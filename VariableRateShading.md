@@ -444,7 +444,7 @@ The following table indicates how many coverage bits are needed for each combina
 
 ### Number of Coverage Bits Needed
 
-![NumberOfCoverageBits](images/VariableRateShading/NumberOfCoverageBits.png "NumberOfCoverageBits")
+![NumberOfCoverageBits](images/VariableRateShading/NumberOfCoverageBits.PNG "NumberOfCoverageBits")
 
 As indicated in the above table, it is not possible to use coarse pixels to write to more than 16 samples at a time using the variable rate shading feature exposed through Direct3D12. This restriction is brought about by Direct3D12’s constraints regarding which MSAA levels are allowed with which coarse pixel size (see table under section "New model").
 
