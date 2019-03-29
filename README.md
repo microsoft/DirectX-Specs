@@ -1,3 +1,21 @@
+This repository publishes raw copies of the engineering specs that were created during the development of DirectX features. It supplements the official API documentation on [docs.microsoft.com](https://docs.microsoft.com/en-us/windows/desktop/directx) with a behind-the-scenes look at how each feature was described during the design process between Microsoft and our IHV partners. These specs are probably not the best place to start if you are new to DirectX and wanting to learn the API, but may be useful to expert users who want to see the same level of detail that is necessary to actually implement each feature.
+
+## Direct3D 12 specs
+* [Background Processing](BackgroundProcessing.md)
+* [DirectX Raytracing (DXR)](Raytracing.md)
+* [Variable Rate Shading](VariableRateShading.md)
+
+## Related links
+
+* [Official DirectX API documentation ](https://docs.microsoft.com/en-us/windows/desktop/directx)
+* [DirectX Developer Blog](https://devblogs.microsoft.com/directx)
+* [PIX on Windows](https://devblogs.microsoft.com/pix/documentation)
+* [DirectX Graphics Samples](https://github.com/Microsoft/DirectX-Graphics-Samples)
+* [D3DX12 (the D3D12 Helper Library)](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3DX12)
+* [D3D12 Raytracing Fallback Layer](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3D12RaytracingFallback)
+* [D3D12 Residency Starter Library](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3DX12Residency)
+* [D3D12 MultiGPU Starter Library](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3DX12AffinityLayer)
+* [DirectX team on Twitter](https://twitter.com/DirectX12)
 
 # Contributing
 
