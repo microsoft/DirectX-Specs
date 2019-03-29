@@ -3,8 +3,6 @@
 ## About this Document
 This document describes Direct3D 12 exposure of graphics hardware functionality. 
 
-*For now, this document is being temporarily distributed alongside the Direct3D samples while the more permanent place for it is being set up. Once the permanent location is set up, this document will be moved there. Please avoid taking dependencies on this document existing at this location.*
-
 ## Motivation
 Due to performance constraints, graphics renderers cannot always afford to deliver the same quality level on every part of their output image. Variable rate shading, or coarse pixel shading, is a mechanism to enable allocation of rendering performance/power at varying rates across the rendered image.
 
