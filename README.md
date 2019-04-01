@@ -15,6 +15,7 @@ This repository publishes raw copies of the engineering specs that were created 
 * [D3D12 Raytracing Fallback Layer](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3D12RaytracingFallback)
 * [D3D12 Residency Starter Library](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3DX12Residency)
 * [D3D12 MultiGPU Starter Library](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3DX12AffinityLayer)
+* [D3DDred debugger extension](https://github.com/Microsoft/DirectX-Debugging-Tools)
 * [DirectX team on Twitter](https://twitter.com/DirectX12)
 
 # Contributing
