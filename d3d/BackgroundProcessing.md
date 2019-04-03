@@ -2,6 +2,24 @@
 
 ---
 
+<h1>Contents</h1>
+
+- [Background](#background)
+- [Problem](#problem)
+- [Solution](#solution)
+- [Detailed Design](#detailed-design)
+- [API](#api)
+  - [Support Query](#support-query)
+  - [Developer Mode](#developer-mode)
+  - [Usage Scenarios](#usage-scenarios)
+  - [App Control Over Task Dispatch](#app-control-over-task-dispatch)
+- [DDI](#ddi)
+  - [GPU Synchronization](#gpu-synchronization)
+  - [Lifetime Management](#lifetime-management)
+- [Tracing / Tooling](#tracing--tooling)
+
+---
+
 # Background
 
 Direct3D 12 has succeeded in providing a reasonably deterministic, predictable API for developers to make use of. A significant part of that was putting threading and GPU synchronization control solely in developers' hands: calling an API generally results in "real", immediate processing on that particular thread, and when a function returns (e.g. ExecuteCommandLists), the operation has "really" completed.
@@ -10,43 +28,52 @@ This in contrast to D3D9/D3D11, where calling an API on the immediate context us
 
 There is another category of threading that IHVs found worthwhile to do in D3D9/D3D11 – background re-compilation/optimization of shaders. This work is distinguished from the previous-described D3D9/D3D11 threading in the following ways:
 
-* The work is decoupled from particular API calls, and may happen indefinitely (or never) in the future.
-* The work does not have any particular deadlines, as even minute-long compilation can pay off if the shader is useful for tens of minutes (can be common in gaming scenarios).
-* The work is 'additional' work and not on the critical path, but crucially must not disrupt critical path work. 2-7% improvements in the average case is not worth even momentary stutter elsewhere.
+- The work is decoupled from particular API calls, and may happen indefinitely (or never) in the future.
+- The work does not have any particular deadlines, as even minute-long compilation can pay off if the shader is useful for tens of minutes (can be common in gaming scenarios).
+- The work is 'additional' work and not on the critical path, but crucially must not disrupt critical path work. 2-7% improvements in the average case is not worth even momentary stutter elsewhere.
 
 Given these requirements, UMDs would spin up background threads and (generally) assign the threads as low a priority as possible, and rely on the NT scheduler to ensure these threads don't disrupt the critical-path threads, generally with success.
 
+---
 
 # Problem
 
 There are three classes of problems with UMD-originated background processing:
 
-1. The nature of async background processing adds unpredictability/indeterminism to workloads, whether when benchmarking end-to-end scenarios, or when A/B testing minute changes in a workload.
-    * This covers in-engine profiling tools (maybe the first 10 seconds of a fly-through are missing the optimized shaders), or PIX (is PIX profiling with/without the optimized shaders?)
-    * Also affects CPU performance due to issue 1, particularly when benchmarking minute CPU changes.
-2. The threads, even when idle-priority, can impact the critical-path work (particularly on SMT systems, but on non-SMT systems as well).
-3. Drivers must keep the profiling 'light-weight', potentially limiting optimization scope, as they don't want to add stutter during an actual live game scenario.
+(1) The nature of async background processing adds unpredictability/indeterminism to workloads, whether when benchmarking end-to-end scenarios, or when A/B testing minute changes in a workload.
 
+- This covers in-engine profiling tools (maybe the first 10 seconds of a fly-through are missing the optimized shaders), or PIX (is PIX profiling with/without the optimized shaders?)
+- Also affects CPU performance due to issue 1, particularly when benchmarking minute CPU changes.
+
+(2) The threads, even when idle-priority, can impact the critical-path work (particularly on SMT systems, but on non-SMT systems as well).
+
+(3) Drivers must keep the profiling 'light-weight', potentially limiting optimization scope, as they don't want to add stutter during an actual live game scenario.
+
+---
 
 # Solution
 
 Solving the above problems will require three work items:
+
 1. The right DDI design to allow UMDs to express desired threading behavior, and the right design for the runtime to control/monitor it (based partially on developer input).
 2. Feature work from the NT Scheduler team to allow us to reduce the impact of these idle-priority threads on critical-path work.
 3. API/DDI design to allow games to designate when: a) the current workload is representative/worth profiling, b) heavy/intrusive profiling is allowed [e.g. during a "detect settings" pass], and c) changes in response to profiling should be temporarily suspended to enable consistent A/B perf comparison.
 
+---
 
 # Detailed Design
 
 The goals of this API/DDI are to:
-* Increase awareness and control of background processing work in general, both for developers and for the platform/OS.
-* Provide the right level of flexibility to ensure background processing isn't too rigid for UMD requirements.
-* Have universal adoption by all D3D12 UMDs seeking to perform background threading.
-* Allow applications to give 'permission' to UMDs to perform heavy-weight profiling/analysis, when the application knows it won't negatively affect user experience (i.e. during level load).
-* Allow applications and profiling tools seeking more deterministic results to detect/wait for UMD processing to complete, such that it knows it is running with the more optimized set of shaders.
+
+- Increase awareness and control of background processing work in general, both for developers and for the platform/OS.
+- Provide the right level of flexibility to ensure background processing isn't too rigid for UMD requirements.
+- Have universal adoption by all D3D12 UMDs seeking to perform background threading.
+- Allow applications to give 'permission' to UMDs to perform heavy-weight profiling/analysis, when the application knows it won't negatively affect user experience (i.e. during level load).
+- Allow applications and profiling tools seeking more deterministic results to detect/wait for UMD processing to complete, such that it knows it is running with the more optimized set of shaders.
 
 With those goals in mind we are proposing a model in which the runtime owns threads and allows the UMD to schedule work onto them, plus APIs allowing apps to adjust what amount of background processing is appropriate for their workloads and when to perform that work.
 
+---
 
 # API
 
@@ -74,7 +101,7 @@ HRESULT SetBackgroundProcessingMode(
             _Out_opt_ BOOL* FurtherMeasurementsDesired);
 ```
 
-By default, the runtime will schedule at most two background compilation tasks at a time, running with idle priority so as to minimize the risk of this work introducing glitches into the foreground rendering. 
+By default, the runtime will schedule at most two background compilation tasks at a time, running with idle priority so as to minimize the risk of this work introducing glitches into the foreground rendering.
 
 Developers and profiling tools can adjust this behavior using combinations of the above enums.  The BACKGROUND_PROCESSING_MODE parameter indicates what level of dynamic profiling and shader recompilation is enabled:
 
@@ -112,6 +139,7 @@ The high priority mode is only valid when developer mode is enabled.
 
 The **FurtherMeasurementsDesired** output value indicates whether the implementation has reached a steady state, or if it would like a chance to examine additional GPU work.  This is useful if, for instance, playback of a single frame in a tool such as PIX identifies opportunities for constant folding.  Once the resulting optimized shaders have been applied, further optimizations might be identified by profiling the workload again with that first round of optimization in place. This value will return false once the PGO implementation has reached a steady state, measuring a workload without identifying any further optimizations that can be made to it.  Analysis tools will typically replay a single frame inside a loop until this returns false, but should break out after some number of attempts in case the implementation never converges on a steady state.
 
+---
 
 ## Support Query
 
@@ -126,6 +154,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS6
 
 It is not necessary to check this capability before calling SetBackgroundProcessingMode.  Changing the mode on drivers that do not take advantage of the background processing feature is a benign no-op.
 
+---
 
 ## Developer Mode
 
@@ -133,6 +162,7 @@ Use of DISABLE_BACKGROUND_WORK, DISABLE_PROFILING_BY_SYSTEM, and COMMIT_RESULTS_
 
 The ALLOW_INTRUSIVE_MEASUREMENTS, COMMIT_RESULTS, and DISCARD_PREVIOUS hints are allowed on retail systems as well as developer mode, because there is interest in the possibility of retail games using these to provide optimization hints.
 
+---
 
 ## Usage Scenarios
 
@@ -159,7 +189,7 @@ RenderFlythroughOfScene();
 
 SetBackgroundProcessingMode(
     D3D12_BACKGROUND_PROCESSING_MODE_ALLOWED,
-    D3D12_MEASUREMENTS_ACTION_COMMIT_RESULTS, 
+    D3D12_MEASUREMENTS_ACTION_COMMIT_RESULTS,
     null, null);
 
 RunTheRealBenchmark();
@@ -189,8 +219,10 @@ while (wantMoreProfiling && ++tries < MaxPassesInCaseDriverDoesntConverge)
     WaitForSingleObject(handle);
 }
 
-PlayBackFrameAgainDoingPixABComparisonStuffEtc(); 
+PlayBackFrameAgainDoingPixABComparisonStuffEtc();
 ```
+
+---
 
 ## App Control Over Task Dispatch
 
@@ -198,6 +230,7 @@ A likely future extension would be to allow developers to control how background
 
 This could be added cleanly over the top of the current proposal, but is not necessary for a V1 of the feature.
 
+---
 
 # DDI
 
@@ -214,7 +247,7 @@ typedef HRESULT(APIENTRY CALLBACK *PFN_D3D12DDI_QUEUEPROCESSINGWORK_CB)(
         _In_ PFN_D3D12DDI_UMD_CALLBACK_METHOD pfnCancel,
 
         // Passed to pfnCallback or pfnCancel.
-        _In_ void* pContext 
+        _In_ void* pContext
 );
 ```
 
@@ -235,6 +268,7 @@ To report driver support for this feature, a new BOOL BackgroundProcessingSuppor
 
 Background processing work must only ever be used for optimization purposes.  These work items must not affect functional correctness of the implementation.
 
+---
 
 ## GPU Synchronization
 
@@ -242,6 +276,7 @@ There is no synchronization between background processing mode changes and comma
 
 We expect many callers (benchmarking tools, or game debug consoles used to commit PGO optimizations before the developer captures timing data) will let the driver record data over several seconds or even minutes, then change processing mode while GPU work is in flight.  Drivers must be robust against these settings changing at any time, but are not expected to make any PGO decisions in response to GPU work that has not yet finished executing.
 
+---
 
 ## Lifetime Management
 
@@ -253,6 +288,7 @@ Expected usage is that each work item will compile a specialized variant of a sh
 
 A suggested approach here is for the UMD PSO data to contain a shared_ptr (or moral equivalent thereof) to a small object which contains a non-owning pointer back to the PSO.  The regular PSO destruction path nulls out this backpointer within the shared object.  When a background compilation is queued, it takes a reference on the shared object (but not the main PSO).  Upon completion of the compilation, it checks the shared object to see if the PSO is still alive, and either abandons the compilation result or transfers it back to the PSO accordingly.
 
+---
 
 # Tracing / Tooling
 

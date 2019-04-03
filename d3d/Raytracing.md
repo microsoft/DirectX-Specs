@@ -288,7 +288,7 @@ This ray independence opens up the possibility of parallelism. To
 exploit this during execution, a typical implementation would balance
 between scheduling and other tasks.
 
-![](images/raytracing/flow.png)
+![raytracing flow](images/raytracing/flow.png)
 
 (The above diagram is only a loose approximation of what an
 implementation might do – don’t read it too deeply.)
@@ -394,7 +394,7 @@ A ray is accompanied by a user defined payload that is modifiable as the
 ray interacts with geometry in a scene and also visible to the caller of
 [TraceRay()](#traceray) upon its return.
 
-![](images/raytracing/ray.png)
+![ray](images/raytracing/ray.png)
 
 The TMin value tracked by the system never changes over the lifetime of
 a ray. On the other hand, as intersections are discovered (in arbitrary
@@ -417,7 +417,7 @@ image, manually though UAVs.
 Upcoming sections describe this picture, plus concepts not shown that
 aren’t specific to geometry, like “miss shaders”.
 
-![](images/raytracing/rayGeometryInteraction.png)
+![rayGeometryIntersection](images/raytracing/rayGeometryInteraction.png)
 
 ---
 
@@ -646,7 +646,7 @@ to do anything for hits and only cares about the [miss shader](#miss-shaders) ru
 
 This is what happens when a shader calls [TraceRay()](#traceray):
 
-![](images/raytracing/traceRayControlFlow.png)
+![traceRayControlFlow](images/raytracing/traceRayControlFlow.png)
 
 [1] This stage searches acceleration structures to enumerate
 primitives that may intersect the ray, conservatively: If a primitive is
@@ -1208,7 +1208,7 @@ all of the shaders at once on one thread.
 
 ### DXIL libraries and state objects example
 
-![](images/raytracing/librariesAndCollections.png)
+![librariesAndCollections](images/raytracing/librariesAndCollections.png)
 
 ---
 
@@ -1897,7 +1897,7 @@ report an intersection with only one of the incident triangles. Which
 triangle is chosen may vary for different rays intersecting the same
 edge.
 
-![](images/raytracing/sharedEdge.png)![](images/raytracing/sharedVertex.png)
+![sharedEdge](images/raytracing/sharedEdge.png)![sharedVertex](images/raytracing/sharedVertex.png)
 
 In the above examples of a shared edge intersection and a shared vertex
 intersection, only one triangle must be reported as intersected in each
@@ -1985,7 +1985,7 @@ earlier.
   establish the up direction. This yields the coordinate system needed
   to implement the top-left rule.
   
-![](images/raytracing/determiningCoordinates.png)
+![determiningCoordinates](images/raytracing/determiningCoordinates.png)
 
 ---
 
@@ -2000,7 +2000,7 @@ The below images show example ray direction to intersection plane
 mappings. Ray directions on the unit sphere map to three possible
 intersection planes.
 
-![](images/raytracing/directionMapping1.png)![](images/raytracing/directionMapping2.png)
+![directionMapping1](images/raytracing/directionMapping1.png)![directionapping2](images/raytracing/directionMapping2.png)
 
 Choose the left direction within the plane based on next largest
 magnitude component of the normal.
@@ -2009,7 +2009,7 @@ In the below image, this corresponds to the colored triangular regions
 and corresponding left directions within the plane. There are two
 possible left directions within each of the three possible planes.
 
-![](images/raytracing/leftDirection.png)
+![leftDirection](images/raytracing/leftDirection.png)
 
 ---
 
@@ -2053,7 +2053,7 @@ edges parallel to the left direction. In one case, the edge in question
 is an upper edge in the other case the edge is a lower edge, inclusive
 and exclusive respectively.
 
-![](images/raytracing/classifyingEdges.png)
+![classifyingEdges](images/raytracing/classifyingEdges.png)
 
 As a series of rays strike an edge, the left direction can change 90°.
 Because of the change in left direction, the inclusive/exclusive
@@ -2164,7 +2164,7 @@ an optimal stack size based on the shaders being used in the raytracing
 pipeline and which ones might potentially be reachable (which only the
 app author can reasonably know).
 
-![](images/raytracing/shaderCallStackConstruction.png)
+![shaderCallStackConstruction](images/raytracing/shaderCallStackConstruction.png)
 
 The app can set the overall stack storage per thread for a raytracing
 pipeline state via [SetPipelineStackSize()](#setpipelinestacksize). The specification for that
