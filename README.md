@@ -35,18 +35,18 @@ date with changes that occurred since the spec was written.
 * Developer Features
     * [Device Removed Extended Data](d3d/DeviceRemovedExtendedData.md)
 
-_D3D12 specs were written as incremental deltas, with a separate spec per feature area.
+_These D3D12 specs were written as incremental deltas, with a separate spec per feature area.
 Baseline information about rendering pipeline behaviors that are common between D3D11 and D3D12
 was inherited from the D3D11 spec rather than being duplicated into the 12 documentation.
 We have an ambition of refactoring this material to present more of a unified how-things-are-now
 view, rather than a historical what-changed-to-get-here, and to merge in more foundational
-information from the D3D11 spec. We would welcome contributions if anyone wants to help with this!_
+information from the D3D11 spec. Contributions welcome if anyone wants to help with this!_
 
 ## Direct3D 11
 
 [Direct3D 11.3 Functional Specification](d3d/archive/D3D11_3_FunctionalSpec.htm)
 
-_This is a single combined spec, covering all features of D3D versions from 10 to 11.3._
+_This is a single combined spec, covering all functionality of D3D versions from 10 to 11.3._
 
 ## Related links
 
