@@ -10,16 +10,20 @@ feature.
 Note that some of this material (especially in older specs) may not have been kept up to 
 date with changes that occurred since the spec was written.
 
-## Direct3D 12 specs
+## Direct3D 12
 
 * Rendering Pipeline
     * [DirectX Raytracing (DXR)](d3d/Raytracing.md)
     * [Variable Rate Shading](d3d/VariableRateShading.md)
     * [View Instancing](d3d/ViewInstancing.md)
+    * [Conservative Rasterization](d3d/ConservativeRasterization.md)
+    * [Rasterizer Ordered Views](d3d/RasterOrderViews.md)
     * [Programmable Sample Positions](d3d/ProgrammableSamplePositions.md)
+    * [Depth Bounds Test](d3d/DepthBoundsTest.md)
 
 * Structure of D3D
     * [Resource Binding](d3d/ResourceBinding.md)
+    * [Indirect Drawing](d3d/IndirectDrawing.md)
     * [Counters & Queries](d3d/CountersAndQueries.md)
     * [Relaxed Format Casting Rules](d3d/RelaxedCasting.md)
 
@@ -30,6 +34,19 @@ date with changes that occurred since the spec was written.
 
 * Developer Features
     * [Device Removed Extended Data](d3d/DeviceRemovedExtendedData.md)
+
+_D3D12 specs were written as incremental deltas, with a separate spec per feature area.
+Baseline information about rendering pipeline behaviors that are common between D3D11 and D3D12
+was inherited from the D3D11 spec rather than being duplicated into the 12 documentation.
+We have an ambition of refactoring this material to present more of a unified how-things-are-now
+view, rather than a historical what-changed-to-get-here, and to merge in more foundational
+information from the D3D11 spec. We would welcome contributions if anyone wants to help with this!_
+
+## Direct3D 11
+
+[Direct3D 11.3 Functional Specification](d3d/archive/D3D11_3_FunctionalSpec.htm)
+
+_This is a single combined spec, covering all features of D3D versions from 10 to 11.3._
 
 ## Related links
 
