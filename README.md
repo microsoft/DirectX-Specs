@@ -1,10 +1,10 @@
 This repository publishes raw copies of the engineering specs that were created during 
 the development of DirectX features. It supplements the official API documentation on 
 [docs.microsoft.com](https://docs.microsoft.com/en-us/windows/desktop/directx) with a 
-behind-the-scenes look at how each feature was described during the design process 
-between Microsoft and our IHV partners. These specs are not the best place to start if 
-you are new to DirectX and wanting to learn the API, but can be useful for expert users 
-who want to see the same level of detail that was necessary while implementing each 
+detailed look at how each feature was described during the design process between 
+Microsoft and our IHV partners. These specs are not the best place to start if you 
+are new to DirectX and wanting to learn the API, but can be useful for expert users 
+who want to see the same level of detail that was described while implementing each 
 feature.
 
 Note that some of this material (especially in older specs) may not have been kept up to 
