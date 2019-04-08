@@ -3,12 +3,16 @@ the development of DirectX features. It supplements the official API documentati
 [docs.microsoft.com](https://docs.microsoft.com/en-us/windows/desktop/directx) with a 
 behind-the-scenes look at how each feature was described during the design process 
 between Microsoft and our IHV partners. These specs are not the best place to start if 
-you are new to DirectX and wanting to learn the API, but can be useful to expert users 
+you are new to DirectX and wanting to learn the API, but can be useful for expert users 
 who want to see the same level of detail that was necessary while implementing each 
 feature.
 
 Note that some of this material (especially in older specs) may not have been kept up to 
 date with changes that occurred since the spec was written.
+
+This material is presented with different interfaces at two different URLs:
+* To read the specs, use [https://microsoft.github.io/DirectX-Specs](https://microsoft.github.io/DirectX-Specs)
+* To view history, clone, file an issue or prepare a pull request, use [https://github.com/Microsoft/DirectX-Specs](https://github.com/Microsoft/DirectX-Specs)
 
 ## Direct3D 12
 
@@ -40,7 +44,10 @@ Baseline information about rendering pipeline behaviors that are common between 
 was inherited from the D3D11 spec rather than being duplicated into the 12 documentation.
 We have an ambition of refactoring this material to present more of a unified how-things-are-now
 view, rather than a historical what-changed-to-get-here, and to merge in more foundational
-information from the D3D11 spec. Contributions welcome if anyone wants to help with this!_
+information from the D3D11 spec. Contributions welcome if you'd like to help with this!_
+
+_This is not yet the full set of D3D12 specs: we will be adding more as time permits.
+Please let us know if there are particular areas you would  like to see prioritized._
 
 ## Direct3D 11
 
