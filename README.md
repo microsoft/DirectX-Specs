@@ -30,6 +30,7 @@ This material is presented with different interfaces at two different URLs:
     * [Indirect Drawing](d3d/IndirectDrawing.md)
     * [Counters & Queries](d3d/CountersAndQueries.md)
     * [Relaxed Format Casting Rules](d3d/RelaxedCasting.md)
+    * [UAV Typed Load](d3d/UAVTypedLoad.md)
 
 * Performance
     * [CPU Efficiency](d3d/CPUEfficiency.md)
