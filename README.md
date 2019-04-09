@@ -1,16 +1,11 @@
-This repository publishes raw copies of the engineering specs that were created during 
-the development of DirectX features. It supplements the official API documentation on 
-[docs.microsoft.com](https://docs.microsoft.com/en-us/windows/desktop/directx) with a 
-detailed look at how each feature was described during the design process between 
-Microsoft and our IHV partners. These specs are not the best place to start if you 
-are new to DirectX and wanting to learn the API, but can be useful for expert users 
-who want to see the same level of detail that was described while implementing each 
-feature.
+This repository publishes the engineering specs for a number of DirectX features.
+It supplements the [official API documentation](https://docs.microsoft.com/en-us/windows/desktop/directx)
+with an extra level of detail that can be useful to expert developers.
 
 Note that some of this material (especially in older specs) may not have been kept up to 
 date with changes that occurred since the spec was written.
 
-This material is presented with different interfaces at two different URLs:
+These specs are presented with different interfaces at two different URLs:
 * To read the specs, use [https://microsoft.github.io/DirectX-Specs](https://microsoft.github.io/DirectX-Specs)
 * To view history, clone, file an issue or prepare a pull request, use [https://github.com/Microsoft/DirectX-Specs](https://github.com/Microsoft/DirectX-Specs)
 
@@ -44,11 +39,11 @@ _These D3D12 specs were written as incremental deltas, with a separate spec per 
 Baseline information about rendering pipeline behaviors that are common between D3D11 and D3D12
 was inherited from the D3D11 spec rather than being duplicated into the 12 documentation.
 We have an ambition of refactoring this material to present more of a unified how-things-are-now
-view, rather than a historical what-changed-to-get-here, and to merge in more foundational
-information from the D3D11 spec. Contributions welcome if you'd like to help with this!_
+view, rather than a historical what-changed-to-get-here, and to merge in foundational
+information from the D3D11 spec. Contributions welcome if you'd like to help with that!_
 
-_This is not yet the full set of D3D12 specs: we will be adding more as time permits.
-Please let us know if there are particular areas you would  like to see prioritized._
+_This is not yet a complete set of D3D12 specs: we'll be adding more as time permits.
+Please let us know if there are particular areas you'd like to see prioritized._
 
 ## Direct3D 11
 
@@ -58,7 +53,7 @@ _This is a single combined spec, covering all functionality of D3D versions from
 
 ## Related links
 
-* [Official DirectX API documentation ](https://docs.microsoft.com/en-us/windows/desktop/directx)
+* [DirectX API documentation ](https://docs.microsoft.com/en-us/windows/desktop/directx)
 * [DirectX Developer Blog](https://devblogs.microsoft.com/directx)
 * [PIX on Windows](https://devblogs.microsoft.com/pix/documentation)
 * [DirectX Graphics Samples](https://github.com/Microsoft/DirectX-Graphics-Samples)
