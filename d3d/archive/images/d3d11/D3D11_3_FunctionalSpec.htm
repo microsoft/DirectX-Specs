@@ -4014,7 +4014,7 @@ Per-Resource MinLOD clamp = 3.5 (this is in the Resource mip number space)
 <ul>
 <li>From the Pixel Shader a sample instruction using the above SRV and Sampler results in a pre-clamp LOD calculation of -2. 
     <ul>
-        <li>The Sampler MinLOD/MaxLOD clamp of [1.2�4] brings the LOD to 1.2 in the SRV mip number space.</li>
+        <li>The Sampler MinLOD/MaxLOD clamp of [1.2&hellip;4] brings the LOD to 1.2 in the SRV mip number space.</li>
         <li>The Per-Resource MinLOD clamp brings the LOD to 2.5 in the SRV mip number space (since the clamp is 3.5 in the Resource space).</li>
         <li>Since the post-clamped LOD is &gt; 0, the minfilter is used (linear).</li>
         <li>So the sample instruction fetches from View mips 2 and 3, applies LINEAR filtering to both mips (since that is the MIN filter), 
@@ -4031,7 +4031,7 @@ since mip 1 in View space (2 in Resource space) has been clamped off.</li>
 the out of bounds result is used as the comparison value against the reference provided from the shader, and the comparison results are returned.</li>
 <li>Suppose in the sample example above, the pre-clamp LOD calculation was 2.</li>
     <ul>
-        <li>The Sampler MinLOD/MaxLOD clamp of [1.2�4] leaves the LOD at 2 in the SRV mip number space.</li>
+        <li>The Sampler MinLOD/MaxLOD clamp of [1.2&hellip;4] leaves the LOD at 2 in the SRV mip number space.</li>
         <li>The Per-Resource MinLOD clamp brings the LOD to 2.5 in the SRV mip number space (since the clamp is 3.5 in the Resource space).</li>
         <li>Since the post-clamped LOD is &gt; 0, the minfilter is used (linear).</li>
         <li>So the sample instruction fetches from View mips 2 and 3, applies LINEAR filtering to both mips (since that is the MIN filter), 
@@ -4056,7 +4056,7 @@ Per-Resource MinLOD clamp = <b>5.5</b> (this is in the Resource mip number space
 <ul>
 <li>From the Pixel Shader a sample instruction using the above SRV and Sampler results in a pre-clamp LOD calculation of -2. </li>
     <ul>
-        <li>The Sampler MinLOD/MaxLOD clamp of [1.2�4] brings the LOD to 1.2 in the SRV mip number space. </li>
+        <li>The Sampler MinLOD/MaxLOD clamp of [1.2&hellip;4] brings the LOD to 1.2 in the SRV mip number space. </li>
         <li>The Per-Resource MinLOD clamp brings the LOD to 4.5 in the SRV mip number space (since the clamp is 5.5 in the Resource space).</li>
         <li>Since the post-clamped LOD is &gt; 0, the minfilter is used (linear).</li>
         <li>So the sample instruction fetches from View mips 4 and 5, applies LINEAR filtering to both mips (since that is the MIN filter), 
@@ -4069,7 +4069,7 @@ Per-Resource MinLOD clamp = <b>5.5</b> (this is in the Resource mip number space
 <li>gather4* instructions, which can only operate on view mip 0, would return out of bounds result.  For gather4_c* instructions (which do a comparison), the out of bounds result is used as the comparison value against the reference provided from the shader, and the comparison results are returned.</li>
 <li>Suppose in the sample example above, the pre-clamp LOD calculation was 2.</li>
     <ul>
-        <li>The Sampler MinLOD/MaxLOD clamp of [1.2�4] causes no change to the LOD of 2.</li>
+        <li>The Sampler MinLOD/MaxLOD clamp of [1.2&hellip;4] causes no change to the LOD of 2.</li>
         <li>The Per-Resource MinLOD clamp brings the LOD to 4.5 in the SRV mip number space (since the clamp is 5.5 in the Resource space).</li>
         <li>Since the post-clamped LOD is &gt; 0, the minfilter is used (linear).</li>
         <li>So the sample instruction fetches from View mips 4 and 5, applies LINEAR filtering to both mips (since that is the MIN filter), and blends them 50% each, due to the .5 in the LOD with LINEAR as the MIP filter.</li>
@@ -12146,7 +12146,7 @@ the clamp described here occurs after the Pixel Shader).</p>
 and MinDepth must be less-than or equal-to MaxDepth.</p>
 <p>The Rasterizer must <a href="#RasterizerPrecision">support</a> fixed-point x,y positions after Viewport
 scale with ###D3D11_PRE_SCISSOR_PIXEL_ADDRESS_RANGE_BIT_COUNT.###D3D11_SUBPIXEL_FRACTIONAL_BIT_COUNT precision (approximately
-[###D3D11_VIEWPORT_BOUNDS_MIN�###D3D11_VIEWPORT_BOUNDS_MAX] range).
+[###D3D11_VIEWPORT_BOUNDS_MIN&hellip;###D3D11_VIEWPORT_BOUNDS_MAX] range).
 As such D3D11 defines the following constraints on the float Viewport Width, Height, TopLeftX and TopLeftY parameters:</p>
 <p>###D3D11_VIEWPORT_BOUNDS_MIN &lt;= Viewport.TopLeftX &lt;= ###D3D11_VIEWPORT_BOUNDS_MAX</p>
 <p>###D3D11_VIEWPORT_BOUNDS_MIN &lt;= Viewport.Width + Viewport.TopLeftX &lt;= ###D3D11_VIEWPORT_BOUNDS_MAX</p>
@@ -13778,7 +13778,7 @@ be dispatched to execute using that shader.</p>
 <h3 id="AnatomyOfDispatch">Anatomy of a Compute Shader Dispatch Call</h3>
 <p>Suppose a Compute Shader program has been compiled having thread group dimensions 10 x 8 x 3.  The HLSL code would look roughly like this pseudocode:</p>
 <pre>
-[numThreads(10,8,3)] void CS( � )
+[numThreads(10,8,3)] void CS( &hellip; )
 {
     Shader Code 
 }
@@ -14184,7 +14184,7 @@ pD3D11Device-&gt;CSSetShader()
 <h3 id="ComputeShaderCodeOutline">HLSL Syntax</h3>
 <p>The following example shows how the thread count is specified as an attribute in HLSL.</p>
 <pre>
-[numThreads(10,8,3)] void CS( � )
+[numThreads(10,8,3)] void CS( &hellip; )
 {
     Shader Code 
 }
