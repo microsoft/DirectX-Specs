@@ -1,6 +1,6 @@
 <h1>D3D12 Resource Binding Functional Spec</h1>
 
-v1.17 4/13/2018
+v1.19 4/10/2019
 
 ---
 
@@ -1280,7 +1280,7 @@ typedef struct D3D12_CPU_DESCRIPTOR_HANDLE
 
 typedef struct D3D12_GPU_DESCRIPTOR_HANDLE
 {
-    SIZE_T ptr;
+    UINT64 ptr;
 } D3D12_GPU_DESCRIPTOR_HANDLE;
 ```
 
@@ -3690,7 +3690,7 @@ root signature at version 1.1, whereas old HLSL compilers only support
 1.0. Note that 1.1 root signatures will not work on OS's that don't
 support root signature 1.1. The root signature version compiled with a
 shader can be forced to a particular version using /force_rootsig_ver
-<version>. Forcing the version will succeed if the compiler can
+\<version\>. Forcing the version will succeed if the compiler can
 preserve the behavior of the root signature being compiled at the forced
 version, for example by dropping unsupported flags in the root signature
 that serve only for optimization purposes but do not affect behavior.
@@ -5170,6 +5170,11 @@ signature.
 
 # Change History
 
+V1.19 April 10, 2019
+
+- Markdown bugfix
+- GPU descriptor handle is UINT64 not SIZE_T
+
 V1.18 March 26, 2019
 
 - Ported spec to markdown format.
@@ -5355,7 +5360,7 @@ V0.9 Nov 21, 2014
         with them like full UAVs support.
 
   - For root CBV, the application must not index past
-        4096*4*32-bits of data within the shader else behavior is
+        4096\*4\*32-bits of data within the shader else behavior is
         undefined (some implementations may produce out of bounds
         behavior like normal descriptor heap based CBVs, while others
         will just read whatever address is requested).
