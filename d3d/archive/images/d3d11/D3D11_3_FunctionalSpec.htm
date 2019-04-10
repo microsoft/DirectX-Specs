@@ -7346,13 +7346,13 @@ and the <a href="#inst_SAMPLE_L">sample_l</a> instruction allows the LOD to be p
 <ul>
     <li>Using TC, determine which component is of the largest magnitude, as when <a href = "#PointSampling">calculating the texel location</a>.
         If any of the components are equivalent, precedence is as follows:  Z, Y, X.  The absolute value of this will be referred to as AxisMajor.
-    <li>select and mirror the minor axes of TC as defined by the TextureCube coordinate space to generate TC&rsquo;.uv
+    <li>select and mirror the minor axes of TC as defined by the TextureCube coordinate space to generate TC'.uv
     <li>select and mirror the minor axes of the partial derivative vectors as defined by the TextureCube coordinate space,
         generating 2 new partial derivative vectors dX'.uv &amp; dY'.uv.
     <li>Suppose DerivativeMajorX and DerivativeMajorY are the major axis component of the original partial derivative vectors.
     <li>Calculate 2 new dX and dY vectors for future calculations as follows:<pre>
-    dX.uv = (AxisMajor*dX'.uv - TC&rsquo;.uv*DerivativeMajorX)/(AxisMajor*AxisMajor)
-    dY.uv = (AxisMajor*dY'.uv - TC&rsquo;.uv*DerivativeMajorY)/(AxisMajor*AxisMajor)</pre>
+    dX.uv = (AxisMajor*dX'.uv - TC'.uv*DerivativeMajorX)/(AxisMajor*AxisMajor)
+    dY.uv = (AxisMajor*dY'.uv - TC'.uv*DerivativeMajorY)/(AxisMajor*AxisMajor)</pre>
 </ul>
 
 <li>Scale the derivatives by the texture size at largest mipmap:<pre>
@@ -11109,8 +11109,8 @@ but patches being streamed out to memory.</p>
 <p>A shared edge has to generate identical domain locations for crack free tessellation to be possible.  Domain Shader authors are responsible for achieving this, given some guarantees from the hardware.  
 First, hardware tessellation on any given edge must always produce a distribution of domain points symmetric about the edge based on the TessFactor for that edge alone.  
 Second, the parameterization of each domain point (U/V for quad or U/V/W for tri) must produce &ldquo;clean&rdquo; values in the space [0.0 ... 1.0].  
-&ldquo;Clean&rdquo; means that given a domain point on one side of the edge, with the parameter for that edge (say it is U) in [0 ... 0.5], the mirrored domain point produced on the other side, call it U&rsquo; in [0.5 ... 1.0] 
-will have a complement satisfying (1-U&rsquo;) == U exactly.  </p>
+&ldquo;Clean&rdquo; means that given a domain point on one side of the edge, with the parameter for that edge (say it is U) in [0 ... 0.5], the mirrored domain point produced on the other side, call it U' in [0.5 ... 1.0] 
+will have a complement satisfying (1-U') == U exactly.  </p>
 
 <p>Even if a neighboring patch sharing an edge happens to produce a complementary parameterization (U moving in the other direction, and/or U/V swapped), both side&rsquo;s parameterization for each 
 shared edge domain point will be equivalent because they are clean.</p>

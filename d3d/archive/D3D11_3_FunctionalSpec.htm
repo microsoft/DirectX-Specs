@@ -8183,13 +8183,13 @@ and the <a href="#inst_SAMPLE_L">sample_l</a><a style="color: Gray"><small><sup>
 <ul>
     <li>Using TC, determine which component is of the largest magnitude, as when <a href = "#PointSampling">calculating the texel location</a><a style="color: Gray"><small><sup>(7.18.7)</sup></small></a>.
         If any of the components are equivalent, precedence is as follows:  Z, Y, X.  The absolute value of this will be referred to as AxisMajor.
-    <li>select and mirror the minor axes of TC as defined by the TextureCube coordinate space to generate TC&rsquo;.uv
+    <li>select and mirror the minor axes of TC as defined by the TextureCube coordinate space to generate TC'.uv
     <li>select and mirror the minor axes of the partial derivative vectors as defined by the TextureCube coordinate space,
         generating 2 new partial derivative vectors dX'.uv &amp; dY'.uv.
     <li>Suppose DerivativeMajorX and DerivativeMajorY are the major axis component of the original partial derivative vectors.
     <li>Calculate 2 new dX and dY vectors for future calculations as follows:<pre>
-    dX.uv = (AxisMajor*dX'.uv - TC&rsquo;.uv*DerivativeMajorX)/(AxisMajor*AxisMajor)
-    dY.uv = (AxisMajor*dY'.uv - TC&rsquo;.uv*DerivativeMajorY)/(AxisMajor*AxisMajor)</pre>
+    dX.uv = (AxisMajor*dX'.uv - TC'.uv*DerivativeMajorX)/(AxisMajor*AxisMajor)
+    dY.uv = (AxisMajor*dY'.uv - TC'.uv*DerivativeMajorY)/(AxisMajor*AxisMajor)</pre>
 </ul>
 
 <li>Scale the derivatives by the texture size at largest mipmap:<pre>
@@ -10064,7 +10064,7 @@ for(each slot, s, <a href="#SetVertexBufferAPI">with a VertexBuffer assigned</a>
         for(each Element, e, <a href="#SetInputLayoutAPI">in the Buffer's Input Layout</a>)
         {
             VertexBufferElementAddressInBytes[s][e] =
-                <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets">VertexBufferOffsetInBytes</a> +
+                <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets"> VertexBufferOffsetInBytes</a> +
                 <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*<a href="#StartVertexLocation">StartVertexLocation</a> +
                 <a href="#SlotDesc">Slot</a>[s].<a href="#pInputLayout">pInputLayout</a>-&gt;pElement[e].<a href="#ElementOffset">OffsetInBytes</a>;
         } // Element loop
@@ -10074,7 +10074,7 @@ for(each slot, s, <a href="#SetVertexBufferAPI">with a VertexBuffer assigned</a>
         for(each Element, e, <a href="#SetInputLayoutAPI">in the Buffer's Input Layout</a>)
         {
             VertexBufferElementAddressInBytes[s][e] =
-                <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets">VertexBufferOffsetInBytes</a> +
+                <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets"> VertexBufferOffsetInBytes</a> +
                 <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*<a href="#DrawInstancedStartInstanceLocation">StartInstanceLocation</a> +
                 <a href="#SlotDesc">Slot</a>[s].<a href="#pInputLayout">pInputLayout</a>-&gt;pElement[e].<a href="#ElementOffset">OffsetInBytes</a>;
         } // Element loop
@@ -10321,7 +10321,7 @@ for(UINT InstanceID = 0; InstanceID &lt; <a href="#DrawIndexedInstancedInstanceC
             }
             for(each Element, e, <a href="#SetInputLayoutAPI">in the buffer's structure declaration</a>)
             {
-                if(<a href="#SlotDesc">Slot</a>[s].<a href="#VertexBufferClass">Class</a> == <a href="#INPUT_CLASSIFICATION"> D3D11_INPUT_PER_VERTEX_DATA</a>)
+                if(<a href="#SlotDesc">Slot</a>[s].<a href="#VertexBufferClass">Class</a> == <a href="#INPUT_CLASSIFICATION">D3D11_INPUT_PER_VERTEX_DATA</a>)
                 {
                     VertexBufferElementAddressInBytes[s][e] =
                         <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets">VertexBufferOffsetInBytes</a> +
@@ -12311,8 +12311,8 @@ but patches being streamed out to memory.</p>
 <p>A shared edge has to generate identical domain locations for crack free tessellation to be possible.  Domain Shader authors are responsible for achieving this, given some guarantees from the hardware.  
 First, hardware tessellation on any given edge must always produce a distribution of domain points symmetric about the edge based on the TessFactor for that edge alone.  
 Second, the parameterization of each domain point (U/V for quad or U/V/W for tri) must produce &ldquo;clean&rdquo; values in the space [0.0 ... 1.0].  
-&ldquo;Clean&rdquo; means that given a domain point on one side of the edge, with the parameter for that edge (say it is U) in [0 ... 0.5], the mirrored domain point produced on the other side, call it U&rsquo; in [0.5 ... 1.0] 
-will have a complement satisfying (1-U&rsquo;) == U exactly.  </p>
+&ldquo;Clean&rdquo; means that given a domain point on one side of the edge, with the parameter for that edge (say it is U) in [0 ... 0.5], the mirrored domain point produced on the other side, call it U' in [0.5 ... 1.0] 
+will have a complement satisfying (1-U') == U exactly.  </p>
 
 <p>Even if a neighboring patch sharing an edge happens to produce a complementary parameterization (U moving in the other direction, and/or U/V swapped), both side&rsquo;s parameterization for each 
 shared edge domain point will be equivalent because they are clean.</p>
@@ -16245,7 +16245,7 @@ _SNORM    - Data in channels appearing on the left of _SNORM in the
             and in the Shader as signed normalized float values
             in the range [-1,1].  Conversions are defined here:
             <a href="#FLOATtoSNORM">FLOAT -&gt; SNORM</a><a style="color: Gray"><small><sup>(3.2.3.4)</sup></small></a>
-            <a href="#SNORMtoFLOAT">SNORM -&gt; FLOAT</a><a style="color: Gray"><small><sup>(3.2.3.3)</sup></small></a>
+            <a href="#SNORMtoFLOAT">SNORM_#_#_#_INSERT_SECTION_NUMBER_#_#_#_[SNORMtoFLOAT] -&gt; FLOAT</a>
 _UNORM    - Data in channels appearing on the left of _UNORM in the
             format name are interpreted in the resource as unsigned integers,
             and in the Shader as unsigned normalized float values,
@@ -18924,7 +18924,7 @@ never really tested for D3D10.x either.</li>
 <a href="#inst_uDCLRaw">dcl_uav_raw[_glc] (Raw UnorderedAccessView (u#) Declaration)</a><a style="color: Gray"><small><sup>(22.3.43)</sup></small></a><br>
 <a href="#inst_uDCLStructured">dcl_uav_structured[_glc] (Structured UnorderedAccessView (u#) Declaration)</a><a style="color: Gray"><small><sup>(22.3.44)</sup></small></a><br>
 <a href="#inst_tDCLRaw">dcl_resource_raw (Raw Input Resource (Shader Resource View, t#) Declaration)</a><a style="color: Gray"><small><sup>(22.3.47)</sup></small></a><br>
-<a href="#inst_tDCLStructured">dcl_resource_structured (Structured Input Resource (Shader_#_#_#_INSERT_SECTION_NUMBER_#_#_#_[inst_tDCLStructured] Resource View, t#) Declaration)</a><br>
+<a href="#inst_tDCLStructured">dcl_resource_structured (Structured Input Resource (Shader Resource View, t#) Declaration)</a><a style="color: Gray"><small><sup>(22.3.48)</sup></small></a><br>
 <a href="#inst_vCycleCounterDCL">dcl_input vCycleCounter (debug only)</a><a style="color: Gray"><small><sup>(22.3.29)</sup></small></a><br>
 <a href="#inst_DCL_FUNCTION_BODY">dcl_function_body (Function Body Declaration)</a><a style="color: Gray"><small><sup>(22.3.49)</sup></small></a><br>
 <a href="#inst_DCL_FUNCTION_TABLE">dcl_function_table (Function Table Declaration)</a><a style="color: Gray"><small><sup>(22.3.50)</sup></small></a><br>
@@ -22999,7 +22999,7 @@ Operation:      Performs the integer comparison (src0 != src1) for each
 <H3>22.6.7 lt (less-than comparison)</H3>
 <pre>
 Instruction:    lt     dest[.mask],
-                    [<a href="#inst_MOD_NEGATE">-</a>]src0[<a href="#inst_MOD_ABS">_abs</a>][.swizzle],
+                    [<a href="#inst_MOD_NEGATE">-</a>]src0[<a href="#inst_MOD_ABS"> _abs</a>][.swizzle],
                     [<a href="#inst_MOD_NEGATE">-</a>]src1[<a href="#inst_MOD_ABS">_abs</a>][.swizzle]
 
 Stage(s):       <a href="#AllStages">All</a><a style="color: Gray"><small><sup>(22.1.1)</sup></small></a>
@@ -26305,7 +26305,7 @@ Operation:      dest = src0 &gt;= src1 ? src0 : src1
 <H3>22.14.3 dmin</H3>
 <pre>
 Instruction:    dmin[<a href="#inst_MOD_SAT">_sat</a>]    dest[.mask],
-                          [<a href="#inst_MOD_NEGATE">-</a>]src0[<a href="#inst_MOD_ABS"> _abs</a>][.swizzle],
+                          [<a href="#inst_MOD_NEGATE">-</a>]src0[<a href="#inst_MOD_ABS">_abs</a>][.swizzle],
                           [<a href="#inst_MOD_NEGATE">-</a>]src1[<a href="#inst_MOD_ABS">_abs</a>][.swizzle]
 
 Stage(s):       <a href="#AllStages">All</a><a style="color: Gray"><small><sup>(22.1.1)</sup></small></a>
