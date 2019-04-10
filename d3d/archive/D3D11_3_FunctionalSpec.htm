@@ -1147,22 +1147,22 @@ This concept has not been actually implemented in GPUs, at least that are known,
 Conservative Rasterization somewhat motivates the alternative that is specified here - Target Independent Rasterization. 
 Note that as of D3D11.3, hardware has evolved to support <a href="#ConservativeRasterization">Conservative Rasterization</a><a style="color: Gray"><small><sup>(15.17)</sup></small></a>.</p>
 
-<p>Consider how multisampling works in D3D (or GPU rasterization in general).  Each pixel has �sample� positions which cause 
+<p>Consider how multisampling works in D3D (or GPU rasterization in general).  Each pixel has &ldquo;sample&rdquo; positions which cause 
 Pixel Shaders to be invoked when primitives (e.g. triangles) cover the samples.  For multisampling, a single Pixel Shader 
 invocation occurs when at least one sample in a pixel is covered.  Alternatively, D3D10.1+ also allows the shader to 
-request that the Pixel Shader be invoked for each covered sample � this has historically been called �supersampling�.</p>
+request that the Pixel Shader be invoked for each covered sample &ndash; this has historically been called &ldquo;supersampling&rdquo;.</p>
 
 <p>The downside to these antialiasing approaches is they are based on a discrete number of samples.  The more samples the better, 
 but there are still holes in the pixel area between the sample points in which geometry rendered there does not contribute to the image.</p>
 
 <p>Conservative Rasterization, instead, would ideally invoke the Pixel Shader if the area of a primitive (e.g. triangle) being 
-rendered has any chance of intersecting with the pixel�s square area.  It would then be up to shader code to compute 
+rendered has any chance of intersecting with the pixel&rsquo;s square area.  It would then be up to shader code to compute 
 whatever measure of pixel area intersection it desires.  It may be acceptable for the rasterization to be 
-�conservative� in that triangles/primitives are simply rasterized with a fattened screen space area that could 
-include some pixels with no actual coverage � it doesn�t really matter since the shader will be computing the actual coverage.</p>
+&ldquo;conservative&rdquo; in that triangles/primitives are simply rasterized with a fattened screen space area that could 
+include some pixels with no actual coverage &ndash; it doesn&rsquo;t really matter since the shader will be computing the actual coverage.</p>
 
 <p>The win is that the number of Pixel Shader invocations is reasonably bounded to the triangle extents 
-(as opposed to rendering bounding rectangles), and the output can be �perfect� antialiasing if desired.  
+(as opposed to rendering bounding rectangles), and the output can be &ldquo;perfect&rdquo; antialiasing if desired.  
 This is particularly the case if also utilizing some other features in D3D11 that allow arbitrary 
 length lists to be recorded per pixel.</p>
 
@@ -1185,7 +1185,7 @@ The first pass will write per-pixel coverage to an intermediate render target te
 non-overlapping triangles.  The GPU will be programmed to use Target Independent Rasterization and additive blending during the 
 first pass.  The pixel shader used in the first pass will simply count the number of bits set in the coverage mask and 
 output the result normalized to [0.0,1.0].  During the second pass the GPU will read from the intermediate texture and 
-write to the application�s render target.  This pass will multiply the path color by the coverage computed during the first pass.</p>
+write to the application&rsquo;s render target.  This pass will multiply the path color by the coverage computed during the first pass.</p>
 
 <p>
 In some cases, it will be faster for Direct2D to tessellate paths into potentially overlapping triangles.  
@@ -1835,7 +1835,7 @@ E.g. Generating an unordered collection of output data in an <a href="#CountAndA
 Hardware may be optimized for smaller reads and writes than the stride of a data.   
 Consider a group of 16 shader threads where each thread wants to write out the first 4 bytes of a structure.  
 If the structure is only 4 bytes, the 16 threads will collectively write out 16 consecutive 32-bit locations, which tends to be fast.   
-But if the structure is larger � say 64 bytes, then the 16 threads will each issue a write that is spaced 64 bytes apart.   
+But if the structure is larger &ndash; say 64 bytes, then the 16 threads will each issue a write that is spaced 64 bytes apart.   
 Then when reading the data back in a later pass, the same problem will be reoccur.  
 Reads will be issued with a spacing equal to the stride of the structure, with larger structures likely to have more of a performance issue.</p>
 <p>Due to the reads and the writes having similar access patterns it would be better to have the data layout in memory match the access pattern that occurs.   
@@ -1861,9 +1861,9 @@ with the flag D3D11_BUFFER_SRV_FLAG_RAW (SRV) or D3D11_BUFFER_UAV_FLAG_RAW (UAV)
 <p>This flag cannot be combined with D3D11_RESOURCE_MISC_STRUCTURED_BUFFER.  Also, a Buffer created with D3D11_BIND_CONSTANT_BUFFER 
 cannot also specify D3D11_RESOURCE_MISC_ALLOW_RAW_VIEWS.  This is not a limitation, since Constant Buffers already have a constraint 
 that they cannot be accessed with any other View in the first place.</p>
-<p>Other than those invalid cases, specifying D3D11_RESOURCE_MISC_ALLOW_RAW_VIEWS when creating a Buffer does not limit any functionality versus not having it � e.g. 
+<p>Other than those invalid cases, specifying D3D11_RESOURCE_MISC_ALLOW_RAW_VIEWS when creating a Buffer does not limit any functionality versus not having it &ndash; e.g. 
 the Buffer can be used for non-RAW access in any number of ways possible with D3D.  Specifying the D3D11_RESOURCE_MISC_ALLOW_RAW_VIEWS flag only increases 
-available functionality � it is just giving the system an early indication that the Buffer may participate in RAW style access in addition to other uses.</p>
+available functionality &ndash; it is just giving the system an early indication that the Buffer may participate in RAW style access in addition to other uses.</p>
 
 
 <h3 id="PrestructuredTypeless"></h3><A id="5.1.5 Prestructured+Typeless Memory"></A>
@@ -2064,7 +2064,7 @@ typedef struct D3D11DDIARG_BUFFER_SHADERRESOURCEVIEW
 } D3D11DDIARG_BUFFER_SHADERRESOURCEVIEW;
 
 <b>
-// BufferEx � Ex means extra pararameters
+// BufferEx - Ex means extra pararameters
 typedef struct D3D11DDIARG_BUFFEREX_SHADERRESOURCEVIEW
 {
     UINT     FirstElement;
@@ -2128,7 +2128,7 @@ not be passed to the DDI.</p>
 <p>ClearUnorderedAccessViewUint(...) clears a UAV with bit-precise values, copying the lower ni bits from each array element i 
 to the corresponding channel, where ni is the number of bits in the ith channel of the resource Format 
 (for example, R8G8B8_FLOAT has 8 bits for the first 3 channels).  This works on any UAV with no format conversion.  
-For RAW Buffer and Structured Buffer Views, only the first array element�s value is used.</p>
+For RAW Buffer and Structured Buffer Views, only the first array element&rsquo;s value is used.</p>
 <p>ClearUnorderedAccessViewFloat(...) clears a UAV with a float value.  It only works on FLOAT, UNORM, and SNORM UAVs, with format conversion from FLOAT to *NORM where appropriate.  
 On other UAVs, the operation is invalid and the call will not reach the driver.</p>
 
@@ -2190,7 +2190,7 @@ Color[2]: V/Cr
 Color[3]: A
 </pre>
 
-<p>For Video Views with YUV or YCbBr formats, no color space conversion happens � and in cases where the format name doesn�t indicate _UNORM vs. _UINT etc., 
+<p>For Video Views with YUV or YCbBr formats, no color space conversion happens &ndash; and in cases where the format name doesn&rsquo;t indicate _UNORM vs. _UINT etc., 
 _UINT is assumed (so input 235.0f maps to 235 as described above).</p>
 
 <p>This feature is required to be supported for all D3D10+ hardware in D3D11.1 drivers and for D3D9 drivers maps to the already existing functionality there.  The D3D9 equivalent honored the scissor rect,
@@ -2207,10 +2207,10 @@ provides parity with D3D9.</p>
 <H5>5.2.3.3.1 ClearView Rect mapping to surface area</H5>
 <p>For RTVs and UAVS: The space the ClearView rects apply on is that of the view format (as opposed to the surface format, which for video surfaces can be different sizes).  This is 
 consistent with how Viewports and rendering work on those views.  e.g. for a 64x64 YUYV surface, an RTV with the format R8G8B8A8_UINT appears in shaders (and to RSSetViewports()) 
-as having dimensions 32x64 RGBA values.  ClearView�s rects apply to the same space.  The �color� coming into ClearView is just maps to the channels in the view (RGBA) 
-ignoring the video layout.  So a single clear color could really mean �stripes� of color if interpreted in video space.  That�s not interesting to do, but it just 
-falls out and isn�t worth bothering to validate out � the user who makes D3D views of video surfaces has to know they are operating 
-on the raw memory via D3D � be it shaders or APIs like ClearView.
+as having dimensions 32x64 RGBA values.  ClearView&rsquo;s rects apply to the same space.  The &ldquo;color&rdquo; coming into ClearView is just maps to the channels in the view (RGBA) 
+ignoring the video layout.  So a single clear color could really mean &ldquo;stripes&rdquo; of color if interpreted in video space.  That&rsquo;s not interesting to do, but it just 
+falls out and isn&rsquo;t worth bothering to validate out &ndash; the user who makes D3D views of video surfaces has to know they are operating 
+on the raw memory via D3D &ndash; be it shaders or APIs like ClearView.
 </p>
 
 <p>By contrast, ClearView on Video Views (the views that are used with the video pipeline and not D3D Rasterization) operate on logical surface dimensions.  
@@ -3158,7 +3158,7 @@ creation of UAVs on the resource to be valid.
 <ul>
 <li>D3D11_BIND_CONSTANT_BUFFER</li>
 <li>D3D11_BIND_DEPTH_STENCIL</li>
-<li>D3D11_BIND_STREAM_OUTPUT // Unordered Access Buffers imply some hidden storage for counters, as do Stream Output Buffers � so to simplify matters, both usages are not allowed to be mixed.</li>
+<li>D3D11_BIND_STREAM_OUTPUT // Unordered Access Buffers imply some hidden storage for counters, as do Stream Output Buffers &ndash; so to simplify matters, both usages are not allowed to be mixed.</li>
 </ul>
 
 <p>The constraints combining D3D11_BIND_UNORDERED_ACCESS with other flags on Resource Creation, such as Usage (dynamic, staging etc) are the same as 
@@ -3267,7 +3267,7 @@ typedef VOID ( APIENTRY* PFND3D11DDI_SETRENDERTARGETS )(
 
 <p>
 There is a separate CSSetUnorderedAccessViews API/DDI that accepts UnorderedAccessViews to be bound for the Compute side of the device.  
-It is similar to the above, except doesn�t include RenderTargets.
+It is similar to the above, except doesn&rsquo;t include RenderTargets.
 </p>
 
 <A id="5.3.9.4 Hazard Tracking"></A>
@@ -3280,18 +3280,18 @@ It is similar to the above, except doesn�t include RenderTargets.
 </ul>
 <p>
 If a subresource is ever bound as an output (RTV/UAV/SO Target), subsequently unbound, and then bound as a shader input, a ReadAfterWriteHazard DDI is called.  
-Drivers can use this as a hint as to when a rendering flush may be required.  There are additional situations where Read After Write hazards are reported given the two pipelines � 
+Drivers can use this as a hint as to when a rendering flush may be required.  There are additional situations where Read After Write hazards are reported given the two pipelines &ndash; 
 Graphics and Compute, in particular resources moving from output binding on one side to input binding on the other side, as well Compute outputs moving to Compute input.   
 Note UAVs are considered as "output", since if an application only needs to read a resource, it should be bound as an input instead.
 </p>
 
 <A id="5.3.9.5 Limitations on Typed UAVs"></A>
 <H4>5.3.9.5 Limitations on Typed UAVs</H4>
-<p>There is a significant and unfortunate limitation in many hardware designs that had to be built into D3D. While Typed UAVs support many formats � 
+<p>There is a significant and unfortunate limitation in many hardware designs that had to be built into D3D. While Typed UAVs support many formats &ndash; 
 essentially any format that can be a RenderTarget - the majority of these formats only support being written as a UAV, but not read at the same time.  </p>
 <p>Shader Resource Views are of course always available in any shader stage when only read-only access from arbitrary locations in a Typed resource is needed.  
 Conversely, it is useful that if write-only access to arbitrary locations in a Typed resource is needed, UAVs support that scenario.  </p>
-<p>However, simultaneous reading and writing to a UAV within a single Draw* or Dispatch* operation is only supported if the UAV�s Type is R32_UINT/_SINT/_FLOAT.  
+<p>However, simultaneous reading and writing to a UAV within a single Draw* or Dispatch* operation is only supported if the UAV&rsquo;s Type is R32_UINT/_SINT/_FLOAT.  
 In particular, the ld_uav_typed IL instruction for reading from a typed UAV is limited to R32_UINT/_SINT/_FLOAT formats.  E.g. a UAV with a type such as R8G8B8A8_UNORM_SRGB 
 cannot be read from (but it can be written).</p>
 <p>D3D has a partial workaround for this inability to simultaneously read+write from Typed UAVs.  The purpose is to make tasks such as editing an image in-place simpler, given the circumstances.  </p>
@@ -3304,11 +3304,11 @@ cannot be read from (but it can be written).</p>
 <li>DXGI_FORMAT_R16G16_TYPELESS</li>
 <li>DXGI_FORMAT_R32_TYPELESS</li>
 </ul>
-<p>Once an R32_* UAV is created, it allows arbitrary reading and writing to the UAV�s memory in-place.  The catch is there is no type conversion since the format is R32_*, 
+<p>Once an R32_* UAV is created, it allows arbitrary reading and writing to the UAV&rsquo;s memory in-place.  The catch is there is no type conversion since the format is R32_*, 
 meaning reads and writes simply move raw data unaltered between a shader and memory.   Since the desire of the application is that the memory is really interpreted as some format 
 like DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, the application is responsible for manually performing type conversion in the shader code upon reads and writes to the R32_* UAV.</p>
 <p>The upside is that because the original resource was created with one of the _TYPELESS formats listed above, it allows other views such as Shader Resource Views or Render Target Views 
-to be created using the actual format that the application intended � such as DXGI_FORMAT_R8G8B8A8_UNORM_SRGB.  These properly typed views can then benefit from the fixed-function hardware type 
+to be created using the actual format that the application intended &ndash; such as DXGI_FORMAT_R8G8B8A8_UNORM_SRGB.  These properly typed views can then benefit from the fixed-function hardware type 
 conversion upon reading and writing to the format during texture filtering on read or blending on writes, even though these were not available to the UAV, where manual type conversion code 
 had to be done in the shader.</p>
 <p>The formats supporting this casting to R32_* are limited those for which the hardware really makes no difference in memory layout versus R32_*, but excluding a few that have complex 
@@ -3324,7 +3324,7 @@ Hardware can take advantage of knowing this type of operation is going on, produ
 <H4>5.3.10.1 Creating Unordered Count and Append Buffers</H4>
 
 <p>For Structured Buffers that have been created with the Bind flag: D3D11_DDI_BIND_UNORDERED_ACCESS, Unordered Access Views can be created with one of the optional flags 
-D3D11_DDI_BUFFER_UAV_FLAG_COUNTER or D3D11_DDI_BUFFER_UAV_FLAG_APPEND.  The latter flag gives up some flexibility for (possibly) performance � described later.</p>
+D3D11_DDI_BUFFER_UAV_FLAG_COUNTER or D3D11_DDI_BUFFER_UAV_FLAG_APPEND.  The latter flag gives up some flexibility for (possibly) performance &ndash; described later.</p>
 
 <p>Creating a Structured Buffer UAV with UAV_FLAG_COUNTER causes the driver to allocate storage for a single hidden 32-bit unsigned integer counter associated with the UAV 
 (as opposed to being associated with the underlying resource), initialized to 0.  Multiple UAVs created on the same Buffer with this flag will thus have multiple independent counters.</p>
@@ -3342,28 +3342,28 @@ Some hardware will take advantage of not having to maintain the order to provide
 
 <A id="5.3.10.2 Using Unordered Count and Append Buffers"></A>
 <H4>5.3.10.2 Using Unordered Count and Append Buffers</H4>
-<p>When Pixel Shaders and Compute Shaders bind UAVs that have _COUNT or _APPEND usage specified, an initial value for the View�s hidden 
+<p>When Pixel Shaders and Compute Shaders bind UAVs that have _COUNT or _APPEND usage specified, an initial value for the View&rsquo;s hidden 
 counter must be provided as part of the bind call. Specifying -1 means maintain the current counter value already in the Buffer.  Any other value sets the counter value.
 </p>
 <p>When an Append UAV is bound to the pipeline, the instructions that can access it are restricted to the following:</p>
 <a href="#inst_IMM_ATOMIC_ALLOC">imm_atomic_alloc</a><a style="color: Gray"><small><sup>(22.17.17)</sup></small></a>
 <ul>
-<li>atomic increment hidden counter in a Count/Append UAV and return original value � see details in instruction definition.  
+<li>atomic increment hidden counter in a Count/Append UAV and return original value &ndash; see details in instruction definition.  
 For Append UAVs, the returned count value is only valid as a reference to a particular struct in the UAV for the lifetime of the shader invocation.</li>
 </ul>
 <a href="#inst_STORE_STRUCTURED">store_structured</a><a style="color: Gray"><small><sup>(22.4.13)</sup></small></a>
 <ul>
-<li>write 32-bit value(s) to a UAV � see details in instruction definition</li>
+<li>write 32-bit value(s) to a UAV &ndash; see details in instruction definition</li>
 <li>this instruction is also available on any UAVs (and other view types), not just Count/Append UAVs.</li>
 </ul>
 <a href="#inst_IMM_ATOMIC_CONSUME">imm_atomic_consume</a><a style="color: Gray"><small><sup>(22.17.18)</sup></small></a>
 <ul>
-<li>atomic decrement hidden counter in a Count/Append UAV and return new counter value � see details in instruction definition.  
+<li>atomic decrement hidden counter in a Count/Append UAV and return new counter value &ndash; see details in instruction definition.  
 For Append UAVs, the returned count value is only valid as a reference to a particular struct in the UAV for the lifetime of the shader invocation.</li>
 </ul>
 <a href="#inst_LD_STRUCTURED">ld_structured</a><a style="color: Gray"><small><sup>(22.4.12)</sup></small></a>
 <ul>
-<li>read 32-bit value(s) from a UAV � see details in instruction definitions</li>
+<li>read 32-bit value(s) from a UAV &ndash; see details in instruction definitions</li>
 <li>this instruction is also available on any UAVs (and other view types), not just Count/Append UAVs.</li>
 </ul>
 <p>
@@ -3381,7 +3381,7 @@ HLSL compiler, which exposes simply the ability to Append() structs or Consume()
 <p>
 For Count UAVs, where the returned count value may be stored, any instructions capable of accessing Structured Buffers 
 are permitted from the shader, in addition to all of the instructions listed above.   Unlike Append UAVs, the HLSL 
-compiler exposes the count values returned by imm_atomic_alloc and imm_atomic_consume for access in the shader � allowing the value to be saved.   
+compiler exposes the count values returned by imm_atomic_alloc and imm_atomic_consume for access in the shader &ndash; allowing the value to be saved.   
 </p>
 <p>
 The counter behind imm_atomic_alloc and imm_atomic_consume has no overflow or underflow clamping, and there is no feedback given to the shader as 
@@ -3432,7 +3432,7 @@ have different sizes from each other.  A few video formats do not support D3D SR
 DXGI_FORMAT_420_OPAQUE, _AI44, _IA44, _P8 and _A8P8.  Further details on all the video formats is provided in the D3D11 Video DDI spec.</p>
 
 <p>Runtime read+write conflict prevention logic (which stops a resource from being bound as an SRV and RTV/UAV at the same time) 
-treats Views of different parts of the same Video surface as conflicting for simplicity.  It doesn�t seem interesting to allow the 
+treats Views of different parts of the same Video surface as conflicting for simplicity.  It doesn&rsquo;t seem interesting to allow the 
 case of reading from luma while simultaneously rendering to chroma in the same surface, for example, even though it may be possible in hardware.</p>
 
 <table border="1" id="VideoViewFormats" frame="border">
@@ -3555,7 +3555,7 @@ case of reading from luma while simultaneously rendering to chroma in the same s
         <br>
         D3D does not enforce or care whether or not the <br>
         lowest 6 bits are 0 (given this is a 10 bit format <br>
-        using 16 bits) � application shader code would have <br>
+        using 16 bits) &ndash; application shader code would have <br>
         to enforce this manually if desired.  From the D3D <br>
         point of view, this is format is no different than P016.
 
@@ -3597,7 +3597,7 @@ case of reading from luma while simultaneously rendering to chroma in the same s
         <br>
         D3D does not enforce or care whether or not the <br>
         lowest 6 bits are 0 (given this is a 10 bit format <br>
-        using 16 bits) � application shader code would have <br>
+        using 16 bits) &ndash; application shader code would have <br>
         to enforce this manually if desired.  From the D3D <br>
         point of view, this is format is no different than Y216.
 
@@ -4173,19 +4173,19 @@ typedef struct D3D11DDIARG_COPYRESOURCEIN
 <h3 id="StagingSurfaceCPUReadPerf"></h3><A id="5.6.4 Staging Surface CPU Read Performance (primarily for ARM CPUs)"></A>
 <H3>5.6.4 Staging Surface CPU Read Performance (primarily for ARM CPUs)</H3>
 
-<p>On the ARM CPU, cache coherency isn�t provided when the GPU writes to system memory, so a GPU driver would normally be tempted to put a 
+<p>On the ARM CPU, cache coherency isn&rsquo;t provided when the GPU writes to system memory, so a GPU driver would normally be tempted to put a 
 staging (D3D CPU memory) surface in uncached memory (which is slow for CPU access) to avoid incorrect values being read from the cache.  
-However, the Win8 Video Memory Manager will manually flush the CPU cache on ARM when data has been copied from the GPU to a staging surface � 
+However, the Win8 Video Memory Manager will manually flush the CPU cache on ARM when data has been copied from the GPU to a staging surface &ndash; 
 so GPU drivers can safely use cacheable memory for STAGING surfaces (yielding good performance on CPU reads).  VidMM will also flush CPU caches 
 for the opposite case as well - before the GPU reads from a STAGING surface.</p>
 
 <p>At the D3D11.1 DDI, when a STAGING surface is created, the CPU_ACCESS flags (READ and/or WRITE) are mapped directly down through the DDI, 
 so there it is obvious to drivers when the cacheable memory choice should be made (when WRITE is not set).  For the D3D9 DDI (which all drivers for all 
-hardware feature levels must implement), the mapping from D3D11's CPU_ACCESS flags to the D3D9 DDI�s is described in the separate API/DDI spec - 
+hardware feature levels must implement), the mapping from D3D11's CPU_ACCESS flags to the D3D9 DDI&rsquo;s is described in the separate API/DDI spec - 
 see PFND3DDDI_CREATERESOURCE - the situation is SYSTEMMEMORY surfaces that don't have the WriteOnly flag set at the D3D9 DDI.</p>
 
 <p>A note for User Mode drivers: The driver must not cache Map on surfaces that rely on the software enforced coherency described above 
-(i.e. surface is cacheable but mapped into an aperture segment which doesn�t support CacheCoherency).  The driver must explicitly call 
+(i.e. surface is cacheable but mapped into an aperture segment which doesn&rsquo;t support CacheCoherency).  The driver must explicitly call 
 LockCb and UnlockCb at every Map for such surfaces to give an opportunity to VidMm to apply the proper memory barrier. 
 Failing to do so will result in the surface getting corrupted over time.</p>
 
@@ -4277,7 +4277,7 @@ with Resources that can be used as Depth/ Stencil, nor for multisampled Resource
 <p>Partial updates of ConstantBuffers are disallowed, so when modifying ConstantBuffers with
 UpdateSubresourceUP, the update box will always be NULL.</p>
 
-<p>UpdateSubresource works with structured buffers as a destination.  The source data is interpreted as an array of structures of the destination�s stride.  
+<p>UpdateSubresource works with structured buffers as a destination.  The source data is interpreted as an array of structures of the destination&rsquo;s stride.  
 If necessary, any conversion of the data to a different layout must happen during the update process.  
 It is only valid to update ranges of complete structures.  If the bounds of the region being updated are not a range of complete structures, 
 the runtime will fail the update operation. </p>
@@ -4427,13 +4427,13 @@ The per-resource MinLOD clamp has the same effect as the Sampler MinLOD clamp (b
 <A id="5.8.3 Mipmap Number Space"></A>
 <H3>5.8.3 Mipmap Number Space</H3>
 <p>The per-resource MinLOD clamp considers the most detailed mipmap on the resource as LOD 0, so specifying a MinLOD clamp of 1 causes miplevel 0 on the resource to be ignored.  
-On the other hand, the Sampler�s MinLOD clamp defines most detailed mipmap in the <i>current Shader Resource View</i> as LOD 0.  
+On the other hand, the Sampler&rsquo;s MinLOD clamp defines most detailed mipmap in the <i>current Shader Resource View</i> as LOD 0.  
 So on a Shader Resource View that, for example, limits a mipmap chain to exclude the most detailed 3 mips from a resource, setting the Sampler MinLOD to 1 
 causes miplevel [3] (the fourth mip) in the resource to be ignored.</p>
 
 <A id="5.8.4 Fractional Clamping"></A>
 <H3>5.8.4 Fractional Clamping</H3>
-<p>The per-resource MinLOD clamp can be fractional (like the <a href="#Samplers">Sampler</a><a style="color: Gray"><small><sup>(7.18.2)</sup></small></a> MinLOD clamp) � this is useful with linear mipmap filtering.  For example suppose the per-resource 
+<p>The per-resource MinLOD clamp can be fractional (like the <a href="#Samplers">Sampler</a><a style="color: Gray"><small><sup>(7.18.2)</sup></small></a> MinLOD clamp) &ndash; this is useful with linear mipmap filtering.  For example suppose the per-resource 
 MinLOD clamp is 1.1, and the current Shader Resource View is the entire mipchain.  Texture filters would behave as if the most detailed mipmap available is a blend 
 of 90% of mipmap [1] and 10% of mipmap [2].  Both mipmap [1] and [2] would have to be resident on the GPU.  A way to make use of the fractions is to start with a 
 high MinLOD clamp (limiting the memory footprint enough to prevent stalling on texture upload to the GPU), and gradually lowing the MinLOD clamp on the 
@@ -4484,7 +4484,7 @@ Per-Resource MinLOD clamp = 3.5 (this is in the Resource mip number space)
 <ul>
 <li>From the Pixel Shader a sample instruction using the above SRV and Sampler results in a pre-clamp LOD calculation of -2. 
     <ul>
-        <li>The Sampler MinLOD/MaxLOD clamp of [1.2�4] brings the LOD to 1.2 in the SRV mip number space.</li>
+        <li>The Sampler MinLOD/MaxLOD clamp of [1.2&hellip;4] brings the LOD to 1.2 in the SRV mip number space.</li>
         <li>The Per-Resource MinLOD clamp brings the LOD to 2.5 in the SRV mip number space (since the clamp is 3.5 in the Resource space).</li>
         <li>Since the post-clamped LOD is &gt; 0, the minfilter is used (linear).</li>
         <li>So the sample instruction fetches from View mips 2 and 3, applies LINEAR filtering to both mips (since that is the MIN filter), 
@@ -4493,7 +4493,7 @@ Per-Resource MinLOD clamp = 3.5 (this is in the Resource mip number space)
     </ul>
 </li>
 <li>sample_l with -2 as the LOD would fetch from LOD 2.5 with MIN filtering the same as the sample did above.</li>
-<li>A ld instruction (note this doesn�t use a sampler) that specifies an unsigned integer mipLevel of 2 results in data being fetched from miplevel 2 
+<li>A ld instruction (note this doesn&rsquo;t use a sampler) that specifies an unsigned integer mipLevel of 2 results in data being fetched from miplevel 2 
 in View space (3 in Resource space), since the per-Resource clamp is 3.5 (in Resource space), which forces mip 2 (3 in Resource space) to be available.</li>
 <li>A ld instruction that specifies an unsigned integer miplevel of 1 results in out-of-bounds ld behavior 
 since mip 1 in View space (2 in Resource space) has been clamped off.</li>
@@ -4501,7 +4501,7 @@ since mip 1 in View space (2 in Resource space) has been clamped off.</li>
 the out of bounds result is used as the comparison value against the reference provided from the shader, and the comparison results are returned.</li>
 <li>Suppose in the sample example above, the pre-clamp LOD calculation was 2.</li>
     <ul>
-        <li>The Sampler MinLOD/MaxLOD clamp of [1.2�4] leaves the LOD at 2 in the SRV mip number space.</li>
+        <li>The Sampler MinLOD/MaxLOD clamp of [1.2&hellip;4] leaves the LOD at 2 in the SRV mip number space.</li>
         <li>The Per-Resource MinLOD clamp brings the LOD to 2.5 in the SRV mip number space (since the clamp is 3.5 in the Resource space).</li>
         <li>Since the post-clamped LOD is &gt; 0, the minfilter is used (linear).</li>
         <li>So the sample instruction fetches from View mips 2 and 3, applies LINEAR filtering to both mips (since that is the MIN filter), 
@@ -4527,7 +4527,7 @@ Per-Resource MinLOD clamp = <b>5.5</b> (this is in the Resource mip number space
 <ul>
 <li>From the Pixel Shader a sample instruction using the above SRV and Sampler results in a pre-clamp LOD calculation of -2. </li>
     <ul>
-        <li>The Sampler MinLOD/MaxLOD clamp of [1.2�4] brings the LOD to 1.2 in the SRV mip number space. </li>
+        <li>The Sampler MinLOD/MaxLOD clamp of [1.2&hellip;4] brings the LOD to 1.2 in the SRV mip number space. </li>
         <li>The Per-Resource MinLOD clamp brings the LOD to 4.5 in the SRV mip number space (since the clamp is 5.5 in the Resource space).</li>
         <li>Since the post-clamped LOD is &gt; 0, the minfilter is used (linear).</li>
         <li>So the sample instruction fetches from View mips 4 and 5, applies LINEAR filtering to both mips (since that is the MIN filter), 
@@ -4535,12 +4535,12 @@ Per-Resource MinLOD clamp = <b>5.5</b> (this is in the Resource mip number space
         <li>The LOD instruction would return -2 as the unclamped LOD and 4.5 as the clamped LOD.</li>
     </ul>
 <li>sample_l with -2 as the LOD would fetch from LOD 4.5 with MIN filtering the same as the sample did above.</li>
-<li>A ld instruction (note this doesn�t use a sampler) that specifies an unsigned integer mipLevel of 4 results in data being fetched from miplevel 4 in View space (5 in Resource space), since the per-Resource clamp is 5.5 (in Resource space), which forces mip 4 (5 in Resource space) to be available.</li>
+<li>A ld instruction (note this doesn&rsquo;t use a sampler) that specifies an unsigned integer mipLevel of 4 results in data being fetched from miplevel 4 in View space (5 in Resource space), since the per-Resource clamp is 5.5 (in Resource space), which forces mip 4 (5 in Resource space) to be available.</li>
 <li>A ld instruction that specifies an unsigned integer miplevel of 3 results in out-of-bounds ld behavior since mip 3 in View space (4 in Resource space) has been clamped off.</li>
 <li>gather4* instructions, which can only operate on view mip 0, would return out of bounds result.  For gather4_c* instructions (which do a comparison), the out of bounds result is used as the comparison value against the reference provided from the shader, and the comparison results are returned.</li>
 <li>Suppose in the sample example above, the pre-clamp LOD calculation was 2.</li>
     <ul>
-        <li>The Sampler MinLOD/MaxLOD clamp of [1.2�4] causes no change to the LOD of 2.</li>
+        <li>The Sampler MinLOD/MaxLOD clamp of [1.2&hellip;4] causes no change to the LOD of 2.</li>
         <li>The Per-Resource MinLOD clamp brings the LOD to 4.5 in the SRV mip number space (since the clamp is 5.5 in the Resource space).</li>
         <li>Since the post-clamped LOD is &gt; 0, the minfilter is used (linear).</li>
         <li>So the sample instruction fetches from View mips 4 and 5, applies LINEAR filtering to both mips (since that is the MIN filter), and blends them 50% each, due to the .5 in the LOD with LINEAR as the MIP filter.</li>
@@ -4569,7 +4569,7 @@ Per-Resource MinLOD clamp = <b>6.5</b> (this is in the Resource mip number space
     </ul>
 <li>The LOD instruction would return -2 as the unclamped LOD and 0 as the clamped LOD.</li>
 <li>sample_l would return the same out of bounds behavior as above, regardless of what mip is requested.</li>
-<li>A ld instruction (note this doesn�t use a sampler) would return out of bounds behavior regardless of what mip is requested.  </li>
+<li>A ld instruction (note this doesn&rsquo;t use a sampler) would return out of bounds behavior regardless of what mip is requested.  </li>
 <li>gather4* instructions, which can only operate on view mip 0, would return out of bounds result.  For gather4_c* instructions (which do a comparison), 
 the out of bounds result is used as the comparison value against the reference provided from the shader, and the comparison results are returned.</li>
 <li>Suppose in the sample example above, the pre-clamp LOD calculation was 2.</li>
@@ -4582,7 +4582,7 @@ the out of bounds result is used as the comparison value against the reference p
 
 <A id="5.8.7 Effects Outside ShaderResourceViews"></A>
 <H3>5.8.7 Effects Outside ShaderResourceViews</H3>
-<p>Per-resource MinLOD clamps only affect the behavior of ShaderResourceView accesses from shader code � such as sample* and ld*instructions discussed so far.  </p>
+<p>Per-resource MinLOD clamps only affect the behavior of ShaderResourceView accesses from shader code &ndash; such as sample* and ld*instructions discussed so far.  </p>
 
 <p>Other operations on the resource are unaffected by per-resource MinLOD clamps, including reading and/or writing via RenderTargetViews, DepthStencilViews, or resource manipulation 
 APIs such as CopySubresourceRegion, UpdateResource or GenerateMips.  Any such reference to the contents of a resource, i.e. NOT through a ShaderResourceView, requires the system to 
@@ -6949,7 +6949,7 @@ However, Command Lists are still required to be executed by the one thread that 
 
 <p>It is important to note that although Command Lists are reusable across frames, the design point for this feature is use-once. Command List creation overhead in the 
 runtime and driver should be low enough that single-use for the sole purpose of distribution of work across threads provides a significant performance win. Likewise, the 
-overhead of submitting the Command List in the main rendering thread (immediate context) should be minimized � the design should diminish any need to patch or recompile Command Lists.
+overhead of submitting the Command List in the main rendering thread (immediate context) should be minimized &ndash; the design should diminish any need to patch or recompile Command Lists.
 If multi-use optimizations become interesting, implementations are encourages to promote such optimizations once a use-threshold has been reached.
 While the use of a single-use hint flag has been considered, detecting multi-use seems best to avoid application abuse/ mis-use of hints.</p>
 
@@ -7047,7 +7047,7 @@ in the Immediate Context and ended by a Command List, and vice versa. This is no
 Begin or End on the Query), the Command List execution will not be allowed on a Context where the same Query has only been Begun. In addition, any Queries that have been Begun in the Deferred 
 Contexts but not Ended, are implicitly Ended by the invocation to Finalize.</p>
 
-<p>Second, when the Command List was being generated, was it assumed that the Command List execution could�ve been wrapped by any of the available Queries? This can be particularly troubling 
+<p>Second, when the Command List was being generated, was it assumed that the Command List execution could&rsquo;ve been wrapped by any of the available Queries? This can be particularly troubling 
 if a Query has hardware bugs related to it and needs some form of emulation. For example, if Blts are being emulated by the 3d pipeline, such operations are specified not to affect certain Queries. 
 To satisfy the specification, the driver could poll any actively monitored counters and subtract off the Blt contribution from Query results. Such driver workarounds are hard to adapt to the Blts 
 that may occur in a Command List. This does have implications on Software Command List implementations (i.e. it may not be known until Command List execution whether a 
@@ -7270,7 +7270,7 @@ instance return undefined values, but cannot return data outside of the address 
 
 <p>Temporary registers are <a href="#inst_tempDCL">declared</a><a style="color: Gray"><small><sup>(22.3.35)</sup></small></a> r#, and can be used as a temporary operand in D3D<a href="#D3D11_MAJOR_VERSION" title="D3D11_MAJOR_VERSION"><font color=black style="text-decoration:none">11</font></a>.<a href="#D3D11_MINOR_VERSION" title="D3D11_MINOR_VERSION"><font color=black style="text-decoration:none">3</font></a> instructions.</p>
 
-<p>Temporary arrays are <a href="#inst_indexableTempDCL">declared</a><a style="color: Gray"><small><sup>(22.3.36)</sup></small></a> as x#[n], where �n� is the array length (indexed with 0..n-1).
+<p>Temporary arrays are <a href="#inst_indexableTempDCL">declared</a><a style="color: Gray"><small><sup>(22.3.36)</sup></small></a> as x#[n], where &ldquo;n&rdquo; is the array length (indexed with 0..n-1).
 Temporary arrays must be indexed by an r# scalar, statically indexed x# scalar, and/or and optional immediate constant (literal),
 and can have only one level of index nesting (e.g. x0[x1[r0.x+1].x+1] is not legal, but x0[x1[1].x+1] is legal).  A temporary array reference, x#[?], can be used
 as a temporary operand in D3D<a href="#D3D11_MAJOR_VERSION" title="D3D11_MAJOR_VERSION"><font color=black style="text-decoration:none">11</font></a>.<a href="#D3D11_MINOR_VERSION" title="D3D11_MINOR_VERSION"><font color=black style="text-decoration:none">3</font></a> instructions (i.e. anywhere an r# can be used).  Out of bounds access to x#[?] is undefined, except that
@@ -7442,7 +7442,7 @@ to be unsigned <a href="#D3D11_STANDARD_COMPONENT_BIT_COUNT" title="D3D11_STANDA
 this convention will carry forward until a good reason to switch paradigms surfaces.  It is known that many implementations actually happen to operate on scalars or combinations
 of layouts even now.</p>
 
-<p>One area where the vector assumption seems to materially impact data organization is the indexing of registers such as inputs or outputs � the indexing happens across registers.  
+<p>One area where the vector assumption seems to materially impact data organization is the indexing of registers such as inputs or outputs &ndash; the indexing happens across registers.  
 If it is important to be able to express cleanly how to index through an array of scalars, this could be an example of an argument for switching the IL to be completely scalar.</p>
 
 <hr><!-- ********************************************************************** -->
@@ -7540,7 +7540,7 @@ It is invalid for implementations to perform the access as if there were no 32-b
 The byte offset must be aligned to 32-bits, otherwise the same behavior described for misaligned raw memory access above applies.</p>
 
 <p>Each memory access instruction defines its behavior for out of bounds accesses, with distinctions for the memory location being accessed (UAV vs SRV vs Thread Group Shared Memory), 
-and the layout (raw vs structured vs typed).  See the documentation of individual instructions for details.  The behaviors are similar for similar classes of instructions � 
+and the layout (raw vs structured vs typed).  See the documentation of individual instructions for details.  The behaviors are similar for similar classes of instructions &ndash; 
 e.g. all atomics have the same out of bounds behavior, all immediate atomics (which return a value to a shader) have their own consistent out of bounds access behavior, etc.</p>
 
 
@@ -7612,8 +7612,8 @@ control is separate from the topic of this section, and may not be exposed until
 <p>Back to issue of global vs group coherency on non-atomic UAV reads.  Importantly, for many scenarios where cross thread-group communication or reduction (such as histograms) can be 
 accomplished using only atomic operations (no cross thread-group loads involved), there is no problem since atomic operations are implemented by all hardware in a globally coherent way, 
 regardless of whether the UAV has been tagged as "globally coherent" or not.</p>
-<p>In the <a href="#PixelShader">Pixel Shader</a><a style="color: Gray"><small><sup>(16)</sup></small></a>, if a UAV is not declared as "globally coherent", it is only "locally coherent".  "Local coherency" is the Pixel Shader�s equivalent of the 
-Compute Shader�s "group coherency", except having scope limited only to a single Pixel Shader invocation.  This indicates that the Pixel Shader is not doing any cross-PS-invocation 
+<p>In the <a href="#PixelShader">Pixel Shader</a><a style="color: Gray"><small><sup>(16)</sup></small></a>, if a UAV is not declared as "globally coherent", it is only "locally coherent".  "Local coherency" is the Pixel Shader&rsquo;s equivalent of the 
+Compute Shader&rsquo;s "group coherency", except having scope limited only to a single Pixel Shader invocation.  This indicates that the Pixel Shader is not doing any cross-PS-invocation 
 communication involving simple load operations.  Note, however, that in the Pixel Shader just like in the Compute Shader, atomic read-modify-write operations are always globally coherent.  
 Indeed it is likely to be rare for a Pixel Shader or perhaps even the Compute Shader to need to declare a UAV as "globally coherent", given that atomic operations, which are always 
 globally coherent, might provide the most practical mechanism for cross-PS-invocation or cross-group operations. </p>
@@ -7628,14 +7628,14 @@ To assist comparisons of algorithms running on GPUs during application developme
 </p>
 <p>The cycle counter appears as an additional 2*32-bit (64 bit total) input register type that can declared in any version 5.0+ shader.  
 There are currently no native 64-bit integer arithmetic operations in shaders, although it is simple enough to emulate this.  
-It may be fine for shaders to just look at the low 32-bits of the counter � this can be requested in the shader.  
+It may be fine for shaders to just look at the low 32-bits of the counter &ndash; this can be requested in the shader.  
 Applications may also export the measurements using standard shader outputs for later analysis such as on the CPU.</p>
 <p>The counter is an implementation-dependent measure of cycles in the GPU engine, requiring care to interpret it usefully.</p>
 <A id="7.15.2 Interpreting Cycle Counts"></A>
 <H3>7.15.2 Interpreting Cycle Counts</H3>
 <p>
 For this discussion, consider a shader "invocation" to be a single execution of one shader program from beginning to end.  For the Compute Shader however, an 
-"invocation" is a single thread-group�s execution � e.g. the lifespan of the contents of thread-group shared memory.  
+"invocation" is a single thread-group&rsquo;s execution &ndash; e.g. the lifespan of the contents of thread-group shared memory.  
 </p>
 <p>The initial value of the counter is undefined.
 </p>
@@ -7655,7 +7655,7 @@ interrupted by thread switching, so delta measurements will be arbitrarily large
 <p>There is no supported way to find out the frequency of the counter.  There is no way to correlate this shader internal counter 
 with external timers such as asynchronous time queries.  The counter measurements cannot be correlated with measurements on different hardware by other hardware vendors or even necessarily the same vendor.  
 </p>
-<p>If a GPU�s speed changes, such as for power saving, there is no way to know this happened, or its effect on cycle measurements. 
+<p>If a GPU&rsquo;s speed changes, such as for power saving, there is no way to know this happened, or its effect on cycle measurements. 
 </p>
 <p>Beyond these hints about the care needed to interpret the counter, the onus is on developers to research the 
 properties of new hardware designs that may affect measurements. 
@@ -7664,7 +7664,7 @@ properties of new hardware designs that may affect measurements.
 <A id="7.15.3 Shader Compiler Constraints"></A>
 <H3>7.15.3 Shader Compiler Constraints</H3>
 <p>The HLSL shader compiler and driver compilers must treat reads of the cycle counter as barriers.  
-Instructions can�t be moved across a counter read, and counter reads can�t be merged.  </p>
+Instructions can&rsquo;t be moved across a counter read, and counter reads can&rsquo;t be merged.  </p>
 
 <A id="7.15.4 Feature Availability"></A>
 <H3>7.15.4 Feature Availability</H3>
@@ -8213,7 +8213,7 @@ footprint.  D3D<a href="#D3D11_MAJOR_VERSION" title="D3D11_MAJOR_VERSION"><font 
     A = dX.v ^ 2 + dY.v ^ 2
     B = -2 * (dX.u * dX.v + dY.u * dY.v)
     C = dX.u ^ 2 + dY.u ^ 2
-    F = (dX.u * dY.v � dY.u * dX.v) ^ 2
+    F = (dX.u * dY.v - dY.u * dX.v) ^ 2
 </pre>
 Defining the following variables:<pre>
     p = A - C
@@ -8571,7 +8571,7 @@ of a specialized shader.</p>
 <A id="7.19.2 Differences from 'Real' Subroutines"></A>
 <H3>7.19.2 Differences from 'Real' Subroutines</H3>
 <p>The primary difference of this approach from "real" subroutines is that at runtime no calling convention is used.   
-Each time a function could be called, a version of the function is emitted to match the caller�s register and other state.  
+Each time a function could be called, a version of the function is emitted to match the caller&rsquo;s register and other state.  
 Since a new version of the callee is emitted for each location in the caller code that the function is called from, 
 all optimizations used when inlining apply, except that callee code must remain functionally separate from caller code.  </p>
 
@@ -8583,15 +8583,15 @@ allocation, scratch registers, etc.  Next the current state is restored to State
 second function is generated.  Finally the current state is restored to StateBeforeCall again and the impacts of the outputs 
 of the fcall are applied to the current state, and code generation continues after the fcall.</p>
 
-<p>Limitations are present in the IL that allow for the calling destination to have a version of a function�s microcode 
-emitted using the current register knowledge of the caller to allocate the callee�s local registers after the caller�s 
+<p>Limitations are present in the IL that allow for the calling destination to have a version of a function&rsquo;s microcode 
+emitted using the current register knowledge of the caller to allocate the callee&rsquo;s local registers after the caller&rsquo;s 
 registers so that no saving/restoring of data is required when crossing the function boundary. </p>
 
 <p>The downside from "real" subroutines is that the amount of code to represent the program can become quite large.  
 No code sharing is done between multiple call sites.   If code is larger than the code cache, and the miss latency 
 is not hidden by some other mechanism, then "real" subroutines are very useful.   Assuming that the code bloat 
 size is minimal (i.e. each function is only ever called from one location), then performance will be better with 
-the new method � no parameter passing overhead, inlining optimizations, etc.</p>
+the new method &ndash; no parameter passing overhead, inlining optimizations, etc.</p>
 
 <p>Another problem with the new method is that all destinations must be known at compile time.  Due to validation that is 
 currently done, all calls will be need to be known.  As that requirement is relaxed, "real" subroutines are 
@@ -8600,7 +8600,7 @@ a better way of handling late binding destinations.</p>
 <p>HLSL requires that all texture and sampler parameters be rooted in some well-known global object so that the compiler can 
 determine which texture or sampler index to use for a particular texture or sampler variable throughout the entire program.  
 As fcalls constitute a late-binding boundary the compiler cannot easily track parameter identity and thus texture and sampler 
-arguments to fcalls are not allowed.  Note that when only concrete classes are used this isn�t a problem.  Additionally, 
+arguments to fcalls are not allowed.  Note that when only concrete classes are used this isn&rsquo;t a problem.  Additionally, 
 texture and sampler members of classes should be allowed, this limitation only applies to parameters to interface methods 
 that are used with full fcall dispatch.</p>
 
@@ -8621,7 +8621,7 @@ that are used with full fcall dispatch.</p>
 </ul>
 <li>Dynamic virtual functions</li>
 <ul>
-<li>Changes to functions called occurs between draw calls � relatively low frequency</li>
+<li>Changes to functions called occurs between draw calls &ndash; relatively low frequency</li>
 </ul>
 </ul>
 
@@ -8776,7 +8776,7 @@ middleware solution separate from another middleware solution).
 <pre>
     interface ID3D11ClassLinkage : IUnknown
     {
-    // PRIMARY FUNCTION � get a reference to an instance of a class
+    // PRIMARY FUNCTION - get a reference to an instance of a class
     //    that exists in a shader.  The common scenario is to refer to 
     //    variables declared in shaders, which means that a reference is 
     //    acquired with this function and then passed in on SetShader
@@ -9032,8 +9032,8 @@ middleware solution separate from another middleware solution).
     // g_StrangeMat0 takes no space.
     //
     // interfaces:
-    //     0:1 � MyMaterial.
-    //     1:9 � g_Lights.
+    //     0:1 - MyMaterial.
+    //     1:9 - g_Lights.
     //
     // textures:
     //     0:1 - g_TexMat0.
@@ -9058,7 +9058,7 @@ middleware solution separate from another middleware solution).
     
     //
     // Function bodies are declared explicitly so
-    // that it�s known in advance which bodies exist
+    // that it&rsquo;s known in advance which bodies exist
     // and how many bodies there are overall.
     //
     
@@ -9124,7 +9124,7 @@ middleware solution separate from another middleware solution).
     // The first [] of an interface decl is the array size.
     // If dynamic indexing is used the decl will indicate
     // that, as shown below.  An array of interface pointers can
-    // be indexed statically also, it isn�t required that
+    // be indexed statically also, it isn&rsquo;t required that
     // arrays of interface pointers mean dynamic indexing.
     //
     // Numbering of interface pointers takes array size into
@@ -9407,7 +9407,7 @@ middleware solution separate from another middleware solution).
     pMyClassTable-&gt;GetClassInstance("g_TexMat0", &amp;pTexMat0);
     pMyClassTable-&gt;GetClassInstance("g_StrangeMat0", &amp;pStrangeMat0);
     
-    // sets lights in array � they do not change only indices to them do
+    // sets lights in array - they do not change only indices to them do
     pMyInterfaceArray[iLightOffset] = pAmbient0;
     for (uint i = 0; i &lt; 8; i++)
     {
@@ -9507,9 +9507,9 @@ middleware solution separate from another middleware solution).
 <li>Minimal driver work to either support low precision processing or not support it</li>
 	<ul>
 	<li>E.g. Drivers can compile shaders once when they are initially submitted</li>
-	<li>Ideally, Constant Buffers also don�t require any special processing by drivers to account for the contents being referenced at various precisions (IHV can choose to build downconverting hardware for this)</li>
-	<li>Drivers that don�t support the feature can simply ignore the precision hints.</li>
-	<li>To understand the precision level a given shader instruction in the bytecode can operate (including converting precisions on operands if necessary), drivers will not have to do any complex far reaching analysis � just looking at the current instruction should be informative enough, possibly with the help of shader declarations.</li>
+	<li>Ideally, Constant Buffers also don&rsquo;t require any special processing by drivers to account for the contents being referenced at various precisions (IHV can choose to build downconverting hardware for this)</li>
+	<li>Drivers that don&rsquo;t support the feature can simply ignore the precision hints.</li>
+	<li>To understand the precision level a given shader instruction in the bytecode can operate (including converting precisions on operands if necessary), drivers will not have to do any complex far reaching analysis &ndash; just looking at the current instruction should be informative enough, possibly with the help of shader declarations.</li>
 	</ul>
 <li>Application codebase does not need to change at all to use low precision shaders</li>
 	<ul>
@@ -9517,7 +9517,7 @@ middleware solution separate from another middleware solution).
 	</ul>
 <li>Low precision support is added to all interesting shader models (2.x-5.0) as opposed to limiting it to the bottom end or adding a new shader model.</li>
 	<ul>
-	<li>Applications don�t have to make a choice between choosing low precision vs using other features if the hardware supports it all.</li>
+	<li>Applications don&rsquo;t have to make a choice between choosing low precision vs using other features if the hardware supports it all.</li>
 	<li>Similarly hardware vendors implementing any shader level can choose to exploit low precision (indepdendent decisions).</li>
 	</ul>
 <li>Data format for the various low precisions is well defined, though it is not directly visible to applications</li>
@@ -9585,7 +9585,7 @@ middleware solution separate from another middleware solution).
 <H3>7.20.3 Low Precision Shader Bytecode</H3>
 <A id="7.20.3.1 D3D9"></A>
 <H4>7.20.3.1 D3D9</H4>
-<p>A new MIN_PRECISION enum is added to the source and dest parameter token, definition below.  This specifies the minimum precision level for the entire operation � implementations can use equal or greater precision.   This new enum co-exists with the PARTIALPRECISION flag that is already in the same dest parameter token � see the comment below.  </p>
+<p>A new MIN_PRECISION enum is added to the source and dest parameter token, definition below.  This specifies the minimum precision level for the entire operation &ndash; implementations can use equal or greater precision.   This new enum co-exists with the PARTIALPRECISION flag that is already in the same dest parameter token &ndash; see the comment below.  </p>
 <A id="7.20.3.1.1 Token Format"></A>
 <H5>7.20.3.1.1 Token Format</H5>
 <pre>
@@ -9635,8 +9635,8 @@ typedef enum _D3DSHADER_MIN_PRECISION
 
 <A id="7.20.3.2 D3D10+"></A>
 <H4>7.20.3.2 D3D10+</H4>
-<p>A new MIN_PRECISION enum is added to the dest parameter token, definition below.  This specifies the minimum precision level for the entire operation � implementations can use equal or greater precision.</p>
-<p>The encoding distinguishes type (e.g. float vs. sint vs. uint), in addition to precision level, to disambiguate instructions like �mov� that don�t already imply a type.  This makes a difference when there is a size change involved in the instruction. E.g. moving a 32 bit float to a min. 16 bit float is a different task for hardware than moving a 32 bit uint to a min. 16 bit uint.  This type distinction is not needed for the D3D9 shader bytecode because all arithmetic is �float� there.</p>
+<p>A new MIN_PRECISION enum is added to the dest parameter token, definition below.  This specifies the minimum precision level for the entire operation &ndash; implementations can use equal or greater precision.</p>
+<p>The encoding distinguishes type (e.g. float vs. sint vs. uint), in addition to precision level, to disambiguate instructions like &ldquo;mov&rdquo; that don&rsquo;t already imply a type.  This makes a difference when there is a size change involved in the instruction. E.g. moving a 32 bit float to a min. 16 bit float is a different task for hardware than moving a 32 bit uint to a min. 16 bit uint.  This type distinction is not needed for the D3D9 shader bytecode because all arithmetic is &ldquo;float&rdquo; there.</p>
 
 <A id="7.20.3.2.1 Token Format"></A>
 <H5>7.20.3.2.1 Token Format</H5>
@@ -9644,7 +9644,7 @@ typedef enum _D3DSHADER_MIN_PRECISION
 <pre>
 // Min precision specifier for source/dest operands.  This 
 // fits in the extended operand token field. Implementations are free to 
-// execute at higher precision than the min � details spec�d elsewhere.
+// execute at higher precision than the min &ndash; details spec&rsquo;d elsewhere.
 // This is part of the opcode specific control range.
 typedef enum D3D11_SB_OPERAND_MIN_PRECISION
 {
@@ -9726,7 +9726,7 @@ typedef enum D3D11_SB_OPERAND_MIN_PRECISION
 <ul>
 <li>Source operands are incoming stored at the (minimum) precision indicated on the operand.  If no minimum precision is specified (default) the operand precision is 32-bit.  </li>
 <li>The precision specified on the output operand determines the minimum storage needed for the output as well as the minimum precision for the operation.</li>
-<li>Mixing precisions across operands and the instruction is valid, but should be rare.  Drivers may need to expand format changes into separate individual type conversions to the instruction�s precision unless the conversion is supported natively.</li>
+<li>Mixing precisions across operands and the instruction is valid, but should be rare.  Drivers may need to expand format changes into separate individual type conversions to the instruction&rsquo;s precision unless the conversion is supported natively.</li>
 <li>Precisions on the index value in dynamic indexing scenarios or other addressing (such as texture coordinates for a texture fetch) just follow the precision indicated on the value, unaffected by the instruction precision.  The same applies for condition parameters in conditional instructions (like movc).</li>
 <li>See <a href="#LowPrecisionShaderConstants">below</a><a style="color: Gray"><small><sup>(7.20.3.5)</sup></small></a> for a discussion about shader constants.</li>
 </ul>
@@ -9735,11 +9735,11 @@ typedef enum D3D11_SB_OPERAND_MIN_PRECISION
 <H4>7.20.3.5 Shader Constants</H4>
 <p>Shader constants are defined at full 32-bit per component.   New hardware implementing low precision is encouraged to design efficient downconversion support upon constant access, otherwise some driver work or extra conversion instructions will need to be added by the driver into shaders that read 32-bit per component constants into lower precision shader operations. </p>
 
-<p>Alternative approaches were considered where low precision constants are exposed all the way to the application (freeing driver/hardware from having to convert constants), but the added complexity in the programming model vs the benefit didn�t hold up at least at this time.  </p>
+<p>Alternative approaches were considered where low precision constants are exposed all the way to the application (freeing driver/hardware from having to convert constants), but the added complexity in the programming model vs the benefit didn&rsquo;t hold up at least at this time.  </p>
 
 <A id="7.20.3.6 Referencing Shader Constants within Shaders"></A>
 <H4>7.20.3.6 Referencing Shader Constants within Shaders</H4>
-<p>When referencing a shader constant from a low precision instruction, if the constant value is out of the range of the instruction�s precision level, the value read is undefined.  For constant values within range of a low precision instruction reference, the precision of the value may still get quantized down from full 32 bits.</p>
+<p>When referencing a shader constant from a low precision instruction, if the constant value is out of the range of the instruction&rsquo;s precision level, the value read is undefined.  For constant values within range of a low precision instruction reference, the precision of the value may still get quantized down from full 32 bits.</p>
 
 <p>Shader constants referenced in shader source operands will be marked at the precision they are to be referenced at, even though they come down the API/DDI at 32-bit per component.  </p>
 
@@ -9752,7 +9752,7 @@ typedef enum D3D11_SB_OPERAND_MIN_PRECISION
 
 <A id="7.20.3.7 Component Swizzling"></A>
 <H4>7.20.3.7 Component Swizzling</H4>
-<p>Low precision data is referenced by component in masks and swizzles � xyzw - just like default precision data.  It is as though the registers do have a smaller number of bits (for hardware that supports lower precision).  This is unlike the way double precision is mapped, where xy contains one double and zw contains another.  Low precision doesn�t yield sub-fields within .x for example.</p>
+<p>Low precision data is referenced by component in masks and swizzles &ndash; xyzw - just like default precision data.  It is as though the registers do have a smaller number of bits (for hardware that supports lower precision).  This is unlike the way double precision is mapped, where xy contains one double and zw contains another.  Low precision doesn&rsquo;t yield sub-fields within .x for example.</p>
 <p>The HLSL compiler will not generate code that mixes precisions in different components of any xyzw register (mostly for simplicity, even though this may not matter for hardware).</p>
 
 <A id="7.20.3.8 Low Precision Shader Limits"></A>
@@ -9761,26 +9761,26 @@ typedef enum D3D11_SB_OPERAND_MIN_PRECISION
 
 <A id="7.20.4 Feature Exposure"></A>
 <H3>7.20.4 Feature Exposure</H3>
-<p>In the D3D system, HLSL shaders are compiled independent of any given device � e.g. they should typically be compiled offline.  This compilation step produces device-agnostic bytecode, apart from the choice of shader target, e.g. vs_4_0.</p>
-<p>The minimum precision facility described above can be optionally used within any 4_0+ shader, including 4_0_level_9_1 to 4_0_level9_3.  These shader targets are all available through the D3D11 runtime, exposing D3D9+ hardware via Shader Model 2_x+.  The D3D9 runtime will not expose the low precision modes � updating that runtime is out of scope.</p>
+<p>In the D3D system, HLSL shaders are compiled independent of any given device &ndash; e.g. they should typically be compiled offline.  This compilation step produces device-agnostic bytecode, apart from the choice of shader target, e.g. vs_4_0.</p>
+<p>The minimum precision facility described above can be optionally used within any 4_0+ shader, including 4_0_level_9_1 to 4_0_level9_3.  These shader targets are all available through the D3D11 runtime, exposing D3D9+ hardware via Shader Model 2_x+.  The D3D9 runtime will not expose the low precision modes &ndash; updating that runtime is out of scope.</p>
 
 <A id="7.20.4.1 Discoverability"></A>
 <H4>7.20.4.1 Discoverability</H4>
 <p>There is a mechanism at the API to discover the precision levels supported by the current device. Note that in Windows 8 the OS did not allow drivers to expose only 10 bit without also exposing 16 bit, but subsequent operating systems relax that requirement (so an implementation may expose 10 bit min precision but not 16 bit min precision).  </p>
-<p>Even though the hardware�s precision support is visible to applications, applications do not have to adjust their shaders for the hardware�s precision level given that by definition operations defined with a min precision run at higher precision on hardware that doesn�t support the min precision. </p>
-<p>It is fine for hardware to not support low precision processing at all � by simply reporting �DEFAULT� as its precision support.  The reason it is called �DEFAULT� rather than some numerical precision is depending on the shader model, there may not be standard value to express.  E.g. the default precision in SM 2.x is fp24 (or greater) within the shader, even though there is no API visible fp24 format.  If the device reports �DEFAULT� precision, all min-precision specifiers in shaders are ignored.</p>
-<p>D3D9 devices are permitted to report a min-precision level that is lower for the Pixel Shader than for the Vertex Shader (all reported via the Windows Next D3D9 DDI).  D3D10+ devices can only report a single min-precision level that applies to all shader stages (reported via the Windows Next D3D11.1 DDI) � since it does not seem to make sense to single out the VS any more.  Note that if the application uses Feature Level 9_x on D3D10+ hardware, the D3D9 DDIs are still used, so the min-precision levels can be reported differently there between VS and PS, as mentioned for D3D9, even though via the D3D11.1 DDI only a single precision can be reported.</p>
+<p>Even though the hardware&rsquo;s precision support is visible to applications, applications do not have to adjust their shaders for the hardware&rsquo;s precision level given that by definition operations defined with a min precision run at higher precision on hardware that doesn&rsquo;t support the min precision. </p>
+<p>It is fine for hardware to not support low precision processing at all &ndash; by simply reporting &ldquo;DEFAULT&rdquo; as its precision support.  The reason it is called &ldquo;DEFAULT&rdquo; rather than some numerical precision is depending on the shader model, there may not be standard value to express.  E.g. the default precision in SM 2.x is fp24 (or greater) within the shader, even though there is no API visible fp24 format.  If the device reports &ldquo;DEFAULT&rdquo; precision, all min-precision specifiers in shaders are ignored.</p>
+<p>D3D9 devices are permitted to report a min-precision level that is lower for the Pixel Shader than for the Vertex Shader (all reported via the Windows Next D3D9 DDI).  D3D10+ devices can only report a single min-precision level that applies to all shader stages (reported via the Windows Next D3D11.1 DDI) &ndash; since it does not seem to make sense to single out the VS any more.  Note that if the application uses Feature Level 9_x on D3D10+ hardware, the D3D9 DDIs are still used, so the min-precision levels can be reported differently there between VS and PS, as mentioned for D3D9, even though via the D3D11.1 DDI only a single precision can be reported.</p>
 
 <A id="7.20.4.2 Shader Management"></A>
 <H4>7.20.4.2 Shader Management</H4>
-<p>Regardless of the min precision level supported by a given device, it is always valid to use a shader that was compiled using any combination of the low precision levels on it.  For example if a device�s min precision level is 32-bit, it is fine to use a shader compiled with some variables that have a min precision of 10 bit.  The device is free to implement the low precision operations at any equal or higher precision level (including precision levels not available at the API).  </p>
+<p>Regardless of the min precision level supported by a given device, it is always valid to use a shader that was compiled using any combination of the low precision levels on it.  For example if a device&rsquo;s min precision level is 32-bit, it is fine to use a shader compiled with some variables that have a min precision of 10 bit.  The device is free to implement the low precision operations at any equal or higher precision level (including precision levels not available at the API).  </p>
 <p>For old drivers (pre-D3D11.1 DDI) that are not aware of the low precision feature, the D3D runtime will patch the shader bytecode on shader creation to remove it.  This preserves the intent of the shader, since it is valid for the device to execute operations tagged with a min precision level at a higher precision.</p>
 
 <A id="7.20.4.3 APIs/DDIs"></A>
 <H4>7.20.4.3 APIs/DDIs</H4>
 <p>An API for reporting device precision support, no other D3D11 API surface area changes apply. </p>
 <p>As far as other DDI additions, there is device precision reporting, the shader bytecode additions detailed earlier, and finally a variant of the existing shader stage I/O signature DDI:</p>
-<p>The I/O signature DDI includes MinPrecision in the signature entry.  This shows up as D3D11_SB_INSTRUCTION_MIN_PRECISION_DEFAULT if the shader didn�t specify a min-precision:</p>
+<p>The I/O signature DDI includes MinPrecision in the signature entry.  This shows up as D3D11_SB_INSTRUCTION_MIN_PRECISION_DEFAULT if the shader didn&rsquo;t specify a min-precision:</p>
 
 <pre>
 typedef struct D3D11_1DDIARG_SIGNATURE_ENTRY
@@ -9800,7 +9800,7 @@ typedef struct D3D11_1DDIARG_STAGE_IO_SIGNATURES
 } D3D11_1DDIARG_STAGE_IO_SIGNATURES;
 </pre>
 
-<p>Motivation: Recall that this DDI exists to complement the shader creation DDIs by providing a more complete picture of the shader stage<->stage I/O layout than may be visible just from an individual shader�s bytecode.  For example sometimes an upstream stage provides data not consumed by a downstream shader, but it should be possible for a driver to compile a shader on its own without having to wait and see what other shaders it gets used with.  MinPrecision is added in case that affects how the driver shader compiler would want to pack the inter-stage I/O data.</p>
+<p>Motivation: Recall that this DDI exists to complement the shader creation DDIs by providing a more complete picture of the shader stage<->stage I/O layout than may be visible just from an individual shader&rsquo;s bytecode.  For example sometimes an upstream stage provides data not consumed by a downstream shader, but it should be possible for a driver to compile a shader on its own without having to wait and see what other shaders it gets used with.  MinPrecision is added in case that affects how the driver shader compiler would want to pack the inter-stage I/O data.</p>
 
 <A id="7.20.4.4 HLSL Exposure"></A>
 <H4>7.20.4.4 HLSL Exposure</H4>
@@ -10488,7 +10488,7 @@ struct DrawInstancedIndirectArgs
   <td>UINT StartInstanceLocation    <td>Which Instance to start sequentially fetching from in each Buffer marked as Instance Data.</td></tr>
 </table>
 
-<p>If the address range in the Buffer where DrawInstancedIndirect�s parameters will be fetched from would go out of bounds of the Buffer, behavior is undefined.</p>
+<p>If the address range in the Buffer where DrawInstancedIndirect&rsquo;s parameters will be fetched from would go out of bounds of the Buffer, behavior is undefined.</p>
 
 <p><a href="#InitializingIndirectArguments">Here</a><a style="color: Gray"><small><sup>(18.6.5.1)</sup></small></a> is a discussion about ways to initialize the arguments for DrawInstancedIndirect.</p>
 
@@ -10525,7 +10525,7 @@ struct DrawIndexedInstancedIndirectArgs
   <td>UINT StartInstanceLocation    <td>Which Instance to start sequentially fetching from in each Buffer marked as Instance Data.</td></tr>
 </table>
 
-<p>If the address range in the Buffer where DrawIndexedInstancedIndirect�s parameters will be fetched from would go out of bounds of the Buffer, behavior is undefined.</p>
+<p>If the address range in the Buffer where DrawIndexedInstancedIndirect&rsquo;s parameters will be fetched from would go out of bounds of the Buffer, behavior is undefined.</p>
 
 <p><a href="#InitializingIndirectArguments">Here</a><a style="color: Gray"><small><sup>(18.6.5.1)</sup></small></a> is a discussion about ways to initialize the arguments for DrawIndexedInstancedIndirect.</p>
 
@@ -10917,7 +10917,7 @@ input data and output storage, described later in great detail.</p>
 <A id="10.3 HS State Declarations"></A>
 <H2>10.3 HS State Declarations</H2>
 <p>This section of the Hull Shader has no executable code.  It simply declares some overall characteristics of Hull Shader operation, such as how many control 
-points the HS inputs and outputs (an independent number).  The operation of the fixed function Tessellator is also defined here � such as choosing the patch domain, 
+points the HS inputs and outputs (an independent number).  The operation of the fixed function Tessellator is also defined here &ndash; such as choosing the patch domain, 
 partitioning etc.  A tessellation pattern overview is given <a href="#TessellationPattern">here</a><a style="color: Gray"><small><sup>(11.7)</sup></small></a>.</p>
 <p>Note that declarations that are typical in shaders, such as input and output register declarations and declarations of input Resources, 
 Constant Buffers, Samplers etc. are part of each individual shader phase below, not part of this HS State declaration section.</p>
@@ -10925,7 +10925,7 @@ Constant Buffers, Samplers etc. are part of each individual shader phase below, 
 
 <h2 id="HSControlPointPhase"></h2><A id="10.4 HS Control Point Phase"></A>
 <H2>10.4 HS Control Point Phase</H2>
-<p>In the Hull Shader�s Control Point phase, a thread is invoked once per patch output control point.  
+<p>In the Hull Shader&rsquo;s Control Point phase, a thread is invoked once per patch output control point.  
 An input value <a href="#generatedvalue_OUTPUT_CONTROL_POINT_ID">vOutputControlPointID</a><a style="color: Gray"><small><sup>(23.7)</sup></small></a> identifies to each thread which output control point it represents.
 Each of the threads see shared input of all the input control points for the patch.   The output of each thread is one of the output control points for the patch.</p>
 
@@ -10961,14 +10961,14 @@ Patch Constant data (such as all the different <a href="#TessFactors">TessFactor
 
 <p>An implementation could choose to execute each mini-shader in parallel, since they are independent.  Or, in the opposite 
 extreme an implementation could choose to trivially concatenate all the mini-shaders together and run them serially.  
-Such transformations of the mini-shaders are trivial to perform (in a driver�s compiler) given they all share the same 
+Such transformations of the mini-shaders are trivial to perform (in a driver&rsquo;s compiler) given they all share the same 
 inputs and perform non-overlapping writes to a unified output space.</p>
 
 <p>An implementation could even choose to hoist any amount of the code from the Fork Phase phase up into the Control Point Phase 
-if that happened to be most efficient.  This is allowable because all the parts of a Hull Shader are specified together as if it is one program � 
+if that happened to be most efficient.  This is allowable because all the parts of a Hull Shader are specified together as if it is one program &ndash; 
 how its contents are executed does not matter as long as the output is deterministic.</p>
 
-<p>The shared inputs to each mini-shader are all of the Control Point Phase�s Input and Output Control Points.</p>
+<p>The shared inputs to each mini-shader are all of the Control Point Phase&rsquo;s Input and Output Control Points.</p>
 
 <p>The output of each mini-shader is a non overlapping subset of the output Patch Constant Data.  </p>
 
@@ -10985,8 +10985,8 @@ a single mini-shader instanced 4 times could output edge TessFactors for each ed
 in that there can be multiple Join programs that are independent of each other.  All of them execute after all the Fork Phase programs.  
 An example use for this phase is to derive <a href="#TessFactors">TessFactors</a><a style="color: Gray"><small><sup>(10.10)</sup></small></a> for the inside of a patch given the edge TessFactors computed in the previous phase.  </p>
 
-<p>The input to each Patch Constant Join Phase shader are all the Control Point Phase�s Input and Output Control Points as well as all the 
-Patch Constant Fork Phase�s output.</p>
+<p>The input to each Patch Constant Join Phase shader are all the Control Point Phase&rsquo;s Input and Output Control Points as well as all the 
+Patch Constant Fork Phase&rsquo;s output.</p>
 
 <p>The output of each Patch Constant Join Phase shaders is a subset of the output Patch Constant data that does not overlap any of the 
 outputs of the shaders from the Patch Constant Fork Phase or other Join Phase shaders.</p>
@@ -11164,7 +11164,7 @@ is <a href="#D3D11_IA_PATCH_MAX_CONTROL_POINT_COUNT" title="D3D11_IA_PATCH_MAX_C
 The subtraction reserves 128 scalars (one control point) worth of space dedicated to the HS Phase 2 and 3, discussed below.  
 The choice of reserving 128 scalars for Patch Constants (as opposed to allowing the amount to be simply whatever of the 4096 scalars of storage 
 is unused by output Control Points) accommodates the limits of another particular hardware design.  Note the Control Point Phase 
-can declare <a href="#D3D11_IA_PATCH_MAX_CONTROL_POINT_COUNT" title="D3D11_IA_PATCH_MAX_CONTROL_POINT_COUNT"><font color=black style="text-decoration:none">32</font></a> output control points, but they just can�t be fully <a href="#D3D11_HS_CONTROL_POINT_PHASE_OUTPUT_REGISTER_COUNT" title="D3D11_HS_CONTROL_POINT_PHASE_OUTPUT_REGISTER_COUNT"><font color=black style="text-decoration:none">32</font></a> elements with 
+can declare <a href="#D3D11_IA_PATCH_MAX_CONTROL_POINT_COUNT" title="D3D11_IA_PATCH_MAX_CONTROL_POINT_COUNT"><font color=black style="text-decoration:none">32</font></a> output control points, but they just can&rsquo;t be fully <a href="#D3D11_HS_CONTROL_POINT_PHASE_OUTPUT_REGISTER_COUNT" title="D3D11_HS_CONTROL_POINT_PHASE_OUTPUT_REGISTER_COUNT"><font color=black style="text-decoration:none">32</font></a> elements with 
 <a href="#D3D11_HS_CONTROL_POINT_REGISTER_COMPONENTS" title="D3D11_HS_CONTROL_POINT_REGISTER_COMPONENTS"><font color=black style="text-decoration:none">4</font></a> components each, since the total storage would be too high. </p>
 
 <A id="10.7.1 System Generated Values input to the HS Control Point Phase"></A>
@@ -11195,7 +11195,7 @@ identifying which one it is [0..n-1] given n declared output Control Points.</p>
 
 <A id="10.8.1 HS Fork Phase Programs"></A>
 <H3>10.8.1 HS Fork Phase Programs</H3>
-<p>There can be 0 or more Fork Phase programs present in a Hull Shader.  Each of them declares its own inputs, but they come from the same pool of input data � the Control Points.  
+<p>There can be 0 or more Fork Phase programs present in a Hull Shader.  Each of them declares its own inputs, but they come from the same pool of input data &ndash; the Control Points.  
 Each Fork Phase program declares its own outputs as well, but out of the same output register space as all Fork Phase and Join Phase programs, and the outputs can never overlap.</p>
 
 <A id="10.8.2 HS Fork Phase Registers"></A>
@@ -11330,11 +11330,11 @@ of view, the Hull Shader is a single atomic shader; the phases within it are imp
 
 <p><a id="HSForkNote1"><sup>(1)</sup></a>
 
-The HS Fork Phase�s Input Control Point register (vicp) declarations must be any subset, along the <b>[element]</b> axis, of the HS Control Point input (pre-Control Point phase).  
+The HS Fork Phase&rsquo;s Input Control Point register (vicp) declarations must be any subset, along the <b>[element]</b> axis, of the HS Control Point input (pre-Control Point phase).  
 Similarly the declarations for inputting the Output Control Points (vocp) must be any subset, along the [element] axis, of the HS Output Control Points (post-Control Point Phase).</p>
 
 <p>Along the <b>[vertex]</b> axis, the number of control points to be read for each of the vicp and vocp must similarly be a subset of the HS Input Control Point count and 
-HS Output Control Point count, respectively.  For example, if the vertex axis of the vocp registers are declared with n vertices, that makes the Control Point Phase�s 
+HS Output Control Point count, respectively.  For example, if the vertex axis of the vocp registers are declared with n vertices, that makes the Control Point Phase&rsquo;s 
 Output Control Points [0..n-1] available as read only input to the Fork Phase.</p>
 
 <p><a id="HSForkNote2"><sup>(2)</sup></a>
@@ -11349,7 +11349,7 @@ A given HS Fork Phase program need only declare what it needs to read and write.
 it can declare a subset of the counts for each, by declaring a smaller number on the [vertex] array axis than the corresponding number of Control Points actually available.  </p>
 
 <p>There is not a way to declare that a sparse set of the Control Points is read.  E.g. a shader that needs read Input Control Points [0],[3], [11] and [15] 
-would just declare the Input Control Point (vicp) register�s [vertex] axis size as 16.  Note that if references to the Control Points from shader code use static indexing, 
+would just declare the Input Control Point (vicp) register&rsquo;s [vertex] axis size as 16.  Note that if references to the Control Points from shader code use static indexing, 
 it will be obvious to drivers exactly what subset of Control Points is actually needed by the program anyway.</p>
 
 <A id="10.8.4 Instancing of an HS Fork Phase Program"></A>
@@ -11366,7 +11366,7 @@ for a quad patch per instance, the declarations for each of those outputs would 
 <p>The HS Fork Phase can input <a href="#PrimitiveID">PrimitiveID</a><a style="color: Gray"><small><sup>(8.17)</sup></small></a> in its own register just like the HS Control Point Phase.  The value in this register is the same as what the HS Control Point Phase sees.  
 The other special input register in the HS Fork Phase is <a href="#generatedvalue_FORK_INSTANCE_ID">vForkInstanceID</a><a style="color: Gray"><small><sup>(23.8)</sup></small></a>, described previously.</p>
 
-<p>The system doesn�t go out of its way to automatically provide other <a href="#SystemGeneratedValues">System Generated Values</a><a style="color: Gray"><small><sup>(4.4.4)</sup></small></a> (<a href="#VertexID">VertexID</a><a style="color: Gray"><small><sup>(8.16)</sup></small></a>, <a href="#InstanceID">InstanceID</a><a style="color: Gray"><small><sup>(8.18)</sup></small></a>) 
+<p>The system doesn&rsquo;t go out of its way to automatically provide other <a href="#SystemGeneratedValues">System Generated Values</a><a style="color: Gray"><small><sup>(4.4.4)</sup></small></a> (<a href="#VertexID">VertexID</a><a style="color: Gray"><small><sup>(8.16)</sup></small></a>, <a href="#InstanceID">InstanceID</a><a style="color: Gray"><small><sup>(8.18)</sup></small></a>) 
 to the HS Fork Phase.  Values like these are part of the Input Control Points (if they were declared to be there) already, so the HS Fork phase can read VertexID/InstanceID by reading them out of the Input Control Points.</p>
 
 <p>The treatment of <a href="#InstanceID">InstanceID</a><a style="color: Gray"><small><sup>(8.18)</sup></small></a> does seem strange, in that InstanceID would be the same for all Control Points in a Patch (indeed, unchanging across multiple patches), 
@@ -11389,7 +11389,7 @@ For the Geometry Shader to see InstanceID, it also shows up in each input vertex
 <hr><!-- ********************************************************************** -->
 <A id="10.9.1 HS Join Phase Program"></A>
 <H3>10.9.1 HS Join Phase Program</H3>
-<p>There can be 0 or more Join Phase programs present in a Hull Shader.  Each of them declares its own inputs, but they come from the same pool of input data � the Control Points as well as 
+<p>There can be 0 or more Join Phase programs present in a Hull Shader.  Each of them declares its own inputs, but they come from the same pool of input data &ndash; the Control Points as well as 
 the Patch Constant outputs of the Fork Phase programs.  Each Join Phase program declares its own outputs as well, but out of the same output register space as all Fork Phase and Join Phase programs, 
 and the outputs can never overlap.</p>
 
@@ -11536,11 +11536,11 @@ the phases within it are implementation details.</p>
 
 <p><a id="HSJoinNote1"><sup>(1)</sup></a>
 
-The HS Join Phase�s Input Control Point register (vicp) declarations must be any subset, along the <b>[element]</b> axis, of the HS Control Point input (pre-Control Point phase).  
+The HS Join Phase&rsquo;s Input Control Point register (vicp) declarations must be any subset, along the <b>[element]</b> axis, of the HS Control Point input (pre-Control Point phase).  
 Similarly the declarations for inputting the Output Control Points (vocp) must be any subset, along the [element] axis, of the HS Output Control Points (post-Control Point Phase).</p>
 
 <p>Along the <b>[vertex]</b> axis, the number of control points to be read for each of the vicp and vocp must similarly be a subset of the HS Input Control Point count and 
-HS Output Control Point count, respectively.  For example, if the vertex axis of the vocp registers are declared with n vertices, that makes the Control Point Phase�s 
+HS Output Control Point count, respectively.  For example, if the vertex axis of the vocp registers are declared with n vertices, that makes the Control Point Phase&rsquo;s 
 Output Control Points [0..n-1] available as read only input to the Join Phase.</p>
 
 <p><a id="HSJoinNote2"><sup>(2)</sup></a>
@@ -11551,7 +11551,7 @@ The outputs of each Fork/Join phase program cannot overlap with each other.  Sys
 <p><a id="HSJoinNote3"><sup>(3)</sup></a>
 
 In addition to Control Point input, the HS Join phase also sees as input the Patch Constant data computed by the HS Fork Phase program(s).  
-This shows up at the HS Fork phase as the vpc# registers.  The HS Join Phase�s input vpc# registers share the same register space as the HS Fork Phase output o# registers.  
+This shows up at the HS Fork phase as the vpc# registers.  The HS Join Phase&rsquo;s input vpc# registers share the same register space as the HS Fork Phase output o# registers.  
 The declarations of the o# registers must not overlap with any HS Fork phase program o# output declaration; the HS Join Phase is adding to the aggregate 
 Patch Constant data output for the Hull Shader.</p>
 
@@ -11595,7 +11595,7 @@ and possibly scaling based on user-provided scale values.  The hardware does not
 <p>The optional (from the HLSL author point of view) tessellation factor processing results in HLSL compiler autogenerated shader code in either or both of the Fork and Join Phases.  
 This standard processing can involve cleaning up of values, handling of special low TessFactor cases to prevent popping, and rounding of the values depending on the tessellation mode.  </p>
 
-<p>The final Tessellation Factors after this processing go to the fixed function Tessellator hardware � TessFactors for each edge and explicit TessFactors for the patch inside 
+<p>The final Tessellation Factors after this processing go to the fixed function Tessellator hardware &ndash; TessFactors for each edge and explicit TessFactors for the patch inside 
 (as opposed to TessFactorScale the user specifies).</p>
 
 <p>Downstream, <a href="#DomainShader">Domain Shader</a><a style="color: Gray"><small><sup>(12)</sup></small></a> code may be interested in seeing all of the intermediate values generated during any optional TessFactor processing.  
@@ -11647,7 +11647,7 @@ not discussed in detail here.</p>
 <A id="10.11 Restrictions on Patch Constant Data"></A>
 <H2>10.11 Restrictions on Patch Constant Data</H2>
 <p>The Hull Shader output Patch Constant data appears as 32 vec4 elements.  The placement of the Final TessFactors are constrained as described in the 
-previous sections � each grouping of TessFactors must appear in a specific order in the same component of consecutive registers/elements in the 
+previous sections &ndash; each grouping of TessFactors must appear in a specific order in the same component of consecutive registers/elements in the 
 Patch Constant Data.  E.g. For Quad Patches, the four Final Edge TessFactors in a fixed order make up one grouping, and the two Final Inside 
 TessFactors in a fixed order make up another separate grouping. </p>
 
@@ -11687,7 +11687,7 @@ it is applied to all the TessFactors listed above.</p>
 advantage of to optimize Tessellation performance for content going through that Hull Shader, versus an otherwise identical Hull Shader without the declaration.</p>
 
 <p>If HLSL fails to enforce the MaxTessFactor when it is declared (by clamping the HS output TessFactors), and a TessFactor larger than MaxTessFactor 
-arrives at the Tessellator, the Tessellator�s behavior is undefined.  Hitting this undefined situation is a Microsoft HLSL compiler (or driver compiler) 
+arrives at the Tessellator, the Tessellator&rsquo;s behavior is undefined.  Hitting this undefined situation is a Microsoft HLSL compiler (or driver compiler) 
 bug, not the fault of the shader author or hardware.</p>
 
 <p>Note that independent of this optional application-defined MaxTessFactor, the Tessellator always performs some additional basic clamping and rounding of Final 
@@ -11753,13 +11753,13 @@ surface representation, or how to map representations to the given pipeline.</p>
 <li>Support both continuous and discrete tessellation</li>
 <ul>
     <li>Each edge can have different tessellation factors with a transition region to an internal more regularly tessellated region</li>
-    <li>Support smooth a transition from 1 segment per edge to �n� segments per edge, with each edge having independent tessellation factors</li>
+    <li>Support smooth a transition from 1 segment per edge to &ldquo;n&rdquo; segments per edge, with each edge having independent tessellation factors</li>
     <li>Support a discrete mode that allows for an integer number of equal length segments per edge, supporting both odd and even numbers of segments</li>
 </ul>
 <li>Support arbitrary patch evaluation methods</li>
 <ul>
     <li><a href="#DomainShader">Domain Shader</a><a style="color: Gray"><small><sup>(12)</sup></small></a> interprets patch data and evaluates surface definition</li>
-    <li>Patch primitive type encodes number of input points per patch for a given draw call � 1 to <a href="#D3D11_IA_PATCH_MAX_CONTROL_POINT_COUNT" title="D3D11_IA_PATCH_MAX_CONTROL_POINT_COUNT"><font color=black style="text-decoration:none">32</font></a></li>
+    <li>Patch primitive type encodes number of input points per patch for a given draw call &ndash; 1 to <a href="#D3D11_IA_PATCH_MAX_CONTROL_POINT_COUNT" title="D3D11_IA_PATCH_MAX_CONTROL_POINT_COUNT"><font color=black style="text-decoration:none">32</font></a></li>
     <li>Tessellation pipeline only tessellates into a UV{W} domain where vertices are generated for evaluation by the developer's Domain Shader code</li>
 </ul>
 <li>Support triangle and quad domains ("isolines" supported as well)</li>
@@ -11776,7 +11776,7 @@ surface representation, or how to map representations to the given pipeline.</p>
 <li>Make watertight tessellation as simple as possible</li>
 <ul>
     <li>Input domain locations must be bit identical when independently computed by neighboring patches after taking into account direction of edge.  
-    Care must be taken with floating point values generated so that generate value == (1 � (1 � generated value))</li>
+    Care must be taken with floating point values generated so that generate value == (1 - (1 - generated value))</li>
     <li>Expose a simple evaluation model that guides developers to use order independent surface evaluation methods </li>
 </ul>
 </ul>
@@ -11792,7 +11792,7 @@ This is also described under <a href="#PatchTopologies">Patch Topologies</a><a s
 
 <p>All existing IA behaviors work orthogonally with patches.  i.e. indexing, instancing, DrawAuto etc.</p>
 
-<p>Incomplete patches are discarded � for example if the vertex count is 32 per patch, and a Draw call specifies 63 vertices, 
+<p>Incomplete patches are discarded &ndash; for example if the vertex count is 32 per patch, and a Draw call specifies 63 vertices, 
 one 32 vertex patch will be produced, and the remaining 31 vertices will be discarded.</p>
 
 <A id="11.4 Tesellation Stages"></A>
@@ -11886,7 +11886,7 @@ Notice that no line is ever generated at V=1.  </p>
 For a triangle, there is a <a href="#TriPatchTessFactors">single TessFactor</a><a style="color: Gray"><small><sup>(10.10.2)</sup></small></a> for the inside region of the patch.  For a quadrilateral, there are <a href="#QuadPatchTessFactors">2 inside TessFactors</a><a style="color: Gray"><small><sup>(10.10.3)</sup></small></a>.</p>
 
 <p>HLSL exposes helpers that can optionally derive inside TessFactors from the edge TessFactors (these amount to shader code, so the hardware doesn't need to know about them).  For example in the case of a quad patch,
-the helpers have a couple of options for deriving inside TessFactors � 1-axis and 2-axis.  In the 1-axis mode, the inside TessFactor reduction is applied on all 4 edges producing a single inside TessFactor.  
+the helpers have a couple of options for deriving inside TessFactors &ndash; 1-axis and 2-axis.  In the 1-axis mode, the inside TessFactor reduction is applied on all 4 edges producing a single inside TessFactor.  
 In the 2-axis mode, the reduction from 4 edge TessFactors is divided into two separate parts.  The V==0 and V==1 edge TessFactors are reduced to a single TessFactor for the V direction of the interior.  
 Similarly the U==0 and U==1 TessFactors are reduced to a single TessFactor for the U direction on the interior.</p>
 
@@ -11940,9 +11940,9 @@ doesn't do the rounding of the TessFactors to pow2.  That rounding is the respon
 <ul>
 <li>There was a proposal to add a special case for fractional even partitioning that allowed it to have a minimum Tessellation Factor of 1.  
 This involved making the TF 1 -&gt; 2 transition temporarily have 3 segments, just like fractional ODD.  Starting from 1 segment with 2 endpoints, 
-2 new points come in from the edges (nowhere else for them to come from) � making 3 segments across.  When these 2 new points meet a the middle, 
+2 new points come in from the edges (nowhere else for them to come from) &ndash; making 3 segments across.  When these 2 new points meet a the middle, 
 they recombine into 1 point, so TF is 2.  So we went from TF 1 to TF 2 by temporarily having a TF of 3.</li>
-<li>This 1-&gt;3-&gt;2 proposal was ruled out because it is quirky and doesn�t provide much value over fractional odd partitioning, which cleanly starts at TF 1.</li>
+<li>This 1-&gt;3-&gt;2 proposal was ruled out because it is quirky and doesn&rsquo;t provide much value over fractional odd partitioning, which cleanly starts at TF 1.</li>
 </ul>
 </DIV>
 
@@ -11954,7 +11954,7 @@ they recombine into 1 point, so TF is 2.  So we went from TF 1 to TF 2 by tempor
     <li>Never split at patch corners</li>
     <li>Avoids degenerate transition area between neighboring patches</li>
     </ul>
-<li>Exception: fractional odd partitioning at Tessellation Factor 1 only has 2 vertices per side � the corners</li>
+<li>Exception: fractional odd partitioning at Tessellation Factor 1 only has 2 vertices per side &ndash; the corners</li>
     <ul>
     <li>No choice but to split the edges</li>
     <li>Not a problem</li>
@@ -11981,7 +11981,7 @@ they recombine into 1 point, so TF is 2.  So we went from TF 1 to TF 2 by tempor
 </li>
     <ul>
     <li>As opposed to having them always point towards the center of the span (yielding more extreme aspect ratios)</li>
-    <li>"ruler function" is a reference to the size of the tick marks on a ruler � coarser divisions have longer ticks.  
+    <li>"ruler function" is a reference to the size of the tick marks on a ruler &ndash; coarser divisions have longer ticks.  
     You enumerate the longer ticks first, then the next size smaller tick (including the larger ones) and so on indefinitely.</li>
     </ul>
 <li>Note with even partitioning, the middle point is a valid candidate in the half-TF space.</li>
@@ -12051,7 +12051,7 @@ they recombine into 1 point, so TF is 2.  So we went from TF 1 to TF 2 by tempor
 <li>Scaling insideTFs by (empirically) around 0.74 vs edges on tri patches will make their triangle and point density roughly match quad patches, 
 across the TF range (except at very low TF where nothing can be done)</li>
 <li>The adjustment would be different for different aspect ratios</li>
-<li>In applications mixing tri and quad patches, tri patches tend to be rare, so this density disparity may be a don�t care</li>
+<li>In applications mixing tri and quad patches, tri patches tend to be rare, so this density disparity may be a don&rsquo;t care</li>
 </ul>
 </DIV>
 
@@ -12090,7 +12090,7 @@ across the TF range (except at very low TF where nothing can be done)</li>
 <li>Each edge and inside TF can independently be even or odd</li>
     <ul>
     <li>Thus smaller jumps in vert/tri count vs fractional</li>
-    <li>But vertex positions obviously don�t move smoothly</li>
+    <li>But vertex positions obviously don&rsquo;t move smoothly</li>
     </ul>
 </ul>
 
@@ -12100,7 +12100,7 @@ across the TF range (except at very low TF where nothing can be done)</li>
 <li>Same as integer partitioning, except instead of rounding to integer, round to next power of 2</li>
     <ul>
     <li>Application (or HLSL compiler) is responsible for rounding to pow2, not hardware.  Hardware just treats pow2 mode exactl like integer mode.</li>
-    <li>Pow2 isn�t just a subset of the integer mode, when the inside TessFactor reduction is "average"</li>
+    <li>Pow2 isn&rsquo;t just a subset of the integer mode, when the inside TessFactor reduction is "average"</li>
     <li>Handy to call this mode out on its own anyway</li>
     </ul>
 <li>As TessFactors increase, once a point shows up on the domain, it stays there permanently</li>
@@ -12114,7 +12114,7 @@ across the TF range (except at very low TF where nothing can be done)</li>
 <li>Take advantage of the properties that result:</li>
     <ul>
     <li>For quads, choosing a single inside TessFactor instead of 2 ensures that points on patch inside always show up bisecting an edge, 
-    and once they show up they don�t move.  This property always holds for tri patches, which only support a single inside TessFactor.</li>
+    and once they show up they don&rsquo;t move.  This property always holds for tri patches, which only support a single inside TessFactor.</li>
     <li>Water-tight dampening of displacement can be done on edges and corners of patch by not looking anywhere else on the patch or the neighboring patches</li>
     <li>Transition "picture frame" can unfortunately have triangle diagonals flipping as TessFactors change, so appropriate dampening of displacements is needed to hide diagonal flips</li>
     <li>Using "max" reduction for inside TF means inside TF &gt;= edge TFs, and there are always enough vertices on the patch inside to smoothly 
@@ -12172,7 +12172,7 @@ When a patch topology is used, the true "primitive" is the patch itself.</p>
 
 <h3 id="TessFactorInterpretation"></h3><A id="11.7.10 TessFactor Interpretation"></A>
 <H3>11.7.10 TessFactor Interpretation</H3>
-<p>The TessFactor number space roughly corresponds to how many line segments there are on the corresponding edge.  This isn�t a precise definition of the number of 
+<p>The TessFactor number space roughly corresponds to how many line segments there are on the corresponding edge.  This isn&rsquo;t a precise definition of the number of 
 segments because different tessellation modes snap to different numbers of segments (i.e. integer versus fractional_even versus fractional_odd).  </p>
 
 <p>For integer partitioning, TessFactor range is [<a href="#D3D11_TESSELLATOR_MIN_ODD_TESSELLATION_FACTOR" title="D3D11_TESSELLATOR_MIN_ODD_TESSELLATION_FACTOR"><font color=black style="text-decoration:none">1</font></a> ... <a href="#D3D11_TESSELLATOR_MAX_TESSELLATION_FACTOR" title="D3D11_TESSELLATOR_MAX_TESSELLATION_FACTOR"><font color=black style="text-decoration:none">64</font></a>] (fractions rounded up).</p>
@@ -12188,7 +12188,7 @@ transitioning the point locations based on the distance between the nearest lowe
 Even TessFactors produce uniform partitioning of the space.  Other TessFactors in the range produce a segment count that is the next even TessFactor higher, 
 transitioning the point locations based on the distance between the nearest lower even TessFactor and nearest greater even TessFactor.</p>
 
-<p>For the IsoLine domain, the line detail TessFactor honors all the above modes.  However the line density TessFactor always behaves as integer � 
+<p>For the IsoLine domain, the line detail TessFactor honors all the above modes.  However the line density TessFactor always behaves as integer &ndash; 
 [<a href="#D3D11_TESSELLATOR_MIN_ISOLINE_DENSITY_TESSELLATION_FACTOR" title="D3D11_TESSELLATOR_MIN_ISOLINE_DENSITY_TESSELLATION_FACTOR"><font color=black style="text-decoration:none">1</font></a> ... <a href="#D3D11_TESSELLATOR_MAX_ISOLINE_DENSITY_TESSELLATION_FACTOR" title="D3D11_TESSELLATOR_MAX_ISOLINE_DENSITY_TESSELLATION_FACTOR"><font color=black style="text-decoration:none">64</font></a>] (fractions rounded to next).</p>
 
 <h3 id="TessFactorRange"></h3><A id="11.7.11 TessFactor Range"></A>
@@ -12256,7 +12256,7 @@ bounds on the complexity of cases the hardware tessellation algorithm has to han
     switch(partitioning)
     {
         case integer:
-        case pow2: // don�t care about pow2 distinction for validation, just treat as integer
+        case pow2: // don&rsquo;t care about pow2 distinction for validation, just treat as integer
             lowerBound = <a href="#D3D11_TESSELLATOR_MIN_ODD_TESSELLATION_FACTOR" title="D3D11_TESSELLATOR_MIN_ODD_TESSELLATION_FACTOR"><font color=black style="text-decoration:none">1</font></a>;
             upperBound = <a href="#D3D11_TESSELLATOR_MAX_TESSELLATION_FACTOR" title="D3D11_TESSELLATOR_MAX_TESSELLATION_FACTOR"><font color=black style="text-decoration:none">64</font></a>;
             break;
@@ -12290,7 +12290,7 @@ bounds on the complexity of cases the hardware tessellation algorithm has to han
     
     if( integer or pow2 partitioning )
     {
-         round HWInsideTessFactorU to next integer (don�t care about pow2 distinction for validation)
+         round HWInsideTessFactorU to next integer (don&rsquo;t care about pow2 distinction for validation)
          round HWInsideTessFactorV to next integer 
          // tri patch only has one insideTessFactor instead of U/V
     }
@@ -12310,11 +12310,11 @@ but patches being streamed out to memory.</p>
 <H3>11.7.13 Tessellation Parameterization and Watertightness</H3>
 <p>A shared edge has to generate identical domain locations for crack free tessellation to be possible.  Domain Shader authors are responsible for achieving this, given some guarantees from the hardware.  
 First, hardware tessellation on any given edge must always produce a distribution of domain points symmetric about the edge based on the TessFactor for that edge alone.  
-Second, the parameterization of each domain point (U/V for quad or U/V/W for tri) must produce �clean� values in the space [0.0 ... 1.0].  
-�Clean� means that given a domain point on one side of the edge, with the parameter for that edge (say it is U) in [0 ... 0.5], the mirrored domain point produced on the other side, call it U� in [0.5 ... 1.0] 
+Second, the parameterization of each domain point (U/V for quad or U/V/W for tri) must produce &ldquo;clean&rdquo; values in the space [0.0 ... 1.0].  
+&ldquo;Clean&rdquo; means that given a domain point on one side of the edge, with the parameter for that edge (say it is U) in [0 ... 0.5], the mirrored domain point produced on the other side, call it U� in [0.5 ... 1.0] 
 will have a complement satisfying (1-U�) == U exactly.  </p>
 
-<p>Even if a neighboring patch sharing an edge happens to produce a complementary parameterization (U moving in the other direction, and/or U/V swapped), both side�s parameterization for each 
+<p>Even if a neighboring patch sharing an edge happens to produce a complementary parameterization (U moving in the other direction, and/or U/V swapped), both side&rsquo;s parameterization for each 
 shared edge domain point will be equivalent because they are clean.</p>
 
 <p>Having clean parameterization means that DS authors can write domain point evaluation algorithms with a carefully constructed order of operations that is guaranteed to produce 
@@ -12333,10 +12333,10 @@ This uniform spacing facilitates the symmetry and watertightness issues discusse
 
 <p>Due to the fixed point arithmetic involved, it is possible for the tessellator to produce degenerate lines or triangles, where each vertex has identical domain coordinates.  
 This will not be visible if the primitives are sent to the rasterizer, because they will be culled.  However, if the Geometry Shader and/or Stream Output are enabled, the 
-degenerate primitives will appear, and it is the application�s responsibility to be robust to this.  For example, Geometry Shader code could check for and discard degenerates 
+degenerate primitives will appear, and it is the application&rsquo;s responsibility to be robust to this.  For example, Geometry Shader code could check for and discard degenerates 
 if that turns out to be the only way to avoid the algorithm being used from falling over on the degenerate input.</p>
 
-<p>If the Tessellator�s output primitive is points (as opposed to triangles or lines), this scenario requires only unique points within a patch to be generated.  
+<p>If the Tessellator&rsquo;s output primitive is points (as opposed to triangles or lines), this scenario requires only unique points within a patch to be generated.  
 The one exception is points that are on the threshold of merging, if TessFactors were to incrementally decrease, may appear in the system as duplicated points 
 (with the same U/V coords) in an implementation dependent way.</p>
 
@@ -12398,7 +12398,7 @@ E.g. to invoke the GS with a cube as its input primitive, one could send 8 Contr
 <H4>11.8.1.2 Sending Un-Tessellated Patches to NULL GS + Stream Output</H4>
 <p>Sending un-tessellated patches to NULL GS + Stream Output is valid. This enables, for example, Control Points that have gone through the Vertex Shader to be streamed 
 out for multi-pass or reuse scenarios.  Note, however, it is not possible for Hull Shader outputs to be streamed out (or go into the GS) - the presence of the 
-Hull Shader requires a simultaneous Domain Shader and enables Tessellation � both of which consumes Hull Shader output entirely.</p>
+Hull Shader requires a simultaneous Domain Shader and enables Tessellation &ndash; both of which consumes Hull Shader output entirely.</p>
 
 <p>When un-tessellated patches arrive at Stream Output, each Control Point in the patch appears as a single vertex for Stream Output. This definition is similar to the way NULL GS + 
 Stream Output behaves with traditional primitive topologies such as triangle lists.  As with other primitive types, only complete patches get written out; if there is not 
@@ -12448,7 +12448,7 @@ the VS output for each Control Point in a patch can be streamed out.  </span></p
 <p><span class="STRIKETHROUGH_ITALIC">Patch Constant data output by the Hull Shader, such as Tessellation Factors, are not available to Stream Output.   
 As a workaround, an application that needs to stream out Patch Constant data could set up the tessellator to run, but then have the 
 Domain Shader flag for discarding (such as assigning a bad vertex position) all but the first n domain points for the patch.  
-The n domain points (where n is chosen to fit all the Patch Constant data across n vertices� storage) would save out all the 
+The n domain points (where n is chosen to fit all the Patch Constant data across n vertices&rsquo; storage) would save out all the 
 patch data from the Domain Shader.  The GS/Stream Output could then send the data to memory as a sequence of individual points.</span></p>
 <p><span class="STRIKETHROUGH_ITALIC">If the HS culls a patch (by specifying an edge Tessellation factor &lt;= 0) when tessellation is disabled, the "cull" has no effect on 
 Stream Output of the patch.  This choice was made because it is deemed not worth defining that the Stream Output stage must be able to interpret 
@@ -12613,7 +12613,7 @@ The Domain Shader is invoked for every domain location generated by the Tessella
 <p><a id="DSNote1"><sup>(1)</sup></a>
 
 The domain shader sees the Hull Shader outputs in 2 separate sets of registers.  
-The v<b>cp</b> registers can see all of the Hull Shader�s output <b>C</b>ontrol <b>P</b>oints.  The v<b>pc</b> registers can see all of the Hull Shader�s <b>P</b>atch <b>C</b>onstant output data.  </p>
+The v<b>cp</b> registers can see all of the Hull Shader&rsquo;s output <b>C</b>ontrol <b>P</b>oints.  The v<b>pc</b> registers can see all of the Hull Shader&rsquo;s <b>P</b>atch <b>C</b>onstant output data.  </p>
 
 <p>Since code for Hull Shader Patch Constant Fork or Join Phases output TessFactors using names such as SV_TessFactor, the DS must match those declarations on the equivalent v<b>pc</b> input 
 if it wishes to see those values.</p>
@@ -12778,14 +12778,14 @@ specifies this (outside the shader code, but appearing to the driver side by sid
  different Stream to go to Rasterization.</p>
 <p>If a GS with streams is passed to CreateGeometryShader at the API/DDI (meaning there is no Stream Output declaration or rasterizer stream selection), 
 the active stream defaults to 0.  So stream 0 goes to rasterization if rasterization is enabled, and the absence of a Stream Output declaration means 
-nothing is streamed out to memory.  If the stream selected to go to rasterization isn�t declared in the GS or doesn�t include a position 
+nothing is streamed out to memory.  If the stream selected to go to rasterization isn&rsquo;t declared in the GS or doesn&rsquo;t include a position 
 and rasterization is enabled, behavior is undefined, just as with any shader that feeds the rasterizer without a position.</p>
 <DIV class=boxed style="background-color: lightblue">
 <p>Sending one of the streams to rasterization with multiple streams isn't a particularly interesting feature for now, since in the multi-stream case all streams are point lists.</p>
 </DIV> 
-<p>Interpolation modes declared for the outputs on one Stream don�t have to match those on another Stream.  Note that when the Geometry Shader is created, 
+<p>Interpolation modes declared for the outputs on one Stream don&rsquo;t have to match those on another Stream.  Note that when the Geometry Shader is created, 
 a choice of which stream (if any) is going to rasterization is made, so the driver shader compiler only needs to pay attention to interpolation modes and System 
-Interpreted Values (such as "position") only on at most a single Stream�s declarations</p>
+Interpreted Values (such as "position") only on at most a single Stream&rsquo;s declarations</p>
 <A id="13.6 Geometry Shader Output Limitations"></A>
 <H2>13.6 Geometry Shader Output Limitations</H2>
 <p>When the application knows that some GS outputs will be treated as per-primitive constant at the subsequent Pixel Shader, the Geometry Shader
@@ -13001,7 +13001,7 @@ typedef struct D3D11DDIARG_STREAM_OUTPUT_STREAM
     NumEntries              - Indicates how many entries are in the array at
                               pStreamOutputDecl.  This must be &gt; 0, and defines 
                               how many Elements (including gaps between Elements 
-                              in memory that aren�t touched) are being defined for Stream
+                              in memory that aren&rsquo;t touched) are being defined for Stream
                               Output, per-vertex.  Maximum count is <a href="#D3D11_SO_OUTPUT_COMPONENT_COUNT" title="D3D11_SO_OUTPUT_COMPONENT_COUNT"><font color=black style="text-decoration:none">128</font></a> per Stream,
                               with up to <a href="#D3D11_SO_STREAM_COUNT" title="D3D11_SO_STREAM_COUNT"><font color=black style="text-decoration:none">4</font></a> Streams supported. 
 
@@ -13034,7 +13034,7 @@ typedef struct D3D11DDIARG_STREAM_OUTPUT_STREAM
                            // RegisterMask does not overlap for repeated registers
                            // within a Stream.  Separate streams can overlap
                            // output registers and component masks freely.
-                           // If there�s no GS, RegisterIndex refers to the
+                           // If there&rsquo;s no GS, RegisterIndex refers to the
                            // appropriate "register" from the previous active
                            // Pipeline Stage's output.
                            // There is no limit on the total number of unique
@@ -13052,10 +13052,10 @@ typedef struct D3D11DDIARG_STREAM_OUTPUT_STREAM
                            // gaps of 1, 2, 3 or 4 components, respectively.
                            // Larger gaps are defined by chaining together
                            // smaller gaps (at least at the DDI).
-        DWORD RegisterMask;// Mask (i.e. xyzw mask) to apply to this �register�
+        DWORD RegisterMask;// Mask (i.e. xyzw mask) to apply to this &ldquo;register&rdquo;
                            // coming from the Pipeline.  This must be a subset of
-                           // the mask for the �register� in the source Pipeline
-                           // Stage�s output, and cannot have gaps between
+                           // the mask for the &ldquo;register&rdquo; in the source Pipeline
+                           // Stage&rsquo;s output, and cannot have gaps between
                            // components.  To define gaps betwen components,
                            // such as writing .xw, separate declaration
                            // entries areused, e.g. for .xw, an entry for
@@ -13128,9 +13128,9 @@ The Geometry Shader declares A and B into one stream (say stream 0), so emits of
 <p>The CreateGeometryShaderWithStreamOutput() call tags Stream 0 as going to the rasterizer.</p>
 <p>Stream 0 and Stream 1 are declared as a point list topology (in fact whenever producing multiple streams, the only available topology is point list for each of them).</p>
 <p>Vertices can be emitted to either stream in any order.</p>
-<p>The shader code doesn�t need to know anything about the mapping of A,B,C,D to buffers/formats/memory layout.  Like DX10, the buffer output declaration that accompanies the shader at 
+<p>The shader code doesn&rsquo;t need to know anything about the mapping of A,B,C,D to buffers/formats/memory layout.  Like DX10, the buffer output declaration that accompanies the shader at 
 CreateGeometryShaderWithBufferOut is responsible for those assignments and format definitions.  This API validates stream constraints, like enforcing that outputs declared in different 
-streams in the shader cannot be sent to the same buffer.  In contrast, what this example does is valid � parts of a single output stream are split across multiple buffers.</p>
+streams in the shader cannot be sent to the same buffer.  In contrast, what this example does is valid &ndash; parts of a single output stream are split across multiple buffers.</p>
 <p>The GS output declaration declares the max output vertex count as 170. <b>As a result, shader compilation fails for this example!</b> The reason is that the output vertex record size, 
 based on the output declarations for the 2 streams, is the union of the declarations of each.  Since stream 0 defines o0.xy and o1.xyzw, and stream 1 defines o0.xyz and o1.xyz, the union 
 is {o0.xyz,o1.xyzw} = 7 scalars.  7 * 170 vertices = 1190, which is greater than 1024.  If it happened that stream 1 also declared o0.xy and o1.xyzw (same as stream 0), the record size 
@@ -13441,7 +13441,7 @@ the clamp described here occurs after the Pixel Shader).</p>
 and MinDepth must be less-than or equal-to MaxDepth.</p>
 <p>The Rasterizer must <a href="#RasterizerPrecision">support</a><a style="color: Gray"><small><sup>(15.16)</sup></small></a> fixed-point x,y positions after Viewport
 scale with <a href="#D3D11_PRE_SCISSOR_PIXEL_ADDRESS_RANGE_BIT_COUNT" title="D3D11_PRE_SCISSOR_PIXEL_ADDRESS_RANGE_BIT_COUNT"><font color=black style="text-decoration:none">16</font></a>.<a href="#D3D11_SUBPIXEL_FRACTIONAL_BIT_COUNT" title="D3D11_SUBPIXEL_FRACTIONAL_BIT_COUNT"><font color=black style="text-decoration:none">8</font></a> precision (approximately
-[<a href="#D3D11_VIEWPORT_BOUNDS_MIN" title="D3D11_VIEWPORT_BOUNDS_MIN"><font color=black style="text-decoration:none">-32768</font></a>�<a href="#D3D11_VIEWPORT_BOUNDS_MAX" title="D3D11_VIEWPORT_BOUNDS_MAX"><font color=black style="text-decoration:none">32767</font></a>] range).
+[<a href="#D3D11_VIEWPORT_BOUNDS_MIN" title="D3D11_VIEWPORT_BOUNDS_MIN"><font color=black style="text-decoration:none">-32768</font></a>&hellip;<a href="#D3D11_VIEWPORT_BOUNDS_MAX" title="D3D11_VIEWPORT_BOUNDS_MAX"><font color=black style="text-decoration:none">32767</font></a>] range).
 As such D3D11 defines the following constraints on the float Viewport Width, Height, TopLeftX and TopLeftY parameters:</p>
 <p><a href="#D3D11_VIEWPORT_BOUNDS_MIN" title="D3D11_VIEWPORT_BOUNDS_MIN"><font color=black style="text-decoration:none">-32768</font></a> &lt;= Viewport.TopLeftX &lt;= <a href="#D3D11_VIEWPORT_BOUNDS_MAX" title="D3D11_VIEWPORT_BOUNDS_MAX"><font color=black style="text-decoration:none">32767</font></a></p>
 <p><a href="#D3D11_VIEWPORT_BOUNDS_MIN" title="D3D11_VIEWPORT_BOUNDS_MIN"><font color=black style="text-decoration:none">-32768</font></a> &lt;= Viewport.Width + Viewport.TopLeftX &lt;= <a href="#D3D11_VIEWPORT_BOUNDS_MAX" title="D3D11_VIEWPORT_BOUNDS_MAX"><font color=black style="text-decoration:none">32767</font></a></p>
@@ -13587,7 +13587,7 @@ if the operation is performed even with zero DepthBias and SlopeScaledDepthBias 
 <DIV class=boxed style="background-color: lightblue">
 <p>Comments on one of the usage scenarios for Depth Biasing:</p>
 <p>One of the artifacts with shadow buffer based
-shadows is �shadow acne�, or a surface shadowing itself in a spotty way because of inexactness in computing
+shadows is &ldquo;shadow acne&rdquo;, or a surface shadowing itself in a spotty way because of inexactness in computing
 the depth of a surface from the shader to be compare against the depth of the same surface in the shadow buffer.
 A way to alleviate this is to use DepthBias and SlopeScaledDepthBias when rendering a shadow buffer.  The intent
 is to push surfaces out enough when rendering a shadow buffer so that when compared against themselves via
@@ -13933,7 +13933,7 @@ and any update to the depth buffer must be identical to what would have happened
 
 <p>This does <b>not</b> mean that if a Pixel Shader reads a depth buffer generated with an identical rendering in a previous pass as an input Shader Resource View (SRV), 
 the PS input Z will match the value read from the SRV given the same primitive and location.  The reason is that the values in the depth SRV reflect quantization/clamping which 
-has not been performed on the PS input Z.  However, if the SRV format is float32, then it will exactly match the PS input Z except for clamping to [Viewport.MinDepth�Viewport.MaxDepth].</p>
+has not been performed on the PS input Z.  However, if the SRV format is float32, then it will exactly match the PS input Z except for clamping to [Viewport.MinDepth&ndash;Viewport.MaxDepth].</p>
 
 
 <h3 id="InputCoverage"></h3><A id="16.3.2 Input Coverage"></A>
@@ -14001,8 +14001,8 @@ the programmer can call intrinsics to evaluate an input attribute at programmabl
 <p>When using programmable locations for evaluation, the only aspect of the interpolation mode declaration that is honored is choice of constant/linear/linearNoPespective.
 On the other hand, location based modifiers on the attribute declaration, centroid or sample, are ignored during pull-model evaluation.  Such modifiers have to do with 
 where evaluation happens spatially, and in pull-model, spatial positioning comes from the instruction.</p>
-<p>If attributes are referenced directly from a shader, all properties of the attribute declaration are honored � the type (constant/linear/linearNoPerspective) 
-and any location modifiers � centroid or sample.  This is the same as previous shader models.</p>
+<p>If attributes are referenced directly from a shader, all properties of the attribute declaration are honored &ndash; the type (constant/linear/linearNoPerspective) 
+and any location modifiers &ndash; centroid or sample.  This is the same as previous shader models.</p>
 <p>Due to a limitation in some hardware, position is the one attribute that cannot be "pulled".  The intention is that this limitation will go away in future APIs.</p>
 <p>The following new intrinsics are being added:</p>
 <div style="BACKGROUND-COLOR: lightgrey"><pre>
@@ -14039,7 +14039,7 @@ float4 main(attrib PSIN inputs);
 {
     // evaluates inputs.sstex normally with no offset
     float4 temp = inputs.sstex;
-    // Line below invalid, since you can�t cast from a non-attrib
+    // Line below invalid, since you can&rsquo;t cast from a non-attrib
     attrib float4 foo = temp;
 
     // this is equivalent to reading inputs.constval directly
@@ -14080,11 +14080,11 @@ results for the pull model evaluation are undefined.</p>
 <p>Consider the mode where the address comes in as an offset.  This mode allows full access to the grid (256 available sample locations),
 as opposed to the sample index mode, which only chooses from among the renderTarget sample locations.</p>
 
-<p>In the offset mode, the offset is an integer tuple (U,V).  This maps to grid coordinates in each axis span the integer range [-8�7], 
+<p>In the offset mode, the offset is an integer tuple (U,V).  This maps to grid coordinates in each axis span the integer range [-8&ndash;7], 
 where 0 is the center. The left and top edges of a pixel are included, but the bottom and right edges are not.  </p>
 
 <p>The least significant 4 bits of each int pixelOffset coordinate are interpreted as fixed point numbers.  The conversion from 4 bit fixed point 
-to float is as follows (MSB�LSB), where the MSB is both a part of the fraction and determines the sign:</p>
+to float is as follows (MSB&ndash;LSB), where the MSB is both a part of the fraction and determines the sign:</p>
 
 <pre>
     1000 = -0.5f    (-8 / 16)
@@ -14409,7 +14409,7 @@ and for sample-frequency execution the per-sample depth is used for per-sample c
 <p>The purpose for requiring centroid in pixel-frequency execution is that it guarantees the clamp is done against a safe depth value 
 within the gamut of the covered samples, thus not violating any traditional depth optimizations.  More ideal would have been to 
 pick the min or max covered sample, depending on which conservative depth mode is chosen, but that would have been too costly 
-to require hardware to compute for the benefit.  It was deemed adequate to use an existing interpolation mode � centroid. </p>
+to require hardware to compute for the benefit.  It was deemed adequate to use an existing interpolation mode &ndash; centroid. </p>
 
 <p>The shader can also ask for position to be interpolated with linear_noperspective_sample, but that makes the shader run at sample-frequency, 
 so the situation is simpler given there is a depth per sample and thus a clamp per sample.   Similary, if the shader is running at sample 
@@ -14443,24 +14443,24 @@ That is, Pixel Shader invocations will be able to perform atomic read/write oper
 So features in the Compute Shader can be considered for the Graphics Pipeline.</p>
 
 <p>In order not to break the clean and specialized semantics of the Graphics Pipeline, many features in the Compute Shader are NOT exposed (at least for this generation).  
-Examples of features not considered for Graphics are the Compute Shader�s ability to share scratch memory between threads, and the ability for a thread to control 
+Examples of features not considered for Graphics are the Compute Shader&rsquo;s ability to share scratch memory between threads, and the ability for a thread to control 
 the synchronization of a thread group.</p>
 
 <p>In fact, only one feature from the Compute Shader is deemed interesting to expose in Graphics for now, and that is the ability to perform random Unordered Access (UA) on memory, 
-both input and output, including atomic operations such as atomic compare and exchange or atomic increment.  Note this is different from the Pixel Shader�s Output Merger ("Blender") 
+both input and output, including atomic operations such as atomic compare and exchange or atomic increment.  Note this is different from the Pixel Shader&rsquo;s Output Merger ("Blender") 
 which is able to perform atomic operations, but does not allow variable addressing from a given Shader thread.  The word "Unordered" denotes the fact that with multiple Shader threads 
 in flight free to perform random accesses to memory, no ordering is enforced, and if the program running wants to achieve determinism, it must make use of atomic operations as appropriate, 
 or be careful to compute unique addresses for memory writes for each thread. </p>
 
 <p>It happens that the number of output memory Buffers that can participate in UA from a Compute Shader is <a href="#D3D11_PS_OUTPUT_REGISTER_COUNT" title="D3D11_PS_OUTPUT_REGISTER_COUNT"><font color=black style="text-decoration:none">8</font></a>.  This number is exactly the number of RenderTargets in the Graphics Pipeline, 
 by design (common resource in the hardware).  Given that the Pixel Shader is the place in the Graphics Pipeline where RenderTargets are already accessed via shaders, it is in the Pixel Shader 
-that Compute Shader�s UA ability is being exposed.</p>
+that Compute Shader&rsquo;s UA ability is being exposed.</p>
 <DIV class=boxed style="background-color: lightblue">
 
-<p>Technically UA could be exposed in other Graphics Pipeline stages (such as the Vertex Shader) as well, but aside from orthogonality, this would not buy much that can�t be accomplished by other existing mechanisms such as Stream Output or the Compute Shader.  </p>
+<p>Technically UA could be exposed in other Graphics Pipeline stages (such as the Vertex Shader) as well, but aside from orthogonality, this would not buy much that can&rsquo;t be accomplished by other existing mechanisms such as Stream Output or the Compute Shader.  </p>
 
-<p>Further, it is seen as important that the number of threads participating in UA be deterministic, and for some shader stages this isn�t obvious without extra design effort � 
-for example at the Vertex Shader, there would have to be a way to force the post-transform vertex cache to turn off.  While certainly possible to do, this wasn�t worth the effort at this point.</p>
+<p>Further, it is seen as important that the number of threads participating in UA be deterministic, and for some shader stages this isn&rsquo;t obvious without extra design effort &ndash; 
+for example at the Vertex Shader, there would have to be a way to force the post-transform vertex cache to turn off.  While certainly possible to do, this wasn&rsquo;t worth the effort at this point.</p>
 
 <p>Exposing UA in the Pixel Shader looks like it is the most enabling place for the feature in the Graphics Pipeline, so for now the feature is limited to this Pipeline Stage.</p>
 
@@ -14515,7 +14515,7 @@ depth/stencil writes before executing the Pixel Shader.</p>
 on per-sample Depth/Stencil tests.</p>
 
 <p>If the tests pass, the Pixel Shader is invoked, and it may perform operations with external effects such as accessing UAVs (Unordered Access Views), outputting to RenderTargets, 
-output Coverage etc.  Attempts to write Depth and/or Stencil (the latter isn�t yet a feature) from the PS are simply ignored with no effect, since Depth/Stencil processing has already happened.</p>
+output Coverage etc.  Attempts to write Depth and/or Stencil (the latter isn&rsquo;t yet a feature) from the PS are simply ignored with no effect, since Depth/Stencil processing has already happened.</p>
 
 <p>The D3D <a href="#QueryOcclusion">Occlusion Query</a><a style="color: Gray"><small><sup>(20.4.6)</sup></small></a> counts the number of MultiSamples which passed Depth and Stencil.  In the FORCE_EARLY_DEPTH_STENCIL mode, a sample is counted for the query if 
 it passes the Depth/Stencil tests that happen before the Pixel Shader invocation, and nothing downstream further impacts the count.</p>
@@ -14925,7 +14925,7 @@ here is unchanged from the past, and doesn't need further documentation here.</p
 <DIV class=boxed style="background-color: lightblue">
 <p>Having a read-only DSV bound at the OM enables ShaderResourceViews (SRVs) of the same depth/stencil buffer memory to be bound as shader input simultaneously, 
 without risk of a read/write hazard on the memory.   Further, this mechanism can be made to cooperate with existing mechanisms for controlling OM depth buffer read/write behavior, 
-while enabling the system to efficiently notice there is no read/write hazard to worry about� in the face of high frequency state changes encountered in Draw*() scenarios.</p>
+while enabling the system to efficiently notice there is no read/write hazard to worry about&ndash; in the face of high frequency state changes encountered in Draw*() scenarios.</p>
 
 <p>In D3D10+, the runtime enforces aggressive write-hazard prevention, so it is impossible to have situations where a given pipeline configuration appears 
 to be both reading and writing to the same memory at the same time.  This enforcement is accomplished by the runtime tracking what SRVs, DSVs, RenderTarget View (RTVs) and UnorderedAccess Views (UAVs)
@@ -15089,7 +15089,7 @@ Its purpose is to enable more general processing operations than those enabled b
 <p>Since many currently identified mass-market applications for compute shader involve presenting results at interactive rates.  
 The additional overhead of transitioning back and forth to a separate graphics API (and associated software stack) would consume too much CPU compute 
 overhead in these tightly coupled scenarios.  Furthermore, adding a separate API presents a more difficult adoption problem and requires a more complex installation process.  
-Therefore, the Compute Shader is integrated into Direct3D � accessible directly through the Direct3D device.  
+Therefore, the Compute Shader is integrated into Direct3D &ndash; accessible directly through the Direct3D device.  
 The compute shader can directly share memory resources with graphics shaders through the Direct3D Device.</p>
 
 <p>A Compute Shader is provided as a separate shader from the graphics shaders to impose different policies and reduce the complexity of interactions with other pipeline state.  
@@ -15148,7 +15148,7 @@ Other algorithms used in video processing such as DCT and quantization can also 
 <A id="18.2.3.6 Physics"></A>
 <H4>18.2.3.6 Physics</H4>
 <p>Accurate physical simulation of object motion is a key component of modern 3-D environments used in games and social network sites.  
-Rendering objects accurately is not sufficient if they don�t move realistically also.  
+Rendering objects accurately is not sufficient if they don&rsquo;t move realistically also.  
 Many of the steps involved in realistic physical simulation can be accelerated by the capabilities of the compute shader.
 Interacting particles such as used in SPH fluid models, flocking behavior, or connected spring-mass models used in character animation 
 benefit from sharing information efficiently between neighbors.  Inter-thread sharing facilitates this.</p>
@@ -15293,7 +15293,7 @@ be dispatched to execute using that shader.</p>
 <H3>18.6.3 Anatomy of a Compute Shader Dispatch Call</H3>
 <p>Suppose a Compute Shader program has been compiled having thread group dimensions 10 x 8 x 3.  The HLSL code would look roughly like this pseudocode:</p>
 <pre>
-[numThreads(10,8,3)] void CS( � )
+[numThreads(10,8,3)] void CS( &hellip; )
 {
     Shader Code 
 }
@@ -15392,7 +15392,7 @@ If the count is too high for the amount of space in the Buffer, it means that du
 subsequent writes were discarded, yet the counter continues going.  The intent here is to efficiently enable scenarios where the 
 application knows the worst case amount of data that could be written and allocates appropriately 
 (or is otherwise somehow robust to having the last elements missing due to Buffer full).  Calling Draw*Indirect with a vertex 
-count that is too high behaves predicably � attempts to read past the end of a Buffer have well defined semantics (spec�d elsewhere). </p>
+count that is too high behaves predicably &ndash; attempts to read past the end of a Buffer have well defined semantics (spec&rsquo;d elsewhere). </p>
 
 <p>NOTE:  CopyStructureCount does not work StreamOutput resources.</p>
 
@@ -15401,13 +15401,13 @@ count that is too high behaves predicably � attempts to read past the end of a
 <p>Current mass-market applications for GPUs (that are not 3-D shading) are substantially GPU memory i/o bound.  This means that 50-80% of the available processing 
 power in current GPUs cannot be brought to bear on these common problems.  Adding support for sharing of small amounts of data between threads can 
 reduce the effects of this i/o bottleneck, as it allows the shader to re-use data that was already brought into registers by a previous thread.  
-This saves the i/o work involved and allows the full processing power of the GPU�s ALUs to operate, producing a potential 4-8x performance improvement for key scenarios.  </p>
+This saves the i/o work involved and allows the full processing power of the GPU&rsquo;s ALUs to operate, producing a potential 4-8x performance improvement for key scenarios.  </p>
 
 <p>Current trends in silicon architecture will enable compute performance to grow faster than bandwidth performance. 
 This will increase the ratio of compute performance to bandwidth performance significantly.</p>
 
 <p>The hardware functionality required to address this in the DirectX11 shader model 5.0 compute shader is a predefined block of 32kB (<a href="#D3D11_CS_TGSM_REGISTER_COUNT" title="D3D11_CS_TGSM_REGISTER_COUNT"><font color=black style="text-decoration:none">8192</font></a> DWORDs) 
-of register space that can be declared within a shader to be of storage class �groupShared�.  
+of register space that can be declared within a shader to be of storage class &ldquo;groupShared&rdquo;.  
 Registers declared to be of this class can be shared between threads in the group.</p>
 
 <p>Due to contention issues it is not ideal for all threads in a given invocation ( Dispatch() call) to access the same set  of shared registers.  
@@ -15731,7 +15731,7 @@ pD3D11Device-&gt;CSSetShader()
 <H3>18.6.13 HLSL Syntax</H3>
 <p>The following example shows how the thread count is specified as an attribute in HLSL.</p>
 <pre>
-[numThreads(10,8,3)] void CS( � )
+[numThreads(10,8,3)] void CS( &hellip; )
 {
     Shader Code 
 }
@@ -15812,7 +15812,7 @@ EvaluateConvergence()
     
 float residual = ResidualBuffer.load( 0 );
 
-    if ( threadID == 0 )                // Don�t bother doing this more than once
+    if ( threadID == 0 )                // Don&rsquo;t bother doing this more than once
     {
         if ( residual &lt; ERR_TOLERANCE )    // if residual is small enough
         {
@@ -15862,8 +15862,8 @@ float residual = ResidualBuffer.load( 0 );
 <H3>18.7.1 Overview</H3>
 <p>This section defines a subset of the D3D11 hardware Compute Shader as well as <a href="#RawBuffer">Raw</a><a style="color: Gray"><small><sup>(5.1.4)</sup></small></a> and <a href="#StructuredBuffer">"Structured Buffer</a><a style="color: Gray"><small><sup>(5.1.3)</sup></small></a> features that can work on some D3D10.x hardware.  
 D3D11 drivers on D3D10.x hardware can opt-in to supporting this functionality via the D3D11 API.  No changes were made to the D3D10.x API/DDIs for this.  </p>
-<p>Example of known D3D10.x hardware that should be able to support this at the time of implementation are all of nVidia�s D3D10+ hardware, and for AMD, all 48xx Series D3D10.1 hardware and beyond.  
-The features exposed are basically an intersection of the features on known existing hardware, while being a clean subset of D3D11 hardware�s feature set.  
+<p>Example of known D3D10.x hardware that should be able to support this at the time of implementation are all of nVidia&rsquo;s D3D10+ hardware, and for AMD, all 48xx Series D3D10.1 hardware and beyond.  
+The features exposed are basically an intersection of the features on known existing hardware, while being a clean subset of D3D11 hardware&rsquo;s feature set.  
 The feature intersection does mean that not all of the expressiveness of IHV-specific APIs is available.  </p>
 
 <p>The rest of this section refers to D3D11 drivers for D3D10.x hardware which have opted into supporting the features as <b>"downlevel HW"</b>.  Note this does not mean all D3D10.x hardware.  </p>
@@ -15888,7 +15888,7 @@ except that only a single UAV can be bound to the pipeline at a time via CSSetUn
 <p>Note the lack of support for Typed UAVs on downlevel HW also means that Texture1D/2D/3D UAVs are not supported.</p>
 <p>Pixel Shaders on downlevel HW do not support UAV access.</p>
 <p>The base offset for a RAW UAV must be <a href="#D3D11_CS_4_X_RAW_UAV_BYTE_ALIGNMENT" title="D3D11_CS_4_X_RAW_UAV_BYTE_ALIGNMENT"><font color=black style="text-decoration:none">256</font></a> byte aligned (whereas full D3D11 HW requires only <a href="#D3D11_RAW_UAV_SRV_BYTE_ALIGNMENT" title="D3D11_RAW_UAV_SRV_BYTE_ALIGNMENT"><font color=black style="text-decoration:none">16</font></a> byte alignment).  
-RAW SRV�s (below) do not have any corresponding additional restriction.</p>
+RAW SRV&rsquo;s (below) do not have any corresponding additional restriction.</p>
 <A id="18.7.2.3 Shader Resource Views (SRVs) on Downlevel HW"></A>
 <H4>18.7.2.3 Shader Resource Views (SRVs) on Downlevel HW</H4>
 <p>All shader stages on downlevel HW: Vertex Shader, Geometry Shader, Pixel Shader and Compute Shader (CS described later) 
@@ -15922,7 +15922,7 @@ The next section describes this in detail.</p>
     <li><a href="#generatedvalue_ThreadIDInGroupFlattened">vThreadIDInGroupFlattened</a><a style="color: Gray"><small><sup>(23.14)</sup></small></a> (single component)</li>
 </ul>
   
-<p>The output is a single UAV, u#, where # is the RT/UAV slot where the UAV is bound.  vThreadIDInGroupFlattened is defined later on (it has not been described before) � 
+<p>The output is a single UAV, u#, where # is the RT/UAV slot where the UAV is bound.  vThreadIDInGroupFlattened is defined later on (it has not been described before) &ndash; 
 it will also be in CS_5_0 for forward compatibility.</p>
 
 <p><b>CS_4_1</b> is like CS_4_0, except it uses the VS_4_1 instruction set instead of VS_4_0.</p>
@@ -15932,7 +15932,7 @@ it will also be in CS_5_0 for forward compatibility.</p>
 <li><a href="#inst_uDCLStructured">dcl_uav_structured[_glc]</a><a style="color: Gray"><small><sup>(22.3.44)</sup></small></a></li>
 <li><a href="#inst_tDCLRaw">dcl_resource_raw</a><a style="color: Gray"><small><sup>(22.3.47)</sup></small></a></li>
 <li><a href="#inst_tDCLStructured">dcl_resource_structured</a><a style="color: Gray"><small><sup>(22.3.48)</sup></small></a></li>
-<li><a href="#inst_gDCLStructured">dcl_tgsm_structured</a><a style="color: Gray"><small><sup>(22.3.46)</sup></small></a> (structured TGSM decl � raw not available)</li>
+<li><a href="#inst_gDCLStructured">dcl_tgsm_structured</a><a style="color: Gray"><small><sup>(22.3.46)</sup></small></a> (structured TGSM decl &ndash; raw not available)</li>
 <li><a href="#inst_LD_RAW">ld_raw</a><a style="color: Gray"><small><sup>(22.4.10)</sup></small></a> (reading from UAV or SRV)  </li>
 <li><a href="#inst_STORE_RAW">store_raw</a><a style="color: Gray"><small><sup>(22.4.11)</sup></small></a> (writing to UAV)</li>
 <li><a href="#inst_LD_STRUCTURED">ld_structured</a><a style="color: Gray"><small><sup>(22.4.12)</sup></small></a> (reading from UAV, SRV or TGSM)</li>
@@ -15942,7 +15942,7 @@ it will also be in CS_5_0 for forward compatibility.</p>
 
 <p>Note in particular the absence of atomic operations, append/consume, or typed UAV access from the above list.  
 All of these are present in CS_5_0.  </p>
-<p>Further, note the absence of double precision arithmetic operations � drivers may opt to expose double precision arithmetic operations support 
+<p>Further, note the absence of double precision arithmetic operations &ndash; drivers may opt to expose double precision arithmetic operations support 
 via 5_0 shaders, but even if that is the case, CS_4_0 does not expose doubles (nor do any 4_x shaders for that matter).</p>
 <p>The sync instruction behaves the same as in CS_5_0, including the stipulation that the _ugroup option will not be exposed via 
 HLSL unless it is deemed necessary (see sync instruction specs).</p>
@@ -15986,7 +15986,7 @@ Instructions that write to the shared memory must use a literal offset into the 
 <A id="18.7.2.9 Enforcement of TGSM Restrictions on Downlevel HW"></A>
 <H4>18.7.2.9 Enforcement of TGSM Restrictions on Downlevel HW</H4>
 <p>First, recall that in cs_5_0, the Thread Group Shared Memory (TGSM) space is made visible to compute shader threads by declaring ranges of the space, each named g#.  
-All threads can see all the g# ranges.  The reason to be able to define multiple g# is to allow different ranges to be organized differently � 
+All threads can see all the g# ranges.  The reason to be able to define multiple g# is to allow different ranges to be organized differently &ndash; 
 like with different structure strides.  A given g# range can be declared as either RAW (just a flat count of bytes in size, multiple of 4 bytes), or 
 STRUCTURED (given a structure count and a structure stride that is a multiple of 4 bytes).</p>
 
@@ -15996,7 +15996,7 @@ way of exposing <i>per-thread RAW memory</i>, rather than as a way of having an 
 <pre>
 dcl_tgsm_structured g#, numStructures, structureByteStride
 </pre>
-<p>Recall the Compute Shader declares its thread group size statically via 3 integers defining the dimensions of the grid of threads � x,y,z.  
+<p>Recall the Compute Shader declares its thread group size statically via 3 integers defining the dimensions of the grid of threads &ndash; x,y,z.  
 The number of threads in the group is x*y*z.</p>
 <p>For CS_4_0/4_1, it is required that numStructures in the dcl above must be exactly x*y*z.  And it is required that the sum of the 
 structureByteStride value for all g# declarations in the program falls within the size limits defined in the previous section.</p>
@@ -16023,7 +16023,7 @@ store_structured g3.xy, /* output */
 in the same way a driver can report support for the Compute Shader and  Raw/Structured Buffers on Shader 4_x.  The support is all or none. </p>
 <p>The particular bit in the caps structure reported by drivers, shown below, is 
 D3D11DDICAPS_SHADER_COMPUTE_PLUS_RAW_AND_STRUCTURED_BUFFERS_IN_SHADER_4_X. D3D11 Hardware must report this bit, 
-as it represents a subset of D3D11�s features.</p>
+as it represents a subset of D3D11&rsquo;s features.</p>
 <pre>
 typedef struct D3D11DDI_SHADER_CAPS
 {
@@ -16425,7 +16425,7 @@ means support for the corresponding standard pattern or center pattern is requir
 
 <DIV class=boxed style="background-color: lightblue">
 <p>Some basic qualitative and quantitative tests were used to help select the sample patterns displayed. 
-In particular halfplane discrepancy � the error between analytic coverage and sample based coverage � seems to be useful. 
+In particular halfplane discrepancy &ndash; the error between analytic coverage and sample based coverage &ndash; seems to be useful. 
 Surprisingly the total L2 error (squared error over all edges through a pixel) was not that useful alone, but the worst case (L-inf) 
 error over all halfplanes (single worst edge), the worst case orientation (orientation with largest squared error as a plane 
 sweeps through the pixel) and the variance (combined with total L2) seem to be reasonable indicators. 
@@ -16684,9 +16684,9 @@ operations are required to be a multiple of 4.</p>
 <p>Valid implementations of BC formats other than BC6H and BC7 may optionally promote or do round-to-nearest division, so long as they meet the following equation for all channels of all texels:</p>
 
 <pre style="BACKGROUND-COLOR: lightgrey">
-| generated � reference | &lt; absolute_error + 0.03
-                            *MAX( | endpoint_0 � endpoint_1 |,
-                                  | endpoint_0_promoted � endpoint_1_promoted | )
+| generated - reference | &lt; absolute_error + 0.03
+                            *MAX( | endpoint_0 - endpoint_1 |,
+                                  | endpoint_0_promoted - endpoint_1_promoted | )
 </pre>
 <p>absolute_error is defined in the description of each format. </p>
 <p>endpoint_0, endpoint_1, and their promoted counterparts have been
@@ -16968,9 +16968,9 @@ if (red_0 &gt; red_1) // signed compare.
 Note that the 16 bit floating point format is often referred to as "half" format, containing 1 sign bit, 5 exponent bits, and 10 mantissa bits.</p>
 </DIV>
 
-<P>BC6H supports floating point denorms, but INF and NaN are not supported. The exception is the signed mode of BC6H, which can represent �INF.  While this �INF "support" was 
+<P>BC6H supports floating point denorms, but INF and NaN are not supported. The exception is the signed mode of BC6H, which can represent -INF.  While this -INF "support" was 
 
-unintentional, it is baked into the format.  So it is valid for encoders to intentionally use �INF, but they also have the option to clamp during encode to avoid it.  In 
+unintentional, it is baked into the format.  So it is valid for encoders to intentionally use -INF, but they also have the option to clamp during encode to avoid it.  In 
 
 general, faced with +-INF or NaN input data to deal with, encoders are loosely encouraged to clamp +-INFs to the corresponding maximum non-INF representable value, and map NaN 
 
@@ -17250,7 +17250,7 @@ although the format is capable of encoding source data with higher bits per comp
 <p>A BC7 block can take one of 8 modes, and the block mode is always stored in the LSBs of the 128-bit block. The block mode is encoded by zero or more "0"'s followed by a "1". 
 This mode string starts from the block LSB. </p>
 <p>A BC7 block may contain multiple endpoint pairs. For the purposes of this document, the set of indices that correspond to an endpoint pair may be referred to as a subset.</p>
-<p>In some block modes the endpoint representation is encoded in a form that for the purposes of this document will be called RGBP � in these cases the P bit represents a shared LSB for the components 
+<p>In some block modes the endpoint representation is encoded in a form that for the purposes of this document will be called RGBP &ndash; in these cases the P bit represents a shared LSB for the components 
 of the endpoint.
 For example, if the endpoint representation for the format was RGBP 5.5.5.1 then the endpoint would be interpreted as an RGB 6.6.6 value, with the LSB of each component being taken from the state of 
 the P bit. If the representation was RGBAP 5.5.5.5.1 then the endpoint would be interpreted as an RGBA 6.6.6.6 value. 
@@ -17313,9 +17313,9 @@ decompress(x, y, block)
     if (mode.type == 4 OR == 5)
     {
         //Decode the 2 color rotation bits as follows:
-        // 00 � Block format is Scalar(A) Vector(RGB) - no swapping
-        // 01 � Block format is Scalar(R) Vector(AGB) - swap A and R
-        // 10 � Block format is Scalar(G) Vector(RAB) - swap A and G
+        // 00 - Block format is Scalar(A) Vector(RGB) - no swapping
+        // 01 - Block format is Scalar(R) Vector(AGB) - swap A and R
+        // 10 - Block format is Scalar(G) Vector(RAB) - swap A and G
         // 11 - Block format is Scalar(B) Vector(RGA) - swap A and B
         rotation = extract_rot_bits(mode, block);
         output = swap_channels(output, rotation);
@@ -17404,7 +17404,7 @@ UINT8 interpolate(UINT8 e0, UINT8 e1, UINT8 index, UINT8 indexprecision)
 </pre></div>
 
 The following pseudocode illustrates how to extract indices and bitcounts for color and alpha components.
-Blocks with separate color and alpha also have two sets of index data � one for the vector channel and one for the scalar channel. 
+Blocks with separate color and alpha also have two sets of index data &ndash; one for the vector channel and one for the scalar channel. 
 For Mode 4, these indices are of differing widths (3 or 2 bits) and there is a one-bit selector which chooses whether 
 the vector or scalar data uses the 3-bit indices. (Extracting the alpha bitcount is similar to extracting color bitcount
 but with inverse behavior based on the idxMode bit.)
@@ -17526,7 +17526,7 @@ bitcount get_color_bitcount(block, mode)
 
 <P>Mode 8 (LSB 0x00) is reserved and should not be used by the encoder. If this mode is given to the hardware, an all 0 block will be returned.</P>
 
-<p>As previously discussed, in some block modes the endpoint representation is encoded in a form called RGBP � in these cases the P bit represents a shared LSB for the components of the endpoint.
+<p>As previously discussed, in some block modes the endpoint representation is encoded in a form called RGBP &ndash; in these cases the P bit represents a shared LSB for the components of the endpoint.
 For example, if the endpoint representation for the format was RGBP 5.5.5.1 then the endpoint would be interpreted as an RGB 6.6.6 value, with the LSB of each component being taken from the state of the P bit. 
 If the representation was RGBAP 5.5.5.5.1 then the endpoint would be interpreted as an RGBA 6.6.6.6 value. 
 Depending on the block mode the shared LSB may either be specified for both endpoints of a subset individually (2 P-bits per subset), 
@@ -17539,8 +17539,8 @@ or shared between the endpoints of the subset (1 P-bit per subset)</p>
 <li><b>Block types with separated color and alpha: </b> In these blocks the alpha values and color values are specified separately, each with their own sets of indices. 
 These blocks effectively have a vector channel (R.G.B) and a scalar channel (A) separately encoded.
 In these blocks a separate 2-bit field is also encoded that allows specification on a per-block basis of the channel that is encoded separately as a scalar, 
-so the block can have 4 different representations � RGB|A, AGB|R, RAB|G, RGA|B. The channel order is swizzled back to RGBA after decoding, so the internal block format is transparent to the developer. 
-Blocks with separate color and alpha also have two sets of index data � one for the vector channel and one for the scalar channel. In the case of Mode 4, these indices are of differing widths 
+so the block can have 4 different representations &ndash; RGB|A, AGB|R, RAB|G, RGA|B. The channel order is swizzled back to RGBA after decoding, so the internal block format is transparent to the developer. 
+Blocks with separate color and alpha also have two sets of index data &ndash; one for the vector channel and one for the scalar channel. In the case of Mode 4, these indices are of differing widths 
 (3 or 2 bits). Mode 4 contains is a one-bit selector which chooses whether the vector or scalar data uses the 3-bit indices.</li>
 </ul>
 
@@ -18251,7 +18251,7 @@ pD3DDevice-&gt;CreateQuery( D3D11_QUERY_OCCLUSION_PREDICATE, 0, &amp;pOcclusionP
 
 // Bracket a box rasterization at the light source to query for occlusion.
 pOcclusionP-&gt;Issue( D3DISSUE_BEGIN );
-// Draw box at light source to see if it�s occluded.
+// Draw box at light source to see if it&rsquo;s occluded.
 pOcclusionP-&gt;Issue( D3DISSUE_END );
 
 
@@ -18294,7 +18294,7 @@ pD3DDevice-&gt;CreateQuery( D3D11_QUERY_OCCLUSION_PREDICATE, D3DCREATEQUERY_PRED
 
 // Bracket a box rasterization at the light source to query for occlusion.
 pOcclusionP-&gt;Issue( D3DISSUE_BEGIN );
-// Draw box at light source to see if it�s occluded.
+// Draw box at light source to see if it&rsquo;s occluded.
 pOcclusionP-&gt;Issue( D3DISSUE_END );
 
 ...
@@ -18355,7 +18355,7 @@ is probably a garbage frame from being shown to the application.</p>
 to a Stream and an output primitive will not fit into any one of the Buffers, writes to all 
 of the Buffers bound to that Stream are stopped, while counters continue indicating how much 
 storage would have been needed continue to increment.  If multiple Streams are being used, 
-and output to a given Stream�s Buffers have been halted because one of its Buffers is full, 
+and output to a given Stream&rsquo;s Buffers have been halted because one of its Buffers is full, 
 this does not affect output to other Streams.  </p>
 <hr><!-- ********************************************************************** -->
 <h2 id="PerfMonitoring"></h2><A id="20.5 Performance Monitoring and Counters"></A>
@@ -18427,7 +18427,7 @@ this concept.</p>
 <hr><!-- ********************************************************************** -->
 <A id="20.5.5.1 Overview and Scope"></A>
 <H4>20.5.5.1 Overview and Scope</H4>
-<p>This feature tries to solve the problem of enabling �real-time, low overhead� GPU performance data gathering and at the same time, 
+<p>This feature tries to solve the problem of enabling &ldquo;real-time, low overhead&rdquo; GPU performance data gathering and at the same time, 
     provide enough information to measure when an API call was made by an application and exactly when it was rendered on the GPU, 
     even using multiple engines. The goal is to also have enough information to reconstruct the exact order of operations executed by the GPU, 
     so that tools can accurately identify shared surface ownership and potential synchronization issues in D3D applications.</p>
@@ -18443,7 +18443,7 @@ this concept.</p>
   <tr>
     <td>Accurate tracking of API calls made by the application, with CPU and GPU timestamps for when these calls are submitted and the work is executed on the GPU<td>1</tr>
   <tr>
-    <td>The ability to extend tools like GPUView by being able to �see inside� a DMA packet and see all the primitives it contains and associate these with the original API calls. <td>1</tr>
+    <td>The ability to extend tools like GPUView by being able to &ldquo;see inside&rdquo; a DMA packet and see all the primitives it contains and associate these with the original API calls. <td>1</tr>
   <tr>
     <td>An architecture that can potentially capture an application submitting 100,000 draw calls at 60 frames per second with ~100MB/s of profiling data generated.<td>2</tr>
   <tr>
@@ -18505,12 +18505,12 @@ This is required for all GPU hardware at all feature levels.
 <p>Microsoft may drive toward these goals by enforcing greater capabilities using methods like the addition of feature levels over future Windows releases and HCK tests.</p>
 
 <ul>
-    <li>Ideally zero processing of the counter data by the runtime or IHV driver. Given the volume of data being collected, we cannot afford to require �fixups� or manipulation of the data as this would be too expensive.</li>
+    <li>Ideally zero processing of the counter data by the runtime or IHV driver. Given the volume of data being collected, we cannot afford to require &ldquo;fixups&rdquo; or manipulation of the data as this would be too expensive.</li>
     <li>Efficiency Improvements to reduce the CPU overhead of logging many events and reduce the effects of the Heisenberg uncertainty principle.</li>
     <ul>
         <li>In the wild, Windows Desktop applications have been reported to issue ~15,000 Draw calls per 60Hz frame today, and each of those Draw calls would 
             additionally call a new DDI when instrumented. Our goals are to evolve Windows Desktop to eventually support ~100,000 Draw calls per 60Hz frame and incur 
-            no more than 5% overhead while instrumented. Some Desktop systems are capable of ~250,000 Draw calls per 60Hz frame, if that�s all they do.</li>
+            no more than 5% overhead while instrumented. Some Desktop systems are capable of ~250,000 Draw calls per 60Hz frame, if that&rsquo;s all they do.</li>
     </ul>
 
 </ul>
@@ -18628,9 +18628,9 @@ of the spec, such as the tables describing the registers available in the shader
 </table>
 <p>Note about the number of texels in a Buffer (listed above as 2<sup><a href="#D3D11_REQ_BUFFER_RESOURCE_TEXEL_COUNT_2_TO_EXP" title="D3D11_REQ_BUFFER_RESOURCE_TEXEL_COUNT_2_TO_EXP"><font color=black style="text-decoration:none">27</font></a></sup> Texels).  
 Since the format type which defines and element, or texel, is only assigned when a View of a Buffer is created, this limit only applies to the creation of Views.  
-D3D11 has a couple of new classes of Buffers � <a ref="#RawBuffers">Raw</a> and <a href="#StructuredBuffer">Structured</a><a style="color: Gray"><small><sup>(5.1.3)</sup></small></a> buffers.  Structured buffer Views are held the the 2<sup><a href="#D3D11_REQ_BUFFER_RESOURCE_TEXEL_COUNT_2_TO_EXP" title="D3D11_REQ_BUFFER_RESOURCE_TEXEL_COUNT_2_TO_EXP"><font color=black style="text-decoration:none">27</font></a></sup> limit 
-(how many structures are allowed in the view).  Raw Buffer Views, however, are not subject to the 2<sup><a href="#D3D11_REQ_BUFFER_RESOURCE_TEXEL_COUNT_2_TO_EXP" title="D3D11_REQ_BUFFER_RESOURCE_TEXEL_COUNT_2_TO_EXP"><font color=black style="text-decoration:none">27</font></a></sup> texel limit � Raw views, which have no type, 
-but are addressed at 32-bit granularity, can span the entire size of a Buffer � where the size of a Buffer is only constrained by the maximum resource size formula above.</p>
+D3D11 has a couple of new classes of Buffers &ndash; <a ref="#RawBuffers">Raw</a> and <a href="#StructuredBuffer">Structured</a><a style="color: Gray"><small><sup>(5.1.3)</sup></small></a> buffers.  Structured buffer Views are held the the 2<sup><a href="#D3D11_REQ_BUFFER_RESOURCE_TEXEL_COUNT_2_TO_EXP" title="D3D11_REQ_BUFFER_RESOURCE_TEXEL_COUNT_2_TO_EXP"><font color=black style="text-decoration:none">27</font></a></sup> limit 
+(how many structures are allowed in the view).  Raw Buffer Views, however, are not subject to the 2<sup><a href="#D3D11_REQ_BUFFER_RESOURCE_TEXEL_COUNT_2_TO_EXP" title="D3D11_REQ_BUFFER_RESOURCE_TEXEL_COUNT_2_TO_EXP"><font color=black style="text-decoration:none">27</font></a></sup> texel limit &ndash; Raw views, which have no type, 
+but are addressed at 32-bit granularity, can span the entire size of a Buffer &ndash; where the size of a Buffer is only constrained by the maximum resource size formula above.</p>
 
 <hr><!-- ********************************************************************** -->
 <h1 id="Shader Instruction Reference"></h1><A id="22 Shader Instruction Reference"></A>
@@ -19592,16 +19592,16 @@ Operation:      The instanceCount parameter of the declaration specifies
                 must be &lt;= <a href="#D3D11_GS_MAX_OUTPUT_VERTEX_COUNT_ACROSS_INSTANCES" title="D3D11_GS_MAX_OUTPUT_VERTEX_COUNT_ACROSS_INSTANCES"><font color=black style="text-decoration:none">1024</font></a>.
 
                 The amount of data that a given GS instance can emit 
-                is (still) <a href="#D3D11_REQ_GS_INVOCATION_32BIT_OUTPUT_COMPONENT_LIMIT" title="D3D11_REQ_GS_INVOCATION_32BIT_OUTPUT_COMPONENT_LIMIT"><font color=black style="text-decoration:none">1024</font></a> scalars maximum � validated by counting up 
+                is (still) <a href="#D3D11_REQ_GS_INVOCATION_32BIT_OUTPUT_COMPONENT_LIMIT" title="D3D11_REQ_GS_INVOCATION_32BIT_OUTPUT_COMPONENT_LIMIT"><font color=black style="text-decoration:none">1024</font></a> scalars maximum &ndash; validated by counting up 
                 all scalars declared for input and multiplying by the 
                 declared output vertex count.  
                 
                 So use of Geometry Shader instancing effectively increases
                 the total amount of data that can be emitted per 
-                input primitive � <a href="#D3D11_REQ_GS_INVOCATION_32BIT_OUTPUT_COMPONENT_LIMIT" title="D3D11_REQ_GS_INVOCATION_32BIT_OUTPUT_COMPONENT_LIMIT"><font color=black style="text-decoration:none">1024</font></a> scalars for a single instance 
+                input primitive &ndash; <a href="#D3D11_REQ_GS_INVOCATION_32BIT_OUTPUT_COMPONENT_LIMIT" title="D3D11_REQ_GS_INVOCATION_32BIT_OUTPUT_COMPONENT_LIMIT"><font color=black style="text-decoration:none">1024</font></a> scalars for a single instance 
                 yields up to <a href="#D3D11_REQ_GS_INVOCATION_32BIT_OUTPUT_COMPONENT_LIMIT" title="D3D11_REQ_GS_INVOCATION_32BIT_OUTPUT_COMPONENT_LIMIT"><font color=black style="text-decoration:none">1024</font></a>*<a href="#D3D11_GS_MAX_INSTANCE_COUNT" title="D3D11_GS_MAX_INSTANCE_COUNT"><font color=black style="text-decoration:none">32</font></a> scalars of output data across all GS 
                 instances for a single input primitive.  However the 
-                the more instances, the fewer vertices each instance can emit � 
+                the more instances, the fewer vertices each instance can emit &ndash; 
                 a single instance (no instancing) can emit <a href="#D3D11_GS_MAX_OUTPUT_VERTEX_COUNT_ACROSS_INSTANCES" title="D3D11_GS_MAX_OUTPUT_VERTEX_COUNT_ACROSS_INSTANCES"><font color=black style="text-decoration:none">1024</font></a> vertices, but 
                 at the other extreme, declaring *<a href="#D3D11_GS_MAX_INSTANCE_COUNT" title="D3D11_GS_MAX_INSTANCE_COUNT"><font color=black style="text-decoration:none">32</font></a> instances means each instance
                 can only output <a href="#D3D11_GS_MAX_OUTPUT_VERTEX_COUNT_ACROSS_INSTANCES" title="D3D11_GS_MAX_OUTPUT_VERTEX_COUNT_ACROSS_INSTANCES"><font color=black style="text-decoration:none">1024</font></a>/<a href="#D3D11_GS_MAX_INSTANCE_COUNT" title="D3D11_GS_MAX_INSTANCE_COUNT"><font color=black style="text-decoration:none">32</font></a> = 32 vertices.
@@ -20746,7 +20746,7 @@ Stage(s):       Compute Shader
 
 Description:    Declare a reference to a region of shared 
                 memory space available to the Compute 
-                Shader�s thread group.
+                Shader&rsquo;s thread group.
                 
 Operation:      The g# being declared is a reference to a 
                 byteCount size block of untyped 
@@ -20775,7 +20775,7 @@ Stage(s):       Compute Shader
 
 Description:    Declare a reference to a region of shared
                 Memory space available to the Compute
-                Shader�s thread group.  The memory is 
+                Shader&rsquo;s thread group.  The memory is 
                 viewed as an array of structures.
 
 Operation:      The g# being declared is a reference to a 
@@ -20956,7 +20956,7 @@ Operation:      Each interface needs to be bound from the API before
                 The first [] of an interface decl is the array size.
                 If dynamic indexing is used the decl will indicate
                 that as shown.  An array of interface pointers can
-                be indexed statically also, it isn�t required that
+                be indexed statically also, it isn&rsquo;t required that
                 arrays of interface pointers mean dynamic indexing.
 
                 Numbering of interface pointers starts at 0 for the first
@@ -21054,7 +21054,7 @@ Operation:      srcResource can be a Buffer (not a Constant Buffer) in an
                 SRV (t#) or UAV (u#)
                 .
                 All components in dest[.mask] receive the 
-                integer number of elements in the Buffer�s Shader 
+                integer number of elements in the Buffer&rsquo;s Shader 
                 Resource View.  The number of elements depends on the 
                 view parameters such as memory format.  
 
@@ -21069,7 +21069,7 @@ Operation:      srcResource can be a Buffer (not a Constant Buffer) in an
                 the number of structures in the view. 
 
 <DIV class=boxed style="background-color: lightblue">
-Motivation:     Matches the functionality �resinfo� has for textures.
+Motivation:     Matches the functionality &ldquo;resinfo&rdquo; has for textures.
 </DIV>
 </pre>
 <hr><!-- ********************************************************************** -->
@@ -21228,7 +21228,7 @@ Operation:      The first 2 components of the 4-vector offset parameter supply
                 shader feedback status output value. Can be NULL (or not present) if not used.
                 See <a href="#TiledResourcesTextureSampling">Tiled Resources Texture Sampling Features</a><a style="color: Gray"><small><sup>(5.9.4.5)</sup></small></a> for details.
 <DIV class=boxed style="background-color: lightblue">
-Motivation:     Extend gather4�s offset range to be larger and programmable.
+Motivation:     Extend gather4&rsquo;s offset range to be larger and programmable.
                 The "po" suffix on the name means "programmable offset"
 </DIV>
 </pre>
@@ -21751,7 +21751,7 @@ Operation:      (1-4) component *32bit components written
                 the actual data does not have to be stored linearly.  
                 dst0 can only have a write mask that is one of the 
                 following: .x, .xy, .xyz, .xyzw.   The writemask determines
-                the number of 32bit components to write � without gaps.
+                the number of 32bit components to write &ndash; without gaps.
 
                 Out of bounds addressing on u# means nothing is written 
                 to the out of bounds memory (any part that is in bounds
@@ -21904,7 +21904,7 @@ Operation:      (1-4) component *32bit components written
                     
                 dst0 can only have a write mask that is one of the 
                 following: .x, .xy, .xyz, .xyzw.   The writemask determines
-                the number of 32bit components to write � without gaps.
+                the number of 32bit components to write &ndash; without gaps.
                  
                 Out of bounds addressing on u# casued by dstAddress
                 means nothing is written to the out of bounds memory.
@@ -22634,22 +22634,22 @@ Operation:      Evaluate resource at (fractional) pixel offset from pixel center
 
                 Only the least significant 4 bits of the first two components (U, V) of pixelOffset are used. The conversion from the 4-bit fixed point to
                 float is as follows (MSB...LSB), where the MSB is both a part of the fraction and determines the sign:
-                �    1000 = -0.5f    (-8 / 16)
-                �    1001 = -0.4375f (-7 / 16)
-                �    1010 = -0.375f  (-6 / 16)
-                �    1011 = -0.3125f (-5 / 16)
-                �    1100 = -0.25f   (-4 / 16)
-                �    1101 = -0.1875f (-3 / 16)
-                �    1110 = -0.125f  (-2 / 16)
-                �    1111 = -0.0625f (-1 / 16)
-                �    0000 =  0.0f    ( 0 / 16)
-                �    0001 =  0.0625f ( 1 / 16)
-                �    0010 =  0.125f  ( 2 / 16)
-                �    0011 =  0.1875f ( 3 / 16)
-                �    0100 =  0.25f   ( 4 / 16)
-                �    0101 =  0.3125f ( 5 / 16)
-                �    0110 =  0.375f  ( 6 / 16)
-                �    0111 =  0.4375f ( 7 / 16)
+                &bull;    1000 = -0.5f    (-8 / 16)
+                &bull;    1001 = -0.4375f (-7 / 16)
+                &bull;    1010 = -0.375f  (-6 / 16)
+                &bull;    1011 = -0.3125f (-5 / 16)
+                &bull;    1100 = -0.25f   (-4 / 16)
+                &bull;    1101 = -0.1875f (-3 / 16)
+                &bull;    1110 = -0.125f  (-2 / 16)
+                &bull;    1111 = -0.0625f (-1 / 16)
+                &bull;    0000 =  0.0f    ( 0 / 16)
+                &bull;    0001 =  0.0625f ( 1 / 16)
+                &bull;    0010 =  0.125f  ( 2 / 16)
+                &bull;    0011 =  0.1875f ( 3 / 16)
+                &bull;    0100 =  0.25f   ( 4 / 16)
+                &bull;    0101 =  0.3125f ( 5 / 16)
+                &bull;    0110 =  0.375f  ( 6 / 16)
+                &bull;    0111 =  0.4375f ( 7 / 16)
 
                 Note that the left and top edges of a pixel are included, but the bottom and right edges are not.  
                
@@ -23700,7 +23700,7 @@ Restrictions:   (1) If arrayIndex uses dynamic indexing,
                     disallow this case.
                     It is ok for adjacent invocations to 
                     simply be inactive due to flow control,
-                    since that doesn�t break lockstep
+                    since that doesn&rsquo;t break lockstep
                     execution.
                 (2) If fp# + arrayIndex specifies an out of 
                     bounds index, behavior is undefined.
@@ -24068,7 +24068,7 @@ Operation:      The encoding of this instruction attempts to
 
                 expands to:
 
-                movc temp[dest0�s mask], 
+                movc temp[dest0&rsquo;s mask], 
                      src0[.swizzle], 
                      src2[.swizzle], src1[.swizzle]
 
@@ -27312,7 +27312,7 @@ Operation:      Sync has options _uglobal, _ugroup, _g and _t,
                 optional in addition.
 
                 *Note the _ugroup option will not be exposed 
-                to developers unless discovered to be critical � 
+                to developers unless discovered to be critical &ndash; 
                 discussed further below.
 
                 _uglobal:
@@ -27419,7 +27419,7 @@ Operation:      Sync has options _uglobal, _ugroup, _g and _t,
                 
                 --------
 
-                Listing of Compute Shader �sync� variants:
+                Listing of Compute Shader &ldquo;sync&rdquo; variants:
 
                 sync_g
                 sync_ugroup*
@@ -27436,7 +27436,7 @@ Operation:      Sync has options _uglobal, _ugroup, _g and _t,
                 by the HLSL compiler, per the earlier discussion 
                 in the _ugroup section above.
 
-                Listing of Graphics Shader �sync� variants:
+                Listing of Graphics Shader &ldquo;sync&rdquo; variants:
 
                 sync_uglobal only.
                 
@@ -27500,7 +27500,7 @@ Operation:      Single component 32-bit bitwise AND of
                 taken from the address is determined
                 by the dimensionality of dst u# or g#.
 
-                If dst is a u#, it may have been decl�d
+                If dst is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as UINT/SINT with 
                 the bound resource format being 
@@ -27558,7 +27558,7 @@ Operation:      Single component 32-bit bitwise OR of
                 taken from the address is determined
                 by the dimensionality of dst u# or g#.
 
-                If dst is a u#, it may have been decl�d
+                If dst is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as UINT/SINT with 
                 the bound resource format being 
@@ -27616,7 +27616,7 @@ Operation:      Single component 32-bit bitwise XOR of
                 taken from the address is determined
                 by the dimensionality of dst u# or g#.
 
-                If dst is a u#, it may have been decl�d
+                If dst is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as UINT/SINT with 
                 the bound resource format being 
@@ -27678,7 +27678,7 @@ Operation:      Single component 32-bit value compare of
                 The entire compare+write operation is 
                 performed atomically.
 
-                If dst is a u#, it may have been decl�d
+                If dst is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as UINT/SINT
                 with the bound resource format being 
@@ -27741,7 +27741,7 @@ Operation:      Single component 32-bit integer add of
                 taken from the address is determined
                 by the dimensionality of dst u# or g#.
 
-                If dst is a u#, it may have been decl�d
+                If dst is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as UINT/SINT with 
                 the bound resource format being 
@@ -27799,7 +27799,7 @@ Operation:      Single component 32-bit signed max of
                 taken from the address is determined
                 by the dimensionality of dst u# or g#.
 
-                If dst is a u#, it may have been decl�d
+                If dst is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as SINT with 
                 the bound resource format being 
@@ -27857,7 +27857,7 @@ Operation:      Single component 32-bit signed min of
                 taken from the address is determined
                 by the dimensionality of dst u# or g#.
 
-                If dst is a u#, it may have been decl�d
+                If dst is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as SINT with 
                 the bound resource format being 
@@ -27915,7 +27915,7 @@ Operation:      Single component 32-bit unsigned max of
                 taken from the address is determined
                 by the dimensionality of dst u# or g#.
 
-                If dst is a u#, it may have been decl�d
+                If dst is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as UINT with 
                 the bound resource format being 
@@ -27972,7 +27972,7 @@ Operation:      Single component 32-bit unsigned min of
                 taken from the address is determined
                 by the dimensionality of dst u# or g#.
 
-                If dst is a u#, it may have been decl�d
+                If dst is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as UINT with 
                 the bound resource format being 
@@ -28126,7 +28126,7 @@ Operation:      Single component 32-bit bitwise AND of
                 Compute Shader it can also be 
                 Thread Group Shared Memory (g#).
 
-                If dst1 is a u#, it may have been decl�d
+                If dst1 is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as UINT/SINT with 
                 the bound resource format being 
@@ -28195,7 +28195,7 @@ Operation:      Single component 32-bit bitwise OR of
                 Compute Shader it can also be 
                 Thread Group Shared Memory (g#).
 
-                If dst1 is a u#, it may have been decl�d
+                If dst1 is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as UINT/SINT with 
                 the bound resource format being 
@@ -28264,7 +28264,7 @@ Operation:      Single component 32-bit bitwise XOR of
                 Compute Shader it can also be 
                 Thread Group Shared Memory (g#).
 
-                If dst1 is a u#, it may have been decl�d
+                If dst1 is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as UINT/SINT with 
                 the bound resource format being 
@@ -28332,7 +28332,7 @@ Operation:      Single component 32-bit value write of
                 Compute Shader it can also be 
                 Thread Group Shared Memory (g#).
 
-                If dst1 is a u#, it may have been decl�d
+                If dst1 is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as UINT/SINT with 
                 the bound resource format being 
@@ -28402,7 +28402,7 @@ Operation:      Single component 32-bit value compare of
                 Compute Shader it can also be 
                 Thread Group Shared Memory (g#).
 
-                If dst1 is a u#, it may have been decl�d
+                If dst1 is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as UINT/SINT with 
                 the bound resource format being 
@@ -28477,7 +28477,7 @@ Operation:      Single component 32-bit integer add of
                 Compute Shader it can also be 
                 Thread Group Shared Memory (g#).
 
-                If dst1 is a u#, it may have been decl�d
+                If dst1 is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as UINT/SINT with 
                 the bound resource format being 
@@ -28545,7 +28545,7 @@ Operation:      Single component 32-bit signed max of
                 Compute Shader it can also be 
                 Thread Group Shared Memory (g#).
 
-                If dst1 is a u#, it may have been decl�d
+                If dst1 is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as SINT with 
                 the bound resource format being 
@@ -28613,7 +28613,7 @@ Operation:      Single component 32-bit signed min of
                 Compute Shader it can also be 
                 Thread Group Shared Memory (g#).
 
-                If dst1 is a u#, it may have been decl�d
+                If dst1 is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as SINT with 
                 the bound resource format being 
@@ -28682,7 +28682,7 @@ Operation:      Single component 32-bit unsigned min of
                 Compute Shader it can also be 
                 Thread Group Shared Memory (g#).
 
-                If dst1 is a u#, it may have been decl�d
+                If dst1 is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as UINT with 
                 the bound resource format being 
@@ -28750,7 +28750,7 @@ Operation:      Single component 32-bit unsigned min of
                 Compute Shader it can also be 
                 Thread Group Shared Memory (g#).
 
-                If dst1 is a u#, it may have been decl�d
+                If dst1 is a u#, it may have been decl&rsquo;d
                 as raw, typed or structured.  If typed, 
                 it must be declared as UINT with 
                 the bound resource format being 
@@ -28895,14 +28895,14 @@ Operation:      The <a href="#inst_globalFlagsDCL">global shader flag</a><a styl
                 The precise modifier affects any operation, not just arithmetic.  
                 As a subtle example consider an example sequence of instructions:
 
-                (a) Write the value of the variable �foo� to memory address x 
+                (a) Write the value of the variable &ldquo;foo&rdquo; to memory address x 
                     in an Unordered Access View
                 (b)    ...
                 (c)    Read from memory address x in the UAV
                 
                 Since there is a write and a read from the same address, if REFACTORING_ALLOWED 
                 was present, the compiler or drivers can optimize away the read from memory 
-                for (c) to just use the value of �foo� rather than reading from memory, 
+                for (c) to just use the value of &ldquo;foo&rdquo; rather than reading from memory, 
                 assuming there were no memory sync operations requested between 
                 them (which would have prevented the optimization).  However, 
                 if REFACTORING_ALLOWED is not declared for the shader, or if it is present 
@@ -28911,7 +28911,7 @@ Operation:      The <a href="#inst_globalFlagsDCL">global shader flag</a><a styl
                 optimized version and the PRECISE version, because, for instance, if memory 
                 address x happens to be out of bounds of the UAV, the write does not happen, 
                 the read out of bounds has some other well defined behavior, and thus the 
-                read will not produce �foo�.
+                read will not produce &ldquo;foo&rdquo;.
 </pre>
 <hr><!-- ********************************************************************** -->
 <h1 id="SystemGeneratedValuesReference"></h1><A id="23 System Generated Values Reference"></A>
@@ -29633,9 +29633,9 @@ a cross-endianness solution.</p>
 <tr><td>D3DFMT_YUY2</td>                <td>Not available</td></tr>
 <tr><td>D3DFMT_G8R8_G8B8</td>           <td>DXGI_FORMAT_R8G8_B8G8_UNORM (in DX9 the data was scaled up by 255.0f, but this can be handled in shader code).</td></tr>
 <tr><td>D3DFMT_DXT1</td>                <td>DXGI_FORMAT_BC1_UNORM &amp; DXGI_FORMAT_BC1_UNORM_SRGB</td></tr>
-<tr><td>D3DFMT_DXT2</td>                <td>DXGI_FORMAT_BC2_UNORM &amp; DXGI_FORMAT_BC2_UNORM_SRGB   Note: DXT2 and DXT3 are the same from an API/hardware perspective� only difference was �premultiplied alpha�, which can be tracked by an application and doesn�t need a separate format.</td></tr>
+<tr><td>D3DFMT_DXT2</td>                <td>DXGI_FORMAT_BC2_UNORM &amp; DXGI_FORMAT_BC2_UNORM_SRGB   Note: DXT2 and DXT3 are the same from an API/hardware perspective&ndash; only difference was &ldquo;premultiplied alpha&rdquo;, which can be tracked by an application and doesn&rsquo;t need a separate format.</td></tr>
 <tr><td>D3DFMT_DXT3</td>                <td>DXGI_FORMAT_BC2_UNORM &amp; DXGI_FORMAT_BC2_UNORM_SRGB</td></tr>
-<tr><td>D3DFMT_DXT4</td>                <td>DXGI_FORMAT_BC3_UNORM &amp; DXGI_FORMAT_BC3_UNORM_SRGB   Note: DXT4 and DXT5 are the same from an API/hardware perspective� only difference was �premultiplied alpha�, which can be tracked by an application and doesn�t need a separate format.</td></tr>
+<tr><td>D3DFMT_DXT4</td>                <td>DXGI_FORMAT_BC3_UNORM &amp; DXGI_FORMAT_BC3_UNORM_SRGB   Note: DXT4 and DXT5 are the same from an API/hardware perspective&ndash; only difference was &ldquo;premultiplied alpha&rdquo;, which can be tracked by an application and doesn&rsquo;t need a separate format.</td></tr>
 <tr><td>D3DFMT_DXT5</td>                <td>DXGI_FORMAT_BC3_UNORM &amp; DXGI_FORMAT_BC3_UNORM_SRGB</td></tr>
 <tr><td>D3DFMT_D16 &amp; D3DFMT_D16_LOCKABLE</td>   <td>DXGI_FORMAT_D16_UNORM</td></tr>
 <tr><td>D3DFMT_D32</td>                 <td>Not available</td></tr>
