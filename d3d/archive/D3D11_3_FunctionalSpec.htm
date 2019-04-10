@@ -10064,7 +10064,7 @@ for(each slot, s, <a href="#SetVertexBufferAPI">with a VertexBuffer assigned</a>
         for(each Element, e, <a href="#SetInputLayoutAPI">in the Buffer's Input Layout</a>)
         {
             VertexBufferElementAddressInBytes[s][e] =
-                <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets">VertexBufferOffsetInBytes</a> +
+                <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets"> VertexBufferOffsetInBytes</a> +
                 <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*<a href="#StartVertexLocation">StartVertexLocation</a> +
                 <a href="#SlotDesc">Slot</a>[s].<a href="#pInputLayout">pInputLayout</a>-&gt;pElement[e].<a href="#ElementOffset">OffsetInBytes</a>;
         } // Element loop
@@ -10074,7 +10074,7 @@ for(each slot, s, <a href="#SetVertexBufferAPI">with a VertexBuffer assigned</a>
         for(each Element, e, <a href="#SetInputLayoutAPI">in the Buffer's Input Layout</a>)
         {
             VertexBufferElementAddressInBytes[s][e] =
-                <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets">VertexBufferOffsetInBytes</a> +
+                <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets"> VertexBufferOffsetInBytes</a> +
                 <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*<a href="#DrawInstancedStartInstanceLocation">StartInstanceLocation</a> +
                 <a href="#SlotDesc">Slot</a>[s].<a href="#pInputLayout">pInputLayout</a>-&gt;pElement[e].<a href="#ElementOffset">OffsetInBytes</a>;
         } // Element loop
@@ -10114,12 +10114,12 @@ for(UINT InstanceID = 0;  InstanceID &lt; <a href="#DrawInstancedInstanceCount">
     // Patch Instance and Vertex Data addresses at the end of an instance.
     for(each slot, s, with a VertexBuffer assigned)
     {
-        if(<a href="#SlotDesc"> Slot</a>[s].<a href="#VertexBufferClass">Class</a> == <a href="#INPUT_CLASSIFICATION">D3D11_INPUT_PER_VERTEX_DATA</a>)
+        if(<a href="#SlotDesc">Slot</a>[s].<a href="#VertexBufferClass">Class</a> == <a href="#INPUT_CLASSIFICATION">D3D11_INPUT_PER_VERTEX_DATA</a>)
         {
             for(each Element, e, <a href="#SetInputLayoutAPI">in the buffer's structure declaration</a>)
             {
                 VertexBufferElementAddressInBytes[s][e] =
-                    <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets"> VertexBufferOffsetInBytes</a> +
+                    <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets">VertexBufferOffsetInBytes</a> +
                     <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*<a href="#StartVertexLocation">StartVertexLocation</a> +
                     <a href="#SlotDesc">Slot</a>[s].<a href="#pInputLayout">pInputLayout</a>-&gt;pElement[e].<a href="#ElementOffset">OffsetInBytes</a>;
             } // Element loop
@@ -10301,7 +10301,7 @@ for(UINT InstanceID = 0; InstanceID &lt; <a href="#DrawIndexedInstancedInstanceC
     {
         UINT IndexValue = FetchIndexFromIndexBuffer(IndexBufferElementAddressInBytes,<a href="#SetIndexBufferAPI">IndexBuffer</a>.<a href="#IndexBufferFormat">Format</a>)
 
-        if(<a href="#Cut">GetPredefinedCutIndexValue</a>(<a href="#SetIndexBufferAPI">IndexBuffer</a>.<a href="#IndexBufferFormat">Format</a>) == IndexValue)
+        if(<a href="#Cut"> GetPredefinedCutIndexValue</a>(<a href="#SetIndexBufferAPI">IndexBuffer</a>.<a href="#IndexBufferFormat">Format</a>) == IndexValue)
         {
             RestartTopology();
 
@@ -18924,7 +18924,7 @@ never really tested for D3D10.x either.</li>
 <a href="#inst_uDCLRaw">dcl_uav_raw[_glc] (Raw UnorderedAccessView (u#) Declaration)</a><a style="color: Gray"><small><sup>(22.3.43)</sup></small></a><br>
 <a href="#inst_uDCLStructured">dcl_uav_structured[_glc] (Structured UnorderedAccessView (u#) Declaration)</a><a style="color: Gray"><small><sup>(22.3.44)</sup></small></a><br>
 <a href="#inst_tDCLRaw">dcl_resource_raw (Raw Input Resource (Shader Resource View, t#) Declaration)</a><a style="color: Gray"><small><sup>(22.3.47)</sup></small></a><br>
-<a href="#inst_tDCLStructured">dcl_resource_structured_#_#_#_INSERT_SECTION_NUMBER_#_#_#_[inst_tDCLStructured] (Structured Input Resource (Shader Resource View, t#) Declaration)</a><br>
+<a href="#inst_tDCLStructured">dcl_resource_structured (Structured Input Resource (Shader Resource View, t#) Declaration)</a><a style="color: Gray"><small><sup>(22.3.48)</sup></small></a><br>
 <a href="#inst_vCycleCounterDCL">dcl_input vCycleCounter (debug only)</a><a style="color: Gray"><small><sup>(22.3.29)</sup></small></a><br>
 <a href="#inst_DCL_FUNCTION_BODY">dcl_function_body (Function Body Declaration)</a><a style="color: Gray"><small><sup>(22.3.49)</sup></small></a><br>
 <a href="#inst_DCL_FUNCTION_TABLE">dcl_function_table (Function Table Declaration)</a><a style="color: Gray"><small><sup>(22.3.50)</sup></small></a><br>
@@ -19281,7 +19281,7 @@ never really tested for D3D10.x either.</li>
 <H4>22.1.8.1 Initial Statements</H4>
 <p>
 <a href="#inst_threadGroupDCL">dcl_thread_group (Thread Group Declaration))</a><a style="color: Gray"><small><sup>(22.3.40)</sup></small></a><br>
-<a href="#inst_threadIDDCL">dcl_input_#_#_#_INSERT_SECTION_NUMBER_#_#_#_[inst_threadIDDCL] vThread* (Compute Shader Input Thread/Group ID Declarations)</a><br>
+<a href="#inst_threadIDDCL">dcl_input vThread* (Compute Shader Input Thread/Group ID Declarations)</a><a style="color: Gray"><small><sup>(22.3.41)</sup></small></a><br>
 <a href="#inst_gDCLRaw">dcl_tgsm_raw (Raw Thread Group Shared Memory (g#) Declaration)</a><a style="color: Gray"><small><sup>(22.3.45)</sup></small></a><br>
 <a href="#inst_gDCLStructured">dcl_tgsm_structured (Structured Thread Group Shared Memory (g#) Declaration)</a><a style="color: Gray"><small><sup>(22.3.46)</sup></small></a><br>
 </p>
@@ -24998,7 +24998,7 @@ Operation:      Component-wise floating-point round of the values in src0,
 <H3>22.10.16 round_pi</H3>
 <pre>
 Instruction:    round_pi[<a href="#inst_MOD_SAT">_sat</a>]     dest[.mask],
-                                [<a href="#inst_MOD_NEGATE">-</a>]src0[<a href="#inst_MOD_ABS"> _abs</a>][.swizzle]
+                                [<a href="#inst_MOD_NEGATE">-</a>]src0[<a href="#inst_MOD_ABS">_abs</a>][.swizzle]
 
 Stage(s):       <a href="#AllStages">All</a><a style="color: Gray"><small><sup>(22.1.1)</sup></small></a>
 
@@ -26908,7 +26908,7 @@ Operation:      Performs the double-precision floating-point comparison
 <pre>
 Instruction:    dne[<a href="#inst_MOD_SAT">_sat</a>]    dest[.mask],
                           [<a href="#inst_MOD_NEGATE">-</a>]src0[<a href="#inst_MOD_ABS">_abs</a>][.swizzle],
-                          [<a href="#inst_MOD_NEGATE">-</a>]src1[<a href="#inst_MOD_ABS">_abs</a>][.swizzle]
+                          [<a href="#inst_MOD_NEGATE">-</a>]src1[<a href="#inst_MOD_ABS"> _abs</a>][.swizzle]
 
 Stage(s):       <a href="#AllStages">All</a><a style="color: Gray"><small><sup>(22.1.1)</sup></small></a>
 
