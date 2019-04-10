@@ -126,6 +126,7 @@ v1.19 4/10/2019
     - [DDI Sampler](#ddi-sampler)
     - [DDI Unordered Access View](#ddi-unordered-access-view)
     - [DDI Render Target View](#ddi-render-target-view)
+    - [DDI Depth Stencil View](#ddi-depth-stencil-view)
   - [DDI Copying Descriptors](#ddi-copying-descriptors)
   - [DDI Creating a Root Signature](#ddi-creating-a-root-signature)
     - [DDI Descriptor Table Bind Types](#ddi-descriptor-table-bind-types)
@@ -4647,9 +4648,11 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CREATE_RENDER_TARGET_VIEW_0002 )(
     D3D10DDI_HDEVICE,
     _In_ CONST D3D10DDIARG_CREATE_RENDER_TARGET_VIEW_0002*,
     _In_ D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor);
+```
 
 ### DDI Depth Stencil View
 
+```C++
 typedef struct D3D12DDIARG_TEX1D_DEPTH_STENCIL_VIEW
 {
     UINT MipSlice;
