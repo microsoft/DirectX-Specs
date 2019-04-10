@@ -945,10 +945,10 @@ This concept has not been actually implemented in GPUs, at least that are known,
 Conservative Rasterization somewhat motivates the alternative that is specified here - Target Independent Rasterization. 
 Note that as of D3D11.3, hardware has evolved to support <a href="#ConservativeRasterization">Conservative Rasterization</a>.</p>
 
-<p>Consider how multisampling works in D3D (or GPU rasterization in general).  Each pixel has �sample� positions which cause 
+<p>Consider how multisampling works in D3D (or GPU rasterization in general).  Each pixel has &ldquo;sample&rdquo; positions which cause 
 Pixel Shaders to be invoked when primitives (e.g. triangles) cover the samples.  For multisampling, a single Pixel Shader 
 invocation occurs when at least one sample in a pixel is covered.  Alternatively, D3D10.1+ also allows the shader to 
-request that the Pixel Shader be invoked for each covered sample � this has historically been called �supersampling�.</p>
+request that the Pixel Shader be invoked for each covered sample � this has historically been called &ldquo;supersampling&rdquo;.</p>
 
 <p>The downside to these antialiasing approaches is they are based on a discrete number of samples.  The more samples the better, 
 but there are still holes in the pixel area between the sample points in which geometry rendered there does not contribute to the image.</p>
@@ -956,11 +956,11 @@ but there are still holes in the pixel area between the sample points in which g
 <p>Conservative Rasterization, instead, would ideally invoke the Pixel Shader if the area of a primitive (e.g. triangle) being 
 rendered has any chance of intersecting with the pixel&rsquo;s square area.  It would then be up to shader code to compute 
 whatever measure of pixel area intersection it desires.  It may be acceptable for the rasterization to be 
-�conservative� in that triangles/primitives are simply rasterized with a fattened screen space area that could 
+&ldquo;conservative&rdquo; in that triangles/primitives are simply rasterized with a fattened screen space area that could 
 include some pixels with no actual coverage � it doesn&rsquo;t really matter since the shader will be computing the actual coverage.</p>
 
 <p>The win is that the number of Pixel Shader invocations is reasonably bounded to the triangle extents 
-(as opposed to rendering bounding rectangles), and the output can be �perfect� antialiasing if desired.  
+(as opposed to rendering bounding rectangles), and the output can be &ldquo;perfect&rdquo; antialiasing if desired.  
 This is particularly the case if also utilizing some other features in D3D11 that allow arbitrary 
 length lists to be recorded per pixel.</p>
 
@@ -1889,8 +1889,8 @@ provides parity with D3D9.</p>
 <h5>ClearView Rect mapping to surface area</h5>
 <p>For RTVs and UAVS: The space the ClearView rects apply on is that of the view format (as opposed to the surface format, which for video surfaces can be different sizes).  This is 
 consistent with how Viewports and rendering work on those views.  e.g. for a 64x64 YUYV surface, an RTV with the format R8G8B8A8_UINT appears in shaders (and to RSSetViewports()) 
-as having dimensions 32x64 RGBA values.  ClearView&rsquo;s rects apply to the same space.  The �color� coming into ClearView is just maps to the channels in the view (RGBA) 
-ignoring the video layout.  So a single clear color could really mean �stripes� of color if interpreted in video space.  That&rsquo;s not interesting to do, but it just 
+as having dimensions 32x64 RGBA values.  ClearView&rsquo;s rects apply to the same space.  The &ldquo;color&rdquo; coming into ClearView is just maps to the channels in the view (RGBA) 
+ignoring the video layout.  So a single clear color could really mean &ldquo;stripes&rdquo; of color if interpreted in video space.  That&rsquo;s not interesting to do, but it just 
 falls out and isn&rsquo;t worth bothering to validate out � the user who makes D3D views of video surfaces has to know they are operating 
 on the raw memory via D3D � be it shaders or APIs like ClearView.
 </p>
@@ -6545,7 +6545,7 @@ instance return undefined values, but cannot return data outside of the address 
 
 <p>Temporary registers are <a href="#inst_tempDCL">declared</a> r#, and can be used as a temporary operand in D3D###D3D11_MAJOR_VERSION.###D3D11_MINOR_VERSION instructions.</p>
 
-<p>Temporary arrays are <a href="#inst_indexableTempDCL">declared</a> as x#[n], where �n� is the array length (indexed with 0..n-1).
+<p>Temporary arrays are <a href="#inst_indexableTempDCL">declared</a> as x#[n], where &ldquo;n&rdquo; is the array length (indexed with 0..n-1).
 Temporary arrays must be indexed by an r# scalar, statically indexed x# scalar, and/or and optional immediate constant (literal),
 and can have only one level of index nesting (e.g. x0[x1[r0.x+1].x+1] is not legal, but x0[x1[1].x+1] is legal).  A temporary array reference, x#[?], can be used
 as a temporary operand in D3D###D3D11_MAJOR_VERSION.###D3D11_MINOR_VERSION instructions (i.e. anywhere an r# can be used).  Out of bounds access to x#[?] is undefined, except that
@@ -8691,7 +8691,7 @@ typedef enum _D3DSHADER_MIN_PRECISION
 
 <h4>D3D10+</h4>
 <p>A new MIN_PRECISION enum is added to the dest parameter token, definition below.  This specifies the minimum precision level for the entire operation � implementations can use equal or greater precision.</p>
-<p>The encoding distinguishes type (e.g. float vs. sint vs. uint), in addition to precision level, to disambiguate instructions like �mov� that don&rsquo;t already imply a type.  This makes a difference when there is a size change involved in the instruction. E.g. moving a 32 bit float to a min. 16 bit float is a different task for hardware than moving a 32 bit uint to a min. 16 bit uint.  This type distinction is not needed for the D3D9 shader bytecode because all arithmetic is �float� there.</p>
+<p>The encoding distinguishes type (e.g. float vs. sint vs. uint), in addition to precision level, to disambiguate instructions like &ldquo;mov&rdquo; that don&rsquo;t already imply a type.  This makes a difference when there is a size change involved in the instruction. E.g. moving a 32 bit float to a min. 16 bit float is a different task for hardware than moving a 32 bit uint to a min. 16 bit uint.  This type distinction is not needed for the D3D9 shader bytecode because all arithmetic is &ldquo;float&rdquo; there.</p>
 
 <h5>Token Format</h5>
 
@@ -8814,7 +8814,7 @@ typedef enum D3D11_SB_OPERAND_MIN_PRECISION
 <h4>Discoverability</h4>
 <p>There is a mechanism at the API to discover the precision levels supported by the current device. Note that in Windows 8 the OS did not allow drivers to expose only 10 bit without also exposing 16 bit, but subsequent operating systems relax that requirement (so an implementation may expose 10 bit min precision but not 16 bit min precision).  </p>
 <p>Even though the hardware&rsquo;s precision support is visible to applications, applications do not have to adjust their shaders for the hardware&rsquo;s precision level given that by definition operations defined with a min precision run at higher precision on hardware that doesn&rsquo;t support the min precision. </p>
-<p>It is fine for hardware to not support low precision processing at all � by simply reporting �DEFAULT� as its precision support.  The reason it is called �DEFAULT� rather than some numerical precision is depending on the shader model, there may not be standard value to express.  E.g. the default precision in SM 2.x is fp24 (or greater) within the shader, even though there is no API visible fp24 format.  If the device reports �DEFAULT� precision, all min-precision specifiers in shaders are ignored.</p>
+<p>It is fine for hardware to not support low precision processing at all � by simply reporting &ldquo;DEFAULT&rdquo; as its precision support.  The reason it is called &ldquo;DEFAULT&rdquo; rather than some numerical precision is depending on the shader model, there may not be standard value to express.  E.g. the default precision in SM 2.x is fp24 (or greater) within the shader, even though there is no API visible fp24 format.  If the device reports &ldquo;DEFAULT&rdquo; precision, all min-precision specifiers in shaders are ignored.</p>
 <p>D3D9 devices are permitted to report a min-precision level that is lower for the Pixel Shader than for the Vertex Shader (all reported via the Windows Next D3D9 DDI).  D3D10+ devices can only report a single min-precision level that applies to all shader stages (reported via the Windows Next D3D11.1 DDI) � since it does not seem to make sense to single out the VS any more.  Note that if the application uses Feature Level 9_x on D3D10+ hardware, the D3D9 DDIs are still used, so the min-precision levels can be reported differently there between VS and PS, as mentioned for D3D9, even though via the D3D11.1 DDI only a single precision can be reported.</p>
 
 <h4>Shader Management</h4>
@@ -10615,7 +10615,7 @@ surface representation, or how to map representations to the given pipeline.</p>
 <li>Support both continuous and discrete tessellation</li>
 <ul>
     <li>Each edge can have different tessellation factors with a transition region to an internal more regularly tessellated region</li>
-    <li>Support smooth a transition from 1 segment per edge to �n� segments per edge, with each edge having independent tessellation factors</li>
+    <li>Support smooth a transition from 1 segment per edge to &ldquo;n&rdquo; segments per edge, with each edge having independent tessellation factors</li>
     <li>Support a discrete mode that allows for an integer number of equal length segments per edge, supporting both odd and even numbers of segments</li>
 </ul>
 <li>Support arbitrary patch evaluation methods</li>
@@ -11108,8 +11108,8 @@ but patches being streamed out to memory.</p>
 <h3>Tessellation Parameterization and Watertightness</h3>
 <p>A shared edge has to generate identical domain locations for crack free tessellation to be possible.  Domain Shader authors are responsible for achieving this, given some guarantees from the hardware.  
 First, hardware tessellation on any given edge must always produce a distribution of domain points symmetric about the edge based on the TessFactor for that edge alone.  
-Second, the parameterization of each domain point (U/V for quad or U/V/W for tri) must produce �clean� values in the space [0.0 ... 1.0].  
-�Clean� means that given a domain point on one side of the edge, with the parameter for that edge (say it is U) in [0 ... 0.5], the mirrored domain point produced on the other side, call it U� in [0.5 ... 1.0] 
+Second, the parameterization of each domain point (U/V for quad or U/V/W for tri) must produce &ldquo;clean&rdquo; values in the space [0.0 ... 1.0].  
+&ldquo;Clean&rdquo; means that given a domain point on one side of the edge, with the parameter for that edge (say it is U) in [0 ... 0.5], the mirrored domain point produced on the other side, call it U� in [0.5 ... 1.0] 
 will have a complement satisfying (1-U�) == U exactly.  </p>
 
 <p>Even if a neighboring patch sharing an edge happens to produce a complementary parameterization (U moving in the other direction, and/or U/V swapped), both side&rsquo;s parameterization for each 
@@ -11785,9 +11785,9 @@ typedef struct D3D11DDIARG_STREAM_OUTPUT_STREAM
                            // gaps of 1, 2, 3 or 4 components, respectively.
                            // Larger gaps are defined by chaining together
                            // smaller gaps (at least at the DDI).
-        DWORD RegisterMask;// Mask (i.e. xyzw mask) to apply to this �register�
+        DWORD RegisterMask;// Mask (i.e. xyzw mask) to apply to this &ldquo;register&rdquo;
                            // coming from the Pipeline.  This must be a subset of
-                           // the mask for the �register� in the source Pipeline
+                           // the mask for the &ldquo;register&rdquo; in the source Pipeline
                            // Stage&rsquo;s output, and cannot have gaps between
                            // components.  To define gaps betwen components,
                            // such as writing .xw, separate declaration
@@ -12287,7 +12287,7 @@ if the operation is performed even with zero DepthBias and SlopeScaledDepthBias 
 <!--REM-->
 <p>Comments on one of the usage scenarios for Depth Biasing:</p>
 <p>One of the artifacts with shadow buffer based
-shadows is �shadow acne�, or a surface shadowing itself in a spotty way because of inexactness in computing
+shadows is &ldquo;shadow acne&rdquo;, or a surface shadowing itself in a spotty way because of inexactness in computing
 the depth of a surface from the shader to be compare against the depth of the same surface in the shadow buffer.
 A way to alleviate this is to use DepthBias and SlopeScaledDepthBias when rendering a shadow buffer.  The intent
 is to push surfaces out enough when rendering a shadow buffer so that when compared against themselves via
@@ -13888,7 +13888,7 @@ This saves the i/o work involved and allows the full processing power of the GPU
 This will increase the ratio of compute performance to bandwidth performance significantly.</p>
 
 <p>The hardware functionality required to address this in the DirectX11 shader model 5.0 compute shader is a predefined block of 32kB (###D3D11_CS_TGSM_REGISTER_COUNT DWORDs) 
-of register space that can be declared within a shader to be of storage class �groupShared�.  
+of register space that can be declared within a shader to be of storage class &ldquo;groupShared&rdquo;.  
 Registers declared to be of this class can be shared between threads in the group.</p>
 
 <p>Due to contention issues it is not ideal for all threads in a given invocation ( Dispatch() call) to access the same set  of shared registers.  
@@ -16643,7 +16643,7 @@ this concept.</p>
 <h3 id="HighPerformanceTimingData">High Performance Timing Data</h3>
 <hr><!-- ********************************************************************** -->
 <h4>Overview and Scope</h4>
-<p>This feature tries to solve the problem of enabling �real-time, low overhead� GPU performance data gathering and at the same time, 
+<p>This feature tries to solve the problem of enabling &ldquo;real-time, low overhead&rdquo; GPU performance data gathering and at the same time, 
     provide enough information to measure when an API call was made by an application and exactly when it was rendered on the GPU, 
     even using multiple engines. The goal is to also have enough information to reconstruct the exact order of operations executed by the GPU, 
     so that tools can accurately identify shared surface ownership and potential synchronization issues in D3D applications.</p>
@@ -16659,7 +16659,7 @@ this concept.</p>
   <tr>
     <td>Accurate tracking of API calls made by the application, with CPU and GPU timestamps for when these calls are submitted and the work is executed on the GPU<td>1</tr>
   <tr>
-    <td>The ability to extend tools like GPUView by being able to �see inside� a DMA packet and see all the primitives it contains and associate these with the original API calls. <td>1</tr>
+    <td>The ability to extend tools like GPUView by being able to &ldquo;see inside&rdquo; a DMA packet and see all the primitives it contains and associate these with the original API calls. <td>1</tr>
   <tr>
     <td>An architecture that can potentially capture an application submitting 100,000 draw calls at 60 frames per second with ~100MB/s of profiling data generated.<td>2</tr>
   <tr>
@@ -16717,7 +16717,7 @@ This is required for all GPU hardware at all feature levels.
 <p>Microsoft may drive toward these goals by enforcing greater capabilities using methods like the addition of feature levels over future Windows releases and HCK tests.</p>
 
 <ul>
-    <li>Ideally zero processing of the counter data by the runtime or IHV driver. Given the volume of data being collected, we cannot afford to require �fixups� or manipulation of the data as this would be too expensive.</li>
+    <li>Ideally zero processing of the counter data by the runtime or IHV driver. Given the volume of data being collected, we cannot afford to require &ldquo;fixups&rdquo; or manipulation of the data as this would be too expensive.</li>
     <li>Efficiency Improvements to reduce the CPU overhead of logging many events and reduce the effects of the Heisenberg uncertainty principle.</li>
     <ul>
         <li>In the wild, Windows Desktop applications have been reported to issue ~15,000 Draw calls per 60Hz frame today, and each of those Draw calls would 
@@ -19032,7 +19032,7 @@ Operation:      srcResource can be a Buffer (not a Constant Buffer) in an
                 the number of structures in the view. 
 
 <!--REM-->
-Motivation:     Matches the functionality �resinfo� has for textures.
+Motivation:     Matches the functionality &ldquo;resinfo&rdquo; has for textures.
 <!--/REM-->
 </pre>
 <hr><!-- ********************************************************************** -->
@@ -25045,7 +25045,7 @@ Operation:      Sync has options _uglobal, _ugroup, _g and _t,
                 
                 --------
 
-                Listing of Compute Shader �sync� variants:
+                Listing of Compute Shader &ldquo;sync&rdquo; variants:
 
                 sync_g
                 sync_ugroup*
@@ -25062,7 +25062,7 @@ Operation:      Sync has options _uglobal, _ugroup, _g and _t,
                 by the HLSL compiler, per the earlier discussion 
                 in the _ugroup section above.
 
-                Listing of Graphics Shader �sync� variants:
+                Listing of Graphics Shader &ldquo;sync&rdquo; variants:
 
                 sync_uglobal only.
                 
@@ -26494,14 +26494,14 @@ Operation:      The <a href="#inst_globalFlagsDCL">global shader flag</a> "REFAC
                 The precise modifier affects any operation, not just arithmetic.  
                 As a subtle example consider an example sequence of instructions:
 
-                (a) Write the value of the variable �foo� to memory address x 
+                (a) Write the value of the variable &ldquo;foo&rdquo; to memory address x 
                     in an Unordered Access View
                 (b)    ...
                 (c)    Read from memory address x in the UAV
                 
                 Since there is a write and a read from the same address, if REFACTORING_ALLOWED 
                 was present, the compiler or drivers can optimize away the read from memory 
-                for (c) to just use the value of �foo� rather than reading from memory, 
+                for (c) to just use the value of &ldquo;foo&rdquo; rather than reading from memory, 
                 assuming there were no memory sync operations requested between 
                 them (which would have prevented the optimization).  However, 
                 if REFACTORING_ALLOWED is not declared for the shader, or if it is present 
@@ -26510,7 +26510,7 @@ Operation:      The <a href="#inst_globalFlagsDCL">global shader flag</a> "REFAC
                 optimized version and the PRECISE version, because, for instance, if memory 
                 address x happens to be out of bounds of the UAV, the write does not happen, 
                 the read out of bounds has some other well defined behavior, and thus the 
-                read will not produce �foo�.
+                read will not produce &ldquo;foo&rdquo;.
 </pre>
 <hr><!-- ********************************************************************** -->
 <h1 id="SystemGeneratedValuesReference">System Generated Values Reference</h1>
@@ -27175,9 +27175,9 @@ a cross-endianness solution.</p>
 <tr><td>D3DFMT_YUY2</td>                <td>Not available</td></tr>
 <tr><td>D3DFMT_G8R8_G8B8</td>           <td>DXGI_FORMAT_R8G8_B8G8_UNORM (in DX9 the data was scaled up by 255.0f, but this can be handled in shader code).</td></tr>
 <tr><td>D3DFMT_DXT1</td>                <td>DXGI_FORMAT_BC1_UNORM &amp; DXGI_FORMAT_BC1_UNORM_SRGB</td></tr>
-<tr><td>D3DFMT_DXT2</td>                <td>DXGI_FORMAT_BC2_UNORM &amp; DXGI_FORMAT_BC2_UNORM_SRGB   Note: DXT2 and DXT3 are the same from an API/hardware perspective� only difference was �premultiplied alpha�, which can be tracked by an application and doesn&rsquo;t need a separate format.</td></tr>
+<tr><td>D3DFMT_DXT2</td>                <td>DXGI_FORMAT_BC2_UNORM &amp; DXGI_FORMAT_BC2_UNORM_SRGB   Note: DXT2 and DXT3 are the same from an API/hardware perspective� only difference was &ldquo;premultiplied alpha&rdquo;, which can be tracked by an application and doesn&rsquo;t need a separate format.</td></tr>
 <tr><td>D3DFMT_DXT3</td>                <td>DXGI_FORMAT_BC2_UNORM &amp; DXGI_FORMAT_BC2_UNORM_SRGB</td></tr>
-<tr><td>D3DFMT_DXT4</td>                <td>DXGI_FORMAT_BC3_UNORM &amp; DXGI_FORMAT_BC3_UNORM_SRGB   Note: DXT4 and DXT5 are the same from an API/hardware perspective� only difference was �premultiplied alpha�, which can be tracked by an application and doesn&rsquo;t need a separate format.</td></tr>
+<tr><td>D3DFMT_DXT4</td>                <td>DXGI_FORMAT_BC3_UNORM &amp; DXGI_FORMAT_BC3_UNORM_SRGB   Note: DXT4 and DXT5 are the same from an API/hardware perspective� only difference was &ldquo;premultiplied alpha&rdquo;, which can be tracked by an application and doesn&rsquo;t need a separate format.</td></tr>
 <tr><td>D3DFMT_DXT5</td>                <td>DXGI_FORMAT_BC3_UNORM &amp; DXGI_FORMAT_BC3_UNORM_SRGB</td></tr>
 <tr><td>D3DFMT_D16 &amp; D3DFMT_D16_LOCKABLE</td>   <td>DXGI_FORMAT_D16_UNORM</td></tr>
 <tr><td>D3DFMT_D32</td>                 <td>Not available</td></tr>
