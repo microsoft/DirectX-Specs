@@ -16968,11 +16968,11 @@ if (red_0 &gt; red_1) // signed compare.
 Note that the 16 bit floating point format is often referred to as "half" format, containing 1 sign bit, 5 exponent bits, and 10 mantissa bits.</p>
 </DIV>
 
-<P>BC6H supports floating point denorms, but INF and NaN are not supported. The exception is the signed mode of BC6H, which can represent -INF.  While this -INF "support" was 
+<P>BC6H supports floating point denorms, but INF and NaN are not supported. The exception is the signed mode of BC6H, which can represent &plusmn;INF.  While this &plusmn;INF "support" was 
 
-unintentional, it is baked into the format.  So it is valid for encoders to intentionally use -INF, but they also have the option to clamp during encode to avoid it.  In 
+unintentional, it is baked into the format.  So it is valid for encoders to intentionally use &plusmn;INF, but they also have the option to clamp during encode to avoid it.  In 
 
-general, faced with +-INF or NaN input data to deal with, encoders are loosely encouraged to clamp +-INFs to the corresponding maximum non-INF representable value, and map NaN 
+general, faced with &plusmn;INF or NaN input data to deal with, encoders are loosely encouraged to clamp &plusmn;INFs to the corresponding maximum non-INF representable value, and map NaN 
 
 to 0 prior to compression.</p> 
 <P>BC6H does not store any alpha data.</p>
