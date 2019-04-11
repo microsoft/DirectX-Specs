@@ -205,7 +205,7 @@ system might care about are happening via dedicated APIs.
 
 The system no longer inspects resource bindings to understand if
 rendering needs to be delayed because it depends on a resource that has
-been mapped for CPU access has not been unmapped yet. Applications now
+been mapped for CPU access and has not been unmapped yet. Applications now
 have the responsibility to synchronize CPU and GPU memory accesses. To
 help with this the system provides mechanisms for the application to
 request sleeping of a CPU thread until work completes. Polling could
@@ -262,7 +262,7 @@ efficiency) that identifies how resources in shaders (SRVs, UAVs, CBVs,
 Samplers) map into descriptor table locations. The root signature can
 also hold a small number of descriptors directly (bypassing the need to
 put them into descriptor heaps / tables). Finally the root signature can
-even hold inline 32-bit values that show up in the shader a constant
+even hold inline 32-bit values that show up in the shader as a constant
 buffer. The root signature defines the set of all of these (descriptor
 tables, descriptors, constants) that an application wants to use with a
 given Pipeline State Object, ideally for groups of Pipeline States that
