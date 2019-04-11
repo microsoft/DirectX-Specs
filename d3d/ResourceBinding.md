@@ -262,7 +262,7 @@ efficiency) that identifies how resources in shaders (SRVs, UAVs, CBVs,
 Samplers) map into descriptor table locations. The root signature can
 also hold a small number of descriptors directly (bypassing the need to
 put them into descriptor heaps / tables). Finally the root signature can
-even hold inline 32-bit values that show up in the shader a constant
+even hold inline 32-bit values that show up in the shader as a constant
 buffer. The root signature defines the set of all of these (descriptor
 tables, descriptors, constants) that an application wants to use with a
 given Pipeline State Object, ideally for groups of Pipeline States that
