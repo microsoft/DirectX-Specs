@@ -205,7 +205,7 @@ system might care about are happening via dedicated APIs.
 
 The system no longer inspects resource bindings to understand if
 rendering needs to be delayed because it depends on a resource that has
-been mapped for CPU access has not been unmapped yet. Applications now
+been mapped for CPU access and has not been unmapped yet. Applications now
 have the responsibility to synchronize CPU and GPU memory accesses. To
 help with this the system provides mechanisms for the application to
 request sleeping of a CPU thread until work completes. Polling could
