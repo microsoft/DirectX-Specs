@@ -650,7 +650,7 @@ be set at slots [2] and [4], etc.
 
 The application can change part of the root arguments at a time (the
 rest remain unchanged). For example if the only thing that needs to
-change between draws is one of the constants at slot [2], that is all
+change between draws is one of the constants at slot [3], that is all
 the application needs to rebind. As discussed previously, the
 driver/hardware versions all root arguments as they are modified
 automatically.
@@ -703,10 +703,10 @@ has defined.
 As a reminder, other resource bindings -- Index Buffers, Vertex Buffer,
 Stream Output Buffers, Render Targets and Depth Stencil are done
 directly on a command list rather than via descriptor tables (which
-point into a descriptor heap). This is different handling is simply a
+point into a descriptor heap). This different handling is simply a
 better match for the breadth of hardware. Additionally there are the
 non-descriptor table based ways of binding certain resources, such as
-using root descriptors. For samplers the alternative binidng option is
+using root descriptors. For samplers the alternative binding option is
 statically defining them in the root signature declaration (described
 later).
 
@@ -785,7 +785,7 @@ technique.
 
 The ability to set some state other than descriptor tables in the root
 arguments, such as user constants, can also relieve some pressure from
-having to burn to many (or any) new descriptors for every rendering call
+having to burn too many (or any) new descriptors for every rendering call
 that needs different data.
 
 ### Out of Bounds Indexing
@@ -876,7 +876,7 @@ defined via single 64-bit value - a GPU virtual address of the data.
 Applications can obtain the base GPU virtual address for a buffer
 resource via ID3D12Resource::GetGPUVirtualAddress() and manually offset
 the address to use it as a root descriptor, subject to buffer address
-alignment constraints. Notably, there is not size parameter in root
+alignment constraints. Notably, there is no size parameter in root
 descriptors defining where out of bounds behavior would kick in, the way
 full descriptors behave. For root descriptors it is up to the
 application to stay within the bounds of the underlying allocation they
