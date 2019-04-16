@@ -109,7 +109,7 @@ Developers and profiling tools can adjust this behavior using combinations of th
 
 **ALLOW_INTRUSIVE_MEASUREMENTS** hints that the driver should prioritize richness and completeness of instrumentation over avoiding glitches, because the rendering currently taking place is being done specifically for training purposes and does not need to execute with usual smooth performance.  This kind of heavy-weight profiling will be used by analysis tools such as PIX.  It could also be used by benchmarks to warm the optimization state before taking their actual performance measurements, or directly by games at appropriate times (eg. pre-training the driver by rendering invisible content behind a menu).
 
-**DISABLE_BACKGROUND_WORK** prevents the execution of background processing tasks.  When this flag is first turned on, any already-in-progress tasks will be allowed to run to completion.  Tasks that the UMD has submitted but which have not yet started running will be cancelled, and any calls to QueueProcssingWorkCB while already in this state will result in the cancel callback being immediately invoked.
+**DISABLE_BACKGROUND_WORK** prevents the execution of background processing tasks.  When this flag is first turned on, all submitted tasks will be allowed to run to completion.  Any calls to QueueProcssingWorkCB while already in this state will result in the cancel callback being immediately invoked before returning.
 
 Of course the UMD may choose to skip task submission entirely while in the disabled state, but if it does submit work, the runtime will cancel rather than just failing the submit operation, in order to avoid the UMD having to bother synchronizing between work submission and mode changes.
 
@@ -125,7 +125,7 @@ In addition to specifying a BACKGROUND_PROCESSING_MODE, which controls future PG
 
 **KEEP_ALL** does not request any specific change of behavior.  Previous results are still valid, and the driver may continue tracking whatever statistics are in the middle of being measured.
 
-**COMMIT_RESULTS** hints that the workload seen so far represents the complete set of what is worth optimizing based on, for instance that a scene flythrough has finished in a benchmarking tool, or playback of the single frame being analyzed has completed in PIX. The UMD should kick off any desired background processing based on what it has seen so far, as no different work will be incoming in the near future.  After the UMD returns from a SetBackgroundProcessingMode call that specifies COMMIT_RESULTS, all currently queued background tasks will be considered part of the commit.  Once that set of tasks finishes executing, the provided hEventToSignalOnCompletion will be signaled.
+**COMMIT_RESULTS** hints that the workload seen so far represents the complete set of what is worth optimizing based on, for instance that a scene flythrough has finished in a benchmarking tool, or playback of the single frame being analyzed has completed in PIX. The UMD should kick off any desired background processing based on what it has seen so far, as no different work will be incoming in the near future.  After the UMD returns from a SetBackgroundProcessingMode call that specifies COMMIT_RESULTS, all currently queued background tasks will be considered part of the commit.  Once that set of tasks finishes executing, the provided hEventToSignalOnCompletion will be signaled. As indicated above, if this is combined with DISABLE_BACKGROUND_WORK, the disable state (i.e. the inability to submit more tasks) will take effect after returning from the SetBackgroundProcessingMode call.
 
 If the UMD has been gathering statistics about eg. commonly used constant values, and is waiting for some threshold amount of data to be recorded before acting on this information, the commit flag should scale up whatever frequency histograms have been recorded so far to give the same result as if the normal act-now threshold had been reached after a longer period of data collection.  This is important to let PIX replay only one single frame capture, but then request a final set of optimized shaders matching that work, without having to waste time repeating a single frame many hundreds of times.
 
@@ -252,6 +252,8 @@ typedef HRESULT(APIENTRY CALLBACK *PFN_D3D12DDI_QUEUEPROCESSINGWORK_CB)(
 ```
 
 The UMD will not have any control over which thread the work is processed on. Work will be processed in the order it was received. QueueProcessingWorkCb may be called from multiple threads concurrently/is thread safe (runtime will serialize).
+
+If background tasks have been disabled by the application, the runtime will invoke the cancel callback (if provided) on the calling thread before returning back to the driver.
 
 When an application changes background processing mode, the UMD is informed of the new settings via:
 
