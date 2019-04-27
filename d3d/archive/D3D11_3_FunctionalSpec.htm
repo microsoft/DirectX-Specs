@@ -9002,7 +9002,7 @@ middleware solution separate from another middleware solution).
     // This pointers are a four-element vector with indices for
     // which constant buffer holds the instance data (.x element),
     // the base offset of the instance data in the instance constant
-    // buffer, the base sampler index and the base texture index.
+    // buffer, the base texture index and the base sampler index.
     // Basic instance members will therefore be referenced with
     // cb[r0.x][r0.y + member_offset].
     // This pointers can be in arrays so the first [] index
@@ -9290,7 +9290,7 @@ middleware solution separate from another middleware solution).
     
     // Texture sample.
     mov r4.xy, this[0].zw
-    sample r0.xyz, r4.xy, t[r0.z].xyz, s[r0.w]
+    sample r0.xyz, v2.xy, t[r4.x].xyz, s[r4.y]
     mul r0.xyz, r0.xyzx, l(0.123400, 0.123400, 0.123400, 0.000000)
     
     // m_Color multiplied by texture sample.
@@ -23739,8 +23739,8 @@ Operation:      'this' data associated with interface
                    holds the instance data
                 y: UINT32 base element offset of the instance data 
                    in the instance constant buffer.
-                z: UINT32 base sampler index
-                w: UINT32 base texture index
+                z: UINT32 base texture index
+                w: UINT32 base sampler index
 
                 References to this appear as this[literal index] 
                 or with a relative index such as: this[r1.x + 5].
