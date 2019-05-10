@@ -482,6 +482,14 @@ ROV interlocks are specified as operating at fine pixel granularity. If shading 
 ## Conservative Rasterization
 Conservative rasterization is allowed to be used with variable rate shading. When conservative rasterization is used with coarse pixel shading, fine pixels within coarse pixels are conservatively rasterized by being given full coverage.
 
+Given conservative rasterization is applied on a fine-pixel basis, SV_InnerCoverage also operates on a fine-pixel basis when coarse shading is used. 
+
+The mapping of cover-able samples to bits in SV_InnerCoverage follow the same scheme as SV_Coverage.
+
+For SV_InnerCoverage:
+* If a fine pixel has partial or no coverage, the corresponding bits for that fine pixel are set to 0.
+* And if a fine pixel has full coverage, the corresponding bits for that fine pixel are set to 1.
+
 ### Coverage
 When conservative rasterization is used, the coverage semantic contains full masks for fine pixels that are covered and 0 for fine pixels that are not covered.
 
