@@ -165,6 +165,11 @@ The per-primitive attribute is a settable semantic called SV_ShadingRate. SV_Sha
 If a VS or GS sets SV_ShadingRate but VRS is not enabled, the semantic-setting has no effect.
 If no value for SV_ShadingRate is specified per-primitive, a shading rate value of 1x1 is assumed as the per-primitive contribution.
 
+Setting SV_ShadingRate is permitted from VS or GS stages. It is not permitted from other stages, for example DS.
+
+#### Interaction with View Instancing
+Applications can output SV_ShadingRate in a view-dependent manner. To put it another way: if an application outputs different SV_ShadingRates for different values of SV_ViewID, the resulting view instances have different per-primitive shading rates.
+
 ### Combining Shading Rate Factors
 The various sources of shading rate are applied in sequence using this diagram.
 
