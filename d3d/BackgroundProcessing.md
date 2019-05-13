@@ -205,7 +205,7 @@ while (wantMoreProfiling && ++tries < MaxPassesInCaseDriverDoesntConverge)
 {
     SetBackgroundProcessingMode(
         D3D12_BACKGROUND_PROCESSING_MODE_ALLOW_INTRUSIVE_MEASUREMENTS,
-        D3D12_MEASUREMENTS_ACTION_DISCARD_PREVIOUS,
+        (tries == 0) ? D3D12_MEASUREMENTS_ACTION_DISCARD_PREVIOUS : D3D12_MEASUREMENTS_ACTION_KEEP_ALL,
         null, null);
 
     PlayBackCapturedFrame();
