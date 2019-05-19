@@ -615,11 +615,13 @@ public:
 ### Preparing the screen space image
 The read-only resource state designating a usable shading rate image is defined as
 
+```
 enum D3D12_RESOURCE_STATES
 {
     // ...
     D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE
 };
+```
 
 ### Setting the screen space image
 The screen space image is specified through a command list method.
