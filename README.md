@@ -55,14 +55,16 @@ _This is a single combined spec, covering all functionality of D3D versions from
 
 * [DirectX API documentation ](https://docs.microsoft.com/en-us/windows/desktop/directx)
 * [DirectX Developer Blog](https://devblogs.microsoft.com/directx)
+* [DirectX team on Twitter](https://twitter.com/DirectX12)
+* [DirectX Discord server](https://discord.gg/directx)
 * [PIX on Windows](https://devblogs.microsoft.com/pix/documentation)
 * [DirectX Graphics Samples](https://github.com/Microsoft/DirectX-Graphics-Samples)
 * [D3DX12 (the D3D12 Helper Library)](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3DX12)
 * [D3D12 Raytracing Fallback Layer](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3D12RaytracingFallback)
 * [D3D12 Residency Starter Library](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3DX12Residency)
 * [D3D12 MultiGPU Starter Library](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3DX12AffinityLayer)
+* [DirectX Tool Kit](https://github.com/Microsoft/DirectXTK12)
 * [D3DDred debugger extension](https://github.com/Microsoft/DirectX-Debugging-Tools)
-* [DirectX team on Twitter](https://twitter.com/DirectX12)
 
 # Contributing
 
