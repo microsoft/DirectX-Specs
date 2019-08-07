@@ -1,6 +1,6 @@
 <h1>D3D12 RS5 Render Passes -- Unified Spec</h1>
 
-Version 0.9
+Version 1.0
 
 ---
 
@@ -237,7 +237,7 @@ Thus, the list of disallowed APIs within a Render Pass is:
 
 - SetProtectedResourceSession
 
-- SetDescriptorHeaps [*added in v0.08*]
+- ~~SetDescriptorHeaps [*added in v0.08, removed in v1.0*]~~
 
 - Else?
 
@@ -818,12 +818,13 @@ via the HLK:
 
 Date | Version | Description
 -|-|-
+8/7/2019 | 1.0 | Updated public spec to match implementation regarding SetDescriptorHeaps 
 10/30/2018 | 0.09 | Clarified inconsistency about what resource state render targets and depth buffers are left in after a render pass that ends with a resolve
-5/15/2018 | 0.08 |<li>General API/DDI refactoring – runtime support for previous DDI version remains, but will be removed prior to feature complete.</li><li>Suspend/Resume has been refactored to be at the pass level, rather than per-view</li><li>Suspend/Resume_LOCAL has been removed from the API/DDI, will be re-added if more ISV scenarios are identified in a future release</li><li>SetDescriptorHeaps no longer allowed during a render pass</li><li>Applications can now explicitly specify whether during a resolve the resolve source (e.g. the bound RT/DB) should be preserved or not.</li><li>Minor API/DDI enum renaming to better follow D3D12 conventions</li>
-4/10/2018|0.07|<li>Allow Resource Barriers that obey the “no read dependencies may be taken on a write that occurred during the Render Pass” rule </li><li>Add new API/DDI CAP for applications to know whether Render Passes are potentially more optimal on the hardware (e.g. whether the DDI table is even implemented), and for the driver to reflect whether UAV writes within the Render Pass can be implemented efficiently.</li><li>Remove SOSetTargets from the list of disallowed APIs within a Render Pass, fill in some APIs that were missing from the list (notably copies).</li><li>One new HLK test case</li>
-3/7/2018|0.06|<p>Allow the Resolve-at-EndRenderPass operation to (optionally) target multiple subresources, earlier design assumed just a single subresource per RTV.</p><p>Changes to:</p><li>`D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS`</li><li>`D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_PARAMETERS`</li>
-2/16/2018|0.05|<p>Address feedback:</p><li>Remove Resource Barrier integration from BeginRenderPass, feedback is that it is likely not a significant win, and this simplifies the design. Can add back in if potential wins identified once up and running.</li><li>Change `ONE_TO_ONE_READ` to `LOCAL_READ`, where user specifies kernel size for reads.</li>
-2/14/2018|0.04|<p>Address feedback:</p><li>Clear*View APIs are not allowed within a Render Pass</li><li>Clarified that Render Targets/Depth Buffer are in an undefined state following a Render Pass, don’t necessarily need to be cleanly unbound by UMD.</li><li>Open issue if runtime enforces this, similar to how it unbinds RTs at start of Command List.</li><p>Added following to list of open issues:</p><li>Should SO be allowed within a Render Pass?</li>
-2/13/2018|0.03|<p>Add API headers.</p><p>Move access specification to sub-resource granularity.</p><p>Reduce verbosity of UAV bindings.</p><p>Add “ISV can validate proper usage of feature even if UMD does not support feature” design goal.</p>
+5/15/2018 | 0.08 | General API/DDI refactoring – runtime support for previous DDI version remains, but will be removed prior to feature complete. Suspend/Resume has been refactored to be at the pass level, rather than per-view. Suspend/Resume_LOCAL has been removed from the API/DDI, will be re-added if more ISV scenarios are identified in a future release. SetDescriptorHeaps no longer allowed during a render pass. Applications can now explicitly specify whether during a resolve the resolve source (e.g. the bound RT/DB) should be preserved or not. Minor API/DDI enum renaming to better follow D3D12 conventions
+4/10/2018|0.07| Allow Resource Barriers that obey the “no read dependencies may be taken on a write that occurred during the Render Pass” rule. Add new API/DDI CAP for applications to know whether Render Passes are potentially more optimal on the hardware (e.g. whether the DDI table is even implemented), and for the driver to reflect whether UAV writes within the Render Pass can be implemented efficiently. Remove SOSetTargets from the list of disallowed APIs within a Render Pass, fill in some APIs that were missing from the list (notably copies). One new HLK test case
+3/7/2018|0.06|Allow the Resolve-at-EndRenderPass operation to (optionally) target multiple subresources, earlier design assumed just a single subresource per RTV. Changes to `D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS` and `D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_PARAMETERS`
+2/16/2018|0.05|Address feedback: Remove Resource Barrier integration from BeginRenderPass, feedback is that it is likely not a significant win, and this simplifies the design. Can add back in if potential wins identified once up and running. Change `ONE_TO_ONE_READ` to `LOCAL_READ`, where user specifies kernel size for reads.
+2/14/2018|0.04|Address feedback: Clear\*View APIs are not allowed within a Render Pass. Clarified that Render Targets/Depth Buffer are in an undefined state following a Render Pass, don’t necessarily need to be cleanly unbound by UMD. Open issue if runtime enforces this, similar to how it unbinds RTs at start of Command List. Added following to list of open issues: Should SO be allowed within a Render Pass?
+2/13/2018|0.03|Add API headers. Move access specification to sub-resource granularity.Reduce verbosity of UAV bindings.Add “ISV can validate proper usage of feature even if UMD does not support feature” design goal.
 01/23/2018|0.02|Design simplification to only allow a single set of writable surfaces per Render Pass.
 01/09/2018|0.01|Initial version
