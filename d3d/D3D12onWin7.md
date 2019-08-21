@@ -6,38 +6,38 @@ This is a guidance document to help game developers port their existing D3D12 ga
 
 <h1>Contents</h1>
 
-- [Overview](#Overview)
-- [Before You Start](#Before-You-Start)
-  - [Have your D3D12 game up and running on Windows 10](#Have-your-D3D12-game-up-and-running-on-Windows-10)
-  - [Collect files from Microsoft](#Collect-files-from-Microsoft)
-  - [Collect drivers from GPU vendors](#Collect-drivers-from-GPU-vendors)
-  - [Set up dev/test machines](#Set-up-devtest-machines)
-- [Get D3D12 Games Up and Running on Windows 7](#Get-D3D12-Games-Up-and-Running-on-Windows-7)
-  - [Set up your project](#Set-up-your-project)
-  - [Load DLLs properly](#Load-DLLs-properly)
-  - [Fork code paths for Windows 7](#Fork-code-paths-for-Windows-7)
-  - [Add new Present code path for Windows 7](#Add-new-Present-code-path-for-Windows-7)
-  - [Remove unsupported fence usage patterns](#Remove-unsupported-fence-usage-patterns)
-  - [Update residency management](#Update-residency-management)
-  - [Disable features not supported on Windows 7](#Disable-features-not-supported-on-Windows-7)
-  - [Run Windows 10 SDK Layer in Windows 7 emulation mode](#Run-Windows-10-SDK-Layer-in-Windows-7-emulation-mode)
-  - [Add support to D3D11On12](#Add-support-to-D3D11On12)
-  - [Other things to watch out](#Other-things-to-watch-out)
-- [Optimize D3D12 Games Performance on Windows 7](#Optimize-D3D12-Games-Performance-on-Windows-7)
-  - [Use `ID3D12PipelineLibrary` to cache PSO](#Use-ID3D12PipelineLibrary-to-cache-PSO)
-  - [Reduce number of resident resources](#Reduce-number-of-resident-resources)
-- [Release D3D12 Games on Windows 7](#Release-D3D12-Games-on-Windows-7)
-  - [Package and release Windows 7 version of D3D12 binaries as part of your game](#Package-and-release-Windows-7-version-of-D3D12-binaries-as-part-of-your-game)
-  - [D3D12 games must continue to run after gamers upgrade from Windows 7 to Windows 10](#D3D12-games-must-continue-to-run-after-gamers-upgrade-from-Windows-7-to-Windows-10)
-- [FAQ](#FAQ)
-  - [Q: Can I build one single executable that works for both Windows 10 and Windows 7? And how?](#Q-Can-I-build-one-single-executable-that-works-for-both-Windows-10-and-Windows-7-And-how)
-  - [Q: Do you support all D3D12 features on Windows 7?](#Q-Do-you-support-all-D3D12-features-on-Windows-7)
-  - [Q: What limitations should I expect when porting D3D12 games to Windows 7?](#Q-What-limitations-should-I-expect-when-porting-D3D12-games-to-Windows-7)
-  - [Q: How about HDR support?](#Q-How-about-HDR-support)
-  - [Q: Do I need to update SDK to build D3D12 games for Windows 7?](#Q-Do-I-need-to-update-SDK-to-build-D3D12-games-for-Windows-7)
-  - [Q: How does D3D12 on Windows 7 handle hardware with Feature Level 11_1? Will a simple query of feature level + tier be enough?](#Q-How-does-D3D12-on-Windows-7-handle-hardware-with-Feature-Level-111-Will-a-simple-query-of-feature-level--tier-be-enough)
-  - [Q: Can I execute the Windows 7 version of D3D12.DLL on a Windows 10 machine?](#Q-Can-I-execute-the-Windows-7-version-of-D3D12DLL-on-a-Windows-10-machine)
-  - [Q: Who should I contact for any questions related to D3D12 on Windows 7?](#Q-Who-should-I-contact-for-any-questions-related-to-D3D12-on-Windows-7)
+- [Overview](#overview)
+- [Before You Start](#before-you-start)
+  - [Have your D3D12 game up and running on Windows 10](#have-your-d3d12-game-up-and-running-on-windows-10)
+  - [Collect files from Microsoft](#collect-files-from-microsoft)
+  - [Collect drivers from GPU vendors](#collect-drivers-from-gpu-vendors)
+  - [Set up dev/test machines](#set-up-devtest-machines)
+- [Get D3D12 Games Up and Running on Windows 7](#get-d3d12-games-up-and-running-on-windows-7)
+  - [Set up your project](#set-up-your-project)
+  - [Load DLLs properly](#load-dlls-properly)
+  - [Fork code paths for Windows 7](#fork-code-paths-for-windows-7)
+  - [Add new Present code path for Windows 7](#add-new-present-code-path-for-windows-7)
+  - [Remove unsupported fence usage patterns](#remove-unsupported-fence-usage-patterns)
+  - [Update residency management](#update-residency-management)
+  - [Disable features not supported on Windows 7](#disable-features-not-supported-on-windows-7)
+  - [Run Windows 10 SDK Layer in Windows 7 emulation mode](#run-windows-10-sdk-layer-in-windows-7-emulation-mode)
+  - [Add support to D3D11On12](#add-support-to-d3d11on12)
+  - [Other things to watch out](#other-things-to-watch-out)
+- [Optimize D3D12 Games Performance on Windows 7](#optimize-d3d12-games-performance-on-windows-7)
+  - [Use `ID3D12PipelineLibrary` to cache PSO](#use-id3d12pipelinelibrary-to-cache-pso)
+  - [Reduce number of resident resources](#reduce-number-of-resident-resources)
+- [Release D3D12 Games on Windows 7](#release-d3d12-games-on-windows-7)
+  - [Package and release Windows 7 version of D3D12 binaries as part of your game](#package-and-release-windows-7-version-of-d3d12-binaries-as-part-of-your-game)
+  - [D3D12 games must continue to run after gamers upgrade from Windows 7 to Windows 10](#d3d12-games-must-continue-to-run-after-gamers-upgrade-from-windows-7-to-windows-10)
+- [FAQ](#faq)
+  - [Q: Can I build one single executable that works for both Windows 10 and Windows 7? And how?](#q-can-i-build-one-single-executable-that-works-for-both-windows-10-and-windows-7-and-how)
+  - [Q: Do you support all D3D12 features on Windows 7?](#q-do-you-support-all-d3d12-features-on-windows-7)
+  - [Q: What limitations should I expect when porting D3D12 games to Windows 7?](#q-what-limitations-should-i-expect-when-porting-d3d12-games-to-windows-7)
+  - [Q: How about HDR support?](#q-how-about-hdr-support)
+  - [Q: Do I need to update SDK to build D3D12 games for Windows 7?](#q-do-i-need-to-update-sdk-to-build-d3d12-games-for-windows-7)
+  - [Q: How does D3D12 on Windows 7 handle hardware with Feature Level 11_1?](#q-how-does-d3d12-on-windows-7-handle-hardware-with-feature-level-11_1)
+  - [Q: Can I execute the Windows 7 version of D3D12.DLL on a Windows 10 machine?](#q-can-i-execute-the-windows-7-version-of-d3d12dll-on-a-windows-10-machine)
+  - [Q: Who should I contact for any questions related to D3D12 on Windows 7?](#q-who-should-i-contact-for-any-questions-related-to-d3d12-on-windows-7)
 
 ---
 
@@ -268,7 +268,7 @@ A: You can continue to use your current SDK on Windows 10 machines to build the 
 
 If you want to run the SDK Layer to detect (1) unsupported flags like sharing, and (2) invalid fence usage patterns (e.g. fence rewinding, out-of-order fence waits), you will need to move up to the latest Windows 10 and matching SDK. See “Run Windows 10 SDK Layer in Windows 7 emulation mode” for details.
 
-## Q: How does D3D12 on Windows 7 handle hardware with Feature Level 11_1? Will a simple query of feature level + tier be enough?
+## Q: How does D3D12 on Windows 7 handle hardware with Feature Level 11_1?
 
 A: D3D12 on Windows 7 will work the same way as on Windows 10: a simple query of feature level + tier is enough. D3D12 on Windows 7 does not introduce new tiers.
 
