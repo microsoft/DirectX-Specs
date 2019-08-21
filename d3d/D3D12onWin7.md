@@ -35,7 +35,7 @@ This is a guidance document to help game developers port their existing D3D12 ga
   - [Q: What limitations should I expect when porting D3D12 games to Windows 7?](#q-what-limitations-should-i-expect-when-porting-d3d12-games-to-windows-7)
   - [Q: How about HDR support?](#q-how-about-hdr-support)
   - [Q: Do I need to update SDK to build D3D12 games for Windows 7?](#q-do-i-need-to-update-sdk-to-build-d3d12-games-for-windows-7)
-  - [Q: How does D3D12 on Windows 7 handle hardware with Feature Level 11_1? Will a simple query of feature level + tier be enough?](#q-how-does-d3d12-on-windows-7-handle-hardware-with-feature-level-111-will-a-simple-query-of-feature-level-tier-be-enough)
+  - [Q: How does D3D12 on Windows 7 handle hardware with Feature Level 11_1?](#q-how-does-d3d12-on-windows-7-handle-hardware-with-feature-level-11_1)
   - [Q: Can I execute the Windows 7 version of D3D12.DLL on a Windows 10 machine?](#q-can-i-execute-the-windows-7-version-of-d3d12dll-on-a-windows-10-machine)
   - [Q: Who should I contact for any questions related to D3D12 on Windows 7?](#q-who-should-i-contact-for-any-questions-related-to-d3d12-on-windows-7)
 
@@ -268,7 +268,7 @@ A: You can continue to use your current SDK on Windows 10 machines to build the 
 
 If you want to run the SDK Layer to detect (1) unsupported flags like sharing, and (2) invalid fence usage patterns (e.g. fence rewinding, out-of-order fence waits), you will need to move up to the latest Windows 10 and matching SDK. See “Run Windows 10 SDK Layer in Windows 7 emulation mode” for details.
 
-## Q: How does D3D12 on Windows 7 handle hardware with Feature Level 11_1? Will a simple query of feature level + tier be enough?
+## Q: How does D3D12 on Windows 7 handle hardware with Feature Level 11_1?
 
 A: D3D12 on Windows 7 will work the same way as on Windows 10: a simple query of feature level + tier is enough. D3D12 on Windows 7 does not introduce new tiers.
 
