@@ -37,6 +37,7 @@ This is a guidance document to help game developers port their existing D3D12 ga
   - [Q: Do I need to update SDK to build D3D12 games for Windows 7?](#q-do-i-need-to-update-sdk-to-build-d3d12-games-for-windows-7)
   - [Q: How does D3D12 on Windows 7 handle hardware with Feature Level 11_1?](#q-how-does-d3d12-on-windows-7-handle-hardware-with-feature-level-11_1)
   - [Q: Can I execute the Windows 7 version of D3D12.DLL on a Windows 10 machine?](#q-can-i-execute-the-windows-7-version-of-d3d12dll-on-a-windows-10-machine)
+  - [Q: What about Windows 8 or Windows 8.1?](#q-what-about-windows-8-or-windows-81)
   - [Q: Who should I contact for any questions related to D3D12 on Windows 7?](#q-who-should-i-contact-for-any-questions-related-to-d3d12-on-windows-7)
 
 ---
@@ -276,6 +277,10 @@ A: D3D12 on Windows 7 will work the same way as on Windows 10: a simple query of
 
 A: No. We explicitly fail the case where developers trying to load the Windows 7 version of D3D12.DLL on a Windows 10 machine. It will also fail even if one forces the game to run in Windows 7 Compatibility Mode.
 The Windows 7 version of D3D12.DLL can only be loaded and executed on Windows 7 SP1.
+
+## Q: What about Windows 8 or Windows 8.1?
+
+A: No, the Windows 7 version of D3D12.DLL can only be loaded and executed on Windows 7 SP1.
 
 ## Q: Who should I contact for any questions related to D3D12 on Windows 7?
 
