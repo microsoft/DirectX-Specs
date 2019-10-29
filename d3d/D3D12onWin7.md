@@ -38,6 +38,7 @@ This is a guidance document to help game developers port their existing D3D12 ga
   - [Q: How does D3D12 on Windows 7 handle hardware with Feature Level 11_1?](#q-how-does-d3d12-on-windows-7-handle-hardware-with-feature-level-11_1)
   - [Q: Can I execute the Windows 7 version of D3D12.DLL on a Windows 10 machine?](#q-can-i-execute-the-windows-7-version-of-d3d12dll-on-a-windows-10-machine)
   - [Q: What about Windows 8 or Windows 8.1?](#q-what-about-windows-8-or-windows-81)
+  - [Q: Windows 7 gamers cannot install D3D12 binaires due to invalid digital signature?](#q-windows-7-gamers-cannot-install-d3d12-binaires-due-to-invalid-digital-signature)
   - [Q: Who should I contact for any questions related to D3D12 on Windows 7?](#q-who-should-i-contact-for-any-questions-related-to-d3d12-on-windows-7)
 
 ---
@@ -225,6 +226,8 @@ To get that cost down, you have several options to reduce the number of resident
 
 To release your D3D12 games on Windows 7, you must package and release the Windows 7 version of D3D12 binaries as part of your game – gamers will not receive those binaries from Microsoft. Any update of those binaries (e.g. with bug fixes) will also be released to gamers as part of your game update, not from Microsoft.
 
+Starting from nupkg 1.1.0 (released on TBD), we will switch binary signing from SHA-1 to SHA-2 in order to be compliant with [Microsoft’s security policy](https://support.microsoft.com/en-us/help/4472027/2019-sha-2-code-signing-support-requirement-for-windows-and-wsus), which may require Windows 7 gamers to install extra patches before they can install D3D12 binaries. Please see [Q: Windows 7 gamers cannot install D3D12 binaires due to invalid digital signature?](#q-windows-7-gamers-cannot-install-d3d12-binaires-due-to-invalid-digital-signature) below for more details.
+
 ## D3D12 games must continue to run after gamers upgrade from Windows 7 to Windows 10
 
 The app should not have two different EXEs *and* decide which EXE to install during installation time. The app must either (1) have one executable for both Windows 7 and Windows 10 (preferred), or (2) have two different EXEs but also have a single launcher to choose the right EXE at launch time.
@@ -281,6 +284,20 @@ The Windows 7 version of D3D12.DLL can only be loaded and executed on Windows 7 
 ## Q: What about Windows 8 or Windows 8.1?
 
 A: No, the Windows 7 version of D3D12.DLL can only be loaded and executed on Windows 7 SP1.
+
+## Q: Windows 7 gamers cannot install D3D12 binaires due to invalid digital signature?
+
+A: Starting from nupkg 1.1.0 (released on TBD), we will switch binary signing from SHA-1 to SHA-2 in order to be compliant with [Microsoft’s security policy](https://support.microsoft.com/en-us/help/4472027/2019-sha-2-code-signing-support-requirement-for-windows-and-wsus), which may require Windows 7 gamers to install extra patches before they can install D3D12 binaries.
+
+To minimize interruption for your Windows 7 gamers, game developers should first decide if their game installer validates binary signing when deployed on Windows 7 PC then follow up properly.
+
+1. Prepare a test machine with Windows 7 SP1, x64, but without either of the following patch (you can validate by checking Update History).
+    * Servicing stack update (SSU) ([KB4490628](https://support.microsoft.com/en-us/help/4490628/)). If you use Windows Update, the required SSU will be offered to you automatically. 
+    *  SHA-2 update ([KB4474419](https://support.microsoft.com/en-us/help/4474419/)). If you use Windows Update, the required SHA-2 update will be offered to you automatically.
+2. Download the nupkg file with version 1.1.0 or newer, and use the new DLLs inside that package to build a new game installer .
+3. Run the game installer you generated in step #2 above on the PC you prepared in step #1 above; observe any error.
+    * If the game is successfully deployed from the updated installer and running as expected, no further action is required. 
+    * Othrewise, you need to prompt Windows 7 gamers to install the two extra patches on top of SP1 (KB4490628 and KB4474419; see details above) before installing your games.
 
 ## Q: Who should I contact for any questions related to D3D12 on Windows 7?
 
