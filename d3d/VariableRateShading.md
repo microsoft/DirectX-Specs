@@ -36,11 +36,105 @@ A multiple-tier implementation is proposed. There are two user-queryable caps.
 
 Features for each tier are described in greater detail below the table.
 
-![tiers](images/VariableRateShading/Tiers.PNG "Tiers")
+<font color="black">
+    <table border="1" bordercolor="black"> 
+        <tr>
+            <td bgcolor="white"><b>Feature</b></td>                 
+            <td bgcolor="white"><b>Tier 1</b></td>      
+            <td bgcolor="white"><b>Tier 2</b></td>
+        </tr>
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">Per draw rate selection</td>        
+            <td style="border:1px solid #000;" bgcolor="#E2EFD9">Y</td>                
+            <td style="border:1px solid #000;" bgcolor="#E2EFD9">Y</td>
+        </tr>
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">Supports request for 1x1, 1x2, 2x1 and 2x2 coarse pixel size</td>        
+            <td style="border:1px solid #000;" bgcolor="#E2EFD9">Y</td>                
+            <td style="border:1px solid #000;" bgcolor="#E2EFD9">Y</td>
+        </tr>
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">Shading rate 1x2 is guaranteed available if requested</td>        
+            <td style="border:1px solid #000;" bgcolor="white">N</td>                
+            <td style="border:1px solid #000;" bgcolor="#E2EFD9">Y</td>
+        </tr>
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">Coarse shading is guaranteed available when programmable sample positions are used</td>        
+            <td style="border:1px solid #000;" bgcolor="white">N</td>                
+            <td style="border:1px solid #000;" bgcolor="#E2EFD9">Y</td>
+        </tr>
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">Coarse shading is guaranteed available when conservative rasterization is used</td>        
+            <td style="border:1px solid #000;" bgcolor="white">N</td>                
+            <td style="border:1px solid #000;" bgcolor="#E2EFD9">Y</td>
+        </tr>
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">Additional coarse pixel sizes (see above)</td>        
+            <td style="border:1px solid #000;" bgcolor="white">CAP (<i>AdditionalShadingRatesSupported</i>)</td>                
+            <td style="border:1px solid #000;" bgcolor="white">CAP (<i>AdditionalShadingRatesSupported</i>)</td>
+        </tr>    
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">Per provoking vertex rate selection when one viewport is used</td>        
+            <td style="border:1px solid #000;" bgcolor="white">N</td>                
+            <td style="border:1px solid #000;" bgcolor="#E2EFD9">Y</td>
+        </tr>    
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">Per provoking vertex rate selection when multiple viewports are used</td>        
+            <td style="border:1px solid #000;" bgcolor="white">N</td>                
+            <td style="border:1px solid #000;" bgcolor="white">CAP (<i>SupportsPerVertexShadingRateWithMultipleViewports</i>)</td>
+        </tr>    
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">Screenspace image-based rate selection</td>        
+            <td style="border:1px solid #000;" bgcolor="white">N</td>               
+            <td style="border:1px solid #000;" bgcolor="#E2EFD9">Y</td>
+        </tr> 
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">SV_ShadingRate PS input</td>        
+            <td style="border:1px solid #000;" bgcolor="white">N</td>               
+            <td style="border:1px solid #000;" bgcolor="#E2EFD9">Y</td>
+        </tr>
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">Subpixel rasterization offset</td>        
+            <td style="border:1px solid #000;" bgcolor="white">N</td>               
+            <td style="border:1px solid #000;" bgcolor="white">N</td>   
+        </tr>
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">Feedback surface</td>        
+            <td style="border:1px solid #000;" bgcolor="white">N</td>               
+            <td style="border:1px solid #000;" bgcolor="white">N</td>   
+        </tr>
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">Hybrid MSAA (continuum of shading rates between coarse and per-sample execution with MSAA)</td>        
+            <td style="border:1px solid #000;" bgcolor="white">N</td>               
+            <td style="border:1px solid #000;" bgcolor="white">N</td>   
+        </tr>
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">Shader can get or set SV_Coverage when coarse pixel shading is used</td>        
+            <td style="border:1px solid #000;" bgcolor="white">N</td>               
+            <td style="border:1px solid #000;" bgcolor="#E2EFD9">Y</td>
+        </tr>
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">SampleMask may be something other than full mask when coarse pixel shading is used</td>        
+            <td style="border:1px solid #000;" bgcolor="white">N</td>               
+            <td style="border:1px solid #000;" bgcolor="#E2EFD9">Y</td>
+        </tr>
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">Pull model can be used when coarse pixel shading is used</td>        
+            <td style="border:1px solid #000;" bgcolor="white">N</td>               
+            <td style="border:1px solid #000;" bgcolor="#E2EFD9">Y</td>
+        </tr>
+        <tr>
+            <td style="border:1px solid #000;" bgcolor="white">Target OS release</td>        
+            <td style="border:1px solid #000;" bgcolor="white">19H1</td>               
+            <td style="border:1px solid #000;" bgcolor="white">19H1</td>   
+        </tr>
+    </table>
+</font>
 
 ### Tier 1
 * Shading rate can only be specified on a per-draw-basis; nothing more granular than that
 * Shading rate applies uniformly to what is drawn independently of where it lies within the rendertarget
+* Use of 1x2, programmable sample positions, or conservative rasterization may cause fall-back into fine shading
 
 ### Tier 2
 * Shading rate can be specified on a per-draw-basis, as in Tier 1. It can also be specified by a combination of per-draw-basis, and of:
@@ -72,9 +166,9 @@ The app can specify a subsampling level in the command buffer. This API takes a 
 Values for this state are expressed through the enumeration D3D12_SHADING_RATE.
 
 #### Coarse pixel size support
-The shading rates 1x1, 1x2, 2x2 and 2x2 are supported on all tiers.
+The shading rates 1x1, 1x2, 2x2 and 2x2 can be requested on all tiers.
 
-There is a cap, AdditionalShadingRatesSupported, to indicate whether 2x4, 4x2, and 4x4 are supported on the device.
+There is a cap, AdditionalShadingRatesSupported, to indicate whether 2x4, 4x2, and 4x4 are available on the device.
 
 ### Screen Space Image (image-based):
 On Tier 2 and higher, pixel shading rate can be specified by a screen-space image.
@@ -234,15 +328,18 @@ A pixel shader fails compilation if it inputs SV_ShadingRate and also uses sampl
 >
 > Deferred shading applications’ lighting passes may need to know shading rate was used for which area of the screen. This is so their lighting pass dispatches can launch at a coarser rate. The SV_ShadingRate variable can be used to accomplish this if it is written out to the gbuffer.
 
+> ### Remark on Tier 1 devices
+> Tier 1 devices do not support SV_ShadingRate. But, if an application needs to query the shading rate on Tier 1 hardware, it could work around this limitation by taking X and Y screen-position gradients to ascertain coarse pixel width and height respectively.
+
 ## Depth and Stencil
 When coarse pixel shading is used, depth and stencil and coverage are always computed and emitted at the full sample resolution.
 
 ## Using the Shading Rate Requested
-For all tiers, it is expected that if a shading rate is requested, and it is supported on the device-and-MSAA-level-combination, then that is the shading rate delivered by the hardware.
+For all tiers, it is expected that if a shading rate is requested, and it is supported on the device-and-MSAA-level-combination together with the relevent rendering feature areas, then that is the shading rate delivered by the hardware.
 
 A requested shading rate means a shading rate computed as an output of the combiners (see section "Combining Shading Rate Factors").
 
-A supported shading rate is 1x1, 1x2, 2x1, or 2x2 in a rendering operation where the sample count is less than or equal to four. If the *AdditionalShadingRatesSupported* cap is true, then 2x4, 4x2, 4x4 are also supported shading rates for some sample counts (see table under section "New model").
+A supported shading rate is 1x1, 1x2, 2x1, or 2x2 in a rendering operation where the sample count is less than or equal to four. If the *AdditionalShadingRatesSupported* cap is true, then 2x4, 4x2, 4x4 are also supported shading rates for some sample counts (see table under section "New model"). On some VRS Tier 1 platforms, coarse shading is not guaranteed in certain situations (see "Feature Tiering").
 
 ## Screen-space Derivatives
 Calculations of pixel-to-adjacent-pixel gradients are affected by coarse pixel shading. For example, when 2x2 coarse pixels are used, a gradient will be twice the size as compared to when coarse pixels are not used. Apps may want to adjust shaders to compensate for this— or not, depending on the desired functionality.
@@ -250,7 +347,7 @@ Calculations of pixel-to-adjacent-pixel gradients are affected by coarse pixel s
 Because mips are chosen based on a screen-space derivative, the usage of coarse pixel shading affects mip selection. Usage of coarse pixel shading will cause lesser-detailed mips to be selected compared to when coarse pixels are not used.
 
 ## Attribute Interpolation
-Inputs to a pixel shader may be interpolated based on their source vertices. Because variable rate shading affects the areas of the target written by each invocation of the pixel shader, it interacts with attribute interpolation. The three types of interpolation are center, centroid and sample.
+Inputs to a pixel shader are interpolated based on their source vertices. Because variable rate shading affects the areas of the target written by each invocation of the pixel shader, it interacts with attribute interpolation. The three types of interpolation are center, centroid and sample.
 
 ### Center
 The center interpolation location for a coarse pixel is the geometric center of the full coarse pixel area. 
@@ -480,7 +577,15 @@ TIR is not supported when subsampling is used.
 ROV interlocks are specified as operating at fine pixel granularity. If shading is performed per sample then interlocks are operating at sample granularity.
 
 ## Conservative Rasterization
-Conservative rasterization is allowed to be used with variable rate shading. When conservative rasterization is used with coarse pixel shading, fine pixels within coarse pixels are conservatively rasterized by being given full coverage.
+Conservative rasterization is allowed to be used with variable rate shading. It is fully orthogonal with coarse pixel shading for Tier 2 devices and higher; on some Tier 1 devices, it may cause drop-down into fine shading. In any case, when conservative rasterization is used with coarse pixel shading, fine pixels within coarse pixels are conservatively rasterized by being given full coverage. 
+
+Given conservative rasterization is applied on a fine-pixel basis, SV_InnerCoverage also operates on a fine-pixel basis when coarse shading is used. 
+
+The mapping of cover-able samples to bits in SV_InnerCoverage follow the same scheme as SV_Coverage.
+
+For SV_InnerCoverage:
+* If a fine pixel has partial coverage, the corresponding bits for that fine pixel are set to 0.
+* And if a fine pixel has full coverage, the corresponding bits for that fine pixel are set to 1. 
 
 Given conservative rasterization is applied on a fine-pixel basis, SV_InnerCoverage also operates on a fine-pixel basis when coarse shading is used. 
 
