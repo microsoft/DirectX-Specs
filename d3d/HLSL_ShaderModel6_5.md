@@ -5,7 +5,7 @@ v1.0 2019-10-15
 # Contents
 
 - [Introduction](#introduction)
-  - [DXR 1.1](#dxr-1.1)
+  - [DXR 1.1](#dxr-11)
   - [Sampler Feedback](#sampler-feedback)
   - [Mesh and Amplification Shaders](#mesh-and-amplification-shaders)
 - [New Wave Intrinsics](#new-wave-intrinsics)
