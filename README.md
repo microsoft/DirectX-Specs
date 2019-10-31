@@ -32,6 +32,14 @@ These specs are presented with different interfaces at two different URLs:
     * [Render Passes](d3d/RenderPasses.md)
     * [Background Processing](d3d/BackgroundProcessing.md)
 
+* Video
+    * [](d3d/D3D12_Video_Motion_Estimation.md)
+    * [](d3d/D3D12_Video_ProtectedResourceSupport.md)
+    * [](d3d/ProtectedResources.md)
+
+* HLSL
+    * [](d3d/HLSL_ShaderModel6_5.md)
+
 * Developer Features
     * [Device Removed Extended Data](d3d/DeviceRemovedExtendedData.md)
 
