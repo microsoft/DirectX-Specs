@@ -33,12 +33,12 @@ These specs are presented with different interfaces at two different URLs:
     * [Background Processing](d3d/BackgroundProcessing.md)
 
 * Video
-    * [](d3d/D3D12_Video_Motion_Estimation.md)
-    * [](d3d/D3D12_Video_ProtectedResourceSupport.md)
-    * [](d3d/ProtectedResources.md)
+    * [Motion Estimation](d3d/D3D12_Video_Motion_Estimation.md)
+    * [Protected Resources](d3d/ProtectedResources.md)
+    * [Video Protected Resource Support](d3d/D3D12_Video_ProtectedResourceSupport.md)
 
 * HLSL
-    * [](d3d/HLSL_ShaderModel6_5.md)
+    * [Shader Model 6.5](d3d/HLSL_ShaderModel6_5.md)
 
 * Developer Features
     * [Device Removed Extended Data](d3d/DeviceRemovedExtendedData.md)
