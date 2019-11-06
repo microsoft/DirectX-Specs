@@ -5905,7 +5905,7 @@ Trivial example, just get a simple triangle hit/miss from tracing a ray.
 Here is a diagram that matches this example, illustrating what happens behind the scenes: [Specialized TraceRayInline control flow](#specialized-tracerayinline-control-flow).
 
 ```C++
-RaytracingAccelerationStructure MyAccelerationStructure : register(t3);
+RaytracingAccelerationStructure myAccelerationStructure : register(t3);
 
 float4 MyPixelShader(float2 uv : TEXCOORD) : SV_Target0
 {
@@ -5919,9 +5919,10 @@ float4 MyPixelShader(float2 uv : TEXCOORD) : SV_Target0
 
     // Set up a trace.  No work is done yet.
     q.TraceRayInline(
-        MyAccelerationStructure,rayFlags,
-        instanceMask,
-        MyRay);
+        myAccelerationStructure,
+        myRayFlags, // OR'd with flags above
+        myInstanceMask,
+        myRay);
 
     // Proceed() below is where behind-the-scenes traversal happens,
     // including the heaviest of any driver inlined code.
@@ -5967,7 +5968,7 @@ More general case, handling all the possible states.
 This a diagram illustrates the full control flow to support this type of scenario: [TraceRayInline control flow](#tracerayinline-control-flow).
 
 ```C++
-RaytracingAccelerationStructure MyAccelerationStructure : register(t3);
+RaytracingAccelerationStructure myAccelerationStructure : register(t3);
 
 struct MyCustomAttrIntersectionAttributes { float4 a; float3 b; }
 
@@ -5982,9 +5983,10 @@ void MyComputeShader(uint3 DTid : SV_DispatchThreadID)
 
     // Set up a trace
     q.TraceRayInline(
-        MyAccelerationStructure,rayFlags,
-        instanceMask,
-        MyRay);
+        myAccelerationStructure,
+        myRayFlags,
+        myInstanceMask,
+        myRay);
 
     // Storage for procedural primitive hit attributes
     MyCustomIntersectionAttributes committedCustomAttribs;
@@ -6102,24 +6104,24 @@ void MyComputeShader(uint3 DTid : SV_DispatchThreadID)
 Expensive scenario with multiple simultaneous traces:
 
 ```C++
-RaytracingAccelerationStructure MyAccelerationStructure : register(t3);
+RaytracingAccelerationStructure myAccelerationStructure : register(t3);
 
 float4 MyPixelShader(float2 uv : TEXCOORD) : SV_Target0
 {
     ...
     RayQuery<RAY_FLAG_FORCE_OPAQUE> rayQ1;
     rayQ1.TraceRayInline(
-      MyAccelerationStructure,
+      myAccelerationStructure,
       RAY_FLAG_NONE,
-      instanceMask,
-      MyRay1);
+      myInstanceMask,
+      myRay1);
 
     RayQuery<RAY_FLAG_FORCE_OPAQUE> rayQ2;
     rayQ2.TraceRayInline(
-      MyAccelerationStructure,
+      myAccelerationStructure,
       RAY_FLAG_NONE,
-      instanceMask,
-      MyRay2);
+      myInstanceMask,
+      myRay2);
 
     // traverse rayQ1 and rayQ2 state machines simultaneously for some reason
 
@@ -6137,10 +6139,10 @@ float4 MyPixelShader(float2 uv : TEXCOORD) : SV_Target0
     // It's also fine to just declare a different query object, relying on the compiler
     // to notice the lifetimes of each don't overlap.
     rayQ1.TraceRayInline(
-      MyAccelerationStructure,
+      myAccelerationStructure,
       RAY_FLAG_NONE,
-      instanceMask,
-      MyRay1);
+      myInstanceMask,
+      myRay1);
     // This could be done any time, no need to wait for the original query to be in some state
     // to be allowed to replace with a new trace.
 }
