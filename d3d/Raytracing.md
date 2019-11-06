@@ -5917,19 +5917,22 @@ float4 MyPixelShader(float2 uv : TEXCOORD) : SV_Target0
              RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES |
              RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH> q;
 
-    // Set up a trace
+    // Set up a trace.  No work is done yet.
     q.TraceRayInline(
         MyAccelerationStructure,rayFlags,
         instanceMask,
         MyRay);
 
-    // This is where behind-the-scenes traversal happens,
+    // Proceed() below is where behind-the-scenes traversal happens,
     // including the heaviest of any driver inlined code.
-    // In simplest of scenarios, this only needs to be called once:
-    // based on the specialization above, traversal completion is
-    // guaranteed.
+    // In this simplest of scenarios, this only needs to be
+    // called once rather than a loop:
+    // Based on the template specialization above,
+    // traversal completion is guaranteed.
     q.Proceed();
 
+    // Examine and act on the result of the traversal.
+    // Was any hit committed?
     if(q.CommittedStatus()) == COMMITTED_TRIANGLE_HIT)
     {
         ShadeMyTriangleHit(
@@ -5941,6 +5944,8 @@ float4 MyPixelShader(float2 uv : TEXCOORD) : SV_Target0
             q.CommittedTriangleFrontFace() );
     }
     else // COMMITTED_NOTHING
+         // From template specialization,
+         // COMMITTED_PROCEDURAL_PRIMITIVE can't happen.
     {
         // Do miss shading
         MyMissColorCalculation(
