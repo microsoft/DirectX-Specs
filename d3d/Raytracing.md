@@ -5926,14 +5926,14 @@ float4 MyPixelShader(float2 uv : TEXCOORD) : SV_Target0
 
     // Proceed() below is where behind-the-scenes traversal happens,
     // including the heaviest of any driver inlined code.
-    // In this simplest of scenarios, this only needs to be
-    // called once rather than a loop:
+    // In this simplest of scenarios, Proceed() only needs
+    // to be called once rather than a loop:
     // Based on the template specialization above,
     // traversal completion is guaranteed.
     q.Proceed();
 
     // Examine and act on the result of the traversal.
-    // Was any hit committed?
+    // Was a hit committed?
     if(q.CommittedStatus()) == COMMITTED_TRIANGLE_HIT)
     {
         ShadeMyTriangleHit(
