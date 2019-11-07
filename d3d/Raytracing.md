@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.09 11/4/2019
+v1.1 11/7/2019
 
 ---
 
@@ -279,6 +279,7 @@ v1.09 11/4/2019
       - [RayQuery CommittedRayT](#rayquery-committedrayt)
       - [RayQuery CandidateInstanceIndex](#rayquery-candidateinstanceindex)
       - [RayQuery CandidateInstanceID](#rayquery-candidateinstanceid)
+      - [RayQuery CandidateInstanceContributionToHitGroupIndex](#rayquery-candidateinstancecontributiontohitgroupindex)
       - [RayQuery CandidateGeometryIndex](#rayquery-candidategeometryindex)
       - [RayQuery CandidatePrimitiveIndex](#rayquery-candidateprimitiveindex)
       - [RayQuery CandidateObjectRayOrigin](#rayquery-candidateobjectrayorigin)
@@ -289,6 +290,7 @@ v1.09 11/4/2019
       - [RayQuery CandidateWorldToObject4x3](#rayquery-candidateworldtoobject4x3)
       - [RayQuery CommittedInstanceIndex](#rayquery-committedinstanceindex)
       - [RayQuery CommittedInstanceID](#rayquery-committedinstanceid)
+      - [RayQuery CommittedInstanceContributionToHitGroupIndex](#rayquery-committedinstancecontributiontohitgroupindex)
       - [RayQuery CommittedGeometryIndex](#rayquery-committedgeometryindex)
       - [RayQuery CommittedPrimitiveIndex](#rayquery-committedprimitiveindex)
       - [RayQuery CommittedObjectRayOrigin](#rayquery-committedobjectrayorigin)
@@ -2411,7 +2413,7 @@ pixel shaders), thread execution syncing (available in compute).
 
 ### Wave Intrinsics
 
-Wave intrinsics which are allowed in raytracing shaders, with the intent
+Wave intrinsics are allowed in raytracing shaders, with the intent
 that they are for tools (PIX) logging. That said, applications are also
 not blocked from using wave intrinsics in case they might find safe use.
 
@@ -2436,6 +2438,9 @@ invocation:
 - [IgnoreHit()](#ignorehit)
 
 - [AcceptHitAndEndSearch()](#accepthitandendsearch)
+
+Note that use of [RayQuery](#rayquery) objects for inline raytracing 
+does not count as a repacking point.
 
 ---
 
@@ -3992,7 +3997,7 @@ Member                              | Definition
 `FLOAT Transform[3][4]` | A 3x4 transform matrix in row major layout representing the instance-to-world transformation. Implementations transform rays, as opposed to transforming all the geometry/AABBs.
 `UINT InstanceID` | An arbitrary 24-bit value that can be accessed via [InstanceID()](#instanceid) in shader types listed in [System value intrinsics](#system-value-intrinsics).
 `UINT InstanceMask` | An 8-bit mask assigned to the instance, which can be used to include/reject groups of instances on a per-ray basis. See the InstanceInclusionMask parameter in [TraceRay()](#traceray) and [RayQuery::TraceRayInline()](#rayquery-tracerayinline). If the value is zero, the instance will never be included, so typically this should be set to some nonzero value..
-`UINT InstanceContributionToHitGroupIndex` | Per-instance contribution to add into shader table indexing to select the hit group to use. The indexing behavior is introduced here: [Indexing into shader tables](#indexing-into-shader-tables), detailed here: [Addressing calculations within shader tables](#addressing-calculations-within-shader-tables), and visualized here: [Ray-geometry interaction diagram](#ray-geometry-interaction-diagram).
+`UINT InstanceContributionToHitGroupIndex` | Per-instance contribution to add into shader table indexing to select the hit group to use. The indexing behavior is introduced here: [Indexing into shader tables](#indexing-into-shader-tables), detailed here: [Addressing calculations within shader tables](#addressing-calculations-within-shader-tables), and visualized here: [Ray-geometry interaction diagram](#ray-geometry-interaction-diagram).  Has no behavior with [inline raytracing](#inline-raytracing), however the value is still available to fetch from a [RayQuery](#rayquery) object for shaders use manually for any purpose.
 `UINT Flags` | Flags from [D3D12_RAYTRACING_INSTANCE_FLAGS](#d3d12_raytracing_instance_flags) to apply to the instance.
 `D3D12_GPU_VIRTUAL_ADDRESS AccelerationStructure` | <p>Address of the bottom-level acceleration structure that is being instanced. The address must be aligned to 256 bytes ([D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT](#constants)), which is a somewhat redundant requirement as any existing acceleration structure passed in here would have already been required to be placed with such alignment anyway.</p><p>The memory pointed to must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p>
 
@@ -5761,6 +5766,7 @@ The following table lists intrinsics available when [RayQuery::Proceed()](#rayqu
 | _**Primitive/object space system values:**_       |          |               |
 | uint [CandidateInstanceIndex()](#rayquery-candidateinstanceindex)|\*|\*|
 | uint [CandidateInstanceID()](#rayquery-candidateinstanceid)|\*|\*|
+| uint [CandidateInstanceContributionToHitGroupIndex()](#rayquery-candidateinstancecontributiontohitgroupindex)|\*|\*|
 | uint [CandidateGeometryIndex()](#rayquery-candidategeometryindex)|\*|\*|
 | uint [CandidatePrimitiveIndex()](#rayquery-candidateprimitiveindex)|\*|\*|
 | float3 [CandidateObjectRayOrigin()](#rayquery-candidateobjectrayorigin)|\*|\*|
@@ -5771,6 +5777,7 @@ The following table lists intrinsics available when [RayQuery::Proceed()](#rayqu
 | float4x3 [CandidateWorldToObject4x3()](#rayquery-candidateworldtoobject4x3)|\*|\*|
 | uint [CommittedInstanceIndex()](#rayquery-committedinstanceindex)|   \*      |    \*         |
 | uint [CommittedInstanceID()](#rayquery-committedinstanceid)|   \*      |    \*         |
+| uint [CommittedInstanceContributionToHitGroupIndex()](#rayquery-committedinstancecontributiontohitgroupindex)|\*|\*|
 | uint [CommittedGeometryIndex()](#rayquery-committedgeometryindex)|   \*      |    \*         |
 | uint [CommittedPrimitiveIndex()](#rayquery-committedprimitiveindex)|   \*      |    \*    |
 | float3 [CommittedObjectRayOrigin()](#rayquery-committedobjectrayorigin)|\*      |    \*       |
@@ -5800,6 +5807,7 @@ The following table lists intrinsics available depending on the current current 
 | _**Primitive/object space system values:**_       |          |               |        |
 | uint [CommittedInstanceIndex()](#rayquery-committedinstanceindex)|   \*      |    \*         |        |
 | uint [CommittedInstanceID()](#rayquery-committedinstanceid)|   \*      |    \*         |        |
+| uint [CommittedInstanceContributionToHitGroupIndex()](#rayquery-committedinstancecontributiontohitgroupindex)|   \*      |    \*         |        |
 | uint [CommittedGeometryIndex()](#rayquery-committedgeometryindex)|   \*      |    \*         |        |
 | uint [CommittedPrimitiveIndex()](#rayquery-committedprimitiveindex)|   \*      |    \*         |       |
 | float3 [CommittedObjectRayOrigin()](#rayquery-committedobjectrayorigin)|\*      |    \*         |    |
@@ -6413,6 +6421,29 @@ uint RayQuery::CandidateInstanceID();
 
 ---
 
+#### RayQuery CandidateInstanceContributionToHitGroupIndex
+
+The user-provided `InstanceContributionToHitGroupIndex` on the bottom-level acceleration structure
+instance within the top-level structure for the current hit candidate.
+
+```C++
+uint RayQuery::CandidateInstanceContributionToHitGroupIndex();
+```
+
+With inline raytracing, this value has no functional effect, even though the name describes
+contributing to hit group indexing.  The name refers to the behavior with dynamic-shader-based raytracing.
+It is simply made available via [RayQuery](#rayquery) for completeness, enabling inline raytracing to see everything
+in an acceleration structure.  
+
+> An app might use this a way to store another arbitrary user value per instance into instance data.
+> Or it might be sharing an acceleration structure between dynamic-shader-based and inline raytracing:
+> In the dynamic-shader-based case, the value participates in [shader table indexing](#addressing-calculations-within-shader-tables)
+> and in the inline case the app may achieve some similar equivalent effect manually indexing into its own data structures.
+
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
+
+---
+
 #### RayQuery CandidateGeometryIndex
 
 The autogenerated index of the current geometry in the bottom-level acceleration structure for the current hit candidate.
@@ -6555,6 +6586,29 @@ instance within the top-level structure for the closest hit committed so far.
 ```C++
 uint RayQuery::CommittedInstanceID();
 ```
+
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
+
+---
+
+#### RayQuery CommittedInstanceContributionToHitGroupIndex
+
+The user-provided `InstanceContributionToHitGroupIndex` on the bottom-level acceleration structure
+instance within the top-level structure for the closest hit committed so far.
+
+```C++
+uint RayQuery::CommittedInstanceContributionToHitGroupIndex();
+```
+
+With inline raytracing, this value has no functional effect, even though the name describes
+contributing to hit group indexing.  The name refers to the behavior with dynamic-shader-based raytracing.
+It is simply made available via [RayQuery](#rayquery) for completeness, enabling inline raytracing to see everything
+in an acceleration structure.  
+
+> An app might use this a way to store another arbitrary user value per instance into instance data.
+> Or it might be sharing an acceleration structure between dynamic-shader-based and inline raytracing:
+> In the dynamic-shader-based case, the value participates in [shader table indexing](#addressing-calculations-within-shader-tables)
+> and in the inline case the app may implement some similar equivalent effect manually indexing into its own data structures.
 
 [RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
@@ -7169,3 +7223,5 @@ v1.06|5/16/2019|<li>Removed a feature proposed in previous spec update: ability 
 v1.07|6/5/2019|<li>For [Tier 1.1](#d3d12_raytracing_tier), [GeometryIndex()](#geometryindex) intrinsic added to relevant raytracing shaders, for applications that wish to distinguish geometries manually in shaders in adddition to or instead of by burning shader table slots.</li><li>Revised [AddToStateObject()](#addtostateobject) API such that it returns a new ID3D12StateObject interface.  This makes it explicitly in the apps control when to release the original state object (if ever).  Clarified lots of others detail about the semantics of the operation, particularly now that an app can produce potentially a family of related state objects (though a straight line of inheritance may be the most likely in practice).</li><li>Refactored [inline raytracing](#inline-raytracing) state machine.  Gave up up original proposal's conceptual simplicity (matching the shader based model closely) in favor of a model that's functionally equivalent but makes it easier for drivers to generate inline code.  The shader has a slightly higher burden having to do a few more things manually (outside the system's tracking).  The biggest win should be that there is one logical place where the bulk of system implemented traversal work needs to happen: [RayQuery::Proceed()](#rayquery-proceed), a method which the shader will typically use in a loop condition until traversal is done. Some helpful links:<ul><li>[Inline raytracing overview](#inline-raytracing)</li><li>[TraceRayInline control flow](#tracerayinline-control-flow)</li><li>[RayQuery object](#rayquery)<li>[RayQuery intrinsics](#rayquery-intrinsics)</li><li>[TraceRayInline examples](#tracerayinline-examples)</li></ul>
 v1.08|7/17/2019|<li>Removed distinction between inline ray flags and ray flags.  Both dynamic ray flags for [RayQuery::TraceRayInline()](#rayquery-tracerayinline) and [TraceRay()](#traceray) as well as the template parameter for [RayQuery](#rayquery) objects share the same set of flags.</li><li>Added [ray flags](#ray-flags): `RAY_FLAG_SKIP_TRIANGLES` and `RAY_FLAG_SKIP_PROCEDRUAL_PRIMITIVES` to allow completely skipping either class of primitives.  These flags are valid everywhere ray flags can be used, as summarized above.</li><li>Allowed [RayQuery::CommitProceduralPrimitiveHit()](#rayquery-commitproceduralprimitivehit) and [RayQuery::CommitNonOpaqueTriangleHit()](#rayquery-commitnonopaquetrianglehit) to be called zero or more times per candidate (spec was 0 or 1 times).  If `CommitProceduralPrimitiveHit(t)` is called multiple times per candidate, it requires the shader to have ensure that each time the new t being committed is closest so far in [ray extents](#ray-extents) (would be the new TMax).  If `CommitNonOpaqueTriangleHit()` is called multiple times per candidate, subsequent calls have no effect, as the hit has already been committed.</li><li>[RayQuery::CandidatePrimitiveIndex()](#rayquery-candidateprimitiveindex) was incorrectly listed as not supported for HIT_CANDIDATE_PROCEDURAL_PRIMITIVE in the [RayQuery intrinsics](#rayquery-intrinsics) tables.</li><li>New version of raytracing pipeline config subobject, [D3D12_RAYTRACING_PIPELINE_CONFIG1](#d3d12_raytracing_pipeline_config1), adding a flags field, [D3D12_RAYTRACING_PIPELINE_FLAGS](#d3d12_raytracing_pipeline_flags). The HLSL equivalent subobject is [RaytracingPipelineConfig1](#raytracing-pipeline-config1).  The available flags, `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_TRIANGLES` and `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_PROCEDURAL_PRIMITIVES` (minus `D3D12_` when defined in HLSL) behave like OR'ing the above equivalent RAY_FLAGS listed above into any [TraceRay()](#traceray) call in a raytracing pipeline.  Implementations may be able to make some pipeline optimizations knowing that one of the primitive types can be skipped.</li><li>Cut RayQuery::Clone() instrinsic, as it doesn't appear to have any useful scenario.</li><li>[Ray extents](#ray-extents) section has been updated to define a different range test for triangles versus procedural primitives.  For triangles, intersections occur in the (TMin...TMax) (exclusive) range, which is no change in behavior.  For procedual primitives, the spec wasn't explicit on what the behavior should be, and now the chosen behavior is that intersections occur in \[TMin...TMax\] (inclusive) range.  This allows apps the choice about how to handle exactly overlapping hits if they want a particular one to be reported.</li>
 v1.09|11/4/2019|<li>Added [Execution and memory ordering](#execution-and-memory-ordering) discussion defining that [TraceRay()](#traceray) and/or [CallShader()](#callshader) invocations finish execution when the caller resumes, and that for UAV writes to be visible memory barriers must be used..</li><li>Added [State object lifetimes as seen by driver](#state-object-lifetimes-as-seen-by-driver) section to clarify how driver sees the lifetimes of collection state objects as well as state objects in a chain of [AddToStateObject()](#addtostateobject) calls growing a state object while the app is also destroying older versions.</li><li>In [BuildRaytracingAccelerationStructure()](#buildraytracingaccelerationstructure) API, tightened the spec for the optional output postbuild info that the caller can request.  The caller can pass an array of postbuild info descriptions that they want the driver to fill out.  The change is to require that any given postbuild info type can only be requested at most once in the array.</li>
+v1.1|11/7/2019|<li>Added accessor functions [RayQuery::CandidateInstanceContributionToHitGroupIndex](#rayquery-candidateinstancecontributiontohitgroupindex) and [RayQuery::CommittedInstanceContributionToHitGroupIndex](#rayquery-committedinstancecontributiontohitgroupindex) so that inline raytracing can see the `InstanceContributionToHitGroupIndex` field in instance data.  This is done in the spirit of letting inline raytracing see everything that is in an acceleration structure.  Of course in inline raytracing there are no shader tables, so there is no functional behavior from this value.  Instead it allows the app to use this value as arbitrary user data.  Or when sharing acceleration structures between dynamic-shader-based raytracing, to manually implementing in the inline raytracing case the effective result of the shader table indexing in the dynamic-shader-based raytracing case.</li><li>In [Wave Intrinsics](#wave-intrinsics) section, clarified that use of [RayQuery](#rayquery) objects for inline raytracing does not count as a repacking point.</li>
+
