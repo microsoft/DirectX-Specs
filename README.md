@@ -12,6 +12,7 @@ These specs are presented with different interfaces at two different URLs:
 ## Direct3D 12
 
 * Rendering Pipeline
+    * [Mesh Shader](d3d/MeshShader.md)
     * [Sampler Feedback](d3d/SamplerFeedback.md)
     * [DirectX Raytracing (DXR)](d3d/Raytracing.md)
     * [Variable Rate Shading](d3d/VariableRateShading.md)
