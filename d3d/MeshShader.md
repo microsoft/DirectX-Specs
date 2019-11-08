@@ -1,4 +1,4 @@
-# <div style="text-align:right">Mesh Shader</div>
+# Mesh Shader
 
 v0.85
 
