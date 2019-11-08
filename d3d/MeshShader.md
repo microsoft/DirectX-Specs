@@ -361,7 +361,7 @@ List of HLSL elements for Mesh shader
 ================================================
 
 | Function Name | Mandatory/optional for shader to use |
-|-|-|
+|---|---|
 | [`[numthreads(X, Y, Z)]`](#numthreads)                | Mandatory, `X*Y*Z <= 128` |
 | [`[outputtopology(T)]`](#outputtopology)              | Required: `T` is `"line"` or `"triangle"` |
 | [`SV_DispatchThreadID`](#sv_dispatchthreadid)   | Optional input |
