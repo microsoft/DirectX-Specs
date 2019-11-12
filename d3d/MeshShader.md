@@ -55,9 +55,9 @@ Contents
     - [Streamout](#streamout)
 
 * [Examples](#examples)
-    - [Example 1 -- Passthrough](#example-1----passthrough)
-    - [Example 2 -- Culling](#example-2----culling)
-    - [Example 3 -- Amplification](#example-3----amplification)
+    - [Example 1: Passthrough](#example-1:-passthrough)
+    - [Example 2: Culling](#example-2:-culling)
+    - [Example 3: Amplification](#example-3:-amplification)
 
 Intro
 =====
@@ -196,7 +196,7 @@ Primitive attributes do not require any interpolation modifiers to be specified,
 
 Since IA is disabled, each thread of the Mesh shader receives inputs
 similar to those in a compute shader, meaning just thread IDs,
-plus a group-uniform mesh [`payload`](#payload) from an Amplification shader, if any.
+plus a group-uniform mesh [`payload`](#mesh-payload) from an Amplification shader, if any.
 It's up to the shader author to read indices, read vertices, and output primitives.
 To make reading and processing of some types of legacy index buffers easier, D3D will
 provide helper functions, which are described in a separate "future work" document.
@@ -350,8 +350,9 @@ List of D3D API calls
 
 Note that in the following tables, all functions must be supported by the device. 
 Optional strictly means that the user has an option of whether or not to make use of this function.
+
 | Function Name | Mandatory/optional for user to call |
-|-|-|
+|---|---|
 |[CheckFeatureSupport(Feature, *pFeatureSupportData, FeatureSupportDataSize)](#checkfeaturesupport) | Mandatory |
 |[CreatePipelineState(pipelineStateStreamDescriptor, riid, ppPipelineState)](#createpipelinestate)| Mandatory | 
 |[DispatchMesh(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ)](#dispatchmesh-api)  | Optional |
@@ -379,6 +380,7 @@ List of HLSL elements for Mesh shader
 
 List of HLSL elements for Amplification shader
 ================================================
+
 | Function Name | Mandatory/optional for Amplification shader |
 |---|---|
 | [`[numthreads(X, Y, Z)]`](#numthreads)                | Mandatory, `X*Y*Z <= 128` |
@@ -1011,7 +1013,7 @@ call is passed through the MeshPayload parameter.
 
 The payload type, specified by `payload_t` here, must be a user-defined struct
 type. The size of this type must match the size of the type used in the Mesh
-shader for the [GetMeshPayload](#getmeshpayload) call. The maximum size
+shader for the [GetMeshPayload](#mesh-payload) call. The maximum size
 allowed for this structure is 16k bytes.
 
 The structure is not flattened into a packed signature layout, but instead
@@ -1051,7 +1053,7 @@ be used from any shader stage including regular compute.
 Examples
 ========
 
-## Example 1 -- Passthrough
+## Example 1: Passthrough
 
 ```c++
 // This gets read from the user vertex SRV
@@ -1131,7 +1133,7 @@ void PassthroughMesh shader(
 }
 ```
 
-## Example 2 -- Culling
+## Example 2: Culling
 
 ```c++
 // This gets read from the user vertex SRV
@@ -1290,7 +1292,7 @@ void PassthroughMesh shader(
 }
 ```
 
-## Example 3 -- Amplification
+## Example 3: Amplification
 
 ```c++
 // This gets read from the SRVs. Vertex buffers aren't automatically loaded now.
