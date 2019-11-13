@@ -47,6 +47,7 @@ These specs are presented with different interfaces at two different URLs:
 
 * Misc
     * [D3D12 on Windows 7](d3d/D3D12onWin7.md)
+    * [Translation Layer Resource Interoperability](d3d/TranslationLayerResourceInterop.md) (9on12 and 11on12)
 
 _These D3D12 specs were written as incremental deltas, with a separate spec per feature area.
 Baseline information about rendering pipeline behaviors that are common between D3D11 and D3D12
