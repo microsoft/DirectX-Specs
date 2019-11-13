@@ -109,7 +109,7 @@ Set TRUE to use 9On12 with the corresponding adapter.
 Optional pointer to the D3D12 Device to use.  If this pointer is specified, this override applies to the display adapter with the same adapter LUID as the D3D12 Device.  If nullptr is specified and Enable9On12 is TRUE, this override applies to any adapter that doesn't match another override in the list.
 
 *ppD3D12Queues*
-Optionally specify the Direct grahpics command queue instance to use.  If nullptr and Enable9on12 is TRUE, 9On12 will internally create the graphics queue.  The second entry of this array is reserved.
+Optionally specify the Direct graphics command queue instance to use.  If nullptr and Enable9on12 is TRUE, 9On12 will internally create the graphics queue.  The second entry of this array is reserved.
 
 *NumQueues*
 Specifies the number of Queues in ppD3D12Queues array.  Must be 0 or 1.  See ppD3D12Queues.
