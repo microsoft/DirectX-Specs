@@ -1,6 +1,6 @@
 <h1>Porting D3D12 games to Windows 7 – Development Guidance</h1>
 
-This is a guidance document to help game developers port their existing D3D12 games from Windows 10 to Windows 7. The current draft is based on the latest D3D12 runtime bits (“Microsoft.Direct3D.D3D12On7.1.0.7.nupkg”). Please read through this guidance document before your planning.
+This is a guidance document to help game developers port their existing D3D12 games from Windows 10 to Windows 7. The current draft is based on the latest D3D12 runtime bits (“Microsoft.Direct3D.D3D12On7.1.1.0.nupkg”). Please read through this guidance document before your planning.
 
 ---
 
@@ -226,7 +226,7 @@ To get that cost down, you have several options to reduce the number of resident
 
 To release your D3D12 games on Windows 7, you must package and release the Windows 7 version of D3D12 binaries as part of your game – gamers will not receive those binaries from Microsoft. Any update of those binaries (e.g. with bug fixes) will also be released to gamers as part of your game update, not from Microsoft.
 
-Starting from nupkg 1.1.0 (released on TBD), we will switch binary signing from SHA-1 to SHA-2 in order to be compliant with [Microsoft’s security policy](https://support.microsoft.com/en-us/help/4472027/2019-sha-2-code-signing-support-requirement-for-windows-and-wsus), which may require Windows 7 gamers to install extra patches before they can install D3D12 binaries. Please see [Q: Windows 7 gamers cannot install D3D12 binaires due to invalid digital signature?](#q-windows-7-gamers-cannot-install-d3d12-binaires-due-to-invalid-digital-signature) below for more details.
+Starting from nupkg 1.1.0 (released on 11/20/2019), we will switch binary signing from SHA-1 to SHA-2 in order to be compliant with [Microsoft’s security policy](https://support.microsoft.com/en-us/help/4472027/2019-sha-2-code-signing-support-requirement-for-windows-and-wsus), which may require Windows 7 gamers to install extra patches before they can install D3D12 binaries. Please see [Q: Windows 7 gamers cannot install D3D12 binaires due to invalid digital signature?](#q-windows-7-gamers-cannot-install-d3d12-binaires-due-to-invalid-digital-signature) below for more details.
 
 ## D3D12 games must continue to run after gamers upgrade from Windows 7 to Windows 10
 
@@ -287,7 +287,7 @@ A: No, the Windows 7 version of D3D12.DLL can only be loaded and executed on Win
 
 ## Q: Windows 7 gamers cannot install D3D12 binaires due to invalid digital signature?
 
-A: Starting from nupkg 1.1.0 (released on TBD), we will switch binary signing from SHA-1 to SHA-2 in order to be compliant with [Microsoft’s security policy](https://support.microsoft.com/en-us/help/4472027/2019-sha-2-code-signing-support-requirement-for-windows-and-wsus), which may require Windows 7 gamers to install extra patches before they can install D3D12 binaries.
+A: Starting from nupkg 1.1.0 (released on 11/20/2019), we will switch binary signing from SHA-1 to SHA-2 in order to be compliant with [Microsoft’s security policy](https://support.microsoft.com/en-us/help/4472027/2019-sha-2-code-signing-support-requirement-for-windows-and-wsus), which may require Windows 7 gamers to install extra patches before they can install D3D12 binaries.
 
 To minimize interruption for your Windows 7 gamers, game developers should first decide if their game installer validates binary signing when deployed on Windows 7 PC then follow up properly.
 
