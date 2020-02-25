@@ -122,7 +122,7 @@ The Amplification shader allows users to decide how many Mesh shader groups to r
 and passes data to those groups.
 The intent for the Amplification shader is to eventually replace hardware tessellators.
 
-![shader stages diagram](images/meshshader/shader_flow.png =150x)  
+![shader stages diagram](images/meshshader/shader_flow.png)  
 
 The Mesh shader runs in threadgroups which are launched by calling a new
 API:
