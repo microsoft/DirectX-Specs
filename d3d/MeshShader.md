@@ -303,7 +303,7 @@ Amplification shader output payload must not exceed 16k bytes per instance.
 
 Mesh shader output data (including alignment constraints) must not exceed 32k bytes per instance.
 
-The size of these two combined must not exceed 47k bytes. 
+The size of these two combined must not exceed 48k bytes. 
 
 Rasterization order
 =====================
