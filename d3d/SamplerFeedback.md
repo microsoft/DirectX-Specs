@@ -185,6 +185,9 @@ In the figure in the Interpretation section above, updating the MinMip map for t
 ### They are a runtime feature
 This section of the document describes a runtime feature specifically geared for representing and manipulating feedback maps.
 
+### They are of an opaque format
+The actual underlying storage of feedback maps may vary across GPUs and is opaque to the application. To get application-inspectable data from a feedback map, the application performs a *decode* step. This is discussed further below in the section "Opaque resource type for feedback maps".
+
 > #### Terminology: Paired
 > For a feedback map to be called "paired" to a sampled resource, it means that the feedback map contains sampler feedback for that resource.
 > 
@@ -218,6 +221,8 @@ Feedback maps cannot themselves be tiled (reserved) resources.
 Their dimension is TEXTURE2D.
 
 Their width and height come from the paired resource.
+
+They have a mip count which matches the resource with which they are paired.
 
 They have an array size which matches the resource with which they are paired.
 
@@ -276,7 +281,7 @@ There are two different implementations of feedback maps, and the application ch
 #### MinMip feedback map
 
 ##### Structure
-MinMip feedback maps do not have mip levels.
+MinMip feedback maps, when decoded, do not have mip levels.
 
 ##### Interpretation
 
