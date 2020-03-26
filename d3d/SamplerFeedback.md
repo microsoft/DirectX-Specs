@@ -131,7 +131,7 @@ While the application is free to choose how to represent MinMip map values, the 
 > Each texel in the MinMip map corresponds to an **mip region** of the paired resource. 
 A **Mip region** is a 2D area over a resource whose dimensions are one tile or a multiple of the tile size. This terminology is used in this document to avoid ambiguous use of the word *tile*.
 
-MinMip map textures themselves do not have mip levels.
+MinMip map textures, when decoded, do not have mip levels.
 
 A MinMip map has the same resource dimensionality as the texture with which it is paired. For example, the MinMip map for an array texture with mipmaps is an array texture with one mip.
 
