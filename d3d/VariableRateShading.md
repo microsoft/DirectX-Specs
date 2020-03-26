@@ -353,8 +353,15 @@ Inputs to a pixel shader are interpolated based on their source vertices. Becaus
 The center interpolation location for a coarse pixel is the geometric center of the full coarse pixel area. 
 SV_Position is always interpolated at center of the coarse pixel region.
 
+> ### Remark about non-covered interpolation locations
+> Center interpolation behavior for coarse shading makes it possible to interpolate things at a location not covered by the geometry. This general idea has special implications for texture co-ordinate interpolation.
+>
+> Suppose, for example, you're using 2x2 coarse pixels. You're interpolating all your stuff as center. You have a tiny, sub-pixel-sized geometry which covers part of one fine pixel of that coarse pixel. Because one fine pixel is covered, we invoke the pixel shader-- remember, coverage is at full resolution. Because we interpolate as center, we interpolate at a location which doesn't overlap the actual geometry. In many situations, this is completely fine- textures can be sampled from any location across a coarse pixel and yield something good. However, if you have a situation involving very precise relationships between coverage location and texture coordinate location, you may want to consider using centroid interpolation instead, whereupon you'll have a guarantee that you won't interpolate at any non-covered location.
+
 ### Centroid
 When coarse pixel shading is used with MSAA, for each fine pixel there will still be writes to the full number of samples allocated for the target’s MSAA level. So, the centroid interpolation location will consider all samples for fine pixels within coarse pixels. That being said, the centroid interpolation location is defined as the first covered sample, in increasing order of sample index. The sample’s effective coverage is and-ed with the corresponding bit of the rasterizer state SampleMask. 
+
+There is an ordering of sample indices within a coarse pixel. It's the same as the ordering of sample indices in the coverage mask. See the section "Ordering and Format of Bits in the Coverage Mask" for information on this.
 
 > ### Note
 >

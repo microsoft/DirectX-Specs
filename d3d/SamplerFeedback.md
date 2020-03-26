@@ -82,11 +82,21 @@ Support for sampler feedback is queryable from a CheckFeatureSupport capability 
 
 The tiers are organized as version-numbers-with-fractions as follows:
 * TIER_NOT_SUPPORTED indicates sampler feedback is not supported. Attempts at calling sampler feedback APIs represent an error.
-* TIER_0_9 (i.e., version 0.9) indicates sampler feedback is supported for samplers with these texture addressing modes:
-    
-    * D3D12_TEXTURE_ADDRESS_MODE_WRAP
-    * D3D12_TEXTURE_ADDRESS_MODE_CLAMP 
-* TIER_1_0 (i.e., version 1.0) indicates sampler feedback is supported for all texture addressing modes.
+* TIER_0_9 (i.e., version 0.9) indicates the following.
+    * Sampler feedback is supported for samplers with these texture addressing modes:    
+      * D3D12_TEXTURE_ADDRESS_MODE_WRAP
+      * D3D12_TEXTURE_ADDRESS_MODE_CLAMP
+    * The Texture2D shader resource view passed in to feedback-writing HLSL methods has these restrictions:
+      * The MostDetailedMip field must be 0.
+      * The MipLevels count must span the full mip count of the resource.
+      * The PlaneSlice field must be 0.
+      * The ResourceMinLODClamp field must be 0.
+    * The Texture2DArray shader resource view passed in to feedback-writing HLSL methods has these restrictions:
+      * All the limitations as in Texture2D above, and
+      * The FirstArraySlice field must be 0.
+      * The ArraySize field must span the full array element count of the resource.
+
+* TIER_1_0 (i.e., version 1.0) indicates sampler feedback is supported for all texture addressing modes, and feedback-writing methods are supported irrespective of the passed-in shader resource view.
 
 ## How to adopt Sampler Feedback for Streaming
 
@@ -131,7 +141,7 @@ While the application is free to choose how to represent MinMip map values, the 
 > Each texel in the MinMip map corresponds to an **mip region** of the paired resource. 
 A **Mip region** is a 2D area over a resource whose dimensions are one tile or a multiple of the tile size. This terminology is used in this document to avoid ambiguous use of the word *tile*.
 
-MinMip map textures themselves do not have mip levels.
+MinMip map textures, when decoded, do not have mip levels.
 
 A MinMip map has the same resource dimensionality as the texture with which it is paired. For example, the MinMip map for an array texture with mipmaps is an array texture with one mip.
 
@@ -162,7 +172,7 @@ The structure of the MinMip map doesn't describe residency of individual mips in
 > #### Note
 > While the values and interpretation described in the previous section represent a reasonable implementation scheme, the system doesn't prevent apps from putting other numbers in the MinMip map or using other numbering schemes.
 
-The values encoded in each texel of a MinMip map are unsigned integers and typically span the expected range of mip level values in the largest possible tiled resource. For a 32K x 32K texture, for example, a mip level of 16 would then be expected for the smallest 1x1 mip level of that texture.
+The values encoded in each texel of a MinMip map are unsigned integers and typically span the expected range of mip level values in the largest possible tiled resource. 
 
 ### Sampling from the MinMip map
 Recall how passing a min-mip to a sampler will perform a clamp when sampling. There, the clamp is uniformly performed no matter where in the texture the sample ends up being. In a similar manner, the MinMip map decides clamping, too- just, the clamp value can vary per-mip-region.
@@ -184,6 +194,9 @@ In the figure in the Interpretation section above, updating the MinMip map for t
 
 ### They are a runtime feature
 This section of the document describes a runtime feature specifically geared for representing and manipulating feedback maps.
+
+### They are of an opaque format
+The actual underlying storage of feedback maps may vary across GPUs and is opaque to the application. To get application-inspectable data from a feedback map, the application performs a *decode* step. This is discussed further below in the section "Opaque resource type for feedback maps".
 
 > #### Terminology: Paired
 > For a feedback map to be called "paired" to a sampled resource, it means that the feedback map contains sampler feedback for that resource.
@@ -218,6 +231,8 @@ Feedback maps cannot themselves be tiled (reserved) resources.
 Their dimension is TEXTURE2D.
 
 Their width and height come from the paired resource.
+
+They have a mip count which matches the resource with which they are paired.
 
 They have an array size which matches the resource with which they are paired.
 
@@ -276,7 +291,7 @@ There are two different implementations of feedback maps, and the application ch
 #### MinMip feedback map
 
 ##### Structure
-MinMip feedback maps do not have mip levels.
+MinMip feedback maps, when decoded, do not have mip levels.
 
 ##### Interpretation
 
@@ -471,13 +486,13 @@ The following properties are free to be decided by the application for its purpo
 * flags
 * allocation type (e.g., commited, placed or reserved).
 
-##### Semantics for encoding and decoding single subresources of MinMip maps
+##### Additional semantics for encoding and decoding MinMip feedback maps
 
-The above *general semantics* work for all feedback in general; this section describes one additional way to encode and decode feedback.
+The above *general semantics* work for all feedback in general; this section describes one additional way to encode and decode feedback for non-arrayed MinMip feedback resources (that is, a feedback resource of array size 1).
 
-When transcoding to or from a subresource of an opaque MinMip feedback resource, the non-opaque resources has the following properties:
+When transcoding to or from an opaque MinMip feedback resource, the non-opaque resources has the following properties:
 * It is a BUFFER.
-* For a feedback map subresource of texure size {FeedbackWidth, FeedbackHeight}
+* For a feedback map of texure size {FeedbackWidth, FeedbackHeight}
   * It has a size of at least FeedbackWidth * FeedbackHeight.
 * It, like all buffers, has format DXGI_FORMAT_UNKNOWN.
 * It, like all buffers, has sample count 1, sample quality 0.
@@ -501,7 +516,7 @@ With a MinMip feedback map, encoding a value of 0xFF is taken to mean "no feedba
 
 With a MipRegionUsed feedback map, encoding values of 0x0 is taken to mean "no feedback is requested" for a given mip level and mip region.
 
-#### Transitivity
+#### Transitivity for MipRegionUsed feedback maps
 If an application
 * has opaque feedback map A 
 * decodes A into to a non-opaque resource B
@@ -515,6 +530,14 @@ If an application
 * decodes B into resource C
 
 then A and C contain the same data.
+
+Note that this section describes MipRegionUsed feedback maps. Transitivity is not guaranteed for MinMip feedback maps in general. 
+
+This is related to the conservative behavior of sampler feedback: for example, suppose you're encoding a MinMip feedback map with 5 mips, and the last paired mip is size 1x1.
+  * The source buffer you encode contains no mip (0xff) everywhere except a single texel containing index 4. 
+  * When you decode that feedback, there won't be any feedback which points to no mip (0xff). All the returned mip levels contained in the resulting buffer will be 4. 
+  
+The conservative behavior of sampler feedback in general is mentioned here, because take the example above: but instead of encoding you're simply writing feedback. Something somewhere tries to load the tail mip. When you decode that feedback, all returned mip level values will contain a number <= 4. You get the most amount of precision for mip zero, but lower levels of precision for mips thereafter.
 
 ### Feedback maps for texture arrays
 Feedback maps for paired texture arrays are supported, but the feedback map and the paired texture array need to have the same array size.
@@ -881,9 +904,13 @@ cl->ResolveSubresourceRegion(readbackResource, 0, 0, 0, feedbackTexture, 0, null
 ```
 where readbackResource is in RESOLVE_DEST, and feedbackTexture has been transitioned from UNORDERED_ACCESS to RESOLVE_SOURCE.
 
-Note that nonzero X, Y are permitted. Source rect semantics are permitted. The consolidated format must be DXGI_FORMAT_R8_UINT.
+Nonzero X, Y are permitted. 
 
-Rectangle semantics are supported. The co-ordinates of the source rectangle, and the destination X and Y are in the space of a *transcoded resource*. Applications do not use co-ordinate systems of any opaque, vendor-specific resources.
+When transcoding, the consolidated format is DXGI_FORMAT_R8_UINT.
+
+Source rect semantics are permitted for MipRegionUsed feedback maps. They are not permitted for MinMip feedback maps. This applies to both encode and decode.
+
+When using source rect semantics with MipRegionUsed feedback maps the co-ordinates of the source rectangle, and the destination X and Y are in the space of a *transcoded resource*. Applications do not use co-ordinate systems of any opaque, vendor-specific resources.
 
 To transcode the entire subresource at once, specify UINT_MAX as the source and dest subresource indices.
 
