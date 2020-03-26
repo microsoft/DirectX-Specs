@@ -889,9 +889,13 @@ cl->ResolveSubresourceRegion(readbackResource, 0, 0, 0, feedbackTexture, 0, null
 ```
 where readbackResource is in RESOLVE_DEST, and feedbackTexture has been transitioned from UNORDERED_ACCESS to RESOLVE_SOURCE.
 
-Note that nonzero X, Y are permitted. Source rect semantics are permitted. The consolidated format must be DXGI_FORMAT_R8_UINT.
+Nonzero X, Y are permitted. 
 
-Rectangle semantics are supported. The co-ordinates of the source rectangle, and the destination X and Y are in the space of a *transcoded resource*. Applications do not use co-ordinate systems of any opaque, vendor-specific resources.
+When transcoding, the consolidated format is DXGI_FORMAT_R8_UINT.
+
+Source rect semantics are permitted for MipRegionUsed feedback maps. They are not permitted for MinMip feedback maps. This applies to both encode and decode.
+
+When using source rect semantics with MipRegionUsed feedback maps the co-ordinates of the source rectangle, and the destination X and Y are in the space of a *transcoded resource*. Applications do not use co-ordinate systems of any opaque, vendor-specific resources.
 
 To transcode the entire subresource at once, specify UINT_MAX as the source and dest subresource indices.
 
