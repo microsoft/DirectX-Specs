@@ -471,13 +471,13 @@ The following properties are free to be decided by the application for its purpo
 * flags
 * allocation type (e.g., commited, placed or reserved).
 
-##### Semantics for encoding and decoding single subresources of MinMip maps
+##### Additional semantics for encoding and decoding MinMip feedback maps
 
-The above *general semantics* work for all feedback in general; this section describes one additional way to encode and decode feedback.
+The above *general semantics* work for all feedback in general; this section describes one additional way to encode and decode feedback for non-arrayed MinMip feedback resources (that is, a feedback resource of array size 1).
 
-When transcoding to or from a subresource of an opaque MinMip feedback resource, the non-opaque resources has the following properties:
+When transcoding to or from an opaque MinMip feedback resource, the non-opaque resources has the following properties:
 * It is a BUFFER.
-* For a feedback map subresource of texure size {FeedbackWidth, FeedbackHeight}
+* For a feedback map of texure size {FeedbackWidth, FeedbackHeight}
   * It has a size of at least FeedbackWidth * FeedbackHeight.
 * It, like all buffers, has format DXGI_FORMAT_UNKNOWN.
 * It, like all buffers, has sample count 1, sample quality 0.
