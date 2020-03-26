@@ -501,7 +501,7 @@ With a MinMip feedback map, encoding a value of 0xFF is taken to mean "no feedba
 
 With a MipRegionUsed feedback map, encoding values of 0x0 is taken to mean "no feedback is requested" for a given mip level and mip region.
 
-#### Transitivity
+#### Transitivity for MipRegionUsed feedback maps
 If an application
 * has opaque feedback map A 
 * decodes A into to a non-opaque resource B
@@ -515,6 +515,14 @@ If an application
 * decodes B into resource C
 
 then A and C contain the same data.
+
+Note that this section describes MipRegionUsed feedback maps. Transitivity is not guaranteed for MinMip feedback maps in general. 
+
+This is related to the conservative behavior of sampler feedback: for example, suppose you're encoding a MinMip feedback map with 5 mips, and the last paired mip is size 1x1.
+  * The source buffer you encode contains no mip (0xff) everywhere except a single texel containing index 4. 
+  * When you decode that feedback, there won't be any feedback which points to no mip (0xff). All the returned mip levels contained in the resulting buffer will be 4. 
+  
+The conservative behavior of sampler feedback in general is mentioned here, because take the example above: but instead of encoding you're simply writing feedback. Something somewhere tries to load the tail mip. When you decode that feedback, all returned mip level values will contain a number <= 4. You get the most amount of precision for mip zero, but lower levels of precision for mips thereafter.
 
 ### Feedback maps for texture arrays
 Feedback maps for paired texture arrays are supported, but the feedback map and the paired texture array need to have the same array size.
