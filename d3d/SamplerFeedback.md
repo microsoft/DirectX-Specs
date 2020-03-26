@@ -162,7 +162,7 @@ The structure of the MinMip map doesn't describe residency of individual mips in
 > #### Note
 > While the values and interpretation described in the previous section represent a reasonable implementation scheme, the system doesn't prevent apps from putting other numbers in the MinMip map or using other numbering schemes.
 
-The values encoded in each texel of a MinMip map are unsigned integers and typically span the expected range of mip level values in the largest possible tiled resource. For a 32K x 32K texture, for example, a mip level of 16 would then be expected for the smallest 1x1 mip level of that texture.
+The values encoded in each texel of a MinMip map are unsigned integers and typically span the expected range of mip level values in the largest possible tiled resource. 
 
 ### Sampling from the MinMip map
 Recall how passing a min-mip to a sampler will perform a clamp when sampling. There, the clamp is uniformly performed no matter where in the texture the sample ends up being. In a similar manner, the MinMip map decides clamping, too- just, the clamp value can vary per-mip-region.
