@@ -82,11 +82,21 @@ Support for sampler feedback is queryable from a CheckFeatureSupport capability 
 
 The tiers are organized as version-numbers-with-fractions as follows:
 * TIER_NOT_SUPPORTED indicates sampler feedback is not supported. Attempts at calling sampler feedback APIs represent an error.
-* TIER_0_9 (i.e., version 0.9) indicates sampler feedback is supported for samplers with these texture addressing modes:
-    
-    * D3D12_TEXTURE_ADDRESS_MODE_WRAP
-    * D3D12_TEXTURE_ADDRESS_MODE_CLAMP 
-* TIER_1_0 (i.e., version 1.0) indicates sampler feedback is supported for all texture addressing modes.
+* TIER_0_9 (i.e., version 0.9) indicates the following.
+    * Sampler feedback is supported for samplers with these texture addressing modes:    
+      * D3D12_TEXTURE_ADDRESS_MODE_WRAP
+      * D3D12_TEXTURE_ADDRESS_MODE_CLAMP
+    * The Texture2D shader resource view passed in to feedback-writing HLSL methods has these restrictions:
+      * The MostDetailedMip field must be 0.
+      * The MipLevels count must span the full mip count of the resource.
+      * The PlaneSlice field must be 0.
+      * The ResourceMinLODClamp field must be 0.
+    * The Texture2DArray shader resource view passed in to feedback-writing HLSL methods has these restrictions:
+      * All the limitations as in Texture2D above, and
+      * The FirstArraySlice field must be 0.
+      * The ArraySize field must span the full array element count of the resource.
+
+* TIER_1_0 (i.e., version 1.0) indicates sampler feedback is supported for all texture addressing modes, and feedback-writing methods are supported irrespective of the passed-in shader resource view.
 
 ## How to adopt Sampler Feedback for Streaming
 
