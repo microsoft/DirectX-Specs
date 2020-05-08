@@ -605,6 +605,12 @@ For SV_InnerCoverage:
 ### Coverage
 When conservative rasterization is used, the coverage semantic contains full masks for fine pixels that are covered and 0 for fine pixels that are not covered.
 
+### An intersection: coarse shading, conservative rasterization, and centroid
+According to the [conservative rasterization spec](https://microsoft.github.io/DirectX-Specs/d3d/ConservativeRasterization.html), 
+> centroid interpolation modes produce results identical to the corresponding non-centroid interpolation mode
+
+The above concept still holds when using coarse pixel shading. When coarse shading with conservative rasterization on Tier 2 or coarse-shading-compatible Tier 1 platforms, centroid interpolation is simply treated as center.
+
 ## Bundles
 Variable-rate shading APIs can be called on bundles.
 

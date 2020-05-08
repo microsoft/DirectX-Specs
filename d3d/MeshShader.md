@@ -19,6 +19,8 @@ Contents
 
 * [Rasterization order](#rasterization-order)
 
+* [SV_RenderTargetArrayIndex limitations](#sv_rendertargetarrayindex-limitations)
+
 * [List of D3D API calls](#list-of-d3d-api-calls)
 
 * [List of HLSL elements for Mesh shader](#list-of-hlsl-elements-for-mesh-shader)
@@ -34,6 +36,7 @@ Contents
 * [HLSL attributes and intrinsics](#hlsl-attributes-and-intrinsics)
     - [numthreads](#numthreads)
     - [outputtopology](#outputtopology)
+    - [System Value Semantics](#system-value-semantics)
     - [SV_DispatchThreadID](#sv_dispatchthreadid)
     - [SV_GroupThreadID](#sv_groupthreadid)
     - [SV_GroupIndex](#sv_groupindex)
@@ -180,7 +183,10 @@ should now be placed in the attribute structure for [`primitives`](#primitive-at
 rather than the attribute structure for [`vertices`](#vertex-attributes).
 Attributes used with `GetAttributeAtVertex`
 should be placed in the attribute structure for [`vertices`](#vertex-attributes),
-and marked with the `nointerpolation` modifier.
+and marked with the `nointerpolation` modifier. 
+In the case that there is a pixel shader input aligned with a mesh shader per-primitive output,
+and that attribute is not marked as nointerpolation, the driver will still force the attribute to nointerpolate
+in order to maintain functionality. 
 
 Vertex order is determined by the order of the vertex [`indices`](#vertex-indices) for the primitive.
 The first vertex is the one referenced by the first index in this vector.
@@ -344,6 +350,18 @@ with respect to other children of the parent amplification shader thread group.
 At the same time, individual mesh shader invocations still retire rasterized output in each mesh shader's output primitive order (defined at the beginning of this discussion).
 In the presence of an amplification shader, any ROV accesses from a pixel shader over a given target location are ordered, 
 with the exception of the arbitrary ordering of mesh shader rasterization retirement described above.
+
+SV_RenderTargetArrayIndex limitations
+=====================================
+
+Due to a limitation in some target hardware, mesh shaders that write to the SV_RenderTargetArrayIndex 
+attribute are limited to outputting a 3 bit value, which allows selecting between at most 8 render targets. 
+On such hardware, outputting an index value larger than 7 produces undefined behavior.
+
+In a future update to D3D12, we will be adding a CheckFeatureSupport cap so hardware that does not have
+this limitation can report support for full 11 bit render target array indexing. Applications running on
+an operating system version where this cap is not yet available must assume that mesh shaders only support 
+a maximum render target array index of 7 and going beyond this produces undefined results.
 
 List of D3D API calls
 =====================
@@ -560,13 +578,29 @@ This is a mandatory function attribute on the entry point of the Mesh shader.
 It specifies the topology for the output primitives of the mesh shader.
 `T` must be either `"line"` or `"triangle"`.
 
+## System Value Semantics
+
+Each of the following four system-values is computed in the following way:
+
+If an Amplification Shader is used, system values are computed with respect to the DispatchMesh intrinsic called by the Amplification Shader.
+
+If an Amplification Shader is not used, system values are relative to the invoking DispatchMesh API call.
+
+For example, if an Amplification Shader is called with `DispatchMesh(2,1,1)` 
+and each AS invokes a Mesh Shader with `DispatchMesh(1,1,1)`, 
+the SV_GroupID within each Mesh Shader threadgroup would be (0,0,0) since they are
+computed with respect to the `DispatchMesh(1,1,1)` call.
+
 ## SV_DispatchThreadID
 
 ```c++
 void main(..., in uint3 dispatchThreadId : SV_DispatchThreadID, ...)
 ```
 
-Provides the uint3 index of the current thread inside a draw.
+Provides the uint3 index of the current thread inside a DispatchMesh.  
+This is computed as explained above in [System Value Semantics](#system-value-semantics).
+
+For a more detailed description see the [HLSL docs](https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/sv-dispatchthreadid).
 
 ## SV_GroupThreadID
 
@@ -574,7 +608,10 @@ Provides the uint3 index of the current thread inside a draw.
 void main(..., in uint3 groupThreadId : SV_GroupThreadID, ...)
 ```
 
-Provides the uint3 index of the current thread inside a threadgroup.
+Provides the uint3 index of the current thread inside a threadgroup. 
+This is computed as explained above in [System Value Semantics](#system-value-semantics).
+
+For a more detailed description see the [HLSL docs](https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/sv-groupthreadid).
 
 ## SV_GroupIndex
 
@@ -583,6 +620,9 @@ void main(..., in uint threadIndex : SV_GroupIndex, ...)
 ```
 
 Provides the uint flattened index of the current thread inside a threadgroup.
+This is computed as explained above in [System Value Semantics](#system-value-semantics).
+
+For a more detailed description see the [HLSL docs](https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/sv-groupindex).
 
 ## SV_GroupID
  
@@ -591,6 +631,9 @@ void main(..., in uint3 groupId : SV_GroupID, ...)
 ```
 
 Provides the uint3 index of the current threadgroup inside a DispatchMesh.
+This is computed as explained above in [System Value Semantics](#system-value-semantics).
+
+For a more detailed description see the [HLSL docs](https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/sv-groupid).
 
 ## SetMeshOutputCounts
 
