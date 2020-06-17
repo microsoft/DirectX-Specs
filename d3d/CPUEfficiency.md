@@ -104,7 +104,7 @@
   - [Test Approach](#test-approach)
   - [Test Area Breakdown](#test-area-breakdown)
     - [Hardware Conformance](#hardware-conformance)
-      - [Bundles And Command LIsts](#bundles-and-command-lists)
+      - [Bundles And Command Lists](#bundles-and-command-lists)
       - [Multithreading](#multithreading)
       - [Pipeline State Objects](#pipeline-state-objects-2)
       - [Driver Performance](#driver-performance)
@@ -2252,7 +2252,7 @@ Tests released as part of the Hardware Certification Test suite used for graphic
 
 ---
 
-#### Bundles And Command LIsts
+#### Bundles And Command Lists
 
 Test Binary: D3D12CmdList.exe\
 Test Group: Bundles
