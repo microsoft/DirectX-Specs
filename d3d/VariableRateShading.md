@@ -347,6 +347,27 @@ A requested shading rate means a shading rate computed as an output of the combi
 
 A supported shading rate is 1x1, 1x2, 2x1, or 2x2 in a rendering operation where the sample count is less than or equal to four. If the *AdditionalShadingRatesSupported* cap is true, then 2x4, 4x2, 4x4 are also supported shading rates for some sample counts (see table under section "New model"). On some VRS Tier 1 platforms, coarse shading is not guaranteed in certain situations (see "Feature Tiering").
 
+## Positioning of the Coarse Pixel Grid
+When coarse pixel shading is used, the exact positioning of the coarse pixel grid (i.e., relative to the top left of the render target) may vary across different platforms.
+
+>### Remark
+> This reminiscent of how the positioning of the 2x2 rasterizer quad stamp grid may vary across platforms.
+
+## VRS Tiles
+On Tier 2 platforms, there is the notion of a "VRS Tile". VRS tile size determines
+* The width and height of the render target area described by one texel of the screenspace image; it is likely to affect the size of the screenspace image an application will want to allocate
+* The width and height of the region of a target having uniform shading rate when drawing one primitive
+
+Because of this, "VRS tile size" is synonymous with "shading rate image tile size". For information on this queriable quantity, see the section "Tile size" under "Tier 2".
+
+An application may specify shading rates through the screenspace image or per-primitive or any type of combiners thereof, but it is not possible to have more than one shading rate used within the same VRS tile for one primitive.
+
+### Tiles and coarse pixels: sizing
+VRS tiles are sized such that their dimensions are an even multiple of coarse pixel sizes. 
+
+### Tiles and coarse pixels: positioning
+The coarse pixel grid is locked to the VRS tile grid; that is, coarse pixels cannot straddle VRS tile boundaries.
+
 ## Screen-space Derivatives
 Calculations of pixel-to-adjacent-pixel gradients are affected by coarse pixel shading. For example, when 2x2 coarse pixels are used, a gradient will be twice the size as compared to when coarse pixels are not used. Apps may want to adjust shaders to compensate for this— or not, depending on the desired functionality.
 
