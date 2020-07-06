@@ -334,12 +334,39 @@ A pixel shader fails compilation if it inputs SV_ShadingRate and also uses sampl
 ## Depth and Stencil
 When coarse pixel shading is used, depth and stencil and coverage are always computed and emitted at the full sample resolution.
 
+### Import and Export of Depth and Stencil
+If a pixel shader imports or exports depth or stencil (for example, by SV_Depth, SV_StencilRef, or SV_Position.z) then shading occurs at fine rate. That is to say, coarse shading is disabled.
+ 
+> ### Remark: Workaround for reading depth and stencil
+> To work around coarse-shading-disablement when reading depth or stencil, applications may choose to read them instead by passing them in as an interpolated value to the pixel shader.
+
 ## Using the Shading Rate Requested
 For all tiers, it is expected that if a shading rate is requested, and it is supported on the device-and-MSAA-level-combination together with the relevent rendering feature areas, then that is the shading rate delivered by the hardware.
 
 A requested shading rate means a shading rate computed as an output of the combiners (see section "Combining Shading Rate Factors").
 
 A supported shading rate is 1x1, 1x2, 2x1, or 2x2 in a rendering operation where the sample count is less than or equal to four. If the *AdditionalShadingRatesSupported* cap is true, then 2x4, 4x2, 4x4 are also supported shading rates for some sample counts (see table under section "New model"). On some VRS Tier 1 platforms, coarse shading is not guaranteed in certain situations (see "Feature Tiering").
+
+## Positioning of the Coarse Pixel Grid
+When coarse pixel shading is used, the exact positioning of the coarse pixel grid (i.e., relative to the top left of the render target) may vary across different platforms.
+
+>### Remark
+> This reminiscent of how the positioning of the 2x2 rasterizer quad stamp grid may vary across platforms.
+
+## VRS Tiles
+On Tier 2 platforms, there is the notion of a "VRS Tile". VRS tile size determines
+* The width and height of the render target area described by one texel of the screenspace image; it is likely to affect the size of the screenspace image an application will want to allocate
+* The width and height of the region of a target having uniform shading rate when drawing one primitive
+
+Because of this, "VRS tile size" is synonymous with "shading rate image tile size". For information on this queriable quantity, see the section "Tile size" under "Tier 2".
+
+An application may specify shading rates through the screenspace image or per-primitive or any type of combiners thereof, but it is not possible to have more than one shading rate used within the same VRS tile for one primitive.
+
+### Tiles and coarse pixels: sizing
+VRS tiles are sized such that their dimensions are an even multiple of coarse pixel sizes. 
+
+### Tiles and coarse pixels: positioning
+The coarse pixel grid is locked to the VRS tile grid; that is, coarse pixels cannot straddle VRS tile boundaries.
 
 ## Screen-space Derivatives
 Calculations of pixel-to-adjacent-pixel gradients are affected by coarse pixel shading. For example, when 2x2 coarse pixels are used, a gradient will be twice the size as compared to when coarse pixels are not used. Apps may want to adjust shaders to compensate for this— or not, depending on the desired functionality.
@@ -604,6 +631,12 @@ For SV_InnerCoverage:
 
 ### Coverage
 When conservative rasterization is used, the coverage semantic contains full masks for fine pixels that are covered and 0 for fine pixels that are not covered.
+
+### An intersection: coarse shading, conservative rasterization, and centroid
+According to the [conservative rasterization spec](https://microsoft.github.io/DirectX-Specs/d3d/ConservativeRasterization.html), 
+> centroid interpolation modes produce results identical to the corresponding non-centroid interpolation mode
+
+The above concept still holds when using coarse pixel shading. When coarse shading with conservative rasterization on Tier 2 or coarse-shading-compatible Tier 1 platforms, centroid interpolation is simply treated as center.
 
 ## Bundles
 Variable-rate shading APIs can be called on bundles.

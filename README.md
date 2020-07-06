@@ -44,6 +44,7 @@ These specs are presented with different interfaces at two different URLs:
 
 * Developer Features
     * [Device Removed Extended Data](d3d/DeviceRemovedExtendedData.md)
+    * [WriteBufferImmediate](d3d/D3D12WriteBufferImmediate.md)
 
 * Misc
     * [D3D12 on Windows 7](d3d/D3D12onWin7.md)
