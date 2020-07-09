@@ -28,6 +28,7 @@ These specs are presented with different interfaces at two different URLs:
     * [Counters & Queries](d3d/CountersAndQueries.md)
     * [Relaxed Format Casting Rules](d3d/RelaxedCasting.md)
     * [UAV Typed Load](d3d/UAVTypedLoad.md)
+    * [Planar Depth Stencil](d3d/PlanarDepthStencilDDISpec.md)
 
 * Performance
     * [CPU Efficiency](d3d/CPUEfficiency.md)
