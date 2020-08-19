@@ -695,7 +695,7 @@ The default values are 0 and 1 for the Min and Max, respectively, and
 NaNs are converted to 0.
 
 We will add a CheckFeatureSupport query, e.g.
-D3D12_FEATURE_D3D12_OPTIONS1, to determine whether this feature is
+D3D12_FEATURE_D3D12_OPTIONS2, to determine whether this feature is
 supported based on UMD version.
 
 In addition to the setting of the Depth Bounds, an enable/disable toggle
