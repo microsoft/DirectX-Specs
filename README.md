@@ -16,6 +16,7 @@ These specs are presented with different interfaces at two different URLs:
     * [Sampler Feedback](d3d/SamplerFeedback.md)
     * [DirectX Raytracing (DXR)](d3d/Raytracing.md)
     * [Variable Rate Shading](d3d/VariableRateShading.md)
+    * [Feature Level 12_2](d3d/D3D12_FeatureLevel12_2.md)
     * [View Instancing](d3d/ViewInstancing.md)
     * [Conservative Rasterization](d3d/ConservativeRasterization.md)
     * [Rasterizer Ordered Views](d3d/RasterOrderViews.md)
