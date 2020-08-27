@@ -38,19 +38,19 @@ Feature level 12_2 is expressed in terms of capabilities and feature tiers direc
 
 If a device is feature level 12_2, it has
 
-| Feature                                                                 | 12_2 proposed minimum         | Public spec | Partner spec
-|:-                                                                       |-                              |-            |-
+| Feature                                                                 | 12_2 proposed minimum         | Public spec
+|:-                                                                       |-                              |- 
 |Required driver model                                                    | WDDM 2.0	                  |
-|Shader Model	                                                          | 6.5                           |[Link](https://microsoft.github.io/DirectX-Specs/d3d/HLSL_ShaderModel6_5.html)|[Link](https://dev.azure.com/cga-exchange/docs/_git/docs?path=%2Fd3d%2FHLSL_ShaderModel6_5.md)
-|Raytracing tier	                                                      | Tier 1.1                      |[Link](https://microsoft.github.io/DirectX-Specs/d3d/Raytracing.html)|[Link](https://dev.azure.com/cga-exchange/docs/_git/docs?path=%2Fd3d%2FRaytracing.md)
-|Variable shading rate                                                    | Tier 2                        |[Link](https://microsoft.github.io/DirectX-Specs/d3d/VariableRateShading.html)|[Link](https://dev.azure.com/cga-exchange/docs/_git/docs?path=%2Fd3d%2FVariableRateShading.md)
-|Mesh shader tier	                                                      | Tier 1                        |[Link](https://microsoft.github.io/DirectX-Specs/d3d/MeshShader.html)|[Link](https://dev.azure.com/cga-exchange/docs/_git/docs?path=%2Fd3d%2FMeshShader.md)
-|Sampler feedback	                                                      | Tier 0.9                      |[Link](https://microsoft.github.io/DirectX-Specs/d3d/SamplerFeedback.html)|[Link](https://dev.azure.com/cga-exchange/docs/_git/docs?path=%2Fd3d%2FSamplerFeedback.md)
-|Resource Binding Tier	                                                  | Tier 3                        |[Link](https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html#root-signature-version-11)|[Link](https://dev.azure.com/cga-exchange/docs/_git/docs?path=%2Fd3d%2FResourceBinding.md)
+|Shader Model	                                                          | 6.5                           |[Link](https://microsoft.github.io/DirectX-Specs/d3d/HLSL_ShaderModel6_5.html)
+|Raytracing tier	                                                      | Tier 1.1                      |[Link](https://microsoft.github.io/DirectX-Specs/d3d/Raytracing.html)
+|Variable shading rate                                                    | Tier 2                        |[Link](https://microsoft.github.io/DirectX-Specs/d3d/VariableRateShading.html)
+|Mesh shader tier	                                                      | Tier 1                        |[Link](https://microsoft.github.io/DirectX-Specs/d3d/MeshShader.html)
+|Sampler feedback	                                                      | Tier 0.9                      |[Link](https://microsoft.github.io/DirectX-Specs/d3d/SamplerFeedback.html)
+|Resource Binding Tier	                                                  | Tier 3                        |[Link](https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html#root-signature-version-11)
 |Tiled Resources	                                                      | Tier 3
-|Conservative Rasterization                                               | Tier 3                        |[Link](https://microsoft.github.io/DirectX-Specs/d3d/ConservativeRasterization.html)|[Link](https://dev.azure.com/cga-exchange/docs/_git/docs?path=%2Fd3d%2FConservativeRasterization.md)
-|RootSignatureTier	                                                      | 1.1                           |[Link](https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html)|[Link](https://dev.azure.com/cga-exchange/docs/_git/docs?path=%2Fd3d%2FResourceBinding.md)
-|DepthBoundsTestSupported	                                              | TRUE                          |[Link](https://microsoft.github.io/DirectX-Specs/d3d/DepthBoundsTest.html)|[Link](https://dev.azure.com/cga-exchange/docs/_git/docs?path=%2Fd3d%2FDepthBoundsTest.md)
+|Conservative Rasterization                                               | Tier 3                        |[Link](https://microsoft.github.io/DirectX-Specs/d3d/ConservativeRasterization.html)
+|RootSignatureTier	                                                      | 1.1                           |[Link](https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html)
+|DepthBoundsTestSupported	                                              | TRUE                          |[Link](https://microsoft.github.io/DirectX-Specs/d3d/DepthBoundsTest.html)
 |WriteBufferImmediateSupportFlags	                                      | Direct, Compute, Bundle
 |MaxGPUVirtualAddressBitsPerResource                                      | 40
 |MaxGPUVirtualAddressBitsPerProcess                                       | 40
