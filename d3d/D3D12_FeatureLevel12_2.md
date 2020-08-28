@@ -68,7 +68,7 @@ Additionally, it has the following flags set
 
 > Remark
 >
-> Some specifications, especially those from before the May 2019 Update, were shared with partners through a system that can not be linked to from here. These older specifications are provided on request, and can be migrated to cga-exchange if there is demand for them.
+> Some specifications, especially those from before the May 2019 Update, are not migrated to the DirectX-Specs repo.
 
 ## DDI
 The Direct3D 12 UMD DDI has an enumeration, D3D12DDI_3DPIPELINELEVEL, for describing feature levels. This enumeration has a value for feature level 12.2:
@@ -109,7 +109,7 @@ The driver returns a value for MaximumDriverSupportedFeatureLevel which does not
 >#### Remark
 > In practice:
 > * Versions of Direct3D built into the operating system at or before Manganese (20H2) use 3DPIPELINESUPPORT.
-> * Versions of Direct3D built into Iron operating system, or organized as a re-distributable use 3DPIPELINESUPPORT1, and fall back to 3DPIPELINESUPPORT if it fails.
+> * Versions of Direct3D built into Iron operating system or later use 3DPIPELINESUPPORT1, and fall back to 3DPIPELINESUPPORT if it fails.
 
 ### Discrepency in API-level and DDI-level reported capabilities
 The WriteBufferImmediateSupportFlags capability D3D12_COMMAND_LIST_SUPPORT_FLAG_BUNDLE is switched on at the API level for drivers which report D3D12DDI_COMMAND_QUEUE_FLAG_3D at the DDI level.
