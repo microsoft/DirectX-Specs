@@ -56,6 +56,7 @@ If a device is feature level 12_2, it has
 |MaxGPUVirtualAddressBitsPerProcess                                       | 40
 
 Additionally, it has the following flags set
+
 | Feature                                                                 | 12_2 proposed value 
 |:-                                                                       |-                   
 |WaveOps	                                                              | TRUE
