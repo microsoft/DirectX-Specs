@@ -899,7 +899,7 @@ and must match the size of the vertex [`indices`](#vertex-indices) array.
 The maximum size for this array is 256 elements.
 
 You can write individual attributes, and leave others unwritten if they will not be used in the Pixel shader.
-If you write to the same attribute at the same vertex index,
+If you write to the same attribute at the same primitive index,
 the last value written will be the value exported from the Mesh shader.
 
 This structure must have system-value or user-defined semantics defined for all elements.
