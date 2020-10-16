@@ -46,6 +46,8 @@ These specs are presented with different interfaces at two different URLs:
 
 * Developer Features
     * [Device Removed Extended Data](d3d/DeviceRemovedExtendedData.md)
+    * [Debug Object Auto Name](d3d/DebugObjectAutoName.md)
+    * [Debug Layer Message Callbacks](d3d/MessageCallback.md)
     * [WriteBufferImmediate](d3d/D3D12WriteBufferImmediate.md)
 
 * Misc
