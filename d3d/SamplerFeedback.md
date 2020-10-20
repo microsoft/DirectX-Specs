@@ -179,7 +179,7 @@ Recall how passing a min-mip to a sampler will perform a clamp when sampling. Th
 
 During scene rendering, the app can choose to do the following (or, perhaps, some variation of its choosing): 
 * Shader samples from the MinMip map
-  * Use the same UV(W) texture coordinates used to sample from the tiled texture
+  * Can use the same UV(W) texture coordinates used to sample from the tiled texture, if the paired texture size is an even multiple of the mip region size
 * Get the filtered mip level value returned from MinMip map, called *X*
 * Use *X* as a per-pixel mip level clamp value for sampling from the tiled texture. 
 
@@ -295,7 +295,7 @@ MinMip feedback maps, when decoded, do not have mip levels.
 
 ##### Interpretation
 
-Each texel in the MinMip feedback map corresponds to a mip region of the paired texture.
+Each texel in a decoded MinMip feedback map corresponds to a mip region of the paired texture.
 
 The value of each texel is the most-detailed mip level that has been requested within the mip region, with no mip level clamping applied. Put another way, each texel’s value is the “ideal” most-detailed mip level that would have been used for that region.
 
@@ -385,6 +385,50 @@ The *small tail mips* are the set of mips less-detailed than 64x64, namely those
 
 
 Therefore in this example, feedback writes for mips indexed 6 through 10 may cause 5 to be written to the feedback map. To put it another way, a more-detailed-mip-than-requested may be written to the feedback map in circumstances where one paired texel might correspond to multiple feedback texels.
+
+##### Decoded representation
+As discussed earlier, each texel in a decoded MinMip feedback map contains the most-detailed mip level requested for the corresponding mip region. If no mip was requested in a particular location, the decoded feedback map contains 0xFF.
+
+A type of variability can exist between feedback map implementations. This variability is unlikely to affect application code.
+
+Suppose you have a paired texture sized 16x16, and a MinMip feedback map with a mip region of 4x4x1.
+
+The paired texture's mips, then, are as follows
+| Mip level | Size | 
+|:-|-|:--|--|
+|0 |16x16 | 
+|1 |8x8| 
+|2 |4x4| 
+|3 |2x2| 
+|4 |1x1| 
+
+Given these sizes with a mip region of 4x4x1, the decoded feedback map is sized 4x4. If no writes were requested, the decoded feedback map looks like:
+
+![MinMipDecode0](images/SamplerFeedback/MinMipDecode0.png "MinMipDecode0")
+
+Now, suppose there is a request written in the top left corner for mip 0. In that case, the decoded feedback map would look like
+
+![MinMipDecode1](images/SamplerFeedback/MinMipDecode1.png "MinMipDecode1")
+
+Now suppose we clear the map and write feedback once again. We write a request for mip 1, in the top left. In that case, the decoded representation would look like one of these:
+
+![MinMipDecode2](images/SamplerFeedback/MinMipDecode2.png "MinMipDecode2")
+
+Note how the "01" may appear in the top left group of decoded texels, or in the top left texel only. 
+
+>##### Remark
+> In practice, regardless of the representation, applications generally react to feedback the exact same way, tracking the given mip level at the given place in the decoded result. 
+>
+> The second representation might appear to be less precise, but consider: a texture streaming system where the mip region is the tile size, namely, 4x4. And we're dealing with a request written for the top left of mip 1, which is an 8x8 mip in the paired texture. *Any* write in the top-left quadrant would have the same effect; it would cause the same tile to be loaded. This is why this variance in decoded result is called out in the spec but is unlikely to have an effect on application code.
+
+Suppose we clear the map and write feedback one last time. We write a request for mip 2, again in the top left. In that case, the decoded representation would look like one of these:
+
+![MinMipDecode3](images/SamplerFeedback/MinMipDecode3.png "MinMipDecode3")
+
+One representation will yield a singular 0x2, while the other will yield the entire feedback map with 0x2. Mip level 2 is sized 4x4 in the paired texture, the size of one mip region.
+
+>##### Remark
+> In a typical application of streaming system where the mip region is set to the tile size, mip level 2 is one entire tile.
 
 #### MipRegionUsed feedback map
 
@@ -493,7 +537,7 @@ The above *general semantics* work for all feedback in general; this section des
 When transcoding to or from an opaque MinMip feedback resource, the non-opaque resources has the following properties:
 * It is a BUFFER.
 * For a feedback map of texure size {FeedbackWidth, FeedbackHeight}
-  * It has a size of at least FeedbackWidth * FeedbackHeight.
+  * It has a size of at least ceil(FeedbackWidth / MipRegionWidth) * ceil(FeedbackHeight / MipRegionHeight).
 * It, like all buffers, has format DXGI_FORMAT_UNKNOWN.
 * It, like all buffers, has sample count 1, sample quality 0.
 
@@ -573,6 +617,26 @@ Feedback is written to the appropriate spot.
 ![Npot3](images/SamplerFeedback/Npot3.png "Npot3") 
 
 In this way, there is predictability of where feedback will be written for non-power-of-two texture cases.
+
+### Helper lane behavior
+Invocations of pixel shaders with Direct3D may involve the use of "inactive", or "helper" lanes needed to fill out 2x2 pixel stamps. Reinterating, here, the general expectation from the D3D11.3 spec: when helper lanes write to UAVs, [those writes are discarded](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#16.13%20Pixel%20Shader%20Discarded%20Pixels%20and%20Helper%20Pixels). Sampler feedback writes are consistent with this idea. On helper lanes, sampler feedback writes are discarded.
+
+>#### Remark
+> While discard of sampler feedback from helper lanes is a clean and consistent design, it's worth calling out an implication that has.
+>
+> Suppose you have a normal-map. It is giant, so you store it as a tiled resource and stream in parts of it as needed. And at a high level, you have a shader which loads a value from this normal-map and uses that normal as UVW to sample something else.
+> 
+> Suppose, given this situation, you're an active lane and you have a neighboring helper lane. You sample from the normal-map, and your helper lane does the same. You write feedback for the sample, also. 
+> 
+> You ideally would have sampled from {mip 0, left tile} so you write that. The neighboring helper lane would have ideally have sampled {mip 0, middle tile}. 
+> 
+> What if sampler feedback is not kept for helper lanes? The next time we run through this shader, given, say, no change in camera or anything, we will have loaded the left tile but not the middle tile. Once again we're the only one active lane. We sample a normal from mip 0, and our helper lane samples from some low quality mip level, say mip 5. Normally it wouldn't matter if a helper lane samples from a low-quality mip level, since all its work gets discarded anyway. But, we can think of some troublesome situations.
+> 
+> Suppose the thing we need to do with our sampled value is take a derivative of it. While this sounds a bit contrived, it can happen. Our derivative would compare a sampled value from a mip 0 versus a sampled value from mip 5. This wouldn't be a very reliable derivative. Why might we need a derivative? Well, maybe we want to do another sample. 
+> 
+> More specifically, we might need a derivative because we want to sample from a sky-box volume texture, and use the previously-sampled normal value as an input UVW. The sample of the sky-box could have unappealing artifacts if its LOD selection is based on a bad derivative.
+> 
+> Given the ~99% discard heuristic discussed in this document, streaming applications are unlikely to experience imprecise LOD selection due to feedback not being written from helper lanes. However, in the cases where this poses a problem, applications could work around it by, for example, avoiding primitives which very closely straddle tile boundaries.
 
 ## Batch Processing of Feedback and MinMip Resources
 
