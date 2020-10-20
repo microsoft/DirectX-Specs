@@ -334,11 +334,12 @@ A pixel shader fails compilation if it inputs SV_ShadingRate and also uses sampl
 ## Depth and Stencil
 When coarse pixel shading is used, depth and stencil and coverage are always computed and emitted at the full sample resolution.
 
-### Import and Export of Depth and Stencil
-If a pixel shader imports or exports depth or stencil (for example, by SV_Depth, SV_StencilRef, or SV_Position.z) then shading occurs at fine rate. That is to say, coarse shading is disabled.
- 
-> ### Remark: Workaround for reading depth and stencil
-> To work around coarse-shading-disablement when reading depth or stencil, applications may choose to read them instead by passing them in as an interpolated value to the pixel shader.
+> ### Remark: Reading depth from pixel shaders
+> When SV_Position.z is read from a pixel shader, the value read is an interpolated position value. This value may differ from the corresponding depth buffer contents. See [Pixel Shader Input Z Requirements](
+https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#16.3.1%20Pixel%20Shader%20Input%20Z%20Requirements). Reading SV_Position.z from a pixel shader does not affect coarse shading.
+
+### Export of Depth and Stencil
+If a pixel shader exports depth or stencil (for example, by writing SV_Depth or SV_StencilRef) then shading occurs at fine rate. That is to say, coarse shading is disabled.
 
 ## Using the Shading Rate Requested
 For all tiers, it is expected that if a shading rate is requested, and it is supported on the device-and-MSAA-level-combination together with the relevent rendering feature areas, then that is the shading rate delivered by the hardware.
