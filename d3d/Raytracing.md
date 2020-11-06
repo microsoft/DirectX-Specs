@@ -1392,13 +1392,13 @@ There are two ways declare a default association for a subobject to a
 set of shaders:
 
 1) Declare a subobject in a given scope with no explicit associations
-   in that scope that reference it.  If this subobject is involved in
+   in that scope that reference it.  If this subobject is involved in
    an association defined in any *other* scope including enclosing or
    contained scopes, it doesn't affect that locally this subobject acts
    as a default association.
 
-2) Define an association with an empty export list.  The subobject
-   specified may or may not be in the current scope.  The subobject
+2) Define an association with an empty export list.  The subobject
+   specified may or may not be in the current scope.  The subobject
    specified can also be unresolved (not defined in current, containing
    or enclosed scopes), unless the state object being defined is
    executable, e.g. RTPSO.
@@ -1409,9 +1409,9 @@ set of shaders:
 
 In a default association a subobject is associated with all candidate
 exports in the current and contained scopes, but not to enclosing
-scopes.  Candidates to be associated are exports for which the
+scopes.  Candidates to be associated are exports for which the
 association would make sense, and that don't have an explicit
-association with another subobject of the same type already.  There is
+association with another subobject of the same type already.  There is
 one exception, where default association can **override** an existing
 association on an export, described later.
 
@@ -2505,7 +2505,7 @@ useful reminder of the various options at play.
 - **Consider multiple update sources for skinned meshes**
   
   - Acceleration structure updates can happen either in-place, or
-    use separate source and destination buffers.  For some geometry
+    use separate source and destination buffers.  For some geometry
     (e.g. a hero character), it can make sense to build multiple
     high quality acceleration structures in different key poses
     upfront (e.g. during level load time), and then refit every
@@ -2579,7 +2579,7 @@ Slower build than #1 and #2.</td>
 <td>yes</td>
 <td>no</td>
 <td>yes</td>
-<td>Fastest trace against update-able acceleration structure. <br />
+<td>Fastest trace against update-able acceleration structure. <br />
 Updates slightly slower than #2.<br />
 Trace a bit slower than #3.</td>
 <td>Hero character, high-LOD dynamic objects that are expected to be hit by a significant number of rays.</td>
@@ -2593,14 +2593,14 @@ Trace a bit slower than #3.</td>
     **ALLOW_COMPACTION**
 
     Whenever compaction is desired. It's generally a good idea to do
-    this on all static geometry to reclaim (potentially significant)
+    this on all static geometry to reclaim (potentially significant)
     amounts of memory.
 
-    For updateable geometry, it makes sense to compact those BVHs that
+    For updateable geometry, it makes sense to compact those BVHs that
     have a long lifetime, so the extra step is worth it (compaction and
     update are not mutually exclusive\!).
 
-    For fully dynamic geometry that's rebuilt every frame (as opposed to
+    For fully dynamic geometry that's rebuilt every frame (as opposed to
     updated), there's generally no benefit from using compaction.
 
     One potential reason to NOT use compaction is to exploit the
@@ -7063,7 +7063,7 @@ the ray to that contains appropriate LOD geometry.
 A traversal node would be defined as AABBs (like procedural geometry)
 with an index into a shader table where a traversal shader is to be
 found. When one of these AABBs is hit by a ray the referenced traversal
-shader is invoked.  The traversal shader might be very simple, perhaps
+shader is invoked.  The traversal shader might be very simple, perhaps
 only choosing to "forward" the ray into another acceleration structure
 of its choice (or drop the ray).
 
@@ -7072,18 +7072,18 @@ parameters:
 
 void ForwardRay(RaytracingAccelerationStructure AccelerationStructure,
 
-              uint RayContributionToHitGroupIndex,
+              uint RayContributionToHitGroupIndex,
 
-              uint MultiplierForGeometryContributionToHitGroupIndex,
+              uint MultiplierForGeometryContributionToHitGroupIndex,
 
-              uint MissShaderIndex,
+              uint MissShaderIndex,
 
-              RayDesc Ray);
+              RayDesc Ray);
 
 Ray processing for the forwarded ray behaves just like
-[TraceRay()](#traceray), with some exceptions.  The closest hit shader
+[TraceRay()](#traceray), with some exceptions.  The closest hit shader
 is only invoked for the lowest T across the original and any forwarded
-rays.  If [AcceptHitAndEndSearch()](#accepthitandendsearch) is invoked
+rays.  If [AcceptHitAndEndSearch()](#accepthitandendsearch) is invoked
 in the forwarded ray, that ends searching in the parent ray too
 (followed by closest hit selection as usual).
 
