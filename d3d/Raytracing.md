@@ -467,7 +467,7 @@ for intersections to count, depending on the geometry type, defined in [ray exte
 
 A ray is accompanied by a user defined payload that is modifiable as the
 ray interacts with geometry in a scene and also visible to the caller of
-[TraceRay()](#traceray) upon its return.  In the case of the [Inline raytracing](#inline-raytracing) variation, the payload isn't an explicit entity, rather it is just a part of whatever user variables the caller of [RayQuery::TraceRayInline()](#rayquery-tracerayinline) has in it's execution scope.
+[TraceRay()](#traceray) upon its return.  In the case of the [Inline raytracing](#inline-raytracing) variation, the payload isn't an explicit entity, rather it is just a part of whatever user variables the caller of [RayQuery::TraceRayInline()](#rayquery-tracerayinline) has in its execution scope.
 
 ![ray](images/raytracing/ray.png)
 
@@ -483,7 +483,7 @@ later.
 ## Raytracing output
 
 In raytracing, shaders output results, such as color samples for an
-image, manually though UAVs.
+image, manually through UAVs.
 
 ---
 
@@ -605,7 +605,7 @@ Intersection shaders may be executed redundantly. There is no guarantee
 that for a given ray that the intersection shader only executes once for
 a given procedural primitive encountered in the acceleration structure.
 Multiple invocations for a given ray and primitive would be redundant
-(wasteful), yet implementations are free to have this behavior the
+(wasteful), yet implementations are free to have this behavior if the
 implementation believes the tradeoff is worth it for some reason. The
 implication of this is apps must be careful about authoring side effects
 into intersection shaders, such as doing UAV writes from them or in
@@ -629,13 +629,13 @@ regardless of position along the ray relative to other intersections.
 This is an any hit shader.
 
 Any hit shaders can read intersection attributes, modify ray payload,
-indicate an hit should be ignored ([IgnoreHit()](#ignorehit), accept
+indicate a hit should be ignored ([IgnoreHit()](#ignorehit)), accept
 the hit and continue (by exiting execution) or accept the hit and tell
 the system to stop searching for more intersections
 ([AcceptHitAndEndSearch()](#accepthitandendsearch)).
 
 There is no defined order of execution of any hit shaders for the
-intersections along a ray path. If an any hit shader accepts a hit, it's
+intersections along a ray path. If an any hit shader accepts a hit, its
 T value becomes the new TMax. So depending on the order that
 intersections are found all else being equal, different numbers of any
 hit shader invocations would occur.
@@ -644,7 +644,7 @@ Any hit shaders are useful, for instance, when geometry has
 transparency. A particular case is transparency in shadow determination,
 where if the any hit shader finds that the current hit location is
 opaque it can tell the system to take this hit but stop searching for
-more intersections (just looking for the anything in a ray's path). In
+more intersections (just looking for anything in a ray's path). In
 many cases though, any hit shaders are not needed, yielding some
 execution efficiency: In the absence of an any hit shader for a given
 geometry instance that has an intersection T within the current ray
