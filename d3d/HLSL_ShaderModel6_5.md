@@ -116,14 +116,20 @@ The bit in the mask corresponding to the current lane will always be set to 1.
 
 ## WaveMatch() Illustration
 
-The following diagram (see figure 1) demonstrates the action of
+The following table demonstrates the action of
 `WaveMatch()` assuming an implementation with a wave width of 8 lanes.
-Inactive lanes are depicted in gray, bits in the mask beyond bit
-position 7 are guaranteed to be cleared (effective mask width is 8).
+Inactive lanes are indicated by "`-`".
+Bits in the mask beyond bit position 7
+are guaranteed to be cleared (effective mask width is 8).
 
-Figure 1. The action of WaveMatch() function.
+```C++
+uint4 mask = WaveMatch(input);
+```
 
-TODO: insert here
+|laneID   | 7     | 6     | 5     | 4 | 3     | 2     | 1     | 0
+|:-       |-      |-      |-      |-  |-      |-      |-      |-
+| input   | 15    | -1    | -1    | - | 123   | 0     | 123   | -
+| mask.x  | 0x80  | 0x60  | 0x60  | - | 0x0a  | 0x04  | 0x0a  | -
 
 ## WaveMultiPrefix*() Functions
 
@@ -195,15 +201,21 @@ val0 ^ val1 ^ val2 ...
 
 ## WaveMultiPrefixSum() Illustration
 
-The following diagram demonstrates the action of
+The following table demonstrates the action of
 `WaveMultiPrefixSum()`, assuming an implementation with wave width of 8 lanes.
-Inactive lanes are depicted in gray.
+Inactive lanes are indicated by "`-`".
 
-Figure 2. The action of WaveMultiPrefixSum() function.
+```C++
+output = WaveMultiPrefixSum(value, mask);
+```
 
-TODO: insert here
+|laneID   | 7     | 6     | 5     | 4     | 3     | 2     | 1 | 0
+|:-       |-      |-      |-      |-      |-      |-      |-  |-
+| mask.x  | 0xe0  | 0xe0  | 0xe0  | 0x14  | 0x09  | 0x14  | - | 0x0b
+| value   | 5     | 4     | 1     | -2    | 3     | 0     | - | 6
+| output  | 5     | 1     | 0     | 0     | 6     | 0     | - | 0
 
-Note how one of the lanes from the orange subset refers to lane 1,
+Note how subset with `mask.x == 0x0b` refers to lane 1,
 which is inactive.
 This doesn't affect the result since bits in the mask
 corresponding to inactive lanes are ignored.
