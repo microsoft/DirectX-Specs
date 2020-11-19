@@ -35,6 +35,7 @@ These specs are presented with different interfaces at two different URLs:
     * [CPU Efficiency](d3d/CPUEfficiency.md)
     * [Render Passes](d3d/RenderPasses.md)
     * [Background Processing](d3d/BackgroundProcessing.md)
+    * [Shader Cache](d3d/ShaderCache.md)
 
 * Video
     * [Motion Estimation](d3d/D3D12_Video_Motion_Estimation.md)
