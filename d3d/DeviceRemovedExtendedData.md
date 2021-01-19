@@ -329,6 +329,7 @@ typedef struct D3D12_AUTO_BREADCRUMB_NODE
 
 ### D3D12_DRED_BREADCRUMB_CONTEXT (DRED version 1.2)
 Context string data associated with a DRED auto-breadcrumb.
+
 ```c++
 typedef struct D3D12_DRED_BREADCRUMB_CONTEXT
 {
@@ -336,6 +337,7 @@ typedef struct D3D12_DRED_BREADCRUMB_CONTEXT
     const wchar_t *pContextString;
 } D3D12_DRED_BREADCRUMB_CONTEXT;
 ```
+
 | Members         | Description                                                           |
 |-----------------|-----------------------------------------------------------------------|
 | BreadcrumbIndex | Index of the associated auto-breadcrumb operation in the command list |
@@ -343,6 +345,7 @@ typedef struct D3D12_DRED_BREADCRUMB_CONTEXT
 
 ### D3D12_AUTO_BREADCRUMB_NODE1 (DRED version 1.2)  
 An extended version of struct D3D12_AUTO_BREADCRUMB_NODE that includes breadcrumb context data.
+
 ```c++
 typedef struct D3D12_AUTO_BREADCRUMB_NODE1
 {
@@ -360,6 +363,7 @@ typedef struct D3D12_AUTO_BREADCRUMB_NODE1
     D3D12_DRED_BREADCRUMB_CONTEXT *pBreadcrumbContexts;
 } D3D12_AUTO_BREADCRUMB_NODE1;
 ```
+
 | Members                 | Description                                                                 |
 |-------------------------|-----------------------------------------------------------------------------|
 | pCommandListDebugNameA  | Pointer to the ANSI debug name of the command list (if any)                 |
@@ -389,6 +393,7 @@ struct D3D12_DRED_ALLOCATION_NODE
     const struct D3D12_DRED_ALLOCATION_NODE *pNext;
 };
 ```
+
 | Members        | Description                                                                          |
 |----------------|--------------------------------------------------------------------------------------|
 | ObjectNameA    | ANSI name of the API object or nullptr of no ANSI name exists.                       |
@@ -411,6 +416,7 @@ struct D3D12_DRED_ALLOCATION_NODE1
     const IUnknown *pObject;
 };
 ```
+
 | Members        | Description                                                                          |
 |----------------|--------------------------------------------------------------------------------------|
 | ObjectNameA    | ANSI name of the API object or nullptr of no ANSI name exists.                       |
@@ -422,30 +428,35 @@ struct D3D12_DRED_ALLOCATION_NODE1
 
 ### D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT (DRED version 1.1)  
 Contains pointer to the head of a linked list of D3D12_AUTO_BREADCRUMB_NODE structures.
+
 ```c++
 struct D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT
 {
     const D3D12_AUTO_BREADCRUMB_NODE *pHeadAutoBreadcrumbNode;
 };
 ```
+
 | Members                 | Description                                                                |
 |-------------------------|----------------------------------------------------------------------------|
 | pHeadAutoBreadcrumbNode | Pointer to the head of a linked list of D3D12_AUTO_BREADCRUMB_NODE objects |
 
 ### D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 (DRED version 1.2)  
 Contains pointer to the head of a linked list of D3D12_AUTO_BREADCRUMB_NODE1 structures.  The last member node in the list has a null pNext member.  The value of pHeadAutoBreadcrumbNode will be null if there are no auto-breadcrumbs.
+
 ```c++
 typedef struct D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1
 {
     const D3D12_AUTO_BREADCRUMB_NODE1 *pHeadAutoBreadcrumbNode;
 } D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1;
 ```
+
 | Members                 | Description                                                                         |
 |-------------------------|-------------------------------------------------------------------------------------|
 | pHeadAutoBreadcrumbNode | Pointer to the head of a linked list of D3D12_AUTO_BREADCRUMB_NODE1 objects or NULL |
 
 ### D3D12_DRED_PAGE_FAULT_OUTPUT (DRED version 1.1)  
 Provides the VA of a GPU page fault and contains a list of matching allocation nodes for active objects and a list of allocation nodes for recently deleted objects.
+
 ```c++
 struct D3D12_DRED_PAGE_FAULT_OUTPUT
 {
@@ -454,6 +465,7 @@ struct D3D12_DRED_PAGE_FAULT_OUTPUT
     const D3D12_DRED_ALLOCATION_NODE *pHeadRecentFreedAllocationNode;
 };
 ```
+
 | Members                        | Description                                                                                                   |
 |--------------------------------|--------------------------------------------------------------------------------------------------------------|
 | PageFaultVA                    | GPU Virtual Address of GPU page fault                                                                        |
@@ -462,6 +474,7 @@ struct D3D12_DRED_PAGE_FAULT_OUTPUT
 
 ### D3D12_DRED_PAGE_FAULT_OUTPUT1 (DRED version 1.2)  
 Provides the VA of a GPU page fault and contains a list of matching allocation nodes for active objects and a list of allocation nodes for recently deleted objects.
+
 ```c++
 struct D3D12_DRED_PAGE_FAULT_OUTPUT1
 {
@@ -470,6 +483,7 @@ struct D3D12_DRED_PAGE_FAULT_OUTPUT1
     const D3D12_DRED_ALLOCATION_NODE1 *pHeadRecentFreedAllocationNode;
 };
 ```
+
 | Members                        | Description                                                                                                   |
 |--------------------------------|--------------------------------------------------------------------------------------------------------------|
 | PageFaultVA                    | GPU Virtual Address of GPU page fault                                                                        |
@@ -478,6 +492,7 @@ struct D3D12_DRED_PAGE_FAULT_OUTPUT1
 
 ### D3D12_DEVICE_REMOVED_EXTENDED_DATA1 (DRED version 1.1)  
 DRED V1.1 data structure.
+
 ```c++
 struct D3D12_DEVICE_REMOVED_EXTENDED_DATA1
 {
@@ -486,6 +501,7 @@ struct D3D12_DEVICE_REMOVED_EXTENDED_DATA1
     D3D12_DRED_PAGE_FAULT_OUTPUT PageFaultOutput;
 };
 ```
+
 | Members               | Description                                                                   |
 |-----------------------|-------------------------------------------------------------------------------|
 | DeviceRemovedReason   | The device removed reason matching the return value of GetDeviceRemovedReason |
@@ -494,6 +510,7 @@ struct D3D12_DEVICE_REMOVED_EXTENDED_DATA1
 
 ### D3D12_DEVICE_REMOVED_EXTENDED_DATA2 (DRED version 1.2)  
 DRED V1.2 data structure.
+
 ```c++
 typedef struct D3D12_DEVICE_REMOVED_EXTENDED_DATA2
 {
@@ -502,6 +519,7 @@ typedef struct D3D12_DEVICE_REMOVED_EXTENDED_DATA2
     D3D12_DRED_PAGE_FAULT_OUTPUT1 PageFaultOutput;
 } D3D12_DEVICE_REMOVED_EXTENDED_DATA2;
 ```
+
 | Members               | Description                                                                   |
 |-----------------------|-------------------------------------------------------------------------------|
 | DeviceRemovedReason   | The device removed reason matching the return value of GetDeviceRemovedReason |
@@ -510,6 +528,7 @@ typedef struct D3D12_DEVICE_REMOVED_EXTENDED_DATA2
 
 ### D3D12_VERSIONED_DEVICE_REMOVED_EXTENDED_DATA
 Encapsulates the versioned DRED data.  The appropriate unioned Dred_* member must match the value of Version.
+
 ```c++
 struct D3D12_VERSIONED_DEVICE_REMOVED_EXTENDED_DATA
 {
@@ -522,6 +541,7 @@ struct D3D12_VERSIONED_DEVICE_REMOVED_EXTENDED_DATA
     };
 };
 ```
+
 | Members  | Description                                                                                |
 |----------|--------------------------------------------------------------------------------------------|
 | Dred_1_0 | DRED data as of Windows 10 version 1809.  Valid only if Version is D3D12_DRED_VERSION_1_0. |
@@ -530,54 +550,66 @@ struct D3D12_VERSIONED_DEVICE_REMOVED_EXTENDED_DATA
 
 ### ID3D12DeviceRemovedExtendedDataSettings::SetAutoBreadcrumbsEnablement (DRED version 1.1)  
 Configures the enablement settings for DRED auto-breadcrumbs.
+
 ```c++
 void ID3D12DeviceRemovedExtendedDataSettings::SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT Enablement);
 ```
+
 | Parameters | Description                                                            |
 |------------|------------------------------------------------------------------------|
 | Enablement | Enablement value (defaults to D3D12_DRED_ENABLEMENT_SYSTEM_CONTROLLED) |
 
 ### ID3D12DeviceRemovedExtendedDataSettings::SetPageFaultEnablement (DRED version 1.1)  
 Configures the enablement settings for DRED page fault reporting.
+
 ```c++
 void ID3D12DeviceRemovedExtendedDataSettings::SetPageFaultEnablement(D3D12_DRED_ENABLEMENT Enablement);
 ```
+
 | Parameters | Description                                                            |
 |------------|------------------------------------------------------------------------|
 | Enablement | Enablement value (defaults to D3D12_DRED_ENABLEMENT_SYSTEM_CONTROLLED) |
 
 ### ID3D12DeviceRemovedExtendedDataSettings::SetWatsonDumpEnablement (DRED version 1.1)  
 Configures the enablement settings for DRED Watson dumps.
+
 ```c++
 void ID3D12DeviceRemovedExtendedDataSettings::SetWatsonDumpEnablement(D3D12_DRED_ENABLEMENT Enablement);
 ```
+
 | Parameters | Description                                                            |
 |------------|------------------------------------------------------------------------|
 | Enablement | Enablement value (defaults to D3D12_DRED_ENABLEMENT_SYSTEM_CONTROLLED) |
 
 ### ID3D12DeviceRemovedExtendedDataSettings1::SetBreadcrumbsContextEnablement (DRED version 1.2)  
 Configures the enablement settings for DRED auto-breadcrumbs context data.
+
 ```c++
 void ID3D12DeviceRemovedExtendedDataSettings1::SetBreadcrumbContextEnablement(D3D12_DRED_ENABLEMENT Enablement);
 ```
+
 | Parameters | Description                                                            |
 |------------|------------------------------------------------------------------------|
 | Enablement | Enablement value (defaults to D3D12_DRED_ENABLEMENT_SYSTEM_CONTROLLED) |
 
 ### ID3D12DeviceRemovedExtendedDataSettings2::SetAutoBreadcrumbFlags
 Sets DRED auto-breadcrumb flags used to customize auto-breadcrumb behavior, such as limiting breadcrumb output.
+
 ```c++
 void ID3D12DeviceRemovedExtendedDataSettings2::SetAutoBreadcrumbFlags(D3D12_DRED_AUTO_BREADCRUMB_FLAGS Flags);
 ```
+
 | Parameters | Description                                                                 |
 |------------|-----------------------------------------------------------------------------|
 | Flags      | Logical combination of one or more D3D12_DRED_AUTO_BREADCRUMB_FLAGS bits    |
 
 ### ID3D12DeviceRemovedExtendedData::GetAutoBreadcrumbsOutput (DRED version 1.1)  
 Gets the DRED auto-breadcrumbs output.
+
 ```c++
 HRESULT ID3D12DeviceRemovedExtendedData::GetAutoBreadcrumbsOutput(D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT *pOutput);
 ```
+
 | Parameters | Description                                                            |
 |------------|------------------------------------------------------------------------|
 | pOutput    | Pointer to a destination D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT structure. |
@@ -588,15 +620,18 @@ Gets the DRED page fault data, including matching allocation for both living, an
 ```c++
 HRESULT ID3D12DeviceRemovedExtendedData::GetPageFaultAllocationOutput(D3D12_DRED_PAGE_FAULT_OUTPUT *pOutput);
 ```
+
 | Parameters | Description                                                      |
 |------------|------------------------------------------------------------------|
 | pOutput    | Pointer to a destination D3D12_DRED_PAGE_FAULT_OUTPUT structure. |
 
 ## ID3D12DeviceRemovedExtendedData1::GetAutoBreadcrumbsOutput1 (DRED version 1.2)  
 Gets the DRED v1.2 auto-breadcrumbs output.
+
 ```c++
 HRESULT ID3D12DeviceRemovedExtendedData1::GetAutoBreadcrumbsOutput1(D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 *pOutput);
 ```
+
 | Parameters | Description                                                             |
 |------------|-------------------------------------------------------------------------|
 | pOutput    | Pointer to a destination D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 structure. |
@@ -607,6 +642,7 @@ Gets the DRED page fault data, including matching allocation for both living, an
 ```c++
 HRESULT ID3D12DeviceRemovedExtendedData1::GetPageFaultAllocationOutput1(D3D12_DRED_PAGE_FAULT_OUTPUT1 *pOutput);
 ```
+
 | Parameters | Description                                                      |
 |------------|------------------------------------------------------------------|
 | pOutput    | Pointer to a destination D3D12_DRED_PAGE_FAULT_OUTPUT1 structure. |
