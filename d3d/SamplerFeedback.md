@@ -505,7 +505,7 @@ Independently of sampler feedback, the semantics for ResolveSubresourceRegion ar
 
 When performing transcode operations involving a sampler feedback resource, the co-ordinate space for these source and dest rects, in all cases, is the co-ordinate space of the *decoded* resource, not the opaque resource.
 
-ResolveSubresourceRegion can transcode one subresource at a time, or the whole subresource. To transcode one subresource at a time, specify source and dest subresource indices. To transcode the whole resource, specify UINT_MAX as the source and dest subresource indices.
+ResolveSubresourceRegion can transcode one subresource at a time, or the whole resource. To transcode one subresource at a time, specify source and dest subresource indices. To transcode the whole resource, specify UINT_MAX as the source and dest subresource indices.
 
 Applications can transcode all subresources using UINT_MAX subresource indices, or use sub-rectangle semantics, but not both at the same time.
 
