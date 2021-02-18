@@ -58,9 +58,9 @@ Contents
     - [Streamout](#streamout)
 
 * [Examples](#examples)
-    - [Example 1: Passthrough](#example-1:-passthrough)
-    - [Example 2: Culling](#example-2:-culling)
-    - [Example 3: Amplification](#example-3:-amplification)
+    - [Example 1: Passthrough](#example-1-passthrough)
+    - [Example 2: Culling](#example-2-culling)
+    - [Example 3: Amplification](#example-3-amplification)
 
 Intro
 =====
