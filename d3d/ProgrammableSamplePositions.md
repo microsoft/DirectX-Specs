@@ -772,7 +772,7 @@ typedef struct D3D12DDI_D3D12_OPTIONS_DATA_0027
 
 - Read out data to a UAV via compute shader
 
-- Repeat except with the destination of the decomporess being a
+- Repeat except with the destination of the decompress being a
     different surface.
 
 ---
