@@ -1092,7 +1092,7 @@ hardware.
 | Max # descriptors in a shader visible CBV/SRV/UAV heap           | 1000000         | 1000000         | 1000000 **+**
 | Max CBVs in all descriptor tables per shader stage | 14              | 14              | **full heap**
 | Max SRVs in all descriptor tables per shader stage | 128             | **full heap**   | full heap
-| Max UAVs in all descriptor tables across all stages | 8 (64 for FL    | **64**          | **full heap**
+| Max UAVs in all descriptor tables across all stages | 8 (64 for FL 11.1+)    | **64**          | **full heap**
 | Max Samplers in all descriptor tables per shader stage | 16              | **full heap**   | full heap
 
 For Tier 3, the max # descriptors is listed as 1000000+. The +
