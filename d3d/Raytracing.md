@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.14 1/12/2021
+v1.15 3/26/2021
 
 ---
 
@@ -303,6 +303,24 @@ v1.14 1/12/2021
       - [RayQuery CandidateTriangleFrontFace](#rayquery-candidatetrianglefrontface)
       - [RayQuery CommittedTriangleBarycentrics](#rayquery-committedtrianglebarycentrics)
       - [RayQuery CommittedTriangleFrontFace](#rayquery-committedtrianglefrontface)
+  - [Payload access qualifiers](#payload-access-qualifiers)
+    - [Availability](#availability)
+    - [Payload size](#payload-size)
+    - [Syntax](#syntax)
+    - [Semantics](#semantics)
+    - [Detailed semantics](#detailed-semantics)
+      - [Local working copy](#local-working-copy)
+      - [Shader stage sequence](#shader-stage-sequence)
+    - [Example](#example)
+    - [Guidelines](#guidelines)
+    - [Optimization potential](#optimization-potential)
+    - [Advanced examples](#advanced-examples)
+      - [Various accesses and recursive TraceRay](#various-accesses-and-recursive-traceray)
+      - [Payload as function parameter](#payload-as-function-parameter)
+      - [Forwarding payloads to recursive TraceRay calls](#forwarding-payloads-to-recursive-traceray-calls)
+      - [Pure input in a loop](#pure-input-in-a-loop)
+      - [Conditional pure output overwriting initial value](#conditional-pure-output-overwriting-initial-value)
+    - [Payload access qualifiers in DXIL](#payload-access-qualifiers-in-dxil)
 - [DDI](#ddi)
   - [General notes](#general-notes)
     - [Descriptor handle encodings](#descriptor-handle-encodings)
@@ -3229,7 +3247,7 @@ must all match when combined into a raytracing pipeline.
 
 Member                              | Definition
 ---------                           | ----------
-`UINT MaxPayloadSizeInBytes` | The maximum storage for scalars (counted as 4 bytes each) in ray payloads in raytracing pipelines that contain this program.  Callable shader payloads are not part of this limit.
+`UINT MaxPayloadSizeInBytes` | The maximum storage for scalars (counted as 4 bytes each) in ray payloads in raytracing pipelines that contain this program.  Callable shader payloads are not part of this limit.  This field is ignored for payloads that use [payload access qualifiers](#payload-access-qualifiers).
 `UINT MaxAttributeSizeInBytes` | The maximum number of scalars (counted as 4 bytes each) that can be used for attributes in pipelines that contain this shader. The value cannot exceed [D3D12_RAYTRACING_MAX_ATTRIBUTE_SIZE_IN_BYTES](#constants).
 
 ---
@@ -4930,6 +4948,9 @@ use the same structure as the one provided at the originating
 [TraceRay()](#traceray) call. Even if one of these shaders doesn't
 reference the ray payload at all, it still must specify the matching
 payload as the originating [TraceRay()](#traceray) call.
+
+See [payload access qualifiers](#payload-access-qualifiers) for a 
+discussion of annotations on payload members introduced in Shader Models 6.6 and 6.7.
 
 ---
 
@@ -6795,6 +6816,400 @@ Parameter                           | Definition
 
 ---
 
+## Payload access qualifiers
+
+Shader models 6.6 and 6.7 add payload access qualifiers (PAQs) to the [ray payload structure](#ray-payload-structure). PAQs are annotations which describe the read and write semantics of a payload field, that is, which shader stages read or write a given field. The added semantic information can help implementations reduce register pressure and can avoid spilling of payload state to memory. This incentivizes the use of the narrowest-possible qualifiers for each payload field.
+
+---
+
+### Availability
+
+Prior to shader model 6.6, [payload access qualifiers](#payload-access-qualifiers) (PAQs) are not supported.
+
+With SM 6.6, PAQs are disabled by default. The user may opt-in to the feature by using the
+`-enable-raypayload-qualifiers` command line flag in DXC.
+
+With SM 6.7 and higher, PAQs are enabled by default. The user may opt-out of the feature by using the
+`-disable-raypayload-qualifiers` command line flag in DXC.
+
+It is legal to mix annotated and unannotated payloads within the same library / state object.
+
+---
+
+### Payload size
+
+With [payload access qualifiers](#payload-access-qualifiers) (PAQs), the `MaxPayloadSizeInBytes` property of [D3D12_RAYTRACING_SHADER_CONFIG](#d3d12_raytracing_shader_config) is no longer needed.  The field is ignored by drivers if PAQs are enabled (the default per above) in SM 6.7 or higher.
+
+For SM 6.7 and higher but with PAQs disabled, `MaxPayloadSizeInBytes` is still used.
+
+For SM 6.6, in order to ease the transition for driver implementers, applications must still set the `MaxPayloadSizeInBytes` regardless of whether PAQs are used or not.  
+
+---
+
+### Syntax
+
+Any structure type used as payload must carry the `[raypayload]` type attribute as part of the type declaration as follows:
+
+```C++
+struct [raypayload] MyPayload{ ... };
+```
+
+Only structs marked as payload as shown above can be used as argument to [TraceRay](#traceray) calls and as payload parameter in
+[closesthit](#closest-hit-shader), [anyhit](#any-hit-shader) or [miss](#miss-shader) shaders.
+
+Payload types require annotating each member variable with PAQs. The [payload access qualifier](#payload-access-qualifiers) (PAQ) syntax follows the syntax of resource bindings. A valid annotation follows this syntax:
+
+```C++
+Type Field : qualifier1([s0, s1, ...]) : qualifier2([s0, s1, ...]);
+```
+
+The two valid qualifiers are `read` and `write`. Each qualifier carries an argument list, containing the shader stages it applies to (`s0..sN` in the above definition). Valid shader stages are: `anyhit`, `closesthit`, `miss`, `caller`.
+
+Each field must declare one `read` and one `write` qualifier. Qualifier argument lists can be empty.
+
+PAQs can only be specified for scalar, array, struct, vector, or matrix types. For payload types containing other types (i.e., structs with PAQs), the PAQs must be specified in the nested type and directly annotating the member is not allowed.
+
+---
+
+### Semantics
+
+Generally speaking, the `read` qualifier indicates that a shader stage reads the payload field, and the `write` qualifier indicates that a shader stage writes to the field.
+
+For the application developer, the following classification provides a description of the qualifier's behavior that should suffice as a mental model in most scenarios. For a more precise definition of the semantics, see the next section.
+
+**anyhit/closesthit/miss stages**
+
+qualifier|semantic
+---|---
+`read`|<p>Indicates that for the given stage, the payload field is available for reading and will contain the last value written by a previous stage.</p>
+`write`|<p>Indicates that the payload field will be overwritten by the given stage, if the stage executes. The field will be overwritten regardless of whether the executed shader explicitly assigns a value. If a value is not explicitly written by the shader, then an undefined value is written to the payload field at the end of the shader.</p><p>If the given stage does not execute, the payload field remains unmodified. A shader stage may not execute for various reasons. Examples include [ray flags](#ray-flags) (`FORCE_OPAQUE` does not execute anyhit, `SKIP_CLOSESTHIT` does not execute closesthit) or dynamic behavior (rays that miss all geometry do not execute closeshit, rays that hit geometry do not execute miss, etc).</p><p>*Note that invoking a NULL shader identifier in the Shader Table is equivalent to executing an empty shader, so in that case the stage counts as executed.*</p>
+`read+write`|<p>Indicates that the given stage may read and/or write the payload field. This is analogous to inout function parameters. If the shader does not explicitly assign a value or if the stage is not executed, the payload field remains unmodified.</p>
+`<none>`|<p>The payload field is neither available for reading nor are its contents modified by the given stage.</p>
+
+
+**caller stage**
+
+The `caller` stage denotes the caller of the [TraceRay](#traceray) function (i.e., most commonly a [raygeneration](#ray-generation-shader) shader). Fields that represent "inputs" to [TraceRay](#traceray) (for example a random seed) must first be written by the caller, so the [payload access qualifier](#payload-access-qualifiers) (PAQ) for such fields must include `write(caller)`. Fields that represent "outputs" from [TraceRay](#traceray) (for example an output color) must be read by the caller,
+so the PAQ for such fields must include `read(caller)`. Fields can be both inputs and outputs to [TraceRay](#traceray) by specifying both `read(caller)` and `write(caller)`.
+
+---
+
+### Detailed semantics
+
+Payload access qualifiers (PAQs) take effect at the transition between shader stages. A shader stage transition occurs when calling or returning from [TraceRay](#traceray), or any time an [anyhit](#any-hit-shaders)/[closesthit](#closest-hit-shaders)/[miss](#miss-shaders) shader is entered or exited. Conceptually, each shader stage that receives a payload as an
+argument creates the payload parameter as a local working copy of the actual payload attached to the ray. The PAQs then determine
+which fields are copied between the local copy and the actual payload when entering and exiting the shader stage.
+
+Specifically, the following semantics apply:
+
+- At the beginning of a [TraceRay](#traceray) call, any fields of the payload type that are marked `write(caller)` are copied from the payload argument passed to [TraceRay](#traceray) into the actual payload. All other fields of the actual payload have undefined contents.
+- At the beginning of execution of a shader stage that receives a payload, any fields that are marked `read` for that stage are
+copied from the actual payload to the parameter the shader receives. All other fields of the input parameter are left undefined.
+- At the end of execution of a shader stage that receives a payload, any fields that are marked `write` for that stage are copied
+back from the parameter of the shader to the actual payload. Any values written to other fields of the parameter are ignored.
+- At the end of execution of a [TraceRay](#traceray) call, any fields of the payload type that are marked `read(caller)` are copied from the actual payload back to the payload argument passed to [TraceRay](#traceray). All other fields of the payload parameter will have undefined contents.
+
+The implementation can organize the actual payload however it wants, and need only preserve the values of payload fields that have
+well-defined values and might possibly be read in the future.
+
+---
+
+#### Local working copy
+
+Because [payload access qualifiers](#payload-access-qualifiers) (PAQs) only affect stage transitions, the compiler does not restrict how shaders may access the local working copy of the payload; the local copy behaves exactly like an un-annotated struct variable. This ensures that variables of payload type can freely be assigned to each other. In particular, it also enables passing payloads as function arguments (in which case in/out semantics apply just like they would for regular struct parameters).
+
+It is the responsibility of the developer to ensure that shaders honor the specified PAQs when accessing payload fields to achieve the desired behavior. To help guard the developer against unintended effects, the compiler will attempt to warn whenever accesses are detected that could lead to undefined values or ignored writes.
+
+---
+
+#### Shader stage sequence
+
+The general sequence of relevant shader stages is as follows. ([intersection](#intersection-shaders) shaders are left out because they cannot access payloads).
+
+```
+caller -> anyhit -> (closesthit|miss) -> caller
+           ^  |
+           |__|         
+```
+Because multiple [anyhit](#any-hit-shaders) shaders can be executed during the course of a [TraceRay](#traceray) operation, 'anyhit' both precedes and succeeds itself.
+
+A [TraceRay](#traceray) call may not invoke any shaders at all (e.g. a ray that hits triangle geometry marked as opaque, while also specifying the `SKIP_CLOSESTHIT` [ray flag](#rayflags)). In that case, [payload access qualifiers](#payload-access-qualifiers) still apply to the `caller -> caller` transition.
+
+The following rules are enforced by the compiler at the payload declaration:
+
+1) Any `read` stage must be preceded by a `write` stage
+2) Any `write` stage must be succeeded by a `read` stage
+
+---
+
+### Example
+
+An example payload structure with [payload access qualifiers](#payload-access-qualifiers) is shown below:
+
+```C++
+struct Nested { float a, b, c; }
+
+struct [raypayload] MyPayload
+{
+    // "Pure" output from closesthit or miss:
+    float4 irradiance : read(caller) : write(closesthit, miss);
+
+    // "Pure" input into all stages, not preserved over TraceRay
+    uint seed : read(anyhit,closesthit,miss) : write(caller);
+
+    // Simple input into all stages, preserved over TraceRay
+    uint seed : read(anyhit,closesthit,miss,caller) : write(caller);
+
+    // In-out flag, overwritten by miss (e.g. for shadow/visibility):
+    bool hasHit : read(caller) : write(caller,miss);
+
+    // Anyhits communicating amongst themselves, with initialization from caller
+    float a : read(anyhit) : write(caller,anyhit);
+
+    // Nested struct which itself does not have PAQs:
+    Nested n : read(caller) : write(closesthit,miss);
+
+    // Nested payload struct which itself has PAQs:
+    MyBasePayload base;
+};
+
+```
+
+### Guidelines
+
+Here are some guidelines to help developers specify [payload access qualifier](#payload-access-qualifiers) definitions correctly:
+
+1) Does the caller need to initialize the field before calling [TraceRay](#traceray) Add `caller` to `write`.
+2) Does the caller use the returned field after calling [TraceRay](#traceray) (including in cases like loops)? Add `caller` to `read`.
+3) Does any shader of an [anyhit](#any-hit-shaders)/[closesthit](#closest-hit-shaders)/[miss](#miss-shaders) stage read the field, but no shader in the same stage ever writes it? Add the corresponding shader stage to `read` but not `write`.
+4) Do all shaders of an [anyhit](#any-hit-shaders)/[closesthit](#closest-hit-shaders)/[miss](#miss-shaders) stage write the field unconditionally and never read it? Add the corresponding shader stage to `write` but not `read`.
+5) Does any [anyhit](#any-hit-shaders)/[closesthit](#closest-hit-shaders)/[miss](#miss-shaders) shader conditionally modify the field, or do some shaders in the stage write the field while others don't? Try to make the `write` unconditional in all shaders and apply guideline (4). If that is not possible, add the stage to both `read` and `write`.
+6) Specify as few qualifiers/stages as possible for maximum performance. Try to make fields "pure inputs" or "pure outputs" (see later examples) where possible.
+
+---
+
+### Optimization potential
+
+**1) Shortened lifetimes**
+
+```C++
+struct [raypayload] MyPayload
+{
+    float ahInput : write(caller) : read(anyhit);
+};
+```
+
+In this example, `ahInput` is not accessed after the [anyhit](#any-hit-shaders) stage, that is, its lifetime ends after [anyhit](#any-hit-shaders). The implementation is therefore free to ignore this field for subsequent stages, which can reduce shader register pressure in [closesthit](#closest-hit-shaders) and [miss](#miss-shaders) shaders.
+
+**2) Disjoint lifetimes**
+
+```C++
+struct [raypayload] MyPayload
+{
+    float alpha : write(caller,anyhit) : read(closesthit);
+    bool didHit : write(closesthit, miss) : read(caller);
+    ...
+};
+```
+
+In this example, the lifetime of `alpha` will end once the [closesthit](#closest-hit-shaders) shader has read the value and resources (e.g. registers) allocated for `alpha` are free to be reused. Since the lifetimes of `alpha` and `didHit` are now provably disjoint, the implementation is allowed to reuse `alpha`'s register to propagate `didHit` back to the caller of [TraceRay](#traceray).
+
+
+---
+
+### Advanced examples
+
+---
+
+#### Various accesses and recursive TraceRay
+
+```C++
+
+struct [raypayload] Payload
+{
+    float a : write(closesthit, miss) : read(caller);
+    float b : write(miss) : read(caller);
+    float c : write(caller, closesthit) : read(caller, closesthit);
+    float d : write(caller) : read(closesthit, miss);
+};
+
+[shader("closesthit")]
+void ClosestHit(inout Payload payload)
+{
+    float tmp1 = payload.a; // WARNING: reading undefined value ('a' not read(closesthit))
+    float tmp2 = payload.b; // WARNING: reading undefined value ('b' not read(closesthit))
+    float tmp3 = payload.c;
+    float tmp4 = payload.d;
+
+    payload.a = 3;
+    payload.b = 3; // WARNING: write will be ignored after CH returns ('b' not write(closesthit))
+    payload.c = 3;
+    payload.d = 3; // WARNING: write will be ignored after CH returns ('d' not write(closesthit))
+
+    Payload p;
+    p.a = 3; // WARNING: value will be undefined inside TraceRay ('a' not write(caller))
+    p.b = 3; // WARNING: value will be undefined inside TraceRay ('b' not write(caller))
+    p.c = 3;
+    p.d = 3;
+    TraceRay(p);
+    float tmp5 = p.a;
+    float tmp6 = p.b;
+    float tmp7 = p.c;
+    float tmp8 = p.d; // WARNING: reading undefined value ('d' not read(caller))
+
+    Payload p2 = payload; // copying entire payload is OK, but inherits any potential undefined values
+    TraceRay(p2);
+}
+
+```
+
+---
+
+#### Payload as function parameter
+
+```C++
+struct [raypayload] MyPayload
+{
+    float a : write(caller, closesthit, miss) : read(caller);
+};
+
+// could also use plain 'in' or 'out', behaves like normal struct parameter
+void foo(inout MyPayload p) 
+{
+    p.a = 123;
+}
+
+[shader(“closesthit”)]
+void ClosestHit(inout MyPayload p)
+{
+    foo(p);
+}
+```
+
+---
+
+#### Forwarding payloads to recursive TraceRay calls
+
+```C++
+struct [raypayload] MyPayload
+{
+    float pureInput : write(caller) : read(closesthit);
+    float pureOutput : write(closesthit) : read(caller);
+};
+
+[shader(“closesthit”)]
+void ClosestHit(inout MyPayload p)
+{
+    // undefined contents due to lack of read(closesthit) and write(caller)
+    float a = p.pureOutput; 
+    
+    // This write will not be visible inside recursive closesthit stages, due to
+    // the lack of write(caller) and read(closesthit) annotations. Once the recursive
+    // TraceRay call returns, the value of p.pureOutput will be whatever the recursive
+    // closesthit invocation assigned, or undefined if the recursive invocation did
+    // not assign anything.
+    p.pureOutput = 222;
+
+    // This write will be visible inside the recursive closesthit stages, thanks to
+    // write(caller). We are operating on the local copy of the payload here, so the
+    // fact that p.pureInput does not specify write(closesthit) is irrelevant for this
+    // point (it only matters at the stage transition out of closeshit).    
+    p.pureInput = 123;    
+    TraceRay(p);
+
+    float c = p.pureInput; // now undefined due to lack of read(caller)
+    float d = p.pureOutput; // result of recursive TraceRay, or undefined 
+                            // if the recursion didn't write
+    
+    p.pureOutput = 444; // visible to the caller
+}
+```
+
+---
+
+#### Pure input in a loop
+
+```C++
+struct [raypayload] MyPayload
+{
+    float pureInput : write(caller) : read(closesthit);
+};
+
+[shader(“raygeneration”)]
+void Raygen()
+{
+    MyPayload p;
+
+    p.pureInput = 123;
+
+    while (condition)
+    {
+      // p.pureInput will be undefined after the first 
+      // loop iteration. Either specify read(caller)
+      // to preserve the value or manually keep a copy 
+      // of the value live across the TraceRay call.
+      TraceRay(p);
+    }
+}
+```
+
+---
+
+#### Conditional pure output overwriting initial value
+
+```C++
+struct [raypayload] MyPayload
+{
+    float pureOutput : write(caller,closesthit) : read(caller);
+};
+
+[shader(“closesthit”)]
+void ClosestHit(inout MyPayload p)
+{
+    if( condition )
+        p.pureOutput = 123;
+    else
+    {
+        // p.pureOutput becomes undefined because we do not 
+        // write it explicitly and omit read(closeshit)
+    }
+}
+```
+
+---
+
+### Payload access qualifiers in DXIL
+
+Payload Access Qualifiers (PAQs) are represented as metadata in DXIL, like type annotations. In contrast to type annotations, PAQs are attached to the `dx.dxrPayloadAnnotations` metadata node which references a single node that contains tag `kDxilPayloadAnnotationStructTag(0)` followed by a list of pairs consisting of an undef value of the payload type and a metadata node reference.  
+
+```C++
+!dx.dxrPayloadAnnotations = !{!24} 
+|--->!24 = !{i32 0, %struct.Payload undef, !25, %struct.MyColor undef, !29} 
+     |--->!25 = !{!26, !27, !28} 
+     |     |--->!26 = !{i32 0, i32 0} 
+     |     |--->!27 = !{i32 0, i32 819} 
+     |     |--->!28 = !{i32 0, i32 51} 
+     |--->!29 = !{!30, !30, !30} 
+           |--->!30 = !{i32 0, i32 545} 
+```
+
+The referenced metadata node must contain another reference to per-field metadata, hence every field in the payload type must be represented by one metadata note and the order must match the type’s layout.  
+
+The per-field metadata contains the `kDxilPayloadFieldAnnotationAccessTag(0)` followed by a bitmask that stores the PAQs for this field. For each shader stage 4 bits are used in the bitmask. Bits 0-1 are used for the PAQs. Bit 0 is set it indicates that the shader stage has read access, bit 1 indicates write access.  
+
+The bits for each stage are: 
+
+Stage      |Bits
+-----------|----
+Caller     |0-3 
+Closesthit |4-7 
+Miss       |8-11 
+Anyhit     |12-15 
+
+Note: A field declared with another payload type must not have any bits set. The payload access information must be taken from the payload type, not the field.
+
+---
+
 # DDI
 
 ---
@@ -7226,3 +7641,4 @@ v1.11|3/3/2020|<li>For [Tier 1.1](#d3d12_raytracing_tier), additional vertex for
 v1.12|4/6/2020|<li>For `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_VISUALIZATION_DECODE_FOR_TOOLS`, clarified that the result is self contained in the destination buffer.</li>
 v1.13|7/6/2020|<li>For [D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC](#d3d12_raytracing_geometry_triangles_desc), clarified that if an index buffer is present, this must be at least the maximum index value in the index buffer + 1.</li><li>Clarified that a null hit group counts as opaque geometry.</li>
 v1.14|1/12/2021|<li>Clarified that [RayFlags()](#rayflags) does not reveal any flags that may have been added externally via [D3D12_RAYTRACING_PIPELINE_CONFIG1](#d3d12_raytracing_pipeline_config1).</li>
+v1.15|3/26/2021|<li>Added [payload access qualifiers](#payload-access-qualifiers) section, introducing a way to annotate members of ray payloads to indicate which shader stages read and/or write individual members of the payload.  This lets implementations optimize data flow in ray traversal.  It is opt-in for apps starting with shader model 6.6, and if present in shaders appears as metadata that is ignored by existing drivers.  For shader model 6.7 and higher these payload access qualifiers are required to be used by default (opt-out).</li>
