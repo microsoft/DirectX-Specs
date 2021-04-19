@@ -48,7 +48,7 @@ Texture2D<float4> myTexture = ResourceDescriptorHeap[texIdx];
 float4 result = myTexture.Sample(SamplerDescriptorHeap[sampIdx], coord);
 ```
 
-See the [Shader Model 6.6 Dynamic Resources](SM_6_6_DynamicResources.md) documentation for more details.
+See the [Shader Model 6.6 Dynamic Resources](HLSL_SM_6_6_DynamicResources.md) documentation for more details.
 
 
 
@@ -94,7 +94,7 @@ See the [Derivative Operations in Compute, Mesh and Amplification Shaders](HLSL_
 A new set of intrinsics are being added to HLSL for processing of packed 8bit data such as colors. New packed datatype 
 are also added to HLSL's front end to symbolize a vector of packed 8bit values. 
 
-See the [Pack/Unpack Math Intrinsics](HLSL_SM_6_6_Pack_Unpack_Intrinisics.md) documenation for more details.
+See the [Pack/Unpack Math Intrinsics](HLSL_SM_6_6_Pack_Unpack_Intrinsics.md) documenation for more details.
 
 
 

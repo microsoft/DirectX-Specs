@@ -62,7 +62,7 @@ original new rendering methods and optimizations become possible.
 
 ---
 
-# New Atomic Function Prototypes
+# New Atomic Functions
 
 This feature introduces overloaded versions of existing `Interlocked*` functions
 that take 64-bit integer and floating-point parameters,
