@@ -23,7 +23,7 @@ to unify code paths and remove unnecessary metadata.
 
 ## Contents
 
-- [HLSL Create Resource by Indexing Directly into Heap](#hlsl-create-resource-by-indexing-directly-into-heap)
+- [HLSL Dynamic Resources](#hlsl-dynamic-resources)
   - [Contents](#contents)
   - [HLSL Changes](#hlsl-changes)
     - [ResourceDescriptorHeap and SamplerDescriptorHeap](#resourcedescriptorheap-and-samplerdescriptorheap)
