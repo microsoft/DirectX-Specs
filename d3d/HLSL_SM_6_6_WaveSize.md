@@ -35,15 +35,17 @@ where the thread group size must be a multiple of the wave size.
 
 ## Contents
 
-- [Allowed Wave Sizes](#allowed-wave-sizes)
-- [HLSL Attribute](#hlsl-attribute)
-- [Compiler Warning](#compiler-warning)
-- [DXIL Metadata](#dxil-metadata)
-- [Runtime Validation](#runtime-validation)
-- [Device Behavior](#device-behavior)
-- [Device Capability](#device-capability)
-- [Issues](#Issues)
-- [Change Log](#change-log)
+- [HLSL Wave Size](#hlsl-wave-size)
+  - [Contents](#contents)
+  - [Allowed Wave Sizes](#allowed-wave-sizes)
+  - [HLSL Attribute](#hlsl-attribute)
+  - [Compiler Warning](#compiler-warning)
+  - [DXIL Metadata](#dxil-metadata)
+  - [Runtime Validation](#runtime-validation)
+  - [Device Behavior](#device-behavior)
+  - [Device Capability](#device-capability)
+  - [Issues](#issues)
+  - [Change Log](#change-log)
 
 ## Allowed Wave Sizes
 
@@ -66,11 +68,7 @@ void main() ...
 `<numLanes>` must be an immediate integer value of
 an [allowed wave size](#allowed-wave-sizes).
 
-Shader types this attribute may be used with are:
-compute, amplification, mesh,
-vertex, hull, domain, geometry, and pixel.
-
-Shader entries of the supported types using this attribute
+Compute shader entries using this attribute
 will keep track of this attribute when compiled into a library
 for use when linking to a final shader target.
 
@@ -123,7 +121,7 @@ must be supported for selection by the shader,
 and wave ops must be supported at each size.
 Wave sizes supported by a device under some conditions,
 but not compatible with wave intrinsics and
-shader selected wave sizes *for all shader types*,
+shader selected wave sizes *for the compute shader stage*,
 should not be included in the range of wave size support
 reported by the driver.
 
@@ -140,38 +138,38 @@ See [Issue 2](#issues)
 
 1. Some dithering has occurred on whether this should be a shader attribute
     or a global setting set via a pragma or command line argument.
-    - Current approach is to use an attribute,
+    - RESOLVED: use an attribute,
     and support all shader types other than DXR shader types.
 
 2. How about devices that don't report support for the optional WaveOps feature?
     - What are the requirements on the wave size min/max reported by the driver in this case?
-    - Should the these devices not be required to support this feature?
+      Should the these devices not be required to support this feature?
+      - RESOLVED: No additional requirement if no support of wave ops.
     - Should use of the wave size by the shader set the WaveOps feature requirement for the shader,
         even if the shader does not use wave intrinsics?
+      - RESOLVED: WaveSize is communicated through the min/max lanes whether or not wave ops are used.  There is no optional feature bit.
 
 3. Should some flexibility be allowed for wave size
     when shaders cannot be directly dependent on the wave size?
     Such as for DXR shaders, and vertex, hull, domain, geometry, and pixel shaders
     that do not use wave intrinsics.
+    - RESOLVED: Feature currently limited to compute shader stage.
 
 4. Should support for DXR libraries be included?
+    - RESOLVED: Feature currently limited to compute shader stage.
 
 5. Should support for a single global setting for a library be considered?
     This would be potentially useful for DXR,
     but also if libraries are accepted in regular graphics pipelines in the future,
     and a consistent wave size is necessary for driver compilation of library functions
     and fast/efficient runtime linking.
-
-6. Need to message to developers that this is not a normal path that should be used,
-    but one that may be used when it is really necessary.
-    - Proposed: Add warning message when compiling shader with feature.
-        Warning message can be disabled with pragma or option.
+    - RESOLVED: Feature currently limited to compute shader stage.
 
 ## Change Log
 
 Version|Date|Description
 -|-|-
 1.00|20 Apr 2021|Minor Edits for Publication
-0.1|2020-04-16|First Draft
-0.2|2020-04-21|Switch to using attribute only, exclude DXR
 0.3|2020-05-11|Add warning, update justification
+0.2|2020-04-21|Switch to using attribute only, exclude DXR
+0.1|2020-04-16|First Draft
