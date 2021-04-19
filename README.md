@@ -49,6 +49,7 @@ These specs are presented with different interfaces at two different URLs:
     * [Shader Model 6.3](https://github.com/microsoft/DirectXShaderCompiler/wiki/Shader-Model-6.3)
     * [Shader Model 6.4](https://github.com/microsoft/DirectXShaderCompiler/wiki/Shader-Model-6.4)
     * [Shader Model 6.5](d3d/HLSL_ShaderModel6_5.md)
+    * [Shader Model 6.5](d3d/HLSL_ShaderModel6_6.md)
     * [SV_Barycentrics](https://github.com/microsoft/DirectXShaderCompiler/wiki/SV_Barycentrics)
     * [SV_ViewID](https://github.com/microsoft/DirectXShaderCompiler/wiki/SV_ViewID)
 
