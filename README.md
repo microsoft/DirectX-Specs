@@ -54,6 +54,7 @@ These specs are presented with different interfaces at two different URLs:
     * [SV_ViewID](https://github.com/microsoft/DirectXShaderCompiler/wiki/SV_ViewID)
 
 * Developer Features
+    * [Agility SDK](d3d/D3D12Redistributable.md)
     * [Device Removed Extended Data](d3d/DeviceRemovedExtendedData.md)
     * [Debug Object Auto Name](d3d/DebugObjectAutoName.md)
     * [Debug Layer Message Callbacks](d3d/MessageCallback.md)

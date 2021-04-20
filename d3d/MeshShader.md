@@ -1,6 +1,6 @@
 # Mesh Shader
 
-v0.85
+v0.86
 
 Contents 
 ========
@@ -19,7 +19,9 @@ Contents
 
 * [Rasterization order](#rasterization-order)
 
-* [SV_RenderTargetArrayIndex limitations](#sv_rendertargetarrayindex-limitations)
+* [Pipeline Statistics](#pipeline-statistics)
+
+* [SV_RenderTargetArrayIndex limitations based on queryable capability](#sv_rendertargetarrayindex-limitations-based-on-queryable-capability)
 
 * [List of D3D API calls](#list-of-d3d-api-calls)
 
@@ -351,17 +353,126 @@ At the same time, individual mesh shader invocations still retire rasterized out
 In the presence of an amplification shader, any ROV accesses from a pixel shader over a given target location are ordered, 
 with the exception of the arbitrary ordering of mesh shader rasterization retirement described above.
 
-SV_RenderTargetArrayIndex limitations
-=====================================
+Pipeline Statistics
+=====================
 
-Due to a limitation in some target hardware, mesh shaders that write to the SV_RenderTargetArrayIndex 
-attribute are limited to outputting a 3 bit value, which allows selecting between at most 8 render targets. 
+In order to track the number of invocations of Mesh Shaders and Amplification shaders in a given program, as well as the number of primitives output by a mesh shader,
+applications can use the Pipeline Statistics feature.
+
+This means versioning the `D3D12_QUERY_DATA_PIPELINE_STATISTICS` struct to include `ASInvocations` and `MSInvocations` - 
+to track the number of amplification/mesh shaders that are invoked- and `MSPrimitives` to track the number of primitives output by a mesh shader.
+This exists as follows: 
+```c++
+typedef struct D3D12_QUERY_DATA_PIPELINE_STATISTICS1
+{
+    UINT64 IAVertices;
+    UINT64 IAPrimitives;
+    UINT64 VSInvocations;
+    UINT64 GSInvocations;
+    UINT64 GSPrimitives;
+    UINT64 CInvocations;
+    UINT64 CPrimitives;
+    UINT64 PSInvocations;
+    UINT64 HSInvocations;
+    UINT64 DSInvocations;
+    UINT64 CSInvocations;
+    UINT64 ASInvocations;
+    UINT64 MSInvocations;
+    UINT64 MSPrimitives;
+} 	D3D12_QUERY_DATA_PIPELINE_STATISTICS1;
+``` 
+Similarly, a new DDI, `D3D12DDI_QUERY_DATA_PIPELINE_STATISTICS1` is used:
+```c++
+typedef struct D3D12DDI_QUERY_DATA_PIPELINE_STATISTICS1
+{
+    UINT64 IAVertices;
+    UINT64 IAPrimitives;
+    UINT64 VSInvocations;
+    UINT64 GSInvocations;
+    UINT64 GSPrimitives;
+    UINT64 CInvocations;
+    UINT64 CPrimitives;
+    UINT64 PSInvocations;
+    UINT64 HSInvocations;
+    UINT64 DSInvocations;
+    UINT64 CSInvocations;
+    UINT64 ASInvocations;
+    UINT64 MSInvocations;
+    UINT64 MSPrimitives;
+}   D3D12DDI_QUERY_DATA_PIPELINE_STATISTICS1;
+```
+
+Since some drivers have Mesh Shader support without support in pipeline statistics, it is important to 
+use `CheckFeatureSupport` to query `D3D12_FEATURE_DATA_D3D12_OPTIONS8` for `MeshShaderPipelineStatsSupported` 
+before using Pipeline Statistics to evaluate mesh shader or amplification shader data. 
+
+This query will return true on all drivers past the Iron release that support Mesh Shaders. 
+
+This can be done as follows: 
+```c++
+D3D12_FEATURE_DATA_D3D12_OPTIONS8 featureData = {};
+pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS8, &featureData, sizeof(featureData));
+VERIFY_IS_TRUE(featureData.MeshShaderPipelineStatsSupported);
+```
+
+If `featureData.MeshShaderPipelineStatsSupported` returns false, meaning that either the driver does not support 
+Mesh Shaders or the driver was released prior to Iron, the query to `D3D12_QUERY_DATA_PIPELINE_STATISTICS1` will return 0
+for the three new fields. 
+
+
+The following enums are also revised to support the new pipeline statistics struct:
+
+`D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1` is added to the enum  `D3D12_QUERY_HEAP_TYPE`.
+
+`D3D12_QUERY_TYPE_PIPELINE_STATISTICS1` is added to the enum `D3D12_QUERY_TYPE`.
+ 
+`D3D12DDI_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1` is added to the enum `D3D12DDI_QUERY_HEAP_TYPE`.
+ 
+`D3D12DDI_QUERY_TYPE_PIPELINE_STATISTICS1` is added to the enum `D3D12DDI_QUERY_TYPE`.
+
+SV_RenderTargetArrayIndex limitations based on queryable capability
+===================================================================
+
+Some target hardware has limitations where mesh shaders that write to the SV_RenderTargetArrayIndex 
+attribute are limited to outputting a 3 bit value. This allows for selecting between at most 8 render targets. 
 On such hardware, outputting an index value larger than 7 produces undefined behavior.
 
-In a future update to D3D12, we will be adding a CheckFeatureSupport cap so hardware that does not have
-this limitation can report support for full 11 bit render target array indexing. Applications running on
-an operating system version where this cap is not yet available must assume that mesh shaders only support 
-a maximum render target array index of 7 and going beyond this produces undefined results.
+Other hardware, however, does not possess a limitation on valid output values of SV_RenderTargetArrayIndex
+and has support for full 11-bit render target array indexing.
+
+> ### Remark
+>
+> 11-bit indexing is the maximum needed, because Direct3D defines the max slices for an array texture as 2048.
+
+Direct3D 12 has a queryable capability allowing applications to know if the target hardware supports
+values of SV_RenderTargetArrayIndex which are 8 or greater. This capability is expressed through the
+`MeshShaderSupportsFullRangeRenderTargetArrayIndex` field of `D3D12_FEATURE_DATA_D3D12_OPTIONS9`.
+
+Applications can check this capability as follows:
+```c++
+D3D12_FEATURE_DATA_D3D12_OPTIONS9 featureData = {};
+pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS9, &featureData, sizeof(featureData));
+if (featureData.MeshShaderSupportsFullRangeRenderTargetArrayIndex)
+    ...
+```
+
+Note that D3D12_FEATURE_DATA_D3D12_OPTIONS9 was not present in the first Windows OS release that 
+introduced support for mesh shaders. Applications running on an operating system version where 
+D3D12_FEATURE_DATA_D3D12_OPTIONS9 is not available must assume that mesh shaders only support a 
+maximum render target array index of 7 and going beyond this produces undefined results.
+
+From a DDI perspective, there exists a revised options structure:
+```
+typedef struct D3D12DDI_D3D12_OPTIONS_DATA_0081
+{
+    ...
+    BOOL MeshShaderSupportsFullRangeRenderTargetArrayIndex;
+}
+```
+
+Drivers report their mesh-shader-render-target-array-index by setting the MeshShaderSupportsFullRangeRenderTargetArrayIndex
+field accordingly. On drivers which set the field to false or are of an older DDI version, the capability value is assumed
+to be false.
 
 List of D3D API calls
 =====================
@@ -837,13 +948,17 @@ defines the maximum number of primitives this mesh shader can produce,
 and must match the size of the [Primitive Attributes](#primitive-attributes) array.
 The maximum size for this array is 256 elements.
 
-You must write all two or three indices of a primitive at once,
+You must write all two or three vertex indices of a primitive at once,
 otherwise the compiler and validator will throw an error.
 If you write the same primitive index more than once,
 the last value written will define the indices for the primitive.
 
 Writing to this array must occur after the [`SetMeshOutputCounts`](#setmeshoutputcounts) call.
 See that section for information on output size and indexing behavior and restrictions.
+
+> ### Remark
+>
+> As there isn't a way to inspect or access the raw output indices of a mesh shader from the application level, the underlying GPU implementation may choose to store output indices in a different format from uint2 or uint3.
 
 ## Vertex Attributes
 
@@ -905,6 +1020,8 @@ the last value written will be the value exported from the Mesh shader.
 This structure must have system-value or user-defined semantics defined for all elements.
 `SV_RenderTargetIndex` and `SV_ViewportIndex` and [`SV_CullPrimitive`](#sv_cullprimitive)
 can only be per-primitive attributes in MeshShader.
+
+`SV_ShadingRate` is settable from mesh shaders on platforms which support coarse shading. When set from a mesh shader, `SV_ShadingRate` functions as an actual per-primitive attribute-- not, say, a per-provoking-vertex attribute.
 
 Writing to this array must occur after the [`SetMeshOutputCounts`](#setmeshoutputcounts) call.
 See that section for information on output size and indexing behavior and restrictions.
@@ -1058,6 +1175,8 @@ The payload type, specified by `payload_t` here, must be a user-defined struct
 type. The size of this type must match the size of the type used in the Mesh
 shader for the [GetMeshPayload](#mesh-payload) call. The maximum size
 allowed for this structure is 16k bytes.
+
+The size of the payload structure counts against groupshared memory limits. These limits are, to reiterate, 28k for mesh shaders and 32k for amplification shaders. For example, an application using the highest possible payload size of 16k would only have 16k left of groupshared available to its amplification shader and 12k to its mesh shader.
 
 The structure is not flattened into a packed signature layout, but instead
 passed with the data layout specified by the native structure.  Data layout
