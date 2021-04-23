@@ -6827,10 +6827,10 @@ Shader models 6.6 and 6.7 add payload access qualifiers (PAQs) to the [ray paylo
 Prior to shader model 6.6, [payload access qualifiers](#payload-access-qualifiers) (PAQs) are not supported.
 
 With SM 6.6, PAQs are disabled by default. The user may opt-in to the feature by using the
-`-enable-raypayload-qualifiers` command line flag in DXC.
+`-enable-payload-qualifiers` command line flag in DXC.
 
 With SM 6.7 and higher, PAQs are enabled by default. The user may opt-out of the feature by using the
-`-disable-raypayload-qualifiers` command line flag in DXC.
+`-disable-payload-qualifiers` command line flag in DXC.
 
 It is legal to mix annotated and unannotated payloads within the same library / state object.
 
