@@ -52,8 +52,12 @@ If a device is feature level 12_2, it has
 |RootSignatureTier	                                                      | 1.1                           |[Link](https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html)
 |DepthBoundsTestSupported	                                              | TRUE                          |[Link](https://microsoft.github.io/DirectX-Specs/d3d/DepthBoundsTest.html)
 |WriteBufferImmediateSupportFlags	                                      | Direct, Compute, Bundle
-|MaxGPUVirtualAddressBitsPerResource                                      | 40
-|MaxGPUVirtualAddressBitsPerProcess                                       | 40
+|MaxGPUVirtualAddressBitsPerResource                                      | 40, on 64-bit processes
+|MaxGPUVirtualAddressBitsPerProcess                                       | 40, on 64-bit processes
+
+On feature level 12_2 devices, the two capabilities MaxGPUVirtualAddressBitsPerResource and MaxGPUVirtualAddressBitsPerProcess are guaranteed to be at least 40 for programs running in 64-bit processes (for example, x64-based processes are considered 64-bit processes). This idea pertains to process architecture which is not necessarily the same as CPU or operating system architecture. 
+
+There are no guarantees in particular regarding MaxGPUVirtualAddressBitsPerResource and MaxGPUVirtualAddressBitsPerProcess for 32-bit processes.
 
 Additionally, it has the following flags set
 
@@ -110,7 +114,7 @@ The driver returns a value for MaximumDriverSupportedFeatureLevel which does not
 >#### Remark
 > In practice:
 > * Versions of Direct3D built into the operating system at or before Manganese (20H2) use 3DPIPELINESUPPORT.
-> * Versions of Direct3D built into Iron operating system or later use 3DPIPELINESUPPORT1, and fall back to 3DPIPELINESUPPORT if it fails.
+> * Versions of Direct3D built into Iron operating system, or organized as a re-distributable use 3DPIPELINESUPPORT1, and fall back to 3DPIPELINESUPPORT if it fails.
 
 ### Discrepency in API-level and DDI-level reported capabilities
 The WriteBufferImmediateSupportFlags capability D3D12_COMMAND_LIST_SUPPORT_FLAG_BUNDLE is switched on at the API level for drivers which report D3D12DDI_COMMAND_QUEUE_FLAG_3D at the DDI level.

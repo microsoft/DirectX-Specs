@@ -534,7 +534,7 @@ The following properties are free to be decided by the application for its purpo
 
 The above *general semantics* work for all feedback in general; this section describes one additional way to encode and decode feedback for non-arrayed MinMip feedback resources (that is, a feedback resource of array size 1).
 
-When transcoding to or from an opaque MinMip feedback resource, the non-opaque resources has the following properties:
+When transcoding to or from an opaque MinMip feedback resource, the non-opaque resource has the following properties:
 * It is a BUFFER.
 * For a feedback map of texure size {FeedbackWidth, FeedbackHeight}
   * It has a size of at least ceil(FeedbackWidth / MipRegionWidth) * ceil(FeedbackHeight / MipRegionHeight).
@@ -983,6 +983,14 @@ To transcode the entire subresource at once, specify UINT_MAX as the source and 
 Some specific semantics are required for MIN_MIP type feedback maps since their transcoded representation has a flattened mip chain:
 * For resolve mode DECODE where a MinMip map is a source, SrcSubresource should be UINT_MAX, or -1
 * For resolve mode ENCODE where a MinMip map is a dest, DstSubresource should be UINT_MAX -1
+
+When resolving arrays:
+* The non-opaque transcode array size equals the feedback map array size.
+* The subresource index used with the resolve corresponds to the desired array slice to transcode (unless it is -1). Namely:
+   * When decoding a MinMip array, the source subresource is -1 and the destination subresource is the desired array slice.
+   * When decoding a MipRegionUsed array, the source and destination subresources match the desired subresource (factor of mip and array slice).
+   * When encoding a MinMip array, the source subresource is the desired array slice and the destination subresource is -1.
+   * When encoding a MipRegionUsed array, the source and destination subresources match the desired subresource (factor of mip and array slice).
 
 For clearing, ClearUnorderedAccessViewUint is used. The four number values passed to it, ordinarily used for specifying what to clear each channel to, are ignored. A cleared feedback map can be thought of as meaning "no mips have been requested for any mip region."
 * If transcoded, a cleared MinMip feedback map consists of all 255 (0xFF) values.

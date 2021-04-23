@@ -154,6 +154,12 @@ Features for each tier are described in greater detail below the table.
 * SupportsPerVertexShadingRateWithMultipleViewports
   * Boolean type
   * Indicates whether more than one viewport can be used with the per-vertex (also referred to as ‘per-primitive’) shading rate
+* VariableRateShadingSumCombinerSupported
+  * Boolean type
+  * Indicates whether the SUM combiner can be used. This cap is pertaining to variable rate shading Tier 2.
+* MeshShaderPerPrimitiveShadingRateSupported
+  * Boolean type
+  * Indicates that the SV_ShadingRate can be set from a mesh shader. This cap is pertaining to variable rate shading Tier 2. Note that SV_ShadingRate can always be set vertex and geometry shaders irrespective of any cap on variable rate shading Tier 2 platforms.
 
 ## Specifying Shading Rate
 For flexibility in applications, there are a variety of mechanisms provided to control the shading rate. Different mechanisms are available depending on the hardware feature tier.
@@ -185,7 +191,6 @@ If the hardware does not support Tier 2 variable rate shading, the capability qu
 If the hardware does support Tier 2 variable rate shading, the tile size is one of
 * 8
 * 16
-* 32
 
 #### Screen space image size
 For a render target of size {rtWidth, rtHeight}, using a given tile size called VRSTileSize, the screen space image that will cover it is of dimensions
@@ -252,14 +257,19 @@ A *null* screen-space image can be set for specifying shader rate. This has the 
 A screen-space image resource does not have any special implications with respect to promotion or decay.
 
 ### Per-Primitive Attribute
-A per-primitive attribute adds the ability to specify a shading rate term as an attribute from a provoking vertex. This attribute is flat-shaded— that is, propagated to all pixels in the current triangle or line primitive. Use of a per-primitive attribute can enable finer-grained control of image quality compared to the other shading rate specifiers.
+A system value provides the ability to specify a shading rate term as either a per-primitive or per-provoking-vertex attribute. This settable semantic is SV_ShadingRate. SV_ShadingRate exists as part of shader model 6_4.
 
-The per-primitive attribute is a settable semantic called SV_ShadingRate. SV_ShadingRate exists as part of shader model 6_4.
+The SV_ShadingRate attribute is flat-shaded— that is, propagated to all pixels in the current triangle or line primitive. Use of SV_ShadingRate can enable finer-grained control of image quality compared to the other shading rate specifiers.
 
-If a VS or GS sets SV_ShadingRate but VRS is not enabled, the semantic-setting has no effect.
+Setting SV_ShadingRate is permitted from VS, GS or MS stages. It is not permitted from other stages, for example DS.
+
+Applications are only permitted to set SV_ShadingRate from the MS (mesh shader) stage if the MeshShaderPerPrimitiveShadingRateSupported cap is TRUE. If an application tries to set SV_ShadingRate from a mesh shader and the MeshShaderPerPrimitiveShadingRateSupported cap is FALSE, the rendering behavior is undefined. 
+
+> #### Remark
+> The MeshShaderPerPrimitiveShadingRateSupported cap was added in a Windows release after the initial release of variable rate shading went out. With this in mind, the runtime does not strictly validate setting of MS per-primitive shading rates against the cap because that could mean an application-breaking change. Instead, SDK layers produces a softer-than-error message if the application tries to set a per-primitive shading rate from MS but the cap does not permit it.
+
+If a VS, GS or MS sets SV_ShadingRate but no per-primitive contribution is enabled through the combiners, the semantic-setting has no effect.
 If no value for SV_ShadingRate is specified per-primitive, a shading rate value of 1x1 is assumed as the per-primitive contribution.
-
-Setting SV_ShadingRate is permitted from VS or GS stages. It is not permitted from other stages, for example DS.
 
 #### Interaction with View Instancing
 Applications can output SV_ShadingRate in a view-dependent manner. To put it another way: if an application outputs different SV_ShadingRates for different values of SV_ViewID, the resulting view instances have different per-primitive shading rates.
@@ -272,8 +282,8 @@ The various sources of shading rate are applied in sequence using this diagram.
 Each pair of A and B is combined using a combiner.
 
 *When specifying a shader rate by vertex attribute:
-* If a geometry shader is used, shading rate can be specified through that. 
-* If a geometry shader is not used, the shading rate is specified by the provoking vertex.
+* If a geometry shader or mesh shader is used, shading rate can be specified through that. 
+* If a geometry shader or mesh shader is not used, the shading rate is specified by the provoking vertex.
 
 #### List of combiners
 The following combiners are supported. Using a Combiner (C) and two inputs (A and B):
@@ -281,11 +291,13 @@ The following combiners are supported. Using a Combiner (C) and two inputs (A an
 * Override. C.xy = B.xy
 * Higher quality. C.xy = min(A.xy, B.xy)
 * Lower quality. C.xy = max(A.xy, B.xy)
-* Apply cost B relative to A. C.xy = min(maxRate, A.xy + B.xy)
+* Apply cost B relative to A. C.xy = min(maxRate, A.xy + B.xy), also called "sum"
 
 where *maxRate* is the largest permitted dimension of coarse pixel on the device. This would be
 * D3D12_AXIS_SHADING_RATE_2X (i.e., a value of 1), if AdditionalShadingRatesSupported is false
 * D3D12_AXIS_SHADING_RATE_4X (i.e., a value of 2), if AdditionalShadingRatesSupported is true
+
+Combiners operate on the x and y D3D12_AXIS_SHADING_RATEs of the coarse pixel separately, not the enum value as a whole. For example, when evaluating the MIN of 1X2 and 2X1, the result is 1x1. 
 
 The choice of combiner for variable rate shading is set on the command list through RSSetShadingRate.
 
@@ -294,6 +306,13 @@ If no combiners are ever set, they stay at the default which is passthrough.
 If the source to a combiner is a D3D12_AXIS_SHADING_RATE which is not allowed in the support table, the input is sanitized to a shading rate that is supported.
 
 If the output of a combiner does not correspond to a shading rate supported on the platform, the result is sanitized to a shading rate that is supported.
+
+Application usage of the "sum" combiner is only permitted when the VariableRateShadingSumCombinerSupported capability is TRUE. Usaging the "sum" combiner when the VariableRateShadingSumCombinerSupported is FALSE means undefined rendering behavior.
+
+> ##### Remark
+> The VariableRateShadingSumCombinerSupported cap was added in a Windows release after the initial release of variable rate shading went out. With this in mind, the runtime does not strictly validate usage of the combiner against the cap because that could mean an application-breaking change. Instead, SDK layers produces a softer-than-error message if the SUM combiner is used but the cap does not permit it.
+
+On variable rate shading Tier 1 devices, using combiners other than PASSTHROUGH is not categorically an API error. The choice of combiners won't however, do anything too interesting on those devices since you can only set one shading rate source- the command list one.
 
 ### Default State and State Clearing
 All shading rate sources, namely
@@ -666,10 +685,18 @@ struct D3D12_FEATURE_DATA_D3D12_OPTIONS6
     UINT ShadingRateImageTileSize;
 };
 
+struct D3D12_FEATURE_DATA_D3D12_OPTIONS10
+{
+    BOOL VariableRateShadingSumCombinerSupported;
+    BOOL MeshShaderPerPrimitiveShadingRateSupported;
+};
+
 enum D3D12_FEATURE
 {
     // ...
-    D3D12_FEATURE_D3D12_OPTIONS6
+    D3D12_FEATURE_D3D12_OPTIONS6,
+    // ...
+    D3D12_FEATURE_D3D12_OPTIONS10
 };
 
 ```
