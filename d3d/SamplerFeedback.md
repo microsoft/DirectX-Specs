@@ -15,7 +15,7 @@ Over time, there has been steady increase in display resolutions whereupon games
 
 The general process of loading texture data on-demand, rather than upfront-all-at-once, is called *texture streaming* in this document, or *streaming* for short.
 
-It makes sense to use streaming in scenarios where only some of a texture's mips are deemed necessary for the scene. When new mips are deemed necessary-- for example, if a new object appears in the scene, or if an object has moved closer into view and requires more detail-- the application may choose to load more-detailed parts of the mip chain. 
+It makes sense to use streaming in scenarios where only some of a texture's mips are deemed necessary for the scene. When new mips are deemed necessary-- for example, if a new object appears in the scene, or if an object has moved closer into view and requires more detail-- the application may choose to load more-detailed parts of the mip chain.
 
 There is a kind of Direct3D resource particularly suitable for providing control to applications under memory-constrained scenarios: *tiled resources*. To avoid the need to keep all most-detailed mips of a scene's textures in memory at the same time, applications may use tiled resources. Tiled resources offer a way to keep parts of a texture resident in memory while other parts of the texture are not resident.
 
@@ -68,7 +68,7 @@ Steps 1, through 3, are the same as in the above section.
 
 4. Draw objects straightforwardly to the final target in screen space. For each object with which texture-space shading will be used, keep a *feedback map* of which areas of objects' target texture would be updated.
 
-5. For objects with which texture-space-shading will be used, draw the scene targeting the objects' target texture. This pass would be the pass in which expensive lighting operations are used. But, do not shade areas of the target texture not included in the *feedback map*. 
+5. For objects with which texture-space-shading will be used, draw the scene targeting the objects' target texture. This pass would be the pass in which expensive lighting operations are used. But, do not shade areas of the target texture not included in the *feedback map*.
 
 6. Draw the scene once again, targeting the final target. The object is rasterized to the screen. Shading the object is a simple texture lookup which already contains the result of the scene's lighting computations.
 
@@ -76,14 +76,14 @@ The ability to skip shading operations in step 5 above comprises a performance s
 
 ## Feature Support
 
-Sampler feedback support is not required as part of a Direct3D feature level. 
+Sampler feedback support is not required as part of a Direct3D feature level.
 
 Support for sampler feedback is queryable from a CheckFeatureSupport capability tier.
 
 The tiers are organized as version-numbers-with-fractions as follows:
 * TIER_NOT_SUPPORTED indicates sampler feedback is not supported. Attempts at calling sampler feedback APIs represent an error.
 * TIER_0_9 (i.e., version 0.9) indicates the following.
-    * Sampler feedback is supported for samplers with these texture addressing modes:    
+    * Sampler feedback is supported for samplers with these texture addressing modes:
       * D3D12_TEXTURE_ADDRESS_MODE_WRAP
       * D3D12_TEXTURE_ADDRESS_MODE_CLAMP
     * The Texture2D shader resource view passed in to feedback-writing HLSL methods has these restrictions:
@@ -105,7 +105,7 @@ To adopt SFS, an application does the following:
 * Along with each tiled texture, create a small "MinMip map" texture and small "feedback map" texture.
   * The MinMip map represents per-region mip level clamping values for the tiled texture; it represents what is actually loaded.
   * The feedback map represents and per-region desired mip level for the tiled texture; it represents what needs to be loaded.
-* Update the mip streaming engine to stream individual tiles instead of mips, using the feedback map contents to drive streaming decisions. 
+* Update the mip streaming engine to stream individual tiles instead of mips, using the feedback map contents to drive streaming decisions.
 * When tiles are made resident or nonresident by the streaming system, the corresponding texture's MinMip map must be updated to reflect the
 updated tile residency, which will clamp the GPU's accesses to that
 region of the texture.
@@ -133,12 +133,12 @@ What this section *does* describe is a recommended application practice for inte
 While the application is free to choose how to represent MinMip map values, the examples presented in this document represent values in the MinMip map as unsigned integers.
 
 > #### Terminology: Paired
-> For a MinMip map to be called "paired" to a sampled resource, it means that the MinMip map is used in ways that correspond to that resource and represents most-detailed resident mips for that resource. 
-> 
-> A resource could be considered "paired" to more than one MinMip map, and a MinMip map could contain information for more than one resource. That is to say, pairing need not be exclusive. 
+> For a MinMip map to be called "paired" to a sampled resource, it means that the MinMip map is used in ways that correspond to that resource and represents most-detailed resident mips for that resource.
+>
+> A resource could be considered "paired" to more than one MinMip map, and a MinMip map could contain information for more than one resource. That is to say, pairing need not be exclusive.
 
 > #### Terminology: Mip Region
-> Each texel in the MinMip map corresponds to an **mip region** of the paired resource. 
+> Each texel in the MinMip map corresponds to an **mip region** of the paired resource.
 A **Mip region** is a 2D area over a resource whose dimensions are one tile or a multiple of the tile size. This terminology is used in this document to avoid ambiguous use of the word *tile*.
 
 MinMip map textures, when decoded, do not have mip levels.
@@ -172,19 +172,19 @@ The structure of the MinMip map doesn't describe residency of individual mips in
 > #### Note
 > While the values and interpretation described in the previous section represent a reasonable implementation scheme, the system doesn't prevent apps from putting other numbers in the MinMip map or using other numbering schemes.
 
-The values encoded in each texel of a MinMip map are unsigned integers and typically span the expected range of mip level values in the largest possible tiled resource. 
+The values encoded in each texel of a MinMip map are unsigned integers and typically span the expected range of mip level values in the largest possible tiled resource.
 
 ### Sampling from the MinMip map
 Recall how passing a min-mip to a sampler will perform a clamp when sampling. There, the clamp is uniformly performed no matter where in the texture the sample ends up being. In a similar manner, the MinMip map decides clamping, too- just, the clamp value can vary per-mip-region.
 
-During scene rendering, the app can choose to do the following (or, perhaps, some variation of its choosing): 
+During scene rendering, the app can choose to do the following (or, perhaps, some variation of its choosing):
 * Shader samples from the MinMip map
   * Can use the same UV(W) texture coordinates used to sample from the tiled texture, if the paired texture size is an even multiple of the mip region size
 * Get the filtered mip level value returned from MinMip map, called *X*
-* Use *X* as a per-pixel mip level clamp value for sampling from the tiled texture. 
+* Use *X* as a per-pixel mip level clamp value for sampling from the tiled texture.
 
 ### Updating the MinMip map
-When the application maps or unmaps a tile from the tiled resource, it's responsible for updating the MinMip map to reflect the change in mapping. This is done by writing a rectangle of updated entries in the MinMip map (either on the CPU or GPU), with the rectangle size corresponding to the coverage region of each mapping change.  
+When the application maps or unmaps a tile from the tiled resource, it's responsible for updating the MinMip map to reflect the change in mapping. This is done by writing a rectangle of updated entries in the MinMip map (either on the CPU or GPU), with the rectangle size corresponding to the coverage region of each mapping change.
 
 Loading a mip tile affects a variable number of MinMip map texels. The number of texels it affects depends on the mip level of the tile loaded. Supposing the typical case where a MinMip map has one texel per tile-of-the-source-texture-Mip0, then loading a mip 0 tile would mean updating one MinMip texel. Loading a mip 1 tile would mean updating 4 MinMip texels; loading a mip 2 tile would mean updating 16 MinMip texels, and so on.
 
@@ -200,17 +200,17 @@ The actual underlying storage of feedback maps may vary across GPUs and is opaqu
 
 > #### Terminology: Paired
 > For a feedback map to be called "paired" to a sampled resource, it means that the feedback map contains sampler feedback for that resource.
-> 
+>
 > When a feedback map is bound to a resource, the feedback map can not be used for writing feedback for other resources and the resource cannot be used with other feedback maps.
-> 
+>
 > Outside of bindings, however, a resource may be used for writing feedback to different feedback maps and a single feedback map may be repurposed to contain feedback for different resources. That is to say, outside of bindings the pairing need not be exclusive.
 
 > #### Terminology: mip region
 > Each texel of a feedback map corresponds to a **mip region** of the paired texture.
-> 
-> In the case of sampler feedback for streaming, a **mip region** is likely to be a tile of the paired reserved, or *tiled* resource. 
-> 
-> In the case of using feedback for texture-space shading, the application would choose what is suitable. A small tile size would provide greater precision of feedback, while a larger tile size would allow a smaller memory cost of the MinMip map and feedback maps. 
+>
+> In the case of sampler feedback for streaming, a **mip region** is likely to be a tile of the paired reserved, or *tiled* resource.
+>
+> In the case of using feedback for texture-space shading, the application would choose what is suitable. A small tile size would provide greater precision of feedback, while a larger tile size would allow a smaller memory cost of the MinMip map and feedback maps.
 
 ### Mip region constraints
 Each dimension of a mip region is
@@ -245,7 +245,7 @@ Their layout is D3D12_TEXTURE_LAYOUT_UNKNOWN. The hardware implementation decide
 They are created with the flag D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS.
 
 ### General interpretation and usage
-Values in a sampler feedback map represent the choice of which mips have been requested. 
+Values in a sampler feedback map represent the choice of which mips have been requested.
 
 The application updates the feedback map against which mips are being requested. The semantics for updating are similar to performing a texture sample. The updating doesn't require any deep understanding, on the part of the application, of where the texture sampler is going to read from or what the filtering scheme is.
 
@@ -253,10 +253,10 @@ The application updates the feedback map against which mips are being requested.
 Meaningful values for sampler feedback are obtained through *transcoding*, described further below. The interpretations of values depend on whether the feedback map is *MinMip* type or *MipRegionUsed* type, described further below.
 
 ### Packed mips behavior
-If the paired texture is a tiled resource with packed mips, feedback writes involving the packed mips don't behave differently from non-packed mips. 
+If the paired texture is a tiled resource with packed mips, feedback writes involving the packed mips don't behave differently from non-packed mips.
 
 ### Zero-weight reads
-In some cases, a filtering mode may involve a computation with multiple texture reads where some of the reads are zero-weight (i.e., are multiplied by zero). 
+In some cases, a filtering mode may involve a computation with multiple texture reads where some of the reads are zero-weight (i.e., are multiplied by zero).
 
 These zero-weight reads may cause feedback to be written to the feedback map, or they may not, depending on the graphics hardware's implementation of the sampler.
 
@@ -338,11 +338,11 @@ The “default” or "initial" value set by the app of each entry in a MinMip fe
 
 As the MinMip feedback map is updated during scene rendering, mip level values smaller than the reset value may appear in the feedback map. At the conclusion of the frame, or some other chosen interval, the app reads back the contents of the MinMip feedback map and resets each of its entries to the default value. Scene rendering for the next frame/interval can proceed at this point.
 
-Using the feedback values read back to the CPU, the app compares the minimum mip level value captured in each region to the set of tiles that are currently loaded for the tiled texture. 
-* Values smaller than the currently loaded tiles’ mip level at a region invoke new load requests and the data for those tiles is streamed in.  
-* Values larger than the currently loaded mip level at a region might invoke unload requests after a certain period of time has elapsed. 
+Using the feedback values read back to the CPU, the app compares the minimum mip level value captured in each region to the set of tiles that are currently loaded for the tiled texture.
+* Values smaller than the currently loaded tiles’ mip level at a region invoke new load requests and the data for those tiles is streamed in.
+* Values larger than the currently loaded mip level at a region might invoke unload requests after a certain period of time has elapsed.
 
-To re-claim no-longer-needed memory, the texture streaming engine could maintain a “last referenced” timestamp for each tracked tile, so that tiles with timestamps older than a certain value can be considered outdated and no longer needed. 
+To re-claim no-longer-needed memory, the texture streaming engine could maintain a “last referenced” timestamp for each tracked tile, so that tiles with timestamps older than a certain value can be considered outdated and no longer needed.
 
 ##### Circumstances where one paired texture texel might correspond to multiple feedback texels
 This section describes a possibility of conservative behavior for feedback involving the least-detailed mips of the paired texture, depending on the hardware implementation.
@@ -357,7 +357,7 @@ When writing feedback for *small tail mip* M, hardware may write either
 * M, or
 * The lowest-indexed *small tail mip*.
 
-For example, consider a 1024x1024 paired texture with a full mip chain. 
+For example, consider a 1024x1024 paired texture with a full mip chain.
 Its mips are sized {1024x1024, 512x512, 256x256, 128x128, 64x64, 32x32, 16x16, 8x8, 4x4, 2x2, 1x1}, indexed 0 through 10 inclusive.
 Suppose the mip region is 16x16.
 
@@ -394,13 +394,13 @@ A type of variability can exist between feedback map implementations. This varia
 Suppose you have a paired texture sized 16x16, and a MinMip feedback map with a mip region of 4x4x1.
 
 The paired texture's mips, then, are as follows
-| Mip level | Size | 
+| Mip level | Size |
 |:-|-|:--|--|
-|0 |16x16 | 
-|1 |8x8| 
-|2 |4x4| 
-|3 |2x2| 
-|4 |1x1| 
+|0 |16x16 |
+|1 |8x8|
+|2 |4x4|
+|3 |2x2|
+|4 |1x1|
 
 Given these sizes with a mip region of 4x4x1, the decoded feedback map is sized 4x4. If no writes were requested, the decoded feedback map looks like:
 
@@ -414,10 +414,10 @@ Now suppose we clear the map and write feedback once again. We write a request f
 
 ![MinMipDecode2](images/SamplerFeedback/MinMipDecode2.png "MinMipDecode2")
 
-Note how the "01" may appear in the top left group of decoded texels, or in the top left texel only. 
+Note how the "01" may appear in the top left group of decoded texels, or in the top left texel only.
 
 >##### Remark
-> In practice, regardless of the representation, applications generally react to feedback the exact same way, tracking the given mip level at the given place in the decoded result. 
+> In practice, regardless of the representation, applications generally react to feedback the exact same way, tracking the given mip level at the given place in the decoded result.
 >
 > The second representation might appear to be less precise, but consider: a texture streaming system where the mip region is the tile size, namely, 4x4. And we're dealing with a request written for the top left of mip 1, which is an 8x8 mip in the paired texture. *Any* write in the top-left quadrant would have the same effect; it would cause the same tile to be loaded. This is why this variance in decoded result is called out in the spec but is unlikely to have an effect on application code.
 
@@ -435,7 +435,7 @@ One representation will yield a singular 0x2, while the other will yield the ent
 ##### Structure
 A MipRegionUsed feedback map has a structure with mip levels. A texel in mip N refers to a mip region in mip N of the paired texture.
 
-Each texel's value holds a boolean true or false value that indicates the desired status of that region in the paired texture. 
+Each texel's value holds a boolean true or false value that indicates the desired status of that region in the paired texture.
 
 The boolean value, in the transcoded R8_UINT format with one byte per texel, is represented as **255**, or **0xFF** for true and **0x0** for false.
 
@@ -454,15 +454,15 @@ Hardware samples and updates a MipRegionUsed feedback map as follows (in steps t
 
 ##### Application usage
 
-MipRegionUsed feedback maps provide similar data back to the app's streaming code as MinMip feedback maps, but in a different layout and encoding. 
+MipRegionUsed feedback maps provide similar data back to the app's streaming code as MinMip feedback maps, but in a different layout and encoding.
 
-MipRegionUsed feedback maps contain boolean “hit or miss” values for each region of each mip level, and can be individually addressed as such. 
+MipRegionUsed feedback maps contain boolean “hit or miss” values for each region of each mip level, and can be individually addressed as such.
 
 Developers choose whether MinMip feedback maps or MipRegionUsed feedback maps would be most optimal for their needs. While only one type of feedback map can be in use at a time for each resource, both types could be freely mixed together within the same scene.
 
 #### Comparison of MinMip Feedback Map and MipRegionUsed Feedback Map
 A MipRegionUsed feedback map contains strictly more information than a MinMip feedback map:
-* A MipRegionUsed feedback map conveys what can be thought of as a "bitfield of mip levels". 
+* A MipRegionUsed feedback map conveys what can be thought of as a "bitfield of mip levels".
 * A MinMip feedback map conveys an "index of the rightmost-set bit in that bitfield of mip levels".
 
 Strictly speaking, it'd be possible to derive a MinMip feedback map from a MipRegionUsed feedback map. That said, the process would be a bit cumbersome. Both map types have some usefulness. Both are provided as Direct3D12 constructs.
@@ -501,7 +501,7 @@ Copying feedback maps using CopyTextureRegion is not supported.
 ### Transcoding
 Feedback maps are transcoded to and from an application-usable format using the API ResolveSubresourceRegion with resolve modes D3D12_RESOLVE_MODE_ENCODE_SAMPLER_FEEDBACK and D3D12_RESOLVE_MODE_DECODE_SAMPLER_FEEDBACK.
 
-Independently of sampler feedback, the semantics for ResolveSubresourceRegion are that it effectively operates on a source and dest rect of the same size. These rectangles are specified in a co-ordinate system. 
+Independently of sampler feedback, the semantics for ResolveSubresourceRegion are that it effectively operates on a source and dest rect of the same size. These rectangles are specified in a co-ordinate system.
 
 When performing transcode operations involving a sampler feedback resource, the co-ordinate space for these source and dest rects, in all cases, is the co-ordinate space of the *decoded* resource, not the opaque resource.
 
@@ -520,12 +520,12 @@ When transcoding an opaque feedback resource to or from a non-opaque one, the no
   * It has a height of at least ceil(FeedbackHeight / MipRegionHeight).
 * It has the same DepthOrArraySize of the feedback resource.
   * If the feedback resource is of MIN_MIP type, it has mip count 1.
-  * If the feedback resource is of MIP_REGION_USED type, it has the mip count of the paired resource. 
+  * If the feedback resource is of MIP_REGION_USED type, it has the mip count of the paired resource.
     * There may be a requirement of padding the transcode resource in order to have the necessary number of mips.
 * It has format DXGI_FORMAT_R8_UINT.
 * It, like the feedback texture, has sample count 1, sample quality 0.
 
-The following properties are free to be decided by the application for its purposes: 
+The following properties are free to be decided by the application for its purposes:
 * alignment
 * flags
 * allocation type (e.g., commited, placed or reserved).
@@ -546,7 +546,7 @@ When transcoding to or from an opaque MinMip feedback resource, the non-opaque r
 Applications may choose to decode to a texture if subsequent operations need to operate on a texture; especially if they require preservation of mip structure. Alternatively, applications may choose to decode to a buffer if direct CPU readback is desired.
 
 #### Transcode resources and padding
-A resource used with transcoding may have padding compared to what is strictly required to store feedback. 
+A resource used with transcoding may have padding compared to what is strictly required to store feedback.
 
 When transcoding using a non-opaque texture, if the subresource of the transcode resource is larger than necessary, the unused padding is located at the right and bottom. That is to say, when a resource used for transcoding is larger than necessary, the start of the data is locked to the top-left corner.
 
@@ -562,7 +562,7 @@ With a MipRegionUsed feedback map, encoding values of 0x0 is taken to mean "no f
 
 #### Transitivity for MipRegionUsed feedback maps
 If an application
-* has opaque feedback map A 
+* has opaque feedback map A
 * decodes A into to a non-opaque resource B
 * encodes B into feedback map C
 
@@ -575,12 +575,12 @@ If an application
 
 then A and C contain the same data.
 
-Note that this section describes MipRegionUsed feedback maps. Transitivity is not guaranteed for MinMip feedback maps in general. 
+Note that this section describes MipRegionUsed feedback maps. Transitivity is not guaranteed for MinMip feedback maps in general.
 
 This is related to the conservative behavior of sampler feedback: for example, suppose you're encoding a MinMip feedback map with 5 mips, and the last paired mip is size 1x1.
-  * The source buffer you encode contains no mip (0xff) everywhere except a single texel containing index 4. 
-  * When you decode that feedback, there won't be any feedback which points to no mip (0xff). All the returned mip levels contained in the resulting buffer will be 4. 
-  
+  * The source buffer you encode contains no mip (0xff) everywhere except a single texel containing index 4.
+  * When you decode that feedback, there won't be any feedback which points to no mip (0xff). All the returned mip levels contained in the resulting buffer will be 4.
+
 The conservative behavior of sampler feedback in general is mentioned here, because take the example above: but instead of encoding you're simply writing feedback. Something somewhere tries to load the tail mip. When you decode that feedback, all returned mip level values will contain a number <= 4. You get the most amount of precision for mip zero, but lower levels of precision for mips thereafter.
 
 ### Feedback maps for texture arrays
@@ -593,7 +593,7 @@ Feedback maps are eligible for heap serialization on platforms that support it (
 
 This section describes transcoded feedback maps of non-power-of-two sizes, given the fact that mip regions are required to be a power-of-two and may not fit neatly along texel boundaries.
 
-To re-iterate the purpose of a *mip region*-- each texel in a feedback map can be thought of corresponding to a *mip region* of texels in the paired texture. For example, if the mip region is 4x4, each texel in the feedback map can be thought of corresponding to a 4x4 region in the paired texture- 16 pixels in total. The mip region describes the granularity of information stored in the feedback map. The Direct3D sampler feedback feature requires all mip regions to be powers of two. 
+To re-iterate the purpose of a *mip region*-- each texel in a feedback map can be thought of corresponding to a *mip region* of texels in the paired texture. For example, if the mip region is 4x4, each texel in the feedback map can be thought of corresponding to a 4x4 region in the paired texture- 16 pixels in total. The mip region describes the granularity of information stored in the feedback map. The Direct3D sampler feedback feature requires all mip regions to be powers of two.
 
 When the hardware is deciding where in the feedback map to write feedback, it needs to perform a co-ordinate mapping. That mapping is trivial for pow2, but requires some spelling-out for non-pow2.
 
@@ -614,7 +614,7 @@ In this case, a “grid” should be considered spacially projected over-top of 
 
 Feedback is written to the appropriate spot.
 
-![Npot3](images/SamplerFeedback/Npot3.png "Npot3") 
+![Npot3](images/SamplerFeedback/Npot3.png "Npot3")
 
 In this way, there is predictability of where feedback will be written for non-power-of-two texture cases.
 
@@ -625,17 +625,17 @@ Invocations of pixel shaders with Direct3D may involve the use of "inactive", or
 > While discard of sampler feedback from helper lanes is a clean and consistent design, it's worth calling out an implication that has.
 >
 > Suppose you have a normal-map. It is giant, so you store it as a tiled resource and stream in parts of it as needed. And at a high level, you have a shader which loads a value from this normal-map and uses that normal as UVW to sample something else.
-> 
-> Suppose, given this situation, you're an active lane and you have a neighboring helper lane. You sample from the normal-map, and your helper lane does the same. You write feedback for the sample, also. 
-> 
-> You ideally would have sampled from {mip 0, left tile} so you write that. The neighboring helper lane would have ideally have sampled {mip 0, middle tile}. 
-> 
+>
+> Suppose, given this situation, you're an active lane and you have a neighboring helper lane. You sample from the normal-map, and your helper lane does the same. You write feedback for the sample, also.
+>
+> You ideally would have sampled from {mip 0, left tile} so you write that. The neighboring helper lane would have ideally have sampled {mip 0, middle tile}.
+>
 > What if sampler feedback is not kept for helper lanes? The next time we run through this shader, given, say, no change in camera or anything, we will have loaded the left tile but not the middle tile. Once again we're the only one active lane. We sample a normal from mip 0, and our helper lane samples from some low quality mip level, say mip 5. Normally it wouldn't matter if a helper lane samples from a low-quality mip level, since all its work gets discarded anyway. But, we can think of some troublesome situations.
-> 
-> Suppose the thing we need to do with our sampled value is take a derivative of it. While this sounds a bit contrived, it can happen. Our derivative would compare a sampled value from a mip 0 versus a sampled value from mip 5. This wouldn't be a very reliable derivative. Why might we need a derivative? Well, maybe we want to do another sample. 
-> 
+>
+> Suppose the thing we need to do with our sampled value is take a derivative of it. While this sounds a bit contrived, it can happen. Our derivative would compare a sampled value from a mip 0 versus a sampled value from mip 5. This wouldn't be a very reliable derivative. Why might we need a derivative? Well, maybe we want to do another sample.
+>
 > More specifically, we might need a derivative because we want to sample from a sky-box volume texture, and use the previously-sampled normal value as an input UVW. The sample of the sky-box could have unappealing artifacts if its LOD selection is based on a bad derivative.
-> 
+>
 > Given the ~99% discard heuristic discussed in this document, streaming applications are unlikely to experience imprecise LOD selection due to feedback not being written from helper lanes. However, in the cases where this poses a problem, applications could work around it by, for example, avoiding primitives which very closely straddle tile boundaries.
 
 ## Batch Processing of Feedback and MinMip Resources
@@ -644,7 +644,7 @@ MinMip and feedback maps are expected to be very small in size – typically les
 * Direct3D 12's alignment rules favor texture alignments significantly larger than these sizes.
 * Peforming many clears and copies on one resource at a time can incur unwanted CPU overhead.
 
-To increase efficiency, applications may choose to organize same-size and suitably-compatible textures into an array, and allocate feedback and MinMip maps into corresponding texture arrays that are divided up with a suballocator. 
+To increase efficiency, applications may choose to organize same-size and suitably-compatible textures into an array, and allocate feedback and MinMip maps into corresponding texture arrays that are divided up with a suballocator.
 
 For feedback maps, an app would manage a small number of opaque texture array resources (each with unique XY dimensions and hundreds of slices), and views of the subresources. Each subresource is associated with one feedback map. That way, the size and packing of the feedback map memory takes advantage of hardware’s efficient packing of array slices.
 
@@ -660,11 +660,11 @@ The core of SFS is the existing support for tiled resources, including tiled tex
 
 ### Opaque resource type for feedback maps
 
-The exact implementation of feedback maps-- both MinMip and MipRegionUsed variants-- is hardware specific. The exact encoding of the values within feedback maps may vary depending on hardware implementation and is opaque to the application. 
+The exact implementation of feedback maps-- both MinMip and MipRegionUsed variants-- is hardware specific. The exact encoding of the values within feedback maps may vary depending on hardware implementation and is opaque to the application.
 
 The runtime validates broad restrictions of the feedback map and provides a narrow set of ways in which it can be used.
 
-This document describes APIs for 
+This document describes APIs for
 * creating feedback maps, and
 * moving data in and out of these opaque resources to standardized layouts which can be used regardless of hardware.
 
@@ -765,7 +765,7 @@ struct D3D12_RESOURCE_DESC1
     DXGI_FORMAT Format;
     DXGI_SAMPLE_DESC SampleDesc;
     D3D12_TEXTURE_LAYOUT Layout;
-    D3D12_RESOURCE_FLAGS Flags;    
+    D3D12_RESOURCE_FLAGS Flags;
     D3D12_MIP_REGION SamplerFeedbackMipRegion;
 };
 
@@ -779,13 +779,13 @@ The device and resource interfacse have been revised to be compatible with the r
     ID3D12Device8 : public ID3D12Device7
     {
     public:
-        virtual D3D12_RESOURCE_ALLOCATION_INFO STDMETHODCALLTYPE GetResourceAllocationInfo2( 
+        virtual D3D12_RESOURCE_ALLOCATION_INFO STDMETHODCALLTYPE GetResourceAllocationInfo2(
             UINT visibleMask,
             UINT numResourceDescs,
             _In_reads_(numResourceDescs)  const D3D12_RESOURCE_DESC1 *pResourceDescs,
             _Out_writes_opt_(numResourceDescs)  D3D12_RESOURCE_ALLOCATION_INFO1 *pResourceAllocationInfo1) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE CreateCommittedResource2( 
+
+        virtual HRESULT STDMETHODCALLTYPE CreateCommittedResource2(
             _In_  const D3D12_HEAP_PROPERTIES *pHeapProperties,
             D3D12_HEAP_FLAGS HeapFlags,
             _In_  const D3D12_RESOURCE_DESC1 *pDesc,
@@ -794,8 +794,8 @@ The device and resource interfacse have been revised to be compatible with the r
             _In_opt_  ID3D12ProtectedResourceSession *pProtectedSession,
             REFIID riidResource,
             _COM_Outptr_opt_  void **ppvResource) = 0;
-        
-        virtual HRESULT STDMETHODCALLTYPE CreatePlacedResource1( 
+
+        virtual HRESULT STDMETHODCALLTYPE CreatePlacedResource1(
             _In_  ID3D12Heap *pHeap,
             UINT64 HeapOffset,
             _In_  const D3D12_RESOURCE_DESC1 *pDesc,
@@ -803,13 +803,13 @@ The device and resource interfacse have been revised to be compatible with the r
             _In_opt_  const D3D12_CLEAR_VALUE *pOptimizedClearValue,
             REFIID riid,
             _COM_Outptr_opt_  void **ppvResource) = 0;
-        
-        virtual void STDMETHODCALLTYPE CreateSamplerFeedbackUnorderedAccessView( 
+
+        virtual void STDMETHODCALLTYPE CreateSamplerFeedbackUnorderedAccessView(
             _In_opt_  ID3D12Resource *pTargetedResource,
             _In_opt_  ID3D12Resource *pFeedbackResource,
             _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor) = 0;
-        
-        virtual void STDMETHODCALLTYPE GetCopyableFootprints1( 
+
+        virtual void STDMETHODCALLTYPE GetCopyableFootprints1(
             _In_  const D3D12_RESOURCE_DESC1 *pResourceDesc,
             _In_range_(0,D3D12_REQ_SUBRESOURCES)  UINT FirstSubresource,
             _In_range_(0,D3D12_REQ_SUBRESOURCES-FirstSubresource)  UINT NumSubresources,
@@ -817,16 +817,16 @@ The device and resource interfacse have been revised to be compatible with the r
             _Out_writes_opt_(NumSubresources)  D3D12_PLACED_SUBRESOURCE_FOOTPRINT *pLayouts,
             _Out_writes_opt_(NumSubresources)  UINT *pNumRows,
             _Out_writes_opt_(NumSubresources)  UINT64 *pRowSizeInBytes,
-            _Out_opt_  UINT64 *pTotalBytes) = 0;        
+            _Out_opt_  UINT64 *pTotalBytes) = 0;
     };
 
-       
+
     MIDL_INTERFACE("BE36EC3B-EA85-4AEB-A45A-E9D76404A495")
     ID3D12Resource2 : public ID3D12Resource1
     {
     public:
         virtual D3D12_RESOURCE_DESC1 STDMETHODCALLTYPE GetDesc1( void) = 0;
-        
+
     };
 ```
 
@@ -839,7 +839,7 @@ struct CD3DX12_RESOURCE_DESC1 : public D3D12_RESOURCE_DESC1
     explicit CD3DX12_RESOURCE_DESC1( const D3D12_RESOURCE_DESC1& o ) :
         D3D12_RESOURCE_DESC1( o )
     {}
-    CD3DX12_RESOURCE_DESC1( 
+    CD3DX12_RESOURCE_DESC1(
         D3D12_RESOURCE_DIMENSION dimension,
         UINT64 alignment,
         UINT64 width,
@@ -905,9 +905,9 @@ Example usage:
 
 ```
     // D3D12_CPU_DESCRIPTOR_HANDLE compatibleDestDescriptor comes from heap type CBV_SRV_UAV
-    
+
     CHECK_HR(d3dDevice->CreateSamplerFeedbackUnorderedAccessView(
-        texture, 
+        texture,
         feedbackTexture,
         compatibleDestDescriptor));
 ```
@@ -921,7 +921,7 @@ Suppose a root parameter binds u3 to compatibleDestDescriptor's heap. In shader 
 
     SamplerState g_sampler : register(s0);
     FeedbackTexture2D<SAMPLER_FEEDBACK_MIP_REGION_USED> g_feedback : register(u3);
-    
+
     float4 PSMain(VSIn in) : SV_TARGET
     {
         float2 uv = in.uv;
@@ -943,12 +943,14 @@ float4 PSMain(VSIn in) : SV_TARGET
         uint minMip = g_residentMinMip.Sample(g_sampler, uv);
 
         int2 offset = int2(0, 0);
-        g_texture.Sample(g_sampler, uv, offset, minMip ); 
-        
+        g_texture.Sample(g_sampler, uv, offset, minMip );
+
         // Use for driving streaming decision
         g_feedback.WriteSamplerFeedback(g_texture, g_sampler, uv);
         ...
 ```
+As such, a representation of the resource cycle could be:
+![SF resource cycle](images/SamplerFeedback/SamplerFeedbackResolvedResourceNextframe.png "SF resource cycle")
 
 For transcoding to and from non-feedback resources, ID3D12GraphicsCommandList1::ResolveSubresourceRegion is used.
 
@@ -968,7 +970,7 @@ cl->ResolveSubresourceRegion(readbackResource, 0, 0, 0, feedbackTexture, 0, null
 ```
 where readbackResource is in RESOLVE_DEST, and feedbackTexture has been transitioned from UNORDERED_ACCESS to RESOLVE_SOURCE.
 
-Nonzero X, Y are permitted. 
+Nonzero X, Y are permitted.
 
 When transcoding, the consolidated format is DXGI_FORMAT_R8_UINT.
 
@@ -990,8 +992,8 @@ When resolving arrays:
    * When encoding a MinMip array, the source subresource is the desired array slice and the destination subresource is -1.
    * When encoding a MipRegionUsed array, the source and destination subresources match the desired subresource (factor of mip and array slice).
 
-For clearing, ClearUnorderedAccessViewUint is used. The four number values passed to it, ordinarily used for specifying what to clear each channel to, are ignored. A cleared feedback map can be thought of as meaning "no mips have been requested for any mip region." 
-* If transcoded, a cleared MinMip feedback map consists of all 255 (0xFF) values. 
+For clearing, ClearUnorderedAccessViewUint is used. The four number values passed to it, ordinarily used for specifying what to clear each channel to, are ignored. A cleared feedback map can be thought of as meaning "no mips have been requested for any mip region."
+* If transcoded, a cleared MinMip feedback map consists of all 255 (0xFF) values.
 * If transcoded, a cleared MipRegionUsed feedback map consists of all 0 values.
 
 Sub-rectangle semantics are not supported, and are ignored when clearing feedback maps.
@@ -1052,11 +1054,11 @@ typedef struct D3D12DDIARG_CREATERESOURCE_0075
 
 Three device functions are revised to take the above DDI argument struct instead:
 ```
-typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEHEAPANDRESOURCE_0075 )( 
+typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEHEAPANDRESOURCE_0075 )(
     D3D12DDI_HDEVICE, _In_opt_ CONST D3D12DDIARG_CREATEHEAP_0001*, D3D12DDI_HHEAP, D3D12DDI_HRTRESOURCE,
-    _In_opt_ CONST D3D12DDIARG_CREATERESOURCE_0075*, _In_opt_ CONST D3D12DDI_CLEAR_VALUES*, 
+    _In_opt_ CONST D3D12DDIARG_CREATERESOURCE_0075*, _In_opt_ CONST D3D12DDI_CLEAR_VALUES*,
     D3D12DDI_HPROTECTEDRESOURCESESSION_0030, D3D12DDI_HRESOURCE );
-    
+
 typedef D3D12DDI_HEAP_AND_RESOURCE_SIZES ( APIENTRY* PFND3D12DDI_CALCPRIVATEHEAPANDRESOURCESIZES_0075 )(
      D3D12DDI_HDEVICE, _In_opt_ CONST D3D12DDIARG_CREATEHEAP_0001*, _In_opt_ CONST D3D12DDIARG_CREATERESOURCE_0075*,
      D3D12DDI_HPROTECTEDRESOURCESESSION_0030 );
@@ -1108,8 +1110,8 @@ FeedbackTexture2D<SAMPLER_FEEDBACK_MIP_REGION_USED> g_feedback2DMipRegionUsed;
 
 FeedbackTexture2DArray<SAMPLER_FEEDBACK_MIN_MIP> g_feedback2DArrayMinMip;
 FeedbackTexture2DArray<SAMPLER_FEEDBACK_MIP_REGION_USED> g_feedback2DArrayMipRegionUsed;
-``` 
- 
+```
+
 Feedback objects have the following DXIL operations:
 * dx.op.writeSamplerFeedback
 * dx.op.writeSamplerFeedbackBias
