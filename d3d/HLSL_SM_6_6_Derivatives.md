@@ -71,12 +71,6 @@ the upper left, proceeding right and then starting over on the next row down:
 |:-----------:|
 |(0) (1)<br>(2) (3)|
 
-If not all lanes of a quad are active,
-such as via non-uniform flow control
-or work group size,
-the derivatives used and returned
-by these operations are undefined.
-
 ## 1D Quads
 
 Where only the X dimension is greater than 1,
