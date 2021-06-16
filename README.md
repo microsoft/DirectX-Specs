@@ -9,6 +9,8 @@ These specs are presented with different interfaces at two different URLs:
 * To read the specs, use [https://microsoft.github.io/DirectX-Specs](https://microsoft.github.io/DirectX-Specs)
 * To view history, clone, file an issue or prepare a pull request, use [https://github.com/Microsoft/DirectX-Specs](https://github.com/Microsoft/DirectX-Specs)
 
+Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.com/directx/landing-page/) for more resources for DirectX developers.
+
 ## Direct3D 12
 
 * Rendering Pipeline
