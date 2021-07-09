@@ -157,7 +157,7 @@ lanes in the current wave into N groups
 N prefix operations are then performed each within its corresponding group.
 The groups are assumed to be non-intersecting
 (that is, a given lane can be a member of one and only one group),
-and bitmasks in all lanes belonging to the same group are required to be the same.
+and bitmasks in all lanes belonging to the same group are required to be the same after excluding inactive/helper lane in the bitmask.
 
 The following operations evaluates multiple prefix operations within groups of threads identified by `mask`:
 
@@ -241,7 +241,7 @@ as group masks in the `WaveMultiPrefix*()` set of intrinsics.
 
 The following illustrates obtaining an equivalent result
 to a `WaveMultiPrefixSum` operation using the
-`WaveReadLaneFirst` and `WaveActiveSum` intrinsics.
+`WaveReadLaneFirst` and `WavePrefixSum` intrinsics.
 However, using the new wave intrinsics provides more
 optimization opportunities for hardware to take advantage of.
 
@@ -257,7 +257,7 @@ sum = WaveMultiPrefixSum(value, mask);
 // Is equivalent to writing a loop like this:
 while (true) {
   if (WaveReadLaneFirst(expr) == expr) {
-    sum = WaveActiveSum(value));
+    sum = WavePrefixSum(value));
     break;
   }
 }
