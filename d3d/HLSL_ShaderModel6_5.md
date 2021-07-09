@@ -241,7 +241,7 @@ as group masks in the `WaveMultiPrefix*()` set of intrinsics.
 
 The following illustrates obtaining an equivalent result
 to a `WaveMultiPrefixSum` operation using the
-`WaveReadLaneFirst` and `WaveActiveSum` intrinsics.
+`WaveReadLaneFirst` and `WavePrefixSum` intrinsics.
 However, using the new wave intrinsics provides more
 optimization opportunities for hardware to take advantage of.
 
