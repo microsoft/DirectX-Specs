@@ -32,7 +32,7 @@
 
 Expose hardware support for Rasterizer Ordered Views (ROVs), which allow
 Pixel Shader code to mark UAV bindings with a declaration that alters
-the requirements of Section 4.2 Fixed Order of Pipeline Results for
+the requirements of [Section 4.2 Fixed Order of Pipeline Results](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#4.2%20Fixed%20Order%20of%20Pipeline%20Results) for
 UAVs, guaranteeing order of UAV accesses for any pair of overlapping
 Pixel Shader invocations.
 
@@ -102,7 +102,7 @@ support structures, data, and logic.
 
 ## Check Feature Support
 
-ID3D11DeviceCheckFeatureSupport API will be used to determine support.
+ID3D11Device CheckFeatureSupport API is used to determine support.
 This will be implemented much like the design of Buffer Map Default, so
 the implementation of that and CheckFeatureSupport() for
 D3D11_FEATURE_D3D11_OPTIONS1 can be referenced.

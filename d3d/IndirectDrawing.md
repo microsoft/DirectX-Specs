@@ -142,12 +142,12 @@ typedef struct D3D12_VERTEX_BUFFER_VIEW
     UINT StrideInBytes;
 } D3D12_VERTEX_BUFFER_VIEW;
 
-typedef struct D3D12_INDEX_BUFFER_VIEW_DESC
+typedef struct D3D12_INDEX_BUFFER_VIEW
 {
     D3D12_GPU_VIRTUAL_ADDRESS BufferLocation;
     UINT SizeInBytes;
     DXGI_FORMAT Format;
-} D3D12_INDEX_BUFFER_VIEW_DESC;
+} D3D12_INDEX_BUFFER_VIEW;
 
 typedef struct D3D12_CONSTANT_BUFFER_VIEW
 {
@@ -231,7 +231,7 @@ The ordering of arguments within an indirect argument buffer is defined
 to exactly match the order of arguments specified in
 D3D12_COMMAND_SIGNATURE::pArguments. All of the arguments for 1
 draw/dispatch call within an indirect argument buffer are tightly
-packed. However, applications are allowed to specify and arbitrary byte
+packed. However, applications are allowed to specify an arbitrary byte
 stride between draw/dispatch commands in an indirect argument buffer.
 
 The root signature must be specified if and only if the command

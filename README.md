@@ -9,12 +9,16 @@ These specs are presented with different interfaces at two different URLs:
 * To read the specs, use [https://microsoft.github.io/DirectX-Specs](https://microsoft.github.io/DirectX-Specs)
 * To view history, clone, file an issue or prepare a pull request, use [https://github.com/Microsoft/DirectX-Specs](https://github.com/Microsoft/DirectX-Specs)
 
+Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.com/directx/landing-page/) for more resources for DirectX developers.
+
 ## Direct3D 12
 
 * Rendering Pipeline
+    * [Mesh Shader](d3d/MeshShader.md)
     * [Sampler Feedback](d3d/SamplerFeedback.md)
     * [DirectX Raytracing (DXR)](d3d/Raytracing.md)
     * [Variable Rate Shading](d3d/VariableRateShading.md)
+    * [Feature Level 12_2](d3d/D3D12_FeatureLevel12_2.md)
     * [View Instancing](d3d/ViewInstancing.md)
     * [Conservative Rasterization](d3d/ConservativeRasterization.md)
     * [Rasterizer Ordered Views](d3d/RasterOrderViews.md)
@@ -27,11 +31,13 @@ These specs are presented with different interfaces at two different URLs:
     * [Counters & Queries](d3d/CountersAndQueries.md)
     * [Relaxed Format Casting Rules](d3d/RelaxedCasting.md)
     * [UAV Typed Load](d3d/UAVTypedLoad.md)
+    * [Planar Depth Stencil](d3d/PlanarDepthStencilDDISpec.md)
 
 * Performance
     * [CPU Efficiency](d3d/CPUEfficiency.md)
     * [Render Passes](d3d/RenderPasses.md)
     * [Background Processing](d3d/BackgroundProcessing.md)
+    * [Shader Cache](d3d/ShaderCache.md)
 
 * Video
     * [Motion Estimation](d3d/D3D12_Video_Motion_Estimation.md)
@@ -39,13 +45,26 @@ These specs are presented with different interfaces at two different URLs:
     * [Video Protected Resource Support](d3d/D3D12_Video_ProtectedResourceSupport.md)
 
 * HLSL
+    * [Shader Model 6.0](https://github.com/microsoft/DirectXShaderCompiler/wiki/Shader-Model-6.0)
+    * [Shader Model 6.1](https://github.com/microsoft/DirectXShaderCompiler/wiki/Shader-Model-6.1)
+    * [Shader Model 6.2](https://github.com/microsoft/DirectXShaderCompiler/wiki/Shader-Model-6.2)
+    * [Shader Model 6.3](https://github.com/microsoft/DirectXShaderCompiler/wiki/Shader-Model-6.3)
+    * [Shader Model 6.4](https://github.com/microsoft/DirectXShaderCompiler/wiki/Shader-Model-6.4)
     * [Shader Model 6.5](d3d/HLSL_ShaderModel6_5.md)
+    * [Shader Model 6.6](d3d/HLSL_ShaderModel6_6.md)
+    * [SV_Barycentrics](https://github.com/microsoft/DirectXShaderCompiler/wiki/SV_Barycentrics)
+    * [SV_ViewID](https://github.com/microsoft/DirectXShaderCompiler/wiki/SV_ViewID)
 
 * Developer Features
+    * [Agility SDK](d3d/D3D12Redistributable.md)
     * [Device Removed Extended Data](d3d/DeviceRemovedExtendedData.md)
+    * [Debug Object Auto Name](d3d/DebugObjectAutoName.md)
+    * [Debug Layer Message Callbacks](d3d/MessageCallback.md)
+    * [WriteBufferImmediate](d3d/D3D12WriteBufferImmediate.md)
 
 * Misc
     * [D3D12 on Windows 7](d3d/D3D12onWin7.md)
+    * [Translation Layer Resource Interoperability](d3d/TranslationLayerResourceInterop.md) (9on12 and 11on12)
 
 _These D3D12 specs were written as incremental deltas, with a separate spec per feature area.
 Baseline information about rendering pipeline behaviors that are common between D3D11 and D3D12

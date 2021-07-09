@@ -95,6 +95,16 @@ meshlet programming model.
 We believe these data parallel primitives will grow in importance as
 applications embrace more compute-centric algorithms.
 
+As with the other wave intrinsics,
+when executed in pixel shaders,
+these intrinsics operate as if helper lanes are not active
+when executing the wave intrinsic.
+This means that the value returned by a wave intrinsic
+is only defined on active, non-helper lanes.
+Similarly, the inputs to a wave intrinsic on helper lanes
+do not impact the result returned from that wave intrinsic
+on active, non-helper lanes.
+
 ## WaveMatch() Function
 
 ### `uint4 WaveMatch( <type> val )`
@@ -114,16 +124,25 @@ Bits in the mask corresponding to active lanes
 which match the value of `val` in the current lane will be set to 1.
 The bit in the mask corresponding to the current lane will always be set to 1.
 
+In pixel shaders, bits corresponding to helper lanes are set to 0,
+and on helper lanes, the resulting bitmask is undefined.
+
 ## WaveMatch() Illustration
 
-The following diagram (see figure 1) demonstrates the action of
+The following table demonstrates the action of
 `WaveMatch()` assuming an implementation with a wave width of 8 lanes.
-Inactive lanes are depicted in gray, bits in the mask beyond bit
-position 7 are guaranteed to be cleared (effective mask width is 8).
+Lanes 0 and 4 are inactive or helper lanes, indicated by "`-`".
+Bits in the mask beyond bit position 7
+are guaranteed to be cleared (effective mask width is 8).
 
-Figure 1. The action of WaveMatch() function.
+```C++
+uint4 mask = WaveMatch(input);
+```
 
-TODO: insert here
+|laneID   | 7     | 6     | 5     | 4 | 3     | 2     | 1     | 0
+|:-       |-      |-      |-      |-  |-      |-      |-      |-
+| input   | 15    | -1    | -1    | - | 123   | 0     | 123   | -
+| mask.x  | 0x80  | 0x60  | 0x60  | - | 0x0a  | 0x04  | 0x0a  | -
 
 ## WaveMultiPrefix*() Functions
 
@@ -154,7 +173,7 @@ integer primitive types.
 representing the partitioning of the current wave into groups of lanes,
 as described above.
 Bits in the masks at positions beyond current implementation's wave width,
-or corresponding to inactive lanes, are ignored (assumed to be 0).
+or corresponding to inactive or helper lanes, are ignored (assumed to be 0).
 If the masks do not form non-intersecting subsets of lanes,
 then the values returned by this intrinsic are undefined.
 Bitmasks for all lanes belonging to the same group are required to match,
@@ -187,7 +206,7 @@ val0 & val1 & val2 ...
 
 ### `<int_type> WaveMultiPrefixOr( <int_type> val, uint4 mask )`
 
-val0 | val1 | val2 ...
+val0 \| val1 \| val2 ...
 
 ### `<int_type> WaveMultiPrefixXor( <int_type> val, uint4 mask )`
 
@@ -195,18 +214,24 @@ val0 ^ val1 ^ val2 ...
 
 ## WaveMultiPrefixSum() Illustration
 
-The following diagram demonstrates the action of
+The following table demonstrates the action of
 `WaveMultiPrefixSum()`, assuming an implementation with wave width of 8 lanes.
-Inactive lanes are depicted in gray.
+Lane 1 is an inactive or helper lane, and is indicated by "`-`".
 
-Figure 2. The action of WaveMultiPrefixSum() function.
+```C++
+output = WaveMultiPrefixSum(value, mask);
+```
 
-TODO: insert here
+|laneID   | 7     | 6     | 5     | 4     | 3     | 2     | 1 | 0
+|:-       |-      |-      |-      |-      |-      |-      |-  |-
+| mask.x  | 0xe0  | 0xe0  | 0xe0  | 0x14  | 0x09  | 0x14  | - | 0x0b
+| value   | 5     | 4     | 1     | -2    | 3     | 0     | - | 6
+| output  | 5     | 1     | 0     | 0     | 6     | 0     | - | 0
 
-Note how one of the lanes from the orange subset refers to lane 1,
-which is inactive.
+Note how subset with `mask.x == 0x0b` refers to lane 1,
+which is either inactive or is a helper lane.
 This doesn't affect the result since bits in the mask
-corresponding to inactive lanes are ignored.
+corresponding to inactive or helper lanes are ignored.
 
 ## Example usage
 
