@@ -382,7 +382,7 @@ implementation might do -- don't read it too deeply.)
 The scheduling portions of execution are hard-wired, or at least
 implemented in an opaque way that can be customized for the hardware.
 This would typically employ strategies like sorting work to maximize
-coherence across eadsthreads. From an API point of view, ray scheduling
+coherence across threads. From an API point of view, ray scheduling
 is built-in functionality.
 
 The other tasks in raytracing are a combination of fixed function and
