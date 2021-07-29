@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.15 3/26/2021
+v1.16 7/29/2021
 
 ---
 
@@ -657,6 +657,11 @@ intersections along a ray path. If an any hit shader accepts a hit, its
 T value becomes the new TMax. So depending on the order that
 intersections are found all else being equal, different numbers of any
 hit shader invocations would occur.
+
+The system cannot execute multiple any hit shaders for a given ray at the 
+same time - as such, any hit shaders can freely modify their 
+[ray payload](#ray-payload-structure) without worrying about conflicting 
+with other shaders. 
 
 Any hit shaders are useful, for instance, when geometry has
 transparency. A particular case is transparency in shadow determination,
@@ -7642,3 +7647,4 @@ v1.12|4/6/2020|<li>For `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_VISUAL
 v1.13|7/6/2020|<li>For [D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC](#d3d12_raytracing_geometry_triangles_desc), clarified that if an index buffer is present, this must be at least the maximum index value in the index buffer + 1.</li><li>Clarified that a null hit group counts as opaque geometry.</li>
 v1.14|1/12/2021|<li>Clarified that [RayFlags()](#rayflags) does not reveal any flags that may have been added externally via [D3D12_RAYTRACING_PIPELINE_CONFIG1](#d3d12_raytracing_pipeline_config1).</li>
 v1.15|3/26/2021|<li>Added [payload access qualifiers](#payload-access-qualifiers) section, introducing a way to annotate members of ray payloads to indicate which shader stages read and/or write individual members of the payload.  This lets implementations optimize data flow in ray traversal.  It is opt-in for apps starting with shader model 6.6, and if present in shaders appears as metadata that is ignored by existing drivers.  For shader model 6.7 and higher these payload access qualifiers are required to be used by default (opt-out).</li>
+v1.16|7/29/2021|<li>For [any hit shaders](#any-hit-shaders), clarified that for a given ray, the system can't execute multiple any hit shaders at the same time.  As such shaders can modify the ray payload freely without worrying about conflicting with other shader invocations.</li>
