@@ -234,7 +234,7 @@ HRESULT D3D12GetInterface
 (
     REFCLSID rclsid,
     REFIID riid,
-    void   **ppvSDK
+    void   **ppvDebug
 );
 ```
 
@@ -244,15 +244,15 @@ HRESULT D3D12GetInterface
 
 The CLSID associated with the data and code that will be used to create the object.
 
-Specify CLSID_D3D12SDKConfiguration to retrieve the 
+Specify `CLSID_D3D12SDKConfiguration` to retrieve the `ID3D12SDKConfiguration` interface.
 
 *riid*
 
-The globally unique identifier (GUID) for the sdk configuration interface. The REFIID, or GUID, of the interface can be obtained by using the __uuidof() macro. For example, __uuidof(ID3D12SDKConfiguration) will get the GUID of the debug interface.
+The globally unique identifier (GUID) for the sdk configuration interface. The REFIID, or GUID, of the interface can be obtained by using the `__uuidof()` macro. For example, `__uuidof(ID3D12SDKConfiguration)` will get the GUID of the debug interface.
 
-*ppvSDK*
+*ppvDebug*
 
-The outparameter that contains the requested interface on return.  For example, the SDK configuration interface, as a pointer to pointer to void. See ID3D12SDKConfiguration.
+The outparameter that contains the requested interface on return, for example, the SDK configuration interface, as a pointer to pointer to void. See ID3D12SDKConfiguration.
 
 **Return Value**
 
@@ -265,7 +265,7 @@ interface ID3D12SDKConfiguration
     : IUnknown
 ```
 
-This interface can be retrieved by calling the D3D12GetSDKInterface export on D3D12.dll
+This interface can be retrieved by calling the `D3D12GetInterface` export on D3D12.dll with the `CLSID_D3D12SDKConfiguration` CLSID.
 
 #### Method: ID3D12SDKConfiguration::SetSDKVersion
 ```c++
@@ -287,6 +287,8 @@ This method can only be used in Windows Developer Mode.
 
 To set the SDK version  using this API, it must be called before the D3D12 device is created. Calling this API after creating the D3D12 device will cause the D3D12 runtime to remove the device.  
 Note that if the D3D12.dll installed with the OS is newer than the SDK version specified, the OS version is used instead.
+
+The version of a particular D3D12Core.dll can be retrieved from the exported symbol `D3D12SDKVersion`, which is a variable of type UINT, just like the variables exported from applications to enable use of the Agility SDK.
 
 # Supported Windows Versions
 
