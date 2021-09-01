@@ -370,7 +370,7 @@ The runtime will validate the following:
     to largest root parameter index
 
 - Root constant entries are sorted from smallest to largest
-    DestOffsetIn32BitValues (including no overlap
+    DestOffsetIn32BitValues (including no overlap)
 
 - If D3D12_INDIRECT_PARAMETER_DISPATCH is used, then VB and IB
     bindings cannot be changed
@@ -429,12 +429,12 @@ CommandCount = min(CommandCount, MaxCommandCount)
 // Get pointer to first Commanding argument
 BYTE* Arguments = pArgumentBuffer->GetBase() + ArgumentBufferOffset;
 
-for(UINT CommandIndex = 0; CommandIndex \< CommandCount; CommandIndex++)
+for(UINT CommandIndex = 0; CommandIndex < CommandCount; CommandIndex++)
 {
     // Interpret the data contained in *Arguments
     // according to the command signature
     pCommandSignature->Interpret(Arguments);
-    Arguments += pCommandSignature ->GetByteStride();\
+    Arguments += pCommandSignature ->GetByteStride();
 }
 
 NULL pCountBuffer:
@@ -442,12 +442,12 @@ NULL pCountBuffer:
 // Get pointer to first Commanding argument
 BYTE* Arguments = pArgumentBuffer->GetBase() + ArgumentBufferOffset;
 
-for(UINT CommandIndex = 0; CommandIndex \< MaxCommandCount;CommandIndex++)
+for(UINT CommandIndex = 0; CommandIndex < MaxCommandCount;CommandIndex++)
 {
   // Interpret the data contained in *Arguments
   // according to the command signature
   pCommandSignature->Interpret(Arguments);
-  Arguments += pCommandSignature ->GetByteStride();\
+  Arguments += pCommandSignature ->GetByteStride();
 }
 ```
 
