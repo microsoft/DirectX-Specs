@@ -937,7 +937,7 @@ example, successful creates can be used for later validation.
 
 ## IHV-Bring-up Test
 
-The unit test to unblock IHV development will be written to rasterize a
+The unit test to unblock IHV development is written to rasterize a
 triangle that falls in between the center sample positions of a 2x2
 Render Target. Enabling Conservative Rasterization must produce
 rasterized pixels, while disabling Conservative Rasterization must NOT
@@ -945,18 +945,16 @@ rasterize pixels. The vertex coordinates should be
 \<-1,0\>,\<1,0\>,\<0,0.5\> in NDC, with a Viewport top-left of \<0,0\>
 and \<2,2\> width and height.
 
-This test will leverage 11on12 to get D3D12 coverage.
+This test leverages 11on12 to get D3D12 coverage.
 
 ## Conformance Tests
 
-The following functionality will be HCK (conformance) tested:
+The following functionality is HCK (conformance) tested:
 
 - Basic Functionality:
-  - IHV-Bring-up Test
-- Main Feature Guarantees:
-
+  - IHV-Bring-up Test, described in the previous section
 - Uncertainty Range:
-  - Tier 1 & 2 are ½ pixel uncertainty region, Tier 3 is 1/256.
+  - Tier 1 uses a ½ pixel uncertainty region. Tiers 2 and 3 are 1/256.
   - To validate ½ pixel, a 4x4 RT/viewport will render a triangle
         such that only the center four pixels should be rasterized. The
         vertex coordinates should be \<-.25+d, .25-d\>,\<-.25+d,
@@ -996,14 +994,11 @@ The following functionality will be HCK (conformance) tested:
 - Inner Coverage
   - Tier 3+ required.
   - Ensure bits are only set when pixel is entirely within 1/256
-        inner uncertainty region. A 3x3 RT/Viewport will be used to
+        inner uncertainty region. A 3x3 RT/Viewport is used to
         validate that only the center pixel receives the Inner Input
         Coverage flag. The vertex coordinates should be \<-1-d,
         -1\>,\<1+d, -1\>,\<0, 1+2d\> in NDC, with a Viewport top-left of
-        \<0,0\> and \<3,3\> width and height, where d is 1/128 of 2/3,
-        accounting for the 1/256 uncertainty region, plus a small offset
-        such that the uncertainty region edge does not land on a pixel
-        edge, since Top-Left Rule is undefined.
+        \<0,0\> and \<3,3\> width and height. The value 'd' is chosen such that the top-left and top-right corners of the middle pixel won't stick outside of the triangle nor will it stick into the uncertainty region. A suitable such value of 'd' is 3/512 in DC, which is multiplied by 2/3 for conversion to NDC.
 
 ![consras7](images/conservativerasterization/consras7.png)
 
