@@ -406,7 +406,7 @@ Since some drivers have Mesh Shader support without support in pipeline statisti
 use `CheckFeatureSupport` to query `D3D12_FEATURE_DATA_D3D12_OPTIONS8` for `MeshShaderPipelineStatsSupported` 
 before using Pipeline Statistics to evaluate mesh shader or amplification shader data. 
 
-This query will return true on all drivers past the Iron release that support Mesh Shaders. 
+This query returns true on all drivers past the Windows 10 May 2021 Update release that support Mesh Shaders. 
 
 This can be done as follows: 
 ```c++
