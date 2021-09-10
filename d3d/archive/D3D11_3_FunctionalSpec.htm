@@ -3261,13 +3261,19 @@ typedef VOID ( APIENTRY* PFND3D11DDI_SETRENDERTARGETS )(
            // -1 means keep current offset.  Any other value sets
            // the hidden counter for that Appendable UAV.
     UINT, // index of first start of UAVs to set
-    UINT // number of UAVs being set (all others unbound)
+    UINT, // number of UAVs being set (all others unbound)
+    UINT, // the first UAV in the set of updated UAVs (including NULL bindings)
+    UINT // the number of UAVs in the set of updated UAVs (including NULL bindings)
  )
 </pre>
 
 <p>
 There is a separate CSSetUnorderedAccessViews API/DDI that accepts UnorderedAccessViews to be bound for the Compute side of the device.
 It is similar to the above, except doesn&rsquo;t include RenderTargets.
+</p>
+
+<p>
+    The last two parameters, UAVRangeStart and UAVRangeSize exist at the DDI level and not at the OMSetRenderTargets API level. The Direct3D 11 runtime tracks the set of bound UAVs which have changed (which may be different from the set of bound UAVs overall) whereby the driver may use this information for optimization purposes.
 </p>
 
 <A id="5.3.9.4 Hazard Tracking"></A>
