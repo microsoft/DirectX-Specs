@@ -989,7 +989,7 @@ The following functionality is HCK (conformance) tested:
   - Included below is a diagram of the described tests, but note
         that the actual vertex coordinate values are not in NDC:
 
-![consras6](images/conservativerasterization/consras6.jpg)
+![consras6](images/conservativerasterization/consras6.png)
 
 - Inner Coverage
   - Tier 3+ required.
