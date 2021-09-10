@@ -307,15 +307,15 @@ Redist releases won't include technologies like chpe, but this will be reconside
 # Packaging
 
 [NuGet](https://docs.microsoft.com/en-us/nuget/what-is-nuget) is the packaging mechanism for D3D12 redist. The following will be published in each SDK:
-- D3D12Core.dll: (Contains components needed on end user machines for applications shipping with redist: D3D12Core.dll)
-- D3D12.h,
+- D3D12Core.dll: (Contains components needed on end user machines for applications shipping with redist)
+- D3D12SDKLayers.dll (Debug Layer)
+- d3dconfig.exe
+- D3D12.h
 - D3D12SDKLayers.h
 - D3D12Video.h 
 - D3D12Shader.h
 - D3D12Common.h
 - DXGIFormat.h
-- D3D12SDKLayers.dll (Debug Layer)
-- d3dconfig.exe
 
 ## Headers
 
@@ -407,7 +407,7 @@ Should the minimum OS version be raised above 19H2/1909, this will be advertised
 
 Windows Update remains the means by which we can push an update to users outside of an OS upgrade.  Servicing fixes for D3D12 has been extremely rare and that is expected to continue with a redistributable D3D12.  
 
-However, a redistributale D3D12 opens an additional avenue to provide bug fixes out of band of OS upgrades and servicing.  The team can make a bug fix available as a new version of the redistributable D3D12 package to developers and developers can update individual affected applications.  
+However, a redistributable D3D12 opens an additional avenue to provide bug fixes out of band of OS upgrades and servicing.  The team can make a bug fix available as a new version of the redistributable D3D12 package to developers and developers can update individual affected applications.  
 
 ## Windows Update
 
