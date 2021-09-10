@@ -28,6 +28,7 @@ v0.4, 5/12/2017
     - [About Tessellation](#about-tessellation)
     - [View Instancing Work Ordering Semantics](#view-instancing-work-ordering-semantics)
       - [Overlapping Viewport/Scissors](#overlapping-viewportscissors)
+    - [Pipeline Statistics Interaction](#pipeline-statistics)
   - [Capability Exposure](#capability-exposure)
 - [DDI](#ddi)
 - [Pipeline State](#pipeline-state)
@@ -456,6 +457,26 @@ If multiple view instances go to overlapping viewport/scissor regions on
 the same renderTargetArrayIndex, rendering results in the overlapping
 area are undefined given the flexibility implementations have in
 progressing through work over separate views.
+
+---
+
+### Pipeline Statistics Interaction
+
+View instances' contribution to pipeline statistics depends on the view instancing tier, which pipeline statistic it is, and where in the pipeline SV_ViewID was referenced.
+
+On view instancing tier 1 platforms, 
+* view instances increase all pipeline statistics in the same manner a non-view-instanced draw would.
+
+On view instancing tier 2 platforms, 
+* view instances might or might not increase pipeline statistics, depending on where in the pipeline SV_ViewID was first referenced. Call the stage where SV_ViewID is first referenced X. 
+  * For the stages that come before X, view instances might or might not increase those stages' pipeline statistics.
+  * For stages X and later, view instances increase those stages' pipeline statistics.
+
+On view instancing tier 3 platforms,
+* view instances might or might not increase pipeline statistics, depending on where in the pipeline SV_ViewID was first referenced. Call the stage where SV_ViewID is first referenced X. 
+  * For the stages that come before X, view instances do not increase those stages' pipeline statistics.
+  * For the stages X and later, view instances increase those stages' pipeline statistics.
+  * For example, if SV_ViewID is only ever referenced from a pixel shader, view instancing affects PSInvocations but not the other statistics.
 
 ---
 
