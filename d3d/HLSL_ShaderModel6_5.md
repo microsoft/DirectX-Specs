@@ -224,11 +224,11 @@ output = WaveMultiPrefixSum(value, mask);
 
 |laneID   | 7     | 6     | 5     | 4     | 3     | 2     | 1 | 0
 |:-       |-      |-      |-      |-      |-      |-      |-  |-
-| mask.x  | 0xe0  | 0xe0  | 0xe0  | 0x14  | 0x09  | 0x14  | - | 0x0b
+| mask.x  | 0xe0  | 0xe0  | 0xe0  | 0x14  | 0x09  | 0x02  | - | 0x14
 | value   | 5     | 4     | 1     | -2    | 3     | 0     | - | 6
 | output  | 5     | 1     | 0     | 0     | 6     | 0     | - | 0
 
-Note how subset with `mask.x == 0x0b` refers to lane 1,
+Note how subset with `mask.x == 0x02` refers to lane 1,
 which is either inactive or is a helper lane.
 This doesn't affect the result since bits in the mask
 corresponding to inactive or helper lanes are ignored.
