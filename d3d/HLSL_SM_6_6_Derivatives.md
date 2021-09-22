@@ -19,8 +19,8 @@ because they require computations on
 # Contents
 
 - [Thread Groups and Quads](#thread-groups-and-quads)
-  - [1D Quads](#1D-quads)
-  - [2D Quads](#2D-quads)
+  - [1D Quads](#1d-quads)
+  - [2D Quads](#2d-quads)
 - [Added Functions](#added-functions)
   - [Derivative Functions](#derivative-functions)
   - [Texture Sample Methods](#texture-sample-methods)
