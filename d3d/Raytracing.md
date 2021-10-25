@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.16 7/29/2021
+v1.17 10/25/2021
 
 ---
 
@@ -1903,7 +1903,12 @@ intersections.
 Degenerate primitives may be discarded from an acceleration structure
 build, unless the `ALLOW_UPDATE` flag specified. As a consequence, the
 coordinates returned during AS visualization may be replaced with NaNs
-for these primitives.
+for these primitives.  
+
+An exception to the rule that degenerates cannot be discarded with
+`ALLOW_UPDATE` specified is primitives that have repeated index value 
+can always be discarded (even with `ALLOW_UPDATE` specified).  There
+is no value in keeping them since even index values cannot be changed.
 
 The primitive count in the returned GeometryDescs and the number of
 InstanceDescs may be affected by any discarded primitives. The index
@@ -7648,3 +7653,5 @@ v1.13|7/6/2020|<li>For [D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC](#d3d12_raytrac
 v1.14|1/12/2021|<li>Clarified that [RayFlags()](#rayflags) does not reveal any flags that may have been added externally via [D3D12_RAYTRACING_PIPELINE_CONFIG1](#d3d12_raytracing_pipeline_config1).</li>
 v1.15|3/26/2021|<li>Added [payload access qualifiers](#payload-access-qualifiers) section, introducing a way to annotate members of ray payloads to indicate which shader stages read and/or write individual members of the payload.  This lets implementations optimize data flow in ray traversal.  It is opt-in for apps starting with shader model 6.6, and if present in shaders appears as metadata that is ignored by existing drivers.  For shader model 6.7 and higher these payload access qualifiers are required to be used by default (opt-out).</li>
 v1.16|7/29/2021|<li>For [any hit shaders](#any-hit-shaders), clarified that for a given ray, the system can't execute multiple any hit shaders at the same time.  As such shaders can modify the ray payload freely without worrying about conflicting with other shader invocations.</li>
+v1.17|10/25/2021|<li>In [Degenerate primitives and instances](#degenerate-primitives-and-instances), added the clarification:  An exception to the rule that degenerates cannot be discarded with `ALLOW_UPDATE` specified is primitives that have repeated index value 
+can always be discarded (even with `ALLOW_UPDATE` specified).  There is no value in keeping them since even index values cannot be changed.</li>
