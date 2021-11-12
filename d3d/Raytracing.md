@@ -1321,8 +1321,8 @@ default: collection creation will fail.  The collection can opt out of needing a
 dependencies to be resolvable, causing the driver to defer compilation, by setting the `D3D12_STATE_OBJECT_FLAG_ALLOW_LOCAL_DEPENDENCIES_ON_EXTERNAL_DEFINITONS` flag in [D3D12_STATE_OBJECT_FLAGS](#d3d12_state_object_flags).
 
 A collection must meet the following requirements for the driver to be able to compile it immediately:
-- library functions called by shaders must be have code definitions
-- resource bindings referenced by shadders must have local and/or global root signature subobjects defining the bindings
+- library functions called by shaders must have code definitions
+- resource bindings referenced by shaders must have local and/or global root signature subobjects defining the bindings
 - raytracing shaders must have a [D3D12_RAYTRACING_SHADER_CONFIG](#d3d12_raytracing_shader_config) and a [D3D12_RAYTRACING_PIPELINE_CONFIG](#d3d12_raytracing_pipeline_config) subobject
 
 The parts of the above list that involve subobject associations are discussed further at [subobject association requirements](#subobject-association-requirements).
