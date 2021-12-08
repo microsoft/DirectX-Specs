@@ -24,6 +24,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Rasterizer Ordered Views](d3d/RasterOrderViews.md)
     * [Programmable Sample Positions](d3d/ProgrammableSamplePositions.md)
     * [Depth Bounds Test](d3d/DepthBoundsTest.md)
+    * [Enhanced Barriers](d3d/D3D12EnhancedBarriers.md)
 
 * Structure of D3D
     * [Resource Binding](d3d/ResourceBinding.md)
