@@ -1336,8 +1336,6 @@ Matches the layout used by D3D12_RESOURCE_STATE_COPY_SOURCE.
 
 Matches the layout used by D3D12_RESOURCE_STATE_COPY_DEST.
 
-Same as D3D12_BARRIER_LAYOUT_COPY_DEST except compatible only with Direct queues.  Can prevent costly, and unnecessary decompression on some layout transitions on resources with next access in a Direct queue.
-
 #### D3D12_BARRIER_LAYOUT_VIDEO_DECODE_READ
 
 Matches the layout used by D3D12_RESOURCE_STATE_VIDEO_DECODE_READ.
@@ -1386,7 +1384,7 @@ Same as D3D12_BARRIER_LAYOUT_COPY_SOURCE except with optimizations specific for 
 
 #### D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COPY_DEST
 
-Same as D3D12_BARRIER_LAYOUT_COPY_DEST except with optimizations specific for direct queues. Can only be used in barriers on direct queues.
+Same as D3D12_BARRIER_LAYOUT_COPY_DEST except with optimizations specific for direct queues. Can only be used in barriers on direct queues. Can prevent costly, and unnecessary decompression on some layout transitions on resources with next access in a Direct queue.
 
 #### D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COMMON
 
@@ -1677,7 +1675,7 @@ Indicates a resource is accessible for read-only access in a video encode queue.
 
 #### D3D12_BARRIER_ACCESS_NO_ACCESS
 
-Resource is inaccessible for read or write.  Once a subresource access as been transitioned to BARRIER_ACCESS_NO_ACCESS, it must be be reactivated by a barrier with AccessBefore set to BARRIER_ACCESS_NO_ACCESS before using in the same ExecuteCommandLists scope.
+Resource is inaccessible for read or write.  Once a subresource access has been transitioned to BARRIER_ACCESS_NO_ACCESS, it must be be reactivated by a barrier with AccessBefore set to BARRIER_ACCESS_NO_ACCESS before using in the same ExecuteCommandLists scope.
 
 Required in split barriers to mark the resource as inaccessible between initial and final split barrier pairs.
 
