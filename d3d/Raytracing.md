@@ -1,7 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.17 10/25/2021
-
+v1.18 3/31/2022
 ---
 
 # Contents <!-- omit in toc -->
@@ -1837,7 +1836,7 @@ in practice.
 ### Inactive primitives and instances
 
 Triangles are considered "inactive" (but legal input to acceleration
-structure build) if the x component of each vertex is NaN. Similarly
+structure build) if the x component of any vertex is NaN. Similarly
 AABBs are considered inactive if AABB.MinX is NaN. The geometries and/or
 their transforms in bottom level acceleration structures can be used as
 one way to inject these NaN values and deactivate entire
@@ -7654,3 +7653,4 @@ v1.14|1/12/2021|<li>Clarified that [RayFlags()](#rayflags) does not reveal any f
 v1.15|3/26/2021|<li>Added [payload access qualifiers](#payload-access-qualifiers) section, introducing a way to annotate members of ray payloads to indicate which shader stages read and/or write individual members of the payload.  This lets implementations optimize data flow in ray traversal.  It is opt-in for apps starting with shader model 6.6, and if present in shaders appears as metadata that is ignored by existing drivers.  For shader model 6.7 and higher these payload access qualifiers are required to be used by default (opt-out).</li>
 v1.16|7/29/2021|<li>For [any hit shaders](#any-hit-shaders), clarified that for a given ray, the system can't execute multiple any hit shaders at the same time.  As such shaders can modify the ray payload freely without worrying about conflicting with other shader invocations.</li>
 v1.17|10/25/2021|<li>In [Degenerate primitives and instances](#degenerate-primitives-and-instances), added the clarification:  An exception to the rule that degenerates cannot be discarded with `ALLOW_UPDATE` specified is primitives that have repeated index value can always be discarded (even with `ALLOW_UPDATE` specified).  There is no value in keeping them since index values cannot be changed.</li>
+v1.18|3/31/2022|<li>In [Inactive primitives and instances](#inactive-primitives-and-instances), changed handling of NaN in triangles to: Triangles are considered "inactive" (but legal input to acceleration structure build) if the x component of any vertex is NaN.  The "any" used to be "each".  This reduces the amount of undefined behavior apps are exposed to.</li>
