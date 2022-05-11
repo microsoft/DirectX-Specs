@@ -2586,8 +2586,8 @@ max_num_ref_frames | Max number of reference pictures used in encode session | N
 gaps_in_frame_num_value_allowed_flag | 0 | None |
 pic_width_in_mbs_minus1 | std::ceil(sequenceTargetResolution.Width / 16.0)) - 1; | None |
 pic_height_in_map_units_minus1 | std::ceil(sequenceTargetResolution.Height / 16.0)) - 1; | None |
-frame_mbs_only_flag | 0 | No interlace support |
-direct_8x8_inference_flag | Based on D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_H264_FLAG_USE_ADAPTIVE_8x8_TRANSFORM | None |
+frame_mbs_only_flag | 1 | No interlace support |
+direct_8x8_inference_flag | 1 | None |
 frame_cropping_flag | 0 or 1 depending on encode resolution being 16 aligned or not | None |
 frame_cropping_rect_left_offset | 0 | Only if frame_cropping_flag = 1 |
 frame_cropping_rect_right_offset | ((pic_width_in_mbs_minus1+1) * 16 - sequenceTargetResolution.Width) / 2 | Only if frame_cropping_flag = 1 |
