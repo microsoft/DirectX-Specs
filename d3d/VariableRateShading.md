@@ -172,7 +172,7 @@ The app can specify a subsampling level in the command buffer. This API takes a 
 Values for this state are expressed through the enumeration D3D12_SHADING_RATE.
 
 #### Coarse pixel size support
-The shading rates 1x1, 1x2, 2x2 and 2x2 can be requested on all tiers.
+The shading rates 1x1, 1x2, 2x1 and 2x2 can be requested on all tiers.
 
 There is a cap, AdditionalShadingRatesSupported, to indicate whether 2x4, 4x2, and 4x4 are available on the device.
 
