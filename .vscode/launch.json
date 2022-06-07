@@ -1,6 +1,13 @@
 {
     "configurations": [
-        
+        {
+            "name": "Attach to Process",
+            "type": "go",
+            "request": "attach",
+            "mode": "local",
+            "processId": 0
+        },
+
         {
             "name": ".NET Core Launch (console)",
             "type": "coreclr",
