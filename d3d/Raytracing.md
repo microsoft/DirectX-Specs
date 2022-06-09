@@ -1232,7 +1232,7 @@ examples of subobject types:
 `D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE*`.
 
 Another notable subobject type is
-`D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_SHADERS_ASSOCIATION`,
+`D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION`,
 whose role is to associate another subobject with a list of DXIL
 exports. This enables, for example, multiple local root signatures to be
 present in a state object simultaneously, each associated with different
