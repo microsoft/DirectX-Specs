@@ -6583,7 +6583,7 @@ Matrix for transforming from world-space to object-space. Object-space
 refers to the space of the current bottom-level acceleration structure for the current hit candidate.
 
 ```C++
-float3x4 RayQuery::CandidateWorldToObject4x3();
+float4x3 RayQuery::CandidateWorldToObject4x3();
 ```
 
 The only difference between this and `CandidateWorldToObject3x4()` is the matrix is
