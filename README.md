@@ -62,6 +62,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Device Removed Extended Data](d3d/DeviceRemovedExtendedData.md)
     * [Debug Object Auto Name](d3d/DebugObjectAutoName.md)
     * [Debug Layer Message Callbacks](d3d/MessageCallback.md)
+    * [Independent Devices](d3d/IndependentDevices.md)
     * [WriteBufferImmediate](d3d/D3D12WriteBufferImmediate.md)
 
 * Misc
