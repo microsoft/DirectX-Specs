@@ -97,13 +97,18 @@ interface ID3D12DeviceFactory : IUnknown
         REFCLSID clsid,
         REFIID   riid,
         void   **ppv);
+
     HRESULT EnableExperimentalFeatures(
        UINT      NumFeatures,
        const IID *pIIDs,
        void      *pConfigurationStructs,
        UINT      *pConfigurationStructSizes);
 
-    HRESULT CreateDevice(IUnknown *adapter, REFIID riid, void **ppvDevice);
+    HRESULT CreateDevice(
+        IUnknown *adapter,
+        D3D_FEATURE_LEVEL FeatureLevel,
+        REFIID riid,
+        void **ppvDevice);
 };
 
 interface ID3D12SDKConfiguration1 : ID3D12SDKConfiguration
