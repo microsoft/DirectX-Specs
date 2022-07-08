@@ -394,9 +394,10 @@ A type of variability can exist between feedback map implementations. This varia
 Suppose you have a paired texture sized 16x16, and a MinMip feedback map with a mip region of 4x4x1.
 
 The paired texture's mips, then, are as follows
+
 | Mip level | Size |
-|:-|-|:--|--|
-|0 |16x16 |
+|:-|-|
+|0 |16x16|
 |1 |8x8|
 |2 |4x4|
 |3 |2x2|
