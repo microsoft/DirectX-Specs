@@ -6048,7 +6048,7 @@ void MyComputeShader(uint3 DTid : SV_DispatchThreadID)
                 candidateAttribs,
                 q.CandidateInstanceIndex(),
                 q.CandidatePrimitiveIndex(),
-                q.CandidatetGeometryIndex()))
+                q.CandidateGeometryIndex()))
             {
                 if( (q.RayTMin() <= tHit) && (tHit <= q.CommittedRayT()) )
                 {
