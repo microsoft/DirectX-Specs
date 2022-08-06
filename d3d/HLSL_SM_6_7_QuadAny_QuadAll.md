@@ -17,21 +17,19 @@ These routines assume that flow control execution is uniform at least across the
 
 ## Contents
 
-- [QuadAny and QuadAll Intrinsics](#quadany-and-quadall-intrinsics)
-  - [Table of Contents](#table-of-contents)
-  - [QuadAny](#quadany)
-  - [QuadAll](#quadall)
-  - [DXIL](#dxil)
-  - [How to use QuadAny/QuadAll to ensure uniform flow control across the quad](#how-to-use-quadanyquadall-to-ensure-uniform-flow-control-across-the-quad)
-    - [Example 1 - Valid use of direct shader input in divergent control flow](#example-1---valid-use-of-direct-shader-input-in-divergent-control-flow)
-    - [Example 2 - Undefined use of shader computed value in divergent control flow](#example-2---undefined-use-of-shader-computed-value-in-divergent-control-flow)
-    - [Example 3 - Fixed by hoisting Sample to uniform control flow](#example-3---fixed-by-hoisting-sample-to-uniform-control-flow)
-    - [Example 4 - Fixed using QuadAny for efficiency](#example-4---fixed-using-quadany-for-efficiency)
-  - [Older Shader Models](#older-shader-models)
-  - [Caps Flag](#caps-flag)
-  - [Issues](#issues)
-    - [Issue - QuadGetLaneIndex](#issue---quadgetlaneindex)
-  - [Change Log](#change-log)
+- [QuadAny](#quadany)
+- [QuadAll](#quadall)
+- [DXIL](#dxil)
+- [How to use QuadAny/QuadAll to ensure uniform flow control across the quad](#how-to-use-quadanyquadall-to-ensure-uniform-flow-control-across-the-quad)
+  - [Example 1 - Valid use of direct shader input in divergent control flow](#example-1---valid-use-of-direct-shader-input-in-divergent-control-flow)
+  - [Example 2 - Undefined use of shader computed value in divergent control flow](#example-2---undefined-use-of-shader-computed-value-in-divergent-control-flow)
+  - [Example 3 - Fixed by hoisting Sample to uniform control flow](#example-3---fixed-by-hoisting-sample-to-uniform-control-flow)
+  - [Example 4 - Fixed using QuadAny for efficiency](#example-4---fixed-using-quadany-for-efficiency)
+- [Older Shader Models](#older-shader-models)
+- [Caps Flag](#caps-flag)
+- [Issues](#issues)
+  - [Issue - QuadGetLaneIndex](#issue---quadgetlaneindex)
+- [Change Log](#change-log)
 
 ## QuadAny
 
