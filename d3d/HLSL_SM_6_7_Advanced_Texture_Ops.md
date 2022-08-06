@@ -140,9 +140,9 @@ Additionally, same-size and same-channel aliasing can be performed
 
 In order to be able to create an single-channel integer resource view,
 a resource must be created using the
-[CreateCommittedResource3](D3D12EnhancedBarriers.md#id3d12device10::createcommittedresource3),
-[CreatePlacedResource2](D3D12EnhancedBarriers.md#id3d12device10::createplacedresource2),
-or [CreateReservedResource2](D3D12EnhancedBarriers.md#id3d12device10::createreservedresource2)
+[CreateCommittedResource3](D3D12EnhancedBarriers.md#id3d12device10createcommittedresource3),
+[CreatePlacedResource2](D3D12EnhancedBarriers.md#id3d12device10createplacedresource2),
+or [CreateReservedResource2](D3D12EnhancedBarriers.md#id3d12device10createreservedresource2)
 using the new API fields, `NumCastableFormats` and `pCastableFormats`
 to specify the list of acceptable casts.
 
