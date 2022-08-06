@@ -12,6 +12,7 @@ v1.0 2022-08-01
   - [Writable MSAA Textures](#writable-msaa-textures)
 - [QuadAny and QuadAll](#quadany-and-quadall)
 - [Helper Lanes in Wave Ops Mode](#helper-lanes-in-wave-ops-mode)
+
 ---
 
 # Introduction

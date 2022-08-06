@@ -21,7 +21,7 @@ For shaders using the new `WaveOpsIncludeHelperLanes` option, the helper lanes w
  guaranteed to exist until the last wave operation in the shader code, in addition to
   quad and derivate ops. The attribute will never activate any helper lanes.
 
-The [`IsHelperLane`](../HLSL_ShaderModel6_6.md#is-helper-lane) intrinsics can be used to
+The [`IsHelperLane`](HLSL_ShaderModel6_6.md#is-helper-lane) intrinsics can be used to
  determine if a lane is a helper lane.
 
 More information about wave intrinsics and helper lanes can be found [here](https://github.com/microsoft/DirectXShaderCompiler/wiki/Wave-Intrinsics).
@@ -57,8 +57,6 @@ in any other type of shader.
 ### Library shaders
 
 For shader model 6.7 the use of `WaveOpsIncludeHelperLanes` attribute in libraries is not supported.
-See the shader model 6.8 experimental feature [Dynamic Shader Linking](HLSL_SM_6_8_DynamicShaderLinking.md#waveopsincludehelperlanes-attribute) 
-specification for details on the `WaveOpsIncludeHelperLanes` attribute use in libraries.
 
 ## DXIL
 

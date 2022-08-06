@@ -140,9 +140,9 @@ Additionally, same-size and same-channel aliasing can be performed
 
 In order to be able to create an single-channel integer resource view,
 a resource must be created using the
-[CreateCommittedResource3](../D3D12EnhancedBarriers.md#id3d12device10::createcommittedresource3),
-[CreatePlacedResource2](../D3D12EnhancedBarriers.md#id3d12device10::createplacedresource2),
-or [CreateReservedResource2](../D3D12EnhancedBarriers.md#id3d12device10::createreservedresource2)
+[CreateCommittedResource3](D3D12EnhancedBarriers.md#id3d12device10::createcommittedresource3),
+[CreatePlacedResource2](D3D12EnhancedBarriers.md#id3d12device10::createplacedresource2),
+or [CreateReservedResource2](D3D12EnhancedBarriers.md#id3d12device10::createreservedresource2)
 using the new API fields, `NumCastableFormats` and `pCastableFormats`
 to specify the list of acceptable casts.
 
@@ -183,9 +183,6 @@ To perform a raw gather on another format,
 The `uint16_t GatherRaw` overload is only available on platforms with native 16-bit shader op support.
 
 The `uint64_t GatherRaw` overload is only available on platforms with 64-bit shader op support.
-
-For `GatherRaw` DXIL intrinsic documentation,
- see the DXIL 1.7 spec [textureGatherRaw entry](DXIL_1_7.md#texturegatherraw).
 
 ## Programmable Offsets
 
@@ -236,9 +233,6 @@ Format TextureCubeArray::SampleCmpLevel( SamplerComparisonState S, float<N> Loca
                                   [out uint Status]);
 ```
 
-For SampleCmpLevel DXIL intrinsic documenation,
- see the DXIL 1.7 spec [sampleCmpLevel entry](DXIL_1_7.md#samplecmplevel).
-
 Note that `<TexObject>::SampleCmpLevel` has programmable offsets as described above.
 
 ## Writable MSAA Textures
@@ -264,9 +258,6 @@ R RWTexture2DMS::sample.Operator[][](uint sampleIndex, uint2 pos);
 R RWTexture2DMSArray::Operator[](uint2 pos);
 R RWTexture2DMSArray::sample.Operator[][](uint sampleIndex, uint2 pos);
 ```
-
-For `sample.Operator[][]` DXIL intrinsic documentation,
- see the DXIL 1.7 spec [textureStoreSample entry](DXIL_1_7.md#texturestoresample).
 
 Support for writable MSAA textures is determined by
 the `WritableMSAATexturesSupported` field of `D3D12_FEATURE_DATA_D3D12_OPTIONS14`.
