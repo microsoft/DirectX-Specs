@@ -4,7 +4,7 @@ v1.0 2022-08-01
 
 Two new quad intrinsics `QuadAny` and `QuadAll` are introduced in HLSL for shader model 6.7.
 
-These intrinsics perform compare operations on local values across all lanes of the current quads. Quads are defined [here](https://github.com/microsoft/DirectXShaderCompiler/wiki/Wave-Intrinsics#quad-wide-shuffle-operations) and [here](../HLSL_SM_6_6_Derivatives.md). The routines will help shader authors quickly evaluate if a certain condition is true for any or all pixels or lanes in the current quad.
+These intrinsics perform compare operations on local values across all lanes of the current quads. Quads are defined [here](https://github.com/microsoft/DirectXShaderCompiler/wiki/Wave-Intrinsics#quad-wide-shuffle-operations) and [here](HLSL_SM_6_6_Derivatives.md). The routines will help shader authors quickly evaluate if a certain condition is true for any or all pixels or lanes in the current quad.
 
 The intrinsics are supported in pixel, compute, mesh and amplification shaders.
 The routines always compare values from all four lanes of the current quad.
@@ -51,7 +51,7 @@ Returns true if &lt;expr&gt; is `true` in all lanes of the current quad.
 
 ## DXIL
 
-A new shared DXIL op  [`quadVoteOp`](DXIL_1_7.md#quad-intrinsics) is introduced for these intrinsics.  The last argument of the op call is a value of [`QuadVoteOpKind`](DXIL_1_7.md#quad-intrinsics) enum that determines which operation to perform.
+A new shared DXIL op  `quadVoteOp` is introduced for these intrinsics.  The last argument of the op call is a value of `QuadVoteOpKind` enum that determines which operation to perform.
 
 Example:
 
