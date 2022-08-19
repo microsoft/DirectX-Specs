@@ -153,7 +153,10 @@ Features for each tier are described in greater detail below the table.
   * Indicates whether 2X4, 4X2, and 4X4 coarse pixel sizes are supported for single sampled rendering, and whether coarse pixel size 2X4 is supported for 2xMSAA.
 * SupportsPerVertexShadingRateWithMultipleViewports
   * Boolean type
-  * Indicates whether more than one viewport can be used with the per-vertex (also referred to as ‘per-primitive’) shading rate
+  * Indicates that an application can both 
+     * use more than one viewport, and
+     * use the per-vertex (also referred to as ‘per-primitive’) shading rate
+  * at the same time. If this cap is FALSE, and per-vertex shading rates are used, then only one viewport can be used at a time. The cap does *not* pertain to the idea of using different shading rates for different viewports. Variable rate shading does not expose a way to use different shading rates for different viewports.
 * VariableRateShadingSumCombinerSupported
   * Boolean type
   * Indicates whether the SUM combiner can be used. This cap is pertaining to variable rate shading Tier 2.
