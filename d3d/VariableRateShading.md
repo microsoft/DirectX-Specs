@@ -247,7 +247,11 @@ Each byte of the screen space image corresponds to a value of the D3D12_SHADING_
 #### Resource state
 A resource needs to be transitioned into a read-only state when used as a screen-space image. A read-only state, D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE, is defined for this purpose. 
 
-The image resource is transitioned out of that state to become writable again.
+Validation of shading rate image resource state occurs at Draw time. In other words, resources need to be in SHADING_RATE_SOURCE state when a Draw is executed that has the shading rate image set.
+
+When a resource is passed as an argument to RSSetShadingRateImage, it can be in SHADING_RATE_SOURCE state or some other state. The resource doesn't have to be in SHADING_RATE_SOURCE state until some Draw is executed that has the resource set as a shading rate image.
+
+An image resource is transitioned out of SHADING_RATE_SOURCE to become writable again.
 
 #### Setting the image
 The screen-space image for specifying shader rate is set on the command list.
