@@ -54,6 +54,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Shader Model 6.4](https://github.com/microsoft/DirectXShaderCompiler/wiki/Shader-Model-6.4)
     * [Shader Model 6.5](d3d/HLSL_ShaderModel6_5.md)
     * [Shader Model 6.6](d3d/HLSL_ShaderModel6_6.md)
+    * [Shader Model 6.7](d3d/HLSL_ShaderModel6_7.md)
     * [SV_Barycentrics](https://github.com/microsoft/DirectXShaderCompiler/wiki/SV_Barycentrics)
     * [SV_ViewID](https://github.com/microsoft/DirectXShaderCompiler/wiki/SV_ViewID)
 
@@ -62,6 +63,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Device Removed Extended Data](d3d/DeviceRemovedExtendedData.md)
     * [Debug Object Auto Name](d3d/DebugObjectAutoName.md)
     * [Debug Layer Message Callbacks](d3d/MessageCallback.md)
+    * [Independent Devices](d3d/IndependentDevices.md)
     * [WriteBufferImmediate](d3d/D3D12WriteBufferImmediate.md)
 
 * Misc

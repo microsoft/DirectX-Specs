@@ -68,6 +68,10 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [ID3D12Device10::CreateCommittedResource3](#id3d12device10createcommittedresource3)
   - [ID3D12Device10::CreatePlacedResource2](#id3d12device10createplacedresource2)
   - [ID3D12Device10::CreateReservedResource2](#id3d12device10createreservedresource2)
+  - [ID3D12DebugCommandQueue1::AssertResourceAccess](#id3d12debugcommandqueue1assertresourceaccess)
+  - [ID3D12DebugCommandQueue1::AssertTextureLayout](#id3d12debugcommandqueue1asserttexturelayout)
+  - [ID3D12DebugCommandList3::AssertResourceAccess](#id3d12debugcommandlist3assertresourceaccess)
+  - [ID3D12DebugCommandList3::AssertTextureLayout](#id3d12debugcommandlist3asserttexturelayout)
 - [Barrier Examples](#barrier-examples)
 - [DDI](#ddi)
   - [`D3D12DDI_BARRIER_LAYOUT`](#d3d12ddi_barrier_layout)
@@ -374,7 +378,7 @@ Execute barrier **after** all vertex stages have completed and block subsequent 
 |---------------------------|---------------------------|
 | `D3D12_BARRIER_SYNC_NONE` | `D3D12_BARRIER_SYNC_NONE` |
 
-Execute barrier without waiting for preceding work or blocking subsequent work.  This is something an app might do in a `ExecuteCommandLists` call that only performs Barriers
+Execute barrier without waiting for preceding work or blocking subsequent work. This is something an app might do in a `ExecuteCommandLists` call that only performs Barriers to JIT (Just-In-Time) latch resource state. When working with enhanced barriers, this should only be used for transitioning texture subresources to a new layout. Given that completion of `ExecuteCommandLists` guarantees full pipeline sync and cache flush, there is zero value in using other barrier types in this way.
 
 ### Layout Transitions
 
@@ -1647,7 +1651,7 @@ Default initial access for all resources in a given `ExecuteCommandLists` scope.
 
 When used as `AccessAfter`, `D3D12_BARRIER_ACCESS_COMMON` may be used to return a resource back to common accessibility.  Note, this may force unnecessary cache flushes if used incorrectly.  When possible, `AccessAfter` should be limited to explicit access bits.
 
-`D3D12_BARRIER_ACCESS_COMMON` may not be used as a barrier `AccessBefore` value. Any read-after-write or write-after-write hazards must be handled using explicit `AccessBefore` bits.
+App developers should avoid using `D3D12_BARRIER_ACCESS_COMMON` as a barrier `AccessBefore` value. Any read-after-write or write-after-write hazards are best handled using explicit `AccessBefore` bits.
 
 #### `D3D12_BARRIER_ACCESS_VERTEX_BUFFER`
 
@@ -2050,167 +2054,201 @@ HRESULT ID3D12Device10::CreateReservedResource2(
 
 See the [Format List Casting](VulkanOn12.md#format-list-casting) spec for details on format casting using `NumCastableFormats` and `pCastableFormats`.
 
+### ID3D12DebugCommandQueue1::AssertResourceAccess
+
+```c++
+    void ID3D12DebugCommandQueue1::AssertResourceAccess(
+        ID3D12Resource* pResource,
+        UINT Subresource,
+        D3D12_BARRIER_ACCESS Access);
+```
+
+Triggers a debug layer error if the given resource does not support the asserted access at the moment the `AssertResourceAccess` begins execution on the command queue GPU timeline.
+
+Also tracks the resource as in-use by the command queue until the `AssertResourceAccess` has completed execution on the command queue GPU timeline. Attempts to evict or destroy an in-use resource produces a debug layer error.
+
+Access validation currently considers only texture barrier layout (if `pResource` is a texture) and resource creation flags. Validation related to missing synchronization and/or cache flush is not implemented.
+
+### ID3D12DebugCommandQueue1::AssertTextureLayout
+
+```c++
+    void ID3D12DebugCommandQueue1::AssertTextureLayout(
+        ID3D12Resource* pResource,
+        UINT Subresource,
+        D3D12_BARRIER_LAYOUT Layout);
+```
+
+Triggers a debug layer error if the given texture resource layout does not match the asserted layout at the moment the `AssertTextureLayout` begins execution on the command queue GPU timeline.
+
+Also tracks the resource as in-use by the command queue until the `AssertTextureLayout` has completed execution on the command queue GPU timeline. Attempts to evict or destroy an in-use resource produces a debug layer error.
+
+Buffers have no layout, therefore `AssertTextureLayout` does nothing when `pResource` is a buffer resource.
+
+### ID3D12DebugCommandList3::AssertResourceAccess
+
+```c++
+    void ID3D12DebugCommandList3::AssertResourceAccess(
+        ID3D12Resource* pResource,
+        UINT Subresource,
+        D3D12_BARRIER_ACCESS Access);
+```
+
+Triggers a debug layer error if the given resource does not support the asserted access at the moment the command list recording begins execution on the command queue GPU timeline.
+
+Also tracks the resource as in-use by the command queue until the command list recording has completed execution on the command queue GPU timeline. Attempts to evict or destroy an in-use resource produces a debug layer error.
+
+Access validation currently considers only texture barrier layout (if `pResource` is a texture) and resource creation flags. Validation related to missing synchronization and/or cache flush is not implemented.
+
+### ID3D12DebugCommandList3::AssertTextureLayout
+
+```c++
+    void ID3D12DebugCommandList3::AssertTextureLayout(
+        ID3D12Resource* pResource,
+        UINT Subresource,
+        D3D12_BARRIER_LAYOUT Layout);
+```
+
+Triggers a debug layer error if the given texture resource layout does not match the asserted layout at the moment the command list recording begins execution on the command queue GPU timeline.
+
+Also tracks the resource as in-use by the command queue until the command list recording has completed execution on the command queue GPU timeline. Attempts to evict or destroy an in-use resource produces a debug layer error.
+
+Buffers have no layout, therefore `AssertTextureLayout` does nothing when `pResource` is a buffer resource.
+
 ## Barrier Examples
 
+For the sake of simplicity, these examples use the D3DX12 helper classes.
+
 ```C++
-void BarrierSamples()
-{
+void BarrierSamples(
     ID3D12CommandListN *pCommandList;
     ID3D12Resource *pTexture;
     ID3D12Resource *pBuffer;
-
+    )
+{
     // Simple state transition barrier:
     // RENDER_TARGET -> PIXEL_SHADER_RESOURCE
     D3D12_TEXTURE_BARRIER TexBarriers[] =
     {
-        {
-            D3D12_BARRIER_ACCESS_RENDER_TARGET,
-            D3D12_BARRIER_ACCESS_SHADER_RESOURCE,
-            D3D12_BARRIER_LAYOUT_RENDER_TARGET,
-            D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_SHADER_RESOURCE,
-            pTexture
-        }
+        CD3DX12_TEXTURE_BARRIER(
+            D3D12_BARRIER_SYNC_RENDER_TARGET,                   // SyncBefore
+            D3D12_BARRIER_SYNC_PIXEL_SHADING,                   // SyncAfter
+            D3D12_BARRIER_ACCESS_RENDER_TARGET,                 // AccessBefore
+            D3D12_BARRIER_ACCESS_SHADER_RESOURCE,               // AccessAfter
+            D3D12_BARRIER_LAYOUT_RENDER_TARGET,                 // LayoutBefore
+            D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_SHADER_RESOURCE,  // LayoutAfter
+            pTexture,
+            CD3DX12_BARRIER_SUBRESOURCE_RANGE(0xffffffff),       // All subresources
+            D3D12_TEXTURE_BARRIER_FLAG_NONE
+        )
     };
 
-    D3D12_BARRIER_GROUP TexBarrierGroup[] =
+    D3D12_BARRIER_GROUP TexBarrierGroups[] =
     {
-        {
-            D3D12_BARRIER_TYPE_TEXTURE,
-            1,
-            TexBarriers
-        },
+        CD3DX12_BARRIER_GROUP(1, TexBarriers)
     };
 
-    pCommandList->Barrier(
-        D3D12_BARRIER_SYNC_RENDER_TARGET,
-        D3D12_BARRIER_SYNC_PIXEL_SHADING,
-        1,
-        TexBarrierGroup
-        );
+    pCommandList->Barrier(1, TexBarrierGroups);
 
-    // Buffer state transition barrier:
+    // Buffer access transition barrier:
     // D3D12_RESOURCE_STATE_STREAM_OUTPUT -> D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
     D3D12_BUFFER_BARRIER BufBarriers[] =
     {
-        {
-            D3D12_BARRIER_ACCESS_STREAM_OUTPUT,
-            D3D12_BARRIER_ACCESS_SHADER_RESOURCE,
+        CD3DX12_BUFFER_BARRIER(
+            D3D12_BARRIER_SYNC_STREAM_OUTPUT,               // SyncBefore
+            D3D12_BARRIER_SYNC_VERTEX_SHADING,              // SyncAfter
+            D3D12_BARRIER_ACCESS_STREAM_OUTPUT,             // AccessBefore
+            D3D12_BARRIER_ACCESS_SHADER_RESOURCE,           // AccessAfter
             pBuffer
-        }
+        )
     };
 
-    D3D12_BARRIER_GROUP BufBarrierGroup[] =
+    D3D12_BARRIER_GROUP BufBarrierGroups[] =
     {
-        {
-            D3D12_BARRIER_TYPE_BUFFER,
-            1,
-            BufBarriers
-        },
+        CD3DX12_BARRIER_GROUP(1, BufBarriers)
     };
 
-    pCommandList->Barrier(
-        D3D12_BARRIER_SYNC_STREAM_OUTPUT,
-        D3D12_BARRIER_SYNC_VERTEX_SHADING,
-        1,
-        BufBarrierGroup
-        );
+    pCommandList->Barrier(1, BufBarrierGroups);
 
     // Compute Texture UAV barrier
-    D3D12_TEXTURE_BARRIER TexBarriersUAV[] =
+    D3D12_TEXTURE_BARRIER TexBarriersUAVs[] =
     {
-        {
-            D3D12_BARRIER_ACCESS_UNORDERED_ACCESS,
-            D3D12_BARRIER_ACCESS_UNORDERED_ACCESS,
-            D3D12_BARRIER_LAYOUT_UNORDERED_ACCESS,
-            D3D12_BARRIER_LAYOUT_UNORDERED_ACCESS,
-            pTexture
-        }
+        CD3DX12_TEXTURE_BARRIER(
+            D3D12_BARRIER_SYNC_COMPUTE_SHADING,     // SyncBefore
+            D3D12_BARRIER_SYNC_COMPUTE_SHADING,     // SyncAfter
+            D3D12_BARRIER_ACCESS_UNORDERED_ACCESS,  // AccessBefore
+            D3D12_BARRIER_ACCESS_UNORDERED_ACCESS,  // AccessAfter
+            D3D12_BARRIER_LAYOUT_UNORDERED_ACCESS,  // LayoutBefore
+            D3D12_BARRIER_LAYOUT_UNORDERED_ACCESS,  // LayoutAfter
+            pTexture,
+            CD3DX12_BARRIER_SUBRESOURCE_RANGE(0xffffffff),       // All subresources
+            D3D12_TEXTURE_BARRIER_FLAG_NONE
+        )
     };
 
-    D3D12_BARRIER_GROUP UAVBarrierGroup[] =
+    D3D12_BARRIER_GROUP UAVBarrierGroups[] =
     {
-        {
-            D3D12_BARRIER_TYPE_TEXTURE,
-            1,
-            TexBarriersUAV
-        },
+        CD3DX12_BARRIER_GROUP(1, TexBarriersUAVs)
     };
 
-    pCommandList->Barrier(
-        D3D12_BARRIER_SYNC_COMPUTE_SHADING,
-        D3D12_BARRIER_SYNC_COMPUTE_SHADING,
-        1,
-        UAVBarrierGroup
-        );
+    pCommandList->Barrier(1, UAVBarrierGroups);
 
 
     // Compute Global UAV barrier
-    // This is what is called a NULL-UAV barrier in ResourceBarrier
+    // This is what is called a "NULL UAV barrier" in legacy ResourceBarrier
     // vernacular.
-    D3D12_BUFFER_BARRIER GlobalBarriersUAV[] =
+    D3D12_BUFFER_BARRIER GlobalBarriersUAVs[] =
     {
-        {
-            D3D12_BARRIER_ACCESS_UNORDERED_ACCESS,
-            D3D12_BARRIER_ACCESS_UNORDERED_ACCESS,
+        CD3DX12_GLOBAL_BARRIER(
+            D3D12_BARRIER_SYNC_COMPUTE_SHADING,     // SyncBefore
+            D3D12_BARRIER_SYNC_COMPUTE_SHADING,     // SyncAfter
+            D3D12_BARRIER_ACCESS_UNORDERED_ACCESS,  // AccessBefore
+            D3D12_BARRIER_ACCESS_UNORDERED_ACCESS,  // AccessAfter
             nullptr
-        }
+        )
     };
 
-    D3D12_BARRIER_GROUP GlobalBarrierGroup[] =
+    D3D12_BARRIER_GROUP GlobalBarrierGroups[] =
     {
-        {
-            D3D12_BARRIER_TYPE_BUFFER,
-            1,
-            GlobalBarriersUAV
-        },
+        CD3DX12_BARRIER_GROUP(1, GlobalBarriersUAVs)
     };
 
-    pCommandList->Barrier(
-        D3D12_BARRIER_SYNC_COMPUTE_SHADING,
-        D3D12_BARRIER_SYNC_COMPUTE_SHADING,
-        1,
-        &GlobalBarrierGroup
-        );
+    pCommandList->Barrier(1, GlobalBarrierGroups);
 
     // Aliasing barrier index buffer -> srv texture
+    // without data sharing.
     D3D12_BUFFER_BARRIER BufBarrierAlias[] =
     {
-        {
-            D3D12_BARRIER_ACCESS_INDEX_BUFFER,
-            D3D12_BARRIER_ACCESS_COMMON,
+        CD3DX12_BUFFER_BARRIER(
+            D3D12_BARRIER_SYNC_INPUT_ASSEMBLER, // SyncBefore
+            D3D12_BARRIER_SYNC_PIXEL_SHADING,   // SyncAfter
+            D3D12_BARRIER_ACCESS_INDEX_BUFFER,  // AccessBefore
+            D3D12_BARRIER_ACCESS_COMMON,        // AccessAfter
             pBuffer,
         }
     };
 
     D3D12_TEXTURE_BARRIER TexBarrierAlias[] =
     {
-        D3D12_BARRIER_ACCESS_COMMON,
-        D3D12_BARRIER_ACCESS_SHADER_RESOURCE,
-        D3D12_BARRIER_LAYOUT_UNDEFINED,
-        D3D12_BARRIER_LAYOUT_SHADER_RESOURCE, // Either Compute or Direct queue shader resource
-        pTexture
+        CD3DX12_TEXTURE_BARRIER(
+            D3D12_BARRIER_SYNC_INPUT_ASSEMBLER,     // SyncBefore
+            D3D12_BARRIER_SYNC_PIXEL_SHADING,       // SyncAfter
+            D3D12_BARRIER_ACCESS_INDEX_BUFFER,      // AccessBefore
+            D3D12_BARRIER_ACCESS_SHADER_RESOURCE,   // AccessAfter
+            D3D12_BARRIER_LAYOUT_UNDEFINED,         // LayoutBefore is UNDEFINED
+            D3D12_BARRIER_LAYOUT_SHADER_RESOURCE,   // LayoutAfter
+            pTexture,
+            CD3DX12_BARRIER_SUBRESOURCE_RANGE(0xffffffff),       // All subresources
+            D3D12_TEXTURE_BARRIER_FLAG_DISCARD      // Discard and init metadata
+        )
     };
 
-    D3D12_BARRIER_GROUP AliasBarrierGroup[] =
+    D3D12_BARRIER_GROUP AliasBarrierGroups[] =
     {
-        {
-            D3D12_BARRIER_TYPE_BUFFER,
-            1,
-            BufBarrierAlias
-        },
-        {
-            D3D12_BARRIER_TYPE_TEXTURE,
-            1,
-            TexBarrierAlias
-        },
+        CD3DX12_BARRIER_GROUP(1, BufBarrierAlias),
+        CD3DX12_BARRIER_GROUP(1, TexBarrierAlias),
     };
 
-    pCommandList->Barrier(
-        D3D12_BARRIER_SYNC_INPUT_ASSEMBLER,
-        D3D12_BARRIER_SYNC_VERTEX_SHADING,
-        2,
-        AliasBarrierGroup
-        );
+    pCommandList->Barrier(2, AliasBarrierGroupS);
 }
 ```
 

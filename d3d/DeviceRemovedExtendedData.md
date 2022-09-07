@@ -275,26 +275,6 @@ enum D3D12_DRED_ENABLEMENT
 | D3D12_DRED_FLAG_FORCE_ON                | Forces a DRED feature on, regardless of system state.                                                                                           |
 | D3D12_DRED_FLAG_DISABLE_AUTOBREADCRUMBS | Disables a DRED feature, regardless of system state.                                                                                            |
 
-### D3D12_DRED_AUTO_BREADCRUMB_FLAGS
-Used by ID3D12DeviceRemovedExtendedDataSettings2::SetAutoBreadcrumbFlags to modify default auto-breadcrumb behavior.
-
-```c++
-enum D3D12_DRED_AUTO_BREADCRUMB_FLAGS
-{
-    D3D12_DRED_AUTO_BREADCRUMB_FLAG_NONE = 0x0000,
-    D3D12_DRED_AUTO_BREADCRUMB_FLAG_NO_MARKERS = 0x0001,
-    D3D12_DRED_AUTO_BREADCRUMB_FLAG_NO_SHADER_OPS = 0x0002,
-    D3D12_DRED_AUTO_BREADCRUMB_FLAG_NO_FIXED_OPS = 0x0004,
-} D3D12_DRED_AUTO_BREADCRUMB_FLAGS;
-```
-
-| Constants                                     | Description                                                                                                                       |
-|-----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| D3D12_DRED_AUTO_BREADCRUMB_FLAG_NONE          | Default auto-breadcrumb behavior                                                                                                  |
-| D3D12_DRED_AUTO_BREADCRUMB_FLAG_NO_MARKERS    | Set to suppress DRED auto-breadcrumb output for Marker and BeginEvent/EndEvent operations.                                        |
-| D3D12_DRED_AUTO_BREADCRUMB_FLAG_NO_SHADER_OPS | Set to suppress DRED auto-breadcrumb output for shader executing operations, including Draw*, Dispatch*, ExecuteIndirect, etc.    |
-| D3D12_DRED_AUTO_BREADCRUMB_FLAG_NO_FIXED_OPS  | Set to suppress DRED auto-breadcrumb output for fixed-function GPU operations, including Copy*, Resolve*, Clear*, etc.            |
-
 ### D3D12_AUTO_BREADCRUMB_NODE (DRED version 1.1)
 D3D12_AUTO_BREADCRUMB_NODE objects are singly linked to each other via the pNext member.  The last node in the list will have a null pNext.
 
@@ -592,16 +572,20 @@ void ID3D12DeviceRemovedExtendedDataSettings1::SetBreadcrumbContextEnablement(D3
 |------------|------------------------------------------------------------------------|
 | Enablement | Enablement value (defaults to D3D12_DRED_ENABLEMENT_SYSTEM_CONTROLLED) |
 
-### ID3D12DeviceRemovedExtendedDataSettings2::SetAutoBreadcrumbFlags
-Sets DRED auto-breadcrumb flags used to customize auto-breadcrumb behavior, such as limiting breadcrumb output.
+### ID3D12DeviceRemovedExtendedDataSettings2::UseMarkersOnlyAutoBreadcrumbs
+Suppresses DRED auto-breadcrumbs for all operations except:
+
+* ID3D12GraphicsCommandList::SetMarker
+* ID3D12GraphicsCommandList::BeginEvent
+* ID3D12GraphicsCommandList::EndEvent
 
 ```c++
-void ID3D12DeviceRemovedExtendedDataSettings2::SetAutoBreadcrumbFlags(D3D12_DRED_AUTO_BREADCRUMB_FLAGS Flags);
+void ID3D12DeviceRemovedExtendedDataSettings2::UseMarkersOnlyAutoBreadcrumbs(BOOL MarkersOnly);
 ```
 
-| Parameters | Description                                                                 |
-|------------|-----------------------------------------------------------------------------|
-| Flags      | Logical combination of one or more D3D12_DRED_AUTO_BREADCRUMB_FLAGS bits    |
+| Parameters  | Description                                                                 |
+|-------------|-----------------------------------------------------------------------------|
+| MarkersOnly | Set to 'true' to enable markers-only auto-breadcrumbs.                      |
 
 ### ID3D12DeviceRemovedExtendedData::GetAutoBreadcrumbsOutput (DRED version 1.1)  
 Gets the DRED auto-breadcrumbs output.
