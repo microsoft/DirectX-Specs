@@ -5762,7 +5762,7 @@ If a variable of type `RayQuery` is assigned to another (which must have been de
 
 `RayQuery` supports the methods (\*) in the following tables depending on its current state. The intrinsics are listed across several tables for readability (with entries repeated as appicable). Calling unsupported methods is invalid and produces undefined results.  
 
-The first table lists intrinsics available after the two steps in `RayQuery` initialization:  First, declaring a [RayQuery](#rayquery) object (with [RayFlags](#ray-flags) template parameter), followed by calling [RayQuery::TraceRayInline()](#rayquery-tracerayinline) to initialize trace parameters but not yet begin the traversal.  [RayQuery::TraceRayInline()](#rayquery-tracerayinline) can be called over again any time to initialize a new trace, discarding the current one regardlessof what state it is in.
+The first table lists intrinsics available after the two steps in `RayQuery` initialization:  First, declaring a [RayQuery](#rayquery) object (with [RayFlags](#ray-flags) template parameter), followed by calling [RayQuery::TraceRayInline()](#rayquery-tracerayinline) to initialize trace parameters but not yet begin the traversal.  [RayQuery::TraceRayInline()](#rayquery-tracerayinline) can be called over again any time to initialize a new trace, discarding the current one regardless of what state it is in.
 
 | **Intrinsic** \ State | New `RayQuery` object|`TraceRayInline()` was called |
 |:--------------|:-----------:|:-----------:|
@@ -6986,7 +6986,7 @@ struct [raypayload] MyPayload
 
 Here are some guidelines to help developers specify [payload access qualifier](#payload-access-qualifiers) definitions correctly:
 
-1) Does the caller need to initialize the field before calling [TraceRay](#traceray) Add `caller` to `write`.
+1) Does the caller need to initialize the field before calling [TraceRay](#traceray)? Add `caller` to `write`.
 2) Does the caller use the returned field after calling [TraceRay](#traceray) (including in cases like loops)? Add `caller` to `read`.
 3) Does any shader of an [anyhit](#any-hit-shaders)/[closesthit](#closest-hit-shaders)/[miss](#miss-shaders) stage read the field, but no shader in the same stage ever writes it? Add the corresponding shader stage to `read` but not `write`.
 4) Do all shaders of an [anyhit](#any-hit-shaders)/[closesthit](#closest-hit-shaders)/[miss](#miss-shaders) stage write the field unconditionally and never read it? Add the corresponding shader stage to `write` but not `read`.
@@ -7426,7 +7426,7 @@ state object creation.
 
 ##### Collection lifetimes
 
-Consider a state object (call it `S`) that references another state object such as an existing ][collection](#collection-state-object) (call it `E`).  
+Consider a state object (call it `S`) that references another state object such as an existing [collection](#collection-state-object) (call it `E`).  
 
 In the runtime, `S` holds a reference on `E` so that even if the app destroys `E`, the driver won't see `E` destroyed until `S` gets destroyed.  This also means the DDI structures describing `E` when it was originally created stay alive as long as `E` is kept alive.  So in the driver both `E` and `S` can freely keep references into the data structures describing the contents of `E` without having to copy them.
 
