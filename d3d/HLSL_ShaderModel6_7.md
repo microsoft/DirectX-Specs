@@ -8,7 +8,7 @@ v1.0 2022-08-01
 - [Advanced Texture Operations](#advanced-texture-operations)
   - [Raw Gather](#raw-gather)
   - [SampleCmpLevel](#samplecmplevel)
-  - [Programmable Offesets](#programmable-offsets)
+  - [Programmable Offsets](#programmable-offsets)
   - [Writable MSAA Textures](#writable-msaa-textures)
 - [QuadAny and QuadAll](#quadany-and-quadall)
 - [Helper Lanes in Wave Ops Mode](#helper-lanes-in-wave-ops-mode)
@@ -46,7 +46,7 @@ See the [SampleCmpLevel](HLSL_SM_6_7_Advanced_Texture_Ops.md#samplecmplevel) sec
 
 Advanced Texture Operations eliminates the requirement that offsets for sample and load operations be immediate values. This applies to all Sample and Load builtin functions including the newly-added `SampleCmpLevel`. Any variables can now be used for offsets, but the respected offset range remains [-8,7] corresponding to the 4 least significant bits of the value.
 
-See the [Programmable Offests](HLSL_SM_6_7_Advanced_Texture_Ops.md#programmable-offsets) section of the Advanced Texture Ops documentation for more details.
+See the [Programmable Offsets](HLSL_SM_6_7_Advanced_Texture_Ops.md#programmable-offsets) section of the Advanced Texture Ops documentation for more details.
 
 ## Writable MSAA Textures
 
