@@ -352,6 +352,9 @@ The returned frequency is measured in Hz (ticks/sec). This API fails
 (E_FAIL) if the specified command queue does not support timestamps
 (see the table in the previous section).
 
+Timestamp frequencies do not change, even if other clock frequencies
+on the GPU change.
+
 ## Clock Calibration
 
 D3D12 enables applications to correlate results obtained from timestamp
