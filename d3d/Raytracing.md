@@ -181,7 +181,7 @@ v1.19 8/10/2022
     - [CopyRaytracingAccelerationStructure](#copyraytracingaccelerationstructure)
       - [CopyRaytracingAccelerationStructure Structures](#copyraytracingaccelerationstructure-structures)
         - [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode)
-        - [D3D12_SERIALIZED_ACCELERATION_STRUCTURE_HEADER](#d3d12_serialized_acceleration_structure_header)
+        - [D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER](#d3d12_serialized_raytracing_acceleration_structure_header)
         - [D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_TOOLS_VISUALIZATION_HEADER](#d3d12_build_raytracing_acceleration_structure_tools_visualization_header)
     - [SetPipelineState1](#setpipelinestate1)
     - [DispatchRays](#dispatchrays)
@@ -3579,7 +3579,7 @@ typedef struct D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER
 Opaque data structure describing driver versioning for a serialized
 acceleration structure. This is a member of the header for serialized
 acceleration structure,
-[D3D12_SERIALIZED_ACCELERATION_STRUCTURE_HEADER](#d3d12_serialized_acceleration_structure_header).
+[D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER](#d3d12_serialized_raytracing_acceleration_structure_header).
 Passing this identifier into [CheckDriverMatchingIdentifier()](#checkdrivermatchingidentifier) tells
 an app if a previously serialized acceleration structure is compatible
 with the current driver/device, and can therefore be deserialized and
@@ -4180,8 +4180,8 @@ typedef struct D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZAT
 
 Member                              | Definition
 ---------                           | ----------
-`UINT64 SerializedSizeInBytes | Size of the serialized acceleration structure, including a header. The header is [D3D12_SERIALIZED_ACCELERATION_STRUCTURE_HEADER](#d3d12_serialized_acceleration_structure_header) followed by followed by a list of pointers to bottom-level acceleration structures.
-`UINT64 NumBottomLevelAccelerationStructurePointers` | <p>How many 64bit GPUVAs will be at the start of the serialized acceleration structure (after `D3D12_SERIALIZED_ACCELERATION_STRUCTURE_HEADER` above). For a bottom-level acceleration structure this will be 0. For a top-level acceleration structure, the pointers indicate the acceleration structures being referred to.</p><p> When deserializing happens, these pointers to bottom level pointers must be initialized by the app in the serialized data (just after the header) to the new locations where the bottom level acceleration structures will reside. These new locations pointed to at deserialize time need not have been populated with bottom-level acceleration structures yet, as long as they have been initialized with the expected deserialized data structures before use in raytracing. During deserialization, the driver reads the new pointers, using them to produce an equivalent top-level acceleration structure to the original.</p>
+`UINT64 SerializedSizeInBytes | Size of the serialized acceleration structure, including a header. The header is [D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER](#d3d12_serialized_raytracing_acceleration_structure_header) followed by followed by a list of pointers to bottom-level acceleration structures.
+`UINT64 NumBottomLevelAccelerationStructurePointers` | <p>How many 64bit GPUVAs will be at the start of the serialized acceleration structure (after `D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER` above). For a bottom-level acceleration structure this will be 0. For a top-level acceleration structure, the pointers indicate the acceleration structures being referred to.</p><p> When deserializing happens, these pointers to bottom level pointers must be initialized by the app in the serialized data (just after the header) to the new locations where the bottom level acceleration structures will reside. These new locations pointed to at deserialize time need not have been populated with bottom-level acceleration structures yet, as long as they have been initialized with the expected deserialized data structures before use in raytracing. During deserialization, the driver reads the new pointers, using them to produce an equivalent top-level acceleration structure to the original.</p>
 
 ---
 
@@ -4253,7 +4253,7 @@ Value                               | Definition
 
 ---
 
-##### D3D12_SERIALIZED_ACCELERATION_STRUCTURE_HEADER
+##### D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER
 
 ```C++
 typedef struct D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER
