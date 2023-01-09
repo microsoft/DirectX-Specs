@@ -255,8 +255,8 @@ The second references the location in the provided sample index.
 ```c++
 R RWTexture2DMS::Operator[](uint2 pos);
 R RWTexture2DMS::sample.Operator[][](uint sampleIndex, uint2 pos);
-R RWTexture2DMSArray::Operator[](uint2 pos);
-R RWTexture2DMSArray::sample.Operator[][](uint sampleIndex, uint2 pos);
+R RWTexture2DMSArray::Operator[](uint3 pos);
+R RWTexture2DMSArray::sample.Operator[][](uint sampleIndex, uint3 pos);
 ```
 
 Support for writable MSAA textures is determined by
