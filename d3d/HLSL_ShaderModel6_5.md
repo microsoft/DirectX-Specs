@@ -231,7 +231,9 @@ output = WaveMultiPrefixSum(value, mask);
 Note how subset with `mask.x == 0x0b` refers to lane 1,
 which is either inactive or is a helper lane.
 This doesn't affect the result since bits in the mask
-corresponding to inactive or helper lanes are ignored.
+corresponding to inactive or helper lanes are ignored
+(lane 0's `mask.x` effectively becomes `0x09`, so there
+is no intersecting subset of lanes).
 
 ## Example usage
 
