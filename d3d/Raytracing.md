@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.19 8/10/2022
+v1.20 1/11/2023
 
 ---
 
@@ -114,81 +114,81 @@ v1.19 8/10/2022
   - [Device methods](#device-methods)
     - [CheckFeatureSupport](#checkfeaturesupport)
       - [CheckFeatureSupport Structures](#checkfeaturesupport-structures)
-        - [D3D12_FEATURE_D3D12_OPTIONS5](#d3d12_feature_d3d12_options5)
-        - [D3D12_RAYTRACING_TIER](#d3d12_raytracing_tier)
+        - [D3D12\_FEATURE\_D3D12\_OPTIONS5](#d3d12_feature_d3d12_options5)
+        - [D3D12\_RAYTRACING\_TIER](#d3d12_raytracing_tier)
     - [CreateStateObject](#createstateobject)
       - [CreateStateObject Structures](#createstateobject-structures)
-        - [D3D12_STATE_OBJECT_DESC](#d3d12_state_object_desc)
-        - [D3D12_STATE_OBJECT_TYPE](#d3d12_state_object_type)
-        - [D3D12_STATE_SUBOBJECT](#d3d12_state_subobject)
-        - [D3D12_STATE_SUBOBJECT_TYPE](#d3d12_state_subobject_type)
-        - [D3D12_STATE_OBJECT_CONFIG](#d3d12_state_object_config)
-        - [D3D12_STATE_OBJECT_FLAGS](#d3d12_state_object_flags)
-        - [D3D12_GLOBAL_ROOT_SIGNATURE](#d3d12_global_root_signature)
-        - [D3D12_LOCAL_ROOT_SIGNATURE](#d3d12_local_root_signature)
-        - [D3D12_DXIL_LIBRARY_DESC](#d3d12_dxil_library_desc)
-        - [D3D12_EXPORT_DESC](#d3d12_export_desc)
-        - [D3D12_EXPORT_FLAGS](#d3d12_export_flags)
-        - [D3D12_EXISTING_COLLECTION_DESC](#d3d12_existing_collection_desc)
-        - [D3D12_HIT_GROUP_DESC](#d3d12_hit_group_desc)
-        - [D3D12_HIT_GROUP_TYPE](#d3d12_hit_group_type)
-        - [D3D12_RAYTRACING_SHADER_CONFIG](#d3d12_raytracing_shader_config)
-        - [D3D12_RAYTRACING_PIPELINE_CONFIG](#d3d12_raytracing_pipeline_config)
-        - [D3D12_RAYTRACING_PIPELINE_CONFIG1](#d3d12_raytracing_pipeline_config1)
-        - [D3D12_RAYTRACING_PIPELINE_FLAGS](#d3d12_raytracing_pipeline_flags)
-        - [D3D12_NODE_MASK](#d3d12_node_mask)
-        - [D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION](#d3d12_subobject_to_exports_association)
-        - [D3D12_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION](#d3d12_dxil_subobject_to_exports_association)
+        - [D3D12\_STATE\_OBJECT\_DESC](#d3d12_state_object_desc)
+        - [D3D12\_STATE\_OBJECT\_TYPE](#d3d12_state_object_type)
+        - [D3D12\_STATE\_SUBOBJECT](#d3d12_state_subobject)
+        - [D3D12\_STATE\_SUBOBJECT\_TYPE](#d3d12_state_subobject_type)
+        - [D3D12\_STATE\_OBJECT\_CONFIG](#d3d12_state_object_config)
+        - [D3D12\_STATE\_OBJECT\_FLAGS](#d3d12_state_object_flags)
+        - [D3D12\_GLOBAL\_ROOT\_SIGNATURE](#d3d12_global_root_signature)
+        - [D3D12\_LOCAL\_ROOT\_SIGNATURE](#d3d12_local_root_signature)
+        - [D3D12\_DXIL\_LIBRARY\_DESC](#d3d12_dxil_library_desc)
+        - [D3D12\_EXPORT\_DESC](#d3d12_export_desc)
+        - [D3D12\_EXPORT\_FLAGS](#d3d12_export_flags)
+        - [D3D12\_EXISTING\_COLLECTION\_DESC](#d3d12_existing_collection_desc)
+        - [D3D12\_HIT\_GROUP\_DESC](#d3d12_hit_group_desc)
+        - [D3D12\_HIT\_GROUP\_TYPE](#d3d12_hit_group_type)
+        - [D3D12\_RAYTRACING\_SHADER\_CONFIG](#d3d12_raytracing_shader_config)
+        - [D3D12\_RAYTRACING\_PIPELINE\_CONFIG](#d3d12_raytracing_pipeline_config)
+        - [D3D12\_RAYTRACING\_PIPELINE\_CONFIG1](#d3d12_raytracing_pipeline_config1)
+        - [D3D12\_RAYTRACING\_PIPELINE\_FLAGS](#d3d12_raytracing_pipeline_flags)
+        - [D3D12\_NODE\_MASK](#d3d12_node_mask)
+        - [D3D12\_SUBOBJECT\_TO\_EXPORTS\_ASSOCIATION](#d3d12_subobject_to_exports_association)
+        - [D3D12\_DXIL\_SUBOBJECT\_TO\_EXPORTS\_ASSOCIATION](#d3d12_dxil_subobject_to_exports_association)
     - [AddToStateObject](#addtostateobject)
     - [GetRaytracingAccelerationStructurePrebuildInfo](#getraytracingaccelerationstructureprebuildinfo)
       - [GetRaytracingAccelerationStructurePrebuildInfo Structures](#getraytracingaccelerationstructureprebuildinfo-structures)
-        - [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO](#d3d12_raytracing_acceleration_structure_prebuild_info)
+        - [D3D12\_RAYTRACING\_ACCELERATION\_STRUCTURE\_PREBUILD\_INFO](#d3d12_raytracing_acceleration_structure_prebuild_info)
     - [CheckDriverMatchingIdentifier](#checkdrivermatchingidentifier)
       - [CheckDriverMatchingIdentifier Structures](#checkdrivermatchingidentifier-structures)
-        - [D3D12_SERIALIZED_DATA_TYPE](#d3d12_serialized_data_type)
-        - [D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER](#d3d12_serialized_data_driver_matching_identifier)
-        - [D3D12_DRIVER_MATCHING_IDENTIFIER_STATUS](#d3d12_driver_matching_identifier_status)
+        - [D3D12\_SERIALIZED\_DATA\_TYPE](#d3d12_serialized_data_type)
+        - [D3D12\_SERIALIZED\_DATA\_DRIVER\_MATCHING\_IDENTIFIER](#d3d12_serialized_data_driver_matching_identifier)
+        - [D3D12\_DRIVER\_MATCHING\_IDENTIFIER\_STATUS](#d3d12_driver_matching_identifier_status)
     - [CreateCommandSignature](#createcommandsignature)
       - [CreateCommandSignature Structures](#createcommandsignature-structures)
-        - [D3D12_COMMAND_SIGNATURE_DESC](#d3d12_command_signature_desc)
-        - [D3D12_INDIRECT_ARGUMENT_DESC](#d3d12_indirect_argument_desc)
-        - [D3D12_INDIRECT_ARGUMENT_TYPE](#d3d12_indirect_argument_type)
+        - [D3D12\_COMMAND\_SIGNATURE\_DESC](#d3d12_command_signature_desc)
+        - [D3D12\_INDIRECT\_ARGUMENT\_DESC](#d3d12_indirect_argument_desc)
+        - [D3D12\_INDIRECT\_ARGUMENT\_TYPE](#d3d12_indirect_argument_type)
   - [Command list methods](#command-list-methods)
     - [BuildRaytracingAccelerationStructure](#buildraytracingaccelerationstructure)
       - [BuildRaytracingAccelerationStructure Structures](#buildraytracingaccelerationstructure-structures)
-        - [D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC](#d3d12_build_raytracing_acceleration_structure_desc)
-        - [D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS](#d3d12_build_raytracing_acceleration_structure_inputs)
-        - [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE](#d3d12_raytracing_acceleration_structure_type)
-        - [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS](#d3d12_raytracing_acceleration_structure_build_flags)
-        - [D3D12_ELEMENTS_LAYOUT](#d3d12_elements_layout)
-        - [D3D12_RAYTRACING_GEOMETRY_DESC](#d3d12_raytracing_geometry_desc)
-        - [D3D12_RAYTRACING_GEOMETRY_TYPE](#d3d12_raytracing_geometry_type)
-        - [D3D12_RAYTRACING_GEOMETRY_FLAGS](#d3d12_raytracing_geometry_flags)
-        - [D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC](#d3d12_raytracing_geometry_triangles_desc)
-        - [D3D12_RAYTRACING_GEOMETRY_AABBS_DESC](#d3d12_raytracing_geometry_aabbs_desc)
-        - [D3D12_RAYTRACING_AABB](#d3d12_raytracing_aabb)
-        - [D3D12_RAYTRACING_INSTANCE_DESC](#d3d12_raytracing_instance_desc)
-        - [D3D12_RAYTRACING_INSTANCE_FLAGS](#d3d12_raytracing_instance_flags)
-        - [D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE](#d3d12_gpu_virtual_address_and_stride)
+        - [D3D12\_BUILD\_RAYTRACING\_ACCELERATION\_STRUCTURE\_DESC](#d3d12_build_raytracing_acceleration_structure_desc)
+        - [D3D12\_BUILD\_RAYTRACING\_ACCELERATION\_STRUCTURE\_INPUTS](#d3d12_build_raytracing_acceleration_structure_inputs)
+        - [D3D12\_RAYTRACING\_ACCELERATION\_STRUCTURE\_TYPE](#d3d12_raytracing_acceleration_structure_type)
+        - [D3D12\_RAYTRACING\_ACCELERATION\_STRUCTURE\_BUILD\_FLAGS](#d3d12_raytracing_acceleration_structure_build_flags)
+        - [D3D12\_ELEMENTS\_LAYOUT](#d3d12_elements_layout)
+        - [D3D12\_RAYTRACING\_GEOMETRY\_DESC](#d3d12_raytracing_geometry_desc)
+        - [D3D12\_RAYTRACING\_GEOMETRY\_TYPE](#d3d12_raytracing_geometry_type)
+        - [D3D12\_RAYTRACING\_GEOMETRY\_FLAGS](#d3d12_raytracing_geometry_flags)
+        - [D3D12\_RAYTRACING\_GEOMETRY\_TRIANGLES\_DESC](#d3d12_raytracing_geometry_triangles_desc)
+        - [D3D12\_RAYTRACING\_GEOMETRY\_AABBS\_DESC](#d3d12_raytracing_geometry_aabbs_desc)
+        - [D3D12\_RAYTRACING\_AABB](#d3d12_raytracing_aabb)
+        - [D3D12\_RAYTRACING\_INSTANCE\_DESC](#d3d12_raytracing_instance_desc)
+        - [D3D12\_RAYTRACING\_INSTANCE\_FLAGS](#d3d12_raytracing_instance_flags)
+        - [D3D12\_GPU\_VIRTUAL\_ADDRESS\_AND\_STRIDE](#d3d12_gpu_virtual_address_and_stride)
     - [EmitRaytracingAccelerationStructurePostbuildInfo](#emitraytracingaccelerationstructurepostbuildinfo)
       - [EmitRaytracingAccelerationStructurePostbuildInfo Structures](#emitraytracingaccelerationstructurepostbuildinfo-structures)
-        - [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_desc)
-        - [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TYPE](#d3d12_raytracing_acceleration_structure_postbuild_info_type)
-        - [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_compacted_size_desc)
-        - [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TOOLS_VISUALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_tools_visualization_desc)
-        - [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc)
-        - [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SIZE_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_current_size_desc)
+        - [D3D12\_RAYTRACING\_ACCELERATION\_STRUCTURE\_POSTBUILD\_INFO\_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_desc)
+        - [D3D12\_RAYTRACING\_ACCELERATION\_STRUCTURE\_POSTBUILD\_INFO\_TYPE](#d3d12_raytracing_acceleration_structure_postbuild_info_type)
+        - [D3D12\_RAYTRACING\_ACCELERATION\_STRUCTURE\_POSTBUILD\_INFO\_COMPACTED\_SIZE\_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_compacted_size_desc)
+        - [D3D12\_RAYTRACING\_ACCELERATION\_STRUCTURE\_POSTBUILD\_INFO\_TOOLS\_VISUALIZATION\_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_tools_visualization_desc)
+        - [D3D12\_RAYTRACING\_ACCELERATION\_STRUCTURE\_POSTBUILD\_INFO\_SERIALIZATION\_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc)
+        - [D3D12\_RAYTRACING\_ACCELERATION\_STRUCTURE\_POSTBUILD\_INFO\_CURRENT\_SIZE\_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_current_size_desc)
     - [CopyRaytracingAccelerationStructure](#copyraytracingaccelerationstructure)
       - [CopyRaytracingAccelerationStructure Structures](#copyraytracingaccelerationstructure-structures)
-        - [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode)
-        - [D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER](#d3d12_serialized_raytracing_acceleration_structure_header)
-        - [D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_TOOLS_VISUALIZATION_HEADER](#d3d12_build_raytracing_acceleration_structure_tools_visualization_header)
+        - [D3D12\_RAYTRACING\_ACCELERATION\_STRUCTURE\_COPY\_MODE](#d3d12_raytracing_acceleration_structure_copy_mode)
+        - [D3D12\_SERIALIZED\_RAYTRACING\_ACCELERATION\_STRUCTURE\_HEADER](#d3d12_serialized_raytracing_acceleration_structure_header)
+        - [D3D12\_BUILD\_RAYTRACING\_ACCELERATION\_STRUCTURE\_TOOLS\_VISUALIZATION\_HEADER](#d3d12_build_raytracing_acceleration_structure_tools_visualization_header)
     - [SetPipelineState1](#setpipelinestate1)
     - [DispatchRays](#dispatchrays)
       - [DispatchRays Structures](#dispatchrays-structures)
-        - [D3D12_DISPATCH_RAYS_DESC](#d3d12_dispatch_rays_desc)
-        - [D3D12_GPU_VIRTUAL_ADDRESS_RANGE](#d3d12_gpu_virtual_address_range)
-        - [D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE](#d3d12_gpu_virtual_address_range_and_stride)
+        - [D3D12\_DISPATCH\_RAYS\_DESC](#d3d12_dispatch_rays_desc)
+        - [D3D12\_GPU\_VIRTUAL\_ADDRESS\_RANGE](#d3d12_gpu_virtual_address_range)
+        - [D3D12\_GPU\_VIRTUAL\_ADDRESS\_RANGE\_AND\_STRIDE](#d3d12_gpu_virtual_address_range_and_stride)
     - [ExecuteIndirect](#executeindirect)
   - [ID3D12StateObjectProperties methods](#id3d12stateobjectproperties-methods)
     - [GetShaderIdentifier](#getshaderidentifier)
@@ -197,7 +197,7 @@ v1.19 8/10/2022
     - [SetPipelineStackSize](#setpipelinestacksize)
   - [Additional resource states](#additional-resource-states)
   - [Additional root signature flags](#additional-root-signature-flags)
-    - [D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE](#d3d12_root_signature_flag_local_root_signature)
+    - [D3D12\_ROOT\_SIGNATURE\_FLAG\_LOCAL\_ROOT\_SIGNATURE](#d3d12_root_signature_flag_local_root_signature)
     - [Note on shader visibility](#note-on-shader-visibility)
   - [Additional SRV type](#additional-srv-type)
   - [Constants](#constants)
@@ -257,8 +257,8 @@ v1.19 8/10/2022
   - [RayQuery](#rayquery)
     - [RayQuery intrinsics](#rayquery-intrinsics)
       - [RayQuery enums](#rayquery-enums)
-        - [COMMITTED_STATUS](#committed_status)
-        - [CANDIDATE_TYPE](#candidate_type)
+        - [COMMITTED\_STATUS](#committed_status)
+        - [CANDIDATE\_TYPE](#candidate_type)
       - [RayQuery TraceRayInline](#rayquery-tracerayinline)
         - [TraceRayInline examples](#tracerayinline-examples)
           - [TraceRayInline example 1](#tracerayinline-example-1)
@@ -326,17 +326,17 @@ v1.19 8/10/2022
     - [Descriptor handle encodings](#descriptor-handle-encodings)
   - [State object DDIs](#state-object-ddis)
     - [State subobjects](#state-subobjects)
-      - [D3D12DDI_STATE_SUBOBJECT_TYPE](#d3d12ddi_state_subobject_type)
-      - [D3D12DDI_STATE_SUBOBJECT_0054](#d3d12ddi_state_subobject_0054)
-      - [D3D12DDI_STATE_SUBOBJECT_TYPE_SHADER_EXPORT_SUMMARY](#d3d12ddi_state_subobject_type_shader_export_summary)
-      - [D3D12DDI_FUNCTION_SUMMARY_0054](#d3d12ddi_function_summary_0054)
-      - [D3D12DDI_FUNCTION_SUMMARY_NODE_0054](#d3d12ddi_function_summary_node_0054)
-      - [D3D12_EXPORT_SUMMARY_FLAGS](#d3d12_export_summary_flags)
+      - [D3D12DDI\_STATE\_SUBOBJECT\_TYPE](#d3d12ddi_state_subobject_type)
+      - [D3D12DDI\_STATE\_SUBOBJECT\_0054](#d3d12ddi_state_subobject_0054)
+      - [D3D12DDI\_STATE\_SUBOBJECT\_TYPE\_SHADER\_EXPORT\_SUMMARY](#d3d12ddi_state_subobject_type_shader_export_summary)
+      - [D3D12DDI\_FUNCTION\_SUMMARY\_0054](#d3d12ddi_function_summary_0054)
+      - [D3D12DDI\_FUNCTION\_SUMMARY\_NODE\_0054](#d3d12ddi_function_summary_node_0054)
+      - [D3D12\_EXPORT\_SUMMARY\_FLAGS](#d3d12_export_summary_flags)
       - [State object lifetimes as seen by driver](#state-object-lifetimes-as-seen-by-driver)
         - [Collection lifetimes](#collection-lifetimes)
         - [AddToStateObject parent lifetimes](#addtostateobject-parent-lifetimes)
     - [Reporting raytracing support from the driver](#reporting-raytracing-support-from-the-driver)
-      - [D3D12DDI_RAYTRACING_TIER](#d3d12ddi_raytracing_tier)
+      - [D3D12DDI\_RAYTRACING\_TIER](#d3d12ddi_raytracing_tier)
 - [Potential future features](#potential-future-features)
   - [Traversal shaders](#traversal-shaders)
   - [More efficient acceleration structure builds](#more-efficient-acceleration-structure-builds)
@@ -4830,8 +4830,12 @@ shader entry function. Use an empty string to omit a shader type.
 Example:
 
 ```C++
-HitGroup my_group_name("intersection_main", "anyhit_main",
-"closesthit_main");
+HitGroup my_group_name = 
+{ 
+  "intersection_main", 
+  "anyhit_main", 
+  "closesthit_main"
+};
 ```
 
 ---
@@ -4843,7 +4847,10 @@ or associated with shaders by name. The root signature is global for all
 shaders in a [DispatchRays](#dispatchrays) call.
 
 ```C++
-RootSignature my_rs_name("root signature definition");
+GlobalRootSignature my_rs_name = 
+{
+    "root signature definition"
+};
 ```
 
 ---
@@ -4855,7 +4862,10 @@ local root signature defines the structure of additional root arguments
 read from the shader record in the shader table.
 
 ```C++
-LocalRootSignature my_local_rs_name("local root signature definition");
+LocalRootSignature my_local_rs_name = 
+{
+    "local root signature definition"
+};
 ```
 
 ---
@@ -4868,8 +4878,11 @@ string, and the list of entry points is supplied as a
 semicolon-separated list of function names in a string.
 
 ```C++
-SubobjectToEntrypointAssociation
-my_association_name("subobject_name","function1;function2;function3");
+SubobjectToEntrypointAssociation my_association_name = 
+{
+    "subobject_name",
+    "function1;function2;function3"
+};
 ```
 
 ---
@@ -4880,7 +4893,11 @@ Defines the maximum sizes in bytes for the [ray payload](#ray-payload-structure)
 See the API equivalent: [D3D12_RAYTRACING_SHADER_CONFIG](#d3d12_raytracing_shader_config).
 
 ```C++
-RaytracingShaderConfig shader_config_name(maxPayloadSizeInBytes,maxAttributeSizeInBytes);
+RaytracingShaderConfig shader_config_name = 
+{
+    maxPayloadSizeInBytes,
+    maxAttributeSizeInBytes
+};
 ```
 
 ---
@@ -4891,7 +4908,10 @@ Defines the maximum [TraceRay()](#traceray) recursion depth. See the API
 equivalent: [D3D12_RAYTRACING_PIPELINE_CONFIG](#d3d12_raytracing_pipeline_config).
 
 ```C++
-RaytracingPipelineConfig config_name(maxTraceRecursionDepth);
+RaytracingPipelineConfig config_name = 
+{
+    maxTraceRecursionDepth
+};
 ```
 
 ---
@@ -4902,8 +4922,11 @@ Defines the maximum [TraceRay()](#traceray) recursion depth as well as raytracin
 equivalent: [D3D12_RAYTRACING_PIPELINE_CONFIG1](#d3d12_raytracing_pipeline_config1).
 
 ```C++
-RaytracingPipelineConfig1 config_name(maxTraceRecursionDepth,
-                                      RAYTRACING_PIPELINE_CONFIG_FLAG_*);
+RaytracingPipelineConfig1 config_name = 
+{
+    maxTraceRecursionDepth,
+    RAYTRACING_PIPELINE_CONFIG_FLAG_*
+};
 ```
 
 The available flags (`RAYTRACING_PIPELINE_CONFIG_FLAG_*`) are defined at: [Raytracing pipeline flags](#raytracing-pipeline-flags).
@@ -7652,3 +7675,4 @@ v1.16|7/29/2021|<li>For [any hit shaders](#any-hit-shaders), clarified that for 
 v1.17|10/25/2021|<li>In [Degenerate primitives and instances](#degenerate-primitives-and-instances), added the clarification:  An exception to the rule that degenerates cannot be discarded with `ALLOW_UPDATE` specified is primitives that have repeated index value can always be discarded (even with `ALLOW_UPDATE` specified).  There is no value in keeping them since index values cannot be changed.</li>
 v1.18|3/31/2022|<li>In [Inactive primitives and instances](#inactive-primitives-and-instances), changed handling of NaN in triangles to: Triangles are considered "inactive" (but legal input to acceleration structure build) if the x component of any vertex is NaN.  The "any" used to be "each".  This reduces the amount of undefined behavior apps are exposed to.</li>
 v1.19|8/10/2022|<li>For [GetShaderIdentifier](#getshaderidentifier) clarified that the returned pointer is valid as long as the state object is valid (used to only say the data pointed to is valid).</li><li>Removed inaccurate statements that various acceleration structure copy modes require the OS to be in developer mode.  Such enforcement was initially considered but not implemented.</li>
+v1.20|1/11/2023|<li>In HLSL [Subobject definitions](#subobject-definitions) sections, corrected all the examples to show the syntax actually supported by the compiler.  Previously showed an alternative syntax that didn't end up being used.</li>

@@ -259,7 +259,8 @@ RenderTarget with sample count \> 1 (see section 3.5.5), although in the
 case of Conservative Rasterization, it is the depth value going into the
 fixed function depth test that can be extrapolated.
 
-Early Depth culling behavior with Depth Extrapolation is undefined. This
+Use of early depth culling behavior in combination with conservative rasterization is undefined.
+This includes early depth culling where depth extrapolation occurs. This
 is because some Early Depth culling hardware cannot properly support
 extrapolated depth values. However, Early Depth culling behavior in the
 presence of Depth Extrapolation is problematic even with hardware that
