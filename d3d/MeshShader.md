@@ -430,6 +430,92 @@ The following enums are also revised to support the new pipeline statistics stru
  
 `D3D12DDI_QUERY_TYPE_PIPELINE_STATISTICS1` is added to the enum `D3D12DDI_QUERY_TYPE`.
 
+## MSPrimitives and view instancing
+
+The interaction between the MSPrimitives pipeline statistic and [view instancing](ViewInstancing.md#pipeline-statistics) depends on the view instancing tier (D3D12_VIEW_INSTANCING_TIER) of the device. 
+
+On D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED devices, view instancing doesn't affect MSPrimitives.
+
+On D3D12_VIEW_INSTANCING_TIER_1 devices, view instances increment MSPrimitives.
+
+On D3D12_VIEW_INSTANCING_TIER_2 devices,
+  * If SV_ViewID is referenced from MS, view instances increment MSPrimitives.
+  * If SV_ViewID is referenced from a later stage like PS, view instances might or might not increment MSPrimitives.
+
+On D3D12_VIEW_INSTANCING_TIER_3 devices,
+  * If SV_ViewID is referenced from MS, view instances increment MSPrimitives.
+  * If SV_ViewID is referenced from a later stage like PS, then view instances don't increment MSPrimitives.
+
+## Culled primitives' effect on MSPrimitives
+
+Culled primitives might or might not be included in MSPrimitives, depending on the GPU implementation. 
+
+Applications can find out whether the GPU implementation includes culled primitives in the MSPrimitives count, using a queriable capability called MSPrimitivesPipelineStatisticIncludesCulledPrimitives.
+
+The capability is queried using
+
+```
+    D3D12_FEATURE_DATA_D3D12_OPTIONS12 featureData12 = {};
+    VERIFY_SUCCEEDED(m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &featureData12, sizeof(featureData12)));
+
+    bool includeCulledPrimitives = featureData12.MSPrimitivesPipelineStatisticIncludesCulledPrimitives == D3D12_TRI_STATE_TRUE;
+```
+
+In the API, the capability appears as
+```
+typedef 
+enum D3D12_FEATURE
+{
+    ...
+    D3D12_FEATURE_D3D12_OPTIONS12 = 41
+} D3D12_FEATURE;
+
+
+typedef 
+enum D3D12_TRI_STATE
+{
+    D3D12_TRI_STATE_UNKNOWN = -1,
+    D3D12_TRI_STATE_FALSE   = 0,
+    D3D12_TRI_STATE_TRUE    = 1
+} D3D12_TRI_STATE;
+
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS12
+{
+    _Out_ D3D12_TRI_STATE MSPrimitivesPipelineStatisticIncludesCulledPrimitives;
+} D3D12_FEATURE_DATA_D3D12_OPTIONS12;
+```
+
+If the capability value is FALSE, then culled primitives are not included in the MSPrimitives count.
+
+If the capability value is TRUE, then called primitives are included in the MSPrimitives count.
+
+If the capability value is UNKNOWN, then the culled primitives might or might not be included in the count.
+
+> ### Remark
+>
+> At the DDI level, drivers do not return UNKNOWN. At the application level, a capability value of UNKNOWN
+> may be returned if the capability can not be queried from the driver. This could be relevant when, for example,
+> using a driver which supports the mesh shader feature but has not been updated to support the 0086 DDI 
+> version.
+
+At the DDI level, the capability is communicated through UMD DDI revision 0086:
+```
+#define D3D12DDI_INTERFACE_VERSION_R8 ((D3D12DDI_MAJOR_VERSION << 16) | D3D12DDI_MINOR_VERSION_R8)
+
+#define D3D12DDI_BUILD_VERSION_0086 6
+#define D3D12DDI_SUPPORTED_0086 ((((UINT64)D3D12DDI_INTERFACE_VERSION_R8) << 32) | (((UINT64)D3D12DDI_BUILD_VERSION_0086) << 16))
+```
+
+With revision 0086, there exists a revised OPTIONS structure:
+```
+// D3D12DDICAPS_TYPE_D3D12_OPTIONS
+typedef struct D3D12DDI_D3D12_OPTIONS_DATA_0086
+{
+    ...
+    BOOL MSPrimitivesPipelineStatisticIncludesCulledPrimitives;
+}
+```
+
 SV_RenderTargetArrayIndex limitations based on queryable capability
 ===================================================================
 

@@ -87,6 +87,7 @@ Where `Flags` is the enum:
 enum D3D12_SAMPLER_FLAGS {
   D3D12_SAMPLER_FLAG_NONE = 0
   D3D12_SAMPLER_FLAG_UINT_BORDER_COLOR = 0x1
+}
 ```
 
 Setting the `D3D12_SAMPLER_FLAG_UINT_BORDER_COLOR` bit
@@ -115,6 +116,13 @@ Static samplers used with unsigned integer formats must use
  either `D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK_UINT` for black borders
  or `D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE_UINT` for white borders.
 
+Support for non-normalized coordinate samplers added
+`D3D12_STATIC_SAMPLER_DESC1` with a `D3D12_SAMPLER_FLAGS` member. In 
+the context of static samplers, `D3D12_SAMPLER_FLAG_UINT_BORDER_COLOR` 
+is shadowed by the static border color, and not applicable. However, root 
+signature creation will fail if this flag is used with a floating-point 
+border color; with a uint border color it is redundant, but not an error.
+
 ## Raw Gather
 
 To enable access to four appropriately-sized elements
@@ -140,9 +148,9 @@ Additionally, same-size and same-channel aliasing can be performed
 
 In order to be able to create an single-channel integer resource view,
 a resource must be created using the
-[CreateCommittedResource3](D3D12EnhancedBarriers.md#id3d12device10createcommittedresource3),
-[CreatePlacedResource2](D3D12EnhancedBarriers.md#id3d12device10createplacedresource2),
-or [CreateReservedResource2](D3D12EnhancedBarriers.md#id3d12device10createreservedresource2)
+[CreateCommittedResource3](D3D12EnhancedBarriers.md#id3d12device10-createcommittedresource3),
+[CreatePlacedResource2](D3D12EnhancedBarriers.md#id3d12device10-createplacedresource2),
+or [CreateReservedResource2](D3D12EnhancedBarriers.md#id3d12device10-createreservedresource2)
 using the new API fields, `NumCastableFormats` and `pCastableFormats`
 to specify the list of acceptable casts.
 
@@ -339,6 +347,7 @@ but it is being considered a prerequisite for enabling `AdvancedTextureOpsSuppor
 ## Change Log
 Version|Date|Description
 -|-|-
+1.01|30 Sep 2022|Add note about D3D12_STATIC_SAMPLER_DESC1 having sampler flags and interaction with border colors
 1.00|01 Aug 2022|Minor edits for publication
 0.10|08 Mar 2022|Rename integer sampler identifiers
 0.9|07 Mar 2022|Clarify pre-requisite for advanced texture ops, Update integer aliasing in keeping with other specs. Correct type, function, and struct details.
