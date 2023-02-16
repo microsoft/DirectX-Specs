@@ -1297,8 +1297,8 @@ interface ID3D12DescriptorHeap : ID3D12Pageable
 {
     D3D12_DESCRIPTOR_HEAP_DESC GetDesc(
     _Out_ D3D12_DESCRIPTOR_HEAP_DESC* pDesc );
-    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandleForHeapStart();
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandleForHeapStart();
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleForHeapStart();
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleForHeapStart();
 };
 
 interface ID3D12Device
@@ -1316,17 +1316,17 @@ interface ID3D12Device
 GetDescriptorHandleIncrementSize() above allows applications to manually
 offset handles into a heap (producing handles into anywhere in a
 descriptor heap). The heap start location's handle comes from
-GetCPUHandleForHeapStart()/GetGPUHandleForHeapStart(). Offsetting is
+GetCPUDescriptorHandleForHeapStart()/GetGPUDescriptorHandleForHeapStart(). Offsetting is
 done by adding to the descriptor heap start the increment size * number
 of descriptors to offset. Note the increment size cannot be thought of
 as a byte size since applications must not dereference handles as if
 they are memory -- the memory pointed to has a nonstandardized layout
 and can vary even for a given device.
 
-GetCPUHandleForHeapStart() returns a CPU handle for CPU manipulation of
+GetCPUDescriptorHandleForHeapStart() returns a CPU handle for CPU manipulation of
 a descriptor heap.
 
-GetGPUHandleForHeapStart() returns a GPU handle for shader visible
+GetGPUDescriptorHandleForHeapStart() returns a GPU handle for shader visible
 descriptor heaps. It returns a NULL handle (and the debug layer will
 report an error) if the descriptor heap is not shader visible.
 
