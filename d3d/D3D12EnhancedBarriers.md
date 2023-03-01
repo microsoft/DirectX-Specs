@@ -705,7 +705,7 @@ Split barrier pairs must use identical `LayoutBefore`, `LayoutAfter`, `AccessBef
 splitBarrierBegin.SyncBefore = D3D12_BARRIER_SYNC_COMPUTE
 splitBarrierBegin.SyncAfter = D3D12_BARRIER_SYNC_SPLIT
 splitBarrierBegin.AccessBefore = D3D12_BARRIER_ACCESS_UNORDERED_ACCESS
-splitBarrierBegin.AccessAfter = D3D12_BARRIER_ACCESS_DIRECT_QUEUE_SHADER_RESOURCE
+splitBarrierBegin.AccessAfter = D3D12_BARRIER_ACCESS_SHADER_RESOURCE
 splitBarrierBegin.LayoutBefore = D3D12_BARRIER_LAYOUT_UNORDERED_ACCESS
 splitBarrierBegin.LayoutAfter = D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_SHADER_RESOURCE
 
@@ -713,7 +713,7 @@ splitBarrierBegin.LayoutAfter = D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_SHADER_RESOURC
 splitBarrierEnd.SyncBefore = D3D12_BARRIER_SYNC_SPLIT
 splitBarrierEnd.SyncAfter = D3D12_BARRIER_SYNC_PIXEL_SHADING
 splitBarrierEnd.AccessBefore = D3D12_BARRIER_ACCESS_UNORDERED_ACCESS
-splitBarrierEnd.AccessAfter = D3D12_BARRIER_ACCESS_DIRECT_QUEUE_SHADER_RESOURCE
+splitBarrierEnd.AccessAfter = D3D12_BARRIER_ACCESS_SHADER_RESOURCE
 splitBarrierEnd.LayoutBefore = D3D12_BARRIER_LAYOUT_UNORDERED_ACCESS
 splitBarrierEnd.LayoutAfter = D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_SHADER_RESOURCE
 ```
