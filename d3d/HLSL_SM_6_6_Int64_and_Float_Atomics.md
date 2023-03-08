@@ -556,7 +556,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS11 {
 `AtomicInt64OnTypedResourceSupported` is a boolean that specifies
 whether typed resource 64-bit integer atomics are supported.
 `AtomicInt64OnGroupSharedSupported` is a boolean that specifies
-whether typed resource 64-bit integer atomics are supported.
+whether 64-bit integer atomics are supported on `groupshared` variables.
 `AtomicInt64OnDescriptorHeapResourceSupported` is a boolean that specifies
 whether 64-bit integer atomics on resources
 in descriptor heaps are supported.
