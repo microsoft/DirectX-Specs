@@ -33,6 +33,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Relaxed Format Casting Rules](d3d/RelaxedCasting.md)
     * [UAV Typed Load](d3d/UAVTypedLoad.md)
     * [Planar Depth Stencil](d3d/PlanarDepthStencilDDISpec.md)
+    * [Vulkan Compatibility Features](d3d/VulkanOn12.md)
 
 * Performance
     * [CPU Efficiency](d3d/CPUEfficiency.md)
