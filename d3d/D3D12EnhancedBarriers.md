@@ -162,6 +162,7 @@ Under the covers, an Aliasing Barrier typically blocks all GPU execution until a
 The Legacy Aliasing Barrier API assumes that only a single subresource is atomically activated with only one other subresource being deactivated.  However, there are many scenarios where there are multiple overlapping subresources on the 'before' and/or 'after' side of the aliasing barrier (see *Figure 1*).
 
 ![Figure 1](images/D3D12PipelineBarriers/AsymAliasing.png)
+
 *Figure 1*
 
 In *Figure 1*, NewTex1 partially overlaps OldTex1 and OldBuf2, which are also partially aliased with other after-resources.  The only way to accomplish this using Legacy Aliasing Barriers is to use a "null/null" aliasing barrier, which is guaranteed to produces a full GPU execution stall.  This is especially unfortunate if all commands accessing OldTex1, OldBuf1, and OldBuf2 have already completed.
@@ -288,6 +289,7 @@ DATA_STATIC_WHILE_SET_AT_EXECUTE descriptors require resource data is finalized 
 Umbrella synchronization scopes supersede one or more other synchronization scopes, and can effectively be treated as though all of the superseded scope bits are set.  For example, the `D3D12_BARRIER_SYNC_DRAW` scope supersedes `D3D12_BARRIER_SYNC_INDEX_INPUT`, `D3D12_BARRIER_SYNC_VERTEX_SHADING`, `D3D12_BARRIER_SYNC_PIXEL_SHADING`, `D3D12_BARRIER_SYNC_DEPTH_STENCIL`, and `D3D12_BARRIER_SYNC_RENDER_TARGET` (see Figure 2).
 
 ![Figure 2](images/D3D12PipelineBarriers/OverlappingScopes.png)
+
 *Figure 2*
 
 The following tables list superseded synchronization scope bits for each umbrella synchronization scope bit.
