@@ -132,10 +132,10 @@ Enhanced Barriers features include:
 
 A Resource State encapsulates both the Layout of a subresource and the ways the GPU can access a subresource (e.g. UAV write, SRV read, Render Target, etc).  Resource State Transitions do the following:
 
-1) GPU work Synchronization
+1. GPU work Synchronization
    - Any in-flight GPU work accessing the transitioning subresource must be completed before a layout change or cache flush can occur
-2) Subresource Layout changes
-3) Memory visibility (i.e. cache flushing)
+2. Subresource Layout changes
+3. Memory visibility (i.e. cache flushing)
 
 Resource States are high-level abstractions over what hardware and drivers are actually doing.  This works ok... sort of.  In reality, the only stateful property of a resource is layout.  Access to resource memory and required synchronization are transient properties that may depend on the current state of the GPU command stream rather than the resource.
 
@@ -231,9 +231,9 @@ According to the D3D12 specifications, a subresource cannot be in a state that c
 
 Drivers typically handle legacy Resource Barriers using three separate operations:
 
-1) Synchronize GPU work
-2) Perform any necessary cache flush operations
-3) Perform any necessary layout changes
+1. Synchronize GPU work
+2. Perform any necessary cache flush operations
+3. Perform any necessary layout changes
 
 The enhanced Barrier API's give developers the ability to control each of these operations separately.
 
@@ -2701,7 +2701,7 @@ typedef struct D3D12DDIARG_BARRIER_0094
 ### `PFND3D12DDI_BARRIER`
 
 ```C++
-typedef VOID ( APIENTRY* PFND3D12DDI_BARRIER_0094 )( 
+typedef VOID ( APIENTRY* PFND3D12DDI_BARRIER_0094 )(
     D3D12DDI_HCOMMANDLIST hDrvCommandList,
     UINT32 NumBarriers,
     _In_reads_(NumBarriers) CONST D3D12DDIARG_BARRIER_0094 *pBarriers );
