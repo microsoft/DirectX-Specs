@@ -531,7 +531,9 @@ The D3D12 runtime internally translates all ResourceBarrier calls to equivalent 
 
 ### Interop with legacy ResourceBarrier
 
-Interop between enhanced Barrier API's and legacy `D3D12_RESOURCE_STATES` is supported.  However, subresources in any legacy state other than `D3D12_RESOURCE_STATE_COMMON` must be transitioned to `D3D12_RESOURCE_STATE_COMMON` before being referenced using an enhanced Barrier.  Likewise, subresources that do not have a legacy state must be transitioned to `D3D12_BARRIER_LAYOUT_COMMON` (for textures) with `D3D12_BARRIER_ACCESS_COMMON` visibility before being referenced using a legacy ResourceBarrier.
+Interop between enhanced Barrier API's and legacy `D3D12_RESOURCE_STATES` is supported.  However, mixing legacy and enhanced barriers on the same subresource can introduce extra performance overhead, especially when combined in the same ECL scope. Therefore, it is strongly recommended that applications avoid mixing barrier types on the same subresource as much as possible.
+
+Buffers and texture subresources assigned any legacy state (either via state promotion or `ResourceBarrier`) other than `D3D12_RESOURCE_STATE_COMMON` must be transitioned to `D3D12_RESOURCE_STATE_COMMON` before being referenced using an enhanced Barrier. Conversely, texture subresources with an enhanced layout must be placed by barrier into `D3D12_BARRIER_LAYOUT_COMMON`, with all preceding accesses finished and flushed, before being referenced by a legacy `ResourceBarrier`. Although simultaneous-access texture subresources are already immutably in `D3D12_BARRIER_LAYOUT_COMMON`, any preceding accesses must still be finished and flushed using a barrier. Similarly, buffer resources that do not have an explicit legacy state must finish and flush all preceding accesses before using in a legacy barrier (effectively placing the buffer in `D3D12_RESOURCE_STATE_COMMON`). Note that at the start of any given ECL scope, all buffer resources and simultaneous-access texture subresources are implicitly in `D3D12_RESOURCE_STATE_COMMON`.
 
 ### Legacy layouts
 
@@ -807,8 +809,6 @@ As with `D3D12_RESOURCE_STATES`, Resource Layouts MUST be compatible with the ty
 - `D3D12_BARRIER_LAYOUT_SHADER_RESOURCE`
 - `D3D12_BARRIER_LAYOUT_COPY_SOURCE`
 - `D3D12_BARRIER_LAYOUT_COPY_DEST`
-
-(*) Access only, cannot use this layout in compute queue barriers.
 
 `D3D12_COMMAND_LIST_TYPE_COPY`
 
