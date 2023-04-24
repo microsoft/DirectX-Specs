@@ -2163,7 +2163,7 @@ Indicates the maximum bit rate that can be reached in bits/second while using th
 
 *ConstantQualityTarget*
 
-Indicates the quality level. The values are codec specific as each standard defines the range for this argument. (eg. h264/hevc 0-51, etc).
+Indicates the quality level. The values are codec specific as each standard defines the range for this argument. (eg. h264/hevc 0-51, etc). The lower the value, the higher the quality.
 
 ## 4.2. Rate control DDI
 
@@ -3729,9 +3729,9 @@ Output parameter containing the sizes in bytes of each subregion. Subregions siz
 
 Output parameter containing the padding size in bytes that needs to be skipped at the beginning of every subregion, this padding size is included in the size reported above.
 
-Let pFrameSubregionsSizes be an array of bSize for each slice.
+Let pFrameSubregionsSizes be an array of bSize and pFrameSubregionsStartOffsets of bStartOffset for each slice.
 
-With this information, along with *pFrameSubregionsSizes*, the user can extract individual subregions from the output bitstream buffer by calculating i-th subregion start offset as *pBuffer + FrameStartOffset + sum j = (0, (i-1)){ pFrameSubregionsSizes[j] } + pFrameSubregionsStartOffsets[i]* and reading pFrameSubregionsSizes[i] bytes.
+With this information, along with *pFrameSubregionsSizes*, the user can extract individual subregions from the output bitstream buffer by calculating i-th subregion start offset as *pBuffer + FrameStartOffset + sum j = (0, (i-1)){ pFrameSubregionsSizes[j] } + pFrameSubregionsStartOffsets[i]* and reading (pFrameSubregionsSizes[i] - pFrameSubregionsStartOffsets[i]) bytes.
 
 *bHeaderSize*
 
