@@ -404,7 +404,7 @@ Access transitions do not perform synchronization.  It is expected that synchron
 
 An `AccessBefore` made visible to a specified `AccessAfter` DOES NOT guarantee that the resource memory is also visible for a *different* access type.  For example:
 
-```C++
+```c++
 MyTexBarrier.AccessBefore=D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
 MyTexBarrier.AccessAfter=D3D12_BARRIER_ACCESS_SHADER_RESOURCE|D3D12_BARRIER_ACCESS_COPY_SOURCE;
 ```
@@ -641,7 +641,7 @@ UAV Barriers are simply synchronization barriers between preceding and subsequen
 
 UAV Barriers are used for both shader UAV accesses and raytracing acceleration structure accesses.  Therefore, the Enhanced Barrier equivalent for a legacy UAV barrier in a graphics command list is:
 
-``` C++
+```c++
 UAVBarrier.SyncBefore =
 UAVBarrier.SyncAfter =
     D3D12_BARRIER_SYNC_ALL_SHADERS |
@@ -1963,7 +1963,7 @@ Useful in aliasing barriers when subresource is not needed for a sufficiently lo
 
 ### `D3D12_BARRIER_SUBRESOURCE_RANGE`
 
-```C++
+```c++
 struct D3D12_BARRIER_SUBRESOURCE_RANGE
 {
     UINT IndexOrFirstMipLevel;
@@ -1986,7 +1986,7 @@ struct D3D12_BARRIER_SUBRESOURCE_RANGE
 
 ### `D3D12_BARRIER_TYPE`
 
-```C++
+```c++
 enum D3D12_BARRIER_TYPE
 {
     D3D12_BARRIER_TYPE_GLOBAL,
@@ -2007,7 +2007,7 @@ Note: Global barriers CAN NOT be split.
 
 Describes a resource memory access barrier.  Used by GLOBAL, TEXTURE, and BUFFER barriers to indicate when resource memory must be made visible for a specific access type.
 
-```C++
+```c++
 struct D3D12_GLOBAL_BARRIER
 {
     D3D12_BARRIER_SYNC SyncBefore;
@@ -2026,7 +2026,7 @@ struct D3D12_GLOBAL_BARRIER
 
 ### `D3D12_TEXTURE_BARRIER_FLAGS`
 
-```C++
+```c++
 enum D3D12_TEXTURE_BARRIER_FLAGS
 {
     D3D12_TEXTURE_BARRIER_FLAG_NONE = 0x0,
@@ -2040,7 +2040,7 @@ Can only be used when `LayoutBefore` is `D3D12_BARRIER_LAYOUT_UNDEFINED`.  Typic
 
 ### `D3D12_TEXTURE_BARRIER`
 
-```C++
+```c++
 struct D3D12_TEXTURE_BARRIER
 {
     D3D12_BARRIER_SYNC SyncBefore;
@@ -2069,7 +2069,7 @@ struct D3D12_TEXTURE_BARRIER
 
 ### `D3D12_BUFFER_BARRIER`
 
-```C++
+```c++
 struct D3D12_BUFFER_BARRIER
 {
     D3D12_BARRIER_SYNC SyncBefore;
@@ -2096,7 +2096,7 @@ struct D3D12_BUFFER_BARRIER
 
 Describes a group of barrier of a given type
 
-```C++
+```c++
 struct D3D12_BARRIER_GROUP
 {
     D3D12_BARRIER_TYPE Type;
@@ -2318,7 +2318,7 @@ Buffers have no layout, therefore `AssertTextureLayout` does nothing when `pReso
 
 For the sake of simplicity, these examples use the D3DX12 helper classes.
 
-```C++
+```c++
 void BarrierSamples(
     ID3D12CommandListN *pCommandList;
     ID3D12Resource *pTexture;
@@ -2570,7 +2570,7 @@ typedef enum D3D12DDI_BARRIER_ACCESS
 
 ### `D3D12DDI_BARRIER_SUBRESOURCE_RANGE_0088`
 
-```C++
+```c++
 typedef struct D3D12DDI_BARRIER_SUBRESOURCE_RANGE_0088
 {
     UINT32 IndexOrFirstMipLevel;
@@ -2584,7 +2584,7 @@ typedef struct D3D12DDI_BARRIER_SUBRESOURCE_RANGE_0088
 
 ### `D3D12DDI_GLOBAL_BARRIER_0088`
 
-```C++
+```c++
 typedef struct D3D12DDI_GLOBAL_BARRIER_0088
 {
     D3D12DDI_BARRIER_SYNC SyncBefore;
@@ -2596,7 +2596,7 @@ typedef struct D3D12DDI_GLOBAL_BARRIER_0088
 
 ### `D3D12DDI_TEXTURE_BARRIER_0088_FLAGS_0088`
 
-```C++
+```c++
 enum D3D12DDI_TEXTURE_BARRIER_0088_FLAGS_0088
 {
     D3D12DDI_TEXTURE_BARRIER_0088_FLAG_NONE = 0x0,
@@ -2606,7 +2606,7 @@ enum D3D12DDI_TEXTURE_BARRIER_0088_FLAGS_0088
 
 ### `D3D12DDI_TEXTURE_BARRIER_0088`
 
-```C++
+```c++
 typedef struct D3D12DDI_TEXTURE_BARRIER_0088
 {
     D3D12DDI_BARRIER_SYNC SyncBefore;
@@ -2623,7 +2623,7 @@ typedef struct D3D12DDI_TEXTURE_BARRIER_0088
 
 ### `D3D12DDI_BUFFER_BARRIER_0088`
 
-```C++
+```c++
 typedef struct D3D12DDI_BUFFER_BARRIER_0088
 {
     D3D12DDI_BARRIER_SYNC SyncBefore;
@@ -2636,7 +2636,7 @@ typedef struct D3D12DDI_BUFFER_BARRIER_0088
 
 ### `D3D12DDI_RANGED_BARRIER_FLAGS`
 
-```C++
+```c++
 typedef enum D3D12DDI_RANGED_BARRIER_FLAGS
 {
     D3D12DDI_RANGED_BARRIER_0088_FLAG_NONE           = 0,
@@ -2650,7 +2650,7 @@ Replaces legacy `D3D12DDI_RESOURCE_RANGED_BARRIER_0022`.  Enhanced Barriers are 
 
 ### `D3D12DDI_RANGE_BARRIER_FLAGS_0094`
 
-```C++
+```c++
 typedef enum D3D12DDI_RANGE_BARRIER_FLAGS_0094
 {
     D3D12DDI_RANGED_BARRIER_FLAG_NONE_0094           = 0,
@@ -2662,7 +2662,7 @@ typedef enum D3D12DDI_RANGE_BARRIER_FLAGS_0094
 
 ### `D3D12DDI_RANGED_BARRIER_0094`
 
-``` C++
+```c++
 typedef struct D3D12DDI_RANGED_BARRIER_0094
 {
     D3D12DDI_RANGE_BARRIER_FLAGS_0094 Flags;
@@ -2674,7 +2674,7 @@ typedef struct D3D12DDI_RANGED_BARRIER_0094
 
 ### `D3D12DDI_BARRIER_TYPE`
 
-```C++
+```c++
 typedef enum D3D12DDI_BARRIER_TYPE
 {
     D3D12DDI_BARRIER_TYPE_GLOBAL,
@@ -2687,7 +2687,7 @@ typedef enum D3D12DDI_BARRIER_TYPE
 
 ### `D3D12DDIARG_BARRIER_0094`
 
-```C++
+```c++
 typedef struct D3D12DDIARG_BARRIER_0094
 {
     D3D12DDI_BARRIER_TYPE Type;
@@ -2704,7 +2704,7 @@ typedef struct D3D12DDIARG_BARRIER_0094
 
 ### `PFND3D12DDI_BARRIER`
 
-```C++
+```c++
 typedef VOID ( APIENTRY* PFND3D12DDI_BARRIER_0094 )(
     D3D12DDI_HCOMMANDLIST hDrvCommandList,
     UINT32 NumBarriers,
@@ -2713,7 +2713,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_BARRIER_0094 )(
 
 ### `D3D12DDIARG_CREATERESOURCE_0088`
 
-```C++
+```c++
 typedef struct D3D12DDIARG_CREATERESOURCE_0088
 {
     D3D12DDIARG_BUFFER_PLACEMENT    ReuseBufferGPUVA;
@@ -2740,7 +2740,7 @@ typedef struct D3D12DDIARG_CREATERESOURCE_0088
 
 ### `PFND3D12DDI_CREATEHEAPANDRESOURCE_0088`
 
-```C++
+```c++
 typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEHEAPANDRESOURCE_0088)(
     D3D12DDI_HDEVICE, _In_opt_ CONST D3D12DDIARG_CREATEHEAP_0001*, D3D12DDI_HHEAP, D3D12DDI_HRTRESOURCE,
     _In_opt_ CONST D3D12DDIARG_CREATERESOURCE_0088*, _In_opt_ CONST D3D12DDI_CLEAR_VALUES*,
@@ -2749,7 +2749,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEHEAPANDRESOURCE_0088)(
 
 ### `PFND3D12DDI_CALCPRIVATEHEAPANDRESOURCESIZES_0088`
 
-```C++
+```c++
 typedef D3D12DDI_HEAP_AND_RESOURCE_SIZES ( APIENTRY* PFND3D12DDI_CALCPRIVATEHEAPANDRESOURCESIZES_0088)(
      D3D12DDI_HDEVICE, _In_opt_ CONST D3D12DDIARG_CREATEHEAP_0001*, _In_opt_ CONST D3D12DDIARG_CREATERESOURCE_0088*,
      D3D12DDI_HPROTECTEDRESOURCESESSION_0030 );
@@ -2757,7 +2757,7 @@ typedef D3D12DDI_HEAP_AND_RESOURCE_SIZES ( APIENTRY* PFND3D12DDI_CALCPRIVATEHEAP
 
 ### `PFND3D12DDI_CHECKRESOURCEALLOCATIONINFO_0088`
 
-```C++
+```c++
 typedef VOID ( APIENTRY* PFND3D12DDI_CHECKRESOURCEALLOCATIONINFO_0088)(
     D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATERESOURCE_0088*, D3D12DDI_RESOURCE_OPTIMIZATION_FLAGS,
     UINT32 AlignmentRestriction, UINT VisibleNodeMask, _Out_ D3D12DDI_RESOURCE_ALLOCATION_INFO_0022* );
@@ -2767,7 +2767,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKRESOURCEALLOCATIONINFO_0088)(
 
 Includes a boolean member indicating whether the driver supports EnhancedBarriers.
 
-```C++
+```c++
 typedef struct D3D12DDI_D3D12_OPTIONS_DATA_0089
 {
     D3D12DDI_RESOURCE_BINDING_TIER ResourceBindingTier;
