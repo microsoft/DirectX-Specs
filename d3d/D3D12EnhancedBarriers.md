@@ -586,8 +586,8 @@ Layouts enums starting with `D3D12_BARRIER_LAYOUT_LEGACY_` are internal-only and
 
 ### Equivalent `D3D12_BARRIER_ACCESS` bit for each `D3D12_RESOURCE_STATES` bit
 
-| State bit                                              | Access bit                                                                  |
-|--------------------------------------------------------|-----------------------------------------------------------------------------|
+| State bit                                                | Access bit                                                                |
+|----------------------------------------------------------|---------------------------------------------------------------------------|
 | `D3D12_RESOURCE_STATE_COMMON`                            | `D3D12_BARRIER_ACCESS_COMMON`                                             |
 | `D3D12_RESOURCE_STATE_VERTEX_BUFFER`                     | `D3D12_BARRIER_ACCESS_VERTEX_BUFFER|D3D12_BARRIER_ACCESS_CONSTANT_BUFFER` |
 | `D3D12_RESOURCE_STATE_CONSTANT_BUFFER`                   | `D3D12_BARRIER_ACCESS_VERTEX_BUFFER|D3D12_BARRIER_ACCESS_CONSTANT_BUFFER` |
