@@ -764,9 +764,9 @@ Upload Heap resources are buffers and thus have no layout.  Upload Heap resource
 - `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`
 - `D3D12_BARRIER_ACCESS_INDIRECT_ARGUMENT`
 - `D3D12_BARRIER_ACCESS_COPY_SOURCE`
-- `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE` (*)
+- `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE` [^1]
 
-(*) `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE` is available only on devices that support Sampler Feedback.
+[^1]: `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE` is available only on devices that support Sampler Feedback.
 
 ### Readback Heap Resources
 
@@ -777,9 +777,9 @@ Readback Heap resources can be written to either by Copy or Resolve operations (
 Readback Heap resources support the following accesses:
 
 - `D3D12_BARRIER_ACCESS_COPY_DEST`
-- `D3D12_BARRIER_ACCESS_RESOLVE_DEST` (*)
+- `D3D12_BARRIER_ACCESS_RESOLVE_DEST` [^2]
 
-(*) `D3D12_BARRIER_ACCESS_RESOLVE_DEST` MUST be available on hardware that supports Sampler Feedback.
+[^2]: `D3D12_BARRIER_ACCESS_RESOLVE_DEST` MUST be available on hardware that supports Sampler Feedback.
 
 ### Command Queue Layout Compatibility
 
