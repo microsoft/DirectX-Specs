@@ -1889,7 +1889,7 @@ Indicates a resource is accessible for read as a raytracing acceleration structu
 
 #### `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE`
 
-Indicates a resource is accessible for write as a raytracing acceleration structure.  The resource MUST have been created using an initial state of `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE`. Runtime barrier validation ensures that `` is used with one or more of the following sync bits:
+Indicates a resource is accessible for write as a raytracing acceleration structure.  The resource MUST have been created using an initial state of `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE`. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE` is used with one or more of the following sync bits:
 
 - `D3D12_BARRIER_SYNC_ALL`
 - `D3D12_BARRIER_SYNC_COMPUTE_SHADING`
