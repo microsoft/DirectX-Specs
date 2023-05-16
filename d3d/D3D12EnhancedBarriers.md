@@ -2876,8 +2876,8 @@ The Debug Layer attempts to validate barriers are correctly mitigating hazards. 
 
 - Raytracing Acceleration Structure Writes
 - Unordered Access (requires GBV to detect unless using `DATA_STATIC` descriptors)
-- Copy (when using `D3D12_COMMAND_LIST_FLAG_ALLOW_ALLOW_EXTENDED_ASYNC`
-- Resolve (when using `D3D12_COMMAND_LIST_FLAG_ALLOW_ALLOW_EXTENDED_ASYNC`
+- Copy (when using `D3D12_COMMAND_LIST_FLAG_ALLOW_ALLOW_EXTENDED_ASYNC`)
+- Resolve (when using `D3D12_COMMAND_LIST_FLAG_ALLOW_ALLOW_EXTENDED_ASYNC`)
 
 Note that there is no sync validation resources supporting concurrent read and write.  It is up to the app developer to know when to synchronize dependent accesses.
 
