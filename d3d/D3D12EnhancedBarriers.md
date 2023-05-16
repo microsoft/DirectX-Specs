@@ -425,7 +425,7 @@ Note that the one-writer-at-a-time policy still applies since two seemingly non-
 
 ### Subresource Ranges
 
-It is common for developers to want to transition a range of subresources such as a full mip-chain for a given texture array or a single mip-level for all array slices.  Legacy Resource State Transition barriers only provide developers the option of transitioning ALL subresource states or single subresource state atomically.  The enhanced Barrier API's allow developers to transition logically-adjacent ranges of subresources using the [`D3D12_BARRIER_SUBRESOURCE_RANGE`](#D3D12_BARRIER_SUBRESOURCE_RANGE) structure.
+It is common for developers to want to transition a range of subresources such as a full mip-chain for a given texture array or a single mip-level for all array slices.  Legacy Resource State Transition barriers only provide developers the option of transitioning ALL subresource states or single subresource state atomically.  The enhanced Barrier API's allow developers to transition logically-adjacent ranges of subresources using the [`D3D12_BARRIER_SUBRESOURCE_RANGE`](#d3d12_barrier_subresource_range) structure.
 
 ### Compute and Direct Queue Layouts
 
@@ -1768,7 +1768,6 @@ Indicates a buffer resource is accessible as a constant buffer in the current ex
 - `D3D12_BARRIER_SYNC_DRAW`
 - `D3D12_BARRIER_SYNC_ALL_SHADING`
 
-
 #### `D3D12_BARRIER_ACCESS_INDEX_BUFFER`
 
 Indicates a buffer resource is accessible as an index buffer in the current execution queue. Index buffer accesses occur only in `D3D12_BARRIER_SYNC_INDEX_INPUT` scope.  Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_INDEX_BUFFER` is used with one or more of the following sync bits:
@@ -1806,7 +1805,6 @@ Indicates a resource is accessible as a writable depth/stencil resource. Runtime
 - `D3D12_BARRIER_SYNC_DRAW`
 - `D3D12_BARRIER_SYNC_DEPTH_STENCIL`
 
-
 #### `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ`
 
 Indicates a resource is accessible as a read-only depth/stencil resource. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ` is used with one or more of the following sync bits:
@@ -1825,7 +1823,6 @@ Indicates a resource is accessible as a shader resource. Runtime barrier validat
 - `D3D12_BARRIER_SYNC_COMPUTE_SHADING`
 - `D3D12_BARRIER_SYNC_DRAW`
 - `D3D12_BARRIER_SYNC_ALL_SHADING`
-
 
 #### `D3D12_BARRIER_ACCESS_STREAM_OUTPUT`
 
