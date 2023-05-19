@@ -24,13 +24,13 @@ is listed below along with links to detailed specifications.
 
 Shader Model 6.7 includes an optional feature called Advanced Texture Operations that contains several useful texture capabilities that grant greater ability to retrieve and set texture data in various ways.
 
-See the Shader Model 6.7 [Advanced Texture Operations](HLSL_SM_6_7_Advanced_Texture_Ops.md) documenation for more details about all these features. Below are brief individual summaries.
+See the Shader Model 6.7 [Advanced Texture Operations](HLSL_SM_6_7_Advanced_Texture_Ops.md) documentation for more details about all these features. Below are brief individual summaries.
 
 ## Raw Gather
 
 Advanced Texture Operations adds the ability to retrieve complete, unprocessed texture elements including all the channels packed into appropriately sized unsigned integers using _raw gathers_.
 
-To get the full benefit of these gather operations requires the expanded ability to cast textures of various sorts into unsigned integer resource views. This requires using the new resource creation methods introduced with [Enhanced Barriers](D3D12EnhancedBarriers.md#id3d12device10createcommittedresource3) and setting the castable formats parameters to the appropriately sized `UINT` format.
+To get the full benefit of these gather operations requires the expanded ability to cast textures of various sorts into unsigned integer resource views. This requires using the new resource creation methods introduced with [Enhanced Barriers](D3D12EnhancedBarriers.md#id3d12device10-createcommittedresource3) and setting the castable formats parameters to the appropriately sized `UINT` format.
 
 In this way, unsigned integer textures with varied backing resources can be sampled within shaders to retrieve the raw representation of the contents that you can process in any way you want.
 
@@ -64,7 +64,7 @@ See the Shader Model 6.7 [QuadAny/QuadAll](HLSL_SM_6_7_QuadAny_QuadAll.md) docum
 
 Shader Model 6.7 adds the `WaveOpsIncludeHelperLanes` entry function attribute. By applying this attribute, any wave ops invoked by shaders compiled with that entry function will include helper lanes in their calculations. This further advances the ability to leverage and identify helper lanes in shader development.
 
-See the Shader Model 6.7 [Helper Lanes in Wave Ops Mode](HLSL_SM_6_7_Wave_Ops_Include_Helper_Lanes.md) documenation for more details.
+See the Shader Model 6.7 [Helper Lanes in Wave Ops Mode](HLSL_SM_6_7_Wave_Ops_Include_Helper_Lanes.md) documentation for more details.
 
 # Change Log
 

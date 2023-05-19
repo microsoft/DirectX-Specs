@@ -131,9 +131,9 @@ This document tracks the multiple features necessary to support a performant imp
 ### Definition
 Vulkan allows reinterpretation-casting of resource formats by supplying a target list of castable formats during resource creation. With the exception of planar and compressed formats, the target formats in Vulkan can be any format whose block size and texels per block matches the resource's format's. Prior to this feature, even with relaxed format casting rules, D3D12 only allowed casting between formats within their respective format families and only if the original format was typeless.
 
-With this feature, D3D12 provides an API at resource creation to specify a list of castable formats for the resource. 
+With this feature, D3D12 provides an API at resource creation to specify a list of castable formats for the resource.
 
-The list 
+The list
 * MAY be empty
 * MAY contain uncompressed formats whose unit size matches the resource's format's unit size.
 * MAY NOT contain planar formats.
@@ -143,17 +143,17 @@ Additionally, if the resource's format is compressed, then a view that casts to 
 
 
 
-Formats not specified in the list during creation MAY NOT be used as view target formats for the resource. 
+Formats not specified in the list during creation MAY NOT be used as view target formats for the resource.
 
 Formats "casted" in this way are _reinterpreted_ as the target format for consumption in shaders.
 
-Refer to [CreateCommittedResource3](D3D12EnhancedBarriers.md#id3d12device10createcommittedresource3), [CreatePlacedResource2](D3D12EnhancedBarriers.md#id3d12device10createplacedresource2), and [CreateReservedResource2](D3D12EnhancedBarriers.md#id3d12device10createreservedresource2) in Enhanced Barriers for documentation on the new API fields, `NumCastableFormats` and `pCastableFormats` used to specify the list.
+Refer to [CreateCommittedResource3](D3D12EnhancedBarriers.md#id3d12device10-createcommittedresource3), [CreatePlacedResource2](D3D12EnhancedBarriers.md#id3d12device10-createplacedresource2), and [CreateReservedResource2](D3D12EnhancedBarriers.md#id3d12device10-createreservedresource2) in Enhanced Barriers for documentation on the new API fields, `NumCastableFormats` and `pCastableFormats` used to specify the list.
 
 ### DDI
 Driver support for format list casting is reported via `RelaxedFormatCastingSupported` in `D3D12DDI_OPTIONS_DATA_0090` when `GetCaps` is called with `D3D12DDICAPS_TYPE_OPTIONS_0090`; available starting with DDI version `e_DDI_12_8_0090`.
 
 ### Tests: HLK Conformance
-#### `D3DConf_12_RelaxedFormatCasting::FormatListCasting` 
+#### `D3DConf_12_RelaxedFormatCasting::FormatListCasting`
 Creates resources using the `CreateCommittedResource3` API and tests a variety of compatible target cast formats, including unsigned integers, signed integers, floats, and compressed formats. Each view is attached as an SRV to a shader and the invoked read must succeed and the result must match the source data.
 
 ---
@@ -164,7 +164,7 @@ Creates resources using the `CreateCommittedResource3` API and tests a variety o
 ### Definition
 Vulkan specifies "optimal" row-pitch and offset alignments for copy operations between buffers and images, but only _requires_ alignments according to the texel size of the image. Prior to this feature, D3D12 required that offsets be aligned to `D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT` (512 bytes) and row-pitch be aligned to `D3D12_TEXTURE_DATA_PITCH_ALIGNMENT` (256 bytes).
 
-With this feature, both offset and row-pitch MUST be aligned only to the whole unit size of the texture's format. For example, copy operations targeting a texture with format `DXGI_FORMAT_R32B32G32A32_FLOAT` must have offset and row-pitch aligned to 16 bytes, i.e, entire texels. 
+With this feature, both offset and row-pitch MUST be aligned only to the whole unit size of the texture's format. For example, copy operations targeting a texture with format `DXGI_FORMAT_R32B32G32A32_FLOAT` must have offset and row-pitch aligned to 16 bytes, i.e, entire texels.
 
 ### DDI
 Driver support for unrestricted copy alignments is reported via `UnrestrictedBufferTextureCopyPitchSupported` in `D3D12DDI_OPTIONS_DATA_0091` when `GetCaps` is called with `D3D12DDICAPS_TYPE_OPTIONS_0091`; available starting with DDI version `e_DDI_12_8_0091`.
@@ -190,7 +190,7 @@ Copies data at various odd offsets, but with row-pitch aligned to `D3D12_TEXTURE
 #### `D3DConf_12_UnrestrictedAlignmentOffsetCopy::CopyWithoutRowPitchAndOffsetAlignment`
 Copies data at various odd offsets, packing the result tightly into the destination buffer.
 
---- 
+---
 
 ## Texture Copy Between Inequal Dimension Textures
 [Nickel:WDDM3.1]
@@ -204,7 +204,7 @@ Support for copying between textures whose dimensionality does not match will be
 ### Tests: HLK Conformance
 In each case, the destination is copied into a readback buffer and the result is verified against what was uploaded.
 #### `Copy3Dto2D`
-Copies entire slices from a 3D texture into a 2D texture, then back into the 3D texture; copies different quandrants from different slices in a 3D texture into different quadrants of a 2D texture. 
+Copies entire slices from a 3D texture into a 2D texture, then back into the 3D texture; copies different quandrants from different slices in a 3D texture into different quadrants of a 2D texture.
 #### `Copy3Dto1D`
 Copies different rows from different slices in a 3D texture into a 1D texture, then back into the 3D texture.
 #### `Copy2Dto1D`
@@ -361,7 +361,7 @@ typedef struct D3D12DDI_COMMAND_LIST_FUNCS_3D_0095
 
 #### `D3DConf_12_Stencil::FrontAndBackStencil`
 
-The test constructs a vertex buffer with a simple _front-face_ top-left half-viewport triangle and a _back-face_ bottom-right viewport triangle. A series of individual test cases will, with back-face culling off, 
+The test constructs a vertex buffer with a simple _front-face_ top-left half-viewport triangle and a _back-face_ bottom-right viewport triangle. A series of individual test cases will, with back-face culling off,
 1. Render to the front and back faces with separate masks and reference value settings
 2. Read back both the render target and the stencil target and verify that the faces are rendered to and that the stencil buffer is correct
 3. Render _again_ with updated stencil parameters dependent on the result of (2)
@@ -388,7 +388,7 @@ typedef enum D3D12DDI_PRIMITIVE_TOPOLOGY
     D3D12DDI_PRIMITIVE_TOPOLOGY_LINESTRIP = 3,
     D3D12DDI_PRIMITIVE_TOPOLOGY_TRIANGLELIST = 4,
     D3D12DDI_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP = 5,
-    
+
     D3D12DDI_PRIMITIVE_TOPOLOGY_TRIANGLEFAN = 6,
     ...
 ```
@@ -401,7 +401,7 @@ The test will render various shapes into a 5x5 viewport using `D3D_PRIMITIVE_TOP
 
 ---
 
-## Dynamic Pipeline State: Depth Bias, IB Strip Cut 
+## Dynamic Pipeline State: Depth Bias, IB Strip Cut
 
 ### Definition
 
@@ -471,7 +471,7 @@ typedef struct D3D12DDI_DEVICE_FUNCS_CORE_0099
 
 ```
 
-For drivers, these flags are only _hints_ about whether or not state is allowed to be changed; it does not alter the behavior of calls to `pfnSetPipelineState`. When setting the pipeline state, the depth bias state and IB strip cut must still be set according to their descriptions in the pipeline state object, regardless of the presence of their corresponding dynamic flags. 
+For drivers, these flags are only _hints_ about whether or not state is allowed to be changed; it does not alter the behavior of calls to `pfnSetPipelineState`. When setting the pipeline state, the depth bias state and IB strip cut must still be set according to their descriptions in the pipeline state object, regardless of the presence of their corresponding dynamic flags.
 
 For pipelines created with this flag, the _current_ depth bias state may be changed via the command list function, `pfnRSSetDepthBias`, and the _current_ IB strip cut value may be changed via the command list function, `pfnIASetIndexBufferStripCutValue`.
 
@@ -520,7 +520,7 @@ typedef SIZE_T(APIENTRY* PFND3D12DDI_CALCPRIVATERASTERIZERSTATESIZE_0099)(
     D3D12DDI_HDEVICE, _In_ CONST D3D12DDI_RASTERIZER_DESC_0099*);
 typedef VOID(APIENTRY* PFND3D12DDI_CREATERASTERIZERSTATE_0099)(
     D3D12DDI_HDEVICE, _In_ CONST D3D12DDI_RASTERIZER_DESC_0099*, D3D12DDI_HRASTERIZERSTATE);
-    
+
 typedef struct D3D12DDI_DEVICE_FUNCS_CORE_0099
 {
     ...
@@ -558,7 +558,7 @@ When present, the corresponding command list functions are valid to call.
         FLOAT DepthBiasClamp,
         FLOAT SlopeScaledDepthBias
     );
-    
+
     void ID3D12GraphicsCommandList9::IASetIndexBufferStripCutValue(
         D3D12_INDEX_BUFFER_STRIP_CUT_VALUE IBStripCutValue
     );
@@ -575,7 +575,7 @@ typedef struct D3D12_RASTERIZER_DESC1
 
     // Changed type to FLOAT
     FLOAT DepthBias;
-    
+
     FLOAT DepthBiasClamp;
     FLOAT SlopeScaledDepthBias;
     BOOL DepthClipEnable;
@@ -626,9 +626,9 @@ Samplers with `D3D12_SAMPLER_FLAG_NON_NORMALIZED_COORDINATES` set must sample fr
 When non-normalized coordinates are used, the following restrictions apply:
 * The SRV being sampled must be `D3D12_SRV_DIMENSION_TEXTURE1D` or `D3D12_SRV_DIMENSION_TEXTURE2D`
 * The SRV's mip-count must be 1.
-* The sampling coordinate valid range is `x:[0, width)` and `y:[0, height)` 
+* The sampling coordinate valid range is `x:[0, width)` and `y:[0, height)`
 * The `Offset` parameter in `Sample*` functions must not be used
-* The `D3D12_FILTER` must be one of 
+* The `D3D12_FILTER` must be one of
   * `D3D12_FILTER_MIN_MAG_MIP_POINT`
   * `D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT`
   * `D3D12_FILTER_MINIMUM_MIN_MAG_MIP_POINT`
@@ -725,7 +725,7 @@ typedef struct D3D12DDIARG_CREATE_ROOT_SIGNATURE_0100
     D3D12DDI_ROOT_SIGNATURE_VERSION Version;
     union
     {
-        CONST D3D12DDI_ROOT_SIGNATURE_0100* pRootSignature_1_2; 
+        CONST D3D12DDI_ROOT_SIGNATURE_0100* pRootSignature_1_2;
     };
     UINT NodeMask;
 } D3D12DDIARG_CREATE_ROOT_SIGNATURE_0100;
@@ -743,7 +743,7 @@ typedef struct D3D12DDI_DEVICE_FUNCS_CORE_0100
     ...
     PFND3D12DDI_CALC_PRIVATE_ROOT_SIGNATURE_SIZE_0100    pfnCalcPrivateRootSignatureSize;
     PFND3D12DDI_CREATE_ROOT_SIGNATURE_0100               pfnCreateRootSignature;
-    
+
     ...
 } D3D12DDI_DEVICE_FUNCS_CORE_0100;
 ```
@@ -917,7 +917,7 @@ Trivially validate core runtime validation for interaction with `SupportedSample
 The tests for programmable sample positions are extended to include coverage of:
 1. UAV-only rasterization with the standard sample positions.
 2. UAV-only rasterization with programmable MSAA tier 1 (per-pixel sample positions)
-3. UAV-only rasterization with programmable MSAA tier 2 (per-quad sample positions) 
+3. UAV-only rasterization with programmable MSAA tier 2 (per-quad sample positions)
 
 All of these tests iterate over `ForcedSampleCount` at pixel frequency, `DXGI_SAMPLE_DESC::Count` at pixel frequency, and `DXGI_SAMPLE_DESC::Count` at sample frequency. Note that test 1 runs for all existing drivers (filling missing coverage), and test 2 runs for existing drivers that support programmable MSAA tier 1 (filling missing coverage). Test 3 only supports running with `DXGI_SAMPLE_DESC::Count` since it requires a sample count of 2, which is not a valid TIR sample count.
 
