@@ -182,15 +182,19 @@ Benchmark applications that wants to prime the optimization state before taking 
 ```c
 SetBackgroundProcessingMode(
     D3D12_BACKGROUND_PROCESSING_MODE_ALLOW_INTRUSIVE_MEASUREMENTS,
-    D3D_MEASUREMENTS_ACTION_KEEP_ALL,
+    D3D12_MEASUREMENTS_ACTION_DISCARD_PREVIOUS,
     null, null);
-
-RenderFlythroughOfScene();
-
-SetBackgroundProcessingMode(
-    D3D12_BACKGROUND_PROCESSING_MODE_ALLOWED,
-    D3D12_MEASUREMENTS_ACTION_COMMIT_RESULTS,
-    null, null);
+    
+BOOL furtherMeasurementsDesired = TRUE;
+while (furtherMeasurementsDesired)
+{
+    RenderFlythroughOfScene();
+    
+    SetBackgroundProcessingMode(
+        D3D12_BACKGROUND_PROCESSING_MODE_ALLOW_INTRUSIVE_MEASUREMENTS,
+        D3D_MEASUREMENTS_ACTION_KEEP_ALL,
+        null, &furtherMeasurementsDesired);
+}
 
 RunTheRealBenchmark();
 ```
