@@ -971,16 +971,16 @@ The following functionality is HCK (conformance) tested:
         This test must only run when the driver reports Tier 3 support.
         The vertex coordinates should be \<-1/3+d, 1/3-d\>,\<-1/3+d,
         -1/3+d\>,\<1/3-d,1/3-d\> in NDC, with a Viewport top-left of
-        \<0,0\> and \<3,3\> width and height, where d is 1/256 of 2/3
-        (i.e. 1/256 of a pixel), accounting for the uncertainty region,
-        plus a small offset such that the uncertainty region edge does
-        not land on a pixel edge, since Top-Left Rule is undefined.
+        \<0,0\> and \<3,3\> width and height, where d is a small delta
+        offset accounting for the uncertainty region plus a small offset
+        such that the uncertainty region edge does not land on a pixel
+        edge, since Top-Left Rule is undefined.
 
 ![consras4](images/conservativerasterization/consras4.png)
 
   - To validate tier-3 Top-Left Rule, we set up the primitive with
         vertices \<-1+d, -0.5\>, \<d, 0.5\>, and \<0.5, -0.5\> on a 4x4
-        viewport, where d is 1/256 of 1/2 (i.e. 1/512). In this case, 13
+        viewport, where d is a small offset. In this case, 13
         pixels should be rendered according to the Top-Left Rule. (Since
         the bottom-right corners of the red pixels touch the left edge
         of the triangle.)
@@ -999,7 +999,7 @@ The following functionality is HCK (conformance) tested:
         validate that only the center pixel receives the Inner Input
         Coverage flag. The vertex coordinates should be \<-1-d,
         -1\>,\<1+d, -1\>,\<0, 1+2d\> in NDC, with a Viewport top-left of
-        \<0,0\> and \<3,3\> width and height. The value 'd' is chosen such that the top-left and top-right corners of the middle pixel won't stick outside of the triangle nor will it stick into the uncertainty region. A suitable such value of 'd' is 3/512 in DC, which is multiplied by 2/3 for conversion to NDC.
+        \<0,0\> and \<3,3\> width and height. The value 'd' is chosen such that the top-left and top-right corners of the middle pixel won't stick outside of the triangle nor will it stick into the uncertainty region.
 
 ![consras7](images/conservativerasterization/consras7.png)
 
