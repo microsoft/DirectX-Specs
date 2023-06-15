@@ -98,6 +98,21 @@ Setting the `D3D12_SAMPLER_FLAG_UINT_BORDER_COLOR` bit
 Otherwise, the sampler has float border color values
 and the `FloatBorderColor` field should be used.
 
+For signed texture formats, the border color values are treated
+as 32-bit signed integers instead. For texture formats where the
+components are smaller than 32 bits, it is undefined whether the
+hardware will truncate or clamp.
+
+**Note**: D3D does not currently define an ordering between retrieving
+border color values and applying SRV swizzles, and different hardware
+may apply these in opposite orders. Additionally, for stencil data,
+D3D defines that the shader should retrieve the value in the G channel,
+which some hardware may achieve by using SRV swizzles. Therefore, it
+is possible that when sampling stencil and passing out-of-bounds coordinates
+to return a border color, the border value returned to the shader in the G
+channel (unless otherwise redirected via an SRV swizzle) may be the value
+specified in the sampler's border color in *either* the R or G channel.
+
 Additional changes are made to the `D3D12_STATIC_BORDER_COLOR`
  enum used by the `D3D12_STATIC_SAMPLER_DESC` struct
  to include integer border color variants:
