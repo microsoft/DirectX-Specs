@@ -141,7 +141,7 @@ However, this method lacks scoping to individual applications and also makes it 
 
 D3D12 re-introduces the idea of an SDK version.  Each release is assigned an SDK version number.  The version released with an OS is also published as a redist and is also assigned an SDK Version number.
 
-![Version timeline](Images\D3D12Redistributable\ReleaseTimeline.png)
+![Version timeline](images/D3D12Redistributable/ReleaseTimeline.png)
 
 ## Using the Redist
 
@@ -149,7 +149,7 @@ Applications targeting a redist ship the app local copy of D3D12core.dll and reg
 
 If the requested redist version is the same or older than the OS inbox D3D12, the application uses the inbox version.
 
-![SDK Version Selection](Images\D3D12Redistributable\SDKVersionSelection.png)
+![SDK Version Selection](images/D3D12Redistributable/SDKVersionSelection.png)
 
 This version policy:  
 

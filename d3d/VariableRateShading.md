@@ -153,7 +153,10 @@ Features for each tier are described in greater detail below the table.
   * Indicates whether 2X4, 4X2, and 4X4 coarse pixel sizes are supported for single sampled rendering, and whether coarse pixel size 2X4 is supported for 2xMSAA.
 * SupportsPerVertexShadingRateWithMultipleViewports
   * Boolean type
-  * Indicates whether more than one viewport can be used with the per-vertex (also referred to as ‘per-primitive’) shading rate
+  * Indicates that an application can both 
+     * use more than one viewport, and
+     * use the per-vertex (also referred to as ‘per-primitive’) shading rate
+  * at the same time. If this cap is FALSE, and per-vertex shading rates are used, then only one viewport can be used at a time. The cap does *not* pertain to the idea of using different shading rates for different viewports. Variable rate shading does not expose a way to use different shading rates for different viewports.
 * VariableRateShadingSumCombinerSupported
   * Boolean type
   * Indicates whether the SUM combiner can be used. This cap is pertaining to variable rate shading Tier 2.
@@ -172,7 +175,7 @@ The app can specify a subsampling level in the command buffer. This API takes a 
 Values for this state are expressed through the enumeration D3D12_SHADING_RATE.
 
 #### Coarse pixel size support
-The shading rates 1x1, 1x2, 2x2 and 2x2 can be requested on all tiers.
+The shading rates 1x1, 1x2, 2x1 and 2x2 can be requested on all tiers.
 
 There is a cap, AdditionalShadingRatesSupported, to indicate whether 2x4, 4x2, and 4x4 are available on the device.
 
@@ -244,7 +247,11 @@ Each byte of the screen space image corresponds to a value of the D3D12_SHADING_
 #### Resource state
 A resource needs to be transitioned into a read-only state when used as a screen-space image. A read-only state, D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE, is defined for this purpose. 
 
-The image resource is transitioned out of that state to become writable again.
+Validation of shading rate image resource state occurs at Draw time. In other words, resources need to be in SHADING_RATE_SOURCE state when a Draw is executed that has the shading rate image set.
+
+When a resource is passed as an argument to RSSetShadingRateImage, it can be in SHADING_RATE_SOURCE state or some other state. The resource doesn't have to be in SHADING_RATE_SOURCE state until some Draw is executed that has the resource set as a shading rate image.
+
+An image resource is transitioned out of SHADING_RATE_SOURCE to become writable again.
 
 #### Setting the image
 The screen-space image for specifying shader rate is set on the command list.
@@ -465,13 +472,13 @@ For four-bit values:
 |         1110 |-0.125f   |-2 / 16     |
 |         1111 |-0.0625f  |-1 /16      |
 |         0000 |0.0f      |0 / 16      |
-|         0001 |-0.0625f  |1 / 16      |
-|         0010 |-0.125f   |2 / 16      |
-|         0011 |-0.1875f  |3 / 16      |
-|         0100 |-0.25f    |4 / 16      |
-|         0101 |-0.3125f  |5 / 16      |
-|         0110 |-0.375f   |6 / 16      |
-|         0111 |-0.4375f  |7 / 16      |
+|         0001 |0.0625f   |1 / 16      |
+|         0010 |0.125f    |2 / 16      |
+|         0011 |0.1875f   |3 / 16      |
+|         0100 |0.25f     |4 / 16      |
+|         0101 |0.3125f   |5 / 16      |
+|         0110 |0.375f    |6 / 16      |
+|         0111 |0.4375f   |7 / 16      |
 
 
 For five-bit values:

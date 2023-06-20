@@ -772,7 +772,7 @@ struct D3D12_RESOURCE_DESC1
 
 ```
 
-The device and resource interfacse have been revised to be compatible with the revised resource description struct.
+The device and resource interface have been revised to be compatible with the revised resource description struct.
 
 ```
 
@@ -1014,7 +1014,7 @@ Sampler feedback feature information is communicated through UMD DDI revision 00
 #define D3D12DDI_SUPPORTED_0075 ((((UINT64)D3D12DDI_INTERFACE_VERSION_R7) << 32) | (((UINT64)D3D12DDI_BUILD_VERSION_0075) << 16))
 ```
 
-A tier enum exists to describe presence sampler feedback support.
+A tier enum exists to describe the level of sampler feedback support.
 ```
 
 typedef enum D3D12DDI_SAMPLER_FEEDBACK_TIER

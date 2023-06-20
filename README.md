@@ -33,12 +33,14 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Relaxed Format Casting Rules](d3d/RelaxedCasting.md)
     * [UAV Typed Load](d3d/UAVTypedLoad.md)
     * [Planar Depth Stencil](d3d/PlanarDepthStencilDDISpec.md)
+    * [Vulkan Compatibility Features](d3d/VulkanOn12.md)
 
 * Performance
     * [CPU Efficiency](d3d/CPUEfficiency.md)
     * [Render Passes](d3d/RenderPasses.md)
     * [Background Processing](d3d/BackgroundProcessing.md)
     * [Shader Cache](d3d/ShaderCache.md)
+    * [GPU Upload Heaps](d3d/D3D12GPUUploadHeaps.md)
 
 * Video
     * [Motion Estimation](d3d/D3D12_Video_Motion_Estimation.md)
@@ -54,6 +56,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Shader Model 6.4](https://github.com/microsoft/DirectXShaderCompiler/wiki/Shader-Model-6.4)
     * [Shader Model 6.5](d3d/HLSL_ShaderModel6_5.md)
     * [Shader Model 6.6](d3d/HLSL_ShaderModel6_6.md)
+    * [Shader Model 6.7](d3d/HLSL_ShaderModel6_7.md)
     * [SV_Barycentrics](https://github.com/microsoft/DirectXShaderCompiler/wiki/SV_Barycentrics)
     * [SV_ViewID](https://github.com/microsoft/DirectXShaderCompiler/wiki/SV_ViewID)
 

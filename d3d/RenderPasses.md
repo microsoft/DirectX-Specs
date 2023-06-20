@@ -1,6 +1,7 @@
-<h1>D3D12 RS5 Render Passes -- Unified Spec</h1>
+<h1>D3D12 Render Passes</h1>
 
-Version 1.0
+Version 1.14
+2/20/2023
 
 ---
 
@@ -13,35 +14,42 @@ Version 1.0
     - [Allow TBDR architectures to opportunistically persistent resources in on-chip cache across Render Passes (even in separate Command Lists)](#allow-tbdr-architectures-to-opportunistically-persistent-resources-in-on-chip-cache-across-render-passes-even-in-separate-command-lists)
       - [Case A: Reading/Writing One-to-One](#case-a-readingwriting-one-to-one)
       - [Case B: Writes to the same Render Targets across multiple Command Lists](#case-b-writes-to-the-same-render-targets-across-multiple-command-lists)
-    - [Allow the new APIs to be used with existing drivers](#allow-the-new-apis-to-be-used-with-existing-drivers)
+    - [Allow the new APIs to be used on drivers that don't take advantage of them](#allow-the-new-apis-to-be-used-on-drivers-that-dont-take-advantage-of-them)
     - [Design allows UMD to choose optimal rendering path without heavy CPU penalty](#design-allows-umd-to-choose-optimal-rendering-path-without-heavy-cpu-penalty)
     - [Allow ISVs to verify proper use of the feature even on drivers that aren't necessarily making behavior changes based on feature use](#allow-isvs-to-verify-proper-use-of-the-feature-even-on-drivers-that-arent-necessarily-making-behavior-changes-based-on-feature-use)
   - [Non-goals](#non-goals)
-- [Summary of API changes](#summary-of-api-changes)
+- [API Summary](#api-summary)
   - [Render Pass output bindings](#render-pass-output-bindings)
   - [Render Pass workloads](#render-pass-workloads)
     - [Resource Barriers within a Render Pass](#resource-barriers-within-a-render-pass)
   - [Resource Access declaration](#resource-access-declaration)
-    - [D3D12_RENDER_PASS_BEGINNING_ACCESS_DISCARD](#d3d12_render_pass_beginning_access_discard)
-    - [D3D12_RENDER_PASS_BEGINNING_ACCESS_PRESERVE](#d3d12_render_pass_beginning_access_preserve)
-    - [D3D12_RENDER_PASS_BEGINNING_ACCESS_CLEAR](#d3d12_render_pass_beginning_access_clear)
-    - [D3D12_RENDER_PASS_BEGINNING_ACCESS_NO_ACCESS](#d3d12_render_pass_beginning_access_no_access)
-    - [~~D3D12_RENDER_PASS_BEGINNING_ACCESS_RESUME_WRITING~~](#d3d12_render_pass_beginning_access_resume_writing)
-    - [~~D3D12_RENDER_PASS_BEGINNING_ACCESS_RESUME_LOCAL_READ~~](#d3d12_render_pass_beginning_access_resume_local_read)
-    - [D3D12_RENDER_PASS_ENDING_ACCESS_DISCARD](#d3d12_render_pass_ending_access_discard)
-    - [D3D12_RENDER_PASS_ENDING_ACCESS_PRESERVE](#d3d12_render_pass_ending_access_preserve)
-    - [D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE](#d3d12_render_pass_ending_access_resolve)
-    - [D3D12_RENDER_PASS_ENDING_ACCESS_NO_ACCESS](#d3d12_render_pass_ending_access_no_access)
-    - [~~D3D12_RENDER_PASS_ENDING_ACCESS_SUSPEND_WRITING~~](#d3d12_render_pass_ending_access_suspend_writing)
-    - [~~D3D12_RENDER_PASS_ENDING_ACCESS_SUSPEND_LOCAL_READ~~](#d3d12_render_pass_ending_access_suspend_local_read)
+    - [D3D12\_RENDER\_PASS\_BEGINNING\_ACCESS\_DISCARD](#d3d12_render_pass_beginning_access_discard)
+    - [D3D12\_RENDER\_PASS\_BEGINNING\_ACCESS\_PRESERVE](#d3d12_render_pass_beginning_access_preserve)
+    - [D3D12\_RENDER\_PASS\_BEGINNING\_ACCESS\_CLEAR](#d3d12_render_pass_beginning_access_clear)
+    - [D3D12\_RENDER\_PASS\_BEGINNING\_ACCESS\_NO\_ACCESS](#d3d12_render_pass_beginning_access_no_access)
+    - [D3D12\_RENDER\_PASS\_BEGINNING\_ACCESS\_TYPE\_PRESERVE\_LOCAL\_RENDER](#d3d12_render_pass_beginning_access_type_preserve_local_render)
+    - [D3D12\_RENDER\_PASS\_BEGINNING\_ACCESS\_TYPE\_PRESERVE\_LOCAL\_SRV](#d3d12_render_pass_beginning_access_type_preserve_local_srv)
+    - [D3D12\_RENDER\_PASS\_BEGINNING\_ACCESS\_TYPE\_PRESERVE\_LOCAL\_UAV](#d3d12_render_pass_beginning_access_type_preserve_local_uav)
+    - [D3D12\_RENDER\_PASS\_ENDING\_ACCESS\_DISCARD](#d3d12_render_pass_ending_access_discard)
+    - [D3D12\_RENDER\_PASS\_ENDING\_ACCESS\_PRESERVE](#d3d12_render_pass_ending_access_preserve)
+    - [D3D12\_RENDER\_PASS\_ENDING\_ACCESS\_PRESERVE\_LOCAL\_RENDER](#d3d12_render_pass_ending_access_preserve_local_render)
+    - [D3D12\_RENDER\_PASS\_ENDING\_ACCESS\_PRESERVE\_LOCAL\_SRV](#d3d12_render_pass_ending_access_preserve_local_srv)
+    - [D3D12\_RENDER\_PASS\_ENDING\_ACCESS\_PRESERVE\_LOCAL\_UAV](#d3d12_render_pass_ending_access_preserve_local_uav)
+    - [D3D12\_RENDER\_PASS\_ENDING\_ACCESS\_RESOLVE](#d3d12_render_pass_ending_access_resolve)
+    - [D3D12\_RENDER\_PASS\_ENDING\_ACCESS\_NO\_ACCESS](#d3d12_render_pass_ending_access_no_access)
   - [Render Pass Flags](#render-pass-flags)
     - [UAV writes within a Render Pass](#uav-writes-within-a-render-pass)
-    - [Suspend/Resume](#suspendresume)
-  - [Render Pass tiers/CheckFeatureSupport](#render-pass-tierscheckfeaturesupport)
-  - [Open Issues](#open-issues)
+    - [Suspend and Resume](#suspend-and-resume)
+    - [Read Only Depth Stencil](#read-only-depth-stencil)
+  - [Surfaces That BeginRenderPass Binds For Raster](#surfaces-that-beginrenderpass-binds-for-raster)
+  - [Surface Flow Between Passes](#surface-flow-between-passes)
+    - [State At End Of Command List](#state-at-end-of-command-list)
+  - [Local Compute Access Mode](#local-compute-access-mode)
+  - [Checking for Support](#checking-for-support)
+    - [Minimum Driver DDI version](#minimum-driver-ddi-version)
 - [API Headers](#api-headers)
 - [Runtime validation](#runtime-validation)
-- [HLK Test Plan](#hlk-test-plan)
+- [HLK Testing](#hlk-testing)
 - [History of changes](#history-of-changes)
 
 ---
@@ -52,8 +60,6 @@ Render Passes are intended to help TBDR-based (and other) renderers
 improve GPU efficiency by reducing memory traffic to/from off-chip
 memory, by enabling applications to better identify resource rendering
 ordering requirements/data dependencies.
-
-The name "Render Passes" may be changed in a future spec.
 
 # Optimization Goals
 
@@ -73,12 +79,11 @@ loads/stores from/to main memory.
 
 #### Case A: Reading/Writing One-to-One
 
-~~A common rendering pattern is for an application to render to RTV A, then turn around and texture from that resource as SRV A at some time in future (while rendering to RTV B). For cases in which the writes to RTV B are reading from pixels 'one-to-one' (mapped to the identical location in SRV A), some architectures may be able to continue the current binning pass during the writes to RTV A, and avoid a flush to main memory (since the SRV A reads only have a dependency on the current tile).~~
+A common rendering pattern is for an application to render to RTV A, then turn around and texture from that resource as SRV A at some time in future (while rendering to RTV B). For cases in which the writes to RTV B are reading from pixels 'one-to-one' (mapped to the identical location in SRV A), some architectures may be able to continue the current binning pass during the writes to RTV A, and avoid a flush to main memory (since the SRV A reads only have a dependency on the current tile).
 
-~~A design goal is to enable these two passes to be coalesced, without a intervening flush to main memory.~~  
+A design goal is to enable these two passes to be coalesced, without a intervening flush to main memory.
 
-*[v0.08] Postponed to a future release, were not able to identify
-common ISV scenarios for this functionality.*
+This goal was postponed from the first version of render passes - justification at the time being that ISV scenarios that would benefit were not common.  An updated version of renderpasses does tackle this one-to-one paradigm.  The justification now is that even if the scenarios are rare, allowing devices that do care about this to be programmed efficiently is worth it, particularly given the small API change needed.  See `PRESERVE_LOCAL_RENDER`, `PRESERVE_LOCAL_SRV` and `PRESERVE_LOCAL_UAV` in this spec.
 
 #### Case B: Writes to the same Render Targets across multiple Command Lists
 
@@ -92,11 +97,14 @@ immediate succeeding Command List.
 A design goal is to allow these two passes to be combined in a way that
 avoids an intervening flush to main memory.
 
-### Allow the new APIs to be used with existing drivers
+### Allow the new APIs to be used on drivers that don't take advantage of them
 
-The design seeks to allow new APIs to be run on existing drivers (not
-necessarily with any performance improvements), to ensure as
-wide-as-possible an install base for the APIs.
+The design allows the APIs to be called on drivers that don't take advantage of the feature.
+As long as the application is running on a sufficiently new runtime
+(which can be ensured via AgilitySDK), RenderPasses
+can be used on all devices.  Apps can write one path.  
+Devices that don't care will get runtime translation of the feature to non-render passes. 
+And devices that do want to take advantage can do so.
 
 ### Design allows UMD to choose optimal rendering path without heavy CPU penalty
 
@@ -136,7 +144,7 @@ call).
 
 ---
 
-# Summary of API changes
+# API Summary
 
 A Render Pass is defined by:
 
@@ -156,8 +164,6 @@ A Render Pass is defined by:
   - This last area is not currently in the spec, but may be
         addressed in a future iteration.
 
-  - *[v0.08] Will not be addressed in RS5*
-
 ---
 
 ## Render Pass output bindings
@@ -176,6 +182,8 @@ The RTVs/DSV set in BeginRenderPass the Render Pass are *not* propagated
 out to the Command List; they are in an undefined state following the
 Render Pass (the driver does not need to manually clear these to
 something well-defined).
+
+For more detail, see [Surfaces that BeginRenderPass For Raster](#surfaces-that-beginrenderpass-binds-for-raster).
 
 ---
 
@@ -227,7 +235,7 @@ Thus, the list of disallowed APIs within a Render Pass is:
 
 - DiscardResource
 
-- Dispatch [*added in v0.08*]
+- Dispatch*
 
 - OMSetRenderTargets
 
@@ -236,10 +244,6 @@ Thus, the list of disallowed APIs within a Render Pass is:
 - ResolveSubresource(Region)
 
 - SetProtectedResourceSession
-
-- ~~SetDescriptorHeaps [*added in v0.08, removed in v1.0*]~~
-
-- Else?
 
 The core runtime will remove the Command List if any of the above APIs
 are called during Command List recording (the UMD can assume those DDIs
@@ -282,7 +286,7 @@ have).
 
 Example non-conformant barriers:
 
-- `RENDER_TARGET`/`DEPTH_WRITE` to _any read state_ on currently-bound
+- `RENDER_TARGET`/`DEPTH_WRITE` to *any read state* on currently-bound
     RTVs/DSVs
 
 - Any aliasing barrier
@@ -311,6 +315,9 @@ beginning/engine 'access' characteristics.
 `D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE`, |  `D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_PRESERVE`,
 `D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_CLEAR`, |`D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_RESOLVE`,
 `D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_NO_ACCESS`, |`D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_NO_ACCESS`
+`D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE_LOCAL_RENDER`, |  `D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_PRESERVE_LOCAL_RENDER`,
+`D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE_LOCAL_SRV`, |  `D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_PRESERVE_LOCAL_SRV`,
+`D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE_LOCAL_UAV`, |  `D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_PRESERVE_LOCAL_UAV`,
 
 The "`BEGINING`" and "`ENDING`" enums must both be provided for all
 resources, and both are provided at BeginRenderPass time.
@@ -328,6 +335,8 @@ a GPU hang, the read may 'at worst' only return undefined data.
 A read is defined as a traditional UAV/SRV/CBV/VBV/IBV/IndirectArg
 binding/read, or as a blend/depth-testing-induced read.
 
+BeginRenderPass with this state means the surface will be bound at the rasterizer/depth (whichever applies) for the pass. See [Surfaces that BeginRenderPass binds for raster](#surfaces-that-beginrenderpass-binds-for-raster).
+
 ---
 
 ### D3D12_RENDER_PASS_BEGINNING_ACCESS_PRESERVE
@@ -335,6 +344,8 @@ binding/read, or as a blend/depth-testing-induced read.
 `BEGIN_PRESERVE` signifies the application has a dependency on the prior
 contents of the resource, and the contents must be loaded from main
 memory.
+
+BeginRenderPass with this state means the surface will be bound at the rasterizer/depth (whichever applies) for the pass. See [Surfaces that BeginRenderPass binds for raster](#surfaces-that-beginrenderpass-binds-for-raster).
 
 ---
 
@@ -345,90 +356,81 @@ being cleared to a specific (app-provided) color. *This clear occurs
 whether or not the resource is interacted with any further in the Render
 Pass*.
 
-The API will allow the application to specify the clear values at
+The API allows the application to specify the clear values at
 BeginRenderPass time, via a `D3D12_CLEAR_VALUE` struct.
+
+BeginRenderPass with this state means the surface will be bound at the rasterizer/depth (whichever applies) for the pass. See [Surfaces that BeginRenderPass binds for raster](#surfaces-that-beginrenderpass-binds-for-raster).
 
 ---
 
 ### D3D12_RENDER_PASS_BEGINNING_ACCESS_NO_ACCESS
 
 `NO_ACCESS` signifies the resource will not be read from or written to
-during the Render Pass. It is most expected to used to denote whether
+during the Render Pass. It is most expected to be used to denote whether
 the depth/stencil plane for a DSV is not accessed.
 
-Must be paired with `ENDING_ACCESS_NO_ACCESS`.
+BeginRenderPass with this state means the surface will not be bound at the rasterizer/depth (whichever applies) for the pass. See [Surfaces that BeginRenderPass binds for raster](#surfaces-that-beginrenderpass-binds-for-raster).  Unless it is on only one of depth or stencil and the other has a state that is renderable, in which case the DSV is bound with only one part being accessible.
+
+See [Surface Flow Between Passes](#surface-flow-between-passes) for a discussion on lining up states across passes, and [State At End Of Command List](#state-at-end-of-command-list) describing restrictions on ending a command list with a surface in `NO_ACCESS` state.
 
 ---
 
-### ~~D3D12_RENDER_PASS_BEGINNING_ACCESS_RESUME_WRITING~~
+### D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE_LOCAL_RENDER
 
-~~`BEGIN_RESUME_WRITING` signifies that the application is resuming
-writing to a surface that was previously written to in the previous
-Render Pass and had the `ENDING_ACCESS_SUSPEND_WRITING` flag, *and no
-intervening GPU work occurred between these two Render Passes*.~~
+`PRESERVE_LOCAL_RENDER` signifies:
 
-~~It is spec'd that the writes in the 'resuming' Render Pass occur after
-the writes in the 'suspending' Render Pass.~~
+- The resource was read or written in the preceding pass, and data from that resource that may be in tile memory can stay there for the current pass.  
+- The current pass will render to the resource in such a way that processing for a given 
+pixel coordinate will access the same location in the resource that
+the previous pass accessed.  
 
-~~The intent of this flag is to allow writes to the same Render Target
-to span multiple command lists, without flushing any on-chip caches.~~
+AdditionalWidth and AdditionalHeight parameters must be 0 since they don't make sense in the context of rendering.  
 
-~~`RESUME_WRITING` may resume from a Render Pass in a separate Command
-List, as long as the suspending/resuming Command Lists are executed
-(back to back) in the same ExecuteCommandLists group.~~
+The end of the previous pass must specify `ENDING_ACCESS_TYPE_PRESERVE_LOCAL_RENDER` and the same AdditionalWidth/AdditionalHeight parameters.
 
-[v0.08] -- In v0.08, suspend/resume was moved from being a per-view
-flag and moved to be a general command list flag. Same semantics
-(suspend/resumes must not have any intervening GPU work, and if they
-span command lists those command lists must be in the same
-ExecuteCommandLists call.)
+See [Surface Flow Between Passes](#surface-flow-between-passes) for a discussion on lining up states across passes, and [State At End Of Command List](#state-at-end-of-command-list) describing that command lists can't finish with a surface in `PRESERVE_LOCAL_*` state.
+
+BeginRenderPass with this state means the surface will be bound at the rasterizer/depth (whichever applies) for the pass. See [Surfaces that BeginRenderPass binds for raster](#surfaces-that-beginrenderpass-binds-for-raster).
 
 ---
 
-### ~~D3D12_RENDER_PASS_BEGINNING_ACCESS_RESUME_LOCAL_READ~~
+### D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE_LOCAL_SRV
 
-~~`BEGINNING_ACCESS_RESUME_LOCAL_READ` signifies that the application
-wants to read from a resource that was *previously immediately written
-to by the GPU (i.e. still potentially in tile cache), and will be read
-from in a pixel-local fashion (i.e. reads will always be on the exact
-output pixel, or adjacent pixels)*.~~
+- The resource was read or written in the preceding pass, and data from that resource that may be in tile memory can stay there for the current pass.  
+- The current pass will read from the resource via SRV binding(s) in the descriptor heap in such a way that processing for a given pixel coordinate will access the same location in the resource that the previous pass accessed.  
 
-~~The goal of this enum (paired with
-`ENDING_ACCESS_SUSPEND_LOCAL_READ`) is to allow resources to be read
-from (when possible) without issuing a flush between two subsequent
-Render Pass operations.~~
+If AdditionalWidth/AdditionalHeight parameters for the pass are nonzero, they define a border of additional pixel locations around the current one that can also be read.  For instance AdditionalWidth of 1 and AdditionalHeight of 2 means a region 3 pixels wide and 5 pixels tall around the current pixel can be read by the current pixel.
 
-~~Specifically, the application warrants:~~
+The end of the previous pass must specify `ENDING_ACCESS_PRESERVE_LOCAL_SRV` and the same
+AdditionalWidth/AdditionalHeight parameters.
 
-- ~~The resource has previously been written to in a Render Pass that
-    had the 'write' characteristics of
-    `D3D12_RENDER_PASS_ENDING_ACCESS_SUSPEND_LOCAL_READ`.~~
+The pass's surface definition is the same rendertarget or depthstencil descriptor used in neighboring passes (even though the application will actually accesses the surface via SRV in the descriptor heap).  This lets implementations match up neighboring passes.  If none of the passes are actually using a rendertarget/depth surface (e.g. UAV/SRV only rendering), the application still must create a dummy rendertarget or depthstencil descriptor to use in the pass description, for simplicity of the API.  The view used in the descriptor heap to actually access the surface can use compatible format casting, so the format doesn't have to exactly match the pass's descriptor as long as the memory identified is the same.
 
-- ~~No GPU operations have occurred between the previous Render Pass'
-    `SUSPEND_LOCAL` and the current Render Pass.~~
+See [Surface Flow Between Passes](#surface-flow-between-passes) for a discussion on lining up states across passes, and [State At End Of Command List](#state-at-end-of-command-list) describing that command lists can't finish with a surface in `PRESERVE_LOCAL_*` state.
 
-  - ~~A `RESUME_LOCAL_READ` may be chained from within the same
-        Command List -or- between Command Lists in the same
-        ExecuteCommandLists call, but *not* across separate
-        ExecuteCommandLists calls.~~
+Compute shaders invoked in the pass follow the semantics of [Local compute access mode](#local-compute-access-mode).
 
-- ~~The resource to be read from matches the size and format of the
-    newly-bound render target~~
+BeginRenderPass with this state means the surface will not be bound at the rasterizer/depth (whichever applies) for the pass.  The exception is read only DSVs. See [Surfaces that BeginRenderPass binds for raster](#surfaces-that-beginrenderpass-binds-for-raster) and [Read only depth stencil](#read-only-depth-stencil).
 
-- ~~All reads/writes are '1-to-1' (plus optional gutter read pixels
-    specified by the app), the reads from the source texture will be
-    written to the same location on the target texture, and the render
-    target texture is the same size as the source texture.~~
+---
 
-~~The kernel size of the read (how many surrounding pixels are needed)
-are specified at BeginRenderPass time, through the
-AdditionalWidth/AdditionalHeight fields on
-`D3D12_RENDER_PASS_BEGINNING_ACCESS_RESUME_LOCAL_READ_PARAMETERS`.
-The AdditionalWidth/AdditionalHeight parameters must match those on the
-previous `ENDING_ACCESS_SUSPEND_LOCAL_READ`.~~
+### D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE_LOCAL_UAV
 
-[v0.08] Removed from API/DDI, may be added in future release in
-response to ISV usage scenarios.
+- The resource was read or written in the preceding pass, and data from that resource that may be in tile memory can stay there for the current pass.  
+- The current pass will read/write the resource via UAV binding(s) in the descriptor heap in such a way that processing for a given pixel coordinate will access the same location in the resource that the previous pass accessed.  
+
+If AdditionalWidth/AdditionalHeight parameters for the pass are nonzero, they define a border of additional pixel locations around the current one that can also be read/written.  For instance AdditionalWidth of 1 and AdditionalHeight of 2 means a region 3 pixels wide and 5 pixels tall around the current pixel can be read/written by the current pixel.
+
+The end of the previous pass must specify `ENDING_ACCESS_PRESERVE_LOCAL_UAV` and the same
+AdditionalWidth/AdditionalHeight parameters.
+
+The pass's surface definition is the same rendertarget or depthstencil descriptor used in neighboring passes (even though the application will actually accesses the surface via UAV in the descriptor heap).  This lets implementations match up neighboring passes.  If none of the passes are actually using a rendertarget/depth surface (e.g. UAV/SRV only rendering), the application still must create a dummy rendertarget or depthstencil descriptor to use in the pass description, for simplicity of the API.  The view used in the descriptor heap to actually access the surface can use compatible format casting, so the format doesn't have to exactly match the pass's descriptor as long as the memory identified is the same.
+
+See [Surface Flow Between Passes](#surface-flow-between-passes) for a discussion on lining up states across passes, and [State At End Of Command List](#state-at-end-of-command-list) describing that command lists can't finish with a surface in `PRESERVE_LOCAL_*` state.
+
+Compute shaders invoked in the pass follow the semantics of [Local compute access mode](#local-compute-access-mode).
+
+BeginRenderPass with this state means the surface will not be bound at the rasterizer/depth (whichever applies) for the pass.  See [Surfaces that BeginRenderPass binds for raster](#surfaces-that-beginrenderpass-binds-for-raster).
 
 ---
 
@@ -439,6 +441,8 @@ dependency on the data written to the resource during this Render Pass
 (may be appropriate for a depth buffer where the depth buffer will never
 be textured from prior to future writes).
 
+See [Surface Flow Between Passes](#surface-flow-between-passes) for a discussion on lining up states across passes.
+
 ---
 
 ### D3D12_RENDER_PASS_ENDING_ACCESS_PRESERVE
@@ -446,6 +450,47 @@ be textured from prior to future writes).
 `ENDING_ACCESS_PRESERVE` signifies the application will have a
 dependency on the written contents of this resource in the future (and
 they must be preserved).
+
+See [Surface Flow Between Passes](#surface-flow-between-passes) for a discussion on lining up states across passes.
+
+---
+
+### D3D12_RENDER_PASS_ENDING_ACCESS_PRESERVE_LOCAL_RENDER
+
+`ENDING_ACCESS_PRESERVE_LOCAL_RENDER` signifies surface contents must be preserved
+for rendering with a local access pattern in the next pass.
+
+The pass's surface definition is the same rendertarget or depthstencil descriptor used in neighboring passes (even though the application might actually accesses the surface some other way in the current pass).  This lets implementations match up neighboring passes.  If none of the passes are actually using a rendertarget/depth surface (e.g. UAV/SRV only rendering), the application still must create a dummy rendertarget or depthstencil descriptor to use in the pass description, for simplicity of the API.  The view used in the descriptor heap to actually access the surface can use compatible format casting, so the format doesn't have to exactly match the pass's descriptor as long as the memory identified is the same.
+
+Compute shaders invoked in the current pass follow the semantics of [Local compute access mode](#local-compute-access-mode).  This doesn't apply if the surface is a rendertarget, since compute shaders can't access them, in which case the compute shader executes as normal (though its presence in the middle pass like this likely disrupts pass optimization ability for implementations).
+
+See [Surface Flow Between Passes](#surface-flow-between-passes) for a discussion on lining up states across passes, and [State At End Of Command List](#state-at-end-of-command-list) describing that command lists can't finish with a surface in `PRESERVE_LOCAL_*` state.
+
+---
+
+### D3D12_RENDER_PASS_ENDING_ACCESS_PRESERVE_LOCAL_SRV
+
+`ENDING_ACCESS_PRESERVE_LOCAL_SRV` signifies surface contents must be preserved
+for use as an SRV with a local access pattern in the next pass.
+
+The pass's surface definition is the same rendertarget or depthstencil descriptor used in neighboring passes (even though the application might actually accesses the surface some other way in the current pass).  This lets implementations match up neighboring passes.  If none of the passes are actually using a rendertarget/depth surface (e.g. UAV/SRV only rendering), the application still must create a dummy rendertarget or depthstencil descriptor to use in the pass description, for simplicity of the API.  The view used in the descriptor heap to actually access the surface can use compatible format casting, so the format doesn't have to exactly match the pass's descriptor as long as the memory identified is the same.
+
+Compute shaders invoked in the current pass follow the semantics of [Local compute access mode](#local-compute-access-mode).  This doesn't apply if the surface is a rendertarget, since compute shaders can't access them, in which case the compute shader executes as normal (though its presence in the middle pass like this likely disrupts pass optimization ability for implementations).
+
+See [Surface Flow Between Passes](#surface-flow-between-passes) for a discussion on lining up states across passes, and [State At End Of Command List](#state-at-end-of-command-list) describing that command lists can't finish with a surface in `PRESERVE_LOCAL_*` state.
+
+---
+
+### D3D12_RENDER_PASS_ENDING_ACCESS_PRESERVE_LOCAL_UAV
+
+`ENDING_ACCESS_PRESERVE_LOCAL_SRV` signifies surface contents must be preserved
+for use as a UAV with a local access pattern in the next pass.
+
+The pass's surface definition is the same rendertarget or depthstencil descriptor used in neighboring passes (even though the application might actually accesses the surface some other way in the current pass).  This lets implementations match up neighboring passes.  If none of the passes are actually using a rendertarget/depth surface (e.g. UAV/SRV only rendering), the application still must create a dummy rendertarget or depthstencil descriptor to use in the pass description, for simplicity of the API.  The view used in the descriptor heap to actually access the surface can use compatible format casting, so the format doesn't have to exactly match the pass's descriptor as long as the memory identified is the same.
+
+Compute shaders invoked in the current pass follow the semantics of [Local compute access mode](#local-compute-access-mode).  This doesn't apply if the surface is a rendertarget, since compute shaders can't access them, in which case the compute shader executes as normal (though its presence in the middle pass like this likely disrupts pass optimization ability for implementations).
+
+See [Surface Flow Between Passes](#surface-flow-between-passes) for a discussion on lining up states across passes, and [State At End Of Command List](#state-at-end-of-command-list) describing that command lists can't finish with a surface in `PRESERVE_LOCAL_*` state.
 
 ---
 
@@ -462,6 +507,8 @@ at the time the Render Pass ends.
 The resolve source will be left in its initial resource state at the time the Render Pass
 ends. Resolve operations sumbmitted by a render pass will not implicitly change the state of any resources.
 
+See [Surface Flow Between Passes](#surface-flow-between-passes) for a discussion on lining up states across passes.
+
 ---
 
 ### D3D12_RENDER_PASS_ENDING_ACCESS_NO_ACCESS
@@ -470,30 +517,7 @@ ends. Resolve operations sumbmitted by a render pass will not implicitly change 
 or written to during the Render Pass. It is most expected to used to
 denote whether the depth/stencil plane for a DSV is not accessed.
 
-Must be paired with `BEGINNING_ACCESS_NO_ACCESS`.
-
----
-
-### ~~D3D12_RENDER_PASS_ENDING_ACCESS_SUSPEND_WRITING~~
-
-~~See *D3D12_RENDER_PASS_BEGINNING_ACCESS_RESUME_WRITING.*~~
-
-~~`ENDING_ACCESS_SUSPEND_WRITING` signifies that the application will
-continue writing to the resource in an immediately succeeding Render
-Pass (with no intervening GPU work).~~
-
----
-
-### ~~D3D12_RENDER_PASS_ENDING_ACCESS_SUSPEND_LOCAL_READ~~
-
-~~See *D3D12_RENDER_PASS_BEGINNING_ACCESS_RESUME_LOCAL_READ.*~~
-
-~~Signifies the application has written to the resource, and it will
-read from the resource in the future in a one-to-one (plus optional
-gutter pixels) fashion (in the pixel shader, only the current pixel plus
-an optional number of surrounding pixels will be read from). Most
-importantly, this enum signifies that no GPU operations will occur
-between the SUSPEND and RESUME.~~
+See [Surface Flow Between Passes](#surface-flow-between-passes) for a discussion on lining up states across passes, and [State At End Of Command List](#state-at-end-of-command-list) describing that command lists can't finish with a surface in `NO_ACCESS` state.
 
 ---
 
@@ -505,7 +529,9 @@ typedef enum D3D12_RENDER_PASS_FLAGS
     D3D12_RENDER_PASS_FLAG_NONE = 0,
     D3D12_RENDER_PASS_FLAG_ALLOW_UAV_WRITES = 0x1,
     D3D12_RENDER_PASS_FLAG_SUSPENDING_PASS = 0x2,
-    D3D12_RENDER_PASS_FLAG_RESUMING_PASS = 0x4
+    D3D12_RENDER_PASS_FLAG_RESUMING_PASS = 0x4,
+    D3D12_RENDER_PASS_FLAG_BIND_READ_ONLY_DEPTH = 0x8,
+    D3D12_RENDER_PASS_FLAG_BIND_READ_ONLY_STENCIL = 0x10,
 } D3D12_RENDER_PASS_FLAGS;
 ```
 
@@ -525,42 +551,164 @@ within a Render Pass.
 UAV bindings (via root tables or root descriptors) **are** inherited
 into Render Passes, and are propagated out of Render Passes.
 
+This flag is not necessary/ignored for passes with `BEGINNING_ACCESS_TYPE`/`ENDING_ACCESS_TYPE` `_PRESERVE_LOCAL_*` flags.  In these passes, if the application wants to do UAV accesses it must ensure that the memory access pattern is such that if an implementation breaks up passes into tiles, the UAV accesses will behave identically as if the implementation didn't do so and executed each GPU command fully before moving to the next. `ALLOW_UAV_WRITES` refers to UAVs other than the pass surface, so is independent of the `_PRESERVE_LOCAL_UAV` flag, which is specifically calling out the pass surface for UAV access with a local access pattern.
+
 ---
 
-### Suspend/Resume
+### Suspend and Resume
 
-In v0.08, applications now suspend/resume an entire render pass.
-Suspending/Resuming render passes must have identical views/access flags
-between the passes, and may not have any intervening GPU ops (draws,
+Applications can suspend/resume a sequence of render passes.  This means suspending at the end of
+the last render pass in one command list and resuming with the first render pass in another command list.
+
+These command lists can be recorded in parallel or any order, but when executed, they have to be placed in 
+the intended order in an execute command lists call.
+
+A render pass can be both resuming and suspending if it is the only thing in a command list, connecting a prior command list that suspends 
+and a subsequent command list that resumes.
+
+The way the ending state of a suspending pass lines up with the beginning state of a resuming pass 
+that will execute after it follows the same rules/restrictions as in between any two passes
+within a command list.  These rules are described in [Surface flow between passes](#surface-flow-between-passes).
+All that suspend/resume is doing is calling out that a logical flow of passes is straddling command list boundaries.
+
+Thre cannot be intervening GPU ops (draws,
 dispatches, discards, clears, copies, updatetilemappings,
 writebufferimmediates, queries, query resolves, ..) between the
 suspending/resuming render passes.
 
-The intended use case is multi-threaded rendering, where say four CLs
-(each with their own render passes) could target the same render
-targets. When render passes are suspended/resumed across command lists,
-the command lists must be executed in the same ExecuteCommandLists call.
-
-A render pass can be both resuming and suspending -- in the
-multi-threaded example, CLs 2 and 3 would be resuming from 1 and 2
-respectively, and suspending to 3 and 4 respectively.
+It is recommended to only use suspend/resume when there actually is a connection between surfaces acrosss the suspending and resuming passes (e.g. surfaces in common across the passes), 
+as opposed to blindly doing suspend/resume across command lists.  Unneeded suspend/resume will not cause any rendering issues, but might incur extra overhead during execution as the driver
+tries to stich together the passes.
 
 ---
 
-## Render Pass tiers/CheckFeatureSupport
+### Read Only Depth Stencil
 
-Applications will be able to query the extent to which a UMD/HW
-efficiently supports Render Passes.
+If an application wishes to bind a DSV where one or both of depth/stencil is read only to the rasterizer for a given pass, it can provide the appropriate read-only DSV descriptor to the pass.  It is fine for neighboring passes to use the same surface in read/write mode via read-write DSV descriptor.  This is the one case with render passes where it is valid for adjacent passes to refer to the same surface via different cpu descriptors.
 
-Though Render Passes will always function given the runtime's mapping
-logic, this allows applicatinos (notably 11on12) to determine when it is
-(possibly) worth their while to issue their commands as Render Passes,
-and when it is definitely not a benefit (when the runtime is just
-mapping to the existing API surface).
+When a read only DSV is specified, the application must include one or both of `D3D12_RENDER_PASS_FLAG_BIND_READ_ONLY_DEPTH_AT_RASTERIZER` and `D3D12_RENDER_PASS_FLAG_BIND_READ_ONLY_STENCIL_AT_RASTERIZER` (whichever apply) in render pass flags.  They indicate to the system to bind the read only DSV at the rasterizer.
 
-There will be three tiers of support:
+These flags can only be specified when the depth/stencil surfaces that have been initialized before the current pass (by a previous pass or some other way).  
 
-- `D3D12_RENDER_PASS_TIER_0` -- UMD has not implemented DDI
+Here is a table of behaviors when combining `D3D12_RENDER_PASS_FLAG_BIND_READ_ONLY_DEPTH/STENCIL_AT_RASTERIZER` flags with various `D3D12_RENDER_PASS_BEGINNING_ACCESS_*` options for the depth and/or stencil surface:
+
+|`D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_*` |Behavior with `D3D12_RENDER_PASS_FLAG_BIND_READ_ONLY_DEPTH/STENCIL_AT_RASTERIZER`|
+|--------------------------------------|---------------------------------------------------------------------------------|
+|`PRESERVE`|The surface will be bound at the rasterizer for read only access.  The application can still bind an SRV for this surface, and is not promising any pixel local access, which is the `PRESERVE_LOCAL_SRV` option below.|
+|`PRESERVE_LOCAL_SRV`|The surface will be bound at the rasterizer for read only access while shaders can also access it via SRV in a local fashion.|
+|`PRESERVE_LOCAL_RENDER`|The surface will be bound at the rasterizer for read only access with no access from shaders. This can be done for read/write DSVs as well (no `D3D12_RENDER_PASS_FLAG_BIND_READ_ONLY_DEPTH/STENCIL_AT_RASTERIZER` flags in that case).|
+
+If an application wants to do pixel local access to a depth buffer via SRV while no depth buffer is bound at the rasterizer, it must specify a normal DSV cpu descriptor (not a read only one) in BeginPass, and use `BEGINNING_ACCESS_TYPE_PRESERVE_LOCAL_SRV`. In this case the `D3D12_RENDER_PASS_FLAG_BIND_READ_ONLY_DEPTH/STENCIL_AT_RASTERIZER` are not specified, and the DSV will not be bound at the rasterizer.
+
+If an application wants to do random access to a depth buffer via SRV that is different from the depth buffer bound at the rasterizer (if any), the pass description doesn't need to mention anything about the surface accessed via SRV binding.  This is just like any other non-pass surface.   It could have been a depth buffer rendered in a previous pass (for example a shadow map) in which that pass ended with `ENDING_ACCESS_TYPE_PRESERVE`.
+
+---
+
+## Surfaces That BeginRenderPass Binds For Raster
+
+This is a description of which surfaces specified in BeginRenderPass get bound for rasterization/depth/stencil and how they match up with surfaces listed in PSO definitions used in the pass.
+
+Surfaces listed in BeginPass in the following access modes will be bound for raster/depth/stencil, as if OMSetRenderTargets() was called at BeginRenderPass():
+
+|`D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_*`|`R` == bound for raster,<br>`NR` == not bound for raster|
+|-----------|-----------------------------------------------------|
+|`DISCARD`|`R`|
+|`PRESERVE`|`R`|
+|`CLEAR`|`R`|
+|`PRESERVE_LOCAL_RENDER`|`R`|
+|`PRESERVE_LOCAL_SRV` with `D3D12_RENDER_PASS_FLAG_BIND_READ_ONLY_DEPTH/STENCIL_AT_RASTERIZER`<br> flag(s) and matching read-only DSV cpuDescriptor. See [Read Only Depth Stencil](#read-only-depth-stencil).|`R`|
+|`PRESERVE_LOCAL_SRV` in all other cases|`NR`|
+|`PRESERVE_LOCAL_UAV`|`NR`|
+|`NO_ACCESS`|`NR`|
+
+Indeed for drivers that don't support render passes, the runtime uses these rules to convert BeginRenderPass() into the equivalent OMSetRenderTargets() call.
+
+Suppose a given BeginRenderPass() call lists a set of RTVs (and DSV) with the following distribution of `R` (bound for raster) and `NR` (not bound for raster) surfaces based on the above:
+
+RTV list:
+
+`[0] PRESERVE_LOCAL_SRV (NR)`<br>
+`[1] NO_ACCESS (NR)`<br>
+`[2] PRESERVE_LOCAL_RENDER (R)`<br>
+`[3] PRESERVE_LOCAL_UAV (NR)`<br>
+`[4] PRESERVE (R)`
+
+DSV: `CLEAR (R)`
+
+In this case, the pass binds 2 RTVs (`[2]` and `[4]` in the array) to raster, plus the DSV - all the `R` surfaces..  As if OMSetRenderTargets() is called with these 2 RTVs and DSV.
+
+Therefore, any PSOs used in the pass must specify descriptions of at least 2 RTV formats and a DSV format.  If Blend desc is applicable, there would be at least 2 entries in the PSO desc there as well.  Any additional RTVs specified beyond 2 in the PSO get unused.  As might be expected, in a PSO definition's list of RTVs, entries `[0]` and `[1]` map to BeginPass surfaces `[2]` and `[4]` respectively - the order the raster bound surfaces appear in the render pass RTV list without any gaps. 
+
+---
+
+## Surface Flow Between Passes
+
+For a given surface specified in BeginRenderPass, regardless of what beginning access (`D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_*`) it uses all ending access (`D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_*`) options are valid.
+
+Conversely, when a pass ends with a surface in a given ending access type, here is a summary of options for the next pass beginning access type:
+
+|Previous pass `D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_*`|Next pass `D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_*` options|
+|-|-|
+|`DISCARD`/`PRESERVE`/`RESOLVE`/`NO_ACCESS` or no previous reference to surface|Any of `DISCARD`/`PRESERVE`/`CLEAR`/`NO_ACCESS` for the next pass that references the surface.  It is also fine for new passes to not use the surface again or until a later pass.  The begin state can differ from the previous end state to allow for non-pass operations on the surface between the passes, such as copying or running a compute shader. |
+|`PRESERVE_LOCAL_RENDER`|`PRESERVE_LOCAL_RENDER`. Between the passes, the only valid operations are setting up rendering state for the next pass.  This includes necessary resource transitions.  Also valid are binding shaders/root parameters, though these can be done within the pass as well.
+|`PRESERVE_LOCAL_SRV`|`PRESERVE_LOCAL_SRV`. Between the passes, the only valid operations are setting up rendering state for the next pass.  This includes necessary resource transitions.  Also valid are binding shaders/root parameters, though these can be done within the pass as well.|
+|`PRESERVE_LOCAL_UAV`|`PRESERVE_LOCAL_UAV`. Between the passes, the only valid operations are setting up rendering state for the next pass.  This includes necessary resource transitions.  Also valid are binding shaders/root parameters, though these can be done within the pass as well.|
+
+The order that RTV descriptors appear in the list in BeginRenderPass does not have to match the order they are listed in neighboring passes.
+
+These rules also apply across passes that [suspend/resume](#suspend-and-resume) across command lists.
+
+---
+
+### State At End Of Command List
+
+A command list cannot end with any surface in `PRESERVE_LOCAL_RENDER / PRESERVE_LOCAL_SRV / PRESERVE_LOCAL_UAV` states.  It is also invalid to end a command list with a surface in `NO_ACCESS` if it was in any other state earlier in the sequence of passes.
+
+The exception is if the last pass in a command list uses flag `D3D12_RENDER_PASS_FLAG_SUSPENDING_PASS`, indicating a subsequent command list in the same ExecuteCommandLists call will have a pass starting with `D3D12_RENDER_PASS_FLAG_RESUMING_PASS`. See [Suspend/Resume](#suspend-and-resume)
+
+---
+
+## Local Compute Access Mode
+
+> This is an initial proposal and likely needs refinement.
+
+This section defines local compute (shader) access in the context of render passes.
+
+This pplies to passes that specify either `BEGINNING_ACCESS_PRESERVE_LOCAL_SRV/UAV` or `ENDING_ACCESS_PRESERVE_LOCAL_RENDER/SRV/UAV` (e.g. next pass is using preserve local semantics).  This does not apply to passes that specify `BEGINNING_ACCESS_PRESERVE_LOCAL_RENDER`, since compute shaders do not have access to surfaces in render target state.
+
+In these passes, if a compute shader is invoked via `Dispatch()` or the equivalent in `ExecuteIndirect()` the system assumes local compute access, which means the following:
+
+Suppose the current viewport and scissor (slot `[0]`) define a rectangle of pixels whose top left coordinate is `(xTopLeft,yTopLeft)`, `w` pixels wide and `h` pixels high.
+
+For each thread invoked by compute shader, it's pixel location in any surfaces with `*PRESERVE_LOCAL*` flags are as follows.  The thread's `SV_DispatchThreadID` `(x,y)` components (regardless of `z` value) correspond to pixel `(xTopLeft+x,yTopLeft+y)`.  Any thread whose `SV_DispatchThreadcID` `x < w` or `y < h` can only access it's local location - `(xTopLeft+x,yTopLeft+y)` in the surface, plus any `AdditionalWidth/Height` pixel border specified, clamped to the extents `w` and `h`.  If a thread accesses anything outside its local location, behavior is undefined.  This also applies to threads whose `x >= w` or `y >= h`, which must not access the surface or else behavior is undefined.
+
+The threads cannot use thread group shared memory or do any cross thread communication or request thread group execution sync, otherwise behavior is undefined.  In other words, the shader author must treat of the threads as if they operate on their own and not depend on any particular neighboring threads to be running with them.
+
+> This convention allows implementations to break up the compute shader thread grid into the same tile boundaries that can be shared with other passes that may be doing other compute or rendering work on the same data in a local access fashion.  Different implementations may have different size tiles, hence the requirement that threads don't depend on neighboring threads.
+
+---
+
+## Checking for Support
+
+This feature originally shipped in an incomplete form that drivers 
+could not take advantage of.  The feature has been repaired now, and
+so to use RenderPasses, applications must first confirm `CheckFeatureSupport` 
+reports `RenderPassesValid` (in `D3D12_OPTIONS_18`).
+  
+On older D3D12 runtimes with the non-functioning RenderPass support, 
+the `RenderPassesValid` query isn't recognized so the query will fail. 
+That is an indication that use of RenderPasses at all is invalid, and can
+result in undefined behavior. On newer runtimes (which applications can 
+guaranteed by using the AgilitysSDK), `RenderPassesValid` will be `TRUE`, 
+in which case the APIs in this spec can all be used.
+
+Separately, applications can check the Tier of support described next to 
+understand how much the driver/harddware takes advantage of the feature
+versus runtime emulation.
+
+There are three tiers of support:
+
+- `D3D12_RENDER_PASS_TIER_0` -- Driver has not implemented DDI
     Table, supported via SW emulation
 
 - `D3D12_RENDER_PASS_TIER_1` -- Render Passes implemented by
@@ -572,57 +720,20 @@ There will be three tiers of support:
     efficiently supported (more efficient than issuing the same work
     without a Render Pass).
 
-The UMD will report back these tiers to the runtime. The runtime will
-validate that UMDs which fill out the DDI table at least report back
-TIER_1, and at the same time will validate that UMDs which do not fill
+The driver will report back these tiers to the runtime. The runtime will
+validate that drivers which fill out the DDI table at least report back
+TIER_1, and at the same time will validate that drivers which do not fill
 out the DDI table do not claim anything other than TIER_0 support (the
 runtime will fail device creation in this case).
 
-This requirement will only be present for UMDs supporting a the DDI
-build version in which this change is made.
+This requirement will only be present for drivers supporting the minimum
+DDI version described in [Minimum Driver DDI version](#minimum-driver-ddi-version).
 
 ---
 
-## Open Issues
+### Minimum Driver DDI version
 
-- Should the `BEGINNING/ENDING_ACCESS` flags be at the sub-resource
-    level for RTVs? They are already specific to the depth/stencil
-    planes.
-
-  - [v0.08] Not for RS5
-
-- Should the user specify at the Render Pass level the
-    write/read-regions of a resource? Can that be inferred through
-    viewport/scissor information mostly-well-enough?
-
-  - [v0.08] Not for RS5
-
-- Do PSOs, VBs/IBs need to be incorporated into the Render Pass
-    structure?
-
-  - [v0.08] No indication this is needed.
-
-- Better name than `_DISCARD`? E.g. "`DON'T_CARE`"?
-
-- Is it ok to not support SO within a Render Pass (spec currently does
-    not support this)
-
-  - [v0.08] SO is supported within render passes
-
-- Should we let users call `OMSetRenderTargets` within a Render Pass, as
-    long as they still to RTVs specified?
-
-  - Need to determine if there's a scenario for this that's worth
-        the extra complexity
-
-  - [v0.08] No
-
-- Should we add back in resource barriers associated with
-    BeginRenderPass? Is that buying UMDs anything?
-
-- Can ROV writes be supported?
-
-- Else?
+Even if drivers report support for `TIER_1+`, if the device doesn't support DDI revision `D3D12DDI_SUPPORTED_0101` or greater, the runtime maps all uses of RenderPasses to non-renderpass DDIs (and report `TIER_0` at the API).  This is the DDI revision where the `*PRESERVE_LOCAL*` flags were introduced, and it is deemed simpler to only support these features going forward, all or none.
 
 ---
 
@@ -632,33 +743,46 @@ build version in which this change is made.
 // Beginning Access
 typedef enum D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE
 {
-    D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_DISCARD,
-    D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE,
-    D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_CLEAR,
-    D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_NO_ACCESS
+    D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_DISCARD,
+    D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE,
+    D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_CLEAR,
+    D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_NO_ACCESS,
+    D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE_LOCAL_RENDER,
+    D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE_LOCAL_SRV,
+    D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE_LOCAL_UAV
 } D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE;
 
 typedef struct D3D12_RENDER_PASS_BEGINNING_ACCESS_CLEAR_PARAMETERS
 {
-    D3D12_CLEAR_VALUE ClearValue;
+    D3D12_CLEAR_VALUE ClearValue;
 } D3D12_RENDER_PASS_BEGINNING_ACCESS_CLEAR_PARAMETERS;
+
+typedef struct D3D12_RENDER_PASS_BEGINNING_ACCESS_PRESERVE_LOCAL_PARAMETERS
+{
+    UINT16 AdditionalWidth;
+    UINT16 AdditionalHeight;
+} D3D12_RENDER_PASS_BEGINNING_ACCESS_PRESERVE_LOCAL_PARAMETERS;
 
 typedef struct D3D12_RENDER_PASS_BEGINNING_ACCESS
 {
-    D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE Type;
-    union
-    {
-        D3D12_RENDER_PASS_BEGINNING_ACCESS_CLEAR_PARAMETERS Clear;
-    };
+    D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE Type;
+    union
+    {
+    D3D12_RENDER_PASS_BEGINNING_ACCESS_CLEAR_PARAMETERS Clear;
+        D3D12_RENDER_PASS_BEGINNING_ACCESS_PRESERVE_LOCAL_PARAMETERS PreserveLocal;
+    };
 } D3D12_RENDER_PASS_BEGINNING_ACCESS;
 
 // Ending Access
 typedef enum D3D12_RENDER_PASS_ENDING_ACCESS_TYPE
 {
-    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_DISCARD,
-    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_PRESERVE,
-    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_RESOLVE,
-    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_NO_ACCESS
+    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_DISCARD,
+    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_PRESERVE,
+    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_RESOLVE,
+    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_NO_ACCESS,
+    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_PRESERVE_LOCAL_RENDER,
+    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_PRESERVE_LOCAL_SRV,
+    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_PRESERVE_LOCAL_UAV,
 } D3D12_RENDER_PASS_ENDING_ACCESS_TYPE;
 
 typedef struct D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS
@@ -686,37 +810,44 @@ typedef struct D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_PARAMETERS
     BOOL PreserveResolveSource; // New to v0.08
 } D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_PARAMETERS;
 
+typedef struct D3D12_RENDER_PASS_ENDING_ACCESS_PRESERVE_LOCAL_PARAMETERS
+{
+    UINT16 AdditionalWidth;
+    UINT16 AdditionalHeight;
+} D3D12_RENDER_PASS_ENDING_ACCESS_PRESERVE_LOCAL_PARAMETERS;
+
 typedef struct D3D12_RENDER_PASS_ENDING_ACCESS
 {
-    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE Type;
-    union
-    {
-        D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_PARAMETERS Resolve;
-    };
+    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE Type;
+    union
+    {
+        D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_PARAMETERS Resolve;
+        D3D12_RENDER_PASS_ENDING_ACCESS_PRESERVE_LOCAL_PARAMETERS PreserveLocal;
+    };
 } D3D12_RENDER_PASS_ENDING_ACCESS;
 
 // Render Target Desc
 typedef struct D3D12_RENDER_PASS_RENDER_TARGET_DESC
 {
-    D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor;
-    D3D12_RENDER_PASS_BEGINNING_ACCESS BeginningAccess;
-    D3D12_RENDER_PASS_ENDING_ACCESS EndingAccess;
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor;
+    D3D12_RENDER_PASS_BEGINNING_ACCESS BeginningAccess;
+    D3D12_RENDER_PASS_ENDING_ACCESS EndingAccess;
 } D3D12_RENDER_PASS_RENDER_TARGET_DESC;
 
 // Depth-Stencil Desc
 typedef struct D3D12_RENDER_PASS_DEPTH_STENCIL_DESC
 {
-    D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor;
-    D3D12_RENDER_PASS_BEGINNING_ACCESS DepthBeginningAccess;
-    D3D12_RENDER_PASS_BEGINNING_ACCESS StencilBeginningAccess;
-    D3D12_RENDER_PASS_ENDING_ACCESS DepthEndingAccess;
-    D3D12_RENDER_PASS_ENDING_ACCESS StencilEndingAccess;
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor;
+    D3D12_RENDER_PASS_BEGINNING_ACCESS DepthBeginningAccess;
+    D3D12_RENDER_PASS_BEGINNING_ACCESS StencilBeginningAccess;
+    D3D12_RENDER_PASS_ENDING_ACCESS DepthEndingAccess;
+    D3D12_RENDER_PASS_ENDING_ACCESS StencilEndingAccess;
 } D3D12_RENDER_PASS_DEPTH_STENCIL_DESC;
 
 // UAV Access Mode
 typedef enum D3D12_RENDER_PASS_FLAGS
 {
-    D3D12_RENDER_PASS_FLAG_NONE = 0x0,
+    D3D12_RENDER_PASS_FLAG_NONE = 0x0,
     D3D12_RENDER_PASS_FLAG_ALLOW_UAV_WRITES = 0x1,
     D3D12_RENDER_PASS_FLAG_SUSPENDING_PASS = 0x2,
     D3D12_RENDER_PASS_FLAG_RESUMING_PASS = 0x4
@@ -727,14 +858,14 @@ DEFINE_ENUM_FLAG_OPERATORS( D3D12_RENDER_PASS_FLAGS );
 [uuid(9742FB99-3D7D-4572-977C-CED7D15EB709), object, local, pointer_default(unique)]
 interface ID3D12GraphicsCommandList4 : ID3D12GraphicsCommandList3
 {
-    void BeginRenderPass(
-        [annotation("_In_")]  UINT NumRenderTargets,
-        [annotation("_In_reads_opt_(NumRenderTargets)")] const D3D12_RENDER_PASS_RENDER_TARGET_DESC* pRenderTargets,
-        [annotation("_In_opt_")] const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC* pDepthStencil,
-        D3D12_RENDER_PASS_FLAGS  Flags
-        );
+    void BeginRenderPass(
+        [annotation("_In_")]  UINT NumRenderTargets,
+        [annotation("_In_reads_opt_(NumRenderTargets)")] const D3D12_RENDER_PASS_RENDER_TARGET_DESC* pRenderTargets,
+        [annotation("_In_opt_")] const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC* pDepthStencil,
+        D3D12_RENDER_PASS_FLAGS  Flags
+        );
 
-    void EndRenderPass();
+    void EndRenderPass();
 }
 ```
 
@@ -742,28 +873,30 @@ interface ID3D12GraphicsCommandList4 : ID3D12GraphicsCommandList3
 
 # Runtime validation
 
-The following validation will be added to the core runtime:
+The runtime does the following validation:
 
-- *[checked in 3/15/18] Render Passes may not be started within
+- *Render Passes may not be started within
     non-DIRECT command lists*
 
-- *[checked in 3/20/18] Render Passes must be ended before calling
+- *Render Passes must be ended before calling
     ID3D12CommandList::Close*
 
-- *[checked in 3/20/18] Render Passes may not be nested (two begins
+- *Render Passes may not be nested (two begins
     in a row)*
 
-- *[checked in 3/20/18] A Render Pass may not be ended twice in a
+- *A Render Pass may not be ended twice in a
     row*
 
-- *[checked in 3/22/18]* Disallowed APIs may not be called during a
+- *Disallowed APIs may not be called during a
     Render Pass (command list will be removed)
 
-The following will be added to SDK Layers:
+The debug layer does the following validation:
 
-- *[checked in 3/20/18] Translate `DISCARD` (`BEGINNING_ACCCESS` or
+- Translate `DISCARD` (`BEGINNING_ACCCESS` or
     `ENDING_ACCESS`) to "clear-to-a-random-value", since that shouldn't
     impact app at all.*
+
+The following potential debug layer validation haven't been implemented:
 
 - No GPU work occurs within a command list between a `ENDING_SUSPEND`
     and `BEGINNING_RESUME`.
@@ -778,9 +911,9 @@ The following will be added to SDK Layers:
 
 ---
 
-# HLK Test Plan
+# HLK Testing
 
-11on12 will replace OMSetRenderTargets calls with
+11on12 replaces OMSetRenderTargets calls with
 BeginRenderPass/EndRenderPass as appropriate to test general rendering
 functionality with Render Passes.
 
@@ -808,7 +941,7 @@ via the HLK:
     (versus `ENDING_PRESERVE`/`BEGINNING_PRESERVE`), for various resource
     formats and types.
 
-- For a BEGINNING/ENDING **preserve**, when no work occurs in the
+- For a BEGINNING/ENDING **preserve**/**preserve_local**, when no work occurs in the
     Render Pass, the values are still present in the Render Target
     outside of the Render Pass
 
@@ -818,6 +951,11 @@ via the HLK:
 
 Date | Version | Description
 -|-|-
+2/20/2023 | 1.14 | <li>In [Surface flow between passes](#surface-flow-between-passes), relaxed rules for surfaces ending a pass in `DISCARD`/`PRESERVE`/`RESOLVE`/`NO_ACCESS` such that the next pass that references these can begin with any of `DISCARD`/`PRESERVE`/`CLEAR`/`NO_ACCESS` state.  It used to be required that ending with `DISCARD` must be paired with the next pass starting with `DISCARD`.  Relaxing this rule allows for operations like copying or compute shaders using a surface between render passes.</li><li>Also in [Surface flow between passes](#surface-flow-between-passes), for `PRESERVE_LOCAL_*` states, clarified what operations are allowed between passes.</li>
+1/4/2023 | 1.13 | <li>In [Minimum Driver DDI Version](#minimum-driver-ddi-version) updated the minimum version to `D3D12DDI_SUPPORTED_0101` now that this has been implemented in the runtime.</li><li>Fleshed out `NO_ACCESS` behavior.</li>
+12/15/2022 | 1.12 | <li>Fleshed out behavior of the `NO_ACCESS` state.  See [Surface flow between passes](#surface-flow-between-passes) and [State At End Of Command List](#state-at-end-of-command-list)</li>
+11/18/2022 | 1.11 | <li>Defined how to support read only depth/stencil with render passes.  Added new [Render pass flags](#render-pass-flags), `_BIND_READ_ONLY_DEPTH` and `_STENCIL`.  And added [Read only depth stencil](#read-only-depth-stencil) section describing supported scenarios and how they work.</li><li>Added [Surfaces that BeginRenderPass binds for raster](#surfaces-that-beginrenderpass-binds-for-raster) section to make clear exactly which surfaces get bound, the equivalent of being passed into OMSetRenderTargets() at BeginRenderPass.  This also clarifies the mapping from surfaces listed in BeginRenderPass to surfaces listed in PSO definitions for PSOs used within a pass.  Also, the rules here for what counts as raster binding are used by the runtime on drivers that don't support render passes to convert BeginRenderPass() calls to the equivalent OMSetRenderTargets().</li><li>Added [Surface Flow Between Passes](#surface-flow-between-passes) for a discussion on lining up states across passes.</li><li>Added [State At End Of Command List](#state-at-end-of-command-list) describing that command lists can't finish with a surface in `PRESERVE_LOCAL_*` state.</li><li>Removed `D3D12_RENDER_PASS_TIER_3`, and added [Minimum Driver DDI Version](#minimum-driver-ddi-version) section.  Drivers that don't support the latest DDIs where `_PRESERVE_LOCAL_*` are exposed are demoted to `TIER_0` and the runtime converts RenderPass use to non-RenderPass.  It is deemed to be only worth supporting the latest feature set, all/none.</li><li>Added `RenderPassesValid` cap that will be `TRUE` on new runtimes and the cap is unrecognized on old runtimes.  When the cap is not recognized, using the RenderPass APIs is invalid an produces undefined behavior.  When the cap is `TRUE`, the APIs can be used, and then the `TIER_*` levels indicate how much the driver takes advantage of the APIs vs runtime emulation.</li>
+9/21/2022 | 1.1 | <li>Added support for apps promising they are doing "local" access to surfaces, meaning during rendering pixel (x,y) only accesses the corresponding location in surfaces.  This is accomplished by new pass beggining access types: `D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE_LOCAL_RENDER`, `_PRESERVE_LOCAL_SRV` and `_PRESERVE_LOCAL_UAV`, and similar ending access types.</li><li>Added proposed [Local compute access mode](#local-compute-access-mode) that is assumed for compute shaders when the `PRESERVE_LOCAL` flags are used, so they can participate in the same tiling as rendering.</li><li>Added `D3D12_RENDER_PASS_TIER_3` indicating that in addition to caring about previous tiers, the implementation makes uses of the `_PRESERVE_LOCAL_` flags to make optimizations (doesn't just ignore them).</li>
 8/7/2019 | 1.0 | Updated public spec to match implementation regarding SetDescriptorHeaps 
 10/30/2018 | 0.09 | Clarified inconsistency about what resource state render targets and depth buffers are left in after a render pass that ends with a resolve
 5/15/2018 | 0.08 | General API/DDI refactoring – runtime support for previous DDI version remains, but will be removed prior to feature complete. Suspend/Resume has been refactored to be at the pass level, rather than per-view. Suspend/Resume_LOCAL has been removed from the API/DDI, will be re-added if more ISV scenarios are identified in a future release. SetDescriptorHeaps no longer allowed during a render pass. Applications can now explicitly specify whether during a resolve the resolve source (e.g. the bound RT/DB) should be preserved or not. Minor API/DDI enum renaming to better follow D3D12 conventions

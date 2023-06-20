@@ -38,14 +38,14 @@ Each format has a depth plane as plane 0, and a stencil plane as plane 1. For de
 ### Texture Memory Layout Remains Undefined
 
 This specification is not yet adding features that reveal the actual memory representation used by Depth and Stencil textures. They are indexed as planar where subresource index is used, but it is still
-possible to emulate planar. We do define a memory layout in buffer for planar and interleavd data to enable staging, see below.
+possible to emulate planar. We do define a memory layout in buffer for planar and interleaved data to enable staging, see below.
 
 Planar Layout for Staging From Buffer
 -------------------------------------
 
 Staging to depth and stencil formats now has a planar placed texture data layout. The CopyTextureRegion API and CopySubresourceRegion DDI use subresource index to identify which plane of the texture (either depth or stencil) that the operation applies to.
 
-### DXGI_FORMAT_R24G8_TYPELESS 
+### DXGI_FORMAT_R24G8_TYPELESS
 
 #### Depth Plane
 
@@ -75,7 +75,7 @@ DXGI_FORMAT_R24G8_TYPELESS texture.
   | ------------------------ | --------------------------------------- |
   | ( ComponentAddress + 0 ) | 07 : 06 : 05 : 04 : 03 : 02 : 01 : 00   |
 
-### DXGI_FORMAT_R32G8X24_TYPELESS 
+### DXGI_FORMAT_R32G8X24_TYPELESS
 
 #### Depth Plane
 

@@ -1127,7 +1127,7 @@ of course it is perfectly valid in general for shader code to mix together input
 <h3 id="Centroid"></h3><A id="3.5.5 Centroid Sampling of Attributes"></A>
 <H3>3.5.5 Centroid Sampling of Attributes</H3>
 <p>When a sample-frequency <a href="#InterpolationModes">interpolation mode</a><a style="color: Gray"><small><sup>(16.4)</sup></small></a> is not needed on an attribute, pixel-frequency
-interpolation-modes such as linear evalueate at the pixel center.  However with sample count &gt; 1 on the RenderTarget, attributes could be interpolated
+interpolation-modes such as linear evaluate at the pixel center.  However with sample count &gt; 1 on the RenderTarget, attributes could be interpolated
 at the pixel center even though the center of the pixel may not be covered by the primitive, in which case interpolation becomes "extrapolation".
 This "extrapolation" can be undesirale in some cases, so short of going to sample-frequency interpolation, a compromise is the
 centroid interpolation mode.</p>
@@ -8170,7 +8170,7 @@ in anisotropic formulation:
                     // filtering of TextureCubes to behave any better than tri-linear filtering.
 
     bool ComputeIsotropicLOD = !ComputeAnisotropicLOD
-    bool Magnifying = (LOD &lt;= 0)
+    bool Magnifying = (clampedLOD &lt;= 0)
 
 </pre>
 
@@ -8334,9 +8334,8 @@ srcLODBias (<a href="#inst_SAMPLE_B">sample_b</a><a style="color: Gray"><small><
 The ordering of min/max guarantees that if MinLOD &gt; MaxLOD, then MinLOD takes precedence.  These min and max operations follow the
 <a href=#FloatingPointRules>Floating Point Rules</a><a style="color: Gray"><small><sup>(3.1)</sup></small></a>, so NaN never gets propagated.  A sampler state that specifies NaN for MinLOD or MaxLOD is invalid.
 <DIV class=boxed style="background-color: lightblue">Note that the naming for MinLOD and MaxLOD is different/opposing from the D3DSAMP_MAXMIPLEVEL sampler state present in Direct3D9.</DIV><br>
-<p> It is undefined whether LOD clamping based on MinLOD and MaxLOD Sampler states should happen
-before or after deciding if magnification is occuring.  Thus when using LOD clamping, applications should avoid
-choosing different minification and magnification filters until this area is more tightly specified.</p>
+<p> The selection of minification vs magnification occurs after LOD clamping.
+<DIV class=boxed style="background-color: lightblue">Prior to feature level 11.0, it was undefined whether magnification selection occurred before or after LOD clamping.</DIV></p>
 <p>Also note the independent <a href="#PerResourceMipmapClamping">Per-Resource Mipmap Clamping</a><a style="color: Gray"><small><sup>(5.8)</sup></small></a> feature, which is an optional additional clamp
 on the LOD like MinLOD above but specified at a resource level as opposed to a sample+shader-resource view level.</p>
 <DIV class=boxed style="background-color: lightblue">
@@ -22771,7 +22770,7 @@ Motivation:     Derivatives calculated at a coarse level (once per
 <H3>22.5.3 deriv_rty_coarse</H3>
 <pre>
 Instruction:    deriv_rty_coarse[<a href="#inst_MOD_SAT">_sat</a>]     dest[.mask],
-                                [<a href="#inst_MOD_NEGATE">-</a>]src0[<a href="#inst_MOD_ABS"> _abs</a>][.swizzle],
+                                [<a href="#inst_MOD_NEGATE">-</a>]src0[<a href="#inst_MOD_ABS">_abs</a>][.swizzle],
 
 Stage(s):       <a href="#PSInstructionSet">Pixel Shader</a><a style="color: Gray"><small><sup>(22.1.7)</sup></small></a>
 
@@ -26871,7 +26870,7 @@ Operation:      Performs the double-precision floating-point comparison
 <pre>
 Instruction:    dlt[<a href="#inst_MOD_SAT">_sat</a>]    dest[.mask],
                           [<a href="#inst_MOD_NEGATE">-</a>]src0[<a href="#inst_MOD_ABS">_abs</a>][.swizzle],
-                          [<a href="#inst_MOD_NEGATE"> -</a>]src1[<a href="#inst_MOD_ABS">_abs</a>][.swizzle]
+                          [<a href="#inst_MOD_NEGATE">-</a>]src1[<a href="#inst_MOD_ABS">_abs</a>][.swizzle]
 
 Stage(s):       <a href="#AllStages">All</a><a style="color: Gray"><small><sup>(22.1.1)</sup></small></a>
 

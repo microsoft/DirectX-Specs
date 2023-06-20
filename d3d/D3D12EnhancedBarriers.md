@@ -10,7 +10,7 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [Asymmetric Aliasing is Even More Expensive](#asymmetric-aliasing-is-even-more-expensive)
   - [Resource State Promotion and Decay](#resource-state-promotion-and-decay)
   - [Compute Queues and `D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE`](#compute-queues-and-d3d12_resource_state_pixel_shader_resource)
-  - [Full-Resource Clear, Copy or Discard](#full-resource-clear-copy-or-discard)
+  - [Full-Subresource Clear, Copy or Discard](#full-subresource-clear-copy-or-discard)
   - [Simultaneous Access - But Only Across Queues](#simultaneous-access---but-only-across-queues)
   - [Inefficient Batching of Subresource Range Transitions](#inefficient-batching-of-subresource-range-transitions)
   - [Synchronous Copy, Discard and Resolve](#synchronous-copy-discard-and-resolve)
@@ -32,7 +32,7 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [New Resource Creation API's](#new-resource-creation-apis)
   - [Hardware Requirements](#hardware-requirements)
 - [Compatibility with legacy `D3D12_RESOURCE_STATES`](#compatibility-with-legacy-d3d12_resource_states)
-  - [Interop with legacy ResourceBarrier](#interop-with-legacy-resourcebarrier)
+  - [Interop with legacy `ResourceBarrier`](#interop-with-legacy-resourcebarrier)
   - [Legacy layouts](#legacy-layouts)
   - [Equivalent `D3D12_BARRIER_LAYOUT` for each `D3D12_RESOURCE_STATES` bit](#equivalent-d3d12_barrier_layout-for-each-d3d12_resource_states-bit)
   - [Equivalent `D3D12_BARRIER_ACCESS` bit for each `D3D12_RESOURCE_STATES` bit](#equivalent-d3d12_barrier_access-bit-for-each-d3d12_resource_states-bit)
@@ -41,7 +41,7 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [Resource Aliasing](#resource-aliasing)
   - [Initial Resource State](#initial-resource-state)
   - [Split Barriers](#split-barriers)
-  - [COMMON Layout](#common-layout)
+  - [`COMMON` Layout](#common-layout)
   - [Upload Heap Resources](#upload-heap-resources)
   - [Readback Heap Resources](#readback-heap-resources)
   - [Command Queue Layout Compatibility](#command-queue-layout-compatibility)
@@ -61,17 +61,17 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [`D3D12_TEXTURE_BARRIER`](#d3d12_texture_barrier)
   - [`D3D12_BUFFER_BARRIER`](#d3d12_buffer_barrier)
   - [`D3D12_BARRIER_GROUP`](#d3d12_barrier_group)
-  - [ID3D12GraphicsCommandList7::Barrier](#id3d12graphicscommandlist7barrier)
-  - [ID3D12VideoDecodeCommandList3::Barrier](#id3d12videodecodecommandlist3barrier)
-  - [ID3D12VideoProcessCommandList3::Barrier](#id3d12videoprocesscommandlist3barrier)
-  - [ID3D12VideoEncodeCommandList3::Barrier](#id3d12videoencodecommandlist3barrier)
-  - [ID3D12Device10::CreateCommittedResource3](#id3d12device10createcommittedresource3)
-  - [ID3D12Device10::CreatePlacedResource2](#id3d12device10createplacedresource2)
-  - [ID3D12Device10::CreateReservedResource2](#id3d12device10createreservedresource2)
-  - [ID3D12DebugCommandQueue1::AssertResourceAccess](#id3d12debugcommandqueue1assertresourceaccess)
-  - [ID3D12DebugCommandQueue1::AssertTextureLayout](#id3d12debugcommandqueue1asserttexturelayout)
-  - [ID3D12DebugCommandList3::AssertResourceAccess](#id3d12debugcommandlist3assertresourceaccess)
-  - [ID3D12DebugCommandList3::AssertTextureLayout](#id3d12debugcommandlist3asserttexturelayout)
+  - [`ID3D12GraphicsCommandList7::Barrier()`](#id3d12graphicscommandlist7-barrier)
+  - [`ID3D12VideoDecodeCommandList3::Barrier()`](#id3d12videodecodecommandlist3-barrier)
+  - [`ID3D12VideoProcessCommandList3::Barrier()`](#id3d12videoprocesscommandlist3-barrier)
+  - [`ID3D12VideoEncodeCommandList3::Barrier()`](#id3d12videoencodecommandlist3-barrier)
+  - [`ID3D12Device10::CreateCommittedResource3()`](#id3d12device10-createcommittedresource3)
+  - [`ID3D12Device10::CreatePlacedResource2()`](#id3d12device10-createplacedresource2)
+  - [`ID3D12Device10::CreateReservedResource2()`](#id3d12device10-createreservedresource2)
+  - [`ID3D12DebugCommandQueue1::AssertResourceAccess()`](#id3d12debugcommandqueue1-assertresourceaccess)
+  - [`ID3D12DebugCommandQueue1::AssertTextureLayout()`](#id3d12debugcommandqueue1-asserttexturelayout)
+  - [`ID3D12DebugCommandList3::AssertResourceAccess()`](#id3d12debugcommandlist3-assertresourceaccess)
+  - [`ID3D12DebugCommandList3::AssertTextureLayout()`](#id3d12debugcommandlist3-asserttexturelayout)
 - [Barrier Examples](#barrier-examples)
 - [DDI](#ddi)
   - [`D3D12DDI_BARRIER_LAYOUT`](#d3d12ddi_barrier_layout)
@@ -87,7 +87,7 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [`D3D12DDI_RANGE_BARRIER_FLAGS_0094`](#d3d12ddi_range_barrier_flags_0094)
   - [`D3D12DDI_RANGED_BARRIER_0094`](#d3d12ddi_ranged_barrier_0094)
   - [`D3D12DDI_BARRIER_TYPE`](#d3d12ddi_barrier_type)
-  - [D3D12DDIARG_BARRIER_0094](#d3d12ddiarg_barrier_0094)
+  - [`D3D12DDIARG_BARRIER_0094`](#d3d12ddiarg_barrier_0094)
   - [`PFND3D12DDI_BARRIER`](#pfnd3d12ddi_barrier)
   - [`D3D12DDIARG_CREATERESOURCE_0088`](#d3d12ddiarg_createresource_0088)
   - [`PFND3D12DDI_CREATEHEAPANDRESOURCE_0088`](#pfnd3d12ddi_createheapandresource_0088)
@@ -111,11 +111,11 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
 
 ## Introduction
 
-The legacy Resource Barrier design has been a source of endless app developer frustration since the beginning of D3D12.  Microsoft's documentation falls short of making sense of concepts such as resource state promotion and decay, split barriers, aliasing barriers, Copy queue states vs Direct queue states, and so on.  The debug layer helps, but validation of the convoluted barrier rules has been buggy at times.  Even when used correctly, a lot of GPU cycles are wasted in ResourceBarrier transitions due to excessive sync latency and frequent. unnecessary cache flushes.  The legacy ResourceBarrier API design itself can sometimes require otherwise-unnecessary transitions, causing additional performance loss.  These are significant pain points that have been the source of frequent customer complaints.
+The legacy Resource Barrier design has been a source of endless app developer frustration since the beginning of D3D12.  Microsoft's documentation falls short of making sense of concepts such as resource state promotion and decay, split barriers, aliasing barriers, Copy queue states vs Direct queue states, and so on.  The debug layer helps, but validation of the convoluted barrier rules has been buggy at times.  Even when used correctly, a lot of GPU cycles are wasted in `ResourceBarrier` transitions due to excessive sync latency and frequent, unnecessary cache flushes.  The legacy `ResourceBarrier` API design itself can sometimes require otherwise-unnecessary transitions, causing additional performance loss.  These are significant pain points that have been the source of frequent customer complaints.
 
 Now, as Microsoft looks toward leveraging D3D12 for more layering solutions similar to OpenGLOn12 and OpenCLOn12, the legacy Resource Barrier model is becoming even more burdensome as compatibility issues arise.
 
-Enhanced Barriers are designed to address these issues while remaining compatible with legacy Resource Barrier API's.  As a bonus, enhanced Barriers expose latent hardware capabilities that legacy ResourceBarrier API's could not.
+Enhanced Barriers are designed to address these issues while remaining compatible with legacy Resource Barrier API's.  As a bonus, enhanced Barriers expose latent hardware capabilities that legacy `ResourceBarrier` API's could not.
 
 Enhanced Barriers features include:
 
@@ -132,10 +132,10 @@ Enhanced Barriers features include:
 
 A Resource State encapsulates both the Layout of a subresource and the ways the GPU can access a subresource (e.g. UAV write, SRV read, Render Target, etc).  Resource State Transitions do the following:
 
-1) GPU work Synchronization
+1. GPU work Synchronization
    - Any in-flight GPU work accessing the transitioning subresource must be completed before a layout change or cache flush can occur
-2) Subresource Layout changes
-3) Memory visibility (i.e. cache flushing)
+2. Subresource Layout changes
+3. Memory visibility (i.e. cache flushing)
 
 Resource States are high-level abstractions over what hardware and drivers are actually doing.  This works ok... sort of.  In reality, the only stateful property of a resource is layout.  Access to resource memory and required synchronization are transient properties that may depend on the current state of the GPU command stream rather than the resource.
 
@@ -153,7 +153,7 @@ Assume a texture was used as a render target during a previous frame.  Now the a
 
 ### Aliasing Barriers Are Very Expensive
 
-The Legacy Aliasing Barrier design provides no way to indicate the state of the AFTER subresource as part of the barrier.  Therefore, an additional ResourceBarrier may be needed to transition the resource to the desired state.  Not only does this further stall execution on the GPU, but a state transition always requires a BEFORE state.  As far as the D3D12 API's are concerned, the AFTER resource is still in the state was in at last use/barrier/create.  However, the contents of this memory may not match this stale state.  Transitioning this memory is wasteful at least, and could even be unstable if the driver attempts to decompress garbage memory.
+The Legacy Aliasing Barrier design provides no way to indicate the state of the AFTER subresource as part of the barrier.  Therefore, an additional `ResourceBarrier` may be needed to transition the resource to the desired state.  Not only does this further stall execution on the GPU, but a state transition always requires a BEFORE state.  As far as the D3D12 API's are concerned, the AFTER resource is still in the state it was in at last use/barrier/create.  However, the contents of this memory may not match this stale state.  Transitioning this memory is wasteful at least, and could even be unstable if the driver attempts to decompress garbage memory.
 
 Under the covers, an Aliasing Barrier typically blocks all GPU execution until all preceding work is finished and writes are flushed.  This is quite expensive, especially if resource aliasing is being used to improve application efficiency.
 
@@ -162,9 +162,10 @@ Under the covers, an Aliasing Barrier typically blocks all GPU execution until a
 The Legacy Aliasing Barrier API assumes that only a single subresource is atomically activated with only one other subresource being deactivated.  However, there are many scenarios where there are multiple overlapping subresources on the 'before' and/or 'after' side of the aliasing barrier (see *Figure 1*).
 
 ![Figure 1](images/D3D12PipelineBarriers/AsymAliasing.png)
+
 *Figure 1*
 
-In *Figure 1*, NewTex1 partially overlaps OldTex1 and OldBuf2, which are also partially aliased with other after-resources.  The only way to accomplish this using Legacy Aliasing Barriers is to use a "null/null" aliasing barrier, which is guaranteed to produces a full GPU execution stall.  This is especially unfortunate if all commands accessing OldTex1, OldBuf1, and OldBuf2 have already completed.
+In *Figure 1*, `NewTex1` partially overlaps `OldTex1` and `OldBuf2`, which are also partially aliased with other after-resources.  The only way to accomplish this using Legacy Aliasing Barriers is to use a "null/null" aliasing barrier, which is guaranteed to produces a full GPU execution stall.  This is especially unfortunate if all commands accessing `OldTex1`, `OldBuf1`, and `OldBuf2` have already completed.
 
 ### Resource State Promotion and Decay
 
@@ -178,7 +179,7 @@ Some of the promotion/decay rules include:
 - Resources promoted to a READ state will decay to `D3D12_RESOURCE_STATE_COMMON` when `ExecuteCommandLists` completes.
   - But not resources promoted to a write state.
 - Resources can be cumulatively promoted to multiple read-states but only a single write-state.
-- All resources used in Copy queues must begin in the COMMON state and always decay back to COMMON when `ExecuteCommandLists` completes.
+- All resources used in Copy queues must begin in the `COMMON` state and always decay back to `COMMON` when `ExecuteCommandLists` completes.
 - Resources promoted to `D3D12_RESOURCE_STATE_COPY_DEST` are left in `D3D12_RESOURCE_STATE_COPY_DEST`
   - Except for resources used in Copy queues, which decay back to `D3D12_RESOURCE_STATE_COMMON`.
 
@@ -186,17 +187,17 @@ Promotion and decay reflect the natural consequences of `ExecuteCommandLists` bo
 
 ### Compute Queues and `D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE`
 
-The `D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE` state is only usable in Direct command lists.  Therefore, a Compute queue cannot use or transition a resource in state `D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE`|`D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`.  However, Compute queues DO support `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`, which has an identical layout in both Direct and Compute queues.  This design oversight is a common source of d3d12 app developer frustration.  The primary reason for the separate states is to provide precise execution sync and memory flush for a Direct queue.  However, when passing resources between Direct and Compute queues, sync and flush are handled using fences.
+The `D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE` state is only usable in Direct command lists.  Therefore, a Compute queue cannot use or transition a resource in state `D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE|D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`.  However, Compute queues DO support `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`, which has an identical layout in both Direct and Compute queues.  This design oversight is a common source of d3d12 app developer frustration.  The primary reason for the separate states is to provide precise execution sync and memory flush for a Direct queue.  However, when passing resources between Direct and Compute queues, sync and flush are handled using fences.
 
-### Full-Resource Clear, Copy or Discard
+### Full-Subresource Clear, Copy or Discard
 
-According to earlier D3D12 specifications, Clear, Copy or Discard commands require destination resources be in a specific resource state.  Typically, this involves a state transition from a prior state.  This makes sense when only a portion of the resource is being written to or discarded.  However, when performing a full-resource Clear, Copy or Discard, the old resource data is being completely replaced.  Therefore, a layout transition seems unnecessary.
+According to earlier D3D12 specifications, Clear, Copy or Discard commands require destination resources be in a specific resource state.  Typically, this involves a state transition from a prior state.  This makes sense when only a portion of the resource is being written to or discarded.  However, when performing a full-subresource Clear, Copy or Discard, the old resource data is being completely replaced.  Therefore, a layout transition seems unnecessary.
 
-This is particularly interesting when it comes to resource aliasing or updated tile mapping, as these operations require full-resource Clear, Copy or Discard when the target is a DSV or RSV.  In such cases, there may not even be a previous "state" to transition from.  In fact, it is conceivable that a memory-decompressing state transition could trigger device removal.
+This is particularly interesting when it comes to resource aliasing or updated tile mapping, as these operations require full-subresource Clear, Copy or Discard when the target is a DSV or RSV.  In such cases, there may not even be a previous "state" to transition from.  In fact, it is conceivable that a memory-decompressing state transition could trigger device removal.
 
 ### Simultaneous Access - But Only Across Queues
 
-Buffers and simultaneous-access resources can be written to in one queue while concurrently being read-from one or more OTHER queues.  However, this pattern is not supported in a single queue because legacy Resource Barrier design prevents subresources from being in both READ and WRITE states at the same time.  However, hardware can support same-queue simultaneous-access; Layout is always COMMON and there is no sync or flush needed since the reads are non-dependent.
+Buffers and simultaneous-access resources can be written to in one queue while concurrently being read-from one or more OTHER queues.  However, this pattern is not supported in a single queue because legacy Resource Barrier design prevents subresources from being in both READ and WRITE states at the same time.  However, hardware can support same-queue simultaneous-access; Layout is always `COMMON` and there is no sync or flush needed since the reads are non-dependent.
 
 ### Inefficient Batching of Subresource Range Transitions
 
@@ -204,11 +205,11 @@ Resource State Transition Barriers provide a choice of transitioning either ALL 
 
 ### Synchronous Copy, Discard and Resolve
 
-With the exception of UAV barriers, legacy ResourceBarrier API's have no way to express dependent writes to the same resource.  For example, a Copy from resource A->B along with a Copy from resource C->B could produce different results if copies actually complete in different orders.  As a result, all Copy, Discard and Resolve commands execute synchronously, with an implicit sync and flush after each command.
+With the exception of UAV barriers, legacy `ResourceBarrier` API's have no way to express dependent writes to the same resource.  For example, a Copy from resource A->B along with a Copy from resource C->B could produce different results if copies actually complete in different orders.  As a result, all Copy, Discard and Resolve commands execute synchronously, with an implicit sync and flush after each command.
 
 ### No Self Copy
 
-According to the D3D12 specifications, a subresource cannot be in a state that combines *read-only* bits and *write* bits.  Therefore a resource cannot be in the `D3D12_RESOURCE_STATE_COPY_SOURCE|D3D12_RESOURCE_STATE_COPY_DEST` state.  This rule applies for promoted states as well, so a resource in a COMMON state cannot be implicitly promoted to both COPY_SOURCE and COPY_DEST at the same time.
+According to the D3D12 specifications, a subresource cannot be in a state that combines *read-only* bits and *write* bits.  Therefore a resource cannot be in the `D3D12_RESOURCE_STATE_COPY_SOURCE|D3D12_RESOURCE_STATE_COPY_DEST` state.  This rule applies for promoted states as well, so a resource in a `COMMON` state cannot be implicitly promoted to both COPY_SOURCE and COPY_DEST at the same time.
 
 ------------------------------------------------
 
@@ -231,9 +232,9 @@ According to the D3D12 specifications, a subresource cannot be in a state that c
 
 Drivers typically handle legacy Resource Barriers using three separate operations:
 
-1) Synchronize GPU work
-2) Perform any necessary cache flush operations
-3) Perform any necessary layout changes
+1. Synchronize GPU work
+2. Perform any necessary cache flush operations
+3. Perform any necessary layout changes
 
 The enhanced Barrier API's give developers the ability to control each of these operations separately.
 
@@ -247,15 +248,15 @@ Enhanced Barrier API's provide three barrier types:
 
 #### Texture Barriers
 
-Texture Barriers control cache flush, memory layout and synchronization for texture subresources.  Texture Barriers must only be used with texture resources.  Texture barriers allow selection of a single subresource, all subresources, or a coherent range of subresources (i.e. mip range and array range).  Texture barriers must provide a valid, non-NULL resource pointer.
+Texture Barriers control cache flush, memory layout and synchronization for texture subresources.  Texture Barriers must only be used with texture resources.  Texture barriers allow a selection of a single subresource, all subresources, or a coherent range of subresources (i.e. mip range and array range).  Texture barriers must provide a valid, non-NULL resource pointer.
 
 #### Buffer Barriers
 
 Buffer Barriers control cache flush and synchronization for buffer resources.  Buffer Barriers must only be used with buffer resources.  Unlike textures, buffers have only a single subresource and do not have a transitionable layout.  Buffer barriers must provide a valid, non-NULL resource pointer.
 
-Buffer subregion barriers are supported in other low-level graphics API's.  However how these barriers work with various memory, caches or whether they guarantee multi-writer support is unclear.  The `D3D12_BUFFER_BARRIER` structure does include UINT64 Offset and UINT64 Size members to facilitate future buffer subregion barriers.  For now, Offset must be zero and Size must be either the buffer size in bytes or UINT64_MAX.  Note that enhanced barriers already supports concurrent read and write on buffers without the need for intervening barriers (see [Single-Queue Simultaneous Access](#single-queue-simultaneous-access)).
+Buffer subregion barriers are supported in other low-level graphics API's.  However how these barriers work with various memory, caches or whether they guarantee multi-writer support is unclear.  The `D3D12_BUFFER_BARRIER` structure does include `UINT64` `Offset` and `UINT64` `Size` members to facilitate future buffer subregion barriers.  For now, `Offset` must be zero and `Size` must be either the buffer size in bytes or `UINT64_MAX`.  Note that enhanced barriers already supports concurrent read and write on buffers without the need for intervening barriers (see [Single-Queue Simultaneous Access](#single-queue-simultaneous-access)).
 
-The current enhanced buffer barrier DDI's do not use Offset or Size, avoiding any need for drivers to handle this no-yet-required feature.
+The current enhanced buffer barrier DDI's do not use `Offset` or `Size`, avoiding any need for drivers to handle this no-yet-required feature.
 
 #### Global Barriers
 
@@ -267,11 +268,11 @@ Since global barriers do not transition texture layout, global barriers may not 
 
 Graphics processors are designed to execute as much work in parallel as possible.  Any GPU work that depends on previous GPU work must be synchronized before accessing dependent data.
 
-With legacy Resource Barriers, drivers must infer which work to synchronize.  Often this is a best-guess since the driver may not be able to determine when a subresource was last accessed.  Typically, the driver must assume the worst-case: any previous work that *could* have accessed a resource in StateBefore must be synchronized with any work that *could* access the resource in StateAfter.
+With legacy Resource Barriers, drivers must infer which work to synchronize.  Often this is a best-guess since the driver may not be able to determine when a subresource was last accessed.  Typically, the driver must assume the worst-case: any previous work that *could* have accessed a resource in `StateBefore` must be synchronized with any work that *could* access the resource in `StateAfter`.
 
-The enhanced Barrier API's use explicit `SyncBefore` and `SyncAfter` values as logical bitfield masks.  A Barrier must wait for all preceding command `SyncBefore` scopes to complete before executing the barrier.  Similarly, a Barrier must block all subsequent `SyncAfter` scopes until the barrier completes.
+The enhanced Barrier API's use explicit `SyncBefore` and `SyncAfter` values as bitfield masks that can describe one or more combined synchronization scopes.  A Barrier must wait for all preceding command `SyncBefore` scopes to complete before executing the barrier.  Similarly, a Barrier must block all subsequent `SyncAfter` scopes until the barrier completes.
 
-D3D12_BARRIER_SYNC_NONE indicates synchronization is not needed either before or after barrier.  A `D3D12_BARRIER_SYNC_NONE` `SyncBefore` value implies that the corresponding subresources are not accessed before the barrier in the same `ExecuteCommandLists` scope.  Likewise, a SYNC_NONE `SyncAfter` value implies that the corresponding subresources are not accessed after the barrier in the same `ExecuteCommandLists` scope.  Therefore, `Sync[Before|After]=D3D12_BARRIER_SYNC_NONE` must be paired with `Access[Before|After]=D3D12_BARRIER_ACCESS_NO_ACCESS`.
+`D3D12_BARRIER_SYNC_NONE` indicates synchronization is not needed either before or after barrier.  A `D3D12_BARRIER_SYNC_NONE` `SyncBefore` value implies that the corresponding subresources are not accessed before the barrier in the same `ExecuteCommandLists` scope.  Likewise, a `D3D12_BARRIER_SYNC_NONE` `SyncAfter` value implies that the corresponding subresources are not accessed after the barrier in the same `ExecuteCommandLists` scope.  Therefore, `Sync[Before|After]=D3D12_BARRIER_SYNC_NONE` must be paired with `Access[Before|After]=D3D12_BARRIER_ACCESS_NO_ACCESS`.
 
 If a barrier `SyncBefore` is `D3D12_BARRIER_SYNC_NONE`, then `AccessBefore` MUST be `D3D12_BARRIER_ACCESS_NO_ACCESS`.  In this case, there MUST have been no preceding barriers or accesses made to that resource in the same `ExecuteCommandLists` scope.
 
@@ -279,23 +280,24 @@ If a barrier `SyncAfter` is `D3D12_BARRIER_SYNC_NONE`, then `AccessAfter` MUST b
 
 When used, `D3D12_BARRIER_SYNC_NONE` must be the only bit set.
 
-ClearUnorderedAccessView* operations are treated as UAV accesses and have their own synchronization scope, `D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW`. The ClearRenderTargetView and ClearDepthStencilView operations use `D3D12_BARRIER_SYNC_RENDER_TARGET` and `D3D12_BARRIER_SYNC_DEPTH_STENCIL`, which are shared with RT and DSV access scopes during Draw.
+`ClearUnorderedAccessView*` operations are treated as UAV accesses and have their own synchronization scope, `D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW`. The `ClearRenderTargetView` and `ClearDepthStencilView` operations use `D3D12_BARRIER_SYNC_RENDER_TARGET` and `D3D12_BARRIER_SYNC_DEPTH_STENCIL`, which are shared with RT and DSV access scopes during Draw.
 
-DATA_STATIC_WHILE_SET_AT_EXECUTE descriptors require resource data is finalized by the time `SetGraphicsRoot*` or `SetComputeRoot*` is executed on the GPU timeline. To support this, any barriers on resources used by `D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE` descriptors must precede the relevant `Set[Graphics|Compute]Root*` call, and must specify `SyncAfter=D3D12_BARRIER_SYNC_DRAW` (for graphics descriptors) or `SyncAfter=D3D12_BARRIER_SYNC_COMPUTE_SHADING` (for compute descriptors).
+`DATA_STATIC_WHILE_SET_AT_EXECUTE` descriptors require resource data is finalized by the time `SetGraphicsRoot*` or `SetComputeRoot*` is executed on the GPU timeline. To support this, any barriers on resources used by `D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE` descriptors must precede the relevant `Set[Graphics|Compute]Root*` call, and must specify `SyncAfter=D3D12_BARRIER_SYNC_DRAW` (for graphics descriptors) or `SyncAfter=D3D12_BARRIER_SYNC_COMPUTE_SHADING` (for compute descriptors).
 
 #### Umbrella Synchronization Scopes
 
-Umbrella synchronization scopes supersede one or more other synchronization scopes, and can effectively be treated as though all of the superseded scope bits are set.  For example, the `D3D12_BARRIER_SYNC_DRAW` scope supersedes `D3D12_BARRIER_SYNC_INPUT_ASSEMBLER`, `D3D12_BARRIER_SYNC_VERTEX_SHADING`, `D3D12_BARRIER_SYNC_PIXEL_SHADING`, `D3D12_BARRIER_SYNC_DEPTH_STENCIL`, and `D3D12_BARRIER_SYNC_RENDER_TARGET` (see Figure 2).
+Umbrella synchronization scopes supersede one or more other synchronization scopes, and can effectively be treated as though all of the superseded scope bits are set.  For example, the `D3D12_BARRIER_SYNC_DRAW` scope supersedes `D3D12_BARRIER_SYNC_INDEX_INPUT`, `D3D12_BARRIER_SYNC_VERTEX_SHADING`, `D3D12_BARRIER_SYNC_PIXEL_SHADING`, `D3D12_BARRIER_SYNC_DEPTH_STENCIL`, and `D3D12_BARRIER_SYNC_RENDER_TARGET` (see *Figure 2*).
 
 ![Figure 2](images/D3D12PipelineBarriers/OverlappingScopes.png)
+
 *Figure 2*
 
 The following tables list superseded synchronization scope bits for each umbrella synchronization scope bit.
 
 | `D3D12_BARRIER_SYNC_ALL`                         |
-|------------------------------------------------|
+|--------------------------------------------------|
 | `D3D12_BARRIER_SYNC_DRAW`                        |
-| `D3D12_BARRIER_SYNC_INPUT_ASSEMBLER`             |
+| `D3D12_BARRIER_SYNC_INDEX_INPUT`                 |
 | `D3D12_BARRIER_SYNC_VERTEX_SHADING`              |
 | `D3D12_BARRIER_SYNC_PIXEL_SHADING`               |
 | `D3D12_BARRIER_SYNC_DEPTH_STENCIL`               |
@@ -311,13 +313,13 @@ The following tables list superseded synchronization scope bits for each umbrell
 | `D3D12_BARRIER_SYNC_VIDEO_ENCODE`                |
 | `D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW` |
 
-| `D3D12_BARRIER_SYNC_DRAW`            |
-|--------------------------------------|
-| `D3D12_BARRIER_SYNC_INPUT_ASSEMBLER` |
-| `D3D12_BARRIER_SYNC_VERTEX_SHADING`  |
-| `D3D12_BARRIER_SYNC_PIXEL_SHADING`   |
-| `D3D12_BARRIER_SYNC_DEPTH_STENCIL`   |
-| `D3D12_BARRIER_SYNC_RENDER_TARGET`   |
+| `D3D12_BARRIER_SYNC_DRAW`           |
+|-------------------------------------|
+| `D3D12_BARRIER_SYNC_INDEX_INPUT`    |
+| `D3D12_BARRIER_SYNC_VERTEX_SHADING` |
+| `D3D12_BARRIER_SYNC_PIXEL_SHADING`  |
+| `D3D12_BARRIER_SYNC_DEPTH_STENCIL`  |
+| `D3D12_BARRIER_SYNC_RENDER_TARGET`  |
 
 | `D3D12_BARRIER_SYNC_ALL_SHADING`     |
 |--------------------------------------|
@@ -332,49 +334,49 @@ The following tables list superseded synchronization scope bits for each umbrell
 
 #### Sequential Barriers
 
-Any barrier subsequent to another barrier on the same subresource in the same `ExecuteCommandLists` scope must use a `SyncBefore` value that fully-contains the preceding barrier `SyncAfter` scopes.
+Any barrier subsequent to another barrier on the same subresource in the same `ExecuteCommandLists` scope must use a `SyncBefore` value that fully-contains the preceding barrier `SyncAfter` scope bits.
 
-To provide well-defined barrier ordering, sequential, adjacent barriers on the same subresource with no intervening commands behave as though all `SyncBefore` and `SyncAfter` bits are logically combined.
+To provide well-defined barrier ordering, sequential, adjacent barriers on the same subresource with no intervening commands behave as though all `SyncBefore` and `SyncAfter` bits are bitwise combined.
 
 #### Barrier Sync Examples
 
-| `SyncBefore`               | `SyncAfter`                |
+| `SyncBefore`             | `SyncAfter`              |
 |--------------------------|--------------------------|
 | `D3D12_BARRIER_SYNC_ALL` | `D3D12_BARRIER_SYNC_ALL` |
 
 Execute barrier **after** all preceding GPU work has completed and block **all subsequent work** until barrier has completed.
 
-| `SyncBefore`               | `SyncAfter`            |
+| `SyncBefore`             | `SyncAfter`          |
 |--------------------------|----------------------|
 | `D3D12_BARRIER_SYNC_ALL` | *specific sync bits* |
 
 Execute barrier **after** all preceding GPU work has completed and block *specific sync bits* GPU work until barrier has completed.
 
-| `SyncBefore`           | `SyncAfter`                |
+| `SyncBefore`         | `SyncAfter`              |
 |----------------------|--------------------------|
 | *specific sync bits* | `D3D12_BARRIER_SYNC_ALL` |
 
 Execute barrier **after** *specific sync bits* GPU work has completed and block **all subsequent work** until barrier has completed.
 
-| `SyncBefore`                | `SyncAfter`            |
+| `SyncBefore`              | `SyncAfter`          |
 |---------------------------|----------------------|
 | `D3D12_BARRIER_SYNC_NONE` | *specific sync bits* |
 
 Execute barrier **before** *specific sync bits* GPU work, but do not wait for any preceding work.
 
-| `SyncBefore`           | `SyncAfter`                 |
+| `SyncBefore`         | `SyncAfter`               |
 |----------------------|---------------------------|
 | *specific sync bits* | `D3D12_BARRIER_SYNC_NONE` |
 
 Execute barrier **after** *specific sync bits* GPU work but do not block any subsequent work.
 
-| `SyncBefore`                          | `SyncAfter`                            |
+| `SyncBefore`                        | `SyncAfter`                          |
 |-------------------------------------|--------------------------------------|
 | `D3D12_BARRIER_SYNC_VERTEX_SHADING` | `D3D12_BARRIER_SYNC_COMPUTE_SHADING` |
 
 Execute barrier **after** all vertex stages have completed and block subsequent compute shading work until barrier has completed.
 
-| `SyncBefore`                | `SyncAfter`                 |
+| `SyncBefore`              | `SyncAfter`               |
 |---------------------------|---------------------------|
 | `D3D12_BARRIER_SYNC_NONE` | `D3D12_BARRIER_SYNC_NONE` |
 
@@ -394,18 +396,20 @@ To provide well-defined barrier ordering, the layout of a subresource after comp
 
 Since many GPU-write operations are cached, any Barrier from a write access to another write access or a read-only access may require a cache flush.  The enhanced Barrier API's use access transitions to indicate that a subresource's memory needs to be made visible for a specific new access type.  Like the layout transitions, some access transitions may not be needed if it is known that the memory of the associated subresource is already accessible for the desired use.
 
+Barrier `AccessBefore` and/or `AccessAfter` values may be a bitwise-or combination of `D3D12_BARRIER_ACCESS` bits when more than one access type applies before or after the barrier.
+
 Access transitions for textures are expressed as part of the `D3D12_TEXTURE_BARRIER` structure data.  Access transitions for buffers are expressed using the `D3D12_BUFFER_BARRIER` structure.
 
 Access transitions do not perform synchronization.  It is expected that synchronization between dependent accesses is handled using appropriate `SyncBefore` and `SyncAfter` values in the barrier.
 
 An `AccessBefore` made visible to a specified `AccessAfter` DOES NOT guarantee that the resource memory is also visible for a *different* access type.  For example:
 
-```C++
-MyTexBarrier.AccessBefore=UNORDERED_ACCESS;
-MyTexBarrier.AccessAfter=SHADER_RESOURCE;
+```c++
+MyTexBarrier.AccessBefore=D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
+MyTexBarrier.AccessAfter=D3D12_BARRIER_ACCESS_SHADER_RESOURCE|D3D12_BARRIER_ACCESS_COPY_SOURCE;
 ```
 
-This access transition indicates that a subsequent shader-read access depends on a preceding unordered-access-write.  However, this may not actually flush the UAV cache if the hardware is capable of reading shader resources directly from the UAV cache.
+This access transition indicates that subsequent shader-resource and copy-source accesses depend on a preceding unordered-access-write. However, this may not actually flush the UAV cache if the hardware is capable of reading shader-resource and copy-source data directly from the UAV cache.
 
 `D3D12_BARRIER_ACCESS_COMMON` is a special access type that indicates any layout-compatible access. Transitioning to `D3D12_BARRIER_ACCESS_COMMON` means that subresource data must be available for any layout-compatible access after a barrier. Since buffers have no layout, `D3D12_BARRIER_ACCESS_COMMON` simply means any buffer-compatible access.
 
@@ -415,13 +419,13 @@ Specifying `D3D12_BARRIER_ACCESS_COMMON` as `AccessBefore` in a barrier implies 
 
 The enhanced Barrier API allows concurrent read write operations on the same buffer or simultaneous-access texture in the same command queue.
 
-Buffers and simultaneous-access resources have always supported write access from one queue with concurrent, non-dependent read accesses from one or more other queues.  This is because such resources always use the COMMON layout and have no read/write hazards since reads must not depend on concurrent writes.  Unfortunately, legacy Resource Barrier rules disallow combining write state bits with any other state bits.  As such, resources cannot be concurrently read-from and written-to in the same queue using legacy ResourceBarrier API's.
+Buffers and simultaneous-access resources have always supported write access from one queue with concurrent, non-dependent read accesses from one or more other queues.  This is because such resources always use the `COMMON` layout and have no read/write hazards since reads must not depend on concurrent writes.  Unfortunately, legacy Resource Barrier rules disallow combining write state bits with any other state bits.  As such, resources cannot be concurrently read-from and written-to in the same queue using legacy `ResourceBarrier` API's.
 
 Note that the one-writer-at-a-time policy still applies since two seemingly non-overlapping write regions may still have overlapping cache lines.
 
 ### Subresource Ranges
 
-It is common for developers to want to transition a range of subresources such as a full mip-chain for a given texture array or a single mip-level for all array slices.  Legacy Resource State Transition barriers only provide developers the option of transitioning ALL subresource states or single subresource state atomically.  The enhanced Barrier API's allow developers to transition logically-adjacent ranges of subresources using the [`D3D12_BARRIER_SUBRESOURCE_RANGE`](#D3D12_BARRIER_SUBRESOURCE_RANGE) structure.
+It is common for developers to want to transition a range of subresources such as a full mip-chain for a given texture array or a single mip-level for all array slices.  Legacy Resource State Transition barriers only provide developers the option of transitioning ALL subresource states or single subresource state atomically.  The enhanced Barrier API's allow developers to transition logically-adjacent ranges of subresources using the [`D3D12_BARRIER_SUBRESOURCE_RANGE`](#d3d12_barrier_subresource_range) structure.
 
 ### Compute and Direct Queue Layouts
 
@@ -443,7 +447,7 @@ On some hardware, layout transition barriers on Direct queues can be significant
 - `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COPY_SOURCE`
 - `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COPY_DEST`
 
-The DIRECT_QUEUE layout variants are not compatible with Compute queues and cannot be used in Compute command list barriers.  However, they are compatible with Compute operations in Direct queues.
+The `DIRECT_QUEUE` layout variants are not compatible with Compute queues and cannot be used in Compute command list barriers.  However, they are compatible with Compute operations in Direct queues.
 
 ### Barrier-Free Access
 
@@ -482,7 +486,7 @@ Subsequent accesses MAY also be made without a barrier with no more than one wri
 
 Though not exclusively related to the enhanced Barrier API's, the ability to allow copies from one region of a subresource to another non-intersecting region is a highly-requested feature.  According to the legacy Resource Barrier design, a subresource cannot be in both the `D3D12_RESOURCE_STATE_COPY_SOURCE` and `D3D12_RESOURCE_STATE_COPY_DEST` state at the same time, and thus cannot copy to itself.
 
-With Enhanced Barriers, a subresource with a common layout can be used as both a source and destination in the same CopyBufferRegion or CopyTextureRegion call.  Copies between intersecting source and dest memory regions produce undefined results.  The Debug Layer MUST validate against this.
+With Enhanced Barriers, a subresource with a common layout can be used as both a source and destination in the same `CopyBufferRegion` or `CopyTextureRegion` call.  Copies between intersecting `source` and `dest` memory regions produce undefined results.  The Debug Layer MUST validate against this.
 
 ### Placed Resource Metadata Initialization
 
@@ -496,22 +500,22 @@ In addition to render target and depth/stencil resources, there are similar UAV 
 
 Barriers are queued in forward order (API-call order, barrier-group-index, barrier-array-index).  Multiple barriers on the same subresource must function as though the barriers complete in queued order.
 
-Queued Barriers with matching `SyncAfter` scopes that potentially write to the same memory must complete all writes in queued order.  This is necessary to avoid data races on barriers that support resource aliasing.  For example a barrier that 'deactivates' a resource must flush any caches before another barrier that 'activates a different resource on the same memory, possible clearing metadata.
+Queued Barriers with matching `SyncAfter` scopes that potentially write to the same memory must complete all writes in queued order.  This is necessary to avoid data races on barriers that support resource aliasing.  For example a barrier that 'deactivates' a resource must flush any caches before another barrier that 'activates' a different resource on the same memory, possible clearing metadata.
 
 ### New Resource Creation API's
 
-To fully support enhanced barriers, developers need to be able to create resources with InitialLayout rather than InitialState.  This is especially true given the fact that there exist some layouts that do not deterministically map to a legacy `D3D12_RESOURCE_STATE` (e.g. `D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COPY_DEST`).
+To fully support enhanced barriers, developers need to be able to create resources with `InitialLayout` rather than `InitialState`.  This is especially true given the fact that there exist some layouts that do not deterministically map to a legacy `D3D12_RESOURCE_STATE` (e.g. `D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COPY_DEST`).
 
 Buffers may only use `D3D12_BARRIER_LAYOUT_UNDEFINED` as an initial layout.
 
 ### Hardware Requirements
 
-Enhanced Barriers is not currently a hardware or driver requirement.  Developers must check for optional driver support before using command list  Barrier API's or resource Create methods using InitialLayout.
+Enhanced Barriers is not currently a hardware or driver requirement.  Developers must check for optional driver support before using command list Barrier API's or resource `Create` methods using `InitialLayout`.
 
 ```c++
     D3D12_FEATURE_DATA_D3D12_OPTIONS12 options12 = {};
     bool EnhancedBarriersSupported = false;
-    if(SUCCEEDED(pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &options12, sizeof(options12))))
+    if (SUCCEEDED(pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &options12, sizeof(options12))))
     {
         EnhancedBarriersSupported = options12.EnhancedBarriersSupported;
     }
@@ -519,17 +523,21 @@ Enhanced Barriers is not currently a hardware or driver requirement.  Developers
 
 #### `D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE`
 
-Since resources are created with InitialLayout instead of InitialState, and buffer resources have no layout, a new `D3D12_RESOURCE_FLAGS` enum value is needed to indicate that a buffer is to be used as a raytracing acceleration structure:
+Since resources are created with `InitialLayout` instead of `InitialState`, and buffer resources have no layout, a new `D3D12_RESOURCE_FLAGS` enum value is needed to indicate that a buffer is to be used as a raytracing acceleration structure:
+
+TODO: There's a colon here and then a hard cut, back from a H4 heading to a H2 heading.
 
 ------------------------------------------------
 
 ## Compatibility with legacy `D3D12_RESOURCE_STATES`
 
-The D3D12 runtime internally translates all ResourceBarrier calls to equivalent enhanced Barriers at the driver interface.  Legacy barrier DDI's are never invoked on a driver supporting enhanced barriers.
+The D3D12 runtime internally translates all `ResourceBarrier` calls to equivalent Enhanced Barriers at the driver interface.  Legacy barrier DDI's are never invoked on a driver supporting enhanced barriers.
 
-### Interop with legacy ResourceBarrier
+### Interop with legacy `ResourceBarrier`
 
-Interop between enhanced Barrier API's and legacy `D3D12_RESOURCE_STATES` is supported.  However, subresources in any legacy state other than `D3D12_RESOURCE_STATE_COMMON` must be transitioned to `D3D12_RESOURCE_STATE_COMMON` before being referenced using an enhanced Barrier.  Likewise, subresources that do not have a legacy state must be transitioned to `D3D12_BARRIER_LAYOUT_COMMON` (for textures) with `D3D12_BARRIER_ACCESS_COMMON` visibility before being referenced using a legacy ResourceBarrier.
+Interop between enhanced Barrier API's and legacy `D3D12_RESOURCE_STATES` is supported.  However, mixing legacy and enhanced barriers on the same subresource can introduce extra performance overhead, especially when combined in the same `ExecuteCommandLists` scope. Therefore, it is strongly recommended that applications avoid mixing barrier types on the same subresource as much as possible.
+
+Buffers and texture subresources assigned any legacy state (either via state promotion or `ResourceBarrier`) other than `D3D12_RESOURCE_STATE_COMMON` must be transitioned to `D3D12_RESOURCE_STATE_COMMON` before being referenced using an enhanced Barrier. Conversely, texture subresources with an enhanced layout must be placed by barrier into `D3D12_BARRIER_LAYOUT_COMMON`, with all preceding accesses finished and flushed, before being referenced by a legacy `ResourceBarrier`. Although simultaneous-access texture subresources are already immutably in `D3D12_BARRIER_LAYOUT_COMMON`, any preceding accesses must still be finished and flushed using a barrier. Similarly, buffer resources that do not have an explicit legacy state must finish and flush all preceding accesses before using in a legacy barrier (effectively placing the buffer in `D3D12_RESOURCE_STATE_COMMON`). Note that at the start of any given `ExecuteCommandLists` scope, all buffer resources and simultaneous-access texture subresources are implicitly in `D3D12_RESOURCE_STATE_COMMON`.
 
 ### Legacy layouts
 
@@ -540,7 +548,7 @@ Legacy resource state rules allow textures in the state `D3D12_RESOURCE_STATE_CO
 - `D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE`
 - `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`
 
-This promotion can occur during state transformation ResourceBarrier, where the StateBefore value is one of these states, but the actual subresource state is `D3D12_RESOURCE_STATE_COMMON`.  From an enhanced barriers perspective the `LayoutBefore` may be either `D3D12_BARRIER_LAYOUT_COMMON` or `D3D12_BARRIER_LAYOUT_<SOMETHING_SPECIFIC>`.  Therefore, a number of internal-only layouts are used to to support legacy ResourceBarrier to enhanced Barrier calls by the D3D12 runtime:
+This promotion can occur during a state transformation `ResourceBarrier`, where the `StateBefore` value is one of these states, but the actual subresource state is `D3D12_RESOURCE_STATE_COMMON`.  From an enhanced barriers perspective the `LayoutBefore` may be either `D3D12_BARRIER_LAYOUT_COMMON` or `D3D12_BARRIER_LAYOUT_<SOMETHING_SPECIFIC>`.  Therefore, a number of internal-only layouts are used to support legacy `ResourceBarrier` to enhanced `Barrier` calls by the D3D12 runtime:
 
 - `D3D12_BARRIER_LAYOUT_LEGACY_COPY_DEST`
 - `D3D12_BARRIER_LAYOUT_LEGACY_COPY_SOURCE`
@@ -548,13 +556,13 @@ This promotion can occur during state transformation ResourceBarrier, where the 
 - `D3D12_BARRIER_LAYOUT_LEGACY_SHADER_RESOURCE`
 - `D3D12_BARRIER_LAYOUT_LEGACY_DIRECT_QUEUE_GENERIC_READ_COMPUTE_QUEUE_ACCESSIBLE`
 
-It is the driver's responsibility to determine the actual memory layout of a resource using one of these legacy layouts.  This is not new behavior since drivers needed to do this for legacy barriers.  These layouts are not exposed in the public API and may not be used in enhanced Barrier API calls.  Invalid layout values in Barrier API calls, including these, result in removal of command list.
+It is the driver's responsibility to determine the actual memory layout of a resource using one of these legacy layouts.  This is not new behavior since drivers needed to do this for legacy barriers.  These layouts are not exposed in the public API and may not be used in enhanced `Barrier` API calls.  Invalid layout values in `Barrier` API calls, including these, result in removal of command list.
 
 The `D3D12_BARRIER_LAYOUT_LEGACY_DIRECT_QUEUE_GENERIC_READ_COMPUTE_QUEUE_ACCESSIBLE` is used when translating from a resource state that includes the `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER` bit along with any other read bits.
 
 ### Equivalent `D3D12_BARRIER_LAYOUT` for each `D3D12_RESOURCE_STATES` bit
 
-Layouts enums starting with `D3D12_BARRIER_LAYOUT_LEGACY_` are internal-only and not exposed in public headers.  These exist only for internal translation of legacy ResourceBarrier API's. See [Legacy layouts](#legacy-layouts).
+Layout enums starting with `D3D12_BARRIER_LAYOUT_LEGACY_` are internal-only and not exposed in public headers.  These exist only for internal translation of legacy `ResourceBarrier` API's. See [Legacy layouts](#legacy-layouts).
 
 | State bit                                                | Layout                                         |
 |----------------------------------------------------------|------------------------------------------------|
@@ -580,8 +588,8 @@ Layouts enums starting with `D3D12_BARRIER_LAYOUT_LEGACY_` are internal-only and
 
 ### Equivalent `D3D12_BARRIER_ACCESS` bit for each `D3D12_RESOURCE_STATES` bit
 
-| State bit                                              | Access bit                                                                  |
-|--------------------------------------------------------|-----------------------------------------------------------------------------|
+| State bit                                                | Access bit                                                                |
+|----------------------------------------------------------|---------------------------------------------------------------------------|
 | `D3D12_RESOURCE_STATE_COMMON`                            | `D3D12_BARRIER_ACCESS_COMMON`                                             |
 | `D3D12_RESOURCE_STATE_VERTEX_BUFFER`                     | `D3D12_BARRIER_ACCESS_VERTEX_BUFFER|D3D12_BARRIER_ACCESS_CONSTANT_BUFFER` |
 | `D3D12_RESOURCE_STATE_CONSTANT_BUFFER`                   | `D3D12_BARRIER_ACCESS_VERTEX_BUFFER|D3D12_BARRIER_ACCESS_CONSTANT_BUFFER` |
@@ -610,7 +618,7 @@ Non-simultaneous-access textures using a common layout can be accessed as `D3D12
 |----------------------------------------------------------|----------------------------------------|
 | `D3D12_RESOURCE_STATE_COMMON`                            | `D3D12_BARRIER_SYNC_ALL`               |
 | `D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER`        | `D3D12_BARRIER_SYNC_ALL_SHADING`       |
-| `D3D12_RESOURCE_STATE_INDEX_BUFFER`                      | `D3D12_BARRIER_SYNC_INPUT_ASSEMBLER`   |
+| `D3D12_RESOURCE_STATE_INDEX_BUFFER`                      | `D3D12_BARRIER_SYNC_INDEX_INPUT`       |
 | `D3D12_RESOURCE_STATE_RENDER_TARGET`                     | `D3D12_BARRIER_SYNC_RENDER_TARGET`     |
 | `D3D12_RESOURCE_STATE_UNORDERED_ACCESS`                  | `D3D12_BARRIER_SYNC_ALL_SHADING`       |
 | `D3D12_RESOURCE_STATE_DEPTH_WRITE`                       | `D3D12_BARRIER_SYNC_DEPTH_STENCIL`     |
@@ -633,10 +641,10 @@ UAV Barriers are simply synchronization barriers between preceding and subsequen
 
 UAV Barriers are used for both shader UAV accesses and raytracing acceleration structure accesses.  Therefore, the Enhanced Barrier equivalent for a legacy UAV barrier in a graphics command list is:
 
-``` C++
+```c++
 UAVBarrier.SyncBefore =
 UAVBarrier.SyncAfter =
-    D3D12_BARRIER_SYNC_ALL_SHADERS |
+    D3D12_BARRIER_SYNC_ALL_SHADING |
     D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE |
     D3D12_BARRIER_SYNC_COPY_RAYTRACING_ACCELERATION_STRUCTURE |
     D3D12_BARRIER_SYNC_EMIT_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO;
@@ -650,7 +658,7 @@ UAVBarrier.AccessAfter =
 
 Applications using Enhanced Barriers natively can leave out the acceleration structure bits if they are not needed.
 
-Legacy Resource Barriers support "NULL" UAV barriers.  These are equivalent to enhanced Barrier global barriers.
+Legacy Resource Barriers support `NULL` UAV barriers.  These are equivalent to enhanced Barrier global barriers.
 
 ### Resource Aliasing
 
@@ -674,9 +682,9 @@ For each "after resource":
 - If needed: Wait for all "before resource" accesses to complete.
 - If needed: Specify desired layout.
   - Use `LayoutBefore` of `D3D12_BARRIER_LAYOUT_UNDEFINED` to avoid modifying memory as part of the barrier.
-- If needed: Perform a full-resource discard using `D3D2_TEXTURE_BARRIER_FLAG_DISCARD`.
+- If needed: Perform a full-subresource discard using `D3D2_TEXTURE_BARRIER_FLAG_DISCARD`.
   - Must not use this flag if any of the "before resource" barriers transition layout or flush memory writes.
-- If needed: Set `AccessBefore` to `D3D12_BARRIER_ACCESS_NO_ACCESS` 'activate' a subresource previously 'deactivated' in the same `ExecuteCommandLists` scope.
+- If needed: Set `AccessBefore` to `D3D12_BARRIER_ACCESS_NO_ACCESS` to 'activate' a subresource previously 'deactivated' in the same `ExecuteCommandLists` scope.
 
 Note that each of these is tagged as 'If needed'.  There are aliasing scenarios where resource aliasing can be accomplished without any barriers at all.  For example: all "before" and "after" resources are buffers (thus no layout), and accesses to all "before" resources occurred in a separate `ExecuteCommandLists` scope than all "after" resources.
 
@@ -692,7 +700,7 @@ Despite the fact that legacy resource creation API's have an Initial State, buff
 
 ### Split Barriers
 
-A split barrier provides a hint to a driver that a state transition must occur between two points in a command stream, even cross `ExecuteCommandLists` boundaries.  Drivers may complete the required layout transitions and cache flushes any time between the start and end of a split barrier.
+A split barrier provides a hint to a driver that a state transition must occur between two points in a command stream, even across `ExecuteCommandLists` boundaries.  Drivers may complete the required layout transitions and cache flushes any time between the start and end of a split barrier.
 
 Enhanced Barrier API's allow SPLIT synchronization.  Split barriers are represented by a pair of barriers where the initial barrier uses a `D3D12_BARRIER_SYNC_SPLIT` `SyncAfter` value, and the final barrier uses a `D3D12_BARRIER_SYNC_SPLIT` `SyncBefore` value.
 
@@ -703,7 +711,7 @@ Split barrier pairs must use identical `LayoutBefore`, `LayoutAfter`, `AccessBef
 splitBarrierBegin.SyncBefore = D3D12_BARRIER_SYNC_COMPUTE
 splitBarrierBegin.SyncAfter = D3D12_BARRIER_SYNC_SPLIT
 splitBarrierBegin.AccessBefore = D3D12_BARRIER_ACCESS_UNORDERED_ACCESS
-splitBarrierBegin.AccessAfter = D3D12_BARRIER_ACCESS_DIRECT_QUEUE_SHADER_RESOURCE
+splitBarrierBegin.AccessAfter = D3D12_BARRIER_ACCESS_SHADER_RESOURCE
 splitBarrierBegin.LayoutBefore = D3D12_BARRIER_LAYOUT_UNORDERED_ACCESS
 splitBarrierBegin.LayoutAfter = D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_SHADER_RESOURCE
 
@@ -711,16 +719,16 @@ splitBarrierBegin.LayoutAfter = D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_SHADER_RESOURC
 splitBarrierEnd.SyncBefore = D3D12_BARRIER_SYNC_SPLIT
 splitBarrierEnd.SyncAfter = D3D12_BARRIER_SYNC_PIXEL_SHADING
 splitBarrierEnd.AccessBefore = D3D12_BARRIER_ACCESS_UNORDERED_ACCESS
-splitBarrierEnd.AccessAfter = D3D12_BARRIER_ACCESS_DIRECT_QUEUE_SHADER_RESOURCE
+splitBarrierEnd.AccessAfter = D3D12_BARRIER_ACCESS_SHADER_RESOURCE
 splitBarrierEnd.LayoutBefore = D3D12_BARRIER_LAYOUT_UNORDERED_ACCESS
 splitBarrierEnd.LayoutAfter = D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_SHADER_RESOURCE
 ```
 
-Split barriers across `ExecuteCommandLists` boundaries are allowed.  In this case all `AccessBefore` and `AccessAfter` values are effectively ignored since the `ExecuteCommandLists` boundaries takes care of any cache flushing.  Essentially, cross-`ExecuteCommandLists` split barriers are layout-only barriers.  Therefore, splitting a buffer barrier or a simultaneous-access texture barrier across `ExecuteCommandLists` boundaries serves no purpose.  An unmatched BEGIN or END split barrier on a buffer or simultaneous-access texture in a given `ExecuteCommandLists` scope is effectively unused and the Debug Layer produces a warning.
+Split barriers across `ExecuteCommandLists` boundaries are allowed.  In this case all `AccessBefore` and `AccessAfter` values are effectively ignored since the `ExecuteCommandLists` boundaries take care of any cache flushing.  Essentially, cross-`ExecuteCommandLists` split barriers are layout-only barriers.  Therefore, splitting a buffer barrier or a simultaneous-access texture barrier across `ExecuteCommandLists` boundaries serves no purpose.  An unmatched BEGIN or END split barrier on a buffer or simultaneous-access texture in a given `ExecuteCommandLists` scope is effectively unused and the Debug Layer produces a warning.
 
-### COMMON Layout
+### `COMMON` Layout
 
-The `D3D12_BARRIER_LAYOUT_COMMON` matches the layout of legacy ResourceBarrier state `D3D12_RESOURCE_STATE_COMMON`.  Any texture subresource in `D3D12_BARRIER_LAYOUT_COMMON` can be used without a layout transition for any combination of the following access bits:
+The `D3D12_BARRIER_LAYOUT_COMMON` matches the layout of legacy `ResourceBarrier` state `D3D12_RESOURCE_STATE_COMMON`.  Any texture subresource in `D3D12_BARRIER_LAYOUT_COMMON` can be used without a layout transition for any combination of the following access bits:
 
 - `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`
 - `D3D12_BARRIER_ACCESS_COPY_DEST`
@@ -756,9 +764,9 @@ Upload Heap resources are buffers and thus have no layout.  Upload Heap resource
 - `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`
 - `D3D12_BARRIER_ACCESS_INDIRECT_ARGUMENT`
 - `D3D12_BARRIER_ACCESS_COPY_SOURCE`
-- `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE` (*)
+- `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE` [^1]
 
-(*) `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE` is available only on devices that support Sampler Feedback.
+[^1]: `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE` is available only on devices that support Sampler Feedback.
 
 ### Readback Heap Resources
 
@@ -769,9 +777,9 @@ Readback Heap resources can be written to either by Copy or Resolve operations (
 Readback Heap resources support the following accesses:
 
 - `D3D12_BARRIER_ACCESS_COPY_DEST`
-- `D3D12_BARRIER_ACCESS_RESOLVE_DEST` (*)
+- `D3D12_BARRIER_ACCESS_RESOLVE_DEST` [^2]
 
-(*) `D3D12_BARRIER_ACCESS_RESOLVE_DEST` MUST be available on hardware that supports Sampler Feedback.
+[^2]: `D3D12_BARRIER_ACCESS_RESOLVE_DEST` MUST be available on hardware that supports Sampler Feedback.
 
 ### Command Queue Layout Compatibility
 
@@ -805,8 +813,6 @@ As with `D3D12_RESOURCE_STATES`, Resource Layouts MUST be compatible with the ty
 - `D3D12_BARRIER_LAYOUT_SHADER_RESOURCE`
 - `D3D12_BARRIER_LAYOUT_COPY_SOURCE`
 - `D3D12_BARRIER_LAYOUT_COPY_DEST`
-
-(*) Access only, cannot use this layout in compute queue barriers.
 
 `D3D12_COMMAND_LIST_TYPE_COPY`
 
@@ -894,7 +900,7 @@ As with `D3D12_RESOURCE_STATES`, Resource Accesses MUST be compatible with the t
 
 - `D3D12_BARRIER_SYNC_ALL`
 - `D3D12_BARRIER_SYNC_DRAW`
-- `D3D12_BARRIER_SYNC_INPUT_ASSEMBLER`
+- `D3D12_BARRIER_SYNC_INDEX_INPUT`
 - `D3D12_BARRIER_SYNC_VERTEX_SHADING`
 - `D3D12_BARRIER_SYNC_PIXEL_SHADING`
 - `D3D12_BARRIER_SYNC_DEPTH_STENCIL`
@@ -962,9 +968,10 @@ Copy queues do not support layout transition Barriers, thus any subresources acc
 
 The following tables describe the Access types compatible with a given layout:
 
-| `D3D12_BARRIER_LAYOUT_UNDEFINED` |
-|----------------------------------|
-| None                             |
+| `D3D12_BARRIER_LAYOUT_UNDEFINED`                                                  |
+|-----------------------------------------------------------------------------------|
+| Any access bits (only when BOTH `LayoutBefore` AND `LayoutAfter` are `UNDEFINED`) |
+| `D3D12_BARRIER_ACCESS_NO_ACCESS`                                                  |
 
 | `D3D12_BARRIER_LAYOUT_COMMON`          |
 |----------------------------------------|
@@ -1112,27 +1119,7 @@ Some Access types require matching Sync.  For the following access bits, at leas
 
 | `D3D12_BARRIER_ACCESS_COMMON`                    |
 |--------------------------------------------------|
-| `D3D12_BARRIER_SYNC_NONE`                        |
-| `D3D12_BARRIER_SYNC_ALL`                         |
-| `D3D12_BARRIER_SYNC_DRAW`                        |
-| `D3D12_BARRIER_SYNC_INPUT_ASSEMBLER`             |
-| `D3D12_BARRIER_SYNC_VERTEX_SHADING`              |
-| `D3D12_BARRIER_SYNC_PIXEL_SHADING`               |
-| `D3D12_BARRIER_SYNC_DEPTH_STENCIL`               |
-| `D3D12_BARRIER_SYNC_RENDER_TARGET`               |
-| `D3D12_BARRIER_SYNC_COMPUTE_SHADING`             |
-| `D3D12_BARRIER_SYNC_RAYTRACING`                  |
-| `D3D12_BARRIER_SYNC_COPY`                        |
-| `D3D12_BARRIER_SYNC_RESOLVE`                     |
-| `D3D12_BARRIER_SYNC_EXECUTE_INDIRECT`            |
-| `D3D12_BARRIER_SYNC_PREDICATION`                 |
-| `D3D12_BARRIER_SYNC_ALL_SHADING`                 |
-| `D3D12_BARRIER_SYNC_NON_PIXEL_SHADING`           |
-| `D3D12_BARRIER_SYNC_VIDEO_DECODE`                |
-| `D3D12_BARRIER_SYNC_VIDEO_PROCESS`               |
-| `D3D12_BARRIER_SYNC_VIDEO_ENCODE`                |
-| `D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW` |
-| `D3D12_BARRIER_SYNC_SPLIT`                       |
+| Any valid sync bits                              |
 
 | `D3D12_BARRIER_ACCESS_VERTEX_BUFFER` |
 |--------------------------------------|
@@ -1150,11 +1137,11 @@ Some Access types require matching Sync.  For the following access bits, at leas
 | `D3D12_BARRIER_SYNC_DRAW`              |
 | `D3D12_BARRIER_SYNC_ALL_SHADING`       |
 
-| `D3D12_BARRIER_ACCESS_INDEX_BUFFER`  |
-|--------------------------------------|
-| `D3D12_BARRIER_SYNC_ALL`             |
-| `D3D12_BARRIER_SYNC_INPUT_ASSEMBLER` |
-| `D3D12_BARRIER_SYNC_DRAW`            |
+| `D3D12_BARRIER_ACCESS_INDEX_BUFFER` |
+|-------------------------------------|
+| `D3D12_BARRIER_SYNC_ALL`            |
+| `D3D12_BARRIER_SYNC_INDEX_INPUT`    |
+| `D3D12_BARRIER_SYNC_DRAW`           |
 
 | `D3D12_BARRIER_ACCESS_RENDER_TARGET` |
 |--------------------------------------|
@@ -1247,8 +1234,8 @@ Some Access types require matching Sync.  For the following access bits, at leas
 | `D3D12_BARRIER_SYNC_COMPUTE_SHADING`                           |
 | `D3D12_BARRIER_SYNC_RAYTRACING`                                |
 | `D3D12_BARRIER_SYNC_ALL_SHADING`                               |
-| `D3D12_BARRIER_SYNC_RAYTRACING_ACCELERATION_STRUCTURE_BUILD`   |
-| `D3D12_BARRIER_SYNC_RAYTRACING_ACCELERATION_STRUCTURE_COPY`    |
+| `D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE`   |
+| `D3D12_BARRIER_SYNC_COPY_RAYTRACING_ACCELERATION_STRUCTURE`    |
 
 | `D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE` |
 |--------------------------------------------|
@@ -1288,8 +1275,7 @@ Some Access types require matching Sync.  For the following access bits, at leas
 
 | `D3D12_BARRIER_ACCESS_NO_ACCESS` |
 |----------------------------------|
-| `D3D12_BARRIER_SYNC_NONE`        |
-| `D3D12_BARRIER_SYNC_SPLIT`       |
+| Any valid sync bits              |
 
 ------------------------------------------------
 
@@ -1297,7 +1283,7 @@ Some Access types require matching Sync.  For the following access bits, at leas
 
 ### `D3D12_BARRIER_LAYOUT`
 
-Describes any of the possible layouts used by D3D12 subresources. Layouts apply only to texture resources.  Buffer resources have only a linear layout, regardless of access type.
+Describes any of the possible layouts used by D3D12 subresources.  Layouts apply only to texture resources.  Buffer resources have only a linear layout, regardless of access type.
 
 ```c++
 typedef enum D3D12_BARRIER_LAYOUT
@@ -1340,9 +1326,11 @@ typedef enum D3D12_BARRIER_LAYOUT
 
 #### `D3D12_BARRIER_LAYOUT_UNDEFINED`
 
-Provides support for subresource layout changes where the previous layout is irrelevant or undefined.  Typically, this is used for full-subresource or full-resource Clear, Discard, and Copy commands.
+Provides support for subresource layout changes where the previous layout is irrelevant or undefined.  Typically, this is used for full-subresource or full-subresource Clear, Discard, and Copy commands.
 
-A layout transition with BOTH `LayoutBefore` and `LayoutAfter` set to `D3D12_BARRIER_LAYOUT_UNDEFINED` indicates a memory-access-only barrier.  Many read/write operations support `D3D12_BARRIER_LAYOUT_COMMON`.  In particular, Copy commands may write to textures using either the `D3D12_BARRIER_LAYOUT_COMMON` or `D3D12_BARRIER_LAYOUT_COPY`.  A memory-access-only barrier can be used to flush copy writes to a texture without changing the texture layout.
+A layout transition with BOTH `LayoutBefore` AND `LayoutAfter` set to `D3D12_BARRIER_LAYOUT_UNDEFINED` indicates a memory-access-only barrier.  Many write operations support more than one layout (e.g. Copy operations support `D3D12_BARRIER_LAYOUT_COMMON` or `D3D12_BARRIER_LAYOUT_COPY_DEST`). A memory-access-only barrier can be used to flush writes to a texture without inadvertently changing the texture layout.
+
+A barrier with only `LayoutBefore` OR `LayoutAfter` set to `D3D12_BARRIER_LAYOUT_UNDEFINED` must set the corresponding `AccessBefore` or `AccessAfter` value to `D3D12_BARRIER_ACCESS_NO_ACCESS`. A texture with an undefined layout clearly does not have meaningful data and thus should not require preservation of data or cache flushes. Barriers used for aliasing can take advantage of this to let the GPU discard outstanding cache writes.
 
 #### `D3D12_BARRIER_LAYOUT_COMMON`
 
@@ -1356,7 +1344,7 @@ Alias for `D3D12_BARRIER_LAYOUT_COMMON`.
 
 #### `D3D12_BARRIER_LAYOUT_GENERIC_READ`
 
-Provides support for any read-only access (e.g. SHADER_RESOURCE, COPY_SOURCE).  Should only be used for textures that require multiple, concurrent read accesses since this may not be as optimal as a more specific read layout.
+Provides support for any read-only access (e.g. `SHADER_RESOURCE`, `COPY_SOURCE`).  Should only be used for textures that require multiple, concurrent read accesses since this may not be as optimal as a more specific read layout.
 
 #### `D3D12_BARRIER_LAYOUT_RENDER_TARGET`
 
@@ -1412,7 +1400,7 @@ Matches the layout used by `D3D12_RESOURCE_STATE_VIDEO_ENCODE_WRITE`.
 
 #### `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COMMON`
 
-Supports common (barrier free) usage on direct queues only. May be more optimal than the more general `D3D12_BARRIER_LAYOUT_COMMON`. Can only be used in barriers on direct queues.
+Supports common (barrier free) usage on direct queues only.  May be more optimal than the more general `D3D12_BARRIER_LAYOUT_COMMON`.  Can only be used in barriers on direct queues.
 
 Note that this cannot be used for Present.  `D3D12_BARRIER_LAYOUT_COMMON` (a.k.a `D3D12_BARRIER_LAYOUT_PRESENT`) is still the required layout for Presentation.
 
@@ -1468,13 +1456,15 @@ Supports common (barrier free) usage on video queues only. May be more optimal t
 
 ### `D3D12_BARRIER_SYNC`
 
+Bit values representing synchronization scopes. Can be combined using bitwise-or in barrier `SyncBefore` and `SyncAfter` values.
+
 ```c++
 enum D3D12_BARRIER_SYNC
 {
     D3D12_BARRIER_SYNC_NONE                                                     = 0x0,
     D3D12_BARRIER_SYNC_ALL                                                      = 0x1,
     D3D12_BARRIER_SYNC_DRAW                                                     = 0x2,
-    D3D12_BARRIER_SYNC_INPUT_ASSEMBLER                                          = 0x4,
+    D3D12_BARRIER_SYNC_INDEX_INPUT                                              = 0x4,
     D3D12_BARRIER_SYNC_VERTEX_SHADING                                           = 0x8,
     D3D12_BARRIER_SYNC_PIXEL_SHADING                                            = 0x10,
     D3D12_BARRIER_SYNC_DEPTH_STENCIL                                            = 0x20,
@@ -1523,29 +1513,64 @@ The `SetGraphicsRoot*` synchronization is required to support `D3D12_DESCRIPTOR_
 
 This is an umbrella scope for all Draw pipeline stages. A `SyncBefore` value of `D3D12_BARRIER_SYNC_DRAW` indicates ALL PRECEDING Draw work must complete before executing the barrier.  A `SyncAfter` value of `D3D12_BARRIER_SYNC_DRAW` indicates ALL SUBSEQUENT Draw work must wait for the barrier to complete.
 
-#### `D3D12_BARRIER_SYNC_INPUT_ASSEMBLER`
+Access types in this scope are limited to:
 
-Synchronize against Input Assembler stage execution.
+- `D3D12_BARRIER_ACCESS_VERTEX_BUFFER`
+- `D3D12_BARRIER_ACCESS_CONSTANT_BUFFER`
+- `D3D12_BARRIER_ACCESS_INDEX_BUFFER`
+- `D3D12_BARRIER_ACCESS_RENDER_TARGET`
+- `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`
+- `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE`
+- `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ`
+- `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`
+- `D3D12_BARRIER_ACCESS_STREAM_OUTPUT`
+
+#### `D3D12_BARRIER_SYNC_INDEX_INPUT`
+
+Synchronize scope for processing index buffer input.
+
+Access types in this scope are limited to:
+
+- `D3D12_BARRIER_SYNC_INDEX_INPUT`
 
 #### `D3D12_BARRIER_SYNC_VERTEX_SHADING`
 
-Synchronize against all vertex shading stages, including vertex, domain, hull, tessellation, geometry, amplification and mesh shading.
+Synchronize scope for all vertex shading stages, including vertex, domain, hull, tessellation, geometry, amplification and mesh shading.
+
+Access types in this scope are limited to:
+
+- `D3D12_BARRIER_ACCESS_VERTEX_BUFFER`
+- `D3D12_BARRIER_ACCESS_CONSTANT_BUFFER`
+- `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`
+- `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`
+- `D3D12_BARRIER_ACCESS_STREAM_OUTPUT`
 
 #### `D3D12_BARRIER_SYNC_PIXEL_SHADING`
 
-Synchronize against pixel shader execution.
+Synchronize scope for pixel shader execution.
+
+Access types in this scope are limited to:
+
+- `D3D12_BARRIER_ACCESS_CONSTANT_BUFFER`
+- `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`
+- `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`
 
 #### `D3D12_BARRIER_SYNC_DEPTH_STENCIL`
 
-Synchronize against depth/stencil read/write operations. This includes DSV accesses during `Draw*` and `ClearRenderTargetView`.
+Synchronize scope for depth/stencil read/write operations. This includes DSV accesses during `Draw*` and `ClearRenderTargetView`.
+
+Access types in this scope are limited to:
+
+- `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE`
+- `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ`
 
 #### `D3D12_BARRIER_SYNC_RENDER_TARGET`
 
-Synchronize against render target read/write operations. This include RTV writes during `Draw*` and `ClearRenderTargetView`.
+Synchronize scope for render target read/write operations. This include RTV writes during `Draw*` and `ClearRenderTargetView`.
 
 #### `D3D12_BARRIER_SYNC_COMPUTE_SHADING`
 
-Synchronize against the following GPU workloads:
+Synchronize scope for the following GPU workloads:
 
 - `Dispatch`
 - `SetComputeRootDescriptorTable`
@@ -1555,63 +1580,133 @@ Synchronize against the following GPU workloads:
 
 The `SetComputeRoot*` synchronization is required to support `D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTION` descriptors.
 
+Access types in this scope are limited to:
+
+- `D3D12_BARRIER_SYNC_RENDER_TARGET`
+
 #### `D3D12_BARRIER_SYNC_RAYTRACING`
 
-Synchronize against raytracing execution.
+Synchronize scope for raytracing execution.
+
+Access types in this scope are limited to:
+
+- `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ`
 
 #### `D3D12_BARRIER_SYNC_COPY`
 
-Synchronize against Copy commands.
+Synchronize scope for Copy commands.
+
+Access types in this scope are limited to:
+
+- `D3D12_BARRIER_ACCESS_COPY_SOURCE`
+- `D3D12_BARRIER_ACCESS_COPY_DEST`
 
 #### `D3D12_BARRIER_SYNC_RESOLVE`
 
-Synchronize against Resolve commands.
+Synchronize scope for Resolve commands.
+
+Access types in this scope are limited to:
+
+- `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE`
+- `D3D12_BARRIER_ACCESS_RESOLVE_DEST`
 
 #### `D3D12_BARRIER_SYNC_EXECUTE_INDIRECT`
 
-Synchronize against ExecuteIndirect execution.
+Synchronize scope for ExecuteIndirect execution.
+
+Access types in this scope are limited to:
+
+- `D3D12_BARRIER_ACCESS_INDIRECT_ARGUMENT`
 
 #### `D3D12_BARRIER_SYNC_ALL_SHADING`
 
-Synchronize against ALL shader execution.
+Synchronize scope for ALL shader execution.
+
+Access types in this scope are limited to:
+
+- `D3D12_BARRIER_ACCESS_VERTEX_BUFFER`
+- `D3D12_BARRIER_ACCESS_CONSTANT_BUFFER`
+- `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`
+- `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`
+- `D3D12_BARRIER_ACCESS_STREAM_OUTPUT`
+- `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ`
+- `D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE`
 
 #### `D3D12_BARRIER_SYNC_NON_PIXEL_SHADING`
 
-Synchronize against shader execution EXCEPT pixel shading.  Exists for compatibility with legacy `ResourceBarrier` API.
+Synchronize scope for shader execution EXCEPT pixel shading.  Exists for compatibility with legacy `ResourceBarrier` API.
+
+Access types in this scope are limited to:
+
+- `D3D12_BARRIER_ACCESS_VERTEX_BUFFER`
+- `D3D12_BARRIER_ACCESS_CONSTANT_BUFFER`
+- `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`
+- `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`
+- `D3D12_BARRIER_ACCESS_STREAM_OUTPUT`
+- `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ`
 
 #### `D3D12_BARRIER_SYNC_VIDEO_DECODE`
 
-Synchronize against Video Decode execution.
+Synchronize scope for Video Decode execution.
+
+Access types in this scope are limited to:
+
+- `D3D12_BARRIER_ACCESS_VIDEO_DECODE_READ`
+- `D3D12_BARRIER_ACCESS_VIDEO_DECODE_WRITE`
 
 #### `D3D12_BARRIER_SYNC_VIDEO_PROCESS`
 
-Synchronize against Video Process execution.
+Synchronize scope for Video Process execution.
+
+Access types in this scope are limited to:
+
+- `D3D12_BARRIER_ACCESS_VIDEO_PROCESS_READ`
+- `D3D12_BARRIER_ACCESS_VIDEO_PROCESS_WRITE`
 
 #### `D3D12_BARRIER_SYNC_VIDEO_ENCODE`
 
-Synchronize against Video Encode execution.
+Synchronize scope for Video Encode execution.
+
+Access types in this scope are limited to:
+
+- `D3D12_BARRIER_ACCESS_VIDEO_ENCODE_READ`
+- `D3D12_BARRIER_ACCESS_VIDEO_ENCODE_WRITE`
 
 #### `D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE`
 
-Synchronize against `ID3D12GraphicsCommandList4::BuildAccelerationStructure` work.
+Synchronize scope for `ID3D12GraphicsCommandList4::BuildAccelerationStructure` work.
 
 Corresponding barrier `Access[Before|After]` must have the `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE` bit set.
+
+Access types in this scope are limited to:
+
+- `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ`
 
 #### `D3D12_BARRIER_SYNC_COPY_RAYTRACING_ACCELERATION_STRUCTURE`
 
-Synchronize against `ID3D12GraphicsCommandList4::CopyRaytracingAccelerationStructure` work.
+Synchronize scope for `ID3D12GraphicsCommandList4::CopyRaytracingAccelerationStructure` work.
 
 Corresponding barrier `Access[Before|After]` must have the `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE` bit set.
 
+Access types in this scope are limited to:
+
+`D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ`
+
 #### `D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW`
 
-Synchronize against `ID3D12GraphicsCommandList::ClearUnorderedAccessViewUint` and `ID3D12GraphicsCommandList::ClearUnorderedAccessViewFloat`.
+Synchronize scope for `ID3D12GraphicsCommandList::ClearUnorderedAccessViewUint` and `ID3D12GraphicsCommandList::ClearUnorderedAccessViewFloat`.
+
+Access types in this scope are limited to:
+
+`D3D12_BARRIER_ACCESS_COMMON`
 
 #### `D3D12_BARRIER_SYNC_SPLIT`
 
 Special sync bit indicating a [split barrier](#split-barriers).  Used as a `SyncAfter` to indicates the start of a split barrier.  The application must provide a matching barrier with `SyncBefore` set to `D3D12_BARRIER_SYNC_SPLIT`.
 
 ### `D3D12_BARRIER_ACCESS`
+
+Bit values representing access types. Can be combined using bitwise-or in barrier `AccessBefore` and `AccessAfter` values.
 
 ```c++
 enum D3D12_BARRIER_ACCESS
@@ -1655,115 +1750,217 @@ App developers should avoid using `D3D12_BARRIER_ACCESS_COMMON` as a barrier `Ac
 
 #### `D3D12_BARRIER_ACCESS_VERTEX_BUFFER`
 
-Indicates a buffer resource is accessible as a vertex buffer in the current execution queue.
+Indicates a buffer resource is accessible as a vertex buffer in the current execution queue. Vertex buffer accesses occur only in `D3D12_BARRIER_SYNC_VERTEX_SHADING` scope. Runtime barrier validation ensure that `D3D12_BARRIER_ACCESS_VERTEX_BUFFER` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_VERTEX_SHADING`
+- `D3D12_BARRIER_SYNC_DRAW`
+- `D3D12_BARRIER_SYNC_ALL_SHADING`
 
 #### `D3D12_BARRIER_ACCESS_CONSTANT_BUFFER`
 
-Indicates a buffer resource is accessible as a constant buffer in the current execution queue.
+Indicates a buffer resource is accessible as a constant buffer in the current execution queue. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_CONSTANT_BUFFER` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_VERTEX_SHADING`
+- `D3D12_BARRIER_SYNC_PIXEL_SHADING`
+- `D3D12_BARRIER_SYNC_COMPUTE_SHADING`
+- `D3D12_BARRIER_SYNC_DRAW`
+- `D3D12_BARRIER_SYNC_ALL_SHADING`
 
 #### `D3D12_BARRIER_ACCESS_INDEX_BUFFER`
 
-Indicates a buffer resource is accessible as an index buffer in the current execution queue.
+Indicates a buffer resource is accessible as an index buffer in the current execution queue. Index buffer accesses occur only in `D3D12_BARRIER_SYNC_INDEX_INPUT` scope.  Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_INDEX_BUFFER` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_INDEX_INPUT`
+- `D3D12_BARRIER_SYNC_DRAW`
+- `D3D12_BARRIER_SYNC_ALL`
 
 #### `D3D12_BARRIER_ACCESS_RENDER_TARGET`
 
-Indicates a resource is accessible as a render target.
+Indicates a resource is accessible as a render target. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_RENDER_TARGET` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_DRAW`
+- `D3D12_BARRIER_SYNC_RENDER_TARGET`
 
 #### `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`
 
-Indicates a resource is accessible as an unordered access resource.
+Indicates a resource is accessible as an unordered access resource. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_VERTEX_SHADING`
+- `D3D12_BARRIER_SYNC_PIXEL_SHADING`
+- `D3D12_BARRIER_SYNC_COMPUTE_SHADING`
+- `D3D12_BARRIER_SYNC_VERTEX_SHADING`
+- `D3D12_BARRIER_SYNC_DRAW`
+- `D3D12_BARRIER_SYNC_ALL_SHADING`
+- `D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW`
 
 #### `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE`
 
-Indicates a resource is accessible as a writable depth/stencil resource.
+Indicates a resource is accessible as a writable depth/stencil resource. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_DRAW`
+- `D3D12_BARRIER_SYNC_DEPTH_STENCIL`
 
 #### `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ`
 
-Indicates a resource is accessible as a read-only depth/stencil resource.
+Indicates a resource is accessible as a read-only depth/stencil resource. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_DRAW`
+- `D3D12_BARRIER_SYNC_DEPTH_STENCIL`
 
 #### `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`
 
-Indicates a resource is accessible as a shader resource.
+Indicates a resource is accessible as a shader resource. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_SHADER_RESOURCE` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_VERTEX_SHADING`
+- `D3D12_BARRIER_SYNC_PIXEL_SHADING`
+- `D3D12_BARRIER_SYNC_COMPUTE_SHADING`
+- `D3D12_BARRIER_SYNC_DRAW`
+- `D3D12_BARRIER_SYNC_ALL_SHADING`
 
 #### `D3D12_BARRIER_ACCESS_STREAM_OUTPUT`
 
-Indicates a buffer is accessible as a stream output target.
+Indicates a buffer is accessible as a stream output target. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_STREAM_OUTPUT` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_VERTEX_SHADING`
+- `D3D12_BARRIER_SYNC_DRAW`
+- `D3D12_BARRIER_SYNC_ALL_SHADING`
 
 #### `D3D12_BARRIER_ACCESS_INDIRECT_ARGUMENT`
 
-Indicates a buffer is accessible as an indirect argument buffer.
+Indicates a buffer is accessible as an indirect argument buffer. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_INDIRECT_ARGUMENT` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_EXECUTE_INDIRECT`
 
 #### `D3D12_BARRIER_ACCESS_PREDICATION`
 
-Indicates a buffer is accessible as a predication buffer.
+Indicates a buffer is accessible as a predication buffer. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_PREDICATION` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_PREDICATION`
 
 #### `D3D12_BARRIER_ACCESS_COPY_DEST`
 
-Indicates a resource is accessible as a copy destination.
+Indicates a resource is accessible as a copy destination. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_COPY_DEST` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_COPY`
 
 #### `D3D12_BARRIER_ACCESS_COPY_SOURCE`
 
-Indicates a resource is accessible as a copy source.
+Indicates a resource is accessible as a copy source. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_COPY_SOURCE` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_COPY`
 
 #### `D3D12_BARRIER_ACCESS_RESOLVE_DEST`
 
-Indicates a resource is accessible as a resolve destination.
+Indicates a resource is accessible as a resolve destination. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_RESOLVE_DEST` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_RESOLVE`
 
 #### `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE`
 
-Indicates a resource is accessible as a resolve source.
+Indicates a resource is accessible as a resolve source. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_RESOLVE`
 
 #### `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ`
 
-Indicates a resource is accessible for read as a raytracing acceleration structure.  The resource MUST have been created using an initial state of `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE`.
+Indicates a resource is accessible for read as a raytracing acceleration structure.  The resource MUST have been created using an initial state of `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE`. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_COMPUTE_SHADING`
+- `D3D12_BARRIER_SYNC_RAYTRACING`
+- `D3D12_BARRIER_SYNC_ALL_SHADING`
+- `D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE`
+- `D3D12_BARRIER_SYNC_COPY_RAYTRACING_ACCELERATION_STRUCTURE`
+- `D3D12_BARRIER_SYNC_EMIT_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO`
 
 #### `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE`
 
-Indicates a resource is accessible for write as a raytracing acceleration structure.  The resource MUST have been created using an initial state of `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE`.
+Indicates a resource is accessible for write as a raytracing acceleration structure.  The resource MUST have been created using an initial state of `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE`. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_COMPUTE_SHADING`
+- `D3D12_BARRIER_SYNC_RAYTRACING`
+- `D3D12_BARRIER_SYNC_ALL_SHADING`
+- `D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE`
+- `D3D12_BARRIER_SYNC_COPY_RAYTRACING_ACCELERATION_STRUCTURE`
 
 #### `D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE`
 
-Indicates a resource is accessible as a shading rate source.
+Indicates a resource is accessible as a shading rate source. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_PIXEL_SHADING`
+- `D3D12_BARRIER_SYNC_ALL_SHADING`
 
 #### `D3D12_BARRIER_ACCESS_VIDEO_DECODE_READ`
 
-Indicates a resource is accessible for read-only access in a video decode queue.
+Indicates a resource is accessible for read-only access in a video decode queue. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_VIDEO_DECODE_READ` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_VIDEO_DECODE`
 
 #### `D3D12_BARRIER_ACCESS_VIDEO_DECODE_WRITE`
 
-Indicates a resource is accessible for write access in a video decode queue.
+Indicates a resource is accessible for write access in a video decode queue. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_VIDEO_DECODE_WRITE` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_VIDEO_DECODE`
 
 #### `D3D12_BARRIER_ACCESS_VIDEO_PROCESS_READ`
 
-Indicates a resource is accessible for read-only access in a video process queue.
+Indicates a resource is accessible for read-only access in a video process queue. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_VIDEO_PROCESS_READ` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_VIDEO_PROCESS`
 
 #### `D3D12_BARRIER_ACCESS_VIDEO_PROCESS_WRITE`
 
-Indicates a resource is accessible for read-only access in a video process queue.
+Indicates a resource is accessible for read-only access in a video process queue. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_VIDEO_PROCESS_WRITE` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_VIDEO_PROCESS`
 
 #### `D3D12_BARRIER_ACCESS_VIDEO_ENCODE_READ`
 
-Indicates a resource is accessible for read-only access in a video encode queue.
+Indicates a resource is accessible for read-only access in a video encode queue. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_VIDEO_ENCODE_READ` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_VIDEO_ENCODE`
 
 #### `D3D12_BARRIER_ACCESS_VIDEO_ENCODE_WRITE`
 
-Indicates a resource is accessible for read-only access in a video encode queue.
+Indicates a resource is accessible for read-only access in a video encode queue. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_VIDEO_ENCODE_WRITE` is used with one or more of the following sync bits:
+
+- `D3D12_BARRIER_SYNC_ALL`
+- `D3D12_BARRIER_SYNC_VIDEO_ENCODE`
 
 #### `D3D12_BARRIER_ACCESS_NO_ACCESS`
 
-Resource is inaccessible for read or write.  Once a subresource access has been transitioned to `D3D12_BARRIER_ACCESS_NO_ACCESS`, it must be be reactivated by a barrier with `AccessBefore` set to `D3D12_BARRIER_ACCESS_NO_ACCESS` before using in the same `ExecuteCommandLists` scope.
+Resource is either not accessed before/after the barrier in the same `ExecuteCommandLists` context, or the data is no longer needed. `D3D12_BARRIER_ACCESS_NO_ACCESS` may not be combined with other access bits.
 
-`D3D12_BARRIER_ACCESS_NO_ACCESS` may only be used in conjunction with `D3D12_BARRIER_SYNC_NONE` or `D3D12_BARRIER_SYNC_SPLIT`.
+Using `AccessBefore=D3D12_BARRIER_ACCESS_NO_ACCESS` with `SyncBefore=D3D12_BARRIER_SYNC_NONE` implies that a subresource was not accessed before the barrier in the current `ExecuteCommandLists` scope. Likewise, using `AccessAfter=D3D12_BARRIER_ACCESS_NO_ACCESS` with `SyncAfter=D3D12_BARRIER_SYNC_NONE` implies that a subresource is not accessed after the barrier in the same `ExecuteCommandLists` scope. This is useful for initiating a layout transition as the final act on a resource before the end of an `ExecuteCommandLists` scope.
 
-`D3D12_BARRIER_ACCESS_NO_ACCESS` may not be set with other access bits. `D3D12_BARRIER_ACCESS_NO_ACCESS` indicates a resource is not expected to be accessed until some subsequent barrier or the next ECL scope.
+Barriers used for aliased resource transitions can set `AccessBefore` or `AccessAfter` to `D3D12_BARRIER_ACCESS_NO_ACCESS` to indicate that aliased subresources do not share data across synchronization boundaries. This can help avoid unnecessary cache flushes and layout transitions.
 
 Useful in aliasing barriers when subresource is not needed for a sufficiently long time that it makes sense to purge the subresource from any read cache.
 
-Also useful for initiating a layout transition as the final act on a resource before the end of an `ExecuteCommandLists` scope.  If `SyncAfter` is `D3D12_BARRIER_SYNC_NONE`, then `AccessAfter` MUST be `D3D12_BARRIER_ACCESS_NO_ACCESS`.
-
 ### `D3D12_BARRIER_SUBRESOURCE_RANGE`
 
-```C++
+```c++
 struct D3D12_BARRIER_SUBRESOURCE_RANGE
 {
     UINT IndexOrFirstMipLevel;
@@ -1775,18 +1972,18 @@ struct D3D12_BARRIER_SUBRESOURCE_RANGE
 };
 ```
 
-| Members              |                                                                                                                                                            |
-|----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `IndexOrFirstMipLevel` | Subresource Index (If `NumMipLevels` is zero) or index of first mip level in the range. If subresource index, may be `0xffffffff` to specify all subresources. |
-| `NumMipLevels`         | Number of mip levels in the range, or zero to indicate `IndexOrFirstMipLevel` is a subresource index.                                                        |
-| `FirstArraySlice`      | Index of first array slice in the range. Ignored if `NumMipLevels` is zero.                                                                                  |
-| `NumArraySlices`       | Number of array slices in the range. Ignored if `NumMipLevels` is zero.                                                                                      |
-| `FirstPlane`           | First plane slice in the range.  Ignored if `NumMipLevels` is zero.                                                                                          |
-| `NumPlanes`            | Number of plane slices in the range.  Ignored if `NumMipLevels` is zero.                                                                                     |
+| Members                |                                                                                                                                                                       |
+|------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `IndexOrFirstMipLevel` | Subresource Index (If `NumMipLevels` is zero) or index of first mip level in the range. May be `0xffffffff` if used as subresource index to specify all subresources. |
+| `NumMipLevels`         | Number of mip levels in the range, or zero to indicate `IndexOrFirstMipLevel` is a subresource index.                                                                 |
+| `FirstArraySlice`      | Index of first array slice in the range. Ignored if `NumMipLevels` is zero.                                                                                           |
+| `NumArraySlices`       | Number of array slices in the range. Ignored if `NumMipLevels` is zero.                                                                                               |
+| `FirstPlane`           | First plane slice in the range.  Ignored if `NumMipLevels` is zero.                                                                                                   |
+| `NumPlanes`            | Number of plane slices in the range.  Ignored if `NumMipLevels` is zero.                                                                                              |
 
 ### `D3D12_BARRIER_TYPE`
 
-```C++
+```c++
 enum D3D12_BARRIER_TYPE
 {
     D3D12_BARRIER_TYPE_GLOBAL,
@@ -1797,7 +1994,7 @@ enum D3D12_BARRIER_TYPE
 
 | `D3D12_BARRIER_TYPE`         |                                                                                                                                                                          |
 |------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `D3D12_BARRIER_TYPE_GLOBAL`  | Indicates a barrier type of GLOBAL. A global barrier applies to ALL resource memory.  Global barriers DO NOT transition texture layouts or force any data decompression. |
+| `D3D12_BARRIER_TYPE_GLOBAL`  | Indicates a barrier of type GLOBAL. A global barrier applies to ALL resource memory.  Global barriers DO NOT transition texture layouts or force any data decompression. |
 | `D3D12_BARRIER_TYPE_BUFFER`  | Indicates a barrier of type BUFFER. A buffer barrier applies to a specific buffer resource.                                                                              |
 | `D3D12_BARRIER_TYPE_TEXTURE` | Indicates a barrier of type TEXTURE. A texture barrier applies to a specific range of texture subresources.                                                              |
 
@@ -1807,7 +2004,7 @@ Note: Global barriers CAN NOT be split.
 
 Describes a resource memory access barrier.  Used by GLOBAL, TEXTURE, and BUFFER barriers to indicate when resource memory must be made visible for a specific access type.
 
-```C++
+```c++
 struct D3D12_GLOBAL_BARRIER
 {
     D3D12_BARRIER_SYNC SyncBefore;
@@ -1817,16 +2014,16 @@ struct D3D12_GLOBAL_BARRIER
 }
 ```
 
-| Member         |                                                                                                                                     |
-|----------------|-------------------------------------------------------------------------------------------------------------------------------------|
-| `SyncBefore`   | Synchronization scope of all preceding GPU work that must be completed before executing the barrier.                                |
-| `SyncAfter`    | Synchronization scope of all subsequent GPU work that must wait until the barrier execution is finished.                            |
-| `AccessBefore` | Access bits corresponding with any relevant resource usage since the preceding barrier or the start of `ExecuteCommandLists` scope. |
-| `AccessAfter`  | Access bits corresponding with any relevant resource usage after the barrier completes.                                             |
+| Member         |                                                                                                                                                                                                              |
+|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `SyncBefore`   | Synchronization scope bits of all preceding GPU work that must be completed before executing the barrier. Can be a bitwise-or combination of multiple `D3D12_BARRIER_SYNC` bits.                             |
+| `SyncAfter`    | Synchronization scope bits of all subsequent GPU work that must wait until the barrier execution is finished. Can be a bitwise-or combination of multiple `D3D12_BARRIER_SYNC` bits.                         |
+| `AccessBefore` | Access bits corresponding with any relevant resource usage since the preceding barrier or the start of `ExecuteCommandLists` scope. Can be a bitwise-or combination of multiple `D3D12_BARRIER_ACCESS` bits. |
+| `AccessAfter`  | Access bits corresponding with any relevant resource usage after the barrier completes. Can be a bitwise-or combination of multiple `D3D12_BARRIER_ACCESS` bits.                                             |
 
 ### `D3D12_TEXTURE_BARRIER_FLAGS`
 
-```C++
+```c++
 enum D3D12_TEXTURE_BARRIER_FLAGS
 {
     D3D12_TEXTURE_BARRIER_FLAG_NONE = 0x0,
@@ -1836,11 +2033,11 @@ enum D3D12_TEXTURE_BARRIER_FLAGS
 
 #### `D3D12_TEXTURE_BARRIER_FLAG_DISCARD`
 
-Can only be used when `LayoutBefore` is `D3D12_BARRIER_LAYOUT_UNDEFINED`.  Typically, this is used to initialize compression metadata as part of a barrier that activates an aliased resource.  The Subresource member must indicate all subresources.  Without this flag, a full resource Clear, Copy or Discard is required before use.
+Can only be used when `LayoutBefore` is `D3D12_BARRIER_LAYOUT_UNDEFINED`.  Typically, this is used to initialize compression metadata as part of a barrier that activates an aliased resource.
 
 ### `D3D12_TEXTURE_BARRIER`
 
-```C++
+```c++
 struct D3D12_TEXTURE_BARRIER
 {
     D3D12_BARRIER_SYNC SyncBefore;
@@ -1855,21 +2052,21 @@ struct D3D12_TEXTURE_BARRIER
 };
 ```
 
-| Member         |                                                                                                                        |
-|----------------|------------------------------------------------------------------------------------------------------------------------|
-| `SyncBefore`   | Synchronization scope of all preceding GPU work that must be completed before executing the barrier.                   |
-| `SyncAfter`    | Synchronization scope of all subsequent GPU work that must wait until the barrier execution is finished.               |
-| `AccessBefore` | Access bits corresponding with resource usage since the preceding barrier or the start of `ExecuteCommandLists` scope. |
-| `AccessAfter`  | Access bits corresponding with resource usage after the barrier completes.                                             |
-| `LayoutBefore` | Layout of texture preceding the barrier execution.                                                                     |
-| `LayoutAfter`  | Layout of texture upon completion of barrier execution.                                                                |
-| `pResource`    | Pointer to the buffer resource being using the barrier.                                                                |
-| `Subresources` | Range of texture subresources being barriered.                                                                         |
-| `Flags`        | Optional flags values.                                                                                                 |
+| Member         |                                                                                                                                                                                                 |
+|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `SyncBefore`   | Synchronization scope bits of all preceding GPU work that must be completed before executing the barrier. Can be a bitwise-or combination of multiple `D3D12_BARRIER_SYNC` bits.                |
+| `SyncAfter`    | Synchronization scope bits of all subsequent GPU work that must wait until the barrier execution is finished. Can be a bitwise-or combination of multiple `D3D12_BARRIER_SYNC` bits.            |
+| `AccessBefore` | Access bits corresponding with resource usage since the preceding barrier or the start of `ExecuteCommandLists` scope. Can be a bitwise-or combination of multiple `D3D12_BARRIER_ACCESS` bits. |
+| `AccessAfter`  | Access bits corresponding with resource usage after the barrier completes. Can be a bitwise-or combination of multiple `D3D12_BARRIER_ACCESS` bits.                                             |
+| `LayoutBefore` | Layout of texture preceding the barrier execution.                                                                                                                                              |
+| `LayoutAfter`  | Layout of texture upon completion of barrier execution.                                                                                                                                         |
+| `pResource`    | Pointer to the buffer resource being using the barrier.                                                                                                                                         |
+| `Subresources` | Range of texture subresources being barriered.                                                                                                                                                  |
+| `Flags`        | Optional flags values.                                                                                                                                                                          |
 
 ### `D3D12_BUFFER_BARRIER`
 
-```C++
+```c++
 struct D3D12_BUFFER_BARRIER
 {
     D3D12_BARRIER_SYNC SyncBefore;
@@ -1882,21 +2079,21 @@ struct D3D12_BUFFER_BARRIER
 };
 ```
 
-| Member         |                                                                                                                        |
-|----------------|------------------------------------------------------------------------------------------------------------------------|
-| `SyncBefore`   | Synchronization scope of all preceding GPU work that must be completed before executing the barrier.                   |
-| `SyncAfter`    | Synchronization scope of all subsequent GPU work that must wait until the barrier execution is finished.               |
-| `AccessBefore` | Access bits corresponding with resource usage since the preceding barrier or the start of `ExecuteCommandLists` scope. |
-| `AccessAfter`  | Access bits corresponding with resource usage after the barrier completes.                                             |
-| `pResource`    | Pointer to the buffer resource being using the barrier.                                                                |
-| `Offset`       | Offset value must be 0.                                                                                                |
-| `Size`         | Size must either be UINT64_MAX or the size of the buffer in bytes.                                                     |
+| Member         |                                                                                                                                                                                                 |
+|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `SyncBefore`   | Synchronization scope bits of all preceding GPU work that must be completed before executing the barrier. Can be a bitwise-or combination of multiple `D3D12_BARRIER_SYNC` bits.                |
+| `SyncAfter`    | Synchronization scope bits of all subsequent GPU work that must wait until the barrier execution is finished. Can be a bitwise-or combination of multiple `D3D12_BARRIER_SYNC` bits.            |
+| `AccessBefore` | Access bits corresponding with resource usage since the preceding barrier or the start of `ExecuteCommandLists` scope. Can be a bitwise-or combination of multiple `D3D12_BARRIER_ACCESS` bits. |
+| `AccessAfter`  | Access bits corresponding with resource usage after the barrier completes. Can be a bitwise-or combination of multiple `D3D12_BARRIER_ACCESS` bits.                                             |
+| `pResource`    | Pointer to the buffer resource being using the barrier.                                                                                                                                         |
+| `Offset`       | Offset value must be `0`.                                                                                                                                                                       |
+| `Size`         | Size must either be `UINT64_MAX` or the size of the buffer in bytes.                                                                                                                            |
 
 ### `D3D12_BARRIER_GROUP`
 
 Describes a group of barrier of a given type
 
-```C++
+```c++
 struct D3D12_BARRIER_GROUP
 {
     D3D12_BARRIER_TYPE Type;
@@ -1918,7 +2115,7 @@ struct D3D12_BARRIER_GROUP
 | `pTextureBarriers` | Pointer to an array of `D3D12_TEXTURE_BARRIERS` if Type is `D3D12_BARRIER_TYPE_TEXTURE` |
 | `pBufferBarriers`  | Pointer to an array of `D3D12_BUFFER_BARRIERS` if Type is `D3D12_BARRIER_TYPE_BUFFER`   |
 
-### ID3D12GraphicsCommandList7::Barrier
+### ID3D12GraphicsCommandList7 Barrier
 
 Adds a collection of barriers into a graphics command list recording.
 
@@ -1929,12 +2126,12 @@ void ID3D12GraphicsCommandList7::Barrier(
         );
 ```
 
-| Parameter          |                                                       |
-|--------------------|-------------------------------------------------------|
-| `NumBarrierGroups` | Number of barrier groups pointed to by pBarrierGroups |
-| `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects  |
+| Parameter          |                                                         |
+|--------------------|---------------------------------------------------------|
+| `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups` |
+| `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
 
-### ID3D12VideoDecodeCommandList3::Barrier
+### ID3D12VideoDecodeCommandList3 Barrier
 
 Adds a collection of barriers into a video decode command list recording.
 
@@ -1945,12 +2142,12 @@ void ID3D12VideoDecodeCommandList3::Barrier(
         );
 ```
 
-| Parameter          |                                                       |
-|--------------------|-------------------------------------------------------|
-| `NumBarrierGroups` | Number of barrier groups pointed to by pBarrierGroups |
-| `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects  |
+| Parameter          |                                                         |
+|--------------------|---------------------------------------------------------|
+| `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups` |
+| `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
 
-### ID3D12VideoProcessCommandList3::Barrier
+### ID3D12VideoProcessCommandList3 Barrier
 
 Adds a collection of barriers into a video process command list recording.
 
@@ -1961,12 +2158,12 @@ void ID3D12VideoProcessCommandList3::Barrier(
         );
 ```
 
-| Parameter          |                                                       |
-|--------------------|-------------------------------------------------------|
-| `NumBarrierGroup`s | Number of barrier groups pointed to by pBarrierGroups |
-| `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects  |
+| Parameter          |                                                         |
+|--------------------|---------------------------------------------------------|
+| `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups` |
+| `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
 
-### ID3D12VideoEncodeCommandList3::Barrier
+### ID3D12VideoEncodeCommandList3 Barrier
 
 Adds a collection of barriers into a video encode command list recording.
 
@@ -1977,12 +2174,12 @@ void ID3D12VideoEncodeCommandList3::Barrier(
         );
 ```
 
-| Parameter          |                                                       |
-|--------------------|-------------------------------------------------------|
-| `NumBarrierGroups` | Number of barrier groups pointed to by pBarrierGroups |
-| `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects  |
+| Parameter          |                                                         |
+|--------------------|---------------------------------------------------------|
+| `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups` |
+| `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
 
-### ID3D12Device10::CreateCommittedResource3
+### ID3D12Device10 CreateCommittedResource3
 
 Creates a committed resource with an initial layout rather than an initial state.
 
@@ -2008,7 +2205,7 @@ HRESULT ID3D12Device10::CreateCommittedResource3(
 
 See the [Format List Casting](VulkanOn12.md#format-list-casting) spec for details on format casting using `NumCastableFormats` and `pCastableFormats`.
 
-### ID3D12Device10::CreatePlacedResource2
+### ID3D12Device10 CreatePlacedResource2
 
 ```c++
 HRESULT ID3D12Device10::CreatePlacedResource2(
@@ -2031,7 +2228,7 @@ HRESULT ID3D12Device10::CreatePlacedResource2(
 
 See the [Format List Casting](VulkanOn12.md#format-list-casting) spec for details on format casting using `NumCastableFormats` and `pCastableFormats`.
 
-### ID3D12Device10::CreateReservedResource2
+### ID3D12Device10 CreateReservedResource2
 
 ```c++
 HRESULT ID3D12Device10::CreateReservedResource2(
@@ -2054,7 +2251,7 @@ HRESULT ID3D12Device10::CreateReservedResource2(
 
 See the [Format List Casting](VulkanOn12.md#format-list-casting) spec for details on format casting using `NumCastableFormats` and `pCastableFormats`.
 
-### ID3D12DebugCommandQueue1::AssertResourceAccess
+### ID3D12DebugCommandQueue1 AssertResourceAccess
 
 ```c++
     void ID3D12DebugCommandQueue1::AssertResourceAccess(
@@ -2069,7 +2266,7 @@ Also tracks the resource as in-use by the command queue until the `AssertResourc
 
 Access validation currently considers only texture barrier layout (if `pResource` is a texture) and resource creation flags. Validation related to missing synchronization and/or cache flush is not implemented.
 
-### ID3D12DebugCommandQueue1::AssertTextureLayout
+### ID3D12DebugCommandQueue1 AssertTextureLayout
 
 ```c++
     void ID3D12DebugCommandQueue1::AssertTextureLayout(
@@ -2084,7 +2281,7 @@ Also tracks the resource as in-use by the command queue until the `AssertTexture
 
 Buffers have no layout, therefore `AssertTextureLayout` does nothing when `pResource` is a buffer resource.
 
-### ID3D12DebugCommandList3::AssertResourceAccess
+### ID3D12DebugCommandList3 AssertResourceAccess
 
 ```c++
     void ID3D12DebugCommandList3::AssertResourceAccess(
@@ -2099,7 +2296,7 @@ Also tracks the resource as in-use by the command queue until the command list r
 
 Access validation currently considers only texture barrier layout (if `pResource` is a texture) and resource creation flags. Validation related to missing synchronization and/or cache flush is not implemented.
 
-### ID3D12DebugCommandList3::AssertTextureLayout
+### ID3D12DebugCommandList3 AssertTextureLayout
 
 ```c++
     void ID3D12DebugCommandList3::AssertTextureLayout(
@@ -2118,7 +2315,7 @@ Buffers have no layout, therefore `AssertTextureLayout` does nothing when `pReso
 
 For the sake of simplicity, these examples use the D3DX12 helper classes.
 
-```C++
+```c++
 void BarrierSamples(
     ID3D12CommandListN *pCommandList;
     ID3D12Resource *pTexture;
@@ -2219,10 +2416,10 @@ void BarrierSamples(
     D3D12_BUFFER_BARRIER BufBarrierAlias[] =
     {
         CD3DX12_BUFFER_BARRIER(
-            D3D12_BARRIER_SYNC_INPUT_ASSEMBLER, // SyncBefore
+            D3D12_BARRIER_SYNC_INDEX_INPUT,     // SyncBefore
             D3D12_BARRIER_SYNC_PIXEL_SHADING,   // SyncAfter
             D3D12_BARRIER_ACCESS_INDEX_BUFFER,  // AccessBefore
-            D3D12_BARRIER_ACCESS_COMMON,        // AccessAfter
+            D3D12_BARRIER_ACCESS_NO_ACCESS,     // AccessAfter: Data get discarded/overwritten
             pBuffer,
         }
     };
@@ -2230,9 +2427,9 @@ void BarrierSamples(
     D3D12_TEXTURE_BARRIER TexBarrierAlias[] =
     {
         CD3DX12_TEXTURE_BARRIER(
-            D3D12_BARRIER_SYNC_INPUT_ASSEMBLER,     // SyncBefore
+            D3D12_BARRIER_SYNC_INDEX_INPUT,         // SyncBefore
             D3D12_BARRIER_SYNC_PIXEL_SHADING,       // SyncAfter
-            D3D12_BARRIER_ACCESS_INDEX_BUFFER,      // AccessBefore
+            D3D12_BARRIER_ACCESS_NO_ACCESS,         // AccessBefore: Old data is not needed
             D3D12_BARRIER_ACCESS_SHADER_RESOURCE,   // AccessAfter
             D3D12_BARRIER_LAYOUT_UNDEFINED,         // LayoutBefore is UNDEFINED
             D3D12_BARRIER_LAYOUT_SHADER_RESOURCE,   // LayoutAfter
@@ -2370,7 +2567,7 @@ typedef enum D3D12DDI_BARRIER_ACCESS
 
 ### `D3D12DDI_BARRIER_SUBRESOURCE_RANGE_0088`
 
-```C++
+```c++
 typedef struct D3D12DDI_BARRIER_SUBRESOURCE_RANGE_0088
 {
     UINT32 IndexOrFirstMipLevel;
@@ -2384,7 +2581,7 @@ typedef struct D3D12DDI_BARRIER_SUBRESOURCE_RANGE_0088
 
 ### `D3D12DDI_GLOBAL_BARRIER_0088`
 
-```C++
+```c++
 typedef struct D3D12DDI_GLOBAL_BARRIER_0088
 {
     D3D12DDI_BARRIER_SYNC SyncBefore;
@@ -2396,7 +2593,7 @@ typedef struct D3D12DDI_GLOBAL_BARRIER_0088
 
 ### `D3D12DDI_TEXTURE_BARRIER_0088_FLAGS_0088`
 
-```C++
+```c++
 enum D3D12DDI_TEXTURE_BARRIER_0088_FLAGS_0088
 {
     D3D12DDI_TEXTURE_BARRIER_0088_FLAG_NONE = 0x0,
@@ -2406,7 +2603,7 @@ enum D3D12DDI_TEXTURE_BARRIER_0088_FLAGS_0088
 
 ### `D3D12DDI_TEXTURE_BARRIER_0088`
 
-```C++
+```c++
 typedef struct D3D12DDI_TEXTURE_BARRIER_0088
 {
     D3D12DDI_BARRIER_SYNC SyncBefore;
@@ -2423,7 +2620,7 @@ typedef struct D3D12DDI_TEXTURE_BARRIER_0088
 
 ### `D3D12DDI_BUFFER_BARRIER_0088`
 
-```C++
+```c++
 typedef struct D3D12DDI_BUFFER_BARRIER_0088
 {
     D3D12DDI_BARRIER_SYNC SyncBefore;
@@ -2436,7 +2633,7 @@ typedef struct D3D12DDI_BUFFER_BARRIER_0088
 
 ### `D3D12DDI_RANGED_BARRIER_FLAGS`
 
-```C++
+```c++
 typedef enum D3D12DDI_RANGED_BARRIER_FLAGS
 {
     D3D12DDI_RANGED_BARRIER_0088_FLAG_NONE           = 0,
@@ -2446,11 +2643,11 @@ typedef enum D3D12DDI_RANGED_BARRIER_FLAGS
 
 ### `D3D12DDI_RANGED_BARRIER_0088`
 
-Replaces legacy `D3D12DDI_RESOURCE_RANGED_BARRIER_0022`.  Enhanced Barriers are designed to fully deprecate the legacy ResourceBarrier DDI's.  This includes the ranged barriers used internally by AtomicCopy commands.
+Replaces legacy `D3D12DDI_RESOURCE_RANGED_BARRIER_0022`.  Enhanced Barriers are designed to fully deprecate the legacy `ResourceBarrier` DDI's.  This includes the ranged barriers used internally by AtomicCopy commands.
 
 ### `D3D12DDI_RANGE_BARRIER_FLAGS_0094`
 
-```C++
+```c++
 typedef enum D3D12DDI_RANGE_BARRIER_FLAGS_0094
 {
     D3D12DDI_RANGED_BARRIER_FLAG_NONE_0094           = 0,
@@ -2462,7 +2659,7 @@ typedef enum D3D12DDI_RANGE_BARRIER_FLAGS_0094
 
 ### `D3D12DDI_RANGED_BARRIER_0094`
 
-``` C++
+```c++
 typedef struct D3D12DDI_RANGED_BARRIER_0094
 {
     D3D12DDI_RANGE_BARRIER_FLAGS_0094 Flags;
@@ -2474,7 +2671,7 @@ typedef struct D3D12DDI_RANGED_BARRIER_0094
 
 ### `D3D12DDI_BARRIER_TYPE`
 
-```C++
+```c++
 typedef enum D3D12DDI_BARRIER_TYPE
 {
     D3D12DDI_BARRIER_TYPE_GLOBAL,
@@ -2485,9 +2682,9 @@ typedef enum D3D12DDI_BARRIER_TYPE
 
 ```
 
-### D3D12DDIARG_BARRIER_0094
+### `D3D12DDIARG_BARRIER_0094`
 
-```C++
+```c++
 typedef struct D3D12DDIARG_BARRIER_0094
 {
     D3D12DDI_BARRIER_TYPE Type;
@@ -2504,8 +2701,8 @@ typedef struct D3D12DDIARG_BARRIER_0094
 
 ### `PFND3D12DDI_BARRIER`
 
-```C++
-typedef VOID ( APIENTRY* PFND3D12DDI_BARRIER_0094 )( 
+```c++
+typedef VOID ( APIENTRY* PFND3D12DDI_BARRIER_0094 )(
     D3D12DDI_HCOMMANDLIST hDrvCommandList,
     UINT32 NumBarriers,
     _In_reads_(NumBarriers) CONST D3D12DDIARG_BARRIER_0094 *pBarriers );
@@ -2513,7 +2710,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_BARRIER_0094 )(
 
 ### `D3D12DDIARG_CREATERESOURCE_0088`
 
-```C++
+```c++
 typedef struct D3D12DDIARG_CREATERESOURCE_0088
 {
     D3D12DDIARG_BUFFER_PLACEMENT    ReuseBufferGPUVA;
@@ -2540,7 +2737,7 @@ typedef struct D3D12DDIARG_CREATERESOURCE_0088
 
 ### `PFND3D12DDI_CREATEHEAPANDRESOURCE_0088`
 
-```C++
+```c++
 typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEHEAPANDRESOURCE_0088)(
     D3D12DDI_HDEVICE, _In_opt_ CONST D3D12DDIARG_CREATEHEAP_0001*, D3D12DDI_HHEAP, D3D12DDI_HRTRESOURCE,
     _In_opt_ CONST D3D12DDIARG_CREATERESOURCE_0088*, _In_opt_ CONST D3D12DDI_CLEAR_VALUES*,
@@ -2549,7 +2746,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEHEAPANDRESOURCE_0088)(
 
 ### `PFND3D12DDI_CALCPRIVATEHEAPANDRESOURCESIZES_0088`
 
-```C++
+```c++
 typedef D3D12DDI_HEAP_AND_RESOURCE_SIZES ( APIENTRY* PFND3D12DDI_CALCPRIVATEHEAPANDRESOURCESIZES_0088)(
      D3D12DDI_HDEVICE, _In_opt_ CONST D3D12DDIARG_CREATEHEAP_0001*, _In_opt_ CONST D3D12DDIARG_CREATERESOURCE_0088*,
      D3D12DDI_HPROTECTEDRESOURCESESSION_0030 );
@@ -2557,7 +2754,7 @@ typedef D3D12DDI_HEAP_AND_RESOURCE_SIZES ( APIENTRY* PFND3D12DDI_CALCPRIVATEHEAP
 
 ### `PFND3D12DDI_CHECKRESOURCEALLOCATIONINFO_0088`
 
-```C++
+```c++
 typedef VOID ( APIENTRY* PFND3D12DDI_CHECKRESOURCEALLOCATIONINFO_0088)(
     D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATERESOURCE_0088*, D3D12DDI_RESOURCE_OPTIMIZATION_FLAGS,
     UINT32 AlignmentRestriction, UINT VisibleNodeMask, _Out_ D3D12DDI_RESOURCE_ALLOCATION_INFO_0022* );
@@ -2567,7 +2764,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKRESOURCEALLOCATIONINFO_0088)(
 
 Includes a boolean member indicating whether the driver supports EnhancedBarriers.
 
-```C++
+```c++
 typedef struct D3D12DDI_D3D12_OPTIONS_DATA_0089
 {
     D3D12DDI_RESOURCE_BINDING_TIER ResourceBindingTier;
@@ -2617,7 +2814,7 @@ Functional tests primarily cover debug layer validation scenarios.  All other fu
 
 ### Unit Testing
 
-No target unit tests.  Leverages existing ResourceBarrier unit tests.
+No target unit tests.  Leverages existing `ResourceBarrier` unit tests.
 
 ### HLK Testing
 
@@ -2633,9 +2830,9 @@ Given that existing ResourceBarriers are implemented on-top of the enhanced Barr
 
 ## Debug Layers
 
-Supporting both legacy resource state validation and the enhanced Barrier API validation is not a reasonable option.  The enhanced Barrier API's are a superset of the legacy Resource Barrier capabilities, meaning there is no parity between legacy resource states and the "state" of a resource in the enhanced Barrier API model.  Therefore, given that existing ResourceBarrier API's are implemented on-top of enhanced Barrier DDI's, all Barrier validation is based on the enhanced Barrier design.
+Supporting both legacy resource state validation and the enhanced Barrier API validation is not a reasonable option.  The enhanced Barrier API's are a superset of the legacy Resource Barrier capabilities, meaning there is no parity between legacy resource states and the "state" of a resource in the enhanced Barrier API model.  Therefore, given that existing `ResourceBarrier` API's are implemented on-top of enhanced Barrier DDI's, all Barrier validation is based on the enhanced Barrier design.
 
-There may be an option to retain some of the existing resource state validation when the state of a resource is "known".  For example, an application that only uses legacy ResourceBarrier API's is guaranteed to keep resources in a known-state.  Retaining and segregating legacy state validation from enhanced Barrier API validation requires significant additional work beyond simply adding enhanced Barrier validation.
+There may be an option to retain some of the existing resource state validation when the state of a resource is "known".  For example, an application that only uses legacy `ResourceBarrier` API's is guaranteed to keep resources in a known-state.  Retaining and segregating legacy state validation from enhanced Barrier API validation requires significant additional work beyond simply adding enhanced Barrier validation.
 
 ### Validation Phases
 
@@ -2643,50 +2840,50 @@ Validation of barrier layout, sync and access is accomplished in two separate ph
 
 #### Command List Record Validation Phase
 
-During command list record, the initial layout, sync scope, and accessibility of a resource is indeterminate.  As such, the debug layer sets these to a assumed values and reconciles these assumptions at the `ExecuteCommandLists` call-site phase.  Subsequent record-time validation builds on that initial assumption.
+During command list recording, the initial layout, sync scope, and accessibility of a resource is indeterminate.  As such, the debug layer sets these to assumed values and reconciles these assumptions at the `ExecuteCommandLists` call-site phase.  Subsequent record-time validation builds on that initial assumption.
 
 #### `ExecuteCommandLists` Call-Site Validation Phase
 
-Texture layout is the only transient property of resources that propagate from one `ExecuteCommandLists` call to the next.  When Synchronized Command Queue Execution is enabled, texture layout can be accurately resolved to enable validation of record-time layout assumptions.  This applies only to non-simultaneous-access texture resources.  Simultaneous-access textures always have a COMMON layout, and buffers have no layout.
+Texture layout is the only transient property of resources that propagate from one `ExecuteCommandLists` call to the next.  When Synchronized Command Queue Execution is enabled, texture layout can be accurately resolved to enable validation of record-time layout assumptions.  This applies only to non-simultaneous-access texture resources.  Simultaneous-access textures always have a `COMMON` layout, and buffers have no layout.
 
 Since layout can only be changed using the Barrier API, the debug layer only needs to keep track of Layout Barriers to track texture layout.  This is in contrast to Legacy Resource Barriers, which needed to account for resource state promotion and decay.
 
 ### Barrier API Call Validation
 
-The debug layer validates the following during Barrier calls:
+The debug layer validates the following during `Barrier` calls:
 
-- Underlying device supports enhanced barriers
-- Not bundle command list
-- Warn if any count (group or per-group-barriers) is zero
-- Verify texture barrier `Subresources` match texture subresource bounds
-- Barrier type matches resource type
+- Underlying device supports enhanced barriers.
+- Not bundle command list.
+- Warn if any count (group or per-group-barriers) is zero.
+- Verify texture barrier `Subresources` match texture subresource bounds.
+- Barrier type matches resource type.
 - `LayoutBefore` and `AccessBefore` match known or assumed resource layout and access.
 - `SyncBefore`, `AccessBefore` and `LayoutBefore` are compatible.
 - `SyncAfter`, `AccessAfter` and `LayoutAfter` are compatible.
 - End-split barriers match preceding Begin-split barriers.
 - Buffer and `D3D12_BARRIER_LAYOUT_COMMON` split barriers do not cross `ExecuteCommandLists` boundaries.
-  - Probably a warning rather than an error due to legacy allowances
+  - Probably a warning rather than an error due to legacy allowances.
 
 ### Layout Validation
 
-Only texture resources have layout.  Therefore, buffers are effectively in RESOURCE_STATE_COMMON between `ExecuteCommandLists` boundaries.  Legacy resource state validation handles buffer state by "decaying" buffer state to RESOURCE_STATE_COMMON upon completion of ExecuteCommandLists.  In fact, the complex rules surrounding resource state promotion and decay are a significant portion of the debug validation source.
+Only texture resources have layout.  Therefore, buffers are effectively in `RESOURCE_STATE_COMMON` between `ExecuteCommandLists` boundaries.  Legacy resource state validation handles buffer state by "decaying" buffer state to `RESOURCE_STATE_COMMON` upon completion of `ExecuteCommandLists`.  In fact, the complex rules surrounding resource state promotion and decay are a significant portion of the debug validation source.
 
 Validation for Layout Barriers is partially validated during command list record using an assumed initial layout. The assumed layout is later validated during the `ExecuteCommandLists` call.  Synchronized command queue execution must be enabled to validate texture layout between `ExecuteCommandLists` calls.  In some cases, more than one assumed layout is possible (e.g. `D3D12_BARRIER_LAYOUT_SHADER_RESOURCE` and `D3D12_BARRIER_LAYOUT_COMMON` both support use as a shader resource). The debug layer resolves the assumed layout against the actual layout during command list execution (again, only when command queue sync is enabled).
 
 ### Sync and Access Validation
 
-The Debug Layer attempts to validate barriers are correctly mitigating hazards.  In most cases, hazards are detected as a result of incompatible access types, including most read-after-write and write-after-read hazards.  However, there are some write-after-write operations need sync-only barriers:
+The Debug Layer attempts to validate barriers are correctly mitigating hazards.  In most cases, hazards are detected as a result of incompatible access types, including most read-after-write and write-after-read hazards.  However, some write-after-write operations need sync-only barriers:
 
 - Raytracing Acceleration Structure Writes
-- Unordered Access (requires GBV to detect unless using DATA_STATIC descriptors)
-- Copy (when using `D3D12_COMMAND_LIST_FLAG_ALLOW_ALLOW_EXTENDED_ASYNC`
-- Resolve (when using `D3D12_COMMAND_LIST_FLAG_ALLOW_ALLOW_EXTENDED_ASYNC`
+- Unordered Access (requires GBV to detect unless using `DATA_STATIC` descriptors)
+- Copy (when using `D3D12_COMMAND_LIST_FLAG_ALLOW_ALLOW_EXTENDED_ASYNC`)
+- Resolve (when using `D3D12_COMMAND_LIST_FLAG_ALLOW_ALLOW_EXTENDED_ASYNC`)
 
 Note that there is no sync validation resources supporting concurrent read and write.  It is up to the app developer to know when to synchronize dependent accesses.
 
 ### Legacy vs Enhanced State Validation
 
-During command list record, the actual legacy state or layout of the resource will have at execution time cannot be known.  Therefore, the first command referencing the resource assigns a "blended state" indicating layout, accessibility, and legacy state (if available).  Subsequent non-barrier accesses are validated against the assumed state or access, updating the assumed bits or producing an error if the accesses are incompatible.
+During command list record, the actual legacy state or layout a resource will have at execution time cannot be known.  Therefore, the first command referencing the resource assigns a "blended state" indicating layout, accessibility, and legacy state (if available).  Subsequent non-barrier accesses are validated against the assumed state or access, updating the assumed bits or producing an error if the accesses are incompatible.
 
 Until the first barrier call, the record-time layout of any texture remains `D3D12_BARRIER_LAYOUT_UNDEFINED`, meaning no record-time validation of layout is performed.
 
@@ -2698,15 +2895,15 @@ GPU-Based Validation (GBV) is built around the legacy resource state model.  GBV
 
 Without resource state promotion, GBV may be able to reduce much of the overhead introduced by supporting promotion and decay.  In addition, GBV can take advantage of the fact that buffers have no layout, and thus only access compatibility must be validated.  Note that `D3D12_BARRIER_ACCESS_COMMON` is a special case that allows any type of access compatible with resource layout (and create-time attributes), which is similar to promotion.  GBV must also handle ensuring only one write access type is performed without a barrier.
 
-GBV uses a sparse buffer to keep track of texture layouts globally.  This is only necessary for texture resources since buffers have no layout.  The buffer must be logically large enough to contain they layout of all application resources (or risk loss of validation).  Since GBV requires synchronized queue execution, GBV reads form and writes to the global data directly during shader execution.  GBV writes only occur during Barrier operations since layout is not "promotable".  This could be a big performance win over legacy ResourceBarrier validation.
+GBV uses a sparse buffer to keep track of texture layouts globally.  This is only necessary for texture resources since buffers have no layout.  The buffer must be logically large enough to contain the layout of all application resources (or risk loss of validation).  Since GBV requires synchronized queue execution, GBV reads from and writes to the global data directly during shader execution.  GBV writes only occur during Barrier operations since layout is not "promotable".  This could be a big performance win over legacy `ResourceBarrier` validation.
 
 GBV uses a separate sparsely-resident buffer to keep track of local resource accessibility (state local to a given `ExecuteCommandLists` context).  This buffer must be logically large enough to store the transient accesses for all application resources (or risk loss of validation).  Patched shaders require write access to this buffer to keep track of UAV write operations.  This allows GBV to validate against disparate write access types missing a barrier.
 
-Legacy GBV validation used a similar system, except that both buffers and textures were tracked only using "state", therefore the local buffer is a temporary copy of the global buffer.  At the start of ExecuteCommandLists, GBV copied the state of all resources to the local subresource-states buffer as an initial state.  At the end of ExecuteCommandLists, resource states that changed were copied back to the global buffer.
+Legacy GBV validation used a similar system, except that both buffers and textures were tracked only using "state", therefore the local buffer is a temporary copy of the global buffer.  At the start of `ExecuteCommandLists`, GBV copied the state of all resources to the local subresource-states buffer as an initial state.  At the end of `ExecuteCommandLists`, resource states that changed were copied back to the global buffer.
 
-With enhanced barriers, the "global buffer" tracks only texture layout and the "local buffer" tracks only resource accesses.  Therefore, no copy between the buffers is needed.  The local access-bits buffer gets initialized to `D3D12_BARRIER_ACCESS_COMMON` (0) for all existing resources at the start of an `ExecuteCommandLists` scope, and is discarded upon completion of an `ExecuteCommandLists` scope.  The global subresource-layout buffer is accessed directly by GBV operations (since GBV GPU-work is serialized, there is no contention for this data).
+With enhanced barriers, the "global buffer" tracks only texture layout and the "local buffer" tracks only resource accesses.  Therefore, no copy between the buffers is needed.  The local access-bits buffer gets initialized to `D3D12_BARRIER_ACCESS_COMMON` (`0`) for all existing resources at the start of an `ExecuteCommandLists` scope, and is discarded upon completion of an `ExecuteCommandLists` scope.  The global subresource-layout buffer is accessed directly by GBV operations (since GBV GPU-work is serialized, there is no contention for this data).
 
-This does require an extra binding since subresource layout is tracked in a different buffer than subresource access bits.  Legacy GBV only bound the local subresource states buffer, copying promoted results to the global subresource states buffer.  GBV for enhanced barriers must bind the local access bits buffer and the global subresource layout buffer in separate UAV locations.  Changes to Layout only occur as a result of Barrier calls.  All other accesses to this data is read-only.
+This does require an extra binding since subresource layout is tracked in a different buffer than subresource access bits.  Legacy GBV only bound the local subresource states buffer, copying promoted results to the global subresource states buffer.  GBV for enhanced barriers must bind the local access bits buffer and the global subresource layout buffer in separate UAV locations.  Changes to Layout only occur as a result of `Barrier` calls.  All other accesses to this data is read-only.
 
 Unlike legacy resource states, layout can only ever be changed using a barrier.  There is no promotion of layout as a result of a read or write.  Therefore, GBV doesn't have to modify state during shader patching.  Instead GBV does the following:
 

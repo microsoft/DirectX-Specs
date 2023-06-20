@@ -1,6 +1,6 @@
 <h1>D3D12 Resource Binding Functional Spec</h1>
 
-v1.19 4/10/2019
+v1.21 3/11/2022
 
 ---
 
@@ -1065,15 +1065,14 @@ minor restriction is imposed on what types of samplers can be created.
 This limits the amount of data required to fully represent a sampler.
 
 BorderColor must be one of: {0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 1.0},
-{1.0, 1.0, 1.0, 1.0}.
+{1.0, 1.0, 1.0, 1.0}; {0u, 0u, 0u, 1u}, {1u, 1u, 1u, 1u}. 
+Where the unsigned integer colors are available  with SM6.7 or higher, 
+and require adding `D3D12_SAMPLER_FLAG_UINT_BORDER_COLOR` 
+to the Flags field in the sampler description.
 
-The small set of border colors at least allows for basic cases like
-common shadow map out of bounds values to be represented in only 2
-bits.  The reason there are 3 and not 4 values is in case an
-implementation needs to use the 4^th^ encoding to represent that a full
-FLOAT4 border color is needed (which full samplers support).  In the
-static sampler definition, BorderColor is chosen via an enumeration
-listing just the 3 possibilities rather than allowing arbitrary floats.
+In the static sampler definition, BorderColor is chosen via an 
+enumeration listing just the 5 possibilities rather than allowing 
+arbitrary floats.
 
 In the highly unlikely case this restriction doesn't work for an
 application it can always use the full samplers in a sampler descriptor
@@ -1298,8 +1297,8 @@ interface ID3D12DescriptorHeap : ID3D12Pageable
 {
     D3D12_DESCRIPTOR_HEAP_DESC GetDesc(
     _Out_ D3D12_DESCRIPTOR_HEAP_DESC* pDesc );
-    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandleForHeapStart();
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandleForHeapStart();
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleForHeapStart();
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleForHeapStart();
 };
 
 interface ID3D12Device
@@ -1317,17 +1316,17 @@ interface ID3D12Device
 GetDescriptorHandleIncrementSize() above allows applications to manually
 offset handles into a heap (producing handles into anywhere in a
 descriptor heap). The heap start location's handle comes from
-GetCPUHandleForHeapStart()/GetGPUHandleForHeapStart(). Offsetting is
+GetCPUDescriptorHandleForHeapStart()/GetGPUDescriptorHandleForHeapStart(). Offsetting is
 done by adding to the descriptor heap start the increment size * number
 of descriptors to offset. Note the increment size cannot be thought of
 as a byte size since applications must not dereference handles as if
 they are memory -- the memory pointed to has a nonstandardized layout
 and can vary even for a given device.
 
-GetCPUHandleForHeapStart() returns a CPU handle for CPU manipulation of
+GetCPUDescriptorHandleForHeapStart() returns a CPU handle for CPU manipulation of
 a descriptor heap.
 
-GetGPUHandleForHeapStart() returns a GPU handle for shader visible
+GetGPUDescriptorHandleForHeapStart() returns a GPU handle for shader visible
 descriptor heaps. It returns a NULL handle (and the debug layer will
 report an error) if the descriptor heap is not shader visible.
 
@@ -1784,12 +1783,38 @@ typedef struct D3D12_SAMPLER_DESC
     FLOAT MaxLOD;
 } D3D12_SAMPLER_DESC;
 
-interface ID3D12Device
+typedef struct D3D12_SAMPLER_DESC2
+{
+    D3D12_FILTER Filter;
+    D3D12_TEXTURE_ADDRESS_MODE AddressU;
+    D3D12_TEXTURE_ADDRESS_MODE AddressV;
+    D3D12_TEXTURE_ADDRESS_MODE AddressW;
+    FLOAT MipLODBias;
+    UINT MaxAnisotropy;
+    D3D12_COMPARISON_FUNC ComparisonFunc;
+    union
+    {
+        FLOAT FloatBorderColor[4]; // RGBA
+        UINT  UintBorderColor[4];
+    };
+    FLOAT MinLOD;
+    FLOAT MaxLOD;
+    D3D12_SAMPLER_FLAGS Flags;
+} D3D12_SAMPLER_DESC;
 
+interface ID3D12Device
 {
     ...
     HRESULT CreateSampler(
     _In_ const D3D12_SAMPLER_DESC* pDesc,
+    _In_ D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor);
+};
+
+interface ID3D12Device11
+{
+    ...
+    HRESULT CreateSampler2(
+    _In_ const D3D12_SAMPLER_DESC2* pDesc,
     _In_ D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor);
 };
 ```
@@ -1848,12 +1873,40 @@ typedef struct D3D12_TEX2D_ARRAY_UAV
     UINT PlaneSlice;
 } D3D12_TEX2D_ARRAY_UAV;
 
+typedef struct D3D12_TEX2DMS_UAV
+{
+    // don't need to define anything specific for this view dimension
+    UINT UnusedField_NothingToDefine;
+} D3D12_TEX2DMS_UAV;
+
+typedef struct D3D12_TEX2DMS_ARRAY_UAV
+{
+    UINT FirstArraySlice;
+    UINT ArraySize;
+} D3D12_TEX2DMS_ARRAY_UAV;
+
 typedef struct D3D12_TEX3D_UAV
 {
     UINT MipSlice;
     UINT FirstWSlice;
     UINT WSize;
 } D3D12_TEX3D_UAV;
+
+typedef enum D3D12_UAV_DIMENSION
+{
+    D3D12_UAV_DIMENSION_UNKNOWN = 0,
+    D3D12_UAV_DIMENSION_BUFFER = 1,
+    D3D12_UAV_DIMENSION_TEXTURE1D = 2,
+    D3D12_UAV_DIMENSION_TEXTURE1DARRAY = 3,
+    D3D12_UAV_DIMENSION_TEXTURE2D = 4,
+    D3D12_UAV_DIMENSION_TEXTURE2DARRAY = 5,
+    D3D12_UAV_DIMENSION_TEXTURE2DMS = 6, 
+    D3D12_UAV_DIMENSION_TEXTURE2DMSARRAY = 7, 
+    D3D12_UAV_DIMENSION_TEXTURE3D = 8,
+} D3D12_UAV_DIMENSION;
+// The MS options above are only available if the
+// WriteableMSAATexturesSupported cap is TRUE, 
+// and using shader model 6.7+
 
 typedef struct D3D12_UNORDERED_ACCESS_VIEW_DESC
 {
@@ -1866,6 +1919,8 @@ typedef struct D3D12_UNORDERED_ACCESS_VIEW_DESC
         D3D12_TEX1D_ARRAY_UAV Texture1DArray;
         D3D12_TEX2D_UAV Texture2D;
         D3D12_TEX2D_ARRAY_UAV Texture2DArray;
+        D3D12_TEX2DMS_UAV Texture2DMS;
+        D3D12_TEX2DMS_ARRAY_UAV Texture2DMSArray;
         D3D12_TEX3D_UAV Texture3D;
     };
 } D3D12_UNORDERED_ACCESS_VIEW_DESC;
@@ -2403,6 +2458,8 @@ typedef enum D3D12_STATIC_BORDER_COLOR
     D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, // 0.0f,0.0f,0.0f,0.0f
     D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK, // 0.0f,0.0f,0.0f,1.0f
     D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE, // 1.0f,1.0f,1.0f,1.0f
+    D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK_UINT, // 0u,0u,0u,1u
+    D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE_UINT  // 1u,1u,1u,1u
 };
 
 typedef struct D3D12_STATIC_SAMPLER
@@ -4032,6 +4089,8 @@ C++ API equivalent is the 'borderColor' field.
 - `STATIC_BORDER_COLOR_TRANSPARENT_BLACK`
 - `STATIC_BORDER_COLOR_OPAQUE_BLACK`
 - `STATIC_BORDER_COLOR_OPAQUE_WHITE`
+- `STATIC_BORDER_COLOR_OPAQUE_BLACK_UINT`
+- `STATIC_BORDER_COLOR_OPAQUE_WHITE_UINT`
 
 # API Example
 
@@ -4514,7 +4573,21 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CREATE_CONSTANT_BUFFER_VIEW )(
 ### DDI Sampler
 
 ```C++
-// D3D12_DDI_SAMPLER_DESC rename ported from D3D11 (not shown here for simplicity)
+
+typedef struct D3D12DDI_SAMPLER_DESC
+{
+    D3D12DDI_FILTER Filter;
+    D3D12DDI_TEXTURE_ADDRESS_MODE AddressU;
+    D3D12DDI_TEXTURE_ADDRESS_MODE AddressV;
+    D3D12DDI_TEXTURE_ADDRESS_MODE AddressW;
+    FLOAT MipLODBias;
+    UINT MaxAnisotropy;
+    D3D12DDI_COMPARISON_FUNC ComparisonFunc;
+    FLOAT BorderColor[4]; // RGBA
+    FLOAT MinLOD;
+    FLOAT MaxLOD;
+} D3D12DDI_SAMPLER_DESC;
+
 typedef struct D3D12DDIARG_CREATE_SAMPLER
 {
     CONST D3D12_DDI_SAMPLER_DESC* pSamplerDesc;
@@ -4524,6 +4597,47 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CREATE_SAMPLER )(
     D3D12DDI_HDEVICE,
     _In_ CONST D3D12DDIARG_CREATE_SAMPLER*,
     _In_ D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor);
+
+
+
+
+typedef enum D3D12DDI_SAMPLER_FLAGS_0096
+{
+    D3D12DDI_SAMPLER_FLAG_NONE = 0x0,
+    D3D12DDI_SAMPLER_FLAG_UINT_BORDER_COLOR = 0x01
+} D3D12DDI_SAMPLER_FLAGS_0096;
+DEFINE_ENUM_FLAG_OPERATORS(D3D12DDI_SAMPLER_FLAGS_0096);
+
+typedef struct D3D12DDI_SAMPLER_DESC_0096
+{
+    D3D12DDI_FILTER Filter;
+    D3D12DDI_TEXTURE_ADDRESS_MODE AddressU;
+    D3D12DDI_TEXTURE_ADDRESS_MODE AddressV;
+    D3D12DDI_TEXTURE_ADDRESS_MODE AddressW;
+    FLOAT MipLODBias;
+    UINT MaxAnisotropy;
+    D3D12DDI_COMPARISON_FUNC ComparisonFunc;
+    union
+    {
+        FLOAT FloatBorderColor[4]; // RGBA
+        UINT  UintBorderColor[4];
+    };
+    FLOAT MinLOD;
+    FLOAT MaxLOD;
+    D3D12DDI_SAMPLER_FLAGS_0096 Flags;
+} D3D12DDI_SAMPLER_DESC_0096;
+
+
+typedef struct D3D12DDIARG_CREATE_SAMPLER_0096
+{
+    CONST D3D12DDI_SAMPLER_DESC_0096* pSamplerDesc;
+} D3D12DDIARG_CREATE_SAMPLER_0096;
+
+typedef VOID(APIENTRY* PFND3D12DDI_CREATE_SAMPLER_0096)(
+    D3D12DDI_HDEVICE, 
+    _In_ CONST D3D12DDIARG_CREATE_SAMPLER_0096*, 
+    _In_ D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor);
+
 ```
 
 ### DDI Unordered Access View
@@ -4903,6 +5017,8 @@ typedef enum D3D12DDI_STATIC_BORDER_COLOR
     D3D12DDI_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, //0.0f,0.0f,0.0f,0.0f
     D3D12DDI_STATIC_BORDER_COLOR_OPAQUE_BLACK, // 0.0f,0.0f,0.0f,1.0f
     D3D12DDI_STATIC_BORDER_COLOR_OPAQUE_WHITE, // 1.0f,1.0f,1.0f,1.0f
+    D3D12DDI_STATIC_BORDER_COLOR_OPAQUE_BLACK_UINT, // 0u,0u,0u,1u
+    D3D12DDI_STATIC_BORDER_COLOR_OPAQUE_WHITE_UINT  // 1u,1u,1u,1u
 } D3D12_DDI_STATIC_BORDER_COLOR;
 
 typedef struct D3D12DDI_STATIC_SAMPLER
@@ -5172,6 +5288,24 @@ should apply the same operation regardless of the currently set root
 signature.
 
 # Change History
+
+V1.21 Mar 11, 2022
+- Updated [Limitations on Static Samplers](#limitations-on-static-samplers); removing the mention
+of border color being restricted to 2 bits, and adding new integer border colors to the list.
+- Added declarations and DDIs for 
+  - D3D12_SAMPLER_DESC2
+  - D3D12_SAMPLER_FLAGS
+  - CreateSampler2
+  - D3D12DDI_SAMPLER_DESC_0096
+  - D3D12DDI_SAMPLER_FLAGS_0096
+  - D3D12DDI_SAMPLER_FLAGS_0096
+  - D3D12DDIARG_CREATE_SAMPLER_0096
+  - PFND3D12DDI_CREATE_SAMPLER_0096
+
+V1.20 Feb 3, 2022
+
+- Added MSAA UAVs, supported if WriteableMSAATexturesSupported cap is TRUE.
+  e.g. D3D12_UAV_DIMENSION_TEXTURE2DMS and D3D12_UAV_DIMENSION_TEXTURE2DMSARRAY
 
 V1.19 April 10, 2019
 
