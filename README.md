@@ -14,6 +14,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
 ## Direct3D 12
 
 * Rendering Pipeline
+    * [Work Graphs](d3d/WorkGraphs.md)
     * [Mesh Shader](d3d/MeshShader.md)
     * [Sampler Feedback](d3d/SamplerFeedback.md)
     * [DirectX Raytracing (DXR)](d3d/Raytracing.md)
