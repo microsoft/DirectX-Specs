@@ -1,5 +1,5 @@
 <h1>D3D12 Work Graphs</h1>
-v0.42 6/12/2023
+v0.43 6/25/2023
 
 ---
 
@@ -288,7 +288,7 @@ Here is a graph contrived to illustrate several capabilities:
 - There are a few options for how a node translates incoming work requests into a set of shader invocations, ranging from a single thread per work item to variable sized grids of thread groups per work item.
 - The graph is acyclic, with one exception: a node can output to itself.  There is a depth limit of 32 including recursion.
 - For implementation efficiency there are limits on the amount of data that node invocations can pass directly to other nodes; for bulk data transfer apps need to use UAV accesses.
-- Scheduling of work requests can be done by the system with whatever underlying hardware tools are at its disposal
+- Scheduling of work requests can be done by the system with whatever underlying hardware tools are at its disposal.
   - Less capable architectures might revert to a single processor on the GPU scheduling work requests.  More advanced architectures might use distributed scheduling techniques and account for the specific topology of processing resources on the GPU to efficiently manage many work requests being generated in parallel.
   - This is in contrast to the `ExecuteIndirect` model which forces a serial processing step for the GPU - walking through a GPU generated command list to determine a sequence of commands to issue.
 - Data from a producer might be more likely to flow to a consumer directly, staying within caches
@@ -302,7 +302,7 @@ Here is a graph contrived to illustrate several capabilities:
 
 Despite the potential advantages, the free scheduling model may not always the best target for an app's workload.  Characteristics of the task, such as how it interacts with memory/caches, or the sophistication of hardware over time, may dictate whether some existing approach is better.  Like continuing to use `ExecuteIndirect`.  Or building producer consumer systems out of relatively long running compute shader threads that cross communicate - clever and fragile. Or using the paradigms in the DirectX Raytracing model, involving shaders splitting up and continuing later.  Work graphs are a new tool in the toolbox.
 
-Given that the model is about producers requesting for consumers to run, currently there isn't an explicit notion of waiting before launching a node.  For instance, waiting for all work at multiple producer nodes to finish before a consumer launches.  This can technically be accomplished by breaking up a graph, or with clever shader logic.  These are mere workarounds for waits not being a focus yet, discussed in [Joins - synchronizing within the graph](#joins---synchronizing-within-the-graph).  Native synchronization support may be defined in the future, better than the workarounds in many ways.  Many other compute frameworks explicitly use a graph to define bulk dependencies, in contrast to the feed-forward model here.
+Given that the model is about producers requesting for consumers to run, currently there isn't an explicit notion of waiting before launching a node.  For instance, waiting for all work at multiple producer nodes to finish before a consumer launches.  This can technically be accomplished by breaking up a graph, or with clever shader logic. Synchronization wasn’t a focus for the initial design, hence these workarounds, discussed more in [Joins - synchronizing within the graph](#joins---synchronizing-within-the-graph).  Native synchronization support may be defined in the future and would be better than the workarounds in lots of ways.  Many other compute frameworks explicitly use a graph to define bulk dependencies, in contrast to the feed-forward model here.
 
 While the hope is that work graphs can be useful out of the gate, the expectation is hardware/drivers and diagnostic tools will improve over time.  This API is being exposed - before optimal systems for running it exist - to allow for:
 
@@ -313,9 +313,9 @@ While the hope is that work graphs can be useful out of the gate, the expectatio
   - synchronization constructs, mentioned earlier
   - supporting other fixed function tasks that command lists can do, like UAV\<\>SRV resource transitions
 - Learning lessons that lead to an even better programming model in the future.  
-  - For example: Exposing low level scheduling building blocks instead of a monolithic API was considered, but didn't currently seem viable across the breadth of hardware.  Perhaps a path to this will emerge, either from hindsight with work graphs on PC, or inspired by what fixed platforms accomplish.
+  - For example: Exposing low level scheduling building blocks instead of a monolithic API was considered but didn't currently seem viable across the breadth of hardware.  Perhaps a path to this will emerge, either from hindsight with work graphs on PC, or inspired by what fixed platforms accomplish.
 
-All of these outcomes are welcome, and might appear over a wide timespan.
+All of these outcomes are welcome and might appear over a wide timespan.
 
 ---
 
@@ -512,6 +512,8 @@ The thread group is fixed in the shader.
 
 All thread groups that are launched share the same set of input parameters.  The exception is the ususal ID system values which identify individual threads within the set.
 
+For wave packing see [Thread visiblity in wave operations](#thread-visibility-in-wave-operations).
+
 ---
 
 ### Coalescing launch nodes
@@ -536,7 +538,9 @@ Launched thread groups can see the full set of input available as an array.  The
 
 Any time a shader declares it expects some number greater than 1 as the maximum number of input records the it can handle in a thread group, it must call the input record's [Count()](#input-record-count-method) method to discover how many records its thread group actually got.
 
-The number of records sent to any given thread group launch is implementation-defined, and not necessarily repeatable on a given implementation.  This is true independent of the method that produces the input -- i.e. whether it comes from another node or from DispatchGraph.  And it is true regardless size of input records, including 0 size records in particular.   
+The number of records sent to any given thread group launch is implementation-defined, and not necessarily repeatable on a given implementation.  This is true independent of the method that produces the input -- i.e. whether it comes from another node or from DispatchGraph.  And it is true regardless size of input records, including 0 size records in particular.
+
+For wave packing see [Thread visiblity in wave operations](#thread-visibility-in-wave-operations).
 
 ---
 
@@ -549,6 +553,8 @@ Thread launch nodes are conceptually a subset of [coalescing launch nodes](#coal
 While a coalescing launch node can express what a thread launch node can do, it is worth calling out the single thread case with a dedicated type.  In terms of implementation, thread launch nodes can pack work fundamentally differently than coalescing or broadcasting launch nodes: thread launch nodes allow multiple threads from different launches to be packed into a wave (see [Thread visibility in wave operations](#thread-visibility-in-wave-operations)).  By contrast if a coalescing launch node declared a thread group size of 1, other thread group launches wouldn't be able to be packed with it (at least they cannot appear to be, and in reality they likely will not be packed).
 
 ![thread launch](images/workgraphs/ThreadLaunchNode.png)
+
+For wave packing see [Thread visiblity in wave operations](#thread-visibility-in-wave-operations).
 
 > Thread launch nodes can be thought of somewhat like the callable shaders that are in DXR, except they do not return back to the caller.  And instead of appearing as a function call from a shader, which would be a different path to invoking threads of execution than the work graph itself, thread launch nodes are by definition part of the work graph structure.  It may still prove interesting to support DXR-style callable shaders in the future, but for now at least, thread launch nodes serve as alternative that embraces a unified model for launching work - nodes in a work graph, while still allowing applications to indicate situations when their workload does involve independent threads of work.
 
@@ -731,11 +737,11 @@ Here is an example of a compute shader whose input record includes a dispatch gr
     // can be indicated (defaults to 0 if not specified):
     // [NodeID("nodeThatIsPartOfAnArrayOfNodes",5)]  
 
-    // [NodeLaunch("Broadcasting")] indicates this is a broadcasting node,
+    // [NodeLaunch("broadcasting")] indicates this is a broadcasting node,
     // so a given input is broadcast to all thread groups launched in the
     // dispatch grid.
-    [Shader("Node")]
-    [NodeLaunch("Broadcasting")]
+    [Shader("node")]
+    [NodeLaunch("broadcasting")]
     [NumThreads(4,5,6)]
     [NodeMaxDispatchGrid(10,1,1)] // when grid size is an input parameter
                               // either the shader must declare a maximum grid 
@@ -766,8 +772,8 @@ Here is an example of a shader that uses a coalescing launch, so the input is an
         uint textureIndex;
     };
 
-    [Shader("Node")]
-    [NodeLaunch("Coalescing")]
+    [Shader("node")]
+    [NodeLaunch("coalescing")]
     [NodeID("myRenamedNode")] // optional rename of node.  
                               // Export name is still myCoalescingNode, but
                               // when used in a node, it's name defaults to "myRenamedNode"
@@ -806,8 +812,8 @@ Here is an example of a compute shader whose input only has shader arguments, as
     };
 
     // Observe, no thread group size - so it must be defined at the node
-    [Shader("Node")]
-    [NodeLaunch("Broadcasting")]
+    [Shader("node")]
+    [NodeLaunch("broadcasting")]
     void myPhysicsNode(uint3 DTid : SV_DispatchThreadID, ...
         DispatchNodeInputRecord<MY_OTHER_RECORD> myRecord
         )
@@ -819,8 +825,8 @@ Here is an example of a compute shader whose input only has shader arguments, as
 Here is an example of a shader that gets invoked when the input has a count of zero-sized records available.  This can indicate progress for scenarios that may not need any other payload data:
 
 ```C++
-    [Shader("Node")]
-    [NodeLaunch("Coalescing")]
+    [Shader("node")]
+    [NodeLaunch("coalescing")]
     [NumThreads(1024,1,1)]
     void myPostprocessingNode(...,
         // Launch a thread group whenever the input has a count from 1 to 64.
@@ -841,8 +847,8 @@ Here is an example of a shader that gets invoked when the input has a count of z
 Here is a variation of zero-sized records using broadcast semantics, whereby a dispatch grid is launched per zero-sized record.
 
 ```C++
-    [Shader("Node")]
-    [NodeLaunch("Broadcasting")]
+    [Shader("node")]
+    [NodeLaunch("broadcasting")]
     [NumThreads(1024,1,1)]
     [NodeMaxDispatchGrid(256,1,1)]
     void myPostprocessingNode(...,
@@ -891,8 +897,8 @@ Here is a shader that outputs to 66 different nodes.  They are declared as 3 ind
         float3 normal;
     };
 
-    [Shader("Node")]
-    [NodeLaunch("Broadcasting")]
+    [Shader("node")]
+    [NodeLaunch("broadcasting")]
     [NumThreads(4,5,6)]
     void myFancyNode(...,  
         DispatchNodeInputRecord<MY_INPUT_RECORD> myInput,
@@ -1047,8 +1053,8 @@ If a node targets itself, it must declare a max recursion level - see `NodeMaxRe
         int moo;
     };
 
-    [Shader("Node")]
-    [NodeLaunch("Broadcasting")]
+    [Shader("node")]
+    [NodeLaunch("broadcasting")]
     [NodeMaxRecursionDepth(16)] // Declaration required when the shader is used in
                        // such a way that the NodeID for one of its outputs is 
                        // the same ID as the node itself.  If, via renaming of 
@@ -1153,7 +1159,7 @@ For broadcasting launch nodes, where multiple thread groups can be launched for 
         //...
     };
 
-    [NodeLaunch("Broadcasting")]
+    [NodeLaunch("broadcasting")]
     [NumThreads(64, 1, 1)]
     [NodeDispatchGrid(4, 1, 1)]
     void myNode(
@@ -1628,7 +1634,7 @@ struct MyDrawIndexedData
 // out a MyDrawIndexedData record representing the draw to launch.
 //
 [NodeID("MyComputeNode")]
-[NodeLaunch("Broadcasting")]
+[NodeLaunch("broadcasting")]
 [NodeIsProgramEntry]
 [NodeDispatchGrid(1, 1, 1)]
 [NumThreads(1, 1, 1)]
@@ -1687,7 +1693,7 @@ struct MyPSInput
 // because the normal Input Assembler pipeline stage still functions for this node.
 //
 [NodeID("material",7)]
-[NodeLaunch("DrawIndexed")]
+[NodeLaunch("drawindexed")]
 MyPSInput MyVertexShader(
   DispatchNodeInputRecord<MyDrawIndexedData> nodeInput,
   in MyVSInput vsInput)
@@ -1735,7 +1741,7 @@ struct MyDispatchMeshData
 // so that the system knows how many thread-groups to launch in the dispatch).
 //
 [NodeID("meshMaterial",2)]
-[NodeLaunch("DispatchMesh")]
+[NodeLaunch("dispatchmesh")]
 [OutputTopology("triangle")]
 [NumThreads(1, 1, 1)]
 void MyMeshShader(
@@ -1775,7 +1781,7 @@ An alternative option to fetch vertex data from vertex buffers would be pull-mod
 // Syntax shown is strawman.
 //
 [NodeID("material",7)]
-[NodeLaunch("DrawIndexed")]
+[NodeLaunch("drawindexed")]
 [VertexBufferCount(2)]
 MyPSInput MyPullModelVertexShader(
   DispatchNodeInputRecord<MyDrawIndexedData> nodeInput,
@@ -2153,7 +2159,7 @@ typedef struct D3D12_SHADER_NODE
 
 Member                           | Definition
 ---------                        | ----------
-`Shader` | Which exported shader to use for this node.  The specified shader must specify [shader target](#shader-target) `[Shader("Node")]`.  If the shader doesn't explicitly specify a Node ID, the ID for the node is {export name, array index 0}, unless the ID is overridden in the applicable `*_OVERRIDES` struct here.
+`Shader` | Which exported shader to use for this node.  The specified shader must specify [shader target](#shader-target) `[Shader("node")]`.  If the shader doesn't explicitly specify a Node ID, the ID for the node is {export name, array index 0}, unless the ID is overridden in the applicable `*_OVERRIDES` struct here.
 `OverridesType` | See [D3D12_NODE_OVERRIDES_TYPE](#d3d12_node_overrides_type).  Can be set to `D3D12_NODE_OVERRIDES_TYPE_NONE` if nothing is being overridden.  Otherwise, it must be set to a value that matches the launch mode declared for the shader, and then the corresponding entry in the union is referenced.  The launch mode of a shader can't be changed.
 `pBroadcastingLaunchOverrides` | Used when `OverridesType` is `D3D12_NODE_OVERRIDES_TYPE_BROADCASTING_LAUNCH`. See [D3D12_BROADCASTING_LAUNCH_OVERRIDES](#d3d12_broadcasting_launch_overrides).
 `pCoalescingLaunchOverrides` | Used when `OverridesType` is `D3D12_NODE_OVERRIDES_TYPE_COALESCING_LAUNCH`. See [D3D12_COALESCING_LAUNCH_OVERRIDES](#d3d12_coalescing_launch_overrides).
@@ -3292,27 +3298,27 @@ Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).
 
 ## Shader target
 
-Shaders at nodes are currently only compute shaders authored in a library, target lib_6_8 or above. The attribute `[Shader("Node")]` on a shader function indicates it can be used in a work graph.  
+Shaders at nodes are currently only compute shaders authored in a library, target lib_6_8 or above. The attribute `[Shader("node")]` on a shader function indicates it can be used in a work graph.  
 
-In some cases the shader can also have the attribute `[Shader("Compute")]` saying the shader is allowed to be used as a standalone compute shader as well, discussed in the next section.
+In some cases the shader can also have the attribute `[Shader("compute")]` saying the shader is allowed to be used as a standalone compute shader as well, discussed in the next section.
 
-Minor note:  The attribute name, `"shader"`, and the string values like `"node"` are case insensitive.
+The attribute name `"Shader"` is case insensitive.  The string must be lowercase..
 
 ---
 
 ### Repurposing plain compute shader code
 
-A shader authored for a node that doesn't happen to declare any node inputs or node outputs can be reused as a standalone, plain compute shader (e.g. launched via `pCommandList->Dispatch()`).  This would have to be a broadcasting launch node, which happens to be exactly how a plain compute shader behaves, albeit with no input to broadcast - context comes is ID system values.  In this case, the shader can have both `[Shader("Node")]` and `[Shader("Compute")]` specified on it.
+A shader authored for a node that doesn't happen to declare any node inputs or node outputs can be reused as a standalone, plain compute shader (e.g. launched via `pCommandList->Dispatch()`).  This would have to be a broadcasting launch node, which happens to be exactly how a plain compute shader behaves, albeit with no input to broadcast - context comes is ID system values.  In this case, the shader can have both `[Shader("node")]` and `[Shader("compute")]` specified on it.
 
-Many attributes that help define node behavior, described in subsequent sections - `[NodeDispatchGrid(x,y,z)]` being one example, are only allowed if `[Shader("Node")]` is present.  These attributes are ignored if the shader also has `[Shader("Compute")]` specified and the shader is launched on its own via `Dispatch()`.  Any [shader function attribute](#shader-function-attributes) whose name begins with `Node` is ignored if the shader is used in standalone compute.  So it might be visually obvious looking at a compute shader which set of attributes are relevant only when the shader is used in a work graph.  Local root signatures also cannot be associated if `[Shader("Compute")]` is present (and note that default associations using a local root signature will not associate with a compute shader).
+Many attributes that help define node behavior, described in subsequent sections - `[NodeDispatchGrid(x,y,z)]` being one example, are only allowed if `[Shader("node")]` is present.  These attributes are ignored if the shader also has `[Shader("compute")]` specified and the shader is launched on its own via `Dispatch()`.  Any [shader function attribute](#shader-function-attributes) whose name begins with `Node` is ignored if the shader is used in standalone compute.  So it might be visually obvious looking at a compute shader which set of attributes are relevant only when the shader is used in a work graph.  Local root signatures also cannot be associated if `[Shader("compute")]` is present (and note that default associations using a local root signature will not associate with a compute shader).
 
-Another way to look at this is that an existing compute shader can be used in a work graph anywhere no node inputs or outputs are needed, simply by adding `[Shader("Node")]` to the beginning, and `[Shader("Compute")]` can be left on the shader if it will be used that way, or removed otherwise.  
+Another way to look at this is that an existing compute shader can be used in a work graph anywhere no node inputs or outputs are needed, simply by adding `[Shader("node")]` to the beginning, and `[Shader("compute")]` can be left on the shader if it will be used that way, or removed otherwise.  
 
 For instance, a work graph may have leaf nodes (which don't output to other nodes) that can be launched without any node inputs, obtaining operational context by accessing resources like UAVs like any shader can.  The node can be targeted by an upstream node in a work graph that outputs a record containing only a 12 byte uint3 dispatch grid size - [SV_DispatchGrid](#sv_dispatchgrid).  Or if node has a fixed dispatch grid size declared either as part of the shader or via the [API node definition](#d3d12_broadcasting_launch_overrides), a parent node can target the node by [declaring](#node-output-declaration) `EmptyNodeOutput`.  Then, calling [{Group\|Thread}IncrementOutputCount()](#incrementoutputcount) in the upstream shader requests dispatch grids to be launched, one full dispatch grid per 1 count item.
 
 All of this is simply about convenience.  It might be handy for an application to be able to reuse some compute shader assets in a work graph sometimes, and also as a standalone compute shader in environments where work graphs are not supported.
 
-If a shader specifies both `[Shader("Compute")]` and `[Shader("Node")]`, this can result in the one shader being compiled by the driver twice in the event the device needs to specialize the underlying implementation of the shader for each usage.
+If a shader specifies both `[Shader("compute")]` and `[Shader("node")]`, this can result in the one shader being compiled by the driver twice in the event the device needs to specialize the underlying implementation of the shader for each usage.
 
 ---
 
@@ -3322,13 +3328,13 @@ These attributes can be used on shader functions used at nodes.  Any attributes 
 
 Any attribute whose name begins with `Node` is ignored if the shader is used in standalone compute.
 
-The attribute names and definitions that contain strings are all case insensitive, with the exception of strings that are function entrypoint names.
+Attribute names are case insensitive.  Strings are case sensitive.
 
 DXIL definition [here](#dxil-shader-function-attributes).
 
 attribute                     | required | description
 ------------------------------|:--------:|------------
-`[NodeLaunch("mode")]`    | N  |  `"mode"` can be `"Broadcasting"`, `"Coalescing"` or `"Thread"`.  Default if `NodeLaunch` attribute is not present is `"Broadcasting"`.
+`[NodeLaunch("mode")]`    | N  |  `"mode"` can be `"broadcasting"`, `"coalescing"` or `"thread"`.  Default if `NodeLaunch` attribute is not present is `"broadcasting"`.
 `[NodeIsProgramEntry]`      | N | Node can receive input records from outside the graph - e.g. from a commmand list.  Any node in a graph that has an input that isn't targetted by other node(s) must either specify this attribute, or it must be separately indicated when constructing the work graph.  Nodes interior to a graph can optionally set this attribute to indicate that not only are they fed from the graph they are also fed from outside.  A graph can have multiple entrypoints.  This can be overridden/selected when constructing a work graph as part of the [definition of a node](#d3d12_node).
 `[NodeID("nodeName")]` or `[NodeID("nodeName",arrayIndex)]` | N | Name for the node.  In the absence of this attribute, the shader function name is the node name.  There is also an optional uint `arrayIndex` parameter, meaning the shader is actually at slot `nodeName[arrayIndex]` in an array of nodes with the collective ID `nodeName`.  The absence of `arrayIndex` means `arrayIndex` is `0`, which is also the case if `NodeID` isn't specified at all (using the shader function name). This can be overridden via the `Rename` option when constructing a work graph as part of the [definition of a node](#d3d12_node).  All nodes are implicitly part of an array of nodes with the given node name string, albeit typically this array happens to be of size 1 (when the app is simply using the node in a non-arrayed way).  If array indexing isn't needed, the second component can be any value, typically 0 but whatever the choice, the index is still considered as part of the identity of the node.  Gaps in a given node array are allowed.  Behavior is undefined if a shader outputs to an empty array index (via dynamic indexing the output node array in the shader). See [Node array constraints](#node-array-constraints).
 `[NodeLocalRootArgumentsTableIndex(index)]` | N | `uint index` indicates the record index into the local root arguments table [bound](#d3d12_set_work_graph_desc) when the work graph is used.  In the absence of this attribute, or it is set to `-1`, and a node's shader has a local root signature associated with it, the index defaults to an unsed value 0,1,2.. (skipping over any entries that have been used by explicit `[NodeLocalRootArgumentsTableIndex(index)]` values).  Default indices are assigned in the order the node is added to the work graph - see the discussion of the order of graph node population in [D3D12_WORK_GRAPH_DESC](#d3d12_work_graph_desc).  This index can be overridden when constructing a work graph as part of the [definition of a node](#d3d12_node).  Multiple nodes can only point to the same location in the local root arguments table if they use the same local root signature.
@@ -4673,7 +4679,7 @@ struct MY_OTHER_RECORD
     uint3 dispatchGrid : SV_DispatchGrid;
 };
 
-[NodeLaunch("Coalescing")]
+[NodeLaunch("coalescing")]
 [NodeID("renamedNode", 0)]
 void myNode(GroupNodeInputRecords<MY_RECORD, 256> myInputNode,
             [MaxRecords(8)] NodeOutput<MY_OTHER_RECORD> myNiftyNode)
@@ -5858,3 +5864,4 @@ v0.39|5/5/2023|<li>In [Node output attributes](#node-output-attributes), renamed
 v0.40|5/24/2023|<li>Fixed typos in DDI defines: [D3D12DDI_NODE_IO_KIND_0084](#d3d12ddi_node_io_kind_0084) and [D3D12DDI_NODE_OUTPUT_0084](#d3d12ddi_node_output_0084).</li>
 v0.41|5/26/2023|<li>In DXIL [Node input and output metadata table](#node-input-and-output-metadata-table), `NodeMaxRecords` and `NodeRecordType` entries were reversed from what the compiler implemented, so swapped the entries in the spec to match the code.</li><li>In [Example of creating node input and output handles](#example-of-creating-node-input-and-output-handles) and [Example DXIL metadata diagram](#example-dxil-metadata-diagram) fixed metadata encoding values, several of which were stale.</li><li>In [Node input](#node-input) fixed examples that used old GetInputRecordCount() to be .count().</li><li>In DXIL [NodeIOFlags and NodeIOKind encoding](#nodeioflags-and-nodeiokind-encoding), there was a typo `GroupNodeOutputRecord` fixed to `GroupNodeOutputRecords` and `ThreadNodeOutputRecord` fixed to `ThreadNodeOutputRecords`.  Similar typo in the DDI header under [D3D12DDI_NODE_IO_KIND_0084](#d3d12ddi_node_io_kind_0084).  This will require new headers and driver recompile but fortunately not a binary breaking change.</li>
 v0.42|6/12/2023|<li>In [Shader function attributes](#shader-function-attributes) section removed stale text under `[NodeShareInputOf()]` that said that nodes sharing input need to have the same node type and dispatch grid size - these constraints were never actually needed.</li>
+v0.43|6/25/2023|<li>In [Shader target](#shader-target) and [Shader function attributes](#shader-function-attributes) sections fixed the case sensitivity to match expected final compiler behavior: For attributes like `Shader("node")` and `NodeLaunch("mode")` (`"mode"` is `"coalescing"` etc.), the attribute name is case insensitive, while the string is case sensitive.  And for these two attributes, the strings also must be lowercase.  The current preview compiler is incorrectly case insensitive for the string in `NodeLaunch("mode")`.  Updated samples to match.</li><li>Linked to [Thread visibility in wave operations](#thread-visibility-in-wave-operations) from the launch mode sections such as [Coalescing launch nodes](#coalescing-launch-nodes) for discoverability.</li>
