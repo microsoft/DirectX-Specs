@@ -48,6 +48,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Protected Resources](d3d/ProtectedResources.md)
     * [Video Protected Resource Support](d3d/D3D12_Video_ProtectedResourceSupport.md)
     * [Video Encoding](d3d/D3D12VideoEncoding.md)
+    * [Video Encoding AV1](d3d/D3D12_Video_Encoding_AV1.md)
 
 * HLSL
     * [Shader Model 6.0](https://github.com/microsoft/DirectXShaderCompiler/wiki/Shader-Model-6.0)
@@ -58,6 +59,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Shader Model 6.5](d3d/HLSL_ShaderModel6_5.md)
     * [Shader Model 6.6](d3d/HLSL_ShaderModel6_6.md)
     * [Shader Model 6.7](d3d/HLSL_ShaderModel6_7.md)
+    * [Shader Model 6.8 (experimental)](d3d/HLSL_ShaderModel6_8.md)
     * [SV_Barycentrics](https://github.com/microsoft/DirectXShaderCompiler/wiki/SV_Barycentrics)
     * [SV_ViewID](https://github.com/microsoft/DirectXShaderCompiler/wiki/SV_ViewID)
 
