@@ -509,9 +509,7 @@ Enhanced Barriers is not currently a hardware or driver requirement.  Developers
 
 #### `D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE`
 
-Since resources are created with `InitialLayout` instead of `InitialState`, and buffer resources have no layout, a new `D3D12_RESOURCE_FLAGS` enum value is needed to indicate that a buffer is to be used as a raytracing acceleration structure:
-
-TODO: There's a colon here and then a hard cut, back from a H4 heading to a H2 heading.
+Since resources are created with `InitialLayout` instead of `InitialState`, and buffer resources have no layout, a new `D3D12_RESOURCE_FLAGS` enum value is needed to indicate that a buffer is to be used as a raytracing acceleration structure.
 
 ------------------------------------------------
 
