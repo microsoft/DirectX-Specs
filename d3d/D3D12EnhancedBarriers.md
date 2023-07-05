@@ -24,7 +24,7 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [Access Transitions](#access-transitions)
   - [Single-Queue Simultaneous Access](#single-queue-simultaneous-access)
   - [Subresource Ranges](#subresource-ranges)
-  - [Compute and Direct Queue Layouts](#compute-and-direct-queue-layouts)
+  - [Queue type specific layouts](#queue-type-specific-layouts)
   - [Barrier-Free Access](#barrier-free-access)
   - [Self Resource Copy](#self-resource-copy)
   - [Placed Resource Metadata Initialization](#placed-resource-metadata-initialization)
@@ -427,27 +427,13 @@ Note that the one-writer-at-a-time policy still applies since two seemingly non-
 
 It is common for developers to want to transition a range of subresources such as a full mip-chain for a given texture array or a single mip-level for all array slices.  Legacy Resource State Transition barriers only provide developers the option of transitioning ALL subresource states or single subresource state atomically.  The enhanced Barrier API's allow developers to transition logically-adjacent ranges of subresources using the [`D3D12_BARRIER_SUBRESOURCE_RANGE`](#d3d12_barrier_subresource_range) structure.
 
-### Compute and Direct Queue Layouts
+### Queue type specific layouts
 
-The following enhanced Barrier layouts are guaranteed to be the same for both Direct and Compute queues:
+Some of the layout names indicate a specific queue type. For example `D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_UNORDERED_ACCESS` or `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COPY_SOURCE`. Such layouts are useful when sequential accesses to a given texture occur on the same queue or queue type. On some hardware, costly texture decompression can be avoided if accesses on both sides of a layout transition barrier happen on the same queue type. For instance, a texture transitioning from `D3D12_BARRIER_LAYOUT_RENDER_TARGET` to `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_SHADER_RESOURCE` can be significantly faster than a transition to `D3D12_BARRIER_LAYOUT_SHADER_RESOURCE`. This is because some hardware can access the render target compressed data in SRV operations on direct queues. However, a transition to `D3D12_BARRIER_LAYOUT_SHADER_RESOURCE` necessarily implies subsequent SRV access could potentially happen in a compute queue. As such, decompression is required if the hardware compute queues cannot read render target compression data.
 
-- `D3D12_BARRIER_LAYOUT_GENERIC_READ`
-- `D3D12_BARRIER_LAYOUT_UNORDERED_ACCESS`
-- `D3D12_BARRIER_LAYOUT_SHADER_RESOURCE`
-- `D3D12_BARRIER_LAYOUT_COPY_SOURCE`
-- `D3D12_BARRIER_LAYOUT_COPY_DEST`
+It is common for applications to use a single direct queue for all GPU operations. In such cases, it is strongly recommended that developers always use `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_...` layouts when available. Likewise, any barrier on a texture that is only ever used in a single queue or queue type should use queue type specific layouts.
 
-A subresource in one of these layouts can be used in either Direct queues or Compute queues without a layout transition.
-
-On some hardware, layout transition barriers on Direct queues can be significantly faster if both preceding or subsequent accesses are also on Direct queues.  It is strongly recommended that app developers predominantly accessing resources on Direct queues use the following layouts:
-
-- `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_GENERIC_READ`
-- `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_UNORDERED_ACCESS`
-- `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_SHADER_RESOURCE`
-- `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COPY_SOURCE`
-- `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COPY_DEST`
-
-The `DIRECT_QUEUE` layout variants are not compatible with Compute queues and cannot be used in Compute command list barriers.  However, they are compatible with Compute operations in Direct queues.
+Queue type specific layouts may only be used within a compatible command queue. For example, a compute queue cannot transition a texture into or out-of `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_UNORDERED_ACCESS`.
 
 ### Barrier-Free Access
 
@@ -523,9 +509,7 @@ Enhanced Barriers is not currently a hardware or driver requirement.  Developers
 
 #### `D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE`
 
-Since resources are created with `InitialLayout` instead of `InitialState`, and buffer resources have no layout, a new `D3D12_RESOURCE_FLAGS` enum value is needed to indicate that a buffer is to be used as a raytracing acceleration structure:
-
-TODO: There's a colon here and then a hard cut, back from a H4 heading to a H2 heading.
+Since resources are created with `InitialLayout` instead of `InitialState`, and buffer resources have no layout, a new `D3D12_RESOURCE_FLAGS` enum value is needed to indicate that a buffer is to be used as a raytracing acceleration structure.
 
 ------------------------------------------------
 
@@ -588,27 +572,26 @@ Layout enums starting with `D3D12_BARRIER_LAYOUT_LEGACY_` are internal-only and 
 
 ### Equivalent `D3D12_BARRIER_ACCESS` bit for each `D3D12_RESOURCE_STATES` bit
 
-| State bit                                                | Access bit                                                                |
-|----------------------------------------------------------|---------------------------------------------------------------------------|
-| `D3D12_RESOURCE_STATE_COMMON`                            | `D3D12_BARRIER_ACCESS_COMMON`                                             |
-| `D3D12_RESOURCE_STATE_VERTEX_BUFFER`                     | `D3D12_BARRIER_ACCESS_VERTEX_BUFFER|D3D12_BARRIER_ACCESS_CONSTANT_BUFFER` |
-| `D3D12_RESOURCE_STATE_CONSTANT_BUFFER`                   | `D3D12_BARRIER_ACCESS_VERTEX_BUFFER|D3D12_BARRIER_ACCESS_CONSTANT_BUFFER` |
-| `D3D12_RESOURCE_STATE_INDEX_BUFFER`                      | `D3D12_BARRIER_ACCESS_INDEX_BUFFER`                                       |
-| `D3D12_RESOURCE_STATE_RENDER_TARGET`                     | `D3D12_BARRIER_ACCESS_RENDER_TARGET`                                      |
-| `D3D12_RESOURCE_STATE_UNORDERED_ACCESS`                  | `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`                                   |
-| `D3D12_RESOURCE_STATE_DEPTH_WRITE`                       | `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE`                                |
-| `D3D12_RESOURCE_STATE_DEPTH_READ`                        | `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ`                                 |
-| `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`         | `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`                                    |
-| `D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE`             | `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`                                    |
-| `D3D12_RESOURCE_STATE_STREAM_OUT`                        | `D3D12_BARRIER_ACCESS_STREAM_OUTPUT`                                      |
-| `D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT`                 | `D3D12_BARRIER_ACCESS_INDIRECT_ARGUMENT`                                  |
-| `D3D12_RESOURCE_STATE_PREDICATION`                       | `D3D12_BARRIER_ACCESS_PREDICATION`                                        |
-| `D3D12_RESOURCE_STATE_COPY_DEST`                         | `D3D12_BARRIER_ACCESS_COPY_DEST`                                          |
-| `D3D12_RESOURCE_STATE_COPY_SOURCE`                       | `D3D12_BARRIER_ACCESS_COPY_SOURCE`                                        |
-| `D3D12_RESOURCE_STATE_RESOLVE_DEST`                      | `D3D12_BARRIER_ACCESS_RESOLVE_DEST`                                       |
-| `D3D12_RESOURCE_STATE_RESOLVE_SOURCE`                    | `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE`                                     |
-| `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE` | `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE`                  |
-| `D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE`               | `D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE`                                |
+| State bit                                                | Access bits                                                                 |
+|----------------------------------------------------------|-----------------------------------------------------------------------------|
+| `D3D12_RESOURCE_STATE_COMMON`                            | `D3D12_BARRIER_ACCESS_COMMON`                                               |
+| `D3D12_RESOURCE_STATE_VERTEX_BUFFER_AND_CONSTANT_BUFFER` | `D3D12_BARRIER_ACCESS_VERTEX_BUFFER + D3D12_BARRIER_ACCESS_CONSTANT_BUFFER` |
+| `D3D12_RESOURCE_STATE_INDEX_BUFFER`                      | `D3D12_BARRIER_ACCESS_INDEX_BUFFER`                                         |
+| `D3D12_RESOURCE_STATE_RENDER_TARGET`                     | `D3D12_BARRIER_ACCESS_RENDER_TARGET`                                        |
+| `D3D12_RESOURCE_STATE_UNORDERED_ACCESS`                  | `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`                                     |
+| `D3D12_RESOURCE_STATE_DEPTH_WRITE`                       | `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE`                                  |
+| `D3D12_RESOURCE_STATE_DEPTH_READ`                        | `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ`                                   |
+| `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`         | `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`                                      |
+| `D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE`             | `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`                                      |
+| `D3D12_RESOURCE_STATE_STREAM_OUT`                        | `D3D12_BARRIER_ACCESS_STREAM_OUTPUT`                                        |
+| `D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT`                 | `D3D12_BARRIER_ACCESS_INDIRECT_ARGUMENT`                                    |
+| `D3D12_RESOURCE_STATE_PREDICATION`                       | `D3D12_BARRIER_ACCESS_PREDICATION`                                          |
+| `D3D12_RESOURCE_STATE_COPY_DEST`                         | `D3D12_BARRIER_ACCESS_COPY_DEST`                                            |
+| `D3D12_RESOURCE_STATE_COPY_SOURCE`                       | `D3D12_BARRIER_ACCESS_COPY_SOURCE`                                          |
+| `D3D12_RESOURCE_STATE_RESOLVE_DEST`                      | `D3D12_BARRIER_ACCESS_RESOLVE_DEST`                                         |
+| `D3D12_RESOURCE_STATE_RESOLVE_SOURCE`                    | `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE`                                       |
+| `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE` | `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE`                    |
+| `D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE`               | `D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE`                                  |
 
 Non-simultaneous-access textures using a common layout can be accessed as `D3D12_BARRIER_ACCESS_COPY_DEST|D3D12_BARRIER_ACCESS_COPY_SOURCE|D3D12_BARRIER_ACCESS_SHADER_RESOURCE`.  Buffers and simultaneous-access textures can be freely accessed as all-but `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE|D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ|D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE`.
 
