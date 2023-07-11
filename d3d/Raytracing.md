@@ -2103,7 +2103,7 @@ is here:
 The following is another example focused on being efficient with an
 acceleration structure implementation while maintaining watertightness:
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<https://software.intel.com/en-us/articles/watertight-ray-traversal-with-reduced-precision>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<https://www.intel.com/content/dam/develop/external/us/en/documents/rptraversal.pdf>
 
 It is expected that implementations of watertight ray triangle
 intersections are possible without having to resort to costly paths such
