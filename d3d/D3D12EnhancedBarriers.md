@@ -103,7 +103,6 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [Validation Phases](#validation-phases)
   - [Barrier API Call Validation](#barrier-api-call-validation)
   - [Layout Validation](#layout-validation)
-  - [Sync and Access Validation](#sync-and-access-validation)
   - [Legacy vs Enhanced State Validation](#legacy-vs-enhanced-state-validation)
   - [GPU-Based Validation](#gpu-based-validation)
 
@@ -680,6 +679,8 @@ Possible but not expected to be common: If aliased memory write flushes were nee
 Legacy D3D12 resource creation API's require an initial state.  For texture resources, this initial state implies an initial layout according to the table in [Equivalent `D3D12_BARRIER_LAYOUT` for each `D3D12_RESOURCE_STATES` bit](#equivalent-d3d12_barrier_layout-for-each-d3d12_resource_states-bit).
 
 Despite the fact that legacy resource creation API's have an Initial State, buffers do not have a layout, and thus are treated as though they have an initial state of `D3D12_RESOURCE_STATE_COMMON`.  This includes Upload Heap and Readback Heap buffers, despite being documented as requiring `D3D12_RESOURCE_STATE_GENERIC_READ` and `D3D12_RESOURCE_STATE_COPY_DEST` respectively.  The exception to this is buffers intended to be used as raytracing acceleration structures.  The `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE` state is a hint to the runtime, driver and PIX that the resource may only be used as a raytracing acceleration structure.
+
+Swap Chain textures are initially created in `D3D12_BARRIER_LAYOUT_COMMON`. This matches the initial state for swap chains documented in https://learn.microsoft.com/en-us/windows/win32/direct3d12/using-resource-barriers-to-synchronize-resource-states-in-direct3d-12#initial-states-for-resources.
 
 ### Split Barriers
 
@@ -2852,17 +2853,6 @@ The debug layer validates the following during `Barrier` calls:
 Only texture resources have layout.  Therefore, buffers are effectively in `RESOURCE_STATE_COMMON` between `ExecuteCommandLists` boundaries.  Legacy resource state validation handles buffer state by "decaying" buffer state to `RESOURCE_STATE_COMMON` upon completion of `ExecuteCommandLists`.  In fact, the complex rules surrounding resource state promotion and decay are a significant portion of the debug validation source.
 
 Validation for Layout Barriers is partially validated during command list record using an assumed initial layout. The assumed layout is later validated during the `ExecuteCommandLists` call.  Synchronized command queue execution must be enabled to validate texture layout between `ExecuteCommandLists` calls.  In some cases, more than one assumed layout is possible (e.g. `D3D12_BARRIER_LAYOUT_SHADER_RESOURCE` and `D3D12_BARRIER_LAYOUT_COMMON` both support use as a shader resource). The debug layer resolves the assumed layout against the actual layout during command list execution (again, only when command queue sync is enabled).
-
-### Sync and Access Validation
-
-The Debug Layer attempts to validate barriers are correctly mitigating hazards.  In most cases, hazards are detected as a result of incompatible access types, including most read-after-write and write-after-read hazards.  However, some write-after-write operations need sync-only barriers:
-
-- Raytracing Acceleration Structure Writes
-- Unordered Access (requires GBV to detect unless using `DATA_STATIC` descriptors)
-- Copy (when using `D3D12_COMMAND_LIST_FLAG_ALLOW_ALLOW_EXTENDED_ASYNC`)
-- Resolve (when using `D3D12_COMMAND_LIST_FLAG_ALLOW_ALLOW_EXTENDED_ASYNC`)
-
-Note that there is no sync validation resources supporting concurrent read and write.  It is up to the app developer to know when to synchronize dependent accesses.
 
 ### Legacy vs Enhanced State Validation
 
