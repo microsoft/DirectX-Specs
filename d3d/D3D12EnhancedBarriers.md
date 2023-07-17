@@ -680,6 +680,8 @@ Legacy D3D12 resource creation API's require an initial state.  For texture reso
 
 Despite the fact that legacy resource creation API's have an Initial State, buffers do not have a layout, and thus are treated as though they have an initial state of `D3D12_RESOURCE_STATE_COMMON`.  This includes Upload Heap and Readback Heap buffers, despite being documented as requiring `D3D12_RESOURCE_STATE_GENERIC_READ` and `D3D12_RESOURCE_STATE_COPY_DEST` respectively.  The exception to this is buffers intended to be used as raytracing acceleration structures.  The `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE` state is a hint to the runtime, driver and PIX that the resource may only be used as a raytracing acceleration structure.
 
+Swap Chain textures are initially created in `D3D12_BARRIER_LAYOUT_COMMON`. This matches the initial state for swap chains documented in https://learn.microsoft.com/en-us/windows/win32/direct3d12/using-resource-barriers-to-synchronize-resource-states-in-direct3d-12#initial-states-for-resources.
+
 ### Split Barriers
 
 A split barrier provides a hint to a driver that a state transition must occur between two points in a command stream, even across `ExecuteCommandLists` boundaries.  Drivers may complete the required layout transitions and cache flushes any time between the start and end of a split barrier.
