@@ -103,7 +103,6 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [Validation Phases](#validation-phases)
   - [Barrier API Call Validation](#barrier-api-call-validation)
   - [Layout Validation](#layout-validation)
-  - [Sync and Access Validation](#sync-and-access-validation)
   - [Legacy vs Enhanced State Validation](#legacy-vs-enhanced-state-validation)
   - [GPU-Based Validation](#gpu-based-validation)
 
@@ -2852,17 +2851,6 @@ The debug layer validates the following during `Barrier` calls:
 Only texture resources have layout.  Therefore, buffers are effectively in `RESOURCE_STATE_COMMON` between `ExecuteCommandLists` boundaries.  Legacy resource state validation handles buffer state by "decaying" buffer state to `RESOURCE_STATE_COMMON` upon completion of `ExecuteCommandLists`.  In fact, the complex rules surrounding resource state promotion and decay are a significant portion of the debug validation source.
 
 Validation for Layout Barriers is partially validated during command list record using an assumed initial layout. The assumed layout is later validated during the `ExecuteCommandLists` call.  Synchronized command queue execution must be enabled to validate texture layout between `ExecuteCommandLists` calls.  In some cases, more than one assumed layout is possible (e.g. `D3D12_BARRIER_LAYOUT_SHADER_RESOURCE` and `D3D12_BARRIER_LAYOUT_COMMON` both support use as a shader resource). The debug layer resolves the assumed layout against the actual layout during command list execution (again, only when command queue sync is enabled).
-
-### Sync and Access Validation
-
-The Debug Layer attempts to validate barriers are correctly mitigating hazards.  In most cases, hazards are detected as a result of incompatible access types, including most read-after-write and write-after-read hazards.  However, some write-after-write operations need sync-only barriers:
-
-- Raytracing Acceleration Structure Writes
-- Unordered Access (requires GBV to detect unless using `DATA_STATIC` descriptors)
-- Copy (when using `D3D12_COMMAND_LIST_FLAG_ALLOW_ALLOW_EXTENDED_ASYNC`)
-- Resolve (when using `D3D12_COMMAND_LIST_FLAG_ALLOW_ALLOW_EXTENDED_ASYNC`)
-
-Note that there is no sync validation resources supporting concurrent read and write.  It is up to the app developer to know when to synchronize dependent accesses.
 
 ### Legacy vs Enhanced State Validation
 
