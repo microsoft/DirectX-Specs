@@ -963,10 +963,13 @@ The following tables describe the Access types compatible with a given layout:
 | `D3D12_BARRIER_ACCESS_COPY_DEST`       |
 | `D3D12_BARRIER_ACCESS_COPY_SOURCE`     |
 
-| `D3D12_BARRIER_LAYOUT_GENERIC_READ`    |
-|----------------------------------------|
-| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE` |
-| `D3D12_BARRIER_ACCESS_COPY_SOURCE`     |
+| `D3D12_BARRIER_LAYOUT_GENERIC_READ`        |
+|--------------------------------------------|
+| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`     |
+| `D3D12_BARRIER_ACCESS_COPY_SOURCE`         |
+| `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ`  |
+| `D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE` |
+| `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE`      |
 
 | `D3D12_BARRIER_LAYOUT_RENDER_TARGET` |
 |--------------------------------------|
@@ -1133,16 +1136,18 @@ Some Access types require matching Sync.  For the following access bits, at leas
 | `D3D12_BARRIER_SYNC_DRAW`            |
 | `D3D12_BARRIER_SYNC_RENDER_TARGET`   |
 
-| `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`          |
-|--------------------------------------------------|
-| `D3D12_BARRIER_SYNC_ALL`                         |
-| `D3D12_BARRIER_SYNC_VERTEX_SHADING`              |
-| `D3D12_BARRIER_SYNC_PIXEL_SHADING`               |
-| `D3D12_BARRIER_SYNC_COMPUTE_SHADING`             |
-| `D3D12_BARRIER_SYNC_VERTEX_SHADING`              |
-| `D3D12_BARRIER_SYNC_DRAW`                        |
-| `D3D12_BARRIER_SYNC_ALL_SHADING`                 |
-| `D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW` |
+| `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`                                    |
+|----------------------------------------------------------------------------|
+| `D3D12_BARRIER_SYNC_ALL`                                                   |
+| `D3D12_BARRIER_SYNC_VERTEX_SHADING`                                        |
+| `D3D12_BARRIER_SYNC_PIXEL_SHADING`                                         |
+| `D3D12_BARRIER_SYNC_COMPUTE_SHADING`                                       |
+| `D3D12_BARRIER_SYNC_VERTEX_SHADING`                                        |
+| `D3D12_BARRIER_SYNC_DRAW`                                                  |
+| `D3D12_BARRIER_SYNC_ALL_SHADING`                                           |
+| `D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW`                           |
+| `D3D12_BARRIER_SYNC_EMIT_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO` |
+| `D3D12_BARRIER_SYNC_RAYTRACING`                                            |
 
 | `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE` |
 |--------------------------------------------|
@@ -1156,14 +1161,16 @@ Some Access types require matching Sync.  For the following access bits, at leas
 | `D3D12_BARRIER_SYNC_DRAW`                 |
 | `D3D12_BARRIER_SYNC_DEPTH_STENCIL`        |
 
-| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE` |
-|----------------------------------------|
-| `D3D12_BARRIER_SYNC_ALL`               |
-| `D3D12_BARRIER_SYNC_VERTEX_SHADING`    |
-| `D3D12_BARRIER_SYNC_PIXEL_SHADING`     |
-| `D3D12_BARRIER_SYNC_COMPUTE_SHADING`   |
-| `D3D12_BARRIER_SYNC_DRAW`              |
-| `D3D12_BARRIER_SYNC_ALL_SHADING`       |
+| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`                       |
+|--------------------------------------------------------------|
+| `D3D12_BARRIER_SYNC_ALL`                                     |
+| `D3D12_BARRIER_SYNC_VERTEX_SHADING`                          |
+| `D3D12_BARRIER_SYNC_PIXEL_SHADING`                           |
+| `D3D12_BARRIER_SYNC_COMPUTE_SHADING`                         |
+| `D3D12_BARRIER_SYNC_DRAW`                                    |
+| `D3D12_BARRIER_SYNC_ALL_SHADING`                             |
+| `D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE` |
+| `D3D12_BARRIER_SYNC_RAYTRACING`                              |
 
 | `D3D12_BARRIER_ACCESS_STREAM_OUTPUT` |
 |--------------------------------------|
