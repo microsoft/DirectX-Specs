@@ -104,7 +104,7 @@ To adopt SFS, an application does the following:
 * Use a tiled texture (instead of a non-tiled texture), called a reserved texture resource in D3D12, for anything that needs to be streamed.
 * Along with each tiled texture, create a small "MinMip map" texture and small "feedback map" texture.
   * The MinMip map represents per-region mip level clamping values for the tiled texture; it represents what is actually loaded.
-  * The feedback map represents and per-region desired mip level for the tiled texture; it represents what needs to be loaded.
+  * The feedback map represents per-region desired mip level for the tiled texture; it represents what needs to be loaded.
 * Update the mip streaming engine to stream individual tiles instead of mips, using the feedback map contents to drive streaming decisions.
 * When tiles are made resident or nonresident by the streaming system, the corresponding texture's MinMip map must be updated to reflect the
 updated tile residency, which will clamp the GPU's accesses to that
