@@ -963,13 +963,37 @@ The following tables describe the Access types compatible with a given layout:
 | `D3D12_BARRIER_ACCESS_COPY_DEST`       |
 | `D3D12_BARRIER_ACCESS_COPY_SOURCE`     |
 
+| `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COMMON` |
+|--------------------------------------------|
+| `D3D12_BARRIER_ACCESS_COPY_SOURCE`         |
+| `D3D12_BARRIER_ACCESS_COPY_DEST`           |
+| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`     |
+| `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`    |
+
+| `D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COMMON` |
+|---------------------------------------------|
+| `D3D12_BARRIER_ACCESS_COPY_SOURCE`          |
+| `D3D12_BARRIER_ACCESS_COPY_DEST`            |
+| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`      |
+| `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`     |
+
 | `D3D12_BARRIER_LAYOUT_GENERIC_READ`        |
 |--------------------------------------------|
 | `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`     |
 | `D3D12_BARRIER_ACCESS_COPY_SOURCE`         |
-| `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ`  |
-| `D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE` |
-| `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE`      |
+
+| `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_GENERIC_READ` |
+|--------------------------------------------------|
+| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`           |
+| `D3D12_BARRIER_ACCESS_COPY_SOURCE`               |
+| `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ`        |
+| `D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE`       |
+| `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE`            |
+
+| `D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_GENERIC_READ` |
+|---------------------------------------------------|
+| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`            |
+| `D3D12_BARRIER_ACCESS_COPY_SOURCE`                |
 
 | `D3D12_BARRIER_LAYOUT_RENDER_TARGET` |
 |--------------------------------------|
@@ -978,6 +1002,14 @@ The following tables describe the Access types compatible with a given layout:
 | `D3D12_BARRIER_LAYOUT_UNORDERED_ACCESS` |
 |-----------------------------------------|
 | `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS` |
+
+| `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_UNORDERED_ACCESS` |
+|------------------------------------------------------|
+| `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`              |
+
+| `D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_UNORDERED_ACCESS` |
+|-------------------------------------------------------|
+| `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`               |
 
 | `D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_WRITE` |
 |--------------------------------------------|
@@ -992,13 +1024,37 @@ The following tables describe the Access types compatible with a given layout:
 |----------------------------------------|
 | `D3D12_BARRIER_ACCESS_SHADER_RESOURCE` |
 
+| `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_SHADER_RESOURCE` |
+|-----------------------------------------------------|
+| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`              |
+
+| `D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_SHADER_RESOURCE` |
+|------------------------------------------------------|
+| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`               |
+
 | `D3D12_BARRIER_LAYOUT_COPY_SOURCE` |
 |------------------------------------|
 | `D3D12_BARRIER_ACCESS_COPY_SOURCE` |
 
+| `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COPY_SOURCE` |
+|-------------------------------------------------|
+| `D3D12_BARRIER_ACCESS_COPY_SOURCE`              |
+
+| `D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COPY_SOURCE` |
+|--------------------------------------------------|
+| `D3D12_BARRIER_ACCESS_COPY_SOURCE`               |
+
 | `D3D12_BARRIER_LAYOUT_COPY_DEST` |
 |----------------------------------|
 | `D3D12_BARRIER_ACCESS_COPY_DEST` |
+
+| `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COPY_DEST` |
+|-----------------------------------------------|
+| `D3D12_BARRIER_ACCESS_COPY_DEST`              |
+
+| `D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COPY_DEST` |
+|------------------------------------------------|
+| `D3D12_BARRIER_ACCESS_COPY_DEST`               |
 
 | `D3D12_BARRIER_LAYOUT_RESOLVE_SOURCE` |
 |---------------------------------------|
@@ -1035,65 +1091,6 @@ The following tables describe the Access types compatible with a given layout:
 | `D3D12_BARRIER_LAYOUT_VIDEO_ENCODE_WRITE` |
 |-------------------------------------------|
 | `D3D12_BARRIER_ACCESS_VIDEO_ENCODE_WRITE` |
-
-| `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COMMON` |
-|--------------------------------------------|
-| `D3D12_BARRIER_ACCESS_COPY_SOURCE`         |
-| `D3D12_BARRIER_ACCESS_COPY_DEST`           |
-| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`     |
-| `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`    |
-
-| `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_GENERIC_READ` |
-|--------------------------------------------------|
-| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`           |
-| `D3D12_BARRIER_ACCESS_COPY_SOURCE`               |
-| `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ`        |
-| `D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE`       |
-| `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE`            |
-
-| `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_SHADER_RESOURCE` |
-|-----------------------------------------------------|
-| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`              |
-
-| `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_UNORDERED_ACCESS` |
-|------------------------------------------------------|
-| `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`              |
-
-| `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COPY_SOURCE` |
-|-------------------------------------------------|
-| `D3D12_BARRIER_ACCESS_COPY_SOURCE`              |
-
-| `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COPY_DEST` |
-|-----------------------------------------------|
-| `D3D12_BARRIER_ACCESS_COPY_DEST`              |
-
-| `D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COMMON` |
-|---------------------------------------------|
-| `D3D12_BARRIER_ACCESS_COPY_SOURCE`          |
-| `D3D12_BARRIER_ACCESS_COPY_DEST`            |
-| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`      |
-| `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`     |
-
-| `D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_GENERIC_READ` |
-|---------------------------------------------------|
-| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`            |
-| `D3D12_BARRIER_ACCESS_COPY_SOURCE`                |
-
-| `D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_UNORDERED_ACCESS` |
-|-------------------------------------------------------|
-| `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`               |
-
-| `D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_SHADER_RESOURCE` |
-|------------------------------------------------------|
-| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`               |
-
-| `D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COPY_SOURCE` |
-|--------------------------------------------------|
-| `D3D12_BARRIER_ACCESS_COPY_SOURCE`               |
-
-| `D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COPY_DEST` |
-|------------------------------------------------|
-| `D3D12_BARRIER_ACCESS_COPY_DEST`               |
 
 | `D3D12_BARRIER_LAYOUT_VIDEO_QUEUE_COMMON` |
 |-------------------------------------------|
