@@ -368,7 +368,7 @@ https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm
 If a pixel shader exports depth or stencil (for example, by writing SV_Depth or SV_StencilRef) then shading occurs at fine rate. That is to say, coarse shading is disabled.
 
 ## Using the Shading Rate Requested
-For all tiers, it is expected that if a shading rate is requested, and it is supported on the device-and-MSAA-level-combination together with the relevent rendering feature areas, then that is the shading rate delivered by the hardware.
+For all tiers, it is expected that if a shading rate is requested, and it is supported on the device-and-MSAA-level-combination together with the relevant rendering feature areas, then that is the shading rate delivered by the hardware.
 
 A requested shading rate means a shading rate computed as an output of the combiners (see section "Combining Shading Rate Factors").
 
