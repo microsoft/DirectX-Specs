@@ -2599,8 +2599,6 @@ Member                           | Definition
 
 ##### D3D12_GENERIC_PROGRAM_DESC
 
-> This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
-
 ```C++
 
 typedef struct D3D12_GENERIC_PROGRAM_DESC
@@ -2628,8 +2626,6 @@ NumSubobjects | Size of the `ppSubobjects` array.  If 0, that array is ignored a
 
 ##### Subobjects that can be listed in a generic program
 
-> This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
-
 Below are the [subobject types](#d3d12_state_subobject_type) that can be listed in a generic program.  These don't use subobject associations (which associate subobjects with shader exports) since it is likely that individual generic programs in a state object will mix and match these state objects. Thus they are simply listed in the generic program definition.
 
 - STREAM_OUTPUT
@@ -2655,8 +2651,6 @@ Subobjects not listed above, like **global root signatures** or **local root sig
 ---
 
 ##### Defaults for subobjects missing from a generic program
-
-> This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
 ###### Missing STREAM_OUTPUT
 
