@@ -361,8 +361,9 @@ if( $ifile_constants eq "" ) {die "No input constants file specified\n";}
             {
                 $SectionLabels{$linkDest} = "<a style=\"color: Gray\"><small><sup>\(broken link!\)</sup></small></a>";
             }
-        }
-        $String =~ s/([\w\s\(\)\/\-\.\#]*)$LinkSectionTag\[([\w\s\(\)\/\-\.\#]+)\]([\w\s\(\)\/\-\.\#]*)<\/([a|A])>/$1$3<\/$4>$SectionLabels{$2}/g;
+        }        
+        $String =~ s/([\w\s\(\)\/\-\.\#]*)$LinkSectionTag\[([\w\s\(\)\/\-\.\#]+)\]([\w\s\(\)\/\-\.\#&;]*)<\/([a|A])>/$1$3<\/$4>$SectionLabels{$2}/g;
+
         return $String;
     }
     

@@ -155,6 +155,17 @@ typedef struct D3D12_CONSTANT_BUFFER_VIEW
     UINT SizeInBytes;
     UINT Padding;
 } D3D12_CONSTANT_BUFFER_VIEW;
+
+typedef struct D3D12_DISPATCH_RAYS_DESC
+{
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE RayGenerationShaderRecord;
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE MissShaderTable;
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE HitGroupTable;
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE CallableShaderTable;
+    UINT Width;
+    UINT Height;
+    UINT Depth;
+} D3D12_DISPATCH_RAYS_DESC;
 ```
 
 ---
@@ -164,22 +175,24 @@ typedef struct D3D12_CONSTANT_BUFFER_VIEW
 Applications use the following API to create a command signature.
 
 ```C++
-typedef enum D3D12_INDIRECT_PARAMETER_TYPE
+typedef enum D3D12_INDIRECT_ARGUMENT_TYPE
 {
-    D3D12_INDIRECT_PARAMETER_DRAW,
-    D3D12_INDIRECT_PARAMETER_DRAW_INDEXED,
-    D3D12_INDIRECT_PARAMETER_DISPATCH,
-    D3D12_INDIRECT_PARAMETER_VERTEX_BUFFER_VIEW,
-    D3D12_INDIRECT_PARAMETER_INDEX_BUFFER_VIEW,
-    D3D12_INDIRECT_PARAMETER_CONSTANT,
-    D3D12_INDIRECT_PARAMETER_CONSTANT_BUFFER_VIEW,
-    D3D12_INDIRECT_PARAMETER_SHADER_RESOURCE_VIEW,
-    D3D12_INDIRECT_PARAMETER_UNORDERED_ACCESS_VIEW,
-} D3D12_INDIRECT_PARAMETER_TYPE;
+    D3D12_INDIRECT_ARGUMENT_TYPE_DRAW,
+    D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED,
+    D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH,
+    D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,
+    D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW,
+    D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT,
+    D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW,
+    D3D12_INDIRECT_ARGUMENT_TYPE_SHADER_RESOURCE_VIEW,
+    D3D12_INDIRECT_ARGUMENT_TYPE_UNORDERED_ACCESS_VIEW,
+    D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_RAYS,
+    D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH,
+} D3D12_INDIRECT_ARGUMENT_TYPE;
 
-typedef struct D3D12_INDIRECT_PARAMETER
+typedef struct D3D12_INDIRECT_ARGUMENT_DESC
 {
-    D3D12_INDIRECT_PARAMETER_TYPE Type;
+    D3D12_INDIRECT_ARGUMENT_TYPE Type;
     union
     {
         struct
@@ -209,15 +222,16 @@ typedef struct D3D12_INDIRECT_PARAMETER
             UINT RootParameterIndex;
         } UnorderedAccessView;
     };
-} D3D12_INDIRECT_PARAMETER;
+} D3D12_INDIRECT_ARGUMENT_DESC;
 
-typedef struct D3D12_COMMAND_SIGNATURE
+typedef struct D3D12_COMMAND_SIGNATURE_DESC
 {
     // The number of bytes between each drawing structure
-    UINT ByteStride;
-    UINT ParameterCount;
-    const D3D12_INDIRECT_PARAMETER* pParameters;
-} D3D12_COMMAND_SIGNATURE;
+    UINT ByteStride; 
+    UINT NumArgumentDescs;
+    [annotation("_Field_size_full_(NumArgumentDescs)")] const D3D12_INDIRECT_ARGUMENT_DESC* pArgumentDescs;
+    UINT NodeMask;
+} D3D12_COMMAND_SIGNATURE_DESC;
 
 HRESULT ID3D12Device::CreateCommandSignature(
     const D3D12_COMMAND_SIGNATURE* pDesc,
@@ -229,7 +243,7 @@ HRESULT ID3D12Device::CreateCommandSignature(
 
 The ordering of arguments within an indirect argument buffer is defined
 to exactly match the order of arguments specified in
-D3D12_COMMAND_SIGNATURE::pArguments. All of the arguments for 1
+D3D12_COMMAND_SIGNATURE::pArgumentDescs. All of the arguments for 1
 draw/dispatch call within an indirect argument buffer are tightly
 packed. However, applications are allowed to specify an arbitrary byte
 stride between draw/dispatch commands in an indirect argument buffer.
@@ -276,13 +290,13 @@ contains the 5 parameters passed to DrawIndexedInstanced (plus padding).
 The code to create the command signature description is:
 
 ```C++
-D3D12_INDIRECT_PARAMETER Args[1];
-Args[0].Type = D3D12_INDIRECT_PARAMETER_DRAW_INDEXED_INSTANCED;
+D3D12_INDIRECT_ARGUMENT_TYPE Args[1];
+Args[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED_INSTANCED;
 
 D3D12_COMMAND_SIGNATURE ProgramDesc;
 ProgramDesc.ByteStride = 36;
 ProgramDesc.ArgumentCount = 1;
-ProgramDesc.pArguments = Args;
+ProgramDesc.pArgumentDescs = Args;
 ```
 
 The layout of a single structure within an indirect argument buffer is:
@@ -307,19 +321,19 @@ non-indexed operation. There is no padding between structures.
 The code to create the command signature description is:
 
 ```C++
-D3D12_INDIRECT_PARAMETER Args[4];
-Args[0].Type = D3D12_INDIRECT_PARAMETER_CONSTANT;
+D3D12_INDIRECT_ARGUMENT_TYPE Args[4];
+Args[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
 Args[0].Constant.RootParameterIndex = 2;
-Args[1].Type = D3D12_INDIRECT_PARAMETER_CONSTANT;
+Args[1].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
 Args[1].Constant.RootParameterIndex = 6;
-Args[2].Type = D3D12_INDIRECT_PARAMETER_VERTEX_BUFFER;
+Args[2].Type = D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER;
 Args[2].VertexBuffer.VBSlot = 3;
-Args[3].Type = D3D12_INDIRECT_PARAMETER_DRAW_INSTANCED;
+Args[3].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INSTANCED;
 
 D3D12_COMMAND_SIGNATURE ProgramDesc;
 ProgramDesc.ByteStride = 40;
 ProgramDesc.ArgumentCount = 4;
-ProgramDesc.pArguments = Args;
+ProgramDesc.pArgumentDescs = Args;
 ```
 
 The layout of a single structure within the indirect argument buffer is:
@@ -343,13 +357,13 @@ Bytes 36:39|StartInstanceLocation
 The runtime will validate the following:
 
 - There is exactly 1 entry defining the draw/dispatch parameters
-    (either D3D12_INDIRECT_PARAMETER_DRAW_INSTANCED or
-    D3D12_INDIRECT_PARAMETER_DRAW_INDEXED_INSTANCED or
-    D3D12_INDIRECT_PARAMETER_DISPATCH). This entry must come last.
+    (either D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INSTANCED or
+    D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED_INSTANCED or
+    D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH). This entry must come last.
 
-- A D3D12_INDIRECT_PARAMETER_INDEX_BUFFER entry can only be
+- A D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER entry can only be
     present if there is also a
-    D3D12_INDIRECT_PARAMETER_DRAW_INDEXED_INSTANCED present.
+    D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED_INSTANCED present.
 
 - ByteStride is 4-byte aligned
 
@@ -372,7 +386,7 @@ The runtime will validate the following:
 - Root constant entries are sorted from smallest to largest
     DestOffsetIn32BitValues (including no overlap)
 
-- If D3D12_INDIRECT_PARAMETER_DISPATCH is used, then VB and IB
+- If D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH is used, then VB and IB
     bindings cannot be changed
 
 - The root signature is specified if and only if the command signature

@@ -772,7 +772,7 @@ struct D3D12_RESOURCE_DESC1
 
 ```
 
-The device and resource interface have been revised to be compatible with the revised resource description struct.
+The device and resource interfaces have been revised to be compatible with the revised resource description struct.
 
 ```
 
