@@ -2048,7 +2048,7 @@ struct D3D12_TEXTURE_BARRIER
 | `AccessAfter`  | Access bits corresponding with resource usage after the barrier completes. Can be a bitwise-or combination of multiple `D3D12_BARRIER_ACCESS` bits.                                             |
 | `LayoutBefore` | Layout of texture preceding the barrier execution.                                                                                                                                              |
 | `LayoutAfter`  | Layout of texture upon completion of barrier execution.                                                                                                                                         |
-| `pResource`    | Pointer to the buffer resource being using the barrier.                                                                                                                                         |
+| `pResource`    | Pointer to the texture resource being using the barrier.                                                                                                                                        |
 | `Subresources` | Range of texture subresources being barriered.                                                                                                                                                  |
 | `Flags`        | Optional flags values.                                                                                                                                                                          |
 
