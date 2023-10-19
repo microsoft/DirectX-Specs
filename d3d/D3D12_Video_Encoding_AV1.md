@@ -10,20 +10,113 @@ The next sections detail the API and DDI for video encoding. In many cases, the 
 
 # 3. Video Encoding API
 
-## 3.0 Rate control API
+## 3.0 Extensions to rate control API
+
+### 3.0.1 Rate control support flags
+
+```C++
+typedef enum D3D12_VIDEO_ENCODER_SUPPORT_FLAGS
+{
+    ...
+    D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_EXTENSION1_SUPPORT = 0x2000,
+    D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_QUALITY_VS_SPEED_AVAILABLE = 0x4000,
+} D3D12_VIDEO_ENCODER_SUPPORT_FLAGS;
+```
+
+*D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_EXTENSION1_SUPPORT*
+
+When enabled, indicates the use of `D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_EXTENSION1_SUPPORT` is available.
+
+*D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_QUALITY_VS_SPEED_AVAILABLE*
+
+Requires `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_EXTENSION1_SUPPORT`. When enabled, indicates the use of `D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_QUALITY_VS_SPEED` is available.
+
+### 3.0.2 Rate control flags
 
 ```C++
 typedef enum D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAGS
 {
     ...
-    D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_EXTENDED_QVBR1_SUPPORT = 0x40,
+    D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_EXTENSION1_SUPPORT = 0x40,
+    D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_QUALITY_VS_SPEED = 0x80,
 } D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAGS;
 ```
 
-*D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_EXTENDED_QVBR1_SUPPORT*
+*D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_EXTENSION1_SUPPORT*
 
-When using *D3D12_VIDEO_ENCODER_RATE_CONTROL.Mode=D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_QVBR* indicates when enabled that *D3D12_VIDEO_ENCODER_RATE_CONTROL_QVBR1* will be used in *D3D12_VIDEO_ENCODER_RATE_CONTROL_CONFIGURATION_PARAMS.pConfiguration_QVBR1*. If disabled app must use the legacy structure in pConfiguration_QVBR.
+Requires `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_EXTENSION1_SUPPORT`. Indicates when enabled that the extended rate control structures will be used in *D3D12_VIDEO_ENCODER_RATE_CONTROL_CONFIGURATION_PARAMS.pConfiguration_\* or legacy when disabled, as per table below.
 
+*When DISABLED:*
+
+| Rate control mode | D3D12_VIDEO_ENCODER_RATE_CONTROL_CONFIGURATION_PARAMS type | D3D12_VIDEO_ENCODER_RATE_CONTROL_CONFIGURATION_PARAMS DataSize |
+|--------------|-------------|-------------|
+| D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_ABSOLUTE_QP_MAP | NULL | 0 |
+| D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_CQP | D3D12_VIDEO_ENCODER_RATE_CONTROL_CQP | sizeof(D3D12_VIDEO_ENCODER_RATE_CONTROL_CQP) |
+| D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_CBR | D3D12_VIDEO_ENCODER_RATE_CONTROL_CBR | sizeof(D3D12_VIDEO_ENCODER_RATE_CONTROL_CBR) |
+| D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_VBR | D3D12_VIDEO_ENCODER_RATE_CONTROL_VBR | sizeof(D3D12_VIDEO_ENCODER_RATE_CONTROL_VBR) |
+| D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_QVBR | D3D12_VIDEO_ENCODER_RATE_CONTROL_QVBR | sizeof(D3D12_VIDEO_ENCODER_RATE_CONTROL_QVBR) |
+
+*When ENABLED:*
+
+| Rate control mode | D3D12_VIDEO_ENCODER_RATE_CONTROL_CONFIGURATION_PARAMS type | D3D12_VIDEO_ENCODER_RATE_CONTROL_CONFIGURATION_PARAMS DataSize |
+|--------------|-------------|-------------|
+| D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_ABSOLUTE_QP_MAP | D3D12_VIDEO_ENCODER_RATE_CONTROL_ABSOLUTE_QP_MAP | sizeof(D3D12_VIDEO_ENCODER_RATE_CONTROL_ABSOLUTE_QP_MAP) |
+| D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_CQP | D3D12_VIDEO_ENCODER_RATE_CONTROL_CQP1 | sizeof(D3D12_VIDEO_ENCODER_RATE_CONTROL_CQP1) |
+| D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_CBR | D3D12_VIDEO_ENCODER_RATE_CONTROL_CBR1 | sizeof(D3D12_VIDEO_ENCODER_RATE_CONTROL_CBR1) |
+| D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_VBR | D3D12_VIDEO_ENCODER_RATE_CONTROL_VBR1 | sizeof(D3D12_VIDEO_ENCODER_RATE_CONTROL_VBR1) |
+| D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_QVBR | D3D12_VIDEO_ENCODER_RATE_CONTROL_QVBR1 | sizeof(D3D12_VIDEO_ENCODER_RATE_CONTROL_QVBR1) |
+
+
+*D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_QUALITY_VS_SPEED*
+
+Requires `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_EXTENSION1_SUPPORT` and `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_QUALITY_VS_SPEED_AVAILABLE`. When enabled, indicates the use of `QualityVsSpeed` in the rate control structure.
+
+### 3.0.2 Extensions to rate control structures
+
+The following D3D12_VIDEO_ENCODER_RATE_CONTROL_* structures are added. `QualityVsSpeed` is added to all modes and `VBVCapacity`, `InitialVBVFullness` are added to QVBR1 in addition.
+
+`QualityVsSpeed` must be in the range [0, D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT1.MaxQualityVsSpeed]. The lower the value, the fastest the encode operation, similar as defined [in the MF API](https://learn.microsoft.com/en-us/windows/win32/directshow/avenccommonqualityvsspeed-property).
+
+The settings associated to each of the levels exposed by `QualityVsSpeed` must only refer to hardware/driver implementation optimizations and heuristics that **are not** related to specific codec configurations or encoding tools selection, which are already independently exposed in the D3D12 API to the user individually. Please note that other codec configurations and codec encoding tools exposed through this API may also affect quality and speed.
+
+```C++
+typedef struct D3D12_VIDEO_ENCODER_RATE_CONTROL_CQP1
+{
+    UINT ConstantQP_FullIntracodedFrame;
+    UINT ConstantQP_InterPredictedFrame_PrevRefOnly;
+    UINT ConstantQP_InterPredictedFrame_BiDirectionalRef;
+    UINT QualityVsSpeed;
+} D3D12_VIDEO_ENCODER_RATE_CONTROL_CQP1;
+```
+
+```C++
+typedef struct D3D12_VIDEO_ENCODER_RATE_CONTROL_CBR1
+{
+    UINT InitialQP;
+    UINT MinQP;
+    UINT MaxQP;
+    UINT64 MaxFrameBitSize;
+    UINT64 TargetBitRate;
+    UINT64 VBVCapacity;
+    UINT64 InitialVBVFullness;
+    UINT QualityVsSpeed;
+} D3D12_VIDEO_ENCODER_RATE_CONTROL_CBR1;
+```
+
+```C++
+typedef struct D3D12_VIDEO_ENCODER_RATE_CONTROL_VBR1
+{
+    UINT InitialQP;
+    UINT MinQP;
+    UINT MaxQP;
+    UINT64 MaxFrameBitSize;
+    UINT64 TargetAvgBitRate;
+    UINT64 PeakBitRate;
+    UINT64 VBVCapacity;
+    UINT64 InitialVBVFullness;
+    UINT QualityVsSpeed;
+} D3D12_VIDEO_ENCODER_RATE_CONTROL_VBR1;
+```
 
 ```C++
 typedef struct D3D12_VIDEO_ENCODER_RATE_CONTROL_QVBR1
@@ -37,12 +130,15 @@ typedef struct D3D12_VIDEO_ENCODER_RATE_CONTROL_QVBR1
     UINT64 VBVCapacity;
     UINT64 InitialVBVFullness;
     UINT ConstantQualityTarget;
+    UINT QualityVsSpeed;
 } D3D12_VIDEO_ENCODER_RATE_CONTROL_QVBR1;
 ```
 
-Extension of the existing *D3D12_VIDEO_ENCODER_RATE_CONTROL_QVBR* adding **VBVCapacity** and **InitialVBVFullness**.
-
-*D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_VBV_SIZES* applies here as to any other rate control mode with VBV Sizes/Fullness configurable.
+```C++
+typedef struct D3D12_VIDEO_ENCODER_RATE_CONTROL_ABSOLUTE_QP_MAP {
+    UINT QualityVsSpeed;
+} D3D12_VIDEO_ENCODER_RATE_CONTROL_ABSOLUTE_QP_MAP;
+```
 
 ```C++
 typedef struct D3D12_VIDEO_ENCODER_RATE_CONTROL_CONFIGURATION_PARAMS
@@ -51,26 +147,20 @@ typedef struct D3D12_VIDEO_ENCODER_RATE_CONTROL_CONFIGURATION_PARAMS
     union
     {
         ...
-        const D3D12_VIDEO_ENCODER_RATE_CONTROL_QVBR1* pConfiguration_QVBR1;
+        const D3D12_VIDEO_ENCODER_RATE_CONTROL_CQP *pConfiguration_CQP;
+        const D3D12_VIDEO_ENCODER_RATE_CONTROL_CBR *pConfiguration_CBR;
+        const D3D12_VIDEO_ENCODER_RATE_CONTROL_VBR *pConfiguration_VBR;
+        const D3D12_VIDEO_ENCODER_RATE_CONTROL_QVBR *pConfiguration_QVBR;
+
+        // Extension 1 structs
+        const D3D12_VIDEO_ENCODER_RATE_CONTROL_CQP1 *pConfiguration_CQP1;
+        const D3D12_VIDEO_ENCODER_RATE_CONTROL_CBR1 *pConfiguration_CBR1;
+        const D3D12_VIDEO_ENCODER_RATE_CONTROL_VBR1 *pConfiguration_VBR1;
+        const D3D12_VIDEO_ENCODER_RATE_CONTROL_QVBR1 *pConfiguration_QVBR1;
+        const D3D12_VIDEO_ENCODER_RATE_CONTROL_ABSOLUTE_QP_MAP* pConfiguration_AbsoluteQPMap;
     };
 } D3D12_VIDEO_ENCODER_RATE_CONTROL_CONFIGURATION_PARAMS;
 ```
-
-```C++
-typedef enum D3D12_VIDEO_ENCODER_SUPPORT_FLAGS
-{
-    ...
-    D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_EXTENDED_QVBR1_SUPPORT = 0x2000,
-} D3D12_VIDEO_ENCODER_SUPPORT_FLAGS;
-```
-
-*D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_EXTENDED_QVBR1_SUPPORT*
-
-When using *D3D12_VIDEO_ENCODER_RATE_CONTROL.Mode=D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_QVBR*, the following applies:
-
-If flag reported DISABLED apps always must use D3D12_VIDEO_ENCODER_RATE_CONTROL_QVBR in pConfiguration_QVBR/DataSize as usual.
-
-If flag reported ENABLED apps can pass either D3D12_VIDEO_ENCODER_RATE_CONTROL_QVBR (legacy) in pConfiguration_QVBR/DataSize or also pass D3D12_VIDEO_ENCODER_RATE_CONTROL_QVBR1 by also setting D3D12_VIDEO_ENCODER_RATE_CONTROL.Flags |= D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_EXTENDED_QVBR1_SUPPORT to indicate to use the new structure.
 
 ## 3.1. Video Encoding Support API
 
@@ -117,12 +207,29 @@ typedef enum D3D12_VIDEO_ENCODER_AV1_PROFILE
 ```
 
 **Remarks**
-    
-    Encode format AV1 support for:
-        DXGI_FORMAT_NV12 -> 8 bit YUV 4:2:0
-        DXGI_FORMAT_P010 -> 10 bit YUV 4:2:0
-    API Client sets accordingly the following syntax elements based on the DXGI_FORMAT used:
-        bit_depth_minus8, subsampling_x, subsampling_y
+
+Driver uses `D3D12_FEATURE_DATA_VIDEO_ENCODER_INPUT_FORMAT` to report optionally supported formats for a given input `D3D12_VIDEO_ENCODER_AV1_PROFILE` to the query.
+
+When a format is supported, the API Client sets accordingly the related AV1 syntax elements based on the `DXGI_FORMAT` used: `color_config()`, `high_bitdepth`, `twelve_bit`, `mono_chrome`, `subsampling_x`, `subsampling_y`, etc.
+
+The` DXGI_FORMAT`s are consistent with the AV1 DXVA decode counterpart spec.
+
+- `D3D12_VIDEO_ENCODER_AV1_PROFILE_MAIN` allows driver reporting support for:
+    - `DXGI_FORMAT_NV12` for 8-bit YUV 4:2:0
+    - `DXGI_FORMAT_P010` for 10-bit YUV 4:2:0
+    - `DXGI_FORMAT_R8_UNORM` for 8-bit monochrome
+    - `DXGI_FORMAT_R16_UNORM` for 10-bit monochrome
+- `D3D12_VIDEO_ENCODER_AV1_PROFILE_HIGH` also allows:
+    - `DXGI_FORMAT_AYUV` for 8-bit YUV 4:4:4
+    - `DXGI_FORMAT_Y410` for 10-bit YUV 4:4:4
+- `D3D12_VIDEO_ENCODER_AV1_PROFILE_PROFESSIONAL` also allows:
+    - `DXGI_FORMAT_YUY2` for 8-bit YUV 4:2:2
+    - `DXGI_FORMAT_Y210` for 10-bit YUV 4:2:2
+    - `DXGI_FORMAT_Y216` for 12-bit YUV 4:2:2
+    - `DXGI_FORMAT_Y416` for 12-bit YUV 4:4:4
+    - `DXGI_FORMAT_R16_UNORM` for 12-bit monochrome
+    - `DXGI_FORMAT_R16_UNORM` for 12-bit monochrome
+    - `DXGI_FORMAT_P016` for 12-bit YUV 4:2:0
 
 ### 3.1.4. UNION: D3D12_VIDEO_ENCODER_PROFILE_DESC
 
@@ -1042,7 +1149,7 @@ When using D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT1, indicates the subregions c
 
 ### 3.1.38. STRUCT: D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT1
 
-Extends on the previous D3D12_FEATURE_VIDEO_ENCODER_SUPPORT query, adding a new input parameter at the end of the associated data structure. This new query can be used with all H264, HEVC and AV1 codecs and must behave exactly as D3D12_FEATURE_VIDEO_ENCODER_SUPPORT semantics.
+Extends on the previous D3D12_FEATURE_VIDEO_ENCODER_SUPPORT query, adding new parameters at the bottom of the associated data structure. This new query can be used with all H264, HEVC and AV1 codecs and must behave exactly as D3D12_FEATURE_VIDEO_ENCODER_SUPPORT semantics.
 
 Please note the previous D3D12_FEATURE_VIDEO_ENCODER_SUPPORT **will not work for AV1 codec** as *Codec* input, and attempting to call it for AV1 will still return S_OK with **ValidationFlags=D3D12_VIDEO_ENCODER_VALIDATION_FLAG_CODEC_NOT_SUPPORTED** and print a debug layer message indicating to instead use the new D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT1 instead.
 
@@ -1069,6 +1176,7 @@ typedef struct D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT1
 
     /* Below are new arguments for D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT1 */
     D3D12_VIDEO_ENCODER_PICTURE_CONTROL_SUBREGIONS_LAYOUT_DATA SubregionFrameEncodingData; // input
+    UINT MaxQualityVsSpeed;// output
 } D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT1;
 ```
 
@@ -1078,6 +1186,9 @@ typedef struct D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT1
 
 Used to calculate D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT1.SuggestedLevel in codecs that have subregions constraints per level and used for related validation with the new flag D3D12_VIDEO_ENCODER_VALIDATION_FLAG_SUBREGION_LAYOUT_DATA_NOT_SUPPORTED.
 
+*MaxQualityVsSpeed*
+
+Reported by driver. Used as the maximum value allowed for the `QualityVsSpeed` parameter in the rate control structures. When `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_QUALITY_VS_SPEED_AVAILABLE` is not reported, this value must be reported as zero.
 
 ### 3.1.39. STRUCT: D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOLUTION_SUPPORT_LIMITS
 ```C++
@@ -1170,6 +1281,8 @@ Similarly, if spatial scalability is supported, the different resolutions of the
 ### **Rate control notes**
 
 The accepted range for D3D12_VIDEO_ENCODER_RATE_CONTROL_QVBR.ConstantQualityTarget is [0..63]. The lowest the value, the highest the quality.
+
+In general, `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_RECONFIGURATION_AVAILABLE` applies to the quality vs speed tweaking and the following RC parameters of the different RC modes: QP in constant QP, bitrates and quality levels in CBR, VBR and QVBR. Driver can return `D3D12_VIDEO_ENCODER_ENCODE_ERROR_FLAG_RECONFIGURATION_REQUEST_NOT_SUPPORTED` in `D3D12_VIDEO_ENCODER_OUTPUT_METADATA.EncodeErrorFlags` for other unsupported RC params reconfiguration. 
 
 ## 4.1 Encoding Operation API
 
@@ -1432,11 +1545,11 @@ Related to AV1 syntax loop_filter_level[0], loop_filter_level[1]
 
 *LoopFilterLevelU*
 
-Related to AV1 syntax loop_filter_level[1]
+Related to AV1 syntax loop_filter_level[2]
 
 *LoopFilterLevelV*
 
-Related to AV1 syntax loop_filter_level[2]
+Related to AV1 syntax loop_filter_level[3]
 
 *LoopFilterSharpnessLevel*
 
