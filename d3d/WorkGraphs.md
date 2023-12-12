@@ -1,5 +1,5 @@
 <h1>D3D12 Work Graphs</h1>
-v0.46 10/5/2023
+v0.49 12/7/2023
 
 > To see the state the spec was in for the June 2023 Work Graphs preview, see the archived v0.43 spec [here](https://github.com/microsoft/DirectX-Specs/blob/preview-2023-06/d3d/WorkGraphs.md).
 > The [Change log](#change-log) in this document shows changes since then on the path to future final (non-preview) release.
@@ -77,7 +77,7 @@ v0.46 10/5/2023
   - [Device methods](#device-methods)
     - [CheckFeatureSupport Structures](#checkfeaturesupport-structures)
     - [CheckFeatureSupport](#checkfeaturesupport)
-      - [D3D12\_FEATURE\_D3D12\_OPTIONS\_EXPERIMENTAL](#d3d12_feature_d3d12_options_experimental)
+      - [D3D12\_FEATURE\_D3D12\_OPTIONS21](#d3d12_feature_d3d12_options21)
       - [D3D12\_WORK\_GRAPHS\_TIER](#d3d12_work_graphs_tier)
     - [CreateStateObject](#createstateobject)
       - [CreateStateObject Structures](#createstateobject-structures)
@@ -102,22 +102,6 @@ v0.46 10/5/2023
         - [D3D12\_DRAW\_LAUNCH\_OVERRIDES](#d3d12_draw_launch_overrides)
         - [D3D12\_DRAW\_INDEXED\_LAUNCH\_OVERRIDES](#d3d12_draw_indexed_launch_overrides)
         - [D3D12\_DISPATCH\_MESH\_LAUNCH\_OVERRIDES](#d3d12_dispatch_mesh_launch_overrides)
-        - [D3D12\_GENERIC\_PROGRAM\_DESC](#d3d12_generic_program_desc)
-        - [Subobjects that can be listed in a generic program](#subobjects-that-can-be-listed-in-a-generic-program)
-        - [Defaults for subobjects missing from a generic program](#defaults-for-subobjects-missing-from-a-generic-program)
-          - [Missing STREAM\_OUTPUT](#missing-stream_output)
-          - [Missing BLEND](#missing-blend)
-          - [Missing SAMPLE\_MASK](#missing-sample_mask)
-          - [Missing RASTERIZER](#missing-rasterizer)
-          - [Missing INPUT\_LAYOUT](#missing-input_layout)
-          - [Missing INDEX\_BUFFER\_STRIP\_CUT\_VALUE](#missing-index_buffer_strip_cut_value)
-          - [Missing PRIMITIVE\_TOPOLOGY](#missing-primitive_topology)
-          - [Missing RENDER\_TARGET\_FORMATS](#missing-render_target_formats)
-          - [Missing DEPTH\_STENCIL\_FORMAT](#missing-depth_stencil_format)
-          - [Missing SAMPLE\_DESC](#missing-sample_desc)
-          - [Missing VIEW\_INSTANCING](#missing-view_instancing)
-          - [Missing FLAGS](#missing-flags)
-          - [Missing DEPTH\_STENCIL or DEPTH\_STENCIL1 or DEPTH\_STENCIL2](#missing-depth_stencil-or-depth_stencil1-or-depth_stencil2)
     - [CreateVertexBufferView](#createvertexbufferview)
     - [CreateDescriptorHeap](#createdescriptorheap)
     - [AddToStateObject](#addtostateobject)
@@ -161,7 +145,6 @@ v0.46 10/5/2023
 - [HLSL](#hlsl)
   - [Shader target](#shader-target)
   - [Shader function attributes](#shader-function-attributes)
-    - [Reusing shader entries](#reusing-shader-entries)
   - [Node Shader Parameters](#node-shader-parameters)
     - [Node Shader system values](#node-shader-system-values)
   - [Record struct](#record-struct)
@@ -234,7 +217,7 @@ v0.46 10/5/2023
     - [D3D12DDICAPS\_TYPE\_OPTIONS\_0108](#d3d12ddicaps_type_options_0108)
     - [D3D12DDI\_OPTIONS\_0108](#d3d12ddi_options_0108)
     - [D3D12DDI\_WORK\_GRAPHS\_TIER](#d3d12ddi_work_graphs_tier)
-  - [Experimental DDI function table](#experimental-ddi-function-table)
+  - [DDI function tables](#ddi-function-tables)
     - [PFND3D12DDI\_GET\_PROGRAM\_IDENTIFIER\_0108](#pfnd3d12ddi_get_program_identifier_0108)
     - [PFND3D12DDI\_GET\_WORK\_GRAPH\_MEMORY\_REQUIREMENTS\_0108](#pfnd3d12ddi_get_work_graph_memory_requirements_0108)
     - [PFND3D12DDI\_SET\_PROGRAM\_0108](#pfnd3d12ddi_set_program_0108)
@@ -273,6 +256,29 @@ v0.46 10/5/2023
     - [D3D12DDI\_DRAW\_LAUNCH\_PROPERTIES\_0108](#d3d12ddi_draw_launch_properties_0108)
     - [D3D12DDI\_DRAW\_INDEXED\_LAUNCH\_PROPERTIES\_0108](#d3d12ddi_draw_indexed_launch_properties_0108)
     - [D3D12DDI\_DISPATCH\_MESH\_LAUNCH\_PROPERTIES\_0108](#d3d12ddi_dispatch_mesh_launch_properties_0108)
+- [Generic programs](#generic-programs)
+  - [Supported shader targets](#supported-shader-targets)
+    - [Default shader entrypoint names](#default-shader-entrypoint-names)
+  - [Resource binding](#resource-binding)
+  - [CreateStateObject structures for generic programs](#createstateobject-structures-for-generic-programs)
+    - [D3D12\_DXIL\_LIBRARY\_DESC](#d3d12_dxil_library_desc)
+    - [D3D12\_EXPORT\_DESC](#d3d12_export_desc)
+    - [D3D12\_GENERIC\_PROGRAM\_DESC](#d3d12_generic_program_desc)
+    - [Subobjects that can be listed in a generic program](#subobjects-that-can-be-listed-in-a-generic-program)
+    - [Defaults for subobjects missing from a generic program](#defaults-for-subobjects-missing-from-a-generic-program)
+      - [Missing STREAM\_OUTPUT](#missing-stream_output)
+      - [Missing BLEND](#missing-blend)
+      - [Missing SAMPLE\_MASK](#missing-sample_mask)
+      - [Missing RASTERIZER](#missing-rasterizer)
+      - [Missing INPUT\_LAYOUT](#missing-input_layout)
+      - [Missing INDEX\_BUFFER\_STRIP\_CUT\_VALUE](#missing-index_buffer_strip_cut_value)
+      - [Missing PRIMITIVE\_TOPOLOGY](#missing-primitive_topology)
+      - [Missing RENDER\_TARGET\_FORMATS](#missing-render_target_formats)
+      - [Missing DEPTH\_STENCIL\_FORMAT](#missing-depth_stencil_format)
+      - [Missing SAMPLE\_DESC](#missing-sample_desc)
+      - [Missing VIEW\_INSTANCING](#missing-view_instancing)
+      - [Missing FLAGS](#missing-flags)
+      - [Missing DEPTH\_STENCIL or DEPTH\_STENCIL1 or DEPTH\_STENCIL2](#missing-depth_stencil-or-depth_stencil1-or-depth_stencil2)
 - [Change log](#change-log)
 
 ---
@@ -484,7 +490,7 @@ The system manages input data arriving at a node to generate a set of shader lau
 
 The semantics of how nodes inputs are handled may be configurable over time.  This might imply various types of queueing happening in the implementation - how this is done is opaque / owned by the driver.  There is flexibility for how backing storage for node inputs is handled, discussed [later](#backing-memory)
 
-The sequence that records get consumed / deuqued at a node is unordered / unpredictable.  This provides maximum flexibility for implementations.  
+The sequence that records get consumed / dequed at a node is unordered / unpredictable.  This provides maximum flexibility for implementations.  
 
 Independent of this unordered dequeueing, the order that records are enqueued is also unordered.  Input order is unpredictable simply because input can arrive from multiple GPU sources/threads running concurrently.  
 
@@ -1449,7 +1455,7 @@ Putting that all together, the limit on nodes in the graph is enforced with the 
 
 > One possibility is implementations could tolerate a graph with a massive number of nodes just fine, as long as many of the nodes are at the same depth in the graph. In support of this, there is a hard constraint on graph depth as a way to limit implementation complexity.  
 
-The longest chain of nodes cannot exceed `32`.  Nodes that target themselves recursively count against this limit by their maximum declared recursion level.
+The longest chain of nodes cannot exceed `32` (`#define D3D12_WORK_GRAPHS_MAX_NODE_DEPTH 32`).  Nodes that target themselves recursively count against this limit by their maximum declared recursion level.
 
 ---
 
@@ -1660,11 +1666,11 @@ Thus, given work completion is trivial to guarantee, an implementation need only
 
 # Discovering device support for work graphs
 
-See `WorkGraphsTier` in [D3D12_FEATURE_D3D12_OPTIONS_EXPERIMENTAL](#d3d12_feature_d3d12_options_experimental).
+See `WorkGraphsTier` in [D3D12_FEATURE_D3D12_OPTIONS21](#d3d12_feature_d3d12_options21).
 
-Given this feature is currently experimental, before device creation apps must call `D3D12EnableExperimentalFeatures()`, enabling both `D3D12StateObjectsExperiment` and `D3D12ExperimentalShaderModels`. Further, the system must have develper mode enabled.
+Currently before device creation apps must call `D3D12EnableExperimentalFeatures()` enabling `D3D12ExperimentalShaderModels` until shader model 6.8 is finalized. Additionally the system must have develper mode enabled for now.
 
-Once all these conditions are met, and the driver supports work graphs in experimental form, `WorkGraphsTier` will show support for the feature.
+Once these conditions are met, and the driver supports work graphs, `WorkGraphsTier` will show support for the feature.
 
 ---
 
@@ -1840,10 +1846,6 @@ struct MyPSInput
 // node could be launched directly from DispatchNodes(), without going through one or more compute 
 // nodes.
 //
-// The presence of the DispatchNodeInputRecord<> declaration is also optional.  If absent, the vertex shader
-// doesn't care about receiving the contents of that input record (but the record still must exist,
-// so that the system knows how many instances and vertices, etc. to launch in the draw).
-//
 // Note that there is no special interaction with the index or vertex buffer "handles" contained in
 // the input record.  The handles are part of the input record, but there is nothing to do with them
 // because the normal Input Assembler pipeline stage still functions for this node.
@@ -1892,16 +1894,12 @@ struct MyDispatchMeshData
 // node could be launched directly from DispatchNodes(), without going through one or more compute 
 // nodes.
 //
-// The presence of the NodeInputRecord<> declaration is also optional.  If absent, the mesh shader
-// doesn't care about receiving the contents of that input record (but the record still must exist,
-// so that the system knows how many thread-groups to launch in the dispatch).
-//
 [NodeID("meshMaterial",2)]
 [NodeLaunch("dispatchmesh")]
 [OutputTopology("triangle")]
 [NumThreads(1, 1, 1)]
 void MyMeshShader(
-  NodeInputRecord<MyDispatchMeshData> nodeInput,
+  DispatchNodeInputRecord<MyDispatchMeshData> nodeInput,
   out vertices MyPSInput verts[3],
   out indices uint3 tris[1])
 {
@@ -1985,27 +1983,25 @@ HRESULT CheckFeatureSupport(
 
 This isn't a work graphs specific API, just the generic D3D API for
 querying feature support. To query for work graphs support, pass
-`D3D12_FEATURE_D3D12_OPTIONS_EXPERIMENTAL` for Feature, and point
-pFeatureSupportData to a [D3D12_FEATURE_D3D12_OPTIONS_EXPERIMENTAL](#d3d12_feature_d3d12_options_experimental)
+`D3D12_FEATURE_D3D12_OPTIONS21` for Feature, and point
+pFeatureSupportData to a [D3D12_FEATURE_D3D12_OPTIONS21](#d3d12_feature_d3d12_options21)
 variable. This has a member [D3D12_WORK_GRAPHS_TIER](#d3d12_work_graphs_tier) WorkGrapshTier.
 
 ---
 
-#### D3D12_FEATURE_D3D12_OPTIONS_EXPERIMENTAL
+#### D3D12_FEATURE_D3D12_OPTIONS21
 
 ```C++
-// D3D12_FEATURE_D3D12_OPTIONS_EXPERIMENTAL
-typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS_EXPERIMENTAL
+// D3D12_FEATURE_D3D12_OPTIONS21
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS21
 {
-    ...
     [annotation("_Out_")] D3D12_WORK_GRAPHS_TIER WorkGraphsTier;
-} D3D12_FEATURE_DATA_D3D12_OPTIONS_EXPERIMENTAL;
+    ...
+} D3D12_FEATURE_DATA_D3D12_OPTIONS_21;
 ```
 
 This is the D3D12 options struct that reports WorkGraphsTier, the work graphs support level. See
 [D3D12_WORK_GRAPHS_TIER](#d3d12_work_graphs_tier).
-
-> When this feature goes out of experimental phase, the tier enum will move into a non-experimental `OPTIONS` struct.
 
 ---
 
@@ -2633,191 +2629,6 @@ Member                           | Definition
 
 ---
 
-##### D3D12_GENERIC_PROGRAM_DESC
-
-```C++
-
-typedef struct D3D12_GENERIC_PROGRAM_DESC
-{
-    LPCWSTR ProgramName;
-
-    UINT NumExports;
-    [annotation("_In_reads_(NumExports)")] LPCWSTR* pExports;
-
-    UINT    NumSubobjects;
-    [annotation("_In_reads_opt_(NumSubobjects)")] const D3D12_STATE_SUBOBJECT* const* ppSubobjects;
-} D3D12_GENERIC_PROGRAM_DESC;
-
-```
-
-Parameter                           | Definition
----------                           | ----------
-`ProgramName`  | Name of the generic program in the state object.  This can be used in APIs that need to reference generic program definitions, like [GetProgramIdentifier()](#getprogramidentifier), and within work graphs via [graphics nodes](#d3d12_program_node).
-NumExports | Size of the `pExports` array.  If 0, that array is ignored and can be null.
-`pExports` | Array of shader entrypoints to use in the program.  Collectively they must make sense to be used together.  There must be either a vertex shader or a mesh shader, as well as any other desired shaders that can go with them.
-NumSubobjects | Size of the `ppSubobjects` array.  If 0, that array is ignored and can be null.
-`ppSubobjects` | Array of pointers to subobjects to include in the program.  This can any of the [subobjects that can be listed in a generic program](#subobjects-that-can-be-listed-in-a-generic-program) that are needed.  For example `INPUT_LAYOUT`, `BLEND` etc.
-
----
-
-##### Subobjects that can be listed in a generic program
-
-Below are the [subobject types](#d3d12_state_subobject_type) that can be listed in a generic program.  These don't use subobject associations (which associate subobjects with shader exports) since it is likely that individual generic programs in a state object will mix and match these state objects. Thus they are simply listed in the generic program definition.
-
-- STREAM_OUTPUT
-- BLEND
-- SAMPLE_MASK
-- RASTERIZER
-- INPUT_LAYOUT
-- INDEX_BUFFER_STRIP_CUT_VALUE
-- PRIMITIVE_TOPOLOGY
-- RENDER_TARGET_FORMATS
-- DEPTH_STENCIL_FORMAT
-- SAMPLE_DESC
-- VIEW_INSTANCING
-- FLAGS
-- DEPTH_STENCIL
-- DEPTH_STENCIL1
-- DEPTH_STENCIL2
-
-See [D3D12_STATE_SUBOBJECT_TYPE](#d3d12_state_subobject_type) for the definitions of these subobjects.  There are also [defaults for subobjects missing from a generic program](#defaults-for-subobjects-missing-from-a-generic-program).
-
-Subobjects not listed above, like **global root signatures** or **local root signatures**, are associated with shaders directly using subobject to export associations (defined in the DXR spec including rules for default associations).  If any of these subobjects like local root signatures are associated with multiple shaders in a generic program, the subobjects must match for any shaders that use them.
-
----
-
-##### Defaults for subobjects missing from a generic program
-
-###### Missing STREAM_OUTPUT
-
-When stream output is not present in a generic program it is disabled as if the following values:
-
-```C++
-    *pSODeclaration = nullptr;
-    NumEntries = 0;
-    *pBufferStrides = nullptr;
-    NumStrides = 0;
-    RasterizedStream = 0;
-```
-
-###### Missing BLEND
-
-BLEND default parameter values:
-
-```C++
-    AlphaToCoverageEnable =	FALSE;
-    IndependentBlendEnable = FALSE;
-    RenderTarget[0].BlendEnable = FALSE;
-    RenderTarget[0].LogicOpEnable =	FALSE;
-    RenderTarget[0].SrcBlend = D3D12_BLEND_ONE;
-    RenderTarget[0].DestBlend = D3D12_BLEND_ZERO;
-    RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
-    RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
-    RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
-    RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-    RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
-    RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-```
-
-###### Missing SAMPLE_MASK
-
-The default value is `UINT_MAX`.
-
-###### Missing RASTERIZER
-
-Default parameter values:
-
-```C++
-    FillMode = D3D12_FILL_MODE_SOLID;  
-    CullMode = D3D12_CULL_MODE_BACK;  
-    FrontCounterClockwise = FALSE;  
-    DepthBias = D3D12_DEFAULT_DEPTH_BIAS;  
-    DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;  
-    SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;  
-    DepthClipEnable = TRUE;  
-    MultisampleEnable = FALSE;  
-    AntialiasedLineEnable = FALSE;  
-    ForcedSampleCount = 0;  
-    ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;  
-```
-
-###### Missing INPUT_LAYOUT
-
-The default is no input buffers, which might be used for:
-
-- a pipeline without the Input Assembler
-- a pipline with the Input Assembler, and the shader uses ID system values to identify vertices and manually fetch data.
-  
-```C++
-    *pInputElementDescs = nullptr;
-    NumElements = 0;
-```
-
-###### Missing INDEX_BUFFER_STRIP_CUT_VALUE
-
-The default value is `D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED`.
-
-###### Missing PRIMITIVE_TOPOLOGY
-
-The default value is `D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED`. For graphics state, an unspecified primitive topology will fail state object creation.
-
-###### Missing RENDER_TARGET_FORMATS
-
-The default value used is no render target.
-
-```C++
-    NumRenderTargets = 0;
-```
-
-###### Missing DEPTH_STENCIL_FORMAT
-
-The default value is no depth stencil target.
-
-###### Missing SAMPLE_DESC
-
-SAMPLE_DESC default parameter values:
-
-```C++
-    Count = 1;
-    Quality = 0;
-```
-
-###### Missing VIEW_INSTANCING
-
- VIEW_INSTANCING default parameter values:
-
-```C++
-    ViewInstanceCount = 0;
-    pViewInstanceLocations = nullptr;
-    Flags = D3D12_VIEW_INSTANCING_FLAG_NONE;
-```
-
-###### Missing FLAGS
-
- The default is `D3D12_PIPELINE_STATE_FLAG_NONE`.
-
-###### Missing DEPTH_STENCIL or DEPTH_STENCIL1 or DEPTH_STENCIL2
-
-DEPTH_STENCIL_DESC2 default parameter values:
-
-```C++
-    DepthEnable = TRUE;
-    DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-    DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-    StencilEnable = FALSE;
-    StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
-    StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
-    const D3D12_DEPTH_STENCILOP_DESC defaultStencilOp =
-    { D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_COMPARISON_FUNC_ALWAYS };
-    FrontFace = defaultStencilOp;
-    BackFace = defaultStencilOp;
-    DepthBoundsTestEnable = FALSE;
-```
-
-> If there is no DEPTH_STENCIL_DESC*, DEPTH_STENCIL_DESC2 is be used as the default. If DESC or DESC1 is specified, the runtime upconverts to DESC2 for the driver, with missing entries filled with their individual defaults.
-
----
-
 ### CreateVertexBufferView
 
 > This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
@@ -2918,7 +2729,7 @@ Work graph specific rules:
 - Adding nodes to an existing work graph in a state object is accomplished by passing a new work graph definition to `AddToStateObject`, whose name matches the existing one, with just the new nodes listed in it.  If the program name is unique in the state object, that means an entirely new work graph is being added (perhaps reusing some existing/new shaders), and later additions can be done to that as well.
 - Ways additions can fit onto to an existing graph
   - Filling holes in output node array ranges of the graph, where [[AllowSparseNodes]](#node-output-attributes) or `[UnboundedSparseNodes]` is specified on the output array.
-  - Adding new entrypoint nodes
+  - Adding new entrypoint nodes.  The entrypoint index of existing nodes, as reported by [GetEntrypointIndex()](#getentrypointindex), remain unchanged. New entrypoints will have entrypoint index values that continue past existing entrypoints.
   - Any of the above additions can be a graph of nodes in itself, like adding a subgraph to the overall graph.
   - New nodes can output to existing nodes in the graph, as long as the graph addition doesn't cause the maximum depth from an entrypoint of of any existing node to increase.
   - NodeIDs of new nodes must not exist in any previous version of the graph.
@@ -3514,6 +3325,8 @@ Shaders at nodes are currently only compute shaders authored in a library, targe
 
 The attribute name `"Shader"` is case insensitive.  The string must be lowercase.
 
+Shaders used for generic programs support shader model 6.0+ (e.g. vs_6_X, ps_6_X, cs_6_X ...etc) and doesn't currently support lib targets.
+
 ---
 
 ## Shader function attributes
@@ -3535,56 +3348,6 @@ attribute                     | required | description
 `[NodeDispatchGrid(x,y,z)]`|N (`BroadcastingLaunch` must have this or `NodeMaxDispatchGrid`)|Define the number of thread groups to launch for a `BroadcastingLaunch` node. In its absence, the [node definition](#d3d12_node) must declare it, or it must appear as [SV_DispatchGrid](#sv_dispatchgrid) in the input record - dynamic dispatch grid size.  If the declaration appears in both the shader and the node definition, the definition in the node overrides. This attribute cannot be used if the launch mode is not `BroadcastingLaunch`.  The uint `x` `y` and `z` parameters individually cannot exceed 65535, and `x*y*z` cannot exceed 2^24-1 (16,777,215).
 `[NodeMaxDispatchGrid(x,y,z)]`|N (`BroadcastingLaunch` must have this or `MaxDispatchGrid`)| Declares the maximum dispatch grid size when the input record includes [SV_DispatchGrid](#sv_dispatchgrid) - dynamic dispatch grid size.  This attribute cannot be specified if the dispatch grid size is not dynamic or if the launch mode is not `BroadcastingLaunch`. If the declaration appears in both the shader and the node definition, the definition in the node overrides.   The uint `x` `y` and `z` parameters individually cannot exceed 65535, and `x*y*z` cannot exceed 2^24-1 (16,777,215).
 `[NodeMaxRecursionDepth(count)]`|N|`uint count` indicates the maximum depth of recursion of the current node.  This attribute is required when the shader is used in such a way that the NodeID for one of its outputs is the same ID as the node itself.  If no output node name matches the current node name, including via renaming of output NodeID or shader's NodeID, recursion is not actually happening, and this MaxRecursion declaration doesn't apply.  Setting this to 0 is the equivalent of not specifying this attribute - no recursion.  To help shader code know where it is in recursion, there are a couple of options: [Node output IsValid() method](#node-output-isvalid-method) and [GetRemainingRecursionLevels()](#getremainingrecursionlevels).
-
----
-
-### Reusing shader entries
-
-In HLSL, shader entry functions are callable as normal functions within shaders as long as the functions do not recurse. This code re-use enables adding work graphs support to existing compute shaders by calling the compute shader entry from a node shader entry as shown in the example below:
-
-```C++
-[Shader("compute")]
-[NumThreads(8,8,1)]
-void CSMain(uint3 DTID : SV_DispatchThreadID) {
-    ...
-}
-
-[Shader("node")]
-[NumThreads(8,8,1)]
-[NodeDispatchGrid(32,1,1)]
-void NodeMain(uint3 DTID : SV_DispatchThreadID, EmptyNodeInput In) {
-    CSMain(DTID.xzz);
-}
-```
-
-When calling a shader entry that takes parameters with semantic annotations, the parameter value provided at the call site is passed to the function not the specified semantic value. In the example above the dispatch thread ID passed to `CSMain` is overridden with a swizzle of the actual `SV_DispatchThreadID` (likely a bug, but illustrates the concept).
-
-Calling shader entry points inside a shader can increase the final size of the generated DXIL because the entry point will get duplicated when it is inlined to the call site. To reduce this overhead in the case described above a small refactoring can be applied and the `[NoInline]` attribute can be used. For example:
-
-```C++
-
-// CSMain becomes a standalone function MainImpl
-[NoInline] void MainImpl(uint3 DTID) {
-    // body of CSMain
-}
-
-[Shader("compute")]
-[NumThreads(8,8,1)]
-void CSMain(uint3 DTID : SV_DispatchThreadID) {
-    MainImpl(DTID);
-}
-
-[Shader("node")]
-[NumThreads(8,8,1)]
-[NodeDispatchGrid(32,1,1)]
-void NodeMain(uint3 DTID : SV_DispatchThreadID, EmptyNodeInput In) {
-    MainImpl(DTID.xzz);
-}
-```
-
-The `[NoInline]` attribute applied to `MainImpl` prevents it from being inlined into the `NodeMain` entry or the `CSMain` entry until code generation by the driver. The `[NoInline]` attribute should work for trivial cases as in the above example, but may not work on more complicated cases due to fragility in DXC. Please use it carefully and report bugs if you encounter them.
-
----
 
 ## Node Shader Parameters
 
@@ -5065,7 +4828,7 @@ define void @myNode() {
 
 Work graph support is advertised via [DDI for reporting work graph support](#ddi-for-reporting-work-graph-support).
 
-Work graph related DDI functions are listed in [Experimental DDI function table](#experimental-ddi-function-table), with links to other related structures.
+Work graph related DDI functions are listed in [DDI function tables](#ddi-function-tables), with links to other related structures.
 
 Work graph related state object creation related structures are listed in [DDI state object creation related structures and enums](#ddi-state-object-creation-related-structures-and-enums).
 
@@ -5121,16 +4884,22 @@ See details in the API equivalent: [D3D12_WORK_GRAPHS_TIER](#d3d12_work_graphs_t
 
 ---
 
-## Experimental DDI function table
+## DDI function tables
 
 ```C++
-typedef struct D3D12DDI_EXPERIMENT_FUNCS_0108
+typedef struct D3D12DDI_DEVICE_FUNCS_CORE_0108
 {
+    ...
     PFND3D12DDI_GET_PROGRAM_IDENTIFIER_0108                pfnGetProgramIdentifier;
     PFND3D12DDI_GET_WORK_GRAPH_MEMORY_REQUIREMENTS_0108    pfnGetWorkGraphMemoryRequirements;
+} D3D12DDI_DEVICE_FUNCS_CORE_0108;
+
+typedef struct D3D12DDI_COMMAND_LIST_FUNCS_3D_0108
+{
+    ...
     PFND3D12DDI_SET_PROGRAM_0108                           pfnSetProgram;
     PFND3D12DDI_DISPATCH_GRAPH_0108                        pfnDispatchGraph;
-} D3D12DDI_EXPERIMENT_FUNCS_0108;
+} D3D12DDI_COMMAND_LIST_FUNCS_3D_0108;
 ```
 
 Member                              | Definition
@@ -5140,9 +4909,7 @@ Member                              | Definition
 `pfnSetProgram`  | See [PFND3D12DDI_SET_PROGRAM_0108](#pfnd3d12ddi_set_program_0108).
 `pfnDispatchGraph` | See [PFND3D12DDI_DISPATCH_GRAPH_0108](#pfnd3d12ddi_dispatch_graph_0108).
 
-At API see [ID3D12StateObjectProperties1](#id3d12stateobjectproperties1-methods) and [ID3D12WorkGraphProperties](#id3d12workgraphproperties-methods).
-
-Drivers can simply not expose this experimental DDI table if its features aren't supported.
+At API see [ID3D12StateObjectProperties1](#id3d12stateobjectproperties1-methods), [ID3D12WorkGraphProperties](#id3d12workgraphproperties-methods), [Device methods](#device-methods) and [Command-list methods](#command-list-methods).
 
 ---
 
@@ -5509,7 +5276,7 @@ Member                           | Definition
 `NumNodes` | Number of nodes including already existing ones if an addition is happening.
 `pNodes` | List of pointers to node definitions. See [D3D12DDI_NODE_LIST_ENTRY_0108](#d3d12ddi_node_list_entry_0108) and [D3D12DDI_NODE_0108](#d3d12ddi_node_0108).  Even with the `D3D12DDI_WORK_GRAPH_FLAG_ADD_TO_EXISTING_WORK_GRAPH` flag, this is a list of all nodes in the graph.  New nodes appear at the start of the list.
 `NumEntrypoints` | Number of entrypoints including already existing ones if an addition is happening.
-`pEntrypoints` | List of pointers to entrypoints. See [D3D12DDI_NODE_LIST_ENTRY_0108](#d3d12ddi_node_list_entry_0108) and [D3D12DDI_NODE_0108](#d3d12ddi_node_0108). Even with the `D3D12DDI_WORK_GRAPH_FLAG_ADD_TO_EXISTING_WORK_GRAPH` flag, this is a list of all entrypoints.  New entrypoints appear at the start of the list.
+`pEntrypoints` | List of pointers to entrypoints. See [D3D12DDI_NODE_LIST_ENTRY_0108](#d3d12ddi_node_list_entry_0108) and [D3D12DDI_NODE_0108](#d3d12ddi_node_0108). Even with the `D3D12DDI_WORK_GRAPH_FLAG_ADD_TO_EXISTING_WORK_GRAPH` flag, this is a list of all entrypoints.  New entrypoints appear at the start of the list and continue entrypoint index numbering after previous versions.  Suppose the initial version of a graph has two entrypoints.  This list would have two entries, and the driver must infer that they have entry point indices `[0]` and `[1]` respectively for record assignments from [DispatchGraph()](#dispatchgraph).  If an addition happens, with 3 new entrypoints, the list for the new graph version would have 5 entries, with the new entries at that start of the list. The driver must infer the entrypoint indices of the 3 new entries at the start of the list (e.g the entries with the new `Version`), so the full list would be `[2]`, `[3]`, `[4]`, `[0]`, `[1]`.  Ideally these assignments would have been provided by the runtime in the DDI so the driver wouldn't have to figure this out, but this was missed and deemed not important enough to fix.
 
 This is the definition of a state subobject of type `D3D12DDI_STATE_SUBOBJECT_TYPE_WORK_GRAPH` (see [D3D12DDI_STATE_SUBOBJECT_TYPE](#d3d12ddi_state_subobject_type)).
 
@@ -5668,7 +5435,7 @@ Any properties listed here take precedence over (override) what may have been de
 Member                           | Definition
 ---------                        | ----------
 `FinalName` | Final name of the node after any optional renames done at the API.  See [D3D12DDI_NODE_ID_0108](#d3d12ddi_node_id_0108).
-`bProgramEntry` | The current node is a program entry.  If so, this node will be listed in the  `pEntrypointNodeIndices` array in [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108).  As such this parameter is redundant, but it is present for clarity.  The shader may not have declared it is an entrypoint but the runtime may have determined it must be one, or at the API the choice may have been overridden in some way.  This will never be false for a node that is not targetted by any other nodes in the graph.
+`bProgramEntry` | The current node is a program entry.  If so, this node will be listed in the `pEntrypoints` list in [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108).  As such this parameter is redundant, but it is present for clarity.  The shader may not have declared it is an entrypoint but the runtime may have determined it must be one, or at the API the choice may have been overridden in some way.  This will never be false for a node that is not targetted by any other nodes in the graph.
 `InputNodeIOKind` |  The class of input.  See the input enums in [D3D12DDI_NODE_IO_KIND_0108](#d3d12ddi_node_io_kind_0108).  And see [Node input declaration](#node-input-declaration).
 `InputNodeIOFlags` |  See the flags within `D3D12DDI_NODE_IO_FLAGS_FLAG_MASK` in [D3D12DDI_NODE_IO_FLAGS_0108](#d3d12ddi_node_io_flags_0108).  For an input, the only flag that applies is `D3D12DDI_NODE_IO_FLAG_TRACK_RW_INPUT_SHARING`.  Also see [Node input declaration](#node-input-declaration).
 `InputRecordSizeInBytes` | Size of the input record.  Can be 0 if `NodeIOKind` is [D3D12DDI_NODE_IO_KIND_EMPTY_INPUT_0108](#d3d12ddi_node_io_kind_0108).
@@ -6115,6 +5882,266 @@ Referenced by [D3D12DDI_PROGRAM_NODE_0108](#d3d12ddi_program_node_0108).
 
 ---
 
+# Generic programs
+
+Generic programs introduce the need to configure graphics pipline state. They introduce notion of graphics subobjects such as rasterizer and blend settings.
+
+An app can define a set of shaders to be active together by defining a program of type `GENERIC_PROGRAM` in a state object. This is constructed using the same state object infrastructure used for raytracing and work graph state objects, via the [CreateStateObject](#createstateobject) API.
+
+Generic programs are available to any device that supports SM6.8 and support non-library shader targets shaders SM6.0+.
+
+## Supported shader targets
+Exports specified in generic programs support shader model 6.0+ targets vs\_, ps\_ ...etc, but not lib_*. Shaders can be added to a state object using a [DXIL library subobject](#d3d12_dxil_library_desc).
+
+Shaders compiled newer DXC (version TBD) via these targets will appear as if they have a single export whose name is the entrypoint's name in HLSL as expected. Shaders compiled with older DXC work similarly, except the runtime can't find the shader's name. So when importing the shader in a DXIL library subobject, the runtime assigns a default entrypoint name based on the shader type below - the name of the shader in HLSL is ignored. The shader entrypoint name can be renamed when included in a DXIL library subobject if desired, via [export desc](#d3d12_export_desc).
+
+### Default shader entrypoint names
+As described above, for older compilers, which produce shaders that don't make the entrypoint name visible to the runtime, the runtime assigns default entrypoint names as follows:
+
+Shader targets | Default shader entrypoint name
+-------------- |-------------------------------
+AS | ASMain
+CS | CSMain
+DS | DSMain
+GS | GSMain
+HS | HSMain
+MS | MSMain
+PS | PSMain
+VS | VSMain
+
+---
+
+## Resource binding
+
+For non-library shaders if a root signature is specified in the shader the runtime will create a root signature subobject and associate it with the shader entrypoint. The root signature in the shader will need to match the global root signature or any root signature associated with a shader in a generic program.
+
+For library shaders a subobject association (defined in the DXR spec including rules for default associations) can be specified in the shader including the name of a non-library shader entrypoint. The association will apply to non-library shader entrypoints for root signature subobject associations only.
+
+---
+## CreateStateObject structures for generic programs
+### D3D12_DXIL_LIBRARY_DESC
+
+```C++
+typedef struct D3D12_DXIL_LIBRARY_DESC
+{
+    D3D12_SHADER_BYTECODE DXILLibrary;
+    UINT NumExports;
+    _In_reads_(NumExports) D3D12_EXPORT_DESC* pExports;
+} D3D12_DXIL_LIBRARY_DESC;
+```
+
+Member                              | Definition
+---------                           | ----------
+`D3D12_SHADER_BYTECODE DXILLibrary` | Shader to include in the state object. Supported shaders include vs\_, ps\_ ...etc must be compiled with target 6.0 or higher. Library shaders must have been compiled with library target 6.3 or higher. It is fine to specify the same shader multiple times either in the same state object / collection or across multiple, as long as the names exported each time don't conflict in a given state object.
+`UINT NumExports` | Size of pExports array. If 0, everything gets exported from the Shader. For non-library shaders the shader entrypoint is the only thing that can be exported.
+`_In_reads(NumExports) D3D12_EXPORT_DESC* pExports` | Optional exports array. See [D3D12_EXPORT_DESC](#d3d12_export_desc).
+
+---
+
+### D3D12_EXPORT_DESC
+
+```C++
+typedef struct D3D12_EXPORT_DESC
+{
+    LPCWSTR Name;
+    _In_opt_ LPCWSTR ExportToRename;
+    D3D12_EXPORT_FLAGS Flags;
+} D3D12_EXPORT_DESC;
+```
+
+Member                              | Definition
+---------                           | ----------
+`LPWSTR Name` | Name to be exported. If the name refers to a function that is overloaded, a mangled version of the name (function parameter information encoded in name string) can be provided to disambiguate which overload to use. The mangled name for a function can be retrieved from HLSL compiler reflection (not documented in this spec). If `ExportToRename` field is non-null, `Name` refers to the new name to use for it when exported. In this case `Name` must be an unmangled name, whereas `ExportToRename` can be either a mangled or unmangled name. A given internal name may be exported multiple times with different renames (and/or not renamed). Shader entrypoints (as opposed to non-entry library functions) always use unmangled names. Thus for generic programs only unmangled names apply. For newer runtimes that support [Generic programs](#generic-programs): As a convenience, when there is only one export available a the library (or it is a non-library shader target like vs\_*, which can only have one export), `Name` can be set to "\*" to refer to that one export without having to know it's name. If the lib has multiple exports, specifying "\*" for `Name` is invalid. If doing a rename, this "\*" option applies to the `ExportToRename` field instead, as the Name field becomes the new name. For non-lib shaders compiled with older compilers (version cutoff TBD), see [Default shader entrypoint names](#default-shader-entrypoint-names), and in addition the "\*" option works here as well."
+`_In_opt_ LPWSTR ExportToRename` | If non-null, this is the name of an export to use but then rename when exported. Described further above.
+`D3D12_EXPORT_FLAGS Flags` | Flags to apply to the export.
+
+Note for driver authors:
+In the DDI version of this struct, drivers are always given a non-null `Name`, even if at the API the NULL option was specified. In particular when it is non-lib shader bytecode, which by definition only has one entrypoint in it, the driver must always use the `Name` specified at the DDI to refer to the entrypoint, regardless of what the name in the bytecode is (the names may or may not match due to application of default names in the API), and `ExportToRename` can be ignored.
+
+---
+### D3D12_GENERIC_PROGRAM_DESC
+
+```C++
+
+typedef struct D3D12_GENERIC_PROGRAM_DESC
+{
+    LPCWSTR ProgramName;
+
+    UINT NumExports;
+    [annotation("_In_reads_(NumExports)")] LPCWSTR* pExports;
+
+    UINT    NumSubobjects;
+    [annotation("_In_reads_opt_(NumSubobjects)")] const D3D12_STATE_SUBOBJECT* const* ppSubobjects;
+} D3D12_GENERIC_PROGRAM_DESC;
+
+```
+
+Parameter                           | Definition
+---------                           | ----------
+`ProgramName`  | Name of the generic program in the state object.  This can be used in APIs that need to reference generic program definitions, like [GetProgramIdentifier()](#getprogramidentifier), and within work graphs via [graphics nodes](#d3d12_program_node).
+NumExports | Size of the `pExports` array.  If 0, that array is ignored and can be null.
+`pExports` | Array of shader entrypoints to use in the program.  Collectively they must make sense to be used together.  There must be either a vertex shader or a mesh shader, as well as any other desired shaders that can go with them.
+NumSubobjects | Size of the `ppSubobjects` array.  If 0, that array is ignored and can be null.
+`ppSubobjects` | Array of pointers to subobjects to include in the program.  This can any of the [subobjects that can be listed in a generic program](#subobjects-that-can-be-listed-in-a-generic-program) that are needed.  For example `INPUT_LAYOUT`, `BLEND` etc.
+
+---
+
+### Subobjects that can be listed in a generic program
+
+Below are the [subobject types](#d3d12_state_subobject_type) that can be listed in a generic program.  These don't use subobject associations (which associate subobjects with shader exports) since it is likely that individual generic programs in a state object will mix and match these state objects. Thus they are simply listed in the generic program definition.
+
+- STREAM_OUTPUT
+- BLEND
+- SAMPLE_MASK
+- RASTERIZER
+- INPUT_LAYOUT
+- INDEX_BUFFER_STRIP_CUT_VALUE
+- PRIMITIVE_TOPOLOGY
+- RENDER_TARGET_FORMATS
+- DEPTH_STENCIL_FORMAT
+- SAMPLE_DESC
+- VIEW_INSTANCING
+- FLAGS
+- DEPTH_STENCIL
+- DEPTH_STENCIL1
+- DEPTH_STENCIL2
+
+See [D3D12_STATE_SUBOBJECT_TYPE](#d3d12_state_subobject_type) for the definitions of these subobjects.  There are also [defaults for subobjects missing from a generic program](#defaults-for-subobjects-missing-from-a-generic-program).
+
+Subobjects not listed above, like **global root signatures** or **local root signatures**, are associated with shaders directly using subobject to export associations (defined in the DXR spec including rules for default associations).  If any of these subobjects like local root signatures are associated with multiple shaders in a generic program, the subobjects must match for any shaders that use them.
+
+---
+
+### Defaults for subobjects missing from a generic program
+
+#### Missing STREAM_OUTPUT
+
+When stream output is not present in a generic program it is disabled as if the following values:
+
+```C++
+    *pSODeclaration = nullptr;
+    NumEntries = 0;
+    *pBufferStrides = nullptr;
+    NumStrides = 0;
+    RasterizedStream = 0;
+```
+
+#### Missing BLEND
+
+BLEND default parameter values:
+
+```C++
+    AlphaToCoverageEnable =	FALSE;
+    IndependentBlendEnable = FALSE;
+    RenderTarget[0].BlendEnable = FALSE;
+    RenderTarget[0].LogicOpEnable =	FALSE;
+    RenderTarget[0].SrcBlend = D3D12_BLEND_ONE;
+    RenderTarget[0].DestBlend = D3D12_BLEND_ZERO;
+    RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+    RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+    RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+    RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+    RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
+    RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+```
+
+#### Missing SAMPLE_MASK
+
+The default value is `UINT_MAX`.
+
+#### Missing RASTERIZER
+
+Default parameter values:
+
+```C++
+    FillMode = D3D12_FILL_MODE_SOLID;  
+    CullMode = D3D12_CULL_MODE_BACK;  
+    FrontCounterClockwise = FALSE;  
+    DepthBias = D3D12_DEFAULT_DEPTH_BIAS;  
+    DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;  
+    SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;  
+    DepthClipEnable = TRUE;  
+    MultisampleEnable = FALSE;  
+    AntialiasedLineEnable = FALSE;  
+    ForcedSampleCount = 0;  
+    ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;  
+```
+
+#### Missing INPUT_LAYOUT
+
+The default is no input buffers, which might be used for:
+
+- a pipeline without the Input Assembler
+- a pipline with the Input Assembler, and the shader uses ID system values to identify vertices and manually fetch data.
+  
+```C++
+    *pInputElementDescs = nullptr;
+    NumElements = 0;
+```
+
+#### Missing INDEX_BUFFER_STRIP_CUT_VALUE
+
+The default value is `D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED`.
+
+#### Missing PRIMITIVE_TOPOLOGY
+
+The default value is `D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED`. For graphics state, an unspecified primitive topology will fail state object creation.
+
+#### Missing RENDER_TARGET_FORMATS
+
+The default value used is no render target.
+
+```C++
+    NumRenderTargets = 0;
+```
+
+#### Missing DEPTH_STENCIL_FORMAT
+
+The default value is no depth stencil target.
+
+#### Missing SAMPLE_DESC
+
+SAMPLE_DESC default parameter values:
+
+```C++
+    Count = 1;
+    Quality = 0;
+```
+
+#### Missing VIEW_INSTANCING
+
+ VIEW_INSTANCING default parameter values:
+
+```C++
+    ViewInstanceCount = 0;
+    pViewInstanceLocations = nullptr;
+    Flags = D3D12_VIEW_INSTANCING_FLAG_NONE;
+```
+
+#### Missing FLAGS
+
+ The default is `D3D12_PIPELINE_STATE_FLAG_NONE`.
+
+#### Missing DEPTH_STENCIL or DEPTH_STENCIL1 or DEPTH_STENCIL2
+
+DEPTH_STENCIL_DESC2 default parameter values:
+
+```C++
+    DepthEnable = TRUE;
+    DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+    DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+    StencilEnable = FALSE;
+    StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
+    StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
+    const D3D12_DEPTH_STENCILOP_DESC defaultStencilOp =
+    { D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_COMPARISON_FUNC_ALWAYS };
+    FrontFace = defaultStencilOp;
+    BackFace = defaultStencilOp;
+    DepthBoundsTestEnable = FALSE;
+```
+
+> If there is no DEPTH_STENCIL_DESC*, DEPTH_STENCIL_DESC2 is be used as the default. If DESC or DESC1 is specified, the runtime upconverts to DESC2 for the driver, with missing entries filled with their individual defaults.
+
 # Change log
 
 Version|Date|Description
@@ -6152,7 +6179,7 @@ v0.30|2/8/2022|<li>Minor tweak:  Changed parameter order for [GetOutputRecord an
 v0.31|2/23/2022|<li>In [Sharing input records across nodes](#sharing-input-records-across-nodes) section added restriction that no more than 256 nodes can share an input. Also a node whose input is shared to other node(s) can't get its input both from other nodes and from graph entry.  These are simply to reduce driver complexity.</li><li>Added two intrinsics to help shader code know if an output is valid: [NodeOutputIsValid](#node-output-isvalid-method) and [GetRemainingRecursionLevels](#getremainingrecursionlevels).</li><li>To reduce further confusion, in [Node input declaration](#node-input-declaration) renamed `[RW]NodeInput[Array]` objects to `[RW]NodeInputRecord[Array]`, to make it more clear these are structurally different from the output counterpart, `NodeOutput`.  The inputs are actually records, whereas the outputs are nodes that require calling `Get*OutputRecord*()` methods to retrieve output records.</li><li>To be consistent with the `*NodeInputRecord*` naming above, in [this section](#getthreadnodeoutputrecords) and [this one](#getgroupnodeoutputrecords), renamed record objects `OutputRecord[Array]` to `NodeOutputRecord[Array]`, and the methods for getting records from `Get[GroupShared]OutputRecord[Array]` to `Get[GroupShared]NodeOutputRecord[Array]`.</li><li>In [Barrier](#barrier) section fixed flags enums to be `enum class`, and fixed typo `MEMORY_TYPE_FLAGS` to `MEMORY_TYPE_FLAG`</li><li>In [NodeIOFlags and NodeIOKind encoding](#nodeioflags-and-nodeiokind-encoding) section fixed enums to be `enum class`.</li><li>Reworked DXIL [Lowering input/output loads and stores](#lowering-inputoutput-loads-and-stores) section to be structured around getelementptr (GEP).  Some examples are shown, including how atomic operations on records is done.</li><li>Reworked HLSL [OutputComplete](#outputcomplete) and DXIL [Lowering OutputComplete](#lowering-outputcomplete) sections with new rules requiring apps always call `OutputComplete(records)`, rather than allowing for implicit calls as the spec used to allow.</li><li>Added subsection [Potential future convenience: auto-inserted OutputComplete](#potential-future-convenience-auto-inserted-outputcomplete) that mentions the compiler may develop the ability to notice when it is trivial where a call to `OutputComplete(records)` needs to happen and so for convenience it will auto insert the call into the compiler output.</li><li>In [lowering OutputComplete](#lowering-outputcomplete), minor cleanup of the dxil such that instead of separate ops `dx.op.outputCompleteRecord(i32 %Opcode, ...)` and `dx.op.outputCompleteNode(i32 %Opcode, ...)`, there is just one op, `dx.op.outputComplete(i32 %Opcode, ...)`, where %Opcode is either `OutputCompleteRecord` or `OutputCompleteHandle`.</li><li>In DXIL [Creating handles to node outputs](#creating-handles-to-node-outputs) section, removed the option to make handles for node inputs, since those are just input records directly.  Correpondingly in the next section, [Creating handles to node input records](#creating-handles-to-node-input-records), changed the parameter to `@dx.op.createNodeInputRecordsHandle` to be `NodeInputIndex = 0 (always, only one input source per node)`, where it used to be `NodeInputHandle`, which no longer exists.</li><li>In [Node input declaration](#node-input-declaration), [Node output declaration](#node-output-declaration), [GetNodeOutputRecord and GetNodeOutputRecordArray](#getthreadnodeoutputrecords) and [GetGroupSharedNodeOutputRecord and GetGroupSharedNodeOutputRecordArray](#getgroupnodeoutputrecords) sections added a list of notes about these objects.  Describes that these behave like objects holding a handle value, so variable assignment copies handles not the data.  And these objects can be passed as parameters into internal linkage function calls.  Internal linkage refers to static functions defined within the same module that are not `export` functions.</li><li>Renamed `GetRecordCount()` to [GetInputRecordCount](#input-record-count-method), with similar change in the [DXIL](#lowering-input-record-count-method).</li><li>Added [Examples of input and output use in shaders](#examples-of-input-and-output-use-in-shaders) to help show what can be done with records in a shader.</li>
 v0.32|3/8/2022|<li>Spec previously allowed redundant calls to `OutputComplete()` on record or node objects.  Refined that with a lot more nuance in a new section: [Node and record object semantics in shaders](#node-and-record-object-semantics-in-shaders)</li><li>Also added [Node and record object semantics in DXIL](#node-and-record-object-semantics-in-dxil).</li><li>In [Node output](#node-output), fixed one of the examples that was calling `OutputComplete(leaf)` in non-uniform flow control.</li><li>Fixed a couple of cases of incorrect syntax in [Examples of input and output use in shaders](#examples-of-input-and-output-use-in-shaders).</li><li>DXIL typos - a couple of ops were all lowercase, fixed to and needed to be lowerCamelCase: [@dx.op.nodeOutputIsValid](#lowering-node-output-isvalid-method) and [@dx.op.getRemainingRecursionLevels](#lowering-getremainingrecursionlevels).</li><li>In [ID3D12WorkGraphProperties methods](#id3d12workgraphproperties-methods) clarified in each member why it isn't strictly necessary to call them.  For instance the `GetEntrypointIndex(UINT WorkGraphIndex, D3D12_NODE_ID NodeID)` method isn't strictly necessary to use, as an app can choose to understand what the entrypoint index will be for a given node ID based on the order nodes are popoulated in the graph relative to the description passed into into the work graph creation API (including any auto population of nodes that may have been requested), described in [D3D12_WORK_GRAPH_DESC](#d3d12_work_graph_desc).  Even so, this method could help verify that assumptions are correct.  A similar sort of description was added for each member of this class.</li>
 v0.33|4/11/2022|<li>In [D3D12_WORK_GRAPH_DESC](#d3d12_work_graph_desc) specified that a work graph with zero nodes will succeed state object creation.  It might be the result of a procedural graph generation, in a state object with other useable graphs, so state object creation need not fail. For [GetProgramIdentifier](#getprogramidentifier) on an empty graph, the runtime returns a zeroed out identifier, which is invalid to use, such as in [SetProgram](#setprogram).</li><li>Fixed some typos in [IncrementOutputCount](#incrementoutputcount) section.</li><li>Renamed DXIL `@dx.op.createNodeInputRecordsHandle` to `@dx.op.createNodeInputRecordHandle` (removed the `s`), given multiple developers working with this preferred it.  No change in behavior - it can still point to multiple handles.</li><li>In [FinishedCrossGroupSharing](#finishedcrossgroupsharing), specified calls must be dispatch grid uniform, not varying across any thread across all thread groups in a dispatch grid.  Also, at most one call to `FinishedCrossGroupSharing` can be reached during execution of each thread - additional calls are invalid (undefined behavior) and the compiler will attempt to flag them as errors.</li><li>For all the various node I/O intrinsics, like [OutputComplete](#outputcomplete), specified that executing threads do not need to be synchronized to this location (e.g. via [Barrier](#barrier)). There may be some implementation specific synchronization happening but the shader cannot assume anything about it.</li><li>For [OutputComplete](#outputcomplete) removed the overloads for `OutputComplete(node)`, leaving just `OutputComplete(records)`.  Nobody saw value in the node variant at least at the moment, and now that `OutputComplete(records)` is no longer optional dont want to leave more burden on apps.</li><li>In [GetGroupSharedNodeOutputRecord and GetGroupSharedNodeOutputRecordArray](#getgroupnodeoutputrecords) stated that these methods are not available in thread launch nodes, since there isn't a group in that case.</li><li>In [Node output limits](#node-output-limits) made separate limits for thread launch nodes:  MaxOutputSize = 128 bytes, MaxOutputRecords = 8.  Noted that all of these limits are somewhat arbitrary, and also discussed how just renaming a node from thread launch to another launch type to get around the limits will have consequences since the implementations of the node types are fundamentally different.</li><li>In [Thread launch nodes](#thread-launch-nodes) definition made it more clear that even though thread launch is conceptually a subset of a coalescing launch node, implementations will be fundamentally different.  In particular pointed out that threads from different launches allowed to be packed in a wave in thread launch.</li>
-v0.34|6/29/2022|<li>In "Repurposing plain compute shader code", clarified that local root signatures cannot be associated if `[Shader("Compute")]` is present (and note that default associations using a local root signature will not associate with a compute shader).</li><li>Update stale spec references to things that were renamed in the experimental API and DDI headers. For example, GraphicsPipeline was renamed to GenericPipeline, and COMPUTE_SHADER and MESH_PIPELINE pipeline types were deleted.</li><li>Removed `[NodeMaxDispatchGrid(x,y,z)]` shader function attribute since nobody was using the information, and exceeding it would produce more undefined behavior across implementations.</li><li>In [Node count limits](#node-count-limits) put in a limit on the number of nodes in the graph only for the purpose of letting implementations track node IDs with 24 bit values - so at most 0xffffff nodes.  Detailed exactly how the limit is enforced, in which empty array slots around against it, as do recursive nodes which implementations can unroll.</li><li>Renamed the API cap structure that holds the WorkGraphsTier value from `D3D12_FEATURE_OPTIONS14` to [D3D12_FEATURE_OPTIONS_EXPERIMENTAL](#d3d12_feature_d3d12_options_experimental) so it is no longer mixed confusingly alongside non-experimental features.  Once out of experimental, it will go back into whatever the latest options struct is.</li><li>In the [Sharing input records across nodes](#sharing-input-records-across-nodes) section, got rid of the limitation: "An unfortunate limitation that had to be imposed here, at least for now, is that the dispatch grid size must be fixed and identical at all nodes sharing an input.", as it turns out we really didn't need this limitation.</li><li>In [D3D12_BROADCASTING_LAUNCH_OVERRIDES](#d3d12_broadcasting_launch_overrides) clarified that the `pDispatchGrid` override can only be used to change the dispatch grid of a node that already declared `[NodeDispatchGrid()]`, and it can't be used to change a node from dynamic to static dispatch or vice versa.</li><li>In [SV_DispatchGrid](#sv_dispatchgrid), tweaked the rules about when it is honored to be the following: `SV_DispatchGrid` can optionally appear anywhere in a record.  If the record arrives at a [broadcasting launch node](#broadcasting-launch-nodes) that doesn't declare a fixed dispatch grid size via `[NodeDispatchGrid(x,y,z)]`, `SV_DispatchGrid` becomes the dynamic grid size used to launch at the node.  For other launch modes, or broadcasting launch that specify `[NodeDispatchGrid(x,y,z)]`, the `SV_DispatchGrid` semantic in an input record has no meaning and the field acts as vanilla input data to the node.  These modes aren't strictly mutually exclusive to allow some flexibility, such as for nodes that are [sharing input](#sharing-input-records-across-nodes) to be able to have different properties if desired, where some may actually use the dynamic dispatch grid, and others may not; it is always fine for `SV_DispatchGrid` to be present, and it only has special meaning depending on context.</li><li>DXIL: Create new handle types [Node and record handles](#node-and-record-handles) to differentiate from resource handles</li><li>DXIL: Add [Annotating node handles](#annotating-node-handles) to capture static node and record type properties</li><li>DXIL: Add groupshared flag for record properties in [NodeIOFlags and NodeIOKind Encoding](#nodeioflags-and-nodeiokind-encoding)</li><li>Specify that `[NodeTrackRWInputSharing]` is allowed on the input parameter itself, in addition to the function entry, and the rule when defining functions that accept the input record object as a parameter.</li><li>Change address space for record handles to 6.</li><li>In [Node input declaration](#node-input-declaration) section, stated that if an `RWNodeInputRecord`'s record layout contains a [SV_DispatchGrid](#sv_dispatchgrid) field, shaders cannot write to that field, and the compiler attempts to enforce this.  Implementations may need to reference the data here actively while spawning invocations of the dynamically selected dispatch grid size.</li>
+v0.34|6/29/2022|<li>In "Repurposing plain compute shader code", clarified that local root signatures cannot be associated if `[Shader("Compute")]` is present (and note that default associations using a local root signature will not associate with a compute shader).</li><li>Update stale spec references to things that were renamed in the experimental API and DDI headers. For example, GraphicsPipeline was renamed to GenericPipeline, and COMPUTE_SHADER and MESH_PIPELINE pipeline types were deleted.</li><li>Removed `[NodeMaxDispatchGrid(x,y,z)]` shader function attribute since nobody was using the information, and exceeding it would produce more undefined behavior across implementations.</li><li>In [Node count limits](#node-count-limits) put in a limit on the number of nodes in the graph only for the purpose of letting implementations track node IDs with 24 bit values - so at most 0xffffff nodes.  Detailed exactly how the limit is enforced, in which empty array slots around against it, as do recursive nodes which implementations can unroll.</li><li>Renamed the API cap structure that holds the WorkGraphsTier value from `D3D12_FEATURE_OPTIONS14` to [D3D12_FEATURE_OPTIONS_EXPERIMENTAL](#d3d12_feature_d3d12_options21) so it is no longer mixed confusingly alongside non-experimental features.  Once out of experimental, it will go back into whatever the latest options struct is.</li><li>In the [Sharing input records across nodes](#sharing-input-records-across-nodes) section, got rid of the limitation: "An unfortunate limitation that had to be imposed here, at least for now, is that the dispatch grid size must be fixed and identical at all nodes sharing an input.", as it turns out we really didn't need this limitation.</li><li>In [D3D12_BROADCASTING_LAUNCH_OVERRIDES](#d3d12_broadcasting_launch_overrides) clarified that the `pDispatchGrid` override can only be used to change the dispatch grid of a node that already declared `[NodeDispatchGrid()]`, and it can't be used to change a node from dynamic to static dispatch or vice versa.</li><li>In [SV_DispatchGrid](#sv_dispatchgrid), tweaked the rules about when it is honored to be the following: `SV_DispatchGrid` can optionally appear anywhere in a record.  If the record arrives at a [broadcasting launch node](#broadcasting-launch-nodes) that doesn't declare a fixed dispatch grid size via `[NodeDispatchGrid(x,y,z)]`, `SV_DispatchGrid` becomes the dynamic grid size used to launch at the node.  For other launch modes, or broadcasting launch that specify `[NodeDispatchGrid(x,y,z)]`, the `SV_DispatchGrid` semantic in an input record has no meaning and the field acts as vanilla input data to the node.  These modes aren't strictly mutually exclusive to allow some flexibility, such as for nodes that are [sharing input](#sharing-input-records-across-nodes) to be able to have different properties if desired, where some may actually use the dynamic dispatch grid, and others may not; it is always fine for `SV_DispatchGrid` to be present, and it only has special meaning depending on context.</li><li>DXIL: Create new handle types [Node and record handles](#node-and-record-handles) to differentiate from resource handles</li><li>DXIL: Add [Annotating node handles](#annotating-node-handles) to capture static node and record type properties</li><li>DXIL: Add groupshared flag for record properties in [NodeIOFlags and NodeIOKind Encoding](#nodeioflags-and-nodeiokind-encoding)</li><li>Specify that `[NodeTrackRWInputSharing]` is allowed on the input parameter itself, in addition to the function entry, and the rule when defining functions that accept the input record object as a parameter.</li><li>Change address space for record handles to 6.</li><li>In [Node input declaration](#node-input-declaration) section, stated that if an `RWNodeInputRecord`'s record layout contains a [SV_DispatchGrid](#sv_dispatchgrid) field, shaders cannot write to that field, and the compiler attempts to enforce this.  Implementations may need to reference the data here actively while spawning invocations of the dynamically selected dispatch grid size.</li>
 v0.35|8/15/2022|<li>Under [Lowering GetNodeOutputRecord](#lowering-get-nodeoutputrecords), for DXIL, clarified that the `%PerThread` parameter to `@dx.op.allocateNodeOutputRecords` is an immediate constant value, `1` refers to `GetNodeOutputRecord{Array}` and `0` refers to `GetGroupSharedNodeOutputRecord{Array}`.</li><li>In [Node input declaration](#node-input-declaration) added: If an `RWNodeInputRecord`'s record layout contains a [SV_DispatchGrid](#sv_dispatchgrid) field, shaders cannot write to that field, and the compiler attempts to enforce this.  Implementations may need to reference the data here actively while spawning invocations of the dynamically selected dispatch grid size.</li>
 v0.36|9/9/2022|<li>Under [Node output limits](#node-output-limits), clarified that even though outputs that are [EmptyNodeOutput](#node-output-declaration) don't count against node output data size limits, they still need to have [MaxOutputRecords or MaxOutputRecordsSharedWith](#node-output-attributes) declared to help scheduler implementations reason about work expansion potential and also avoid overflowing tracking of live work.</li><li>DXIL: Under [Lowering IncrementOutputCount](#lowering-incrementoutputcount) corrected parameter from %dx.types.NodeRecordHandle to %dx.types.NodeHandle.</li><li>DXIL: add `indexNodeRecordHandle` (see [Creating handles to node outputs](#creating-handles-to-node-outputs) and [Lowering GetNodeOutputRecord](#lowering-get-nodeoutputrecords)) and remove index from `getNodeRecordPtr` ([Lowering input/output loads and stores](#lowering-inputoutput-loads-and-stores)), and updated create sequences to add annotate and potential indexing operations</li><li>Stale mentions of MaxDispatchGrid declaration in various places.  This was meant to be removed in the v0.34 update.</li>
 v0.37|9/22/2022|<li>DXIL: In [Annotating node handles](#annotating-node-handles), minor clarification that second NodeRecordInfo field is 0 for other record types.</li><li>Brought `[MaxDispatchGrid()]` [shader function attribute](#shader-function-attributes) back after previously cutting it because it appeared nobody needed it.  Now it has become clear there is some need for this declaration to give implementations an upper bound on the magnitude of `SV_DispatchGrid` values to expect in records arriving at the node.  This is an API/DDI and compiler breaking change.</li>
@@ -6162,6 +6189,9 @@ v0.40|5/24/2023|<li>Fixed typos in DDI defines: [D3D12DDI_NODE_IO_KIND_0108](#d3
 v0.41|5/26/2023|<li>In DXIL [Node input and output metadata table](#node-input-and-output-metadata-table), `NodeMaxRecords` and `NodeRecordType` entries were reversed from what the compiler implemented, so swapped the entries in the spec to match the code.</li><li>In [Example of creating node input and output handles](#example-of-creating-node-input-and-output-handles) and [Example DXIL metadata diagram](#example-dxil-metadata-diagram) fixed metadata encoding values, several of which were stale.</li><li>In [Node input](#node-input) fixed examples that used old GetInputRecordCount() to be .count().</li><li>In DXIL [NodeIOFlags and NodeIOKind encoding](#nodeioflags-and-nodeiokind-encoding), there was a typo `GroupNodeOutputRecord` fixed to `GroupNodeOutputRecords` and `ThreadNodeOutputRecord` fixed to `ThreadNodeOutputRecords`.  Similar typo in the DDI header under [D3D12DDI_NODE_IO_KIND_0108](#d3d12ddi_node_io_kind_0108).  This will require new headers and driver recompile but fortunately not a binary breaking change.</li>
 v0.42|6/12/2023|<li>In [Shader function attributes](#shader-function-attributes) section removed stale text under `[NodeShareInputOf()]` that said that nodes sharing input need to have the same node type and dispatch grid size - these constraints were never actually needed.</li>
 v0.43|6/25/2023|<li>In [Shader target](#shader-target) and [Shader function attributes](#shader-function-attributes) sections fixed the case sensitivity to match expected final compiler behavior: For attributes like `Shader("node")` and `NodeLaunch("mode")` (`"mode"` is `"coalescing"` etc.), the attribute name is case insensitive, while the string is case sensitive.  And for these two attributes, the strings also must be lowercase.  The current preview compiler is incorrectly case insensitive for the string in `NodeLaunch("mode")`.  Updated samples to match.</li><li>Linked to [Thread visibility in wave operations](#thread-visibility-in-wave-operations) from the launch mode sections such as [Coalescing launch nodes](#coalescing-launch-nodes) for discoverability.</li>
-v0.44|9/7/2023|<li>Added [Producer - consumer dataflow through UAVs](#producer---consumer-dataflow-through-uavs), summarizing the rules for how to make sure data written to UAVs in a producer node ends up visible to a consumer.</li><li> Added example code for a couple of barrier scenarios:<ul><li>[Dispatch grid writing to UAV for consumer node to read](#dispatch-grid-writing-to-uav-for-consumer-node-to-read)</li><li>[Single thread writing to UAV for consumer node to read](#single-thread-writing-to-uav-for-consumer-node-to-read)</li></ul></li><li>Joined the ACCESS_FLAGS and SYNC_FLAGS field in [Barrier](#barrier) into a single flags field: BARRIER_SEMANTIC_FLAGS for simplicity.  Matching change to DXIL in [Lowering barrier](#lowering-barrier).</li><li>In [Node input declaration](#node-input-declaration) and [Node input atttributes](#node-input-attributes), added a `globallycoherent` option to `RWDispatchNodeInputRecord` for cases loads/stores will be used on the input record for cross-group communication.  Matching change to DXIL in [NodeIOFlags and NodeIOKind encoding](#nodeioflags-and-nodeiokind-encoding)</li><li>Added [Quad and derivative operation semantics](#quad-and-derivative-operation-semantics) and [NonUniformResourceIndex semantics](#nonuniformresourceindex-semantics) sections to clarify how these operate in work graphs.</li><li>Added [Support for WaveSize shader function attribute](#support-for-wavesize-shader-function-attribute) section to clarify that the HLSL `WaveSize(N)` shader function attribute works for shaders node shaders of all launch types.</li><li>Refined behavior for [AddToStateObject()](#addtostateobject) with more specifics and more flexibility than the initial proposal.  Will need more refinement with feedback.</li><li>Along with the [AddToStateObject()](#addtostateobject) refinement, changed various work graphs creation DDIs so that nodes identify their connections to other nodes with lists of pointers rather than by index.  This way when additions are made, existing node definitons can be updated in-place by appending pointers to lists when a node points to a newly added node, or is targetted by a newly added node.  The addition lists all nodes, with new ones at the start of the list. All affected existing node definitions from previous DDIs are modified in-place to point to each other appropriately.  Each node definition includes a versionAdded number so that with a single DDI memory representation of the full work graph, drivers can see what the structure at any given version looked like if needed.  See [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108)(added flags, version, and changed node arrays to lists), [D3D12DDI_WORK_GRAPH_FLAGS_0108](#d3d12ddi_work_graph_flags_0108)(new addition flag), [D3D12DDI_NODE_LIST_ENTRY_0108](#d3d12ddi_node_list_entry_0108)(new, used for lists of nodes), [D3D12DDI_NODE_0108](#d3d12ddi_node_0108)(updated with `VersionAdded` instead of `NodeIndex`), [D3D12DDI_NODE_OUTPUT_0108](#d3d12ddi_node_output_0108)(updated with node list instead of array), [D3D12DDI_BROADCASTING_LAUNCH_NODE_PROPERTIES_0108](#d3d12ddi_broadcasting_launch_node_properties_0108)(updated with input node list instead of arrays), [D3D12DDI_COALESCING_LAUNCH_NODE_PROPERTIES_0108](#d3d12ddi_coalescing_launch_node_properties_0108)(updated with input node list instead of arrays), [D3D12DDI_THREAD_LAUNCH_NODE_PROPERTIES_0108](#d3d12ddi_thread_launch_node_properties_0108)(updated with input node list instead of arrays)</li><li>In [Node output attributes](#node-output-attributes) added `[UnboundedSparseNodes]` option, which is equivalent to setting `[AllowSparseNodes]` and `[NodeArraySize(0xffffffff)]`.  In DXIL [Node input and output metadata table](#node-input-and-output-metadata-table), noted that for `NodeOutputArraySize`, `0xffffffff` means unbounded array size and `NodeAllowSparseNodes` must be `true`.</li><li>Removed changes to allow multiple conflicting `shader` attributes on entry points. Replaced **Repurposing plain compute shader code** with [Reusing shader entries](#reusing-shader-entries). Removed references to default or implicit node inputs throughout.</li><li>In [D3D12_WORK_GRAPHS_TIER](#d3d12_work_graphs_tier) added `D3D12_WORK_GRAPHS_TIER_1_0` (and same at DDI) to get ready for first full release.</li>
+v0.44|9/7/2023|<li>Added [Producer - consumer dataflow through UAVs](#producer---consumer-dataflow-through-uavs), summarizing the rules for how to make sure data written to UAVs in a producer node ends up visible to a consumer.</li><li> Added example code for a couple of barrier scenarios:<ul><li>[Dispatch grid writing to UAV for consumer node to read](#dispatch-grid-writing-to-uav-for-consumer-node-to-read)</li><li>[Single thread writing to UAV for consumer node to read](#single-thread-writing-to-uav-for-consumer-node-to-read)</li></ul></li><li>Joined the ACCESS_FLAGS and SYNC_FLAGS field in [Barrier](#barrier) into a single flags field: BARRIER_SEMANTIC_FLAGS for simplicity.  Matching change to DXIL in [Lowering barrier](#lowering-barrier).</li><li>In [Node input declaration](#node-input-declaration) and [Node input atttributes](#node-input-attributes), added a `globallycoherent` option to `RWDispatchNodeInputRecord` for cases loads/stores will be used on the input record for cross-group communication.  Matching change to DXIL in [NodeIOFlags and NodeIOKind encoding](#nodeioflags-and-nodeiokind-encoding)</li><li>Added [Quad and derivative operation semantics](#quad-and-derivative-operation-semantics) and [NonUniformResourceIndex semantics](#nonuniformresourceindex-semantics) sections to clarify how these operate in work graphs.</li><li>Added [Support for WaveSize shader function attribute](#support-for-wavesize-shader-function-attribute) section to clarify that the HLSL `WaveSize(N)` shader function attribute works for shaders node shaders of all launch types.</li><li>Refined behavior for [AddToStateObject()](#addtostateobject) with more specifics and more flexibility than the initial proposal.  Will need more refinement with feedback.</li><li>Along with the [AddToStateObject()](#addtostateobject) refinement, changed various work graphs creation DDIs so that nodes identify their connections to other nodes with lists of pointers rather than by index.  This way when additions are made, existing node definitons can be updated in-place by appending pointers to lists when a node points to a newly added node, or is targetted by a newly added node.  The addition lists all nodes, with new ones at the start of the list. All affected existing node definitions from previous DDIs are modified in-place to point to each other appropriately.  Each node definition includes a versionAdded number so that with a single DDI memory representation of the full work graph, drivers can see what the structure at any given version looked like if needed.  See [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108)(added flags, version, and changed node arrays to lists), [D3D12DDI_WORK_GRAPH_FLAGS_0108](#d3d12ddi_work_graph_flags_0108)(new addition flag), [D3D12DDI_NODE_LIST_ENTRY_0108](#d3d12ddi_node_list_entry_0108)(new, used for lists of nodes), [D3D12DDI_NODE_0108](#d3d12ddi_node_0108)(updated with `VersionAdded` instead of `NodeIndex`), [D3D12DDI_NODE_OUTPUT_0108](#d3d12ddi_node_output_0108)(updated with node list instead of array), [D3D12DDI_BROADCASTING_LAUNCH_NODE_PROPERTIES_0108](#d3d12ddi_broadcasting_launch_node_properties_0108)(updated with input node list instead of arrays), [D3D12DDI_COALESCING_LAUNCH_NODE_PROPERTIES_0108](#d3d12ddi_coalescing_launch_node_properties_0108)(updated with input node list instead of arrays), [D3D12DDI_THREAD_LAUNCH_NODE_PROPERTIES_0108](#d3d12ddi_thread_launch_node_properties_0108)(updated with input node list instead of arrays)</li><li>In [Node output attributes](#node-output-attributes) added `[UnboundedSparseNodes]` option, which is equivalent to setting `[AllowSparseNodes]` and `[NodeArraySize(0xffffffff)]`.  In DXIL [Node input and output metadata table](#node-input-and-output-metadata-table), noted that for `NodeOutputArraySize`, `0xffffffff` means unbounded array size and `NodeAllowSparseNodes` must be `true`.</li><li>Removed changes to allow multiple conflicting `shader` attributes on entry points. Replaced **Repurposing plain compute shader code** with **Reusing shader entries**. Removed references to default or implicit node inputs throughout.</li><li>In [D3D12_WORK_GRAPHS_TIER](#d3d12_work_graphs_tier) added `D3D12_WORK_GRAPHS_TIER_1_0` (and same at DDI) to get ready for first full release.</li>
 v0.45|9/22/2023|<li>Added new option for overriding node properties at the API, a new [D3D12_NODE_OVERRIDES_TYPE](#d3d12_node_overrides_type), [D3D12_NODE_OVERRIDES_TYPE_COMMON_COMPUTE](#d3d12_node_overrides_type).  This allows overriding common properties agnostic to launch mode, like renaming a node or its outputs, without having to know the launch mode of the node/shader.  Previously any override required the app to know the launch mode to pick the matching override type for the shader.</li><li>In [Interactions with other d3d12 features](#interactions-with-other-d3d12-features), noted that - Pipeline statistics report invocations of nodes against the corresponding shader type.  So compute-based node shader invocations increment `CSInvocations`.</li>
 v0.46|10/5/2023|<li>In [D3D12_WORK_GRAPH_MEMORY_REQUIREMENTS](#d3d12_work_graph_memory_requirements) renamed `SizeAlignmentInBytes` to `SizeGranularityInBytes` to be more clear.  It turns out the codebase already used this name.  Users were confusing `SizeAlignmentInBytes` in the spec for the alignment of the base address, when actually it defines that usable backing memory sizes larger than the minimum stated by the driver must be larger than the minimum by a multiple of `SizeGranularityInBytes`.  Added documentation describing the meaning more clearly, and clarified: The application can provide sizes for backing memory that are larger than `MinSizeInBytes` + an integer multiple of `SizeGranularityInBytes`, or larger than `MaxSizeInBytes`, but it simply wastes memory as the driver won't touch memory beyond the size range and granularity specifications here.</li>
+v0.47|11/1/2023|<li>A new section was added for [Generic programs](#generic-programs) that explains the way a generic program is supported as part of the upcoming SM6.8 release. Generic programs are available to any device that supports SM6.8 and the [Supported shader targets](#supported-shader-targets) are non-library shader targets SM6.0+. Also added details about how [Resource binding](#resource-binding) and exports [Default shader entrypoint names](#default-shader-entrypoint-names) will be handled for non-library shaders. To enable the use of non-library shader an update for [D3D12\_DXIL\_LIBRARY\_DESC](#d3d12_dxil_library_desc) and [D3D12\_EXPORT\_DESC](#d3d12_export_desc) create state object structures was added showing how they will be used for generic programs. [D3D12\_EXPORT\_DESC](#d3d12_export_desc) will also introduce a new way to rename exports in the case of a shader library or non-library with only one export; the export can be referenced by passing in a NULL as the export will be handled by the runtime and the resolved list of names passed on to the driver (see link for exact details).</li><li>Removed section **Reusing shader entries**, as unfortunately there is no longer any way to share compute shader and node shader code to save on binary space.  This is because lib targets were node shaders live can no longer be used for specifying compute shaders (cs_* target is all that's supported).  Having compute shaders and all other preexisting shader types in lib targets was a feature that was proposed but the feature is now cut for this release.</li>
+v0.48|11/8/2023|<li>In [D3D12\_EXPORT\_DESC](#d3d12_export_desc) for lib/non-lib with only one export in the shader, changed the way to pick it without knowing the name from NULL to "\*" to eliminate any possibility for an accidental rename when an `ExportToRename` is NULL and there is a typo in `Name` (see link for exact details). </li>
+v0.49|12/7/2023|<li>In [AddToStateObject](#addtostateobject), clarified that when entrypoints are added to a graph, the entrypoint index of existing nodes, as reported by [GetEntrypointIndex()](#getentrypointindex), remain unchanged. New entrypoints will have entrypoint index values that continue past existing entrypoints.</li><li>Corresponding to this, clarified in [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108) how drivers must infer entrypoint index values for entries in the list to match the API view.  It was an oversight that the runtime's index calculation wasn't passed to the driver, but deemed not important enough to rectify.</li><li>In [Graphics nodes example](#graphics-nodes-example), removed text stating that `DispatchNodeInputRecord<>` on the input declaration of a vertex or mesh shader is optional.  It is required (should graphics nodes be supported in the future), consistent with changes to the spec in v0.44 spec that removed defaults for missing node inputs</li>Renamed D3D12_OPTIONS_EXPERIMENTAL to [D3D12_FEATURE_OPTIONS21](#d3d12_feature_d3d12_options21), final location to find [D3D12_WORK_GRAPHS_TIER](#d3d12_work_graphs_tier) via [CheckFeatureSupport](#checkfeaturesupport).<li>In [Discovering device suppport for work graphs](#discovering-device-support-for-work-graphs) removed the need to enable `D3D12StateObjectsExperiment` to use work graphs via `D3D12EnableExperimentalFeatures()`, leaving only `D3D12ExperimentalShaderModels` needed here until shader model 6.8 is final.</li>
