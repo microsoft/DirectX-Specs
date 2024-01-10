@@ -1,5 +1,5 @@
 <h1>D3D12 Work Graphs</h1>
-v0.49 12/7/2023
+v0.50 1/9/2024
 
 > To see the state the spec was in for the June 2023 Work Graphs preview, see the archived v0.43 spec [here](https://github.com/microsoft/DirectX-Specs/blob/preview-2023-06/d3d/WorkGraphs.md).
 > The [Change log](#change-log) in this document shows changes since then on the path to future final (non-preview) release.
@@ -85,6 +85,8 @@ v0.49 12/7/2023
         - [D3D12\_STATE\_SUBOBJECT](#d3d12_state_subobject)
         - [D3D12\_STATE\_OBJECT\_TYPE](#d3d12_state_object_type)
         - [D3D12\_STATE\_SUBOBJECT\_TYPE](#d3d12_state_subobject_type)
+        - [D3D12\_STATE\_OBJECT\_FLAGS](#d3d12_state_object_flags)
+        - [D3D12\_STATE\_OBJECT\_CONFIG](#d3d12_state_object_config)
         - [D3D12\_WORK\_GRAPH\_DESC](#d3d12_work_graph_desc)
         - [D3D12\_WORK\_GRAPH\_FLAGS](#d3d12_work_graph_flags)
         - [D3D12\_NODE](#d3d12_node)
@@ -102,6 +104,7 @@ v0.49 12/7/2023
         - [D3D12\_DRAW\_LAUNCH\_OVERRIDES](#d3d12_draw_launch_overrides)
         - [D3D12\_DRAW\_INDEXED\_LAUNCH\_OVERRIDES](#d3d12_draw_indexed_launch_overrides)
         - [D3D12\_DISPATCH\_MESH\_LAUNCH\_OVERRIDES](#d3d12_dispatch_mesh_launch_overrides)
+        - [D3D12\_COMMON\_PROGRAM\_NODE\_OVERRIDES](#d3d12_common_program_node_overrides)
     - [CreateVertexBufferView](#createvertexbufferview)
     - [CreateDescriptorHeap](#createdescriptorheap)
     - [AddToStateObject](#addtostateobject)
@@ -258,7 +261,6 @@ v0.49 12/7/2023
     - [D3D12DDI\_DISPATCH\_MESH\_LAUNCH\_PROPERTIES\_0108](#d3d12ddi_dispatch_mesh_launch_properties_0108)
 - [Generic programs](#generic-programs)
   - [Supported shader targets](#supported-shader-targets)
-    - [Default shader entrypoint names](#default-shader-entrypoint-names)
   - [Resource binding](#resource-binding)
   - [CreateStateObject structures for generic programs](#createstateobject-structures-for-generic-programs)
     - [D3D12\_DXIL\_LIBRARY\_DESC](#d3d12_dxil_library_desc)
@@ -619,7 +621,7 @@ desribed in [Graphics node resource binding and root arguments](#graphics-node-r
 
 The entire input record for a *draw launch node* is accessible from the first shader stage in the node's associated [program](#program), a vertex shader.
 
-For further details see [Graphics nodes](#graphics-nodes).
+For further details see [Graphics nodes](#graphics-nodes) and [Graphics nodes example](#graphics-nodes-example).
 
 ---
 
@@ -661,7 +663,7 @@ desribed in [Graphics node resource binding and root arguments](#graphics-node-r
 
 The entire input record for a *draw-indexed launch node* is accessible from the first shader stage in the node's associated [program](#program), a vertex shader.
 
-For further details see [Graphics nodes](#graphics-nodes).
+For further details see [Graphics nodes](#graphics-nodes) and [Graphics nodes example](#graphics-nodes-example).
 
 ---
 
@@ -690,7 +692,9 @@ struct MyDispatchMeshNodeInput
 
 The entire input record for a *dispatch mesh launch node* is accessible from the first shader stage in the node's associated [program](#program), a mesh shader.
 
-For further details see [Graphics nodes](#graphics-nodes).
+> For initial experimentation, where HLSL does not yet support any work graphs specific syntax such as inputting [DispatchNodeInputRecord](#input-record-objects), vanilla mesh shaders can be used, with the input record appearing as mesh shader input `payload` that mesh shaders would normally use as amplification shader input.  So in this case instead of an amplification shader providing the `payload`, it comes from the output record from the producer node in the work graph.
+
+For further details see [Graphics nodes](#graphics-nodes) and [Graphics nodes example](#graphics-nodes-example).
 
 ---
 
@@ -1702,9 +1706,13 @@ Three node launch types are listed earlier in the spec that support [programs](#
 [DrawIndexed launch nodes](#drawindexed-launch-nodes): invoke a [graphics program](#program) like `DrawIndexedInstanced()`
 [DispatchMesh launch nodes](#dispatchmesh-launch-nodes): invoke a [mesh shading program](#program) like `DispatchMesh()`
 
+> Initial private experimentation is being done with just mesh nodes, reported via unreleased [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier).  While this spec description can be public, the implementation isn't yet ready to be public.
+
 See [D3D12_GENERIC_PROGRAM_DESC](#d3d12_generic_program_desc) for how to define a program to use at one of these nodes at the API.
 
 Additional details on their operation follow.
+
+---
 
 ## Graphics nodes execution characteristics
 
@@ -1714,6 +1722,8 @@ Additional details on their operation follow.
 
 - Switching between executing graphics nodes: The implication is while executing the graph, there is arbitrary switching between graphics nodes (among other nodes).  The GPU overhead required for this switching is expected to scale with the number of distinct graphics nodes in particular as well as the difference between the state configuration in each graphics node's [program](#program) definition.  So programs which are all *mostly* the same should have a low switching overhead, while wildly different ones will have a higher overhead.  Developers may need to account for this when deciding which states to vary across the many graphics nodes that may be in a single work graph.
 
+---
+
 ## Graphics node resource binding and root arguments
 
 > This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
@@ -1722,7 +1732,9 @@ Like other node types, graphics nodes also receive an input record with effectiv
 
 Each shader in the [program](#program) at a graphics node (e.g. vertex shader, pixel shader etc.) can get resource bindings from the work graph's global root signature and/or from a local root signature at the node.  This is in contrast to when these shaders are used outside of work graphs, in which case only the global root signature applies.  
 
-Another difference from using graphics shaders outside work graphs is with graphics nodes in a work graph, the global root arguments come from the *compute* root arguments on the command list, along with the rest of the work graph, as opposed to the graphics root arguments that command list `Draw*()/DispatchMesh()` calls reference.
+When graphics nodes are used in a work graph, the entire work graph (both graphics and compute nodes) must gets their global root arguments from *graphics* root arguments on the command list (e.g. `pCommandList->SetGraphicsRoot*()` as opposed to `pCommandList->SetComputeRoot*()`).  This is enforced by the requirement that a state object containing work graphs with graphics nodes must set the flag `D3D12_STATE_OBJECT_FLAG_WORK_GRAPHS_USE_GRAPHICS_STATE_FOR_GLOBAL_ROOT_SIGNATURE` in the [D3D12_STATE_OBJECT_FLAGS](#d3d12_state_object_flags) subobject.
+
+---
 
 ### Graphics node index and vertex buffers
 
@@ -1772,6 +1784,8 @@ struct MyDrawIndexedNodePayload
     // Other fields omitted for brevity (and can be interspersed with above).
 };
 ```
+
+---
 
 ## Graphics nodes example
 
@@ -1880,7 +1894,7 @@ float4 MyPixelShader(
 struct MyDispatchMeshData
 {
   float3 perDispatchConstant;
-  uint32 dispatchGrid : SV_DispatchGrid;
+  uint3 dispatchGrid : SV_DispatchGrid;
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -1915,6 +1929,31 @@ void MyMeshShader(
   tris[0] = uint3(0, 1, 2);
 }
 ```
+
+> HLSL does not yet support any graphics node specific syntax.  For initial experimentation (not released yet) mesh shader nodes are supported by repurposing existing mesh shader input `payload` syntax to act as the input record, since there is no support for `DispatchNodeInputRecord` syntax shown above yet.  So the above example works temporarily via existing mesh shader syntax as follows:
+
+```C++
+[OutputTopology("triangle")]
+[NumThreads(1, 1, 1)]
+void MyMeshShader(
+  in payload MyDispatchMeshData nodeInput,
+  out vertices MyPSInput verts[3],
+  out indices uint3 tris[1])
+{
+  SetMeshOutputCounts(3, 1);
+
+  for (uint i = 0; i < 3; ++i)
+  {
+  // In the future `Get().` below will have `->` as an alternative.
+    verts[i].position = ComputePosition(nodeInput.perDrawConstant);
+    verts[i].texCoord = ComputeTexCoord(i);
+  }
+
+  tris[0] = uint3(0, 1, 2);
+}
+```
+
+> Though there isn't yet HLSL syntax for mesh shaders for defining the nodeID (e.g. `{"meshMaterial",2}` above ), or other attributes like local root argument table index, these properties can be defined when adding the node to a work graph at the API, via overrides in the [D3D12_PROGRAM_NODE](#d3d12_program_node) declaration.
 
 ---
 
@@ -2013,6 +2052,7 @@ typedef enum D3D12_WORK_GRAPHS_TIER
     D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED = 0,
     D3D12_WORK_GRAPHS_TIER_0_1 = 1,
     D3D12_WORK_GRAPHS_TIER_1_0 = 10,
+    D3D12_WORK_GRAPHS_TIER_1_1 = 11, // unreleased
 } D3D12_WORK_GRAPHS_TIER;
 ```
 
@@ -2024,6 +2064,7 @@ Value                               | Definition
 `D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED` | No support for work graphs on the device. Attempts to create any work graphs related object will fail and using work graphs related APIs on command lists results in undefined behavior.
 `D3D12_WORK_GRAPHS_TIER_0_1` | The device the June 2023 work graphs preview.  See [Discovering device support for work graphs](#discovering-device-support-for-work-graphs).
 `D3D12_WORK_GRAPHS_TIER_1_0` | The device fully supports the first full work graphs release.  See [Discovering device support for work graphs](#discovering-device-support-for-work-graphs).
+`D3D12_WORK_GRAPHS_TIER_1_1` | Unreleased tier in which [graphics nodes](#graphics-nodes) are being prototyped.
 
 ---
 
@@ -2156,7 +2197,8 @@ Subobject types defined in this spec:
 
 Value                           | Definition
 ---------                       | ----------
-`D3D12_STATE_SUJBOBJECT_TYPE_WORK_GRAPH` | Work graph definition subobject. Seee [D3D12_WORK_GRAPH_DESC](#d3d12_work_graph_desc).
+`D3D12_STATE_SUBOBJECT_TYPE_STATE_OBJECT_CONFIG` | State object config subobject.  See [D3D12_STATE_OBJECT_CONFIG](#d3d12_state_object_config).  This pre-existing subobject has a new flag proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
+`D3D12_STATE_SUBOBJECT_TYPE_WORK_GRAPH` | Work graph definition subobject. See [D3D12_WORK_GRAPH_DESC](#d3d12_work_graph_desc).
 `D3D12_STATE_SUBOBJECT_TYPE_GENERIC_PROGRAM` | Generic program definition subobject.  See [D3D12_GENERIC_PROGRAM_DESC](#d3d12_generic_program_desc).  This is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
 > The following subobjects are proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
@@ -2180,6 +2222,40 @@ Value                           | Definition
 `D3D12_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL` | Depth Stencil description subobject that can be used by a [generic program](#d3d12_generic_program_desc).  The contents are the pre-existing API struct: `D3D12_DEPTH_STENCIL_DESC`. [Defaults if missing](#missing-depth_stencil-or-depth_stencil1-or-depth_stencil2).
 `D3D12_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL1` | Depth Stencil (iteration 1) description subobject that can be used by a [generic program](#d3d12_generic_program_desc).  The contents are the pre-existing API struct: `D3D12_DEPTH_STENCIL_DESC1`. [Defaults if missing](#missing-depth_stencil-or-depth_stencil1-or-depth_stencil2).
 `D3D12_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL2` | Depth Stencil (iteration 2) description subobject that can be used by a [generic program](#d3d12_generic_program_desc).  The contents are the pre-existing API struct: `D3D12_DEPTH_STENCIL_DESC2`. [Defaults if missing](#missing-depth_stencil-or-depth_stencil1-or-depth_stencil2).
+
+---
+
+##### D3D12_STATE_OBJECT_FLAGS
+
+```C++
+typedef enum D3D12_STATE_OBJECT_FLAGS
+{
+    D3D12_STATE_OBJECT_FLAG_NONE = 0x0,
+    D3D12_STATE_OBJECT_FLAG_ALLOW_LOCAL_DEPENDENCIES_ON_EXTERNAL_DEFINITIONS = 0x1,
+    D3D12_STATE_OBJECT_FLAG_ALLOW_EXTERNAL_DEPENDENCIES_ON_LOCAL_DEFINITIONS = 0x2,
+    D3D12_STATE_OBJECT_FLAG_ALLOW_STATE_OBJECT_ADDITIONS = 0x4,
+    D3D12_STATE_OBJECT_FLAG_WORK_GRAPHS_USE_GRAPHICS_STATE_FOR_GLOBAL_ROOT_SIGNATURE = 0x40,
+} D3D12_STATE_OBJECT_FLAGS;
+```
+
+These flags initially was introduced with raytracing.  In the context of work graphs there is a new flag proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet:
+
+Flag                           | Definition
+---------                      | ----------
+`D3D12_STATE_OBJECT_FLAG_WORK_GRAPHS_USE_GRAPHICS_STATE_FOR_GLOBAL_ROOT_SIGNATURE`  | All nodes in work graphs in the state object get their global root signature bindings from graphics state as opposed to compute state.  e.g. `pCommandList->SetGraphicsRoot*()` APIs as opposed to `pCommandList->SetComputeRoot*()` APIs.  This flag must be specified for state objects that contain work graphs using [graphics nodes](#graphics-nodes).  For work graphs that don't use graphics nodes, this flag can be used optionally.  It is only available when [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier) is supported.
+
+---
+
+##### D3D12_STATE_OBJECT_CONFIG
+
+```C++
+typedef struct D3D12_STATE_OBJECT_CONFIG
+{
+    D3D12_STATE_OBJECT_FLAGS Flags;
+} D3D12_STATE_OBJECT_CONFIG;
+```
+
+This subobject initially was introduced with raytracing.  In the contextg of work grpahs there is a new flag in [D3D12_STATE_OBJECT_FLAGS](#d3d12_state_object_flags) proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
 ---
 
@@ -2521,6 +2597,7 @@ typedef struct D3D12_PROGRAM_NODE
         const D3D12_DRAW_LAUNCH_OVERRIDES* pDrawLaunchOverrides;
         const D3D12_DRAW_INDEXED_LAUNCH_OVERRIDES* pDrawIndexedLaunchOverrides;
         const D3D12_DISPATCH_MESH_LAUNCH_OVERRIDES* pDispatchMeshLaunchOverrides;
+        const D3D12_COMMON_PROGRAM_NODE_OVERRIDES* pCommonProgramNodeOverrides;
     };
 } D3D12_PROGRAM_NODE;
 ```
@@ -2532,6 +2609,7 @@ Member                           | Definition
 `pDrawLaunchOverrides` | Used when `OverridesType` is `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_LAUNCH`. See [D3D12_DRAW_LAUNCH_OVERRIDES](#d3d12_draw_launch_overrides).
 `pDrawIndexedLaunchOverrides` | Used when `OverridesType` is `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_INDEXED_LAUNCH`. See [D3D12_DRAW_INDEXED_LAUNCH_OVERRIDES](#d3d12_draw_indexed_launch_overrides).
 `pDispatchMeshLaunchOverrides` | Used when `OverridesType` is `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DISPATCH_MESH_LAUNCH`. See [D3D12_DISPATCH_MESH_LAUNCH_OVERRIDES](#d3d12_dispatch_mesh_launch_overrides).
+`pCommonProgramNodeOverrides` | Used when `OverridesType` is `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_COMMON_PROGRAM`. See [D3D12_COMMON_PROGRAM_NODE_OVERRIDES](#d3d12_common_program_node_overrides).
 
 ---
 
@@ -2544,8 +2622,9 @@ typedef enum D3D12_PROGRAM_NODE_OVERRIDES_TYPE
 {
     D3D12_PROGRAM_NODE_OVERRIDES_TYPE_NONE = 0,
     D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_LAUNCH = 1,
-    D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_INDEXED_LAUNCH = 2
-    D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DISPATCH_MESH_LAUNCH = 3
+    D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_INDEXED_LAUNCH = 2,
+    D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DISPATCH_MESH_LAUNCH = 3,
+    D3D12_PROGRAM_NODE_OVERRIDES_TYPE_COMMON_PROGRAM = 4,
 } D3D12_PROGRAM_NODE_OVERRIDES_TYPE;
 ```
 
@@ -2557,6 +2636,7 @@ Value                           | Definition
 `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_LAUNCH` | For a broadcasting launch node, use [D3D12_DRAW_LAUNCH_OVERRIDES](#d3d12_draw_launch_overrides) to define overrides from what was declared in the shader.
 `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_INDEXED_LAUNCH` | For a coalescing launch node, use [D3D12_DRAW_INDEXED_LAUNCH_OVERRIDES](#d3d12_draw_indexed_launch_overrides) to define overrides from what was declared in the shader.
 `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DISPATCH_MESH_LAUNCH` | For a thread launch node, use [D3D12_DISPATCH_MESH_LAUNCH_OVERRIDES](#d3d12_dispatch_mesh_launch_overrides) to define overrides from what was declared in the shader.
+`D3D12_PROGRAM_NODE_OVERRIDES_TYPE_COMMON_PROGRAM` | For overrides that apply to any program node type, use typedef [D3D12_COMMON_PROGRAM_NODE_OVERRIDES](#d3d12_common_program_node_overrides). This is a convenience to allow overrides that aren't unique to a given launch mode, so the node's launch mode doesn't have to be known.
 
 ---
 
@@ -2571,7 +2651,7 @@ typedef struct D3D12_DRAW_LAUNCH_OVERRIDES
 {
     _In_opt_ const UINT*          pLocalRootArgumentsTableIndex;
     _In_opt_ const BOOL*          pIsProgramEntry;
-    D3D12_NODE_ID                 Rename;
+    _In_opt const D3D12_NODE_ID*  pNewName;
 } D3D12_DRAW_LAUNCH_OVERRIDES;
 ```
 
@@ -2579,7 +2659,7 @@ Member                           | Definition
 ---------                        | ----------
 `pLocalRootArgumentsTableIndex` | Overrides [shader function attribute](#shader-function-attributes) `[NodeLocalRootArgumentsTableIndex()]` (or default table index discussed at the link if the attribute wasn't specified). `-1` means auto-assign (if the node has a local root signature associated with it) - equivalent to not declaring.  Set to `nullptr` if not overriding the shader definition / default.
 `pIsProgramEntry` | Overrides [shader function attribute](#shader-function-attributes) `[NodeIsProgramEntry]` (or lack of it).  Invalid to set this to false if no other nodes output to this node.  Set to `nullptr` if not overriding the shader definition / default.
-`Rename` | Assign a new name for the node instead of what the first shader in the program may have defined via [shader function attribute](#shader-function-attributes) `[NodeID()]`, or in the absense of that attribute the default node ID {shader export name for first shader in program, array index 0}.  If not overriding the existing NodeID, specify `nullptr` for the `Rename.Name`.
+`pNewName` | Assign a new name for the node instead of what the first shader in the program may have defined via [shader function attribute](#shader-function-attributes) `[NodeID()]` (not supported yet), or in the absense of that attribute the default node ID {program name, array index 0}.  If not overriding the existing NodeID, `nullptr`.
 
 ---
 
@@ -2594,7 +2674,7 @@ typedef struct D3D12_DRAW_INDEXED_LAUNCH_OVERRIDES
 {
     _In_opt_ const UINT*          pLocalRootArgumentsTableIndex;
     _In_opt_ const BOOL*          pIsProgramEntry;
-    D3D12_NODE_ID                 Rename;
+    _In_opt const D3D12_NODE_ID*  pNewName;
 } D3D12_DRAW_INDEXED_LAUNCH_OVERRIDES;
 ```
 
@@ -2602,7 +2682,7 @@ Member                           | Definition
 ---------                        | ----------
 `pLocalRootArgumentsTableIndex` | Overrides [shader function attribute](#shader-function-attributes) `[NodeLocalRootArgumentsTableIndex()]` (or default table index discussed at the link if the attribute wasn't specified). `-1` means auto-assign (if the node has a local root signature associated with it) - equivalent to not declaring.  Set to `nullptr` if not overriding the shader definition / default.
 `pIsProgramEntry` | Overrides [shader function attribute](#shader-function-attributes) `[NodeIsProgramEntry]` (or lack of it).  Invalid to set this to false if no other nodes output to this node.  Set to `nullptr` if not overriding the shader definition / default.
-`Rename` | Assign a new name for the node instead of what the first shader in the program may have defined via [shader function attribute](#shader-function-attributes) `[NodeID()]`, or in the absense of that attribute the default node ID {shader export name for first shader in program, array index 0}.  If not overriding the existing NodeID, specify `nullptr` for the `Rename.Name`.
+`pNewName` | Assign a new name for the node instead of what the first shader in the program may have defined via [shader function attribute](#shader-function-attributes) `[NodeID()]`, or in the absense of that attribute the default node ID {program name, array index 0}.  If not overriding the existing NodeID, `nullptr`.
 
 ---
 
@@ -2617,7 +2697,7 @@ typedef struct D3D12_DISPATCH_MESH_LAUNCH_OVERRIDES
 {
     _In_opt_ const UINT*          pLocalRootArgumentsTableIndex;
     _In_opt_ const BOOL*          pIsProgramEntry;
-    D3D12_NODE_ID                 Rename;
+    _In_opt const D3D12_NODE_ID*  pNewName;
 } D3D12_DISPATCH_MESH_LAUNCH_OVERRIDES;
 ```
 
@@ -2625,7 +2705,32 @@ Member                           | Definition
 ---------                        | ----------
 `pLocalRootArgumentsTableIndex` | Overrides [shader function attribute](#shader-function-attributes) `[NodeLocalRootArgumentsTableIndex()]` (or default table index discussed at the link if the attribute wasn't specified). `-1` means auto-assign (if the node has a local root signature associated with it) - equivalent to not declaring.  Set to `nullptr` if not overriding the shader definition / default.
 `pIsProgramEntry` | Overrides [shader function attribute](#shader-function-attributes) `[NodeIsProgramEntry]` (or lack of it).  Invalid to set this to false if no other nodes output to this node.  Set to `nullptr` if not overriding the shader definition / default.
-`Rename` | Assign a new name for the node instead of what the first shader in the program may have defined via [shader function attribute](#shader-function-attributes) `[NodeID()]`, or in the absense of that attribute the default node ID {shader export name for first shader in program, array index 0}.  If not overriding the existing NodeID, specify `nullptr` for the `Rename.Name`.
+`pNewName` | Assign a new name for the node instead of what the first shader in the program may have defined via [shader function attribute](#shader-function-attributes) `[NodeID()]`, or in the absense of that attribute the default node ID {program name, array index 0}.  If not overriding the existing NodeID, `nullptr`.
+
+---
+
+##### D3D12_COMMON_PROGRAM_NODE_OVERRIDES
+
+> This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
+
+Override program attributes.  This is used in [D3D12_PROGRAM_NODE](#d3d12_program_node).
+
+This option is a convenience for overriding properties that are common across all program node types.
+
+```C++
+typedef struct D3D12_COMMON_PROGRAM_NODE_OVERRIDES
+{
+    _In_opt_ const UINT*          pLocalRootArgumentsTableIndex;
+    _In_opt_ const BOOL*          pIsProgramEntry;
+    _In_opt const D3D12_NODE_ID*  pNewName;
+} D3D12_COMMON_PROGRAM_NODE_OVERRIDES;
+```
+
+Member                           | Definition
+---------                        | ----------
+`pLocalRootArgumentsTableIndex` | Overrides [shader function attribute](#shader-function-attributes) `[NodeLocalRootArgumentsTableIndex()]` (or default table index discussed at the link if the attribute wasn't specified). `-1` means auto-assign (if the node has a local root signature associated with it) - equivalent to not declaring.  Set to `nullptr` if not overriding the shader definition / default.
+`pIsProgramEntry` | Overrides [shader function attribute](#shader-function-attributes) `[NodeIsProgramEntry]` (or lack of it).  Invalid to set this to false if no other nodes output to this node.  Set to `nullptr` if not overriding the shader definition / default.
+`pNewName` | Assign a new name for the node instead of what the first shader in the program may have defined via [shader function attribute](#shader-function-attributes) `[NodeID()]`, or in the absense of that attribute the default node ID {program name, array index 0}.  If not overriding the existing NodeID, `nullptr`.
 
 ---
 
@@ -5893,21 +5998,7 @@ Generic programs are available to any device that supports SM6.8 and support non
 ## Supported shader targets
 Exports specified in generic programs support shader model 6.0+ targets vs\_, ps\_ ...etc, but not lib_*. Shaders can be added to a state object using a [DXIL library subobject](#d3d12_dxil_library_desc).
 
-Shaders compiled newer DXC (version TBD) via these targets will appear as if they have a single export whose name is the entrypoint's name in HLSL as expected. Shaders compiled with older DXC work similarly, except the runtime can't find the shader's name. So when importing the shader in a DXIL library subobject, the runtime assigns a default entrypoint name based on the shader type below - the name of the shader in HLSL is ignored. The shader entrypoint name can be renamed when included in a DXIL library subobject if desired, via [export desc](#d3d12_export_desc).
-
-### Default shader entrypoint names
-As described above, for older compilers, which produce shaders that don't make the entrypoint name visible to the runtime, the runtime assigns default entrypoint names as follows:
-
-Shader targets | Default shader entrypoint name
--------------- |-------------------------------
-AS | ASMain
-CS | CSMain
-DS | DSMain
-GS | GSMain
-HS | HSMain
-MS | MSMain
-PS | PSMain
-VS | VSMain
+Shaders compiled newer DXC (version TBD) via these targets will appear as if they have a single export whose name is the entrypoint's name in HLSL as expected. Shaders compiled with older DXC work similarly, except the runtime can't find the shader's entrypoint name. To handle the missing entrypoint name the app must rename it and the name of the shader entrypoint in HLSL is ignored. The shader entrypoint name can be renamed when included in a DXIL library subobject, via [export desc](#d3d12_export_desc).
 
 ---
 
@@ -5951,12 +6042,12 @@ typedef struct D3D12_EXPORT_DESC
 
 Member                              | Definition
 ---------                           | ----------
-`LPWSTR Name` | Name to be exported. If the name refers to a function that is overloaded, a mangled version of the name (function parameter information encoded in name string) can be provided to disambiguate which overload to use. The mangled name for a function can be retrieved from HLSL compiler reflection (not documented in this spec). If `ExportToRename` field is non-null, `Name` refers to the new name to use for it when exported. In this case `Name` must be an unmangled name, whereas `ExportToRename` can be either a mangled or unmangled name. A given internal name may be exported multiple times with different renames (and/or not renamed). Shader entrypoints (as opposed to non-entry library functions) always use unmangled names. Thus for generic programs only unmangled names apply. For newer runtimes that support [Generic programs](#generic-programs): As a convenience, when there is only one export available a the library (or it is a non-library shader target like vs\_*, which can only have one export), `Name` can be set to "\*" to refer to that one export without having to know it's name. If the lib has multiple exports, specifying "\*" for `Name` is invalid. If doing a rename, this "\*" option applies to the `ExportToRename` field instead, as the Name field becomes the new name. For non-lib shaders compiled with older compilers (version cutoff TBD), see [Default shader entrypoint names](#default-shader-entrypoint-names), and in addition the "\*" option works here as well."
+`LPWSTR Name` | Name to be exported. If the name refers to a function that is overloaded, a mangled version of the name (function parameter information encoded in name string) can be provided to disambiguate which overload to use. The mangled name for a function can be retrieved from HLSL compiler reflection (not documented in this spec). If `ExportToRename` field is non-null, `Name` refers to the new name to use for it when exported. In this case `Name` must be an unmangled name, whereas `ExportToRename` can be either a mangled or unmangled name. A given internal name may be exported multiple times with different renames (and/or not renamed). Shader entrypoints (as opposed to non-entry library functions) always use unmangled names. Thus for generic programs only unmangled names apply. For newer runtimes that support [Generic programs](#generic-programs): As a convenience, when there is only one export available in the library, `Name` can be set to "\*" to refer to that one export without having to know it's name. If the lib has multiple exports, specifying "\*" for `Name` is invalid. If doing a rename, this "\*" option applies to the `ExportToRename` field instead, as the Name field becomes the new name. For non-lib shaders compiled with older compilers (version cutoff TBD), the shader name isn't visible to the runtime, so a rename must be done with the "*" option. Doing so would then work fine with both old and new compilers equivalently.
 `_In_opt_ LPWSTR ExportToRename` | If non-null, this is the name of an export to use but then rename when exported. Described further above.
 `D3D12_EXPORT_FLAGS Flags` | Flags to apply to the export.
 
 Note for driver authors:
-In the DDI version of this struct, drivers are always given a non-null `Name`, even if at the API the NULL option was specified. In particular when it is non-lib shader bytecode, which by definition only has one entrypoint in it, the driver must always use the `Name` specified at the DDI to refer to the entrypoint, regardless of what the name in the bytecode is (the names may or may not match due to application of default names in the API), and `ExportToRename` can be ignored.
+In the DDI version of this struct, drivers are always given a non-null `Name`, even if at the API the NULL option was specified. In particular when it is non-lib shader bytecode, which by definition only has one entrypoint in it, the driver must always use the `Name` specified at the DDI to refer to the entrypoint, regardless of what the name in the bytecode is, and `ExportToRename` can be ignored.
 
 ---
 ### D3D12_GENERIC_PROGRAM_DESC
@@ -6192,6 +6283,7 @@ v0.43|6/25/2023|<li>In [Shader target](#shader-target) and [Shader function attr
 v0.44|9/7/2023|<li>Added [Producer - consumer dataflow through UAVs](#producer---consumer-dataflow-through-uavs), summarizing the rules for how to make sure data written to UAVs in a producer node ends up visible to a consumer.</li><li> Added example code for a couple of barrier scenarios:<ul><li>[Dispatch grid writing to UAV for consumer node to read](#dispatch-grid-writing-to-uav-for-consumer-node-to-read)</li><li>[Single thread writing to UAV for consumer node to read](#single-thread-writing-to-uav-for-consumer-node-to-read)</li></ul></li><li>Joined the ACCESS_FLAGS and SYNC_FLAGS field in [Barrier](#barrier) into a single flags field: BARRIER_SEMANTIC_FLAGS for simplicity.  Matching change to DXIL in [Lowering barrier](#lowering-barrier).</li><li>In [Node input declaration](#node-input-declaration) and [Node input atttributes](#node-input-attributes), added a `globallycoherent` option to `RWDispatchNodeInputRecord` for cases loads/stores will be used on the input record for cross-group communication.  Matching change to DXIL in [NodeIOFlags and NodeIOKind encoding](#nodeioflags-and-nodeiokind-encoding)</li><li>Added [Quad and derivative operation semantics](#quad-and-derivative-operation-semantics) and [NonUniformResourceIndex semantics](#nonuniformresourceindex-semantics) sections to clarify how these operate in work graphs.</li><li>Added [Support for WaveSize shader function attribute](#support-for-wavesize-shader-function-attribute) section to clarify that the HLSL `WaveSize(N)` shader function attribute works for shaders node shaders of all launch types.</li><li>Refined behavior for [AddToStateObject()](#addtostateobject) with more specifics and more flexibility than the initial proposal.  Will need more refinement with feedback.</li><li>Along with the [AddToStateObject()](#addtostateobject) refinement, changed various work graphs creation DDIs so that nodes identify their connections to other nodes with lists of pointers rather than by index.  This way when additions are made, existing node definitons can be updated in-place by appending pointers to lists when a node points to a newly added node, or is targetted by a newly added node.  The addition lists all nodes, with new ones at the start of the list. All affected existing node definitions from previous DDIs are modified in-place to point to each other appropriately.  Each node definition includes a versionAdded number so that with a single DDI memory representation of the full work graph, drivers can see what the structure at any given version looked like if needed.  See [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108)(added flags, version, and changed node arrays to lists), [D3D12DDI_WORK_GRAPH_FLAGS_0108](#d3d12ddi_work_graph_flags_0108)(new addition flag), [D3D12DDI_NODE_LIST_ENTRY_0108](#d3d12ddi_node_list_entry_0108)(new, used for lists of nodes), [D3D12DDI_NODE_0108](#d3d12ddi_node_0108)(updated with `VersionAdded` instead of `NodeIndex`), [D3D12DDI_NODE_OUTPUT_0108](#d3d12ddi_node_output_0108)(updated with node list instead of array), [D3D12DDI_BROADCASTING_LAUNCH_NODE_PROPERTIES_0108](#d3d12ddi_broadcasting_launch_node_properties_0108)(updated with input node list instead of arrays), [D3D12DDI_COALESCING_LAUNCH_NODE_PROPERTIES_0108](#d3d12ddi_coalescing_launch_node_properties_0108)(updated with input node list instead of arrays), [D3D12DDI_THREAD_LAUNCH_NODE_PROPERTIES_0108](#d3d12ddi_thread_launch_node_properties_0108)(updated with input node list instead of arrays)</li><li>In [Node output attributes](#node-output-attributes) added `[UnboundedSparseNodes]` option, which is equivalent to setting `[AllowSparseNodes]` and `[NodeArraySize(0xffffffff)]`.  In DXIL [Node input and output metadata table](#node-input-and-output-metadata-table), noted that for `NodeOutputArraySize`, `0xffffffff` means unbounded array size and `NodeAllowSparseNodes` must be `true`.</li><li>Removed changes to allow multiple conflicting `shader` attributes on entry points. Replaced **Repurposing plain compute shader code** with **Reusing shader entries**. Removed references to default or implicit node inputs throughout.</li><li>In [D3D12_WORK_GRAPHS_TIER](#d3d12_work_graphs_tier) added `D3D12_WORK_GRAPHS_TIER_1_0` (and same at DDI) to get ready for first full release.</li>
 v0.45|9/22/2023|<li>Added new option for overriding node properties at the API, a new [D3D12_NODE_OVERRIDES_TYPE](#d3d12_node_overrides_type), [D3D12_NODE_OVERRIDES_TYPE_COMMON_COMPUTE](#d3d12_node_overrides_type).  This allows overriding common properties agnostic to launch mode, like renaming a node or its outputs, without having to know the launch mode of the node/shader.  Previously any override required the app to know the launch mode to pick the matching override type for the shader.</li><li>In [Interactions with other d3d12 features](#interactions-with-other-d3d12-features), noted that - Pipeline statistics report invocations of nodes against the corresponding shader type.  So compute-based node shader invocations increment `CSInvocations`.</li>
 v0.46|10/5/2023|<li>In [D3D12_WORK_GRAPH_MEMORY_REQUIREMENTS](#d3d12_work_graph_memory_requirements) renamed `SizeAlignmentInBytes` to `SizeGranularityInBytes` to be more clear.  It turns out the codebase already used this name.  Users were confusing `SizeAlignmentInBytes` in the spec for the alignment of the base address, when actually it defines that usable backing memory sizes larger than the minimum stated by the driver must be larger than the minimum by a multiple of `SizeGranularityInBytes`.  Added documentation describing the meaning more clearly, and clarified: The application can provide sizes for backing memory that are larger than `MinSizeInBytes` + an integer multiple of `SizeGranularityInBytes`, or larger than `MaxSizeInBytes`, but it simply wastes memory as the driver won't touch memory beyond the size range and granularity specifications here.</li>
-v0.47|11/1/2023|<li>A new section was added for [Generic programs](#generic-programs) that explains the way a generic program is supported as part of the upcoming SM6.8 release. Generic programs are available to any device that supports SM6.8 and the [Supported shader targets](#supported-shader-targets) are non-library shader targets SM6.0+. Also added details about how [Resource binding](#resource-binding) and exports [Default shader entrypoint names](#default-shader-entrypoint-names) will be handled for non-library shaders. To enable the use of non-library shader an update for [D3D12\_DXIL\_LIBRARY\_DESC](#d3d12_dxil_library_desc) and [D3D12\_EXPORT\_DESC](#d3d12_export_desc) create state object structures was added showing how they will be used for generic programs. [D3D12\_EXPORT\_DESC](#d3d12_export_desc) will also introduce a new way to rename exports in the case of a shader library or non-library with only one export; the export can be referenced by passing in a NULL as the export will be handled by the runtime and the resolved list of names passed on to the driver (see link for exact details).</li><li>Removed section **Reusing shader entries**, as unfortunately there is no longer any way to share compute shader and node shader code to save on binary space.  This is because lib targets were node shaders live can no longer be used for specifying compute shaders (cs_* target is all that's supported).  Having compute shaders and all other preexisting shader types in lib targets was a feature that was proposed but the feature is now cut for this release.</li>
+v0.47|11/1/2023|<li>A new section was added for [Generic programs](#generic-programs) that explains the way a generic program is supported as part of the upcoming SM6.8 release. Generic programs are available to any device that supports SM6.8 and the [Supported shader targets](#supported-shader-targets) are non-library shader targets SM6.0+. Also added details about how [Resource binding](#resource-binding) and exports `Default shader entrypoint names` will be handled for non-library shaders. To enable the use of non-library shader an update for [D3D12\_DXIL\_LIBRARY\_DESC](#d3d12_dxil_library_desc) and [D3D12\_EXPORT\_DESC](#d3d12_export_desc) create state object structures was added showing how they will be used for generic programs. [D3D12\_EXPORT\_DESC](#d3d12_export_desc) will also introduce a new way to rename exports in the case of a shader library or non-library with only one export; the export can be referenced by passing in a NULL as the export will be handled by the runtime and the resolved list of names passed on to the driver (see link for exact details).</li><li>Removed section **Reusing shader entries**, as unfortunately there is no longer any way to share compute shader and node shader code to save on binary space.  This is because lib targets were node shaders live can no longer be used for specifying compute shaders (cs_* target is all that's supported).  Having compute shaders and all other preexisting shader types in lib targets was a feature that was proposed but the feature is now cut for this release.</li>
 v0.48|11/8/2023|<li>In [D3D12\_EXPORT\_DESC](#d3d12_export_desc) for lib/non-lib with only one export in the shader, changed the way to pick it without knowing the name from NULL to "\*" to eliminate any possibility for an accidental rename when an `ExportToRename` is NULL and there is a typo in `Name` (see link for exact details). </li>
 v0.49|12/7/2023|<li>In [AddToStateObject](#addtostateobject), clarified that when entrypoints are added to a graph, the entrypoint index of existing nodes, as reported by [GetEntrypointIndex()](#getentrypointindex), remain unchanged. New entrypoints will have entrypoint index values that continue past existing entrypoints.</li><li>Corresponding to this, clarified in [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108) how drivers must infer entrypoint index values for entries in the list to match the API view.  It was an oversight that the runtime's index calculation wasn't passed to the driver, but deemed not important enough to rectify.</li><li>In [Graphics nodes example](#graphics-nodes-example), removed text stating that `DispatchNodeInputRecord<>` on the input declaration of a vertex or mesh shader is optional.  It is required (should graphics nodes be supported in the future), consistent with changes to the spec in v0.44 spec that removed defaults for missing node inputs</li>Renamed D3D12_OPTIONS_EXPERIMENTAL to [D3D12_FEATURE_OPTIONS21](#d3d12_feature_d3d12_options21), final location to find [D3D12_WORK_GRAPHS_TIER](#d3d12_work_graphs_tier) via [CheckFeatureSupport](#checkfeaturesupport).<li>In [Discovering device suppport for work graphs](#discovering-device-support-for-work-graphs) removed the need to enable `D3D12StateObjectsExperiment` to use work graphs via `D3D12EnableExperimentalFeatures()`, leaving only `D3D12ExperimentalShaderModels` needed here until shader model 6.8 is final.</li>
+v0.50|1/5/2024|<li>In [Graphics nodes](#graphics-nodes) described that initially mesh nodes are supported for private experimentation, exposed via [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier).</li><li>In [Graphics node resource binding and root arguments](#graphics-node-resource-binding-and-root-arguments) described a new flag for [D3D12_STATE_OBJECT_CONFIG](#d3d12_state_object_config), `D3D12_STATE_OBJECT_FLAG_WORK_GRAPHS_USE_GRAPHICS_STATE_FOR_GLOBAL_ROOT_SIGNATURE`, available in [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier).  Any work graph that uses graphics nodes must use this flag in it's containing state object.  Previously the spec stated that graphics nodes would use compute state.  The semantics here might still need tweaking.</li><li>In [DispatchMesh launch nodes](#dispatchmesh-launch-nodes) and [Graphics nodes example](#graphics-nodes-example), explained how mesh node support works initially for private experimentation, while there is no HLSL support for mesh node specific syntax yet.  The main affordance for experimentation is that existing mesh shader `payload` input that is normally used as input from the amplification shader is repurposed to be the node input record, given there is no `DispatchNodeInputRecord` object support for mesh shaders for now.  So instead of the `payload` coming from an amplification shader (not supported with work graphs), in a work graph the producer node's output record becomes the mesh shader `payload` input, for now.</li><li>Made some  minor corrections and tweaks to the [D3D12_PROGRAM_NODE](#d3d12_program_node) API struct's member fields for overriding program node properties.</li><li>In [Generic programs](#generic-programs) default names will no longer be assigned by the runtime for shaders produced by older compilers where the runtime can't see the shader name. Instead, for non-library shaders compiled with older compilers the app must rename the shader entrypoint from "*" to a new name, effectively assigning a name. Based on that the Name field in  [D3D12\_EXPORT\_DESC](#d3d12_export_desc) will no longer accept shader entry point default names (removed).</li>
