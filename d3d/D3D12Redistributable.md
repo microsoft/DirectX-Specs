@@ -38,7 +38,7 @@
   - [DXGI](#dxgi)
   - [HLSL Compiler](#hlsl-compiler)
   - [Shader Cache](#shader-cache)
-  - [DXBC to DIXL Converter](#dxbc-to-dixl-converter)
+  - [DXBC to DXIL Converter](#dxbc-to-dxil-converter)
   - [D3D12 Application Local vs. Inbox OS Compatibility](#d3d12-application-local-vs-inbox-os-compatibility)
   - [Compatibility With Multiple Versions of D3D12.dll](#compatibility-with-multiple-versions-of-d3d12dll)
   - [Sharing Contract For Driver Private Data](#sharing-contract-for-driver-private-data)
@@ -365,9 +365,9 @@ New D3D12 features may have dependencies on new versions of the HLSL compiler.  
 
 This component is expected to be stable and can be left as an OS only component.  This can be revisited when needed.
 
-## DXBC to DIXL Converter
+## DXBC to DXIL Converter
 
-Upconverts legacy DXBC shaders to DIXL shaders.  New features appear natively in DXIL, so this component does not require redistribution.
+Upconverts legacy DXBC shaders to DXIL shaders.  New features appear natively in DXIL, so this component does not require redistribution.
 
 ## D3D12 Application Local vs. Inbox OS Compatibility
 
