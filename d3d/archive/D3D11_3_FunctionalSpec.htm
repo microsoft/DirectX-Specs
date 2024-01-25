@@ -14738,7 +14738,7 @@ e.g. with the format R8G8_UNORM, the components B,A entering the blending hardwa
 <p>Note that this clamping must be done on a per-rendertarget basis,
 so if one render target is a float type and another is UNORM type, the shader values and blend factor must be
 float range for the float render target Blend, and clamped to 0..1 for the UNORM render target Blend.</p>
-<p>An exception is float16, float11 or float10 RenderTargets, where it is permitted
+<p>An exception is float16, float11, float10 or R9G9B9E5 RenderTargets, where it is permitted
 for implementations to not clamp data going into the blend.  So it is required that blend operations on these formats to be
 be done with at least equal precision/range as the output format but an implementation can choose to perform blending with
 precision/range (up to float32).</p>
