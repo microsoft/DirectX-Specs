@@ -1,5 +1,5 @@
 <h1>D3D12 Work Graphs</h1>
-v0.50 1/9/2024
+v0.51 1/19/2024
 
 > To see the state the spec was in for the June 2023 Work Graphs preview, see the archived v0.43 spec [here](https://github.com/microsoft/DirectX-Specs/blob/preview-2023-06/d3d/WorkGraphs.md).
 > The [Change log](#change-log) in this document shows changes since then on the path to future final (non-preview) release.
@@ -32,7 +32,7 @@ v0.50 1/9/2024
     - [Thread launch nodes](#thread-launch-nodes)
     - [Draw Launch Nodes](#draw-launch-nodes)
     - [DrawIndexed Launch Nodes](#drawindexed-launch-nodes)
-    - [DispatchMesh Launch Nodes](#dispatchmesh-launch-nodes)
+    - [Mesh Launch Nodes](#mesh-launch-nodes)
   - [Shader invocation at a node](#shader-invocation-at-a-node)
   - [Node ID](#node-id)
   - [Node input](#node-input)
@@ -95,15 +95,15 @@ v0.50 1/9/2024
         - [D3D12\_NODE\_OVERRIDES\_TYPE](#d3d12_node_overrides_type)
         - [D3D12\_BROADCASTING\_LAUNCH\_OVERRIDES](#d3d12_broadcasting_launch_overrides)
         - [D3D12\_COALESCING\_LAUNCH\_OVERRIDES](#d3d12_coalescing_launch_overrides)
-        - [D3D12\_COMMON\_COMPUTE\_NODE\_OVERRIDES](#d3d12_common_compute_node_overrides)
         - [D3D12\_THREAD\_LAUNCH\_OVERRIDES](#d3d12_thread_launch_overrides)
+        - [D3D12\_COMMON\_COMPUTE\_NODE\_OVERRIDES](#d3d12_common_compute_node_overrides)
         - [D3D12\_NODE\_ID](#d3d12_node_id)
         - [D3D12\_NODE\_OUTPUT\_OVERRIDES](#d3d12_node_output_overrides)
         - [D3D12\_PROGRAM\_NODE](#d3d12_program_node)
         - [D3D12\_PROGRAM\_NODE\_OVERRIDES\_TYPE](#d3d12_program_node_overrides_type)
         - [D3D12\_DRAW\_LAUNCH\_OVERRIDES](#d3d12_draw_launch_overrides)
         - [D3D12\_DRAW\_INDEXED\_LAUNCH\_OVERRIDES](#d3d12_draw_indexed_launch_overrides)
-        - [D3D12\_DISPATCH\_MESH\_LAUNCH\_OVERRIDES](#d3d12_dispatch_mesh_launch_overrides)
+        - [D3D12\_MESH\_LAUNCH\_OVERRIDES](#d3d12_mesh_launch_overrides)
         - [D3D12\_COMMON\_PROGRAM\_NODE\_OVERRIDES](#d3d12_common_program_node_overrides)
     - [CreateVertexBufferView](#createvertexbufferview)
     - [CreateDescriptorHeap](#createdescriptorheap)
@@ -258,7 +258,7 @@ v0.50 1/9/2024
     - [D3D12DDI\_PROGRAM\_NODE\_0108](#d3d12ddi_program_node_0108)
     - [D3D12DDI\_DRAW\_LAUNCH\_PROPERTIES\_0108](#d3d12ddi_draw_launch_properties_0108)
     - [D3D12DDI\_DRAW\_INDEXED\_LAUNCH\_PROPERTIES\_0108](#d3d12ddi_draw_indexed_launch_properties_0108)
-    - [D3D12DDI\_DISPATCH\_MESH\_LAUNCH\_PROPERTIES\_0108](#d3d12ddi_dispatch_mesh_launch_properties_0108)
+    - [D3D12DDI\_MESH\_LAUNCH\_PROPERTIES\_0108](#d3d12ddi_mesh_launch_properties_0108)
 - [Generic programs](#generic-programs)
   - [Supported shader targets](#supported-shader-targets)
   - [Resource binding](#resource-binding)
@@ -518,7 +518,7 @@ Proposed future [graphics node](#graphics-nodes) types:
 
 [Draw launch nodes](#draw-launch-nodes): invoke a [graphics program](#program) like `DrawInstanced()`
 [DrawIndexed launch nodes](#drawindexed-launch-nodes): invoke a [graphics program](#program) like `DrawIndexedInstanced()`
-[DispatchMesh launch nodes](#dispatchmesh-launch-nodes): invoke a [mesh shading program](#program) like `DispatchMesh()`
+[Mesh launch nodes](#mesh-launch-nodes): invoke a [mesh shading program](#program) like `DispatchMesh()`
 
 ---
 
@@ -588,7 +588,7 @@ For wave packing see [Thread visiblity in wave operations](#thread-visibility-in
 
 > This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
-Draw launch nodes can only appear at a leaf of a work graph.
+Draw launch nodes can only appear at a leaf of a work graph. They can appear in the graph as standalone entrypoints as well (which is a form of leaf).
 
 The equivalent of a graphics `DrawInstanced()` is generated when an input is present - a set of instanced draws launched per input.  Work is launched for the [program](#program) at the node the same way it would if the equivalent was used on the command list with a `DrawInstanced()` call.
 
@@ -629,7 +629,7 @@ For further details see [Graphics nodes](#graphics-nodes) and [Graphics nodes ex
 
 > This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
-DrawIndexed launch nodes can only appear at a leaf of a work graph.
+DrawIndexed launch nodes can only appear at a leaf of a work graph. They can appear in the graph as standalone entrypoints as well (which is a form of leaf).
 
 The equivalent of a graphics `DrawIndexedInstanced()` is generated when an input is present - a set of indexed, instanced draws launched per input.  Work is launched for the [program](#program) at the node the same way it would if the equivalent was used on a command list with a `DrawIndexedInstanced()` call.
 
@@ -667,23 +667,25 @@ For further details see [Graphics nodes](#graphics-nodes) and [Graphics nodes ex
 
 ---
 
-### DispatchMesh Launch Nodes
+### Mesh Launch Nodes
 
 > This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
-DispatchMesh launch nodes can only appear at a leaf of a work graph.
+Mesh launch nodes can only appear at a leaf of a work graph.  They can appear in the graph as standalone entrypoints as well (which is a form of leaf).
 
-The equivalent of a graphics `DispatchMesh()` is generated when an input is present - a set of mesh shader threadgroups.  The program at the node must begin with a mesh shader.  Amplification shaders are not supported since they aren't needed in a work graph.  Nodes in the graph that feed into the DispatchMesh launch node can do work amplification with more flexibility than an amplification shader alone.
+The equivalent of a graphics `DispatchMesh()` is generated when an input is present - a set of mesh shader threadgroups.  The program at the node must begin with a mesh shader.  Amplification shaders are not supported since they aren't needed in a work graph.  Nodes in the graph that feed into the Mesh launch node can do work amplification with more flexibility than an amplification shader alone.
 
 Consistent with the mesh shader spec, each of the thead group's three dimensions must be less than 64k, and the total number of thread groups launched must not exceed 2^22.  Work is launched for the [program](#program) at the node the same way it would if the equivalent was used on a command list with a `DispatchMesh()` call.
 
-Per-dispatch arguments must be present in the input record.  This is specified by using the same system-interpreted-value, `SV_DispatchGrid` as is used for [broadcasting launch nodes](#broadcasting-launch-nodes).  The only difference for DispatchMesh nodes is that `SV_DispatchGrid` is *required*: a fixed-size dispatch grid is not supported like it is with broadcasting launch nodes.
+Per-dispatch arguments must be present in the input record.  This is specified by using the same system-interpreted-value, `SV_DispatchGrid` as is used for [broadcasting launch nodes](#broadcasting-launch-nodes).  The only difference for DispatchMesh nodes is that `SV_DispatchGrid` is *required*: a fixed-size dispatch grid is not supported like it is with broadcasting launch nodes.  In case this requirement can be relaxed, during experimentation the system will initially be set up to allow a fixed dispatch grid to be specified via `[NodeDispatchGrid()]` [shader function attribute](#shader-function-attributes) or API [override](#d3d12_mesh_launch_overrides), in which case per-dispatch arguments become optional inputs.  
+
+When `SV_DispatchGrid` is specified in the node input, `[NodeMaxDispatchGrid()]` must be specified via `[NodeDispatchGrid()]` [shader function attribute](#shader-function-attributes) or API [override](#d3d12_mesh_launch_overrides).
 
 All of the normal system-generated Values for mesh shaders, such as `SV_DispatchThreadID`, `SV_GroupThreadID`, `SV_GroupIndex`, `SV_GroupID`, etc. work as expected.  The snippet below illustrates an example input payload to a *dispatch mesh launch node*:
 
 ```c++
 // This structure is defined by the application's shader.
-struct MyDispatchMeshNodeInput
+struct MyMeshNodeInput
 {
     uint3 dispatchGrid : SV_DispatchGrid; // can appear anywhere in struct
     // Other fields omitted for brevity.
@@ -1698,13 +1700,13 @@ One way to do this is to define tiers of functionality, where lower tiers don't 
 
 > This section is proposed and not supported yet.  Details need to be proven out and refined across hardware vendors, and this process might require a lengthy incubation period.  The vision should be useful for everyone to see though: This is a potential way that work graphs could support more than just compute shaders.
 
-With graphics nodes at the leaves of a work graph, `DrawInstanced()`, `DrawIndexedInstanced()` and `DispatchMesh()` calls can be requested just like any other graph node, by enqueueing a record with `Draw*/DispatchMesh` specific arguments to the node, including index and vertex buffer bindings. Since there can be more than one graphics node in the work graph, this implies the system being able to switch between what graphics program is running on the fly, something that has not been exposed by D3D on PC before.
+With graphics nodes at the leaves of a work graph, `DrawInstanced()`, `DrawIndexedInstanced()` and `DispatchMesh()` calls can be requested just like any other graph node, by enqueueing a record with `Draw*/Mesh` specific arguments to the node, including index and vertex buffer bindings. Since there can be more than one graphics node in the work graph, this implies the system being able to switch between what graphics program is running on the fly, something that has not been exposed by D3D on PC before.
 
 Three node launch types are listed earlier in the spec that support [programs](#program) with graphics shaders:
 
 [Draw launch nodes](#draw-launch-nodes): invoke a [graphics program](#program) like `DrawInstanced()`
 [DrawIndexed launch nodes](#drawindexed-launch-nodes): invoke a [graphics program](#program) like `DrawIndexedInstanced()`
-[DispatchMesh launch nodes](#dispatchmesh-launch-nodes): invoke a [mesh shading program](#program) like `DispatchMesh()`
+[Mesh launch nodes](#mesh-launch-nodes): invoke a [mesh shading program](#program) like `DispatchMesh()`
 
 > Initial private experimentation is being done with just mesh nodes, reported via unreleased [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier).  While this spec description can be public, the implementation isn't yet ready to be public.
 
@@ -1718,7 +1720,7 @@ Additional details on their operation follow.
 
 > This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
-- Draw order: The order of `Draw*`/`DispatchMesh` calls is undefined. Invocations of multiple concurrent graphics nodes (or any nodes in the work graph) have no ordering relative to each other. Similarly, draw calls sent to a single graphics node (like any node in a work graph) *may* be reordered.
+- Draw order: The order of `Draw*`/`Mesh` node launches is undefined. Invocations of multiple concurrent graphics nodes (or any nodes in the work graph) have no ordering relative to each other. Similarly, draw calls sent to a single graphics node (like any node in a work graph) *may* be reordered.
 
 - Switching between executing graphics nodes: The implication is while executing the graph, there is arbitrary switching between graphics nodes (among other nodes).  The GPU overhead required for this switching is expected to scale with the number of distinct graphics nodes in particular as well as the difference between the state configuration in each graphics node's [program](#program) definition.  So programs which are all *mostly* the same should have a low switching overhead, while wildly different ones will have a higher overhead.  Developers may need to account for this when deciding which states to vary across the many graphics nodes that may be in a single work graph.
 
@@ -1891,7 +1893,7 @@ float4 MyPixelShader(
   return; // Sample texture based on texture coordinates.  Omitted for brevity.
 }
 
-struct MyDispatchMeshData
+struct MyMeshData
 {
   float3 perDispatchConstant;
   uint3 dispatchGrid : SV_DispatchGrid;
@@ -1909,11 +1911,12 @@ struct MyDispatchMeshData
 // nodes.
 //
 [NodeID("meshMaterial",2)]
-[NodeLaunch("dispatchmesh")]
+[NodeLaunch("mesh")]
 [OutputTopology("triangle")]
+[NodeMaxDispatchGrid(16,1,1)]
 [NumThreads(1, 1, 1)]
 void MyMeshShader(
-  DispatchNodeInputRecord<MyDispatchMeshData> nodeInput,
+  DispatchNodeInputRecord<MyMeshData> nodeInput,
   out vertices MyPSInput verts[3],
   out indices uint3 tris[1])
 {
@@ -1936,7 +1939,7 @@ void MyMeshShader(
 [OutputTopology("triangle")]
 [NumThreads(1, 1, 1)]
 void MyMeshShader(
-  in payload MyDispatchMeshData nodeInput,
+  in payload MyMeshData nodeInput,
   out vertices MyPSInput verts[3],
   out indices uint3 tris[1])
 {
@@ -1952,6 +1955,8 @@ void MyMeshShader(
   tris[0] = uint3(0, 1, 2);
 }
 ```
+
+The `[NodeMaxDispatchGrid(...)]` or `[NodeDispatchGrid(...)]` declaration can be specified at the API (see [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides)) since mesh node syntax isn't available yet.
 
 > Though there isn't yet HLSL syntax for mesh shaders for defining the nodeID (e.g. `{"meshMaterial",2}` above ), or other attributes like local root argument table index, these properties can be defined when adding the node to a work graph at the API, via overrides in the [D3D12_PROGRAM_NODE](#d3d12_program_node) declaration.
 
@@ -2433,7 +2438,7 @@ typedef struct D3D12_BROADCASTING_LAUNCH_OVERRIDES
 {
     _In_opt_ const UINT*          pLocalRootArgumentsTableIndex;
     _In_opt_ const BOOL*          pIsProgramEntry;
-    D3D12_NODE_ID                 Rename;
+    _In_opt D3D12_NODE_ID*        pNewName;
     _In_opt_ const D3D12_NODE_ID* pShareInputOf;
     _In_reads_opt_(3) const UINT* pDispatchGrid;
     _In_reads_opt_(3) const UINT* pMaxDispatchGrid;
@@ -2447,7 +2452,7 @@ Member                           | Definition
 ---------                        | ----------
 `pLocalRootArgumentsTableIndex` | Overrides [shader function attribute](#shader-function-attributes) `[NodeLocalRootArgumentsTableIndex()]` (or default table index discussed at the link if the attribute wasn't specified). `-1` means auto-assign (if the node has a local root signature associated with it) - equivalent to not declaring.  Set to `nullptr` if not overriding the shader definition / default.
 `pIsProgramEntry` | Overrides [shader function attribute](#shader-function-attributes) `[NodeIsProgramEntry]` (or lack of it).  Invalid to set this to false if no other nodes output to this node.  Set to `nullptr` if not overriding the shader definition / default.
-`Rename` | Assign a new name for the node instead of what the shader defined via [shader function attribute](#shader-function-attributes) `[NodeID()]`, or in the absense of that attribute the default node ID {shader export name, array index 0}.  If not overriding the existing NodeID, specify `nullptr` for the `Rename.Name`.
+`pNewName` | Assign a new name for the node instead of what the shader defined via [shader function attribute](#shader-function-attributes) `[NodeID()]`, or in the absence of that attribute the default node ID {shader export name, array index 0}.  If not overriding the existing NodeID, specify `nullptr` for `pNewName`.
 `pShareInputOf` | Overrides [shader function attribute](#shader-function-attributes) `[NodeShareInputOf()]` (or lack of it).  Set to `nullptr` if not overriding the shader definition / default.  Specify `nullptr` for `pShareInputOf->Name` to force not sharing input.  The NodeID specified here applies after any node renames.
 `pDispatchGrid` | Overrides [shader function attribute](#shader-function-attributes) `[NodeDispatchGrid()]` (or lack of it). Set to `nullptr` if not overriding the shader definition or not applicable (e.g. dispatch grid is in shader record), in which case `[NodeMaxDispatchGrid()]` / `pMaxDispatchGrid` are relevant instead). The uint x y and z parameters individually cannot exceed 65535, and x*y*z cannot exceed 2^24-1 (16,777,215).
 `pMaxDispatchGrid` | Overrides [shader function attribute](#shader-function-attributes) `[NodeMaxDispatchGrid()]` (or lack of it). Set to `nullptr` if not overriding the shader definition or not applicable (e.g. fixed dispatch grid, in which case `[NodeDispatchGrid()]` / `pDispatchGrid` are relevant instead). The uint x y and z parameters individually cannot exceed 65535, and x*y*z cannot exceed 2^24-1 (16,777,215).
@@ -2465,7 +2470,7 @@ typedef struct D3D12_COALESCING_LAUNCH_OVERRIDES
 {
     _In_opt_ const UINT*          pLocalRootArgumentsTableIndex;
     _In_opt_ const BOOL*          pIsProgramEntry;
-    D3D12_NODE_ID                 Rename;
+    _In_opt D3D12_NODE_ID*        pNewName;
     _In_opt_ const D3D12_NODE_ID* pShareInputOf;
     UINT                          NumOutputOverrides;
     _In_reads_opt_(NumOutputOverrides) const D3D12_NODE_OUTPUT_OVERRIDES* 
@@ -2477,7 +2482,35 @@ Member                           | Definition
 ---------                        | ----------
 `pLocalRootArgumentsTableIndex` | Overrides [shader function attribute](#shader-function-attributes) `[NodeLocalRootArgumentsTableIndex()]` (or default table index discussed at the link if the attribute wasn't specified). `-1` means auto-assign (if the node has a local root signature associated with it) - equivalent to not declaring.  Set to `nullptr` if not overriding the shader definition / default.
 `pIsProgramEntry` | Overrides [shader function attribute](#shader-function-attributes) `[NodeIsProgramEntry]` (or lack of it).  Invalid to set this to false if no other nodes output to this node.  Set to `nullptr` if not overriding the shader definition / default.
-`Rename` | Assign a new name for the node instead of what the shader defined via [shader function attribute](#shader-function-attributes) `[NodeID()]`, or in the absense of that attribute the default node ID {shader export name, array index 0}.  If not overriding the existing NodeID, specify `nullptr` for the `Rename.Name`.
+`pNewName` | Assign a new name for the node instead of what the shader defined via [shader function attribute](#shader-function-attributes) `[NodeID()]`, or in the absence of that attribute the default node ID {shader export name, array index 0}.  If not overriding the existing NodeID, specify `nullptr` for `pNewName`.
+`pShareInputOf` | Overrides [shader function attribute](#shader-function-attributes) `[NodeShareInputOf()]` (or lack of it).  Set to `nullptr` if not overriding the shader definition / default.  Specify `nullptr` for `pShareInputOf->Name` to force not sharing input.  The NodeID specified here applies after any node renames.
+`NumOutputOverrides` | Size of array pointed to by `pOutputOverrides`.  Anyu number of the shader's declared otput ndoes can have output attributes overridden.  Set to 0 if not overriding any outputs (`pOutputOverrides` will be ignored).
+`pOutputOverrides` | If `NumOutputOverrides > 0`, points to an array of `NumOutputOverrides` [D3D12_NODE_OUTPUT_OVERRIDES](#d3d12_node_output_overrides) definitions.
+
+---
+
+##### D3D12_THREAD_LAUNCH_OVERRIDES
+
+Override shader attributes.  See [shader function attributes](#shader-function-attributes) and [node output declaration](#node-output-declaration) for the attributes that can be overridden.
+
+```C++
+typedef struct D3D12_THREAD_LAUNCH_OVERRIDES
+{
+    _In_opt_ const UINT*          pLocalRootArgumentsTableIndex;
+    _In_opt_ const BOOL*          pIsProgramEntry;
+    _In_opt D3D12_NODE_ID*        pNewName;
+    _In_opt_ const D3D12_NODE_ID* pShareInputOf;
+    UINT                          NumOutputOverrides;
+    _In_reads_opt_(NumOutputOverrides) const D3D12_NODE_OUTPUT_OVERRIDES* 
+                                  pOutputOverrides;
+} D3D12_THREAD_LAUNCH_OVERRIDES;
+```
+
+Member                           | Definition
+---------                        | ----------
+`pLocalRootArgumentsTableIndex` | Overrides [shader function attribute](#shader-function-attributes) `[NodeLocalRootArgumentsTableIndex()]` (or default table index discussed at the link if the attribute wasn't specified). `-1` means auto-assign (if the node has a local root signature associated with it) - equivalent to not declaring.  Set to `nullptr` if not overriding the shader definition / default.
+`pIsProgramEntry` | Overrides [shader function attribute](#shader-function-attributes) `[NodeIsProgramEntry]` (or lack of it).  Invalid to set this to false if no other nodes output to this node.  Set to `nullptr` if not overriding the shader definition / default.
+`pNewName` | Assign a new name for the node instead of what the shader defined via [shader function attribute](#shader-function-attributes) `[NodeID()]`, or in the absence of that attribute the default node ID {shader export name, array index 0}.  If not overriding the existing NodeID, specify `nullptr` for `pNewName`.
 `pShareInputOf` | Overrides [shader function attribute](#shader-function-attributes) `[NodeShareInputOf()]` (or lack of it).  Set to `nullptr` if not overriding the shader definition / default.  Specify `nullptr` for `pShareInputOf->Name` to force not sharing input.  The NodeID specified here applies after any node renames.
 `NumOutputOverrides` | Size of array pointed to by `pOutputOverrides`.  Anyu number of the shader's declared otput ndoes can have output attributes overridden.  Set to 0 if not overriding any outputs (`pOutputOverrides` will be ignored).
 `pOutputOverrides` | If `NumOutputOverrides > 0`, points to an array of `NumOutputOverrides` [D3D12_NODE_OUTPUT_OVERRIDES](#d3d12_node_output_overrides) definitions.
@@ -2495,7 +2528,7 @@ typedef struct D3D12_COMMON_COMPUTE_NODE_OVERRIDES
 {
     _In_opt_ const UINT*          pLocalRootArgumentsTableIndex;
     _In_opt_ const BOOL*          pIsProgramEntry;
-    D3D12_NODE_ID                 Rename;
+    _In_opt D3D12_NODE_ID*        pNewName;
     _In_opt_ const D3D12_NODE_ID* pShareInputOf;
     UINT                          NumOutputOverrides;
     _In_reads_opt_(NumOutputOverrides) const D3D12_NODE_OUTPUT_OVERRIDES* 
@@ -2507,35 +2540,7 @@ Member                           | Definition
 ---------                        | ----------
 `pLocalRootArgumentsTableIndex` | Overrides [shader function attribute](#shader-function-attributes) `[NodeLocalRootArgumentsTableIndex()]` (or default table index discussed at the link if the attribute wasn't specified). `-1` means auto-assign (if the node has a local root signature associated with it) - equivalent to not declaring.  Set to `nullptr` if not overriding the shader definition / default.
 `pIsProgramEntry` | Overrides [shader function attribute](#shader-function-attributes) `[NodeIsProgramEntry]` (or lack of it).  Invalid to set this to false if no other nodes output to this node.  Set to `nullptr` if not overriding the shader definition / default.
-`Rename` | Assign a new name for the node instead of what the shader defined via [shader function attribute](#shader-function-attributes) `[NodeID()]`, or in the absense of that attribute the default node ID {shader export name, array index 0}.  If not overriding the existing NodeID, specify `nullptr` for the `Rename.Name`.
-`pShareInputOf` | Overrides [shader function attribute](#shader-function-attributes) `[NodeShareInputOf()]` (or lack of it).  Set to `nullptr` if not overriding the shader definition / default.  Specify `nullptr` for `pShareInputOf->Name` to force not sharing input.  The NodeID specified here applies after any node renames.
-`NumOutputOverrides` | Size of array pointed to by `pOutputOverrides`.  Anyu number of the shader's declared otput ndoes can have output attributes overridden.  Set to 0 if not overriding any outputs (`pOutputOverrides` will be ignored).
-`pOutputOverrides` | If `NumOutputOverrides > 0`, points to an array of `NumOutputOverrides` [D3D12_NODE_OUTPUT_OVERRIDES](#d3d12_node_output_overrides) definitions.
-
----
-
-##### D3D12_THREAD_LAUNCH_OVERRIDES
-
-Override shader attributes.  See [shader function attributes](#shader-function-attributes) and [node output declaration](#node-output-declaration) for the attributes that can be overridden.
-
-```C++
-typedef struct D3D12_THREAD_LAUNCH_OVERRIDES
-{
-    _In_opt_ const UINT*          pLocalRootArgumentsTableIndex;
-    _In_opt_ const BOOL*          pIsProgramEntry;
-    D3D12_NODE_ID                 Rename;
-    _In_opt_ const D3D12_NODE_ID* pShareInputOf;
-    UINT                          NumOutputOverrides;
-    _In_reads_opt_(NumOutputOverrides) const D3D12_NODE_OUTPUT_OVERRIDES* 
-                                  pOutputOverrides;
-} D3D12_THREAD_LAUNCH_OVERRIDES;
-```
-
-Member                           | Definition
----------                        | ----------
-`pLocalRootArgumentsTableIndex` | Overrides [shader function attribute](#shader-function-attributes) `[NodeLocalRootArgumentsTableIndex()]` (or default table index discussed at the link if the attribute wasn't specified). `-1` means auto-assign (if the node has a local root signature associated with it) - equivalent to not declaring.  Set to `nullptr` if not overriding the shader definition / default.
-`pIsProgramEntry` | Overrides [shader function attribute](#shader-function-attributes) `[NodeIsProgramEntry]` (or lack of it).  Invalid to set this to false if no other nodes output to this node.  Set to `nullptr` if not overriding the shader definition / default.
-`Rename` | Assign a new name for the node instead of what the shader defined via [shader function attribute](#shader-function-attributes) `[NodeID()]`, or in the absense of that attribute the default node ID {shader export name, array index 0}.  If not overriding the existing NodeID, specify `nullptr` for the `Rename.Name`.
+`pNewName` | Assign a new name for the node instead of what the shader defined via [shader function attribute](#shader-function-attributes) `[NodeID()]`, or in the absence of that attribute the default node ID {shader export name, array index 0}.  If not overriding the existing NodeID, specify `nullptr` for `pNewName`.
 `pShareInputOf` | Overrides [shader function attribute](#shader-function-attributes) `[NodeShareInputOf()]` (or lack of it).  Set to `nullptr` if not overriding the shader definition / default.  Specify `nullptr` for `pShareInputOf->Name` to force not sharing input.  The NodeID specified here applies after any node renames.
 `NumOutputOverrides` | Size of array pointed to by `pOutputOverrides`.  Anyu number of the shader's declared otput ndoes can have output attributes overridden.  Set to 0 if not overriding any outputs (`pOutputOverrides` will be ignored).
 `pOutputOverrides` | If `NumOutputOverrides > 0`, points to an array of `NumOutputOverrides` [D3D12_NODE_OUTPUT_OVERRIDES](#d3d12_node_output_overrides) definitions.
@@ -2596,7 +2601,7 @@ typedef struct D3D12_PROGRAM_NODE
         // Set to null if not used.
         const D3D12_DRAW_LAUNCH_OVERRIDES* pDrawLaunchOverrides;
         const D3D12_DRAW_INDEXED_LAUNCH_OVERRIDES* pDrawIndexedLaunchOverrides;
-        const D3D12_DISPATCH_MESH_LAUNCH_OVERRIDES* pDispatchMeshLaunchOverrides;
+        const D3D12_MESH_LAUNCH_OVERRIDES* pMeshLaunchOverrides;
         const D3D12_COMMON_PROGRAM_NODE_OVERRIDES* pCommonProgramNodeOverrides;
     };
 } D3D12_PROGRAM_NODE;
@@ -2608,7 +2613,7 @@ Member                           | Definition
 `OverridesType` | See [D3D12_PROGRAM_NODE_OVERRIDES_TYPE](#d3d12_program_node_overrides_type).  Can be set to `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_NONE` if nothing is being overridden.  Otherwise, it must be set to a value that matches the launch mode of the program, and then the corresponding entry in the union is referenced.  The launch mode of a program can't be changed - it is intrinsic to the contents of the program (e.g. presence of vertex shader vs mesh shader, or use of index buffer).
 `pDrawLaunchOverrides` | Used when `OverridesType` is `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_LAUNCH`. See [D3D12_DRAW_LAUNCH_OVERRIDES](#d3d12_draw_launch_overrides).
 `pDrawIndexedLaunchOverrides` | Used when `OverridesType` is `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_INDEXED_LAUNCH`. See [D3D12_DRAW_INDEXED_LAUNCH_OVERRIDES](#d3d12_draw_indexed_launch_overrides).
-`pDispatchMeshLaunchOverrides` | Used when `OverridesType` is `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DISPATCH_MESH_LAUNCH`. See [D3D12_DISPATCH_MESH_LAUNCH_OVERRIDES](#d3d12_dispatch_mesh_launch_overrides).
+`pMeshLaunchOverrides` | Used when `OverridesType` is `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_MESH_LAUNCH`. See [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides).
 `pCommonProgramNodeOverrides` | Used when `OverridesType` is `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_COMMON_PROGRAM`. See [D3D12_COMMON_PROGRAM_NODE_OVERRIDES](#d3d12_common_program_node_overrides).
 
 ---
@@ -2623,7 +2628,7 @@ typedef enum D3D12_PROGRAM_NODE_OVERRIDES_TYPE
     D3D12_PROGRAM_NODE_OVERRIDES_TYPE_NONE = 0,
     D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_LAUNCH = 1,
     D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_INDEXED_LAUNCH = 2,
-    D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DISPATCH_MESH_LAUNCH = 3,
+    D3D12_PROGRAM_NODE_OVERRIDES_TYPE_MESH_LAUNCH = 3,
     D3D12_PROGRAM_NODE_OVERRIDES_TYPE_COMMON_PROGRAM = 4,
 } D3D12_PROGRAM_NODE_OVERRIDES_TYPE;
 ```
@@ -2635,7 +2640,7 @@ Value                           | Definition
 `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_NONE` | Use the shader as-is, no overrides.
 `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_LAUNCH` | For a broadcasting launch node, use [D3D12_DRAW_LAUNCH_OVERRIDES](#d3d12_draw_launch_overrides) to define overrides from what was declared in the shader.
 `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_INDEXED_LAUNCH` | For a coalescing launch node, use [D3D12_DRAW_INDEXED_LAUNCH_OVERRIDES](#d3d12_draw_indexed_launch_overrides) to define overrides from what was declared in the shader.
-`D3D12_PROGRAM_NODE_OVERRIDES_TYPE_DISPATCH_MESH_LAUNCH` | For a thread launch node, use [D3D12_DISPATCH_MESH_LAUNCH_OVERRIDES](#d3d12_dispatch_mesh_launch_overrides) to define overrides from what was declared in the shader.
+`D3D12_PROGRAM_NODE_OVERRIDES_TYPE_MESH_LAUNCH` | For a thread launch node, use [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides) to define overrides from what was declared in the shader.
 `D3D12_PROGRAM_NODE_OVERRIDES_TYPE_COMMON_PROGRAM` | For overrides that apply to any program node type, use typedef [D3D12_COMMON_PROGRAM_NODE_OVERRIDES](#d3d12_common_program_node_overrides). This is a convenience to allow overrides that aren't unique to a given launch mode, so the node's launch mode doesn't have to be known.
 
 ---
@@ -2659,7 +2664,7 @@ Member                           | Definition
 ---------                        | ----------
 `pLocalRootArgumentsTableIndex` | Overrides [shader function attribute](#shader-function-attributes) `[NodeLocalRootArgumentsTableIndex()]` (or default table index discussed at the link if the attribute wasn't specified). `-1` means auto-assign (if the node has a local root signature associated with it) - equivalent to not declaring.  Set to `nullptr` if not overriding the shader definition / default.
 `pIsProgramEntry` | Overrides [shader function attribute](#shader-function-attributes) `[NodeIsProgramEntry]` (or lack of it).  Invalid to set this to false if no other nodes output to this node.  Set to `nullptr` if not overriding the shader definition / default.
-`pNewName` | Assign a new name for the node instead of what the first shader in the program may have defined via [shader function attribute](#shader-function-attributes) `[NodeID()]` (not supported yet), or in the absense of that attribute the default node ID {program name, array index 0}.  If not overriding the existing NodeID, `nullptr`.
+`pNewName` | Assign a new name for the node instead of what the first shader in the program may have defined via [shader function attribute](#shader-function-attributes) `[NodeID()]` (not supported yet), or in the absense of that attribute the default node ID {program name, array index 0}.  If not overriding the existing NodeID, specify `nullptr` for `pNewName`.
 
 ---
 
@@ -2682,30 +2687,36 @@ Member                           | Definition
 ---------                        | ----------
 `pLocalRootArgumentsTableIndex` | Overrides [shader function attribute](#shader-function-attributes) `[NodeLocalRootArgumentsTableIndex()]` (or default table index discussed at the link if the attribute wasn't specified). `-1` means auto-assign (if the node has a local root signature associated with it) - equivalent to not declaring.  Set to `nullptr` if not overriding the shader definition / default.
 `pIsProgramEntry` | Overrides [shader function attribute](#shader-function-attributes) `[NodeIsProgramEntry]` (or lack of it).  Invalid to set this to false if no other nodes output to this node.  Set to `nullptr` if not overriding the shader definition / default.
-`pNewName` | Assign a new name for the node instead of what the first shader in the program may have defined via [shader function attribute](#shader-function-attributes) `[NodeID()]`, or in the absense of that attribute the default node ID {program name, array index 0}.  If not overriding the existing NodeID, `nullptr`.
+`pNewName` | Assign a new name for the node instead of what the first shader in the program may have defined via [shader function attribute](#shader-function-attributes) `[NodeID()]` (not supported yet), or in the absense of that attribute the default node ID {program name, array index 0}.  If not overriding the existing NodeID, specify `nullptr` for `pNewName`.
 
 ---
 
-##### D3D12_DISPATCH_MESH_LAUNCH_OVERRIDES
+##### D3D12_MESH_LAUNCH_OVERRIDES
 
 > This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
 Override program attributes.  This is used in [D3D12_PROGRAM_NODE](#d3d12_program_node).
 
 ```C++
-typedef struct D3D12_DISPATCH_MESH_LAUNCH_OVERRIDES
+typedef struct D3D12_MESH_LAUNCH_OVERRIDES
 {
     _In_opt_ const UINT*          pLocalRootArgumentsTableIndex;
     _In_opt_ const BOOL*          pIsProgramEntry;
     _In_opt const D3D12_NODE_ID*  pNewName;
-} D3D12_DISPATCH_MESH_LAUNCH_OVERRIDES;
+    _In_opt_ const D3D12_NODE_ID* pShareInputOf;
+    _In_reads_opt_(3) const UINT* pDispatchGrid;
+    _In_reads_opt_(3) const UINT* pMaxDispatchGrid;    
+} D3D12_MESH_LAUNCH_OVERRIDES;
 ```
 
 Member                           | Definition
 ---------                        | ----------
 `pLocalRootArgumentsTableIndex` | Overrides [shader function attribute](#shader-function-attributes) `[NodeLocalRootArgumentsTableIndex()]` (or default table index discussed at the link if the attribute wasn't specified). `-1` means auto-assign (if the node has a local root signature associated with it) - equivalent to not declaring.  Set to `nullptr` if not overriding the shader definition / default.
 `pIsProgramEntry` | Overrides [shader function attribute](#shader-function-attributes) `[NodeIsProgramEntry]` (or lack of it).  Invalid to set this to false if no other nodes output to this node.  Set to `nullptr` if not overriding the shader definition / default.
-`pNewName` | Assign a new name for the node instead of what the first shader in the program may have defined via [shader function attribute](#shader-function-attributes) `[NodeID()]`, or in the absense of that attribute the default node ID {program name, array index 0}.  If not overriding the existing NodeID, `nullptr`.
+`pNewName` | Assign a new name for the node instead of what the first shader in the program may have defined via [shader function attribute](#shader-function-attributes) `[NodeID()]` (not supported yet), or in the absense of that attribute the default node ID {program name, array index 0}.  If not overriding the existing NodeID, specify `nullptr` for `pNewName`.
+`pShareInputOf` | Overrides [shader function attribute](#shader-function-attributes) `[NodeShareInputOf()]` (or lack of it).  Set to `nullptr` if not overriding the shader definition / default.  Specify `nullptr` for `pShareInputOf->Name` to force not sharing input.  The NodeID specified here applies after any node renames.
+`pDispatchGrid` | Overrides [shader function attribute](#shader-function-attributes) `[NodeDispatchGrid()]` (or lack of it). Set to `nullptr` if not overriding the shader definition or not applicable (e.g. dispatch grid is in shader record), in which case `[NodeMaxDispatchGrid()]` / `pMaxDispatchGrid` are relevant instead). The uint x y and z parameters individually cannot exceed 65535, and x*y*z cannot exceed 2^24-1 (16,777,215).
+`pMaxDispatchGrid` | Overrides [shader function attribute](#shader-function-attributes) `[NodeMaxDispatchGrid()]` (or lack of it). Set to `nullptr` if not overriding the shader definition or not applicable (e.g. fixed dispatch grid, in which case `[NodeDispatchGrid()]` / `pDispatchGrid` are relevant instead). The uint x y and z parameters individually cannot exceed 65535, and x*y*z cannot exceed 2^24-1 (16,777,215).
 
 ---
 
@@ -5842,7 +5853,7 @@ typedef struct D3D12DDI_PROGRAM_NODE_0108
         // Set to null if not used.
         const D3D12DDI_DRAW_LAUNCH_PROPERTIES_0108* pDrawLaunchNodeProperties;
         const D3D12DDI_DRAW_INDEXED_LAUNCH_PROPERTIES_0108* pDrawIndexedLaunchNodeProperties;
-        const D3D12DDI_DISPATCH_MESH_LAUNCH_PROPERTIES_0108* pDispatchMeshLaunchNodeProperties;
+        const D3D12DDI_MESH_LAUNCH_PROPERTIES_0108* pMeshLaunchNodeProperties;
     };
 } D3D12DDI_PROGRAM_NODE_0108;
 ```
@@ -5853,7 +5864,7 @@ Member                           | Definition
 `PropertiesType` | See [D3D12DDI_PROGRAM_NODE_OVERRIDES_TYPE_0108](#d3d12_program_node_overrides_type).  A selection of which entry in the union describes properties of the node.
 `pDrawLaunchNodeProperties` | Used when `OverridesType` is `D3D12DDI_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_LAUNCH_0108`. See [D3D12DDI_DRAW_LAUNCH_PROPERTIES_0108](#d3d12ddi_draw_launch_properties_0108).
 `pDrawIndexedLaunchNodeProperties` | Used when `OverridesType` is `D3D12DDI_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_INDEXED_LAUNCH_0108`. See [D3D12DDI_DRAW_INDEXED_LAUNCH_PROPERTIES_0108](#d3d12ddi_draw_indexed_launch_properties_0108).
-`pDispatchMeshLaunchNodeProperties` | Used when `OverridesType` is `D3D12DDI_PROGRAM_NODE_OVERRIDES_TYPE_DISPATCH_MESH_LAUNCH_0108`. See [D3D12DDI_DISPATCH_MESH_LAUNCH_PROPERTIES_0108](#d3d12ddi_dispatch_mesh_launch_properties_0108).
+`pMeshLaunchNodeProperties` | Used when `OverridesType` is `D3D12DDI_PROGRAM_NODE_OVERRIDES_TYPE_MESH_LAUNCH_0108`. See [D3D12DDI_MESH_LAUNCH_PROPERTIES_0108](#d3d12ddi_mesh_launch_properties_0108).
 
 ---
 
@@ -5939,12 +5950,12 @@ Referenced by [D3D12DDI_PROGRAM_NODE_0108](#d3d12ddi_program_node_0108).
 
 ---
 
-### D3D12DDI_DISPATCH_MESH_LAUNCH_PROPERTIES_0108
+### D3D12DDI_MESH_LAUNCH_PROPERTIES_0108
 
 > This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
 ```C++
-typedef struct D3D12DDI_DISPATCH_MESH_LAUNCH_PROPERTIES_0108
+typedef struct D3D12DDI_MESH_LAUNCH_PROPERTIES_0108
 {
     D3D12DDI_NODE_ID_0108 FinalName;
     BOOL bProgramEntry;
@@ -5960,7 +5971,7 @@ typedef struct D3D12DDI_DISPATCH_MESH_LAUNCH_PROPERTIES_0108
     _In_reads_opt_(NumInputNodeIndices) const UINT* pInputNodeIndices;
     UINT          NumNodesSharingInputWithThisNode;
     _In_reads_opt_(NumNodesSharingInputWithThisNode) const UINT* pIndicesOfNodesSharingInputWithThisNode;
-} D3D12DDI_DISPATCH_MESH_LAUNCH_PROPERTIES_0108;
+} D3D12DDI_MESH_LAUNCH_PROPERTIES_0108;
 ```
 
 Any properties listed here take precedence over (override) what may have been declared in the program's definition.  The driver must always use the properties listed here as the final property selections.  If a driver happens to care about whether something was overridden, it can compare any setting here against what the shader declared.
@@ -6286,4 +6297,5 @@ v0.46|10/5/2023|<li>In [D3D12_WORK_GRAPH_MEMORY_REQUIREMENTS](#d3d12_work_graph_
 v0.47|11/1/2023|<li>A new section was added for [Generic programs](#generic-programs) that explains the way a generic program is supported as part of the upcoming SM6.8 release. Generic programs are available to any device that supports SM6.8 and the [Supported shader targets](#supported-shader-targets) are non-library shader targets SM6.0+. Also added details about how [Resource binding](#resource-binding) and exports `Default shader entrypoint names` will be handled for non-library shaders. To enable the use of non-library shader an update for [D3D12\_DXIL\_LIBRARY\_DESC](#d3d12_dxil_library_desc) and [D3D12\_EXPORT\_DESC](#d3d12_export_desc) create state object structures was added showing how they will be used for generic programs. [D3D12\_EXPORT\_DESC](#d3d12_export_desc) will also introduce a new way to rename exports in the case of a shader library or non-library with only one export; the export can be referenced by passing in a NULL as the export will be handled by the runtime and the resolved list of names passed on to the driver (see link for exact details).</li><li>Removed section **Reusing shader entries**, as unfortunately there is no longer any way to share compute shader and node shader code to save on binary space.  This is because lib targets were node shaders live can no longer be used for specifying compute shaders (cs_* target is all that's supported).  Having compute shaders and all other preexisting shader types in lib targets was a feature that was proposed but the feature is now cut for this release.</li>
 v0.48|11/8/2023|<li>In [D3D12\_EXPORT\_DESC](#d3d12_export_desc) for lib/non-lib with only one export in the shader, changed the way to pick it without knowing the name from NULL to "\*" to eliminate any possibility for an accidental rename when an `ExportToRename` is NULL and there is a typo in `Name` (see link for exact details). </li>
 v0.49|12/7/2023|<li>In [AddToStateObject](#addtostateobject), clarified that when entrypoints are added to a graph, the entrypoint index of existing nodes, as reported by [GetEntrypointIndex()](#getentrypointindex), remain unchanged. New entrypoints will have entrypoint index values that continue past existing entrypoints.</li><li>Corresponding to this, clarified in [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108) how drivers must infer entrypoint index values for entries in the list to match the API view.  It was an oversight that the runtime's index calculation wasn't passed to the driver, but deemed not important enough to rectify.</li><li>In [Graphics nodes example](#graphics-nodes-example), removed text stating that `DispatchNodeInputRecord<>` on the input declaration of a vertex or mesh shader is optional.  It is required (should graphics nodes be supported in the future), consistent with changes to the spec in v0.44 spec that removed defaults for missing node inputs</li>Renamed D3D12_OPTIONS_EXPERIMENTAL to [D3D12_FEATURE_OPTIONS21](#d3d12_feature_d3d12_options21), final location to find [D3D12_WORK_GRAPHS_TIER](#d3d12_work_graphs_tier) via [CheckFeatureSupport](#checkfeaturesupport).<li>In [Discovering device suppport for work graphs](#discovering-device-support-for-work-graphs) removed the need to enable `D3D12StateObjectsExperiment` to use work graphs via `D3D12EnableExperimentalFeatures()`, leaving only `D3D12ExperimentalShaderModels` needed here until shader model 6.8 is final.</li>
-v0.50|1/5/2024|<li>In [Graphics nodes](#graphics-nodes) described that initially mesh nodes are supported for private experimentation, exposed via [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier).</li><li>In [Graphics node resource binding and root arguments](#graphics-node-resource-binding-and-root-arguments) described a new flag for [D3D12_STATE_OBJECT_CONFIG](#d3d12_state_object_config), `D3D12_STATE_OBJECT_FLAG_WORK_GRAPHS_USE_GRAPHICS_STATE_FOR_GLOBAL_ROOT_SIGNATURE`, available in [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier).  Any work graph that uses graphics nodes must use this flag in it's containing state object.  Previously the spec stated that graphics nodes would use compute state.  The semantics here might still need tweaking.</li><li>In [DispatchMesh launch nodes](#dispatchmesh-launch-nodes) and [Graphics nodes example](#graphics-nodes-example), explained how mesh node support works initially for private experimentation, while there is no HLSL support for mesh node specific syntax yet.  The main affordance for experimentation is that existing mesh shader `payload` input that is normally used as input from the amplification shader is repurposed to be the node input record, given there is no `DispatchNodeInputRecord` object support for mesh shaders for now.  So instead of the `payload` coming from an amplification shader (not supported with work graphs), in a work graph the producer node's output record becomes the mesh shader `payload` input, for now.</li><li>Made some  minor corrections and tweaks to the [D3D12_PROGRAM_NODE](#d3d12_program_node) API struct's member fields for overriding program node properties.</li><li>In [Generic programs](#generic-programs) default names will no longer be assigned by the runtime for shaders produced by older compilers where the runtime can't see the shader name. Instead, for non-library shaders compiled with older compilers the app must rename the shader entrypoint from "*" to a new name, effectively assigning a name. Based on that the Name field in  [D3D12\_EXPORT\_DESC](#d3d12_export_desc) will no longer accept shader entry point default names (removed).</li>
+v0.50|1/9/2024|<li>In [Graphics nodes](#graphics-nodes) described that initially mesh nodes are supported for private experimentation, exposed via [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier).</li><li>In [Graphics node resource binding and root arguments](#graphics-node-resource-binding-and-root-arguments) described a new flag for [D3D12_STATE_OBJECT_CONFIG](#d3d12_state_object_config), `D3D12_STATE_OBJECT_FLAG_WORK_GRAPHS_USE_GRAPHICS_STATE_FOR_GLOBAL_ROOT_SIGNATURE`, available in [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier).  Any work graph that uses graphics nodes must use this flag in it's containing state object.  Previously the spec stated that graphics nodes would use compute state.  The semantics here might still need tweaking.</li><li>In [DispatchMesh launch nodes](#mesh-launch-nodes) and [Graphics nodes example](#graphics-nodes-example), explained how mesh node support works initially for private experimentation, while there is no HLSL support for mesh node specific syntax yet.  The main affordance for experimentation is that existing mesh shader `payload` input that is normally used as input from the amplification shader is repurposed to be the node input record, given there is no `DispatchNodeInputRecord` object support for mesh shaders for now.  So instead of the `payload` coming from an amplification shader (not supported with work graphs), in a work graph the producer node's output record becomes the mesh shader `payload` input, for now.</li><li>Made some  minor corrections and tweaks to the [D3D12_PROGRAM_NODE](#d3d12_program_node) API struct's member fields for overriding program node properties.</li><li>In [Generic programs](#generic-programs) default names will no longer be assigned by the runtime for shaders produced by older compilers where the runtime can't see the shader name. Instead, for non-library shaders compiled with older compilers the app must rename the shader entrypoint from "*" to a new name, effectively assigning a name. Based on that the Name field in  [D3D12\_EXPORT\_DESC](#d3d12_export_desc) will no longer accept shader entry point default names (removed).</li>
+v.51|1/19/2024|<li>Renamed DispatchMesh launch nodes to simply [Mesh launch nodes](#mesh-launch-nodes).  Similar for related APIs and DDIs such as [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides).</li><li>In [Mesh launch nodes](#mesh-launch-nodes) allowed for `[NodeMaxDispatchGrid()]` or `[NodeDispatchGrid()]` shader function attributes to enable selecting between fixed or dynamic dispatch grid.  This spec does still mention that a dynamic dispatch grid is required, but for the purposes of experimentation in case this requirement can be relaxed, the fixed grid option is at least set up to be allowed.</li><li>Similarly for [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides), added overrides for `[NodeShareInputOf()]`, `[NodeMaxDispatchGrid()]` and `[NodeDispatchGrid()]` shader function attributes, consistent with broadcasting launch nodes.</li>
