@@ -1476,6 +1476,10 @@ enum D3D12_BARRIER_SYNC
 };
 ```
 
+#### Notes about using with D3D12_BARRIER_ACCESS_COMMON
+
+Each sync scope bit has a limited set of compatible access types (see the specific sync bit description for details). In addition, `D3D12_BARRIER_ACCESS_COMMON` can be used to imply any or all layout and sync scope compatible access bits. However, using `D3D12_BARRIER_ACCESS_COMMON` in a barrier may result in excessive cache flushing, negatively impacting performance.
+
 #### `D3D12_BARRIER_SYNC_NONE`
 
 A `SyncBefore` value of `D3D12_BARRIER_SYNC_NONE` indicates NO PRECEDING work must complete before executing the barrier.  This MUST be paired with an `AccessBefore` value of `D3D12_BARRIER_ACCESS_NO_ACCESS`.  Additionally, no preceding barriers or accesses to the related subresource are permitted in the same `ExecuteCommandLists` scope.
@@ -1512,6 +1516,7 @@ Access types in this scope are limited to:
 - `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ`
 - `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`
 - `D3D12_BARRIER_ACCESS_STREAM_OUTPUT`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_INDEX_INPUT`
 
@@ -1519,7 +1524,8 @@ Synchronize scope for processing index buffer input.
 
 Access types in this scope are limited to:
 
-- `D3D12_BARRIER_SYNC_INDEX_INPUT`
+- `D3D12_BARRIER_ACCESS_INDEX_BUFFER`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_VERTEX_SHADING`
 
@@ -1532,6 +1538,7 @@ Access types in this scope are limited to:
 - `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`
 - `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`
 - `D3D12_BARRIER_ACCESS_STREAM_OUTPUT`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_PIXEL_SHADING`
 
@@ -1541,7 +1548,9 @@ Access types in this scope are limited to:
 
 - `D3D12_BARRIER_ACCESS_CONSTANT_BUFFER`
 - `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`
+- `D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE`
 - `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_DEPTH_STENCIL`
 
@@ -1551,12 +1560,17 @@ Access types in this scope are limited to:
 
 - `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE`
 - `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_RENDER_TARGET`
 
 Synchronize scope for render target read/write operations. This include RTV writes during `Draw*` and `ClearRenderTargetView`.
 
-#### `D3D12_BARRIER_SYNC_COMPUTE_SHADING`
+Access types in this scope are limited to:
+
+- `D3D12_BARRIER_ACCESS_RENDER_TARGET`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
+
 
 Synchronize scope for the following GPU workloads:
 
@@ -1571,6 +1585,7 @@ The `SetComputeRoot*` synchronization is required to support `D3D12_DESCRIPTOR_R
 Access types in this scope are limited to:
 
 - `D3D12_BARRIER_SYNC_RENDER_TARGET`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_RAYTRACING`
 
@@ -1579,6 +1594,7 @@ Synchronize scope for raytracing execution.
 Access types in this scope are limited to:
 
 - `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_COPY`
 
@@ -1588,6 +1604,7 @@ Access types in this scope are limited to:
 
 - `D3D12_BARRIER_ACCESS_COPY_SOURCE`
 - `D3D12_BARRIER_ACCESS_COPY_DEST`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_RESOLVE`
 
@@ -1597,6 +1614,7 @@ Access types in this scope are limited to:
 
 - `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE`
 - `D3D12_BARRIER_ACCESS_RESOLVE_DEST`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_EXECUTE_INDIRECT`
 
@@ -1605,6 +1623,7 @@ Synchronize scope for ExecuteIndirect execution.
 Access types in this scope are limited to:
 
 - `D3D12_BARRIER_ACCESS_INDIRECT_ARGUMENT`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_ALL_SHADING`
 
@@ -1619,6 +1638,7 @@ Access types in this scope are limited to:
 - `D3D12_BARRIER_ACCESS_STREAM_OUTPUT`
 - `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ`
 - `D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_NON_PIXEL_SHADING`
 
@@ -1632,6 +1652,7 @@ Access types in this scope are limited to:
 - `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`
 - `D3D12_BARRIER_ACCESS_STREAM_OUTPUT`
 - `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_VIDEO_DECODE`
 
@@ -1641,6 +1662,7 @@ Access types in this scope are limited to:
 
 - `D3D12_BARRIER_ACCESS_VIDEO_DECODE_READ`
 - `D3D12_BARRIER_ACCESS_VIDEO_DECODE_WRITE`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_VIDEO_PROCESS`
 
@@ -1650,6 +1672,7 @@ Access types in this scope are limited to:
 
 - `D3D12_BARRIER_ACCESS_VIDEO_PROCESS_READ`
 - `D3D12_BARRIER_ACCESS_VIDEO_PROCESS_WRITE`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_VIDEO_ENCODE`
 
@@ -1659,6 +1682,7 @@ Access types in this scope are limited to:
 
 - `D3D12_BARRIER_ACCESS_VIDEO_ENCODE_READ`
 - `D3D12_BARRIER_ACCESS_VIDEO_ENCODE_WRITE`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE`
 
@@ -1669,6 +1693,7 @@ Corresponding barrier `Access[Before|After]` must have the `D3D12_BARRIER_ACCESS
 Access types in this scope are limited to:
 
 - `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_COPY_RAYTRACING_ACCELERATION_STRUCTURE`
 
@@ -1678,7 +1703,8 @@ Corresponding barrier `Access[Before|After]` must have the `D3D12_BARRIER_ACCESS
 
 Access types in this scope are limited to:
 
-`D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ`
+- `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW`
 
@@ -1686,13 +1712,15 @@ Synchronize scope for `ID3D12GraphicsCommandList::ClearUnorderedAccessViewUint` 
 
 Access types in this scope are limited to:
 
-`D3D12_BARRIER_ACCESS_COMMON`
+- `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`
+- `D3D12_BARRIER_ACCESS_COMMON` (See [Notes about using with D3D12_BARRIER_ACCESS_COMMON](#notes-about-using-with-d3d12_barrier_access_common))
 
 #### `D3D12_BARRIER_SYNC_SPLIT`
 
 Special sync bit indicating a [split barrier](#split-barriers).  Used as a `SyncAfter` to indicates the start of a split barrier.  The application must provide a matching barrier with `SyncBefore` set to `D3D12_BARRIER_SYNC_SPLIT`.
 
-### `D3D12_BARRIER_ACCESS`
+There are no specific restrictions on access bits that can be used with `D3D12_BARRIER_SYNC_SPLIT`.
+
 
 Bit values representing access types. Can be combined using bitwise-or in barrier `AccessBefore` and `AccessAfter` values.
 
