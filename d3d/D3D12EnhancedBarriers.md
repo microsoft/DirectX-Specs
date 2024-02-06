@@ -596,26 +596,26 @@ Non-simultaneous-access textures using a common layout can be accessed as `D3D12
 
 ### Equivalent `D3D12_BARRIER_SYNC` bit for each `D3D12_RESOURCE_STATES` bit
 
-| State bit                                                | Sync bit                               |
-|----------------------------------------------------------|----------------------------------------|
-| `D3D12_RESOURCE_STATE_COMMON`                            | `D3D12_BARRIER_SYNC_ALL`               |
-| `D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER`        | `D3D12_BARRIER_SYNC_ALL_SHADING`       |
-| `D3D12_RESOURCE_STATE_INDEX_BUFFER`                      | `D3D12_BARRIER_SYNC_INDEX_INPUT`       |
-| `D3D12_RESOURCE_STATE_RENDER_TARGET`                     | `D3D12_BARRIER_SYNC_RENDER_TARGET`     |
-| `D3D12_RESOURCE_STATE_UNORDERED_ACCESS`                  | `D3D12_BARRIER_SYNC_ALL_SHADING`       |
-| `D3D12_RESOURCE_STATE_DEPTH_WRITE`                       | `D3D12_BARRIER_SYNC_DEPTH_STENCIL`     |
-| `D3D12_RESOURCE_STATE_DEPTH_READ`                        | `D3D12_BARRIER_SYNC_DEPTH_STENCIL`     |
-| `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`         | `D3D12_BARRIER_SYNC_NON_PIXEL_SHADING` |
-| `D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE`             | `D3D12_BARRIER_SYNC_PIXEL_SHADING`     |
-| `D3D12_RESOURCE_STATE_STREAM_OUT`                        | `D3D12_BARRIER_SYNC_VERTEX_SHADING`    |
-| `D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT`                 | `D3D12_BARRIER_SYNC_EXECUTE_INDIRECT`  |
-| `D3D12_RESOURCE_STATE_PREDICATION`                       | `D3D12_BARRIER_SYNC_PREDICATION`       |
-| `D3D12_RESOURCE_STATE_COPY_DEST`                         | `D3D12_BARRIER_SYNC_COPY`              |
-| `D3D12_RESOURCE_STATE_COPY_SOURCE`                       | `D3D12_BARRIER_SYNC_COPY`              |
-| `D3D12_RESOURCE_STATE_RESOLVE_DEST`                      | `D3D12_BARRIER_SYNC_RESOLVE`           |
-| `D3D12_RESOURCE_STATE_RESOLVE_SOURCE`                    | `D3D12_BARRIER_SYNC_RESOLVE`           |
-| `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE` | `D3D12_BARRIER_SYNC_RAYTRACING`        |
-| `D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE`               | `D3D12_BARRIER_SYNC_PIXEL_SHADING`     |
+| State bit                                                | Sync bit                                                                                   |
+|----------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| `D3D12_RESOURCE_STATE_COMMON`                            | `D3D12_BARRIER_SYNC_ALL`                                                                   |
+| `D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER`        | `D3D12_BARRIER_SYNC_ALL_SHADING`                                                           |
+| `D3D12_RESOURCE_STATE_INDEX_BUFFER`                      | `D3D12_BARRIER_SYNC_INDEX_INPUT`                                                           |
+| `D3D12_RESOURCE_STATE_RENDER_TARGET`                     | `D3D12_BARRIER_SYNC_RENDER_TARGET`                                                         |
+| `D3D12_RESOURCE_STATE_UNORDERED_ACCESS`                  | `D3D12_BARRIER_SYNC_ALL_SHADING + D3D12_BARRIER_SYNC_*_RAYTRACING_ACCELERATION_STRUCTURE*` |
+| `D3D12_RESOURCE_STATE_DEPTH_WRITE`                       | `D3D12_BARRIER_SYNC_DEPTH_STENCIL`                                                         |
+| `D3D12_RESOURCE_STATE_DEPTH_READ`                        | `D3D12_BARRIER_SYNC_DEPTH_STENCIL`                                                         |
+| `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`         | `D3D12_BARRIER_SYNC_NON_PIXEL_SHADING`                                                     |
+| `D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE`             | `D3D12_BARRIER_SYNC_PIXEL_SHADING`                                                         |
+| `D3D12_RESOURCE_STATE_STREAM_OUT`                        | `D3D12_BARRIER_SYNC_VERTEX_SHADING`                                                        |
+| `D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT`                 | `D3D12_BARRIER_SYNC_EXECUTE_INDIRECT`                                                      |
+| `D3D12_RESOURCE_STATE_PREDICATION`                       | `D3D12_BARRIER_SYNC_PREDICATION`                                                           |
+| `D3D12_RESOURCE_STATE_COPY_DEST`                         | `D3D12_BARRIER_SYNC_COPY`                                                                  |
+| `D3D12_RESOURCE_STATE_COPY_SOURCE`                       | `D3D12_BARRIER_SYNC_COPY`                                                                  |
+| `D3D12_RESOURCE_STATE_RESOLVE_DEST`                      | `D3D12_BARRIER_SYNC_RESOLVE`                                                               |
+| `D3D12_RESOURCE_STATE_RESOLVE_SOURCE`                    | `D3D12_BARRIER_SYNC_RESOLVE`                                                               |
+| `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE` | `D3D12_BARRIER_SYNC_RAYTRACING`                                                            |
+| `D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE`               | `D3D12_BARRIER_SYNC_PIXEL_SHADING`                                                         |
 
 ### UAV Barriers
 
