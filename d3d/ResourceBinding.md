@@ -2600,10 +2600,10 @@ interface ID3D12CommandList
 interface ID3D12CommandList
 {
     ...
-    void SetComputeDescriptorTable(
+    void SetComputeRootDescriptorTable(
     UINT RootParameterIndex,
     D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor);
-    void SetGraphicsDescriptorTable(
+    void SetGraphicsRootDescriptorTable(
     UINT RootParameterIndex,
     D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor);
 }
