@@ -1,5 +1,5 @@
 <h1>D3D12 Work Graphs</h1>
-v0.51 1/19/2024
+v0.52 2/9/2024
 
 > To see the state the spec was in for the June 2023 Work Graphs preview, see the archived v0.43 spec [here](https://github.com/microsoft/DirectX-Specs/blob/preview-2023-06/d3d/WorkGraphs.md).
 > The [Change log](#change-log) in this document shows changes since then on the path to future final (non-preview) release.
@@ -187,6 +187,7 @@ v0.51 1/19/2024
   - [General intrinsics](#general-intrinsics)
     - [GetRemainingRecursionLevels](#getremainingrecursionlevels)
     - [Barrier](#barrier)
+      - [Barrier Rules](#barrier-rules)
       - [Barrier mapping from earlier intrinsics](#barrier-mapping-from-earlier-intrinsics)
 - [DXIL](#dxil)
   - [DXIL Shader function attributes](#dxil-shader-function-attributes)
@@ -1519,6 +1520,8 @@ For `MaxRecords`, an exception to the limits are empty records ([EmptyNodeOutput
 > These bounds on the memory footprint of node shaders are present to simplify implementations and make them at least less likely to hit performance cliffs and very large overall graph execution memory backing footprints.  The exact numbers are at least somewhat arbitrary, so some implementations may yield more efficiency when apps don't need to max out the limits.
 
 > One might notice that the tight limits on thread launch nodes could be worked around by simply renaming the node to be coalescing launch or broadcasting launch nodes with a thread group size of 1.  While this is true, implementations of the different node types will typically be fundamentally different.  For instance with coalescing and broadcasting launch nodes, implementations cannot appear to pack thread groups into a wave by definition (see [Thread visibility in wave operations](#thread-visibility-in-wave-operations)), so it might be that using thread groups of size 1 in those node types will expose inefficiency similar to using compute shaders in general this way.  On the other hand, if thread launch output limits turn out be too restrictive, working around them by switching node types (and possibly using larger thread group sizes) might produce inefficiency locally in a graph that is worth taking on for the benefit of overall graph data flow.  This is hard to predict, and apps are certainly free to experiment to see what works best.  
+
+Another limit on outputs is the maximum number of node output declarations from a node is 1024.  This refers to output targets, not number of records.  Fortunately outputting to a node array only counts as 1 to this limit (regardless of array size).  So it is exceedingly unlikely for an application to reach the limit - imagine a single shader that declares more than 1024 separate individual outputs (that many lines of HLSL code just in the shader function signature), and has dedicated separate code in the shader body to write to each of the outputs.
 
 ---
 
@@ -3087,6 +3090,8 @@ UINT GetEntrypointRecordSizeInBytes(UINT WorkGraphIndex, UINT EntrypointIndex);
 
 Returns the record size of entry point index `EntrypointIndex` (`[0... NumEntrypoints-1]`) in the work graph at at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).
 
+This includes any padding neccessary to meet the input record size requirements described in [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and equivalently in [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input).  For instance a record that just contains a uint16 (which appears to be 2 bytes) actually counts as 4 bytes due to the minimum granularity specified in those sections.
+
 Returns `-1` if the `WorkGraphIndex` or `EntrypointIndex` are invalid.
 
 Returns `0` for entrypoints that have empty input.
@@ -3108,7 +3113,9 @@ void GetWorkGraphMemoryRequirements(
 
 Fills out `pWorkGraphMemoryRequirements` (see [D3D12_WORK_GRAPH_MEMORY_REQUIREMENTS](#d3d12_work_graph_memory_requirements)) based on the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).
 
-The output is zeroed out if `WorkGraphIndex` is invalid.
+Zeroes are valid return values if the system doesn't need any backing memory for the graph.  The application can pass `null` for the backing memory in [SetProgram()](#setprogram) in this case.
+
+The output is aso zeroed out if `WorkGraphIndex` is invalid (debug layer will report the error).  
 
 See [Backing memory](#backing-memory).
 
@@ -3130,6 +3137,8 @@ Member                           | Definition
 `MinSizeInBytes` | Minimum size the driver needs for backing memory.
 `MaxSizeInBytes` | Maximum size the driver would be able to make use of for backing memory.
 `SizeGranularityInBytes` | Sizes that the driver can use that are larger than `MinSizeInBytes` are larger by a multiple of `SizeGranularityInBytes`.  The application can provide sizes for backing memory that are larger than `MinSizeInBytes` + an integer multiple of `SizeGranularityInBytes`, or larger than `MaxSizeInBytes`, but it simply wastes memory as the driver won't touch memory beyond the size range and granularity specifications here.
+
+The min can be reported as zero if the system doesn't need any backing memory for the graph.  If min is reported as zero, max might also be reported as zero unless the system can use backing store if the app wants but can also handle being given none.  When zero is reported as a valid size, the application can pass `null` for the backing memory in [SetProgram()](#setprogram).
 
 Referenced by [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements).
 
@@ -3228,8 +3237,8 @@ Member                           | Definition
 ---------                           | ----------
 `ProgramIdentifier` | Which work graph to set.  See [D3D12_PROGRAM_IDENTIFIER](#d3d12_program_identifier) and [GetProgramIdentifier](#getprogramidentifier).
 `Flags` | See [D3D12_SET_WORK_GRAPH_FLAGS](#d3d12_set_work_graph_flags).
-`BackingMemory` | See [Backing memory](#backing-memory) and [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements).  The memory must be accessible as a UAV (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_UNORDERED_ACCESS`).  The address must be 64KB aligned.
-`NodeLocalRootArgumentsTable` | Local root argument table location.  See [GetNodeLocalRootArgumentsTableIndex](#getnodelocalrootargumentstableindex) and the `[NodeLocalRootArgumentsTableIndex()]` [shader function attribute](#shader-function-attributes). `NodeLocalRootArgumentsTable`, if non-null, the memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`).  Nodes that use different local root signatures can't point to the same location in the table, otherwise behavior is undefined.  As such, stride can be `0` only if the work graph uses a single local root signature.  If the stride is nonzero, it must be at least as large as the largest local root signature argument footprint. So there is some unused memory between shader records when they are smaller than the stride.  The address and stride must both be aligned to the size of the largest member of any local root signature in the work graph, e.g. 8 bytes if there are any root descriptors.  Constants only impose 32bit alignment (even if they are vectors).
+`BackingMemory` | See [Backing memory](#backing-memory) and [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements).  The memory must be accessible as a UAV (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_UNORDERED_ACCESS`).  The address must be `8` byte aligned.  Can be null if the driver report zero as a valid size.
+`NodeLocalRootArgumentsTable` | Local root argument table location.  See [GetNodeLocalRootArgumentsTableIndex](#getnodelocalrootargumentstableindex) and the `[NodeLocalRootArgumentsTableIndex()]` [shader function attribute](#shader-function-attributes). `NodeLocalRootArgumentsTable`, if non-null, the memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`).  Nodes that use different local root signatures can't point to the same location in the table, otherwise behavior is undefined.  As such, stride can be `0` only if the work graph uses a single local root signature.  If the stride is nonzero, it must be at least as large as the largest local root signature argument footprint. So there is some unused memory between shader records when they are smaller than the stride.  The address and stride must both be aligned to the size of the largest member of any local root signature in the work graph, e.g. `8` bytes if there are any root descriptors.  Constants only impose 32bit alignment (even if they are vectors).
 
 > If callable shaders were supported, a second version of this struct would be needed, with an additional `D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE CallableShaderTable` member.
 
@@ -3310,9 +3319,9 @@ Member                           | Definition
 ---------                           | ----------
 `Mode` | Which entry in the union to use.  See [D3D12_DISPATCH_GRAPH_MODE](#d3d12_dispatch_graph_mode).
 `NodeCPUInput` | See [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input).
-`NodeGPUInput` | See [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input).  In GPU memory.
+`NodeGPUInput` | See [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input).  In GPU memory.  The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`)
 `MultiNodeCPUInput` | See [D3D12_MULTI_NODE_CPU_INPUT](#d3d12_multi_node_cpu_input).
-`MultiNodeGPUInput` | See [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input).  In GPU memory.
+`MultiNodeGPUInput` | See [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input).  In GPU memory.  The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`)
 
 Referenced by [DispatchGraph()](#dispatchgraph)
 
@@ -3353,8 +3362,8 @@ Member                           | Definition
 ---------                           | ----------
 `UINT EntrypointIndex` | Provides index of a given entry to a work graph.  See the [GetEntrypointIndex](#getentrypointindex) API. 
 `UINT NumRecords` | Number of records to add. `NumRecords` is always used - even with empty records the count of empty work items still drives node invocations. 
-`void* pRecords` | Record definitions, laid out with the same member packing and struct size rules that C uses.  If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be set to NULL if desired.  The data is copied/saved by the driver at the [DispatchGraph()](#dispatchgraph) call during command-list recording.  So immediately after the [DispatchGraph()](#dispatchgraph) call returns on the CPU timeline, the data pointed to is no longer referenced by the system and the caller has free ownership of the memory again. The address must be `4` byte aligned.
-`UINT64 RecordStrideInBytes` | Distance between the start of each record in bytes. If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be set to NULL if desired.  This doesn't need to be 64 bits, but this way the struct matches with the layout of the GPU version below, in case there is ever a world where CPU and GPU can share pointers.  `RecordStrideInBytes` can be 0 to replicate a single record, and if it is nonzero, it must be at least as big as the entrypoint's input record size, which can be retrieved via [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) for convenience.  Stride must be `4` byte aligned.
+`void* pRecords` | Record definitions, laid out with the same member packing and struct size rules that C uses.  If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be set to NULL if desired.  The data is copied/saved by the driver at the [DispatchGraph()](#dispatchgraph) call during command-list recording.  So immediately after the [DispatchGraph()](#dispatchgraph) call returns on the CPU timeline, the data pointed to is no longer referenced by the system and the caller has free ownership of the memory again. The address must be aligned to `max(4,largest scalar member size)` bytes.
+`UINT64 RecordStrideInBytes` | Distance between the start of each record in bytes. If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be set to NULL if desired.  This doesn't need to be 64 bits, but this way the struct matches with the layout of the GPU version below, in case there is ever a world where CPU and GPU can share pointers.  `RecordStrideInBytes` can be 0 to replicate a single record, and if it is nonzero, it must be at least as big as the entrypoint's input record size, which can be retrieved via [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) for convenience.  Stride must be aligned to `max(4,largest scalar member size)` bytes, or `0`.
 
 Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).
 
@@ -3377,7 +3386,7 @@ Member                           | Definition
 ---------                           | ----------
 `UINT EntrypointIndex` | Provides index of a given entry to a work graph.  See the [GetEntrypointIndex](#getentrypointindex) API. 
 `UINT NumRecords` | Number of records to add. `NumRecords` is always used - even with empty records the count of empty work items still drives node invocations.
-`D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE Records` | Record definitions, laid out with the same member packing and struct size rules that C uses. The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`).  If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be zeroed out if desired.   Stride can be 0 to replicate a single record, and if it is nonzero, it must be at least as big as the entrypoint's input record size, which can be retrieved via [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) for convenience.  Address and stride must be `4` byte aligned.  The system does not alter the record data, except if the records are consumed by a node that writes to its input records (see `RW{Dispatch|Thread}NodeInputRecord` and `RWGroupNodeInputRecords` in [Node input declaration](#node-input-declaration)), in which case the contents of the writeable portions of the input records becomes undefined during graph execution.
+`D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE Records` | Record definitions, laid out with the same member packing and struct size rules that C uses. The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`).  If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be zeroed out if desired.   Stride can be 0 to replicate a single record, and if it is nonzero, it must be at least as big as the entrypoint's input record size, which can be retrieved via [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) for convenience.  Address and stride must be aligned to `max(4,largest scalar member size)` bytes (stride can alsp be `0`).  The system does not alter the record data, except if the records are consumed by a node that writes to its input records (see `RW{Dispatch|Thread}NodeInputRecord` and `RWGroupNodeInputRecords` in [Node input declaration](#node-input-declaration)), in which case the contents of the writeable portions of the input records becomes undefined during graph execution.
 
 Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).
 
@@ -4195,7 +4204,7 @@ DXIL definition [here](#lowering-getremainingrecursionlevels).
 
 ### Barrier
 
-The following `Barrier()` intrinsic is available in all shader types (not just in work graphs).  This is a superset of existing intrinsics (which are still supported): `AllMemoryBarrier{WithGroupSync}()`, `GroupMemoryBarrier{WithGroupSync}()`, `DeviceMemoryBarrier{WithGroupSync}()`.  
+The following `Barrier()` intrinsic is available in all shader stages (not just in work graphs).  This is a superset of existing intrinsics (which are still supported): `AllMemoryBarrier{WithGroupSync}()`, `GroupMemoryBarrier{WithGroupSync}()`, `DeviceMemoryBarrier{WithGroupSync}()`.
 
 `Barrier()` takes flags to control its behavior, encompassing everything the existing barriers could do while being extensible.  The flags selections must be static / resolvable at compile time.
 
@@ -4220,13 +4229,23 @@ enum class BARRIER_SEMANTIC_FLAG
 }
 
 // Request a barrier for a set of memory types and/or thread group execution sync.
+// Some usages can be translated to prior shader models; otherwise require SM 6.8.
 void Barrier(uint MemoryTypeFlags, uint SemanticFlags)
 
-// Request a barrier for just the memory used by an object
-// The object can be a particular node input/output record object or UAV resource.
-// Groupshared variables are not currently supported, but could be 
-// with some additional tweaking of DXIL level definition.
-void Barrier(Object o, uint SemanticFlags)
+// Request a barrier for just the memory referred to by a UAV object
+// UAVResource can be any UAV resource object.
+// Requires SM 6.8 and shader stage with visible group.
+template<typename UAVResource>
+void Barrier(UAVResource o, uint SemanticFlags)
+
+// Request a barrier for just the memory associated with a record object
+// NodeRecordObject can be any RW*NodeInputRecord(s) object, or
+// any *NodeOutputRecords object. In other words:
+// RWDispatchNodeInputRecord, RWGroupNodeInputRecords, RWThreadNodeInputRecord,
+// GroupNodeOutputRecords, or ThreadNodeOutputRecords object.
+// Requires SM 6.8 and node shader stage.
+template<typename NodeRecordObject>
+void Barrier(NodeRecordObject o, uint SemanticFlags)
 
 ```
 
@@ -4245,10 +4264,10 @@ As a basis, D3D's shader memory consistency model is relaxed, as generally under
 |`BARRIER_SEMANTIC_FLAG`|Definition|
 |-|-|
 |`GROUP_SYNC`|Synchronize threads in group to the current location in the shader.|
-|`GROUP_SCOPE`|Scope for memory visibility is current thread group.|
+|`GROUP_SCOPE`|Scope for memory visibility is current thread group.  Subsumed by `DEVICE_SCOPE`.|
 |`DEVICE_SCOPE`|Scope for memory visibility is device.  This only relevant for memory accesses to `globallycoherent` resources or atomics, to ensure the rest of the device sees the accesses in the correct order.  For load/store to non-`globallycoherent` resources this accomplishes nothing more than `GROUP_SCOPE`. |
 
-`Barrier()` must be called from uniform flow control in the thread group.  For shader types that don't have thread groups the call must be in globally uniform flow control.
+A `Barrier()` call using `GROUP_SYNC` must be called from uniform flow control in the thread group.
 
 See a couple of examples of `Barrier()` being applied in [Producer - consumer dataflow through UAVs](#producer---consumer-dataflow-through-uavs).
 
@@ -4257,6 +4276,49 @@ See a couple of examples of `Barrier()` being applied in [Producer - consumer da
 The minimal call `Barrier(0,0)` technically accomplishes nothing, as no memory type or sync has been requested.  Regardless, the DXC compiler may, in its DXIL code generation, prevent any memory access of *any* memory type from moving in either direction over any `Barrier()` call, regardless of flags in the call that might indicate specific memory types.  The underlying driver compilation, however, is free to take advantage of the specific flags.  As such, without any flags, this minimal call `Barrier(0,0)` accomplishes nothing at the level of machine code generation - it is not a barrier to anything.
 
 The minimal calls `Barrier(UAV_MEMORY,0)` or `Barrier(myUAV,0)` signal to the driver compilation to machine code that accesses to all UAV memory, or `myUAV` in the latter case, in thread program order cannot be migrated in either direction accross the barrier.  The driver compiler can freely move other memory accesses across the barrier.  There is no action at execution to ensure data visibility outside the thread, since no related `*_SCOPE` is specified in the semantic flags.  In practice some memory scope flag will be needed as well, assuming the shader invocation using the barrier wants to enforce the memory operations are seen outside it in the code order.  So the only utility in using a barrier with a memory type specified but without a memory scope is if there was a performance implication for maintaining a particular order/grouping of memory transactions local to a shader, which compiler code reordering would lose.
+
+Calling `Barrier()` with `MemoryTypeFlags` equal to `ALL_MEMORY` is allowed on shader stages that do not have access to all memory types.  The inapplicable memory types will be masked off in this case.  In other words, `NODE_INPUT_MEMORY` or `NODE_OUTPUT_MEMORY` will be masked off when not called from a node shader, and `GROUP_SHARED_MEMORY` will be masked off when not called from a shader with access to group shared memory.  However, if called with any value of `MemoryTypeFlags` besides `ALL_MEMORY`, each memory type specified must be applicable to the shader stage, otherwise the operation is invalid.
+
+This table identifies shader stages to which different `MemoryTypeFlags` apply:
+
+|`MEMORY_TYPE_FLAG`|Applicable Shader Stages|
+|-|-|
+|`UAV_MEMORY`| applicable to all shader stages |
+|`GROUP_SHARED_MEMORY`| compute-like shader stages: compute, mesh, amplification, and node |
+|`NODE_INPUT_MEMORY`| node shaders only |
+|`NODE_OUTPUT_MEMORY`| node shaders only |
+|`ALL_MEMORY`| usable in all shader stages, automatically masked to applicable bits |
+
+"If both `DEVICE_SCOPE` and `GROUP_SCOPE` are specified in `SemanticFlags`, then `GROUP_SCOPE` is ignored and masked off.
+
+The new barrier intrinsic with compatible `MemoryTypeFlags` and `SemanticFlags` can be used on older shader models, as long as the flags map to the original barrier DXIL operation (after shader stage masking).  See details [here](#lowering-barrier).
+
+#### Barrier Rules
+
+There are rules for valid combinations of flags and objects to avoid meaningless states, and catch likely user errors.
+
+These are the principles behind the rules:
+
+- GROUP flags do not apply where there is no visible group in HLSL.
+- SCOPE flags require some memory of that scope or larger to be specified for them to be meaningful.
+
+General rules:
+
+- `GROUP_SCOPE` and `GROUP_SYNC` may only be used in compute-model shaders with a visible group: compute, mesh, and amplification shaders, or node shaders with broadcasting or coalescing launch.
+- Thread launch nodes do not have access to group scope.  Therefore, it is not valid to use `GROUP_SCOPE` or `GROUP_SYNC` in `SemanticFlags` for any `Barrier()` call, or to use any `MemoryTypeFlags` without `UAV_MEMORY`.
+- Using `DEVICE_SCOPE` requires `UAV_MEMORY`, `NODE_INPUT_MEMORY`, a UAV resource object, or `RWDispatchNodeInputRecord` object.
+
+When calling `Barrier()` overload with `MemoryTypeFlags`:
+
+- `GROUP_SCOPE` may only be used if `MemoryTypeFlags` is non-zero.
+- `NODE_INPUT_MEMORY` is only applicable at `DEVICE_SCOPE` on a broadcasting node that inputs a `RWDispatchNodeInputRecord`.  However, inapplicable scopes are allowed and ignored.
+- `NODE_OUTPUT_MEMORY` is only applicable to at most `GROUP_SCOPE`.  It is invalid to use `DEVICE_SCOPE` unless `NODE_INPUT_MEMORY` or `UAV_MEMORY` are also included in the `MemoryTypeFlags` since it cannot be meaningful.  Besides this case, any inapplicable scopes will be ignored.
+- The driver is required to ignore any memory types and scopes not applicable to the actual node input or output memory declared by an entry function when `NODE_INPUT_MEMORY` and/or `NODE_OUTPUT_MEMORY` are used.  This includes ignoring the memory flag when no actual node intput or output exists.  This simplifies call graph validation and allows a function to use a barrier with these flags without concern about whether the entry has declared inputs or outputs at the specified scope.
+
+When calling `Barrier()` overload with a node record object:
+
+- A `Barrier()` call with `RWGroupNodeInputRecords`, or `GroupNodeOutputRecords` may not be used with `DEVICE_SCOPE`, since this scope does not apply to group-local objects.
+- A `Barrier()` call with `RWThreadNodeInputRecord` or `ThreadNodeOutputRecords` cannot use `GROUP_SCOPE` or `DEVICE_SCOPE` - these scopes do not apply to thread-local objects.  Using the `Barrier()` on the object only serves to prevent loads and stores to the record(s) from being moved across the `Barrier()` call.
 
 ---
 
@@ -4274,11 +4336,11 @@ AllMemoryBarrierWithGroupSync() ->
              DEVICE_SCOPE|GROUP_SYNC)
 
 DeviceMemoryBarrier() -> 
-     Barrier(UAV_MEMORY|GROUP_SHARED_MEMORY,
+     Barrier(UAV_MEMORY,
              DEVICE_SCOPE)
 
 DeviceMemoryBarrierWithGroupSync() -> 
-     Barrier(UAV_MEMORY|GROUP_SHARED_MEMORY,
+     Barrier(UAV_MEMORY,
              DEVICE_SCOPE|GROUP_SYNC)
 
 GroupMemoryBarrier() -> 
@@ -4749,14 +4811,40 @@ See [Barrier](#barrier) for HLSL definition, including flags definitions.
 HLSL
 ```C++
 void Barrier(uint MemoryTypeFlags, uint SemanticFlags)
-void Barrier(Object o, uint SemanticFlags)
+// Here, UAVObject stands for any UAV resource object in HLSL
+template<typename UAVObject>
+void Barrier(UAVObject o, uint SemanticFlags)
+// Here, NodeRecordObject stands for any node record object in HLSL
+template<typename NodeRecordObject>
+void Barrier(NodeRecordObject o, uint SemanticFlags)
 ```
 
 DXIL
 ```LLVM
+; Inapplicable MemoryTypeFlags flags in the DXIL op must be ignored, and scopes adjusted as necessary.
 void @dx.op.barrierByMemoryType(i32 %Opcode, i32 %MemoryTypeFlags, i32 %SemanticFlags)
-void @dx.op.barrierByMemoryHandle(i32 %Opcode, %dx.types.NodeRecordHandle %Object, i32 %SemanticFlags)
+void @dx.op.barrierByMemoryHandle(i32 %Opcode, %dx.types.Handle %Object, i32 %SemanticFlags)
+void @dx.op.barrierByNodeRecordHandle(i32 %Opcode, %dx.types.NodeRecordHandle %Object, i32 %SemanticFlags)
 ```
+
+Inapplicable `MemoryTypeFlags` flags in the DXIL op must be ignored by the implementation, and any scopes must be narrowed according to actual memory scopes present.  While the compiler will do its best to validate scopes, some cases may not be caught through call graph validation and may result in an inapplicable combination after masking for available memory types.  An explicitly allowed example is when node input/output flags that don't apply given the actual node inputs and/or outputs used in the node shader entry point.
+
+Previous HLSL barrier intrinsics map to the new `@dx.op.barrierByMemoryType` DXIL operation when used on shader model 6.8 or above.
+
+The new HLSL barrier intrinsic map to the old `@dx.op.barrier` DXIL operation on prior shader models for compatible `MemoryTypeFlags` and `SemanticFlags` inputs.  Compatible inputs are ones that, after masking `MemoryTypeFlags` for shader stage when `ALL_MEMORY`, are equivalent to valid combinations of mode flags in the original `@dx.op.barrier` DXIL operation.  This excludes cases that could be expressed by the mode flags in the old operation, but either were not considered valid before, or were not accessible through the original HLSL intrinsics.
+
+Here is a mapping between old and equivalent new flag parameters (after masking `MemoryTypeFlags` for shader stage).  `@dx.op.barrier` mode flags are defined by `DXIL::BarrierMode`.
+
+| HLSL intrinsic | `DXIL::BarrierMode` | `MemoryTypeFlags` | `SemanticFlags` |
+|-|-|-|-|
+| `AllMemoryBarrier()` | `(10)` = `UAVFenceGlobal(2)` + `TGSMFence(8)` | `(3)` = `UAV_MEMORY(1)` + `GROUP_SHARED_MEMORY(2)` | `(4)` = `DEVICE_SCOPE(4)` |
+| `AllMemoryBarrierWithGroupSync()` | `(11)` = `UAVFenceGlobal(2)` + `TGSMFence(8)` + `SyncThreadGroup(1)` | `(3)` = `UAV_MEMORY(1)` + `GROUP_SHARED_MEMORY(2)` | `(5)` = `DEVICE_SCOPE(4)` + `GROUP_SYNC(1)` |
+| `DeviceMemoryBarrier()` | `(2)` = `UAVFenceGlobal(2)` | `(1)` = `UAV_MEMORY(1)` | `(4)` = `DEVICE_SCOPE(4)` |
+| `DeviceMemoryBarrierWithGroupSync()` | `(3)` = `UAVFenceGlobal(2)` + `SyncThreadGroup(1)` | `(1)` = `UAV_MEMORY(1)` | `(5)` = `DEVICE_SCOPE(4)` + `GROUP_SYNC(1)` |
+| `GroupMemoryBarrier()` | `(8)` = `TGSMFence(8)` | `(2)` = `GROUP_SHARED_MEMORY(2)` | `(2)` = `GROUP_SCOPE(2)` |
+| `GroupMemoryBarrierWithGroupSync()` | `(9)` = `TGSMFence(8)` + `SyncThreadGroup(1)` | `(2)` = `GROUP_SHARED_MEMORY(2)` | `(3)` = `GROUP_SCOPE(2)` + `GROUP_SYNC(1)` |
+
+Other flag combinations are explicitly not supported for translation to the original `@dx.op.barrier` operation.  This includes ones with `MemoryTypeFlags` of `0`, and ones that lack a `*_SCOPE` flag.  This also includes the technically legal case of `UAV_MEMORY` used with `GROUP_SCOPE` that maps to `UAVFenceThreadGroup`, but was not previously exposed in HLSL.
 
 ---
 
@@ -5202,7 +5290,7 @@ Member                              | Definition
 ---------                           | ----------
 `ProgramIdentifier`       | See [D3D12DDI_PROGRAM_IDENTIFIER_0108](#d3d12ddi_program_identifier_0108).
 `Flags` | See [D3D12DDI_SET_WORK_GRAPH_FLAGS_0108](#d3d12ddi_set_work_graph_flags_0108).
-`BackingMemory` | See [Backing memory](#backing-memory).  The address must be 64KB aligned.
+`BackingMemory` | See [Backing memory](#backing-memory).  The address must be `8` byte aligned.
 `NodeLocalRootArgumentsTable` | Location of local root arguments table.  See the members of [D3D12DDI_SHADER_NODE_0108](#d3d12ddi_shader_node_0108) in a work graph definition at the DDI indicating what the local root argument table index for a given node in a work graph is (if any).
 
 At API see [D3D12_SET_WORK_GRAPH_DESC](#d3d12_set_work_graph_desc).
@@ -6187,7 +6275,9 @@ The default value is `D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED`.
 
 #### Missing PRIMITIVE_TOPOLOGY
 
-The default value is `D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED`. For graphics state, an unspecified primitive topology will fail state object creation.
+For programs with a vertex shader, the default value is `D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED`. An unspecified primitive topology will fail state object creation.
+
+For programs with a mesh shader, the mesh shader itself declares an output topology, so a primmitive topology subobject isn't needed.  If a primitive topology subobject happens to be present, the runtime enforces that it matches what the mesh shader declared.
 
 #### Missing RENDER_TARGET_FORMATS
 
@@ -6299,3 +6389,4 @@ v0.48|11/8/2023|<li>In [D3D12\_EXPORT\_DESC](#d3d12_export_desc) for lib/non-lib
 v0.49|12/7/2023|<li>In [AddToStateObject](#addtostateobject), clarified that when entrypoints are added to a graph, the entrypoint index of existing nodes, as reported by [GetEntrypointIndex()](#getentrypointindex), remain unchanged. New entrypoints will have entrypoint index values that continue past existing entrypoints.</li><li>Corresponding to this, clarified in [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108) how drivers must infer entrypoint index values for entries in the list to match the API view.  It was an oversight that the runtime's index calculation wasn't passed to the driver, but deemed not important enough to rectify.</li><li>In [Graphics nodes example](#graphics-nodes-example), removed text stating that `DispatchNodeInputRecord<>` on the input declaration of a vertex or mesh shader is optional.  It is required (should graphics nodes be supported in the future), consistent with changes to the spec in v0.44 spec that removed defaults for missing node inputs</li>Renamed D3D12_OPTIONS_EXPERIMENTAL to [D3D12_FEATURE_OPTIONS21](#d3d12_feature_d3d12_options21), final location to find [D3D12_WORK_GRAPHS_TIER](#d3d12_work_graphs_tier) via [CheckFeatureSupport](#checkfeaturesupport).<li>In [Discovering device suppport for work graphs](#discovering-device-support-for-work-graphs) removed the need to enable `D3D12StateObjectsExperiment` to use work graphs via `D3D12EnableExperimentalFeatures()`, leaving only `D3D12ExperimentalShaderModels` needed here until shader model 6.8 is final.</li>
 v0.50|1/9/2024|<li>In [Graphics nodes](#graphics-nodes) described that initially mesh nodes are supported for private experimentation, exposed via [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier).</li><li>In [Graphics node resource binding and root arguments](#graphics-node-resource-binding-and-root-arguments) described a new flag for [D3D12_STATE_OBJECT_CONFIG](#d3d12_state_object_config), `D3D12_STATE_OBJECT_FLAG_WORK_GRAPHS_USE_GRAPHICS_STATE_FOR_GLOBAL_ROOT_SIGNATURE`, available in [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier).  Any work graph that uses graphics nodes must use this flag in it's containing state object.  Previously the spec stated that graphics nodes would use compute state.  The semantics here might still need tweaking.</li><li>In [DispatchMesh launch nodes](#mesh-launch-nodes) and [Graphics nodes example](#graphics-nodes-example), explained how mesh node support works initially for private experimentation, while there is no HLSL support for mesh node specific syntax yet.  The main affordance for experimentation is that existing mesh shader `payload` input that is normally used as input from the amplification shader is repurposed to be the node input record, given there is no `DispatchNodeInputRecord` object support for mesh shaders for now.  So instead of the `payload` coming from an amplification shader (not supported with work graphs), in a work graph the producer node's output record becomes the mesh shader `payload` input, for now.</li><li>Made some  minor corrections and tweaks to the [D3D12_PROGRAM_NODE](#d3d12_program_node) API struct's member fields for overriding program node properties.</li><li>In [Generic programs](#generic-programs) default names will no longer be assigned by the runtime for shaders produced by older compilers where the runtime can't see the shader name. Instead, for non-library shaders compiled with older compilers the app must rename the shader entrypoint from "*" to a new name, effectively assigning a name. Based on that the Name field in  [D3D12\_EXPORT\_DESC](#d3d12_export_desc) will no longer accept shader entry point default names (removed).</li>
 v.51|1/19/2024|<li>Renamed DispatchMesh launch nodes to simply [Mesh launch nodes](#mesh-launch-nodes).  Similar for related APIs and DDIs such as [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides).</li><li>In [Mesh launch nodes](#mesh-launch-nodes) allowed for `[NodeMaxDispatchGrid()]` or `[NodeDispatchGrid()]` shader function attributes to enable selecting between fixed or dynamic dispatch grid.  This spec does still mention that a dynamic dispatch grid is required, but for the purposes of experimentation in case this requirement can be relaxed, the fixed grid option is at least set up to be allowed.</li><li>Similarly for [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides), added overrides for `[NodeShareInputOf()]`, `[NodeMaxDispatchGrid()]` and `[NodeDispatchGrid()]` shader function attributes, consistent with broadcasting launch nodes.</li>
+v.52|2/9/2024|<li>If [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements) and [D3D12_WORK_GRAPH_MEMORY_REQUIREMENTS](#d3d12_work_graph_memory_requirements) noted that zero is a possible valid size (including zero as the min but nonzero as the max), in which case it is valid for the app to pass null to [SetProgram](#setprogram).</li><li>In [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc) clarified the resource state required for `[MULTI]_NODE_GPU_INPUT` graph input description that is in GPU memory (basically the same state requirement as the actual record data that the description points to which was already documented).</li><li>In [Node output limits](#node-output-limits) added constraint that a node can't declare more than 1024 outputs.  Not records, but outputs.  Fortunately node arrays just count as 1 output, so it is exceedingly unlikely that any application would ever run into the limit.</li><li>In [D3D12_SET_WORK_GRAPH_DESC](#d3d12_set_work_graph_desc) reduced backing memory alignment from 64KB minimum to 8 byte minimum.</li><li>In [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) updated the record address and stride requirement to `max(4,largest scalar member size)` bytes.  Stride can also be `0`.  The change here is that previously alignments that weren't multiple of 4 were valid.  e.g. a uint16 record,2 bytes, requires 4 byte alignment. [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) reflects this padding on reported record sizes.</li><li>For generic programs, in the section describing defaults for missing subobjects, under [Missing primitive topology](#missing-primitive_topology), clarified that if it is a mesh shader program, the topology is declared in the shader itself, so a primitive topology subobject isn't needed.  If a primitive topology subobject happens to be present, the runtime enforces it matches what the mesh shader declared.  This simply matches existing PSO behavior.</li><li>[Barrier](#barrier) fixes: Uniform control flow only required for `GROUP_SYNC`. `DeviceMemoryBarrier*()` excludes `GROUP_SHARED_MEMORY`. `MemoryTypeFlags` masked for shader stage when `ALL_MEMORY`. Added detailed rules for valid Barrier() use. Fix [DXIL ops](#lowering-barrier) for UAV Handle vs. NodeRecordHandle. Old intrinsics should produce the new DXIL op on SM 6.8, and uses of the new HLSL intrinsic equivalent to the old HLSL intrinsics will map to the existing barrier DXIL op on prior shader models.</li>
