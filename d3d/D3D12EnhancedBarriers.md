@@ -196,7 +196,7 @@ This is particularly interesting when it comes to resource aliasing or updated t
 
 ### Simultaneous Access - But Only Across Queues
 
-Buffers and simultaneous-access resources can be written to in one queue while concurrently being read-from one or more OTHER queues.  However, this pattern is not supported in a single queue because legacy Resource Barrier design prevents subresources from being in both READ and WRITE states at the same time.  However, hardware can support same-queue simultaneous-access; Layout is always `COMMON` and there is no sync or flush needed since the reads are non-dependent.
+Buffers and simultaneous-access textures can be written to in one queue while concurrently being read-from one or more OTHER queues.  However, this pattern is not supported in a single queue because legacy Resource Barrier design prevents subresources from being in both READ and WRITE states at the same time.  However, hardware can support same-queue simultaneous-access; Layout is immutable and there is no sync or flush needed since the reads are non-dependent.
 
 ### Inefficient Batching of Subresource Range Transitions
 
@@ -416,11 +416,13 @@ Specifying `D3D12_BARRIER_ACCESS_COMMON` as `AccessBefore` in a barrier implies 
 
 ### Single-Queue Simultaneous Access
 
-The enhanced Barrier API allows concurrent read write operations on the same buffer or simultaneous-access texture in the same command queue.
+The GPU is allowed to reorder commands or execute them concurrently if there are no intervening barriers. Any subresources accessed by two or more commands in the same queue without an intervening barrier (or by completion of an `ExecuteCommandLists` scope) are potentially being accessed simultaneously. Likewise, any subresources accessed by operations in two or more concurrently running command queues are being accessed simultaneously.
 
-Buffers and simultaneous-access resources have always supported write access from one queue with concurrent, non-dependent read accesses from one or more other queues.  This is because such resources always use the `COMMON` layout and have no read/write hazards since reads must not depend on concurrent writes.  Unfortunately, legacy Resource Barrier rules disallow combining write state bits with any other state bits.  As such, resources cannot be concurrently read-from and written-to in the same queue using legacy `ResourceBarrier` API's.
+D3D12 provides a `D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS` flag to declare a resource as supporting concurrent read operations along with up to one write operation without the need for an intervening barrier. However, before enhanced barriers the simultaneous accesses could only be accomplished by accessing the resource in separate concurrently executing command queues.
 
-Note that the one-writer-at-a-time policy still applies since two seemingly non-overlapping write regions may still have overlapping cache lines.
+Buffers (which are implicitly simultaneous-access) and simultaneous-access textures have an immutable layout, and therefore never require a layout transition. This means that barriers are only needed to mitigate read-after-write, write-after-read, and write-after-write hazards. If a write operation is independent of a set of read operations, then there are no hazards. Unfortunately, due to how many GPUs manage resource caches, concurrent write operations to seemingly non-overlapping regions of the same subresource may still result in data corruption without a barrier. Therefore, buffers and simultaneous-access textures may be accessed by any number of read operations and up to one write operation concurrently as long as the read regions do not intersect the write regions.
+
+Note that accessing simultaneous-access textures is generally much slower than standard texture accesses. Also note that simultaneous-access textures have some important usage limitations. For more information on this, see [D3D12_RESOURCE_FLAGS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_flags).
 
 ### Subresource Ranges
 
@@ -2862,7 +2864,7 @@ During command list recording, the initial layout, sync scope, and accessibility
 
 #### ExecuteCommandLists Call-Site Validation Phase
 
-Texture layout is the only transient property of resources that propagate from one `ExecuteCommandLists` call to the next.  When Synchronized Command Queue Execution is enabled, texture layout can be accurately resolved to enable validation of record-time layout assumptions.  This applies only to non-simultaneous-access texture resources.  Simultaneous-access textures always have a `COMMON` layout, and buffers have no layout.
+Texture layout is the only transient property of resources that propagate from one `ExecuteCommandLists` call to the next.  When Synchronized Command Queue Execution is enabled, texture layout can be accurately resolved to enable validation of record-time layout assumptions.  This applies only to non-simultaneous-access texture resources.  Simultaneous-access textures have an immutable layout, and buffers have no layout.
 
 Since layout can only be changed using the Barrier API, the debug layer only needs to keep track of Layout Barriers to track texture layout.  This is in contrast to Legacy Resource Barriers, which needed to account for resource state promotion and decay.
 
