@@ -10,6 +10,7 @@
   - [Overview](#overview)
   - [Indirect Argument Buffer Structures](#indirect-argument-buffer-structures)
 - [Command signature Creation](#command-signature-creation)
+  - [Incrementing constant](#incrementing-constant)
   - [Example Command signatures](#example-command-signatures)
     - [Plain MultiDrawIndirect](#plain-multidrawindirect)
     - [Root Constants + Vertex Buffers](#root-constants--vertex-buffers)
@@ -18,11 +19,13 @@
 - [Bundles](#bundles)
 - [State leakage](#state-leakage)
 - [Obtaining buffer virtual addresses](#obtaining-buffer-virtual-addresses)
+- [Feature tiers](#feature-tiers)
 - [Implementation Details](#implementation-details)
 - [GPU Validation](#gpu-validation)
 - [Test Plan](#test-plan)
   - [Runtime Functional Tests](#runtime-functional-tests)
   - [Driver Conformance Tests](#driver-conformance-tests)
+- [Change log](#change-log)
 
 ---
 
@@ -188,6 +191,7 @@ typedef enum D3D12_INDIRECT_ARGUMENT_TYPE
     D3D12_INDIRECT_ARGUMENT_TYPE_UNORDERED_ACCESS_VIEW,
     D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_RAYS,
     D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH,
+    D3D12_INDIRECT_ARGUMENT_TYPE_INCREMENTING_CONSTANT
 } D3D12_INDIRECT_ARGUMENT_TYPE;
 
 typedef struct D3D12_INDIRECT_ARGUMENT_DESC
@@ -221,6 +225,13 @@ typedef struct D3D12_INDIRECT_ARGUMENT_DESC
         {
             UINT RootParameterIndex;
         } UnorderedAccessView;
+
+        // Tier 1.1 support
+        struct
+        {
+            UINT RootParameterIndex;
+            UINT DestOffsetIn32BitValues;
+        } IncrementingConstant;
     };
 } D3D12_INDIRECT_ARGUMENT_DESC;
 
@@ -248,6 +259,8 @@ draw/dispatch call within an indirect argument buffer are tightly
 packed. However, applications are allowed to specify an arbitrary byte
 stride between draw/dispatch commands in an indirect argument buffer.
 
+`D3D12_INDIRECT_ARGUMENT_TYPE_INCREMENTING_CONSTANT` is a unique argument type in that it doesn't occupy any argument buffer space. See [Incrementing constant](#incrementing-constant).
+
 The root signature must be specified if and only if the command
 signature changes one of the root arguments.
 
@@ -274,6 +287,32 @@ contain a dispatch operation, and it is a compute command signature.
 
 Graphics command signatures only affect graphics root arguments.
 Likewise, compute command signatures only affect compute root arguments.
+
+---
+
+## Incrementing constant
+
+[Feature tier](#feature-tiers) 1.1 adds support for `D3D12_INDIRECT_ARGUMENT_TYPE_INCREMENTING_CONSTANT`.
+
+This is a unique argument type in that it doesn't occupy any argument buffer space.
+
+Instead, `D3D12_INDIRECT_ARGUMENT_TYPE_INCREMENTING_CONSTANT` makes the system update a specified root constant for each executed command.  The configuration of the update is in the `IncrementingConstant` union entry of `D3D12_INDIRECT_ARGUMENT_DESC` (see [Command signature creation](#command-signature-creation)):
+
+```C++
+struct
+{
+    UINT RootParameterIndex; // Must match with a root constant in the command signature's root signature
+    UINT DestOffsetIn32BitValues; // Which constant in case the root constant has multiple 
+} IncrementingConstant;
+```
+
+From the shader point of view, accessing this is simply a matter of accessing the corresponding root constant.
+
+The counter is a 32-bit UINT. For a given `ExecuteIndirect` call, the value starts at `0` for the first command and increments by `1` for each subsequent command.
+
+A command signature can contain at most one incrementing constant.
+
+After an `ExecuteIndirect()` invocation completes, any root constant targeted by an incrementing constant argument is reset to `0`, consistent with the overall rules defined in [State leakage](#state-leakage).  As stated in that section, runtime accomplishes this by calling the driver to set the root constant to `0`.
 
 ---
 
@@ -550,6 +589,22 @@ This API returns 0's for non-buffer resources.
 
 ---
 
+# Feature tiers
+
+```C++
+typedef enum D3D12_EXECUTE_INDIRECT_TIER
+{
+    D3D12_EXECUTE_INDIRECT_TIER_1_0 = 10,
+    D3D12_EXECUTE_INDIRECT_TIER_1_1 = 11,
+} D3D12_EXECUTE_INDIRECT_TIER;
+```
+
+All D3D12 devices support tier 1.0, which is the majority of this spec, and applications don't need to bother checking for this level of support.
+
+Tier 1.1 adds support for [Incrementing constant](#incrementing-constant).  To use this, applications do need to ensure device support for tier 1.1, reported in `D3D12_FEATURE_D3D12_OPTIONS21`, via `CheckFeatureSupport()`.
+
+---
+
 # Implementation Details
 
 Both of the following implementations are acceptable:
@@ -690,3 +745,11 @@ expected to perform the following validation:
 - Root SRVs and UAVs work with all supported formats
 
 - Tiled root SRVs and UAVs work correctly (with offsets)
+
+---
+
+# Change log
+
+|Date|Changes|
+|---|---|
+|10/12/2023|<ul><li>Added [Incrementing constant](#incrementing-constant), which ask the system to increment a specified root constant for each ExecuteIndirect command.</li><li>Added [Feature tiers](#feature-tiers) which has `D3D12_EXECUTE_INDIRECT_TIER_1_1` to report incrementing constant support.</li></ul> |
