@@ -1,5 +1,5 @@
 <h1>D3D12 Work Graphs</h1>
-v0.53 2/22/2024
+v0.54 3/1/2024
 
 ---
 
@@ -123,6 +123,7 @@ v0.53 2/22/2024
     - [GetEntrypointID](#getentrypointid)
     - [GetEntrypointIndex](#getentrypointindex)
     - [GetEntrypointRecordSizeInBytes](#getentrypointrecordsizeinbytes)
+    - [GetEntrypointRecordAlignmentInBytes](#getentrypointrecordalignmentinbytes)
     - [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements)
       - [GetWorkGraphMemoryRequirements structures](#getworkgraphmemoryrequirements-structures)
         - [D3D12\_WORK\_GRAPH\_MEMORY\_REQUIREMENTS](#d3d12_work_graph_memory_requirements)
@@ -2196,7 +2197,7 @@ typedef enum D3D12_STATE_SUBOBJECT_TYPE
     D3D12_STATE_SUBOBJECT_TYPE_STREAM_OUTPUT = 14,  // D3D12_STREAM_OUTPUT_DESC
     D3D12_STATE_SUBOBJECT_TYPE_BLEND = 15,  // D3D12_BLEND_DESC
     D3D12_STATE_SUBOBJECT_TYPE_SAMPLE_MASK = 16,  // UINT
-    D3D12_STATE_SUBOBJECT_TYPE_RASTERIZER = 17,  // D3D12_RASTERIZER_DESC
+    D3D12_STATE_SUBOBJECT_TYPE_RASTERIZER = 17,  // D3D12_RASTERIZER_DESC2
     D3D12_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL = 18,  // D3D12_DEPTH_STENCIL_DESC
     D3D12_STATE_SUBOBJECT_TYPE_INPUT_LAYOUT = 19,  // D3D12_INPUT_LAYOUT_DESC
     D3D12_STATE_SUBOBJECT_TYPE_IB_STRIP_CUT_VALUE = 20,  // D3D12_INDEX_BUFFER_STRIP_CUT_VALUE
@@ -2230,7 +2231,7 @@ Value                           | Definition
 `D3D12_STATE_SUBOBJECT_TYPE_STREAM_OUTPUT` | Stream output definition subobject that can used by a [generic program](#d3d12_generic_program_desc).  The contents are the pre-existing API struct: `D3D12_STREAM_OUTPUT_DESC`.  [Defaults if missing](#missing-stream_output).
 `D3D12_STATE_SUBOBJECT_TYPE_BLEND` | Blend description subobject that can be used by a [generic program](#d3d12_generic_program_desc).  The contents are the pre-existing API struct: `D3D12_BLEND_DESC`. [Defaults if missing](#missing-blend).
 `D3D12_STATE_SUBOBJECT_TYPE_SAMPLE_MASK` |  Sample mask subobject that can be used by a [generic program](#d3d12_generic_program_desc).  The contents are a `UINT`. [Defaults if missing](#missing-sample_mask).
-`D3D12_STATE_SUBOBJECT_TYPE_RASTERIZER` | Rasterizer description subobject that can be used by a [generic program](#d3d12_generic_program_desc).  The contents are the pre-existing API struct: `D3D12_RASTERIZER_DESC`. [Defaults if missing](#missing-rasterizer).
+`D3D12_STATE_SUBOBJECT_TYPE_RASTERIZER` | Rasterizer description subobject that can be used by a [generic program](#d3d12_generic_program_desc).  The contents are the pre-existing API struct: `D3D12_RASTERIZER_DESC2`. [Defaults if missing](#missing-rasterizer).
 `D3D12_STATE_SUBOBJECT_TYPE_INPUT_LAYOUT` | Input layout description subobject that can be used by a [generic program](#d3d12_generic_program_desc).  The contents are the pre-existing API struct: `D3D12_INPUT_LAYOUT_DESC`. [Defaults if missing](#missing-input_layout).
 `D3D12_STATE_SUBOBJECT_TYPE_IB_STRIP_CUT_VALUE` | Index buffer strip cut value description subobject that can be used by a [generic program](#d3d12_generic_program_desc).  The contents are the pre-existing API struct: `D3D12_INDEX_BUFFER_STRIP_CUT_VALUE`. [Defaults if missing](#missing-index_buffer_strip_cut_value).
 `D3D12_STATE_SUBOBJECT_TYPE_PRIMITIVE_TOPOLOGY` | Primitive topology description subobject that can be used by a [generic program](#d3d12_generic_program_desc).  The contents are the pre-existing API struct: `D3D12_PRIMITIVE_TOPOLOGY_TYPE`. [Defaults if missing](#missing-primitive_topology).
@@ -3110,6 +3111,24 @@ Returns `0` for entrypoints that have empty input.
 
 ---
 
+### GetEntrypointRecordAlignmentInBytes
+
+```C++
+UINT GetEntrypointRecordAlignmentInBytes(UINT WorkGraphIndex, UINT EntrypointIndex);
+```
+
+Returns the record alignment of entry point index `EntrypointIndex` (`[0... NumEntrypoints-1]`) in the work graph at at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).
+
+This includes any padding neccessary to meet the input record alignment requirements described in [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and equivalently in [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input).  For instance a record that just contains a uint16 (which appears to be 2 bytes) actually counts as requiring a 4 byte alignment due to the minimum granularity specified in those sections.
+
+Returns `-1` if the `WorkGraphIndex` or `EntrypointIndex` are invalid.
+
+Returns `0` for entrypoints that have empty input.
+
+> This method can be handy as a confirmation that a graph's input is what the app expects.  Apps really need to know this from looking at the shaders they authored (to even know what data to pass), but this serves as an optional sanity check. This reflects what [DispatchGraph()](#dispatchgraph) expects for input.
+
+---
+
 ### GetWorkGraphMemoryRequirements
 
 See [Discovering backing memory size requirements](#discovering-backing-memory-size-requirements).
@@ -3369,8 +3388,8 @@ Member                           | Definition
 ---------                           | ----------
 `UINT EntrypointIndex` | Provides index of a given entry to a work graph.  See the [GetEntrypointIndex](#getentrypointindex) API. 
 `UINT NumRecords` | Number of records to add. `NumRecords` is always used - even with empty records the count of empty work items still drives node invocations. 
-`void* pRecords` | Record definitions, laid out with the same member packing and struct size rules that C uses.  If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be set to NULL if desired.  The data is copied/saved by the driver at the [DispatchGraph()](#dispatchgraph) call during command-list recording.  So immediately after the [DispatchGraph()](#dispatchgraph) call returns on the CPU timeline, the data pointed to is no longer referenced by the system and the caller has free ownership of the memory again. The address must be aligned to `max(4,largest scalar member size)` bytes.
-`UINT64 RecordStrideInBytes` | Distance between the start of each record in bytes. If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be set to NULL if desired.  This doesn't need to be 64 bits, but this way the struct matches with the layout of the GPU version below, in case there is ever a world where CPU and GPU can share pointers.  `RecordStrideInBytes` can be 0 to replicate a single record, and if it is nonzero, it must be at least as big as the entrypoint's input record size, which can be retrieved via [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) for convenience.  Stride must be aligned to `max(4,largest scalar member size)` bytes, or `0`.
+`void* pRecords` | Record definitions, laid out with the same member packing and struct size rules that C uses.  If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be set to NULL if desired.  The data is copied/saved by the driver at the [DispatchGraph()](#dispatchgraph) call during command-list recording.  So immediately after the [DispatchGraph()](#dispatchgraph) call returns on the CPU timeline, the data pointed to is no longer referenced by the system and the caller has free ownership of the memory again. The address must be aligned to the largest scalar member size and be a multiple of 4 bytes.  The alignment requirement for a given entrypoint can be queried by [GetEntrypointRecordAlignmentInBytes()](#getentrypointrecordalignmentinbytes).
+`UINT64 RecordStrideInBytes` | Distance between the start of each record in bytes. If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be set to NULL if desired.  This doesn't need to be 64 bits, but this way the struct matches with the layout of the GPU version below, in case there is ever a world where CPU and GPU can share pointers.  `RecordStrideInBytes` can be 0 to replicate a single record, and if it is nonzero, it must be at least as big as the entrypoint's input record size, which can be retrieved via [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) for convenience.  Stride must be aligned to the largest scalar member size and be a multiple of 4 bytes.  The alignment requirement for a given entrypoint can be queried by [GetEntrypointRecordAlignmentInBytes()](#getentrypointrecordalignmentinbytes).
 
 Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).
 
@@ -3393,7 +3412,7 @@ Member                           | Definition
 ---------                           | ----------
 `UINT EntrypointIndex` | Provides index of a given entry to a work graph.  See the [GetEntrypointIndex](#getentrypointindex) API. 
 `UINT NumRecords` | Number of records to add. `NumRecords` is always used - even with empty records the count of empty work items still drives node invocations.
-`D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE Records` | Record definitions, laid out with the same member packing and struct size rules that C uses. The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`).  If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be zeroed out if desired.   Stride can be 0 to replicate a single record, and if it is nonzero, it must be at least as big as the entrypoint's input record size, which can be retrieved via [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) for convenience.  Address and stride must be aligned to `max(4,largest scalar member size)` bytes (stride can alsp be `0`).  The system does not alter the record data, except if the records are consumed by a node that writes to its input records (see `RW{Dispatch|Thread}NodeInputRecord` and `RWGroupNodeInputRecords` in [Node input declaration](#node-input-declaration)), in which case the contents of the writeable portions of the input records becomes undefined during graph execution.
+`D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE Records` | Record definitions, laid out with the same member packing and struct size rules that C uses. The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`).  If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be zeroed out if desired.  Stride can be 0 to replicate a single record, and if it is nonzero, it must be at least as big as the entrypoint's input record size, which can be retrieved via [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) for convenience.  Address and stride must also be aligned to the largest scalar member size and be a multiple of 4 bytes.  The alignment requirement for a given entrypoint can be queried by [GetEntrypointRecordAlignmentInBytes()](#getentrypointrecordalignmentinbytes). The system does not alter the record data, except if the records are consumed by a node that writes to its input records (see `RW{Dispatch|Thread}NodeInputRecord` and `RWGroupNodeInputRecords` in [Node input declaration](#node-input-declaration)), in which case the contents of the writeable portions of the input records becomes undefined during graph execution.
 
 Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).
 
@@ -6257,7 +6276,7 @@ Default parameter values:
     DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;  
     SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;  
     DepthClipEnable = TRUE;  
-    MultisampleEnable = FALSE;  
+    LineRasterizationMode = D3D12_LINE_RASTERIZATION_MODE_ALIASED;
     AntialiasedLineEnable = FALSE;  
     ForcedSampleCount = 0;  
     ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;  
@@ -6397,3 +6416,4 @@ v0.50|1/9/2024|<li>In [Graphics nodes](#graphics-nodes) described that initially
 v.51|1/19/2024|<li>Renamed DispatchMesh launch nodes to simply [Mesh launch nodes](#mesh-nodes).  Similar for related APIs and DDIs such as [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides).</li><li>In [Mesh launch nodes](#mesh-nodes) allowed for `[NodeMaxDispatchGrid()]` or `[NodeDispatchGrid()]` shader function attributes to enable selecting between fixed or dynamic dispatch grid.  This spec does still mention that a dynamic dispatch grid is required, but for the purposes of experimentation in case this requirement can be relaxed, the fixed grid option is at least set up to be allowed.</li><li>Similarly for [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides), added overrides for `[NodeShareInputOf()]`, `[NodeMaxDispatchGrid()]` and `[NodeDispatchGrid()]` shader function attributes, consistent with broadcasting launch nodes.</li>
 v.52|2/9/2024|<li>If [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements) and [D3D12_WORK_GRAPH_MEMORY_REQUIREMENTS](#d3d12_work_graph_memory_requirements) noted that zero is a possible valid size (including zero as the min but nonzero as the max), in which case it is valid for the app to pass null to [SetProgram](#setprogram).</li><li>In [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc) clarified the resource state required for `[MULTI]_NODE_GPU_INPUT` graph input description that is in GPU memory (basically the same state requirement as the actual record data that the description points to which was already documented).</li><li>In [Node output limits](#node-output-limits) added constraint that a node can't declare more than 1024 outputs.  Not records, but outputs.  Fortunately node arrays just count as 1 output, so it is exceedingly unlikely that any application would ever run into the limit.</li><li>In [D3D12_SET_WORK_GRAPH_DESC](#d3d12_set_work_graph_desc) reduced backing memory alignment from 64KB minimum to 8 byte minimum.</li><li>In [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) updated the record address and stride requirement to `max(4,largest scalar member size)` bytes.  Stride can also be `0`.  The change here is that previously alignments that weren't multiple of 4 were valid.  e.g. a uint16 record,2 bytes, requires 4 byte alignment. [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) reflects this padding on reported record sizes.</li><li>For generic programs, in the section describing defaults for missing subobjects, under [Missing primitive topology](#missing-primitive_topology), clarified that if it is a mesh shader program, the topology is declared in the shader itself, so a primitive topology subobject isn't needed.  If a primitive topology subobject happens to be present, the runtime enforces it matches what the mesh shader declared.  This simply matches existing PSO behavior.</li><li>[Barrier](#barrier) fixes: Uniform control flow only required for `GROUP_SYNC`. `DeviceMemoryBarrier*()` excludes `GROUP_SHARED_MEMORY`. `MemoryTypeFlags` masked for shader stage when `ALL_MEMORY`. Added detailed rules for valid Barrier() use. Fix [DXIL ops](#lowering-barrier) for UAV Handle vs. NodeRecordHandle. Old intrinsics should produce the new DXIL op on SM 6.8, and uses of the new HLSL intrinsic equivalent to the old HLSL intrinsics will map to the existing barrier DXIL op on prior shader models.</li>
 v.53|2/22/2024|<li>Cleared out mentions of June 2023 preview ahead of official release.</li><li>Noted that [Draw nodes](#draw-nodes), [DrawIndexed nodes](#drawindexed-nodes) and related supporting APIs are cut in favor of experimenting with [mesh nodes](#mesh-nodes) only.</li>
+v.54|3/1/2024|<li>Now that DXC reports record alignment to the runtime based on the member sizes, added a [GetEntrypointRecordAlignmentInBytes()](#getentrypointrecordalignmentinbytes) method to help apps understand the record alignment rules, as applied to a given entry point's struct definition.  No driver impact from this new API.  This is a complement to the exisiting [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) API.</li><li>Cleaned up the entry record size and alignemnt requirements in [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) such that they are aligned to largest scalar member size and must be a multiple of 4. The previous definition would have allowed a struct of size 6 bytes to have a stride of 6.  To be safe, bumping that to 8.  This is reflected in the above mentioned APIs.</li><li>In [D3D12_STATE_SUBOBJECT_TYPE](#d3d12_state_object_type), the contents of the subobject `D3D12_SATE_SUBOBJECT_TYPE_RASTERIZER` were incorrectly stated as `D3D12_RASTERIZER_DESC`.  Corrected this to be the latest version of this desc, `D3D12_RASTERIZER_DESC2`, which is what the runtime was already assuming and passing to the driver.  Correspondingly updated the section describing defaults for missing subobjects to define the correct struct type in [Missing RASTERIZER](#missing-rasterizer), where `MultisampleEnable` isn't a member, it is `LineRasterizationMode` instead, defaulting to `D3D12_LINE_RASTERIZATION_MODE_ALIASED`.</li>
