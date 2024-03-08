@@ -5,16 +5,23 @@ v0.6 2024-03-11
 <h2>Contents</h2>
 
 - [Introduction](#introduction)
+- [Work Graphs](#work-graphs)
 - [Expanded Comparison Sampling](#expanded-comparison-sampling)
 - [Extended Command Information](#extended-command-information)
 - [Wave Size Range](#wave-size-range)
-- [Work Graphs](#work-graphs)
 - [Change Log](#change-log)
 
 ## Introduction
 
 This document covers the new Shader Model 6.8.  A brief summary of each new feature
 is listed below along with links to detailed specifications.
+
+## Work Graphs
+
+Work Graphs define a system of shader nodes that feed into each other
+to enable tailored GPU work creation.
+
+See the [Work Graphs](WorkGraphs.md) documentation for more details.
 
 ## Expanded Comparison Sampling
 
@@ -39,13 +46,6 @@ A new variant of the [WaveSize](HLSL_SM_6_6_WaveSize.md) attribute is added: `[W
 This allows you to specify a range and optional preferred size.
 
 See the [Wave Size Range](https://microsoft.github.io/hlsl-specs/proposals/0013-wave-size-range.html) documentation for more details.
-
-## Work Graphs
-
-Work Graphs define a system of shader nodes that feed into each other
-to enable tailored GPU work creation.
-
-See the [Work Graphs](WorkGraphs.md) documentation for more details.
 
 ## Change Log
 
