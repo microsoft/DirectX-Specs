@@ -6,6 +6,7 @@ v0.6 2024-03-11
 
 - [Introduction](#introduction)
 - [Expanded Comparison Sampling](#expanded-comparison-sampling)
+- [Extended Command Information](#extended-command-information)
 - [Wave Size Range](#wave-size-range)
 - [Work Graphs](#work-graphs)
 - [Change Log](#change-log)
@@ -22,6 +23,15 @@ New methods: `SampleCmpBias`, `SampleCmpGrad`.
 Added overloads: `CalculateLevelOfDetail`, `CalculateLevelOfDetailUnclamped`.
 
 See the [Expanded Comparison Sampling](https://microsoft.github.io/hlsl-specs/proposals/0014-expanded-comparison-sampling.html) documentation for more details.
+
+## Extended Command Information
+
+Two new system-value semantics are required to be supported in HLSL shader model 6.8:
+
+- `SV_StartVertexLocation` - Reports `StartVertexLocation` from `DrawInstanced()` or `BaseVertexLocation` from `DrawIndexedInstanced()` to a vertex shader.
+- `SV_StartInstanceLocation` - Reports `StartInstanceLocation` From `Draw*Instanced` to a vertex shader.
+
+See the [Extended Command Information](https://microsoft.github.io/hlsl-specs/proposals/0015-extended-command-info.html) documentation for more details.
 
 ## Wave Size Range
 
@@ -46,4 +56,4 @@ Version|Date|Description
 0.3| 24 Aug 2022|Add WaveMMA spec link
 0.4| 01 May 2023|Update included elements
 0.5| 21 Jun 2023|Update for preview release
-0.6| 11 Mar 2024|Remove WaveMMA; remove experimental; add Expanded Comparison Sampling and Wave Size Range
+0.6| 11 Mar 2024|Remove WaveMMA; remove experimental; add Expanded Comparison Sampling, Extended Command Information, and Wave Size Range
