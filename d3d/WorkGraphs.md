@@ -547,7 +547,7 @@ Of course the system will attempt to fill each thread group with the maximum dec
 
 Launched thread groups can see the full set of input available as an array.  The shader can discover how many inputs there are and is responsible for distributing work items across threads in the thread group.  If threads don't have any work to do, they can simply exit immediately.
 
-Any time a shader declares it expects some number greater than 1 as the maximum number of input records the it can handle in a thread group, it must call the input record's [Count()](#input-record-count-method) method to discover how many records its thread group actually got.
+Any time a shader declares it expects some number greater than 1 as the maximum number of input records that it can handle in a thread group, it must call the input record's [Count()](#input-record-count-method) method to discover how many records its thread group actually got.
 
 The number of records sent to any given thread group launch is implementation-defined, and not necessarily repeatable on a given implementation.  This is true independent of the method that produces the input -- i.e. whether it comes from another node or from DispatchGraph.  And it is true regardless size of input records, including 0 size records in particular.
 
