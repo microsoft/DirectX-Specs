@@ -521,7 +521,7 @@ The dispatch grid size can either be part of the input record or be fixed for th
 
 The thread group is fixed in the shader.  
 
-All thread groups that are launched share the same set of input parameters.  The exception is the ususal ID system values which identify individual threads within the set.
+All thread groups that are launched share the same set of input parameters.  The exception is the usual system ID values which identify individual threads within the group.
 
 For wave packing see [Thread visiblity in wave operations](#thread-visibility-in-wave-operations).
 
