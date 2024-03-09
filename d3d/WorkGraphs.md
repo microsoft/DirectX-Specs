@@ -496,7 +496,7 @@ Input record size can be 0 - discussed under [record struct](#record-struct).  T
 
 ## Node types
 
-[Broadcasting launch nodes](#broadcasting-launch-nodes) : one input seen my many thread groups
+[Broadcasting launch nodes](#broadcasting-launch-nodes) : one input seen by many thread groups
 [Thread launch nodes](#thread-launch-nodes) : one input per thread
 [Coalescing launch nodes](#coalescing-launch-nodes) : variable inputs seen by each thread group
 
