@@ -523,7 +523,7 @@ The thread group is fixed in the shader.
 
 All thread groups that are launched share the same set of input parameters.  The exception is the usual system ID values which identify individual threads within the group.
 
-For wave packing see [Thread visiblity in wave operations](#thread-visibility-in-wave-operations).
+For wave packing see [Thread visibility in wave operations](#thread-visibility-in-wave-operations).
 
 ---
 
@@ -551,7 +551,7 @@ Any time a shader declares it expects some number greater than 1 as the maximum 
 
 The number of records sent to any given thread group launch is implementation-defined, and not necessarily repeatable on a given implementation.  This is true independent of the method that produces the input -- i.e. whether it comes from another node or from DispatchGraph.  And it is true regardless size of input records, including 0 size records in particular.
 
-For wave packing see [Thread visiblity in wave operations](#thread-visibility-in-wave-operations).
+For wave packing see [Thread visibility in wave operations](#thread-visibility-in-wave-operations).
 
 ---
 
@@ -565,7 +565,7 @@ While a coalescing launch node can express what a thread launch node can do, it 
 
 ![thread launch](images/workgraphs/ThreadLaunchNode.png)
 
-For wave packing see [Thread visiblity in wave operations](#thread-visibility-in-wave-operations).
+For wave packing see [Thread visibility in wave operations](#thread-visibility-in-wave-operations).
 
 > Thread launch nodes can be thought of somewhat like the callable shaders that are in DXR, except they do not return back to the caller.  And instead of appearing as a function call from a shader, which would be a different path to invoking threads of execution than the work graph itself, thread launch nodes are by definition part of the work graph structure.  It may still prove interesting to support DXR-style callable shaders in the future, but for now at least, thread launch nodes serve as alternative that embraces a unified model for launching work - nodes in a work graph, while still allowing applications to indicate situations when their workload does involve independent threads of work.
 
