@@ -130,7 +130,7 @@ v0.55 3/9/2024
       - [GetWorkGraphMemoryRequirements structures](#getworkgraphmemoryrequirements-structures)
         - [D3D12\_WORK\_GRAPH\_MEMORY\_REQUIREMENTS](#d3d12_work_graph_memory_requirements)
   - [ID3D12WorkGraphProperties1 methods](#id3d12workgraphproperties1-methods)
-    - [SetMaximumGPUInputRecords](#setmaximumgpuinputrecords)
+    - [SetMaximumInputRecords](#setmaximuminputrecords)
   - [Command list methods](#command-list-methods)
     - [SetProgram](#setprogram)
       - [SetProgram Structures](#setprogram-structures)
@@ -1758,10 +1758,10 @@ The following HLSL attribute is available [mesh nodes](#mesh-nodes) (only):
       - Are `NodeLaunch("broadcast")` or a node that recurses
   - This attribute can be overridden at the API or only specified there, for convenience via [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides).
 
-The following API methods are required for work graphs with [mesh nodes](#mesh-nodes) that will drive the graph via [DispatchGraph()](#dispatchgraph) with input data that lives in GPU memory (as opposed to CPU input data):
+The following API methods apply only to work graphs with [mesh nodes](#mesh-nodes):
 
-- [ID3D12WorkGraphProperties1](#id3d12workgraphproperties1-methods)::[SetMaximumGPUInputRecords()](#setmaximumgpuinputrecords) must be called before calling calling [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements)
-- [SetMaximumWorkGraphGPUInputRecords()](#setmaximumworkgraphgpuinputrecords) must be called on the [command list](#command-list-methods) before initializing backing memory (via [SetProgram()](#setprogram) with [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags))
+- [ID3D12WorkGraphProperties1](#id3d12workgraphproperties1-methods)::[SetMaximumInputRecords()](#setmaximuminputrecords) must be called before calling [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements), defining the maximum number of CPU or GPU input records a given [DispatchGraph()](#dispatchgraph) call could use.
+- [SetMaximumWorkGraphGPUInputRecords()](#setmaximumworkgraphgpuinputrecords) must be called on the [command list](#command-list-methods) before initializing backing memory (via [SetProgram()](#setprogram) with [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags)), only if[DispatchGraph()](#dispatchgraph) will be used with input data that lives in GPU memory.
 
 Supplying/producing more records than any of these declarations results in undefined behavior.
 
@@ -3215,25 +3215,25 @@ Referenced by [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements).
 
 ---
 
-### SetMaximumGPUInputRecords
+### SetMaximumInputRecords
 
 > This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
 ```C++
-void SetMaximumGPUInputRecords(UINT WorkGraphIndex, UINT Count);
+void SetMaximumInputRecords(UINT WorkGraphIndex, UINT Count);
 ```
 
 See [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware).
 
-For work graphs that use [graphics nodes](#graphics-nodes), in order for some implementations to calculate the amount of backing store memory they need, [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements) requires the maximum value of `NumRecords` that may be passed at [DispatchGraph](#dispatchgraph) when using input records specified in GPU memory via [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) or [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input) (across all inputs in a call).
+For work graphs that use [graphics nodes](#graphics-nodes), in order for some implementations to calculate the amount of backing store memory they need, [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements) requires the maximum value of `NumRecords` that may be passed in any given [DispatchGraph()](#dispatchgraph) call. For multi-node input modes - [D3D12_MULTI_NODE_CPU_INPUT](#d3d12_multi_node_cpu_input) and [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input), this is maximum totaled across all inputs in a given [DispatchGraph()](#dispatchgraph) call.
 
-This state only applies to the next call to [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements) for this work graph.
+This state only applies to the next call to [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements) for this work graph.  The runtime takes a mutex in work graph properties methods like `SetMaximumInputRecords()` and `GetWorkGraphMemoryRequirements()` - they are thread safe.
+
+If the work graph has graphics nodes and this method isn't called before [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements), behavior is undefined, and the debug layer reports an error.
+
+If [DispatchGraph()](#dispatchgraph) will be called with inputs in GPU memory - [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) or [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input) - then on the command list [SetMaximumWorkgraphGPUInputRecords()](#setmaximumworkgraphgpuinputrecords) must be called before the backing memory is initialized via call to [SetProgram()](#setprogram) with [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags).  The maxmimum set on the command list must not exceed the maximum count originally declared via `ID3D12WorkGraphProperties1::SetMaximumInputRecords()` above.
 
 If the work graph doesn't have graphics nodes, this method has no effect.
-
-If the work graph has graphics nodes and this method isn't called beforeg [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements), the default is `0`.  This means the graph can only be driven by inputs specified from CPU memory - [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) or [D3D12_MULTI_NODE_CPU_INPUT](#d3d12_multi_node_cpu_input).
-
-If a nonzero value is set with `SetMaximumGPUInputRecords(N)`, then when the work graph is used on the command list, the command list method [SetMaximumWorkgraphGPUInputRecords()](#setmaximumworkgraphgpuinputrecords) must be called with a value less than or equal to `N` before some backing memory for the work graph is initialized via call to [SetProgram()](#setprogram) with [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags).
 
 ---
 
@@ -3550,7 +3550,7 @@ Sets the maximum value of `NumRecords` that may be passed to call to [DispatchGr
 
 This state only applies to the next call to [SetProgram](#setprogram) for this work graph which must use [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags) to initialize backing memory.  Essentially the system knows to initialize the backing memory based on the `SetMaximumWorkGraphGPUInputRecords()` value.  Any subsequent [DispatchGraph](#dispatchgraph) call using this initialization of backing memory, whether in this command list or another, must not be driven by more records in a given `DispatchGraph()` call than the maximum specified, otherwise behavior is undefined.
 
-The `Count` must be less than or equal to the `Count` declared earlier via `ID3D12WorkGraphsProperties1`::[SetMaximumGPUInputRecords()](#setmaximumgpuinputrecords) before the [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements) call that provided the size of backing memory that will be initialized here on the command list in the next [SetProgram()](#setprogram) call.
+The `Count` must be less than or equal to the `Count` declared earlier via `ID3D12WorkGraphsProperties1`::[SetMaximumInputRecords()](#setmaximuminputrecords) before the [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements) call that provided the size of backing memory that will be initialized here on the command list in the next [SetProgram()](#setprogram) call.
 
 ---
 
