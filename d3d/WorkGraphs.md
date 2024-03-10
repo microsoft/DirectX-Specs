@@ -67,8 +67,8 @@ v0.55 3/9/2024
 - [Graphics nodes](#graphics-nodes)
   - [Graphics nodes execution characteristics](#graphics-nodes-execution-characteristics)
   - [Graphics node resource binding and root arguments](#graphics-node-resource-binding-and-root-arguments)
-  - [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware)
     - [Graphics node index and vertex buffers](#graphics-node-index-and-vertex-buffers)
+  - [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware)
   - [Graphics nodes example](#graphics-nodes-example)
     - [Graphics node pull model vertex access](#graphics-node-pull-model-vertex-access)
 - [API](#api)
@@ -1737,36 +1737,6 @@ When graphics nodes are used in a work graph, the entire work graph (both graphi
 
 ---
 
-## Helping mesh nodes work better on some hardware
-
-> This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
-
-Some implementations may prefer to minimize work backpressure at the graphics transition (e.g. mesh noddes) in a graph.  For example, some hardware may experience heavyweight transitions when switching between the execution of compute based nodes and graphics leaf nodes.
-
-Such implementations can glean some information about worst-case graph dataflow from the various maximum output declarations and grid/group size declarations that are statically declared from the graph.  Beyond that, extra declarations are available here, specific to mesh nodes to to enable more accurate workload estimation given information from the application.
-
-> This is quite experimental, likely to be tweaked from learnings, ideally not even needed longer term.
-
-The following HLSL attribute is available [mesh nodes](#mesh-nodes) (only):
-
-- `[NodeMaxInputRecordsPerGraphEntryRecord(uint count,bool sharedAcrossNodeArray)]` [shader function attribute](#shader-function-attributes)
-  - Only required in complex topologies (defined next), otherwise optional if the app can declare a much smaller value than the worst case the driver would arrive at by just propagating max output declarations through the graph to the node
-  - Complex topologies requiring this declaration on a mesh node: 
-    - From the mesh node, moving two or more nodes upstream in the graph reaches a producer that outputs to a node array
-    - Between that node array output and the mesh node any intermediate node:
-      - Expands the number of output records vs its input
-      - Are `NodeLaunch("broadcast")` or a node that recurses
-  - This attribute can be overridden at the API or only specified there, for convenience via [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides).
-
-The following API methods apply only to work graphs with [mesh nodes](#mesh-nodes):
-
-- [ID3D12WorkGraphProperties1](#id3d12workgraphproperties1-methods)::[SetMaximumInputRecords()](#setmaximuminputrecords) must be called before calling [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements), defining the maximum number of CPU or GPU input records a given [DispatchGraph()](#dispatchgraph) call could use.
-- [SetMaximumWorkGraphGPUInputRecords()](#setmaximumworkgraphgpuinputrecords) must be called on the [command list](#command-list-methods) before initializing backing memory (via [SetProgram()](#setprogram) with [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags)), only if[DispatchGraph()](#dispatchgraph) will be used with input data that lives in GPU memory.
-
-Supplying/producing more records than any of these declarations results in undefined behavior.
-
----
-
 ### Graphics node index and vertex buffers
 
 > `[CUT]` This section was proposed as part of [graphics nodes](#graphics-nodes), but has been cut in favor of starting experimentation with [mesh nodes](#mesh-nodes) only.
@@ -1815,6 +1785,36 @@ struct MyDrawIndexedNodePayload
     // Other fields omitted for brevity (and can be interspersed with above).
 };
 ```
+
+---
+
+## Helping mesh nodes work better on some hardware
+
+> This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
+
+Some implementations may prefer to minimize work backpressure at the graphics transition (e.g. mesh noddes) in a graph.  For example, some hardware may experience heavyweight transitions when switching between the execution of compute based nodes and graphics leaf nodes.
+
+Such implementations can glean some information about worst-case graph dataflow from the various maximum output declarations and grid/group size declarations that are statically declared from the graph.  Beyond that, extra declarations are available here, specific to mesh nodes to to enable more accurate workload estimation given information from the application.
+
+> This is quite experimental, likely to be tweaked from learnings, ideally not even needed longer term.
+
+The following HLSL attribute is available [mesh nodes](#mesh-nodes) (only):
+
+- `[NodeMaxInputRecordsPerGraphEntryRecord(uint count,bool sharedAcrossNodeArray)]` [shader function attribute](#shader-function-attributes)
+  - Only required in complex topologies (defined next), otherwise optional if the app can declare a much smaller value than the worst case the driver would arrive at by just propagating max output declarations through the graph to the node
+  - Complex topologies requiring this declaration on a mesh node: 
+    - From the mesh node, moving two or more nodes upstream in the graph reaches a producer that outputs to a node array
+    - Between that node array output and the mesh node any intermediate node:
+      - Expands the number of output records vs its input
+      - Are `NodeLaunch("broadcast")` or a node that recurses
+  - This attribute can be overridden at the API or only specified there, for convenience via [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides).
+
+The following API methods apply only to work graphs with [mesh nodes](#mesh-nodes):
+
+- [ID3D12WorkGraphProperties1](#id3d12workgraphproperties1-methods)::[SetMaximumInputRecords()](#setmaximuminputrecords) must be called before calling [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements), defining the maximum number of CPU or GPU input records a given [DispatchGraph()](#dispatchgraph) call could use.
+- [SetMaximumWorkGraphGPUInputRecords()](#setmaximumworkgraphgpuinputrecords) must be called on the [command list](#command-list-methods) before initializing backing memory (via [SetProgram()](#setprogram) with [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags)), only if[DispatchGraph()](#dispatchgraph) will be used with input data that lives in GPU memory.
+
+Supplying/producing more records than any of these declarations results in undefined behavior.
 
 ---
 
