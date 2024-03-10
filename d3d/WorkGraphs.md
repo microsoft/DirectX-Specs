@@ -1,5 +1,5 @@
 <h1>D3D12 Work Graphs</h1>
-v0.54 3/1/2024
+v0.55 3/9/2024
 
 ---
 
@@ -67,6 +67,7 @@ v0.54 3/1/2024
 - [Graphics nodes](#graphics-nodes)
   - [Graphics nodes execution characteristics](#graphics-nodes-execution-characteristics)
   - [Graphics node resource binding and root arguments](#graphics-node-resource-binding-and-root-arguments)
+  - [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware)
     - [Graphics node index and vertex buffers](#graphics-node-index-and-vertex-buffers)
   - [Graphics nodes example](#graphics-nodes-example)
     - [Graphics node pull model vertex access](#graphics-node-pull-model-vertex-access)
@@ -99,6 +100,7 @@ v0.54 3/1/2024
         - [D3D12\_PROGRAM\_NODE](#d3d12_program_node)
         - [D3D12\_PROGRAM\_NODE\_OVERRIDES\_TYPE](#d3d12_program_node_overrides_type)
         - [D3D12\_MESH\_LAUNCH\_OVERRIDES](#d3d12_mesh_launch_overrides)
+        - [D3D12\_MAX\_NODE\_INPUT\_RECORDS\_PER\_GRAPH\_ENTRY\_RECORD](#d3d12_max_node_input_records_per_graph_entry_record)
         - [D3D12\_DRAW\_LAUNCH\_OVERRIDES](#d3d12_draw_launch_overrides)
         - [D3D12\_DRAW\_INDEXED\_LAUNCH\_OVERRIDES](#d3d12_draw_indexed_launch_overrides)
         - [D3D12\_COMMON\_PROGRAM\_NODE\_OVERRIDES](#d3d12_common_program_node_overrides)
@@ -127,6 +129,8 @@ v0.54 3/1/2024
     - [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements)
       - [GetWorkGraphMemoryRequirements structures](#getworkgraphmemoryrequirements-structures)
         - [D3D12\_WORK\_GRAPH\_MEMORY\_REQUIREMENTS](#d3d12_work_graph_memory_requirements)
+  - [ID3D12WorkGraphProperties1 methods](#id3d12workgraphproperties1-methods)
+    - [SetMaximumGPUInputRecords](#setmaximumgpuinputrecords)
   - [Command list methods](#command-list-methods)
     - [SetProgram](#setprogram)
       - [SetProgram Structures](#setprogram-structures)
@@ -143,6 +147,7 @@ v0.54 3/1/2024
         - [D3D12\_NODE\_GPU\_INPUT](#d3d12_node_gpu_input)
         - [D3D12\_MULTI\_NODE\_CPU\_INPUT](#d3d12_multi_node_cpu_input)
         - [D3D12\_MULTI\_NODE\_GPU\_INPUT](#d3d12_multi_node_gpu_input)
+    - [SetMaximumWorkGraphGPUInputRecords](#setmaximumworkgraphgpuinputrecords)
 - [HLSL](#hlsl)
   - [Shader target](#shader-target)
   - [Shader function attributes](#shader-function-attributes)
@@ -256,6 +261,7 @@ v0.54 3/1/2024
     - [D3D12DDI\_NODE\_ID\_0108](#d3d12ddi_node_id_0108)
     - [D3D12DDI\_PROGRAM\_NODE\_0108](#d3d12ddi_program_node_0108)
     - [D3D12DDI\_MESH\_LAUNCH\_PROPERTIES\_0108](#d3d12ddi_mesh_launch_properties_0108)
+    - [D3D12DDI\_MAX\_NODE\_INPUT\_RECORDS\_PER\_GRAPH\_ENTRY\_RECORD\_0108](#d3d12ddi_max_node_input_records_per_graph_entry_record_0108)
     - [D3D12DDI\_DRAW\_LAUNCH\_PROPERTIES\_0108](#d3d12ddi_draw_launch_properties_0108)
     - [D3D12DDI\_DRAW\_INDEXED\_LAUNCH\_PROPERTIES\_0108](#d3d12ddi_draw_indexed_launch_properties_0108)
 - [Generic programs](#generic-programs)
@@ -346,16 +352,16 @@ Here is a summary of existing ways the GPU can generate work for itself; a remin
   - Variable number of pixels with various strict ordering requirements.
 - Tessellation and Geometry Shaders
   - Mix of programmable expansion and fixed function.
-- Mesh Shaders
+- [Mesh Shaders](MeshShader.md)
   - Alternative pipeline for programmable geometry expansion and processing
   - Seeks to avoid bottlnecks in the above pipelines
-- ExecuteIndirect
+- [ExecuteIndirect](IndirectDrawing.md)
   - App generates a command buffer on the GPU and then executes it
   - Many limitations on PC like not being able to change shaders
   - App needs to do worst case buffering between phases
   - Messy implementations in drivers
   - Could try to add flexibility here, but would be doubling down on the mess
-- Callable Shaders (from DXR)
+- [Callable Shaders](raytracing.md\#callable-shaders) (from [DXR](raytracing.md))
   - Form of dynamic call from a shader thread that returns to caller
   - Typically implemented by ending the shader invocation at the callsite and starting a new one to resume
   - Could be extended outside DXR (even into this spec), but out of scope
@@ -496,7 +502,7 @@ Input record size can be 0 - discussed under [record struct](#record-struct).  T
 
 ## Node types
 
-[Broadcasting launch nodes](#broadcasting-launch-nodes) : one input seen my many thread groups
+[Broadcasting launch nodes](#broadcasting-launch-nodes) : one input seen by many thread groups
 [Thread launch nodes](#thread-launch-nodes) : one input per thread
 [Coalescing launch nodes](#coalescing-launch-nodes) : variable inputs seen by each thread group
 
@@ -521,9 +527,9 @@ The dispatch grid size can either be part of the input record or be fixed for th
 
 The thread group is fixed in the shader.  
 
-All thread groups that are launched share the same set of input parameters.  The exception is the ususal ID system values which identify individual threads within the set.
+All thread groups that are launched share the same set of input parameters.  The exception is the usual system ID values which identify individual threads within the group/grid.
 
-For wave packing see [Thread visiblity in wave operations](#thread-visibility-in-wave-operations).
+For wave packing see [Thread visibility in wave operations](#thread-visibility-in-wave-operations).
 
 ---
 
@@ -547,11 +553,11 @@ Of course the system will attempt to fill each thread group with the maximum dec
 
 Launched thread groups can see the full set of input available as an array.  The shader can discover how many inputs there are and is responsible for distributing work items across threads in the thread group.  If threads don't have any work to do, they can simply exit immediately.
 
-Any time a shader declares it expects some number greater than 1 as the maximum number of input records the it can handle in a thread group, it must call the input record's [Count()](#input-record-count-method) method to discover how many records its thread group actually got.
+Any time a shader declares it expects some number greater than 1 as the maximum number of input records that it can handle in a thread group, it must call the input record's [Count()](#input-record-count-method) method to discover how many records its thread group actually got.
 
 The number of records sent to any given thread group launch is implementation-defined, and not necessarily repeatable on a given implementation.  This is true independent of the method that produces the input -- i.e. whether it comes from another node or from DispatchGraph.  And it is true regardless size of input records, including 0 size records in particular.
 
-For wave packing see [Thread visiblity in wave operations](#thread-visibility-in-wave-operations).
+For wave packing see [Thread visibility in wave operations](#thread-visibility-in-wave-operations).
 
 ---
 
@@ -565,7 +571,7 @@ While a coalescing launch node can express what a thread launch node can do, it 
 
 ![thread launch](images/workgraphs/ThreadLaunchNode.png)
 
-For wave packing see [Thread visiblity in wave operations](#thread-visibility-in-wave-operations).
+For wave packing see [Thread visibility in wave operations](#thread-visibility-in-wave-operations).
 
 > Thread launch nodes can be thought of somewhat like the callable shaders that are in DXR, except they do not return back to the caller.  And instead of appearing as a function call from a shader, which would be a different path to invoking threads of execution than the work graph itself, thread launch nodes are by definition part of the work graph structure.  It may still prove interesting to support DXR-style callable shaders in the future, but for now at least, thread launch nodes serve as alternative that embraces a unified model for launching work - nodes in a work graph, while still allowing applications to indicate situations when their workload does involve independent threads of work.
 
@@ -579,7 +585,7 @@ For wave packing see [Thread visiblity in wave operations](#thread-visibility-in
 
 Mesh launch nodes can only appear at a leaf of a work graph.  They can appear in the graph as standalone entrypoints as well (which is a form of leaf).
 
-The equivalent of a graphics `DispatchMesh()` is generated when an input is present - a set of mesh shader threadgroups.  The program at the node must begin with a mesh shader.  Amplification shaders are not supported since they aren't needed in a work graph.  Nodes in the graph that feed into the Mesh launch node can do work amplification with more flexibility than an amplification shader alone.
+The equivalent of a graphics `DispatchMesh()` is generated when an input is present - a set of mesh shader threadgroups.  The program at the node must begin with a mesh shader.  Amplification shaders are not supported since they aren't needed in a work graph.  Nodes in the graph that feed into the mesh launch node can do work amplification with more flexibility than an amplification shader alone.
 
 Consistent with the mesh shader spec, each of the thead group's three dimensions must be less than 64k, and the total number of thread groups launched must not exceed 2^22.  Work is launched for the [program](#program) at the node the same way it would if the equivalent was used on a command list with a `DispatchMesh()` call.
 
@@ -587,7 +593,7 @@ Per-dispatch arguments must be present in the input record.  This is specified b
 
 When `SV_DispatchGrid` is specified in the node input, `[NodeMaxDispatchGrid()]` must be specified via `[NodeDispatchGrid()]` [shader function attribute](#shader-function-attributes) or API [override](#d3d12_mesh_launch_overrides).
 
-All of the normal system-generated Values for mesh shaders, such as `SV_DispatchThreadID`, `SV_GroupThreadID`, `SV_GroupIndex`, `SV_GroupID`, etc. work as expected.  The snippet below illustrates an example input payload to a *dispatch mesh launch node*:
+All of the normal system-generated Values for mesh shaders, such as `SV_DispatchThreadID`, `SV_GroupThreadID`, `SV_GroupIndex`, `SV_GroupID`, etc. work as expected.  The snippet below illustrates an example input payload to a *mesh launch node*:
 
 ```c++
 // This structure is defined by the application's shader.
@@ -598,11 +604,12 @@ struct MyMeshNodeInput
 };
 ```
 
-The entire input record for a *dispatch mesh launch node* is accessible from the first shader stage in the node's associated [program](#program), a mesh shader.
+The entire input record for a *mesh launch node* is accessible from the first shader stage in the node's associated [program](#program), a mesh shader.
 
-> For initial experimentation, where HLSL does not yet support any work graphs specific syntax such as inputting [DispatchNodeInputRecord](#input-record-objects), vanilla mesh shaders can be used, with the input record appearing as mesh shader input `payload` that mesh shaders would normally use as amplification shader input.  So in this case instead of an amplification shader providing the `payload`, it comes from the output record from the producer node in the work graph.
-
-For further details see [Graphics nodes](#graphics-nodes) and [Graphics nodes example](#graphics-nodes-example).
+Related topics:
+- [Graphics nodes](#graphics-nodes)
+- [Graphics nodes example](#graphics-nodes-example)
+- [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware)
 
 ---
 
@@ -1730,6 +1737,36 @@ When graphics nodes are used in a work graph, the entire work graph (both graphi
 
 ---
 
+## Helping mesh nodes work better on some hardware
+
+> This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
+
+Some implementations may prefer to minimize work backpressure at the graphics transition (e.g. mesh noddes) in a graph.  For example, some hardware may experience heavyweight transitions when switching between the execution of compute based nodes and graphics leaf nodes.
+
+Such implementations can glean some information about worst-case graph dataflow from the various maximum output declarations and grid/group size declarations that are statically declared from the graph.  Beyond that, extra declarations are available here, specific to mesh nodes to to enable more accurate workload estimation given information from the application.
+
+> This is quite experimental, likely to be tweaked from learnings, ideally not even needed longer term.
+
+The following HLSL attribute is available [mesh nodes](#mesh-nodes) (only):
+
+- `[NodeMaxInputRecordsPerGraphEntryRecord(uint count,bool sharedAcrossNodeArray)]` [shader function attribute](#shader-function-attributes)
+  - Only required in complex topologies (defined next), otherwise optional if the app can declare a much smaller value than the worst case the driver would arrive at by just propagating max output declarations through the graph to the node
+  - Complex topologies requiring this declaration on a mesh node: 
+    - From the mesh node, moving two or more nodes upstream in the graph reaches a producer that outputs to a node array
+    - Between that node array output and the mesh node any intermediate node:
+      - Expands the number of output records vs its input
+      - Are `NodeLaunch("broadcast")` or a node that recurses
+  - This attribute can be overridden at the API or only specified there, for convenience via [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides).
+
+The following API methods are required for work graphs with [mesh nodes](#mesh-nodes) that will drive the graph via [DispatchGraph()](#dispatchgraph) with input data that lives in GPU memory (as opposed to CPU input data):
+
+- [ID3D12WorkGraphProperties1](#id3d12workgraphproperties1-methods)::[SetMaximumGPUInputRecords()](#setmaximumgpuinputrecords) must be called before calling calling [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements)
+- [SetMaximumWorkGraphGPUInputRecords()](#setmaximumworkgraphgpuinputrecords) must be called on the [command list](#command-list-methods) before initializing backing memory (via [SetProgram()](#setprogram) with [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags))
+
+Supplying/producing more records than any of these declarations results in undefined behavior.
+
+---
+
 ### Graphics node index and vertex buffers
 
 > `[CUT]` This section was proposed as part of [graphics nodes](#graphics-nodes), but has been cut in favor of starting experimentation with [mesh nodes](#mesh-nodes) only.
@@ -1867,33 +1904,6 @@ void MyMeshShader(
   tris[0] = uint3(0, 1, 2);
 }
 ```
-
-> HLSL does not yet support any graphics node specific syntax.  For initial experimentation (not released yet) mesh shader nodes are supported by repurposing existing mesh shader input `payload` syntax to act as the input record, since there is no support for `DispatchNodeInputRecord` syntax shown above yet.  So the above example works temporarily via existing mesh shader syntax as follows:
-
-```C++
-[OutputTopology("triangle")]
-[NumThreads(1, 1, 1)]
-void MyMeshShader(
-  in payload MyMeshData nodeInput,
-  out vertices MyPSInput verts[3],
-  out indices uint3 tris[1])
-{
-  SetMeshOutputCounts(3, 1);
-
-  for (uint i = 0; i < 3; ++i)
-  {
-  // In the future `Get().` below will have `->` as an alternative.
-    verts[i].position = ComputePosition(nodeInput.perDrawConstant);
-    verts[i].texCoord = ComputeTexCoord(i);
-  }
-
-  tris[0] = uint3(0, 1, 2);
-}
-```
-
-The `[NodeMaxDispatchGrid(...)]` or `[NodeDispatchGrid(...)]` declaration can be specified at the API (see [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides)) since mesh node syntax isn't available yet.
-
-> Though there isn't yet HLSL syntax for mesh shaders for defining the nodeID (e.g. `{"meshMaterial"}` above ), or other attributes like local root argument table index, these properties can be defined when adding the node to a work graph at the API, via overrides in the [D3D12_PROGRAM_NODE](#d3d12_program_node) declaration.
 
 > `[CUT]` The remainder of this section has been cut in favor of starting experimentation with [mesh nodes](#mesh-nodes) only.
 
@@ -2177,7 +2187,7 @@ Value                               | Definition
 
 ##### D3D12_STATE_SUBOBJECT_TYPE
 
-Here are the subset of subobject types relevant to work graphs.  Most of the relevant subobject types are declared in the raytracing spec (even though they aren't specific to raytracing).  Additional subobjects relevant here and defined in this spec are indicated in the list below.
+Here are the subset of subobject types relevant to this spec.  Some of these are originally declared in the raytracing spec (even though they aren't specific to raytracing).  Additional subobjects relevant here and defined in this spec are indicated in the list below.
 
 ```C++
 typedef enum D3D12_STATE_SUBOBJECT_TYPE
@@ -2193,7 +2203,6 @@ typedef enum D3D12_STATE_SUBOBJECT_TYPE
     ...
     D3D12_STATE_SUBOBJECT_TYPE_WORK_GRAPH = 13 // Defined in this spec
 
-    // The following are proposed as part of graphics nodes, which aren't supported yet:
     D3D12_STATE_SUBOBJECT_TYPE_STREAM_OUTPUT = 14,  // D3D12_STREAM_OUTPUT_DESC
     D3D12_STATE_SUBOBJECT_TYPE_BLEND = 15,  // D3D12_BLEND_DESC
     D3D12_STATE_SUBOBJECT_TYPE_SAMPLE_MASK = 16,  // UINT
@@ -2210,7 +2219,7 @@ typedef enum D3D12_STATE_SUBOBJECT_TYPE
     D3D12_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL1 = 27, // D3D12_DEPTH_STENCIL_DESC1
     D3D12_STATE_SUBOBJECT_TYPE_VIEW_INSTANCING = 28, // D3D12_VIEW_INSTANCING_DESC
     D3D12_STATE_SUBOBJECT_TYPE_GENERIC_PROGRAM = 29, // D3D12_GENERIC_PROGRAM_DESC
-    D3D12_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL2 = 30, // D3D12_DEPTH_STENCIL_DESC2  
+    D3D12_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL2 = 30, // D3D12_DEPTH_STENCIL_DESC2
 } D3D12_STATE_SUBOBJECT_TYPE;
 ```
 
@@ -2665,7 +2674,7 @@ Value                           | Definition
 
 > This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
-Override program attributes.  This is used in [D3D12_PROGRAM_NODE](#d3d12_program_node).
+Override program attributes for [mesh nodes](#mesh-nodes).  This is used in [D3D12_PROGRAM_NODE](#d3d12_program_node).
 
 ```C++
 typedef struct D3D12_MESH_LAUNCH_OVERRIDES
@@ -2675,7 +2684,8 @@ typedef struct D3D12_MESH_LAUNCH_OVERRIDES
     _In_opt const D3D12_NODE_ID*  pNewName;
     _In_opt_ const D3D12_NODE_ID* pShareInputOf;
     _In_reads_opt_(3) const UINT* pDispatchGrid;
-    _In_reads_opt_(3) const UINT* pMaxDispatchGrid;    
+    _In_reads_opt_(3) const UINT* pMaxDispatchGrid;
+    _In_opt_ const D3D12_MAX_NODE_INPUT_RECORDS_PER_OVERALL_GRAPH_INPUT*  pMaxInputRecordsPerOverallGraphInput;
 } D3D12_MESH_LAUNCH_OVERRIDES;
 ```
 
@@ -2687,6 +2697,28 @@ Member                           | Definition
 `pShareInputOf` | Overrides [shader function attribute](#shader-function-attributes) `[NodeShareInputOf()]` (or lack of it).  Set to `nullptr` if not overriding the shader definition / default.  Specify `nullptr` for `pShareInputOf->Name` to force not sharing input.  The NodeID specified here applies after any node renames.
 `pDispatchGrid` | Overrides [shader function attribute](#shader-function-attributes) `[NodeDispatchGrid()]` (or lack of it). Set to `nullptr` if not overriding the shader definition or not applicable (e.g. dispatch grid is in shader record), in which case `[NodeMaxDispatchGrid()]` / `pMaxDispatchGrid` are relevant instead). The uint x y and z parameters individually cannot exceed 65535, and x*y*z cannot exceed 2^24-1 (16,777,215).
 `pMaxDispatchGrid` | Overrides [shader function attribute](#shader-function-attributes) `[NodeMaxDispatchGrid()]` (or lack of it). Set to `nullptr` if not overriding the shader definition or not applicable (e.g. fixed dispatch grid, in which case `[NodeDispatchGrid()]` / `pDispatchGrid` are relevant instead). The uint x y and z parameters individually cannot exceed 65535, and x*y*z cannot exceed 2^24-1 (16,777,215).
+`pMaxInputRecordsPerGraphEntryRecord` | Overrides [shader function attribute](#shader-function-attributes) `[NodeMaxInputRecordsPerGraphEntryRecord()]` (or lack of it).  Set to `nullptr` if not overriding the shader definition or it is not needed. See [D3D12_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD](#d3d12_max_node_input_records_per_graph_entry_record).  For when to use, see [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware).
+
+---
+
+##### D3D12_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD
+
+> This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
+
+This is used in [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides).  See see [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware).
+
+```C++
+typedef struct D3D12_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD
+{
+    UINT RecordCount;
+    BOOL bCountSharedAcrossNodeArray;
+};
+```
+
+Member | Definition
+---    |---
+RecordCount | Overrides the [shader function attribute](#shader-function-attributes) `[NodeMaxInputRecordsPerGraphEntryRecord()]` with a new value of `count`. |
+bCountSharedAcrossNodeArray | Overrides the [shader function attribute](#shader-function-attributes) `[NodeMaxInputRecordsPerGraphEntryRecord()]` with a new value of `sharedAcrossNodeArray`. |
 
 ---
 
@@ -3148,6 +3180,8 @@ The output is aso zeroed out if `WorkGraphIndex` is invalid (debug layer will re
 
 See [Backing memory](#backing-memory).
 
+---
+
 #### GetWorkGraphMemoryRequirements structures
 
 ##### D3D12_WORK_GRAPH_MEMORY_REQUIREMENTS
@@ -3170,6 +3204,36 @@ Member                           | Definition
 The min can be reported as zero if the system doesn't need any backing memory for the graph.  If min is reported as zero, max might also be reported as zero unless the system can use backing store if the app wants but can also handle being given none.  When zero is reported as a valid size, the application can pass `null` for the backing memory in [SetProgram()](#setprogram).
 
 Referenced by [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements).
+
+---
+
+## ID3D12WorkGraphProperties1 methods
+
+> This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
+
+`ID3D12WorkGraphProperties1` is an interface exported by `ID3D12StateObject`, adding to [ID3D12WorkGraphProperties methods](#id3d12workgraphproperties-methods). The following member is exposed from `ID3D12WorkGraphProperties1`.
+
+---
+
+### SetMaximumGPUInputRecords
+
+> This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
+
+```C++
+void SetMaximumGPUInputRecords(UINT WorkGraphIndex, UINT Count);
+```
+
+See [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware).
+
+For work graphs that use [graphics nodes](#graphics-nodes), in order for some implementations to calculate the amount of backing store memory they need, [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements) requires the maximum value of `NumRecords` that may be passed at [DispatchGraph](#dispatchgraph) when using input records specified in GPU memory via [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) or [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input) (across all inputs in a call).
+
+This state only applies to the next call to [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements) for this work graph.
+
+If the work graph doesn't have graphics nodes, this method has no effect.
+
+If the work graph has graphics nodes and this method isn't called beforeg [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements), the default is `0`.  This means the graph can only be driven by inputs specified from CPU memory - [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) or [D3D12_MULTI_NODE_CPU_INPUT](#d3d12_multi_node_cpu_input).
+
+If a nonzero value is set with `SetMaximumGPUInputRecords(N)`, then when the work graph is used on the command list, the command list method [SetMaximumWorkgraphGPUInputRecords()](#setmaximumworkgraphgpuinputrecords) must be called with a value less than or equal to `N` before some backing memory for the work graph is initialized via call to [SetProgram()](#setprogram) with [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags).
 
 ---
 
@@ -3466,6 +3530,30 @@ Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).
 
 ---
 
+### SetMaximumWorkGraphGPUInputRecords
+
+> This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
+
+See [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware).
+
+```C++
+void SetMaximumWorkGraphGPUInputRecords(UINT Count);
+```
+
+If the work graph doesn't have graphics nodes, this method has no effect and isn't needed.
+
+This method also isn't needed if the work graph has graphics nodes, but with the backing memory that will be used the graph will only be driven with inputs from CPU memory - [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) or [D3D12_MULTI_NODE_CPU_INPUT](#d3d12_multi_node_cpu_input) in [DispatchGraph()](#dispatchgraph).  Equivalent to calling `SetMaximumWorkGraphGPUInputRecords(0)`.
+
+For a work graph with graphics nodes that will be driven by GPU input data, this method must be called, and it's semantics are as follows.
+
+Sets the maximum value of `NumRecords` that may be passed to call to [DispatchGraph](#dispatchgraph) when using input records specified in GPU memory via [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) or [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input) (across all inputs in a call).
+
+This state only applies to the next call to [SetProgram](#setprogram) for this work graph which must use [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags) to initialize backing memory.  Essentially the system knows to initialize the backing memory based on the `SetMaximumWorkGraphGPUInputRecords()` value.  Any subsequent [DispatchGraph](#dispatchgraph) call using this initialization of backing memory, whether in this command list or another, must not be driven by more records in a given `DispatchGraph()` call than the maximum specified, otherwise behavior is undefined.
+
+The `Count` must be less than or equal to the `Count` declared earlier via `ID3D12WorkGraphsProperties1`::[SetMaximumGPUInputRecords()](#setmaximumgpuinputrecords) before the [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements) call that provided the size of backing memory that will be initialized here on the command list in the next [SetProgram()](#setprogram) call.
+
+---
+
 # HLSL
 
 ---
@@ -3499,6 +3587,7 @@ attribute                     | required | description
 `[NodeDispatchGrid(x,y,z)]`|N (`BroadcastingLaunch` must have this or `NodeMaxDispatchGrid`)|Define the number of thread groups to launch for a `BroadcastingLaunch` node. In its absence, the [node definition](#d3d12_node) must declare it, or it must appear as [SV_DispatchGrid](#sv_dispatchgrid) in the input record - dynamic dispatch grid size.  If the declaration appears in both the shader and the node definition, the definition in the node overrides. This attribute cannot be used if the launch mode is not `BroadcastingLaunch`.  The uint `x` `y` and `z` parameters individually cannot exceed 65535, and `x*y*z` cannot exceed 2^24-1 (16,777,215).
 `[NodeMaxDispatchGrid(x,y,z)]`|N (`BroadcastingLaunch` must have this or `MaxDispatchGrid`)| Declares the maximum dispatch grid size when the input record includes [SV_DispatchGrid](#sv_dispatchgrid) - dynamic dispatch grid size.  This attribute cannot be specified if the dispatch grid size is not dynamic or if the launch mode is not `BroadcastingLaunch`. If the declaration appears in both the shader and the node definition, the definition in the node overrides.   The uint `x` `y` and `z` parameters individually cannot exceed 65535, and `x*y*z` cannot exceed 2^24-1 (16,777,215).
 `[NodeMaxRecursionDepth(count)]`|N|`uint count` indicates the maximum depth of recursion of the current node.  This attribute is required when the shader is used in such a way that the NodeID for one of its outputs is the same ID as the node itself.  If no output node name matches the current node name, including via renaming of output NodeID or shader's NodeID, recursion is not actually happening, and this MaxRecursion declaration doesn't apply.  Setting this to 0 is the equivalent of not specifying this attribute - no recursion.  To help shader code know where it is in recursion, there are a couple of options: [Node output IsValid() method](#node-output-isvalid-method) and [GetRemainingRecursionLevels()](#getremainingrecursionlevels).
+`[NodeMaxInputRecordsPerGraphEntryRecord(count, sharedAcrossNodeArray)]`| N (`NodeLaunch("mesh")` only) | This attribute is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.  See [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware) for more detail about what this mean, when this is required or when it can optionally be helpful to specify. `uint count`: The maximum number of records that can be passed to this node, from all possible producers, **per** entry record passed to [DispatchGraph()](#dispatchgraph). `bool sharedAcrossNodeArray`: If `true` indicates whether that `count` is actually shared for all nodes with the same node string name (regardless of array index) in the entire graph.  If `false` (default) it applies just to the current node.  If the attribute is specified with `true`, then it need only be specified on one of the nodes.  State object creation fails if any node specifies `true` and another node in the array set has a declaration and it doesn't match.
 
 ## Node Shader Parameters
 
@@ -6002,6 +6091,7 @@ typedef struct D3D12DDI_MESH_LAUNCH_PROPERTIES_0108
     _In_reads_opt_(NumInputNodeIndices) const UINT* pInputNodeIndices;
     UINT          NumNodesSharingInputWithThisNode;
     _In_reads_opt_(NumNodesSharingInputWithThisNode) const UINT* pIndicesOfNodesSharingInputWithThisNode;
+    _In_opt_ const D3D12DDI_MAX_NODE_INPUT_RECORDS_PER_OVERALL_GRAPH_INPUT_0108*  pMaxInputRecordsPerOverallGraphInput;
 } D3D12DDI_MESH_LAUNCH_PROPERTIES_0108;
 ```
 
@@ -6024,8 +6114,25 @@ Member                           | Definition
 `pInputNodeIndices` | Array of `NumNodeIndices` indices of nodes that target this node.  These nodes, if any, can be located in [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108) via `ppNodes[pInputNodeIndices[i]]`, where `i` spans `[0..NumNodeIndices-1]`. `pNodeInputIndices` is `nullptr` if no nodes target this node.
 `NumNodesSharingInputWithThisNode` | How many other nodes share this nodes' input.
 `pIndicesOfNodesSharingInputWithThisNode` | Array of `NumNodesSharingInputWithThisNode` indices of nodes that share input with this node. These nodes, if any, can be located in [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108) via `ppNodes[pIndicesOfNodesSharingInputWithThisNode[i]]`, where `i` spans `[0..NumNodesSharingInputWithThisNode-1]`. `pIndicesOfNodesSharingInputWithThisNode` is `nullptr` if no nodes share input with this node.
+`pMaxInputRecordsPerGraphEntryRecord` | See [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware) for semantics.  Set to `nullptr` if not overriding the shader definition or it is not needed. See [D3D12DDI_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD_0108](#d3d12ddi_max_node_input_records_per_graph_entry_record_0108).  If this is shared for an array, the runtime will automatically repeat the declaration here at the DDI for all nodes with the same name in {name,arrayIndex}.
 
 Referenced by [D3D12DDI_PROGRAM_NODE_0108](#d3d12ddi_program_node_0108).
+
+---
+
+### D3D12DDI_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD_0108
+
+> This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
+
+This is used in [D3D12DDI_MESH_LAUNCH_PROPERTIES_0108](#d3d12ddi_mesh_launch_properties_0108).  See [D3D12_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD](#d3d12_max_node_input_records_per_graph_entry_record) for the API equivalent.
+
+```C++
+typedef struct D3D12DDI_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD_0108
+{
+    UINT RecordCount;
+    BOOL bCountSharedAcrossNodeArray;
+};
+```
 
 ---
 
@@ -6122,7 +6229,7 @@ Generic programs are available to any device that supports SM6.8 and support non
 ## Supported shader targets
 Exports specified in generic programs support shader model 6.0+ targets vs\_, ps\_ ...etc, but not lib_*. Shaders can be added to a state object using a [DXIL library subobject](#d3d12_dxil_library_desc).
 
-Shaders compiled newer DXC (version TBD) via these targets will appear as if they have a single export whose name is the entrypoint's name in HLSL as expected. Shaders compiled with older DXC work similarly, except the runtime can't find the shader's entrypoint name. To handle the missing entrypoint name the app must rename it and the name of the shader entrypoint in HLSL is ignored. The shader entrypoint name can be renamed when included in a DXIL library subobject, via [export desc](#d3d12_export_desc).
+Shaders compiled with DXC version 1.8 or newer via these targets will appear as if they have a single export whose name is the entrypoint's name in HLSL as expected. Shaders compiled with older DXC work similarly, except the runtime can't find the shader's entrypoint name. To handle the missing entrypoint name the app must rename it and the name of the shader entrypoint in HLSL is ignored. The shader entrypoint name can be renamed when included in a DXIL library subobject, via [export desc](#d3d12_export_desc).
 
 ---
 
@@ -6166,7 +6273,7 @@ typedef struct D3D12_EXPORT_DESC
 
 Member                              | Definition
 ---------                           | ----------
-`LPWSTR Name` | Name to be exported. If the name refers to a function that is overloaded, a mangled version of the name (function parameter information encoded in name string) can be provided to disambiguate which overload to use. The mangled name for a function can be retrieved from HLSL compiler reflection (not documented in this spec). If `ExportToRename` field is non-null, `Name` refers to the new name to use for it when exported. In this case `Name` must be an unmangled name, whereas `ExportToRename` can be either a mangled or unmangled name. A given internal name may be exported multiple times with different renames (and/or not renamed). Shader entrypoints (as opposed to non-entry library functions) always use unmangled names. Thus for generic programs only unmangled names apply. For newer runtimes that support [Generic programs](#generic-programs): As a convenience, when there is only one export available in the library, `Name` can be set to "\*" to refer to that one export without having to know it's name. If the lib has multiple exports, specifying "\*" for `Name` is invalid. If doing a rename, this "\*" option applies to the `ExportToRename` field instead, as the Name field becomes the new name. For non-lib shaders compiled with older compilers (version cutoff TBD), the shader name isn't visible to the runtime, so a rename must be done with the "*" option. Doing so would then work fine with both old and new compilers equivalently.
+`LPWSTR Name` | Name to be exported. If the name refers to a function that is overloaded, a mangled version of the name (function parameter information encoded in name string) can be provided to disambiguate which overload to use. The mangled name for a function can be retrieved from HLSL compiler reflection (not documented in this spec). If `ExportToRename` field is non-null, `Name` refers to the new name to use for it when exported. In this case `Name` must be an unmangled name, whereas `ExportToRename` can be either a mangled or unmangled name. A given internal name may be exported multiple times with different renames (and/or not renamed). Shader entrypoints (as opposed to non-entry library functions) always use unmangled names. Thus for generic programs only unmangled names apply. For newer runtimes that support [Generic programs](#generic-programs): As a convenience, when there is only one export available in the library, `Name` can be set to "\*" to refer to that one export without having to know it's name. If the lib has multiple exports, specifying "\*" for `Name` is invalid. If doing a rename, this "\*" option applies to the `ExportToRename` field instead, as the Name field becomes the new name. For non-lib shaders compiled with older compilers (older than version 1.8), the shader name isn't visible to the runtime, so a rename must be done with the "*" option. Doing so would then work fine with both old and new compilers equivalently.
 `_In_opt_ LPWSTR ExportToRename` | If non-null, this is the name of an export to use but then rename when exported. Described further above.
 `D3D12_EXPORT_FLAGS Flags` | Flags to apply to the export.
 
@@ -6413,7 +6520,8 @@ v0.47|11/1/2023|<li>A new section was added for [Generic programs](#generic-prog
 v0.48|11/8/2023|<li>In [D3D12\_EXPORT\_DESC](#d3d12_export_desc) for lib/non-lib with only one export in the shader, changed the way to pick it without knowing the name from NULL to "\*" to eliminate any possibility for an accidental rename when an `ExportToRename` is NULL and there is a typo in `Name` (see link for exact details). </li>
 v0.49|12/7/2023|<li>In [AddToStateObject](#addtostateobject), clarified that when entrypoints are added to a graph, the entrypoint index of existing nodes, as reported by [GetEntrypointIndex()](#getentrypointindex), remain unchanged. New entrypoints will have entrypoint index values that continue past existing entrypoints.</li><li>Corresponding to this, clarified in [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108) how drivers must infer entrypoint index values for entries in the list to match the API view.  It was an oversight that the runtime's index calculation wasn't passed to the driver, but deemed not important enough to rectify.</li><li>In [Graphics nodes example](#graphics-nodes-example), removed text stating that `DispatchNodeInputRecord<>` on the input declaration of a vertex or mesh shader is optional.  It is required (should graphics nodes be supported in the future), consistent with changes to the spec in v0.44 spec that removed defaults for missing node inputs</li>Renamed D3D12_OPTIONS_EXPERIMENTAL to [D3D12_FEATURE_OPTIONS21](#d3d12_feature_d3d12_options21), final location to find [D3D12_WORK_GRAPHS_TIER](#d3d12_work_graphs_tier) via [CheckFeatureSupport](#checkfeaturesupport).<li>In [Discovering device suppport for work graphs](#discovering-device-support-for-work-graphs) removed the need to enable `D3D12StateObjectsExperiment` to use work graphs via `D3D12EnableExperimentalFeatures()`, leaving only `D3D12ExperimentalShaderModels` needed here until shader model 6.8 is final.</li>
 v0.50|1/9/2024|<li>In [Graphics nodes](#graphics-nodes) described that initially mesh nodes are supported for private experimentation, exposed via [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier).</li><li>In [Graphics node resource binding and root arguments](#graphics-node-resource-binding-and-root-arguments) described a new flag for [D3D12_STATE_OBJECT_CONFIG](#d3d12_state_object_config), `D3D12_STATE_OBJECT_FLAG_WORK_GRAPHS_USE_GRAPHICS_STATE_FOR_GLOBAL_ROOT_SIGNATURE`, available in [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier).  Any work graph that uses graphics nodes must use this flag in it's containing state object.  Previously the spec stated that graphics nodes would use compute state.  The semantics here might still need tweaking.</li><li>In [DispatchMesh launch nodes](#mesh-nodes) and [Graphics nodes example](#graphics-nodes-example), explained how mesh node support works initially for private experimentation, while there is no HLSL support for mesh node specific syntax yet.  The main affordance for experimentation is that existing mesh shader `payload` input that is normally used as input from the amplification shader is repurposed to be the node input record, given there is no `DispatchNodeInputRecord` object support for mesh shaders for now.  So instead of the `payload` coming from an amplification shader (not supported with work graphs), in a work graph the producer node's output record becomes the mesh shader `payload` input, for now.</li><li>Made some  minor corrections and tweaks to the [D3D12_PROGRAM_NODE](#d3d12_program_node) API struct's member fields for overriding program node properties.</li><li>In [Generic programs](#generic-programs) default names will no longer be assigned by the runtime for shaders produced by older compilers where the runtime can't see the shader name. Instead, for non-library shaders compiled with older compilers the app must rename the shader entrypoint from "*" to a new name, effectively assigning a name. Based on that the Name field in  [D3D12\_EXPORT\_DESC](#d3d12_export_desc) will no longer accept shader entry point default names (removed).</li>
-v.51|1/19/2024|<li>Renamed DispatchMesh launch nodes to simply [Mesh launch nodes](#mesh-nodes).  Similar for related APIs and DDIs such as [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides).</li><li>In [Mesh launch nodes](#mesh-nodes) allowed for `[NodeMaxDispatchGrid()]` or `[NodeDispatchGrid()]` shader function attributes to enable selecting between fixed or dynamic dispatch grid.  This spec does still mention that a dynamic dispatch grid is required, but for the purposes of experimentation in case this requirement can be relaxed, the fixed grid option is at least set up to be allowed.</li><li>Similarly for [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides), added overrides for `[NodeShareInputOf()]`, `[NodeMaxDispatchGrid()]` and `[NodeDispatchGrid()]` shader function attributes, consistent with broadcasting launch nodes.</li>
-v.52|2/9/2024|<li>If [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements) and [D3D12_WORK_GRAPH_MEMORY_REQUIREMENTS](#d3d12_work_graph_memory_requirements) noted that zero is a possible valid size (including zero as the min but nonzero as the max), in which case it is valid for the app to pass null to [SetProgram](#setprogram).</li><li>In [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc) clarified the resource state required for `[MULTI]_NODE_GPU_INPUT` graph input description that is in GPU memory (basically the same state requirement as the actual record data that the description points to which was already documented).</li><li>In [Node output limits](#node-output-limits) added constraint that a node can't declare more than 1024 outputs.  Not records, but outputs.  Fortunately node arrays just count as 1 output, so it is exceedingly unlikely that any application would ever run into the limit.</li><li>In [D3D12_SET_WORK_GRAPH_DESC](#d3d12_set_work_graph_desc) reduced backing memory alignment from 64KB minimum to 8 byte minimum.</li><li>In [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) updated the record address and stride requirement to `max(4,largest scalar member size)` bytes.  Stride can also be `0`.  The change here is that previously alignments that weren't multiple of 4 were valid.  e.g. a uint16 record,2 bytes, requires 4 byte alignment. [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) reflects this padding on reported record sizes.</li><li>For generic programs, in the section describing defaults for missing subobjects, under [Missing primitive topology](#missing-primitive_topology), clarified that if it is a mesh shader program, the topology is declared in the shader itself, so a primitive topology subobject isn't needed.  If a primitive topology subobject happens to be present, the runtime enforces it matches what the mesh shader declared.  This simply matches existing PSO behavior.</li><li>[Barrier](#barrier) fixes: Uniform control flow only required for `GROUP_SYNC`. `DeviceMemoryBarrier*()` excludes `GROUP_SHARED_MEMORY`. `MemoryTypeFlags` masked for shader stage when `ALL_MEMORY`. Added detailed rules for valid Barrier() use. Fix [DXIL ops](#lowering-barrier) for UAV Handle vs. NodeRecordHandle. Old intrinsics should produce the new DXIL op on SM 6.8, and uses of the new HLSL intrinsic equivalent to the old HLSL intrinsics will map to the existing barrier DXIL op on prior shader models.</li>
-v.53|2/22/2024|<li>Cleared out mentions of June 2023 preview ahead of official release.</li><li>Noted that [Draw nodes](#draw-nodes), [DrawIndexed nodes](#drawindexed-nodes) and related supporting APIs are cut in favor of experimenting with [mesh nodes](#mesh-nodes) only.</li>
-v.54|3/1/2024|<li>Now that DXC reports record alignment to the runtime based on the member sizes, added a [GetEntrypointRecordAlignmentInBytes()](#getentrypointrecordalignmentinbytes) method to help apps understand the record alignment rules, as applied to a given entry point's struct definition.  No driver impact from this new API.  This is a complement to the exisiting [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) API.</li><li>Cleaned up the entry record size and alignemnt requirements in [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) such that they are aligned to largest scalar member size and must be a multiple of 4. The previous definition would have allowed a struct of size 6 bytes to have a stride of 6.  To be safe, bumping that to 8.  This is reflected in the above mentioned APIs.</li><li>In [D3D12_STATE_SUBOBJECT_TYPE](#d3d12_state_object_type), the contents of the subobject `D3D12_SATE_SUBOBJECT_TYPE_RASTERIZER` were incorrectly stated as `D3D12_RASTERIZER_DESC`.  Corrected this to be the latest version of this desc, `D3D12_RASTERIZER_DESC2`, which is what the runtime was already assuming and passing to the driver.  Correspondingly updated the section describing defaults for missing subobjects to define the correct struct type in [Missing RASTERIZER](#missing-rasterizer), where `MultisampleEnable` isn't a member, it is `LineRasterizationMode` instead, defaulting to `D3D12_LINE_RASTERIZATION_MODE_ALIASED`.</li>
+v0.51|1/19/2024|<li>Renamed DispatchMesh launch nodes to simply [Mesh launch nodes](#mesh-nodes).  Similar for related APIs and DDIs such as [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides).</li><li>In [Mesh launch nodes](#mesh-nodes) allowed for `[NodeMaxDispatchGrid()]` or `[NodeDispatchGrid()]` shader function attributes to enable selecting between fixed or dynamic dispatch grid.  This spec does still mention that a dynamic dispatch grid is required, but for the purposes of experimentation in case this requirement can be relaxed, the fixed grid option is at least set up to be allowed.</li><li>Similarly for [D3D12_MESH_LAUNCH_OVERRIDES](#d3d12_mesh_launch_overrides), added overrides for `[NodeShareInputOf()]`, `[NodeMaxDispatchGrid()]` and `[NodeDispatchGrid()]` shader function attributes, consistent with broadcasting launch nodes.</li>
+v0.52|2/9/2024|<li>If [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements) and [D3D12_WORK_GRAPH_MEMORY_REQUIREMENTS](#d3d12_work_graph_memory_requirements) noted that zero is a possible valid size (including zero as the min but nonzero as the max), in which case it is valid for the app to pass null to [SetProgram](#setprogram).</li><li>In [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc) clarified the resource state required for `[MULTI]_NODE_GPU_INPUT` graph input description that is in GPU memory (basically the same state requirement as the actual record data that the description points to which was already documented).</li><li>In [Node output limits](#node-output-limits) added constraint that a node can't declare more than 1024 outputs.  Not records, but outputs.  Fortunately node arrays just count as 1 output, so it is exceedingly unlikely that any application would ever run into the limit.</li><li>In [D3D12_SET_WORK_GRAPH_DESC](#d3d12_set_work_graph_desc) reduced backing memory alignment from 64KB minimum to 8 byte minimum.</li><li>In [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) updated the record address and stride requirement to `max(4,largest scalar member size)` bytes.  Stride can also be `0`.  The change here is that previously alignments that weren't multiple of 4 were valid.  e.g. a uint16 record,2 bytes, requires 4 byte alignment. [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) reflects this padding on reported record sizes.</li><li>For generic programs, in the section describing defaults for missing subobjects, under [Missing primitive topology](#missing-primitive_topology), clarified that if it is a mesh shader program, the topology is declared in the shader itself, so a primitive topology subobject isn't needed.  If a primitive topology subobject happens to be present, the runtime enforces it matches what the mesh shader declared.  This simply matches existing PSO behavior.</li><li>[Barrier](#barrier) fixes: Uniform control flow only required for `GROUP_SYNC`. `DeviceMemoryBarrier*()` excludes `GROUP_SHARED_MEMORY`. `MemoryTypeFlags` masked for shader stage when `ALL_MEMORY`. Added detailed rules for valid Barrier() use. Fix [DXIL ops](#lowering-barrier) for UAV Handle vs. NodeRecordHandle. Old intrinsics should produce the new DXIL op on SM 6.8, and uses of the new HLSL intrinsic equivalent to the old HLSL intrinsics will map to the existing barrier DXIL op on prior shader models.</li>
+v0.53|2/22/2024|<li>Cleared out mentions of June 2023 preview ahead of official release.</li><li>Noted that [Draw nodes](#draw-nodes), [DrawIndexed nodes](#drawindexed-nodes) and related supporting APIs are cut in favor of experimenting with [mesh nodes](#mesh-nodes) only.</li>
+v0.54|3/1/2024|<li>Now that DXC reports record alignment to the runtime based on the member sizes, added a [GetEntrypointRecordAlignmentInBytes()](#getentrypointrecordalignmentinbytes) method to help apps understand the record alignment rules, as applied to a given entry point's struct definition.  No driver impact from this new API.  This is a complement to the exisiting [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) API.</li><li>Cleaned up the entry record size and alignemnt requirements in [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) such that they are aligned to largest scalar member size and must be a multiple of 4. The previous definition would have allowed a struct of size 6 bytes to have a stride of 6.  To be safe, bumping that to 8.  This is reflected in the above mentioned APIs.</li><li>In [D3D12_STATE_SUBOBJECT_TYPE](#d3d12_state_object_type), the contents of the subobject `D3D12_SATE_SUBOBJECT_TYPE_RASTERIZER` were incorrectly stated as `D3D12_RASTERIZER_DESC`.  Corrected this to be the latest version of this desc, `D3D12_RASTERIZER_DESC2`, which is what the runtime was already assuming and passing to the driver.  Correspondingly updated the section describing defaults for missing subobjects to define the correct struct type in [Missing RASTERIZER](#missing-rasterizer), where `MultisampleEnable` isn't a member, it is `LineRasterizationMode` instead, defaulting to `D3D12_LINE_RASTERIZATION_MODE_ALIASED`.</li>
+v0.55|3/9/2024|<li>Added [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware).  Plus a few related sections linked from there. This is relevant to experimental mesh nodes prototyping, not yet exposed.</li><li>Minor fixup: Under [Supported shader targets](#supported-shader-targets) for generic programs, there was a TBD on what DXC version would be required to compile non-lib shaders such as vs_* / ps_* targets and have the runtime be able to know the name of the function (so the app isn't forced to give it a name to use it in a generic program).  Updated the TBD to DXC version 1.8, the compiler launched alongside the runtime with generic programs support.</li>
