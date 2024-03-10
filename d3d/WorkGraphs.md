@@ -361,7 +361,7 @@ Here is a summary of existing ways the GPU can generate work for itself; a remin
   - App needs to do worst case buffering between phases
   - Messy implementations in drivers
   - Could try to add flexibility here, but would be doubling down on the mess
-- [Callable Shaders](raytracing.md\#callable-shaders) (from [DXR](raytracing.md))
+- [Callable Shaders](Raytracing.md\#callable-shaders) (from [DXR](Raytracing.md))
   - Form of dynamic call from a shader thread that returns to caller
   - Typically implemented by ending the shader invocation at the callsite and starting a new one to resume
   - Could be extended outside DXR (even into this spec), but out of scope
