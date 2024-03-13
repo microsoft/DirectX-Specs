@@ -1,5 +1,5 @@
 <h1>D3D12 Work Graphs</h1>
-v1.000 3/11/2024
+v1.001 3/13/2024
 
 ---
 
@@ -585,26 +585,26 @@ For wave packing see [Thread visibility in wave operations](#thread-visibility-i
 
 Mesh launch nodes can only appear at a leaf of a work graph.  They can appear in the graph as standalone entrypoints as well (which is a form of leaf).
 
-The equivalent of a graphics `DispatchMesh()` is generated when an input is present - a set of mesh shader threadgroups.  The program at the node must begin with a mesh shader.  Amplification shaders are not supported since they aren't needed in a work graph.  Nodes in the graph that feed into the mesh launch node can do work amplification with more flexibility than an amplification shader alone.
+The equivalent of a graphics `DispatchMesh()` is generated when an input is present - a set of mesh shader threadgroups.  The program at the node must begin with a shader with `[NodeLaunch("mesh")]` (as opposed to mesh shader).  This is basically a hybrid of a broadcasting launch node and a mesh shader.  
+
+> Amplification shaders are not supported since they aren't needed in a work graph.  Nodes in the graph that feed into the mesh launch node can do work amplification with more flexibility than an amplification shader alone.
 
 Consistent with the mesh shader spec, each of the thead group's three dimensions must be less than 64k, and the total number of thread groups launched must not exceed 2^22.  Work is launched for the [program](#program) at the node the same way it would if the equivalent was used on a command list with a `DispatchMesh()` call.
 
-Per-dispatch arguments must be present in the input record.  This is specified by using the same system-interpreted-value, `SV_DispatchGrid` as is used for [broadcasting launch nodes](#broadcasting-launch-nodes).  The only difference for DispatchMesh nodes is that `SV_DispatchGrid` is *required*: a fixed-size dispatch grid is not supported like it is with broadcasting launch nodes.  In case this requirement can be relaxed, during experimentation the system will initially be set up to allow a fixed dispatch grid to be specified via `[NodeDispatchGrid()]` [shader function attribute](#shader-function-attributes) or API [override](#d3d12_mesh_launch_overrides), in which case per-dispatch arguments become optional inputs.  
+Node input and dispatch grid behavior follow he same semantics as [broadcasting launch nodes](#broadcasting-launch-nodes).
 
-When `SV_DispatchGrid` is specified in the node input, `[NodeMaxDispatchGrid()]` must be specified via `[NodeDispatchGrid()]` [shader function attribute](#shader-function-attributes) or API [override](#d3d12_mesh_launch_overrides).
+Accordingly, grid size can be dynamic or fixed.  An input record is therefore only required for the dynamic grid case, where `SV_DispatchGrid` can reside along with any other input data the shader needs, illustrated below.  This works the same way as described for broadcasting launch nodes in: [SV_DispatchGrid](#sv_dispatchgrid).  A `[NodeDispatchGrid()]` [shader function attribute](#shader-function-attributes) indicates a fixed grid, and `[NodeMaxDispatchGrid()]` indicates a dynamic grid - one must be present.  Whichever one is specified, that one can also be [overridden](#d3d12_mesh_launch_overrides) at the API as well.
 
-All of the normal system-generated Values for mesh shaders, such as `SV_DispatchThreadID`, `SV_GroupThreadID`, `SV_GroupIndex`, `SV_GroupID`, etc. work as expected.  The snippet below illustrates an example input payload to a *mesh launch node*:
+All of the normal system-generated values for mesh shaders, such as `SV_DispatchThreadID`, `SV_GroupThreadID`, `SV_GroupIndex`, `SV_GroupID`, etc. work as expected.  The snippet below illustrates an example input record to a *mesh launch node*:
 
 ```c++
-// This structure is defined by the application's shader.
+// Example input record with dynamic grid
 struct MyMeshNodeInput
 {
     uint3 dispatchGrid : SV_DispatchGrid; // can appear anywhere in struct
     // Other fields omitted for brevity.
 };
 ```
-
-The entire input record for a *mesh launch node* is accessible from the first shader stage in the node's associated [program](#program), a mesh shader.
 
 Related topics:
 - [Graphics nodes](#graphics-nodes)
@@ -6526,3 +6526,4 @@ v0.53|2/22/2024|<li>Cleared out mentions of June 2023 preview ahead of official 
 v0.54|3/1/2024|<li>Now that DXC reports record alignment to the runtime based on the member sizes, added a [GetEntrypointRecordAlignmentInBytes()](#getentrypointrecordalignmentinbytes) method to help apps understand the record alignment rules, as applied to a given entry point's struct definition.  No driver impact from this new API.  This is a complement to the exisiting [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) API.</li><li>Cleaned up the entry record size and alignemnt requirements in [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) such that they are aligned to largest scalar member size and must be a multiple of 4. The previous definition would have allowed a struct of size 6 bytes to have a stride of 6.  To be safe, bumping that to 8.  This is reflected in the above mentioned APIs.</li><li>In [D3D12_STATE_SUBOBJECT_TYPE](#d3d12_state_object_type), the contents of the subobject `D3D12_SATE_SUBOBJECT_TYPE_RASTERIZER` were incorrectly stated as `D3D12_RASTERIZER_DESC`.  Corrected this to be the latest version of this desc, `D3D12_RASTERIZER_DESC2`, which is what the runtime was already assuming and passing to the driver.  Correspondingly updated the section describing defaults for missing subobjects to define the correct struct type in [Missing RASTERIZER](#missing-rasterizer), where `MultisampleEnable` isn't a member, it is `LineRasterizationMode` instead, defaulting to `D3D12_LINE_RASTERIZATION_MODE_ALIASED`.</li>
 v0.55|3/9/2024|<li>Added [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware).  Plus a few related sections linked from there. This is relevant to experimental mesh nodes prototyping, not yet exposed.</li><li>Minor fixup: Under [Supported shader targets](#supported-shader-targets) for generic programs, there was a TBD on what DXC version would be required to compile non-lib shaders such as vs_* / ps_* targets and have the runtime be able to know the name of the function (so the app isn't forced to give it a name to use it in a generic program).  Updated the TBD to DXC version 1.8, the compiler launched alongside the runtime with generic programs support.</li>
 v1.000|3/11/2023|<li>Bumping version to 1.000 for official release.</li>
+v1.001|3/13/2024|<li>Fixed broken wording in experimental [Mesh nodes](#mesh-nodes) section.  Made it more clear that a shader of node launch "mesh" is basically a hybrid of a broadcasting launch shader and a mesh shader.  One point in particular that needed cleaning up is that dispatch grid (fixed or dynamic) works just like with broadcasting launch wrt `SV_DispatchGrid` in record, `[NodeMaxDispatchGrid()]` vs `[NodeDispatchGrid()]` options.</li>
