@@ -1,5 +1,5 @@
 <h1>D3D12 Work Graphs</h1>
-v1.001 3/13/2024
+v1.002 3/21/2024
 
 ---
 
@@ -147,7 +147,7 @@ v1.001 3/13/2024
         - [D3D12\_NODE\_GPU\_INPUT](#d3d12_node_gpu_input)
         - [D3D12\_MULTI\_NODE\_CPU\_INPUT](#d3d12_multi_node_cpu_input)
         - [D3D12\_MULTI\_NODE\_GPU\_INPUT](#d3d12_multi_node_gpu_input)
-    - [SetMaximumWorkGraphGPUInputRecords](#setmaximumworkgraphgpuinputrecords)
+    - [SetWorkGraphMaximumGPUInputRecords](#setworkgraphmaximumgpuinputrecords)
 - [HLSL](#hlsl)
   - [Shader target](#shader-target)
   - [Shader function attributes](#shader-function-attributes)
@@ -1812,7 +1812,7 @@ The following HLSL attribute is available [mesh nodes](#mesh-nodes) (only):
 The following API methods apply only to work graphs with [mesh nodes](#mesh-nodes):
 
 - [ID3D12WorkGraphProperties1](#id3d12workgraphproperties1-methods)::[SetMaximumInputRecords()](#setmaximuminputrecords) must be called before calling [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements), defining the maximum number of CPU or GPU input records a given [DispatchGraph()](#dispatchgraph) call could use.
-- [SetMaximumWorkGraphGPUInputRecords()](#setmaximumworkgraphgpuinputrecords) must be called on the [command list](#command-list-methods) before initializing backing memory (via [SetProgram()](#setprogram) with [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags)), only if[DispatchGraph()](#dispatchgraph) will be used with input data that lives in GPU memory.
+- [SetWorkGraphMaximumGPUInputRecords()](#setworkgraphmaximumgpuinputrecords) must be called on the [command list](#command-list-methods) before initializing backing memory (via [SetProgram()](#setprogram) with [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags)), only if[DispatchGraph()](#dispatchgraph) will be used with input data that lives in GPU memory.
 
 Supplying/producing more records than any of these declarations results in undefined behavior.
 
@@ -2095,7 +2095,7 @@ Value                               | Definition
 -----                               | ----------
 `D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED` | No support for work graphs on the device. Attempts to create any work graphs related object will fail and using work graphs related APIs on command lists results in undefined behavior.
 `D3D12_WORK_GRAPHS_TIER_1_0` | The device fully supports the first full work graphs release.  See [Discovering device support for work graphs](#discovering-device-support-for-work-graphs).
-`D3D12_WORK_GRAPHS_TIER_1_1` | Unreleased tier in which [graphics nodes](#graphics-nodes) are being prototyped.
+`D3D12_WORK_GRAPHS_TIER_1_1` | Unreleased tier in which [graphics nodes](#graphics-nodes) are being prototyped.  This level implies the device supports `D3D12_MESH_SHADER_TIER_1`.
 
 ---
 
@@ -2179,9 +2179,9 @@ typedef enum D3D12_STATE_OBJECT_TYPE
 
 Value                               | Definition
 ---------                           | ----------
-`D3D12_STATE_OBJECT_TYPE_COLLECTION` | Collection state object.  This can hold any of the items in the below state object types, though linkage doesn't have to be fully resolved.  If linkage does happen to be fully resolved, shader/[program](#program) identifiers (as applicable) can be retrieved from a collection, though the colection needs to be placed in an _EXECUTABLE or _RAYTRACING_PIPELINE to be used.
-`D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE` | Standalone raytracing pipeline.  This can be defined in an EXECUTABLE below as well.  This entry therefore isn't necessary - it remains only because it predated EXECUTABLE.
-`D3D12_STATE_OBJECT_TYPE_EXECUTABLE` | State object that holds one or more [programs](#program).  This could hold zero or more work graphs, as well as zero or more compute, graphics and mesh shading programs.  A raytracing pipeline can be defined here too, but only on its own (just the same as STATE_OBJECT_TYPE_RAYTRACING_PIPELINE above).
+`D3D12_STATE_OBJECT_TYPE_COLLECTION` | Collection state object.  This can hold individual shaders but not generic program or work graph definitions.
+`D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE` | Standalone raytracing pipeline.  For now at least, raytracing pipelines can only be defined here, and not in `EXECUTABLE` state objects below.
+`D3D12_STATE_OBJECT_TYPE_EXECUTABLE` | State object that holds one or more [programs](#program).  This could hold zero or more work graphs, as well as zero or more compute, graphics and mesh shading programs.  A raytracing pipelines are not supported here (though using `RayQuery` in non-raytracing shader stages is fine).
 
 ---
 
@@ -3231,7 +3231,7 @@ This state only applies to the next call to [GetWorkGraphMemoryRequirements](#ge
 
 If the work graph has graphics nodes and this method isn't called before [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements), behavior is undefined, and the debug layer reports an error.
 
-If [DispatchGraph()](#dispatchgraph) will be called with inputs in GPU memory - [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) or [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input) - then on the command list [SetMaximumWorkgraphGPUInputRecords()](#setmaximumworkgraphgpuinputrecords) must be called before the backing memory is initialized via call to [SetProgram()](#setprogram) with [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags).  The maxmimum set on the command list must not exceed the maximum count originally declared via `ID3D12WorkGraphProperties1::SetMaximumInputRecords()` above.
+If [DispatchGraph()](#dispatchgraph) will be called with inputs in GPU memory - [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) or [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input) - then on the command list [SetWorkGraphMaximumGPUInputRecords()](#setworkgraphmaximumgpuinputrecords) must be called before the backing memory is initialized via call to [SetProgram()](#setprogram) with [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags).  The maxmimum set on the command list must not exceed the maximum count originally declared via `ID3D12WorkGraphProperties1::SetMaximumInputRecords()` above.
 
 If the work graph doesn't have graphics nodes, this method has no effect.
 
@@ -3530,25 +3530,25 @@ Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).
 
 ---
 
-### SetMaximumWorkGraphGPUInputRecords
+### SetWorkGraphMaximumGPUInputRecords
 
 > This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
 See [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware).
 
 ```C++
-void SetMaximumWorkGraphGPUInputRecords(UINT Count);
+void SetWorkGraphMaximumGPUInputRecords(UINT Count);
 ```
 
 If the work graph doesn't have graphics nodes, this method has no effect and isn't needed.
 
-This method also isn't needed if the work graph has graphics nodes, but with the backing memory that will be used the graph will only be driven with inputs from CPU memory - [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) or [D3D12_MULTI_NODE_CPU_INPUT](#d3d12_multi_node_cpu_input) in [DispatchGraph()](#dispatchgraph).  Equivalent to calling `SetMaximumWorkGraphGPUInputRecords(0)`.
+This method also isn't needed if the work graph has graphics nodes, but with the backing memory that will be used the graph will only be driven with inputs from CPU memory - [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) or [D3D12_MULTI_NODE_CPU_INPUT](#d3d12_multi_node_cpu_input) in [DispatchGraph()](#dispatchgraph).  Equivalent to calling `SetWorkGraphMaximumGPUInputRecords(0)`.
 
 For a work graph with graphics nodes that will be driven by GPU input data, this method must be called, and it's semantics are as follows.
 
 Sets the maximum value of `NumRecords` that may be passed to call to [DispatchGraph](#dispatchgraph) when using input records specified in GPU memory via [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) or [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input) (across all inputs in a call).
 
-This state only applies to the next call to [SetProgram](#setprogram) for this work graph which must use [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags) to initialize backing memory.  Essentially the system knows to initialize the backing memory based on the `SetMaximumWorkGraphGPUInputRecords()` value.  Any subsequent [DispatchGraph](#dispatchgraph) call using this initialization of backing memory, whether in this command list or another, must not be driven by more records in a given `DispatchGraph()` call than the maximum specified, otherwise behavior is undefined.
+This state only applies to the next call to [SetProgram](#setprogram) for this work graph which must use [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags) to initialize backing memory.  Essentially the system knows to initialize the backing memory based on the `SetWorkGraphMaximumGPUInputRecords()` value.  Any subsequent [DispatchGraph](#dispatchgraph) call using this initialization of backing memory, whether in this command list or another, must not be driven by more records in a given `DispatchGraph()` call than the maximum specified, otherwise behavior is undefined.
 
 The `Count` must be less than or equal to the `Count` declared earlier via `ID3D12WorkGraphsProperties1`::[SetMaximumInputRecords()](#setmaximuminputrecords) before the [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements) call that provided the size of backing memory that will be initialized here on the command list in the next [SetProgram()](#setprogram) call.
 
@@ -6527,3 +6527,4 @@ v0.54|3/1/2024|<li>Now that DXC reports record alignment to the runtime based on
 v0.55|3/9/2024|<li>Added [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware).  Plus a few related sections linked from there. This is relevant to experimental mesh nodes prototyping, not yet exposed.</li><li>Minor fixup: Under [Supported shader targets](#supported-shader-targets) for generic programs, there was a TBD on what DXC version would be required to compile non-lib shaders such as vs_* / ps_* targets and have the runtime be able to know the name of the function (so the app isn't forced to give it a name to use it in a generic program).  Updated the TBD to DXC version 1.8, the compiler launched alongside the runtime with generic programs support.</li>
 v1.000|3/11/2023|<li>Bumping version to 1.000 for official release.</li>
 v1.001|3/13/2024|<li>Fixed broken wording in experimental [Mesh nodes](#mesh-nodes) section.  Made it more clear that a shader of node launch "mesh" is basically a hybrid of a broadcasting launch shader and a mesh shader.  One point in particular that needed cleaning up is that dispatch grid (fixed or dynamic) works just like with broadcasting launch wrt `SV_DispatchGrid` in record, `[NodeMaxDispatchGrid()]` vs `[NodeDispatchGrid()]` options.</li><li>Missing const on pointer members of [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and [D3D12_MULTI_NODE_CPU_INPUT](#d3d12_multi_node_cpu_input).  Released headers don't have this fixed yet - will be include at next chance for an update.</li>
+v1.002|3/21/2024|<li>In [D3D12_STATE_OBJECT_TYPE](#d3d12_state_object_type) clarified what can be in the various state object types.  For instance, `COLLECTION` state objects can have shaders but not program definitions like generic pipelines or work graphs.  The latter are confined to `EXECUTABLE` state objects, at least for now.</li><li>Claraified that experimental [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier) implies the device supports `D3D12_MESH_SHADER_TIER_1`.</li>
