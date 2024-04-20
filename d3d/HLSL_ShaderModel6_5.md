@@ -200,15 +200,15 @@ val0 \* val1 \* val2 ...
 
 (val0 ? 1 : 0) + (val1 ? 1 : 0) + (val2 ? 1 : 0) ...
 
-### `<int_type> WaveMultiPrefixAnd( <int_type> val, uint4 mask )`
+### `<int_type> WaveMultiPrefixBitAnd( <int_type> val, uint4 mask )`
 
 val0 & val1 & val2 ...
 
-### `<int_type> WaveMultiPrefixOr( <int_type> val, uint4 mask )`
+### `<int_type> WaveMultiPrefixBitOr( <int_type> val, uint4 mask )`
 
 val0 \| val1 \| val2 ...
 
-### `<int_type> WaveMultiPrefixXor( <int_type> val, uint4 mask )`
+### `<int_type>  WaveMultiPrefixBitXor( <int_type> val, uint4 mask )`
 
 val0 ^ val1 ^ val2 ...
 
