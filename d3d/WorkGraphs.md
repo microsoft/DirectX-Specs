@@ -1,5 +1,5 @@
 <h1>D3D12 Work Graphs</h1>
-v1.003 3/25/2024
+v1.004 4/22/2024
 
 ---
 
@@ -4404,7 +4404,9 @@ This table identifies shader stages to which different `MemoryTypeFlags` apply:
 
 "If both `DEVICE_SCOPE` and `GROUP_SCOPE` are specified in `SemanticFlags`, then `GROUP_SCOPE` is ignored and masked off.
 
-The new barrier intrinsic with compatible `MemoryTypeFlags` and `SemanticFlags` can be used on older shader models, as long as the flags map to the original barrier DXIL operation (after shader stage masking).  See details [here](#lowering-barrier).
+> **Note, this barrier translation was planned, but not implemented:**
+> 
+> The new barrier intrinsic with compatible `MemoryTypeFlags` and `SemanticFlags` can be used on older shader models, as long as the flags map to the original barrier DXIL operation (after shader stage masking).  See details [here](#lowering-barrier).
 
 #### Barrier Rules
 
@@ -4942,9 +4944,11 @@ void @dx.op.barrierByNodeRecordHandle(i32 %Opcode, %dx.types.NodeRecordHandle %O
 
 Inapplicable `MemoryTypeFlags` flags in the DXIL op must be ignored by the implementation, and any scopes must be narrowed according to actual memory scopes present.  While the compiler will do its best to validate scopes, some cases may not be caught through call graph validation and may result in an inapplicable combination after masking for available memory types.  An explicitly allowed example is when node input/output flags that don't apply given the actual node inputs and/or outputs used in the node shader entry point.
 
-Previous HLSL barrier intrinsics map to the new `@dx.op.barrierByMemoryType` DXIL operation when used on shader model 6.8 or above.
-
-The new HLSL barrier intrinsic map to the old `@dx.op.barrier` DXIL operation on prior shader models for compatible `MemoryTypeFlags` and `SemanticFlags` inputs.  Compatible inputs are ones that, after masking `MemoryTypeFlags` for shader stage when `ALL_MEMORY`, are equivalent to valid combinations of mode flags in the original `@dx.op.barrier` DXIL operation.  This excludes cases that could be expressed by the mode flags in the old operation, but either were not considered valid before, or were not accessible through the original HLSL intrinsics.
+> **Note, this barrier translation was planned, but not implemented:**
+> 
+> Previous HLSL barrier intrinsics map to the new `@dx.op.barrierByMemoryType` DXIL operation when used on shader model 6.8 or above.
+> 
+> The new HLSL barrier intrinsic map to the old `@dx.op.barrier` DXIL operation on prior shader models for compatible `MemoryTypeFlags` and `SemanticFlags` inputs.  Compatible inputs are ones that, after masking `MemoryTypeFlags` for shader stage when `ALL_MEMORY`, are equivalent to valid combinations of mode flags in the original `@dx.op.barrier` DXIL operation.  This excludes cases that could be expressed by the mode flags in the old operation, but either were not considered valid before, or were not accessible through the original HLSL intrinsics.
 
 Here is a mapping between old and equivalent new flag parameters (after masking `MemoryTypeFlags` for shader stage).  `@dx.op.barrier` mode flags are defined by `DXIL::BarrierMode`.
 
@@ -4957,7 +4961,9 @@ Here is a mapping between old and equivalent new flag parameters (after masking 
 | `GroupMemoryBarrier()` | `(8)` = `TGSMFence(8)` | `(2)` = `GROUP_SHARED_MEMORY(2)` | `(2)` = `GROUP_SCOPE(2)` |
 | `GroupMemoryBarrierWithGroupSync()` | `(9)` = `TGSMFence(8)` + `SyncThreadGroup(1)` | `(2)` = `GROUP_SHARED_MEMORY(2)` | `(3)` = `GROUP_SCOPE(2)` + `GROUP_SYNC(1)` |
 
-Other flag combinations are explicitly not supported for translation to the original `@dx.op.barrier` operation.  This includes ones with `MemoryTypeFlags` of `0`, and ones that lack a `*_SCOPE` flag.  This also includes the technically legal case of `UAV_MEMORY` used with `GROUP_SCOPE` that maps to `UAVFenceThreadGroup`, but was not previously exposed in HLSL.
+> **Note, this barrier translation was planned, but not implemented:**
+> 
+> Other flag combinations are explicitly not supported for translation to the original `@dx.op.barrier` operation.  This includes ones with `MemoryTypeFlags` of `0`, and ones that lack a `*_SCOPE` flag.  This also includes the technically legal case of `UAV_MEMORY` used with `GROUP_SCOPE` that maps to `UAVFenceThreadGroup`, but was not previously exposed in HLSL.
 
 ---
 
@@ -6529,3 +6535,4 @@ v1.000|3/11/2023|<li>Bumping version to 1.000 for official release.</li>
 v1.001|3/13/2024|<li>Fixed broken wording in experimental [Mesh nodes](#mesh-nodes) section.  Made it more clear that a shader of node launch "mesh" is basically a hybrid of a broadcasting launch shader and a mesh shader.  One point in particular that needed cleaning up is that dispatch grid (fixed or dynamic) works just like with broadcasting launch wrt `SV_DispatchGrid` in record, `[NodeMaxDispatchGrid()]` vs `[NodeDispatchGrid()]` options.</li><li>Missing const on pointer members of [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and [D3D12_MULTI_NODE_CPU_INPUT](#d3d12_multi_node_cpu_input).  Released headers don't have this fixed yet - will be include at next chance for an update.</li>
 v1.002|3/21/2024|<li>In [D3D12_STATE_OBJECT_TYPE](#d3d12_state_object_type) clarified what can be in the various state object types.  For instance, `COLLECTION` state objects can have shaders but not program definitions like generic pipelines or work graphs.  The latter are confined to `EXECUTABLE` state objects, at least for now.</li><li>Claraified that experimental [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier) implies the device supports `D3D12_MESH_SHADER_TIER_1`.</li>
 v1.003|3/25/2024|<li>In [shader function attributes](#shader-function-attributes), for `[NodeShareInputOf(nodeID)]`, corrected the semantics around node renaming to match shipped behavior. The text used to say that the specified nodeID is before any node renames, so if the target gets renamed, the sharing connection based on old name stays intact.  This was incorrect.  Instead, if the node to share from gets renamed, the `[NodeShareInputOf(nodeID)]` attribute can be overridden at the API to point to the new nodeID.</li>
+v1.004|4/22/2024|<li>In [Barrier](#barrier) and [Lowering Barrier](#lowering-barrier), clarify that barrier translation between old/new DXIL ops depending on shader model is not implemented.</li>
