@@ -1,5 +1,5 @@
 <h1>D3D12 Work Graphs</h1>
-v1.004 4/22/2024
+v1.005 4/30/2024
 
 ---
 
@@ -259,9 +259,9 @@ v1.004 4/22/2024
     - [D3D12DDI\_NODE\_IO\_KIND\_0108](#d3d12ddi_node_io_kind_0108)
     - [D3D12DDI\_RECORD\_DISPATCH\_GRID\_0108](#d3d12ddi_record_dispatch_grid_0108)
     - [D3D12DDI\_NODE\_ID\_0108](#d3d12ddi_node_id_0108)
-    - [D3D12DDI\_PROGRAM\_NODE\_0108](#d3d12ddi_program_node_0108)
-    - [D3D12DDI\_MESH\_LAUNCH\_PROPERTIES\_0108](#d3d12ddi_mesh_launch_properties_0108)
-    - [D3D12DDI\_MAX\_NODE\_INPUT\_RECORDS\_PER\_GRAPH\_ENTRY\_RECORD\_0108](#d3d12ddi_max_node_input_records_per_graph_entry_record_0108)
+    - [D3D12DDI\_PROGRAM\_NODE\_0110](#d3d12ddi_program_node_0110)
+    - [D3D12DDI\_MESH\_LAUNCH\_PROPERTIES\_0110](#d3d12ddi_mesh_launch_properties_0110)
+    - [D3D12DDI\_MAX\_NODE\_INPUT\_RECORDS\_PER\_GRAPH\_ENTRY\_RECORD\_0110](#d3d12ddi_max_node_input_records_per_graph_entry_record_0110)
     - [D3D12DDI\_DRAW\_LAUNCH\_PROPERTIES\_0108](#d3d12ddi_draw_launch_properties_0108)
     - [D3D12DDI\_DRAW\_INDEXED\_LAUNCH\_PROPERTIES\_0108](#d3d12ddi_draw_indexed_launch_properties_0108)
 - [Generic programs](#generic-programs)
@@ -2685,7 +2685,7 @@ typedef struct D3D12_MESH_LAUNCH_OVERRIDES
     _In_opt_ const D3D12_NODE_ID* pShareInputOf;
     _In_reads_opt_(3) const UINT* pDispatchGrid;
     _In_reads_opt_(3) const UINT* pMaxDispatchGrid;
-    _In_opt_ const D3D12_MAX_NODE_INPUT_RECORDS_PER_OVERALL_GRAPH_INPUT*  pMaxInputRecordsPerOverallGraphInput;
+    _In_opt_ const D3D12_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD*  pMaxInputRecordsPerGraphEntryRecord;
 } D3D12_MESH_LAUNCH_OVERRIDES;
 ```
 
@@ -4404,7 +4404,7 @@ This table identifies shader stages to which different `MemoryTypeFlags` apply:
 
 "If both `DEVICE_SCOPE` and `GROUP_SCOPE` are specified in `SemanticFlags`, then `GROUP_SCOPE` is ignored and masked off.
 
-> **Note, this barrier translation was planned, but not implemented:**
+> **Note** this barrier translation was planned, but not implemented:
 > 
 > The new barrier intrinsic with compatible `MemoryTypeFlags` and `SemanticFlags` can be used on older shader models, as long as the flags map to the original barrier DXIL operation (after shader stage masking).  See details [here](#lowering-barrier).
 
@@ -4944,7 +4944,7 @@ void @dx.op.barrierByNodeRecordHandle(i32 %Opcode, %dx.types.NodeRecordHandle %O
 
 Inapplicable `MemoryTypeFlags` flags in the DXIL op must be ignored by the implementation, and any scopes must be narrowed according to actual memory scopes present.  While the compiler will do its best to validate scopes, some cases may not be caught through call graph validation and may result in an inapplicable combination after masking for available memory types.  An explicitly allowed example is when node input/output flags that don't apply given the actual node inputs and/or outputs used in the node shader entry point.
 
-> **Note, this barrier translation was planned, but not implemented:**
+> **Note**, this barrier translation was planned, but not implemented:
 > 
 > Previous HLSL barrier intrinsics map to the new `@dx.op.barrierByMemoryType` DXIL operation when used on shader model 6.8 or above.
 > 
@@ -4961,7 +4961,7 @@ Here is a mapping between old and equivalent new flag parameters (after masking 
 | `GroupMemoryBarrier()` | `(8)` = `TGSMFence(8)` | `(2)` = `GROUP_SHARED_MEMORY(2)` | `(2)` = `GROUP_SCOPE(2)` |
 | `GroupMemoryBarrierWithGroupSync()` | `(9)` = `TGSMFence(8)` + `SyncThreadGroup(1)` | `(2)` = `GROUP_SHARED_MEMORY(2)` | `(3)` = `GROUP_SCOPE(2)` + `GROUP_SYNC(1)` |
 
-> **Note, this barrier translation was planned, but not implemented:**
+> **Note**, this barrier translation was planned, but not implemented:
 > 
 > Other flag combinations are explicitly not supported for translation to the original `@dx.op.barrier` operation.  This includes ones with `MemoryTypeFlags` of `0`, and ones that lack a `*_SCOPE` flag.  This also includes the technically legal case of `UAV_MEMORY` used with `GROUP_SCOPE` that maps to `UAVFenceThreadGroup`, but was not previously exposed in HLSL.
 
@@ -5653,7 +5653,7 @@ typedef struct D3D12DDI_NODE_0108
     union
     {        
         D3D12DDI_SHADER_NODE_0108 Shader; // D3D12DDI_NODE_TYPE_SHADER_0108
-        D3D12_PROGRAM_NODE_0108   Program; // D3D12_NODE_TYPE_PROGRAM_0108, not supported yet
+        D3D12_PROGRAM_NODE_0110   Program; // D3D12_NODE_TYPE_PROGRAM_0108, not supported yet
     };
 } D3D12DDI_NODE_0108;
 ```
@@ -5663,7 +5663,7 @@ Member                           | Definition
 `VersionAdded` | Version number the node was added to the state object, starting at `0` for the initial work graph.  Only becomes relevant when [AddToStateObject()](#addtostateobject) starts being used to add nodes to a work graph, in which case the version number distingushes when the node was added.  The structure of a graph at any given version can be identified by considering any version less or equal to the relevant version number.
 `NodeType` | Type of node, and thus which entry in the union to use.  See [D3D12DDI_NODE_TYPE_0108](#d3d12ddi_node_type_0108).
 `Shader` | See [D3D12DDI_SHADER_NODE_0108](#d3d12ddi_shader_node_0108).
-`Program` | See [D3D12DDI_PROGRAM_NODE_0108](#d3d12ddi_program_node_0108).  Not supported until [graphics nodes](#graphics-nodes) are supported.
+`Program` | See [D3D12DDI_PROGRAM_NODE_0110](#d3d12ddi_program_node_0110).  Not supported until [graphics nodes](#graphics-nodes) are supported.
 
 Referenced by [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108).
 
@@ -5675,7 +5675,7 @@ Referenced by [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108).
 typedef enum D3D12DDI_NODE_TYPE_0108
 {
     D3D12DDI_NODE_TYPE_SHADER_0108 = 0x0
-    D3D12DDI_NODE_TYPE_PROGRAM_0108 = 0x1 // Not supported yet
+    D3D12DDI_NODE_TYPE_PROGRAM_0110 = 0x1 // Not supported yet
 } D3D12DDI_NODE_TYPE_0108;
 ```
 
@@ -6045,12 +6045,12 @@ At the API see [D3D12_NODE_ID](#d3d12_node_id).
 
 ---
 
-### D3D12DDI_PROGRAM_NODE_0108
+### D3D12DDI_PROGRAM_NODE_0110
 
 > This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
 ```C++
-typedef struct D3D12DDI_PROGRAM_NODE_0108
+typedef struct D3D12DDI_PROGRAM_NODE_0110
 {
     LPCWSTR     Program; 
     D3D12DDI_PROGRAM_NODE_PROPERTIES_TYPE PropertiesType;
@@ -6059,9 +6059,9 @@ typedef struct D3D12DDI_PROGRAM_NODE_0108
         // Set to null if not used.
         const D3D12DDI_DRAW_LAUNCH_PROPERTIES_0108* pDrawLaunchNodeProperties;
         const D3D12DDI_DRAW_INDEXED_LAUNCH_PROPERTIES_0108* pDrawIndexedLaunchNodeProperties;
-        const D3D12DDI_MESH_LAUNCH_PROPERTIES_0108* pMeshLaunchNodeProperties;
+        const D3D12DDI_MESH_LAUNCH_PROPERTIES_0110* pMeshLaunchNodeProperties;
     };
-} D3D12DDI_PROGRAM_NODE_0108;
+} D3D12DDI_PROGRAM_NODE_0110;
 ```
 
 > `[CUT]` This section was proposed as part of [graphics nodes](#graphics-nodes), but has been cut in favor of starting experimentation with [mesh nodes](#mesh-nodes) only.  The feature described here could in theory work for any shader stage, but isn't currently a priority.
@@ -6072,17 +6072,16 @@ Member                           | Definition
 `PropertiesType` | See [D3D12DDI_PROGRAM_NODE_OVERRIDES_TYPE_0108](#d3d12_program_node_overrides_type).  A selection of which entry in the union describes properties of the node.
 `pDrawLaunchNodeProperties` | (`[CUT]` in favor of starting experimentation with [mesh nodes](#mesh-nodes) only.) Used when `OverridesType` is `D3D12DDI_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_LAUNCH_0108`. See [D3D12DDI_DRAW_LAUNCH_PROPERTIES_0108](#d3d12ddi_draw_launch_properties_0108).
 `pDrawIndexedLaunchNodeProperties` | (`[CUT]` in favor of starting experimentation with [mesh nodes](#mesh-nodes) only.) Used when `OverridesType` is `D3D12DDI_PROGRAM_NODE_OVERRIDES_TYPE_DRAW_INDEXED_LAUNCH_0108`. See [D3D12DDI_DRAW_INDEXED_LAUNCH_PROPERTIES_0108](#d3d12ddi_draw_indexed_launch_properties_0108).
-`pMeshLaunchNodeProperties` | Used when `OverridesType` is `D3D12DDI_PROGRAM_NODE_OVERRIDES_TYPE_MESH_LAUNCH_0108`. See [D3D12DDI_MESH_LAUNCH_PROPERTIES_0108](#d3d12ddi_mesh_launch_properties_0108).
+`pMeshLaunchNodeProperties` | Used when `OverridesType` is `D3D12DDI_PROGRAM_NODE_OVERRIDES_TYPE_MESH_LAUNCH_0110`. See [D3D12DDI_MESH_LAUNCH_PROPERTIES_0110](#d3d12ddi_mesh_launch_properties_0110).
 
 ---
 
-### D3D12DDI_MESH_LAUNCH_PROPERTIES_0108
+### D3D12DDI_MESH_LAUNCH_PROPERTIES_0110
 
 > This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
 ```C++
-typedef struct D3D12DDI_MESH_LAUNCH_PROPERTIES_0108
-{
+typedef struct D3D12DDI_MESH_LAUNCH_PROPERTIES_0110
     D3D12DDI_NODE_ID_0108 FinalName;
     BOOL bProgramEntry;
     D3D12DDI_NODE_IO_KIND_0108 InputNodeIOKind;
@@ -6097,8 +6096,8 @@ typedef struct D3D12DDI_MESH_LAUNCH_PROPERTIES_0108
     _In_reads_opt_(NumInputNodeIndices) const UINT* pInputNodeIndices;
     UINT          NumNodesSharingInputWithThisNode;
     _In_reads_opt_(NumNodesSharingInputWithThisNode) const UINT* pIndicesOfNodesSharingInputWithThisNode;
-    _In_opt_ const D3D12DDI_MAX_NODE_INPUT_RECORDS_PER_OVERALL_GRAPH_INPUT_0108*  pMaxInputRecordsPerOverallGraphInput;
-} D3D12DDI_MESH_LAUNCH_PROPERTIES_0108;
+    _In_opt_ const D3D12DDI_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD_0110*  pMaxInputRecordsPerGraphEntryRecord;
+} D3D12DDI_MESH_LAUNCH_PROPERTIES_0110;
 ```
 
 Any properties listed here take precedence over (override) what may have been declared in the program's definition.  The driver must always use the properties listed here as the final property selections.  If a driver happens to care about whether something was overridden, it can compare any setting here against what the shader declared.
@@ -6120,20 +6119,20 @@ Member                           | Definition
 `pInputNodeIndices` | Array of `NumNodeIndices` indices of nodes that target this node.  These nodes, if any, can be located in [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108) via `ppNodes[pInputNodeIndices[i]]`, where `i` spans `[0..NumNodeIndices-1]`. `pNodeInputIndices` is `nullptr` if no nodes target this node.
 `NumNodesSharingInputWithThisNode` | How many other nodes share this nodes' input.
 `pIndicesOfNodesSharingInputWithThisNode` | Array of `NumNodesSharingInputWithThisNode` indices of nodes that share input with this node. These nodes, if any, can be located in [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108) via `ppNodes[pIndicesOfNodesSharingInputWithThisNode[i]]`, where `i` spans `[0..NumNodesSharingInputWithThisNode-1]`. `pIndicesOfNodesSharingInputWithThisNode` is `nullptr` if no nodes share input with this node.
-`pMaxInputRecordsPerGraphEntryRecord` | See [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware) for semantics.  Set to `nullptr` if not overriding the shader definition or it is not needed. See [D3D12DDI_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD_0108](#d3d12ddi_max_node_input_records_per_graph_entry_record_0108).  If this is shared for an array, the runtime will automatically repeat the declaration here at the DDI for all nodes with the same name in {name,arrayIndex}.
+`pMaxInputRecordsPerGraphEntryRecord` | See [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware) for semantics.  Set to `nullptr` if not overriding the shader definition or it is not needed. See [D3D12DDI_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD_0110](#d3d12ddi_max_node_input_records_per_graph_entry_record_0110).  If this is shared for an array, the runtime will automatically repeat the declaration here at the DDI for all nodes with the same name in {name,arrayIndex}.
 
-Referenced by [D3D12DDI_PROGRAM_NODE_0108](#d3d12ddi_program_node_0108).
+Referenced by [D3D12DDI_PROGRAM_NODE_0110](#d3d12ddi_program_node_0110).
 
 ---
 
-### D3D12DDI_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD_0108
+### D3D12DDI_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD_0110
 
 > This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
-This is used in [D3D12DDI_MESH_LAUNCH_PROPERTIES_0108](#d3d12ddi_mesh_launch_properties_0108).  See [D3D12_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD](#d3d12_max_node_input_records_per_graph_entry_record) for the API equivalent.
+This is used in [D3D12DDI_MESH_LAUNCH_PROPERTIES_0110](#d3d12ddi_mesh_launch_properties_0110).  See [D3D12_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD](#d3d12_max_node_input_records_per_graph_entry_record) for the API equivalent.
 
 ```C++
-typedef struct D3D12DDI_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD_0108
+typedef struct D3D12DDI_MAX_NODE_INPUT_RECORDS_PER_GRAPH_ENTRY_RECORD_0110
 {
     UINT RecordCount;
     BOOL bCountSharedAcrossNodeArray;
@@ -6179,7 +6178,7 @@ Member                           | Definition
 `NumNodesSharingInputWithThisNode` | How many other nodes share this nodes' input.
 `pIndicesOfNodesSharingInputWithThisNode` | Array of `NumNodesSharingInputWithThisNode` indices of nodes that share input with this node. These nodes, if any, can be located in [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108) via `ppNodes[pIndicesOfNodesSharingInputWithThisNode[i]]`, where `i` spans `[0..NumNodesSharingInputWithThisNode-1]`. `pIndicesOfNodesSharingInputWithThisNode` is `nullptr` if no nodes share input with this node.
 
-Referenced by [D3D12DDI_PROGRAM_NODE_0108](#d3d12ddi_program_node_0108).
+Referenced by [D3D12DDI_PROGRAM_NODE_0110](#d3d12ddi_program_node_0110).
 
 ---
 
@@ -6220,7 +6219,7 @@ Member                           | Definition
 `NumNodesSharingInputWithThisNode` | How many other nodes share this nodes' input.
 `pIndicesOfNodesSharingInputWithThisNode` | Array of `NumNodesSharingInputWithThisNode` indices of nodes that share input with this node. These nodes, if any, can be located in [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108) via `ppNodes[pIndicesOfNodesSharingInputWithThisNode[i]]`, where `i` spans `[0..NumNodesSharingInputWithThisNode-1]`. `pIndicesOfNodesSharingInputWithThisNode` is `nullptr` if no nodes share input with this node.
 
-Referenced by [D3D12DDI_PROGRAM_NODE_0108](#d3d12ddi_program_node_0108).
+Referenced by [D3D12DDI_PROGRAM_NODE_0110](#d3d12ddi_program_node_0110).
 
 ---
 
@@ -6530,9 +6529,10 @@ v0.51|1/19/2024|<li>Renamed DispatchMesh launch nodes to simply [Mesh launch nod
 v0.52|2/9/2024|<li>If [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements) and [D3D12_WORK_GRAPH_MEMORY_REQUIREMENTS](#d3d12_work_graph_memory_requirements) noted that zero is a possible valid size (including zero as the min but nonzero as the max), in which case it is valid for the app to pass null to [SetProgram](#setprogram).</li><li>In [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc) clarified the resource state required for `[MULTI]_NODE_GPU_INPUT` graph input description that is in GPU memory (basically the same state requirement as the actual record data that the description points to which was already documented).</li><li>In [Node output limits](#node-output-limits) added constraint that a node can't declare more than 1024 outputs.  Not records, but outputs.  Fortunately node arrays just count as 1 output, so it is exceedingly unlikely that any application would ever run into the limit.</li><li>In [D3D12_SET_WORK_GRAPH_DESC](#d3d12_set_work_graph_desc) reduced backing memory alignment from 64KB minimum to 8 byte minimum.</li><li>In [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) updated the record address and stride requirement to `max(4,largest scalar member size)` bytes.  Stride can also be `0`.  The change here is that previously alignments that weren't multiple of 4 were valid.  e.g. a uint16 record,2 bytes, requires 4 byte alignment. [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) reflects this padding on reported record sizes.</li><li>For generic programs, in the section describing defaults for missing subobjects, under [Missing primitive topology](#missing-primitive_topology), clarified that if it is a mesh shader program, the topology is declared in the shader itself, so a primitive topology subobject isn't needed.  If a primitive topology subobject happens to be present, the runtime enforces it matches what the mesh shader declared.  This simply matches existing PSO behavior.</li><li>[Barrier](#barrier) fixes: Uniform control flow only required for `GROUP_SYNC`. `DeviceMemoryBarrier*()` excludes `GROUP_SHARED_MEMORY`. `MemoryTypeFlags` masked for shader stage when `ALL_MEMORY`. Added detailed rules for valid Barrier() use. Fix [DXIL ops](#lowering-barrier) for UAV Handle vs. NodeRecordHandle. Old intrinsics should produce the new DXIL op on SM 6.8, and uses of the new HLSL intrinsic equivalent to the old HLSL intrinsics will map to the existing barrier DXIL op on prior shader models.</li>
 v0.53|2/22/2024|<li>Cleared out mentions of June 2023 preview ahead of official release.</li><li>Noted that [Draw nodes](#draw-nodes), [DrawIndexed nodes](#drawindexed-nodes) and related supporting APIs are cut in favor of experimenting with [mesh nodes](#mesh-nodes) only.</li>
 v0.54|3/1/2024|<li>Now that DXC reports record alignment to the runtime based on the member sizes, added a [GetEntrypointRecordAlignmentInBytes()](#getentrypointrecordalignmentinbytes) method to help apps understand the record alignment rules, as applied to a given entry point's struct definition.  No driver impact from this new API.  This is a complement to the exisiting [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) API.</li><li>Cleaned up the entry record size and alignemnt requirements in [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) such that they are aligned to largest scalar member size and must be a multiple of 4. The previous definition would have allowed a struct of size 6 bytes to have a stride of 6.  To be safe, bumping that to 8.  This is reflected in the above mentioned APIs.</li><li>In [D3D12_STATE_SUBOBJECT_TYPE](#d3d12_state_object_type), the contents of the subobject `D3D12_SATE_SUBOBJECT_TYPE_RASTERIZER` were incorrectly stated as `D3D12_RASTERIZER_DESC`.  Corrected this to be the latest version of this desc, `D3D12_RASTERIZER_DESC2`, which is what the runtime was already assuming and passing to the driver.  Correspondingly updated the section describing defaults for missing subobjects to define the correct struct type in [Missing RASTERIZER](#missing-rasterizer), where `MultisampleEnable` isn't a member, it is `LineRasterizationMode` instead, defaulting to `D3D12_LINE_RASTERIZATION_MODE_ALIASED`.</li>
-v0.55|3/9/2024|<li>Added [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware).  Plus a few related sections linked from there. This is relevant to experimental mesh nodes prototyping, not yet exposed.</li><li>Minor fixup: Under [Supported shader targets](#supported-shader-targets) for generic programs, there was a TBD on what DXC version would be required to compile non-lib shaders such as vs_* / ps_* targets and have the runtime be able to know the name of the function (so the app isn't forced to give it a name to use it in a generic program).  Updated the TBD to DXC version 1.8, the compiler launched alongside the runtime with generic programs support.</li>
+v0.55|3/9/2024|<li>Added [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware).  Plus a few related sections linked from there. This is relevant to experimental mesh nodes prototyping, not yet exposed.</li><li>Minor fixup: Under [Supported shader targets](#supported-shader-targets) for generic programs, there was a TBD on what DXC version would be required to compile non-lib shaders such as `vs_* / ps_*` targets and have the runtime be able to know the name of the function (so the app isn't forced to give it a name to use it in a generic program).  Updated the TBD to DXC version 1.8, the compiler launched alongside the runtime with generic programs support.</li>
 v1.000|3/11/2023|<li>Bumping version to 1.000 for official release.</li>
 v1.001|3/13/2024|<li>Fixed broken wording in experimental [Mesh nodes](#mesh-nodes) section.  Made it more clear that a shader of node launch "mesh" is basically a hybrid of a broadcasting launch shader and a mesh shader.  One point in particular that needed cleaning up is that dispatch grid (fixed or dynamic) works just like with broadcasting launch wrt `SV_DispatchGrid` in record, `[NodeMaxDispatchGrid()]` vs `[NodeDispatchGrid()]` options.</li><li>Missing const on pointer members of [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and [D3D12_MULTI_NODE_CPU_INPUT](#d3d12_multi_node_cpu_input).  Released headers don't have this fixed yet - will be include at next chance for an update.</li>
 v1.002|3/21/2024|<li>In [D3D12_STATE_OBJECT_TYPE](#d3d12_state_object_type) clarified what can be in the various state object types.  For instance, `COLLECTION` state objects can have shaders but not program definitions like generic pipelines or work graphs.  The latter are confined to `EXECUTABLE` state objects, at least for now.</li><li>Claraified that experimental [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier) implies the device supports `D3D12_MESH_SHADER_TIER_1`.</li>
 v1.003|3/25/2024|<li>In [shader function attributes](#shader-function-attributes), for `[NodeShareInputOf(nodeID)]`, corrected the semantics around node renaming to match shipped behavior. The text used to say that the specified nodeID is before any node renames, so if the target gets renamed, the sharing connection based on old name stays intact.  This was incorrect.  Instead, if the node to share from gets renamed, the `[NodeShareInputOf(nodeID)]` attribute can be overridden at the API to point to the new nodeID.</li>
 v1.004|4/22/2024|<li>In [Barrier](#barrier) and [Lowering Barrier](#lowering-barrier), clarify that barrier translation between old/new DXIL ops depending on shader model is not implemented.</li>
+v1.005|4/30/2024|<li>Fixed minor typos in various mesh node DDIs names where version was 0108 but meant to be 0110.</li>
