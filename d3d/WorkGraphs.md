@@ -1,5 +1,5 @@
 <h1>D3D12 Work Graphs</h1>
-v1.006 5/2/2024
+v1.007 5/3/2024
 
 ---
 
@@ -1195,6 +1195,11 @@ For broadcasting launch nodes, where multiple thread groups can be launched for 
         [MaxRecords(4)] NodeOutput<rec0> myOutput)
     {
         ...
+        // If the local thread group needs to finish work first,
+        // a barrier with group sync must be used before calling
+        // FinishedCrossGroupSharing().  e.g.:
+        Barrier(NODE_INPUT_MEMORY, DEVICE_SCOPE|GROUP_SYNC);
+
         if(myInput.FinishedCrossGroupSharing())
         {
             // This thread group is the last to finish coordinating 
@@ -3354,7 +3359,7 @@ typedef enum D3D12_SET_WORK_GRAPH_FLAGS
 
 Flag                           | Definition
 ---------                           | ----------
-`D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` |<p>Ask system to prepare backing memory for initial dispatch. When this flag is used, app first needs to need to manually ensure any previous references to the backing memory are finished  execution, via appropriate preceding Barrier() call if necessary.</p><p>The first time a work graph is used with a particular backing memory allocation, the flag `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` must be set so the system can prepare the opaque contents for use by graph execution.  This includes situations like reusing backing memory that is in an unknown state for whatever reason, such as if it was last used with a different work graph or for some other purpose.  This isn't needed if independent memory changes, like the local root argument table changes or the contents of global root arguments.</p><p>If the app knows that the last time the backing memory was used was with the same work graph, it doesn't need to specify `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` when setting the memory on the command list.  </p>
+`D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` |<p>Ask system to prepare [backing memory](#backing-memory) for initial dispatch. When this flag is used, app first needs to need to manually ensure any previous references to the backing memory are finished  execution, via appropriate preceding Barrier() call if necessary.</p><p>The first time a work graph is used with a particular backing memory allocation, the flag `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` must be set so the system can prepare the opaque contents for use by graph execution.  This includes situations like reusing backing memory that is in an unknown state for whatever reason, such as if it was last used with a different work graph or for some other purpose.  This isn't needed if independent memory changes, like the local root argument table changes or the contents of global root arguments.</p><p>If the app knows that the last time the backing memory was used was with the same work graph, it doesn't need to specify `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` when setting the memory on the command list.  A command list barrier also isn't needed between subsesquent graph invocations (work from each can overlap), unless the application specifically wants one graph invocation to finish before the next.</p>
 
 ---
 
@@ -3387,6 +3392,10 @@ Parameter                           | Definition
 See [initiating work from a command list](#initiating-work-from-a-command-list).
 
 `DispatchGraph` can only be called within command lists of type `DIRECT` or `COMPUTE`.  `BUNDLE` is not supported given that bundles are meant to be reused across command lists, and the [backing memory](#backing-memory) for work graphs can't be used for parallel graph invocations.
+
+There is no implicit barrier between `DispatchGraph()` calls (similar to other `Dispatch*()` APIs).  So unless the app inserts command list arriers, the system can overlap graph execution with surrounding work, including other graph invocations.  
+
+Note the discussion in [D3D12_SET_WORK_GRAPH_FLAGS](#d3d12_set_work_graph_flags) on `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` for semantics around [backing memory](#backing-memory).
 
 ---
 
@@ -3844,7 +3853,7 @@ DXIL definition [here](#lowering-input-record-count-method).
 
 The semantics of this method are described in [scoped scratch storage](#shaders-can-use-input-record-lifetime-for-scoped-scratch-storage).
 
-`FinishedCrossGroupSharing` calls must be dispatch grid uniform, not in any flow control that could vary across any thread in any thread groups in the dispatch grid (varying includes threads exiting), otherwise behavior is undefined. Though the callsite is uniform, executing threads do not need to be synchronized to this location in groups (e.g. via [Barrier](#barrier)). There may be some implementation specific barrier happening but the shader cannot assume anything about it. Often the shader will need to include an appropriate [Barrier](#barrier) call depending on what it is doing around `FinishedCrossGroupSharing`.  
+`FinishedCrossGroupSharing` calls must be dispatch grid uniform, not in any flow control that could vary across any thread in any thread groups in the dispatch grid (varying includes threads exiting), otherwise behavior is undefined. Though the callsite is uniform, executing threads do not need to be synchronized to this location in groups (e.g. via [Barrier](#barrier)). There may be some implementation specific barrier happening but the shader cannot assume anything about it. Often the shader will need to include an appropriate [Barrier](#barrier) call depending on what it is doing around `FinishedCrossGroupSharing`.  For instance if the local group needs to finish some work first, a barrier with group sync (and any relevant memory type/scope) must be used before calling `FinishedCrossGroupSharing`.
 
 At most one call to `FinishedCrossGroupSharing` can be reached during execution of each thread - additional calls are invalid (undefined behavior) and the compiler will attempt to flag them as errors.
 
@@ -6543,3 +6552,4 @@ v1.003|3/25/2024|<li>In [shader function attributes](#shader-function-attributes
 v1.004|4/22/2024|<li>In [Barrier](#barrier) and [Lowering Barrier](#lowering-barrier), clarify that barrier translation between old/new DXIL ops depending on shader model is not implemented.</li>
 v1.005|4/30/2024|<li>Fixed minor typos in various mesh node DDIs names where version was 0108 but meant to be 0110.</li>
 v1.006|5/02/2024|<li>In [NodeID](#node-id) section, clarified some semantics around default NodeID naming.  Specifically, if a [node shader definition](#shader-function-attributes) doesn't specify a `[NodeID()]` attribute, the node ID defaults to `{shader name in HLSL, 0}` in the compiled shader. The NodeID and shader name are separate entities in the shader.  From the runtime point of view, it doesn't know whether the NodeID was specified explicitly or was a default assignment.  The significance is if the shader export is renamed when importing into a state object, the NodeID doesn't also get renamed. To rename NodeIDs at state object creation, use node overrides such as [D3D12_COMMON_COMPUTE_NODE_OVERRIDES](#d3d12_common_compute_node_overrides) at the API.</li>
+v1.007|5/03/2024|<li>In [FinishedCrossGroupSharing](#finishedcrossgroupsharing) added an example for when a barrier might be needed before calling `FinishedCrossGroupSharing()`.  Similarly added this to the example code in the [Shaders can use input record lifetime for scoped scratch storage](#shaders-can-use-input-record-lifetime-for-scoped-scratch-storage) section.</li><li>In [DispatchGraph](#dispatchgraph) and [D3D12_SET_WORK_GRAPH_FLAGS](#d3d12_set_work_graph_flags) clarified that there is no implicit barrier around `DispatchGraph` calls, so graph execution can overlap surrounding work including other graph invocation, unless the app manually inserts barriers on the command list.</li>
