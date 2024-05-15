@@ -237,14 +237,10 @@ GPUs that claim display support must provide support for all the above modes.
 
 Same as DWM, the composite swap chain would have to be able to handle this new color space. 
 
-This will be updated later as more is discovered.
-
 #### Display/DxgKrnl Changes
 Display/DxgKrnl is required to work with this format, if driver support is declared. 
 
 There might be changes required in  `D3DKMTCheckMultiPlaneOverlaySupport*` and `CheckColorspaceSupport` that will need to support this format. 
-
-This will be updated later as more is discovered.
 
 ### WARP Support
 999E5 previously existed as an SRV, so there is already WARP decoding support for this format. The following will be added to WARP
