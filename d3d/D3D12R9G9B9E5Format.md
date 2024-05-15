@@ -63,7 +63,7 @@ The details of the format as it existed in Direct3D 11 can be found [here](https
 # Motivation
 High Dynamic Range (HDR) technology has revolutionized the visual quality of digital content, providing a wider range of colors and luminance levels. Direct3D 12 plans to support developers by exposing more of `DXGI_FORMAT_R9G9B9E5_SHAREDEXP`, which gives a much better color definition in almost every color space. 999E5 promises a lot of utility as a float format that is half the size of `R16G16B16A16_FLOAT`, while being almost on par with `R16G16B16A16_FLOAT` on image quality except in the most contrived scenarios. The image below is an exaggerated banding comparison between R11G11B10 vs 999E5 \[0..200\]. 
 
-![Picture comparing 999e5 vs R11G11B10](images\999e5\999e5_banding.png)
+![Picture comparing 999e5 vs R11G11B10](images/999e5/999e5_banding.png)
 
 This format was previously only available in Direct3D as a shader resource. To use the format previously, applications would alias with a 32-bit type format, create a resource that is `DXGI_FORMAT_R9G9B9E5_SHAREDEXP` format, and [copy](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-copyresource#reinterpret-copy) into said resource. More recently, [relaxed casting options](https://microsoft.github.io/DirectX-Specs/d3d/RelaxedCasting.html) allowed developers greater flexbility to write into the `DXGI_FORMAT_R9G9B9E5_SHAREDEXP` format. With this optional feature (depending on driver support), applications will be able to write and use `DXGI_FORMAT_R9G9B9E5_SHAREDEXP` directly without the casts. This means relying on hardware format conversions between the format memory and the float data in the shader. Applications can also rely on hardware supporting output merger blending.
 
@@ -256,7 +256,7 @@ This will be updated later as more is discovered.
 
 
 ### Checking Against Older Drivers
-In the case of a newer runtime running on older drivers, the runtime will first determine the driver's DDI version. If the driver's DDI is below *to be determined*, the runtime will report not support instead of querying the driver.
+In the case of a newer runtime running on older drivers, the runtime will first determine the driver's DDI version. If the driver's DDI is below **107**, the runtime will report not support instead of querying the driver.
 
 ## DDI Changes
 ### CheckFormatSupport
