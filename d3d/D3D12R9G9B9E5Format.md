@@ -296,6 +296,7 @@ RTV/UAV Support
 
 
 Display Support
+
 | **D3D11**                                        | **D3D12**                                         |
 |--------------------------------------------------|---------------------------------------------------|
 | D3D11_1DDI_FORMAT_SUPPORT_MULTIPLANE_OVERLAY     | D3D12DDI_FORMAT_SUPPORT_MULTIPLANE_OVERLAY        |
