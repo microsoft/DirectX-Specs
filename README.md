@@ -26,6 +26,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Programmable Sample Positions](d3d/ProgrammableSamplePositions.md)
     * [Depth Bounds Test](d3d/DepthBoundsTest.md)
     * [Enhanced Barriers](d3d/D3D12EnhancedBarriers.md)
+    * [R9G9B9E5_SHAREDEXP RTV and UAV support] (d3d/D3D12R9G9B9E5Format.md)
 
 * Structure of D3D
     * [Resource Binding](d3d/ResourceBinding.md)
