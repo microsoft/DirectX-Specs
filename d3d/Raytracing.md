@@ -4955,7 +4955,7 @@ intersection must use this structure for hit attributes.
 Given attributes `a0`, `a1` and `a2` for the 3 vertices of a triangle,
 `barycentrics.x` is the weight for `a1` and `barycentrics.y` is the weight
 for `a2`. For example, the app can interpolate by doing: `a = a0 +
-barycentrics.x \* (a1-a0) + barycentrics.y\* (a2 -- a0)`.
+barycentrics.x * (a1-a0) + barycentrics.y* (a2-a0)`.
 
 **(2)** Intersection with axis-aligned bounding boxes for procedural
   primitives in the raytracing acceleration structure triggers an
