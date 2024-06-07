@@ -1,5 +1,5 @@
 <h1>D3D12 Work Graphs</h1>
-v1.007 5/3/2024
+v1.008 6/6/2024
 
 ---
 
@@ -66,6 +66,7 @@ v1.007 5/3/2024
 - [Interactions with other D3D12 features](#interactions-with-other-d3d12-features)
 - [Graphics nodes](#graphics-nodes)
   - [Graphics nodes execution characteristics](#graphics-nodes-execution-characteristics)
+    - [Graphics nodes with ordered rasterization](#graphics-nodes-with-ordered-rasterization)
   - [Graphics node resource binding and root arguments](#graphics-node-resource-binding-and-root-arguments)
     - [Graphics node index and vertex buffers](#graphics-node-index-and-vertex-buffers)
   - [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware)
@@ -492,6 +493,8 @@ Independent of this unordered dequeueing, the order that records are enqueued is
 > - dequeue least recently queued
 > - complete all launched child work before continuing to the next item
 
+There is a constrained case where some ordering is guaranteed, described in [graphics nodes with ordered rasterization](#graphics-nodes-with-ordered-rasterization).
+
 Input records at a node are of a fixed size - the size of the input struct declared in the node's shader.
 
 The backing physical memory footprint a system needs to execute a graph (to handle the possibility spilling out of caches for instance) is owned by the application - see [backing memory](#backing-memory).  To simplify implementations, there are [node output limits](#node-output-limits), and [node input limits](#node-input-limits).
@@ -585,7 +588,7 @@ For wave packing see [Thread visibility in wave operations](#thread-visibility-i
 
 Mesh launch nodes can only appear at a leaf of a work graph.  They can appear in the graph as standalone entrypoints as well (which is a form of leaf).
 
-The equivalent of a graphics `DispatchMesh()` is generated when an input is present - a set of mesh shader threadgroups.  The program at the node must begin with a shader with `[NodeLaunch("mesh")]` (as opposed to mesh shader).  This is basically a hybrid of a broadcasting launch node and a mesh shader.  
+The equivalent of a graphics `DispatchMesh()` is generated when an input is present at a mesh node - a set of mesh shader threadgroups.  The program at the node must begin with a shader with `[NodeLaunch("mesh")]` (as opposed to mesh shader).  This is basically a hybrid of a broadcasting launch node and a mesh shader.  These shaders can only be used in work graphs, not from `DispatchMesh()` on the command list, which is for plain mesh shaders.
 
 > Amplification shaders are not supported since they aren't needed in a work graph.  Nodes in the graph that feed into the mesh launch node can do work amplification with more flexibility than an amplification shader alone.
 
@@ -1709,11 +1712,11 @@ With graphics nodes at the leaves of a work graph, `DispatchMesh()` calls can be
 
 Similarly if draw and drawindexed nodes were supported (currently cut), records could produce the equivalent of `DrawInstanced()`, `DrawIndexedInstanced()` calls by including draw specific arguments, including index and vertex buffer bindings.
 
-Three node launch types are listed earlier in the spec that support [programs](#program) with graphics shaders:
+The following node launch type listed earlier in the spec supports [programs](#program) with graphics shaders:
 
 [Mesh nodes](#mesh-nodes): invoke a [mesh shading program](#program) like `DispatchMesh()`
 
-The following have been **cut** in favor of starting experimentation with [mesh nodes](#mesh-nodes) only:
+The following additional node launch types have been **cut** in favor of starting with [mesh nodes](#mesh-nodes) only:
 
 [Draw nodes](#draw-nodes): invoke a [graphics program](#program) like `DrawInstanced()`
 [DrawIndexed nodes](#drawindexed-nodes): invoke a [graphics program](#program) like `DrawIndexedInstanced()`
@@ -1730,9 +1733,29 @@ Additional details on their operation follow.
 
 > This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
-- Draw order: The order of graphics node launches is undefined. Invocations of multiple concurrent graphics nodes (or any nodes in the work graph) have no ordering relative to each other. Similarly, draw calls sent to a single graphics node (like any node in a work graph) *may* be reordered.
+- Draw order: By default the order of graphics node launches is undefined. Invocations of multiple concurrent graphics nodes (or any nodes in the work graph) have no ordering relative to each other. Even invocations of a single graphics node (like any node in a work graph) *may* be reordered.  There is an exception where ordering can be opted-in, described in [graphics nodes with ordered rasteization](#graphics-nodes-with-ordered-rasterization) below.
 
-- Switching between executing graphics nodes: The implication is while executing the graph, there is arbitrary switching between graphics nodes (among other nodes).  The GPU overhead required for this switching is expected to scale with the number of distinct graphics nodes in particular as well as the difference between the state configuration in each graphics node's [program](#program) definition.  So programs which are all *mostly* the same should have a low switching overhead, while wildly different ones will have a higher overhead.  Developers may need to account for this when deciding which states to vary across the many graphics nodes that may be in a single work graph.
+- Switching between executing graphics nodes: The implication is while executing the graph there is arbitrary switching between graphics nodes (among other nodes).  The GPU overhead required for this switching is expected to scale with the number of distinct graphics nodes in particular as well as the difference between the state configuration in each graphics node's [program](#program) definition.  So programs which are all *mostly* the same should have a low switching overhead, while wildly different ones will have a higher overhead.  Developers may need to account for this when deciding which states to vary across the many graphics nodes that may be in a single work graph.
+
+---
+
+### Graphics nodes with ordered rasterization
+
+Work graphs with [graphics nodes](#graphics-nodes) (when [supported](#d3d12_work_graphs_tier)) can specify the [flag](#d3d12_work_graph_flags) `D3D12_WORK_GRAPH_FLAG_ENTRYPOINT_GRAPHICS_NODES_RASTERIZE_IN_ORDER` as part of [D3D12_WORK_GRAPH_DESC](#d3d12_work_graph_desc).  This is quite experimental, so during the mesh nodes preview phase this will not yet be supported by all drivers for potentially several months after launch.  There aren't capability bits for determining this, simply look at communications from the GPU vendor about whether/when this flag will be supported. The flag is put in place to enable bringing the feature up during the course of preview without needing to do an updated preview release.  
+
+The meaning of the flag is as follows:
+
+If a work graph has any nodes that drive graphics, e.g. [mesh nodes](#mesh-nodes), and those nodes are graph entrypoints, then invocations of these nodes directly from work graph input ([DispatchGraph()](#dispatchgraph) input) retire rasterization results to any given render target location (e.g. rendertarget/depth sample location) in the order of these inputs.  That is, rasterization resulting from graph input `N` retires before rasterization resulting from input `N+1` etc., even if the invoked graphics nodes are different.  Even though rasterization results retire in this order, pixel shader invocations producing them may not be in order - this is just like rasterization behavior outside work graphs.
+
+If the graph has other non-graphics nodes that invoke graphics nodes, rasterization that results from these paths do not guarantee order across node invocations. A given graphics node may be both a graph entrypoint and driven from within the graph, in which case only the inputs directly to the graphics node via entrypoint rasterize in order with respect to other graphics nodes directly driven via entrypoints.
+
+UAV accesses in graphics nodes do not guarantee ordering except for [Raster order views](RasterOrderViews.md) in the mesh node [program](#program)'s pixel shader, also just like rasterization behavior outside work graphs.
+
+In the context of [mesh nodes](#mesh-nodes), regardless of the presence of the `D3D12_WORK_GRAPH_FLAG_ENTRYPOINT_GRAPHICS_NODES_RASTERIZE_IN_ORDER` flag, individual invocations of a mesh node (dispatch grid per invocation) internally always follow the rasterization order defined in the mesh shader spec under [rasterization order](MeshShader.md#rasterization-order).  In that spec the description without amplification shaders present is the relevant part, aligning with how individual mesh node invocations behave in a work graph.  On top of this, the presence of the work graph flag `D3D12_WORK_GRAPH_FLAG_ENTRYPOINT_GRAPHICS_NODES_RASTERIZE_IN_ORDER` provides a way of ordering the mesh node invocations overall.  The combination of opt-in overall ordering flag and always present mesh node ordering produces fully deterministic raster ordering.
+
+> A possible use for this ordering capability is GPU-driven rendering of transparencies with varying materials.  The work graph could be a set of standalone mesh nodes that are all entrypoints, acting as a sort of material palette.  The app can call [DispatchGraph()](#dispatchgraph) with input data from CPU or GPU that represents the sorted order to render geometry + materials, computed earlier, for instance from an earlier work graph. Ordering should only be requested if actually needed, as the extra constraint may limit performance that could be achieved otherwise. 
+> 
+> In general a graph with only standalone leaf nodes (all entrypoints) might be useful even without the ordering flag discussed here, and with or without mesh nodes.  This flat graph structure acts like a variant of the [`ExecuteIndirect()`](IndirectDrawing.md) API that can support program changes.  There is a difference around state changes, where `ExecuteIndirect()` defines sequential state changes like resource binding updates, versus in work graphs input records and local root arguments describe node state instead in a non-persistent manner.  Summing it up, when using work graphs in this `ExecuteIndirect()`-in-a-graph fashion AND ordering is needed, the `D3D12_WORK_GRAPH_FLAG_ENTRYPOINT_GRAPHICS_NODES_RASTERIZE_IN_ORDER` applies.
 
 ---
 
@@ -2106,7 +2129,7 @@ Value                               | Definition
 -----                               | ----------
 `D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED` | No support for work graphs on the device. Attempts to create any work graphs related object will fail and using work graphs related APIs on command lists results in undefined behavior.
 `D3D12_WORK_GRAPHS_TIER_1_0` | The device fully supports the first full work graphs release.  See [Discovering device support for work graphs](#discovering-device-support-for-work-graphs).
-`D3D12_WORK_GRAPHS_TIER_1_1` | Unreleased tier in which [graphics nodes](#graphics-nodes) are being prototyped.  This level implies the device supports `D3D12_MESH_SHADER_TIER_1`.
+`D3D12_WORK_GRAPHS_TIER_1_1` | Tier in which [graphics nodes](#graphics-nodes) are being prototyped.  This level implies the device supports `D3D12_MESH_SHADER_TIER_1`.
 
 ---
 
@@ -2358,7 +2381,8 @@ Here are the subset of subobject types relevant to work graphs.  Most of the rel
 typedef enum D3D12_WORK_GRAPH_FLAGS
 {
     D3D12_WORK_GRAPH_FLAG_NONE = 0x0,
-    D3D12_WORK_GRAPH_FLAG_INCLUDE_ALL_AVAILABLE_NODES = 0x1
+    D3D12_WORK_GRAPH_FLAG_INCLUDE_ALL_AVAILABLE_NODES = 0x1,
+    D3D12_WORK_GRAPH_FLAG_ENTRYPOINT_GRAPHICS_NODES_RASTERIZE_IN_ORDER = 0x2,
 } D3D12_WORK_GRAPH_FLAGS;
 ```
 
@@ -2367,6 +2391,7 @@ Subobject types defined in this spec:
 Flag                           | Definition
 ---------                           | ----------
 `D3D12_WORK_GRAPH_FLAG_INCLUDE_ALL_AVAILABLE_NODES` | Assume any node that has been exported from a dxil library in the state object belongs in the work graph.  See the discussion in [D3D12_WORK_GRAPH_DESC](#d3d12_work_graph_desc) discussing the various options for populating a work graph.  This flag can be handy in particular for simple cases where the author of the state object knows all the nodes belong in one graph, in which case the work graph definition doesn't need to explicitly name the nodes or entrypoints; the runtime can just figure it out by including everything and noticing how the nodes all fit together.
+`D3D12_WORK_GRAPH_FLAG_ENTRYPOINT_GRAPHICS_NODES_RASTERIZE_IN_ORDER` | See [graphics nodes with ordered rasterization](#graphics-nodes-with-ordered-rasterization) for a description of this flag. Requires support for [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier) which introduces [mesh nodes](#mesh-nodes), though during preview phase will not yet be supported by all drivers for potentially several months after launch.  There aren't capability bits for determining this, simply look at communications from the GPU vendor about whether/when this flag will be supported.  The flag is put in place to enable bringing the feature up during the course of preview without needing to do an updated preview release.
 
 ---
 
@@ -2895,7 +2920,7 @@ Valid additions to state objects of type `D3D12_STATE_OBJECT_TYPE_EXECUTABLE`:
 - New shaders, generic [programs](#program), work graphs, subobjects like root signatures that shaders may need or building blocks of generic programs like blend state.
 - New nodes of any [node type](#node-types) added to a new or existing work graph in the state object
 - New generic programs and nodes in work graphs can reference new and/or existing shaders and subobjects
-  - When subobjects like blend state are initially added to a state object, there will eventually be an option to define them in DXIL with a string name (not available yet, but like how DXR subobjects are supported already).  Calls to `AddToStateObject` that add a generic program can identify the blend state by name.  Until then, subobjects referenced by additions will need to be specified locally in the addition, as there isn't a way to identify subobjects in previous versions of the state object.  Shaders entrypoints from earlier versions of the state object can be used in new nodes (referenced by export name).
+  - When subobjects like blend state are initially added to a state object, there will eventually be an option to define them in DXIL with a string name (not available yet, but like how DXR subobjects are supported already).  Calls to `AddToStateObject` that add a generic program can identify the blend state by name.  Until then, if a generic program defined in an addition needs to reference a subobject, the subobject will need to be specified locally in the addition as there isn't a way to identify subobjects in previous versions of the state object.  Shaders entrypoints from earlier versions of the state object can be used in new nodes (referenced by export name).
 
 Work graph specific rules:
 
@@ -3231,16 +3256,21 @@ Referenced by [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements).
 > This section is proposed as part of [graphics nodes](#graphics-nodes), which aren't supported yet.
 
 ```C++
-void SetMaximumInputRecords(UINT WorkGraphIndex, UINT Count);
+void SetMaximumInputRecords(UINT WorkGraphIndex, UINT MaxRecords, UINT MaxNodeInputs);
 ```
 
 See [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware).
 
-For work graphs that use [graphics nodes](#graphics-nodes), in order for some implementations to calculate the amount of backing store memory they need, [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements) requires the maximum value of `NumRecords` that may be passed in any given [DispatchGraph()](#dispatchgraph) call. For multi-node input modes - [D3D12_MULTI_NODE_CPU_INPUT](#d3d12_multi_node_cpu_input) and [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input), this is maximum totaled across all inputs in a given [DispatchGraph()](#dispatchgraph) call.
+For work graphs that use [graphics nodes](#graphics-nodes), in order for some implementations to calculate the amount of backing store memory they need, [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements) requires:
+
+Member                           | Definition
+---------                        | ----------
+`MaxRecords` | The maximum value of `NumRecords` that may be passed in any given [DispatchGraph()](#dispatchgraph) call. For multi-node input modes - [D3D12_MULTI_NODE_CPU_INPUT](#d3d12_multi_node_cpu_input) and [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input), this is maximum totaled across all inputs in a given [DispatchGraph()](#dispatchgraph) call.  
+`MaxNodeInputs`|The maximum number of entrypoints that will be fed by a [DispatchGraph()](#dispatchgraph) must be specified via the `MaxNodeInputs` parameter.  Logically this would be at least 1, but can be more if [D3D12_MULTI_NODE_CPU_INPUT](#d3d12_multi_node_cpu_input) and [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input) are used.  These modes specify a set of entrypoints to feed records to with a `NumNodeInputs` member.  The `MaxNodeInputs` member of `SetMaximumInputRecords()` must be set to the largest value of `NumNodeInputs` that could be used in a `DispatchGraph()` call.
 
 This state only applies to the next call to [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements) for this work graph.  The runtime takes a mutex in work graph properties methods like `SetMaximumInputRecords()` and `GetWorkGraphMemoryRequirements()` - they are thread safe.
 
-If the work graph has graphics nodes and this method isn't called before [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements), behavior is undefined, and the debug layer reports an error.
+If the work graph has graphics nodes and this method isn't called before [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements), behavior is undefined, and the debug layer reports an error.  If the app calls [DispatchGraph()](#dispatchgraph) and exceeds these limits, behavior is undefined.
 
 If [DispatchGraph()](#dispatchgraph) will be called with inputs in GPU memory - [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) or [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input) - then on the command list [SetWorkGraphMaximumGPUInputRecords()](#setworkgraphmaximumgpuinputrecords) must be called before the backing memory is initialized via call to [SetProgram()](#setprogram) with [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags).  The maxmimum set on the command list must not exceed the maximum count originally declared via `ID3D12WorkGraphProperties1::SetMaximumInputRecords()` above.
 
@@ -3359,7 +3389,7 @@ typedef enum D3D12_SET_WORK_GRAPH_FLAGS
 
 Flag                           | Definition
 ---------                           | ----------
-`D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` |<p>Ask system to prepare [backing memory](#backing-memory) for initial dispatch. When this flag is used, app first needs to need to manually ensure any previous references to the backing memory are finished  execution, via appropriate preceding Barrier() call if necessary.</p><p>The first time a work graph is used with a particular backing memory allocation, the flag `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` must be set so the system can prepare the opaque contents for use by graph execution.  This includes situations like reusing backing memory that is in an unknown state for whatever reason, such as if it was last used with a different work graph or for some other purpose.  This isn't needed if independent memory changes, like the local root argument table changes or the contents of global root arguments.</p><p>If the app knows that the last time the backing memory was used was with the same work graph, it doesn't need to specify `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` when setting the memory on the command list.  A command list barrier also isn't needed between subsesquent graph invocations (work from each can overlap), unless the application specifically wants one graph invocation to finish before the next.</p>
+`D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` |<p>Ask system to prepare [backing memory](#backing-memory) for initial dispatch. When this flag is used, app first needs to need to manually ensure any previous references to the backing memory are finished execution, via appropriate preceding Barrier() call if necessary, treating the backing memory initialization as if it is a compute shader doing UAV writes.</p><p>The first time a work graph is used with a particular backing memory allocation, the flag `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` must be set so the system can prepare the opaque contents for use by graph execution.  This includes situations like reusing backing memory that is in an unknown state for whatever reason, such as if it was last used with a different work graph or for some other purpose.  This isn't needed if independent memory changes, like the local root argument table changes or the contents of global root arguments.</p><p>If the app knows that the last time the backing memory was used was with the same work graph, it doesn't need to specify `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` when setting the memory on the command list.  A command list barrier also isn't needed between subsesquent graph invocations (work from each can overlap), unless the application specifically wants one graph invocation to finish before the next.</p>
 
 ---
 
@@ -3393,7 +3423,7 @@ See [initiating work from a command list](#initiating-work-from-a-command-list).
 
 `DispatchGraph` can only be called within command lists of type `DIRECT` or `COMPUTE`.  `BUNDLE` is not supported given that bundles are meant to be reused across command lists, and the [backing memory](#backing-memory) for work graphs can't be used for parallel graph invocations.
 
-There is no implicit barrier between `DispatchGraph()` calls (similar to other `Dispatch*()` APIs).  So unless the app inserts command list arriers, the system can overlap graph execution with surrounding work, including other graph invocations.  
+There is no implicit barrier between `DispatchGraph()` calls (similar to other `Dispatch*()` APIs).  So unless the app inserts command list barriers, the system can overlap graph execution with surrounding work, including other graph invocations.  For compute nodes, the appropriate sync in a `Barrier()` call is `D3D12_BARRIER_SYNC_COMPUTE_SHADING`.  For [graphics nodes](#graphics-nodes), the relevant sync can be used for the stage - mesh launch node shaders described in [mesh nodes](#mesh-nodes) would use `D3D12_BARRIER_SYNC_VERTEX_SHADING` just like mesh shaders outside a work graph.  Similarly other parts of the mesh node program, like pixel shader, depth stencil and rasterizer state, can sync with relevant `D3D12_BARRIER_SYNC_*`.  Since the order of execution of a work graph is unordered, using any of these barriers before or after `DispatchGraph()` may in practice conservatively sync around the full graph execution bounds.  Even though technically, for instance, a barrier related to mesh nodes in the work graph might need only apply when the first mesh node happens to start or the last one finishes.
 
 Note the discussion in [D3D12_SET_WORK_GRAPH_FLAGS](#d3d12_set_work_graph_flags) on `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` for semantics around [backing memory](#backing-memory).
 
@@ -3552,7 +3582,7 @@ Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).
 See [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware).
 
 ```C++
-void SetWorkGraphMaximumGPUInputRecords(UINT Count);
+void SetWorkGraphMaximumGPUInputRecords(UINT MaxRecords, UINT MaxNodeInputs);
 ```
 
 If the work graph doesn't have graphics nodes, this method has no effect and isn't needed.
@@ -3561,11 +3591,14 @@ This method also isn't needed if the work graph has graphics nodes, but with the
 
 For a work graph with graphics nodes that will be driven by GPU input data, this method must be called, and it's semantics are as follows.
 
-Sets the maximum value of `NumRecords` that may be passed to call to [DispatchGraph](#dispatchgraph) when using input records specified in GPU memory via [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) or [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input) (across all inputs in a call).
+Member                           | Definition
+---------                        | ----------
+`MaxRecords`|The maximum value of `NumRecords` that may be passed to call to [DispatchGraph](#dispatchgraph) when using input records specified in GPU memory via [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) or [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input) (across all inputs in a call).
+`MaxNodeInputs`|The maximum number of entrypoints that will be fed by a [DispatchGraph()](#dispatchgraph).  Logically this would be at least 1, but can be more if [D3D12_MULTI_NODE_CPU_INPUT](#d3d12_multi_node_cpu_input) and [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input) are used.  These modes specify a set of entrypoints to feed records to with a `NumNodeInputs` member.  In this case the `MaxNodeInputs` member of `SetMaximumInputRecords()` must be set to the largest value of `NumNodeInputs` that could be used in a `DispatchGraph()` call.
 
 This state only applies to the next call to [SetProgram](#setprogram) for this work graph which must use [D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE](#d3d12_set_work_graph_flags) to initialize backing memory.  Essentially the system knows to initialize the backing memory based on the `SetWorkGraphMaximumGPUInputRecords()` value.  Any subsequent [DispatchGraph](#dispatchgraph) call using this initialization of backing memory, whether in this command list or another, must not be driven by more records in a given `DispatchGraph()` call than the maximum specified, otherwise behavior is undefined.
 
-The `Count` must be less than or equal to the `Count` declared earlier via `ID3D12WorkGraphsProperties1`::[SetMaximumInputRecords()](#setmaximuminputrecords) before the [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements) call that provided the size of backing memory that will be initialized here on the command list in the next [SetProgram()](#setprogram) call.
+The `MaxRecords` and `MaxNodeInputs` values must not exceed the values set earlier via `ID3D12WorkGraphsProperties1`::[SetMaximumInputRecords()](#setmaximuminputrecords), else behavior is undefined.  That method had to be called before the [GetWorkGraphMemoryRequirements()](#getworkgraphmemoryrequirements) call that provided the size of backing memory that will be initialized by the next [SetProgram()](#setprogram) call here on the commandlist.  The inputs the app passes to a `DispatchGraph()` call can't exceed these values else behavior is undefined.
 
 ---
 
@@ -5627,7 +5660,8 @@ At the API this is [D3D12_WORK_GRAPH_DESC](#d3d12_work_graph_desc), however the 
 typedef enum D3D12DDI_WORK_GRAPH_FLAGS_0108
 {
     D3D12DDI_WORK_GRAPH_FLAG_NONE = 0x0,
-    D3D12DDI_WORK_GRAPH_FLAG_ADD_TO_EXISTING_WORK_GRAPH = 0x1
+    D3D12DDI_WORK_GRAPH_FLAG_ADD_TO_EXISTING_WORK_GRAPH = 0x1,
+    D3D12DDI_WORK_GRAPH_FLAG_ENTRYPOINT_GRAPHICS_NODES_RASTERIZE_IN_ORDER = 0x2,
 } D3D12DDI_WORK_GRAPH_FLAGS_0108;
 ```
 
@@ -5636,6 +5670,7 @@ Subobject types defined in this spec:
 Flag                           | Definition
 ---------                           | ----------
 `D3D12DDI_WORK_GRAPH_FLAG_ADD_TO_EXISTING_WORK_GRAPH` | The work graph is being added to an existing one, so the `ProgramName` in [D3D12DDI_WORK_GRAPH_DESC_0108](#d3d12ddi_work_graph_desc_0108) will have been seen before.  It is possible for `AddToStateObject()` to be used without this flag, in which case an entirely new work graph is being added to the state object, such as making a new graph from some existing or new nodes in the state object. So this flag helps distinguish adding an entirely new state object versus adding to an existing one.  The driver could also deduce this by checking to see of `ProgramName` already exists in the state object, but the flag saves the trouble.  Whether or not this flag is present, the work graph description will list the entire graph, with newly added nodes at the start of the list (reusing list entries for existing nodes).  Newly added node definitions include pointers for how they are connected to the rest of the graph (just like existing nodes), and existing nodes provided in previous state objects are updated in-place to link back to the new nodes they are connected to.  So there is one representation of all versions of the graph together, and the differences between versions can be seen by the version number in each node.   For the rules about valid additions, see [AddToStateObject()](#addtostateobject).
+`D3D12DDI_WORK_GRAPH_FLAG_ENTRYPOINT_GRAPHICS_NODES_RASTERIZE_IN_ORDER` | See [graphics nodes with ordered rasterization](#graphics-nodes-with-ordered-rasterization) for the semantics of this flag.  Requires support for [D3D12_WORK_GRAPHS_TIER_1_1](#d3d12_work_graphs_tier) which introduces [mesh nodes](#mesh-nodes).
 
 ---
 
@@ -6320,7 +6355,7 @@ typedef struct D3D12_GENERIC_PROGRAM_DESC
 
 Parameter                           | Definition
 ---------                           | ----------
-`ProgramName`  | Name of the generic program in the state object.  This can be used in APIs that need to reference generic program definitions, like [GetProgramIdentifier()](#getprogramidentifier), and within work graphs via [graphics nodes](#d3d12_program_node).
+`ProgramName`  | Name of the generic program in the state object.  This can be used in APIs that need to reference generic program definitions, like [GetProgramIdentifier()](#getprogramidentifier), and within work graphs via [graphics nodes](#d3d12_program_node). This can be left null for [graphics nodes](#graphics-nodes) in the case where an application is using the ability to construct a graph via node auto-population as described in [D3D12_WORK_GRAPH_DESC](#d3d12_work_graph_desc). In that case, the node ID of the entry shader will be found via node autopopulation to add the program containing the shader to the graph. Even though `ProgramName` isn't necessary here, in its absence the runtime autogenerates a name based on the node ID internally for the purpose of identifying the program when reporting any errors during state object validation via debug layer.  The app doesn't need to worry about this name.  On the other hand if the app needs to do any overrides of a [graphics node](#graphics-nodes) definition from the API, then the generic program would need a `ProgramName` so the node definition can refer to it.
 NumExports | Size of the `pExports` array.  If 0, that array is ignored and can be null.
 `pExports` | Array of shader entrypoints to use in the program.  Collectively they must make sense to be used together.  There must be either a vertex shader or a mesh shader, as well as any other desired shaders that can go with them.
 NumSubobjects | Size of the `ppSubobjects` array.  If 0, that array is ignored and can be null.
@@ -6553,3 +6588,4 @@ v1.004|4/22/2024|<li>In [Barrier](#barrier) and [Lowering Barrier](#lowering-bar
 v1.005|4/30/2024|<li>Fixed minor typos in various mesh node DDIs names where version was 0108 but meant to be 0110.</li>
 v1.006|5/02/2024|<li>In [NodeID](#node-id) section, clarified some semantics around default NodeID naming.  Specifically, if a [node shader definition](#shader-function-attributes) doesn't specify a `[NodeID()]` attribute, the node ID defaults to `{shader name in HLSL, 0}` in the compiled shader. The NodeID and shader name are separate entities in the shader.  From the runtime point of view, it doesn't know whether the NodeID was specified explicitly or was a default assignment.  The significance is if the shader export is renamed when importing into a state object, the NodeID doesn't also get renamed. To rename NodeIDs at state object creation, use node overrides such as [D3D12_COMMON_COMPUTE_NODE_OVERRIDES](#d3d12_common_compute_node_overrides) at the API.</li>
 v1.007|5/03/2024|<li>In [FinishedCrossGroupSharing](#finishedcrossgroupsharing) added an example for when a barrier might be needed before calling `FinishedCrossGroupSharing()`.  Similarly added this to the example code in the [Shaders can use input record lifetime for scoped scratch storage](#shaders-can-use-input-record-lifetime-for-scoped-scratch-storage) section.</li><li>In [DispatchGraph](#dispatchgraph) and [D3D12_SET_WORK_GRAPH_FLAGS](#d3d12_set_work_graph_flags) clarified that there is no implicit barrier around `DispatchGraph` calls, so graph execution can overlap surrounding work including other graph invocation, unless the app manually inserts barriers on the command list.</li>
+v1.008|6/6/2024|<li>Added [graphics nodes with ordered rasterization](#graphics-nodes-with-ordered-rasterization) section.  Correspondingly added a `D3D12_WORK_GRAPH_FLAG_ENTRYPOINT_GRAPHICS_NODES_RASTERIZE_IN_ORDER` [flag](#d3d12_work_graph_flags) to the `D3D12_WORK_GRAPHS_DESC` API and a similar [flag](#d3d12ddi_work_graph_flags_0108) in the DDI.  Noted that this may not be supported until potentially several months after preview launch for all drivers - check with GPU vendor (there's no caps for support for now).  This flag gives apps a way to get fully deterministic rasterization order in a specific case detailed in the spec text.  In short, the focus is to expand on the existing ability to use a work graph in an enhanced `ExecuteIndirect()`-like manner, already supporting the ability to switch programs (e.g. mesh nodes): One can use a graph structure with some/all of its nodes being standalone entrypoints.  The new addition is the ability to opt-in to rasterization order for those graphics nodes directly fed from graph entry (with respect to each other). This could be useful, for instance, for GPU driven rendering of transparencies.</li><li>In [D3D12_SET_WORK_GRAPH_FLAGS](#d3d12_set_work_graph_flags) clarified that `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` acts as a compute shader doing UAV writes from the perspective of any barrier the app may need to issue beforehand.</li><li>In [DispatchGraph()](#dispatchgraph) added a discussion of how `D3D12_BARRIER_SYNC_*` in `Barrier()` API calls apply around work graph execution.</li><li>Added `MaxNodeInputs` parameter to [ID3D12WorkGraphProperties1::SetMaximumInputRecords()](#setmaximuminputrecords) and [ID3D12CommandList::SetWorkGraphMaximumGPUInputRecords()](#setworkgraphmaximumgpuinputrecords) to give mesh nodes implementations a bit more information about user workload.</li><li>In [D3D12_GENERIC_PROGRAM_DESC](#d3d12_generic_program_desc), for the `ProgramName` field, added: This can be left null for [graphics nodes](#graphics-nodes) in the case where an application is using the ability to construct a graph via node auto-population as described in [D3D12_WORK_GRAPH_DESC](#d3d12_work_graph_desc). In that case, the node ID of the entry shader will be found via node autopopulation to add the program containing the shader to the graph. Even though `ProgramName` isn't necessary here, in its absence the runtime autogenerates a name based on the node ID internally for the purpose of identifying the program when reporting any errors during state object validation via debug layer.  The app doesn't need to worry about this name.  On the other hand if the app needs to do any overrides of a [graphics node](#graphics-nodes) definition from the API, then the generic program would need a `ProgramName` so the node definition can refer to it.</li>
