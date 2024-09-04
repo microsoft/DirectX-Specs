@@ -275,6 +275,11 @@ These texture resources share the existing methods of the
 The first references the location in sample index 0.
 The second references the location in the provided sample index.
 
+These texture resources are UAV-type objects similar to RWTexture2D and RWTexture2DArray.
+Just like those objects, their backing resources have to be created with unordered access enabled.
+Resources that enable unordered access cannot also allow creation of depth stencil views.
+As such, depth stencil resources cannot be written to using Writable MSAA Textures.
+
 ```c++
 R RWTexture2DMS::Operator[](uint2 pos);
 R RWTexture2DMS::sample.Operator[][](uint sampleIndex, uint2 pos);
