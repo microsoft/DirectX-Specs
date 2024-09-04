@@ -54,11 +54,16 @@ CBV, SRV, or UAV resource variable or function call argument.
 `SamplerDescriptorHeap[index]` must be used to assign a local or global
 SamplerState or SamplerComparisonState variable or function call argument.
 
-Here's an example usage:
+This example demonstrates how resources of different types can come from the heaps:
 
 ```C++
-Texture2D<float4> myTexture = ResourceDescriptorHeap[texIdx];
-float4 result = myTexture.Sample(SamplerDescriptorHeap[sampIdx], coord);
+Texture2D<float3> myTexture = ResourceDescriptorHeap[texIdx];
+SamplerState samp = SamplerDescriptorHeap[sampIdx];
+float3 color = myTexture.Sample(samp, coord);
+
+Texture2D<float4> myShadowMap = ResourceDescriptorHeap[texIdx+1];
+SamplerComparisonState compSamp = SamplerDescriptorHeap[sampIdx+1];
+float shadow = myShadowMap.SampleCmp(compSamp, shadowCoord, cmpVal);
 ```
 
 The object type returned by these indexing operations
@@ -208,6 +213,7 @@ set in the blob part `DFCC_FeatureInfo` (FourCC `SFI0`).
 
 Version|Date|Description
 -|-|-
+1.00|31 Jul 2024|Corrected malfunctioning sample, added a cmp example
 1.00|20 Apr 2021|Minor Edits for Publication
 0.7|2020-10-07|Added Descriptor and Data Volatility
 0.6|2020-09-25|Note for local root signature, update feature flags
