@@ -289,12 +289,10 @@ are supported if the appropriate capability bit is true.
 Quad Read functions should be supported on Shader Model 6.0
 
 4. How should the quads be ordered?
-   - RESOLVED: Group Index.
-This has advantages and drawbacks.
-It introduces a restriction that the thread group
-must be traversed in row-order.
-Without it, there is no way to identify where the current
-quad is in the group.
+   - RESOLVED: Implementation dependent.
+This spec takes no position on the ordering of quads within a group.
+This gives the most flexibility to implementations possible
+while still presenting a consistent ordering for threads within a single quad.
 
 ---
 # Change Log
