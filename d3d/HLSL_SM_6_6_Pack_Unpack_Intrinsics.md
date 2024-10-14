@@ -79,21 +79,21 @@ write(y);
 ### DXIL Backend Example
 
 ```C++
-%vec4.i16 = type { i16, i16, i16, i16 }
+%dx.types.fouri16 = type { i16, i16, i16, i16 }
 
 ...
 
 %read1 = ...
 %read2 = ...
 // unpack x0
-%x0 = call %vec4.i16 @dx.unpack_u8s16(i32 <op>, i32 %read1)
+%x0 = call %dx.types.fouri16 @dx.unpack_u8s16(i32 <op>, i32 %read1)
 %x0.0 = i16 extractelement %vec4.i16 %x0, 0
 %x0.1 = i16 extractelement %vec4.i16 %x0, 1
 %x0.2 = i16 extractelement %vec4.i16 %x0, 2
 %x0.3 = i16 extractelement %vec4.i16 %x0, 3
 
 // unpack x1
-%z0 = call %vec4.i16 @dx.unpack_u8s16(i32 <op>, i32 %read3)
+%z0 = call %dx.types.fouri16 @dx.unpack_u8s16(i32 <op>, i32 %read3)
 %z0.1 = i16 extractelement %vec4.i16 %z0, 0
 
 // subtract x0 - z0.xxxx
