@@ -138,6 +138,13 @@ typedef struct D3D12_DISPATCH_ARGUMENTS
     UINT ThreadGroupCountZ;
 } D3D12_DISPATCH_ARGUMENTS;
 
+typedef struct D3D12_DISPATCH_MESH_ARGUMENTS
+{
+    UINT ThreadGroupCountX;
+    UINT ThreadGroupCountY;
+    UINT ThreadGroupCountZ;
+} D3D12_DISPATCH_MESH_ARGUMENTS;
+
 typedef struct D3D12_VERTEX_BUFFER_VIEW
 {
     D3D12_GPU_VIRTUAL_ADDRESS BufferLocation;
@@ -151,13 +158,6 @@ typedef struct D3D12_INDEX_BUFFER_VIEW
     UINT SizeInBytes;
     DXGI_FORMAT Format;
 } D3D12_INDEX_BUFFER_VIEW;
-
-typedef struct D3D12_CONSTANT_BUFFER_VIEW
-{
-    D3D12_GPU_VIRTUAL_ADDRESS BufferLocation;
-    UINT SizeInBytes;
-    UINT Padding;
-} D3D12_CONSTANT_BUFFER_VIEW;
 
 typedef struct D3D12_DISPATCH_RAYS_DESC
 {
@@ -753,3 +753,4 @@ expected to perform the following validation:
 |Date|Changes|
 |---|---|
 |10/12/2023|<ul><li>Added [Incrementing constant](#incrementing-constant), which ask the system to increment a specified root constant for each ExecuteIndirect command.</li><li>Added [Feature tiers](#feature-tiers) which has `D3D12_EXECUTE_INDIRECT_TIER_1_1` to report incrementing constant support.</li></ul> |
+|12/9/2024|<ul><li>`D3D12_DISPATCH_MESH_ARGUMENTS` was missing.</li><li>Removed `D3D12_CONSTANT_BUFFER_VIEW` struct, which doesn't exist.</li></ul> |
