@@ -377,7 +377,7 @@ heap out of a larger underlying descriptor heap so that multiple API
 descriptor heaps fit within one hardware descriptor heap. The reason
 this may happen is that for some hardware, switching between hardware
 descriptor heaps during execution requires a GPU wait for idle (ensuring
-GPU references to the previously descriptor heap are finished).
+GPU references to the previous descriptor heap are finished).
 Applications must allow for the possibility, therefore, that switching
 current descriptor heap may incur a GPU wait for idle.
 
