@@ -36,6 +36,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [UAV Typed Load](d3d/UAVTypedLoad.md)
     * [Planar Depth Stencil](d3d/PlanarDepthStencilDDISpec.md)
     * [Vulkan Compatibility Features](d3d/VulkanOn12.md)
+    * [Tight Resource Alignment](d3d/D3D12TightPlacedResourceAlignment.md)
 
 * Performance
     * [CPU Efficiency](d3d/CPUEfficiency.md)
@@ -50,6 +51,11 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Video Protected Resource Support](d3d/D3D12_Video_ProtectedResourceSupport.md)
     * [Video Encoding](d3d/D3D12VideoEncoding.md)
     * [Video Encoding AV1](d3d/D3D12_Video_Encoding_AV1.md)
+    * [Video Encoding HEVC 422/444](d3d/D3D12_Video_Encoding_HEVC_422_444.md)
+    * [Video Encoding Subregion Notification](d3d/D3D12_Video_Encoding_SubregionNotification.md)
+    * [Video Encoding Readable Reconstructed Picture](d3d/D3D12_Video_Encoding_ReadableReconpic.md)
+    * [Video Encoding Extended metadata stats](d3d/D3D12_Video_Encoding_Stats_Metadata.md)
+    * [Video Encoding QPMap, Dirty rects/map, Motion rects/map](d3d/D3D12_Video_Encoding_Texture_QPMap_DirtyMap_MotionVectors.md)
 
 * HLSL
     * [Shader Model 6.0](https://github.com/microsoft/DirectXShaderCompiler/wiki/Shader-Model-6.0)
@@ -71,6 +77,10 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Debug Layer Message Callbacks](d3d/MessageCallback.md)
     * [Independent Devices](d3d/IndependentDevices.md)
     * [WriteBufferImmediate](d3d/D3D12WriteBufferImmediate.md)
+
+* Tools
+    * [Recreate At GPUVA](d3d/RecreateAtGpuva-public.md)
+    * [Application Specific Driver State](d3d/Application_Specific_Driver_State_v0_07.md)
 
 * Misc
     * [D3D12 on Windows 7](d3d/D3D12onWin7.md)
