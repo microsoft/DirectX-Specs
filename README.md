@@ -36,6 +36,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [UAV Typed Load](d3d/UAVTypedLoad.md)
     * [Planar Depth Stencil](d3d/PlanarDepthStencilDDISpec.md)
     * [Vulkan Compatibility Features](d3d/VulkanOn12.md)
+    * [Tight Resource Alignment](d3d/D3D12TightPlacedResourceAlignment.md)
 
 * Performance
     * [CPU Efficiency](d3d/CPUEfficiency.md)
@@ -71,6 +72,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Debug Layer Message Callbacks](d3d/MessageCallback.md)
     * [Independent Devices](d3d/IndependentDevices.md)
     * [WriteBufferImmediate](d3d/D3D12WriteBufferImmediate.md)
+    * [Recreate At GPUVA](d3d/RecreateAtGpuva-public.md)
 
 * Misc
     * [D3D12 on Windows 7](d3d/D3D12onWin7.md)
