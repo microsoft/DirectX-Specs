@@ -72,7 +72,10 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Debug Layer Message Callbacks](d3d/MessageCallback.md)
     * [Independent Devices](d3d/IndependentDevices.md)
     * [WriteBufferImmediate](d3d/D3D12WriteBufferImmediate.md)
+
+* Tools
     * [Recreate At GPUVA](d3d/RecreateAtGpuva-public.md)
+    * [Application Specific Driver State](d3d/Application_Specific_Driver_State_v0_07.md)
 
 * Misc
     * [D3D12 on Windows 7](d3d/D3D12onWin7.md)
