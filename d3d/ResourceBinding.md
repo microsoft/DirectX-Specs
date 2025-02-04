@@ -1,6 +1,6 @@
 <h1>D3D12 Resource Binding Functional Spec</h1>
 
-v1.21 3/11/2022
+v1.22 2/4/2025
 
 ---
 
@@ -840,13 +840,15 @@ struct DrawConstants
 ConstantBuffer<DrawConstants> myDrawConstants : register(b1, space0);
 ```
 
-Arrays are not permitted in cbuffers that get mapped onto root constants
-since dynamic indexing in the root argument space is not supported. So
-for example it is invalid to have an entry in the cbuffer like "float
-myArray[2];".
+Arrays are in cbuffers, such as having entry "float myArray[2];" that 
+get mapped onto root constants can only be accessed using static/literal
+into the array so the driver compiler can directly map each access 
+to a root constant, given the underlying root constant storage 
+may not be contiguous and linearly indexable.
 
-A cbuffer that is mapped to root constants cannot itself be an array. So
-it is invalid to map "cbuffer myCBArray[2]" into root constants.
+Similarly if a cbuffer that is mapped to root constants is an array,
+such as "cbuffer myCBArray[2]", access to the cbuffer array must use 
+static/literal indexing.
 
 ## Using Descriptors Directly in the Root Arguments
 
@@ -5288,6 +5290,17 @@ should apply the same operation regardless of the currently set root
 signature.
 
 # Change History
+
+v1.22 Feb 4, 2025
+- For constant buffers that can map to root constants, the spec disallowed
+    array struct members or arrays of constant buffers.  Changed to allow
+    these, as long as indexing into the arrays is static/literal so the 
+    driver compiler can resolve each access directly to which root constant
+    needs to be accessed (given the underlying storage isn't guaranteed to
+    be contiguous and linearly indexable).  The HLSL compiler or 
+    root signature validation never enforced the old rule that arrays could 
+    not be used, so that rule ended up being meaningless given apps already
+    doing this.
 
 V1.21 Mar 11, 2022
 - Updated [Limitations on Static Samplers](#limitations-on-static-samplers); removing the mention
