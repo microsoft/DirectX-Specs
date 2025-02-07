@@ -1,6 +1,6 @@
 <h1>D3D12 Resource Binding Functional Spec</h1>
 
-v1.22 2/4/2025
+v1.23 2/7/2025
 
 ---
 
@@ -81,7 +81,7 @@ v1.22 2/4/2025
       - [Descriptor Range Flags](#descriptor-range-flags)
       - [Root Descriptor Flags](#root-descriptor-flags)
       - [Consequences of Violating Promises From Static-ness Flags](#consequences-of-violating-promises-from-static-ness-flags)
-    - [Root Signature Version 1.1 API](#root-signature-version-11-api)
+    - [Versioned Root Signature API](#versioned-root-signature-api)
     - [Versioned Root Signature Data Structure Serialization / Deserialization](#versioned-root-signature-data-structure-serialization--deserialization)
     - [Root Signature Version 1.1 Structures](#root-signature-version-11-structures)
   - [Querying Root Signature Version Support](#querying-root-signature-version-support)
@@ -2490,6 +2490,10 @@ typedef struct D3D12_ROOT_SIGNATURE
 } D3D12_ROOT_SIGNATURE;
 ```
 
+Root Signature 1.2 adds `D3D12_STATIC_SAMPLER_DESC1` and `D3D12_ROOT_SIGNATURE_DESC2`,
+described in the [VulkanOn12](VulkanOn12.md#non-normalized-texture-sampling-coordinates) 
+spec under the Non-normalized texture sampling coordinates section.
+
 ### Root Signature Data Structure Serialization / Deserialization
 
 *[**NOTE:** The methods described here are still supported for
@@ -3185,24 +3189,28 @@ The debug layer will have options for validating that applications honor
 their promises, including the default promises that come with using Root
 Signature version 1.1 without setting any flags.
 
-### Root Signature Version 1.1 API
+### Versioned Root Signature API
 
 The following structures define a new versioned root signature
 de-serialized format, `D3D12_VERSIONED_ROOT_SIGNATURE_DESC`, which can
 hold any root signature version.
 
-The new version, 1.1, is defined via `D3D12_ROOT_SIGNATURE_DESC1`
+The new versions, 1.1+, are defined via `D3D12_ROOT_SIGNATURE_DESC1`
 (which will be further detailed below). Root Signature version 1.1
 simply introduces new flags parameters described earlier to descriptor
 ranges and root descriptors, allowing the level of staticness of
 descriptors and data to be declared.
+
+Root Signature 1.2 is documented in the [VulkanOn12](VulkanOn12.md#non-normalized-texture-sampling-coordinates) spec
+under the Non-normalized texture sampling coordinates section.
 
 ```C++
 typedef enum D3D_ROOT_SIGNATURE_VERSION
 {
     D3D_ROOT_SIGNATURE_VERSION_1 = 0x1,
     D3D_ROOT_SIGNATURE_VERSION_1_0 = 0x1,
-    D3D_ROOT_SIGNATURE_VERSION_1_1 = 0x2
+    D3D_ROOT_SIGNATURE_VERSION_1_1 = 0x2,
+    D3D_ROOT_SIGNATURE_VERSION_1_2 = 0x3,
 } D3D_ROOT_SIGNATURE_VERSION;
 
 typedef struct D3D12_FEATURE_DATA_ROOT_SIGNATURE
@@ -3217,6 +3225,7 @@ D3D_ROOT_SIGNATURE_VERSION Version;
     {
         D3D12_ROOT_SIGNATURE_DESC Desc_1_0;
         D3D12_ROOT_SIGNATURE_DESC1 Desc_1_1;
+        D3D12_ROOT_SIGNATURE_DESC2  Desc_1_2;
     };
 } D3D12_VERSIONED_ROOT_SIGNATURE_DESC;
 ```
@@ -3377,7 +3386,7 @@ runtime will return the highest root signature version it supports that
 does not exceed what the application said it is aware of. If an
 application is aware of Root Signature 1.1, it can set HighestVersion to
 this value, and the runtime will confirm this by returning 1.1 out in
-the same field. In a hypothetical future where there is a version 1.2
+the same field. If, for example, version 1.2
 supported, but the application is only aware of 1.1 (initializing
 HighestVersion to 1.1), the runtime will only return 1.1 instead of 1.2.
 
@@ -4599,9 +4608,6 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CREATE_SAMPLER )(
     _In_ CONST D3D12DDIARG_CREATE_SAMPLER*,
     _In_ D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor);
 
-
-
-
 typedef enum D3D12DDI_SAMPLER_FLAGS_0096
 {
     D3D12DDI_SAMPLER_FLAG_NONE = 0x0,
@@ -5289,6 +5295,11 @@ should apply the same operation regardless of the currently set root
 signature.
 
 # Change History
+
+v1.12 Feb 7, 2024
+- Spec was missing definition of Root Signature 1.2.  This is defined 
+  in the [VulkanOn12](VulkanOn12.md#non-normalized-texture-sampling-coordinates) spec under
+  the Non-normalized texture sampling coordinates section.
 
 v1.22 Feb 4, 2025
 - For constant buffers that can map to root constants, the spec disallowed
