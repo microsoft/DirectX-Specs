@@ -439,6 +439,7 @@ the infinitely preceise result.  This applies only to addition, subtraction and 
 <li>Comparisons ignore the sign of 0 (so +0 equals -0).</li>
 <LI>The comparison NE, when either or both operands is NaN returns TRUE. </li>
 <LI>Comparisons of any non-NaN value against +/- INF return the correct result. </li>
+<li>min(x,NaN) == min(NaN,x) == x (same for max).  This used to be a deviation from IEEE 754 but now aligns with IEEE-754-2019's minimumNumber and maximumNumber operations.</li>
 </ul>
 <h4 id="FP32SpecialCases"></h4><A id="3.1.3.2 Complete Listing of Deviations or Additional Requirements vs. IEEE-754"></A>
 <H4>3.1.3.2 Complete Listing of Deviations or Additional Requirements vs. IEEE-754</H4>
@@ -458,20 +459,9 @@ values etc., may be provided as denorm values and may or may not be flushed befo
 <li>NaN input to an operation obviously always produces NaN on output, however the exact bit pattern
 of the NaN is not required to stay the same (unless the operation is a raw "mov" instruction which
 does not alter data at all.)</li>
-<p>The IEEE-754R specification for floating point min and max operations states that if one of the inputs to min or max is a
-"quiet" NaN, then the result of the operation is the other parameter. For example:</p>
-<p>min(x,QNaN) == min(QNaN,x) == x  (same for max)  </p>
-<p>A recent revision of the IEEE-754R specification seems to have adopted a different behavior
-for min and max when one input is a "signaling" SNaN value vs if it was QNaN: </p>
-<p>min(x,SNaN) == min(SNaN,x) == QNaN (same for max)</p>
-<p>This latter change was not in place until after D3D10 had shipped, and even after the D3D11 specifications had become fairly mature and locked down.
-So, even though the intent in general for D3D is to follow the standards for arithmetic: IEEE-754 and IEEE-754R, in this case there is a deviation.
-Future D3D versions may consider relaxing the rules allow either behavior, although compatibility will be a concern in addition having to
-justify the value of distinguishing QNaN vs SNaN in general.  As for D3D11, it cannot change behavior here at this point, so it matches D3D10 as follows:</p>
-<p>The arithmetic rules in D3D10+ do not make any distinctions between "quiet" and "signaling" NaN values (QNaN vs SNaN).  All "NaN" values are handled the same way.
-In the case of min() and max(), the D3D behavior for any NaN value is like how QNaN is handled in IEEE-754R definition above.
-(For completeness - if both inputs are NaN, any NaN value is returned.)</p>
-<li>Another new IEEE 754R rule is that min(-0,+0) == min(+0,-0) == -0,
+<li>The arithmetic rules in D3D10+ do not make any distinctions between "quiet" and "signaling" NaN values (QNaN vs SNaN).  All "NaN" values are handled the same way.</li>
+<li>If both inputs to min() or max() are NaN, any NaN is returned.</li>
+<li>A IEEE 754R rule is that min(-0,+0) == min(+0,-0) == -0,
 and max(-0,+0) == max(+0,-0) == +0, which honor the sign, in contrast
 to the comparison rules for signed zero (stated above).  D3D11 recommends the
 IEEE 754R behavior here, but it will not be enforced; it is permissible
