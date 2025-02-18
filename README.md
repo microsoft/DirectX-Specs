@@ -44,6 +44,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Background Processing](d3d/BackgroundProcessing.md)
     * [Shader Cache](d3d/ShaderCache.md)
     * [GPU Upload Heaps](d3d/D3D12GPUUploadHeaps.md)
+    * [Runtime Bypass](d3d/D3D12RuntimeBypass.md)
 
 * Video
     * [Motion Estimation](d3d/D3D12_Video_Motion_Estimation.md)
