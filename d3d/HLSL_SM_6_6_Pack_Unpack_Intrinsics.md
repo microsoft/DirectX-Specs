@@ -16,7 +16,7 @@ These new packed datatypes are front end constructs to aid in the proper use of 
 The new datatypes and assosiated intrinsics are a required feature for SM6.6.
 
 ## Unpack Intrinsics
-A set of unpack intrinsics are being added to unpack 4 signed or unsigned 8-bit values into a vector of 16 bit values or a 32 bit values. The packing order is from from x component packed to the least significant byte to w components packed to the most significant byte. The 32 bit vector will not require the 16 bit native support.
+A set of unpack intrinsics are being added to unpack 4 signed or unsigned 8-bit values into a vector of 16 bit values or a 32 bit values. The packing order is from x component packed to the least significant byte to w components packed to the most significant byte. The 32 bit vector will not require the 16 bit native support.
 
 ```C++
 int16_t4 unpack_s8s16(int8_t4_packed packedVal);        // Sign Extended
