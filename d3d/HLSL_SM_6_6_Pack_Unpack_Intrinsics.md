@@ -36,10 +36,10 @@ int8_t4_packed pack_s8(int32_t4  unpackedVal);          // Pack lower 8 bits, dr
 uint8_t4_packed pack_u8(uint16_t4 unpackedVal);         // Pack lower 8 bits, drop unused bits
 int8_t4_packed pack_s8(int16_t4  unpackedVal);          // Pack lower 8 bits, drop unused bits
 
-uint8_t4_packed pack_clamp_u8(uint32_t4  unpackedVal);   // Pack and Clamp [0, 255]
+uint8_t4_packed pack_clamp_u8(int32_t4  unpackedVal);   // Pack and Clamp [0, 255]
 int8_t4_packed pack_clamp_s8(int32_t4  unpackedVal);    // Pack and Clamp [-128, 127]
 
-uint8_t4_packed pack_clamp_u8(uint16_t4  unpackedVal);   // Pack and Clamp [0, 255]
+uint8_t4_packed pack_clamp_u8(int16_t4  unpackedVal);   // Pack and Clamp [0, 255]
 int8_t4_packed pack_clamp_s8(int16_t4  unpackedVal);    // Pack and Clamp [-128, 127]
 ```
 
