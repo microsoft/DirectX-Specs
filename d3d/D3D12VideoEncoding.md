@@ -22,7 +22,7 @@ The D3D12 Video API will enable portable hardware accelerated video encoding on 
 
 ### 2.1.2 Media APIs
 
-This API provides access to video encoding capabilities in a low level and portable way across all hardware vendors. This allows higher level Media APIs (such as Media Foundation) to build their media layers on top of this API which takes care of abstracting the different hardware platforms. Given the low level design of the API, these higher level media layers can optimize for their scenarios by having fine grain control of synchronization and memory allocation/residency aspects of the Video encode session such as full control of the reference picture management and bitstream headers writing responsabilities. This shift of responsabilities to the layer sitting above this API also allows to have a consistent set of encoding policies (eg. DPB heuristics such as adaptive GOP) in the media layer that can be reused across different hardware platforms.
+This API provides access to video encoding capabilities in a low level and portable way across all hardware vendors. This allows higher level Media APIs (such as Media Foundation) to build their media layers on top of this API which takes care of abstracting the different hardware platforms. Given the low level design of the API, these higher level media layers can optimize for their scenarios by having fine grain control of synchronization and memory allocation/residency aspects of the Video encode session such as full control of the reference picture management and bitstream headers writing responsibilities. This shift of responsibilities to the layer sitting above this API also allows to have a consistent set of encoding policies (eg. DPB heuristics such as adaptive GOP) in the media layer that can be reused across different hardware platforms.
 
 ### 2.1.3 D3D Graphics, Compute and Machine learning interop with Video Encode API
 
@@ -42,11 +42,11 @@ The main supported codecs will be H264 and HEVC but with open extensibility for 
 
  *Note:* The union types always contain **pointers** to the codec-specific structures. The rationale behind this design decision is to preserve the binary interface compatibility on extensibility. The union types will always have a constant size based on the pointer size of the host architecture. This decision also prevents structures holding members of (or containing anonymous) union types of changing their type sizes when extending the interface. Some of the unions today only contain pointers to enum types, but to be consistent with this, they were also referenced as pointers in the case a new codec requires some more complex type than an enum to represent those concepts.
 
-## 2.3 Responsabilities separation between D3D12 API and Helper layer
+## 2.3 Responsibilities separation between D3D12 API and Helper layer
 
 The D3D12 API is designed to be a lower level API than the existing D3D11 like APIs, giving more control to the host regarding some aspects like final bitstream header coding, frame reference management and exposing more complex synchronization mechanisms and explicit memory management.
 
-After building this API, we will be building an **optional** separate helper layer placed on top of this API interface that will have responsabilities such as, but not limited to:
+After building this API, we will be building an **optional** separate helper layer placed on top of this API interface that will have responsibilities such as, but not limited to:
 * Producing the full encoded bitstream based on the D3D12 API payload output and subregion (eg. slice) headers. This includes handling SEI/VUI/VPS/SPS/PPS/etc.
 * Reference picture management component that manages the reconstructed picture allocations and residency, B-frame reordering and reference frames usage strategy.
 * Delegation pattern for some of the D3D12 API features such as Rate Control, Intra-refresh, Encoder Support cap queries, etc.
@@ -56,7 +56,7 @@ After building this API, we will be building an **optional** separate helper lay
 ### D3D12 Api vs Helper layer interaction diagram
 ![APIs Layering diagram](./images/D3D12VideoEncoding/api-layering.png)
 
-**Note:** In the spec, when mentioning "the host" we refer to any user of the D3D12 lower level API. The helper layer is a particular instance of a host that will take care of some of the low level responsabilities and provide a higher level interface for entry level end users. **Advanced users can use the D3D12 API directly without the helper layer.**
+**Note:** In the spec, when mentioning "the host" we refer to any user of the D3D12 lower level API. The helper layer is a particular instance of a host that will take care of some of the low level responsibilities and provide a higher level interface for entry level end users. **Advanced users can use the D3D12 API directly without the helper layer.**
 
 ---
 
