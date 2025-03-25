@@ -169,7 +169,7 @@ interface ID3D12DeviceConfiguration : IUnknown
 
 **`ID3D12DeviceFactory`**
 
-This interface can be retrieved from `ID3D12SDKConfiguration1::CreateDeviceFactory` (where `ID3D12SDKConfiguration1` is created from `D3D12GetInterface` with `CLSID_D3D12SDKConfiguration`). The returned object can retrieve further configuration settings using `ID3D12DeviceFactory::GetConfigInterface` with `CLSID_D3D12Debug`, `CLSID_D3D12Tools`, and `CLSID_D3D12DeviceRemovedExtendedData`.
+This interface can be retrieved from `ID3D12SDKConfiguration1::CreateDeviceFactory` (where `ID3D12SDKConfiguration1` is created from `D3D12GetInterface` with `CLSID_D3D12SDKConfiguration`). The returned object can retrieve further configuration settings using `ID3D12DeviceFactory::GetConfigurationInterface` with `CLSID_D3D12Debug`, `CLSID_D3D12Tools`, and `CLSID_D3D12DeviceRemovedExtendedData`.
 
 Any settings applied using any of these interfaces, when that interface was queried from a D3D12 device factory object, will apply only to that factory object and not globally, unless/until `ApplyToGlobalState` is set. If the `InitializeFromGlobalState` API is not called, the device factory object will begin in a well-defined state, which matches the state if no API is invoked on any of the above-mentioned interfaces, nor the `D3D12EnableExperimentalFeatures` export. The `InitializeFromGlobalState` API may not always be available. It requires that the globally-configured `D3D12Core.dll` be updated to support device factories, or else some of the global state is not queryable.
 
