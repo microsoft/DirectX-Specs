@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.20 1/11/2023
+v1.30 5/28/2025
 
 ---
 
@@ -39,6 +39,14 @@ v1.20 1/11/2023
   - [Inline raytracing](#inline-raytracing)
     - [TraceRayInline control flow](#tracerayinline-control-flow)
     - [Specialized TraceRayInline control flow](#specialized-tracerayinline-control-flow)
+  - [Shader Execution Reordering](#shader-execution-reordering)
+    - [SER Device Support](#ser-device-support)
+  - [Opacity micromaps](#opacity-micromaps)
+    - [Opacity micromap construction](#opacity-micromap-construction)
+    - [Opacity micromaps and TraceRay](#opacity-micromaps-and-traceray)
+    - [Opacity micromaps and TraceRayInline](#opacity-micromaps-and-tracerayinline)
+    - [Opacity micromap encoding](#opacity-micromap-encoding)
+    - [Opacity micromap related API and HLSL impacts](#opacity-micromap-related-api-and-hlsl-impacts)
 - [Shader management](#shader-management)
   - [Problem space](#problem-space)
     - [Implementations juggle many shaders](#implementations-juggle-many-shaders)
@@ -169,6 +177,14 @@ v1.20 1/11/2023
         - [D3D12\_RAYTRACING\_AABB](#d3d12_raytracing_aabb)
         - [D3D12\_RAYTRACING\_INSTANCE\_DESC](#d3d12_raytracing_instance_desc)
         - [D3D12\_RAYTRACING\_INSTANCE\_FLAGS](#d3d12_raytracing_instance_flags)
+        - [D3D12\_RAYTRACING\_GEOMETRY\_OMM\_TRIANGLES\_DESC](#d3d12_raytracing_geometry_omm_triangles_desc)
+        - [D3D12\_RAYTRACING\_GEOMETRY\_OMM\_LINKAGE\_DESC](#d3d12_raytracing_geometry_omm_linkage_desc)
+        - [D3D12\_RAYTRACING\_OPACITY\_MICROMAP\_SPECIAL\_INDEX](#d3d12_raytracing_opacity_micromap_special_index)
+        - [D3D12\_RAYTRACING\_OPACITY\_MICROMAP\_ARRAY\_DESC](#d3d12_raytracing_opacity_micromap_array_desc)
+        - [D3D12\_RAYTRACING\_OPACITY\_MICROMAP\_FORMAT](#d3d12_raytracing_opacity_micromap_format)
+        - [D3D12\_RAYTRACING\_OPACITY\_MICROMAP\_HISTOGRAM\_ENTRY](#d3d12_raytracing_opacity_micromap_histogram_entry)
+        - [D3D12\_RAYTRACING\_OPACITY\_MICROMAP\_DESC](#d3d12_raytracing_opacity_micromap_desc)
+        - [D3D12\_RAYTRACING\_OPACITY\_MICROMAP\_STATE](#d3d12_raytracing_opacity_micromap_state)
         - [D3D12\_GPU\_VIRTUAL\_ADDRESS\_AND\_STRIDE](#d3d12_gpu_virtual_address_and_stride)
     - [EmitRaytracingAccelerationStructurePostbuildInfo](#emitraytracingaccelerationstructurepostbuildinfo)
       - [EmitRaytracingAccelerationStructurePostbuildInfo Structures](#emitraytracingaccelerationstructurepostbuildinfo-structures)
@@ -182,6 +198,10 @@ v1.20 1/11/2023
       - [CopyRaytracingAccelerationStructure Structures](#copyraytracingaccelerationstructure-structures)
         - [D3D12\_RAYTRACING\_ACCELERATION\_STRUCTURE\_COPY\_MODE](#d3d12_raytracing_acceleration_structure_copy_mode)
         - [D3D12\_SERIALIZED\_RAYTRACING\_ACCELERATION\_STRUCTURE\_HEADER](#d3d12_serialized_raytracing_acceleration_structure_header)
+        - [D3D12\_SERIALIZED\_RAYTRACING\_ACCELERATION\_STRUCTURE\_HEADER1](#d3d12_serialized_raytracing_acceleration_structure_header1)
+        - [D3D12\_SERIALIZED\_RAYTRACING\_ACCELERATION\_STRUCTURE\_HEADER\_POSTAMBLE\_TYPE](#d3d12_serialized_raytracing_acceleration_structure_header_postamble_type)
+        - [D3D12\_RAYTRACING\_SERIALIZED\_BLOCK](#d3d12_raytracing_serialized_block)
+        - [D3D12\_RAYTRACING\_SERIALIZED\_BLOCK\_TYPE](#d3d12_raytracing_serialized_block_type)
         - [D3D12\_BUILD\_RAYTRACING\_ACCELERATION\_STRUCTURE\_TOOLS\_VISUALIZATION\_HEADER](#d3d12_build_raytracing_acceleration_structure_tools_visualization_header)
     - [SetPipelineState1](#setpipelinestate1)
     - [DispatchRays](#dispatchrays)
@@ -254,7 +274,9 @@ v1.20 1/11/2023
       - [WorldToObject4x3](#worldtoobject4x3)
     - [Hit specific system values](#hit-specific-system-values)
       - [HitKind](#hitkind)
+      - [TriangleObjectPosition](#triangleobjectposition)
   - [RayQuery](#rayquery)
+    - [RayQuery flags](#rayquery-flags)
     - [RayQuery intrinsics](#rayquery-intrinsics)
       - [RayQuery enums](#rayquery-enums)
         - [COMMITTED\_STATUS](#committed_status)
@@ -301,13 +323,66 @@ v1.20 1/11/2023
       - [RayQuery CommittedWorldToObject4x3](#rayquery-committedworldtoobject4x3)
       - [RayQuery CandidateTriangleBarycentrics](#rayquery-candidatetrianglebarycentrics)
       - [RayQuery CandidateTriangleFrontFace](#rayquery-candidatetrianglefrontface)
+      - [RayQuery CandidateTriangleObjectPosition](#rayquery-candidatetriangleobjectposition)
       - [RayQuery CommittedTriangleBarycentrics](#rayquery-committedtrianglebarycentrics)
       - [RayQuery CommittedTriangleFrontFace](#rayquery-committedtrianglefrontface)
+      - [RayQuery CommittedTriangleObjectPosition](#rayquery-committedtriangleobjectposition)
+  - [HitObject](#hitobject)
+    - [HitObject Interaction with Payload Access Qualifiers](#hitobject-interaction-with-payload-access-qualifiers)
+    - [HitObject TraceRay](#hitobject-traceray)
+    - [HitObject FromRayQuery](#hitobject-fromrayquery)
+    - [HitObject MakeMiss](#hitobject-makemiss)
+    - [HitObject MakeNop](#hitobject-makenop)
+    - [HitObject Invoke](#hitobject-invoke)
+    - [HitObject IsMiss](#hitobject-ismiss)
+    - [HitObject IsHit](#hitobject-ishit)
+    - [HitObject IsNop](#hitobject-isnop)
+    - [HitObject GetRayFlags](#hitobject-getrayflags)
+    - [HitObject GetRayTMin](#hitobject-getraytmin)
+    - [HitObject GetRayTCurrent](#hitobject-getraytcurrent)
+    - [HitObject GetWorldRayOrigin](#hitobject-getworldrayorigin)
+    - [HitObject GetWorldRayDirection](#hitobject-getworldraydirection)
+    - [HitObject GetObjectRayOrigin](#hitobject-getobjectrayorigin)
+    - [HitObject GetObjectRayDirection](#hitobject-getobjectraydirection)
+    - [HitObject GetObjectToWorld3x4](#hitobject-getobjecttoworld3x4)
+    - [HitObject GetObjectToWorld4x3](#hitobject-getobjecttoworld4x3)
+    - [HitObject GetWorldToObject3x4](#hitobject-getworldtoobject3x4)
+    - [HitObject GetWorldToObject4x3](#hitobject-getworldtoobject4x3)
+    - [HitObject GetInstanceIndex](#hitobject-getinstanceindex)
+    - [HitObject GetInstanceID](#hitobject-getinstanceid)
+    - [HitObject GetGeometryIndex](#hitobject-getgeometryindex)
+    - [HitObject GetPrimitiveIndex](#hitobject-getprimitiveindex)
+    - [HitObject GetHitKind](#hitobject-gethitkind)
+    - [HitObject GetAttributes](#hitobject-getattributes)
+    - [HitObject GetShaderTableIndex](#hitobject-getshadertableindex)
+    - [HitObject SetShaderTableIndex](#hitobject-setshadertableindex)
+    - [HitObject LoadLocalRootArgumentsConstant](#hitobject-loadlocalrootargumentsconstant)
+  - [MaybeReorderThread](#maybereorderthread)
+    - [MaybeReorderThread with HitObject](#maybereorderthread-with-hitobject)
+    - [MaybeReorderThread with coherence hint](#maybereorderthread-with-coherence-hint)
+    - [MaybeReorderThread with HitObject and coherence hint](#maybereorderthread-with-hitobject-and-coherence-hint)
+    - [ReorderThread Example 1](#reorderthread-example-1)
+    - [ReorderThread Example 2](#reorderthread-example-2)
+    - [ReorderThread Example 3](#reorderthread-example-3)
+    - [Reorder points](#reorder-points)
+    - [MaybeReorderThread divergence behavior](#maybereorderthread-divergence-behavior)
+      - [Reorder points - memory coherence and visibility](#reorder-points---memory-coherence-and-visibility)
+    - [Separation of MaybeReorderThread and HitObject Invoke](#separation-of-maybereorderthread-and-hitobject-invoke)
+      - [MaybeReorderThread and Invoke example 1: Common computations that rely on large raygen state](#maybereorderthread-and-invoke-example-1-common-computations-that-rely-on-large-raygen-state)
+      - [MaybeReorderThread and Invoke example 2: Do common computations with hit coherence](#maybereorderthread-and-invoke-example-2-do-common-computations-with-hit-coherence)
+      - [MaybeReorderThread and Invoke example 3: Same surface shader but different behaviour in raygen](#maybereorderthread-and-invoke-example-3-same-surface-shader-but-different-behaviour-in-raygen)
+      - [MaybeReorderThread and Invoke example 4: Unified shading](#maybereorderthread-and-invoke-example-4-unified-shading)
+      - [MaybeReorderThread and Invoke example 5: Coherently break render loop on miss](#maybereorderthread-and-invoke-example-5-coherently-break-render-loop-on-miss)
+      - [MaybeReorderThread and Invoke example 6: Two-step shading, single reorder](#maybereorderthread-and-invoke-example-6-two-step-shading-single-reorder)
+      - [MaybeReorderThread and Invoke example 7: Live state optimization](#maybereorderthread-and-invoke-example-7-live-state-optimization)
+      - [MaybeReorderThread and Invoke example 8: Back-to-back calls](#maybereorderthread-and-invoke-example-8-back-to-back-calls)
   - [Payload access qualifiers](#payload-access-qualifiers)
     - [Availability](#availability)
     - [Payload size](#payload-size)
     - [Syntax](#syntax)
     - [Semantics](#semantics)
+      - [anyhit/closesthit/miss stages](#anyhitclosesthitmiss-stages)
+      - [caller stage](#caller-stage)
     - [Detailed semantics](#detailed-semantics)
       - [Local working copy](#local-working-copy)
       - [Shader stage sequence](#shader-stage-sequence)
@@ -337,14 +412,6 @@ v1.20 1/11/2023
         - [AddToStateObject parent lifetimes](#addtostateobject-parent-lifetimes)
     - [Reporting raytracing support from the driver](#reporting-raytracing-support-from-the-driver)
       - [D3D12DDI\_RAYTRACING\_TIER](#d3d12ddi_raytracing_tier)
-- [Potential future features](#potential-future-features)
-  - [Traversal shaders](#traversal-shaders)
-  - [More efficient acceleration structure builds](#more-efficient-acceleration-structure-builds)
-  - [Beam tracing](#beam-tracing)
-  - [ExecuteIndirect improvements](#executeindirect-improvements)
-    - [DispatchRays in command signature](#dispatchrays-in-command-signature)
-    - [Draw and Dispatch improvements](#draw-and-dispatch-improvements)
-    - [BuildRaytracingAccelerationStructure in command signature](#buildraytracingaccelerationstructure-in-command-signature)
 - [Change log](#change-log)
 
 ---
@@ -560,11 +627,7 @@ simultaneously, binding them to relevant shaders as input resources (see
 HLSL). That way a given shader can trace rays into different sets of
 geometry if desired.
 
-> The two level hierarchy for geometry lets applications strike a balance
-between intersection performance (maximized by using larger bottom-level
-acceleration structures) and flexibility (maximized by using more,
-smaller bottom-level acceleration structures and more instances in a
-top-level acceleration structure).
+> The two level hierarchy for geometry lets applications strike a balance between intersection performance (maximized by using larger bottom-level acceleration structures) and flexibility (maximized by using more, smaller bottom-level acceleration structures and more instances in a top-level acceleration structure).
 
 See [Acceleration structure properties](#acceleration-structure-properties) for a discussion of rules and determinism.
 
@@ -690,9 +753,7 @@ if it produced the closest accepted intersection within the [ray extents](#ray-e
 Closest hit shaders can read intersection attributes, modify ray
 payload, and generate additional rays.
 
-> A typical use of a closest hit shader would be to evaluate the color of
-a surface and either contribute to the ray payload or store data to
-memory (via UAV).
+> A typical use of a closest hit shader would be to evaluate the color of a surface and either contribute to the ray payload or store data to memory (via UAV).
 
 Any hit shaders (if any) along a ray's path are all executed before a
 closest hit shader (if any). In particular, if both shader types are
@@ -734,8 +795,7 @@ A hit group with no shaders at all is also possible, by simply using
 NULL as it's [shader identifier](#shader-identifier) (concept described
 later).  This counts as opaque geometry.
 
-> An empty hit group can be useful, for example, if the app doesn't want
-to do anything for hits and only cares about the [miss shader](#miss-shaders) running when nothing has been hit.
+> An empty hit group can be useful, for example, if the app doesn't want to do anything for hits and only cares about the [miss shader](#miss-shaders) running when nothing has been hit.
 
 ---
 
@@ -749,7 +809,7 @@ This is what happens when a shader calls [TraceRay()](#traceray):
 primitives that may intersect the ray, conservatively: If a primitive is
 intersected by the ray and is within the current [ray extents](#ray-extents), it is guaranteed to be enumerated eventually. If a primitive
 is not intersected by the ray or is outside the current [ray extents](#ray-extents), it may or may not be enumerated. Note that TMax is updated
-when a hit is committed.
+when a hit is committed (internal to the traversal, not visible to the application).
 
 \[2\] If the intersection shader is running and calls
 [ReportHit()](#reporthit), the subsequent logic handles the intersection
@@ -780,38 +840,15 @@ contain more calls to [ReportHit()](#reporthit).
 [TraceRay()](#traceray) supports a selection of [ray flags](#ray-flags) to override transparency, culling, and early-out
 behavior.
 
-> To illustrate the utility of ray flags, consider how they would help
-implement one of multiple approaches to rendering shadows. Suppose an
-app wants to trace rays to distant light sources to accumulate light
-contributions for rays that don't hit any geometry, using tail
-recursion.
+> To illustrate the utility of ray flags, consider how they would help implement one of multiple approaches to rendering shadows. Suppose an app wants to trace rays to distant light sources to accumulate light contributions for rays that don't hit any geometry, using tail recursion.
 >
-> [TraceRay()](#traceray) could be called with
-`RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH |
-RAY_FLAG_SKIP_CLOSEST_HIT_SHADER` flags from the [ray generation shader](#ray-generation-shaders),
-followed by exiting the shader withn nothing else to do. Any hit shaders,
-if present on geometry, would execute to determine transparency,
-though these shader invocations could be skipped if desired by also including `RAY_FLAG_FORCE_OPAQUE`.
+> [TraceRay()](#traceray) could be called with `RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER` flags from the [ray generation shader](#ray-generation-shaders), followed by exiting the shader withn nothing else to do. Any hit shaders, if present on geometry, would execute to determine transparency, though these shader invocations could be skipped if desired by also including `RAY_FLAG_FORCE_OPAQUE`.
 >
->If any geometry hit is encountered (not necessarily the closest hit),
-ray processing stops, due to
-`RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH`. A hit has been
-committed/found, but there is no [closest hit shader](#closest-hit-shaders) invocation, due to
-`RAY_FLAG_SKIP_CLOSEST_HIT_SHADER`. So processing of the ray ends
-with no action.
+>If any geometry hit is encountered (not necessarily the closest hit), ray processing stops, due to `RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH`. A hit has been committed/found, but there is no [closest hit shader](#closest-hit-shaders) invocation, due to `RAY_FLAG_SKIP_CLOSEST_HIT_SHADER`. So processing of the ray ends with no action.
 >
->Rays that don't hit anything cause the [miss shader](#miss-shaders) to
-run, where light contribution is evaluated and written to a UAV. So in
-this scenario, geometry in the acceleration structure acted to cull miss
-shader invocations, ignoring every other type of shader (unless needed
-for transparency evaluation).
+>Rays that don't hit anything cause the [miss shader](#miss-shaders) to run, where light contribution is evaluated and written to a UAV. So in this scenario, geometry in the acceleration structure acted to cull miss shader invocations,  ignoring every other type of shader (unless needed for transparency evaluation).
 >
->Skipping shaders can alternatively be accomplished by setting shader
-bindings to NULL (shader bindings details are discussed [later on](#shader-identifier)).
-But the use of ray flags in this example means the implementation doesn't
-even have to look up shader bindings (only to find that they are NULL).
-Which also means the app doesn't have to bother configuring NULL bindings
-anywhere.
+>Skipping shaders can alternatively be accomplished by setting shader bindings to NULL (shader bindings details are discussed [later on](#shader-identifier)). But the use of ray flags in this example means the implementation doesn't even have to look up shader bindings (only to find that they are NULL). Which also means the app doesn't have to bother configuring NULL bindings anywhere.
 
 ---
 
@@ -824,22 +861,15 @@ InstanceInclusionMask which gets ANDed with the InstanceMask from any
 geometry instance that is a candidate for intersection. If the result of
 the AND is zero, the intersection is ignored.
 
-> This feature allows apps to represent different subsets of geometry
-within a single acceleration structure as opposed to having to build
-separate acceleration structures for each subset. The app can choose how
-to trade traversal performance versus overhead for maintaining multiple
-acceleration structures.
+> This feature allows apps to represent different subsets of geometry within a single acceleration structure as opposed to having to build separate acceleration structures for each subset. The app can choose how to trade traversal performance versus overhead for maintaining multiple acceleration structures.
 >
-> An example would be culling objects that an app doesn't want to
-contribute to a shadow determination but otherwise remain visible.
+> An example would be culling objects that an app doesn't want to contribute to a shadow determination but otherwise remain visible.
 >
 > Another way to look at this is:
 >
-> The bits in InstanceMask define which "groups" an instance belongs to.
-(If it is set to zero the instance will always be rejected\!)
+> The bits in InstanceMask define which "groups" an instance belongs to. (If it is set to zero the instance will always be rejected\!)
 >
->The bits in the ray's InstanceInclusionMask define which groups to
-include during traversal.
+>The bits in the ray's InstanceInclusionMask define which groups to include during traversal.
 
 ---
 
@@ -876,19 +906,9 @@ rays causes other shaders to run. So using this feature to execute a
 tiny program may not be worth the minimum overhead of scheduling the
 shader to run.
 
-> In the absence of callable shaders as a feature, applications could
-achieve the same result by tracing rays with a NULL acceleration
-structure, which causes a miss shader to run, repurposing the ray
-payload and potentially the ray itself as function parameters. Except
-doing this miss shader hack would be wasteful in terms of defining a ray
-that is guaranteed to miss for no reason. Rather than supporting this
-hack, callable shaders are seen as a cleaner equivalent.
+> In the absence of callable shaders as a feature, applications could achieve the same result by tracing rays with a NULL acceleration structure, which causes a miss shader to run, repurposing the ray payload and potentially the ray itself as function parameters. Except doing this miss shader hack would be wasteful in terms of defining a ray that is guaranteed to miss for no reason. Rather than supporting this hack, callable shaders are seen as a cleaner equivalent.
 >
-> The bottom line is implementations should not have difficulty supporting
-callable shaders given the system has to support miss shaders anyway. At
-the same time, apps must not expect execution efficiency that would
-greatly exceed that of invoking a miss shader from a raytrace (minus the
-actual ray processing overhead).
+> The bottom line is implementations should not have difficulty supporting callable shaders given the system has to support miss shaders anyway. At the same time, apps must not expect execution efficiency that would greatly exceed that of invoking a miss shader from a raytrace (minus the actual ray processing overhead).
 
 ---
 
@@ -950,16 +970,7 @@ s0 must use the same definition. Further, the total number of unique
 static samplers across local root signature and global root signature
 must fit in the static sampler limit for D3D12's resource binding model.
 
-> The reason that local root signatures must not have any conflicting
-static sampler definitions is to enable shaders to be compiled
-individually on implementations that have to emulate static samplers
-using descriptor heaps. Such implementations can pick a fixed location
-in a sampler descriptor heap to place a static sampler, knowing that
-other shaders that might use a different local root signature and define
-the same sampler will use the same slot. Static samplers in the global
-root signature can also be handled the same way (given that as mentioned
-above, register bindings can't overlap across global and local root
-signatures.
+> The reason that local root signatures must not have any conflicting static sampler definitions is to enable shaders to be compiled individually on implementations that have to emulate static samplers using descriptor heaps. Such implementations can pick a fixed location in a sampler descriptor heap to place a static sampler, knowing that other shaders that might use a different local root signature and define the same sampler will use the same slot. Static samplers in the global root signature can also be handled the same way (given that as mentioned above, register bindings can't overlap across global and local root signatures.
 
 There is a discussion on shader visibility flags in root signatures
 [here](#note-on-shader-visibility).
@@ -991,7 +1002,7 @@ behavior will be consistent with the specified shader code.
 
 ## Shader record
 
-```
+```nothing
 shader record = {shader identifier, local root arguments for the shader}
 ```
 
@@ -1006,7 +1017,7 @@ signature. The maximum stride for shader records is 4096 bytes.
 
 ## Shader tables
 
-```
+```nothing
 shader table = {shader record A}, {shader record B} ...
 ```
 
@@ -1127,7 +1138,7 @@ primitives that may intersect the ray, conservatively: If a primitive is
 intersected by the ray and is within the current [ray extents](#ray-extents)
 interval, it is guaranteed to be enumerated eventually. If a primitive
 is not intersected by the ray or is outside the current [ray extents](#ray-extents), it may or may not be enumerated. Note that TMax is updated
-when a hit is committed.  [RayQuery::Proceed()](#rayquery-proceed) represents where the bulk of system acceleration structure traversal is implemented (including code inlining where applicable).  [RayQuery::Abort()](#rayquery-abort) is an optional shortcut for the shader to be able to cause traversal to appear to be complete, via [RayQuery::Proceed()](#rayquery-proceed) returning `FALSE`.  So it is just a convenient way to exit the shader's traversal loop.  A shader can instead choose to break out of its traversal logic manually as well with normal shader code branching (invisible to the system).  This works since, as discussed in \[5\], the shader can call [RayQuery::CommittedStatus()](#rayquery-committedstatus) and related methods for retrieving committed hit information at any time after a [RayQuery::TraceRayInline](#rayquery-tracerayinline) call.
+when a hit is committed (internal to the traversal, not visible to the application).  [RayQuery::Proceed()](#rayquery-proceed) represents where the bulk of system acceleration structure traversal is implemented (including code inlining where applicable).  [RayQuery::Abort()](#rayquery-abort) is an optional shortcut for the shader to be able to cause traversal to appear to be complete, via [RayQuery::Proceed()](#rayquery-proceed) returning `FALSE`.  So it is just a convenient way to exit the shader's traversal loop.  A shader can instead choose to break out of its traversal logic manually as well with normal shader code branching (invisible to the system).  This works since, as discussed in \[5\], the shader can call [RayQuery::CommittedStatus()](#rayquery-committedstatus) and related methods for retrieving committed hit information at any time after a [RayQuery::TraceRayInline](#rayquery-tracerayinline) call.
 
 \[2\] Consider the case where the geometry is not triangle based.  Instead of fixed function triangle intersection [RayQuery::Proceed()](#rayquery-proceed) returns control to the shader.  It is the responsibility of the shader to evaluate all procedural intersections for this acceleration structure node, including resolving transparency for them if necessary without the system seeing what's happening.  The net result in terms of traversal is to call[RayQuery::CommitProceduralPrimitiveHit()](#rayquery-commitproceduralprimitivehit) at most once if the shader finds an opaque hit that is closest so far.
 
@@ -1150,6 +1161,339 @@ flags of the intersection as well as the selection of [ray flags](#ray-flags) (t
 The image below depicts how a particular choice of template flags used with the initial declaration of `RayQuery` can prune down the full flow graph (depicted above).  There is no shader participation needed in the search for intersections here.  Further, the search is configured to end upon the first hit.  Simplifications like this can free the system to generate more performant inline raytracing code.
 
 ![traceRayInlineControlFlow2](images/raytracing/traceRayInlineControlFlow2.png)
+
+---
+
+## Shader Execution Reordering
+
+> Motivation:
+>
+> Many raytracing workloads suffer from divergent shader execution and divergent data access because of their stochastic nature. Improving coherence with high-level application-side logic has many drawbacks, both in terms of achievable performance (compared to a hardware-assisted implementation) and developer effort. The DXR API already allows implementations to dynamically schedule shading work triggered by [TraceRay](#traceray) and [CallShader](#callshader)`, but does not offer a way for the application to control that scheduling in any way.
+>
+>Furthermore, the current fused nature of `TraceRay` with its combined execution of traversal, intersection testing, anyhit shading and closesthit or miss shading imposes various restrictions on the programming model that, again, can increase the amount of developer effort and decrease performance. One aspect is that common code, e.g., vertex fetch and interpolation, must be duplicated in all closesthit shaders. This can cause more code to be generated, which is particularly problematic in a divergent execution environment. Furthermore, `TraceRay`'s nature requires that simple visibility rays unnecessarily execute hit shaders in order to access basic information about the hit which must be transferred back to the caller through the payload.
+
+Shader Execution Reordering (SER) introduces a new HLSL built-in intrinsic,
+[MaybeReorderThread](#maybereorderthread),
+that enables application-controlled reordering of work across the GPU for
+improved execution and data coherence.
+Additionally, the introduction of [HitObject](#hitobject) allows separation of traversal,
+anyhit shading and intersection testing from closesthit and miss shading.
+
+`HitObject` and `MaybeReorderThread` can be combined to improve coherence for
+closesthit and miss shader execution in a controlled manner.
+Applications can control coherence based on hit properties,
+ray generation state, ray payload, or any combination thereof. Applications can
+maximize performance by considering coherence for both hit and miss shading as
+well as subsequent control flow and data access patterns inside the
+raygeneration shader.
+
+`HitObject` improves the flexibility of the ray tracing pipeline in general.
+First, common code, such as vertex fetch and interpolation, must no longer be
+duplicated in all closesthit shaders. Common code can simply be part of the
+raygeneration shader and execute before closesthit shading. Second, simple
+visibility rays no longer have to invoke hit shaders in order to access basic
+information about the hit, such as the distance to the closest hit. Finally,
+`HitObject` can be constructed from a [RayQuery](#rayquery), which enables
+`MaybeReorderThread` and shader table-based closesthit and miss shading to be combined with
+`RayQuery`.
+
+This feature should be relatively straightforward to adopt by
+current DXR implementations: `HitObject` merely decouples existing `TraceRay`
+functionality into two distinct stages: the traversal stage and the shading
+stage. For SER's `MaybeReorderThread`, the minimal allowed implementation is simply a
+no-op, while implementations that already employ more sophisticated scheduling
+strategies are likely able to reuse existing mechanisms to implement support
+for SER. No DXR runtime changes are necessary, since the addition to the programming model is limited to HLSL and DXIL.
+
+This feature is a required part of Shader Model 6.9 (in preview) for devices with raytracing support.  It is also a required part of [D3D12_RAYTRACING_TIER_1_2](#d3d12_raytracing_tier), though even if a device doesn't support this tier it must still must support SER if it supports Shader Model 6.9.
+
+Note that all new SER types and intrinsics are added to `namespace dx` in
+accordance with the [Fast-Track Process for HLSL
+Extensions](https://github.com/microsoft/hlsl-specs/blob/main/docs/Process.md#fast-track-for-extensions).
+For the sake of legibility, this document only qualifies the namespace
+explicitly in the definition of [HitObject](#hitobject) and its members. An implicit `using namespace dx` is assumed
+elsewhere, such as code examples.
+
+The canonical use of the features in SER features involve changing a `TraceRay` call to the
+following sequence that is functionally equivalent:
+
+```C++
+HitObject Hit = HitObject::TraceRay( ..., Payload );
+MaybeReorderThread( Hit );
+HitObject::Invoke( Hit, Payload );
+```
+
+This snippet traces a ray and stores the result of traversal, intersection
+testing and anyhit shading in `Hit`. The call to [MaybeReorderThread](#maybereorderthread) improves
+coherence based on the information inside the `Hit`. Closesthit or miss
+shading is then invoked in a more coherent context.
+
+Note that this is a very basic example. Among other things, it is possible to
+query information about the hit to influence [MaybeReorderThread](#maybereorderthread) with additional
+hints. See [Separation of MaybeReorderThread and HitObject::Invoke](#separation-of-maybereorderthread-and-hitobject-invoke)
+for more elaborate examples.
+
+[TraceRay](#hitobject-traceray) returning a [HitObject](#hitobject) can be called on its own as well without
+calling [MaybeReorderThread](#maybereorderthread) or [Invoke](#hitobject-invoke).  The caller might just want a `HitObject` 
+without caring about thread reordering or Closesthit or miss shading. 
+This is discussed in [SER Device Support](#SER-device-support), in particular
+the implication, given that SER is required as part of Shader Model 6.9 for 
+raytracing capable devices: Even devices that only trivially support SER 
+by doing nothing on `MaybeReorderThread` must also support `Invoke` not being called,
+essentially a new capability to skip final shading not available before.
+
+See [HitObject](#hitobject) and [MaybeReorderThread](#maybereorderthread) for the rest of the documentation
+of this feature.
+
+---
+
+### SER Device Support
+
+Devices that support Shader Model 6.9 and raytracing must support the 
+[Shader Execution Reordering](#shader-execution-reordering) HLSL methods in this spec. This doesn't mean 
+all devices must support performing thread reordering - it is valid for 
+an implementation to do nothing there.  Applications write one codebase 
+using SER, and devices that can take advantage will, and other devices 
+will just behave as if no reordering happened.
+
+To help applications understand if the device actually does reordering,
+D3D12 exposes a device capability indicating it that can be queried via
+`CheckFeatureSupport()`:
+
+```C++
+// OPTIONSNN - NN TBD when SER support goes out of preview
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONSNN
+{
+    ...
+    _Out_ BOOL ShaderExecutionReorderingActuallyReorders;
+    ...
+} D3D12_FEATURE_DATA_D3D12_OPTIONSNN;
+```
+
+e.g.:
+
+```C++
+D3D12_FEATURE_DATA_D3D12_OPTIONSNN Options; // NN TBD when implemented
+VERIFY_SUCCEEDED(pDevice->CheckFeatureSupport(
+    D3D12_FEATURE_D3D12_OPTIONSNN, &Options, sizeof(Options)));
+if (!Options.ShaderExecutionReorderingActuallyReorders) {
+    // Maybe app wants to do it's own manual sorting.
+    // Or maybe a developer just wants to double check what's happening
+    // on a given device during development.
+}
+```
+ 
+Even on devices that don't do reordering, the [HitObject](#hitobject) portion 
+of SER can be useful.
+
+For instance, suppose an app wants to trace a ray, potentially including AnyHit 
+shader invocations, and just wants the final `T` value without running
+the ClosestHit shader (even if it happens to exist in the HitGroup).
+
+The app can call [TraceRay](#hitobject-traceray) returning a [HitObject](#hitobject), call
+[HitObject::GetRayTCurrent](#hitobject-getraytcurrent) on the `HitObject` to get the `T` value and be done.
+Not calling [HitObject::Invoke](#hitobject-invoke), skips `ClosestHit`/`Miss` invocation, and this 
+works on any device with Shader Model 6.9 support.
+
+The app might still want to call `MaybeReorderThread()` after `TraceRay()` 
+if the subsequent work could benefit, as illustrated in the Unified 
+Shading example above.  And devices that can't reorder would just 
+ignore the `MaybeReorderThread()` call.
+
+---
+
+## Opacity micromaps
+
+Very high quality, high-definition opacity (alpha) content is usually very coherent, or locally similar.
+
+Typically, there are larger regions that are completely transparent or opaque within meshes that do not necessarily coincide with triangle boundaries.
+
+Furthermore, in DXR Tier 1.1, the opaque/non-opaque properties of triangles are geometry-wide, but it might be impractical to split up meshes into several geometry pieces. As a consequence, any-hit shaders are often invoked for ray-triangle hits that could be trivially categorized as a miss or a hit.
+
+To reduce the overhead of redundant and potentially expensive any-hit shaders, Opacity Micromaps (OMM) are added to triangle primitives with DXR Tier 1.2 ([D3D12_RAYTRACING_TIER_1_2](#d3d12_raytracing_tier)).
+
+The opacity micromap is defined on a sub-triangle detail level, encoded in a uniformly subdivided mesh of 4<sup>N</sup> *micro-triangles*, laid out on a 2<sup>N</sup>&nbsp;×&nbsp;2<sup>N</sup> barycentric grid. 
+
+Here is a diagram of the first few levels of the subdivision scheme:
+
+![The subdivision schemes at level 0, 1, 2, and 3.](images/Raytracing/OMMSubdivisionSchemeExamples.jpg)
+<figure>
+  <figcaption>Micro-mesh subdivision scheme.</figcaption>
+</figure>
+
+Briefly, OMMs can be used to cull any-hit shading invocations in regions within a triangle known to be completely opaque or transparent.
+It is also possible to bypass any-hit shading completely, and use the mask as high frequency geometric detail on the triangle.
+Individual OMMs store (compact) information about how to modulate a base triangle to add the extra detail, much like traditional texture mapping.
+
+Here is an example of OMM detail applied to a base triangle:
+	
+![A triangle side-by-side to a similar triangle but with a opacity-micromap applied.](images/Raytracing/ApplyingOMMToTriangle.jpg)
+<figure>
+  <figcaption>Left: A plain base triangle. Right: A opacity micromap applied to the base triangle, splitting it into opaque and transparent regions.</figcaption>
+</figure>
+
+Some more operational details follow.  In addition, see [Opacity Micromap related API and HLSL impacts](#opacity-micromap-related-api-and-hlsl-impacts) for a links to how the features integrates into the programming model overall.
+
+---
+
+### Opacity micromap construction
+
+Unlike triangles, the OMMs are not stored directly in the bottom-level acceleration structures (BLAS), but instead reside in separate resources. Individual OMMs may be referenced by triangles from within a BLAS. Because OMMs storage is separate from the BLASes, they can be reused within and across multiple BLASes in a scene.
+
+Before OMMs can be used with raytracing, they must be processed by the driver. This is similar to how triangles and procedural primitives must be encoded into a BLAS before they can be used.
+
+Collections of OMM inputs are used to construct *OMM Arrays* using the same API as for building acceleration structures: [`BuildRaytracingAccelerationStructure()`](#buildraytracingaccelerationstructure) on the command list.  Here is an example of a collection of OMMs in an OMM Array:
+
+![Different OMMs, at different subdivision levels, within a single OMM Array.](images/Raytracing/OMMArrayContentExample.jpg)
+<figure>
+  <figcaption>Example of an OMM Array containing entries with different subdivision levels. Individual OMMs are referenced via their index in the array.</figcaption>
+</figure>
+
+Like acceleration structures, the OMM Arrays are opaque data structures, but the application is responsible for memory management. The amount of memory required for an OMM Array can be queried via the same method used for acceleration structures: [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo) device member function. Opaque OMM Array data must reside in resources that are permanently in the state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states), just like acceleration structures.  It is fine to intermix acceleration structures and OMM array data in the same allocations.
+
+The application can reference specific entries within an array by their input-order index to link specific entries to specific triangles in a BLAS. To construct an OMM Array, the application provides an input buffer with micro-triangles in one of the supported encodings, which the driver assembles into a raytracing-compatible format.
+
+The application can link an OMM Array per geometry, from which detailed opacity information is retrieved during ray traversal. This is illustrated in the diagram below. The OMM feature is accessible for BLAS builds through the use of a new geometry descriptor, [D3D12_RAYTRACING_GEOMETRY_OMM_TRIANGLES_DESC](#d3d12_raytracing_geometry_omm_triangles_desc), which contains additional inputs to the [BuildRaytracingAccelerationStructure()](#buildraytracingaccelerationstructure) function.
+
+![The instances in a TLAS point down to different BLASes. In turn, the geometry in those BLASes point down to different OMM Arrays.](images/Raytracing/RelationshipBetweenOMMArraysAndASHierarchy.jpg)
+<figure>
+  <figcaption>Illustration of how OMM Arrays fit into the AS hierarchy. At BLAS build time, per-triangle indices link specific triangles to OMM Array entries. OMMs can be referenced multiple times both within and across multiple BLASes.</figcaption>
+</figure>
+
+If an OMM Array is overwritten with new OMM data, any BLASes referencing it become stale and must be updated.
+It is also possible to assign a different OMM Array and OMM indices when updating a BLAS.
+The new AS build flag [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_OMM_LINKAGE_UPDATE](#d3d12_raytracing_acceleration_structure_build_flags) lets the driver know that OMM contents may change with BLAS updates.
+
+OMM Arrays can be copied around, serialized/deserialized etc. just like acceleration structures via the various modes of [CopyRaytracingAccelerationStructure()](#copyraytracingaccelerationstructure). 
+
+Some information about OMM Arrays is only available once it has been built. This includes the final size of the resource (which may be somewhat smaller than what is reported by the [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo) call), and the sizes of the serialized and visualization versions of the Array. The information can either be retrieved from the OMM Array build call, or by calling [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo).
+
+---
+
+### Opacity micromaps and TraceRay
+
+A new pipeline flag, [D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS](#d3d12_raytracing_pipeline_flags), has been added to let the driver know that the opacity micromap feature is going to be used. 
+
+- If OMMs are known not to be used, it is more efficient to not specify the [D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS](#d3d12_raytracing_pipeline_flags) flag. 
+- If the flag is omitted and an OMM is encountered during ray traversal, behavior is undefined.
+
+Opacity micromaps classify micro-triangles as opaque, transparent or unknown. When a ray intersects a triangle with a linked OMM, the intersection point within the barycentric space of the triangle is used to look up the opacity at that location.
+
+- If it is opaque, then the hit is committed.
+- If it is transparent the hit is ignored and traversal resumes.
+- If it is unknown, the attached any hit shader is invoked.
+
+The additions to [TraceRay()](#traceray) are depicted in this diagram:
+
+![Opacity micromaps affect the control flow of `TraceRay()` between the discovery of a new closest hit and its processing.](images/Raytracing/UpdatedTraceRayControlFlow.jpg)
+<figure>
+  <figcaption>Updated `TraceRay()` behavior to handle opacity micromaps.</figcaption>
+</figure>
+
+The geometry opaque/non-opaque flag state is ignored for triangles which have linked OMMs (that aren't disabled via flags), as OMMs give much more fine-grained control and are intended to replace the geometry-wide state where possible.
+
+Ray flags and instance flags may still alter the state of opaque or unknown hits, but note that any such flags are only applied *after* the OMM hit classification has occurred. This means that once the OMM has been evaluated, there is no way to turn a transparent micro-triangle miss into a hit even by using force-opaque ray or instance flags.
+
+It is still possible to turn off OMMs and revert to the geometry-specified behavior for individual instances using the [D3D12_RAYTRACING_INSTANCE_FLAG_DISABLE_OMMS](#d3d12_raytracing_instance_flags) instance flag.
+This flag is only valid if the referenced BLAS was originally built with the [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DISABLE_OMMS](#d3d12_raytracing_acceleration_structure_build_flags) build flag.
+
+> Disabling OMMs on a per-instance basis is useful to implement certain level-of-detail schemes.
+
+---
+
+### Opacity micromaps and TraceRayInline
+
+For inline raytracing via [RayQuery](#rayquery) objects, the `RayQuery` object takes an additional template parameter (as of Shader Model 6.9) allowing each instance of the object to indicate that the opacity micromap feature is going to be used.
+
+```C++
+RayQuery<RAY_FLAGS,RAYQUERY_FLAGS>
+```
+See [RayQuery flags](#rayquery-flags), which has a `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` flag.
+
+- If OMMs are known not to be used, it is more efficient to not specify the `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` flag. 
+- If the flag is omitted and an OMM is encountered during ray traversal, behavior is undefined.
+
+Opacity micromaps classify micro-triangles as opaque, transparent or unknown. When a ray intersects a triangle with a a linked OMM, the intersection point within the barycentric space of the triangle is used to look up the opacity at that location.
+
+- If it is opaque, then the hit is committed.
+- If it is transparent the hit is ignored and traversal resumes.
+- If it is unknown, a candidate hit is returned.
+
+The geometry opaque/non-opaque flag state is ignored for triangles which have linked OMMs, as OMMs give much more fine-grained control and are intended to replace the geometry-wide state where possible.
+
+Ray flags and instance flags may still alter the state of opaque hits, but note that any such flags are only applied *after* the OMM hit classification has occurred. This means that once the OMM has been evaluated, there is no way to turn a transparent micro-triangle miss into a hit even by using force-opaque ray or instance flags.
+
+It is still possible to turn off OMMs and revert to the geometry-specified behavior for individual instances using the [D3D12_RAYTRACING_INSTANCE_FLAG_DISABLE_OMMS](#d3d12_raytracing_instance_flags) instance flag.
+This flag is only valid if the referenced BLAS was originally built with the [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DISABLE_OMMS](#d3d12_raytracing_acceleration_structure_build_flags) build flag.
+
+> Disabling OMMs on a per-instance basis is useful to implement certain level-of-detail schemes.
+
+---
+
+### Opacity micromap encoding
+
+Opacity micromaps are bit masks of one or two bits per micro-triangle.
+
+A 1-bit OMM marks each corresponding micro-triangle as either opaque ([D3D12_RAYTRACING_OPACITY_MICROMAP_STATE_OPAQUE](#d3d12_raytracing_opacity_micromap_state)) or transparent ([D3D12_RAYTRACING_OPACITY_MICROMAP_STATE_TRANSPARENT](#d3d12_raytracing_opacity_micromap_state)) and never requires any-hit shader intervention during the tracing of a ray.
+
+2-bit OMMs are used if there are portions of the opacity that need to be resolved in an any-hit shader. A third translucent or “unknown” micro-triangle state is used for this purpose. The 2-bit OMM encodes four states (instead of only three) which affords some flexibility of interpretation: in some ray-traced effects, exact resolution is not required. For example, soft shadows may be resolved using a lower resolution proxy.
+
+To facilitate use of such proxies the four states of a 2-bit OMM are transparent, opaque, unknown transparent ([D3D12_RAYTRACING_OPACITY_MICROMAP_STATE_UNKNOWN_TRANSPARENT](#d3d12_raytracing_opacity_micromap_state)), and unknown opaque ([D3D12_RAYTRACING_OPACITY_MICROMAP_STATE_UNKNOWN_OPAQUE](#d3d12_raytracing_opacity_micromap_state)). 
+
+In one mode of interpretation, unknown transparent is associated with transparent, and unknown opaque with opaque, and in doing so interpreting it as a 1-bit map without unknown states. This is referred to as operating in 2-state mode.
+
+In a second mode of interpretation of the four states, the any-hit shader is invoked when the micro-triangle that is struck is categorized as either of the unknowns. This is referred to as operating in 4-state mode.
+
+OMMs can be constructed with either 2 or 4 states ([D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT_OC1_2_STATE](#d3d12_raytracing_opacity_micromap_format) or [D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT_OC1_4_STATE](#d3d12_raytracing_opacity_micromap_format)).
+
+4-state OMMs can operate in a 2-state interpretation mode through ray and instance flags, [RAY_FLAG_FORCE_OMM_2_STATE](#ray-flags) or [D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OMM_2_STATE](#d3d12_raytracing_instance_flags). 
+
+The OMM micro-triangle states are organized along a space-filling curve in barycentric space, depicted here:
+
+![A space-filling curve going through all tessellated micro-triangles of a triangle.](images/Raytracing/OMMInputOrder.jpg)
+<figure>
+  <figcaption>The OMM input order follows a space-filling curve over the uniformly tessellated micro-triangles in barycentric space.</figcaption>
+</figure>
+
+---
+
+### Opacity micromap related API and HLSL impacts
+
+Device methods extended to support Opacity Micromaps:
+- [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo)
+  - added support for prebuild info for acceleration structures using OMMs
+  - added support for prebuild info for OMM arrays themselves
+  - for details see additions to `BuildRaytracingAccelerationStructure` below which are shared for prebuild info here
+- [CreateStateObject()](#createstateobject) 
+  - added `D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS` in [D3D12_RAYTRACING_PIPELINE_FLAG](#d3d12_raytracing_pipeline_flags)
+  - added `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` in a new [RayQuery flags](#rayquery-flags) template parameter to [RayQuery](#rayquery)
+- [CheckDriverMatchingIdentifier()](#checkdrivermatchingidentifier)
+  - added `D3D12_SERIALIZED_DATA_RAYTRACING_OPACITY_MICROMAP_ARRAY` in [D3D12_SERIALIZED_DATA_TYPE](#d3d12_serialized_data_type)
+
+CommandList methods extended to support Opacity Micromaps:
+- [BuildRaytracingAccelerationStructure()](#buildraytracingaccelerationstructure)
+  - Additions for using Opacity Micromap arrays in bottom level acceleration structures:
+    - In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS](#d3d12_raytracing_acceleration_structure_build_flags):
+      - Added behavior to existing flag `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE`
+      - Added `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_OMM_LINKAGE_UPDATE` and `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DISABLE_OMMS`
+    - In [D3D12_RAYTRACING_GEOMETRY_DESC](#d3d12_raytracing_geometry_desc) added [D3D12_RAYTRACING_GEOMETRY_OMM_TRIANGLES_DESC](#d3d12_raytracing_geometry_omm_triangles_desc) to union
+    - Added `D3D12_RAYTRACING_GEOMETRY_TYPE_OMM_TRIANGLES` to [D3D12_RAYTRACING_GEOMETRY_TYPE](#d3d12_raytracing_geometry_type) to indicate above desc
+    - In [D3D12_RAYTRACING_INSTANCE_FLAGS](#d3d12_raytracing_instance_flags):
+      - Added `D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OMM_2_STATE` and `D3D12_RAYTRACING_INSTANCE_FLAG_DISABLE_OMMS`
+  - Added support for building Opacity Micromap arrays themselves:
+    - [D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS](#d3d12_build_raytracing_acceleration_structure_inputs) has a new entry in its typed union: [D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC](#d3d12_raytracing_opacity_micromap_array_desc) `*pOpacityMicromapArrayDesc`.  There is a corresponding new [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE](#d3d12_raytracing_acceleration_structure_type) `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_OPACITY_MICROMAP_ARRAY`.
+  
+- [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo)
+  - [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc) defines a new serialization header [D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER1](#d3d12_serialized_raytracing_acceleration_structure_header1) that is a superset and backwards compatible with the existing header, [D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER](#d3d12_serialized_raytracing_acceleration_structure_header).  With the new header, BLAS can refer to serialized Opacity Micromaps, where before there was nothing they could refer to.  Apps that serialized with the previous header continue to work fine, as it results in the same memory layout for cases where there is nothing after the header (since there were no OMMs before).
+- [CopyRaytracingAccelerationStructure()](#copyraytracingaccelerationstructure)
+  - OMM Arrays support existing `COPY_MODE_CLONE`, `COPY_MODE_COMPACT`, `_VISUALIZATION_DECODE_FOR_TOOLS`, `_SERIALIZE` and `_DESERIALIZE`.
+  - As described above for [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo), when doing serialization/deserialization the header for BLAS now supports specifying serialized Opacity Micromaps (which are themselves serialized/deserialized separately)
+
+There are a couple of header [Constants](#constants) related to Opacity Micromaps as well.
+
+For HLSL there is one new [Ray flag](#ray-flags) related to Opacity Micromaps. There is also an equivalent flag in a new [RayQuery flags](#rayquery-flags) template parameter for inline raytracing [RayQuery](#rayquery) objects.
+
+Enum representing entries in Opacity Micromaps (not an API, just defining the data interpretation): [D3D12_RAYTRACING_OPACITY_MICROMAP_STATE](#d3d12_raytracing_opacity_micromap_state).
 
 ---
 
@@ -1414,13 +1758,13 @@ A given scope can **contain** other inner scopes, or outer scopes can
 There are two ways declare a default association for a subobject to a
 set of shaders:
 
-1) Declare a subobject in a given scope with no explicit associations
+1. Declare a subobject in a given scope with no explicit associations
    in that scope that reference it.  If this subobject is involved in
    an association defined in any *other* scope including enclosing or
    contained scopes, it doesn't affect that locally this subobject acts
    as a default association.
 
-2) Define an association with an empty export list.  The subobject
+2. Define an association with an empty export list.  The subobject
    specified may or may not be in the current scope.  The subobject
    specified can also be unresolved (not defined in current, containing
    or enclosed scopes), unless the state object being defined is
@@ -1509,20 +1853,9 @@ contained collections may have).
 The subobject being associated can be unresolved unless the state object
 is RTPSO (executable).
 
-> The reason overriding is only defined for DXIL libraries directly passed
-into a given state object's creation is the following. Drivers never
-have to worry about compiling code that came from a DXIL library during
-state object creation only to have to recompile later because multiple
-subobject overrides happened. e.g. creating a collection that overrides
-associations in a DXIL library then creating an RTPSO that includes the
-collection and tries to override an association again is invalid (the
-second association becomes conflicting and state object creation
-fails).
+> The reason overriding is only defined for DXIL libraries directly passed into a given state object's creation is the following. Drivers never have to worry about compiling code that came from a DXIL library during state object creation only to have to recompile later because multiple subobject overrides happened. e.g. creating a collection that overrides associations in a DXIL library then creating an RTPSO that includes the collection and tries to override an association again is invalid (the second association becomes conflicting and state object creation fails).
 >
-> The value in supporting overriding of subobject associations is to give
-programmatic code (i.e. performing state object creation) one chance to
-override what is in a static DXIL library, without having to patch the
-DXIL library itself.
+> The value in supporting overriding of subobject associations is to give programmatic code (i.e. performing state object creation) one chance to override what is in a static DXIL library, without having to patch the DXIL library itself.
 
 ---
 
@@ -1596,29 +1929,13 @@ components in them) are reused across runs of an application.
 
 ## Addressing calculations within shader tables
 
-> The very fixed nature of shader table indexing described here is a
-result of IHV limitation. The hope is these limitations aren't too
-annoying for apps (which have to live with them). The extent to which
-the fixed function choices made here conflict with what an app actually
-wants may force app to do inefficient things like duplicating entries in
-shader tables to accomplish what they want. That said, such
-inefficiencies in shader table layout may not turn out to be an overall
-bottleneck. So this might be no worse than simply being slightly awkward
-to use.
+> The very fixed nature of shader table indexing described here is a result of IHV limitation. The hope is these limitations aren't too annoying for apps (which have to live with them). The extent to which the fixed function choices made here conflict with what an app actually wants may force app to do inefficient things like duplicating entries in shader tables to accomplish what they want. That said, such inefficiencies in shader table layout may not turn out to be an overall bottleneck. So this might be no worse than simply being slightly awkward to use.
 
 ---
 
 ### Hit group table indexing
 
->HitGroupRecordAddress =
-[D3D12_DISPATCH_RAYS_DESC](#d3d12_dispatch_rays_desc).HitGroupTable.StartAddress \+ <small>// from: [DispatchRays()](#dispatchrays)</small><br>
-[D3D12_DISPATCH_RAYS_DESC](#d3d12_dispatch_rays_desc).HitGroupTable.StrideInBytes \*  <small>// from: [DispatchRays()](#dispatchrays)</small><br>
-(
-RayContributionToHitGroupIndex \+ <small>// from shader: [TraceRay()](#traceray)</small><br>
-(MultiplierForGeometryContributionToHitGroupIndex \* <small>// from shader: [TraceRay()](#traceray)</small><br>
-GeometryContributionToHitGroupIndex) \+ <small>// system generated index of geometry in bottom-level acceleration structure (0,1,2,3..)</small><br>
-[D3D12_RAYTRACING_INSTANCE_DESC](#d3d12_raytracing_instance_desc).InstanceContributionToHitGroupIndex <small>// from instance</small><br>
-)
+> HitGroupRecordAddress =<br>[D3D12_DISPATCH_RAYS_DESC](#d3d12_dispatch_rays_desc).HitGroupTable.StartAddress \+ <small>// from: [DispatchRays()](#dispatchrays)</small><br>[D3D12_DISPATCH_RAYS_DESC](#d3d12_dispatch_rays_desc).HitGroupTable.StrideInBytes \*  <small>// from: [DispatchRays()](#dispatchrays)</small><br>(<br>RayContributionToHitGroupIndex \+ <small>// from shader: [TraceRay()](#traceray)</small><br>(MultiplierForGeometryContributionToHitGroupIndex \* <small>// from shader: [TraceRay()](#traceray)</small><br>GeometryContributionToHitGroupIndex) \+ <small>// system generated index of geometry in bottom-level acceleration structure (0,1,2,3..)</small><br><br>[D3D12_RAYTRACING_INSTANCE_DESC](#d3d12_raytracing_instance_desc).InstanceContributionToHitGroupIndex <small>// from instance</small><br>)
 
 Setting MultiplierForGeometryContributionToHitGroupIndex \> 1 lets apps
 group shaders for multiple ray types adjacent to each other per-geometry
@@ -1635,19 +1952,13 @@ As of raytracing [Tier 1.1](#d3d12_raytracing_tier) implementations, it can be i
 
 ### Miss shader table indexing
 
->MissShaderRecordAddress =
-D3D12_DISPATCH_RAYS_DESC.MissShaderTable.StartAddress \+ <small>// from: [DispatchRays()](#dispatchrays)</small><br>
-D3D12_DISPATCH_RAYS_DESC.MissShaderTable.StrideInBytes \* <small>// from: [DispatchRays()](#dispatchrays)</small><br>
-MissShaderIndex <small>// from shader: [TraceRay()](#traceray)</small><br>
+> MissShaderRecordAddress =<br>D3D12_DISPATCH_RAYS_DESC.MissShaderTable.StartAddress \+ <small>// from: [DispatchRays()](#dispatchrays)</small><br>D3D12_DISPATCH_RAYS_DESC.MissShaderTable.StrideInBytes \* <small>// from: [DispatchRays()](#dispatchrays)</small><br>MissShaderIndex <small>// from shader: [TraceRay()](#traceray)</small><br>
 
 ---
 
 ### Callable shader table indexing
 
->CallableShaderRecordAddress =
-D3D12_DISPATCH_RAYS_DESC.CallableShaderTable.StartAddress + <small>// from: [DispatchRays()](#dispatchrays)</small><br>
-D3D12_DISPATCH_RAYS_DESC.CallableShaderTable.StrideInBytes \* <small>// from: [DispatchRays()](#dispatchrays)</small><br>
-ShaderIndex <small>// from shader: [CallShader()](#callshader)</small>
+> CallableShaderRecordAddress =<br>D3D12_DISPATCH_RAYS_DESC.CallableShaderTable.StartAddress + <small>// from: [DispatchRays()](#dispatchrays)</small><br>D3D12_DISPATCH_RAYS_DESC.CallableShaderTable.StrideInBytes \* <small>//  from: [DispatchRays()](#dispatchrays)</small><br>ShaderIndex <small>// from shader: [CallShader()](#callshader)</small>
 
 ---
 
@@ -1944,10 +2255,7 @@ for an update to provide data from different addresses in memory as long
 as the only changes in the data itself conform to the following
 restrictions.
 
-> A rule of thumb is that the more that acceleration structure updates
-diverge from the original, the more that raytrace performance is likely
-to suffer. An implementation is expected to be able to retain whatever
-topology it might have in an acceleration structure during update.
+> A rule of thumb is that the more that acceleration structure updates diverge from the original, the more that raytrace performance is likely to suffer. An implementation is expected to be able to retain whatever topology it might have in an acceleration structure during update.
 
 ---
 
@@ -2019,15 +2327,7 @@ non-ASB simultaneously this is an error enforceable by debug layer
 error. Mapping a tile into or out of an acceleration structure
 invalidates that tile's contents.
 
-> The reason for segregating ASBs from non-ASB memory is to enable
-tools/PIX to be able to robustly capture applications that use
-raytracing. The restriction avoids instability/crashing from tools
-attempting to serialize what they think are opaque acceleration
-structures that might have been partially overwritten by other data
-because the app repurposed the memory without tools being able to track
-it. The key issue here is the opaqueness of acceleration structure data,
-requiring dedicated APIs for serializing and deserializing their data to
-be able to preserve application state.
+> The reason for segregating ASBs from non-ASB memory is to enable tools/PIX to be able to robustly capture applications that use raytracing. The restriction avoids instability/crashing from tools attempting to serialize what they think are opaque acceleration structures that might have been partially overwritten by other data because the app repurposed the memory without tools being able to track it. The key issue here is the opaqueness of acceleration structure data, requiring dedicated APIs for serializing and deserializing their data to be able to preserve application state.
 
 ---
 
@@ -2043,18 +2343,7 @@ operations that write to an acceleration structure (such as
 [BuildRaytracingAccelerationStructure()](#buildraytracingaccelerationstructure) and operations that read from
 them (such as [DispatchRays()](#dispatchrays) (and vice versa).
 
-> The use of UAV barriers (as opposed to state transitions) for
-synchronizing acceleration structure accesses comes in handy for
-scenarios like [compacting](#d3d12_raytracing_acceleration_structure_copy_mode) multiple acceleration structures.
-Each compaction reads an acceleration structure and then writes the
-compacted result to another address. An app can perform a string of
-compactions to tightly pack a collection of acceleration structures that
-all may be in the same resource. No resource transitions are necessary.
-Instead all that's needed are a single UAV barrier after one or more
-original acceleration structure builds are complete before passing them
-into a sequence of compactions for each acceleration structure. Then
-another UAV barrier after compactions are done and the acceleration
-structures are referenced by DispatchRays() for raytracing.
+> The use of UAV barriers (as opposed to state transitions) for synchronizing acceleration structure accesses comes in handy for scenarios like [compacting](#d3d12_raytracing_acceleration_structure_copy_mode) multiple acceleration structures. Each compaction reads an acceleration structure and then writes the compacted result to another address. An app can perform a string of compactions to tightly pack a collection of acceleration structures that all may be in the same resource. No resource transitions are necessary. Instead all that's needed are a single UAV barrier after one or more original acceleration structure builds are complete before passing them into a sequence of compactions for each acceleration structure. Then another UAV barrier after compactions are done and the acceleration structures are referenced by DispatchRays() for raytracing.
 
 ---
 
@@ -2196,17 +2485,17 @@ possible left directions within each of the three possible planes.
   triangle's edges, apply the top-left rule to establish whether the
   triangle is considered intersected:
 
-  ***Top edge**: If a projected edge is exactly parallel to the left
-  direction, and the* up *direction points away from the projected
+  **Top edge**: If a projected edge is exactly parallel to the left
+  direction, and the *up* direction points away from the projected
   triangle's interior in the space of the ray's plane, then it is a
   "top" edge.*
   
-  ***Left edge**: If a projected edge is not exactly parallel to the
-  left direction, and the* left *direction points away from the
+  **Left edge**: If a projected edge is not exactly parallel to the
+  left direction, and the *left* direction points away from the
   projected triangle's interior in the space of the ray's plane, then it
   is a "left" edge. A triangle can have one or two left edges.*
 
-  ***Top-left rule**: If the ray-plane intersection falls exactly on the
+  **Top-left rule**: If the ray-plane intersection falls exactly on the
   edge of a projected triangle, the triangle is considered intersected
   if the edge is a "top" edge or a "left" edge. If two edges from the
   same projected triangle (a vertex) coincide with the ray-plane
@@ -2263,7 +2552,7 @@ Violating these rules produces undefined behavior.
 ## Ray recursion limit
 
 Raytracing pipeline state objects must [declare](#d3d12_raytracing_pipeline_config) a maximum ray recursion
-depth (in the range [[0..31]](#constants)). The ray generation shader
+depth (in the range [\[0..31\]](#constants)). The ray generation shader
 is depth 0. Below the maximum recursion depth, shader invocations such
 as closest hit or miss shaders can call [TraceRay()](#traceray) any
 number of times. At the maximum recursion depth, [TraceRay()](#traceray)
@@ -2278,17 +2567,9 @@ This recursion depth limit does not include callable shaders, which are
 not bounded except in the context of overall [pipeline stack](#pipeline-stack)
 allocation.
 
-> Apps should pick a limit that is as low as absolutely necessary. There
-may be performance implications in how the implementation chooses to
-handle upper limits set at obvious thresholds -- e.g. 0 means no tracing
-of rays at all (perhaps only using callable shaders or not even that), 1
-means single bounce rays, and numbers above 1 might imply a different
-implementation strategy.
+> Apps should pick a limit that is as low as absolutely necessary. There may be performance implications in how the implementation chooses to handle upper limits set at obvious thresholds -- e.g. 0 means no tracingof rays at all (perhaps only using callable shaders or not even that), 1 means single bounce rays, and numbers above 1 might imply a different implementation strategy.
 >
-> It isn't expected that most apps would ever need to declare very large
-recursion limits. The upper limit of 31 is there to put a bound on the
-number of bits hardware has to reserve for a counter -- inexpensive yet
-large enough range to likely never have to worry about.
+> It isn't expected that most apps would ever need to declare very large recursion limits. The upper limit of 31 is there to put a bound on the number of bits hardware has to reserve for a counter -- inexpensive yet large enough range to likely never have to worry about.
 
 ---
 
@@ -2304,14 +2585,7 @@ starting from an individual ray generation shader thread can consume,
 considering tracing rays, the various shaders that can be invoked in the
 process, including callable shaders, and nesting/recursion.
 
-> In practice typical systems will support many thousands of threads in
-flight at once, so the actual memory footprint for driver managed stack
-storage will be much larger than the space required for just one thread.
-This multiplication factor is an implementation detail not directly
-exposed to the app. That said, it is in the app's best interest (if
-memory footprint is important) to make an optimal choice for the one
-number it has control over -- individual thread stack size -- to match
-what the app actually needs.
+> In practice typical systems will support many thousands of threads in flight at once, so the actual memory footprint for driver managed stack storage will be much larger than the space required for just one thread. This multiplication factor is an implementation detail not directly exposed to the app. That said, it is in the app's best interest (if memory footprint is important) to make an optimal choice for the one number it has control over -- individual thread stack size -- to match what the app actually needs.
 
 Raytracing pipeline state objects can optionally set a maximum pipeline
 stack size, otherwise a default value is used, which is typically overly
@@ -2320,15 +2594,7 @@ more than 2 levels). The way an app can calculate an optimal stack size
 if desired is described next, followed by an explanation of how the
 default is selected.
 
-> Here is an example of a situation where it really matters for an app to
-manually calculate the stack size rather than rely on the default:
-Suppose there is a complex closest hit shader with lots of state doing
-complex shading that recursively shoots a shadow ray that's known to hit
-only trivial shaders with very small stack requirements. The default
-calculation described further below doesn't know this and will assume
-all levels of recursion might invoke the expensive closest hit shader,
-resulting in wasted stack space reservation, multiplied by the number of
-threads in flight on the GPU.
+> Here is an example of a situation where it really matters for an app to manually calculate the stack size rather than rely on the default: Suppose there is a complex closest hit shader with lots of state doing complex shading that recursively shoots a shadow ray that's known to hit only trivial shaders with very small stack requirements. The default calculation described further below doesn't know this and will assume all levels of recursion might invoke the expensive closest hit shader, resulting in wasted stack space reservation, multiplied by the number of threads in flight on the GPU.
 
 ---
 
@@ -2475,15 +2741,20 @@ invocation:
 Note that use of [RayQuery](#rayquery) objects for inline raytracing 
 does not count as a repacking point.
 
+When [Shader Execution Reordering](#shader-execution-reordering) is supported
+see [reorder points](#reorder-points).
+
 ---
 
 ## Execution and memory ordering
 
 When [TraceRay()](#traceray) or [CallShader()](#callshader) are called, any resulting shader invocations complete by the time the call returns.  
 
-Memory operations (stores, atomics) performed by the caller can be guaranteed to be visible to the callee with a memory barrier in either caller or callee.  `DeviceMemoryBarrier()` is the relevant barrier call for raytracing shaders. Input payload/parameter data is passed to callees by-value so does not require a barrier.
+Memory operations (stores, atomics) performed by the caller can be guaranteed to be visible to the callee with a `DeviceMemoryBarrier()` in the caller after writes.  The UAV must be declared `[globallycoherent]`. Input payload/parameter data is passed to callees by-value so does not require a barrier.
 
-Memory operations performed by the callee can similarly be guaranteed to be visible to the caller (and any subsequent calls made by the caller) with a memory barriers in any shader.  Output payload/parameter data is returned to the caller by-value so does not require a barrier.
+Memory operations performed by the callee can similarly be guaranteed to be visible to the caller (and any subsequent calls made by the caller) with similar UAV declaration and writes followed by memory barrier in the writing shader.  Output payload/parameter data is returned to the caller by-value so does not require a barrier.
+
+Also see [Reorder points](#reorder-points) and [Reorder points - memory coherence and visibility](#reorder-points---memory-coherence-and-visibility).
 
 # General tips for building acceleration structures
 
@@ -2657,13 +2928,7 @@ of the above -- it is just a software library that sits on top of D3D.
 
 ## Raytracing emulation
 
-> The following emulation feature proved useful during the experimental
-phase of DXR design. But as of the first shipping release of DXR, the
-plan is to stop maintaining this codebase. The cost/benefit is not
-justified and further, over time as more native DXR support comes
-online, the value of emulation will diminish further. That said, the
-description of what was done is left in case a strong justification
-crops up to resurrect the feature.
+> The following emulation feature proved useful during the experimental phase of DXR design. But as of the first shipping release of DXR, the plan is to stop maintaining this codebase. The cost/benefit is not justified and further, over time as more native DXR support comes online, the value of emulation will diminish further. That said, the description of what was done is left in case a strong justification crops up to resurrect the feature.
 
 The raytracing fallback layer is a library that provides support for
 raytracing on devices that do not have native driver/hardware support
@@ -2743,12 +3008,10 @@ patching, root signature patching and more generally, API hooking.
   ways:
   
   - **serialization:**
-
     Driver serializes acceleration structures to a (still) opaque
     format that tools (or an app) can store to a file.
 
   - **deserialization:**
-
     Driver deserializes the serialized format above on a later
     playback of a captured application. The result is an
     acceleration structure that functions as the original did when
@@ -2757,7 +3020,6 @@ patching, root signature patching and more generally, API hooking.
     device / driver that the serialization was performed on.
 
   - **visualization:**
-
     Convert an opaque acceleration structure to a form that can be
     visualized by tools. This is a bit like the inverse of an
     acceleration structure build, where the output in this case is
@@ -2857,6 +3119,7 @@ typedef enum D3D12_RAYTRACING_TIER
     D3D12_RAYTRACING_TIER_NOT_SUPPORTED = 0,
     D3D12_RAYTRACING_TIER_1_0 = 10,
     D3D12_RAYTRACING_TIER_1_1 = 11,
+    D3D12_RAYTRACING_TIER_1_2 = 12,
 } D3D12_RAYTRACING_TIER;
 ```
 
@@ -2868,6 +3131,7 @@ Value                               | Definition
 `D3D12_RAYTRACING_TIER_NOT_SUPPORTED` | No support for raytracing on the device. Attempts to create any raytracing related object will fail and using raytracing related APIs on command lists results in undefined behavior.
 `D3D12_RAYTRACING_TIER_1_0` | The device supports the full raytracing functionality described in this spec, except features added in higher tiers listed below.
 `D3D12_RAYTRACING_TIER_1_1` | Adds: <li>Support for indirect DispatchRays() calls (ray generation shader invocation) via [ExecuteIndirect()](#executeindirect).</li><li>Support for [incremental additions to existing state objects](#incremental-additions-to-existing-state-objects) via [AddToStateObject()](#addtostateobject).<li>Support for [inline raytracing](#inline-raytracing) via [RayQuery](#rayquery) objects declarable in any shader stage.</li><li>[GeometryIndex()](#geometryindex) intrinsic added to relevant raytracing shaders, for applications that wish to distinguish geometries manually in shaders in addition to or instead of by burning shader table slots.</li><li>Additional [ray flags](#ray-flags), `RAY_FLAG_SKIP_TRIANGLES` and `RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES`.</li><li>New version of raytracing pipeline config subobject, [D3D12_RAYTRACING_PIPELINE_CONFIG1](#d3d12_raytracing_pipeline_config1), adding a flags field, [D3D12_RAYTRACING_PIPELINE_FLAGS](#d3d12_raytracing_pipeline_flags). The equivalent subobject in HLSL is [RaytracingPipelineConfig1](#raytracing-pipeline-config1).  The available flags, `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_TRIANGLES` and `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_PROCEDURAL_PRIMITIVES` (minus `D3D12_` when defined in HLSL) behave like OR'ing the equivalent RAY_FLAGS above into any [TraceRay()](#traceray) call in a raytracing pipeline, except that these do not show up in a [RayFlags()](#rayflags) call from a shader. Implementations may be able to make pipeline optimizations knowing that one of the primitive types can be skipped.</li><li>Additional vertex formats supported for acceleration structure build input as part of [D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC](#d3d12_raytracing_geometry_triangles_desc).</li>
+`D3D12_RAYTRACING_TIER_1_2` |Adds:<li>[Opacity Micromaps](#opacity-micromaps)</li><li>[Shader Execution Reordering](#shader-execution-reordering)</li><li>The parts of these features involving shader code, which would be all of Shader Execution Reordering, as well as a small portion of Opacity Micromaps, exist in Shader Model 6.9 which is currently in preview.  All the non-HLSL parts of Opacity Micromaps are available in release (non-preview).</li><li>All devices that support raytracing at all (`D3D12_RAYTRACING_TIER_1_0`+) and support Shader Model 6.9 must support [Shader Execution Reordering](#shader-execution-reordering).  `D3D12_RAYTRACING_TIER_1_2` simply means the device supports all of the features listed here.</li>
 
 ---
 
@@ -3226,11 +3490,7 @@ Specify the type of hit group. For triangles, the hit group can't
 contain an intersection shader. For procedural primitives, the hit group
 must contain an intersection shader.
 
-> This enum exists to allow the possibility in the future of having other
-hit group types which may not otherwise be distinguishable from the
-other members of `D3D12_HIT_GROUP_DESC`. For instance, a new type might
-simply change the meaning of the intersection shader import to represent
-a different formulation of procedural primitive.
+> This enum exists to allow the possibility in the future of having other hit group types which may not otherwise be distinguishable from the other members of `D3D12_HIT_GROUP_DESC`. For instance, a new type might simply change the meaning of the intersection shader import to represent a different formulation of procedural primitive.
 
 ---
 
@@ -3320,6 +3580,7 @@ typedef enum D3D12_RAYTRACING_PIPELINE_FLAGS
     D3D12_RAYTRACING_PIPELINE_FLAG_NONE                         = 0x0,
     D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_TRIANGLES               = 0x100,
     D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_PROCEDURAL_PRIMITIVES   = 0x200,
+    D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS      = 0x400,
 } D3D12_RAYTRACING_PIPELINE_FLAGS;
 
 ```
@@ -3330,6 +3591,7 @@ Value                               | Definition
 ---------                           | ----------
 `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_TRIANGLES` | <p>For any [TraceRay()](#traceray) call within this raytracing pipeline, add in the `RAY_FLAG_SKIP_TRIANGLES` [Ray flag](#ray-flags). The resulting combination of ray flags must be valid.  The presence of this flag in a raytracing pipeline config does not show up in a [RayFlags()](#rayflags) call from a shader.  Implementations may be able to optimize pipelines knowing that a particular primitive type need not be considered.</p>
 `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_PROCEDURAL_PRIMITIVES` | <p>For any [TraceRay()](#traceray) call within this raytracing pipeline, add in the `RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES` [Ray flag](#ray-flags). The resulting combination of ray flags must be valid.  The presence of this flag in a raytracing pipeline config does not show up in a [RayFlags()](#rayflags) call from a shader. Implementations may be able to optimize pipelines knowing that a particular primitive type need not be considered.</p>
+`D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS` | If this flag is specified, the pipeline supports Opacity Micromaps. If a triangle with an OMM is encountered during traversal with this flag cleared, behavior is undefined. This flag should not be set if there are no OMMs present, since it may incur a small penalty on traversal performance overall.  This flag is part of the [Opacity Micromaps](#opacity-micromaps) feature. This flag applies to accessing OMMs via [TraceRay()](#traceray), whereas for [RayQuery::TraceRayInline()](#rayquery-tracerayinline), the same is accomplished by specifying [RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS](#rayquery-flags) in the second template parameter to [RayQuery](#rayquery).
 
 ---
 
@@ -3517,7 +3779,7 @@ Member                              | Definition
 ---------                           | ----------
 `UINT64 ResultDataMaxSizeInBytes` | Size required to hold the result of an acceleration structure build based on the specified inputs.
 `UINT64 ScratchDataSizeInBytes` | Scratch storage on GPU required during acceleration structure build based on the specified inputs.
-`UINT64 UpdateScratchDataSizeInBytes` | <p>Scratch storage on GPU required during an acceleration structure update based on the specified inputs. This only needs to be called for the original acceleration structure build, and defines the scratch storage requirement for every acceleration structure update (other than the initial build).</p><p>If the `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE` flag is not specified, this parameter returns 0.</p>
+`UINT64 UpdateScratchDataSizeInBytes` | <p>Scratch storage on GPU required during an acceleration structure update based on the specified inputs. This only needs to be called for the original acceleration structure build, and defines the scratch storage requirement for every acceleration structure update (other than the initial build).</p><p>If the `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE` flag is not specified, this parameter returns 0.</p><p>For [Opacity Micromaps](#opacity-micromaps), this parameter returns 0 as update doesn't apply.</p>
 
 ---
 
@@ -3555,6 +3817,7 @@ Parameter                           | Definition
 typedef enum D3D12_SERIALIZED_DATA_TYPE
 {
     D3D12_SERIALIZED_DATA_RAYTRACING_ACCELERATION_STRUCTURE = 0x0,
+    D3D12_SERIALIZED_DATA_APPLICATION_SPECIFIC_DRIVER_STATE = 0x1,
 } D3D12_SERIALIZED_DATA_TYPE;
 ```
 
@@ -3562,7 +3825,8 @@ Type of serialized data. At the moment there is only one:
 
 Value                               | Definition
 ---------                           | ----------
-`D3D12_SERIALIZED_DATA_RAYTRACING_ACCELERATION_STRUCTURE` | Serialized data contains a raytracing acceleration structure.
+`D3D12_SERIALIZED_DATA_RAYTRACING_ACCELERATION_STRUCTURE` | Serialized data contains a raytracing acceleration structure (or [Opacity Micromap](#opacity-micromaps) array).
+`D3D12_SERIALIZED_DATA_APPLICATION_SPECIFIC_DRIVER_STATE` | Unrelated to raytracing, `CheckDriverMatchingIdentifier` is also used for the application specific driver state feature, specified elsewhere.
 
 ---
 
@@ -3710,12 +3974,10 @@ void BuildRaytracingAccelerationStructure(
 Perform an acceleration structure build on the GPU. Also optionally
 output postbuild information immediately after the build.
 
-> This postbuild information can also be obtained separately from an
-already built acceleration structure via [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo).
-The advantage of generating postbuild info along with a build is that a
-barrier isn't needed in between the build completing and requesting
-postbuild information, for the case where an app knows it needs the
-postbuild info right away.
+CPU-side input buffers are not referenced after this call.
+GPU-side input resources are not referenced after the build has finished executing via `ExecuteCommandList()`.
+
+> This postbuild information can also be obtained separately from an already built acceleration structure via [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo). The advantage of generating postbuild info along with a build is that a barrier isn't needed in between the build completing and requesting postbuild information, for the case where an app knows it needs the postbuild info right away.
 
 See [Geometry and acceleration structures](#geometry-and-acceleration-structures) for an overview.
 
@@ -3730,7 +3992,7 @@ Parameter                           | Definition
 ---------                           | ----------
 `const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC* pDesc` | Description of the acceleration structure to build.  See [D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC](#d3d12_build_raytracing_acceleration_structure_desc).
 `UINT NumPostbuildInfoDescs` | Size of postbuild info desc array. Set to 0 if none are needed.
-`const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC* pPostbuildInfoDescs` | Optional array of descriptions for postbuild info to generate describing properties of the acceleration structure that was built. See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_desc).  Any given postbuild info type,[D3D12_RAYTRACING_ACCEELRATION_STRUCTURE_POSTBUILD_INFO_TYPE](#d3d12_raytracing_acceleration_structure_postbuild_info_type), can only be selected for output by at most one array entry.
+`const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC* pPostbuildInfoDescs` | Optional array of descriptions for postbuild info to generate describing properties of the acceleration structure that was built. See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_desc).  Any given postbuild info type,[D3D12_RAYTRACING_ACCELRATION_STRUCTURE_POSTBUILD_INFO_TYPE](#d3d12_raytracing_acceleration_structure_postbuild_info_type), can only be selected for output by at most one array entry.
 
 ---
 
@@ -3752,9 +4014,9 @@ typedef struct D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC
 
 Member                              | Definition
 ---------                           | ----------
-`D3D12_GPU_VIRTUAL_ADDRESS DestAccelerationStructureData` | <p> Location to store resulting acceleration structure. [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo) reports the amount of memory required for the result here given a set of acceleration structure build parameters.</p><p> The address must be aligned to 256 bytes ([D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT](#constants)).</p><p> The memory pointed to must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p>
+`D3D12_GPU_VIRTUAL_ADDRESS DestAccelerationStructureData` | <p> Location to store resulting acceleration structure. [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo) reports the amount of memory required for the result here given a set of acceleration structure build parameters.</p><p> The address must be aligned to 256 bytes ([D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT](#constants)), or 128 bytes for [Opacity Micromap](#opacity-micromaps) arrays ([D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_BYTE_ALIGNMENT](#constants)).</p><p> The memory pointed to must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p>
 `D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs` | Description of the input data for the acceleration structure build. This is packaged in its own struct since it is shared with [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo).
-`D3D12_GPU_VIRTUAL_ADDRESS SourceAccelerationStructureData` | <p>Address of an existing acceleration structure if an acceleration structure update (incremental build) is being requested, by setting D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE in the Flags parameter. Otherwise this address must be NULL.</p><p> If this address is the same as DestAccelerationStructureData, the update is to be performed in-place. Any other form of overlap of the source and destination memory is invalid and produces undefined behavior.</p><p>The address must be aligned to 256 bytes ([D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT](#constants)), which is a somewhat redundant requirement as any existing acceleration structure passed in here would have already been required to be placed with such alignment anyway.</p><p>The memory pointed to must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p>
+`D3D12_GPU_VIRTUAL_ADDRESS SourceAccelerationStructureData` | <p>Address of an existing acceleration structure if an acceleration structure update (incremental build) is being requested, by setting D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE in the Flags parameter. Otherwise this address must be NULL.</p><p> If this address is the same as DestAccelerationStructureData, the update is to be performed in-place. Any other form of overlap of the source and destination memory is invalid and produces undefined behavior.</p><p>The address must be aligned to 256 bytes ([D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT](#constants)), or 128 bytes for [Opacity Micromap](#opacity-micromaps) arrays ([D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_BYTE_ALIGNMENT](#constants)).  This is somewhat redundant requirement as any existing acceleration structure passed in here would have already been required to be placed with such alignment anyway.</p><p>The memory pointed to must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p>
 `D3D12_GPU_VIRTUAL_ADDRESS ScratchAccelerationStructureData` | <p>Location where the build will store temporary data.[GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo) reports the amount of scratch memory the implementation will need for a given set of acceleration structure build parameters.</p><p> The address must be aligned to 256 bytes ([D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT](#constants)).</p><p> Contents of this memory going into a build on the GPU timeline are irrelevant and will not be preserved. After the build is complete on the GPU timeline, the memory is left with whatever undefined contents the build finished with.</p><p> The memory pointed to must be in state `D3D12_RESOURCE_STATE_UNORDERED_ACCESS`.</p>
 
 ---
@@ -3773,6 +4035,7 @@ typedef struct D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS
         D3D12_GPU_VIRTUAL_ADDRESS InstanceDescs;
         const D3D12_RAYTRACING_GEOMETRY_DESC* pGeometryDescs;
         const D3D12_RAYTRACING_GEOMETRY_DESC*const* ppGeometryDescs;
+        const D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC* pOpacityMicromapArrayDesc;
     };
 } D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS;
 ```
@@ -3797,6 +4060,7 @@ Member                              | Definition
 `const D3D12_GPU_VIRTUAL_ADDRESS InstanceDescs` | <p> If Type is `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TOP_LEVEL`, this refers to NumDescs [D3D12_RAYTRACING_INSTANCE_DESC](#d3d12_raytracing_instance_desc) structures in GPU memory describing instances. Each instance must be aligned to 16 bytes ([D3D12_RAYTRACING_INSTANCE_DESC_BYTE_ALIGNMENT](#constants)).</p><p>If DescLayout is `D3D12_ELEMENTS_LAYOUT_ARRAY`, InstanceDescs points to an array of instance descs in GPU memory.</p><p>If DescLayout is `D3D12_ELEMENTS_LAYOUT_ARRAY_OF_POINTERS`, InstanceDescs points to an array in GPU memory of `D3D12_GPU_VIRTUAL_ADDRESS` pointers to instance descs.</p><p>If Type is not `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TOP_LEVEL`, this parameter is unused (space repurposed in a union).</p><p>The memory pointed to must be in state `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`.</p>
 `const D3D12_RAYTRACING_GEOMETRY_DESC* pGeometryDescs` | <p>If Type is `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BOTTOM_LEVEL`, and DescsLayout is `D3D12_ELEMENTS_LAYOUT_ARRAY`, this field is used and points to NumDescs contiguous [D3D12_RAYTRACING_GEOMETRY_DESC](#d3d12_raytracing_geometry_desc) structures on the CPU describing individual geometries.</p><p>If Type is not `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BOTTOM_LEVEL` or DescsLayout is not `D3D12_ELEMENTS_LAYOUT_ARRAY`, this parameter is unused (space repurposed in a union).</p><p>*The reason pGeometryDescs is a CPU based parameter as opposed to InstanceDescs which live on the GPU is, at least for initial implementations, the CPU needs to look at some of the information such as triangle counts in pGeometryDescs in order to schedule acceleration structure builds. Perhaps in the future more of the data can live on the GPU.*</p>
 `const D3D12_RAYTRACING_GEOMETRY_DESC** ppGeometryDescs` | <p>If Type is `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BOTTOM_LEVEL`, and DescsLayout is `D3D12_ELEMENTS_LAYOUT_ARRAY_OF_POINTERS`, this field is used and points to an array of NumDescs pointers to [D3D12_RAYTRACING_GEOMETRY_DESC](#d3d12_raytracing_geometry_desc) structures on the CPU describing individual geometries.</p><p>If Type is not `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BOTTOM_LEVEL` or DescsLayout is not `D3D12_ELEMENTS_LAYOUT_ARRAY_OF_POINTERS`, this parameter is unused (space repurposed in a union).</p><p>*ppGeometryDescs is a CPU based parameter for the same reason as pGeometryDescs described above. The only difference is this option lets the app have sparsely located geometry descs if desired.*</p>
+`const D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC* pOpacityMicromapArrayDesc` | <p>If Type is `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_OPACITY_MICROMAP_ARRAY`, this field is used and points to a single [D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC](#d3d12_raytracing_opacity_micromap_array_desc) structure on the CPU.  `NumDescs` must be `1`, and `DescsLayout` must be `D3D12_ELEMENTS_LAYOUT_ARRAY` (even though it is just an array of 1 desc).  Note that the single structure being pointed to itself has fields describing an array of OMMs.  The array description there is split into multiple parts, so it doesn't work to specify just one array in this `D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS` union as with other acceleration structures.</p>
 
 ---
 
@@ -3806,7 +4070,8 @@ Member                              | Definition
 typedef enum D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE
 {
   D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL = 0x0,
-  D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL = 0x1
+  D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL = 0x1,
+  D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_OPACITY_MICROMAP_ARRAY = 0x2
 } D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE;
 ```
 
@@ -3814,6 +4079,7 @@ Value                            | Definition
 ---------                        | ----------
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL` | Top-level acceleration structure.
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL` | Bottom-level acceleration structure.
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_OPACITY_MICROMAP_ARRAY` | Opacity micromap array.  This is part of the [Opacity Micromaps](#opacity-micromaps) feature.  
 
 Descriptions of these types are at [Geometry and acceleration structures](#geometry-and-acceleration-structures)
 and visualized in [Ray-geometry interaction diagram](#ray-geometry-interaction-diagram).
@@ -3832,18 +4098,24 @@ typedef enum D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD= 0x08,
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_MINIMIZE_MEMORY= 0x10,
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE= 0x20,
+    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_OMM_LINKAGE_UPDATE = 0x40,
+    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DISABLE_OMMS = 0x80,
+    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS = 0x100
 } D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS;
 ```
 
 Member                              | Definition
 ---------                           | ----------
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE` | No options specified for the acceleration structure build.
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE` | <p> Build the acceleration structure such that it supports future updates (via the flag `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE`) instead of the app having to entirely rebuild. This option may result in increased memory consumption, build times and lower raytracing performance. Future updates, however, should be faster than building the equivalent acceleration structure from scratch.</p><p> This flag can only be set on an initial acceleration structure build, or on an update where the source acceleration structure specified `ALLOW_UPDATE`. In other words as soon as an acceleration structure has been built without `ALLOW_UPDATE`, no other acceleration structures can be created from it via updates.</p>
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION` | <p>Enables the option to compact the acceleration structure by calling [CopyRaytracingAccelerationStructure()](#copyraytracingaccelerationstructure) with the compact mode (see [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode)).</p><p> This option may result in increased memory consumption and build times. After future compaction, however, the resulting acceleration structure should consume a smaller memory footprint (certainly no larger) than building the acceleration structure from scratch.</p><p>Specifying `ALLOW_COMPACTION` may increase pre-compaction acceleration structure size versus not specifying `ALLOW_COMPACTION`.</p><p>If multiple incremental builds are performed before finally compacting, there may be redundant compaction related work performed.</p><p>The size required for the compacted acceleration structure can be queried before compaction via [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo) -- see [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_compacted_size_desc) in particular for a discussion on some properties of compacted acceleration structure size.</p><p>This flag is compatible with all other flags. If specified as part of an acceleration structure update, the source acceleration structure must have also been built with this flag. In other words as soon as an acceleration structure has been built without `ALLOW_COMPACTION`, no other acceleration structures can be created from it via updates that specify `ALLOW_COMPACTION`.</p><p>*Note on interaction of `ALLOW_UPDATE` with `ALLOW_COMPACTION` that might apply to some implementations:*</p><p>*As long as `ALLOW_UPDATE` is specified, there is certain information that needs to be retained in the acceleration structure, and compaction will only help so much.*</p><p>*However, if the implementation knows that the acceleration structure will no longer be updated, it could do a better job of compacting it.*</p><p>*The application could benefit from compacting twice - once after the initial build, and once after the acceleration structure has "settled" to a static state (if ever).*</p>
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE` | <p>Construct a high quality acceleration structure that maximizes raytracing performance at the expense of additional build time. A rough rule of thumb is the implementation should take about 2-3 times the build time than default in order to get better tracing performance.</p><p> This flag is recommended for static geometry in particular. It is also compatible with all other flags except for `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD`.</p>
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD` | <p>Construct a lower quality acceleration structure, trading raytracing performance for build speed. A rough rule of thumb is the implementation should take about 1/2 to 1/3 the build time than default at a sacrifice in tracing performance.</p><p>This flag is compatible with all other flags except for `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE`.</p>
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_MINIMIZE_MEMORY` | <p>Minimize the amount of scratch memory used during the acceleration structure build as well as the size of the result. This option may result in increased build times and/or raytracing times.</p><p>This is orthogonal to the `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION` flag (and explicit acceleration structure compaction that it enables). Combining the flags can mean both the initial acceleration structure as well as the result of compacting it use less memory.</p><p>The impact of using this flag for a build is reflected in the result of calling [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo) before doing the build to retrieve memory requirements for the build.</p><p>This flag is compatible with all other flags.</p>
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE` | <p> Perform an acceleration structure update, as opposed to building from scratch. This is faster than a full build, but can negatively impact raytracing performance, especially if the positions of the underlying objects have changed significantly from the original build of the acceleration structure before updates.</p><p>See [Acceleration structure update constraints](#acceleration-structure-update-constraints) for a discussion of what is allowed to change in an acceleration structure update.</p><p>If the addresses of the source and destination acceleration structures are identical, the update is performed in-place. Any other overlapping of address ranges of the source and destination is invalid. For non-overlapping source and destinations, the source acceleration structure is unmodified. The memory requirement for the output acceleration structure is the same as in the input acceleration structure.</p><p>The source acceleration structure must have specified `ALLOW_UPDATE`.</p><p>This flag is compatible with all other flags. The other flags selections, aside from `ALLOW_UPDATE` and `PERFORM_UPDATE`, must match the flags in the source acceleration structure.</p><p>Acceleration structure updates can be performed in unlimited succession, as long as the source acceleration structure was created with `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE` and the flags for the update build continue to specify `ALLOW_UPDATE`.
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE` | <p>Applicable to TLAS and BLAS builds.</p><p>Build the acceleration structure such that it supports future updates (via the flag `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE`) instead of the app having to entirely rebuild. This option may result in increased memory consumption, build times and lower raytracing performance. Future updates, however, should be faster than building the equivalent acceleration structure from scratch.</p><p>This flag can only be set on an initial acceleration structure build, or on an update where the source acceleration structure specified `ALLOW_UPDATE`. In other words as soon as an acceleration structure has been built without `ALLOW_UPDATE`, no other acceleration structures can be created from it via updates.</p><p>When the [Opacity Micromaps](#opacity-micromaps) feature is being used, if `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_OMM_LINKAGE_UPDATE` is specified on a BLAS, OMM linkage may be changed in the along with positions when the next update is performed. `_ALLOW_OMM_LINKAGE_SUPPORT` can't be specified without `_ALLOW_UPDATE`, implying updates always require positions to be specified, whether or not OMM linkages are also being updated. If OMM linkages are present, even if they aren't being updated, the description must still be specified in an update.</p>
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION` | <p>Enables the option to compact the acceleration structure by calling [CopyRaytracingAccelerationStructure()](#copyraytracingaccelerationstructure) with the compact mode (see [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode)).</p><p> This option may result in increased memory consumption and build times. After future compaction, however, the resulting acceleration structure should consume a smaller memory footprint (certainly no larger) than building the acceleration structure from scratch.</p><p>Specifying `ALLOW_COMPACTION` may increase pre-compaction acceleration structure size versus not specifying `ALLOW_COMPACTION`.</p><p>If multiple incremental builds are performed before finally compacting, there may be redundant compaction related work performed.</p><p>The size required for the compacted acceleration structure can be queried before compaction via [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo) -- see [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_compacted_size_desc) in particular for a discussion on some properties of compacted acceleration structure size.</p><p>This flag is compatible with all other flags. If specified as part of an acceleration structure update, the source acceleration structure must have also been built with this flag. In other words as soon as an acceleration structure has been built without `ALLOW_COMPACTION`, no other acceleration structures can be created from it via updates that specify `ALLOW_COMPACTION`.</p><p>*Note on interaction of `ALLOW_UPDATE` with `ALLOW_COMPACTION` that might apply to some implementations:*</p><p>*As long as `ALLOW_UPDATE` is specified, there is certain information that needs to be retained in the acceleration structure, and compaction will only help so much.*</p><p>*However, if the implementation knows that the acceleration structure will no longer be updated, it could do a better job of compacting it.*</p><p>*The application could benefit from compacting twice - once after the initial build, and once after the acceleration structure has "settled" to a static state (if ever).*</p><p>Applicable to TLAS, BLAS and OMM Array builds.</p>
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE` | <p>Construct a high quality acceleration structure that maximizes raytracing performance at the expense of additional build time. A rough rule of thumb is the implementation should take about 2-3 times the build time than default in order to get better tracing performance.</p><p> This flag is recommended for static geometry in particular. It is also compatible with all other flags except for `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD`.</p><p>This flag applies to all acceleration structure types, including OMM arrays.</p>
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD` | <p>Construct a lower quality acceleration structure, trading raytracing performance for build speed. A rough rule of thumb is the implementation should take about 1/2 to 1/3 the build time than default at a sacrifice in tracing performance.</p><p>This flag is compatible with all other flags except for `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE`.</p><p>This flag applies to all acceleration structure types, including OMM arrays.</p>
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_MINIMIZE_MEMORY` | <p>Minimize the amount of scratch memory used during the acceleration structure build as well as the size of the result. This option may result in increased build times and/or raytracing times.</p><p>This is orthogonal to the `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION` flag (and explicit acceleration structure compaction that it enables). Combining the flags can mean both the initial acceleration structure as well as the result of compacting it use less memory.</p><p>The impact of using this flag for a build is reflected in the result of calling [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo) before doing the build to retrieve memory requirements for the build.</p><p>This flag is compatible with all other flags.</p><p>Applicable to TLAS and BLAS builds.</p>
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE` | <p> Perform an acceleration structure update, as opposed to building from scratch. This is faster than a full build, but can negatively impact raytracing performance, especially if the positions of the underlying objects have changed significantly from the original build of the acceleration structure before updates.</p><p>See [Acceleration structure update constraints](#acceleration-structure-update-constraints) for a discussion of what is allowed to change in an acceleration structure update.</p><p>If the addresses of the source and destination acceleration structures are identical, the update is performed in-place. Any other overlapping of address ranges of the source and destination is invalid. For non-overlapping source and destinations, the source acceleration structure is unmodified. The memory requirement for the output acceleration structure is the same as in the input acceleration structure.</p><p>The source acceleration structure must have specified `ALLOW_UPDATE` (and if needed `ALLOW_OMM_LINKAGE_UPDATE`).</p><p>`_PERFORM_UPDATE` compatible with all other flags. The other flags selections, aside from `ALLOW_UPDATE` and `PERFORM_UPDATE`, must match the flags in the source acceleration structure.</p><p>Acceleration structure updates can be performed in unlimited succession, as long as the source acceleration structure was created with `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE` and/or `_ALLOW_OMM_LINKAGE_UPDATE`, and if opting to continue allowing future updates, the build specifies the same combination of `ALLOW_*_UPDATE` flags (set can't change other than setting none if updates are forever finished).</p><p>If OMM linkage is present and not being updated, the original linkage description must still be passed into the update operation.</p><p>Applicable to TLAS and BLAS builds.</p>
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_OMM_LINKAGE_UPDATE`   | <p>The AS supports updating OMM contents (fields of [D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC](#d3d12_raytracing_geometry_omm_linkage_desc)). Specifying this flag may result in larger AS size and may reduce traversal performance.</p><p>Rules for when `ALLOW_OMM_LINKAGE_UPDATE` can be set mirror the rules described `ALLOW_UPDATE`, except only applicable if OMMs are present.</p><p>`ALLOW_OMM_LINKAGE_UPDATE` can only be set if `ALLOW_UPDATE` is also set.</p><p>While any part of the linkage description can be changed, switching between having an OMM linkage at all and not having one isn't permitted.</p><p>If an acceleration structure with OMM linkage is having just it's positions updated (not the OMM linkage), so `ALLOW_OMM_LINKAGE_UPDATE` isn't specified, the update description still has to provide the original OMM linkage description.</p><p>Applicable to BLAS builds.</p><p>This is part of the [Opacity Micromaps](#opacity-micromaps) feature.</p>
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DISABLE_OMMS` | Only applicable for BLAS builds. If enabled, any instances referencing this BLAS are allowed to disable the OMM test through the [D3D12_RAYTRACING_INSTANCE_FLAG_DISABLE_OMMS](#d3d12_raytracing_instance_flags) flag. Specifying this build flag may result in some reductions in traversal performance. This is part of the [Opacity Micromaps](#opacity-micromaps) feature.
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS` | This is proposed, not supported yet. Only applicable for BLAS builds. Allows the use of the proposed: geometry fetch intrinsic [TriangleObjectPosition(uint VertexIndex)](#triangleobjectposition) in [AnyHit](#any-hit-shader) or [ClosestHit](#closest-hit-shader) shaders, or in [RayQuery](#rayquery): [RayQuery::CandidateTriangleObjectPosition(uint VertexIndex)](#rayquery-candidatetriangleobjectposition) or [RayQuery::CommittedTriangleObjectPosition(uint VertexIndex)](#rayquery-committedtriangleobjectposition).
 
 ---
 
@@ -3878,6 +4150,7 @@ typedef struct D3D12_RAYTRACING_GEOMETRY_DESC
     {
         D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC Triangles;
         D3D12_RAYTRACING_GEOMETRY_AABBS_DESC AABBs;
+        D3D12_RAYTRACING_GEOMETRY_OMM_TRIANGLES_DESC OmmTriangles;
     };
 } D3D12_RAYTRACING_GEOMETRY_DESC;
 ```
@@ -3888,6 +4161,7 @@ Member                              | Definition
 `D3D12_RAYTRACING_GEOMETRY_FLAGS Flags` | [D3D12_RAYTRACING_GEOMETRY_FLAGS](#d3d12_raytracing_geometry_flags) for this geometry.
 `D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC Triangles` | [D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC](#d3d12_raytracing_geometry_triangles_desc) describing triangle geometry if Type is `D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES`. Otherwise this parameter is unused (space repurposed in a union).
 `D3D12_RAYTRACING_GEOMETRY_AABBS_DESC AABBs` | [D3D12_RAYTRACING_GEOMETRY_AABBS_DESC](#d3d12_raytracing_geometry_aabbs_desc) describing AABB geometry if Type is `D3D12_RAYTRACING_GEOMETRY_TYPE_PROCEDURAL_PRIMITIVE_AABBS`. Otherwise this parameter is unused (space repurposed in a union).
+`D3D12_RAYTRACING_GEOMETRY_OMM_TRIANGLES_DESC OmmTriangles` | Describes triangle geometry which may optionally use opacity micromaps, if `Type` is [D3D12_RAYTRACING_GEOMETRY_TYPE_OMM_TRIANGLES](#d3d12_raytracing_geometry_type). Otherwise, this parameter is unused (space repurposed in a union).  This is part of the [Opacity Micromaps](#opacity-micromaps) feature.
 
 ---
 
@@ -3897,7 +4171,8 @@ Member                              | Definition
 typedef enum D3D12_RAYTRACING_GEOMETRY_TYPE
 {
     D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES,
-    D3D12_RAYTRACING_GEOMETRY_TYPE_PROCEDURAL_PRIMITIVE_AABBS
+    D3D12_RAYTRACING_GEOMETRY_TYPE_PROCEDURAL_PRIMITIVE_AABBS,
+    D3D12_RAYTRACING_GEOMETRY_TYPE_OMM_TRIANGLES
 } D3D12_RAYTRACING_GEOMETRY_TYPE;
 ```
 
@@ -3905,6 +4180,7 @@ Value                               | Definition
 ---------                           | ----------
 `D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES` | The geometry consists of triangles described by [D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC](#d3d12_raytracing_geometry_triangles_desc).
 `D3D12_RAYTRACING_GEOMETRY_TYPE_PROCEDURAL_PRIMITIVE_AABBS` | The geometry procedurally is defined during raytracing by [intersection shaders](#intersection-shaders---procedural-primitive-geometry). So for the purpose of acceleration structure builds, the geometry's bounds are described with axis-aligned bounding boxes via [D3D12_RAYTRACING_GEOMETRY_AABBS_DESC](#d3d12_raytracing_geometry_aabbs_desc).
+`D3D12_RAYTRACING_GEOMETRY_TYPE_OMM_TRIANGLES` | Shares most fields with the basic triangle geometry type,[D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC](#d3d12_raytracing_geometry_triangles_desc), but allows the geometry to link to an OMM Array. The basic triangle type and this OMM-enabled type geometries may be mixed in the same BLAS build.  This is part of the [Opacity Micromaps](#opacity-micromaps) feature.
 
 ---
 
@@ -4036,6 +4312,8 @@ typedef enum D3D12_RAYTRACING_INSTANCE_FLAGS
     D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE =0x2,
     D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE = 0x4,
     D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE = 0x8
+    D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OMM_2_STATE = 0x10,
+    D3D12_RAYTRACING_INSTANCE_FLAG_DISABLE_OMMS = 0x20,
 } D3D12_RAYTRACING_INSTANCE_FLAGS;
 ```
 
@@ -4046,6 +4324,204 @@ Value                               | Definition
 `D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE` | <p> This flag reverses front and back facings, which is useful if for example, the application's natural winding order differs from the default (described below).</p><p>By default, a triangle is front facing if its vertices appear clockwise from the ray origin and back facing if its vertices appear counter-clockwise from the ray origin, in object space in a left-handed coordinate system.</p><p>Since these winding direction rules are defined in object space, they are unaffected by instance transforms. For example, an instance transform matrix with negative determinant (e.g. mirroring some geometry) does not change the facing of the triangles within the instance. Per-geometry transforms, by contrast, (defined in [D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC](#d3d12_raytracing_geometry_triangles_desc)), get combined with the associated vertex data in object space, so a negative determinant matrix there *does* flip triangle winding.</p>
 `D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE` | <p>The instance will act as if [D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE](#d3d12_raytracing_geometry_flags) had been specified for all the geometries in the bottom-level acceleration structure referenced by the instance. Note that this behavior can be overridden by the [ray flag](#ray-flags) `RAY_FLAG_FORCE_NON_OPAQUE`.</p><p>Mutually exclusive to the `D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE` flag.</p>
 `D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE` |<p>The instance will act as if [D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE](#d3d12_raytracing_geometry_flags) had not been specified for any of the geometries in the bottom-level acceleration structure referenced by the instance. Note that this behavior can be overridden by the [ray flag](#ray-flags) `RAY_FLAG_FORCE_OPAQUE`.</p><p>Mutually exclusive to the `D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE` flag.</p>
+`D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OMM_2_STATE` | Ignore the Unknown state and only consider the Transparent/Opaque bit for all 4-state Opacity Micromaps encountered during traversal. This flag has no effect if `D3D12_RAYTRACING_INSTANCE_FLAG_DISABLE_OMMS` is set. This is part of the [Opacity Micromaps](#opacity-micromaps) feature.
+`D3D12_RAYTRACING_INSTANCE_FLAG_DISABLE_OMMS`      | Disable Opacity Micromaps for all triangles, and revert to using geometry opaque/non-opaque state instead (original behavior). This flag is only valid if the referenced BLAS was built with the [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DISABLE_OMMS](#d3d12_raytracing_acceleration_structure_build_flags) flag. Omitting the flag during BLAS build will result in undefined behavior. This is part of the [Opacity micromaps](#opacity-micromaps) feature.
+
+---
+
+##### D3D12_RAYTRACING_GEOMETRY_OMM_TRIANGLES_DESC
+
+```C
+typedef struct D3D12_RAYTRACING_GEOMETRY_OMM_TRIANGLES_DESC
+{
+    const D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC* pTriangles;
+    const D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC* pOmmLinkage;
+} D3D12_RAYTRACING_GEOMETRY_OMM_TRIANGLES_DESC;
+```
+
+Geometry triangle descriptor accompanied by a mapping to opacity micromaps.
+
+Member                                                        | Definition
+------                                                        | ----------
+`const D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC* pTriangles`          | Pointer to triangle mesh descriptor.  See [D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC](#d3d12_raytracing_geometry_triangles_desc).
+`const D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC pOmmLinkage` | Pointer to data to map triangles to OMM data. See [D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC](#d3d12_raytracing_geometry_omm_linkage_desc).
+
+The reason the members are pointers is to keep the size of `D3D12_RAYTRACING_GEOMETRY_OMM_TRIANGLES_DESC` from exceeding the other pre-existing structs in the union within [D3D12_RAYTRACING_GEOMETRY_DESC](#d3d12_raytracing_geometry_desc).  This tradeoff in extra complexity to use Opacity Micromaps avoided the larger complexity of having to make an API breaking change to version the container structs and corresponding APIs.  Technically the contents of pOmmLinkage could have been inlined here, but the thinking is it could be handy to combine separately tracked OMM linkage desc and triangles desc.
+
+
+This is part of the [Opacity Micromaps](#opacity-micromaps) feature.
+
+---
+
+##### D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC
+
+```C
+typedef struct D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC
+{
+    D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE OpacityMicromapIndexBuffer;
+    DXGI_FORMAT OpacityMicromapIndexFormat;
+    UINT OpacityMicromapBaseLocation;
+    D3D12_GPU_VIRTUAL_ADDRESS OpacityMicromapArray;
+} D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC;
+```
+
+Descriptor of opacity micromap data to be paired with separate triangle data.
+
+Member                                                                 | Definition
+------                                                                 | ----------
+`D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE OpacityMicromapIndexBuffer`      | <p>Buffer specifying which OMM index to use for each triangle. Some values have special meaning and are used to encode OMMs with uniform state (see [D3D12_RAYTRACING_OPACITY_MICROMAP_SPECIAL_INDEX](#d3d12_raytracing_opacity_micromap_special_index)). This input is optional. If `NULL`, there is a 1:1 mapping between input triangles and OMM Array entries, as long as the OMM Array has at least as many entries as the number of triangles + `OpacityMicromapBaseLocation`. For BLAS updates, this input buffer must match that of the original build if the [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_OMM_LINKAGE_UPDATE](#d3d12_raytracing_acceleration_structure_build_flags) build flag is cleared.</p><p>The memory must be in state `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`.  Address and stride must be aligned to the index format size.</p>
+`DXGI_FORMAT OpacityMicromapIndexFormat`                               | Format of `OpacityMicromapIndexBuffer`. Can be `DXGI_FORMAT_R32_UINT`, `DXGI_FORMAT_R16_UINT`, `DXGI_FORMAT_R8_UINT` or `DXGI_FORMAT_UNKNOWN` (no index buffer used).
+`UINT OpacityMicromapBaseLocation`                                     | Constant added to all non-uniform OMM indices in `OpacityMicromapIndexBuffer`.  For the non-indexed case it also offsets the range of entries used in an OMM Array.
+`D3D12_GPU_VIRTUAL_ADDRESS OpacityMicromapArray`                       | <p>Pointer to an OMM Array used by this geometry. May be set to `NULL` if no non-uniform OMMs are used. Unlike vertex, index, and transform buffers, this resource is dereferenced during raytracing.</p><p>The memory must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p>
+
+This is part of the [Opacity Micromaps](#opacity-micromaps) feature.
+
+---
+
+##### D3D12_RAYTRACING_OPACITY_MICROMAP_SPECIAL_INDEX
+
+```C
+typedef enum D3D12_RAYTRACING_OPACITY_MICROMAP_SPECIAL_INDEX
+{
+    D3D12_RAYTRACING_OPACITY_MICROMAP_SPECIAL_INDEX_FULLY_TRANSPARENT = -1,
+    D3D12_RAYTRACING_OPACITY_MICROMAP_SPECIAL_INDEX_FULLY_OPAQUE = -2,
+    D3D12_RAYTRACING_OPACITY_MICROMAP_SPECIAL_INDEX_FULLY_UNKNOWN_TRANSPARENT = -3,
+    D3D12_RAYTRACING_OPACITY_MICROMAP_SPECIAL_INDEX_FULLY_UNKNOWN_OPAQUE = -4,
+} D3D12_RAYTRACING_OPACITY_MICROMAP_SPECIAL_INDEX;
+```
+
+If a triangle has a uniform OMM state in a BLAS build, it is preferable to signal this explicitly, rather than linking to single state Opacity Micromap.
+
+This can be accomplished by supplying these special indices as entries in `OpacityMicromapIndexBuffer`, in [D3D12_RAYTRACING_GEOMETRY_OMM_TRIANGLES_DESC](#d3d12_raytracing_geometry_omm_triangles_desc).
+
+Value                                                                       | Definition
+-----                                                                       | ----------
+`D3D12_RAYTRACING_OPACITY_MICROMAP_SPECIAL_INDEX_FULLY_TRANSPARENT`         | Uniform transparent OMM state.
+`D3D12_RAYTRACING_OPACITY_MICROMAP_SPECIAL_INDEX_FULLY_OPAQUE`              | Uniform opaque OMM state.
+`D3D12_RAYTRACING_OPACITY_MICROMAP_SPECIAL_INDEX_FULLY_UNKNOWN_TRANSPARENT` | Uniform unknown-transparent OMM state.
+`D3D12_RAYTRACING_OPACITY_MICROMAP_SPECIAL_INDEX_FULLY_UNKNOWN_OPAQUE`      | Uniform unknown-opaque OMM state.
+
+This is part of the [Opacity Micromaps](#opacity-micromaps) feature.
+
+---
+
+##### D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC
+
+```C
+typedef struct D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC
+{
+    UINT NumOmmHistogramEntries;
+    const D3D12_RAYTRACING_OPACITY_MICROMAP_HISTOGRAM_ENTRY* pOmmHistogram;
+    D3D12_GPU_VIRTUAL_ADDRESS InputBuffer;
+    D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE PerOmmDescs;
+} D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC;
+```
+
+Input structure to OMM Array construction.
+Individual OMMs are accessed via indices when used in BLAS construction.
+
+Member                                                                 | Definition
+------                                                                 | ----------
+`UINT NumOmmHistogramEntries`                                               | Number of OMM histogram entries in the `pOmmHistogram` array.
+`const D3D12_RAYTRACING_OPACITY_MICROMAP_HISTOGRAM_ENTRY* pOmmHistogram` | Counts for each subdivision level and format combination across all the OMM entries in the build.  See [D3D12_RAYTRACING_OPACITY_MICROMAP_HISTOGRAM_ENTRY](#d3d12_raytracing_opacity_micromap_histogram_entry).
+`D3D12_GPU_VIRTUAL_ADDRESS InputBuffer`                                | <p>Address for raw OMM input data. Must be 128-byte aligned. It is recommended to try to organize OMMs together in memory that are expected to be used close together spatially.</p><p>The memory must be in state `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`.</p>
+`D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE PerOmmDescs`                     | <p>GPU array with one [`D3D12_RAYTRACING_OPACITY_MICROMAP_DESC`](#d3d12_raytracing_opacity_micromap_desc) entry per OMM.</p><p>The memory must be in state `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`.  The address and stride must be 4 byte aligned.</p>
+
+This is part of the [Opacity Micromaps](#opacity-micromaps) feature.
+
+---
+
+##### D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT
+
+```C
+typedef enum D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT
+{
+    D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT_OC1_2_STATE = 0x1,
+    D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT_OC1_4_STATE = 0x2,
+} D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT;
+```
+
+Specifies the input opacity micromap formats.
+The OC1 (Opacity Compression 1) format follows the space-filling curve listed in the [Opacity Micromap encoding](#opacity-micromap-encoding) section.
+
+Value                                                  | Definition
+-----                                                  | ----------
+`D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT_OC1_2_STATE` | 2-state (Transparent/Opaque) format.
+`D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT_OC1_4_STATE` | 4-state (Transparent/Opaque, Known/Unknown) format.
+
+This is part of the [Opacity Micromaps](#opacity-micromaps) feature.
+
+---
+
+##### D3D12_RAYTRACING_OPACITY_MICROMAP_HISTOGRAM_ENTRY
+
+```C
+typedef struct D3D12_RAYTRACING_OPACITY_MICROMAP_HISTOGRAM_ENTRY
+{
+    UINT Count;
+    UINT SubdivisionLevel;
+    D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT Format;
+} D3D12_RAYTRACING_OPACITY_MICROMAP_HISTOGRAM_ENTRY;
+```
+
+Number of OMMs of a specific configuration in an OMM Array.
+Used to compute conservative buffer size estimates for OMM Array builds.
+
+Member                                            | Definition
+------                                            | ----------
+`UINT Count`                                      | Total number of OMMs in the OMM Array with the particular `SubdivisionLevel` and `Format` specified in this descriptor.
+`UINT SubdivisionLevel`                           | Number of subdivisions for the OMM. Valid inputs are `[0, 12]` (see [`D3D12_RAYTRACING_OPACITY_MICROMAP_OC1_MAX_SUBDIVISION_LEVEL`](#constants)). The total number of micro-triangles is 4<sup>`SubdivisionLevel`</sup>.
+`D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT Format` | Opacity micromap format. Note that this is a 32-bit integer.
+
+This is part of the [Opacity Micromaps](#opacity-micromaps) feature.
+
+---
+
+##### D3D12_RAYTRACING_OPACITY_MICROMAP_DESC
+
+```C
+typedef struct D3D12_RAYTRACING_OPACITY_MICROMAP_DESC
+{
+    UINT ByteOffset;
+    UINT SubdivisionLevel : 16;
+    D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT Format : 16;
+} D3D12_RAYTRACING_OPACITY_MICROMAP_DESC;
+```
+
+Describes one opacity micromap.
+
+Member                                                | Definition
+------                                                | ----------
+`UINT ByteOffset`                                     | Byte offset from the InputBuffer, specified in the input [`D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC`](#d3d12_raytracing_opacity_micromap_array_desc) struct, to where the input OMM data is located.
+`UINT SubdivisionLevel : 16`                          | Number of subdivisions for the OMM. Valid inputs are `[0, 12]` (see [`D3D12_RAYTRACING_OPACITY_MICROMAP_OC1_MAX_SUBDIVISION_LEVEL`](#constants)). The total number of micro-triangles is 4<sup>`SubdivisionLevel`</sup>.
+`D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT Forma : 16` | Format of the OMM of type [`D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT`](#d3d12_raytracing_opacity_micromap_format). Note that this is a 16-bit integer.
+
+This is part of the [Opacity Micromaps](#opacity-micromaps) feature.
+
+---
+
+##### D3D12_RAYTRACING_OPACITY_MICROMAP_STATE
+
+```C
+enum D3D12_RAYTRACING_OPACITY_MICROMAP_STATE : uint
+{
+    D3D12_RAYTRACING_OPACITY_MICROMAP_STATE_TRANSPARENT = 0,
+    D3D12_RAYTRACING_OPACITY_MICROMAP_STATE_OPAQUE = 1,
+    D3D12_RAYTRACING_OPACITY_MICROMAP_STATE_UNKNOWN_TRANSPARENT = 2,
+    D3D12_RAYTRACING_OPACITY_MICROMAP_STATE_UNKNOWN_OPAQUE = 3,
+} D3D12_RAYTRACING_OPACITY_MICROMAP_STATE;
+```
+
+Opacity Micromap micro-triangle states. Defines the entries within an Opacity Micromap, so not part of any APU input, just listed here for convenience.
+
+Value                                       | Definition
+-----                                       | ----------
+`D3D12_RAYTRACING_OPACITY_MICROMAP_STATE_TRANSPARENT`         | Transparent OMM state. Hit is ignored.
+`D3D12_RAYTRACING_OPACITY_MICROMAP_STATE_OPAQUE`              | Opaque OMM state. Hit is committed.
+`D3D12_RAYTRACING_OPACITY_MICROMAP_STATE_UNKNOWN_TRANSPARENT` | Unknown-transparent OMM state. If operating in 4-state mode, invoke any-hit shader. If operating in 2-state mode, ignore hit.
+`D3D12_RAYTRACING_OPACITY_MICROMAP_STATE_UNKNOWN_OPAQUE`      | Unknown-opaque OMM state. If operating in 4-state mode, invoke any-hit shader. If operating in 2-state mode, commit the hit.
+
+This is part of the [Opacity Micromaps](#opacity-micromaps) feature.  Also see [Opacity Micromap encoding](#opacity-micromap-encoding).
 
 ---
 
@@ -4087,7 +4563,7 @@ Parameter                           | Definition
 ---------                           | ----------
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC* pDesc` |Description of postbuild information to generate.
 `UINT NumSourceAccelerationStructures` | Number of pointers to acceleration structure GPUVAs pointed to by pSourceAccelerationStructureData. This number also affects the destination (output), which will be a contiguous array of NumSourceAccelerationStructures output structures, where the type of the structures depends on InfoType.
-`const D3D12_GPU_VIRTUAL_ADDRESS* pSourceAccelerationStructureData` | <p>Pointer to array of GPUVAs of size NumSourceAccelerationStructures. Each GPUVA points to the start of an existing acceleration structure, which is aligned to 256 bytes ([D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT](#constants)).</p><p>The memory pointed to must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p>
+`const D3D12_GPU_VIRTUAL_ADDRESS* pSourceAccelerationStructureData` | <p>Pointer to array of GPUVAs of size NumSourceAccelerationStructures. Each GPUVA points to the start of an existing acceleration structure, which is aligned to 256 bytes ([D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT](#constants)), or 128 bytes for [Opacity Micromap](#opacity-micromaps) arrays ([D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_BYTE_ALIGNMENT](#constants)).</p><p>The memory pointed to must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p>
 
 ---
 
@@ -4131,10 +4607,10 @@ typedef enum D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TYPE
 
 Member                              | Definition
 ---------                           | ----------
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE` | Space requirements for an acceleration structure after compaction. See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_compacted_size_desc).
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TOOLS_VISUALIZATION` | Space requirements for generating tools visualization for an acceleration structure (used by tools). See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TOOLS_VISUALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_tools_visualization_desc).
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION` | Space requirements for serializing an acceleration structure. See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc)
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SIZE` | Size of the current acceleration structure. See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SIZE_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_current_size_desc).
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE` | Space requirements for an acceleration structure or Opacity Micromap Array after compaction. See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_compacted_size_desc).  Applies to TLAS, BLAS and Opacity Micromap Arrays.
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TOOLS_VISUALIZATION` | Space requirements for generating tools visualization for an acceleration structure or Opacity Micromap Array (used by tools). See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TOOLS_VISUALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_tools_visualization_desc).
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION` | Space requirements for serializing an acceleration structure or Opacity Micromap Array. See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc)
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SIZE` | Size of the current acceleration structure or Opacity Micromap Array. See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SIZE_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_current_size_desc).
 
 ---
 
@@ -4149,7 +4625,7 @@ typedef struct D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_
 
 Member                              | Definition
 ---------                           | ----------
-`UINT64 CompactedSizeInBytes` | <p>Space requirement for acceleration structure after compaction.</p><p>It is guaranteed that a compacted acceleration structure doesn't consume more space than a non-compacted acceleration structure.</p><p>Pre-compaction, it is guaranteed that the size requirements reported by [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo) for a given build configuration (triangle counts etc.) will be sufficient to store any acceleration structure whose build inputs are reduced (e.g. reducing triangle counts). This is discussed in [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo). This non-increasing property for smaller builds does not apply post-compaction, however. In other words, it is not guaranteed that having fewer items in an acceleration structure means it compresses to a smaller size than compressing an acceleration structure with more items.</p>
+`UINT64 CompactedSizeInBytes` | <p>Space requirement for acceleration structure or Opacity Micromap Array after compaction.</p><p>It is guaranteed that a compacted acceleration structure doesn't consume more space than a non-compacted acceleration structure.</p><p>Pre-compaction, it is guaranteed that the size requirements reported by [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo) for a given build configuration (triangle counts etc.) will be sufficient to store any acceleration structure whose build inputs are reduced (e.g. reducing triangle counts). This is discussed in [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo). This non-increasing property for smaller builds does not apply post-compaction, however. In other words, it is not guaranteed that having fewer items in an acceleration structure means it compresses to a smaller size than compressing an acceleration structure with more items.</p>
 
 ---
 
@@ -4164,7 +4640,7 @@ typedef struct D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TOOLS_VISU
 
 Member                              | Definition
 ---------                           | ----------
-`UINT64 DecodedSizeInBytes` | Space requirement for decoding an acceleration structure into a form that can be visualized by tools.
+`UINT64 DecodedSizeInBytes` | Space requirement for decoding an acceleration structure or Opacity Micromap array into a form that can be visualized by tools.
 
 ---
 
@@ -4174,14 +4650,23 @@ Member                              | Definition
 typedef struct D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC
 {
     UINT64 SerializedSizeInBytes;
-    UINT64 NumBottomLevelAccelerationStructurePointers; // UINT64 to align arrays of this struct
+    union
+    {
+        UINT64 NumBottomLevelAccelerationStructurePointers; // UINT64 to align arrays of this struct
+        UINT64 NumBottomLevelAccelerationStructureHeaderAndPointerListPairs;
+    };
 } D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC;
 ```
 
 Member                              | Definition
 ---------                           | ----------
-`UINT64 SerializedSizeInBytes | Size of the serialized acceleration structure, including a header. The header is [D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER](#d3d12_serialized_raytracing_acceleration_structure_header) followed by followed by a list of pointers to bottom-level acceleration structures.
-`UINT64 NumBottomLevelAccelerationStructurePointers` | <p>How many 64bit GPUVAs will be at the start of the serialized acceleration structure (after `D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER` above). For a bottom-level acceleration structure this will be 0. For a top-level acceleration structure, the pointers indicate the acceleration structures being referred to.</p><p> When deserializing happens, these pointers to bottom level pointers must be initialized by the app in the serialized data (just after the header) to the new locations where the bottom level acceleration structures will reside. These new locations pointed to at deserialize time need not have been populated with bottom-level acceleration structures yet, as long as they have been initialized with the expected deserialized data structures before use in raytracing. During deserialization, the driver reads the new pointers, using them to produce an equivalent top-level acceleration structure to the original.</p>
+`UINT64 SerializedSizeInBytes` | Size of the serialized acceleration structure, including a header, [D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER1](#d3d12_serialized_raytracing_acceleration_structure_header1), and header postamble data (described by the header), and the actual acceleration structure data.  For top level acceleration structures, the header postamble is a list of pointers to bottom-level acceleration structures.  For bottom-level acceleration structures, the header postable is an array of pairs: {[D3D12_RAYTRACING_SERIALIZED_BLOCK](#d3d12_raytracing_serialized_block), list of pointers the described block type}, if needed (e.g. to describe pointers to OMM arrays if used).
+`UINT64 NumBottomLevelAccelerationStructurePointers` | <p>This union entry only applies for top level acceleration structures. How many 64bit GPUVAs will be at the start of the serialized acceleration structure (after [D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER1](#d3d12_serialized_raytracing_acceleration_structure_header1)). For a top-level acceleration structure, the pointers indicate the acceleration structures being referred to.</p><p>When deserializing happens, these pointers to bottom level pointers must be initialized by the app in the serialized data (just after the header) to the new locations where the bottom level acceleration structures will reside. These new locations pointed to at deserialize time need not have been populated with bottom-level acceleration structures yet, as long as they have been initialized with the expected deserialized data structures before use in raytracing. During deserialization, the driver reads the new pointers, using them to produce an equivalent top-level acceleration structure to the original.</p>
+`UINT64 NumBottomLevelAccelerationStructureHeaderAndPointerListPairs` | <p>This union entry only applies for bottom level acceleration structures. How many sets {[D3D12_RAYTRACING_SERIALIZED_BLOCK](#d3d12_raytracing_serialized_block), list of pointers the described block type} will be at the start of the serialized acceleration structure (after [D3D12_SERIALIZED_RAYTRACING_BOTTOM_LEVEL_ACCELERATION_STRUCTURE_HEADER](#d3d12_serialized_raytracing_acceleration_structure_header1)).  This could be `0` if no additional blocks are needed, such as no use of Opacity Micromap arrays.</p><p>When deserializing happens, this additional block information must be initialized by the app in the serialized data (just after the header) to the new locations where the specified data (e.g. Opacity Micromap arrays) will reside.  The driver must only list pointers for geometries that actually bind OMM Arrays, so in a nonempty pointer list there will be no non-null pointers that need to be patched with new addresses by the app. These new locations pointed to at deserialize time need not have been populated with data (e.g. Opacity Micromap arrays) yet, as long as they have been initialized with the expected deserialized data structures before use in raytracing. During deserialization, the driver reads the new pointers, using them to produce an equivalent bottom-level acceleration structure to the original.</p>
+
+The `Num*` fields are arguably not necessary for an app to look at out of postbuild info.  The same information, with more detail, is available after serialization in [D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER1](#d3d12_serialized_raytracing_acceleration_structure_header1)).
+
+For Opacity Micromap arrays being serialized, the `Num*` don't apply and are `0`.
 
 ---
 
@@ -4196,7 +4681,7 @@ typedef struct D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SI
 
 Member                              | Definition
 ---------                           | ----------
-`UINT64 CurrentSizeInBytes**` | <p>Space used by current acceleration structure. If the acceleration structure hasn't had a compaction operation performed on it, this size is the same one reported by [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo), and if it has been compacted this size is the same reported for postbuild info with `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE`.</p><p>*While this appears redundant to other ways of querying sizes, this one can be handy for tools to be able to determine how much memory is occupied by an arbitrary acceleration structure sitting in memory.*</p>
+`UINT64 CurrentSizeInBytes**` | <p>Space used by current acceleration structure or OMM array. If the acceleration structure hasn't had a compaction operation performed on it, this size is the same one reported by [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo), and if it has been compacted this size is the same reported for postbuild info with `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE`.</p><p>*While this appears redundant to other ways of querying sizes, this one can be handy for tools to be able to determine how much memory is occupied by an arbitrary acceleration structure sitting in memory.*</p>
 
 ---
 
@@ -4220,8 +4705,8 @@ Can be called on graphics or compute command lists but not from bundles.
 
 Parameter                              | Definition
 ---------                           | ----------
-`D3D12_GPU_VIRTUAL_ADDRESS DestAccelerationStructureData` | <p>Destination memory. Required size can be discovered by calling [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo) beforehand, if necessary depending on the Mode.</p><p> Destination address must be 256 byte aligned ([D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT](#constants)), regardless of the Mode.</p><p> Destination memory range cannot overlap source otherwise results are undefined.</p><p>The resource state that the memory pointed to must be in depends on the Mode parameter - see [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode) definitions.</p>
-`D3D12_GPU_VIRTUAL_ADDRESS SourceAccelerationStructureData` | <p> Acceleration structure or other type of data to copy/transform based on the specified Mode. The data remains unchanged and usable (such as if it is an acceleration structure). The operation only involves the data pointed to (such as acceleration structure) and not any other data (such as acceleration structures) it may point to. E.g. in the case of a top-level acceleration structure, any bottom-level acceleration structures that it points to are not involved in the operation.</p><p>Memory must be 256 byte aligned ([D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT](#constants)) regardless of Mode.</p><p>The resource state that the memory pointed to must be in depends on the Mode parameter - see [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode) definitions.</p>
+`D3D12_GPU_VIRTUAL_ADDRESS DestAccelerationStructureData` | <p>Destination memory. Required size can be discovered by calling [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo) beforehand, if necessary depending on the Mode.</p><p>Destination address must be 256 byte aligned ([D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT](#constants)), or 128 bytes for [Opacity Micromap](#opacity-micromaps) arrays ([D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_BYTE_ALIGNMENT](#constants)), regardless of the Mode.</p><p> Destination memory range cannot overlap source otherwise results are undefined.</p><p>The resource state that the memory pointed to must be in depends on the Mode parameter - see [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode) definitions.</p>
+`D3D12_GPU_VIRTUAL_ADDRESS SourceAccelerationStructureData` | <p> Acceleration structure or other type of data to copy/transform based on the specified Mode. The data remains unchanged and usable (such as if it is an acceleration structure). The operation only involves the data pointed to (such as acceleration structure) and not any other data (such as acceleration structures) it may point to. E.g. in the case of a top-level acceleration structure, any bottom-level acceleration structures that it points to are not involved in the operation.</p><p>Memory must be 256 byte aligned ([D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT](#constants)), or 128 bytes for [Opacity Micromap](#opacity-micromaps) arrays ([D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_BYTE_ALIGNMENT](#constants)), regardless of Mode.</p><p>The resource state that the memory pointed to must be in depends on the Mode parameter - see [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode) definitions.</p>
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE Mode` | Type of copy operation to perform. See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode).
 
 ---
@@ -4239,21 +4724,23 @@ typedef enum D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_COMPACT = 0x1,
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_VISUALIZATION_DECODE_FOR_TOOLS = 0x2,
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_SERIALIZE = 0x3,
-    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_DESERIALIZE = 0x4,
+    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_DESERIALIZE = 0x4
 } D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE;
 ```
 
 Value                               | Definition
 ---------                           | ----------
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_CLONE` | <p>Copy an acceleration structure while fixing up any self-referential pointers that may be present so that the destination is a self-contained match for the source. Any external pointers to other acceleration structures remain unchanged from source to destination in the copy. The size of the destination is identical to the size of the source.</p><p>The source and destination memory must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p>
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_COMPACT` | <p>Similar to the clone mode, producing a functionally equivalent acceleration structure to source in the destination. Compact mode also fits the destination into a potentially smaller memory footprint (certainly no larger). The size required for the destination can be retrieved beforehand from [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo).</p><p>This mode is only valid if the source acceleration structure was originally built with the [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION](#d3d12_raytracing_acceleration_structure_build_flags) flag, otherwise results are undefined.</p><p>The source and destination memory must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p>
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_VISUALIZATION_DECODE_FOR_TOOLS` | <p>Destination takes the layout described in [D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_TOOLS_VISUALIZATION_HEADER](#d3d12_build_raytracing_acceleration_structure_tools_visualization_header). The size required for the destination can be retrieved beforehand from [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo).</p><p>This mode is intended for tools such as PIX only, though nothing stops any app from using it. The output is essentially the inverse of an acceleration structure build and is self-contained in the destination buffer.</p><p>For top-level acceleration structures, the output includes a set of instance descriptions that are identical to the data used in the original build and in the same order.</p><p>For bottom-level acceleration structures, the output includes a set of geometry descriptions *roughly* matching the data used in the original build. The output is only a rough match for the original in part because of the tolerances allowed in the specification for [acceleration structures](#acceleration-structure-properties), and in part because reporting exactly the same structure as is conceptually encoded may not be simple.</p><p>AABBs returned for procedural primitives, for instance, could be more conservative (larger) in volume and even different in number than what is actually in the acceleration structure representation (because it may not be clean to expose the exact representation).</p><p>Geometries (each with its own geometry description) must appear in the same order as in the original build, as [shader table indexing](#hit-group-table-indexing) calculations depends on this.</p><p> This overall structure with is sufficient for tools/PIX to be able to give the application some visual sense of the acceleration structure the driver made out of the app's input. Visualization can help reveal driver bugs in acceleration structures if what is shown grossly mismatches the data the application used to create the acceleration structure, beyond allowed tolerances.</p><p>The source memory must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p><p>The destination memory must be in state `D3D12_RESOURCE_STATE_UNORDERED_ACCESS`.</p>
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_SERIALIZE` | <p>Destination takes the layout and size described in the documentation for [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc), itself a struct generated via [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo).</p><p>This mode serializes an acceleration structure so that an app or tools/PIX can store it to a file for later reuse, typically on a different device instance, via deserialization.</p><p>The source memory must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p><p>The destination memory must be in state `D3D12_RESOURCE_STATE_UNORDERED_ACCESS`.</p><p>When serializing a top-level acceleration structure the bottom-level acceleration structures it refers to do not have to still be present/intact in memory. Likewise bottom-level acceleration structures can be serialized independent of whether any top-level acceleration structures are pointing to them. Said another way, order of serialization of acceleration structures doesn't matter.</p>
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_CLONE` | <p>Copy an acceleration structure or Opacity Micromap array while fixing up any self-referential pointers that may be present so that the destination is a self-contained match for the source. Any external pointers to other acceleration structures remain unchanged from source to destination in the copy. The size of the destination is identical to the size of the source.</p><p>The source and destination memory must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p><p>The destination and source memory addresses must be be 256-byte aligned ([`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT`](#constants)), or 128 bytes for [Opacity Micromap](#opacity-micromaps) arrays ([D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_BYTE_ALIGNMENT](#constants)).</p>
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_COMPACT` | <p>Similar to the clone mode, producing a functionally equivalent acceleration structure to source in the destination. Compact mode also fits the destination into a potentially smaller memory footprint (certainly no larger). The size required for the destination can be retrieved beforehand from [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo).</p><p>This mode is only valid if the source acceleration structure was originally built with the [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION](#d3d12_raytracing_acceleration_structure_build_flags) flag, otherwise results are undefined.</p><p>The source and destination memory must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p><p>The destination and source memory addresses must be be 256-byte aligned, see [`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT`](#constants), or 128 bytes for [Opacity Micromap](#opacity-micromaps) arrays ([D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_BYTE_ALIGNMENT](#constants)).</p>
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_VISUALIZATION_DECODE_FOR_TOOLS` | <p>Destination takes the layout described in [D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_TOOLS_VISUALIZATION_HEADER](#d3d12_build_raytracing_acceleration_structure_tools_visualization_header). The size required for the destination can be retrieved beforehand from [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo).</p><p>This mode is intended for tools such as PIX only, though nothing stops any app from using it. The output is essentially the inverse of an acceleration structure or Opacity Micromap array build and is self-contained in the destination buffer.</p><p>For top-level acceleration structures, the output includes a set of instance descriptions that are identical to the data used in the original build and in the same order.</p><p>For bottom-level acceleration structures, the output includes a set of geometry descriptions *roughly* matching the data used in the original build. The output is only a rough match for the original in part because of the tolerances allowed in the specification for [acceleration structures](#acceleration-structure-properties), and in part because reporting exactly the same structure as is conceptually encoded may not be simple.</p><p>AABBs returned for procedural primitives, for instance, could be more conservative (larger) in volume and even different in number than what is actually in the acceleration structure representation (because it may not be clean to expose the exact representation).</p><p>Geometries (each with its own geometry description) must appear in the same order as in the original build, as [shader table indexing](#hit-group-table-indexing) calculations depends on this.</p><p>For Opacity Micromap arrays the output is a lossless representation of original input expressed as a [D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC](#d3d12_raytracing_opacity_micromap_array_desc) after the header, with `pOmmHistogram` as a GPUVA within the result memory buffer rather than CPU pointer.  The `pOmmHistogram` contents are necessary for the caller to be able to understand the size of data pointed to by `InputBuffer` (there isn't an explicit size parameter).  For BLAS with type `D3D12_RAYTRACING_GEOMETRY_TYPE_OMM_TRIANGLES`, the `D3D12_RAYTRACING_GEOMETRY_DESC.OmmTriangles` member ([D3D12_RAYTRACING_GEOMETRY_OMM_TRIANGLES_DESC](#d3d12_raytracing_geometry_omm_triangles_desc)) has its CPU pointer members reinterpreted as GPUVAs within the result memory buffer.</p><p> These visualization structures overalll are sufficient for tools/PIX to be able to give the application some visual sense of the acceleration structure the driver made out of the app's input. Visualization can help reveal driver bugs in acceleration structures if what is shown grossly mismatches the data the application used to create the acceleration structure, beyond allowed tolerances.</p><p>The source memory must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p><p>The destination memory must be in state `D3D12_RESOURCE_STATE_UNORDERED_ACCESS`.</p><p>The destination and source memory addresses must be be 256-byte aligned ([`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT`](#constants)), or 128 bytes for [Opacity Micromap](#opacity-micromaps) arrays ([D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_BYTE_ALIGNMENT](#constants)).</p>
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_SERIALIZE` | <p>Destination takes the layout and size described in the documentation for [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc), itself a struct generated via [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo).</p><p>This mode serializes an acceleration structure or Opacity Micromap array so that an app or tools/PIX can store it to a file for later reuse, typically on a different device instance, via deserialization.</p><p>The source memory must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p><p>The destination memory must be in state `D3D12_RESOURCE_STATE_UNORDERED_ACCESS`.</p><p>When serializing a top-level acceleration structure the bottom-level acceleration structures it refers to do not have to still be present/intact in memory. Likewise bottom-level acceleration structures can be serialized independent of whether any top-level acceleration structures are pointing to them. Opacity Micromap arrays can be independently serialized as well. Said another way, order of serialization of acceleration structures or OMM arrays doesn't matter.</p>
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_DESERIALIZE` | <p>Source must be a serialized acceleration structure, with any pointers (directly after the header) fixed to point to their new locations, as discussed in the [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc) section.</p><p>Destination gets an acceleration structure that is functionally equivalent to the acceleration structure that was originally serialized. It does not matter what order top-level and bottom-level acceleration structures (that the top-level refers to) are deserialized, as long as by the time a top-level acceleration structure is used for raytracing or acceleration structure updates it's referenced bottom-level acceleration structures are present.</p><p>Deserialize only works on the same device and driver version otherwise results are undefined. This isn't intended to be used for caching acceleration structures, as running a full acceleration structure build is likely to be faster than loading one from disk.</p><p>While intended for tools/PIX, nothing stops any app from using this.</p><p>The source memory must be in state `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`.</p><p>The destination memory must be in state [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states).</p>
 
 ---
 
 ##### D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER
+
+This struct is no longer needed. [D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER1](#d3d12_serialized_raytracing_acceleration_structure_header1) replaces it in a backward compatible way. The new struct makes the safe the assumption that the `UINT64 NumBottomLevelAccelerationStructurePointersAfterHeader` field in this old struct would never have needed more than 32 bits to store a count.  Thus the new struct repurposes the top 32 bits to be an enum field, where the new enum would be set to 0 in any scenario that needs to be backwards compatible with this old struct.
 
 ```C++
 typedef struct D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER
@@ -4265,7 +4752,7 @@ typedef struct D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER
 } D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER;
 ```
 
-Header for a serialized raytracing acceleration structure.
+Header for a serialized top level raytracing acceleration structure.
 
 Member                              | Definition
 ---------                           | ----------
@@ -4273,6 +4760,97 @@ Member                              | Definition
 `UINT64 SerializedSizeInBytesIncludingHeader` | Size of serialized data.
 `UINT64 DeserializedSizeInBytes` | Size that will be consumed when deserialized. This is less than or equal to the size of the original acceleration structure before it was serialized.
 `UINT64 NumBottomLevelAccelerationStructurePointersAfterHeader` | Size of the array of `D3D12_GPU_VIRTUAL_ADDRESS` values that follow the header. See discussion in [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc), which also reports the same count and explains what to do with these pointers.
+
+---
+
+##### D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER1
+
+```C++
+typedef struct D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER1
+{
+    D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER DriverMatchingIdentifier;
+    UINT64 SerializedSizeInBytesIncludingHeader;
+    UINT64 DeserializedSizeInBytes;
+    union
+    {
+        UINT NumBottomLevelAccelerationStructurePointersAfterHeader;
+        UINT NumBlocks;
+    };
+    D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER_POSTAMBLE_TYPE HeaderPostambleType;
+} D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER1;
+```
+
+Header for a serialized top or bottom-level acceleration structure which may or may not reference additional blocks.
+
+Similar to how BLAS pointers are passed in to TLAS deserialization as a list of VAs, blocks such as Opacity Micromap Arrays are listed after the header.
+The number of blocks is specified by `NumBlocks`.
+For each block type, one `D3D12_RAYTRACING_SERIALIZED_BLOCK` entry with array of pointers of type `D3D12_GPU_VIRTUAL_ADDRESS` follows.
+
+Member                                              | Definition
+------                                              | ----------
+`D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER DriverMatchingIdentifier` | See [D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER](#d3d12_serialized_data_driver_matching_identifier)
+`UINT64 SerializedSizeInBytesIncludingHeader`       | Size of serialized data.
+`UINT64 DeserializedSizeInBytes`                    | Size that will be consumed when deserialized. This is less than or equal to the size of the original acceleration structure before it was serialized.
+`UINT64 NumBottomLevelAccelerationStructurePointersAfterHeader` | Size of the array of `D3D12_GPU_VIRTUAL_ADDRESS` values that follow the header. See discussion in [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc), which also reports the same count and explains what to do with these pointers.
+`UINT64 NumBlocks`                            | Number of [D3D12_RAYTRACING_SERIALIZED_BLOCK](#d3d12_raytracing_serialized_block) and pointer array pairs following this header.
+`D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER_POSTAMBLE_TYPE HeaderPostambleType` | What type of extra information follows the header to complete the header before the main acceleration structure data.  See [D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER_POSTAMBLE_TYPE](#d3d12_serialized_raytracing_acceleration_structure_header_postamble_type). `D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER_POSTAMBLE_TYPE_NONE` (which doesn't apply to TLAS) means the `Num*` union fields will be `0`. `D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER_POSTAMBLE_TYPE_BOTTOM_LEVEL_POINTERS` (which applies to TLAS only) means that the `NumBottomLevelAccelerationStructurePointersAfterHeader` union field applies. `D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER_POSTAMBLE_TYPE_BLOCKS` means the `NumBlocks` union field applies.
+
+---
+
+##### D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER_POSTAMBLE_TYPE
+
+```C++
+typedef enum D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER_POSTAMBLE_TYPE
+{
+    D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER_POSTAMBLE_TYPE_NONE = 0,
+    D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER_POSTAMBLE_TYPE_BOTTOM_LEVEL_POINTERS = 0,
+    D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER_POSTAMBLE_TYPE_BLOCKS = 0xffffffff
+} D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER_POSTAMBLE_TYPE;
+```
+
+Enum                                              | Definition
+----                                              | ----------
+`D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER_POSTAMBLE_TYPE_NONE` | No post header data after [D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER1](#d3d12_serialized_raytracing_acceleration_structure_header_postamble_type).  The `Num*` union members will always be `0` (which thereby makes the header backwards compatible with the old `D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER1` that it replaces).  This enum also intentionally uses the same enum value as `D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER_POSTAMBLE_TYPE_BOTTOM_LEVEL_POINTERS` for backwards compatibility, and given the `Num*` are `0`, the meaning is identical.  The `NONE` case applies, for instance, to BLAS with no OMMs linked by any of its geometries.  Drivers can ignore this entry and just treat it as the  `_BOTTOM_LEVEL_POINTERS` value (same enum value) in a switch statement, understanding that for non-TLAS the `Num*` will be `0` in this case.
+`D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER_POSTAMBLE_TYPE_BOTTOM_LEVEL_POINTERS` | [D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER1](#d3d12_serialized_raytracing_acceleration_structure_header_postamble_type) is followed by `NumBottomLevelAccelerationStructurePointersAfterHeader` (header member) pointers to bottom level acceleration structures, before the main serialized data.
+`D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER_POSTAMBLE_TYPE_BLOCKS` | [D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER1](#d3d12_serialized_raytracing_acceleration_structure_header_postamble_type) is followed by `NumBlocks` (header member) sets of { [D3D12_RAYTRACING_SERIALIZED_BLOCK](#d3d12_raytracing_serialized_block) header, followed by associated list of data for that block type }.
+
+---
+
+##### D3D12_RAYTRACING_SERIALIZED_BLOCK
+
+```C
+typedef struct D3D12_RAYTRACING_SERIALIZED_BLOCK
+{
+    D3D12_RAYTRACING_SERIALIZED_BLOCK_TYPE Type;
+    UINT64 NumBlockPointersAfterHeader;
+} D3D12_RAYTRACING_SERIALIZED_BLOCK;
+```
+
+Header for one block type.
+
+This header struct is followed by `NumBlockPointersAfterHeader` pointers of type `D3D12_GPU_VIRTUAL_ADDRESS` with valid block resources (such as, for example, [Opacity Micromap](#opacity-micromaps) Arrays if `Type` is [D3D12_RAYTRACING_SERIALIZED_BLOCK_TYPE_OPACITY_MICROMAPS](#d3d12_raytracing_serialized_block_type)).
+
+Member                                              | Definition
+------                                              | ----------
+`D3D12_RAYTRACING_SERIALIZED_BLOCK_TYPE Type`       | Type of block.
+`UINT64 NumBlockPointersAfterHeader`                | Number of `D3D12_GPU_VIRTUAL_ADDRESS` entries following directly after this header.
+
+---
+
+##### D3D12_RAYTRACING_SERIALIZED_BLOCK_TYPE
+
+```C
+typedef enum D3D12_RAYTRACING_SERIALIZED_BLOCK_TYPE
+{
+    D3D12_RAYTRACING_SERIALIZED_BLOCK_TYPE_OPACITY_MICROMAPS = 0x0,
+} D3D12_RAYTRACING_SERIALIZED_BLOCK_TYPE;
+```
+
+Type of block that will follow a `D3D12_RAYTRACING_SERIALIZED_BLOCK` header in a serialized BLAS.
+
+Value                                                           | Definition
+-----                                                           | ----------
+`D3D12_RAYTRACING_SERIALIZED_BLOCK_TYPE_OPACITY_MICROMAPS` | Indicates that an array of OMM Array pointers follow the block header.  The list of entries includes at least geometries that actually have OMMs linked to them.  But also some devices the list will be interspersed with `null` entries for geometreis that don't have OMMs linked, while other devices may prune out the null entries.  Consumers of the list must simply ignore null entries, if any.
 
 ---
 
@@ -4287,7 +4865,11 @@ typedef struct D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_TOOLS_VISUALIZATION
 
 // Depending on Type field, NumDescs above is followed by either:
 // D3D12_RAYTRACING_INSTANCE_DESC InstanceDescs[NumDescs]
-// or D3D12_RAYTRACING_GEOMETRY_DESC GeometryDescs[NumDescs].
+// or D3D12_RAYTRACING_GEOMETRY_DESC GeometryDescs[NumDescs]
+// or D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC (NumDescs == 1 in this case).
+//
+// For D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC, the pOmmHistogram pointer becomes a GPUVA instead of CPU pointer
+
 ```
 
 This describes the GPU memory layout of an acceleration structure
@@ -4461,7 +5043,7 @@ otherwise nullptr is returned.
 Parameter                           | Definition
 ---------                           | ----------
 `LPWSTR pExportName` | Entrypoint in the state object for which to retrieve an identifier.
-`Return value: const void*` | <p>Returns a pointer to the shader identifier.</p><p>The pointer and data pointed to are valid as long as the state object it came from is valid. The size of the data returned is [D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES](#constants). Applications should retain this result to avoid the cost of searching for it in the state object if it will need to be retrieved many times. The place the identifier actually gets used is in shader records within shader tables in GPU memory, which it is up to the app to populate.</p><p>The data itself globally identifies the shader, so even if the shader appears in a different state object (with same associations like any root signatures) it will have the same identifier.</p><p>If the shader isn't fully resolved in the state object, the return value is nullptr.</p>
+`Return value: const void*` | <p>Returns a pointer to the shader identifier.</p><p>The pointer and data pointed to are valid as long as the state object it came from is valid. The size of the data returned is [D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES](#constants). Applications should retain this result to avoid the cost of searching for it in the state object if it will need to be retrieved many times. The place the identifier actually gets used is in shader records within shader tables in GPU memory, which it is up to the app to populate.</p><p>If the shader isn't fully resolved in the state object, the return value is nullptr.</p>
 
 ---
 
@@ -4701,6 +5283,14 @@ typedef struct D3D12_SHADER_RESOURCE_VIEW_DESC
 #define D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES 32
 ```
 
+The following constants are relevant when [Opacity Micromaps](#opacity-micromaps) are supported:
+
+```C++
+#define D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_BYTE_ALIGNMENT 128
+
+#define D3D12_RAYTRACING_OPACITY_MICROMAP_OC1_MAX_SUBDIVISION_LEVEL 12
+```
+
 ---
 
 # HLSL
@@ -4717,7 +5307,7 @@ Ray flags are passed to [TraceRay()](#traceray) or [RayQuery::TraceRayInline()](
 transparency, culling, and early-out behavior. For an example, see
 [here](#flags-per-ray).
 
-Ray flags are also a template paramter to [RayQuery](#rayquery) objects to enable static specialization - runtime behavior of [RayQuery::TraceRayInline()](#rayquery-tracerayinline) takes on the OR of dynamic and static/template ray falgs.
+Ray flags are also a template parameter to [RayQuery](#rayquery) objects to enable static specialization - runtime behavior of [RayQuery::TraceRayInline()](#rayquery-tracerayinline) takes on the OR of dynamic and static/template ray flags.
 
 Shaders that interact with rays can query the
 current flags via [RayFlags()](#rayflags) or [RayQuery::RayFlags()](#rayquery-rayflags) intrinsics.
@@ -4736,6 +5326,7 @@ enum RAY_FLAG : uint
     RAY_FLAG_CULL_NON_OPAQUE = 0x80,
     RAY_FLAG_SKIP_TRIANGLES = 0x100,
     RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES = 0x200,
+    RAY_FLAG_FORCE_OMM_2_STATE = 0x400,
 };
 ```
 
@@ -4754,6 +5345,7 @@ Value                               | Definition
 `RAY_FLAG_CULL_NON_OPAQUE` | <p>Culls all primitives that are considered non-opaque based on their [geometry](#d3d12_raytracing_geometry_flags) and [instance](#d3d12_raytracing_instance_flags) flags.</p><p>This flag is mutually exclusive to `RAY_FLAG_FORCE_OPAQUE`, `RAY_FLAG_FORCE_NON_OPAQUE`, and `RAY_FLAG_CULL_OPAQUE`.</p>
 `RAY_FLAG_SKIP_TRIANGLES` | <p>Culls all triangles.</p><p>This flag is mutually exclusive to `RAY_FLAG_CULL_FRONT_FACING_TRIANGLES`, `RAY_FLAG_CULL_BACK_FACING_TRIANGLES` and `RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES`.</p><p>If instances specify [D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE](#d3d12_raytracing_instance_flags) it has no effect, as that flag is meant for disabling front or back culling only.  In other words `RAY_FLAG_SKIP_TRIANGLES` cannot be overruled.</p><p>This flag is only supported as of [Tier 1.1](#d3d12_raytracing_tier) implementations.</p>
 `RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES` | <p>Culls all procedural primitives.</p><p>This flag is mutually exclusive to `RAY_FLAG_SKIP_TRIANGLES`.</p><p>This flag is only supported as of [Tier 1.1](#d3d12_raytracing_tier) implementations.</p>
+`RAY_FLAG_FORCE_OMM_2_STATE` | <p>Treat unknown opaque and unknown transparent as opaque and transparent, respectively during traversal. If an instance is flagged with [D3D12_RAYTRACING_INSTANCE_FLAG_DISABLE_OMMS](#d3d12_raytracing_instance_flags) that takes precedence over this flag.</p><p>This flag is only valid when [Opacity Micromaps](#opacity-micromaps) are supported. This flag is also documented in a separate [HLSL Opacity Micromaps](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0024-opacity-micromaps.md) spec.</p>
 
 ---
 
@@ -4784,6 +5376,7 @@ enum RAYTRACING_PIPELINE_FLAG : uint
     RAYTRACING_PIPELINE_FLAG_NONE                         = 0x0,
     RAYTRACING_PIPELINE_FLAG_SKIP_TRIANGLES               = 0x100,
     RAYTRACING_PIPELINE_FLAG_SKIP_PROCEDURAL_PRIMITIVES   = 0x200,
+    RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS      = 0x400,
 };
 
 ```
@@ -4955,7 +5548,7 @@ intersection must use this structure for hit attributes.
 Given attributes `a0`, `a1` and `a2` for the 3 vertices of a triangle,
 `barycentrics.x` is the weight for `a1` and `barycentrics.y` is the weight
 for `a2`. For example, the app can interpolate by doing: `a = a0 +
-barycentrics.x \* (a1-a0) + barycentrics.y\* (a2 -- a0)`.
+barycentrics.x * (a1-a0) + barycentrics.y * (a2-a0)`.
 
 **(2)** Intersection with axis-aligned bounding boxes for procedural
   primitives in the raytracing acceleration structure triggers an
@@ -5376,7 +5969,7 @@ void TraceRay(RaytracingAccelerationStructure AccelerationStructure,
 Parameter                           | Definition
 ---------                           | ----------
 `RaytracingAccelerationStructure AccelerationStructure` | Top-level acceleration structure to use. Specifying a NULL acceleration structure forces a miss.
-`uint RayFlags` | Valid combination of [Ray flags](#ray-flags). Only defined ray flags are propagated by the system, e.g. visible to the [RayFlags()](#rayflags) shader intrinsic.
+`uint RayFlags` | Valid combination of [Ray flags](#ray-flags). Only defined ray flags are propagated by the system, e.g. visible to the [RayFlags()](#rayflags) shader intrinsic.  Presence of unknown flags results in undefined behavior.
 `uint InstanceInclusionMask` |<p>Bottom 8 bits of InstanceInclusionMask are used to include/reject geometry instances based on the InstanceMask in each [instance](#d3d12_raytracing_instance_desc):</p><p>`if(!((InstanceInclusionMask & InstanceMask) & 0xff)) { ignore intersection }`</p>
 `uint RayContributionToHitGroupIndex` | Offset to add into [Addressing calculations within shader tables](#addressing-calculations-within-shader-tables) for hit group indexing. Only the bottom 4 bits of this value are used.
 `uint MultiplierForGeometryContributionToShaderIndex` | Stride to multiply by GeometryContributionToHitGroupIndex (which is just the 0 based index the geometry was supplied by the app into its bottom-level acceleration structure). See [Addressing calculations within shader tables](#addressing-calculations-within-shader-tables) for hit group indexing. Only the bottom 4 bits of this multiplier value are used.
@@ -5448,16 +6041,16 @@ The following table shows where system value intrinsics.
 
 | **values \\ shaders**                                     | ray generation | intersection | any hit | closest hit | miss | callable |
 |:---------------------------------------------------------:|:--------------:|:------------:|:-------:|:-----------:|:----:|:--------:|
-| _**Ray dispatch system values:**_                         |                |              |         |         |            |      |
+| **Ray dispatch system values:**                         |                |              |         |         |            |      |
 | uint3 [DispatchRaysIndex()](#dispatchraysindex)         |   \*           |     \*       |   \*    |    \*   |   \*       |  \*  |
 | uint3 [DispatchRaysDimensions()](#dispatchraysdimensions) |     \*       |     \*       |   \*    |    \*   |   \*       |  \*  |
-| _**Ray system values:**_                                      |                |              |         |         |            |      |
+| **Ray system values:**                                      |                |              |         |         |            |      |
 | float3 [WorldRayOrigin()](#worldrayorigin)              |                |     \*       |   \*    |    \*   |   \*       |      |
 | float3 [WorldRayDirection()](#worldraydirection)        |                |     \*       |   \*    |    \*   |   \*       |      |
 | float [RayTMin()](#raytmin)                             |                |     \*       |   \*    |    \*   |   \*       |      |
 | float [RayTCurrent()](#raytcurrent)                     |                |     \*       |   \*    |    \*   |   \*       |      |
 | uint [RayFlags()](#rayflags)                            |                |     \*       |   \*    |    \*   |   \*       |      |
-| _**Primitive/object space system values:**_               |                |              |         |         |            |      |
+| **Primitive/object space system values:**               |                |              |         |         |            |      |
 | uint [InstanceIndex()](#instanceindex)                  |                |     \*       |   \*    |    \*   |            |      |
 | uint [InstanceID()](#instanceid)                        |                |     \*       |   \*    |    \*   |            |      |
 | uint [GeometryIndex()](#geometryindex)<br>(requires [Tier 1.1](#d3d12_raytracing_tier) implementation)                        |                |     \*       |   \*    |    \*   |            |      |
@@ -5468,7 +6061,7 @@ The following table shows where system value intrinsics.
 | float4x3 [ObjectToWorld4x3()](#objecttoworld4x3)        |                |     \*       |   \*    |    \*   |            |      |
 | float3x4 [WorldToObject3x4()](#worldtoobject3x4)        |                |     \*       |   \*    |    \*   |            |      |
 | float4x3 [WorldToObject4x3()](#worldtoobject4x3)        |                |     \*       |   \*    |    \*   |            |      |
-| _**Hit specific system values:**_                         |                |              |         |         |            |      |
+| **Hit specific system values:**                         |                |              |         |         |            |      |
 | uint [HitKind()](#hitkind)                              |                |              |   \*    |    \*   |            |      |
 
 ---
@@ -5757,15 +6350,34 @@ uint HitKind();
 
 ---
 
+#### TriangleObjectPosition
+
+> This is a proposed feature, not supported yet.
+
+```C
+float3 TriangleObjectPosition(uint VertexIndex)
+```
+
+May only be used if the hit BLAS was built with [`RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS`](#d3d12_raytracing_acceleration_structure_build_flags). Otherwise behavior is undefined.
+
+This intrinsic is only available in a TBD new [D3D12_RAYTRACING_TIER](#d3d12_raytracing_tier) or shader model.
+
+This intrinsic may only be used with a triangle hit, [AnyHit](#any-hit-shader) or [ClosestHit](#closest-hit-shader) shaders, otherwise behavior is undefined. A shader can check for a triangle hit with [`HitKind`](#hitkind).
+
+The `VertexIndex` parameter specifies the vertex within the triangle to read in the range of `[0..2]`.
+Specifying an index outside this range produces undefined behavior.
+
+---
+
 ## RayQuery
 
 ```C++
-RayQuery<RAY_FLAGS>
+RayQuery<RAY_FLAGS,RAYQUERY_FLAGS>
 ```
 
 `RayQuery` represents the state of an [inline raytracing](#inline-raytracing) call into an acceleration structure via member function [RayQuery::TraceRayInline()](#rayquery-tracerayinline).  It is "inline" in the sense that this form of raytracing doesn't automatically invoke other shader invocations during traversal as [TraceRay()](#traceray) does.  The shader observes `RayQuery` to be in one of a set of states, each of which exposes relevant [methods](#rayquery-intrinsics) to retrieve information about the current state or continue the query into the acceleration structure.  
 
-`RayQuery` takes a template parameter on instantiation: a set of [RAY_FLAGS](#ray-flags) that are inline/literal at compile time.  These flags enable implementations to produce more efficient inline code generation by drivers customized to the selected flags.  For example, declaring `RayFlags<RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES> myRayQuery` means ray traversals done via `myRayQuery` will not enumerate procedural primitives.  Applications can also custimize their code to rely on the impact of the selected flags - in this example not having to write code to handle the procedural primitives showing up. [RayQuery::TraceRayInline()](#rayquery-tracerayinline) also has a [RAY_FLAGS](#ray-flags) field which allows dynamic ray flags configuration - the template flags are OR'd with the dynamic flags during a raytrace.
+`RayQuery` takes template parameter(s) on instantiation: a set of [RAY_FLAGS](#ray-flags) that are inline/literal at compile time, and with Shader Model 6.9+ support an additional optional [RAYQUERY_FLAGS](#rayquery-flags) parameter with rayquery-specific flags.  These flags enable implementations to produce more efficient inline code generation by drivers customized to the selected flags.  For example, declaring `RayFlags<RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES> myRayQuery` means ray traversals done via `myRayQuery` will not enumerate procedural primitives.  Applications can also custimize their code to rely on the impact of the selected flags - in this example not having to write code to handle the procedural primitives showing up. [RayQuery::TraceRayInline()](#rayquery-tracerayinline) also has a [RAY_FLAGS](#ray-flags) field which allows dynamic ray flags configuration - the template flags are OR'd with the dynamic flags during a raytrace.
 
 Pseudocode examples are [here](#tracerayinline-examples).
 
@@ -5778,6 +6390,27 @@ If a variable of type `RayQuery` is assigned to another (which must have been de
 > A proposed feature that was cut is the ability for full [TraceRay()](#traceray) to return a [RayQuery](#rayquery) object.  This would have been a middle ground between inline raytracing and the dynamic-shader-based form - e.g. apps could use dynamic any-hit shaders but then choose to do final hit/miss processing in the calling shader, without the dynamic shaders having to bother stuffing ray query metadata like hit distance in the ray payload - redundant information given that the system knows it.  It turned out that for some implementations this would actually be slower than the application manually stuffing only needed values into the ray payload, and would require extra compilation for paths that need the ray query versus those that do not.  
 >
 > This feature could come back in a more refined form in the future.  This could be allowing the user to declare entries in the ray payload as system generated values for all query data (e.g. SV_CurrentT).  Some implementations could choose to compile shaders (which see the payload declaration) to automatically store these values in the ray payload as declared, whereas other implementations would be free to pull these system values as needed from elsewhere if they are readily available (avoiding payload bloat).
+
+---
+
+### RayQuery flags
+
+RayQuery flags are optionally specified as a second template parameter to [RayQuery](#rayquery) objects to enable static specialization - runtime behavior of [RayQuery::TraceRayInline()](#rayquery-tracerayinline) takes on the OR of dynamic and static/template ray flags as well as rayquery-specific flags.
+
+```C++
+enum RAYQUERY_FLAG : uint
+{
+    RAYQUERY_FLAG_NONE = 0x00, // default
+    RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS = 0x01,
+};
+```
+
+(d3d12.h has equivalent `D3D12_RAY_FLAG_*` defined for convenience)
+
+Value                               | Definition
+---------                           | ----------
+`RAYQUERY_FLAG_NONE` | No options selected.
+`RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` | If this flag is specified, the rayquery object supports Opacity Micromaps. If a triangle with an OMM is encountered during traversal with this flag cleared, behavior is undefined. This flag should not be set if there are no OMMs present, since it may incur a small penalty on traversal performance overall.  This is the rayquery equivalent for [TraceRayInline()](#rayquery-tracerayinline) of what the [D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS](#d3d12_raytracing_pipeline_flags) flag accomplishes for non-inline [TraceRay()](#traceray). This flag is also documented in a separate [HLSL Opacity Micromaps](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0024-opacity-micromaps.md) spec.
 
 ---
 
@@ -5806,14 +6439,14 @@ The following table lists intrinsics available when [RayQuery::Proceed()](#rayqu
 | [CommitNonOpaqueTriangleHit()](#rayquery-commitnonopaquetrianglehit) | \* | |
 | [CommitProceduralPrimitiveHit(float t)](#rayquery-commitproceduralprimitivehit) | | \*|
 | `COMMITTED_STATUS` [CommittedStatus())](#rayquery-committedstatus) | \* | \* |
-| _**Ray system values:**_    |              |            |
+| **Ray system values:**    |              |            |
 | uint [RayFlags()](#rayquery-rayflags) |   \*      |    \*         |
 | float3 [WorldRayOrigin()](#rayquery-worldrayorigin)|    \*     |    \*         |
 | float3 [WorldRayDirection()](#rayquery-worldraydirection)|\*   |    \*         |
 | float [RayTMin()](#rayquery-raytmin)  |   \*      |    \*         |
 | float [CandidateTriangleRayT()](#rayquery-candidatetrianglerayt)| \* |  |
 | float [CommittedRayT()](#rayquery-committedrayt)|   \*      |    \*    |
-| _**Primitive/object space system values:**_       |          |               |
+| **Primitive/object space system values:**       |          |               |
 | uint [CandidateInstanceIndex()](#rayquery-candidateinstanceindex)|\*|\*|
 | uint [CandidateInstanceID()](#rayquery-candidateinstanceid)|\*|\*|
 | uint [CandidateInstanceContributionToHitGroupIndex()](#rayquery-candidateinstancecontributiontohitgroupindex)|\*|\*|
@@ -5836,11 +6469,13 @@ The following table lists intrinsics available when [RayQuery::Proceed()](#rayqu
 | float4x3 [CommittedObjectToWorld4x3()](#rayquery-committedobjecttoworld4x3)|\*  |    \*       |
 | float3x4 [CommittedWorldToObject3x4()](#rayquery-committedworldtoobject3x4)|\*  |    \*       |
 | float4x3 [CommittedWorldToObject4x3()](#rayquery-committedworldtoobject4x3)|\*  |    \*       |
-| _**Hit specific system values:**_ |              |           |
+| **Hit specific system values:** |              |           |
 | float2 [CandidateTriangleBarycentrics()](#rayquery-candidatetrianglebarycentrics)|\*| |
 | bool [CandidateTriangleFrontFace()](#rayquery-candidatetrianglefrontface)|\*| |
+| proposed, not supported: float3x3 [CandidateTriangleObjectPosition(uint VertexIndex)](#rayquery-candidatetriangleobjectposition)|\*| |
 | float2 [CommittedTriangleBarycentrics()](#rayquery-committedtrianglebarycentrics)|\*|\*|
 | bool [CommittedTriangleFrontFace()](#rayquery-committedtrianglefrontface)|\*|\*|
+| proposed, not supported: float3x3 [CommittedTriangleObjectPosition(uint VertexIndex)](#rayquery-committedtriangleobjectposition)|\*|\*|
 
 The following table lists intrinsics available depending on the current current [COMMITTED_STATUS](#committed_status) (i.e. what type of hit has been commited, if any?).  This applies regardless of whether [RayQuery::Proceed()](#rayquery-proceed) has returned `TRUE` (shader evaluation needed for traversal), or `FALSE` (traversal complete).  If `TRUE`, additional methods than shown below are available based on the table above.
 
@@ -5848,13 +6483,13 @@ The following table lists intrinsics available depending on the current current 
 |:--------------|:-----------:|:-----------:|:-----------:|:-----------:|
 | [TraceRayInline()](#rayquery-tracerayinline) | \* | \* | \* |
 | `COMMITTED_STATUS` [CommittedStatus()](#rayquery-committedstatus) | \* | \* | \* |
-| _**Ray system values:**_    |              |            |              |
+| **Ray system values:**    |              |            |              |
 | uint [RayFlags()](#rayquery-rayflags) |   \*      |    \*         |   \*   |
 | float3 [WorldRayOrigin()](#rayquery-worldrayorigin)|    \*     |    \*         |   \*   |
 | float3 [WorldRayDirection()](#rayquery-worldraydirection)|\*   |    \*         |   \*   |
 | float [RayTMin()](#rayquery-raytmin)  |   \*      |    \*         |   \*   |
 | float [CommittedRayT()](#rayquery-committedrayt)|   \*      |    \*    |   \*   |
-| _**Primitive/object space system values:**_       |          |               |        |
+| **Primitive/object space system values:**       |          |               |        |
 | uint [CommittedInstanceIndex()](#rayquery-committedinstanceindex)|   \*      |    \*         |        |
 | uint [CommittedInstanceID()](#rayquery-committedinstanceid)|   \*      |    \*         |        |
 | uint [CommittedInstanceContributionToHitGroupIndex()](#rayquery-committedinstancecontributiontohitgroupindex)|   \*      |    \*         |        |
@@ -5866,9 +6501,10 @@ The following table lists intrinsics available depending on the current current 
 | float4x3 [CommittedObjectToWorld4x3()](#rayquery-committedobjecttoworld4x3)|\*  |    \*         |    |
 | float3x4 [CommittedWorldToObject3x4()](#rayquery-committedworldtoobject3x4)|\*  |    \*         |     |
 | float4x3 [CommittedWorldToObject4x3()](#rayquery-committedworldtoobject4x3)|\*  |    \*         |    |
-| _**Hit specific system values:**_ |              |           |
+| **Hit specific system values:** |              |           |
 | float2 [CommittedTriangleBarycentrics()](#rayquery-committedtrianglebarycentrics)|\*| | |
 | bool [CommittedTriangleFrontFace()](#rayquery-committedtrianglefrontface)|\*| | |
+| proposed, not supported: float3x3 [CommittedTriangleObjectPosition(uint VertexIndex)](#rayquery-committedtriangleobjectposition)|\*| | |
 
 ---
 
@@ -5937,7 +6573,7 @@ void RayQuery::TraceRayInline(
 Parameter                           | Definition
 ---------                           | ----------
 `RaytracingAccelerationStructure AccelerationStructure` | Top-level acceleration structure to use. Specifying a NULL acceleration structure forces a miss.
-`uint RayFlags` | Valid combination of [Ray flags](#ray-flags). Only defined ray flags are propagated by the system, e.g. visible to the [RayFlags()](#rayflags) shader intrinsic.  These flags are OR'd with the [RayQuery](#rayquery)'s ray flags, and the combination must be valid (see the definition of each flag).
+`uint RayFlags` | Valid combination of [Ray flags](#ray-flags). Only defined ray flags are propagated by the system, e.g. visible to the [RayFlags()](#rayflags) shader intrinsic.  These flags are OR'd with the [RayQuery](#rayquery)'s ray flags, and the combination must be valid (see the definition of each flag).  Presence of unknown flags results in undefined behavior.
 `uint InstanceInclusionMask` | <p>Bottom 8 bits of InstanceInclusionMask are used to include/reject geometry instances based on the InstanceMask in each [instance](#d3d12_raytracing_instance_desc):</p><p>`if(!((InstanceInclusionMask & InstanceMask) & 0xff)) { ignore intersection }`</p>
 `RayDesc Ray` | [Ray](#ray-description-structure) to be traced. See [Ray-extents](#ray-extents) for bounds on valid ray parameters.
 `Return: RayQuery` | Opaque object defining the state of a ray trace operation with no shader invocations.  The caller calls methods on this object to participate in the acceleration structure traversal for as long as desired or until it ends.  See [RayQuery](#rayquery).
@@ -6799,6 +7435,8 @@ Parameter                           | Definition
 ---------                           | ----------
 `Return value: float2` | <p>Given attributes `a0`, `a1` and `a2` for the 3 vertices of a triangle, `float2.x` is the weight for `a1` and `float2.y` is the weight for `a2`. For example, the app can interpolate by doing: `a = a0 + float2.x \* (a1-a0) + float2.y\* (a2 -- a0)`.</p>
 
+---
+
 #### RayQuery CandidateTriangleFrontFace
 
 ```C++
@@ -6812,6 +7450,30 @@ Applicable for the current hit candidate, if [RayQuery::CandidateType()](#rayque
 Parameter                           | Definition
 ---------                           | ----------
 `Return value: bool` | <p>`TRUE` means front face, `FALSE` means back face.</p>
+
+---
+
+#### RayQuery CandidateTriangleObjectPosition
+
+> This is a proposed feature, not supported yet.
+
+```C
+float3 RayQuery::CandidateTriangleObjectPosition(uint VertexIndex)
+```
+
+May only be used if the hit BLAS was built with [`RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS`](#d3d12_raytracing_acceleration_structure_build_flags). Otherwise behavior is undefined.
+
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
+
+This intrinsic is only available in a TBD new [D3D12_RAYTRACING_TIER](#d3d12_raytracing_tier) or shader model.
+
+Parameter                           | Definition
+---------                           | ----------
+`uint VertexIndex` | <p>Index of vertex in triangle to retrieve.</p>
+`Return value: float3` | <p>Candidate hit triangle object position for specified vertex.</p>
+
+The `VertexIndex` parameter specifies the vertex within the triangle to read in the range of `[0..2]`.
+Specifying an index outside this range produces undefined behavior.
 
 ---
 
@@ -6844,6 +7506,1170 @@ Applicable for the closest committed hit so far, if that hit is a triangle (whic
 Parameter                           | Definition
 ---------                           | ----------
 `Return value: bool` | <p>`TRUE` means front face, `FALSE` means back face.</p>
+
+---
+
+#### RayQuery CommittedTriangleObjectPosition
+
+> This is a proposed feature, not supported yet.
+
+```C
+float3 RayQuery::CommittedTriangleObjectPosition(uint VertexIndex)
+```
+
+May only be used if the hit BLAS was built with [`RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS`](#d3d12_raytracing_acceleration_structure_build_flags). Otherwise behavior is undefined.
+
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
+
+This intrinsic is only available in a TBD new [D3D12_RAYTRACING_TIER](#d3d12_raytracing_tier) or shader model.
+
+Parameter                           | Definition
+---------                           | ----------
+`uint VertexIndex` | <p>Index of vertex in triangle to retrieve.</p>
+`Return value: float3` | <p>Committed hit triangle object positions for specified vertex.</p>
+
+The `VertexIndex` parameter specifies the vertex within the triangle to read in the range of `[0..2]`.
+Specifying an index outside this range produces undefined behavior.
+
+---
+
+## HitObject
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+```C++
+namespace dx {
+  HitObject
+}
+```
+
+The `HitObject` type encapsulates information about a hit or a miss. It is constructed using [HitObject::TraceRay](#hitobject-traceray), [HitObject::FromRayQuery](#hitobject-fromrayquery), [HitObject::MakeMiss](#hitobject-makemiss), or [HitObject::MakeNop](#hitobject-makenop). It can be used to invoke closesthit or miss shading using [HitObject::Invoke](#hitobject-invoke), and to reorder threads for shading coherence with [MaybeReorderThread](#maybereorderthread).
+
+The `HitObject` has value semantics, so modifying one `HitObject` will not impact any other HitObject in the shader. A shader can have any number of active `HitObject`s at a time. Each `HitObject` will take up some hardware resources to hold information related to the hit or miss, including ray, intersection attributes and information about the shader to invoke. The size of a `HitObject` is unspecified, and thus considered intangible. As a consequence, `HitObject` cannot be stored in memory buffers, in groupshared memory, in ray payloads, or in intersection attributes. `HitObject` supports assignment (by-value copy) and can be passed as arguments to and returned from local inlined functions.
+
+A `HitObject` is default-initialized to encode a NOP-HitObject (see [HitObject::MakeNop](#hitobject-makenop)). A NOP-HitObject can be used with [HitObject::Invoke](#hitobject-invoke) and [MaybeReorderThread](#maybereorderthread) but does not call shaders or provide additional information for reordering. Most accessors will return zero-initialized values for a NOP-HitObject.
+
+The HitObject type and related functions are available only in the following shader stages: raygeneration, closesthit, miss (the shader stages that may call TraceRay).
+
+|`HitObject` methods:|
+|---------------------|
+|[HitObject::TraceRay](#hitobject-traceray)|
+|[HitObject::FromRayQuery](#hitobject-fromrayquery)|
+|[HitObject::MakeMiss](#hitobject-makemiss)|
+|[HitObject::MakeNop](#hitobject-makenop)|
+|[HitObject::Invoke](#hitobject-invoke)|
+|[HitObject::IsMiss](#hitobject-ismiss)|
+|[HitObject::IsHit](#hitobject-ishit)|
+|[HitObject::IsNop](#hitobject-isnop)|
+|[HitObject::GetRayFlags](#hitobject-getrayflags)|
+|[HitObject::GetRayTMin](#hitobject-getraytmin)|
+|[HitObject::GetRayTCurrent](#hitobject-getraytcurrent)|
+|[HitObject::GetWorldRayOrigin](#hitobject-getworldrayorigin)|
+|[HitObject::GetWorldRayDirection](#hitobject-getworldraydirection)|
+|[HitObject::GetObjectRayOrigin](#hitobject-getobjectrayorigin)|
+|[HitObject::GetObjectRayDirection](#hitobject-getobjectraydirection)|
+|[HitObject::GetObjectToWorld3x4](#hitobject-getobjecttoworld3x4)|
+|[HitObject::GetObjectToWorld4x3](#hitobject-getobjecttoworld4x3)|
+|[HitObject::GetWorldToObject3x4](#hitobject-getworldtoobject3x4)|
+|[HitObject::GetWorldToObject4x3](#hitobject-getworldtoobject4x3)|
+|[HitObject::GetInstanceIndex](#hitobject-getinstanceindex)|
+|[HitObject::GetInstanceID](#hitobject-getinstanceid)|
+|[HitObject::GetGeometryIndex](#hitobject-getgeometryindex)|
+|[HitObject::GetPrimitiveIndex](#hitobject-getprimitiveindex)|
+|[HitObject::GetHitKind](#hitobject-gethitkind)|
+|[HitObject::GetAttributes](#hitobject-getattributes)|
+|[HitObject::GetShaderTableIndex](#hitobject-getshadertableindex)|
+|[HitObject::SetShaderTableIndex](#hitobject-setshadertableindex)|
+|[HitObject::LoadLocalRootArgumentsConstant](#hitobject-loadlocalrootargumentsconstant)|
+
+---
+
+### HitObject Interaction with Payload Access Qualifiers
+
+[Payload Access Qualifiers](#payload-access-qualifiers) (PAQs) are based on how information flows between shader stages in [TraceRay](#traceray):
+
+```C++
+caller -> anyhit -> (closesthit|miss) -> caller
+           ^  |
+           |__|
+```
+
+With [HitObject](#hitobject), control is returned to the caller after [HitObject::TraceRay](#hitobject-traceray) completed and hence caller is inserted between anyhit and (closesthit|miss):
+
+The flow for [HitObject::TraceRay](#hitobject-traceray) is:
+
+```C++
+caller -> anyhit -> caller
+           ^  |
+           |__|
+```
+
+The flow for [HitObject::Invoke](#hitobject-invoke) is:
+
+```C++
+caller -> (closesthit|miss) -> caller
+```
+
+To allow interchangeability of payload types between [TraceRay](#traceray) and the new execution model introduced with [HitObject::TraceRay](#hitobject-traceray)/[HitObject::Invoke](#hitobject-invoke), the following additional PAQ rules apply:
+
+- At the call to [HitObject::TraceRay](#hitobject-traceray), any field declared as `read(miss)`  or `read(closesthit)` is treated as `read(caller)`
+- At the call to [HitObject::Invoke](#hitobject-invoke), any field declared as `write(anyhit)`  is treated as `write(caller)`
+
+---
+
+### HitObject TraceRay
+
+Executes traversal (including anyhit and intersection shaders) and returns the resulting hit or miss information as a [HitObject](#hitobject). Unlike [TraceRay](#traceray), this does not execute closesthit or miss shaders. The resulting payload is not part of the [HitObject](#hitobject). See [HitObject Interaction with Payload Access Qualifiers](#hitobject-interaction-with-payload-access-qualifiers) for details.
+
+```C++
+template<payload_t> 
+static dx::HitObject dx::HitObject::TraceRay( 
+    RaytracingAccelerationStructure AccelerationStructure, 
+    uint RayFlags, 
+    uint InstanceInclusionMask, 
+    uint RayContributionToHitGroupIndex, 
+    uint MultiplierForGeometryContributionToHitGroupIndex, 
+    uint MissShaderIndex, 
+    RayDesc Ray, 
+    inout payload_t Payload);
+```
+
+See [TraceRay](#traceray) for parameter definitions.
+
+The returned [HitObject](#hitobject) will always encode a hit or a miss, i.e. it will never be a NOP-Hitobject.
+
+`HitObject::TraceRay` must not be invoked if the maximum trace recursion depth has been reached.
+
+This function introduces a [reorder point](#reorder-points).
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject FromRayQuery
+
+Construct a [HitObject](#hitobject) representing the committed hit in a [RayQuery](#rayquery). It is not bound to a [shader table](#shader-tables) entry and behaves as NOP (no operation) if invoked. It can be used for reordering based on hit information. If no hit is committed in the `RayQuery`, the `HitObject` returned is a [NOP](#hitobject-makenop) object. A shader table entry can be assigned separately, which in turn allows invoking a shader.
+
+An overload takes a user-defined hit kind and custom attributes associated with `COMMITTED_PROCEDURAL_PRIMITIVE_HIT`. It is ok to always use the overload, even for `COMMITTED_TRIANGLE_HIT`. For anything other than a procedural hit, the specified hit kind and attributes are ignored.
+
+```C++
+static dx::HitObject dx::HitObject::FromRayQuery( 
+    RayQuery Query);
+
+template<attr_t>
+static dx::HitObject dx::HitObject::FromRayQuery(
+    RayQuery Query,
+    uint CommittedCustomHitKind,
+    attr_t CommittedCustomAttribs);    
+```
+
+Parameter                           | Definition
+---------                           | ----------
+`Return: HitObject` | The [HitObject](#hitobject) that contains the result of the initialization operation.
+`RayQuery` | RayQuery from which the hit is created.
+`uint CommitedCustomHitKind` | See the `HitKind` parameter of [ReportHit](#reporthit) for definition.
+`attr_t CommittedCustomAttribs` | See the `Attributes` parameter of [ReportHit](#reporthit) for definition. If a closesthit shader is invoked from this `HitObject`, `attr_t` must match the attribute type of the closesthit shader.
+
+The size of `attr_t` must not exceed `MaxAttributeSizeInBytes` specified in the [D3D12_RAYTRACING_SHADER_CONFIG](#d3d12_raytracing_shader_config).
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject MakeMiss
+
+Construct a [HitObject](#hitobject) representing a miss, without tracing a ray. It is legal to construct a [HitObject](#hitobject) that differs from the result that would be obtained by passing the same parameters to [HitObject::TraceRay](#hitobject-traceray), e.g. constructing a miss for a ray that would have hit some geometry if it were traced.
+
+```C++
+static dx::HitObject dx::HitObject::MakeMiss( 
+    uint MissShaderIndex, 
+    RayDesc Ray);
+```
+Parameter                           | Definition
+---------                           | ----------
+`Return: HitObject` | The `HitObject` that contains the result of the initialization operation.
+`uint RayFlags` | Valid combination of Ray flags as specified by [TraceRay](#traceray). Only defined ray flags are propagated by the system.
+`uint MissShaderIndex` | The miss shader index, used to calculate the address of the shader table record. The miss shader index must reference a valid shader table record. Only the least significant 16 bits of this value are used.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject MakeNop
+
+Construct a NOP-HitObject (no operation) that represents neither a hit nor a miss. This is the same as a default-initialized [HitObject](#hitobject). NOP-Hitobjects can be useful in certain scenarios when combined with [MaybeReorderThread](#maybereorderthread), e.g. when a thread wants to participate in reordering without executing a closesthit or miss shader.
+
+```C++
+static dx::HitObject dx::HitObject::MakeNop();
+```
+
+Parameter                           | Definition
+---------                           | ----------
+`Return: HitObject` | The `HitObject` initialized to a NOP-HitObject.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+### HitObject Invoke
+
+Execute closesthit or miss shading for the hit or miss encapsulated in a [HitObject](#hitobject). The [HitObject](#hitobject) fully determines the system values accessible from the closesthit or miss shader. A NOP-HitObject or a `HitObject` constructed from a [RayQuery](#rayquery) without setting a shader table index will not invoke a shader and is effectively ignored. 
+
+The `HitObject::Invoke` call counts towards the trace recursion depth. It must not be invoked if the maximum trace recursion depth has already been reached. It is legal to call `Invoke` with the same `HitObject` multiple times. The `HitObject` is not modified by `Invoke`.
+
+This function introduces a [reorder point](#reorder-points).
+
+```C++
+template<payload_t> 
+static void dx::HitObject::Invoke( 
+    dx::HitObject HitOrMiss, 
+    inout payload_t Payload);
+```
+
+Parameter                           | Definition
+---------                           | ----------
+`HitObject HitOrMiss` |  `HitObject` that encapsulates information about the closesthit or miss shader to be executed. If the `HitObject` is a NOP-HitObject or a `HitObject` constructed from a `RayQuery` without setting a shader table index, then neither a closeshit nor a miss shader will be executed.
+`payload_t Payload` | The ray payload. `payload_t` must match the type expected by the shader being invoked. See [HitObject Interaction With Payload Access Qualifiers](#hitobject-interaction-with-payload-access-qualifiers) for details.
+
+> It is legal to call [HitObject::TraceRay](#hitobject-traceray) with a different payload type than a subsequent [HitObject::Invoke](#hitobject-invoke). One use case for this is a pipeline with anyhit shaders that require only a small payload, combined with closesthit shaders that read inputs from a large payload. Payload Access Qualifiers can express this situation, but don't allow for as much optimization as using two different payloads with [HitObject](#hitobject) does. That is because anyhit would have to preserve the fields read by closesthit in the example above unnecessarily increasing register pressure on anyhit. Note that allowing different payload types within a hit group is not a spec change, because payload compatibility matters at runtime, not compile time. That is, at runtime, the payload type passed to the calling [TraceRay](#traceray)/[HitObject::TraceRay](#hitobject-traceray)/[HitObject::Invoke](#hitobject-invoke) must match the payload type of the *invoked* shaders (only). With the introduction of [HitObject](#hitobject), it can now be desirable for applications to create hit groups where the payload type in anyhit differs from the payload type in closesthit, whereas without [HitObject](#hitobject) this was merely legal but not particularly useful.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+ 
+---
+
+### HitObject IsMiss
+
+```C++
+bool dx::HitObject::IsMiss();
+```
+
+Returns `true` if the [HitObject](#hitobject) encodes a miss. If the `HitObject` encodes a hit or is a NOP-Hitobject, returns `false`.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject IsHit
+
+```C++
+bool dx::HitObject::IsHit();
+```
+
+Returns `true` if the [HitObject](#hitobject) encodes a hit. If the `HitObject` encodes a miss or is a NOP-Hitobject, returns `false`.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject IsNop
+
+```C++
+bool dx:HitObject::IsNop();
+```
+
+Returns `true` if the [HitObject](#hitobject) is a NOP-Hitobject, otherwise returns `false`.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetRayFlags
+
+```C++
+uint dx::HitObject::GetRayFlags();
+```
+
+Returns the ray flags associated with the hit object.
+
+Returns 0 if the [HitObject](#hitobject) is a NOP-HitObject.
+
+---
+
+### HitObject GetRayTMin
+
+```C++
+float dx::HitObject::GetRayTMin();
+```
+
+Returns the parametric starting point for the ray associated with the hit
+object.
+
+Returns 0 if the [HitObject](#hitobject) is a NOP-HitObject.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetRayTCurrent
+
+```C++
+float dx::HitObject::GetRayTCurrent();
+```
+
+Returns the parametric ending point for the ray associated with the hit
+object. For a miss, the ending point indicates the maximum initially specified.
+
+Returns 0 if the [HitObject](#hitobject) is a NOP-HitObject.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetWorldRayOrigin
+
+```C++
+float3 dx::HitObject::GetWorldRayOrigin();
+```
+
+Returns the world-space origin for the ray associated with the hit object.
+
+If the [HitObject](#hitobject) is a NOP-HitObject, all components of the returned `float3`
+will be zero.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetWorldRayDirection
+
+```C++
+float3 dx::HitObject::GetWorldRayDirection();
+```
+
+Returns the world-space direction for the ray associated with the hit object.
+
+If the [HitObject](#hitobject) is a NOP-HitObject, all components of the returned `float3`
+will be zero.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetObjectRayOrigin
+
+```C++
+float3 dx::HitObject::GetObjectRayOrigin();
+```
+
+Returns the object-space origin for the ray associated with the hit object.
+
+If the [HitObject](#hitobject) encodes a miss, returns the world ray origin.
+
+If the [HitObject](#hitobject) is a NOP-HitObject, all components of the returned `float3`
+will be zero.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetObjectRayDirection
+
+```C++
+float3 dx::HitObject::GetObjectRayDirection();
+```
+
+Returns the object-space direction for the ray associated with the hit object.
+
+If the [HitObject](#hitobject) encodes a miss, returns the world ray direction.
+
+If the [HitObject](#hitobject) is a NOP-HitObject, all components of the returned `float3`
+will be zero.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetObjectToWorld3x4
+
+```C++
+float3x4 dx::HitObject::GetObjectToWorld3x4();
+```
+
+Returns a matrix for transforming from object-space to world-space.
+
+Returns an identity matrix if the `HitObject` does not encode a hit.
+
+The only difference between this and [HitObject::GetObjectToWorld4x3](#hitobject-getobjecttoworld4x3) is the
+matrix is transposed – use whichever is convenient.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetObjectToWorld4x3
+
+```C++
+float4x3 dx::HitObject::GetObjectToWorld4x3();
+```
+
+Returns a matrix for transforming from object-space to world-space.
+
+Returns an identity matrix if the `HitObject` does not encode a hit.
+
+The only difference between this and [HitObject::GetObjectToWorld3x4](#hitobject-getobjecttoworld3x4) is
+the matrix is transposed – use whichever is convenient.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetWorldToObject3x4
+
+```C++
+float3x4 dx::HitObject::GetWorldToObject3x4();
+```
+
+Returns a matrix for transforming from world-space to object-space.
+
+Returns an identity matrix if the `HitObject` does not encode a hit.
+
+The only difference between this and [HitObject::GetWorldToObject4x3](#hitobject-getworldtoobject4x3) is
+the matrix is transposed – use whichever is convenient.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetWorldToObject4x3
+
+```C++
+float4x3 dx::HitObject::GetWorldToObject4x3();
+```
+
+Returns a matrix for transforming from world-space to object-space.
+
+Returns an identity matrix if the `HitObject` does not encode a hit.
+
+The only difference between this and [HitObject::GetWorldToObject4x3](#hitobject-getworldtoobject3x4) is
+the matrix is transposed – use whichever is convenient.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetInstanceIndex
+
+```C++
+uint dx::HitObject::GetInstanceIndex();
+```
+
+Returns the instance index of a hit.
+
+Returns 0 if the [HitObject](#hitobject) does not encode a hit.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetInstanceID
+
+```C++
+uint dx::HitObject::GetInstanceID();
+```
+
+Returns the instance ID of a hit.
+
+Returns 0 if the [HitObject](#hitobject) does not encode a hit.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetGeometryIndex
+
+```C++
+uint dx::HitObject::GetGeometryIndex();
+```
+
+Returns the geometry index of a hit.
+
+Returns 0 if the [HitObject](#hitobject) does not encode a hit.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetPrimitiveIndex
+
+```C++
+uint dx::HitObject::GetPrimitiveIndex();
+```
+
+Returns the primitive index of a hit.
+
+Returns 0 if the [HitObject](#hitobject) does not encode a hit.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetHitKind
+
+```C++
+uint dx::HitObject::GetHitKind();
+```
+
+Returns the hit kind of a hit. See `HitKind` for definition of possible values.
+
+Returns 0 if the [HitObject](#hitobject) does not encode a hit.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetAttributes
+
+```C++
+template<attr_t>
+attr_t dx::HitObject::GetAttributes();
+```
+
+Returns the attributes of a hit. `attr_t` must match the committed attributes' type regardless of whether they were committed by an intersection shader, fixed function logic, or using [HitObject::FromRayQuery](#hitobject-fromrayquery).
+
+If the `HitObject` does not encode a hit, the returned value will be zero-initialized. The size of `attr_t` must not exceed `MaxAttributeSizeInBytes` specified in the [D3D12_RAYTRACING_SHADER_CONFIG](#d3d12_raytracing_shader_config).
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject GetShaderTableIndex
+
+```C++
+uint dx::HitObject::GetShaderTableIndex()
+```
+
+Returns the index used for shader table lookups. If the [HitObject](#hitobject) encodes a hit, the index relates to the hit group table. If the [HitObject](#hitobject) encodes a miss, the index relates to the miss table. If the [HitObject](#hitobject) is a NOP-Hitobject, or a `HitObject` constructed from a `RayQuery` without setting
+a shader table index, the return value is zero.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject SetShaderTableIndex
+
+```C++
+uint dx::HitObject::SetShaderTableIndex(uint RecordIndex)
+```
+
+Sets the index used for shader table lookups.
+
+Parameter                           | Definition
+---------                           | ----------
+`uint RecordIndex` | The index into the hit or miss shader table. If the [HitObject](#hitobject) is a NOP-Hitobject, the value is ignored.
+
+If the `HitObject` encodes a hit, the index relates to the hit group table and only the bottom 28 bits are used:
+
+```C++
+HitGroupRecordAddress = 
+    D3D12_DISPATCH_RAYS_DESC.HitGroupTable.StartAddress + // from: DispatchRays() 
+    D3D12_DISPATCH_RAYS_DESC.HitGroupTable.StrideInBytes * // from: DispatchRays() 
+    HitGroupRecordIndex; // from shader: HitObject::SetShaderTableIndex(RecordIndex) 
+```
+
+If the `HitObject` encodes a miss, the index relates to the miss table and only the least significant 16 bits are used:
+
+```C++
+MissRecordAddress = 
+    D3D12_DISPATCH_RAYS_DESC.MissShaderTable.StartAddress + // from: DispatchRays() 
+    D3D12_DISPATCH_RAYS_DESC.MissShaderTable.StrideInBytes * // from: DispatchRays() 
+    MissRecordIndex; // from shader: HitObject::SetShaderTableIndex(RecordIndex) 
+```
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### HitObject LoadLocalRootArgumentsConstant
+
+```C++
+uint dx::HitObject::LoadLocalRootArgumentsConstant(uint RootConstantOffsetInBytes)
+```
+
+Load a local root arguments constant from the shader table. The offset is specified from the start of the local root arguments, after the shader identifier. This function is particularly convenient for applications to "peek" at material properties or flags stored in the shader table and use that information to augment reordering decisions before invoking a hit shader.
+
+`RootConstantOffsetInBytes` must be a multiple of 4.
+
+If the [HitObject](#hitobject) is a NOP-Hitobject, or a `HitObject` constructed from a
+`RayQuery` without setting a shader table index, the return value is zero.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+## MaybeReorderThread
+
+`MaybeReorderThread` provides an efficient way for the application to reorder work across the physical threads running on the GPU in order to improve the coherence and performance of subsequently executed code. The target ordering is given by the arguments passed to `MaybeReorderThread`. For example, the application can pass a [HitObject](#hitobject), indicating to the system that coherent execution is desired with respect to a ray hit location in the scene. Reordering based on a `HitObject` is particularly useful in situations with highly incoherent hits, e.g., in path tracing applications.
+
+`ReorderThread` is available only in shaders of type [raygeneration](#ray-generation-shader).
+
+This function introduces a [reorder point](#reorder-points).
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+Variants:
+
+- [MaybeReorderThread with HitObject](#maybereorderthread-with-hitobject)
+- [MaybeReorderThread with coherence hint](#maybereorderthread-with-coherence-hint)
+- [MaybeReorderThread with HitObject and coherence hint](#maybereorderthread-with-hitobject-and-coherence-hint)
+
+Example and other information:
+
+- [Examples](#reorderthread-example-1)
+- [Reorder Points](#reorder-points)
+- [Divergence behavior](#maybereorderthread-divergence-behavior)
+- [Memory coherence and visibility](#reorder-points---memory-coherence-and-visibility)
+- [Separation of MaybeReorderThrad and HitObject::Invoke](#separation-of-maybereorderthread-and-hitobject-invoke)
+- [MaybeReorderThread and Invoke examples](#maybereorderthread-and-invoke-example-1-common-computations-that-rely-on-large-raygen-state)
+
+---
+
+### MaybeReorderThread with HitObject
+
+This variant of [MaybeReorderThread](#maybereorderthread) reorders calling threads based on the information contained in a [HitObject](#hitobject). 
+
+It is implementation defined which [HitObject](#hitobject) properties are taken into
+account when defining the ordering. For example, an implementation may decide
+to order threads with respect to their hit group index, hit locations in
+3d-space, or other factors.
+
+[MaybeReorderThread](#maybereorderthread) may access both information about the instance in the
+acceleration structure as well as the shader record at the shader table
+offset contained in the [HitObject](#hitobject). The respective fields in the `HitObject`
+must therefore represent valid instances and shader table offsets.
+NOP-HitObjects is an exception, which do not contain information about a hit
+or a miss, but are still legal inputs to `MaybeReorderThread`. Similarly, a
+`HitObject` constructed from a [RayQuery](#rayquery) but did not set a shader table
+index is exempt from having a valid shader table record.
+
+```C++
+void dx::MaybeReorderThread( dx::HitObject Hit );
+
+// There is currently a bug in DXC where "using namespace dx;" to avoid needing dx:: 
+// when calling dx::MaybeReorderThread*() results in incorrect DXIL generation.  
+// dx::HitObject is not affected.
+```
+
+Parameter                           | Definition
+---------                           | ----------
+`HitObject HitOrMiss` | [HitObject](#hitobject) that encapsulates the hit or miss according to which reordering should be performed.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### MaybeReorderThread with coherence hint
+
+This variant of [MaybeReorderThread](#maybereorderthread) reorders threads based on a generic
+user-provided hint. Similarity of hint values should indicate expected
+similarity of subsequent work being performed by threads. More significant
+bits of the hint value are more important than less significant bits for
+determining coherency. Specific scheduling behavior may vary by
+implementation. The resolution of
+the hint is implementation-specific. If an implementation cannot resolve all
+values of `CoherenceHint`, it is free to ignore an arbitrary number of least
+significant bits. The thread ordering resulting from this call may be
+approximate.
+
+```C++
+void dx::MaybeReorderThread( uint CoherenceHint, uint NumCoherenceHintBitsFromLSB );
+
+// There is currently a bug in DXC where "using namespace dx;" to avoid needing dx:: 
+// when calling dx::MaybeReorderThread*() results in incorrect DXIL generation.  
+// dx::HitObject is not affected.
+```
+
+Parameter                           | Definition
+---------                           | ----------
+`uint CoherenceHint` | User-defined value that determines the desired ordering of a thread relative to others.
+`uint NumCoherenceHintBitsFromLSB` | Indicates how many of the least significant bits in `CoherenceHint` the implementation should try to take into account. Applications should set this to the lowest value required to represent all possible values of `CoherenceHint` (at the given `MaybeReorderThread` call site). All threads should provide the same value at a given call site to achieve best performance.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### MaybeReorderThread with HitObject and coherence hint
+
+This variant of [MaybeReorderThread](#maybereorderthread) reorders threads based on the information contained in a [HitObject](#hitobject), supplemented by additional information expressed as a user-defined hint. The user-provided hint should mainly map properties that an implementation cannot infer from the [HitObject](#hitobject) itself. This can represent material- or other application-specific behavior. Examples include stochastic behavior such as loop termination by russian roulette in path tracing, or a material specific trait that is handled in a branch within a closeshit shader.
+
+An implementation shold attempt to group threads both by information in the [HitObject](#hitobject) and by information in the coherence hint. The details of how this information is combined for reordering is implementation specific, but implementations should generally prioritize the hit group specified in the [HitObject](#hitobject) higher than the coherence hint. This lets applications use the coherence hint to reduce divergence from important branches within closesthit shaders, like the aforementioned material traits.
+
+Note that the number of coherence hint bits that the implementation actually
+honors can be smaller in this overload of `MaybeReorderThread` compared to the one
+described in compared to the one described in [MaybeReorderThread with coherence hint](#maybereorderthread-with-coherence-hint).
+
+```C++
+void dx::MaybeReorderThread( 
+  dx::HitObject HitOrMiss, 
+  uint CoherenceHint, 
+  uint NumCoherenceHintBitsFromLSB );
+
+// There is currently a bug in DXC where "using namespace dx;" to avoid needing dx:: 
+// when calling dx::MaybeReorderThread*() results in incorrect DXIL generation.  
+// dx::HitObject is not affected.
+```
+
+Parameter                           | Definition
+---------                           | ----------
+`HitObject HitOrMiss` | [HitObject](#hitobject) that encapsulates the hit or miss according to which reordering should be performed.
+`uint CoherenceHint` | User-defined value that determines the desired ordering of a thread relative to others.
+`uint NumCoherenceHintBitsFromLSB` | Indicates how many of the least significant bits in `CoherenceHint` the implementation should try to take into account. Applications should set this to the lowest value required to represent all possible values of `CoherenceHint` (at the given `ReorderThread` call site). All threads should provide the same value at a given call site to achieve best performance.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+### ReorderThread Example 1
+
+The following example shows a common pattern of combining [HitObject](#hitobject) and [MaybeReorderThread](#maybereorderthread):
+
+```C++
+// Trace a ray without invoking closesthit/miss shading.
+HitObject hit = HitObject::TraceRay( ... );
+ 
+// Reorder by hit point to increase coherence of subsequent shading.
+MaybeReorderThread( hit );
+
+// Invoke shading.
+HitObject::Invoke( hit, ... );
+```
+
+---
+
+### ReorderThread Example 2
+
+The following pseudocode shows an example of reordering with [coherence hints](#maybereorderthread-with-coherence-hint) as it might be used in a simple path tracer.
+
+```C++
+for( int bounceCount=0; ; bounceCount++ )
+{
+    // Trace the next ray
+    HitObject hit = HitObject::TraceRay( ray, payload, ... );
+
+    // Assume we have per-geometry albedo information stored in the Shader Table
+    float albedo = asfloat( hit.LoadLocalRootTableConstant(0) );
+
+    // Use the albedo information and current bounce count to estimate whether
+    // we're likely to exit the loop after shading the current hit, and turn
+    // that estimate into a coherence hint for reordering. Note that whether
+    // this estimate is correct or not only affects performance, not
+    // correctness.
+    bool probablyFinished = russianRoulette(albedo) || bounceCount >= maxBounces;
+    uint coherenceHints = probablyFinished ? 1 : 0;
+
+    // Reorder based on the hit, while taking into account how likely we are to
+    // exit the loop this round. 
+    MaybeReorderThread( hit, coherenceHints, 1 );
+
+    // Invoke shading for the current hit. Due to the reordering performed
+    // above, this will have increased coherence. 
+    HitObject::Invoke( hit, payload );
+
+    // Test whether the loop should actually exit, or whether we should compute
+    // the next light bounce.
+    if( payload.needsNextBounce && bounceCount < maxBounces )
+        ray = sampleNextBounce( ... );
+    else
+        break;
+}
+```
+
+---
+
+### ReorderThread Example 3
+
+The following pseudocode shows another example of reordering used in the context of path tracing with a slightly different loop structure. In this case, NOP-Hitobject are used in reordering to ensure coherent execution not only of shaders, but also of the code after the loop. 
+
+```C++
+for( int bounceCount=0; ; bounceCount++ )
+{
+    HitObject hit;    // initialize to NOP-hitobject
+
+    // Have threads conditionally participate in the next bounce depending on
+    // loop iteration count and path throughput. Instead of having
+    // non-participating threads break out of the loop here, we let them
+    // participate in the reordering with a NOP-hitobject first. 
+    // This will cause them to be grouped together and execute the work after 
+    // the loop with higher coherence. Note that the values of 'bounceCount'
+    // might differ between threads in a wave, because reordering may group
+    // threads from different iteration counts together if their hit locations
+    // are similar.
+    if( bounceCount < MaxBounces && throughput > ThroughputThreshold )
+    {
+        // Trace the next ray
+        hit = HitObject::TraceRay( ray, payload, ... );
+    }
+
+    // Reorder based on the ray hit. Some of the hit objects may be NOPs; these
+    // will be grouped together. Note that ordering by the type of hitobject
+    // (hit,miss,nop) can be expected to take precedence over ordering by the
+    // shader ID represented by the hitobject. This is as opposed to coherence
+    // hint bits, which have lower priority than the shader ID during
+    // reordering.
+    MaybeReorderThread( hit );
+
+    // Now that we've reordered, break non-participating threads out of the
+    // loop.
+    if( hit.IsNop() )
+        break;
+
+    // Execute shading and update path throughput.
+    HitObject::Invoke( hit, payload );
+    throughput *= payload.brdfValue;
+}
+
+// Assume significant work here that benefits from waves breaking out of the
+// loop coherently.
+<...>
+```
+
+---
+
+### Reorder points
+
+The [Wave Intrinsics](#wave-intrinsics) section defines _repacking points_ at [TraceRay](#traceray), [CallShader](#callshader) and [ReportHit](#reporthit). [Shader Execution Reordering](#shader-execution-reordering) takes this concept further and refers to it as  _reorder points_.
+
+A reorder point is a point in the control flow of a shader or sequence of
+shaders where the system may arbitrarily change the physical arrangement of
+threads executing on the GPU, usually with the goal of increasing coherence.
+That is, the system may choose to migrate thread contexts that arrive at a
+reorder point to different processors, different waves or groups, or indices
+within waves or groups. Such migrations can be visible to the application if
+the application queries certain system state, such as group or thread IDs,
+wave lane indices, ballots, etc.
+
+As mentioned, the base API in the absence of [Shader Execution Reordering](#shader-execution-reordering) has reorder points due to [TraceRay](#traceray), [CallShader](#callshader) and [ReportHit](#reporthit). [Shader Execution Reordering](#shader-execution-reordering) adds new reorder
+points. The following is a comprehensive list of existing and newly added reorder points:
+
+- [TraceRay](#traceray): transitions to and from `anyhit`, `intersection`, `closesthit`, and `miss` shaders. In the case of multiple `anyhit` or `intersection` shader invocations, each shader stage transition is a separate reorder point.
+- [CallShader](#callshader): transitions to and from the `callable` shader.
+- [HitObject::TraceRay](#hitobject-traceray): transitions to and from `anyhit` and `intersection` shaders. In the case of multiple `anyhit` or `intersection` shader invocations, each shader stage transition is a separate reorder point.
+- [HitObject::Invoke](#hitobject-invoke): transitions to and from `closeshit` and `miss` shaders. Constitutes a reorder point even in cases where no shader is invoked.
+- [MaybeReorderThread](#maybereorderthread): the `MaybeReorderThread` call site.
+
+[`MaybeReorderThread`](#maybereorderthread) stands out as it explicitly separates reordering from a
+transition between shader stages, thus, it allows applications to (carefully)
+choose the most effective reorder locations given a specific workload. The
+combination of [HitObject](#hitobject) and coherence hints provides additional control
+over the reordering itself. These characteristics make `MaybeReorderThread` a
+versatile tool for improving performance in a variety of workloads that suffer
+from divergent execution or data access.
+
+Similar to [TraceRay](#traceray) and [CallShader](#callshader), the behavior of the actual reorder
+operation at any reorder point is implementation specific. An implementation
+may, for instance, not reorder at all, reorder within some local domain
+(threads on a local processor), reorder only within a certain time window,
+reorder globally across the entire GPU and the entire dispatch, or any
+variation thereof. The general target is for implementations to make a _best
+effort_ to extract as much coherence as possible, while keeping the overhead
+of reordering low enough to be practical for use in typical raytracing
+scenarios.
+
+While it is understood that reordering at `TraceRay` and `CallShader` is done
+at the discretion of the driver, [HitObject::TraceRay](#hitobject-traceray) and [HitObject::Invoke](#hitobject-invoke)
+are intended to be used in conjunction with [MaybeReorderThread](#maybereorderthread).
+Reordering at `HitObject::TraceRay` and `HitObject::Invoke` is permitted but the
+driver should minimize its efforts to reorder for hit coherence and instead
+prioritize reordering through `MaybeReorderThread`.
+
+Some implementations may achieve best performance when `HitObject::TraceRay`,
+`MaybeReorderThread`, and `HitObject::Invoke` are called back-to-back.
+This case is semantically equivalent to DXR 1.0 `TraceRay` but with defined
+reordering characteristics.
+The back-to-back combination of `MaybeReorderThread` and `HitObject::Invoke` may
+similarly see a performance benefit on some implementations.
+
+For performance reasons, it is crucial that the DXIL-generating compiler does
+not move non-uniform resource access across reorder points in general, and across
+`MaybeReorderThread` in particular. It should be assumed that the shader will perform
+the access where coherence is maximized.
+
+---
+
+ ### MaybeReorderThread divergence behavior
+
+An implementation may only reorder threads whose control flow arrives at a
+reorder point. Threads that do not arrive at a reorder point are guaranteed to
+not migrate, even if neighboring threads in the same wave do migrate.
+
+From the physical wave's point of view, an implementation may remove, replace,
+or do nothing with threads that arrive at a reorder point. It is also legal for
+an implementation to replace threads that were inactive at the start of the
+wave or those that exited the shader during execution, as long as any remaining
+thread reach a reorder point. This may indirectly affect threads that
+conditionally did not invoke a reorder point, as illustrated in the following
+code snippet:
+
+```C++
+int MyFunc(int coherenceCoord)
+{
+    int A = WaveActiveBallot(true);
+    if (WaveIsFirstLane())
+        MaybeReorderThread(coherenceCoord, 32);
+    int B = WaveActiveBallot(true);
+    return A - B;
+}
+```
+
+In this example, a number of different things could happen:
+- If the implementation does not honor [MaybeReorderThread](#maybereorderthread) at all, the function
+will most likely return zero, as the set of threads before and after the
+conditional reorder would be the same.
+- If the implementation reorders threads invoking `MaybeReorderThread` but does not
+replace them, B will likely be less than A for threads not invoking
+`MaybeReorderThread`, while the reordered threads will likely resume execution with
+a newly formed full wave, thereby obtaining `A <= B`.
+- If the implementation replaces threads in a wave, the threads not
+participating in the reorder may possibly be joined by more threads than were
+removed from the wave, again observing `A <= B`.
+
+This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+
+---
+
+#### Reorder points - memory coherence and visibility
+
+Due to the existence of non-coherent caches on most modern GPUs, an
+application must take special care when communicating information across
+reorder points through memory (UAVs). [Shader Execution Reordering](#shader-execution-reordering) adds a
+coherence scope for communication between reorder points within the same
+dispatch index, as follows:
+- A new `[reordercoherent]` storage class for UAVs.
+- A new `REORDER_SCOPE = 0x8` member in the `SEMANTIC_FLAG` enum for use in barriers.
+
+Specifically, if UAV stores or atomics are performed on one side of a
+reorder point, and on the other side the data is read via non-atomic
+UAV reads, the following steps are required:
+1. The UAV must be declared `[reordercoherent]`.
+2. The UAV writer must issue a `Barrier(UAV_MEMORY, REORDER_SCOPE)` between the write and the reorder point.
+
+Note that these steps are required to ensure coherence across any reorder point.
+For example, between a write performed before `MaybeReorderThread` or `TraceRay` and a
+subsequent read in the same shader, or between shader stages (such as data written
+in the closesthit shader and read in the raygeneration shader).
+
+When communicating both between threads with different dispatch index and
+across reorder points the reorder coherence scope is insufficient.
+Instead, global coherency can be utilized as follows:
+1. The UAV must be declared `[globallycoherent]`.
+2. The UAV writer must issue a `DeviceMemoryBarrier` between the write and the
+reorder point.
+
+---
+
+### Separation of MaybeReorderThread and HitObject Invoke
+
+[MaybeReorderThread](#maybereorderthread) and [HitObject::Invoke](#hitobject-invoke) are kept separate. It enables calling
+`MaybeReorderThread` without `HitObject::Invoke`, and `HitObject::Invoke` without
+calling `MaybeReorderThread`. These are valid use cases as reordering can be
+beneficial even when shading happens inline in the raygeneration shader, and
+reordering before a known to be coherent or cheap shader can be
+counterproductive. For cases in which both is desired, keeping `MaybeReorderThread`
+and `HitObject::Invoke` separated is still beneficial as detailed below.
+
+Common hit processing can happen in the raygeneration shader with the
+additional efficiency gains of hit coherence. Benefits include:
+- Logic otherwise duplicated can be hoisted into the raygeneration shader
+without a loss of hit coherence. This can reduce instruction cache pressure
+and reduce compile times.
+- Logic between `MaybeReorderThread` and `HitObject::Invoke` have access to the
+full state of the raygeneration shader. It can access a large material stack
+keeping track of surface boundaries, for example. This is difficult or
+impossible to communicate through the payload.
+- Modularity between the shader stages is improved by allowing hit shading to
+focus on surface logic. Different raygeneration shaders, and different call
+sites within a raygeneration shader, may want to vary how common logic is
+implemented. E.g., on first bounce a shadow ray may be fired after performing
+common light sampling. On a second bounce a shadow map lookup may be enough.
+
+In addition to the above, API complexity is reduced by only having separate
+calls, as opposed to both separate calls and a fused variant. Further,
+`MaybeReorderThread` naturally communicates a reorder point, when hit-coherent
+execution starts and that it will persist after the call (until the next
+reorder point). Reasoning about the execution and that it is hit-coherent is
+not as obvious after a call to a hypothetical (fused)
+`HitObject::ReorderAndInvoke`. Finally, tools can report live state across
+`MaybeReorderThread` and users can optimize live state across it. This is important
+as live state across `MaybeReorderThread` may be more expensive on some
+architectures.
+
+Some examples follow. 
+
+---
+
+#### MaybeReorderThread and Invoke example 1: Common computations that rely on large raygen state
+
+In this example, a large number of surface events are tracked in the ray generation shader.
+Only the result is communicated to the invoked shader via the payload.
+
+```C++
+struct IorData
+{
+    float ior;
+    uint id;
+};
+
+IorData iorList[16];
+uint iorListSize = 0;
+
+for( ... )
+{
+    HitObject hit = HitObject::TraceRay( ... );
+    MaybeReorderThread( hit );
+
+    IorData newEntry = LoadIorDataFromHit( hit );
+    bool enter = hit.GetHitKind() == HIT_KIND_TRIANGLE_FRONT_FACE;
+
+    payload.ior = UpdateIorList( newEntry, enter, iorList, iorListSize );
+
+    HitObject::Invoke( hit, payload );
+}
+```
+
+---
+
+#### MaybeReorderThread and Invoke example 2: Do common computations with hit coherence
+
+In this example, common code runs in the raygeneration shader, after
+the thread has been reordered for hit coherence.
+
+```C++
+hit = HitObject::TraceRay( ... );
+MaybeReorderThread( hit );
+
+payload.giData = GlobalIlluminationCacheLookup( hit );
+
+HitObject::Invoke( hit, payload );
+```
+
+---
+
+#### MaybeReorderThread and Invoke example 3: Same surface shader but different behaviour in raygen
+
+This example demonstrates varying reordering behavior and shadow logic, despite
+using the same shader code.
+
+```C++
+// Primary ray wants perfect shadows and does not need to explicitly
+// reorder for hit coherence as it is coherent enough.
+ray = GeneratePrimaryRay();
+hit = HitObject::TraceRay( ... );
+// NOTE: Although MaybeReorderThread is not explicitly invoked here,
+// reordering can still occur at any reorder point based on
+// driver-specific decisions.
+RayDesc shadowRay = SampleShadow( hit );
+payload.shadowTerm = HitObject::TraceRay( shadowRay ).IsHit() ? 0.0f : 1.0f;
+HitObject::Invoke( hit, payload );
+
+// Secondary ray is incoherent but does not need perfect shadows.
+ray = ContinuePath( payload );
+hit = HitObject::TraceRay( ... );
+MaybeReorderThread( hit );
+payload.shadowTerm = SampleShadowMap( hit );
+HitObject::Invoke( hit, payload );
+```
+
+---
+
+#### MaybeReorderThread and Invoke example 4: Unified shading
+
+No hit shader is invoked in this example; however, reordering can still
+improve data coherence.
+
+```C++
+hit = HitObject::TraceRay( ... );
+
+MaybeReorderThread( hit );
+
+// Do not call HitObject::Invoke. Shade in raygeneration.
+```
+
+---
+
+#### MaybeReorderThread and Invoke example 5: Coherently break render loop on miss
+
+Executing the miss shader when not needed is unnecessarily inefficient
+on some architectures. In this example, miss shader execution is skipped.
+
+Note that behavior can vary. Other architectures may have better efficiency
+when `HitObject::TraceRay`, `MaybeReorderThread` and `HitObject::Invoke` are
+called back-to-back (see [Reorder Points](#reorder-points)).
+
+```C++
+for( ;; )
+{
+    hit = HitObject::TraceRay( ... );
+    MaybeReorderThread( hit );
+
+    if( hit.IsMiss() )
+        break;
+
+    HitObject::Invoke( hit, payload );
+}
+```
+
+---
+
+#### MaybeReorderThread and Invoke example 6: Two-step shading, single reorder
+
+In this example, shading is performed in two steps.
+The first step gathers material information, while the second step dispatches a common surface shader.
+This approach can help reduce shader permutations.
+
+```C++
+hit = HitObject::TraceRay( ... );
+MaybeReorderThread( hit );
+
+// Gather surface parameters into payload, e.g., compute normal and albedo
+// based on surface-specific functions and/or textures.
+HitObject::Invoke( hit, payload );
+
+// Alter the hit object to point to a unified surface shader.
+hit.SetShaderTableIndex( payload.surfaceShaderIdx );
+
+// Invoke unified surface shading. We are already hit-coherent so it is not
+// worth explicitly reordering again.
+// Reordering may still occur at any reorder point based on driver-specific
+// decisions.
+HitObject::Invoke( hit, payload );
+```
+
+---
+
+#### MaybeReorderThread and Invoke example 7: Live state optimization
+
+In this example, logic is added to compress and uncompress part of the
+payload across [MaybeReorderThread](#maybereorderthread).
+This can make sense if live state is more expensive across `MaybeReorderThread`.
+
+Some implementations may favor cases where [HitObject::TraceRay](#hitobject-traceray), `MaybeReorderThread`
+and [HitObject::Invoke](#hitobject-invoke) are called back-to-back (see [Reorder Points](#reorder-points)),
+so performance profiling is necessary.
+
+```C++
+hit = HitObject::TraceRay( ... );
+
+uint compressedNormal = CompressNormal( payload.normal );
+MaybeReorderThread( hit );
+payload.normal = UncompressNormal( compressedNormal );
+
+HitObject::Invoke( hit, payload );
+```
+---
+
+#### MaybeReorderThread and Invoke example 8: Back-to-back calls
+
+This example demonstrates the back-to-back arrangement of [HitObject::TraceRay](#hitobject-traceray),
+[MaybeReorderThread](#maybereorderthread), and [HitObject::Invoke](#hitobject-invoke).
+For some architectures, this arrangement is the most efficient, as it can be
+recognized as a single reorder point, reducing call overhead
+(see [Reorder Points](#reorder-points)).
+
+Additional logic between these calls should only be added when necessary.
+
+```C++
+hit = HitObject::TraceRay( ... );
+MaybeReorderThread( hit );
+HitObject::Invoke( hit, payload );
+```
 
 ---
 
@@ -6908,7 +8734,7 @@ Generally speaking, the `read` qualifier indicates that a shader stage reads the
 
 For the application developer, the following classification provides a description of the qualifier's behavior that should suffice as a mental model in most scenarios. For a more precise definition of the semantics, see the next section.
 
-**anyhit/closesthit/miss stages**
+#### anyhit/closesthit/miss stages
 
 qualifier|semantic
 ---|---
@@ -6917,7 +8743,7 @@ qualifier|semantic
 `read+write`|<p>Indicates that the given stage may read and/or write the payload field. This is analogous to inout function parameters. If the shader does not explicitly assign a value or if the stage is not executed, the payload field remains unmodified.</p>
 `<none>`|<p>The payload field is neither available for reading nor are its contents modified by the given stage.</p>
 
-**caller stage**
+#### caller stage
 
 The `caller` stage denotes the caller of the [TraceRay](#traceray) function (i.e., most commonly a [raygeneration](#ray-generation-shader) shader). Fields that represent "inputs" to [TraceRay](#traceray) (for example a random seed) must first be written by the caller, so the [payload access qualifier](#payload-access-qualifiers) (PAQ) for such fields must include `write(caller)`. Fields that represent "outputs" from [TraceRay](#traceray) (for example an output color) must be read by the caller,
 so the PAQ for such fields must include `read(caller)`. Fields can be both inputs and outputs to [TraceRay](#traceray) by specifying both `read(caller)` and `write(caller)`.
@@ -6956,7 +8782,7 @@ It is the responsibility of the developer to ensure that shaders honor the speci
 
 The general sequence of relevant shader stages is as follows. ([intersection](#intersection-shader) shaders are left out because they cannot access payloads).
 
-```
+```nothing
 caller -> anyhit -> (closesthit|miss) -> caller
            ^  |
            |__|         
@@ -6967,8 +8793,10 @@ A [TraceRay](#traceray) call may not invoke any shaders at all (e.g. a ray that 
 
 The following rules are enforced by the compiler at the payload declaration:
 
-1) Any `read` stage must be preceded by a `write` stage
-2) Any `write` stage must be succeeded by a `read` stage
+1. Any `read` stage must be preceded by a `write` stage
+2. Any `write` stage must be succeeded by a `read` stage
+
+For a [HitObject](#hitobject) (part of the [Shader Execution Reordering](#shader-execution-reordering) feature) the semantics are described here: [HitObject Interaction With Payload Access Qualifiers](#hitobject-interaction-with-payload-access-qualifiers).
 
 ---
 
@@ -7009,12 +8837,12 @@ struct [raypayload] MyPayload
 
 Here are some guidelines to help developers specify [payload access qualifier](#payload-access-qualifiers) definitions correctly:
 
-1) Does the caller need to initialize the field before calling [TraceRay](#traceray) Add `caller` to `write`.
-2) Does the caller use the returned field after calling [TraceRay](#traceray) (including in cases like loops)? Add `caller` to `read`.
-3) Does any shader of an [anyhit](#any-hit-shaders)/[closesthit](#closest-hit-shaders)/[miss](#miss-shaders) stage read the field, but no shader in the same stage ever writes it? Add the corresponding shader stage to `read` but not `write`.
-4) Do all shaders of an [anyhit](#any-hit-shaders)/[closesthit](#closest-hit-shaders)/[miss](#miss-shaders) stage write the field unconditionally and never read it? Add the corresponding shader stage to `write` but not `read`.
-5) Does any [anyhit](#any-hit-shaders)/[closesthit](#closest-hit-shaders)/[miss](#miss-shaders) shader conditionally modify the field, or do some shaders in the stage write the field while others don't? Try to make the `write` unconditional in all shaders and apply guideline (4). If that is not possible, add the stage to both `read` and `write`.
-6) Specify as few qualifiers/stages as possible for maximum performance. Try to make fields "pure inputs" or "pure outputs" (see later examples) where possible.
+1. Does the caller need to initialize the field before calling [TraceRay](#traceray) Add `caller` to `write`.
+2. Does the caller use the returned field after calling [TraceRay](#traceray) (including in cases like loops)? Add `caller` to `read`.
+3. Does any shader of an [anyhit](#any-hit-shaders)/[closesthit](#closest-hit-shaders)/[miss](#miss-shaders) stage read the field, but no shader in the same stage ever writes it? Add the corresponding shader stage to `read` but not `write`.
+4. Do all shaders of an [anyhit](#any-hit-shaders)/[closesthit](#closest-hit-shaders)/[miss](#miss-shaders) stage write the field unconditionally and never read it? Add the corresponding shader stage to `write` but not `read`.
+5. Does any [anyhit](#any-hit-shaders)/[closesthit](#closest-hit-shaders)/[miss](#miss-shaders) shader conditionally modify the field, or do some shaders in the stage write the field while others don't? Try to make the `write` unconditional in all shaders and apply guideline (4). If that is not possible, add the stage to both `read` and `write`.
+6. Specify as few qualifiers/stages as possible for maximum performance. Try to make fields "pure inputs" or "pure outputs" (see later examples) where possible.
 
 ---
 
@@ -7486,161 +9314,6 @@ This is the RaytracingTier member of
 
 ---
 
-# Potential future features
-
-This is a non-exhaustive list of potential future features. The list
-will likely grow and evolve.
-
----
-
-## Traversal shaders
-
-Bottom-level acceleration structures currently support two types:
-triangle geometry or procedural geometry (via AABBs).
-
-We could add a third type of bottom-level acceleration structure:
-traversal. The goal of this node would be to make some procedural
-decision about what other acceleration structure (if any) to forward the
-ray that arrived at the node. This could allow a dynamic LOD selection,
-for example, by choosing a separate acceleration structure to forward
-the ray to that contains appropriate LOD geometry.
-
-A traversal node would be defined as AABBs (like procedural geometry)
-with an index into a shader table where a traversal shader is to be
-found. When one of these AABBs is hit by a ray the referenced traversal
-shader is invoked.  The traversal shader might be very simple, perhaps
-only choosing to "forward" the ray into another acceleration structure
-of its choice (or drop the ray).
-
-The following intrinsic looks a like [TraceRay()](#traceray) with fewer
-parameters:
-
-void ForwardRay(RaytracingAccelerationStructure AccelerationStructure,
-
-              uint RayContributionToHitGroupIndex,
-
-              uint MultiplierForGeometryContributionToHitGroupIndex,
-
-              uint MissShaderIndex,
-
-              RayDesc Ray);
-
-Ray processing for the forwarded ray behaves just like
-[TraceRay()](#traceray), with some exceptions.  The closest hit shader
-is only invoked for the lowest T across the original and any forwarded
-rays.  If [AcceptHitAndEndSearch()](#accepthitandendsearch) is invoked
-in the forwarded ray, that ends searching in the parent ray too
-(followed by closest hit selection as usual).
-
-- There's no payload in the parameter list, as that is forwarded from
-  the original ray.
-  
-  - The traversal shader itself may want to be able to inspect the
-    payload (read-only?)
-
-- Other parameters to [TraceRay()](#traceray) such as payload, ray
-  flags, instance cull mask get forwarded with the new ray.
-
-- The ray can be defined arbitrarily, likely to be a transformed
-  version of the parent ray
-
-- There would be a user declared recursion limit on ForwardRay
-  recursion, perhaps separate from the user declared TraceRay
-  recursion limit.
-  
-  - And/or perhaps ForwardRay specifies a **bottom**-level
-    acceleration structure to use (including defining instance
-    data).
-
----
-
-## More efficient acceleration structure builds
-
-The current spec requires apps to produce vertex positions in final
-position into GPU memory before acceleration structure build (unless the
-available instancing transforms in the acceleration structure definition
-would happen to do the job).
-
-It could be more efficient if the staging of transformed (e.g. skinned)
-vertices to memory could be avoided. Perhaps ongoing acceleration
-structure builds could be directly fed with geometry as it is produced
-via compute shaders, stream output, UAV writes and/or some new shader
-stage dedicated to thread-cooperative vertex/primitive processing.
-Perhaps the system takes geometry directly as shaders process it for the
-purpose of rasterization and simultaneously encode it into an opaque
-ongoing acceleration structure build. The system could exploit any data
-coherency the app has likely already baked into the order it processes
-geometry, and potentially eliminate wasteful writing/reading of staging
-geometry to GPU memory.
-
-It is possible that the complexity of more advanced acceleration
-structures will not be worth it, like if perf bottlenecks tend to be
-somewhere else.
-
----
-
-## Beam tracing
-
-The [Ray generation shader](#ray-generation-shaders) could have a
-different mode of operation where the grid location for each thread
-represents an explicitly defined region of space. The region could be
-the frustum that represents the volume that an eye would see through
-each "pixel" in a parameterized definition of the curvature of a
-viewport. Beams could be intersected with geometry in acceleration
-structures and produce some kind of rasterization of the intersected
-geometry, perhaps with some involvement of depth buffering and
-multisampling. Shader selection could come from shader tables just as in
-the current raytracing proposal. Since the system would understand the
-parameterization of the view volume and how it is diced into beams it
-could do things like make memory layout and rasterization order
-optimizations (spanning "pixels") similar to what traditional
-rasterizers do.
-
-An application of this would be for aligning geometry projection and
-shading frequency with display optics as opposed to being stuck
-shoehorning desired projection through plane(s) of pixels as is done
-with traditional rasterization.
-
----
-
-## ExecuteIndirect improvements
-
----
-
-### DispatchRays in command signature
-
-This is now supported - see [CreateCommandSignature()](#createcommandsignature).
-
----
-
-### Draw and Dispatch improvements
-
-Going further, perhaps the shader table concept that enables dynamic
-shader selection in raytracing could be applied back to graphics and
-compute. So that even for command signatures that include
-Draw\*()/Dispatch\*() there could be both:
-
-1) an option to include a shader identifier for a graphics or compute
-   pipeline state into a command signature
-
-2) an option to set an index into a shader table that picks the
-   pipeline state to use, including local root arguments if desired
-
-    - as part of this, command signatures should also be improved to
-      allow descriptor table setting, so the full set of root
-      parameter types can be changed which means adding descriptor
-      table support
-
----
-
-### BuildRaytracingAccelerationStructure in command signature
-
-It might even be interesting to be able to use ExecuteIndirect() to
-issue acceleration structure builds. How this looks might tie into how a
-design for [More efficient acceleration structure builds](#more-efficient-acceleration-structure-builds) plays out.
-
----
-
 # Change log
 
 Version|Date|Change log
@@ -7663,7 +9336,7 @@ v1.04|4/18/2019|<li>Support for indirect DispatchRays() calls (ray generation sh
 v1.05|5/15/2019|<li>Renamed `InlineRayQuery` to simply `RayQuery` in support of adding this object as a return value for [TraceRay()](#traceray) (in addition to [TraceRayInline()](#rayquery-tracerayinline)).  For `TraceRay()`, the returned `RayQuery` object represents the final state of ray traversal after any shader invocations have completed.  The caller can retrieve information about the final state of traversal (CLOSEST_HIT or MISS) and relevant metadata such as hit attributes, object ids etc. that the system already knows about without having to manually store this information in the ray payload.</li><li>Added stipulations on the state object definition passed into the [AddToStateObject()](#addtostateobject) API based around the incremental addition being a valid self contained definition of a state object, even though it is being combined with an existing one.  The list of stipulations are intended to simplify driver compiler burden, runtime validation burden, as well as simplify code linkage/dependency semantics.<li>Added `D3D12_STATE_OBJECT_FLAG_ALLOW_STATE_OBJECT_ADDITIONS` [flag](#d3d12_state_object_flags) so that *executable* state objects (e.g. raytracing pipelines) must opt-in to being used with [AddToStateObject()](#addtostateobject).  The [flags](#d3d12_state_object_flags) discussion includes a description of what it means for *collection* state objects to set this flag.</li><li>Renamed D3D12_RAYTRACING_TIER_2_0 to D3D12_RAYTRACING_TIER_1_1 to slightly better convey the relative significance of the new features to the set of functionality in TIER_1_0.</li><li>Removed RAY_QUERY_STATE_UNINITIALIZED from RAY_QUERY_STATE in favor of simply defining that accessing an uninitialized `RayQuery` object produces undefined behavior, and the HLSL compiler will attemp to disalllow it.</li>
 v1.06|5/16/2019|<li>Removed a feature proposed in previous spec update: ability for [TraceRay()](#traceray) to return a [RayQuery](#rayquery) object.  For some implementations this would actually be slower than the application manually stuffing only needed values into the ray payload, and would require extra compilation for paths that need the ray query versus those that do not.  This feature could come back in a more refined form in the future.  This could be allowing the user to declare entries in the ray payload as system generated values for all query data (e.g. SV_CurrentT).  Some implementations could choose to compile shaders to automatically store these values in the ray payload (as declared), whereas other implementations would be free to retrieve these system values from elsewhere if they are readily available (avoiding payload bloat).</li>
 v1.07|6/5/2019|<li>For [Tier 1.1](#d3d12_raytracing_tier), [GeometryIndex()](#geometryindex) intrinsic added to relevant raytracing shaders, for applications that wish to distinguish geometries manually in shaders in adddition to or instead of by burning shader table slots.</li><li>Revised [AddToStateObject()](#addtostateobject) API such that it returns a new ID3D12StateObject interface.  This makes it explicitly in the apps control when to release the original state object (if ever).  Clarified lots of others detail about the semantics of the operation, particularly now that an app can produce potentially a family of related state objects (though a straight line of inheritance may be the most likely in practice).</li><li>Refactored [inline raytracing](#inline-raytracing) state machine.  Gave up up original proposal's conceptual simplicity (matching the shader based model closely) in favor of a model that's functionally equivalent but makes it easier for drivers to generate inline code.  The shader has a slightly higher burden having to do a few more things manually (outside the system's tracking).  The biggest win should be that there is one logical place where the bulk of system implemented traversal work needs to happen: [RayQuery::Proceed()](#rayquery-proceed), a method which the shader will typically use in a loop condition until traversal is done. Some helpful links:<ul><li>[Inline raytracing overview](#inline-raytracing)</li><li>[TraceRayInline control flow](#tracerayinline-control-flow)</li><li>[RayQuery object](#rayquery)<li>[RayQuery intrinsics](#rayquery-intrinsics)</li><li>[TraceRayInline examples](#tracerayinline-examples)</li></ul>
-v1.08|7/17/2019|<li>Removed distinction between inline ray flags and ray flags.  Both dynamic ray flags for [RayQuery::TraceRayInline()](#rayquery-tracerayinline) and [TraceRay()](#traceray) as well as the template parameter for [RayQuery](#rayquery) objects share the same set of flags.</li><li>Added [ray flags](#ray-flags): `RAY_FLAG_SKIP_TRIANGLES` and `RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES` to allow completely skipping either class of primitives.  These flags are valid everywhere ray flags can be used, as summarized above.</li><li>Allowed [RayQuery::CommitProceduralPrimitiveHit()](#rayquery-commitproceduralprimitivehit) and [RayQuery::CommitNonOpaqueTriangleHit()](#rayquery-commitnonopaquetrianglehit) to be called zero or more times per candidate (spec was 0 or 1 times).  If `CommitProceduralPrimitiveHit(t)` is called multiple times per candidate, it requires the shader to have ensure that each time the new t being committed is closest so far in [ray extents](#ray-extents) (would be the new TMax).  If `CommitNonOpaqueTriangleHit()` is called multiple times per candidate, subsequent calls have no effect, as the hit has already been committed.</li><li>[RayQuery::CandidatePrimitiveIndex()](#rayquery-candidateprimitiveindex) was incorrectly listed as not supported for HIT_CANDIDATE_PROCEDURAL_PRIMITIVE in the [RayQuery intrinsics](#rayquery-intrinsics) tables.</li><li>New version of raytracing pipeline config subobject, [D3D12_RAYTRACING_PIPELINE_CONFIG1](#d3d12_raytracing_pipeline_config1), adding a flags field, [D3D12_RAYTRACING_PIPELINE_FLAGS](#d3d12_raytracing_pipeline_flags). The HLSL equivalent subobject is [RaytracingPipelineConfig1](#raytracing-pipeline-config1).  The available flags, `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_TRIANGLES` and `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_PROCEDURAL_PRIMITIVES` (minus `D3D12_` when defined in HLSL) behave like OR'ing the above equivalent RAY_FLAGS listed above into any [TraceRay()](#traceray) call in a raytracing pipeline.  Implementations may be able to make some pipeline optimizations knowing that one of the primitive types can be skipped.</li><li>Cut RayQuery::Clone() instrinsic, as it doesn't appear to have any useful scenario.</li><li>[Ray extents](#ray-extents) section has been updated to define a different range test for triangles versus procedural primitives.  For triangles, intersections occur in the (TMin...TMax) (exclusive) range, which is no change in behavior.  For procedural primitives, the spec wasn't explicit on what the behavior should be, and now the chosen behavior is that intersections occur in \[TMin...TMax\] (inclusive) range.  This allows apps the choice about how to handle exactly overlapping hits if they want a particular one to be reported.</li>
+v1.08|7/17/2019|<li>Removed distinction between inline ray flags and ray flags.  Both dynamic ray flags for [RayQuery::TraceRayInline()](#rayquery-tracerayinline) and [TraceRay()](#traceray) as well as the template parameter for [RayQuery](#rayquery) objects share the same set of flags.</li><li>Added [ray flags](#ray-flags): `RAY_FLAG_SKIP_TRIANGLES` and `RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES` to allow completely skipping either class of primitives.  These flags are valid everywhere ray flags can be used, as summarized above.</li><li>Allowed [RayQuery::CommitProceduralPrimitiveHit()](#rayquery-commitproceduralprimitivehit) and [RayQuery::CommitNonOpaqueTriangleHit()](#rayquery-commitnonopaquetrianglehit) to be called zero or more times per candidate (spec was 0 or 1 times).  If `CommitProceduralPrimitiveHit(t)` is called multiple times per candidate, it requires the shader to have ensure that each time the new t being committed is closest so far in [ray extents](#ray-extents) (would be the new TMax).  If `CommitNonOpaqueTriangleHit()` is called multiple times per candidate, subsequent calls have no effect, as the hit has already been committed.</li><li>[RayQuery::CandidatePrimitiveIndex()](#rayquery-candidateprimitiveindex) was incorrectly listed as not supported for `HIT_CANDIDATE_PROCEDURAL_PRIMITIVE` in the [RayQuery intrinsics](#rayquery-intrinsics) tables.</li><li>New version of raytracing pipeline config subobject, [D3D12_RAYTRACING_PIPELINE_CONFIG1](#d3d12_raytracing_pipeline_config1), adding a flags field, [D3D12_RAYTRACING_PIPELINE_FLAGS](#d3d12_raytracing_pipeline_flags). The HLSL equivalent subobject is [RaytracingPipelineConfig1](#raytracing-pipeline-config1).  The available flags, `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_TRIANGLES` and `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_PROCEDURAL_PRIMITIVES` (minus `D3D12_` when defined in HLSL) behave like OR'ing the above equivalent RAY_FLAGS listed above into any [TraceRay()](#traceray) call in a raytracing pipeline.  Implementations may be able to make some pipeline optimizations knowing that one of the primitive types can be skipped.</li><li>Cut RayQuery::Clone() instrinsic, as it doesn't appear to have any useful scenario.</li><li>[Ray extents](#ray-extents) section has been updated to define a different range test for triangles versus procedural primitives.  For triangles, intersections occur in the (TMin...TMax) (exclusive) range, which is no change in behavior.  For procedural primitives, the spec wasn't explicit on what the behavior should be, and now the chosen behavior is that intersections occur in \[TMin...TMax\] (inclusive) range.  This allows apps the choice about how to handle exactly overlapping hits if they want a particular one to be reported.</li>
 v1.09|11/4/2019|<li>Added [Execution and memory ordering](#execution-and-memory-ordering) discussion defining that [TraceRay()](#traceray) and/or [CallShader()](#callshader) invocations finish execution when the caller resumes, and that for UAV writes to be visible memory barriers must be used..</li><li>Added [State object lifetimes as seen by driver](#state-object-lifetimes-as-seen-by-driver) section to clarify how driver sees the lifetimes of collection state objects as well as state objects in a chain of [AddToStateObject()](#addtostateobject) calls growing a state object while the app is also destroying older versions.</li><li>In [BuildRaytracingAccelerationStructure()](#buildraytracingaccelerationstructure) API, tightened the spec for the optional output postbuild info that the caller can request.  The caller can pass an array of postbuild info descriptions that they want the driver to fill out.  The change is to require that any given postbuild info type can only be requested at most once in the array.</li>
 v1.1|11/7/2019|<li>Added accessor functions [RayQuery::CandidateInstanceContributionToHitGroupIndex](#rayquery-candidateinstancecontributiontohitgroupindex) and [RayQuery::CommittedInstanceContributionToHitGroupIndex](#rayquery-committedinstancecontributiontohitgroupindex) so that inline raytracing can see the `InstanceContributionToHitGroupIndex` field in instance data.  This is done in the spirit of letting inline raytracing see everything that is in an acceleration structure.  Of course in inline raytracing there are no shader tables, so there is no functional behavior from this value.  Instead it allows the app to use this value as arbitrary user data.  Or when sharing acceleration structures between dynamic-shader-based raytracing, to manually implementing in the inline raytracing case the effective result of the shader table indexing in the dynamic-shader-based raytracing case.</li><li>In [Wave Intrinsics](#wave-intrinsics) section, clarified that use of [RayQuery](#rayquery) objects for inline raytracing does not count as a repacking point.</li>
 v1.11|3/3/2020|<li>For [Tier 1.1](#d3d12_raytracing_tier), additional vertex formats supported for acceleration structure build input as part of [D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC](#d3d12_raytracing_geometry_triangles_desc).</li><li>Cleaned up spec wording - [D3D12_RAYTRACING_PIPELINE_CONFIG](#d3d12_raytracing_pipeline_config) and [D3D12_RAYTRACING_SHADER_CONFIG](#d3d12_raytracing_shader_config) have the same rules:  If multiple shader configurations are present (such as one in each [collection](#collection-state-object) to enable independent driver compilation for each one) they must all match when combined into a raytracing pipeline.</li><li>For [collections](#collection-state-object), spelled out the list of conditions that must be met for a shader to be able to do compilation (as opposed to having to defer it).</li><li>Clarified that [ray recursion limit](#ray-recursion-limit) doesn't include callable shaders.</li><li>Clarified that in [D3D12_RAYTRACING_SHADER_CONFIG](#d3d12_raytracing_shader_config), the MaxPayloadSizeInBytes field doesn't include callable shader payloads.  It's only for ray payloads.</li>
@@ -7676,3 +9349,13 @@ v1.17|10/25/2021|<li>In [Degenerate primitives and instances](#degenerate-primit
 v1.18|3/31/2022|<li>In [Inactive primitives and instances](#inactive-primitives-and-instances), changed handling of NaN in triangles to: Triangles are considered "inactive" (but legal input to acceleration structure build) if the x component of any vertex is NaN.  The "any" used to be "each".  This reduces the amount of undefined behavior apps are exposed to.</li>
 v1.19|8/10/2022|<li>For [GetShaderIdentifier](#getshaderidentifier) clarified that the returned pointer is valid as long as the state object is valid (used to only say the data pointed to is valid).</li><li>Removed inaccurate statements that various acceleration structure copy modes require the OS to be in developer mode.  Such enforcement was initially considered but not implemented.</li>
 v1.20|1/11/2023|<li>In HLSL [Subobject definitions](#subobject-definitions) sections, corrected all the examples to show the syntax actually supported by the compiler.  Previously showed an alternative syntax that didn't end up being used.</li>
+v1.21|7/20/2023|<li>Merged features proposals for [Opacity Micromaps](#opacity-micromaps) and [Shader Execution Reordering](#shader-execution-reordering).  These featues still need refinement, but the plan is to ship them.  Specific timeline unknown, and each may ship independently.  In the meantime progress aligning the features can resume.</li>
+v1.22|8/4/2023|<li>To enable shaders to get triangle object positions, added [TriangleObjectPosition()](#triangleobjectposition), [RayQuery::CandidateTriangleObjectPosition()](#rayquery-candidatetriangleobjectposition), [RayQuery::CommittedTriangleObjectPosition()](#rayquery-committedtriangleobjectposition) and [RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS](#d3d12_raytracing_acceleration_structure_build_flags) build flag.  These will be supported with a TBD new [D3D12_RAYTRACING_TIER](#d3d12_raytracing_tier) or shader model.</li>
+v1.23|10/31/2023|<li>Large update to [Shader Execution Reordering](#shader-execution-reordering), including many refinements and a large reduction in the scope of `MakeHit`:</li><ul><li>Added the concept of `NOP-HitObjects`, including updates to default-construction of HitObjects and various getters.</li><li>Made all [HitObject](#hitobject) getters well-defined regardless of whether the `HitObject` encodes a hit, miss, or nop.</li><li>Added a more explicit definition of reorder points and how they relate to existing and new APIs.</li><li>Updated the sections on Execution and memory reordering and Reorder points - memory coherence and visibility, including more crisp memory barrier requirements for passing data across caller/callee through UAVs and across reorder points.</li><li>Replaced ReorderThread example 2 with a longer version and added ReorderThread example 3</li><li>Restricted `HitObject::MakeHit` to creation from [RayQuery](#rayquery).</li><li>Specified that a [HitObject](#hitobject) has no shader table index if created from RayQuery.</li><li>Added `HitObject::SetShaderTableIndex`, to assign a shader table index after the fact.</li><li>Added `Separation of ReorderThread and HitObject::Invoke` section discussing the benefits of having separate calls.</li></ul>
+v1.24|05/30/2024|<li>[TriangleObjectPosition(uint VertexIndex)](#triangleobjectposition), [RayQuery::CandidateTriangleObjectPosition(uint VertexIndex)](#rayquery-candidatetriangleobjectposition), [RayQuery::CommittedTriangleObjectPosition(uint VertexIndex)](#rayquery-committedtriangleobjectposition): Add `uint VertexIndex` parameter and change return to individual vertex position.</li><li>[Raytracing pipeline flags](#raytracing-pipeline-flags): Add `RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS`, corresponding to the D3D API equivalent, usable in the [Raytracing pipeline config1](#raytracing-pipeline-config1) subobject.</li><li>[TraceRay](#traceray), [RayQuery TraceRayInline](#rayquery-tracerayinline): Clarify that presence of unknown RayFlags results in undefined behavior.</li><li>In [GetShaderIdentifier](#getshaderidentifier) removed the sentence: \"The data itself globally identifies the shader, so even if the shader appears in a different state object (with same associations like any root signatures) it will have the same identifier.\".  This contradicted the text in [Shader identifier](#shader-identifier) that allows for duplicate shaders to have the same or different identifier depending on implementation.</li>
+v1.25|11/8/2024|<li>For [Opacity Micromaps](#opacity-micromaps), merged separate APIs for building/copying OMMs into the equivalent existing APIs for managing acceleration structures.</li><li>A summary of the resulting delta from the base DXR spec is here: [Opacity Micromap related API and HLSL impacts](#opacity-micromap-related-api-and-hlsl-impacts)</li><li>Required OMM arrays to be in buffers of state `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE` just like other acceleration structures (they can be intermixed in the same buffers).</li><li>Clarified the resource states required for inputs and outputs to OMM array build, consistent with how acceleration structures already behave.</li><li>Added a template parameter to [RayQuery](#rayquery), [RayQuery flags](#rayquery-flags), where `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` can be specified for inline raytracing rayquery objects, equivalent to the [raytracing pipeline flag](#raytracing-pipeline-flags) `RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS` for opting in to OMMs with non-inline raytracing.</li><li>In [Opacity micromaps and TraceRayInline](#opacity-micromaps-and-tracerayinline) cleaned up incorrect text copy paste from TraceRay, so that the description is now relevant to the inline case.</li><li>In [D3D12_RAYTRACING_GEOMETRY_OMM_TRIANGLES_DESC](#d3d12_raytracing_geometry_omm_triangles_desc), changed `D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC Triangles` member to `const D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC* pTriangles`, similar for `pOMMLinkage`. The reason these are pointers is to keep the size of `D3D12_RAYTRACING_GEOMETRY_OMM_TRIANGLES_DESC` from exceeding the other pre-existing structs in the union within [D3D12_RAYTRACING_GEOMETRY_DESC](#d3d12_raytracing_geometry_desc).  This allowed adding the Opacity Micromaps feature without having to make an API breaking change to version the container structs and corresponding APIs.</li><li>Changed[D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_BYTE_ALIGNMENT](#constants) from 256 to 128 bytes.  Same for [D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC](#d3d12_raytracing_opacity_micromap_array_desc).InputBuffer, from 256 to 128 byte alignment.</li><li>For [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_VISUALIZATION_DECODE_FOR_TOOLS](#d3d12_raytracing_acceleration_structure_copy_mode), for OMM arrays defined the layout as: For Opacity Micromap arrays the output is a lossless representation of original input expressed as a [D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC](#d3d12_raytracing_opacity_micromap_array_desc) after the header, with `pOmmUsageCounts` as a GPUVA rather than CPU pointer.</li><li>In [D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC](#d3d12_raytracing_geometry_omm_linkage_desc) specified that indices must be aligned to the index format size.</li><li>In [D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC](#d3d12_raytracing_opacity_micromap_array_desc) specified that PerOMMDescs ([D3D12_RAYTRACING_OPACITY_MICROMAP_DESC](#d3d12_raytracing_opacity_micromap_desc)) must be 4 byte aligned.</li><li>In [D3D12_RAYTRACING_GEOMETRY_LINKAGE_DESC](#d3d12_raytracing_geometry_omm_linkage_desc) define that `OpacityMicromapBaseLocation` offsets the range of OMMs in the array that are used in the non-indexed case.  This field already was defined to offset indices in the indexed OMM case.</li><li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS](#d3d12_raytracing_acceleration_structure_build_flags) allow `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION` to work for OMM Array builds (in addition to TLAS/BLAS before).  Similar clarifications for `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE`.</li><li>In [D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC](#d3d12_raytracing_geometry_omm_linkage_desc) added support for 8 bit indices.</li><li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS](#d3d12_raytracing_acceleration_structure_build_flags) defined that `ALLOW_UPDATE` and `ALLOW_OMM_LINKAGE_UPDATE` flags can be independently specified, and thus on a subsequent update, only the relevant inputs are referenced (need to be provided) based on the flags initially used.</li><li>In [D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC](#d3d12_raytracing_geometry_omm_linkage_desc) specified that `pOMMUsageCounts` aren't used and can be left null if `ALLOW_OMM_LINKAGE_UPDATE` is specified.</li><li>Renamed `D3D12_SERIALIZED_RAYTRACING_BOTTOM_LEVEL_ACCELERATION_STRUCTURE_HEADER` to [D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER1](#d3d12_serialized_raytracing_acceleration_structure_header1), which is now designed to be a backwards compatible replacement to the existing header [D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER](#d3d12_serialized_raytracing_acceleration_structure_header) which no longer needs to be used by apps or drivers (without having to worry about compatibility).  The new header enables support for serialized BLAS to reference linked OMMs.</li>
+v1.26|12/9/2024|<li>Clarified that during ray traversal and TMax gets updated when a hit is committed (already in spec), that is internal to the traversal, not visiable to the application.</li>
+v1.27|1/9/2025|<li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS](#d3d12_raytracing_acceleration_structure_build_flags) revisited recent change, making it now that `ALLOW_OMM_LINKAGE_UPDATE` can only be specified with `ALLOW_UPDATE` always specified.  Meaning positions are always supplied in an update whether or not omm linkage is also being updated.</li>
+v1.28|1/30/2025|<li>Removed the usage count histogram from [D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC](#d3d12_raytracing_geometry_omm_linkage_desc), as it wasn't needed.  The histogram in [D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC](#d3d12_raytracing_opacity_micromap_array_desc) for OMM array builds is still present.  Renamed the histogram entry struct from `D3D12_RAYTRACING_OPACITY_MICROMAP_USAGE_COUNTS` to [D3D12_RAYTRACING_OPACITY_MICROMAP_HISTOGRAM_ENTRY](#d3d12_raytracing_opacity_micromap_histogram_entry).</li>
+v1.29|2/20/2025|<li>In [D3D12_RAYTRACING_OPACITY_MICROMAP_DESC](#d3d12_raytracing_opacity_micromap_desc) made non-breaking change to switch members to bitfields so that the `UINT16 Format` member can be a more strongly typed equivalent: `D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT Format : 16;`.</li><li>In [D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC](#d3d12_raytracing_geometry_omm_linkage_desc) clarified that `OpacityMicromapIndexFormat` can be `DXGI_FORMAT_UNKNOWN` when no index buffer is used.</li>
+v1.3|5/28/2025|<li>In [D3D12_RAYTRACING_TIER](#d3d12_raytracing_tier) added `D3D12_RAYTRACING_TIER_1_2`, containing [Opacity Micromaps](#opacity-micromaps) and [Shader Execution Reordering](#shader-execution-reordering).  Pointed out that the HLSL portions of these features (all of SER and a small part of OMMs) are part of Shader Model 6.9 which is in preview).</li><li>For [Shader Execution Reordering](#shader-execution-reordering), updated spec to mirror contents of [HLSL Shader Execution Reordering](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0027-shader-execution-reordering.md).</li><li>For [D3D12_RAYTRACING_SERIALIZED_BLOCK_TYPE](#d3d12_raytracing_serialized_block_type) loosened the behavior so that the list may include `null` entries for geometries that don't have OMMs (that consumers must simply ignore).  Other devices might happen prune these so the list only has OMMs.</li><li>In [MaybeReorderThread](#maybereorderthread) noted that DXC currently has a bug where "using namespace dx;" to avoid "dx::" before calling `MaybeReorderThread()` results in incorrect DXIL generation.</li>
