@@ -55,7 +55,3 @@ Relax runtime and debug layer validation when arrayed tiled resources are create
 ## Test
 
 D3D12 adds new conformance tests D3DConf_12_0_ReservedResource::Tier4Test*, which test that tiled texture array can be created with full mip chain and make sure existing D3D tiled resource APIs work properly on this resource.  
-
-## ExecutePageMappings
-
-Since box mapping in ExecutePageMappings is comparable to UpdateTileMappings, no API change is needed.
