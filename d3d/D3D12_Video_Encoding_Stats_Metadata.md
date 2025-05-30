@@ -16,6 +16,8 @@ typedef enum D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAGS
     D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_QP_MAP = 0x1,
     D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_SATD_MAP = 0x2,
     D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_RC_BIT_ALLOCATION_MAP = 0x4,
+    D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_FRAME_PSNR = 0x8,
+    D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_SUBREGIONS_PSNR = 0x10,
 } D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAGS;
 ```
 
@@ -42,6 +44,18 @@ The user must check `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_PER_BLOCK_SATD_MAP_METADAT
 Indicates that per block rate control bit allocation output in metadata is enabled.
 
 The user must check `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_PER_BLOCK_RC_BIT_ALLOCATION_MAP_METADATA_AVAILABLE` first before using this flag. When user sets `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_RC_BIT_ALLOCATION_MAP`, the driver will write the number of allocated bits used for each block of the encoded frame along with the rest of the metadata. If the flag is not set by the user, the driver can avoid calculating this metadata during the frame encoding, and the metadata won't contain it, even when supported by the driver. This is done to avoid performance hits of collecting this information unless required by the customer.
+
+*D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_FRAME_PSNR*
+
+Indicates that frame PSNR output stats are enabled.
+
+The user must check `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_FRAME_PSNR_METADATA_AVAILABLE` first before using this flag. When user sets `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_FRAME_PSNR`, the driver will write the PSNR of Y (and optionally U and V in that order) components along with the rest of the metadata. If the flag is not set by the user, the driver can avoid calculating this metadata during the frame encoding, and the metadata won't contain it, even when supported by the driver. This is done to avoid performance hits of collecting this information unless required by the customer.
+
+*D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_SUBREGIONS_PSNR*
+
+Indicates that subregions PSNR output stats are enabled.
+
+The user must check `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGIONS_PSNR_METADATA_AVAILABLE` first before using this flag. When user sets `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_SUBREGIONS_PSNR`, the driver will write the PSNR of Y (and optionally U and V in that order) components along with the rest of the metadata, for each frame subregion. If the flag is not set by the user, the driver can avoid calculating this metadata during the frame encoding, and the metadata won't contain it, even when supported by the driver. This is done to avoid performance hits of collecting this information unless required by the customer.
 
 ### ENUM: D3D12_FEATURE_VIDEO
 ```C++
@@ -76,6 +90,9 @@ typedef struct D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOURCE_REQUIREMENTS1
     D3D12_VIDEO_ENCODER_PICTURE_RESOLUTION_DESC EncoderOutputMetadataQPMapTextureDimensions;            // output
     D3D12_VIDEO_ENCODER_PICTURE_RESOLUTION_DESC EncoderOutputMetadataSATDMapTextureDimensions;          // output
     D3D12_VIDEO_ENCODER_PICTURE_RESOLUTION_DESC EncoderOutputMetadataBitAllocationMapTextureDimensions; // output
+    UINT EncoderOutputMetadataFramePSNRComponentsNumber;                                                // output
+    UINT EncoderOutputMetadataSubregionsPSNRComponentsNumber;                                           // output
+    UINT EncoderOutputMetadataSubregionsPSNRResolvedMetadataBufferSize;                                 // output
 } D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOURCE_REQUIREMENTS1;
 ```
 
@@ -106,6 +123,8 @@ _Optional_ input parameter. When required for any of the selected metadatas in `
 | `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_QP_MAP` | Required |
 | `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_SATD_MAP` | Required |
 | `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_RC_BIT_ALLOCATION_MAP` | Required |
+| `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_FRAME_PSNR` | Required |
+| `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_SUBREGIONS_PSNR` | Required |
 
 *EncoderOutputMetadataQPMapTextureDimensions*
 
@@ -119,6 +138,18 @@ Output parameter. When `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_SATD_M
 
 Output parameter. When `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_RC_BIT_ALLOCATION_MAP` is set, indicates the texture dimensions required for `D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS1.pOutputBitAllocationMap`. The block size can be derived dividing the components of `PictureTargetResolution` by the components of `EncoderOutputMetadataBitAllocationMapTextureDimensions`.
 
+*EncoderOutputMetadataFramePSNRComponentsNumber*
+
+Output parameter. When `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_FRAME_PSNR` is set, indicates the number of components (Y, U and V in that order) that will be written in `D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS1.ResolvedFramePSNRData` interpreted as `D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_PSNR_RESOLVED_LAYOUT`.
+
+*EncoderOutputMetadataSubregionsPSNRComponentsNumber*
+
+Output parameter. When `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_SUBREGIONS_PSNR` is set, indicates the number of components (Y, U and V in that order) that will be written in `D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS1.ResolvedSubregionsPSNRData` when interpreted as `D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_PSNR_RESOLVED_LAYOUT` per each subregion.
+
+*EncoderOutputMetadataSubregionsPSNRResolvedMetadataBufferSize*
+
+Output parameter. When `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_SUBREGIONS_PSNR` is set, indicates the `Width` size of the buffer the app needs to pass in `D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS1.ResolvedSubregionsPSNRData`. This can be estimated by the driver as a max size based on the max number of subregions for `D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOURCE_REQUIREMENTS1.Codec` and other inputs.
+
 ### ENUM: D3D12_VIDEO_ENCODER_SUPPORT_FLAGS
 
 ```C++
@@ -129,12 +160,14 @@ typedef enum D3D12_VIDEO_ENCODER_SUPPORT_FLAGS
     D3D12_VIDEO_ENCODER_SUPPORT_FLAG_PER_BLOCK_QP_MAP_METADATA_AVAILABLE	= ...,
     D3D12_VIDEO_ENCODER_SUPPORT_FLAG_PER_BLOCK_SATD_MAP_METADATA_AVAILABLE  = ...,
     D3D12_VIDEO_ENCODER_SUPPORT_FLAG_PER_BLOCK_RC_BIT_ALLOCATION_MAP_METADATA_AVAILABLE  = ...,
+    D3D12_VIDEO_ENCODER_SUPPORT_FLAG_FRAME_PSNR_METADATA_AVAILABLE  = ...,
+    D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGIONS_PSNR_METADATA_AVAILABLE  = ...,
 } D3D12_VIDEO_ENCODER_SUPPORT_FLAGS;
 ```
 
 **Remarks**
 
-Driver reports optional support for `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_PER_BLOCK_QP_MAP_METADATA_AVAILABLE` using the associated support cap input parameters to determine support.
+Driver reports optional support for `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_*_METADATA_AVAILABLE` using the associated support cap input parameters to determine support.
 
 ### STRUCT: D3D12_VIDEO_ENCODER_ENCODEFRAME_INPUT_ARGUMENTS1
 ```C++
@@ -202,6 +235,18 @@ _Optional_ input parameter. When required for any of the selected metadatas in `
 | `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_QP_MAP` | Required |
 | `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_SATD_MAP` | Required |
 | `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_RC_BIT_ALLOCATION_MAP` | Required |
+| `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_FRAME_PSNR` | Required |
+| `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_SUBREGIONS_PSNR` | Required |
+
+### STRUCT: D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_PSNR_RESOLVED_LAYOUT
+```C++
+typedef struct D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_PSNR_RESOLVED_LAYOUT
+{
+    float PSNRY;
+    float PSNRU;
+    float PSNRV;
+} D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_PSNR_RESOLVED_LAYOUT;
+```
 
 ### STRUCT: D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS1
 ```C++
@@ -212,6 +257,8 @@ typedef struct D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS1
     ID3D12Resource* pOutputQPMap;
     ID3D12Resource* pOutputSATDMap;
     ID3D12Resource* pOutputBitAllocationMap;
+    D3D12_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER ResolvedFramePSNRData;
+    D3D12_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER ResolvedSubregionsPSNRData;
 } D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS1;
 ```
 
@@ -223,7 +270,9 @@ Corresponds to mandatory metadata associated with `D3D12_VIDEO_ENCODER_OPTIONAL_
 
 Corresponds to the metadata associated with `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_QP_MAP`. Can be `NULL` if `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_QP_MAP` is not set.
 
-When present, must be a texture with format `DXGI_FORMAT_R8_SINT` for H264, HEVC or `DXGI_FORMAT_R16_SINT` for AV1. The dimensions must correspond with the value returned by the driver in `D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOURCE_REQUIREMENTS1.EncoderOutputMetadataQPMapTextureDimensions`.
+When present, must be a texture with format `DXGI_FORMAT_R8_SINT` for H264, HEVC or `DXGI_FORMAT_R8_UINT` for AV1. The dimensions must correspond with the value returned by the driver in `D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOURCE_REQUIREMENTS1.EncoderOutputMetadataQPMapTextureDimensions`.
+
+> For any codecs/configurations where the QP ranges can be negative, the ranges used by `pOutputQPMap` are kept in that native signed range. For example for HEVC `[0, 51]` range for 8 bit pixel depth, the range for 10 bits `[-12, 51]`, and similar for higher bit depths are all considered as-is from the spec.
 
 *pOutputSATDMap*
 
@@ -236,6 +285,22 @@ When present, must be a texture with format `DXGI_FORMAT_R32_UINT`. The dimensio
 Corresponds to the metadata associated with `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_RC_BIT_ALLOCATION_MAP`. Can be `NULL` if `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_RC_BIT_ALLOCATION_MAP` is not set.
 
 When present, must be a texture with format `DXGI_FORMAT_R32_UINT`. The dimensions must correspond with the value returned by the driver in `D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOURCE_REQUIREMENTS1.EncoderOutputMetadataBitAllocationMapTextureDimensions`.
+
+*ResolvedFramePSNRData*
+
+Corresponds to the metadata associated with `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_FRAME_PSNR`. The associated `ID3D12Resource` can be `NULL` if `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_FRAME_PSNR` is not set.
+
+When present, must be a `D3D12_RESOURCE_DIMENSION_BUFFER`. The `Width` must be `sizeof(D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_PSNR_RESOLVED_LAYOUT)`.
+
+The contents of the resolved buffer, must be interpreted as `D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_PSNR_RESOLVED_LAYOUT`. The available components in the struct are given by `EncoderOutputMetadataFramePSNRComponentsNumber` indicating the presence of Y, U and V components, in that order. The unsupported components in the struct will be written as zero by driver.
+
+*ResolvedSubregionsPSNRData*
+
+Corresponds to the metadata associated with `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_SUBREGIONS_PSNR`. The associated `ID3D12Resource` can be `NULL` if `D3D12_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_SUBREGIONS_PSNR` is not set.
+
+When present, must be a `D3D12_RESOURCE_DIMENSION_BUFFER`. The `Width` must correspond with the value returned by the driver in `D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOURCE_REQUIREMENTS1.EncoderOutputMetadataSubregionsPSNRResolvedMetadataBufferSize`.
+
+The contents of the resolved buffer, must be interpreted as a packed array of `WrittenSubregionsCount` elements of type `D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_PSNR_RESOLVED_LAYOUT`. The available components in the struct are given by `EncoderOutputMetadataSubregionsPSNRComponentsNumber` indicating the presence of Y, U and V components, in that order. The unsupported components in the struct will be written as zero by driver.
 
 ### METHOD: ID3D12VIDEOCOMMANDLIST4::ResolveEncoderOutputMetadata1
 

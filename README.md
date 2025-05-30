@@ -27,6 +27,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Depth Bounds Test](d3d/DepthBoundsTest.md)
     * [Enhanced Barriers](d3d/D3D12EnhancedBarriers.md)
     * [R9G9B9E5_SHAREDEXP RTV and UAV support](d3d/D3D12R9G9B9E5Format.md)
+    * [Tiled Resources Tier 4](d3d/D3D12TiledResourceTier4.md)
 
 * Structure of D3D
     * [Resource Binding](d3d/ResourceBinding.md)
@@ -45,6 +46,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Shader Cache](d3d/ShaderCache.md)
     * [GPU Upload Heaps](d3d/D3D12GPUUploadHeaps.md)
     * [Runtime Bypass](d3d/D3D12RuntimeBypass.md)
+    * [Command Queue Dynamic Priority](d3d/D3D12_CommandQueue_Dynamic_Priority.md)
 
 * Video
     * [Motion Estimation](d3d/D3D12_Video_Motion_Estimation.md)
@@ -57,6 +59,8 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Video Encoding Readable Reconstructed Picture](d3d/D3D12_Video_Encoding_ReadableReconpic.md)
     * [Video Encoding Extended metadata stats](d3d/D3D12_Video_Encoding_Stats_Metadata.md)
     * [Video Encoding QPMap, Dirty rects/map, Motion rects/map](d3d/D3D12_Video_Encoding_Texture_QPMap_DirtyMap_MotionVectors.md)
+    * [Video Encoding HEVC Reference list extension](d3d/D3D12_Video_Encoding_HEVC_ReferenceListExtension.md)
+    * [Video Encoding Lower resolution two pass](d3d/D3D12_Video_Encoding_LowerResolution_2Pass.md)
 
 * HLSL
     * [Shader Model 6.0](https://github.com/microsoft/DirectXShaderCompiler/wiki/Shader-Model-6.0)
