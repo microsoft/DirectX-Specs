@@ -1316,7 +1316,7 @@ The opacity micromap is defined on a sub-triangle detail level, encoded in a uni
 
 Here is a diagram of the first few levels of the subdivision scheme:
 
-![The subdivision schemes at level 0, 1, 2, and 3.](images/Raytracing/OMMSubdivisionSchemeExamples.jpg)
+![The subdivision schemes at level 0, 1, 2, and 3.](images/raytracing/OMMSubdivisionSchemeExamples.jpg)
 <figure>
   <figcaption>Micro-mesh subdivision scheme.</figcaption>
 </figure>
@@ -1327,7 +1327,7 @@ Individual OMMs store (compact) information about how to modulate a base triangl
 
 Here is an example of OMM detail applied to a base triangle:
 	
-![A triangle side-by-side to a similar triangle but with a opacity-micromap applied.](images/Raytracing/ApplyingOMMToTriangle.jpg)
+![A triangle side-by-side to a similar triangle but with a opacity-micromap applied.](images/raytracing/ApplyingOMMToTriangle.jpg)
 <figure>
   <figcaption>Left: A plain base triangle. Right: A opacity micromap applied to the base triangle, splitting it into opaque and transparent regions.</figcaption>
 </figure>
@@ -1344,7 +1344,7 @@ Before OMMs can be used with raytracing, they must be processed by the driver. T
 
 Collections of OMM inputs are used to construct *OMM Arrays* using the same API as for building acceleration structures: [`BuildRaytracingAccelerationStructure()`](#buildraytracingaccelerationstructure) on the command list.  Here is an example of a collection of OMMs in an OMM Array:
 
-![Different OMMs, at different subdivision levels, within a single OMM Array.](images/Raytracing/OMMArrayContentExample.jpg)
+![Different OMMs, at different subdivision levels, within a single OMM Array.](images/raytracing/OMMArrayContentExample.jpg)
 <figure>
   <figcaption>Example of an OMM Array containing entries with different subdivision levels. Individual OMMs are referenced via their index in the array.</figcaption>
 </figure>
@@ -1355,7 +1355,7 @@ The application can reference specific entries within an array by their input-or
 
 The application can link an OMM Array per geometry, from which detailed opacity information is retrieved during ray traversal. This is illustrated in the diagram below. The OMM feature is accessible for BLAS builds through the use of a new geometry descriptor, [D3D12_RAYTRACING_GEOMETRY_OMM_TRIANGLES_DESC](#d3d12_raytracing_geometry_omm_triangles_desc), which contains additional inputs to the [BuildRaytracingAccelerationStructure()](#buildraytracingaccelerationstructure) function.
 
-![The instances in a TLAS point down to different BLASes. In turn, the geometry in those BLASes point down to different OMM Arrays.](images/Raytracing/RelationshipBetweenOMMArraysAndASHierarchy.jpg)
+![The instances in a TLAS point down to different BLASes. In turn, the geometry in those BLASes point down to different OMM Arrays.](images/raytracing/RelationshipBetweenOMMArraysAndASHierarchy.jpg)
 <figure>
   <figcaption>Illustration of how OMM Arrays fit into the AS hierarchy. At BLAS build time, per-triangle indices link specific triangles to OMM Array entries. OMMs can be referenced multiple times both within and across multiple BLASes.</figcaption>
 </figure>
@@ -1385,7 +1385,7 @@ Opacity micromaps classify micro-triangles as opaque, transparent or unknown. Wh
 
 The additions to [TraceRay()](#traceray) are depicted in this diagram:
 
-![Opacity micromaps affect the control flow of `TraceRay()` between the discovery of a new closest hit and its processing.](images/Raytracing/UpdatedTraceRayControlFlow.jpg)
+![Opacity micromaps affect the control flow of `TraceRay()` between the discovery of a new closest hit and its processing.](images/raytracing/UpdatedTraceRayControlFlow.jpg)
 <figure>
   <figcaption>Updated `TraceRay()` behavior to handle opacity micromaps.</figcaption>
 </figure>
@@ -1450,7 +1450,7 @@ OMMs can be constructed with either 2 or 4 states ([D3D12_RAYTRACING_OPACITY_MIC
 
 The OMM micro-triangle states are organized along a space-filling curve in barycentric space, depicted here:
 
-![A space-filling curve going through all tessellated micro-triangles of a triangle.](images/Raytracing/OMMInputOrder.jpg)
+![A space-filling curve going through all tessellated micro-triangles of a triangle.](images/raytracing/OMMInputOrder.jpg)
 <figure>
   <figcaption>The OMM input order follows a space-filling curve over the uniformly tessellated micro-triangles in barycentric space.</figcaption>
 </figure>
