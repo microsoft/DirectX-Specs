@@ -8117,7 +8117,7 @@ Example and other information:
 - [Reorder Points](#reorder-points)
 - [Divergence behavior](#maybereorderthread-divergence-behavior)
 - [Memory coherence and visibility](#reorder-points---memory-coherence-and-visibility)
-- [Separation of MaybeReorderThrad and HitObject::Invoke](#separation-of-maybereorderthread-and-hitobject-invoke)
+- [Separation of MaybeReorderThread and HitObject::Invoke](#separation-of-maybereorderthread-and-hitobject-invoke)
 - [MaybeReorderThread and Invoke examples](#maybereorderthread-and-invoke-example-1-common-computations-that-rely-on-large-raygen-state)
 
 ---
