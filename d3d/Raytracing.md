@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.30 5/28/2025
+v1.31 6/9/2025
 
 ---
 
@@ -5416,18 +5416,35 @@ libraries.
 
 #### Hit group
 
-The hit group is a group of zero or one intersection, anyhit, and
-closesthit shaders referenced by name (string), rather than a single
-shader entry function. Use an empty string to omit a shader type.
+A `TriangleHitGroup` is a hit group with zero or one anyhit shaders and 
+zero or one closesthit shaders listed in this order by name (string).
+
+Use an empty string to omit a shader type.
 
 Example:
 
 ```C++
-HitGroup my_group_name = 
+TriangleHitGroup my_group_name = 
 { 
-  "intersection_main", 
+  "anyhit_main", 
+  "" // no closesthit
+};
+```
+
+A `ProceduralPrimitiveHitGroup` is a hit group with zero or one 
+anyhit, zero or one closesthit and one intersection shader, 
+listed in this order by name (string).
+
+Use an empty string to omit a shader type.
+
+Example:
+
+```C++
+ProceduralPrimitiveHitGroup my_procedural_group_name = 
+{ 
   "anyhit_main", 
   "closesthit_main"
+  "intersection_main", 
 };
 ```
 
@@ -9359,3 +9376,4 @@ v1.27|1/9/2025|<li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS](#d3d
 v1.28|1/30/2025|<li>Removed the usage count histogram from [D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC](#d3d12_raytracing_geometry_omm_linkage_desc), as it wasn't needed.  The histogram in [D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_DESC](#d3d12_raytracing_opacity_micromap_array_desc) for OMM array builds is still present.  Renamed the histogram entry struct from `D3D12_RAYTRACING_OPACITY_MICROMAP_USAGE_COUNTS` to [D3D12_RAYTRACING_OPACITY_MICROMAP_HISTOGRAM_ENTRY](#d3d12_raytracing_opacity_micromap_histogram_entry).</li>
 v1.29|2/20/2025|<li>In [D3D12_RAYTRACING_OPACITY_MICROMAP_DESC](#d3d12_raytracing_opacity_micromap_desc) made non-breaking change to switch members to bitfields so that the `UINT16 Format` member can be a more strongly typed equivalent: `D3D12_RAYTRACING_OPACITY_MICROMAP_FORMAT Format : 16;`.</li><li>In [D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC](#d3d12_raytracing_geometry_omm_linkage_desc) clarified that `OpacityMicromapIndexFormat` can be `DXGI_FORMAT_UNKNOWN` when no index buffer is used.</li>
 v1.3|5/28/2025|<li>In [D3D12_RAYTRACING_TIER](#d3d12_raytracing_tier) added `D3D12_RAYTRACING_TIER_1_2`, containing [Opacity Micromaps](#opacity-micromaps) and [Shader Execution Reordering](#shader-execution-reordering).  Pointed out that the HLSL portions of these features (all of SER and a small part of OMMs) are part of Shader Model 6.9 which is in preview).</li><li>For [Shader Execution Reordering](#shader-execution-reordering), updated spec to mirror contents of [HLSL Shader Execution Reordering](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0027-shader-execution-reordering.md).</li><li>For [D3D12_RAYTRACING_SERIALIZED_BLOCK_TYPE](#d3d12_raytracing_serialized_block_type) and [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc) loosened the behavior so that the list may include `null` entries for geometries that don't have OMMs (that consumers must simply ignore).  Other devices might happen prune these so the list only has OMMs.</li><li>In [MaybeReorderThread](#maybereorderthread) noted that DXC currently has a bug where "using namespace dx;" to avoid "dx::" before calling `MaybeReorderThread()` results in incorrect DXIL generation.</li>
+v1.31|6/9/2025|<li>In the HLSL suboboject definition for [HitGroup](#hit-group), corrected the spec which listed a `HitGroup` object, which doens't even exist in in HLSL.  Instead there is a `TriangleHitGroup` and `ProceduralPrimitiveHitGroup`, which are now each documented.</li>
