@@ -196,7 +196,7 @@ This is particularly interesting when it comes to resource aliasing or updated t
 
 ### Simultaneous Access - But Only Across Queues
 
-Buffers and simultaneous-access textures can be written to in one queue while concurrently being read-from one or more OTHER queues.  However, this pattern is not supported in a single queue because legacy Resource Barrier design prevents subresources from being in both READ and WRITE states at the same time.  However, hardware can support same-queue simultaneous-access; Layout is immutable and there is no sync or flush needed since the reads are non-dependent.
+Buffers and simultaneous-access textures can be written to in one queue while concurrently being read-from one or more OTHER queues.  However, this pattern has not been supported in a single queue because legacy Resource Barrier design prevents subresources from being in both READ and WRITE states at the same time.
 
 ### Inefficient Batching of Subresource Range Transitions
 
@@ -283,15 +283,15 @@ When used, `D3D12_BARRIER_SYNC_NONE` must be the only bit set.
 
 `DATA_STATIC_WHILE_SET_AT_EXECUTE` descriptors require resource data is finalized by the time `SetGraphicsRoot*` or `SetComputeRoot*` is executed on the GPU timeline. To support this, any barriers on resources used by `D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE` descriptors must precede the relevant `Set[Graphics|Compute]Root*` call, and must specify `SyncAfter=D3D12_BARRIER_SYNC_DRAW` (for graphics descriptors) or `SyncAfter=D3D12_BARRIER_SYNC_COMPUTE_SHADING` (for compute descriptors).
 
-#### Umbrella Synchronization Scopes
+#### Aggregate Synchronization Scopes
 
-Umbrella synchronization scopes supersede one or more other synchronization scopes, and can effectively be treated as though all of the superseded scope bits are set.  For example, the `D3D12_BARRIER_SYNC_DRAW` scope supersedes `D3D12_BARRIER_SYNC_INDEX_INPUT`, `D3D12_BARRIER_SYNC_VERTEX_SHADING`, `D3D12_BARRIER_SYNC_PIXEL_SHADING`, `D3D12_BARRIER_SYNC_DEPTH_STENCIL`, and `D3D12_BARRIER_SYNC_RENDER_TARGET` (see *Figure 2*).
+Aggregate synchronization scopes supersede one or more other synchronization scopes, and can effectively be treated as though all of the superseded scope bits are set.  For example, the `D3D12_BARRIER_SYNC_DRAW` scope supersedes `D3D12_BARRIER_SYNC_INDEX_INPUT`, `D3D12_BARRIER_SYNC_VERTEX_SHADING`, `D3D12_BARRIER_SYNC_PIXEL_SHADING`, `D3D12_BARRIER_SYNC_DEPTH_STENCIL`, and `D3D12_BARRIER_SYNC_RENDER_TARGET` (see *Figure 2*).
 
 ![Figure 2](images/D3D12PipelineBarriers/OverlappingScopes.png)
 
 *Figure 2*
 
-The following tables list superseded synchronization scope bits for each umbrella synchronization scope bit.
+The following tables list superseded synchronization scope bits for each aggregate synchronization scope bit.
 
 | `D3D12_BARRIER_SYNC_ALL`                         |
 |--------------------------------------------------|
@@ -790,6 +790,7 @@ As with `D3D12_RESOURCE_STATES`, Resource Layouts MUST be compatible with the ty
 - `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_SHADER_RESOURCE`
 - `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COPY_SOURCE`
 - `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COPY_DEST`
+- `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_GENERIC_READ_COMPUTE_QUEUE_ACCESSIBLE`
 
 `D3D12_COMMAND_LIST_TYPE_COMPUTE`
 
@@ -799,6 +800,7 @@ As with `D3D12_RESOURCE_STATES`, Resource Layouts MUST be compatible with the ty
 - `D3D12_BARRIER_LAYOUT_SHADER_RESOURCE`
 - `D3D12_BARRIER_LAYOUT_COPY_SOURCE`
 - `D3D12_BARRIER_LAYOUT_COPY_DEST`
+- `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_GENERIC_READ_COMPUTE_QUEUE_ACCESSIBLE`
 
 `D3D12_COMMAND_LIST_TYPE_COPY`
 
@@ -1099,6 +1101,14 @@ The following tables describe the Access types compatible with a given layout:
 | `D3D12_BARRIER_ACCESS_COPY_SOURCE`        |
 | `D3D12_BARRIER_ACCESS_COPY_DEST`          |
 
+| `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_GENERIC_READ_COMPUTE_QUEUE_ACCESSIBLE` |
+|------------------------------------------------------------------------------|
+| `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`                                       |
+| `D3D12_BARRIER_ACCESS_COPY_SOURCE`                                           |
+| `D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ`                                    |
+| `D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE`                                   |
+| `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE`                                        |
+
 ### Access Bits Barrier Sync Compatibility
 
 Some Access types require matching Sync.  For the following access bits, at least one of the listed sync bits must also be provided in a barrier.
@@ -1311,6 +1321,7 @@ typedef enum D3D12_BARRIER_LAYOUT
     D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COPY_SOURCE,
     D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COPY_DEST,
     D3D12_BARRIER_LAYOUT_VIDEO_QUEUE_COMMON,
+    D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_GENERIC_READ_COMPUTE_QUEUE_ACCESSIBLE,
 } D3D12_BARRIER_LAYOUT;
 ```
 
@@ -1444,6 +1455,12 @@ Same as `D3D12_BARRIER_LAYOUT_COPY_DEST` except with optimizations specific for 
 
 Supports common (barrier free) usage on video queues only. May be more optimal than the more general `D3D12_BARRIER_LAYOUT_COMMON`. Can only be used in barriers on video queues.
 
+#### D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_GENERIC_READ_COMPUTE_QUEUE_ACCESSIBLE
+
+Usable in both direct and compute command lists. Supports generic read access in all queue types that support `D3D12_BARRIER_LAYOUT_GENERIC_READ`. Additionally, supports read-only depth stencil access in direct command lists.
+
+Although compute queues may access resources using this layout, only direct queues can transition resources into or out of `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_GENERIC_READ_COMPUTE_QUEUE_ACCESSIBLE`.
+
 ### D3D12_BARRIER_SYNC
 
 Bit values representing synchronization scopes. Can be combined using bitwise-or in barrier `SyncBefore` and `SyncAfter` values.
@@ -1505,7 +1522,7 @@ Synchronize against the following GPU workloads:
 
 The `SetGraphicsRoot*` synchronization is required to support `D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTION` descriptors.
 
-This is an umbrella scope for all Draw pipeline stages. A `SyncBefore` value of `D3D12_BARRIER_SYNC_DRAW` indicates ALL PRECEDING Draw work must complete before executing the barrier.  A `SyncAfter` value of `D3D12_BARRIER_SYNC_DRAW` indicates ALL SUBSEQUENT Draw work must wait for the barrier to complete.
+This is an aggregate scope for all Draw pipeline stages. A `SyncBefore` value of `D3D12_BARRIER_SYNC_DRAW` indicates ALL PRECEDING Draw work must complete before executing the barrier.  A `SyncAfter` value of `D3D12_BARRIER_SYNC_DRAW` indicates ALL SUBSEQUENT Draw work must wait for the barrier to complete.
 
 Access types in this scope are limited to:
 
@@ -2190,7 +2207,7 @@ Adds a collection of barriers into a video encode command list recording.
 ```c++
 void ID3D12VideoEncodeCommandList3::Barrier(
         UINT32 NumBarrierGroups,
-        D3D12_BARRIER_GROUP *pBarrierGroups,
+        const D3D12_BARRIER_GROUP *pBarrierGroups,
         );
 ```
 
@@ -2511,7 +2528,9 @@ enum D3D12DDI_BARRIER_LAYOUT
     D3D12DDI_BARRIER_LAYOUT_COMPUTE_QUEUE_COPY_SOURCE,
     D3D12DDI_BARRIER_LAYOUT_COMPUTE_QUEUE_COPY_DEST,
     D3D12DDI_BARRIER_LAYOUT_VIDEO_QUEUE_COMMON,
-    D3D12DDI_BARRIER_LAYOUT_LEGACY_DIRECT_QUEUE_GENERIC_READ_COMPUTE_QUEUE_ACCESSIBLE, // Recently promoted to legacy layout
+    D3D12DDI_BARRIER_LAYOUT_DIRECT_QUEUE_GENERIC_READ_COMPUTE_QUEUE_ACCESSIBLE,
+    D3D12DDI_BARRIER_LAYOUT_LEGACY_DIRECT_QUEUE_GENERIC_READ_COMPUTE_QUEUE_ACCESSIBLE =
+        D3D12DDI_BARRIER_LAYOUT_DIRECT_QUEUE_GENERIC_READ_COMPUTE_QUEUE_ACCESSIBLE,
     D3D12DDI_BARRIER_LAYOUT_LEGACY_COPY_SOURCE = 0x80000000, // Special layouts start here
     D3D12DDI_BARRIER_LAYOUT_LEGACY_COPY_DEST,
     D3D12DDI_BARRIER_LAYOUT_LEGACY_SHADER_RESOURCE,
@@ -2864,7 +2883,7 @@ During command list recording, the initial layout, sync scope, and accessibility
 
 #### ExecuteCommandLists Call-Site Validation Phase
 
-Texture layout is the only transient property of resources that propagate from one `ExecuteCommandLists` call to the next.  When Synchronized Command Queue Execution is enabled, texture layout can be accurately resolved to enable validation of record-time layout assumptions.  This applies only to non-simultaneous-access texture resources.  Simultaneous-access textures have an immutable layout, and buffers have no layout.
+Texture layout is the only transient property of resources that propagate from one `ExecuteCommandLists` call to the next.  When Synchronized Command Queue Execution is enabled, texture layout can be accurately resolved to enable validation of record-time layout assumptions.  This applies only to non-simultaneous-access texture resources.  Simultaneous-access textures use an opaque, immutable layout, and buffers have no layout.
 
 Since layout can only be changed using the Barrier API, the debug layer only needs to keep track of Layout Barriers to track texture layout.  This is in contrast to Legacy Resource Barriers, which needed to account for resource state promotion and decay.
 
