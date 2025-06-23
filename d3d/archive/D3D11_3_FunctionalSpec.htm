@@ -33,7 +33,7 @@
 Specification"></A>
 <H1>Direct3D <a href="#D3D11_MAJOR_VERSION" title="D3D11_MAJOR_VERSION"><font color=black style="text-decoration:none">11</font></a>.<a href="#D3D11_MINOR_VERSION" title="D3D11_MINOR_VERSION"><font color=black style="text-decoration:none">3</font></a> Functional
 Specification</H1>
-<p>Version <a href="#D3D11_SPEC_VERSION" title="D3D11_SPEC_VERSION"><font color=black style="text-decoration:none">1.16</font></a> - <a href="#D3D11_SPEC_DATE_MONTH" title="D3D11_SPEC_DATE_MONTH"><font color=black style="text-decoration:none">4</font></a>/<a href="#D3D11_SPEC_DATE_DAY" title="D3D11_SPEC_DATE_DAY"><font color=black style="text-decoration:none">23</font></a>/<a href="#D3D11_SPEC_DATE_YEAR" title="D3D11_SPEC_DATE_YEAR"><font color=black style="text-decoration:none">2015</font></a></p>
+<p>Version <a href="#D3D11_SPEC_VERSION" title="D3D11_SPEC_VERSION"><font color=black style="text-decoration:none">1.17</font></a> - <a href="#D3D11_SPEC_DATE_MONTH" title="D3D11_SPEC_DATE_MONTH"><font color=black style="text-decoration:none">6</font></a>/<a href="#D3D11_SPEC_DATE_DAY" title="D3D11_SPEC_DATE_DAY"><font color=black style="text-decoration:none">20</font></a>/<a href="#D3D11_SPEC_DATE_YEAR" title="D3D11_SPEC_DATE_YEAR"><font color=black style="text-decoration:none">2025</font></a></p>
 <hr><!-- ********************************************************************** -->
 <a id="ShortTableOfContents"></a>
 <P><A href="#Table of Contents">Full Table of Contents</A> at end of document.</P>
@@ -9965,7 +9965,7 @@ typedef struct D3D11_INPUT_ELEMENT_DESC
 <pre>
 <a id="CreateInputLayoutAPI"></a>
 CreateInputLayout(
-    const <a href="#D3D11_INPUT_ELEMENT_DESC"> D3D11_INPUT_ELEMENT_DESC</a>* pDeclaration,
+    const <a href="#D3D11_INPUT_ELEMENT_DESC">D3D11_INPUT_ELEMENT_DESC</a>* pDeclaration,
     SIZE_T NumElements,
     ID3D10InputLayout **ppInputLayout);
 
@@ -10060,7 +10060,7 @@ for(each slot, s, <a href="#SetVertexBufferAPI">with a VertexBuffer assigned</a>
         {
             VertexBufferElementAddressInBytes[s][e] =
                 <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets">VertexBufferOffsetInBytes</a> +
-                <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*<a href="#StartVertexLocation">StartVertexLocation</a> +
+                <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*<a href="#StartVertexLocation"> StartVertexLocation</a> +
                 <a href="#SlotDesc">Slot</a>[s].<a href="#pInputLayout">pInputLayout</a>-&gt;pElement[e].<a href="#ElementOffset">OffsetInBytes</a>;
         } // Element loop
     }
@@ -10070,7 +10070,7 @@ for(each slot, s, <a href="#SetVertexBufferAPI">with a VertexBuffer assigned</a>
         {
             VertexBufferElementAddressInBytes[s][e] =
                 <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets">VertexBufferOffsetInBytes</a> +
-                <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*<a href="#DrawInstancedStartInstanceLocation">StartInstanceLocation</a> +
+                <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*<a href="#DrawInstancedStartInstanceLocation"> StartInstanceLocation</a> +
                 <a href="#SlotDesc">Slot</a>[s].<a href="#pInputLayout">pInputLayout</a>-&gt;pElement[e].<a href="#ElementOffset">OffsetInBytes</a>;
         } // Element loop
         InstanceDataStepCounter[s] = <a href="#SlotDesc">Slot</a>[s].<a href="#InstanceDataStepRate">InstanceDataStepRate</a>;
@@ -10109,7 +10109,7 @@ for(UINT InstanceID = 0;  InstanceID &lt; <a href="#DrawInstancedInstanceCount">
     // Patch Instance and Vertex Data addresses at the end of an instance.
     for(each slot, s, with a VertexBuffer assigned)
     {
-        if(<a href="#SlotDesc">Slot</a>[s].<a href="#VertexBufferClass">Class</a> == <a href="#INPUT_CLASSIFICATION"> D3D11_INPUT_PER_VERTEX_DATA</a>)
+        if(<a href="#SlotDesc">Slot</a>[s].<a href="#VertexBufferClass">Class</a> == <a href="#INPUT_CLASSIFICATION">D3D11_INPUT_PER_VERTEX_DATA</a>)
         {
             for(each Element, e, <a href="#SetInputLayoutAPI">in the buffer's structure declaration</a>)
             {
@@ -10310,16 +10310,16 @@ for(UINT InstanceID = 0; InstanceID &lt; <a href="#DrawIndexedInstancedInstanceC
         for(each slot, s, <a href="#SetVertexBufferAPI">with a VertexBuffer assigned</a>)
         {
             UINT IndexedOffset;
-            if(<a href="#SlotDesc">Slot</a>[s].<a href="#VertexBufferClass">Class</a> == <a href="#INPUT_CLASSIFICATION">D3D11_INPUT_PER_VERTEX_DATA</a>)
+            if(<a href="#SlotDesc"> Slot</a>[s].<a href="#VertexBufferClass">Class</a> == <a href="#INPUT_CLASSIFICATION">D3D11_INPUT_PER_VERTEX_DATA</a>)
             {
-                IndexedOffset = <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*(<a href="#BaseVertexLocation"> BaseVertexLocation</a> + IndexValue);
+                IndexedOffset = <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*(<a href="#BaseVertexLocation">BaseVertexLocation</a> + IndexValue);
             }
             for(each Element, e, <a href="#SetInputLayoutAPI">in the buffer's structure declaration</a>)
             {
                 if(<a href="#SlotDesc">Slot</a>[s].<a href="#VertexBufferClass">Class</a> == <a href="#INPUT_CLASSIFICATION">D3D11_INPUT_PER_VERTEX_DATA</a>)
                 {
                     VertexBufferElementAddressInBytes[s][e] =
-                        <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets">VertexBufferOffsetInBytes</a> +
+                        <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets"> VertexBufferOffsetInBytes</a> +
                         IndexedOffset +
                         <a href="#SlotDesc">Slot</a>[s].pInputLayout-&gt;pElement[e].<a href="#ElementOffset">OffsetInBytes</a>;
                 }
@@ -14289,7 +14289,7 @@ registers is not validated or enforced in general.</p>
 <A href="#16.9.3 Conservative Output Depth (Conservative oDepth)">16.9.3 Conservative Output Depth (Conservative oDepth)</A><br>
 <DIR>
 <A href="#16.9.3.1 Implementation:">16.9.3.1 Implementation:</A><br>
-<A href="#16.9.3.2 Rasterizer Depth Value Used in Clamp">16.9.3.2 Rasterizer Depth Value Used in Clamp</A><br>
+<A href="#16.9.3.2 Rasterizer Depth Value Implementations May Use to Clamp Conservative Depth">16.9.3.2 Rasterizer Depth Value Implementations May Use to Clamp Conservative Depth</A><br>
 </DIR>
 <A href="#16.9.4 Output Coverage Mask (oMask)">16.9.4 Output Coverage Mask (oMask)</A><br>
 </DIR>
@@ -14358,48 +14358,46 @@ Pixel Shader outputs depth).</p>
 This enables early depth culling and depth modification to be used together.</p>
 <DIV class=boxed style="background-color: lightblue">
 <p>Enabling oDepth in a pixel shader disables early z culling.  Early depth culling dramatically improves performance when there is medium to significant overdraw.
-Rather than having the pixel shader arbitrarily change the depth value, the shader could provide information on whether the output depth value is always less than
-or greater than the rasterizer depth value.  In addition to providing the information of that oDepth is always "greater  or equal to" or "less or equal to" the
-rasterizer depth, the shader compiler adds instructions to the shader to guarantee the direction indicated.  This allows the depth value to be affected by the
+Rather than having the pixel shader arbitrarily change the depth value, the shader can make a promise that the output depth value is always less than
+or greater than the rasterizer depth value.  This allows the depth value to be affected by the
 shader and allows early depth culling when the declared conservative depth mode and depth comparison mode are compatible.</p>
 </DIV>
 
 <p>If a Shader intends to use conservative depth writes, it must be <a href="#inst_ConservativeoDepthDCL">declared</a><a style="color: Gray"><small><sup>(22.3.38)</sup></small></a> statically in the Shader with parameters
 <a href="#interpretedvalue_DEPTH_GREATER_EQUAL">SV_DepthGreaterEqual</a><a style="color: Gray"><small><sup>(24.6)</sup></small></a> or <a href="#interpretedvalue_DEPTH_LESS_EQUAL">SV_DepthLessEqual</a><a style="color: Gray"><small><sup>(24.7)</sup></small></a>.
-If the shader chooses SV_DepthGreaterEqual or SV_DepthLessEqual, then a guarantee is made that the shader never
-writes smaller or larger values (respectively) than the rasterizer depth value by inserting instructions that either max or min the desired output depth
-value with the rasterizer depth.  If the desired output value would be in violation of the defined conservative depth type, then the rasterizer depth is used.</p>
+If the shader chooses SV_DepthGreaterEqual or SV_DepthLessEqual, then a the shader promises that it never writes smaller or larger values (respectively) than the 
+rasterizer depth value.  Breaking this promise results in undefined behavior.</p>
 
 <p>The valid range is indentical to that for standard oDepth.</p>
 
 <A id="16.9.3.1 Implementation:"></A>
 <H4>16.9.3.1 Implementation:</H4>
 <p><a href="#interpretedvalue_DEPTH_GREATER_EQUAL">SV_DepthGreaterEqual:</a><a style="color: Gray"><small><sup>(24.6)</sup></small></a></p>
-<p>If the shader declares the depth output as SV_DepthGreaterEqual, then an extra max instruction is added to the end of the shader program.</p>
-<pre>oDepth = max(DepthGreaterEqualValue, RasterizerDepthValue);</pre>
-<p>This instruction enforces the guarantee that the output depth value of the pixel shader is greater than or equal to the rasterizer depth value.
-Now that the value is known to be equal to or behind the depth values defined by the primitive, then early depth cull can be enabled when the depth
+<p>If the shader declares the depth output as SV_DepthGreaterEqual, the system assumes it can enable early depth cull when the depth
 comparison mode is "less" or "less or equal".</p>
 
 <p><a href="#interpretedvalue_DEPTH_LESS_EQUAL">SV_DepthLessEqual:</a><a style="color: Gray"><small><sup>(24.7)</sup></small></a></p>
-<p>If the shader declares the depth output as SV_DepthLessEqual, then an extra min instruction is added to the end of the shader program.</p>
-<pre>oDepth = min(DepthLessEqualValue, RasterizerDepthValue);</pre>
-<p>This instruction enforces the guarantee that the output depth value of the pixel shader is less than or equal to the rasterizer depth value.
-Now that the value is known to be equal to or in front of the depth values defined by the primitive, then early depth cull can be enabled when the
-depth comparison mode is "greater" or "greater or equal".</p>
+<p>If the shader declares the depth output as SV_DepthLessEqual, the system assumes it can enable early depth cull when the depth
+comparison mode is "greater" or "greater or equal".</p>
 
 <p>Using SV_DepthGreaterEqual and SV_DepthLessEqual is valid with any depth mode, but the early depth cull will be disabled if the knowledge of is
-GreaterEqual/LessEqual  is not compatible with the early depth cull optimization. The min/max test against the rasterizer depth always occurs, but the benefits
-of the guarantee are only useful with the correct depth test mode.
+GreaterEqual/LessEqual  is not compatible with the early depth cull optimization. 
 </p>
 
-<A id="16.9.3.2 Rasterizer Depth Value Used in Clamp"></A>
-<H4>16.9.3.2 Rasterizer Depth Value Used in Clamp</H4>
-<p>For either clamp described above, RasterizerDepthValue is the centroid depth value if the shader is executing at pixel-frequency.
-It is enforced by the HLSL compiler that if the shader inputs depth and outputs one of the above clamped depth values,
-the input depth must be interpolated as linear_noperspective_centroid in pixel-frequency execution (if position is input at all).
-If the shader does not input position, for pixel-frequency execution the centroid depth is used for conservative depth clamping,
-and for sample-frequency execution the per-sample depth is used for per-sample conservative depth clamping.</p>
+<A id="16.9.3.2 Rasterizer Depth Value Implementations May Use to Clamp Conservative Depth"></A>
+<H4>16.9.3.2 Rasterizer Depth Value Implementations May Use to Clamp Conservative Depth</H4>
+<p>Implementations may choose to pick a particular behavior when the app breaks the promises described above by clamping to the 
+rasterizer depth.  The rasterizer depth value that would be used to clamp against is the centroid depth value if the shader is executing at pixel-frequency
+or sample depth at sample-frequency.
+To help enable this, it is enforced by the HLSL compiler that if the shader inputs depth and outputs one of the above depth values,
+the input depth must be interpolated as linear_noperspective_centroid or linear_noperspective_sample (if position is input at all).</p>
+
+<DIV class=boxed style="background-color: lightblue">
+<p>This clamping was originally intended to be performed by either the HLSL compiler or by the driver (spec was ambiguous), avoiding undefined behavior.
+But it appears tests weren't authored to verify clamping, so it turns out the compiler and many implementations haven't clamping for years (and it isn't worth starting to clamp now that this was noticed in 2025).
+
+The compiler enforcement of interpolation mode described here was always present on the assumption that clamping is happening, and it isn't being removed.</p>
+</DIV>
 
 <p>The purpose for requiring centroid in pixel-frequency execution is that it guarantees the clamp is done against a safe depth value
 within the gamut of the covered samples, thus not violating any traditional depth optimizations.  More ideal would have been to
@@ -24438,7 +24436,7 @@ Operation:      dest = src0.r * src1.r +
 <h3 id="inst_DP4"></h3><A id="22.10.5 dp4"></A>
 <H3>22.10.5 dp4</H3>
 <pre>
-Instruction:    dp4[<a href="#inst_MOD_SAT">_sat</a>]
+Instruction:    dp4[<a href="#inst_MOD_SAT"> _sat</a>]
                              dest[.mask],
                           [<a href="#inst_MOD_NEGATE">-</a>]src0[<a href="#inst_MOD_ABS">_abs</a>][.swizzle],
                           [<a href="#inst_MOD_NEGATE">-</a>]src1[<a href="#inst_MOD_ABS">_abs</a>][.swizzle],
@@ -25220,7 +25218,7 @@ Restrictions:   The maximum absolute error is 0.0008 in the interval from -100*P
 <H3>22.10.21 sqrt</H3>
 <pre>
 Instruction:    sqrt[<a href="#inst_MOD_SAT">_sat</a>]   dest[.mask],
-                                [<a href="#inst_MOD_NEGATE">-</a>]src0[<a href="#inst_MOD_ABS">_abs</a>][.swizzle]
+                                [<a href="#inst_MOD_NEGATE">-</a>]src0[<a href="#inst_MOD_ABS"> _abs</a>][.swizzle]
 
 Stage(s):       <a href="#AllStages">All</a><a style="color: Gray"><small><sup>(22.1.1)</sup></small></a>
 
@@ -26979,7 +26977,7 @@ Operation:      dest = src0
 <h3 id="inst_DMOVC"></h3><A id="22.16.2 dmovc (conditional select)"></A>
 <H3>22.16.2 dmovc (conditional select)</H3>
 <pre>
-Instruction:    dmovc[<a href="#inst_MOD_SAT">_sat</a>]               dest[.mask],
+Instruction:    dmovc[<a href="#inst_MOD_SAT"> _sat</a>]               dest[.mask],
                                                                      src0[.swizzle],
                                    [<a href="#inst_MOD_NEGATE">-</a>]src1[<a href="#inst_MOD_ABS">_abs</a>][.swizzle],
                                    [<a href="#inst_MOD_NEGATE">-</a>]src2[<a href="#inst_MOD_ABS">_abs</a>][.swizzle],
@@ -30040,10 +30038,10 @@ a cross-endianness solution.</p>
 <tr><td>D3D11_SO_NO_RASTERIZED_STREAM<td><a id="D3D11_SO_NO_RASTERIZED_STREAM">0xffffffff</a></td>
 <tr><td>D3D11_SO_OUTPUT_COMPONENT_COUNT<td><a id="D3D11_SO_OUTPUT_COMPONENT_COUNT">128</a></td>
 <tr><td>D3D11_SO_STREAM_COUNT<td><a id="D3D11_SO_STREAM_COUNT">4</a></td>
-<tr><td>D3D11_SPEC_DATE_DAY<td><a id="D3D11_SPEC_DATE_DAY">23</a></td>
-<tr><td>D3D11_SPEC_DATE_MONTH<td><a id="D3D11_SPEC_DATE_MONTH">4</a></td>
-<tr><td>D3D11_SPEC_DATE_YEAR<td><a id="D3D11_SPEC_DATE_YEAR">2015</a></td>
-<tr><td>D3D11_SPEC_VERSION<td><a id="D3D11_SPEC_VERSION">1.16</a></td>
+<tr><td>D3D11_SPEC_DATE_DAY<td><a id="D3D11_SPEC_DATE_DAY">20</a></td>
+<tr><td>D3D11_SPEC_DATE_MONTH<td><a id="D3D11_SPEC_DATE_MONTH">6</a></td>
+<tr><td>D3D11_SPEC_DATE_YEAR<td><a id="D3D11_SPEC_DATE_YEAR">2025</a></td>
+<tr><td>D3D11_SPEC_VERSION<td><a id="D3D11_SPEC_VERSION">1.17</a></td>
 <tr><td>D3D11_SRGB_GAMMA<td><a id="D3D11_SRGB_GAMMA">2.2f</a></td>
 <tr><td>D3D11_SRGB_TO_FLOAT_DENOMINATOR_1<td><a id="D3D11_SRGB_TO_FLOAT_DENOMINATOR_1">12.92f</a></td>
 <tr><td>D3D11_SRGB_TO_FLOAT_DENOMINATOR_2<td><a id="D3D11_SRGB_TO_FLOAT_DENOMINATOR_2">1.055f</a></td>
@@ -30938,7 +30936,7 @@ a cross-endianness solution.</p>
 <LI><A href="#16.9.3 Conservative Output Depth (Conservative oDepth)">16.9.3 Conservative Output Depth (Conservative oDepth)</A></LI>
 <DIR>
 <LI><A href="#16.9.3.1 Implementation:">16.9.3.1 Implementation:</A></LI>
-<LI><A href="#16.9.3.2 Rasterizer Depth Value Used in Clamp">16.9.3.2 Rasterizer Depth Value Used in Clamp</A></LI>
+<LI><A href="#16.9.3.2 Rasterizer Depth Value Implementations May Use to Clamp Conservative Depth">16.9.3.2 Rasterizer Depth Value Implementations May Use to Clamp Conservative Depth</A></LI>
 </DIR>
 <LI><A href="#16.9.4 Output Coverage Mask (oMask)">16.9.4 Output Coverage Mask (oMask)</A></LI>
 </DIR>
