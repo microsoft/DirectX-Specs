@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.32 6/23/2025
+v1.33 6/27/2025
 
 ---
 
@@ -1098,10 +1098,21 @@ shader identifier must match the local root signature the specified
 shader was compiled with. The argument layout is defined by packing each
 argument with padding as needed to align each to its individual
 (defined) size, and in the order declared in the local root signature.
-For instance, root descriptors and descriptor handles (identifying
+Root descriptors and descriptor handles (identifying
 descriptor tables) are each 8 bytes in size and therefore need to be at
 the nearest 8 byte aligned offset from the start of the record after
-whatever argument precedes it.
+whatever argument precedes it. Root constants are an array of DWORD
+values, and since they are the smallest data type available in the
+root signature, no extra padding or alignment is needed.
+
+> In the global root signature cost function, a descriptor table is
+considered to be one DWORD (4 bytes), despite the API handle type being
+an 8 byte value. For hardware that is constrained in their root argument
+space, they are able to compress this value by diffing it against the
+currently-bound root descriptor table to produce a 32-bit offset. Note
+that for a local root signature, the full 64-bit value should be placed
+in the shader table, which makes the local root signature size calculation
+different than the global root signature cost function.
 
 ---
 
@@ -9380,4 +9391,5 @@ v1.29|2/20/2025|<li>In [D3D12_RAYTRACING_OPACITY_MICROMAP_DESC](#d3d12_raytracin
 v1.3|5/28/2025|<li>In [D3D12_RAYTRACING_TIER](#d3d12_raytracing_tier) added `D3D12_RAYTRACING_TIER_1_2`, containing [Opacity Micromaps](#opacity-micromaps) and [Shader Execution Reordering](#shader-execution-reordering).  Pointed out that the HLSL portions of these features (all of SER and a small part of OMMs) are part of Shader Model 6.9 which is in preview).</li><li>For [Shader Execution Reordering](#shader-execution-reordering), updated spec to mirror contents of [HLSL Shader Execution Reordering](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0027-shader-execution-reordering.md).</li><li>For [D3D12_RAYTRACING_SERIALIZED_BLOCK_TYPE](#d3d12_raytracing_serialized_block_type) and [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc) loosened the behavior so that the list may include `null` entries for geometries that don't have OMMs (that consumers must simply ignore).  Other devices might happen prune these so the list only has OMMs.</li><li>In [MaybeReorderThread](#maybereorderthread) noted that DXC currently has a bug where "using namespace dx;" to avoid "dx::" before calling `MaybeReorderThread()` results in incorrect DXIL generation.</li>
 v1.31|6/9/2025|<li>In the HLSL suboboject definition for [HitGroup](#hit-group), corrected the spec which listed a `HitGroup` object, which doens't even exist in in HLSL.  Instead there is a `TriangleHitGroup` and `ProceduralPrimitiveHitGroup`, which are now each documented.</li><li>Fixed incorrect argument listing for [HitObject::MakeMiss()](#hitobject-makemiss)</li>
 v1.32|6/19/2025|<li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS](#d3d12_raytracing_acceleration_structure_build_flags), for `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_OMM_LINKAGE_UPDATE` clarified that replacing an OMM array at the same location requires a linkage update for BLAS's referencing it even though the linkage pointer didn't change.</li><li>Name fix: [HitObject::LoadLocalRootTableConstant](#hitobject-loadlocalroottableconstant) was incorrectly named `LoadLocalRootArgumentsConstant` (stale name before rename).  The compiler is correct.</li>
+v1.33|6/27/2025|<li>In [Shader table memory initialization](#shader-table-memory-initialization), clarify the local root signature size calculation and shader table layout requirements.</li>
 
