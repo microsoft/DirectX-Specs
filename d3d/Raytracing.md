@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.33 6/27/2025
+v1.34 6/30/2025
 
 ---
 
@@ -1106,13 +1106,13 @@ values, and since they are the smallest data type available in the
 root signature, no extra padding or alignment is needed.
 
 > In the global root signature cost function, a descriptor table is
-considered to be one DWORD (4 bytes), despite the API handle type being
-an 8 byte value. For hardware that is constrained in their root argument
-space, they are able to compress this value by diffing it against the
-currently-bound root descriptor table to produce a 32-bit offset. Note
-that for a local root signature, the full 64-bit value should be placed
-in the shader table, which makes the local root signature size calculation
-different than the global root signature cost function.
+> considered to be one DWORD (4 bytes), despite the API handle type being
+> an 8 byte value. For hardware that is constrained in their root argument
+> space, they are able to compress this value by diffing it against the
+> currently-bound root descriptor table to produce a 32-bit offset. Note
+> that for a local root signature, the full 64-bit value should be placed
+> in the shader table, which makes the local root signature size calculation
+> different than the global root signature cost function.
 
 ---
 
@@ -4791,9 +4791,9 @@ typedef struct D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER1
 } D3D12_SERIALIZED_RAYTRACING_ACCELERATION_STRUCTURE_HEADER1;
 ```
 
-Header for a serialized top or bottom-level acceleration structure which may or may not reference additional blocks.
+Header for a serialized top or bottom-level acceleration structure which may or may not reference additional blocks.  Also used for serialized OMM arrays, with no additional blocks in this case.
 
-Similar to how BLAS pointers are passed in to TLAS deserialization as a list of VAs, blocks such as Opacity Micromap Arrays are listed after the header.
+Similar to how BLAS pointers are passed in to TLAS deserialization as a list of VAs, blocks such as references to Opacity Micromap Arrays by a BLAS are listed after the header.
 The number of blocks is specified by `NumBlocks`.
 For each block type, one `D3D12_RAYTRACING_SERIALIZED_BLOCK` entry with array of pointers of type `D3D12_GPU_VIRTUAL_ADDRESS` follows.
 
@@ -9392,4 +9392,5 @@ v1.3|5/28/2025|<li>In [D3D12_RAYTRACING_TIER](#d3d12_raytracing_tier) added `D3D
 v1.31|6/9/2025|<li>In the HLSL suboboject definition for [HitGroup](#hit-group), corrected the spec which listed a `HitGroup` object, which doens't even exist in in HLSL.  Instead there is a `TriangleHitGroup` and `ProceduralPrimitiveHitGroup`, which are now each documented.</li><li>Fixed incorrect argument listing for [HitObject::MakeMiss()](#hitobject-makemiss)</li>
 v1.32|6/19/2025|<li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS](#d3d12_raytracing_acceleration_structure_build_flags), for `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_OMM_LINKAGE_UPDATE` clarified that replacing an OMM array at the same location requires a linkage update for BLAS's referencing it even though the linkage pointer didn't change.</li><li>Name fix: [HitObject::LoadLocalRootTableConstant](#hitobject-loadlocalroottableconstant) was incorrectly named `LoadLocalRootArgumentsConstant` (stale name before rename).  The compiler is correct.</li>
 v1.33|6/27/2025|<li>In [Shader table memory initialization](#shader-table-memory-initialization), clarify the local root signature size calculation and shader table layout requirements.</li>
+v1.34|6/30/2025|<li>In [D3D12\_SERIALIZED\_RAYTRACING\_ACCELERATION\_STRUCTURE\_HEADER1](#d3d12_serialized_raytracing_acceleration_structure_header1), clarified that this serialization header is also used for OMM Arrays.
 
