@@ -1034,8 +1034,8 @@ that need to allocate some samplers internally.  This is separate from
 the 2048 samplers that an application can manage manually in a sampler
 descriptor heap.  
 
-Dynamic indexing of static samplers not permitted from within shader
-code.  This way drivers can manage the maximum limit of 2032 static
+Arrays of static samplers are not permitted.
+This way drivers can manage the maximum limit of 2032 static
 samplers as a heap of individually allocated samplers, such as in a
 hidden portion of any application created sampler descriptor heap,
 without any consequence from heap fragmentation as samplers may come and
