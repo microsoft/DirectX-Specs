@@ -1052,7 +1052,7 @@ A call to `records.OutputComplete()` must be reached for every call to `Get*Node
 
 Once outputs have been declared, any threads in the thread group can collectively generate any of the output.   
 
-For a EmptyNodeOutput (like `myProgressCounter` above), the shader needs to call `{Group\|Thread}IncrementOutputCount(n)` once during execution to select the logical output count, otherwise 0 outputs are assumed when the shader finishes execution.
+For a EmptyNodeOutput (like `myProgressCounter` above), the shader needs to call `{Group|Thread}IncrementOutputCount(n)` once during execution to select the logical output count, otherwise 0 outputs are assumed when the shader finishes execution.
 
 ```C++
     myProgressCounter.GroupIncrementOutputCount(12); // see myProgressCounter declared
@@ -1287,7 +1287,7 @@ Quad and derivative operations are invalid in thread launch nodes since there is
 
 ## NonUniformResourceIndex semantics
 
-To restate the rules for shaders in general, irrespective of work graphs:  The value indexing into a resource array or a `(Resource|Sampler)DescriptorHeap` must be uniform across all active threads in a wave, unless `NonUniformResourceIndex` is called directly on the index within the indexing operation, such as:
+To restate the rules for shaders in general, irrespective of work graphs:  The value indexing into a resource array or a `{Resource|Sampler}DescriptorHeap` must be uniform across all active threads in a wave, unless `NonUniformResourceIndex` is called directly on the index within the indexing operation, such as:
 
 ```C++
 myBufferArray[NonUniformResourceIndex(index)].Load(...)
@@ -1314,7 +1314,7 @@ To ensure the data is visible to the consumer, this is the supported path:
 
 Notice that the stores and loads above are `globallycoherent`, which means fastest GPU memory caches are bypassed for those paths to work.  Atomics have this property as well; `globallycoherent` is implied, so specifying it has no effect on an atomic operation.
 
-The consumer doesn't need a barrier before accessing the data.  In the producer though, a barrier is required between UAV writes and the *node invocation request*. A node invocation request is when a producer node's shader executes an [OutputComplete()](#outputcomplete) or [{Thread|Group}IncrementOutputCount()](#incrementoutputcount) call. Resulting consumer node invocations can occur any time after this.  The minimum barrier between relevant UAV writes and a node invocation request is [Barrier](#barrier)(`UAV_MEMORY or object,DEVICE_SCOPE`), where `object` is the UAV.  This keeps the UAV accesses and node invocation request in order.  
+The consumer doesn't need a barrier before accessing the data.  In the producer though, a barrier is required between UAV writes and the *node invocation request*. A node invocation request is when a producer node's shader executes an [OutputComplete()](#outputcomplete) or [`{Group|Thread}IncrementOutputCount()`](#incrementoutputcount) call. Resulting consumer node invocations can occur any time after this.  The minimum barrier between relevant UAV writes and a node invocation request is [Barrier](#barrier)(`UAV_MEMORY or object,DEVICE_SCOPE`), where `object` is the UAV.  This keeps the UAV accesses and node invocation request in order.
 
 > An app might get away without this barrier - things seem to work fine.  Maybe the driver internally did a barrier to enable its implementation of [OutputComplete()](#outputcomplete), and unbenownst to the driver that barrier was what the app needed for its UAV data passing to work.  And the driver's compiler didn't happen to move UAV writing code past `OutputComplete()`.  Then along comes a different device or driver without a hidden barrier, or the compiler validly moves UAV writing code past `OutputComplete()` and the app falls apart.
 
@@ -3521,7 +3521,7 @@ Member                           | Definition
 ---------                           | ----------
 `UINT EntrypointIndex` | Provides index of a given entry to a work graph.  See the [GetEntrypointIndex](#getentrypointindex) API. 
 `UINT NumRecords` | Number of records to add. `NumRecords` is always used - even with empty records the count of empty work items still drives node invocations.
-`D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE Records` | Record definitions, laid out with the same member packing and struct size rules that C uses. The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`).  If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be zeroed out if desired.  Stride can be 0 to replicate a single record, and if it is nonzero, it must be at least as big as the entrypoint's input record size, which can be retrieved via [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) for convenience.  Address and stride must also be aligned to the largest scalar member size and be a multiple of 4 bytes.  The alignment requirement for a given entrypoint can be queried by [GetEntrypointRecordAlignmentInBytes()](#getentrypointrecordalignmentinbytes). The system does not alter the record data, except if the records are consumed by a node that writes to its input records (see `RW{Dispatch|Thread}NodeInputRecord` and `RWGroupNodeInputRecords` in [Node input declaration](#node-input-declaration)), in which case the contents of the writeable portions of the input records becomes undefined during graph execution.
+`D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE Records` | Record definitions, laid out with the same member packing and struct size rules that C uses. The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`).  If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be zeroed out if desired.  Stride can be 0 to replicate a single record, and if it is nonzero, it must be at least as big as the entrypoint's input record size, which can be retrieved via [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) for convenience.  Address and stride must also be aligned to the largest scalar member size and be a multiple of 4 bytes.  The alignment requirement for a given entrypoint can be queried by [GetEntrypointRecordAlignmentInBytes()](#getentrypointrecordalignmentinbytes). The system does not alter the record data, except if the records are consumed by a node that writes to its input records (see `RW{Dispatch\|Thread}NodeInputRecord` and `RWGroupNodeInputRecords` in [Node input declaration](#node-input-declaration)), in which case the contents of the writeable portions of the input records becomes undefined during graph execution.
 
 Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).
 
@@ -3761,7 +3761,7 @@ The `x` `y` and `z` values used to launch at a node cannot exceed the `NodeMaxDi
 |---|---|---|---|
 | [NodeOutput](#node-output-declaration) | `recordType` | [GetThreadNodeOutputRecords](#getthreadnodeoutputrecords)<br>[GetGroupNodeOutputRecords](#getgroupnodeoutputrecords)<br>[IsValid](#node-output-isvalid-method) | Defines an output and record type for spawning nodes |
 | [NodeOutputArray](#node-output-declaration) | `recordType` | [`operator[]`](#node-output-array-indexing) | Defines an array of node outputs |
-| [EmptyNodeOutput](#node-output-declaration) | `recordType` | [{Group\|Thread}IncrementOutputCount](#incrementoutputcount)<br>[IsValid](#node-output-isvalid-method) | Defines an empty output for spawning nodes with no record data |
+| [EmptyNodeOutput](#node-output-declaration) | `recordType` | [`{Group\|Thread}IncrementOutputCount`](#incrementoutputcount)<br>[IsValid](#node-output-isvalid-method) | Defines an empty output for spawning nodes with no record data |
 | [EmptyNodeOutputArray](#node-output-declaration) | `recordType` | [`operator[]`](#node-output-array-indexing) | Defines an array of empty node outputs |
 
 ### Output Record Objects
@@ -4093,7 +4093,7 @@ If the node declares an output that is an array of empty node outputs, as `Empty
 myEmptyOutputs[i].ThreadIncrementOutputCount(perThreadCount);
 ```
 
-`{Group\|Thread}IncrementOutputCount()` may be called multiple times on an output by a thread group.  The count passed in each time (applicable for the thread group as whole for `GroupIncrementOutputCount()` or per thread for `ThradIncrementOutputCount()`) takes away from the record budget declared for the output node or group of output nodes.  See `MaxRecords` and `MaxRecordsSharedWith` in [node output attributes](#node-output-attributes).  Incrementing more than the declared maximum produces undefined behavior.
+`{Group|Thread}IncrementOutputCount()` may be called multiple times on an output by a thread group.  The count passed in each time (applicable for the thread group as whole for `GroupIncrementOutputCount()` or per thread for `ThradIncrementOutputCount()`) takes away from the record budget declared for the output node or group of output nodes.  See `MaxRecords` and `MaxRecordsSharedWith` in [node output attributes](#node-output-attributes).  Incrementing more than the declared maximum produces undefined behavior.
 
 An example of using `IncrementOutputCount` is shown in [Node output](#node-output).
 
@@ -4434,7 +4434,7 @@ A `Barrier()` call using `GROUP_SYNC` must be called from uniform flow control i
 
 See a couple of examples of `Barrier()` being applied in [Producer - consumer dataflow through UAVs](#producer---consumer-dataflow-through-uavs).
 
-[OutputComplete()](#outputcomplete), [{Thread|Group}IncrementOutputCount()](#incrementoutputcount) and [FinishedCrossGroupSharing()](#finishedcrossgroupsharing) are never moved across a barrier by compilers.
+[`OutputComplete()`](#outputcomplete), [`{Group|Thread}IncrementOutputCount()`](#incrementoutputcount) and [`FinishedCrossGroupSharing()`](#finishedcrossgroupsharing) are never moved across a barrier by compilers.
 
 The minimal call `Barrier(0,0)` technically accomplishes nothing, as no memory type or sync has been requested.  Regardless, the DXC compiler may, in its DXIL code generation, prevent any memory access of *any* memory type from moving in either direction over any `Barrier()` call, regardless of flags in the call that might indicate specific memory types.  The underlying driver compilation, however, is free to take advantage of the specific flags.  As such, without any flags, this minimal call `Barrier(0,0)` accomplishes nothing at the level of machine code generation - it is not a barrier to anything.
 
@@ -4801,7 +4801,7 @@ Atomic operations will similarly use native llvm AtomicRMW and AtomicCmpXchg ins
 
 ## Lowering IncrementOutputCount
 
-See [{Group\|Thread}IncrementOutputCount](#incrementoutputcount) for HLSL definition.
+See [`{Group|Thread}IncrementOutputCount`](#incrementoutputcount) for HLSL definition.
 
 HLSL
 
