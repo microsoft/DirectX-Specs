@@ -688,6 +688,8 @@ A texture with format `DXGI_FORMAT_R8_SINT` for H264, HEVC or `DXGI_FORMAT_R16_S
 - QPMap Width: `(align(FrameResolution.Width, BlockSize) / BlockSize)`
 - QPMap Height: `(align(FrameResolution.Height, BlockSize) / BlockSize)`
 
+> For any codecs/configurations where the QP ranges can be negative, the ranges used by `pQuantizationMap` as an absolute map (e.g CQP base zero) are kept in that native signed range. For example for HEVC `[0, 51]` range for 8 bit pixel depth, the range for 10 bits `[-12, 51]`, and similar for higher bit depths are all considered as-is from the spec.
+
 ### STRUCT: D3D12_VIDEO_ENCODER_INPUT_MAP_DATA_DIRTY_REGIONS
 
 ```C++
@@ -739,7 +741,7 @@ typedef struct D3D12_VIDEO_ENCODER_FRAME_MOTION_SEARCH_MODE_CONFIG
 *MotionSearchMode*
 
 Specifies the motion search mode in which the driver will use the motion vector hints.
-- If `NumHintsPerPixel == 0`, `MotionSearchMode` must be `D3D12_VIDEO_ENCODER_FRAME_MOTION_SEARCH_MODE_FULL_SEARCH`.
+- If `NumHintsPerPixel == 0`, `MotionSearchMode` must be `D3D12_VIDEO_ENCODER_FRAME_MOTION_SEARCH_MODE_FULL_SEARCH`. In this case no hints are passed to the driver, thus no need to call `ResolveInputParamLayout` nor pass a non-null buffer in `D3D12_VIDEO_ENCODER_FRAME_MOTION_VECTORS.pOpaqueLayoutBuffer`.
 - If `NumHintsPerPixel > 0`, `MotionSearchMode` may specify motion search configuration on how to use the motion vector hints.
 
 *SearchDeviationLimit*
@@ -758,7 +760,7 @@ typedef struct D3D12_VIDEO_ENCODER_INPUT_MAP_DATA_MOTION_VECTORS
     [annotation("_Field_size_full_(NumHintsPerPixel)")] ID3D12Resource** ppMotionVectorMapsMetadata;
     [annotation("_Field_size_full_(NumHintsPerPixel)")] UINT*            pMotionVectorMapsMetadataSubresources;
     D3D12_VIDEO_ENCODER_FRAME_INPUT_MOTION_UNIT_PRECISION                MotionUnitPrecision;
-    D3D12_VIDEO_ENCODER_PICTURE_CONTROL_CODEC_DATA                       PictureControlConfiguration;
+    D3D12_VIDEO_ENCODER_PICTURE_CONTROL_CODEC_DATA1                      PictureControlConfiguration;
 } D3D12_VIDEO_ENCODER_INPUT_MAP_DATA_MOTION_VECTORS;
 ```
 
@@ -1052,7 +1054,7 @@ typedef struct D3D12_VIDEO_ENCODER_PICTURE_CONTROL_DESC1
 {
     UINT IntraRefreshFrameIndex;
     D3D12_VIDEO_ENCODER_PICTURE_CONTROL_FLAGS Flags;
-    D3D12_VIDEO_ENCODER_PICTURE_CONTROL_CODEC_DATA PictureControlCodecData;
+    D3D12_VIDEO_ENCODER_PICTURE_CONTROL_CODEC_DATA1 PictureControlCodecData;
     D3D12_VIDEO_ENCODE_REFERENCE_FRAMES ReferenceFrames;
     D3D12_VIDEO_ENCODER_FRAME_MOTION_VECTORS MotionVectors;
     D3D12_VIDEO_ENCODER_DIRTY_REGIONS DirtyRects;

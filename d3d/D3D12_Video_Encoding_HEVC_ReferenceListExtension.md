@@ -126,7 +126,7 @@ These will be the runtime validations for the HEVC picture params. For the older
 
 2. The D3D12 runtime currently also validates that `Count(Distinct(UnionSet(pList0ReferenceFrames, pList1ReferenceFrames))` is equal to the number of elements in `pReferenceFramesReconPictureDescriptors` with `IsRefUsedByCurrentPic = true`. This validation will stay in place as-is, as it will ensure that the count of DPB snapshot entries with `IsRefUsedByCurrentPic = true` matches the `RefPicSetStCurrBefore`, `RefPicSetStCurrAfter`, `RefPicSetLtCurr` from which the `RefPicListTempX` (passed as `pListXReferenceFrames`) were generated.
 
-3. New validation: `num_ref_idx_l0_active_minus1 > 0` for P frames. `num_ref_idx_l0_active_minus1 > 0` and `num_ref_idx_l1_active_minus1 > 0` for B frames.
+3. New validation: `num_ref_idx_l0_active_minus1 >= 0` for P frames. `num_ref_idx_l0_active_minus1 >= 0` and `num_ref_idx_l1_active_minus1 >= 0` for B frames.
 
 4. New validation: `num_ref_idx_l0_active_minus1 + 1 <= pCurCommandPicCtrlHEVC->List0ReferenceFramesCount`.
 

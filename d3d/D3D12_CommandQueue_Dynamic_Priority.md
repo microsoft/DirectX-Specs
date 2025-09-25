@@ -143,11 +143,11 @@ typedef enum D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY
 
 > Note that `D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY` numeric definitions don't exactly match dxgk nor allow undefined values to be used. Only well defined enum values will be mapped/accepted by the runtime and mapped into dxgk values. New D3D12 definitions will be needed to be added to expose more dxgk granularity in the future.
 
-## INTERFACE: ID3D12CommandQueueDynamicPriorityPreview
+## INTERFACE: ID3D12CommandQueue1
 
 ```C++
-interface ID3D12CommandQueueDynamicPriorityPreview
-    : IUnknown
+interface ID3D12CommandQueue1
+    : ID3D12CommandQueue
 {
     HRESULT SetProcessPriority(D3D12_COMMAND_QUEUE_PROCESS_PRIORITY Priority);
     HRESULT GetProcessPriority(D3D12_COMMAND_QUEUE_PROCESS_PRIORITY* pOutValue);
@@ -392,7 +392,7 @@ VERIFY_SUCCEEDED(spDevice9->CheckFeatureSupport(D3D12_FEATURE_HARDWARE_SCHEDULIN
     //    Scheduling group 1 = { DynamicPriorityEnabled, CustomCreatorID2, D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY_HARD_REALTIME, D3D12_COMMAND_QUEUE_PROCESS_PRIORITY_HIGH, { spPriorityComputeQueue1, spPriorityComputeQueue2 } }
     //    Scheduling group 2 = { DynamicPriorityDisabled, CustomCreatorID2, D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY_DEFAULT, D3D12_COMMAND_QUEUE_PROCESS_PRIORITY_NORMAL, { spComputeQueue3 } } <--- Creates a new scheduling group for CustomCreatorID2 since queues with and without D3D12_COMMAND_QUEUE_FLAG_ALLOW_DYNAMIC_PRIORITY do not mix nor affect each other scheduling groups
 
-    CComPtr<ID3D12CommandQueueDynamicPriorityPreview> spPriorityIface1;
+    CComPtr<ID3D12CommandQueue1> spPriorityIface1;
     VERIFY_SUCCEEDED(spPriorityComputeQueue1->QueryInterface(&spPriorityIface1));
     spPriorityIface1->SetGlobalPriority(D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY_SOFT_REALTIME_1); // This will change the priority of all queues in the scheduling group associated to spPriorityComputeQueue1
     // Scheduling groups mapping state expectation:
@@ -400,7 +400,7 @@ VERIFY_SUCCEEDED(spDevice9->CheckFeatureSupport(D3D12_FEATURE_HARDWARE_SCHEDULIN
     //    Scheduling group 1 = { DynamicPriorityEnabled, CustomCreatorID2, D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY_SOFT_REALTIME_1, D3D12_COMMAND_QUEUE_PROCESS_PRIORITY_NORMAL, { spPriorityComputeQueue1, spPriorityComputeQueue2 } } <--- Sets the priority of all queues in this scheduling group to D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY_SOFT_REALTIME_1
     //    Scheduling group 2 = { DynamicPriorityDisabled, CustomCreatorID2, D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY_DEFAULT, D3D12_COMMAND_QUEUE_PROCESS_PRIORITY_NORMAL, { spComputeQueue3 } }
 
-    CComPtr<ID3D12CommandQueueDynamicPriorityPreview> spPriorityIface0;
+    CComPtr<ID3D12CommandQueue1> spPriorityIface0;
     VERIFY_SUCCEEDED(spPriorityComputeQueue0->QueryInterface(&spPriorityIface0));
     spPriorityIface0->SetGlobalPriority(D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY_IDLE); // In this case since there is only one queue in this scheduling group (by using CustomCreatorID1), the priority can be changed only to affect this queue.
     // Scheduling groups mapping state expectation:
@@ -408,7 +408,7 @@ VERIFY_SUCCEEDED(spDevice9->CheckFeatureSupport(D3D12_FEATURE_HARDWARE_SCHEDULIN
     //    Scheduling group 1 = { DynamicPriorityEnabled, CustomCreatorID2, D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY_SOFT_REALTIME_1, D3D12_COMMAND_QUEUE_PROCESS_PRIORITY_NORMAL, { spPriorityComputeQueue1, spPriorityComputeQueue2 } }
     //    Scheduling group 2 = { DynamicPriorityDisabled, CustomCreatorID2, D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY_DEFAULT, D3D12_COMMAND_QUEUE_PROCESS_PRIORITY_NORMAL, { spComputeQueue3 } }
 
-  CComPtr<ID3D12CommandQueueDynamicPriorityPreview> spPriorityIface3;
+  CComPtr<ID3D12CommandQueue1> spPriorityIface3;
   VERIFY_SUCCEEDED(spComputeQueue3->QueryInterface(&spPriorityIface3));
   spPriorityIface3->SetGlobalPriority(D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY_IDLE); // Fails call since spComputeQueue3 was not created with D3D12_COMMAND_QUEUE_FLAG_ALLOW_DYNAMIC_PRIORITY
 }

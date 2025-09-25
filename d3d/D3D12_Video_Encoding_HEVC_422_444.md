@@ -357,6 +357,8 @@ typedef struct D3D12_VIDEO_ENCODER_PICTURE_CONTROL_CODEC_DATA_HEVC1
 
 The new added parameters must conform the codec spec, the new flags added to `D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS` and `D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS1` as well as any driver cap limitations exposed by `D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC1`.
 
+> For any codecs/configurations where the QP ranges can be negative, the ranges used by `pRateControlQPMap` as absolute map parameter are kept in that native signed range. For example for HEVC `[0, 51]` range for 8 bit pixel depth, the range for 10 bits `[-12, 51]`, and similar for higher bit depths such as `[-24, 51]` for 12 bits or `[-48, 51]` for 16 bits are all considered as-is signed from the spec.
+
 ### 3.1.7. UNION: D3D12_VIDEO_ENCODER_PICTURE_CONTROL_CODEC_DATA
 
 ```C++
@@ -376,3 +378,5 @@ typedef struct D3D12_VIDEO_ENCODER_PICTURE_CONTROL_CODEC_DATA
 For new profiles defined in the spec, the app must ensure support by calling `D3D12_FEATURE_VIDEO_ENCODER_PROFILE_LEVEL` first and then use `D3D12_VIDEO_ENCODER_PICTURE_CONTROL_CODEC_DATA_HEVC1` which contains the additional parameters to use the associated profile features.
 
 For compatibility, the previously existing profiles defined before this spec, must continue to use the legacy picture param structure `D3D12_VIDEO_ENCODER_PICTURE_CONTROL_CODEC_DATA_HEVC`, to ensure that older runtime/driver versions that do not implement support for `D3D12_VIDEO_ENCODER_PICTURE_CONTROL_CODEC_DATA_HEVC1` work as expected.
+
+> Note: Is recommended that the when support for `ID3D12VideoEncodeCommandList4::EncodeFrame1` is available, apps use `D3D12_VIDEO_ENCODER_PICTURE_CONTROL_CODEC_DATA_HEVC2` defined in [D3D12_Video_Encoding_HEVC_ReferenceListExtension](D3D12_Video_Encoding_HEVC_ReferenceListExtension.md).
