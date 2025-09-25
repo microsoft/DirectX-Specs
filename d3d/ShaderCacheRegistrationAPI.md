@@ -6,7 +6,7 @@ This API will be distributed with the D3D12 Agility SDK; however, a compatible D
 
 ## Install/Update Workflow:
 
-![Diagram representing the workflow of how the Shader Cache registration API should be used for the game store Install/Update scenario](.\Images\AdvancedShaderDelivery\D3DShaderCacheRegistrationAPI_Install.png "Install / Update Scenario")
+![Diagram representing the workflow of how the Shader Cache registration API should be used for the game store Install/Update scenario](images/AdvancedShaderDelivery/D3DShaderCacheRegistrationAPI_Install.png "Install / Update Scenario")
 
 This diagram demonstrates the interactions between the Game Store/Installer and the D3DSCR API during the game install and update process. A typical process is as follow:
 
@@ -18,7 +18,7 @@ This diagram demonstrates the interactions between the Game Store/Installer and 
 6. The installer will use D3DSCR to register the newly installed PSDB for the game.
 
 ## Runtime Workflow (Non-Title Cooperative):
-![Diagram representing the workflow of how the Shader Cache registration API should be used during runtime](.\Images\ClientShaderCacheAPI\D3DShaderCacheRegistrationAPI_Runtime.png "Runtime Scenario")
+![Diagram representing the workflow of how the Shader Cache registration API should be used during runtime](images/AdvancedShaderDelivery/D3DShaderCacheRegistrationAPI_Runtime.png "Runtime Scenario")
 
 This diagram demonstrates the interaction between the D3D12 runtime and D3DSCR API during game execution time for the 'Non-Title Cooperative' case. In this case the title was either shipped before Advanced Shader Delivery (ASD) was released or was shipped after and chose not to use the new ASD APIs. The game can still benefit from pre-compiled shaders if an SODB can be collected via playthrough. A typical process in this scenario is as follows:
 
