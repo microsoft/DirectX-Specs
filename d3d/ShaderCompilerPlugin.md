@@ -758,17 +758,15 @@ typedef struct D3D12DDI_SHADERCACHE_ABI_SUPPORT_DATA
 } D3D12DDI_SHADERCACHE_ABI_SUPPORT_DATA;
 ```
 
-Used as the pData of [D3D12DDIARG_SHADERCACHE_GETCAPS](#struct:-d3d12ddiarg_shadercache_getcaps) when querying [D3D12DDICAPS_TYPE_SHADERCACHE_ABI_SUPPORT](#enum:-d3d12ddicaps_type_shadercache).  IHVs assign one or more adapters to an adapter family, and report that family in the D3D12DDI.  They then supply a compiler for that family to allow compilation targeting the set of adapters specified by the family.  The ABI version range is compared to the ABI version of the compiler that produced precompiled shaders.
-
-See also [PFND3D12DDI_COMPILER_CHECK_ABI_VERSION](../ShaderCompilerPlugin.md#function:-pfnd3d12ddi_compiler_check_abi_version) in the compiler plugin specification.
+IHVs assign one or more adapters to an adapter family, and report that family in the D3D12DDI.  They then supply a compiler for that family to allow compilation targeting the set of adapters specified by the family.  The ABI version range is compared to the ABI version of the compiler that produced precompiled shaders.
 
 Members                                             | Description
 ------                                              | ----------
-CONST CHAR szAdapterFamily[128];                    | The IHV defined adapter family that this adapter belongs to.
-MinimumABISupportVersion                            | The lowest compiler ABI version supported by the driver.
-MaximumABISupportVersion                            | The highest compiler ABI version supported by the driver.
-CompilerVersion                                     | The Compiler Version of the compiler used by driver.
-ApplicationProfileVersion                           | The version of the compiler profile that targets this application.
+`CONST CHAR szAdapterFamily[128];`                    | The IHV defined adapter family that this adapter belongs to.
+`MinimumABISupportVersion`                            | The lowest compiler ABI version supported by the driver.
+`MaximumABISupportVersion`                            | The highest compiler ABI version supported by the driver.
+`CompilerVersion`                                     | The Compiler Version of the compiler used by driver.
+`ApplicationProfileVersion`                           | The version of the compiler profile that targets this application.
 
 Note: These values are expected to match the locally registered compiler:
 
@@ -874,7 +872,7 @@ The ABIVersion of pAdapterFamily to retrieve caps for.
 
 *pApplicationDesc*
 
-Describes the target application and version.  Not typically used, see Remarks.  See [D3D12DDI_APPLICATION_DESC](struct-d3d12ddi_application_desc).
+Describes the target application and version.  Not typically used, see Remarks.  See [D3D12DDI_APPLICATION_DESC](#struct-d3d12ddi_application_desc).
 
 *pCaps*
 
@@ -983,7 +981,7 @@ pAdapterFamily may be nullptr when performing a size check.  In that case, set \
 
 ABIVersion 0x0 and UINT64_MAX(0xffffffffffffffffui64) are reserved and must not be returned.  Compilers report version 1 for the initial version of an adapter families ABI, and then increments this counter every time the ABI version changes.
 
-ABI Versions must be reported in ascending order, so the latest ABI version appears at pABIVersions[0] and the oldest ABI version is at the highest index.  If the buffer size is insufficient, driver must fill out as many ABI versions as there is room for and report DXGI_ERROR_MORE_DATA.  For example, this may be used to only retrieve the latest ABI version supported.
+ABI Versions must be reported in ascending order, so the latest ABI version appears at `pABIVersions[0]` and the oldest ABI version is at the highest index.  If the buffer size is insufficient, driver must fill out as many ABI versions as there is room for and report DXGI_ERROR_MORE_DATA.  For example, this may be used to only retrieve the latest ABI version supported.
 
 If \*pNumABIVersions is equal to the number of ABI version or larger, copy the complete list and set \*pNumABIVersions to the correct number of entries.  Return S_OK.
 
@@ -2467,7 +2465,7 @@ On return, a pointer the compiler interface specified by riid.
 
 **Remarks**
 
-Use [D3D12_APPLICATION_DESC](#struct-d3d12_application_desc) to query the profile version from the compiler plugin with [ID3D12CompilerFactory::GetCompilerApplicationProfileVersion](#method-id3d12compilerfactorygetcompilerapplicationprofileversion).  Compilers may revise this number to indicate application specific changes to compiler output.
+Use [D3D12_APPLICATION_DESC](#struct-d3d12_application_desc) to query the profile version from the compiler plugin with [ID3D12CompilerFactory::GetApplicationProfileVersion](#method-id3d12compilerfactorygetapplicationprofileversion).  Compilers may revise this number to indicate application specific changes to compiler output.
 
 ### Enumeration: D3D12_COMPILER_VALUE_TYPE
 
