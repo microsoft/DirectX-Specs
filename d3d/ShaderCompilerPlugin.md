@@ -43,6 +43,9 @@
       - [Enumeration: D3D12DDI\_COMPILER\_CALLBACK\_TABLE\_TYPE](#enumeration-d3d12ddi_compiler_callback_table_type)
       - [Function: PFND3D12DDI\_COMPILER\_SET\_CALLBACK\_DDI\_TABLE](#function-pfnd3d12ddi_compiler_set_callback_ddi_table)
     - [Application and Compiler Descs](#application-and-compiler-descs)
+      - [Struct: D3D12DDI\_VERSION\_NUMBER](#struct-d3d12ddi_version_number)
+      - [Struct: D3D12DDI\_APPLICATION\_DESC](#struct-d3d12ddi_application_desc)
+      - [Struct: D3D12DDI\_SHADERCACHE\_ABI\_SUPPORT\_DATA](#struct-d3d12ddi_shadercache_abi_support_data)
       - [Struct: D3D12DDI\_COMPILER\_ADAPTER\_FAMILY](#struct-d3d12ddi_compiler_adapter_family)
       - [Struct: D3D12DDI\_COMPILER\_TARGET](#struct-d3d12ddi_compiler_target)
     - [Checking Capabilities](#checking-capabilities)
@@ -694,6 +697,88 @@ The size in bytes of the pTable buffer.
 
 Common structs for identifying and versioning applications, plugin compilers, and plugin application profiles.
 
+#### Struct: D3D12DDI_VERSION_NUMBER
+
+Describes a version number.  Used to describe the version of the compiler, application profiles, application versions, and minimum driver versions.
+
+```c++
+typedef union D3D12DDI_VERSION_NUMBER
+{
+    UINT64 Version;
+    UINT16 VersionParts[4];
+} D3D12DDI_VERSION_NUMBER;
+```
+
+**Members**
+
+*Version*
+
+A 64 bit encoding of four 16bit values to define a four part version as X.X.X.X.  The most significant 16bits are the first number, the next most significant bits are the second, etc.  
+
+*VersionParts*
+
+A 16 bit array representation of the version number.
+
+#### Struct: D3D12DDI_APPLICATION_DESC
+
+```c++
+typedef struct D3D12DDI_APPLICATION_DESC
+{
+    PWSTR pExeFilename;
+    PWSTR pName;
+    D3D12DDI_VERSION_NUMBER Version;
+    PWSTR pEngineName;
+    D3D12DDI_VERSION_NUMBER EngineVersion;
+} D3D12DDI_APPLICATION_DESC;
+```
+
+Metadata originating from the game store to allow the compiler plugin to identify an application.
+
+Member                                  | Definition
+------                                  | ----------
+PCWSTR pExeFilename                     | Main application executable name.  Includes the file extension, i.e "Code.exe".  This parameter is required and must be null terminated.  The member pExeFilename is used to help uniquely identify an application, but SODBs and PSDBs generated with this value may be used from other executables within the same application. For usermode drivers and the D3D12 runtime, this value is not guaranteed to match the host executable of the respective dlls. Applications must use the same pExeFilename string for all of its SODBs, regardless of which executable(s) in the application make use of it.
+PCWSTR pName                            | The title of the application.  Example: "Microsoft Visual Studio Code".  This parameter is required and must be null terminated.
+D3D12DDI_VERSION_NUMBER Version         | The version of the application.  For example, for Visual Studio Code 1.93.1, the version would be: 0x0001005D00010000.  This parameter is required.
+PCWSTR pEngineName                      | The name of the game engine used.  Example "Godot", "Unity", "Unreal Engine", etc.  This parameter is optional, but should be provided whenever possible and must be null terminated.  Use nullptr to indicate unspecified.
+D3D12DDI_VERSION_NUMBER EngineVersion   | The version of the engine.  For example, for Godot 4.3, the version would be: 0x0004000300000000.  This parameter is required if pEngineName is non-nullptr.
+
+Note: An application may have multiple SODBs, but the application information must be identical between them.
+
+#### Struct: D3D12DDI_SHADERCACHE_ABI_SUPPORT_DATA
+
+```c++
+// D3D12DDICAPS_TYPE_SHADERCACHE_ABI_SUPPORT
+typedef struct D3D12DDI_SHADERCACHE_ABI_SUPPORT_DATA
+{
+    CONST CHAR szAdapterFamily[128];
+    UINT64 MinimumABISupportVersion;
+    UINT64 MaximumABISupportVersion;
+    D3D12DDI_VERSION_NUMBER CompilerVersion;
+    D3D12DDI_VERSION_NUMBER ApplicationProfileVersion;
+} D3D12DDI_SHADERCACHE_ABI_SUPPORT_DATA;
+```
+
+Used as the pData of [D3D12DDIARG_SHADERCACHE_GETCAPS](#struct:-d3d12ddiarg_shadercache_getcaps) when querying [D3D12DDICAPS_TYPE_SHADERCACHE_ABI_SUPPORT](#enum:-d3d12ddicaps_type_shadercache).  IHVs assign one or more adapters to an adapter family, and report that family in the D3D12DDI.  They then supply a compiler for that family to allow compilation targeting the set of adapters specified by the family.  The ABI version range is compared to the ABI version of the compiler that produced precompiled shaders.
+
+See also [PFND3D12DDI_COMPILER_CHECK_ABI_VERSION](../ShaderCompilerPlugin.md#function:-pfnd3d12ddi_compiler_check_abi_version) in the compiler plugin specification.
+
+Members                                             | Description
+------                                              | ----------
+CONST CHAR szAdapterFamily[128];                    | The IHV defined adapter family that this adapter belongs to.
+MinimumABISupportVersion                            | The lowest compiler ABI version supported by the driver.
+MaximumABISupportVersion                            | The highest compiler ABI version supported by the driver.
+CompilerVersion                                     | The Compiler Version of the compiler used by driver.
+ApplicationProfileVersion                           | The version of the compiler profile that targets this application.
+
+Note: These values are expected to match the locally registered compiler:
+
+- szAdapterFamily must be supported by the compiler plugin
+- MaximumABISupportedVersion must be supported by the compiler plugin
+- CompilerVersion must match the CompilerVersion of the corresponding compiler registered for this driver.
+- ApplicationProfileVersion must also match the compiler given the same adapter family and application desc.
+
+Note: ApplicationProfileVersion here is determined by inspecting the D3D12DDI_APPLICATION_DESC retreived from D3DDDI_QUERYADAPTERTYPE_APPLICATIONDESC.  When the desc is not available or does not match a profile, this value should be zero.  When D3DDDI_QUERYADAPTERTYPE_APPLICATIONSPECIFICDRIVERBLOB is used, the blob should allow returning an value here that is consistent with when the blob was captured for replay scenarios.
+
 #### Struct: D3D12DDI_COMPILER_ADAPTER_FAMILY
 
 Describes an adapter family by name.
@@ -789,7 +874,7 @@ The ABIVersion of pAdapterFamily to retrieve caps for.
 
 *pApplicationDesc*
 
-Describes the target application and version.  Not typically used, see Remarks.  See [D3D12DDI_APPLICATION_DESC](SORuntimeChanges.md#struct-d3d12ddi_application_desc).
+Describes the target application and version.  Not typically used, see Remarks.  See [D3D12DDI_APPLICATION_DESC](struct-d3d12ddi_application_desc).
 
 *pCaps*
 
@@ -882,7 +967,7 @@ Recieves the list of ABI Versions for pAdapterFamily.  May be nullptr when perfo
 
 **Remarks**
 
-Returns the the compiler ABI version supported by the compiled binaries produced by this compiler.  This is compared with the supported ABI range of a driver to understand if precompiled binaries are supported.  See the [D3D12DDI_SHADERCACHE_ABI_SUPPORT_DATA](./SORuntimeChanges.md#struct-d3d12ddi_shadercache_abi_support_data) capability check. A range of ABI versions is supported for an adapter family to allow targeting adapters that may not be receiving driver updates.
+Returns the the compiler ABI version supported by the compiled binaries produced by this compiler.  This is compared with the supported ABI range of a driver to understand if precompiled binaries are supported.  See the [D3D12DDI_SHADERCACHE_ABI_SUPPORT_DATA](#struct-d3d12ddi_shadercache_abi_support_data) capability check. A range of ABI versions is supported for an adapter family to allow targeting adapters that may not be receiving driver updates.
 
 Compiled objects produced by this compiler may not be used with drivers that do not report this ABI version in their supported ABI version range.
 
@@ -926,7 +1011,7 @@ The index specifies adapter family.  See [D3D12DDI_COMPILER_ADAPTER_FAMILY](#str
 
 *pCompilerVersion*
 
-Compiler version changes signify changes in code generation that potentially impact all applications for an adapter family.  See [D3D12DDI_VERSION_NUMBER](./SORuntimeChanges.md#struct-d3d12ddi_version_number).
+Compiler version changes signify changes in code generation that potentially impact all applications for an adapter family.  See [D3D12DDI_VERSION_NUMBER](#struct-d3d12ddi_version_number).
 
 **Remarks**
 
@@ -957,11 +1042,11 @@ Contains the adapter family and ABI version.  See [D3D12DDI_COMPILER_TARGET](#st
 
 *pApplicationDesc*
 
-Describes the target application and version.  See [D3D12DDI_APPLICATION_DESC](SORuntimeChanges.md#struct-d3d12ddi_application_desc).
+Describes the target application and version.  See [D3D12DDI_APPLICATION_DESC](#struct-d3d12ddi_application_desc).
 
 *pApplicationProfileVersion*
 
-Describes the version of the compiler profile that targets a specific application.  Applications are specified by application identifier and application version.  Compilers may revise this number to indicate application specific changes to compiler output.  See [D3D12DDI_VERSION_NUMBER](./SORuntimeChanges.md#struct-d3d12ddi_version_number).
+Describes the version of the compiler profile that targets a specific application.  Applications are specified by application identifier and application version.  Compilers may revise this number to indicate application specific changes to compiler output.  See [D3D12DDI_VERSION_NUMBER](#struct-d3d12ddi_version_number).
 
 **Remarks**
 
@@ -1487,7 +1572,7 @@ Contains the adapter family and ABI version.  See [D3D12DDI_COMPILER_TARGET](#st
 
 *pApplicationDesc*
 
-Describes the target application and version.  See [D3D12DDI_APPLICATION_DESC](SORuntimeChanges.md#struct-d3d12ddi_application_desc).
+Describes the target application and version.  See [D3D12DDI_APPLICATION_DESC](#struct-d3d12ddi_application_desc).
 
 **Remarks**
 
@@ -1514,7 +1599,7 @@ Contains the adapter family and ABI version.  See [D3D12DDI_COMPILER_TARGET](#st
 
 *pApplicationDesc*
 
-Describes the target application and version.  See [D3D12DDI_APPLICATION_DESC](SORuntimeChanges.md#struct-d3d12ddi_application_desc).
+Describes the target application and version.  See [D3D12DDI_APPLICATION_DESC](#struct-d3d12ddi_application_desc).
 
 *hCompiler*
 
@@ -1885,7 +1970,7 @@ Uniquely identifies an adapter family for a hardware vendor.
 
 *CompilerVersion*
 
-Compiler version changes signify changes in code generation that potentially impact all applications for an adapter family.  See [D3D12_VERSION_NUMBER](./SORuntimeChanges.md#struct-d3d12_version_number).
+Compiler version changes signify changes in code generation that potentially impact all applications for an adapter family.  See [D3D12_VERSION_NUMBER](#union-d3d12_version_number).
 
 **Remarks**
 
@@ -2298,7 +2383,7 @@ The index of the adapter family to to query for supported ABI versions.  See [D3
 
 *pCompilerVersion*
 
-Compiler version changes signify changes in code generation that potentially impact all applications for an adapter family.  See [D3D12_VERSION_NUMBER](./SORuntimeChanges.md#struct-d3d12_version_number).
+Compiler version changes signify changes in code generation that potentially impact all applications for an adapter family.  See [D3D12_VERSION_NUMBER](#union-d3d12_version_number).
 
 **Remarks**
 
