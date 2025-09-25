@@ -89,6 +89,8 @@ typedef struct D3D12_VIDEO_ENCODER_RATE_CONTROL_CQP1
 } D3D12_VIDEO_ENCODER_RATE_CONTROL_CQP1;
 ```
 
+> For any codecs/configurations where the QP ranges can be negative, the ranges used by these `D3D12_VIDEO_ENCODER_RATE_CONTROL_CQP1` parameters are shifted into a positive range. For example for HEVC `[0, 51]` range for 8 bit pixel depth is unchanged, however the range for 10 bits `[-12, 51]` (and similar for higher bit depths) is considered `[0, 63]`.
+
 ```C++
 typedef struct D3D12_VIDEO_ENCODER_RATE_CONTROL_CBR1
 {
@@ -1561,15 +1563,15 @@ Related to AV1 syntax loop_filter_delta_enabled. Requires D3D12_VIDEO_ENCODER_AV
 
 *UpdateRefDelta*
 
-Related to AV1 syntax update_ref_delta
+Bitmask related to AV1 syntax update_ref_delta. The i-th bit is associated with the `RefDeltas[i]` entry with i in range [0..7].
 
 *RefDeltas*
 
-Related to AV1 syntax loop_filter_ref_deltas
+Related to AV1 syntax loop_filter_ref_deltas.
 
 *UpdateModeDelta*
 
-Related to AV1 syntax update_mode_delta
+Bitmask related to AV1 syntax update_mode_delta. The i-th bit is associated with the `ModeDeltas[i]` entry with i in range [0..1].
 
 *ModeDeltas*
 
@@ -2173,6 +2175,9 @@ Resolves the output metadata to a readable format. **Already present in existing
     - For D3D12_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS.EncodeCodec == D3D12_VIDEO_ENCODER_CODEC_AV1, a new resolved buffer layout is defined below.
 
 ### **Resolved buffer layouts for ResolveEncoderOutputMetadata**
+
+Please refer to [D3D12_Video_Encoding_Stats_Metadata](D3D12_Video_Encoding_Stats_Metadata.md) for additional resolved metadata layout data.
+
 #### *For H264/HEVC codecs*
 
     - Same as existing ResolveEncoderOutputMetadata layout:
@@ -2193,7 +2198,7 @@ Resolves the output metadata to a readable format. **Already present in existing
                 - bSize = tile_size_minus_1 + 1 + bStartOffset
                 - bStartOffset = Bytes to skip relative to this tile, the actual bitstream coded tile size is tile_size_minus_1 = (bSize - bStartOffset - 1).
                 - bHeaderSize = 0
-                - The i-th tile is read from the compressed_bitstream[offset] with  offset = [sum j = (0, (i-1)){ tile[j].bSize }] + tile[i].bStartOffset
+                - The i-th tile is read from the compressed_bitstream[offset] with  offset = D3D12_VIDEO_ENCODER_COMPRESSED_BITSTREAM.FrameStartOffset + [sum j = (0, (i-1)){ tile[j].bSize }] + tile[i].bStartOffset
             - D3D12_VIDEO_ENCODER_AV1_PICTURE_CONTROL_SUBREGIONS_LAYOUT_DATA_TILES structure indicating the encoded frame tile grid structure
             - D3D12_VIDEO_ENCODER_AV1_POST_ENCODE_VALUES indicating encoding metadata values that are only obtained post-execution of EncodeFrame on the GPU.
 
