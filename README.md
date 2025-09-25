@@ -38,6 +38,10 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Planar Depth Stencil](d3d/PlanarDepthStencilDDISpec.md)
     * [Vulkan Compatibility Features](d3d/VulkanOn12.md)
     * [Tight Resource Alignment](d3d/D3D12TightPlacedResourceAlignment.md)
+    * Advanced Shader Delivery
+      * [Serialized Root Signatures](d3d/SerializedRootSignatures.md)
+      * [Shader Cache Registration API](d3d/ShaderCacheRegistrationAPI.md)
+      * [Shader Compilers](d3d/ShaderCompilerPlugin.md)
 
 * Performance
     * [CPU Efficiency](d3d/CPUEfficiency.md)
