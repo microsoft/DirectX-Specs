@@ -52,7 +52,7 @@ To keep things consitent for the runtime and the compiler the new subobject type
 
 ## Runtime support for the new subobject type
 
-###Changes to subobject types
+### Changes to subobject types
 ```cpp
 typedef enum D3D12_PIPELINE_STATE_SUBOBJECT_TYPE
 {
