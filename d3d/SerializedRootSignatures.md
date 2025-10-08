@@ -147,5 +147,4 @@ public:
         _COM_Outptr_  void **ppvRootSignature) = 0;
     
 };
-
 ```
