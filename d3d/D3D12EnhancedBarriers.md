@@ -730,11 +730,10 @@ In addition, textures created using the `D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_
 - `D3D12_BARRIER_ACCESS_RESOLVE_DEST`
 - `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE`
 
-There are several queue-type-specific common layouts which may differ from `D3D12_BARRIER_LAYOUT_COMMON` in some hardware:
+There are queue-type-specific common layouts which may differ from `D3D12_BARRIER_LAYOUT_COMMON` in some hardware:
 
 - `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COMMON`
 - `D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COMMON`
-- `D3D12_BARRIER_LAYOUT_VIDEO_QUEUE_COMMON`
 
 The queue-specific common layouts offer some advantages, including reduced decompress operations and the ability to use common-layout textures as UAV's without the need for a layout transition.
 
@@ -1096,11 +1095,6 @@ The following tables describe the Access types compatible with a given layout:
 |-------------------------------------------|
 | `D3D12_BARRIER_ACCESS_VIDEO_ENCODE_WRITE` |
 
-| `D3D12_BARRIER_LAYOUT_VIDEO_QUEUE_COMMON` |
-|-------------------------------------------|
-| `D3D12_BARRIER_ACCESS_COPY_SOURCE`        |
-| `D3D12_BARRIER_ACCESS_COPY_DEST`          |
-
 | `D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_GENERIC_READ_COMPUTE_QUEUE_ACCESSIBLE` |
 |------------------------------------------------------------------------------|
 | `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`                                       |
@@ -1320,8 +1314,8 @@ typedef enum D3D12_BARRIER_LAYOUT
     D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_SHADER_RESOURCE,
     D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COPY_SOURCE,
     D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COPY_DEST,
-    D3D12_BARRIER_LAYOUT_VIDEO_QUEUE_COMMON,
-    D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_GENERIC_READ_COMPUTE_QUEUE_ACCESSIBLE,
+    D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_GENERIC_READ_COMPUTE_QUEUE_ACCESSIBLE =
+        D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COPY_DEST + 2,
 } D3D12_BARRIER_LAYOUT;
 ```
 
@@ -1450,10 +1444,6 @@ Same as `D3D12_BARRIER_LAYOUT_COPY_SOURCE` except with optimizations specific fo
 #### D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COPY_DEST
 
 Same as `D3D12_BARRIER_LAYOUT_COPY_DEST` except with optimizations specific for compute queues. Can only be used in barriers on compute queues.
-
-#### D3D12_BARRIER_LAYOUT_VIDEO_QUEUE_COMMON
-
-Supports common (barrier free) usage on video queues only. May be more optimal than the more general `D3D12_BARRIER_LAYOUT_COMMON`. Can only be used in barriers on video queues.
 
 #### D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_GENERIC_READ_COMPUTE_QUEUE_ACCESSIBLE
 
