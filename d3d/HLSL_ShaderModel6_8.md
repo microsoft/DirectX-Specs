@@ -29,7 +29,7 @@ Several existing operations have been expanded to support Comparison Samplers.
 New methods: `SampleCmpBias`, `SampleCmpGrad`.
 Added overloads: `CalculateLevelOfDetail`, `CalculateLevelOfDetailUnclamped`.
 
-See the [Expanded Comparison Sampling](https://microsoft.github.io/hlsl-specs/proposals/0014-expanded-comparison-sampling.html) documentation for more details.
+See the [Expanded Comparison Sampling](https://microsoft.github.io/hlsl-specs/proposals/0014-expanded-comparison-sampling/) documentation for more details.
 
 ## Extended Command Information
 
@@ -38,14 +38,14 @@ Two new system-value semantics are required to be supported in HLSL shader model
 - `SV_StartVertexLocation` - Reports `StartVertexLocation` from `DrawInstanced()` or `BaseVertexLocation` from `DrawIndexedInstanced()` to a vertex shader.
 - `SV_StartInstanceLocation` - Reports `StartInstanceLocation` From `Draw*Instanced` to a vertex shader.
 
-See the [Extended Command Information](https://microsoft.github.io/hlsl-specs/proposals/0015-extended-command-info.html) documentation for more details.
+See the [Extended Command Information](https://microsoft.github.io/hlsl-specs/proposals/0015-extended-command-info/) documentation for more details.
 
 ## Wave Size Range
 
 A new variant of the [WaveSize](HLSL_SM_6_6_WaveSize.md) attribute is added: `[WaveSize( min, max [, preferred] )]`.
 This allows you to specify a range and optional preferred size.
 
-See the [Wave Size Range](https://microsoft.github.io/hlsl-specs/proposals/0013-wave-size-range.html) documentation for more details.
+See the [Wave Size Range](https://microsoft.github.io/hlsl-specs/proposals/0013-wave-size-range/) documentation for more details.
 
 ## Change Log
 
