@@ -160,7 +160,7 @@ This example demonstrates how to compile a Pipeline State Object (PSO) and store
     //
 
     Microsoft::WRL::ComPtr<ID3D12CompilerFactory> spFactory;
-    VERIFY_SUCCEEDED(D3D12CreateCompilerFactory(CompilerPluginDll, IID_PPV_ARGS(&spFactory)));
+    VERIFY_SUCCEEDED(D3D12CreateCompilerFactory(CompilerPluginDll, IID_PPV_ARGS(&spFactory)));  // Current Agility SDK version (1.618.5) uses D3D12CompilerCreateFactory in d3d12compiler.h
 
     //
     // Cache output path and type
@@ -1872,6 +1872,8 @@ Expected return codes (not exhaustive):
 | E_INVALIDARG | Invalid arguments specified. |
 | E_OUTOFMEMORY | Unable to create compiler factory do to memory allocation failure. |
 | HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) | pPluginCompilerDllPath does not point to a file. |
+
+Current Agility SDK version (1.618.5) uses D3D12CompilerCreateFactory in d3d12compiler.h.
 
 ### Application Descs and Compiler Targets
 
