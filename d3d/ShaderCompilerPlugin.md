@@ -1875,6 +1875,8 @@ Expected return codes (not exhaustive):
 
 Current Agility SDK version (1.618.5) uses D3D12CompilerCreateFactory in d3d12compiler.h.
 
+You must define `WINAPI_FAMILY` to either `WINAPI_FAMILY_PC_APP`, `WINAPI_FAMILY_PHONE_APP`, `WINAPI_FAMILY_DESKTOP_APP`, or `WINAPI_FAMILY_GAMES` before including d3d12compiler.h to use this function.
+
 ### Application Descs and Compiler Targets
 
 ### Union: D3D12_VERSION_NUMBER
