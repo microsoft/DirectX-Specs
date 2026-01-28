@@ -5159,6 +5159,7 @@ listed here for consideration in a future release.</b></p>
 <p>A Buffer Resource is trivially divided into 64KB tiles, with some empty space in the last tile if the size is not a multiple of 64KB.</p>
 <p>Structured Buffers must have no constraint on the Stride to be Tiled, however possible performance optimizations in hardware
 for using Structured Buffers may be sacrificed by making them Tiled in the first place.</p>
+<p>Typed buffer views on a tiled resource don't support 96bpp formats, video formats, R1_UNORM, R8G8_B8G8_UNORM, G8R8_G8B8_UNORM.</p>
 
 <hr><!-- ********************************************************************** -->
 <h5 id="MipmapPacking"></h5><A id="5.9.2.8.5 Mipmap Packing"></A>
@@ -9965,7 +9966,7 @@ typedef struct D3D11_INPUT_ELEMENT_DESC
 <pre>
 <a id="CreateInputLayoutAPI"></a>
 CreateInputLayout(
-    const <a href="#D3D11_INPUT_ELEMENT_DESC">D3D11_INPUT_ELEMENT_DESC</a>* pDeclaration,
+    const <a href="#D3D11_INPUT_ELEMENT_DESC"> D3D11_INPUT_ELEMENT_DESC</a>* pDeclaration,
     SIZE_T NumElements,
     ID3D10InputLayout **ppInputLayout);
 
@@ -10060,7 +10061,7 @@ for(each slot, s, <a href="#SetVertexBufferAPI">with a VertexBuffer assigned</a>
         {
             VertexBufferElementAddressInBytes[s][e] =
                 <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets">VertexBufferOffsetInBytes</a> +
-                <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*<a href="#StartVertexLocation"> StartVertexLocation</a> +
+                <a href="#SlotDesc"> Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*<a href="#StartVertexLocation">StartVertexLocation</a> +
                 <a href="#SlotDesc">Slot</a>[s].<a href="#pInputLayout">pInputLayout</a>-&gt;pElement[e].<a href="#ElementOffset">OffsetInBytes</a>;
         } // Element loop
     }
@@ -10070,7 +10071,7 @@ for(each slot, s, <a href="#SetVertexBufferAPI">with a VertexBuffer assigned</a>
         {
             VertexBufferElementAddressInBytes[s][e] =
                 <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets">VertexBufferOffsetInBytes</a> +
-                <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*<a href="#DrawInstancedStartInstanceLocation"> StartInstanceLocation</a> +
+                <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*<a href="#DrawInstancedStartInstanceLocation">StartInstanceLocation</a> +
                 <a href="#SlotDesc">Slot</a>[s].<a href="#pInputLayout">pInputLayout</a>-&gt;pElement[e].<a href="#ElementOffset">OffsetInBytes</a>;
         } // Element loop
         InstanceDataStepCounter[s] = <a href="#SlotDesc">Slot</a>[s].<a href="#InstanceDataStepRate">InstanceDataStepRate</a>;
@@ -10109,13 +10110,13 @@ for(UINT InstanceID = 0;  InstanceID &lt; <a href="#DrawInstancedInstanceCount">
     // Patch Instance and Vertex Data addresses at the end of an instance.
     for(each slot, s, with a VertexBuffer assigned)
     {
-        if(<a href="#SlotDesc">Slot</a>[s].<a href="#VertexBufferClass">Class</a> == <a href="#INPUT_CLASSIFICATION">D3D11_INPUT_PER_VERTEX_DATA</a>)
+        if(<a href="#SlotDesc">Slot</a>[s].<a href="#VertexBufferClass">Class</a> == <a href="#INPUT_CLASSIFICATION"> D3D11_INPUT_PER_VERTEX_DATA</a>)
         {
             for(each Element, e, <a href="#SetInputLayoutAPI">in the buffer's structure declaration</a>)
             {
                 VertexBufferElementAddressInBytes[s][e] =
                     <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets">VertexBufferOffsetInBytes</a> +
-                    <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*<a href="#StartVertexLocation">StartVertexLocation</a> +
+                    <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides"> StrideInBytes</a>*<a href="#StartVertexLocation">StartVertexLocation</a> +
                     <a href="#SlotDesc">Slot</a>[s].<a href="#pInputLayout">pInputLayout</a>-&gt;pElement[e].<a href="#ElementOffset">OffsetInBytes</a>;
             } // Element loop
         }
@@ -10307,10 +10308,10 @@ for(UINT InstanceID = 0; InstanceID &lt; <a href="#DrawIndexedInstancedInstanceC
             continue;
         }
 
-        for(each slot, s, <a href="#SetVertexBufferAPI">with a VertexBuffer assigned</a>)
+        for(each slot, s, <a href="#SetVertexBufferAPI"> with a VertexBuffer assigned</a>)
         {
             UINT IndexedOffset;
-            if(<a href="#SlotDesc"> Slot</a>[s].<a href="#VertexBufferClass">Class</a> == <a href="#INPUT_CLASSIFICATION">D3D11_INPUT_PER_VERTEX_DATA</a>)
+            if(<a href="#SlotDesc">Slot</a>[s].<a href="#VertexBufferClass">Class</a> == <a href="#INPUT_CLASSIFICATION">D3D11_INPUT_PER_VERTEX_DATA</a>)
             {
                 IndexedOffset = <a href="#SlotDesc">Slot</a>[s].<a href="#pStrides">StrideInBytes</a>*(<a href="#BaseVertexLocation">BaseVertexLocation</a> + IndexValue);
             }
@@ -10319,7 +10320,7 @@ for(UINT InstanceID = 0; InstanceID &lt; <a href="#DrawIndexedInstancedInstanceC
                 if(<a href="#SlotDesc">Slot</a>[s].<a href="#VertexBufferClass">Class</a> == <a href="#INPUT_CLASSIFICATION">D3D11_INPUT_PER_VERTEX_DATA</a>)
                 {
                     VertexBufferElementAddressInBytes[s][e] =
-                        <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets"> VertexBufferOffsetInBytes</a> +
+                        <a href="#SlotDesc">Slot</a>[s].<a href="#pOffsets">VertexBufferOffsetInBytes</a> +
                         IndexedOffset +
                         <a href="#SlotDesc">Slot</a>[s].pInputLayout-&gt;pElement[e].<a href="#ElementOffset">OffsetInBytes</a>;
                 }
@@ -24436,7 +24437,7 @@ Operation:      dest = src0.r * src1.r +
 <h3 id="inst_DP4"></h3><A id="22.10.5 dp4"></A>
 <H3>22.10.5 dp4</H3>
 <pre>
-Instruction:    dp4[<a href="#inst_MOD_SAT"> _sat</a>]
+Instruction:    dp4[<a href="#inst_MOD_SAT">_sat</a>]
                              dest[.mask],
                           [<a href="#inst_MOD_NEGATE">-</a>]src0[<a href="#inst_MOD_ABS">_abs</a>][.swizzle],
                           [<a href="#inst_MOD_NEGATE">-</a>]src1[<a href="#inst_MOD_ABS">_abs</a>][.swizzle],
@@ -25218,7 +25219,7 @@ Restrictions:   The maximum absolute error is 0.0008 in the interval from -100*P
 <H3>22.10.21 sqrt</H3>
 <pre>
 Instruction:    sqrt[<a href="#inst_MOD_SAT">_sat</a>]   dest[.mask],
-                                [<a href="#inst_MOD_NEGATE">-</a>]src0[<a href="#inst_MOD_ABS"> _abs</a>][.swizzle]
+                                [<a href="#inst_MOD_NEGATE">-</a>]src0[<a href="#inst_MOD_ABS">_abs</a>][.swizzle]
 
 Stage(s):       <a href="#AllStages">All</a><a style="color: Gray"><small><sup>(22.1.1)</sup></small></a>
 
@@ -26977,7 +26978,7 @@ Operation:      dest = src0
 <h3 id="inst_DMOVC"></h3><A id="22.16.2 dmovc (conditional select)"></A>
 <H3>22.16.2 dmovc (conditional select)</H3>
 <pre>
-Instruction:    dmovc[<a href="#inst_MOD_SAT"> _sat</a>]               dest[.mask],
+Instruction:    dmovc[<a href="#inst_MOD_SAT">_sat</a>]               dest[.mask],
                                                                      src0[.swizzle],
                                    [<a href="#inst_MOD_NEGATE">-</a>]src1[<a href="#inst_MOD_ABS">_abs</a>][.swizzle],
                                    [<a href="#inst_MOD_NEGATE">-</a>]src2[<a href="#inst_MOD_ABS">_abs</a>][.swizzle],
