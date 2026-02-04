@@ -1,5 +1,5 @@
 <h1>D3D12 Work Graphs</h1>
-v1.011 2/12/2025
+v1.012 2/4/2026
 
 ---
 
@@ -832,7 +832,7 @@ Here is an example of a shader that uses a coalescing launch, so the input is an
 
 ```
 	
-Here is an example of a compute shader whose input only has shader arguments, as the dispatch grid size is fixed at the node.  The shader also doesn't declare a thread group size, which means the node the shader is used at must declare a thread group size:
+Here is an example of a compute shader whose input only has shader arguments, as the dispatch grid size is fixed at the node:
 
 ```C++
     struct MY_OTHER_RECORD // this record goes to a node with a fixed dispatch 
@@ -842,9 +842,9 @@ Here is an example of a compute shader whose input only has shader arguments, as
         uint textureIndex; 
     };
 
-    // Observe, no thread group size - so it must be defined at the node
     [Shader("node")]
     [NodeLaunch("broadcasting")]
+    [NumThreads(1024,1,1)]
     void myPhysicsNode(uint3 DTid : SV_DispatchThreadID, ...
         DispatchNodeInputRecord<MY_OTHER_RECORD> myRecord
         )
@@ -6594,3 +6594,4 @@ v1.008|6/6/2024|<li>Added [graphics nodes with ordered rasterization](#graphics-
 v1.009|6/13/2024|<li>In [Helping mesh nodes work better on some hardware](#helping-mesh-nodes-work-better-on-some-hardware) and [SetWorkGraphMaximumGPUInputRecords()](#setworkgraphmaximumgpuinputrecords), changed the requirements for this call such that it isn't needed before initializing backing memory, but instead needed before calls to `DispatchGraph()` on the commandlist that feed mesh nodes via GPU input records.</li>
 v1.010|7/3/2024|<li>In [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc) clarified that `NodeGPUInput` or `MultiNodeGPUInput` members, which are GPUVAs, must be 8 byte aligned.</li>
 v1.011|2/12/2025|<li>In [Sharing input records across nodes](#sharing-input-records-across-nodes), clarified that entrypoints can't share input of another node.  The runtime already enforces this.</li>
+v1.012|2/4/2026|<li>Fixed code example that made it look like thread group size didn't need to be specified with a broadcasting launch shader and could be specified later (which is not the case, it's required and fixed just like a vanilla compute shader).</li>
