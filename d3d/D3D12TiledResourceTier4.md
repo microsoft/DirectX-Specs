@@ -23,7 +23,7 @@ Since 64KB_STANDARD_SWIZZLE is not widely adopted, tiled resource tier 4 does no
 
 ## API
 
-D3D12 has already exposed D3D12_TILED_RESOURCES_TIER_4, although it can only be used as an experimental feature with developer mode enabled. Therefore, no API change is needed here.
+There is no API change. D3D12_TILED_RESOURCES_TIER_4 is already available.
 
 Existing D3D12 resource creation APIs can already be used to create 64KB_UNDEFINED_SWIZZLE texture arrays with a full mip chain. Other D3D12 tiled resource APIs (GetResourceTiling, UpdateTileMappings, etc.) do not need to change for the same reason. 
 
