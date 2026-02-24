@@ -50,6 +50,15 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [Copy Queues](#copy-queues)
   - [Layout Access Compatibility](#layout-access-compatibility)
   - [Access Bits Barrier Sync Compatibility](#access-bits-barrier-sync-compatibility)
+- [Fence Barriers](#fence-barriers)
+  - [Signal Barriers](#signal-barriers)
+  - [Wait Barriers](#wait-barriers)
+  - [Fence Creation Flags Supporting Fence Barriers](#fence-creation-flags-supporting-fence-barriers)
+  - [Command List Scoped Fences](#command-list-scoped-fences)
+  - [Cross Queue Synchronization](#cross-queue-synchronization)
+  - [CPU/GPU Synchronization](#cpugpu-synchronization)
+  - [External Dependencies and D3D12\_BARRIER\_ACCESS\_GLOBAL](#external-dependencies-and-d3d12_barrier_access_global)
+  - [Return Trip Fence Barrier Dependencies](#return-trip-fence-barrier-dependencies)
 - [API](#api)
   - [D3D12\_BARRIER\_LAYOUT](#d3d12_barrier_layout)
   - [D3D12\_BARRIER\_SYNC](#d3d12_barrier_sync)
@@ -65,6 +74,8 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [ID3D12VideoDecodeCommandList3 Barrier](#id3d12videodecodecommandlist3-barrier)
   - [ID3D12VideoProcessCommandList3 Barrier](#id3d12videoprocesscommandlist3-barrier)
   - [ID3D12VideoEncodeCommandList3 Barrier](#id3d12videoencodecommandlist3-barrier)
+  - [ID3D12GraphicsCommandListXXX  WaitBarrier](#id3d12graphicscommandlistxxx--waitbarrier)
+  - [ID3D12GraphicsCommandListXXX SignalBarrier](#id3d12graphicscommandlistxxx-signalbarrier)
   - [ID3D12Device10 CreateCommittedResource3](#id3d12device10-createcommittedresource3)
   - [ID3D12Device10 CreatePlacedResource2](#id3d12device10-createplacedresource2)
   - [ID3D12Device10 CreateReservedResource2](#id3d12device10-createreservedresource2)
@@ -89,12 +100,20 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [D3D12DDI\_BARRIER\_TYPE](#d3d12ddi_barrier_type)
   - [D3D12DDIARG\_BARRIER\_0094](#d3d12ddiarg_barrier_0094)
   - [PFND3D12DDI\_BARRIER](#pfnd3d12ddi_barrier)
+  - [PFND3D12DDI\_WAITBARRIER\_0114](#pfnd3d12ddi_waitbarrier_0114)
+  - [PFND3D12DDI\_SIGNALBARRIER\_0114](#pfnd3d12ddi_signalbarrier_0114)
+  - [D3D12DDI\_FENCE\_BARRIERS\_FUNCS\_0114](#d3d12ddi_fence_barriers_funcs_0114)
   - [D3D12DDIARG\_CREATERESOURCE\_0088](#d3d12ddiarg_createresource_0088)
   - [PFND3D12DDI\_CREATEHEAPANDRESOURCE\_0088](#pfnd3d12ddi_createheapandresource_0088)
   - [PFND3D12DDI\_CALCPRIVATEHEAPANDRESOURCESIZES\_0088](#pfnd3d12ddi_calcprivateheapandresourcesizes_0088)
   - [PFND3D12DDI\_CHECKRESOURCEALLOCATIONINFO\_0088](#pfnd3d12ddi_checkresourceallocationinfo_0088)
   - [D3D12DDI\_D3D12\_OPTIONS\_DATA\_0089](#d3d12ddi_d3d12_options_data_0089)
+  - [D3D12DDI\_FEATURE\_0114\_FENCE\_BARRIERS (temporary)](#d3d12ddi_feature_0114_fence_barriers-temporary)
+  - [Updates to D3D12DDI\_FENCE\_TYPE\_0112 enum](#updates-to-d3d12ddi_fence_type_0112-enum)
+  - [D3D12DDI\_COMMAND\_LIST\_SCOPED\_FENCE struct](#d3d12ddi_command_list_scoped_fence-struct)
+  - [Updates to D3D12DDIARG\_CREATE\_FENCE\_0112 struct](#updates-to-d3d12ddiarg_create_fence_0112-struct)
 - [Open Issues](#open-issues)
+  - [Fence barriers fence rollback](#fence-barriers-fence-rollback)
 - [Testing](#testing)
   - [Functional Testing](#functional-testing)
   - [Unit Testing](#unit-testing)
@@ -271,7 +290,7 @@ With legacy Resource Barriers, drivers must infer which work to synchronize.  Of
 
 The enhanced Barrier API's use explicit `SyncBefore` and `SyncAfter` values as bitfield masks that can describe one or more combined synchronization scopes.  A Barrier must wait for all preceding command `SyncBefore` scopes to complete before executing the barrier.  Similarly, a Barrier must block all subsequent `SyncAfter` scopes until the barrier completes.
 
-`D3D12_BARRIER_SYNC_NONE` indicates synchronization is not needed either before or after barrier.  A `D3D12_BARRIER_SYNC_NONE` `SyncBefore` value implies that the corresponding subresources are not accessed before the barrier in the same `ExecuteCommandLists` scope.  Likewise, a `D3D12_BARRIER_SYNC_NONE` `SyncAfter` value implies that the corresponding subresources are not accessed after the barrier in the same `ExecuteCommandLists` scope.  Therefore, `Sync[Before|After]=D3D12_BARRIER_SYNC_NONE` must be paired with `Access[Before|After]=D3D12_BARRIER_ACCESS_NO_ACCESS`.
+For non-fence barriers, `D3D12_BARRIER_SYNC_NONE` indicates no synchronization is needed either before or after barrier.  A `D3D12_BARRIER_SYNC_NONE` `SyncBefore` value implies that the corresponding subresources are not accessed before the barrier in the same `ExecuteCommandLists` scope.  Likewise, a `D3D12_BARRIER_SYNC_NONE` `SyncAfter` value implies that the corresponding subresources are not accessed after the barrier in the same `ExecuteCommandLists` scope.  Therefore, `Sync[Before|After]=D3D12_BARRIER_SYNC_NONE` is typically paired with `Access[Before|After]=D3D12_BARRIER_ACCESS_NO_ACCESS` (except in the case of certain `SignalBarrier` or `WaitBarrier` operations).
 
 If a barrier `SyncBefore` is `D3D12_BARRIER_SYNC_NONE`, then `AccessBefore` MUST be `D3D12_BARRIER_ACCESS_NO_ACCESS`.  In this case, there MUST have been no preceding barriers or accesses made to that resource in the same `ExecuteCommandLists` scope.
 
@@ -1273,6 +1292,155 @@ Some Access types require matching Sync.  For the following access bits, at leas
 
 ------------------------------------------------
 
+## Fence Barriers
+
+Fence barriers allow app developers to perform GPU command execution timeline synchronization between command queues or with the CPU. This improves both GPU/CPU and GPU/GPU concurrency, and gives developers an alternative to split barriers.
+
+There are two fence barriers support tiers:
+
+- `D3D12_FENCE_BARRIERS_TIER_NOT_SUPPORTED`
+  - No support for fence barriers
+- `D3D12_FENCE_BARRIERS_TIER_1`
+  - Supports command list `SignalBarrier` methods using fences created with `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS` bit set.
+  - Supports command list `WaitBarrier` methods using fences created with `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS` bit set, except for fences created with `D3D12_FENCE_FLAG_ALLOW_QUEUE_AND_CPU_SYNC` bit also set (see [Command List Scoped Fences](#command-list-scoped-fences)).
+  - Requires driver support for fence barriers
+  - Requires device support for 64-bit atomic ops
+    - Must be able to write 64-bit fence values atomically to avoid torn values
+- `D3D12_FENCE_BARRIERS_TIER_2`
+  - Supports command list `SignalBarrier` and `WaitBarrier` methods on all fences created with `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS` bit set.
+  - Requires kernel and driver support for both user mode submission queues and native fences
+    - Sometimes referred to as "Hardware Scheduling Stage 3"
+
+`CheckFeatureSupport` is used to determine fence barriers support tier for a given command list type:
+
+``` C++
+    D3D12_FEATURE_DATA_FENCE_BARRIERS fenceBarriersSupport{};
+    fenceBarriersSupport.CommandListType = D3D12_COMMAND_LIST_TYPE_DIRECT;
+    D3D12_FENCE_BARRIERS_TIER fenceBarriersTier = D3D12_FENCE_BARRIERS_TIER_NONE;
+    if (SUCCEEDED(pDevice->CheckFeatureSupport(D3D12_FEATURE_FENCE_BARRIERS, &fenceBarriersSupport, sizeof(fenceBarriersSupport))))
+    {
+        fenceBarriersTier = optionsXX.FenceBarriersTier;
+    }
+```
+
+### Signal Barriers
+
+Signal Barriers perform normal `Barrier` operations before signaling a fence once the barrier transition is completed. This can be used to unblock dependent CPU or GPU workloads without having to wait for the full `ExecuteCommandLists` to finish and flush.
+
+When used with [Command List Scoped Fences](#command-list-scoped-fences), `SignalBarrier`/`WaitBarrier` pairs can be used to allow background processing of barrier operations in the same `ExecuteCommandLists` scope without blocking non-dependent tasks. This is functionally similar to split barriers, but with less driver overhead and support for global barriers.
+
+A `SignalBarrier` with [external dependencies](#external-dependencies-and-d3d12_barrier_access_global) must set the `D3D12_BARRIER_ACCESS_GLOBAL` bit in `AccessAfter` to guarantee data coherency.
+
+Fences used by `SignalBarrier` with external dependencies must be created with the `D3D12_FENCE_FLAG_ALLOW_QUEUE_AND_CPU_SYNC` bit set.
+
+`SignalBarrier` is still a normal barrier operation, and the transitioning subresource can still be accessed in the `ExecuteCommandLists` scope based on the `AccessAfter` bits used in the barrier; This includes write operations so long as the resource is simultaneous-access and no external dependent accesses write to the resource. However, consecutive layout transitioning `SignalBarrier` operations with no intervening `WaitBarrier` on a given texture subresource in a single `ExecuteCommandLists` scope is invalid since it risks racing with external dependent accesses.
+
+### Wait Barriers
+
+Wait Barriers perform normal `Barrier` operations after a set of fence conditions are satisfied. `WaitBarrier` can always be used with [Command List Scoped Fences](#command-list-scoped-fences). Otherwise, `WaitBarrier` can be used with `D3D12_FENCE_FLAG_ALLOW_QUEUE_AND_CPU_SYNC` fences only when `D3D12_FENCE_BARRIERS_TIER_2` is supported.
+
+Command lists can use `WaitBarrier` with [Command List Scoped Fences](#command-list-scoped-fences) to wait for fences signalled earlier in the same `ExecuteCommandLists`. Command list `WaitBarrier` operations can also wait for Command List Scoped fences signals from the CPU or in another queue as long as the wait condition is *guaranteed* to be satisfied before the `WaitBarrier` executes on the GPU timeline.
+
+A `WaitBarrier` with [external dependencies](#external-dependencies-and-d3d12_barrier_access_global) must set the `D3D12_BARRIER_ACCESS_GLOBAL` bit in `AccessBefore` to guarantee data coherency.
+
+Consecutive layout transitioning `WaitBarrier` operations with no intervening `SignalBarrier` on a given texture subresource in a single `ExecuteCommandLists` scope is invalid. Such a scenario would imply concurrent write operations to the same subresource, which is not supported.
+
+### Fence Creation Flags Supporting Fence Barriers
+
+New fence creation flags are required to fully support fence barriers.
+
+#### D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS
+
+Attributes fence as usable with command list `SignalBarrier` and `WaitBarrier` methods.
+Fences created with `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS` set but without `D3D12_FENCE_FLAG_ALLOW_QUEUE_AND_CPU_SYNC` bit also set are referred to as [Command List Scoped Fences](#command-list-scoped-fences).
+
+#### D3D12_FENCE_FLAG_ALLOW_QUEUE_AND_CPU_SYNC
+
+This flag is necessary to support GPU command-buffer-level fence synchronization between multiple queues or between the GPU and CPU.
+
+`D3D12_FENCE_FLAG_ALLOW_QUEUE_AND_CPU_SYNC` must be combined with `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS`.
+
+If an app doesn't require queue or CPU sync, then it is recommended not setting this flag as it may significantly reduce barrier performance.
+
+All fences created with `D3D12_FENCE_FLAG_SHARED` or `D3D12_FENCE_FLAG_SHARED_CROSS_ADAPTER` require Queue and CPU sync. As such, the `D3D12_FENCE_FLAG_SHARED` and `D3D12_FENCE_FLAG_SHARED_CROSS_ADAPTER` bits cannot be used when `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS` is set without also setting `D3D12_FENCE_FLAG_ALLOW_QUEUE_AND_CPU_SYNC`.
+
+`D3D12_FENCE_BARRIERS_TIER_1` drivers create `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS|D3D12_FENCE_FLAG_ALLOW_QUEUE_AND_CPU_SYNC` fences as either `D3D12DDI_FENCE_TYPE_NATIVE` (native fences supported but no user mode submission) or `D3D12DDI_FENCE_TYPE_MONITORED` (native fences not supported).
+
+`D3D12_FENCE_BARRIERS_TIER_2` drivers create `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS|D3D12_FENCE_FLAG_ALLOW_QUEUE_AND_CPU_SYNC` fences as `D3D12DDI_FENCE_TYPE_NATIVE`.
+
+All fences created with `D3D12_FENCE_FLAG_SHARED` or `D3D12_FENCE_FLAG_SHARED_CROSS_ADAPTER` implicitly support command list barriers and Queue and CPU sync.
+
+### Command List Scoped Fences
+
+Command List Scoped fences are fences created with the `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS` bit set but without the `D3D12_FENCE_FLAG_ALLOW_QUEUE_AND_CPU_SYNC` bit set. Command List Scoped fences are usable with `ID3D12Fence::Signal` and command list `SignalBarrier` and `WaitBarrier` methods, but cannot support `ID3D12CommandQueue::Wait`, `ID3D12CommandQueue::Signal`, or `ID3D12Fence::SetEventOnCompletion`. Command List Scoped fences are designed to efficiently manage barrier dependencies within a single command list or a set of command lists in the same `ExecuteCommandLists` scope. The primary use for Command List Scoped fences is to perform efficient split barrier operations.
+
+Command List Scoped fences cannot be used with `ID3D12CommandQueue::Wait`, `ID3D12CommandQueue::Signal` or `ID3D12Fence::SetEventOnCompletion` methods. Command List Scoped fences can only be signaled using `SignalBarrier` and `ID3D12Fence::Signal`.
+
+`WaitBarrier` values using Command List Scoped fences must already be satisfied either by the most recent preceding `SignalBarrier` operation in the same command queue or by `ID3D12Fence::Signal` called prior to GPU timeline execution of the submitted command list containing the `WaitBarrier`.
+
+`ID3D12Fence::GetCompletedValue` always returns UINT64_MAX for Command List Scoped fences. Signaling a Command List Scoped fence currently in use in an in-execution command list by other command list, CPU or queue is invalid.
+
+Unlike Monitored fences, Command List Scoped fences are not internally signaled to UINT64_MAX upon device removal. However, `ID3D12Fence::GetCompletedValue` for Command List Scoped fences still returns UINT64_MAX while a device is in a removed state.
+
+The `D3D12DDI_FENCE_TYPE_COMMAND_LIST_SCOPED` type instructs drivers to create a Command List Scoped fence.
+
+#### Replacement for Split Barriers
+
+To initiate a split barrier using a Command List Scoped fence, a `SignalBarrier` operation specifies any layout transition and access after bits, setting `SyncAfter` to `D3D12_BARRIER_SYNC_NONE` since the barrier is not expected to block subsequent command processing other than a dependent `WaitBarrier`. The values of `AccessBefore` and `AccessAfter` reflect the before and after accesses upon completion of the dependent `WaitBarrier`.
+
+The split barrier is terminated by a dependent `WaitBarrier`, satisfied when the initiating `SignalBarrier` completes texture layout transition and cache flush. The terminating `WaitBarrier` typically sets `SyncBefore` to `D3D12_BARRIER_SYNC_NONE` since it only needs to sync with the fence condition. For texture barriers, `LayoutBefore` and `LayoutAfter` are set to `D3D12_BARRIER_LAYOUT_UNDEFINED` since all the layout transitions are completed by the time the fence is signaled. The values of `AccessBefore` and `AccessAfter` must match those of the initiating `SignalBarrier` to properly invalidate any relevant caches.
+
+Fence barriers using Command List Scoped fence are the only way to split global barriers. Classic split barriers require drivers to set aside storage in resource memory to track completion state. Thus, global barriers cannot be split using `D3D12_BARRIER_SYNC_SPLIT` since no resource is provided.
+
+Although `D3D12_FENCE_BARRIERS_TIER_2` monitored fences could be logically used to perform split barrier operations, this is not guaranteed to be efficient. With Monitored fences, Drivers must assume a `WaitBarrier` may be satisfied by the CPU or another queue, eliminating valuable performance optimizations such as trivially dropping already-completed split barrier pairs.
+
+Example:
+``` C++
+// TODO...
+```
+
+Fence barriers effectively make [split barriers](#split-barriers) obsolete. Split barrier `SyncBefore`/`SyncAfter` semantics force drivers to use an implicit fence object per split barrier instance, requiring per subresource storage. Because of this, global barriers cannot use `D3D12_BARRIER_SYNC_SPLIT` since there are no associated resources.
+
+In contrast, fence barriers use an app-provided fence. This is a cleaner design that give apps control over storage and lifetime of the sync object. In addition, it allows multiple barriers to concurrently share the same fence and makes it possible to split global barriers.
+
+### Cross Queue Synchronization
+
+Fence barriers can synchronize workloads across GPU queues during command processing on the GPU timeline. For instance, a fence may be signaled by a barrier executing on a compute queue, which then unblocks GPU workloads on another command queue. If `WaitBarrier` barriers are supported, wait synchronization can also occur as part of GPU command processing.
+
+Fence barriers with [external dependencies](#external-dependencies-and-d3d12_barrier_access_global) involving non-Graphics queue must use the `D3D12_BARRIER_ACCESS_GLOBAL` bit to manage cache coherency.
+
+### CPU/GPU Synchronization
+
+Apps can use `WaitBarrier` or `SignalBarrier` to synchronize GPU and CPU workloads. [Managing the resource caches](#external-dependencies-and-d3d12_barrier_access_global) between the CPU and GPU is accomplished using the `D3D12_BARRIER_ACCESS_GLOBAL` access bit.
+
+`D3D12_BARRIER_ACCESS_NO_ACCESS` may be used when synchronizing between CPU and GPU access if there are no writes to flush or caches do not need invalidating. This is typically the case with write-after-read barriers.
+
+### External Dependencies and D3D12_BARRIER_ACCESS_GLOBAL
+
+Resource caches on the GPU are required to be coherent at the start of `ExecuteCommandLists` workloads, and completion of `ExecuteCommandLists` guarantees that all caches are flushed to main memory. However, with fence barriers it is possible to represent dependencies that do not benefit from this coherency guarantee.
+
+It is expected that all caches are coherent across all COMPUTE and DIRECT queues on the same device. However, CPU/GPU dependencies or cross-queue dependencies involving other queue types such as COPY and VIDEO queues may require full cache flush or invalidation. As such, apps must use the `D3D12_BARRIER_ACCESS_GLOBAL` access bit in fence barriers to manage cache coherency for these external dependencies.
+
+Unnecessary cache flushes and cache invalidation can be costly. Cross-queue dependencies specifically between COMPUTE and DIRECT queues on the same device should avoid using the `D3D12_BARRIER_ACCESS_GLOBAL` bit to avoid unneeded overhead.
+
+### Return Trip Fence Barrier Dependencies
+
+Tools such as PIX and GBV rely on the ability to serialize execution of workloads across multiple command queues. As such, any `SignalBarrier`/`WaitBarrier` dependencies that prevent serialization of `ExecuteCommandLists` workloads is not currently supported. This is described here as a "return trip dependency". A return trip dependency occurs in a `WaitBarrier` chain where the sequence starts and ends in the same queue with intervening dependencies on fence signals from other queues or the host CPU. Return trip dependencies can cause deadlocks using PIX capture/playback and Debug Layers which sometimes serialize command queue execution, meaning that a `WaitBarrier` could be waiting for a signal that will never happen.
+
+#### Impact on Debug Layer
+
+Since return trip dependent fence barriers are disallowed, the debug layer can serialize execution of  `ExecuteCommandLists` workloads in forward dependency order.
+
+`WaitBarrier` operations that depend on fence signals from another queue or the host CPU can be logically mirrored by a queue-level `Wait` just before the `ExecuteCommandLists` execution. Likewise, any `SignalBarrier` operations depended on by another queue or the host CPU can be mirrored to a queue-level `Signal` after completion of `ExecuteCommandLists`. The existing debug layer command queue serializer automatically detects these dependencies and serializes the queue submissions in forward order.
+
+Since fence objects and values are known at command list record time, the debug runtime reports errors when multiple in-flight queues contain fence barriers with return trip dependencies. Additionally, the debug runtime can detect when a fence signalled early in an ECL scope is subsequently being waited on with a larger value. This implies that the signal is expected to come from another queue or from the CPU.
+
+#### Impact on PIX
+
+Like the debug layer, PIX serializes workloads across multiple command queues. PIX can use similar fence mirroring techniques as the debug layer to detect and sort `ExecuteCommandLists` workloads in forward dependency order. PIX captures initiated while fence barrier operations are in-progress on the GPU can also be problematic since the state of the in-progress work may not have been included in the capture. This can be addressed using the mirrored fences to force queue and sync whenever PIX capture is possible. However, this may introduce unwanted performance degradation. An alternative is to encourage developers to start captures before executing any queues signaling fences with dependant barriers later in the capture.
+
+------------------------------------------------
+
 ## API
 
 ### D3D12_BARRIER_LAYOUT
@@ -1491,9 +1659,9 @@ Each sync scope bit has a limited set of compatible access types (see the specif
 
 #### D3D12_BARRIER_SYNC_NONE
 
-A `SyncBefore` value of `D3D12_BARRIER_SYNC_NONE` indicates NO PRECEDING work must complete before executing the barrier.  This MUST be paired with an `AccessBefore` value of `D3D12_BARRIER_ACCESS_NO_ACCESS`.  Additionally, no preceding barriers or accesses to the related subresource are permitted in the same `ExecuteCommandLists` scope.
+For non-fence barriers, `SyncBefore` value of `D3D12_BARRIER_SYNC_NONE` indicates NO PRECEDING work must complete before executing the barrier.  This MUST be paired with an `AccessBefore` value of `D3D12_BARRIER_ACCESS_NO_ACCESS`.  Additionally, no preceding barriers or accesses to the related subresource are permitted in the same `ExecuteCommandLists` scope. Likewise, a `SyncAfter` value of `D3D12_BARRIER_SYNC_NONE` indicates NO SUBSEQUENT work must wait for the barrier to complete, and MUST be paired with an `AccessAfter` value of `D3D12_BARRIER_ACCESS_NO_ACCESS`.  Additionally, no subsequent barriers or accesses to the related subresource are permitted in the same `ExecuteCommandLists` scope.
 
-A `SyncAfter` value of `D3D12_BARRIER_SYNC_NONE` indicates NO SUBSEQUENT work must wait for the barrier to complete, and MUST be paired with an `AccessAfter` value of `D3D12_BARRIER_ACCESS_NO_ACCESS`.  Additionally, no subsequent barriers or accesses to the related subresource are permitted in the same `ExecuteCommandLists` scope.
+A `SignalBarrier` may use `SyncAfter = D3D12_BARRIER_SYNC_NONE` with any `AccessAfter` value to initiate a split barrier. A dependent `WaitBarrier` provides the necessary synchronization to allow subsequent access.
 
 #### D3D12_BARRIER_SYNC_ALL
 
@@ -1763,6 +1931,7 @@ enum D3D12_BARRIER_ACCESS
     D3D12_BARRIER_ACCESS_VIDEO_PROCESS_WRITE                        = 0x100000,
     D3D12_BARRIER_ACCESS_VIDEO_ENCODE_READ                          = 0x200000,
     D3D12_BARRIER_ACCESS_VIDEO_ENCODE_WRITE                         = 0x400000,
+    D3D12_BARRIER_ACCESS_GLOBAL                                     = 0x40000000,
     D3D12_BARRIER_ACCESS_NO_ACCESS                                  = 0x80000000
 };
 ```
@@ -1974,6 +2143,16 @@ Indicates a resource is accessible for read-only access in a video encode queue.
 
 - `D3D12_BARRIER_SYNC_ALL`
 - `D3D12_BARRIER_SYNC_VIDEO_ENCODE`
+
+#### D3D12_BARRIER_ACCESS_GLOBAL
+
+Used to mitigate fence barriers with [external dependencies](#external-dependencies-and-d3d12_barrier_access_global).
+
+Setting `D3D12_BARRIER_ACCESS_GLOBAL` bit in `AccessBefore` in a `SignalBarrier` barrier may invalidate GPU caches to ensure coherency with dependent writes by the CPU or external queues. Likewise, setting `D3D12_BARRIER_ACCESS_GLOBAL` in `AccessAfter` in a `WaitBarrier` barrier may trigger a cache flush to main memory.
+ 
+`D3D12_BARRIER_ACCESS_GLOBAL` may be combined with other access bits.
+
+`D3D12_BARRIER_ACCESS_GLOBAL` cannot be used in non-fence barriers, nor can `D3D12_BARRIER_ACCESS_GLOBAL` be used in `AccessBefore` in a `SignalBarrier` barrier or in `AccessAfter` in a `WaitBarrier` barrier.
 
 #### D3D12_BARRIER_ACCESS_NO_ACCESS
 
@@ -2205,6 +2384,47 @@ void ID3D12VideoEncodeCommandList3::Barrier(
 |--------------------|---------------------------------------------------------|
 | `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups` |
 | `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
+
+### ID3D12GraphicsCommandListXXX  WaitBarrier
+
+Waits for the full set of fence/value pairs to be satisfied then executes the provided barrier operations.
+
+``` c++
+void ID3D12GraphicsCommandListXXX::WaitBarrier(
+    UINT NumBarrierGroups,
+    const D3D12_BARRIER_GROUP *pBarrierGroups,
+    UINT NumFences, ID3D12Fence * const *ppFences,
+    const UINT64 *pFenceValues);
+```
+
+| Parameter          |                                                                   |
+|--------------------|-------------------------------------------------------------------|
+| `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups`           |
+| `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects              |
+| `NumFences`        | Number of fence/value pairs                                       |
+| `ppFences`         | Pointer to an array of `ID3D12Fence` pointers of size `NumFences` |
+| `pFenceValues`     | Pointer to an array of fence values of size `NumFences`           |
+
+### ID3D12GraphicsCommandListXXX SignalBarrier
+
+Executes the provided barriers, signalling a fence after all barrier transactions have fully completed. Any subsequent dependent operations must be preceded by a `WaitBarrier` with matching fence/value pairs.
+
+If a wait barrier on a texture subresource corresponds to a preceding signal barrier, the `LayoutBefore` on the wait barrier must match the `LayoutAfter` from the signal barrier or be set to `D3D12_BARRIER_LAYOUT_UNDEFINED`, which avoids a layout transition. This effectively matches split barrier behavior where a barrier transaction is started by the split-begin barrier, and completed by the split-end barrier.
+
+``` c++
+void ID3D12GraphicsCommandListXXX::SignalBarrier(
+    UINT NumBarrierGroups,
+    const D3D12_BARRIER_GROUP *pBarrierGroups,
+    ID3D12Fence *pFence,
+    UINT64 FenceValue);
+```
+
+| Parameter          |                                                         |
+|--------------------|---------------------------------------------------------|
+| `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups` |
+| `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
+| `pFence`           | Fence to signal upon completion of barriers             |
+| `FenceValue`       | Fence value to signal                                   |
 
 ### ID3D12Device10 CreateCommittedResource3
 
@@ -2737,6 +2957,49 @@ typedef VOID ( APIENTRY* PFND3D12DDI_BARRIER_0094 )(
     _In_reads_(NumBarriers) CONST D3D12DDIARG_BARRIER_0094 *pBarriers );
 ```
 
+### PFND3D12DDI_WAITBARRIER_0114
+
+```c++
+typedef VOID ( APIENTRY* PFND3D12DDI_WAITBARRIER_00114 )(
+    D3D12DDI_HCOMMANDLIST hDrvCommandList,
+    UINT32 NumBarriers,
+    _In_reads_(NumBarriers) CONST D3D12DDIARG_BARRIER_0094 *pBarriers,
+    UINT32 NumFences,
+    _In_reads_(NumFences) CONST D3D12DDI_HFENCE* phFences,
+    _In_reads_(NumFences) CONST UINT64 *pFenceValues );
+```
+
+### PFND3D12DDI_SIGNALBARRIER_0114
+
+```c++
+typedef VOID ( APIENTRY* PFND3D12DDI_SIGNALBARRIER_0114 )(
+    D3D12DDI_HCOMMANDLIST hDrvCommandList,
+    UINT32 NumBarriers,
+    _In_reads_(NumBarriers) CONST D3D12DDIARG_BARRIER_0094 *pBarriers,
+    D3D12DDI_HFENCE hFence,
+    UINT64 FenceValue );
+```
+
+### D3D12DDI_FENCE_BARRIERS_FUNCS_0114
+
+Until fence barriers are ready for public preview, the fence barrier DDIs are exposed using the `D3D12DDI_FENCE_BARRIERS_FUNCS_0114` extended feature table. This table is identified using `D3D12DDI_TABLE_TYPE::D3D12DDI_TABLE_TYPE_0114_FENCE_BARRIERS`.
+
+Once the fence barriers feature is ready to release as a public preview, the `PFND3D12DDI_WAITBARRIER_0114` and `PFND3D12DDI_SIGNALBARRIER_0114` DDIs are likely to move into a `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114` table.
+
+``` c++
+typedef struct D3D12DDI_FENCE_BARRIERS_FUNCS_0114
+{
+    PFND3D12DDI_WAITBARRIER_0114 pfnWaitBarrier;
+    PFND3D12DDI_SIGNALBARRIER_0114 pfnSignalBarrier;
+    PFND3D12DDI_WAITBARRIER_0114 pfnWaitBarrierVideoDecode;
+    PFND3D12DDI_SIGNALBARRIER_0114 pfnSignalBarrierVideoDecode;
+    PFND3D12DDI_WAITBARRIER_0114 pfnWaitBarrierVideoProcess;
+    PFND3D12DDI_SIGNALBARRIER_0114 pfnSignalBarrierVideoProcess;
+    PFND3D12DDI_WAITBARRIER_0114 pfnWaitBarrierVideoEncode;
+    PFND3D12DDI_SIGNALBARRIER_0114 pfnSignalBarrierVideoEncode;
+} D3D12DDI_FENCE_BARRIERS_FUNCS_0114;
+```
+
 ### D3D12DDIARG_CREATERESOURCE_0088
 
 ```c++
@@ -2831,9 +3094,80 @@ typedef struct D3D12DDI_D3D12_OPTIONS_DATA_0089
 
 ```
 
+### D3D12DDI_FEATURE_0114_FENCE_BARRIERS (temporary)
+
+For the time being, fence barriers DDIs are exposed as an extended feature.
+
+Feature: `D3D12DDI_FEATURE_0114_FENCE_BARRIERS`
+Version: `D3D12DDI_FEATURE_VERSION_FENCE_BARRIERS_0114_0`
+Table Type: `D3D12DDI_TABLE_TYPE_0114_FENCE_BARRIERS`
+
+``` C++
+typedef struct D3D12DDI_FENCE_BARRIERS_FUNCS_0114
+{
+    PFND3D12DDI_WAITBARRIER_0114 pfnWaitBarrier;
+    PFND3D12DDI_SIGNALBARRIER_0114 pfnSignalBarrier;
+    PFND3D12DDI_WAITBARRIER_0114 pfnWaitBarrierVideoDecode;
+    PFND3D12DDI_SIGNALBARRIER_0114 pfnSignalBarrierVideoDecode;
+    PFND3D12DDI_WAITBARRIER_0114 pfnWaitBarrierVideoProcess;
+    PFND3D12DDI_SIGNALBARRIER_0114 pfnSignalBarrierVideoProcess;
+    PFND3D12DDI_WAITBARRIER_0114 pfnWaitBarrierVideoEncode;
+    PFND3D12DDI_SIGNALBARRIER_0114 pfnSignalBarrierVideoEncode;
+} D3D12DDI_FENCE_BARRIERS_FUNCS_0114;
+```
+
+These will likely move into D3D12DDI_COMMAND_LIST_FUNCS_3D_0114 (and similar video equivalents) once fence barriers is ready to go into Windows insider previews.
+
+### Updates to D3D12DDI_FENCE_TYPE_0112 enum
+
+Enum value `D3D12DDI_FENCE_TYPE_COMMAND_LIST_SCOPED = 3` added.
+
+``` C++
+typedef enum D3D12DDI_FENCE_TYPE_0112 {
+   D3D12DDI_FENCE_TYPE_MONITORED = 0,
+   D3D12DDI_FENCE_TYPE_NATIVE = 1,
+   D3D12DDI_FENCE_TYPE_OPENED_NATIVE = 2,
+   D3D12DDI_FENCE_TYPE_COMMAND_LIST_SCOPED = 3,
+} D3D12DDI_FENCE_TYPE_0112;
+
+```
+
+### D3D12DDI_COMMAND_LIST_SCOPED_FENCE struct
+
+Referenced in `D3D12DDIARG_CREATE_FENCE_0112` when D3D12DDIARG_CREATE_FENCE_0112::FenceType is `D3D12DDI_FENCE_TYPE_COMMAND_LIST_SCOPED`.
+
+``` C++
+typedef struct D3D12DDI_COMMAND_LIST_SCOPED_FENCE
+{
+    UINT64 **ppFenceValue;
+};
+```
+
+Unlike other fence creation DDI args, the `D3D12DDI_COMMAND_LIST_SCOPED_FENCE` arguments have an output parameter, expecting the driver to provide the CPU address of the CL-scoped fence. The driver provided address contains the most current CL-Scoped fence value at the start and end of of command buffer execution. It is not expected that this address is updated as the fence is signaled during command buffer execution on the GPU.
+
+### Updates to D3D12DDIARG_CREATE_FENCE_0112 struct
+
+Member `D3D12DDI_COMMAND_LIST_SCOPED_FENCE CLScopedFenceArgs` added to inner union. Used when `FenceType` equals `D3D12DDI_FENCE_TYPE_COMMAND_LIST_SCOPED`.
+
+``` C++
+typedef struct D3D12DDIARG_CREATE_FENCE_0112
+{
+   D3D12DDI_FENCE_TYPE_0112 FenceType;
+   union {
+      D3D12DDI_FENCE MonitoredFenceArgs;
+      D3DKMT_CREATENATIVEFENCE *pNativeFenceArgs;
+      D3D12DDI_COMMAND_LIST_SCOPED_FENCE CLScopedFenceArgs;
+   };
+} D3D12DDIARG_CREATE_FENCE_0112;
+```
+
 ------------------------------------------------
 
 ## Open Issues
+
+### Fence barriers fence rollback
+
+Rolling back fence values in a command list recording risks potential race conditions during command list serialization in PIX and debug layer. In general it is also not a best practice even for normal fence API usage. Considering making fence value rollback invalid during command list recording.
 
 ## Testing
 
