@@ -44,6 +44,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
       * [Shader Compilers](d3d/ShaderCompilerPlugin.md)
       * [State Object Database](d3d/StateObjectDatabase.md)
       * [Device Cache Statistics](d3d/D3D12DeviceCacheStatistics.md)
+      * [Application Identity](d3d/D3D12ApplicationIdentity.md)
 
 * Performance
     * [CPU Efficiency](d3d/CPUEfficiency.md)
