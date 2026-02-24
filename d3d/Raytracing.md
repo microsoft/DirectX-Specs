@@ -1216,7 +1216,7 @@ no-op, while implementations that already employ more sophisticated scheduling
 strategies are likely able to reuse existing mechanisms to implement support
 for SER. No DXR runtime changes are necessary, since the addition to the programming model is limited to HLSL and DXIL.
 
-This feature is a required part of Shader Model 6.9 (in preview) for devices with raytracing support.  It is also a required part of [D3D12_RAYTRACING_TIER_1_2](#d3d12_raytracing_tier), though even if a device doesn't support this tier it must still must support SER if it supports Shader Model 6.9.
+This feature is a required part of Shader Model 6.9 for devices with raytracing support.  It is also a required part of [D3D12_RAYTRACING_TIER_1_2](#d3d12_raytracing_tier), though even if a device doesn't support this tier it must still must support SER if it supports Shader Model 6.9.
 
 Note that all new SER types and intrinsics are added to `namespace dx` in
 accordance with the [Fast-Track Process for HLSL
@@ -1272,19 +1272,18 @@ D3D12 exposes a device capability indicating it that can be queried via
 `CheckFeatureSupport()`:
 
 ```C++
-// OPTIONSNN - NN TBD when SER support goes out of preview
-typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONSNN
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22
 {
     ...
     _Out_ BOOL ShaderExecutionReorderingActuallyReorders;
     ...
-} D3D12_FEATURE_DATA_D3D12_OPTIONSNN;
+} D3D12_FEATURE_DATA_D3D12_OPTIONS22;
 ```
 
 e.g.:
 
 ```C++
-D3D12_FEATURE_DATA_D3D12_OPTIONSNN Options; // NN TBD when implemented
+D3D12_FEATURE_DATA_D3D12_OPTIONS22 Options;
 VERIFY_SUCCEEDED(pDevice->CheckFeatureSupport(
     D3D12_FEATURE_D3D12_OPTIONSNN, &Options, sizeof(Options)));
 if (!Options.ShaderExecutionReorderingActuallyReorders) {
@@ -7751,13 +7750,13 @@ This function introduces a [reorder point](#reorder-points).
 ```C++
 template<payload_t> 
 static void dx::HitObject::Invoke( 
-    dx::HitObject HitOrMiss, 
+    dx::HitObject Hit, 
     inout payload_t Payload);
 ```
 
 Parameter                           | Definition
 ---------                           | ----------
-`HitObject HitOrMiss` |  `HitObject` that encapsulates information about the closesthit or miss shader to be executed. If the `HitObject` is a NOP-HitObject or a `HitObject` constructed from a `RayQuery` without setting a shader table index, then neither a closeshit nor a miss shader will be executed.
+`HitObject Hit` |  `HitObject` that encapsulates information about the closesthit or miss shader to be executed. If the `HitObject` is a NOP-HitObject or a `HitObject` constructed from a `RayQuery` without setting a shader table index, then neither a closeshit nor a miss shader will be executed.
 `payload_t Payload` | The ray payload. `payload_t` must match the type expected by the shader being invoked. See [HitObject Interaction With Payload Access Qualifiers](#hitobject-interaction-with-payload-access-qualifiers) for details.
 
 > It is legal to call [HitObject::TraceRay](#hitobject-traceray) with a different payload type than a subsequent [HitObject::Invoke](#hitobject-invoke). One use case for this is a pipeline with anyhit shaders that require only a small payload, combined with closesthit shaders that read inputs from a large payload. Payload Access Qualifiers can express this situation, but don't allow for as much optimization as using two different payloads with [HitObject](#hitobject) does. That is because anyhit would have to preserve the fields read by closesthit in the example above unnecessarily increasing register pressure on anyhit. Note that allowing different payload types within a hit group is not a spec change, because payload compatibility matters at runtime, not compile time. That is, at runtime, the payload type passed to the calling [TraceRay](#traceray)/[HitObject::TraceRay](#hitobject-traceray)/[HitObject::Invoke](#hitobject-invoke) must match the payload type of the *invoked* shaders (only). With the introduction of [HitObject](#hitobject), it can now be desirable for applications to create hit groups where the payload type in anyhit differs from the payload type in closesthit, whereas without [HitObject](#hitobject) this was merely legal but not particularly useful.
@@ -8172,15 +8171,11 @@ index is exempt from having a valid shader table record.
 
 ```C++
 void dx::MaybeReorderThread( dx::HitObject Hit );
-
-// There is currently a bug in DXC where "using namespace dx;" to avoid needing dx:: 
-// when calling dx::MaybeReorderThread*() results in incorrect DXIL generation.  
-// dx::HitObject is not affected.
 ```
 
 Parameter                           | Definition
 ---------                           | ----------
-`HitObject HitOrMiss` | [HitObject](#hitobject) that encapsulates the hit or miss according to which reordering should be performed.
+`HitObject Hit` | [HitObject](#hitobject) that encapsulates the hit or miss according to which reordering should be performed.
 
 This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
 
@@ -8201,10 +8196,6 @@ approximate.
 
 ```C++
 void dx::MaybeReorderThread( uint CoherenceHint, uint NumCoherenceHintBitsFromLSB );
-
-// There is currently a bug in DXC where "using namespace dx;" to avoid needing dx:: 
-// when calling dx::MaybeReorderThread*() results in incorrect DXIL generation.  
-// dx::HitObject is not affected.
 ```
 
 Parameter                           | Definition
@@ -8228,18 +8219,14 @@ described in compared to the one described in [MaybeReorderThread with coherence
 
 ```C++
 void dx::MaybeReorderThread( 
-  dx::HitObject HitOrMiss, 
+  dx::HitObject Hit, 
   uint CoherenceHint, 
   uint NumCoherenceHintBitsFromLSB );
-
-// There is currently a bug in DXC where "using namespace dx;" to avoid needing dx:: 
-// when calling dx::MaybeReorderThread*() results in incorrect DXIL generation.  
-// dx::HitObject is not affected.
 ```
 
 Parameter                           | Definition
 ---------                           | ----------
-`HitObject HitOrMiss` | [HitObject](#hitobject) that encapsulates the hit or miss according to which reordering should be performed.
+`HitObject Hit` | [HitObject](#hitobject) that encapsulates the hit or miss according to which reordering should be performed.
 `uint CoherenceHint` | User-defined value that determines the desired ordering of a thread relative to others.
 `uint NumCoherenceHintBitsFromLSB` | Indicates how many of the least significant bits in `CoherenceHint` the implementation should try to take into account. Applications should set this to the lowest value required to represent all possible values of `CoherenceHint` (at the given `ReorderThread` call site). All threads should provide the same value at a given call site to achieve best performance.
 
