@@ -17,7 +17,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Work Graphs](d3d/WorkGraphs.md)
     * [Mesh Shader](d3d/MeshShader.md)
     * [Sampler Feedback](d3d/SamplerFeedback.md)
-    * [DirectX Raytracing (DXR)](d3d/Raytracing.md)
+    * [Raytracing](d3d/Raytracing.md)
     * [Variable Rate Shading](d3d/VariableRateShading.md)
     * [Feature Level 12_2](d3d/D3D12_FeatureLevel12_2.md)
     * [View Instancing](d3d/ViewInstancing.md)
@@ -28,16 +28,21 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Enhanced Barriers](d3d/D3D12EnhancedBarriers.md)
     * [R9G9B9E5_SHAREDEXP RTV and UAV support](d3d/D3D12R9G9B9E5Format.md)
     * [Tiled Resources Tier 4](d3d/D3D12TiledResourceTier4.md)
-
+    * [Increased Dispatch Dimension](d3d/D3D12IncreasedDispatchDimension.md)
+    
 * Structure of D3D
     * [Resource Binding](d3d/ResourceBinding.md)
     * [Indirect Drawing](d3d/IndirectDrawing.md)
     * [Counters & Queries](d3d/CountersAndQueries.md)
+    * [CPU Timeline Query Resolution](d3d/D3D12CpuTimelineQueryResolution.md)
     * [Relaxed Format Casting Rules](d3d/RelaxedCasting.md)
+    * [Revised View Creation APIs](d3d/D3D12RevisedCreateViews.md)
     * [UAV Typed Load](d3d/UAVTypedLoad.md)
     * [Planar Depth Stencil](d3d/PlanarDepthStencilDDISpec.md)
     * [Vulkan Compatibility Features](d3d/VulkanOn12.md)
     * [Tight Resource Alignment](d3d/D3D12TightPlacedResourceAlignment.md)
+    * [Periodic Trim Notifications](d3d/D3D12_PeriodicTrimNotifications.md)
+    * [API Extensions (preview)](d3d/D3D12ApiExtensions.md)
     * Advanced Shader Delivery
       * [Serialized Root Signatures](d3d/SerializedRootSignatures.md)
       * [Shader Cache Registration API](d3d/ShaderCacheRegistrationAPI.md)
