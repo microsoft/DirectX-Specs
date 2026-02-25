@@ -53,6 +53,7 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
 - [Fence Barriers (Preview)](#fence-barriers-preview)
   - [Signal Barriers](#signal-barriers)
   - [Wait Barriers](#wait-barriers)
+  - [Enabling and using Fence Barriers preview](#enabling-and-using-fence-barriers-preview)
   - [Fence Creation Flags Supporting Fence Barriers](#fence-creation-flags-supporting-fence-barriers)
   - [Command List Scoped Fences](#command-list-scoped-fences)
   - [Cross Queue Synchronization](#cross-queue-synchronization)
@@ -1344,6 +1345,21 @@ Command lists can use `WaitBarrier` with [Command List Scoped Fences](#command-l
 A `WaitBarrier` with [external dependencies](#external-dependencies-and-d3d12_barrier_access_global) must set the `D3D12_BARRIER_ACCESS_GLOBAL` bit in `AccessBefore` to guarantee data coherency.
 
 Consecutive layout transitioning `WaitBarrier` operations with no intervening `SignalBarrier` on a given texture subresource in a single `ExecuteCommandLists` scope is invalid. Such a scenario would imply concurrent write operations to the same subresource, which is not supported.
+
+### Enabling and using Fence Barriers preview
+
+The Fence Barriers preview requires developer mode. Additionally, developers must use `D3D12EnableExperimentalFeatures` to enable fence barriers preview APIs:
+
+```c++
+D3D12EnableExperimentalFeatures(1, &D3D12FenceBarriersExperiment, nullptr, 0))
+```
+
+The `ID3D12CommandListFenceBarriers` interface must be queried from an existing `ID3D12CommandList` object:
+
+```c++
+CComPtr<ID3D12CommandListFenceBarriers> pFenceBarriersCL;
+pCL->QueryInterface(IID_PPV_ARGS(&pFenceBarriersCL));
+```
 
 ### Fence Creation Flags Supporting Fence Barriers
 
