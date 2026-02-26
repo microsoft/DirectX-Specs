@@ -50,9 +50,10 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [Copy Queues](#copy-queues)
   - [Layout Access Compatibility](#layout-access-compatibility)
   - [Access Bits Barrier Sync Compatibility](#access-bits-barrier-sync-compatibility)
-- [Fence Barriers](#fence-barriers)
+- [Fence Barriers (Preview)](#fence-barriers-preview)
   - [Signal Barriers](#signal-barriers)
   - [Wait Barriers](#wait-barriers)
+  - [Enabling and using Fence Barriers preview](#enabling-and-using-fence-barriers-preview)
   - [Fence Creation Flags Supporting Fence Barriers](#fence-creation-flags-supporting-fence-barriers)
   - [Command List Scoped Fences](#command-list-scoped-fences)
   - [Cross Queue Synchronization](#cross-queue-synchronization)
@@ -74,8 +75,8 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [ID3D12VideoDecodeCommandList3 Barrier](#id3d12videodecodecommandlist3-barrier)
   - [ID3D12VideoProcessCommandList3 Barrier](#id3d12videoprocesscommandlist3-barrier)
   - [ID3D12VideoEncodeCommandList3 Barrier](#id3d12videoencodecommandlist3-barrier)
-  - [ID3D12GraphicsCommandListXXX  WaitBarrier](#id3d12graphicscommandlistxxx--waitbarrier)
-  - [ID3D12GraphicsCommandListXXX SignalBarrier](#id3d12graphicscommandlistxxx-signalbarrier)
+  - [ID3D12CommandListFenceBarriers WaitBarrier (Preview)](#id3d12commandlistfencebarriers-waitbarrier-preview)
+  - [ID3D12CommandListFenceBarriers SignalBarrier (Preview)](#id3d12commandlistfencebarriers-signalbarrier-preview)
   - [ID3D12Device10 CreateCommittedResource3](#id3d12device10-createcommittedresource3)
   - [ID3D12Device10 CreatePlacedResource2](#id3d12device10-createplacedresource2)
   - [ID3D12Device10 CreateReservedResource2](#id3d12device10-createreservedresource2)
@@ -1292,7 +1293,7 @@ Some Access types require matching Sync.  For the following access bits, at leas
 
 ------------------------------------------------
 
-## Fence Barriers
+## Fence Barriers (Preview)
 
 Fence barriers allow app developers to perform GPU command execution timeline synchronization between command queues or with the CPU. This improves both GPU/CPU and GPU/GPU concurrency, and gives developers an alternative to split barriers.
 
@@ -1344,6 +1345,21 @@ Command lists can use `WaitBarrier` with [Command List Scoped Fences](#command-l
 A `WaitBarrier` with [external dependencies](#external-dependencies-and-d3d12_barrier_access_global) must set the `D3D12_BARRIER_ACCESS_GLOBAL` bit in `AccessBefore` to guarantee data coherency.
 
 Consecutive layout transitioning `WaitBarrier` operations with no intervening `SignalBarrier` on a given texture subresource in a single `ExecuteCommandLists` scope is invalid. Such a scenario would imply concurrent write operations to the same subresource, which is not supported.
+
+### Enabling and using Fence Barriers preview
+
+The Fence Barriers preview requires developer mode. Additionally, developers must use `D3D12EnableExperimentalFeatures` to enable fence barriers preview APIs:
+
+```c++
+D3D12EnableExperimentalFeatures(1, &D3D12FenceBarriersExperiment, nullptr, 0))
+```
+
+The `ID3D12CommandListFenceBarriers` interface must be queried from an existing `ID3D12CommandList` object:
+
+```c++
+CComPtr<ID3D12CommandListFenceBarriers> pFenceBarriersCL;
+pCL->QueryInterface(IID_PPV_ARGS(&pFenceBarriersCL));
+```
 
 ### Fence Creation Flags Supporting Fence Barriers
 
@@ -2385,12 +2401,12 @@ void ID3D12VideoEncodeCommandList3::Barrier(
 | `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups` |
 | `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
 
-### ID3D12GraphicsCommandListXXX  WaitBarrier
+### ID3D12CommandListFenceBarriers WaitBarrier (Preview)
 
 Waits for the full set of fence/value pairs to be satisfied then executes the provided barrier operations.
 
 ``` c++
-void ID3D12GraphicsCommandListXXX::WaitBarrier(
+void ID3D12CommandListFenceBarriers::WaitBarrier(
     UINT NumBarrierGroups,
     const D3D12_BARRIER_GROUP *pBarrierGroups,
     UINT NumFences, ID3D12Fence * const *ppFences,
@@ -2405,14 +2421,14 @@ void ID3D12GraphicsCommandListXXX::WaitBarrier(
 | `ppFences`         | Pointer to an array of `ID3D12Fence` pointers of size `NumFences` |
 | `pFenceValues`     | Pointer to an array of fence values of size `NumFences`           |
 
-### ID3D12GraphicsCommandListXXX SignalBarrier
+### ID3D12CommandListFenceBarriers SignalBarrier (Preview)
 
 Executes the provided barriers, signalling a fence after all barrier transactions have fully completed. Any subsequent dependent operations must be preceded by a `WaitBarrier` with matching fence/value pairs.
 
 If a wait barrier on a texture subresource corresponds to a preceding signal barrier, the `LayoutBefore` on the wait barrier must match the `LayoutAfter` from the signal barrier or be set to `D3D12_BARRIER_LAYOUT_UNDEFINED`, which avoids a layout transition. This effectively matches split barrier behavior where a barrier transaction is started by the split-begin barrier, and completed by the split-end barrier.
 
 ``` c++
-void ID3D12GraphicsCommandListXXX::SignalBarrier(
+void ID3D12CommandListFenceBarriers::SignalBarrier(
     UINT NumBarrierGroups,
     const D3D12_BARRIER_GROUP *pBarrierGroups,
     ID3D12Fence *pFence,
