@@ -14,21 +14,22 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
 ## Direct3D 12
 
 * Rendering Pipeline
-    * [Work Graphs](d3d/WorkGraphs.md)
-    * [Mesh Shader](d3d/MeshShader.md)
-    * [Sampler Feedback](d3d/SamplerFeedback.md)
-    * [Raytracing](d3d/Raytracing.md)
-    * [Variable Rate Shading](d3d/VariableRateShading.md)
-    * [Feature Level 12_2](d3d/D3D12_FeatureLevel12_2.md)
-    * [View Instancing](d3d/ViewInstancing.md)
     * [Conservative Rasterization](d3d/ConservativeRasterization.md)
-    * [Rasterizer Ordered Views](d3d/RasterOrderViews.md)
-    * [Programmable Sample Positions](d3d/ProgrammableSamplePositions.md)
     * [Depth Bounds Test](d3d/DepthBoundsTest.md)
     * [Enhanced Barriers](d3d/D3D12EnhancedBarriers.md)
-    * [R9G9B9E5_SHAREDEXP RTV and UAV support](d3d/D3D12R9G9B9E5Format.md)
-    * [Tiled Resources Tier 4](d3d/D3D12TiledResourceTier4.md)
+    * [Feature Level 12_2](d3d/D3D12_FeatureLevel12_2.md)
     * [Increased Dispatch Dimension](d3d/D3D12IncreasedDispatchDimension.md)
+    * [Mesh Shader](d3d/MeshShader.md)
+    * [Programmable Sample Positions](d3d/ProgrammableSamplePositions.md)
+    * [Rasterizer Ordered Views](d3d/RasterOrderViews.md)
+    * [Raytracing](d3d/Raytracing.md)
+    * [Raytracing2](d3d/Raytracing2.md)
+    * [R9G9B9E5_SHAREDEXP RTV and UAV support](d3d/D3D12R9G9B9E5Format.md)
+    * [Sampler Feedback](d3d/SamplerFeedback.md)
+    * [Tiled Resources Tier 4](d3d/D3D12TiledResourceTier4.md)
+    * [View Instancing](d3d/ViewInstancing.md)
+    * [Variable Rate Shading](d3d/VariableRateShading.md)
+    * [Work Graphs](d3d/WorkGraphs.md)
     
 * Structure of D3D
     * [Resource Binding](d3d/ResourceBinding.md)
