@@ -1,25 +1,23 @@
 # DirectX Raytracing (DXR) Functional Spec, Part 2 <!-- omit in toc -->
 
-v0.16 3/10/2026
+v0.16 3/11/2026
 
 ---
 
 # Contents <!-- omit in toc -->
 
 - [Intro](#intro)
-  - [Features](#features)
-    - [Clustered geometry](#clustered-geometry)
-      - [Cluster Level Acceleration Structure](#cluster-level-acceleration-structure)
-      - [Cluster templates](#cluster-templates)
-      - [Cluster input geometry encoding](#cluster-input-geometry-encoding)
-        - [Compressed1 position encoding](#compressed1-position-encoding)
-        - [Compressed1 with cluster templates](#compressed1-with-cluster-templates)
-        - [D3D12\_VERTEX\_FORMAT\_COMPRESSED1\_TEMPLATE\_HEADER](#d3d12_vertex_format_compressed1_template_header)
-    - [Partitioned Top Level Acceleration Structures](#partitioned-top-level-acceleration-structures)
-      - [Partitioned TLAS overview](#partitioned-tlas-overview)
-      - [Global partition](#global-partition)
-      - [Partition translation](#partition-translation)
-    - [Indirect Acceleration Structure operations](#indirect-acceleration-structure-operations)
+- [Clustered geometry](#clustered-geometry)
+  - [Cluster level acceleration structure](#cluster-level-acceleration-structure)
+  - [Cluster templates](#cluster-templates)
+  - [Cluster input geometry encoding](#cluster-input-geometry-encoding)
+    - [Compressed1 position encoding](#compressed1-position-encoding)
+    - [Compressed1 with cluster templates](#compressed1-with-cluster-templates)
+- [Partitioned Top Level Acceleration Structures](#partitioned-top-level-acceleration-structures)
+  - [Partitioned TLAS overview](#partitioned-tlas-overview)
+  - [Global partition](#global-partition)
+  - [Partition translation](#partition-translation)
+- [Indirect Acceleration Structure operations](#indirect-acceleration-structure-operations)
 - [API](#api)
   - [Device methods](#device-methods)
     - [GetRTASOperationPrebuildInfo](#getrtasoperationprebuildinfo)
@@ -64,6 +62,7 @@ v0.16 3/10/2026
         - [D3D12\_RTAS\_OPERATION\_BUILD\_BLAS\_FROM\_CLAS\_ARGS](#d3d12_rtas_operation_build_blas_from_clas_args)
         - [D3D12\_RTAS\_OPERATION\_MOVE\_CLUSTER\_OBJECTS\_ARGS](#d3d12_rtas_operation_move_cluster_objects_args)
         - [D3D12\_RTAS\_OPERATION\_BUILD\_CLUSTER\_TEMPLATES\_FROM\_TRIANGLES\_ARGS](#d3d12_rtas_operation_build_cluster_templates_from_triangles_args)
+      - [D3D12\_VERTEX\_FORMAT\_COMPRESSED1\_TEMPLATE\_HEADER](#d3d12_vertex_format_compressed1_template_header)
         - [D3D12\_RTAS\_OPERATION\_INSTANTIATE\_CLUSTER\_TEMPLATES\_ARGS](#d3d12_rtas_operation_instantiate_cluster_templates_args)
         - [D3D12\_RTAS\_PARTITIONED\_TLAS\_OPERATION](#d3d12_rtas_partitioned_tlas_operation)
         - [D3D12\_RTAS\_PARTITIONED\_TLAS\_OPERATION\_TYPE](#d3d12_rtas_partitioned_tlas_operation_type)
@@ -95,31 +94,27 @@ v0.16 3/10/2026
 
 # Intro
 
-This is a continuation of the large original raytracing spec: [raytracing.md](Raytracing.md) into a second file.
+This is a continuation of the large original raytracing spec: [raytracing.md](Raytracing.md) into a second file.  See the [walkthrough](raytracing.md#walkthrough) there for a listing of prior features.
 
----
-
-## Features
-
-This adds to the feature [walkthrough](raytracing.md#walkthrough) in the original raytracing spec. Features defined here:
+Features defined here:
 
 - [Clustered Geometry](#clustered-geometry)
 - [Partitioned Top Level Acceleration Structures](#partitioned-top-level-acceleration-structures)
 - [Indirect Acceleration Structure Operations](#indirect-acceleration-structure-operations)
 
-These features can work on any hardware with existing raytracing support.  All that's needed are updated drivers for a given device.  If some older devices don't get support it will likely be a resourcing tradeoff the hardware vendor needed to make.
+The focus is using finer grained building blocks for more efficient raytracing acceleration structure management builds and updates.  In contrast to the original raytracing API, these operations are also now GPU-driven.  This set of features can work well on any hardware with existing raytracing support given a driver update.  Newer hardware may show some additional improvements while developers can deploy the same code and assets broadly. If some older devices don't get support it will likely be a resourcing tradeoff the hardware vendor needed to make. 
 
-Support is reported by `ClustersAndPTLASSupported` in [D3D12_FEATURE_OPTIONS_NNN](raytracing.md#d3d12_feature_d3d12_options_nnn) (version NNN to be determined) via [CheckFeatureSupport()](raytracing.md#checkfeaturesupport).  This also implies support for Shader Model 6.10 with the small HLSL portion of these features.  Shader Model 6.10 also requires [TriangleObjectPositions](raytracing.md#triangleobjectpositions) support, which a device could expose on its own without the above features.
+Support is reported by `ClustersAndPTLASSupported` in [D3D12_FEATURE_OPTIONS_NNN](raytracing.md#d3d12_feature_d3d12_options_nnn) (version NNN determined at ship) via [CheckFeatureSupport()](raytracing.md#checkfeaturesupport).  This also implies support for Shader Model 6.10 with the small HLSL portion of these features.  Shader Model 6.10 also requires [TriangleObjectPositions](raytracing.md#triangleobjectpositions) support, which a device could expose on its own without the above features.
 
-There is a [D3D12_RAYTRACING_TIER_2_0](raytracing.md#d3d12_raytracing_tier) which requires all of the above, in addition to all features from previous tiers.  In particular some hardware may support the feature caps described above but not yet have [Opacity Micromaps](raytracing.md#opacity-micromaps) required with [D3D12_RAYTRACING_TIER_1_2](raytracing.md#d3d12_raytracing_tier).
+There is a [D3D12_RAYTRACING_TIER_2_0](raytracing.md#d3d12_raytracing_tier) which requires all of the above, in addition to all features from previous tiers.  Some [D3D12_RAYTRACING_TIER_1_1](raytracing.md#d3d12_raytracing_tier) hardware may support the feature caps described above, given they only require driver update, but not support [Opacity Micromaps](raytracing.md#opacity-micromaps) required with [D3D12_RAYTRACING_TIER_1_2](raytracing.md#d3d12_raytracing_tier)+.
 
-> These features are currently being developed.  Release likely starts with a ~late summer 2026 preview.  The spec is posted early given the features are generally aligned across hardware vendors, still subject to refinement.
+> These features are currently being developed.  Release likely starts with a ~late summer 2026 preview.  The spec is posted early given the features are aligned across hardware vendors, still subject to refinement before shipping.
 > 
 > The small HLSL parts are also published as proposals already: [HLSL support for Clustered Geometry in Raytracing](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0045-clustered-geometry.md) and [HLSL TriangleObjectPositions](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0041-triangle-object-positions.md).
 
 ---
 
-### Clustered geometry
+# Clustered geometry
 
 Acceleration structure build times can become a bottleneck in raytracing applications that require large amounts of dynamic geometry. Example scenarios include new geometry being streamed in from disk, high numbers of animated objects, level-of-detail systems, or dynamic tessellation.
 
@@ -154,7 +149,7 @@ All operations related to cluster geometry are provided as part of a flexible [i
 
 ---
 
-#### Cluster Level Acceleration Structure
+## Cluster level acceleration structure
 
 A CLAS behaves like a BLAS in many ways but with the following differences: 
 
@@ -189,7 +184,7 @@ See [Navigating RTAS operation types](#navigating-rtas-operation-types).
   
 ---
 
-#### Cluster templates
+## Cluster templates
 
 In addition to CLAS and Cluster BLAS, a third structure is introduced referred to as Cluster Template. A Cluster Template is a partially constructed CLAS with the following properties compared to a CLAS:
 
@@ -234,7 +229,7 @@ See [Navigating RTAS operation types](#navigating-rtas-operation-types).
 
 ---
 
-#### Cluster input geometry encoding
+## Cluster input geometry encoding
 
 Vertex position input to cluster builds supports the same uncompressed input formats supported for [triangle geometries in plain BLAS](raytracing.md#d3d12_raytracing_geometry_triangles_desc).
 
@@ -248,7 +243,7 @@ Topology input to cluster builds must be indexed triangle lists.  Index format i
 
 ---
 
-##### Compressed1 position encoding
+### Compressed1 position encoding
 
 [D3D12_VERTEX_FORMAT_COMPRESSED1](#d3d12_vertex_format) vertices are encoded in the following format with no padding between sections.  These are pointed to by GPU-side [cluster build arguments](#d3d12_rtas_operation_build_clas_from_triangles_args) and [cluster build from template arguments](#d3d12_rtas_operation_build_clas_from_triangles_args):
 
@@ -324,7 +319,7 @@ float3 compressed1_position_decode(int24_t Anchor[3], uint16_t Offset[3], uint8_
 
 ---
 
-##### Compressed1 with cluster templates
+### Compressed1 with cluster templates
 
 When generating [cluster templates](#cluster-templates), [D3D12_RTAS_CLUSTER_TEMPLATE_TRIANGLES_INPUTS_DESC](#d3d12_rtas_cluster_template_triangles_inputs_desc) has a `VertexInstantiationFormat` member that specifies the data format that instances of the template will store in the acceleration structure.  Actual hardware implementation may vary, but it will functionally appear as if the specified format is what is used.
 
@@ -346,31 +341,7 @@ This requires careful selection of `anchor` and `exponent` values in the input `
 
 ---
 
-##### D3D12_VERTEX_FORMAT_COMPRESSED1_TEMPLATE_HEADER
-
-```C++
-typedef struct D3D12_VERTEX_FORMAT_COMPRESSED1_TEMPLATE_HEADER
-{
-    UINT exponent : 8;
-    UINT x_bits : 4;
-    UINT y_bits : 4;
-    UINT z_bits : 4;
-} D3D12_VERTEX_FORMAT_COMPRESSED1_TEMPLATE_HEADER;
-```
-
-See [Compressed1 with cluster templates](#compressed1-with-cluster-templates) above.
-
-Referenced by `Compressed1TemplateHeader` member of [D3D12_RTAS_OPERATION_BUILD_CLUSTER_TEMPLATES_FROM_TRIANGLES_ARGS](#d3d12_rtas_operation_build_cluster_templates_from_triangles_args).
-
-This struct definition shown from `d3d12.h` can be copied to HLSL with the following definition, along with HLSL 2021 to get bitfield support:
-
-```C++
-typedef uint32_t UINT;
-```
-
----
-
-### Partitioned Top Level Acceleration Structures
+# Partitioned Top Level Acceleration Structures
 
 As developers strive to create larger and more detailed worlds, instance counts have been steadily increasing since the launch of DXR. The design of the Top Level Acceleration Structure API requires the entire data structure to be rebuilt even if only a small number of instances are modified. This does not allow for exploiting temporal invariance across frames, such as in applications where the majority of the scene is static.
 
@@ -378,7 +349,7 @@ Partitioned Top Level Acceleration Structures (PTLAS) provide an alternative to 
 
 ---
 
-#### Partitioned TLAS overview
+## Partitioned TLAS overview
 
 The primary difference between a Partitioned TLAS and a non-Partitioned TLAS is the partitioning of instances, as the name implies. A PTLAS build is internally split into two stages: 
 
@@ -412,7 +383,7 @@ Also see [PTLAS resizing](#ptlas-resizing).
 
 ---
 
-#### Global partition
+## Global partition
 
 Partitioned TLAS supports a special Global Partition that exists separately from the other partitions. Instances can be assigned to the Global Partition in the same way they can be assigned to other partitions. The Global Partition differs in two ways from other partitions:
 
@@ -429,7 +400,7 @@ Instances within the global partition still have a build performance impact, and
 
 ---
 
-#### Partition translation
+## Partition translation
 
 In order to assist titles with large worlds that require more precision than 32-bit floating point numbers can provide, the Partitioned TLAS supports the efficient translation of partitions.
 
@@ -443,7 +414,7 @@ See [Navigating RTAS operation types](#navigating-rtas-operation-types).
 
 ---
 
-### Indirect Acceleration Structure operations
+# Indirect Acceleration Structure operations
 
 A GPU-driven acceleration structure management API surface provides an extendable interface for multiple raytracing features. All operations are GPU-driven with indirect argument lists, allowing for efficient batching and device-generated workloads. The system is designed to be implementation agnostic while providing optimization opportunities for specific hardware architectures.
 
@@ -1579,7 +1550,7 @@ Member                                    | Definition
 Used by:
 - GPU-side operation arguments for [D3D12_RTAS_OPERATION_TYPE_BUILD_CLUSTER_TEMPLATES_FROM_TRIANGLES](#d3d12_rtas_operation_type)
 
-Until HLSL gets union support, a specific variant of the args needs to be declared in HLSL depending on which union member is needed.  Examples shown, assuming the nested structs have also been declared in HLSL(see documentation of those for HLSL mapping).  The address field needs the following in HLSL (a subset of the definitions needed for the other members):
+Until HLSL gets union support, a specific variant of the args needs to be declared in HLSL depending on which union member is needed.  Examples shown, assuming the nested structs have also been declared in HLSL (see documentation of those for HLSL mapping).  The address field needs the following in HLSL (a subset of the definitions needed for the other members):
 
 ```C++
 // Example of flattening the union for HLSL
@@ -1601,6 +1572,30 @@ typedef struct D3D12_RTAS_OPERATION_BUILD_CLUSTER_TEMPLATES_FROM_TRIANGLES_ARGS_
     UINT UnusedPadding;
 } D3D12_RTAS_OPERATION_BUILD_CLUSTER_TEMPLATES_FROM_TRIANGLES_ARGS_COMPRESSED1;
 
+```
+
+---
+
+#### D3D12_VERTEX_FORMAT_COMPRESSED1_TEMPLATE_HEADER
+
+```C++
+typedef struct D3D12_VERTEX_FORMAT_COMPRESSED1_TEMPLATE_HEADER
+{
+    UINT exponent : 8;
+    UINT x_bits : 4;
+    UINT y_bits : 4;
+    UINT z_bits : 4;
+} D3D12_VERTEX_FORMAT_COMPRESSED1_TEMPLATE_HEADER;
+```
+
+See [Compressed1 with cluster templates](#compressed1-with-cluster-templates) above.
+
+Referenced by `Compressed1TemplateHeader` member of [D3D12_RTAS_OPERATION_BUILD_CLUSTER_TEMPLATES_FROM_TRIANGLES_ARGS](#d3d12_rtas_operation_build_cluster_templates_from_triangles_args).
+
+This struct definition shown from `d3d12.h` can be copied to HLSL with the following definition, along with HLSL 2021 to get bitfield support:
+
+```C++
+typedef uint32_t UINT;
 ```
 
 ---
@@ -2057,6 +2052,7 @@ v0.11|12/22/2025|<li>Split out the inputs desc for template generation ([D3D12_R
 v0.12|1/13/2026|<li>In [Clustered geometry](#clustered-geometry), added that accessing acceleration structures that may contain clusters from shaders requires opting in via [D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY](raytracing.md#d3d12_raytracing_pipeline_flags) flag for the state object, or for [RayQuery](#rayquery), [RAYQUERY_FLAG_ALLOW_CLUSTERED_GEOMETRY](raytracing.md#rayquery-flags) in the `RayQuery` instantiation.  These flags are now documented in the original raytracing spec.</li><li>Fixed incorrect wording that said non-indexed positions are allowed for cluster positions - they aren't (as stated elsewhere in the spec).</li><li>In [D3D12_RTAS_CLUSTER_LIMITS](#d3d12_rtas_cluster_limits) corrected `MaxGeometryIndexValue` to not exceed `D3D12_RAYTRACING_MAXIMUM_GEOMETRY_INDEX` (used to say must be less than).</li><li>For template instantiation, when converting from source vertex data to template format, the driver uses round to nearest (used to say round to zero, which was less precise without saving much cost).</li><li>In [D3D12_RTAS_OPERATION_BUILD_CLUSTER_TEMPLATES_FROM_TRIANGLES_ARGS](#d3d12_rtas_operation_build_cluster_templates_from_triangles_args), for the `COMPRESSED1` format, changed the interpretation of the `CompressedFormatHeader` such that only exponent and x,y,z bit counts are used, anchor ignored.  At template instantiation ([D3D12_RTAS_OPERATION_INSTANTIATE_CLUSTER_TEMPLATES_ARGS](#d3d12_rtas_operation_instantiate_cluster_templates_args)) with `COMPRESSED1` templates, the stored anchor is derived as the min x, y and z across all input vertices, and the exponent and bit counts to complete the format specification come from the header stored in the template.</li>
 v0.13|1/19/2026|<li>Added [Template instance format conversion semantics](#template-instance-format-conversion-semantics) and [Compressed1 with cluster templates](#compressed1-with-cluster-templates) sections with template related details such as format conversion rounding behavior.</li><li>In [D3D12_RTAS_OPERATION_BUILD_CLUSTER_TEMPLATES_FROM_TRIANGLES_ARGS](#d3d12_rtas_operation_build_cluster_templates_from_triangles_args), changed the pointer to `CompressedFormatHeader` to an inline 4 byte mini-header, [D3D12_VERTEX_FORMAT_COMPRESSED1_TEMPLATE_HEADER](#d3d12_vertex_format_compressed1_template_header) `Compressed1TemplateHeader`, omitting the anchor in template generation. [Compressed1 with cluster templates](#compressed1-with-cluster-templates) now describes how the anchor is computed at template instantiation from the input vertex data.</li><li>In [D3D12_RTAS_OPERATION_MODE](#d3d12_rtas_operation_mode), for `GET_SIZES` added: In template instantiation, `GET_SIZES` can be used with with `VertexBuffer` left `null` in [D3D12_RTAS_OPERATION_INSTANTIATE_CLUSTER_TEMPLATES_ARGS](#d3d12_rtas_operation_instantiate_cluster_templates_args), which will return the worst-case instantiation size for the specific template, whereas providing vertices can yield a tighter bound.  There may be no difference between these for some devices and formats (like [COMPRESSED1](#compressed1-position-encoding)), but that isn't guaranteed.</li><li>For [D3D12_RTAS_BATCHED_OPERATION_DATA](#d3d12_rtas_batched_operation_data), added a `ToolsInfo` member, which is an optional pointer to memory the device fills copies of result fields but in memory owned by the tool.  Apps can ignore this field and set it to `null`.</li>
 v0.14|1/26/2026|<li>In [D3D12_RTAS_OPERATION_BUILD_CLAS_FROM_TRIANGLES_ARGS](#d3d12_rtas_operation_build_clas_from_triangles_args), added reserved padding members to show where padding appears in the struct, for clarity given apps will be filling the struct in on the GPU.</li><li>For various `ARGS` structs expected to be filled out on the GPU, described now to turn the definition from `d3d12.h` into an HLSL equivalent.</li><li>In [D3D12_RTAS_BATCHED_OPERATION_DATA](#d3d12_rtas_batched_operation_data), for the `D3D12_GPU_VIRTUAL_ADDRESS ToolsInfo` member, instead of pointing to `D3D12_RTAS_BATCHED_OPERATION_TOOLS_INFO` (struct no longer needed, so removed), defined that `ToolsInfo` optionally points to a block of memory with sufficient space for the driver to contiguously write out the various data that used to be pointed to by the fields of `D3D12_RTAS_BATCHED_OPERATION_TOOLS_INFO`.  Essentially flattening a bunch of indirections into a flat chunk of memory.  This flattening makes it easier for PIX to parse the data, particularly for the edge case of an app using the `ToolsInfo` field itself, and thus PIX would have to know where to look in the app's memory (just where `ToolsInfo` points).</li>
-v0.15|2/20/2026|<li>In [D3D12_RTAS_OPERATION_BUILD_CLAS_FROM_TRIANGLES_ARGS](#d3d12_rtas_operation_build_clas_from_triangles_args), clarified that if `VertexBufferStride` is 0, that means to take the natural stride of the vertex type.</li><li>Added `D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_ALLOW_DATA_ACCESS` to [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAGS](#d3d12_rtas_cluster_operation_clas_flags) for opting in to `TriangleObjectPositions()` availability on clusters.</li><li>In [Features](#features) described a `ClustersAndPTLASSupported` cap exposed via [D3D12_FEATURE_D3D12_OPTIONS_NNN](raytracing.md#d3d12_feature_d3d12_options_nnn), NNN to be determined.  This lets devices support these features without having to meet all [D3D12_RAYTRACING_TIER_2_0](raytracing.md#d3d12_raytracing_tier) requirements (in particular Opacity Micromaps support from Tier 1.2). So while Tier 2.0 requires all features, a device could support everything except OMM by reporting Tier 1.1 and `ClustersAndPTLASSupported`.  This cap also implies Shader Model 6.10 support.  A device can also just support Tier 1.1 plus `TriangleObjectPositions()` by supporting SM 6.10 only (which would also bring in SER from 6.9).</li><li>In [D3D12_RTAS_BATCHED_OPERATION_DATA](#d3d12_rtas_batched_operation_data) clarified that the `ResultAddressArray` pointer provided by the app can only be NULL for `GET_SIZES`.</li>
-v0.16|3/10/2026|<li>In [D3D12_RTAS_CLUSTER_TRIANGLES_INPUTS_DESC](#d3d12_rtas_cluster_triangles_inputs_desc) clarified that `PositionTruncateBitCount` applies after converting from input vertex format to float32.</li><li>In [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAGS](#d3d12_rtas_cluster_operation_clas_flags), clarified that `D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_ALLOW_DATA_ACCESS` must be consistently set (or not) for all clusters in a cluster BLAS otherwise behavior is undefined.</li><li>In [D3D12_RTAS_OPERATION_MODE](#d3d12_rtas_operation_mode) added details about what build properties can be `null` during a `GET_SIZES` operation, and how the reported size will be correspondingly conservative.</li>
+v0.15|2/20/2026|<li>In [D3D12_RTAS_OPERATION_BUILD_CLAS_FROM_TRIANGLES_ARGS](#d3d12_rtas_operation_build_clas_from_triangles_args), clarified that if `VertexBufferStride` is 0, that means to take the natural stride of the vertex type.</li><li>Added `D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_ALLOW_DATA_ACCESS` to [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAGS](#d3d12_rtas_cluster_operation_clas_flags) for opting in to `TriangleObjectPositions()` availability on clusters.</li><li>In [Intro](#intro) described a `ClustersAndPTLASSupported` cap exposed via [D3D12_FEATURE_D3D12_OPTIONS_NNN](raytracing.md#d3d12_feature_d3d12_options_nnn), NNN to be determined.  This lets devices support these features without having to meet all [D3D12_RAYTRACING_TIER_2_0](raytracing.md#d3d12_raytracing_tier) requirements (in particular Opacity Micromaps support from Tier 1.2). So while Tier 2.0 requires all features, a device could support everything except OMM by reporting Tier 1.1 and `ClustersAndPTLASSupported`.  This cap also implies Shader Model 6.10 support.  A device can also just support Tier 1.1 plus `TriangleObjectPositions()` by supporting SM 6.10 only (which would also bring in SER from 6.9).</li><li>In [D3D12_RTAS_BATCHED_OPERATION_DATA](#d3d12_rtas_batched_operation_data) clarified that the `ResultAddressArray` pointer provided by the app can only be NULL for `GET_SIZES`.</li>
+v0.16|3/11/2026|<li>In [D3D12_RTAS_CLUSTER_TRIANGLES_INPUTS_DESC](#d3d12_rtas_cluster_triangles_inputs_desc) clarified that `PositionTruncateBitCount` applies after converting from input vertex format to float32.</li><li>In [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAGS](#d3d12_rtas_cluster_operation_clas_flags), clarified that `D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_ALLOW_DATA_ACCESS` must be consistently set (or not) for all clusters in a cluster BLAS otherwise behavior is undefined.</li><li>In [D3D12_RTAS_OPERATION_MODE](#d3d12_rtas_operation_mode) added details about what build properties can be `null` during a `GET_SIZES` operation, and how the reported size will be correspondingly conservative.</li><li>[Intro](#intro) section refinement/cleanup.</li>
+
 
