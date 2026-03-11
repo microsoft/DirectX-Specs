@@ -1,40 +1,41 @@
-- [Graphics partial states](#graphics-partial-states)
-    - [Pre-rasterization shaders partial program](#pre-rasterization-shaders-partial-program)
-    - [Pixel shader partial program](#pixel-shader-partial-program)
-    - [Use in generic programs](#use-in-generic-programs)
-- [API](#API)
-    - [Device Methods](#device_methods)
-        - [CheckFeatureSupport](#checkfeaturesupport)
-            - [CheckFeatureSupport Structures](checkfeaturesupport_structures)
-                - [D3D12\_FEATURE\_DATA\_PARTIAL\_GRAPHICS\_PROGRAMS](#d3d12_feature_data_partial_graphics_programs)
-                - [D3D12\_PARTIAL\_GRAPHICS\_PROGRAMS\_TIER](#d3d12_partial_graphics_programs_tier)
-    - [D3D12\_STATE\_SUBOBJECT\_TYPE](#d3d12_state_subobject_type)
-    - [D3D12\_PARTIAL\_GRAPHICS\_PROGRAM\_TYPE](#d3d12_partial_graphics_program_type)
-    - [D3D12\_PARTIAL\_GRAPHICS\_PROGRAM\_DESC](#d3d12_partial_graphics_program_desc)
-    - [D3D12\_OUTPUT\_LINKAGE\_SIGNATURE\_DESC](#d3d12_output_linkage_signature_desc)
-    - [D3D12\_OUTPUT\_LINKAGE\_ELEMENT\_DESC](#d3d12_output_linkage_element_desc)
-    - [D3D12\_PRERASTERIZATION\_OUTPUT\_LINKAGE\_SIGNATURE\_DESC](#d3d12_prerasterization_output_linkage_signature_desc)
-    - [D3D12\_PRERASTERIZATION\_OUTPUT\_LINKAGE\_ELEMENT\_DESC](#d3d12_prerasterization_output_linkage_element_desc)
-    - [D3D12\_PRERASTERIZATION\_SHADERS\_PARTIAL\_PROGRAM\_FIELDS](#d3d12_prerasterization_shaders_partial_program_fields)
-    - [D3D12\_PIXEL\_SHADER\_PARTIAL\_PROGRAM\_FIELDS](#d3d12_pixel_shader_partial_program_fields)
-- [DDI](#DDI)
-    - [D3D12DDI\_STATE\_SUBOBJECT\_TYPE](#d3d12ddi_state_subobject_type)
-    - [D3D12DDI\_PARTIAL\_GRAPHICS\_PROGRAM\_TYPE](#d3d12ddi_partial_graphics_program_type)
-    - [D3D12DDI\_PARTIAL\_GRAPHICS\_PROGRAM\_DESC\_0121](#d3d12ddi_partial_graphics_program_desc_0121)
-    - [D3D12DDI\_OUTPUT\_LINKAGE\_SIGNATURE\_DESC\_0121](#d3d12ddi_output_linkage_signature_desc_0121)
-    - [D3D12DDI\_OUTPUT\_LINKAGE\_ELEMENT\_DESC\_0121](#d3d12ddi_output_linkage_element_desc_0121)
-    - [D3D12DDI\_PRERASTERIZATION\_OUTPUT\_LINKAGE\_SIGNATURE\_DESC\_0121](#d3d12ddi_prerasterization_output_linkage_signature_desc_0121)
-    - [D3D12DDI\_PRERASTERIZATION\_OUTPUT\_LINKAGE\_ELEMENT\_DESC\_0121](#d3d12ddi_prerasterization_output_linkage_element_desc_0121)
-    - [D3D12DDI\_PRERASTERIZATION\_SHADERS\_PARTIAL\_PROGRAM\_FIELDS\_0121](#d3d12ddi_prerasterization_shaders_partial_program_fields_0121)
-    - [D3D12DDI\_PIXEL\_SHADER\_PARTIAL\_PROGRAM\_FIELDS\_0121](#d3d12ddi_pixel_shader_partial_program_fields_0121)
-    - [Reporting Partial Graphics Programs Support](#reporting_partial_graphics_programs_support)
-        - [D3D12DDI\_PARTIAL\_GRAPHICS\_PROGRAMS\_TIER](#d3d12ddi_partial_graphics_programs_tier)
+- [Partial Graphics Programs](#partial-graphics-programs)
+  - [Pre-rasterization shaders partial program](#pre-rasterization-shaders-partial-program)
+  - [Pixel shader partial program](#pixel-shader-partial-program)
+  - [Notes](#notes)
+  - [Use in generic programs](#use-in-generic-programs)
+- [API](#api)
+  - [Device Methods](#device-methods)
+    - [CheckFeatureSupport](#checkfeaturesupport)
+    - [CheckFeatureSupport Structures](#checkfeaturesupport-structures)
+      - [D3D12\_FEATURE\_DATA\_PARTIAL\_GRAPHICS\_PROGRAMS](#d3d12_feature_data_partial_graphics_programs)
+      - [D3D12\_PARTIAL\_GRAPHICS\_PROGRAMS\_TIER](#d3d12_partial_graphics_programs_tier)
+  - [D3D12\_STATE\_SUBOBJECT\_TYPE](#d3d12_state_subobject_type)
+  - [D3D12\_PARTIAL\_GRAPHICS\_PROGRAM\_TYPE](#d3d12_partial_graphics_program_type)
+  - [D3D12\_PARTIAL\_GRAPHICS\_PROGRAM\_DESC](#d3d12_partial_graphics_program_desc)
+  - [D3D12\_OUTPUT\_LINKAGE\_SIGNATURE\_DESC](#d3d12_output_linkage_signature_desc)
+  - [D3D12\_OUTPUT\_LINKAGE\_ELEMENT\_DESC](#d3d12_output_linkage_element_desc)
+  - [D3D12\_PRERASTERIZATION\_OUTPUT\_LINKAGE\_SIGNATURE\_DESC](#d3d12_prerasterization_output_linkage_signature_desc)
+  - [D3D12\_PRERASTERIZATION\_OUTPUT\_LINKAGE\_ELEMENT\_DESC](#d3d12_prerasterization_output_linkage_element_desc)
+  - [D3D12\_PRERASTERIZATION\_SHADERS\_PARTIAL\_PROGRAM\_FIELDS](#d3d12_prerasterization_shaders_partial_program_fields)
+  - [D3D12\_PIXEL\_SHADER\_PARTIAL\_PROGRAM\_FIELDS](#d3d12_pixel_shader_partial_program_fields)
+- [DDI](#ddi)
+  - [D3D12DDI\_STATE\_SUBOBJECT\_TYPE](#d3d12ddi_state_subobject_type)
+  - [D3D12DDI\_PARTIAL\_GRAPHICS\_PROGRAM\_TYPE](#d3d12ddi_partial_graphics_program_type)
+  - [D3D12DDI\_PARTIAL\_GRAPHICS\_PROGRAM\_DESC\_0121](#d3d12ddi_partial_graphics_program_desc_0121)
+  - [D3D12DDI\_OUTPUT\_LINKAGE\_SIGNATURE\_DESC\_0121](#d3d12ddi_output_linkage_signature_desc_0121)
+  - [D3D12DDI\_OUTPUT\_LINKAGE\_ELEMENT\_DESC\_0121](#d3d12ddi_output_linkage_element_desc_0121)
+  - [D3D12DDI\_PRERASTERIZATION\_OUTPUT\_LINKAGE\_SIGNATURE\_DESC\_0121](#d3d12ddi_prerasterization_output_linkage_signature_desc_0121)
+  - [D3D12DDI\_PRERASTERIZATION\_OUTPUT\_LINKAGE\_ELEMENT\_DESC\_0121](#d3d12ddi_prerasterization_output_linkage_element_desc_0121)
+  - [D3D12DDI\_PRERASTERIZATION\_SHADERS\_PARTIAL\_PROGRAM\_FIELDS\_0121](#d3d12ddi_prerasterization_shaders_partial_program_fields_0121)
+  - [D3D12DDI\_PIXEL\_SHADER\_PARTIAL\_PROGRAM\_FIELDS\_0121](#d3d12ddi_pixel_shader_partial_program_fields_0121)
+- [Reporting Partial Graphics Programs Support](#reporting-partial-graphics-programs-support)
+  - [D3D12DDI\_PARTIAL\_GRAPHICS\_PROGRAMS\_TIER](#d3d12ddi_partial_graphics_programs_tier)
 - [State Object Compilation Flags](#state-object-compilation-flags)
-    - [State Object Flag](#state-object-flag)
-    - [How to measure if these flags work?](#how-to-measure-if-these-flags-work?)
+  - [State Object Flag](#state-object-flag)
+  - [How to measure if these flags work?](#how-to-measure-if-these-flags-work)
 - [History](#history)
 
-# Graphics partial states
+# Partial Graphics Programs
 
 PSOs exist for two reasons:
 - Providing some "fixed function" pipeline state to the driver during shader compilation so that parts of the pipeline can be implemented in shader code.
@@ -141,7 +142,7 @@ Value                                                | Definition
 
 ## D3D12_STATE_SUBOBJECT_TYPE
 
-The enum struct below only shows the subobject type relevant to this spec. See [DXR](../Raytracing.md) and [WG](../WorkGraphs.md) specs for all the other subobject types available.
+The enum struct below only shows the subobject type relevant to this spec. See [DXR](Raytracing.md) and [WG](WorkGraphs.md) specs for all the other subobject types available.
 
 ```cpp
 typedef enum D3D12_STATE_SUBOBJECT_TYPE
@@ -155,12 +156,6 @@ typedef enum D3D12_STATE_SUBOBJECT_TYPE
     // todo: do we need a pixel shader output linkage
 }
 ```
-
-Subobject type defined in this spec:
-
-Value                                           | Definition
----------                                       | ----------
-`D3D12_STATE_SUBOBJECT_TYPE_PRECOMPILED_OBJECT` | Precompiled object definition subobject. See [D3D12_PRECOMPILED_OBJECT_DESC](#d3d12_precompiled_object_desc).
 
 ## D3D12_PARTIAL_GRAPHICS_PROGRAM_TYPE
 
@@ -264,7 +259,7 @@ Members                     | Description
 `BOOL IsPrimitive`          | Set to `True` if this element is a primitive.
 
 
-**[TODO](Add a helper in d3dx that helps generate the linkage desc from a pair of example shaders. So apps don't have to make these by hand.)**
+**TODO (Add a helper in d3dx that helps generate the linkage desc from a pair of example shaders. So apps don't have to make these by hand.)**
 
 
 
@@ -315,6 +310,7 @@ Members                                 | Description
 `LateLinkDepthStencilFormatSubobject`   | Specifies whether the pixel shader partial program depth stencil format subobject will be late linked. When it is set to false that means that when the subobject is not available in the pixel shader partial program then, the driver will use [default values](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#missing-depth_stencil_format).
 `LateLinkRenderTargetFormatSubobject`   | Specifies whether the pixel shader partial program render target format subobject will be late linked. When it is set to false that means that when the subobject is not available in the pixel shader partial program then, the driver will use [default values](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#missing-render_target_formats).
 `LateLinkDepthStencilSubobject`         | Specifies whether the pixel shader partial program depth stencil subobject will be late linked. When it is set to false that means that when the subobject is not available in the pixel shader partial program then, the driver will use [default values](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#missing-depth_stencil-or-depth_stencil1-or-depth_stencil2).
+
 ---
 
 # DDI
