@@ -90,7 +90,12 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Debug Layer Message Callbacks](d3d/MessageCallback.md)
     * [Independent Devices](d3d/IndependentDevices.md)
     * [WriteBufferImmediate](d3d/D3D12WriteBufferImmediate.md)
-
+  
+* GPU Debugging
+    * [DirectX Dump Files](d3d/D3D12GpuDumps.md)
+    * [Debug Break](d3d/D3D12DebugBreak.md)
+    * [PIX Markers](d3d/D3D12PIXMarkers.md)
+    
 * Tools
     * [Recreate At GPUVA](d3d/RecreateAtGpuva-public.md)
     * [Application Specific Driver State](d3d/Application_Specific_Driver_State_v0_07.md)
