@@ -967,7 +967,7 @@ With the CLAS and Cluster BLAS model, this source of unpredictability shifts fro
 
 Any remaining sources of internal fragmentation in the clustered model can be handled transparently by implementations or are insignificant.
 
-For these reasons the option to compact of individual CLAS / CBLAS isn't necessary.
+For these reasons the option to compact individual CLAS / CBLAS isn't necessary.
 
 ---
 
