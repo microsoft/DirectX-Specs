@@ -59,7 +59,9 @@ Partial programs can be defined as:
 - A partial program combining pre-rasterization and pixel shaders, later used with other state subobjects to form a full program. In that case, the two tables below effectively become combined (i.e. you can specify any subobject in either table), except that the output linkage subobjects become invalid, since they can be deduced from the provided shaders. The use case for declaring a combined partial program like this is to allow some of the other fixed-function state to vary without worrying about it impacting shader compilation.
 
 ## Pre-rasterization shaders partial program
+
 This partial program includes:
+
 Subobject type                                              | Is it required?           | Notes
 ---------                                                   | ----------                | ----------
 Primitive topology                                          | Yes, excluding MS         | If specified for a mesh shader then it must match the topology specified in the shader code.
@@ -72,7 +74,9 @@ Input layout                                                | Optional          
 Index buffer strip cut value                                | Optional                  | This can be specified in the pre-rasterization partial program or included in the full graphics program specification. If not present in either the driver will assume [default value](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#missing-index_buffer_strip_cut_value)
 
 ## Pixel shader partial program
+
 This partial program includes:
+
 Subobject type                                              | Is it required?           | Notes
 ---------                                                   | ----------                | ----------
 Shader                                                      | Yes                       | This is used to define the pixel shader. The shader can be present in the state object directly or indirectly using an existing collection.
@@ -99,9 +103,11 @@ A graphics generic programs can be defined using partial graphics programs. To r
 [generic program desc](https://microsoft.github.io/DirectX-Specs/d3d/WorkGraphs.html#d3d12_generic_program_desc). A partial graphics program is only allowed to be referenced by name, it can't be added as a subobject when specifying a generic program.
 
 ---
+
 # API
 
 ## Device Methods
+
 Per D3D12 device interface semantics, these device methods can be called by multiple threads simultaneously.
 
 ### CheckFeatureSupport
@@ -222,6 +228,7 @@ Members                     | Description
 `BOOL IsPrimitive`          | Set to `True` if this element is a primitive.
 
 ## D3D12_PRERASTERIZATION_OUTPUT_LINKAGE_SIGNATURE_DESC
+
 ```cpp
 typedef
 struct D3D12_PRERASTERIZATION_OUTPUT_LINKAGE_SIGNATURE_DESC
@@ -258,12 +265,10 @@ Members                     | Description
 `BYTE ComponentCount`       | The number of components of the entry to write out to.
 `BOOL IsPrimitive`          | Set to `True` if this element is a primitive.
 
-
 **TODO (Add a helper in d3dx that helps generate the linkage desc from a pair of example shaders. So apps don't have to make these by hand.)**
 
-
-
 ## D3D12_PRERASTERIZATION_SHADERS_PARTIAL_PROGRAM_FIELDS
+
 ```cpp
 typedef
 struct D3D12_PRERASTERIZATION_SHADERS_PARTIAL_PROGRAM_FIELDS
@@ -272,13 +277,14 @@ struct D3D12_PRERASTERIZATION_SHADERS_PARTIAL_PROGRAM_FIELDS
     BOOL LateLinkInputLayoutSubobject;
 } D3D12_PRERASTERIZATION_SHADERS_PARTIAL_PROGRAM_FIELDS;
 ```
+
 Members                         | Description
 ------                          | ----------
 `ExcludePS`                     | Specifies whether the pre-rasterization shaders partial program is going to be linked with a pixel shader or not. A partial program with `ExcludePS` can only be used in a generic program that doesn't include a pixel shader.
 `LateLinkInputLayoutSubobject`  | Specifies whether the pre-rasterization shaders partial program input layout subobject will be late linked. When it is set to false that means that when the subobject is not available in the pixel shader partial program then, the driver will use default values.
 
-
 ## D3D12_PIXEL_SHADER_PARTIAL_PROGRAM_FIELDS
+
 ```cpp
 typedef
 struct D3D12_PIXEL_SHADER_PARTIAL_PROGRAM_FIELDS
@@ -316,7 +322,9 @@ Members                                 | Description
 # DDI
 
 ## D3D12DDI_STATE_SUBOBJECT_TYPE
+
 Below is a pruned list of the subobject types relevant to partial programs:
+
 ```cpp
 typedef enum D3D12DDI_STATE_SUBOBJECT_TYPE
 {
@@ -399,6 +407,7 @@ typedef struct D3D12DDI_PRERASTERIZATION_OUTPUT_LINKAGE_ELEMENT_DESC_0121
 ```
 
 ## D3D12DDI_PRERASTERIZATION_SHADERS_PARTIAL_PROGRAM_FIELDS_0121
+
 ```cpp
 typedef
 struct D3D12DDI_PRERASTERIZATION_SHADERS_PARTIAL_PROGRAM_FIELDS_0121
@@ -409,6 +418,7 @@ struct D3D12DDI_PRERASTERIZATION_SHADERS_PARTIAL_PROGRAM_FIELDS_0121
 ```
 
 ## D3D12DDI_PIXEL_SHADER_PARTIAL_PROGRAM_FIELDS_0121
+
 ```cpp
 typedef
 struct D3D12DDI_PIXEL_SHADER_PARTIAL_PROGRAM_FIELDS_0121
@@ -430,6 +440,7 @@ struct D3D12DDI_PIXEL_SHADER_PARTIAL_PROGRAM_FIELDS_0121
 # Reporting Partial Graphics Programs Support
 
 ## D3D12DDI_PARTIAL_GRAPHICS_PROGRAMS_TIER
+
 ```cpp
 typedef enum D3D12DDI_PARTIAL_GRAPHICS_PROGRAMS_TIER
 {
@@ -437,6 +448,7 @@ typedef enum D3D12DDI_PARTIAL_GRAPHICS_PROGRAMS_TIER
     D3D12DDI_PARTIAL_GRAPHICS_PROGRAMS_TIER_1_0 = 10,
 } D3D12DDI_PARTIAL_GRAPHICS_PROGRAMS_TIER;
 ```
+
 Level of partial graphics programs support. Currently all or nothing.
 This is the `PartialGraphicsProgramTier` member of `D3D12DDI_OPTIONS_DATA_PARTIAL_GRAPHICS_PROGRAMS`.
 
@@ -447,6 +459,7 @@ For state objects, when shaders are introduced as part of collections there is a
 To support what is described above flags are added to the state object, these flags are described below.
 
 ## State Object Flag
+
 ```cpp
 typedef enum D3D12_STATE_OBJECT_FLAGS
 {
@@ -480,6 +493,7 @@ Full specialization                                 | Improvement in performance
 Prefer minimal link with background specialization  | This flag should provide faster state object creation first, with an indication that the cache is being used, then when a full specialized version is introduced, the performance should improve. If we need a signal from the driver to know when a full specialized version was added, we can add a call back function.
 
 # History
+
 | Date    | Notes |
 | -------- | ------- |
 | **04/11/2025** | Split out partial programs into its own spec. |
