@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec, Part 2 <!-- omit in toc -->
 
-v0.16 3/11/2026
+v0.17 3/12/2026
 
 ---
 
@@ -40,6 +40,7 @@ v0.16 3/11/2026
         - [D3D12\_RTAS\_OPERATION\_FLAGS](#d3d12_rtas_operation_flags)
         - [D3D12\_RTAS\_OPERATION\_MODE](#d3d12_rtas_operation_mode)
         - [Implicit vs explicit destinations for acceleration structure operations](#implicit-vs-explicit-destinations-for-acceleration-structure-operations)
+        - [Why compaction doesn't apply to clustered geometry](#why-compaction-doesnt-apply-to-clustered-geometry)
         - [Resource state for read-only arguments](#resource-state-for-read-only-arguments)
         - [Resource state for read-write or write-only arguments](#resource-state-for-read-write-or-write-only-arguments)
         - [Resource state for acceleration structures](#resource-state-for-acceleration-structures)
@@ -169,7 +170,7 @@ The intended use for cluster-related operations is for the user to create BLAS o
 
 - CLAS allow reusing of geometry data between multiple BLAS, reducing memory footprint.
 - CLAS can be built efficiently in general, and using [template-based instantiation](#cluster-templates) CLAS can be created with extremely low overhead.
-- CLAS require no compaction and can be emitted without unnecessary structures within the object.
+- CLAS/Cluster BLAS require no compaction and can be emitted without unnecessary structures within the object. See [Why compaction doesn't apply to clustered geometry](#why-compaction-doesnt-apply-to-clustered-geometry).
 - Constructing BLAS from CLAS is more efficient by reducing the number of primitives the build operates on. For assembling BLAS out of CLAS of 100 triangles a ~100x speedup is reasonable to expect.
 - Non-consecutive geometry indexing allows more flexible use of Shader Tables.
 - All operations are device driven and allow device-generated arguments.
@@ -954,6 +955,20 @@ This also means the results of `_GET_SIZES` are not safe to use for calculating 
 
 Using explicit build guarantees that objects can be packed as tightly as `_GET_SIZES` returns, but this isn't necessarily the tightest possible packing, given relationship shown above. Using `_GET_SIZES` and then building with explicit destinations can reduce peak memory footprint versus just implicit address builds (without subsequent moves for compaction), but can perform slower as the size calculation is effectively done twice: once for `_GET_SIZES` and once when the build executes, even if the build doesn't request the final size to be output. `_GET_SIZES` on instantiating a template should be virtually instantaneous.
 
+See also [Why compaction doesn't apply to clustered geometry](#why-compaction-doesnt-apply-to-clustered-geometry)acceleration-structure-compaction-with-clustered-geometry).
+
+---
+
+##### Why compaction doesn't apply to clustered geometry
+
+For traditional BLAS (non-clustered geometry), acceleration structure [compaction](raytracing.md#d3d12_raytracing_acceleration_structure_copy_mode) is a useful tool for reducing memory consumption. The primary driver for compaction was that the final size of an acceleration structure after a build is unpredictable due to geometry-dependent fragmentation that falls out of actually doing the build.  Implementations must conservatively allocate based on worst-case prebuild estimates.
+
+With the CLAS and Cluster BLAS model, this source of unpredictability shifts from being internal fragmentation within a monolithic BLAS to being variance in the actual sizes of individual CLAS relative to their prebuild estimates. Rather than reclaiming wasted space inside a large acceleration structure through a post-build compaction step, applications can use the options described in [Implicit vs explicit destinations for acceleration structure operations](#implicit-vs-explicit-destinations-for-acceleration-structure-operations) to position / move CLAS and Cluster BLAS to be tightly packed.
+
+Any remaining sources of internal fragmentation in the clustered model can be handled transparently by implementations or are insignificant.
+
+For these reasons the option to compact of individual CLAS / CBLAS isn't necessary.
+
 ---
 
 ##### Resource state for read-only arguments
@@ -1103,7 +1118,7 @@ Specifies the type of cluster acceleration structure objects being moved.
 
 Value                                                                                              | Definition
 -----                                                                                              | ----------
-`D3D12_RTAS_MOVE_OPERATION_TYPE_CLUSTER_BOTTOM_LEVEL_ACCELERATION_STRUCTURE` | Move multiple Cluster BLAS in memory. Only Cluster BLAS,  constructed through [ExecuteIndirectRTASOperations()](#executeindirectrtasoperations) are supported. The alignment of `BatchResultData` and addresses in `ResultAddressArray` both in [D3D12_RTAS_BATCHED_OPERATION_DATA](#d3d12_rtas_batched_operation_data) must be a multiple of 256 bytes, see [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT](raytracing.md#constants).
+`D3D12_RTAS_MOVE_OPERATION_TYPE_CLUSTER_BOTTOM_LEVEL_ACCELERATION_STRUCTURE` | Move multiple Cluster BLAS in memory. Only Cluster BLAS, constructed through [ExecuteIndirectRTASOperations()](#executeindirectrtasoperations) are supported. The alignment of `BatchResultData` and addresses in `ResultAddressArray` both in [D3D12_RTAS_BATCHED_OPERATION_DATA](#d3d12_rtas_batched_operation_data) must be a multiple of 256 bytes, see [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT](raytracing.md#constants).
 `D3D12_RTAS_MOVE_OPERATION_TYPE_CLUSTER_LEVEL_ACCELERATION_STRUCTURE` | Move multiple CLAS in memory. The alignment of `BatchResultData` and addresses in `ResultAddressArray` both in [D3D12_RTAS_BATCHED_OPERATION_DATA](#d3d12_rtas_batched_operation_data) must be a multiple of 128 bytes, see [D3D12_RAYTRACING_CLAS_BYTE_ALIGNMENT](#constants).
 `D3D12_RTAS_MOVE_OPERATION_TYPE_CLUSTER_TEMPLATE`             | Move multiple Cluster Templates in memory. The alignment of `BatchResultData` and addresses in `ResultAddressArray` both in [D3D12_RTAS_BATCHED_OPERATION_DATA](#d3d12_rtas_batched_operation_data) must be a multiple of 32 bytes, see [D3D12_RAYTRACING_CLUSTER_TEMPLATE_BYTE_ALIGNMENT](#constants).
 
@@ -1160,6 +1175,8 @@ Describes a Cluster Operation that moves multiple cluster objects built by [Indi
 If memory addresses do overlap and the allocations are reserved (tiled) resources, if the same physical memory is aliased with different virtual addresses and the physical memory overlaps but the virtual memory doesn't, the move is undefined.
 
 The [GetRTASOperationPrebuildInfo()](#getrtasoperationprebuildinfo) call will return sufficient memory requirements for a call to [ExecuteIndirectRTASOperations()](#executeindirectrtasoperations) if all of the fields have the same value between both calls.  For moves, only the required scratch memory is returned. The result memory requirement is up to the user to determine based on the sum of input object sizes, which will pack tightly given the size originally reported for each input object is already a multiple of the required object alignment.
+
+Notice there is no cluster compaction option (for reducing sizs) like exists for traditional BLAS which has [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_COMPACT](raytracing.md#d3d12_raytracing_acceleration_structure_copy_mode).  For clusters and cluster BLAS it's just moves.  See [Why compaction doesn't apply to clustered geometry.](#why-compaction-doesnt-apply-to-clustered-geometry).
 
 Member                                                             | Definition
 ------                                                             | ----------
@@ -2054,5 +2071,6 @@ v0.13|1/19/2026|<li>Added [Template instance format conversion semantics](#templ
 v0.14|1/26/2026|<li>In [D3D12_RTAS_OPERATION_BUILD_CLAS_FROM_TRIANGLES_ARGS](#d3d12_rtas_operation_build_clas_from_triangles_args), added reserved padding members to show where padding appears in the struct, for clarity given apps will be filling the struct in on the GPU.</li><li>For various `ARGS` structs expected to be filled out on the GPU, described now to turn the definition from `d3d12.h` into an HLSL equivalent.</li><li>In [D3D12_RTAS_BATCHED_OPERATION_DATA](#d3d12_rtas_batched_operation_data), for the `D3D12_GPU_VIRTUAL_ADDRESS ToolsInfo` member, instead of pointing to `D3D12_RTAS_BATCHED_OPERATION_TOOLS_INFO` (struct no longer needed, so removed), defined that `ToolsInfo` optionally points to a block of memory with sufficient space for the driver to contiguously write out the various data that used to be pointed to by the fields of `D3D12_RTAS_BATCHED_OPERATION_TOOLS_INFO`.  Essentially flattening a bunch of indirections into a flat chunk of memory.  This flattening makes it easier for PIX to parse the data, particularly for the edge case of an app using the `ToolsInfo` field itself, and thus PIX would have to know where to look in the app's memory (just where `ToolsInfo` points).</li>
 v0.15|2/20/2026|<li>In [D3D12_RTAS_OPERATION_BUILD_CLAS_FROM_TRIANGLES_ARGS](#d3d12_rtas_operation_build_clas_from_triangles_args), clarified that if `VertexBufferStride` is 0, that means to take the natural stride of the vertex type.</li><li>Added `D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_ALLOW_DATA_ACCESS` to [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAGS](#d3d12_rtas_cluster_operation_clas_flags) for opting in to `TriangleObjectPositions()` availability on clusters.</li><li>In [Intro](#intro) described a `ClustersAndPTLASSupported` cap exposed via [D3D12_FEATURE_D3D12_OPTIONS_NNN](raytracing.md#d3d12_feature_d3d12_options_nnn), NNN to be determined.  This lets devices support these features without having to meet all [D3D12_RAYTRACING_TIER_2_0](raytracing.md#d3d12_raytracing_tier) requirements (in particular Opacity Micromaps support from Tier 1.2). So while Tier 2.0 requires all features, a device could support everything except OMM by reporting Tier 1.1 and `ClustersAndPTLASSupported`.  This cap also implies Shader Model 6.10 support.  A device can also just support Tier 1.1 plus `TriangleObjectPositions()` by supporting SM 6.10 only (which would also bring in SER from 6.9).</li><li>In [D3D12_RTAS_BATCHED_OPERATION_DATA](#d3d12_rtas_batched_operation_data) clarified that the `ResultAddressArray` pointer provided by the app can only be NULL for `GET_SIZES`.</li>
 v0.16|3/11/2026|<li>In [D3D12_RTAS_CLUSTER_TRIANGLES_INPUTS_DESC](#d3d12_rtas_cluster_triangles_inputs_desc) clarified that `PositionTruncateBitCount` applies after converting from input vertex format to float32.</li><li>In [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAGS](#d3d12_rtas_cluster_operation_clas_flags), clarified that `D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_ALLOW_DATA_ACCESS` must be consistently set (or not) for all clusters in a cluster BLAS otherwise behavior is undefined.</li><li>In [D3D12_RTAS_OPERATION_MODE](#d3d12_rtas_operation_mode) added details about what build properties can be `null` during a `GET_SIZES` operation, and how the reported size will be correspondingly conservative.</li><li>[Intro](#intro) section refinement/cleanup.</li>
+v0.17|3/12/2026|<li>Added [Why compaction doesn't apply to clustered geometry](#why-compaction-doesnt-apply-to-clustered-geometry) section</li>
 
 
