@@ -42,18 +42,19 @@ v0.01 12 Mar 2026
 ---
 
 ## Terms and Acronyms
-| Term               | Definition                                                                                                                                                                                                              |
-|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| TDR                | Timeout Detection and Recovery, a feature in Windows that detects when the GPU is taking longer than expected to complete an operation. It then resets the GPU to prevent the entire system from becoming unresponsive. |
-| dxgkrnl            | GPU scheduler, a component of the DirectX graphics kernel subsystem in Windows, responsible for timeout detection and recovery                                                                                          |
-| LKD                | Live kernel dump, a TDR LKD created by dxgkrnl on a TDR                                                                                                                                                                 |
-| DirectX Dump Files | Application specific GPU dumps created by DirectX that this spec describes                                                                                                                                              |
-| ISV                | Xbox and PC game developer, or author of other applications using DirectX, aka "software developer"                                                                                                                     |
-| IHV                | Independent Hardware Vendor, aka "GPU manufacturer" or "hardware developer"                                                                                                                                             |
-| D3D12 runtime      | D3D12Core.dll in Agility SDK or in Windows OS                                                                                                                                                                           |
-| Developer scenario | The one where a D3D12 application is running at a company developing it                                                                                                                                                 | 
-| Retail scenario    | The one where an end user is running a D3D12 application they did not develop                                                                                                                                           |
-| Overhead           | Reduced frame rate or increased memory consumption due to extra mechanisms enabled for debugging purposes while the application is running                                                                              |
+
+| Term | Definition |
+| -- | -- |
+| TDR | Timeout Detection and Recovery, a feature in Windows that detects when the GPU is taking longer than expected to complete an operation. It then resets the GPU to prevent the entire system from becoming unresponsive. |
+| dxgkrnl | GPU scheduler, a component of the DirectX graphics kernel subsystem in Windows, responsible for timeout detection and recovery |
+| LKD | Live kernel dump, a TDR LKD created by dxgkrnl on a TDR |
+| DirectX Dump Files | Application specific GPU dump files created by DirectX that this spec describes |
+| ISV | Xbox and PC game developer, or author of other applications using DirectX, aka "software developer" |
+| IHV | Independent Hardware vendor, aka "GPU manufacturer" or "hardware developer" |
+| D3D12 runtime | D3D12Core.dll in Agility SDK or in Windows OS |
+| Developer scenario | The one where a D3D12 application is running at a company developing it | 
+| Retail scenario | The one where an end user is running a D3D12 application they did not develop |
+| Overhead | Reduced frame rate or increased memory consumption due to extra mechanisms enabled for debugging purposes while the application is running |
 
 # Overview
 
