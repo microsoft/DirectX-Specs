@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec, Part 2 <!-- omit in toc -->
 
-v0.19 3/17/2026
+v0.20 3/18/2026
 
 ---
 
@@ -1654,95 +1654,126 @@ typedef int INT;
 ###### D3D12_VERTEX_FORMAT_COMPRESSED1_HEADER macros
 
 ```C++
-// 24-bit sign extension (portable, no arithmetic-shift dependency)
-#define D3D12_COMPRESSED1_SIGN_EXTEND_24(val) \
-    ((INT)(((val) ^ 0x800000) - 0x800000))
-
-// ENCODER MACRO: Store exponent field (read-modify-write). Caller must pass biased exponent (actual + 127).
-#define ENCODE_D3D12_COMPRESSED1_EXPONENT(header, exponent)  ((header).field0 = ((header).field0 & 0xFFFFFF00) | ((UINT)(exponent) & 0xFF))
+// ENCODER MACRO: Store exponent field (read-modify-write). 
+// Caller must pass biased exponent (actual + 127).
+#define ENCODE_D3D12_COMPRESSED1_EXPONENT(header, exponent) \
+    ((header).field0 = ((header).field0 & ~0xFF) | (UINT(exponent) & 0xFF))
 
 // ENCODER MACRO: Store x_anchor field (read-modify-write).
-#define ENCODE_D3D12_COMPRESSED1_X_ANCHOR(header, x_anchor)  ((header).field0 = ((header).field0 & 0xFF) | (((UINT)(x_anchor) << 8) & 0xFFFFFF00))
+#define ENCODE_D3D12_COMPRESSED1_X_ANCHOR(header, x_anchor) \
+    ((header).field0 = ((header).field0 & 0xFF) | ((UINT(x_anchor) << 8)))
 
 // ENCODER MACRO: Store x_bits field (read-modify-write). Caller must pass (bit_count - 1).
-#define ENCODE_D3D12_COMPRESSED1_X_BITS(header, x_bits)    ((header).field1 = ((header).field1 & ~0xF) | ((UINT)(x_bits) & 0xF))
+#define ENCODE_D3D12_COMPRESSED1_X_BITS(header, x_bits) \
+    ((header).field1 = ((header).field1 & ~0xF) | ((UINT(x_bits) & 0xF)))
 
 // ENCODER MACRO: Store y_bits field (read-modify-write). Caller must pass (bit_count - 1).
-#define ENCODE_D3D12_COMPRESSED1_Y_BITS(header, y_bits)    ((header).field1 = ((header).field1 & ~0xF0) | (((UINT)(y_bits) & 0xF) << 4))
+#define ENCODE_D3D12_COMPRESSED1_Y_BITS(header, y_bits) \
+    ((header).field1 = ((header).field1 & ~0xF0) | ((UINT(y_bits) & 0xF) << 4))
 
 // ENCODER MACRO: Store y_anchor field (read-modify-write).
-#define ENCODE_D3D12_COMPRESSED1_Y_ANCHOR(header, y_anchor)  ((header).field1 = ((header).field1 & 0xFF) | (((UINT)(y_anchor) << 8) & 0xFFFFFF00))
+#define ENCODE_D3D12_COMPRESSED1_Y_ANCHOR(header, y_anchor) \
+    ((header).field1 = ((header).field1 & 0xFF) | ((UINT(y_anchor) << 8)))
 
 // ENCODER MACRO: Store z_bits field (read-modify-write). Caller must pass (bit_count - 1).
-#define ENCODE_D3D12_COMPRESSED1_Z_BITS(header, z_bits)    ((header).field2 = ((header).field2 & ~0xF) | ((UINT)(z_bits) & 0xF))
+#define ENCODE_D3D12_COMPRESSED1_Z_BITS(header, z_bits) \
+    ((header).field2 = ((header).field2 & ~0xF) | ((UINT(z_bits) & 0xF)))
 
 // ENCODER MACRO: Store z_anchor field (read-modify-write).
-#define ENCODE_D3D12_COMPRESSED1_Z_ANCHOR(header, z_anchor)  ((header).field2 = ((header).field2 & 0xFF) | (((UINT)(z_anchor) << 8) & 0xFFFFFF00))
+#define ENCODE_D3D12_COMPRESSED1_Z_ANCHOR(header, z_anchor) \
+    ((header).field2 = ((header).field2 & 0xFF) | ((UINT(z_anchor) << 8)))
 
-// ENCODER MACRO Store all field0 members: exponent and x_anchor. Caller must pass biased exponent (actual + 127).
+// ENCODER MACRO Store all field0 members: exponent and x_anchor. 
+// Caller must pass biased exponent (actual + 127).
 #define ENCODE_D3D12_COMPRESSED1_EXPONENT_X_ANCHOR(header, exponent, x_anchor) \
-    ((header).field0 = (((UINT)(exponent) & 0xFF) | (((UINT)(x_anchor) << 8) & 0xFFFFFF00)))
+    ((header).field0 = ((UINT(exponent) & 0xFF) | (UINT(x_anchor) << 8)))
 
-// ENCODER MACRO Store all field1 members: x_bits, y_bits, and y_anchor. Caller must pass (bit_count - 1) for x_bits and y_bits.
+// ENCODER MACRO Store all field1 members: x_bits, y_bits, and y_anchor. 
+// Caller must pass (bit_count - 1) for x_bits and y_bits.
 #define ENCODE_D3D12_COMPRESSED1_XY_BITS_Y_ANCHOR(header, x_bits, y_bits, y_anchor) \
-    ((header).field1 = (((UINT)(x_bits) & 0xF) | (((UINT)(y_bits) & 0xF) << 4) | (((UINT)(y_anchor) << 8) & 0xFFFFFF00)))
+    ((header).field1 = ((UINT(x_bits) & 0xF) | ((UINT(y_bits) & 0xF) << 4) | (UINT(y_anchor) << 8)))
 
-// ENCODER MACRO Store all field2 members: z_bits and z_anchor. Caller must pass (bit_count - 1) for z_bits. Bits [07:04] are set to zero (unused).
+// ENCODER MACRO Store all field2 members: z_bits and z_anchor. 
+// Caller must pass (bit_count - 1) for z_bits. Bits [07:04] are set to zero (unused).
 #define ENCODE_D3D12_COMPRESSED1_Z_BITS_Z_ANCHOR(header, z_bits, z_anchor) \
-    ((header).field2 = (((UINT)(z_bits) & 0xF) | (((UINT)(z_anchor) << 8) & 0xFFFFFF00)))
+    ((header).field2 = ((UINT(z_bits) & 0xF) | (UINT(z_anchor) << 8)))
 
-// DECODER MACRO: Extract the 8-bit biased exponent. Caller must subtract 127 from result to get the actual exponent.
+// ENCODER MACRO: Store all fields. Caller must pass biased exponent 
+// (actual + 127) and (bit_count - 1) for x_bits, y_bits, and z_bits. 
+// Bits [07:04] in field2 are set to zero (unused).
+#define ENCODE_D3D12_COMPRESSED1(header, exponent, x_anchor, y_anchor, z_anchor, x_bits, y_bits, z_bits ) \
+    ((header).field0 = ((UINT(exponent) & 0xFF) | (UINT(x_anchor) << 8)), \
+     (header).field1 = ((UINT(x_bits) & 0xF) | ((UINT(y_bits) & 0xF) << 4) | (UINT(y_anchor) << 8)), \
+     (header).field2 = ((UINT(z_bits) & 0xF) | (UINT(z_anchor) << 8)))
+
+// DECODER MACRO: Extract the 8-bit biased exponent. 
+// Caller must subtract 127 from result to get the actual exponent.
 #define DECODE_D3D12_COMPRESSED1_EXPONENT(header)  (((header).field0) & 0xFF)
 
 // DECODER MACRO: Extract the 24-bit x_anchor as a signed integer.
-#define DECODE_D3D12_COMPRESSED1_X_ANCHOR(header)  D3D12_COMPRESSED1_SIGN_EXTEND_24((((header).field0) >> 8) & 0xFFFFFF)
+#define DECODE_D3D12_COMPRESSED1_X_ANCHOR(header)  (INT((header).field0) >> 8)
 
-// DECODER MACRO: Extract the 4-bit x_bits value. Caller must add 1 to result to get the actual bit count.
+// DECODER MACRO: Extract the 4-bit x_bits value. 
+// Caller must add 1 to result to get the actual bit count.
 #define DECODE_D3D12_COMPRESSED1_X_BITS(header)    (((header).field1) & 0xF)
 
-// DECODER MACRO: Extract the 4-bit y_bits value. Caller must add 1 to result to get the actual bit count.
+// DECODER MACRO: Extract the 4-bit y_bits value. 
+// Caller must add 1 to result to get the actual bit count.
 #define DECODE_D3D12_COMPRESSED1_Y_BITS(header)    ((((header).field1) >> 4) & 0xF)
 
 // DECODER MACRO: Extract the 24-bit y_anchor as a signed integer.
-#define DECODE_D3D12_COMPRESSED1_Y_ANCHOR(header)  D3D12_COMPRESSED1_SIGN_EXTEND_24((((header).field1) >> 8) & 0xFFFFFF)
+#define DECODE_D3D12_COMPRESSED1_Y_ANCHOR(header)  (INT((header).field1) >> 8)
 
-// DECODER MACRO: Extract the 4-bit z_bits value. Caller must add 1 to result to get the actual bit count.
+// DECODER MACRO: Extract the 4-bit z_bits value. 
+// Caller must add 1 to result to get the actual bit count.
 #define DECODE_D3D12_COMPRESSED1_Z_BITS(header)    (((header).field2) & 0xF)
 
 // DECODER MACRO: Extract the 24-bit z_anchor as a signed integer.
-#define DECODE_D3D12_COMPRESSED1_Z_ANCHOR(header)  D3D12_COMPRESSED1_SIGN_EXTEND_24((((header).field2) >> 8) & 0xFFFFFF)
+#define DECODE_D3D12_COMPRESSED1_Z_ANCHOR(header)  (INT((header).field2) >> 8)
+
 ```
 
 ###### D3D12_VERTEX_FORMAT_COMPRESSED1_TEMPLATE_HEADER macros
 
 ```C++
 // ENCODER MACRO: Store exponent field (read-modify-write). Caller must pass biased exponent (actual + 127).
-#define ENCODE_D3D12_COMPRESSED1_TEMPLATE_EXPONENT(header, exponent)  ((header).field0 = ((header).field0 & ~0xFF) | ((UINT)(exponent) & 0xFF))
+#define ENCODE_D3D12_COMPRESSED1_TEMPLATE_EXPONENT(header, exponent) \
+    ((header).field0 = ((header).field0 & ~0xFF) | (UINT(exponent) & 0xFF))
 
 // ENCODER MACRO: Store x_bits field (read-modify-write). Caller must pass (bit_count - 1).
-#define ENCODE_D3D12_COMPRESSED1_TEMPLATE_X_BITS(header, x_bits)    ((header).field0 = ((header).field0 & ~0xF00) | (((UINT)(x_bits) & 0xF) << 8))
+#define ENCODE_D3D12_COMPRESSED1_TEMPLATE_X_BITS(header, x_bits) \
+    ((header).field0 = ((header).field0 & ~0xF00) | ((UINT(x_bits) & 0xF) << 8))
 
 // ENCODER MACRO: Store y_bits field (read-modify-write). Caller must pass (bit_count - 1).
-#define ENCODE_D3D12_COMPRESSED1_TEMPLATE_Y_BITS(header, y_bits)    ((header).field0 = ((header).field0 & ~0xF000) | (((UINT)(y_bits) & 0xF) << 12))
+#define ENCODE_D3D12_COMPRESSED1_TEMPLATE_Y_BITS(header, y_bits) \
+    ((header).field0 = ((header).field0 & ~0xF000) | ((UINT(y_bits) & 0xF) << 12))
 
 // ENCODER MACRO: Store z_bits field (read-modify-write). Caller must pass (bit_count - 1).
-#define ENCODE_D3D12_COMPRESSED1_TEMPLATE_Z_BITS(header, z_bits)    ((header).field0 = ((header).field0 & ~0xF0000) | (((UINT)(z_bits) & 0xF) << 16))
+#define ENCODE_D3D12_COMPRESSED1_TEMPLATE_Z_BITS(header, z_bits) \
+    ((header).field0 = ((header).field0 & ~0xF0000) | ((UINT(z_bits) & 0xF) << 16))
 
-// ENCODER MACRO: Store all members: exponent, x_bits, y_bits, and z_bits. Caller must pass biased exponent (actual + 127) and (bit_count - 1) for each bits field. Bits [31:20] are set to zero (unused).
+// ENCODER MACRO: Store all members: exponent, x_bits, y_bits, and z_bits. 
+// Caller must pass biased exponent (actual + 127) and (bit_count - 1) for each bits field. 
+// Bits [31:20] are set to zero (unused).
 #define ENCODE_D3D12_COMPRESSED1_TEMPLATE(header, exponent, x_bits, y_bits, z_bits) \
-    ((header).field0 = (((UINT)(exponent) & 0xFF) | (((UINT)(x_bits) & 0xF) << 8) | (((UINT)(y_bits) & 0xF) << 12) | (((UINT)(z_bits) & 0xF) << 16)))
+    ((header).field0 = ((UINT(exponent) & 0xFF) | ((UINT(x_bits) & 0xF) << 8) | ((UINT(y_bits) & 0xF) << 12) | ((UINT(z_bits) & 0xF) << 16)))
 
 // DECODER MACRO: Extract the 8-bit biased exponent. Caller must subtract 127 to get the actual exponent.
-#define DECODE_D3D12_COMPRESSED1_TEMPLATE_EXPONENT(header)  (((header).field0) & 0xFF)
+#define DECODE_D3D12_COMPRESSED1_TEMPLATE_EXPONENT(header) \
+    (((header).field0) & 0xFF)
 
 // DECODER MACRO: Extract the 4-bit x_bits value. Caller must add 1 to get the actual bit count.
-#define DECODE_D3D12_COMPRESSED1_TEMPLATE_X_BITS(header)    ((((header).field0) >> 8) & 0xF)
+#define DECODE_D3D12_COMPRESSED1_TEMPLATE_X_BITS(header) \
+    ((((header).field0) >> 8) & 0xF)
 
 // DECODER MACRO: Extract the 4-bit y_bits value. Caller must add 1 to get the actual bit count.
-#define DECODE_D3D12_COMPRESSED1_TEMPLATE_Y_BITS(header)    ((((header).field0) >> 12) & 0xF)
+#define DECODE_D3D12_COMPRESSED1_TEMPLATE_Y_BITS(header) \ 
+    ((((header).field0) >> 12) & 0xF)
 
 // DECODER MACRO: Extract the 4-bit z_bits value. Caller must add 1 to get the actual bit count.
-#define DECODE_D3D12_COMPRESSED1_TEMPLATE_Z_BITS(header)    ((((header).field0) >> 16) & 0xF)
+#define DECODE_D3D12_COMPRESSED1_TEMPLATE_Z_BITS(header) \
+    ((((header).field0) >> 16) & 0xF)
+
 ```
 
 ---
@@ -2204,3 +2235,4 @@ v0.16|3/11/2026|<li>In [D3D12_RTAS_CLUSTER_TRIANGLES_INPUTS_DESC](#d3d12_rtas_cl
 v0.17|3/12/2026|<li>Added [Why compaction doesn't apply to clustered geometry](#why-compaction-doesnt-apply-to-clustered-geometry) section</li>
 v0.18|3/16/2026|<li>Replaced C++ bitfields with plain `UINT` members (to be manually packed by user) in [D3D12_VERTEX_FORMAT_COMPRESSED1_HEADER](#compressed1-position-encoding) and [D3D12_VERTEX_FORMAT_COMPRESSED1_TEMPLATE_HEADER](#d3d12_vertex_format_compressed1_template_header) for portable layout across C++ compilers, architectures, and HLSL. Added [Compressed1 bitfield helper macros](#compressed1-bitfield-helper-macros) section with encode/decode macros from `d3d12.h` that work in both C++ and HLSL (with `UINT`/`INT` typedefs). For the same reason, in [D3D12_RTAS_OPERATION_BUILD_CLAS_FROM_TRIANGLES_ARGS](#d3d12_rtas_operation_build_clas_from_triangles_args) replaced bitfield members with vanilla typed members.</li><li>In [D3D12_RTAS_OPERATION_BUILD_CLAS_FROM_TRIANGLES_ARGS](#d3d12_rtas_operation_build_clas_from_triangles_args), for `IndexBufferStride` limited the maximum stride value to 4 bytes. The purpose of this stride is just for cases where an application may have index values of a larger size (e.g. 4 bytes) but knows the values would happen to fit in a smaller size like 1 byte, which implementations might process more efficiently.  The intent isn't for interleaving arbitrary data between indices (something more reasonable to do with the other stride values in this struct).</li>
 v0.19|3/17/2026|<li>Moved `D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_ALLOW_DATA_ACCESS` from [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAGS](#d3d12_rtas_cluster_operation_clas_flags) to [D3D12_RTAS_OPERATION_FLAGS](#d3d12_rtas_operation_flags) as `D3D12_RTAS_OPERATION_FLAG_ALLOW_DATA_ACCESS`.  This flag applies to CLAS builds and CLAS template builds; it is ignored for CLAS template instantiation, which inherits the allow/disallow state from the template.  It not allowed for cluster BLAS builds; instead, all CLAS referenced by a given cluster BLAS must have consistently chosen to allow data access or not when they were built.</li><li>Added `D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_DISALLOW_DATA_ACCESS` to [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAGS](#d3d12_rtas_cluster_operation_clas_flags) to selectively disable data access for individual cluster builds within an operation that has `ALLOW_DATA_ACCESS` globally set.</li>
+v0.20|3/18/2026|<li>In [Compressed1 bitfield helper macros](#compressed1-bitfield-helper-macros), macro cleanup and bugfixes: removed unnecessary mask after left shifting; `UINT(val)` instead of `(UINT)(val)` (less verbose); use sign extend on right shift - support is ubiquitous enough (old macro also incorrectly masked result)</li>
