@@ -104,6 +104,9 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [D3D12 on Windows 7](d3d/D3D12onWin7.md)
     * [Translation Layer Resource Interoperability](d3d/TranslationLayerResourceInterop.md) (9on12 and 11on12)
 
+* In-development specifications
+    * [D3D APIs for Shader Model 6.10 Linear Algebra](d3d/D3D12LinearAlgebraRuntimeFeatureSupport.md)
+
 _These D3D12 specs were written as incremental deltas, with a separate spec per feature area.
 Baseline information about rendering pipeline behaviors that are common between D3D11 and D3D12
 was inherited from the D3D11 spec rather than being duplicated into the 12 documentation.
