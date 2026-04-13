@@ -699,7 +699,7 @@ which is stricter than the general D3D11 <a href="#FloatingPointRules">Floating 
 conversion to floating-point is as follows:</p>
 <ul>
 <li>The most-negative value maps to -1.0f.  e.g. the 5-bit value 10000 maps to -1.0f.
-<li>Every other value is converted to a float (call it c), and then result = c * (1.0f / (2<sup>(n-1)</sup>-1)).
+<li>Every other value is converted to a float (call it c), and then result = c / (2<sup>(n-1)</sup>-1).
 e.g. the 5-bit value 10001 is converted to -15.0f, and then divided by 15.0f, yielding
 -1.0f.</li>
 </ul>
