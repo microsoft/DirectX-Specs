@@ -2263,6 +2263,8 @@ enum D3D12_TEXTURE_BARRIER_FLAGS
 
 Can only be used when `LayoutBefore` is `D3D12_BARRIER_LAYOUT_UNDEFINED`.  Typically, this is used to initialize compression metadata as part of a barrier that activates an aliased resource.
 
+When `D3D12_TEXTURE_BARRIER_FLAG_DISCARD` is specified, `LayoutAfter` may be any valid layout appropriate for the resource and barrier command list type.  This is more flexible than the legacy `DiscardResource` API, which requires subresources to be in `D3D12_RESOURCE_STATE_RENDER_TARGET` if the resource was created with `D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET`, or `D3D12_RESOURCE_STATE_DEPTH_WRITE` if created with `D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL`. As such, applications can discard-initialize a subresource directly into the layout needed for subsequent access, without barrier layout restriction.
+
 ### D3D12_TEXTURE_BARRIER
 
 ```c++
