@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec, Part 2 <!-- omit in toc -->
 
-v0.21 4/14/2026
+v0.22 4/16/2026
 
 ---
 
@@ -883,8 +883,8 @@ typedef enum D3D12_RTAS_OPERATION_FLAGS
     D3D12_RTAS_OPERATION_FLAG_NONE = 0x0,
     D3D12_RTAS_OPERATION_FLAG_FAST_TRACE = 0x4,
     D3D12_RTAS_OPERATION_FLAG_FAST_OPERATION = 0x8,
+    D3D12_RTAS_OPERATION_FLAG_ALLOW_DATA_ACCESS = 0x100,
     D3D12_RTAS_OPERATION_FLAG_ALLOW_OMM = 0x400,
-    D3D12_RTAS_OPERATION_FLAG_ALLOW_DATA_ACCESS = 0x800,
 } D3D12_RTAS_OPERATION_FLAGS;
 ```
 
@@ -895,8 +895,8 @@ Value                                                                     | Defi
 `D3D12_RTAS_OPERATION_FLAG_NONE`    | No options specified for the operation.
 `D3D12_RTAS_OPERATION_FLAG_FAST_TRACE` | Allow the Operation to take longer in return for improving the trace performance of the resulting objects. Compatible with all other flags except for `D3D12_RTAS_OPERATION_FLAG_FAST_OPERATION`.
 `D3D12_RTAS_OPERATION_FLAG_FAST_OPERATION` | Sacrifice trace performance of resulting objects in return for reduced execution time of the Operation. Compatible with all other flags except for `D3D12_RTAS_OPERATION_FLAG_FAST_TRACE`.
-`D3D12_RTAS_OPERATION_FLAG_ALLOW_OMM` | Specify that the operation will interact with Cluster BLAS, CLAS or Templates that reference OMMs. All Operation Types & Modes require this field to be set to correctly support interaction with objects that contain OMMs. This flag is compatible with all other flags.
 `D3D12_RTAS_OPERATION_FLAG_ALLOW_DATA_ACCESS` | <p>For clusters, allows the use of [TriangleObjectPositions()](raytracing.md#triangleobjectpositions) in [AnyHit](raytracing.md#any-hit-shader) or [ClosestHit](raytracing.md#closest-hit-shader) shaders, or in [RayQuery](raytracing.md#rayquery): [RayQuery::CandidateTriangleObjectPositions()](raytracing.md#rayquery-candidatetriangleobjectpositions) or [RayQuery::CommittedTriangleObjectPositions()](raytracing.md#rayquery-committedtriangleobjectpositions).  This turns on access for all CLAS builds and CLAS template builds. Ignored for CLAS template instantiation which just inherit the choice from the template.</p><p>For individual clusters in the overall operation that set `ALLOW_DATA_ACCESS`, access can be disallowed for via [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_DISALLOW_DATA_ACCESS](#d3d12_rtas_cluster_operation_clas_flags) for more granular control.</p><p>Starting with a global `ALLOW` ensures prebuild size calculations can be sufficiently conservative: some implementations may need extra storage where `TriangleObjectPositions` is allowed.</p><p>`D3D12_RTAS_OPERATION_FLAG_ALLOW_DATA_ACCESS` is not allowed for cluster BLAS: instead, all CLAS referenced by a given cluster BLAS must have consistently chosen to allow data access or not when they were built, otherwise behavior is undefined.</p>
+`D3D12_RTAS_OPERATION_FLAG_ALLOW_OMM` | Specify that the operation will interact with Cluster BLAS, CLAS or Templates that reference OMMs. All Operation Types & Modes require this field to be set to correctly support interaction with objects that contain OMMs. This flag is compatible with all other flags.
 
 Used by:
 - [D3D12_RTAS_CLAS_INPUTS_DESC](#d3d12_rtas_clas_inputs_desc) - `Flags` member
@@ -2237,3 +2237,4 @@ v0.18|3/16/2026|<li>Replaced C++ bitfields with plain `UINT` members (to be manu
 v0.19|3/17/2026|<li>Moved `D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_ALLOW_DATA_ACCESS` from [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAGS](#d3d12_rtas_cluster_operation_clas_flags) to [D3D12_RTAS_OPERATION_FLAGS](#d3d12_rtas_operation_flags) as `D3D12_RTAS_OPERATION_FLAG_ALLOW_DATA_ACCESS`.  This flag applies to CLAS builds and CLAS template builds; it is ignored for CLAS template instantiation, which inherits the allow/disallow state from the template.  It not allowed for cluster BLAS builds; instead, all CLAS referenced by a given cluster BLAS must have consistently chosen to allow data access or not when they were built.</li><li>Added `D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_DISALLOW_DATA_ACCESS` to [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAGS](#d3d12_rtas_cluster_operation_clas_flags) to selectively disable data access for individual cluster builds within an operation that has `ALLOW_DATA_ACCESS` globally set.</li>
 v0.20|3/18/2026|<li>In [Compressed1 bitfield helper macros](#compressed1-bitfield-helper-macros), macro cleanup and bugfixes: removed unnecessary mask after left shifting; `UINT(val)` instead of `(UINT)(val)` (less verbose); use sign extend on right shift - support is ubiquitous enough (old macro also incorrectly masked result)</li>
 v0.21|4/14/2026|<li>In [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAGS](#d3d12_rtas_cluster_operation_clas_flags), for `D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_ALLOW_DISABLE_OMMS`, clarified that regardless of whether this flag is set, OMMs can always be disabled per-cluster by setting `OpacityMicromapArray` and `OpacityMicromapIndexBuffer` to NULL in [D3D12_RTAS_OPERATION_BUILD_CLAS_FROM_TRIANGLES_ARGS](#d3d12_rtas_operation_build_clas_from_triangles_args).</li><li>In [D3D12_RTAS_OPERATION_BUILD_CLAS_FROM_TRIANGLES_ARGS](#d3d12_rtas_operation_build_clas_from_triangles_args), updated `OpacityMicromapArray` and `OpacityMicromapIndexBuffer` so that OMMs are disabled only when both are NULL (previously only `OpacityMicromapArray` being NULL was required).  Similarly, [D3D12_RTAS_OPERATION_FLAG_ALLOW_OMM](#d3d12_rtas_operation_flags) is required when either is non-NULL.  For `OpacityMicromapIndexBuffer`, clarified that if the entire index buffer uses only special index values, `OpacityMicromapArray` can be null since it won't be referenced.</li>
+v0.22|4/16/2026|<li>In [D3D12_RTAS_OPERATION_FLAGS](#d3d12_rtas_operation_flags) switched `D3D12_RTAS_OPERATION_FLAG_ALLOW_DATA_ACCESS` from `0x800` to `0x100` to align with `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS` in DXR1's [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS](raytracing.md#d3d12_raytracing_acceleration_structure_build_flags)</li>
