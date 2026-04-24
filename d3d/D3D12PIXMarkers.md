@@ -17,7 +17,7 @@ v0.01 12 Mar 2026
 
 # Summary
 
-As of 2025, [PIXEvents](https://github.com/microsoft/PixEvents) provides APIs to instrument your game, labeling regions of CPU or GPU work and marking important occurences. Common APIs include `PixBeginEvent`, `PixEndEvent`, and `PixSetMarker` which internally call `ID3D12GraphicsCommandList::BeginEvent`, `ID3D12CommandQueue::BeginEvent`, `ID3D12GraphicsCommandList::EndEvent` `ID3D12CommandQueue::EndEvent`, `ID3D12GraphicsCommandList::SetMarker` and `ID3D12CommandQueue::SetMarker` depending on the context.
+As of 2025, [PIXEvents](https://github.com/microsoft/PixEvents) provides APIs to instrument your game, labeling regions of CPU or GPU work and marking important occurrences. Common APIs include `PixBeginEvent`, `PixEndEvent`, and `PixSetMarker` which internally call `ID3D12GraphicsCommandList::BeginEvent`, `ID3D12CommandQueue::BeginEvent`, `ID3D12GraphicsCommandList::EndEvent` `ID3D12CommandQueue::EndEvent`, `ID3D12GraphicsCommandList::SetMarker` and `ID3D12CommandQueue::SetMarker` depending on the context.
 
 The limitation of these APIs is that they operate only at the runtime level and do not propagate to the driver. As a result, these markers are absent in [DirectX dump files](D3D12GpuDumps.md), making it difficult to trace the marker hierarchy that led to a TDR or device error.
 
