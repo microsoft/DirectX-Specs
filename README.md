@@ -106,6 +106,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
 
 * In-development specifications
     * [D3D APIs for Shader Model 6.10 Linear Algebra](d3d/D3D12LinearAlgebraRuntimeFeatureSupport.md)
+    * [MLIR Programs & Compute Graphs](d3d/MlirPrograms.md)
 
 _These D3D12 specs were written as incremental deltas, with a separate spec per feature area.
 Baseline information about rendering pipeline behaviors that are common between D3D11 and D3D12
