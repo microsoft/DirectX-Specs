@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.38 2/16/2026
+v1.42 5/13/2026
 
 ---
 
@@ -397,6 +397,7 @@ v1.38 2/16/2026
       - [Forwarding payloads to recursive TraceRay calls](#forwarding-payloads-to-recursive-traceray-calls)
       - [Pure input in a loop](#pure-input-in-a-loop)
       - [Conditional pure output overwriting initial value](#conditional-pure-output-overwriting-initial-value)
+      - [Value preservation across stage transitions](#value-preservation-across-stage-transitions)
     - [Payload access qualifiers in DXIL](#payload-access-qualifiers-in-dxil)
 - [DDI](#ddi)
   - [General notes](#general-notes)
@@ -3844,6 +3845,8 @@ with mode `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_SERIALIZE`,
 likely from a previous execution of the application. CheckDriverMatchingIdentifier()
 reports the compatibility of the serialized data with the current device/driver.
 
+Drivers that support raytracing must recognize `D3D12_SERIALIZED_DATA_RAYTRACING_ACCELERATION_STRUCTURE` as a valid serialized data type. Returning `D3D12_DRIVER_MATCHING_IDENTIFIER_UNSUPPORTED_TYPE` for this type is not permitted when the device supports raytracing. The driver must instead return `UNRECOGNIZED`, `INCOMPATIBLE_VERSION`, or `COMPATIBLE_WITH_DEVICE` as appropriate for the identifier provided.
+
 Parameter                           | Definition
 ---------                           | ----------
 `D3D12_SERIALIZED_DATA_TYPE SerializedDataType` | See [D3D12_SERIALIZED_DATA_TYPE](#d3d12_serialized_data_type).
@@ -3870,7 +3873,7 @@ Type of serialized data. At the moment there is only one:
 
 Value                               | Definition
 ---------                           | ----------
-`D3D12_SERIALIZED_DATA_RAYTRACING_ACCELERATION_STRUCTURE` | Serialized data contains a raytracing acceleration structure (or [Opacity Micromap](#opacity-micromaps) array).
+`D3D12_SERIALIZED_DATA_RAYTRACING_ACCELERATION_STRUCTURE` | Serialized data contains a raytracing acceleration structure, including BLAS, TLAS, [Opacity Micromap](#opacity-micromaps) arrays, [CLAS, Cluster BLAS, Cluster Templates](raytracing2.md#clustered-geometry), and [Partitioned TLAS](raytracing2.md#partitioned-top-level-acceleration-structures).
 `D3D12_SERIALIZED_DATA_APPLICATION_SPECIFIC_DRIVER_STATE` | Unrelated to raytracing, `CheckDriverMatchingIdentifier` is also used for the application specific driver state feature, specified elsewhere.
 
 ---
@@ -3914,7 +3917,7 @@ Return value for [CheckDriverMatchingIdentifier()](#checkdrivermatchingidentifie
 Value                               | Definition
 ---------                           | ----------
 `D3D12_DRIVER_MATCHING_IDENTIFIER_COMPATIBLE_WITH_DEVICE` | Serialized data is compatible with the current device/driver.
-`D3D12_DRIVER_MATCHING_IDENTIFIER_UNSUPPORTED_TYPE` | [D3D12_SERIALIZED_DATA_TYPE](#d3d12_serialized_data_type) specified is unknown or unsupported.
+`D3D12_DRIVER_MATCHING_IDENTIFIER_UNSUPPORTED_TYPE` | [D3D12_SERIALIZED_DATA_TYPE](#d3d12_serialized_data_type) specified is unknown or unsupported. Drivers that support raytracing must not return this value for `D3D12_SERIALIZED_DATA_RAYTRACING_ACCELERATION_STRUCTURE`; they must recognize the type and return one of the other status values (such as `UNRECOGNIZED` or `INCOMPATIBLE_VERSION` if the identifier is not compatible). This applies to all object types serialized under this enum value, including BLAS, TLAS, [Opacity Micromap](#opacity-micromaps) arrays, [CLAS, Cluster BLAS, Cluster Templates](raytracing2.md#clustered-geometry), and [Partitioned TLAS](raytracing2.md#partitioned-top-level-acceleration-structures).
 `D3D12_DRIVER_MATCHING_IDENTIFIER_UNRECOGNIZED` | Format of the data in [D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER](#d3d12_serialized_data_driver_matching_identifier) is unrecognized. This could indicate either corrupt data or the identifier was produced by a different hardware vendor.
 `D3D12_DRIVER_MATCHING_IDENTIFIER_INCOMPATIBLE_VERSION` | Serialized data is recognized (likely from the same hardware vendor), but its version is not compatible with the current driver.
 `D3D12_DRIVER_MATCHING_IDENTIFIER_INCOMPATIBLE_TYPE` | [D3D12_SERIALIZED_DATA_TYPE](#d3d12_serialized_data_type) specifies a data type that is not compatible with the type of serialized data. As long as there is only a single defined serialized data type this error cannot not be produced.
@@ -4162,15 +4165,15 @@ typedef enum D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS
 Member                              | Definition
 ---------                           | ----------
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE` | No options specified for the acceleration structure build.
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE` | <p>Applicable to TLAS and BLAS builds.</p><p>Build the acceleration structure such that it supports future updates (via the flag `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE`) instead of the app having to entirely rebuild. This option may result in increased memory consumption, build times and lower raytracing performance. Future updates, however, should be faster than building the equivalent acceleration structure from scratch.</p><p>This flag can only be set on an initial acceleration structure build, or on an update where the source acceleration structure specified `ALLOW_UPDATE`. In other words as soon as an acceleration structure has been built without `ALLOW_UPDATE`, no other acceleration structures can be created from it via updates.</p><p>When the [Opacity Micromaps](#opacity-micromaps) feature is being used, if `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_OMM_LINKAGE_UPDATE` is specified on a BLAS, OMM linkage can be changed along with positions when the next update is performed.  Replacing an OMM array at the same location requires a linkage update for BLAS's referencing it even though the linkage pointer didn't change. `_ALLOW_OMM_LINKAGE_SUPPORT` can't be specified without `_ALLOW_UPDATE`, implying updates always require positions to be specified, whether or not OMM linkages are also being updated. If OMM linkages are present, even if they aren't being updated, the description must still be specified in an update.</p>
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE` | <p>Applicable to TLAS and BLAS builds.  Not supported for [Opacity Micromap](#opacity-micromaps) Array builds where update doesn't apply.</p><p>Build the acceleration structure such that it supports future updates (via the flag `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE`) instead of the app having to entirely rebuild. This option may result in increased memory consumption, build times and lower raytracing performance. Future updates, however, should be faster than building the equivalent acceleration structure from scratch.</p><p>This flag can only be set on an initial acceleration structure build, or on an update where the source acceleration structure specified `ALLOW_UPDATE`. In other words as soon as an acceleration structure has been built without `ALLOW_UPDATE`, no other acceleration structures can be created from it via updates.</p><p>When the [Opacity Micromaps](#opacity-micromaps) feature is being used, if `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_OMM_LINKAGE_UPDATE` is specified on a BLAS, OMM linkage can be changed along with positions when the next update is performed.  Replacing an OMM array at the same location requires a linkage update for BLAS's referencing it even though the linkage pointer didn't change. `_ALLOW_OMM_LINKAGE_SUPPORT` can't be specified without `_ALLOW_UPDATE`, implying updates always require positions to be specified, whether or not OMM linkages are also being updated. If OMM linkages are present, even if they aren't being updated, the description must still be specified in an update.</p>
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION` | <p>Enables the option to compact the acceleration structure by calling [CopyRaytracingAccelerationStructure()](#copyraytracingaccelerationstructure) with the compact mode (see [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode)).</p><p> This option may result in increased memory consumption and build times. After future compaction, however, the resulting acceleration structure should consume a smaller memory footprint (certainly no larger) than building the acceleration structure from scratch.</p><p>Specifying `ALLOW_COMPACTION` may increase pre-compaction acceleration structure size versus not specifying `ALLOW_COMPACTION`.</p><p>If multiple incremental builds are performed before finally compacting, there may be redundant compaction related work performed.</p><p>The size required for the compacted acceleration structure can be queried before compaction via [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo) -- see [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_compacted_size_desc) in particular for a discussion on some properties of compacted acceleration structure size.</p><p>This flag is compatible with all other flags. If specified as part of an acceleration structure update, the source acceleration structure must have also been built with this flag. In other words as soon as an acceleration structure has been built without `ALLOW_COMPACTION`, no other acceleration structures can be created from it via updates that specify `ALLOW_COMPACTION`.</p><p>*Note on interaction of `ALLOW_UPDATE` with `ALLOW_COMPACTION` that might apply to some implementations:*</p><p>*As long as `ALLOW_UPDATE` is specified, there is certain information that needs to be retained in the acceleration structure, and compaction will only help so much.*</p><p>*However, if the implementation knows that the acceleration structure will no longer be updated, it could do a better job of compacting it.*</p><p>*The application could benefit from compacting twice - once after the initial build, and once after the acceleration structure has "settled" to a static state (if ever).*</p><p>Applicable to TLAS, BLAS and OMM Array builds.</p>
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE` | <p>Construct a high quality acceleration structure that maximizes raytracing performance at the expense of additional build time. A rough rule of thumb is the implementation should take about 2-3 times the build time than default in order to get better tracing performance.</p><p> This flag is recommended for static geometry in particular. It is also compatible with all other flags except for `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD`.</p><p>This flag applies to all acceleration structure types, including OMM arrays.</p>
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD` | <p>Construct a lower quality acceleration structure, trading raytracing performance for build speed. A rough rule of thumb is the implementation should take about 1/2 to 1/3 the build time than default at a sacrifice in tracing performance.</p><p>This flag is compatible with all other flags except for `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE`.</p><p>This flag applies to all acceleration structure types, including OMM arrays.</p>
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_MINIMIZE_MEMORY` | <p>Minimize the amount of scratch memory used during the acceleration structure build as well as the size of the result. This option may result in increased build times and/or raytracing times.</p><p>This is orthogonal to the `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION` flag (and explicit acceleration structure compaction that it enables). Combining the flags can mean both the initial acceleration structure as well as the result of compacting it use less memory.</p><p>The impact of using this flag for a build is reflected in the result of calling [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo) before doing the build to retrieve memory requirements for the build.</p><p>This flag is compatible with all other flags.</p><p>Applicable to TLAS and BLAS builds.</p>
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE` | <p> Perform an acceleration structure update, as opposed to building from scratch. This is faster than a full build, but can negatively impact raytracing performance, especially if the positions of the underlying objects have changed significantly from the original build of the acceleration structure before updates.</p><p>See [Acceleration structure update constraints](#acceleration-structure-update-constraints) for a discussion of what is allowed to change in an acceleration structure update.</p><p>If the addresses of the source and destination acceleration structures are identical, the update is performed in-place. Any other overlapping of address ranges of the source and destination is invalid. For non-overlapping source and destinations, the source acceleration structure is unmodified. The memory requirement for the output acceleration structure is the same as in the input acceleration structure.</p><p>The source acceleration structure must have specified `ALLOW_UPDATE` (and if needed `ALLOW_OMM_LINKAGE_UPDATE`).</p><p>`_PERFORM_UPDATE` compatible with all other flags. The other flags selections, aside from `ALLOW_UPDATE` and `PERFORM_UPDATE`, must match the flags in the source acceleration structure.</p><p>Acceleration structure updates can be performed in unlimited succession, as long as the source acceleration structure was created with `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE` and/or `_ALLOW_OMM_LINKAGE_UPDATE`, and if opting to continue allowing future updates, the build specifies the same combination of `ALLOW_*_UPDATE` flags (set can't change other than setting none if updates are forever finished).</p><p>If OMM linkage is present and not being updated, the original linkage description must still be passed into the update operation.</p><p>Applicable to TLAS and BLAS builds.</p>
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE` | <p> Perform an acceleration structure update, as opposed to building from scratch. This is faster than a full build, but can negatively impact raytracing performance, especially if the positions of the underlying objects have changed significantly from the original build of the acceleration structure before updates.</p><p>See [Acceleration structure update constraints](#acceleration-structure-update-constraints) for a discussion of what is allowed to change in an acceleration structure update.</p><p>If the addresses of the source and destination acceleration structures are identical, the update is performed in-place. Any other overlapping of address ranges of the source and destination is invalid. For non-overlapping source and destinations, the source acceleration structure is unmodified. The memory requirement for the output acceleration structure is the same as in the input acceleration structure.</p><p>The source acceleration structure must have specified `ALLOW_UPDATE` (and if needed `ALLOW_OMM_LINKAGE_UPDATE`).</p><p>`_PERFORM_UPDATE` compatible with all other flags. The other flags selections, aside from `ALLOW_UPDATE` and `PERFORM_UPDATE`, must match the flags in the source acceleration structure.</p><p>Acceleration structure updates can be performed in unlimited succession, as long as the source acceleration structure was created with `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE` and/or `_ALLOW_OMM_LINKAGE_UPDATE`, and if opting to continue allowing future updates, the build specifies the same combination of `ALLOW_*_UPDATE` flags (set can't change other than setting none if updates are forever finished).</p><p>If OMM linkage is present and not being updated, the original linkage description must still be passed into the update operation.</p><p>Applicable to TLAS and BLAS builds.  Not supported for [Opacity Micromap](#opacity-micromaps) Array builds where update doesn't apply.</p>
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_OMM_LINKAGE_UPDATE`   | <p>The AS supports updates that change OMM linkage (fields of [D3D12_RAYTRACING_GEOMETRY_OMM_LINKAGE_DESC](#d3d12_raytracing_geometry_omm_linkage_desc)). Replacing an OMM array at the same location requires a linkage update for BLAS' referencing it even though the linkage pointer didn't change. Specifying this flag may result in larger AS size and may reduce traversal performance.</p><p>Rules for when `ALLOW_OMM_LINKAGE_UPDATE` can be set mirror the rules described `ALLOW_UPDATE`, except only applicable if OMMs are present.</p><p>`ALLOW_OMM_LINKAGE_UPDATE` can only be set if `ALLOW_UPDATE` is also set.</p><p>While any part of the linkage description can be changed, switching between having an OMM linkage at all and not having one isn't permitted.</p><p>If an acceleration structure with OMM linkage is having just it's positions updated (not the OMM linkage), so `ALLOW_OMM_LINKAGE_UPDATE` isn't specified, the update description still has to provide the original OMM linkage description.</p><p>Applicable to BLAS builds.</p><p>This is part of the [Opacity Micromaps](#opacity-micromaps) feature.</p>
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DISABLE_OMMS` | Only applicable for BLAS builds. If enabled, any instances referencing this BLAS are allowed to disable the OMM test through the [D3D12_RAYTRACING_INSTANCE_FLAG_DISABLE_OMMS](#d3d12_raytracing_instance_flags) flag. Specifying this build flag may result in some reductions in traversal performance. This is part of the [Opacity Micromaps](#opacity-micromaps) feature.
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS` | This is not shipped yet, part of Shader Model 6.10: Only applicable for BLAS and Cluster BLAS builds. Allows the use of the proposed: geometry fetch intrinsic [TriangleObjectPositions()](#triangleobjectpositions) in [AnyHit](#any-hit-shader) or [ClosestHit](#closest-hit-shader) shaders, or in [RayQuery](#rayquery): [RayQuery::CandidateTriangleObjectPositions()](#rayquery-candidatetriangleobjectpositions) or [RayQuery::CommittedTriangleObjectPositions()](#rayquery-committedtriangleobjectpositions).
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS` | This is not shipped yet, part of Shader Model 6.10: Only applicable for BLAS builds.  For Clusters BLAS builds, comprised of individual clusters, see [D3D12_RTAS_OPERATION_FLAG_ALLOW_DATA_ACCESS](raytracing2.md#d3d12_rtas_operation_flags). Allows the use of the proposed geometry fetch intrinsic [TriangleObjectPositions()](#triangleobjectpositions) in [AnyHit](#any-hit-shader) or [ClosestHit](#closest-hit-shader) shaders, or in [RayQuery](#rayquery): [RayQuery::CandidateTriangleObjectPositions()](#rayquery-candidatetriangleobjectpositions) or [RayQuery::CommittedTriangleObjectPositions()](#rayquery-committedtriangleobjectpositions).
 
 ---
 
@@ -4618,6 +4621,8 @@ performing acceleration structure operations via
 
 Can be called on graphics or compute command lists but not from bundles.
 
+> For [CLAS, Cluster Templates, Cluster BLAS](raytracing2.md#clustered-geometry), and [Partitioned TLAS](raytracing2.md#partitioned-top-level-acceleration-structures), only the `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION` and `_TOOLS_VISUALIZATION` info types are supported (sized for use with the corresponding `_SERIALIZE` / `_DESERIALIZE` and `_VISUALIZATION_DECODE_FOR_TOOLS` modes of [CopyRaytracingAccelerationStructure()](#copyraytracingaccelerationstructure)).  `_COMPACTED_SIZE` and `_CURRENT_SIZE` do not apply; for current-size queries on these objects, use `D3D12_RTAS_OPERATION_MODE_GET_SIZES` of [ExecuteIndirectRTASOperations()](raytracing2.md#executeindirectrtasoperations) instead.  Compaction is not a supported operation on these objects (see [Why compaction doesn't apply to clustered geometry](raytracing2.md#why-compaction-doesnt-apply-to-clustered-geometry)).
+
 Parameter                           | Definition
 ---------                           | ----------
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC* pDesc` |Description of postbuild information to generate.
@@ -4667,9 +4672,9 @@ typedef enum D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TYPE
 Member                              | Definition
 ---------                           | ----------
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE` | Space requirements for an acceleration structure or Opacity Micromap Array after compaction. See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_COMPACTED_SIZE_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_compacted_size_desc).  Applies to TLAS, BLAS and Opacity Micromap Arrays.
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TOOLS_VISUALIZATION` | Space requirements for generating tools visualization for an acceleration structure or Opacity Micromap Array (used by tools). See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TOOLS_VISUALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_tools_visualization_desc).
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION` | Space requirements for serializing an acceleration structure or Opacity Micromap Array. See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc)
-`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SIZE` | Size of the current acceleration structure or Opacity Micromap Array. See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SIZE_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_current_size_desc).
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TOOLS_VISUALIZATION` | Space requirements for generating tools visualization for an acceleration structure or Opacity Micromap Array (used by tools). See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TOOLS_VISUALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_tools_visualization_desc).  Applies to TLAS, BLAS, Opacity Micromap Arrays, [CLAS, Cluster Templates, Cluster BLAS](raytracing2.md#clustered-geometry), and [Partitioned TLAS](raytracing2.md#partitioned-top-level-acceleration-structures).
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION` | Space requirements for serializing an acceleration structure or Opacity Micromap Array. See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc).  Applies to TLAS, BLAS, Opacity Micromap Arrays, [CLAS, Cluster Templates, Cluster BLAS](raytracing2.md#clustered-geometry), and [Partitioned TLAS](raytracing2.md#partitioned-top-level-acceleration-structures).
+`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SIZE` | Size of the current acceleration structure or Opacity Micromap Array. See [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_CURRENT_SIZE_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_current_size_desc).  Applies to TLAS, BLAS and Opacity Micromap Arrays only.  For [CLAS, Cluster Templates, Cluster BLAS](raytracing2.md#clustered-geometry), and [Partitioned TLAS](raytracing2.md#partitioned-top-level-acceleration-structures), use the `D3D12_RTAS_OPERATION_MODE_GET_SIZES` mode of [ExecuteIndirectRTASOperations()](raytracing2.md#executeindirectrtasoperations) instead.
 
 ---
 
@@ -4761,6 +4766,8 @@ structure and copies it to destination memory while applying the
 transformation requested by the Mode parameter.
 
 Can be called on graphics or compute command lists but not from bundles.
+
+> For [CLAS, Cluster Templates, Cluster BLAS](raytracing2.md#clustered-geometry), and [Partitioned TLAS](raytracing2.md#partitioned-top-level-acceleration-structures), only the `_SERIALIZE`, `_DESERIALIZE` and `_VISUALIZATION_DECODE_FOR_TOOLS` modes of [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode) are supported.  `_CLONE` and `_COMPACT` do not apply; for cluster objects, use [D3D12_RTAS_OPERATION_TYPE_MOVE_CLUSTER_OBJECTS](raytracing2.md#d3d12_rtas_operation_type) of [ExecuteIndirectRTASOperations()](raytracing2.md#executeindirectrtasoperations) to copy or move them.
 
 Parameter                              | Definition
 ---------                           | ----------
@@ -6451,7 +6458,7 @@ BuiltInTrianglePositions TriangleObjectPositions()
 
 May only be used if the hit BLAS was built with [`RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS`](#d3d12_raytracing_acceleration_structure_build_flags). Otherwise behavior is undefined.
 
-For [clustered geometry](raytracing2.md#clustered-geometry), the CLAS being accessed must have been built with [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_ALLOW_DATA_ACCESS](raytracing2.md#d3d12_rtas_cluster_operation_clas_flags), and all CLAS in the CBLAS (cluster-BLAS) must set the flag.  Otherwise behavior is undefined.
+For [clustered geometry](raytracing2.md#clustered-geometry), the operation that built the CLAS must have set [D3D12_RTAS_OPERATION_FLAG_ALLOW_DATA_ACCESS](raytracing2.md#d3d12_rtas_operation_flags), and the CLAS must not have been built with [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_DISALLOW_DATA_ACCESS](raytracing2.md#d3d12_rtas_cluster_operation_clas_flags).  All CLAS referenced by a given cluster BLAS must have consistently chosen to allow data access or not when they were built, otherwise behavior is undefined.
 
 This intrinsic is a required featurein Shader Model 6.10.
 
@@ -7572,6 +7579,8 @@ BuiltInTrianglePositions RayQuery::CandidateTriangleObjectPositions()
 
 May only be used if the hit BLAS was built with [`RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS`](#d3d12_raytracing_acceleration_structure_build_flags).  Otherwise behavior is undefined.
 
+For [clustered geometry](raytracing2.md#clustered-geometry), the operation that built the CLAS must have set [D3D12_RTAS_OPERATION_FLAG_ALLOW_DATA_ACCESS](raytracing2.md#d3d12_rtas_operation_flags), and the CLAS must not have been built with [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_DISALLOW_DATA_ACCESS](raytracing2.md#d3d12_rtas_cluster_operation_clas_flags).  All CLAS referenced by a given cluster BLAS must have consistently chosen to allow data access or not when they were built, otherwise behavior is undefined.
+
 [RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 This intrinsic is a required feature in Shader Model 6.10.
@@ -7623,6 +7632,8 @@ float3 RayQuery::CommittedTriangleObjectPositions()
 ```
 
 May only be used if the hit BLAS was built with [`RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS`](#d3d12_raytracing_acceleration_structure_build_flags). Otherwise behavior is undefined.
+
+For [clustered geometry](raytracing2.md#clustered-geometry), the operation that built the CLAS must have set [D3D12_RTAS_OPERATION_FLAG_ALLOW_DATA_ACCESS](raytracing2.md#d3d12_rtas_operation_flags), and the CLAS must not have been built with [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_DISALLOW_DATA_ACCESS](raytracing2.md#d3d12_rtas_cluster_operation_clas_flags).  All CLAS referenced by a given cluster BLAS must have consistently chosen to allow data access or not when they were built, otherwise behavior is undefined.
 
 [RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
@@ -8859,6 +8870,8 @@ back from the parameter of the shader to the actual payload. Any values written 
 The implementation can organize the actual payload however it wants, and need only preserve the values of payload fields that have
 well-defined values and might possibly be read in the future.
 
+See [Value preservation across stage transitions](#value-preservation-across-stage-transitions) in the [Advanced examples](#advanced-examples) section for step-by-step walkthroughs of how these rules apply to writes by unqualified stages and recursive [TraceRay](#traceray) calls.
+
 ---
 
 #### Local working copy
@@ -9123,6 +9136,117 @@ void ClosestHit(inout MyPayload p)
     }
 }
 ```
+
+---
+
+#### Value preservation across stage transitions
+
+The following examples illustrate how the [detailed semantics](#detailed-semantics) copy rules
+interact with writes to fields that a shader stage is not qualified to write, and
+with recursive [TraceRay](#traceray) calls that forward the payload.
+
+**Example 1 - Writing to a field without `write` qualification**
+
+```C++
+struct [raypayload] MyPayload
+{
+    float callerValue : write(caller) : read(caller);
+};
+
+[shader("raygeneration")]
+void Raygen()
+{
+    MyPayload p;
+    p.callerValue = 0;
+    TraceRay(/* ... */, p);
+    // p.callerValue is guaranteed to be 0.
+}
+
+[shader("closesthit")]
+void ClosestHit(inout MyPayload p, in BuiltInTriangleIntersectionAttributes a)
+{
+    p.callerValue = 1; // Legal write to the local copy, but ignored on copy-back.
+}
+```
+
+Here, `callerValue` is only marked `write(caller)`, not
+`write(closesthit)`. Per the [detailed semantics](#detailed-semantics):
+
+1. The caller writes 0, and `write(caller)` copies 0 into the actual
+   payload.
+2. When the closesthit shader begins, `callerValue` is not marked
+   `read(closesthit)`, so the local copy's value is **undefined**.
+3. The closesthit shader writes 1 to its local copy. This is legal -
+   shaders may freely read and write their [local working copy](#local-working-copy).
+4. When closesthit exits, `callerValue` is not marked
+   `write(closesthit)`, so the write is **not** copied back to the
+   actual payload. The actual payload still contains 0.
+5. When [TraceRay](#traceray) returns, `read(caller)` copies the actual
+   payload's value (0) back to the caller.
+
+**Result:** `p.callerValue` is guaranteed to be 0 after
+[TraceRay](#traceray) returns. The closesthit shader's write to its
+local copy has no effect on the actual payload.
+
+> The compiler should emit a warning for the write in closesthit because
+> the value will be discarded, but it is not an error.
+
+**Example 2 - Recursive TraceRay with payload forwarding**
+
+```C++
+struct [raypayload] MyPayload
+{
+    float callerValue : write(caller) : read(caller);
+};
+
+[shader("raygeneration")]
+void Raygen()
+{
+    MyPayload p;
+    p.callerValue = 0;
+    TraceRay(/* ... */, p);
+    // p.callerValue is guaranteed to be 0.
+}
+
+[shader("closesthit")]
+void ClosestHit(inout MyPayload p, in BuiltInTriangleIntersectionAttributes a)
+{
+    p.callerValue = 1;
+    TraceRay(/* ... */, p);  // Forwards the payload to a nested TraceRay.
+    // p.callerValue is 1 here.
+}
+```
+
+In this example, the closesthit shader modifies `callerValue` in its
+local copy and then calls a nested [TraceRay](#traceray), forwarding the
+payload. Each [TraceRay](#traceray) call operates on its own actual
+payload:
+
+1. **Outer TraceRay**: The caller (Raygen) writes 0; `write(caller)`
+   copies 0 into the outer actual payload.
+2. **Outer closesthit begins**: `callerValue` is not marked
+   `read(closesthit)`, so the local copy starts with an undefined value.
+3. **Closesthit writes 1** to its local copy.
+4. **Inner TraceRay**: Closesthit is now the *caller* of this
+   [TraceRay](#traceray). `write(caller)` copies 1 from the local copy
+   into the inner actual payload.
+5. **Inner TraceRay returns**: `read(caller)` copies from the inner
+   actual payload back to closesthit's local copy. Assuming no inner
+   shader modifies the field, `callerValue` is still 1 in the local
+   copy.
+6. **Outer closesthit exits**: `callerValue` is not marked
+   `write(closesthit)`, so the local value (1) is **not** copied back
+   to the outer actual payload. The outer actual payload still
+   contains 0.
+7. **Outer TraceRay returns**: `read(caller)` copies the outer actual
+   payload's value (0) back to Raygen.
+
+**Result:** The outer caller (Raygen) always observes
+`p.callerValue == 0`. The closesthit shader observes
+`p.callerValue == 1` after its nested [TraceRay](#traceray). Each
+[TraceRay](#traceray) has its own actual payload, and closesthit's
+writes are not propagated to the outer actual payload because the field
+lacks `write(closesthit)`.
 
 ---
 
@@ -9458,3 +9582,7 @@ v1.35|11/5/2025|<li>In [D3D12_RAYTRACING_OPACITY_MICROMAP_SPECIAL_INDEX](#d3d12_
 v1.36|1/8/2026|<li>In [D3D12_RAYTRACING_PIPELINE_FLAGS](#d3d12_raytracing_pipeline_flags) and [RayQuery flags](#rayquery-flags) added `D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY` and `RAYQUERY_FLAG_ALLOW_CLUSTERED_GEOMETRY` for opting in to the presence of [clustered geometry](raytracing2.md#clustered-geometry) in the acceleration structure being accessed.</li>
 v1.37|1/26/2026|<li>Added support for tools visualization of [clustered geometry](raytracing2.md#clustered-geometry) and [patitioned tlas](raytracing2.md#partitioned-top-level-acceleration-structures) by extending the existing [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode) `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_VISUALIZATION_DECODE_FOR_TOOLS` option. [D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_TOOLS_VISUALIZATION_HEADER](#d3d12_build_raytracing_acceleration_structure_tools_visualization_header), and added new types to [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE](#d3d12_raytracing_acceleration_structure_type) that are only valid in `D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_TOOLS_VISUALIZATION_HEADER`.</li>
 v1.38|2/16/2026|<li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode), updated the description for `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE_VISUALIZATION_DECODE_FOR_TOOLS` to relax the requirements around Opacity Micromap data such that the returned data doesn't have to exactly match the user input other than functionally it would behave the same way.  OMM special indices are still preserved though (non special not coverted to special or vice versa).</li><li>Cleaned up [TriangleObjectPositions()](#triangleobjectpositions) and the `RayQuery` variants to match final HLSL spec, where these intrinsics now return [BuiltInTrianglePositions](#builtintrianglepositions).  Also mentioned these are a required feature in SM 6.10 (not released yet).</li><li>Added [D3D12_FEATURE_OPTIONS_NNN](#d3d12_feature_d3d12_options_nnn), NNN to be determined, with a `ClustersAndPTLASSupported` cap that lets devices support these features without having to meet all [D3D12_RAYTRACING_TIER_2_0](#d3d12_raytracing_tier) requirements (in particular Opacity Micromaps support from Tier 1.2). So while Tier 2.0 requires all features, a device could support everything except OMM by reporting Tier 1.1 and `ClustersAndPTLASSupported`.  This cap also implies Shader Model 6.10 support.  A device can also just support Tier 1.1 plus `TriangleObjectPositions()` by supporting SM 6.10 only (which would also bring in SER from 6.9).</li>
+v1.39|3/16/2026|<li>For [clustered geometry](raytracing2.md#clustered-geometry), data access is now controlled via [D3D12_RTAS_OPERATION_FLAG_ALLOW_DATA_ACCESS](raytracing2.md#d3d12_rtas_operation_flags) at the operation level, replacing the former per-CLAS flag.  Updated [TriangleObjectPositions()](#triangleobjectpositions), [RayQuery::CandidateTriangleObjectPositions()](#rayquery-candidatetriangleobjectpositions) and [RayQuery::CommittedTriangleObjectPositions()](#rayquery-committedtriangleobjectpositions) to describe clustered geometry requirements including the [D3D12_RTAS_CLUSTER_OPERATION_CLAS_FLAG_DISALLOW_DATA_ACCESS](raytracing2.md#d3d12_rtas_cluster_operation_clas_flags) per-operation opt-out and the CBLAS consistency requirement.  Updated [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS](#d3d12_raytracing_acceleration_structure_build_flags) to clarify it applies to BLAS builds only, with a cross-reference to the RTAS operation flag for clusters.</li>
+v1.40|3/30/2026|<li>In [Payload access qualifiers](#payload-access-qualifiers), added [Value preservation across stage transitions](#value-preservation-across-stage-transitions) to [Advanced examples](#advanced-examples) with step-by-step walkthroughs clarifying: (1) a field marked only `write(caller) : read(caller)` is guaranteed to preserve the caller's value even if closesthit writes to its local copy, and (2) recursive [TraceRay](#traceray) with payload forwarding gives each call its own actual payload, so the outer caller still observes the original value while closesthit observes its written value after the nested call returns.</li><li>In [CheckDriverMatchingIdentifier](#checkdrivermatchingidentifier), clarified that drivers supporting raytracing must not return `D3D12_DRIVER_MATCHING_IDENTIFIER_UNSUPPORTED_TYPE` for `D3D12_SERIALIZED_DATA_RAYTRACING_ACCELERATION_STRUCTURE`. The driver must recognize the type and return an appropriate status such as `UNRECOGNIZED`, `INCOMPATIBLE_VERSION`, or `COMPATIBLE_WITH_DEVICE`.</li>
+v1.41|5/6/2026|<li>For [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo) and [CopyRaytracingAccelerationStructure()](#copyraytracingaccelerationstructure) added a note clarifying which postbuild-info types and copy modes apply to [CLAS, Cluster Templates, Cluster BLAS](raytracing2.md#clustered-geometry), and [Partitioned TLAS](raytracing2.md#partitioned-top-level-acceleration-structures): only `_SERIALIZE`, `_DESERIALIZE` and `_VISUALIZATION_DECODE_FOR_TOOLS` modes (and the corresponding `_SERIALIZATION` / `_TOOLS_VISUALIZATION` postbuild-info types).</li><li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_TYPE](#d3d12_raytracing_acceleration_structure_postbuild_info_type), extended the `_TOOLS_VISUALIZATION` and `_SERIALIZATION` entries to enumerate the additional supported object types (CLAS, Cluster Templates, Cluster BLAS, Partitioned TLAS).  Also clarified `_CURRENT_SIZE` applies to TLAS, BLAS and Opacity Micromap Arrays only, with a pointer to `D3D12_RTAS_OPERATION_MODE_GET_SIZES` of [ExecuteIndirectRTASOperations()](raytracing2.md#executeindirectrtasoperations) for size queries on cluster and partitioned-TLAS objects.</li><li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode), extended the `_SERIALIZE` and `_DESERIALIZE` entries to call out that the same modes apply to CLAS, Cluster Templates, Cluster BLAS, and Partitioned TLAS, and that the order-independence rule extends to those reference relationships (Cluster BLAS to CLAS, Partitioned TLAS to BLAS).</li>
+v1.42|5/13/2026|<li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS](#d3d12_raytracing_acceleration_structure_build_flags), for `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE` and `_PERFORM_UPDATE`, made the existing TLAS/BLAS-only applicability explicit by adding "Not supported for Opacity Micromap Array builds where update doesn't apply."  Behavior is unchanged; this only removes the implicit-by-omission exclusion that was easy to miss when reading the flag list.</li>
