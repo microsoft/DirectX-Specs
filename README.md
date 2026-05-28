@@ -27,6 +27,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [R9G9B9E5_SHAREDEXP RTV and UAV support](d3d/D3D12R9G9B9E5Format.md)
     * [Sampler Feedback](d3d/SamplerFeedback.md)
     * [Tiled Resources Tier 4](d3d/D3D12TiledResourceTier4.md)
+    * [UAV of Depth Buffer](d3d/D3D12UAVOfDepthBuffer.md)
     * [View Instancing](d3d/ViewInstancing.md)
     * [Variable Rate Shading](d3d/VariableRateShading.md)
     * [Work Graphs](d3d/WorkGraphs.md)
