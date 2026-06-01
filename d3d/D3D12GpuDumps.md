@@ -1,6 +1,6 @@
 # D3D12: DirectX Dump Files <!-- omit in toc -->
 
-v0.01 12 Mar 2026
+v0.02 29 May 2026
 
 # Contents <!-- omit in toc -->
 
@@ -10,26 +10,33 @@ v0.01 12 Mar 2026
   - [Device Error](#device-error)
   - [DirectX Dump File Creation](#directx-dump-file-creation)
     - [Settings](#settings)
+      - [Add the application to d3dconfig](#add-the-application-to-d3dconfig)
+      - [Retain dump file](#retain-dump-file)
+      - [Dump file driver options](#dump-file-driver-options)
     - [Callbacks](#callbacks)
     - [Dump file](#dump-file)
-- [Reconcile device error codes](#reconcile-device-error-codes)
-- [GPU Debug Blobs](#gpu-debug-blobs)
+  - [Information from D3D12 runtime](#information-from-d3d12-runtime)
+  - [Information from the application](#information-from-the-application)
+  - [Information from the drivers](#information-from-the-drivers)
+    - [GPU Debug Blobs](#gpu-debug-blobs)
+  - [Naming and Location](#naming-and-location)
+- [Device error code](#device-error-code)
 - [Proposed API/DDI](#proposed-apiddi)
   - [API](#api)
-    - [ID3D12DeviceExperimental](#id3d12deviceexperimental)
-      - [D3D12\_GPUDUMPBEGINCALLBACK](#d3d12_gpudumpbegincallback)
-      - [D3D12\_GPUDUMPENDCALLBACK](#d3d12_gpudumpendcallback)
-      - [D3D12\_GPU\_DUMP\_DRIVER\_TIER](#d3d12_gpu_dump_driver_tier)
-      - [D3D12\_GPU\_DUMP\_DRIVER\_OPTIONS](#d3d12_gpu_dump_driver_options)
-      - [ConfigureGpuDump](#configuregpudump)
-      - [SetGpuDumpCallbacks](#setgpudumpcallbacks)
-      - [AddBlobToGpuDump](#addblobtogpudump)
-      - [RetainGpuDump](#retaingpudump)
+    - [ID3D12DevicePreview](#id3d12devicepreview)
+      - [D3D12\_DUMPFILEBEGINCALLBACK](#d3d12_dumpfilebegincallback)
+      - [D3D12\_DUMPFILEENDCALLBACK](#d3d12_dumpfileendcallback)
+      - [D3D12\_DUMP\_FILE\_DRIVER\_TIER](#d3d12_dump_file_driver_tier)
+      - [D3D12\_DUMP\_FILE\_DRIVER\_OPTIONS](#d3d12_dump_file_driver_options)
+      - [ConfigureDumpFile](#configuredumpfile)
+      - [SetDumpFileCallbacks](#setdumpfilecallbacks)
+      - [AddBlobToDumpFile](#addblobtodumpfile)
+      - [RetainDumpFile](#retaindumpfile)
       - [GetDeviceErrorCode](#getdeviceerrorcode)
-    - [D3D12\_FEATURE\_GPU\_DUMP](#d3d12_feature_gpu_dump)
+    - [D3D12\_FEATURE\_DUMP\_FILE](#d3d12_feature_dump_file)
   - [DDI](#ddi)
-    - [D3D12DDI\_GPU\_DUMP\_FUNCS\_0121](#d3d12ddi_gpu_dump_funcs_0121)
-      - [pfnSetGpuDumpOptions](#pfnsetgpudumpoptions)
+    - [D3D12DDI\_DUMP\_FILE\_FUNCS\_0121](#d3d12ddi_dump_file_funcs_0121)
+      - [pfnSetDumpFileOptions](#pfnsetdumpfileoptions)
       - [pfnGetDebugBlobInfo](#pfngetdebugblobinfo)
       - [pfnGetDebugBlob](#pfngetdebugblob)
 - [Test Plan](#test-plan)
@@ -46,11 +53,11 @@ v0.01 12 Mar 2026
 | Term | Definition |
 | -- | -- |
 | TDR | Timeout Detection and Recovery, a feature in Windows that detects when the GPU is taking longer than expected to complete an operation. It then resets the GPU to prevent the entire system from becoming unresponsive. |
-| dxgkrnl | GPU scheduler, a component of the DirectX graphics kernel subsystem in Windows, responsible for timeout detection and recovery |
+| dxgkrnl | GPU scheduler, a component of the DirectX graphics kernel subsystem in Windows, responsible for timeout detection and recovery (TDR) |
 | LKD | Live kernel dump, a TDR LKD created by dxgkrnl on a TDR |
-| DirectX Dump Files | Application specific GPU dump files created by DirectX that this spec describes |
-| ISV | Xbox and PC game developer, or author of other applications using DirectX, aka "software developer" |
-| IHV | Independent Hardware vendor, aka "GPU manufacturer" or "hardware developer" |
+| DirectX Dump Files | Application specific dump files with the GPU state, created by DirectX that this spec describes |
+| ISV | Independent Software Vendor, aka Xbox and PC game developer, or author of other applications using DirectX, aka "software developer" |
+| IHV | Independent Hardware Vendor, aka "GPU manufacturer" or "hardware developer" |
 | D3D12 runtime | D3D12Core.dll in Agility SDK or in Windows OS |
 | Developer scenario | The one where a D3D12 application is running at a company developing it | 
 | Retail scenario | The one where an end user is running a D3D12 application they did not develop |
@@ -60,9 +67,9 @@ v0.01 12 Mar 2026
 
 TDR live kernel dumps (LKDs) are created currently as part of the timeout detection and recovery (TDR) process. However, these dumps are not accessible for timeout investigations to game developers or authors of other applications (ISVs) utilizing DirectX. Since these dumps are created by dxgkrnl, a component of the DirectX graphics kernel subsystem, they may contain kernel memory and optionally user memory of all the processes, which cannot be shared with ISVs.
 
-Additionally, there can be other graphics issues that may not cause a timeout but may result in a device error either by the graphics kernel or by the D3D12 runtime. These are referred to as software device removals. The ability to investigate using dumps is immensely helpful in these cases as well. 
+Additionally, there can be other graphics issues that may not cause a timeout but may result in a device error detected either by the graphics kernel or by the D3D12 runtime. These are referred to as software device removals. The ability to investigate using dumps is immensely helpful in these cases as well. 
 
-This spec outlines new DirectX functionality to create application specific GPU dumps called DirectX dump files. The dumps are always generated on Windows OS versions that send a notification on device errors and do not need any setting to be turned on. These dumps are available to ISVs in both development and retail scenarios.
+This spec outlines new DirectX functionality to create application specific GPU dump files. The dump files are always generated on Windows OS versions that send a notification on device errors and do not need any setting to be turned on. These dump files are available to ISVs in both development and retail scenarios.
 
 This work will be extended to support live debugging of shaders on device errors and other scenarios. It will be available to ISVs exclusively in the development scenario. Spec updates and implementation will be done after implementing support for application specific GPU dumps.
 
@@ -78,19 +85,20 @@ Here is an in-depth view and description of the device error workflow that expla
 - if a timeout, dxgkrnl creates a GUID (new functionality)
 - dxgkrnl stops processing the work submitted by user processes (existing functionality)
 - if a timeout, dxgkrnl creates a live kernel dump (LKD) and writes the GUID (new functionality), global kernel mode GPU debug blob and other TDR segments (existing functionality)
-- dxgkrnl calls a new DDI to collect application specific kernel mode GPU debug blob (new functionality)
+- dxgkrnl calls a DDI to collect application specific kernel mode GPU debug blob (new functionality)
 - dxgkrnl sends a notification to the D3D12 runtime with the GUID (if created) and device error code (new functionality)
 - D3D12 runtime starts user mode device error processing (new functionality)
-  - calls GpuDumpBegin callback
+  - calls the Begin callback
   - creates a GPU dump and writes the GUID and relevant information from D3D12 runtime
   - gets the application specific kernel mode GPU debug blob and passes it to collect the user mode GPU debug blob 
   - writes both GPU debug blobs in the GPU dump
-  - calls GpuDumpEnd callback
-- dxgkrnl reclaims the memory allocated for the application specific GPU debug blob if the D3D12 runtime call to retrieve the blob succeeds or after the application process exits (new functionality)
+  - writes application blobs in the dump file
+  - calls the End callback
 - if a timeout, dxgkrnl resets engines/adapter and puts the device in error state (existing functionality)
+- dxgkrnl reclaims the memory allocated for the application specific GPU debug blob if the D3D12 runtime call to retrieve the blob succeeds or after the application process exits (new functionality)
 - dxgkrnl starts processing the work submitted by user processes (existing functionality)
 
-The GPU dumps are uploaded to Watson and made available to ISVs and IHVs. PIX is updated to open these GPU dumps for postmortem debugging. It uses the PIX plugin model to analyze information in the GPU debug blob.
+The GPU dumps are uploaded to Watson and made available to ISVs through cloud services and IHVs through dev center. PIX is updated to open these GPU dumps for postmortem debugging. It uses the PIX plugin model to analyze information in the driver collected GPU debug blobs.
 
 # GPU Debug Manager
 This spec focuses on updates to the D3D12 runtime. We are adding a GPU Debug Manager to the Agility SDK that creates application specific GPU dumps which ISVs can use for postmortem debugging.
@@ -111,60 +119,107 @@ The device error notification contains the GUID (if created) and the device erro
 D3D12 runtime generates the GPU dump file on a device error. In other words, the GPU dump is always created in both developer and retail scenarios on Windows OS versions that send a notification on a device error.
 
 ### Settings
--	A setting to retain GPU dumps locally and not upload them to the cloud is added. It is off by default. This setting is exposed through PIX and D3DConfig. Note that there is a maximum limit of 20 local dump files. If the number of files exceeds this limit, the oldest files will be deleted. The setting to retain GPU dumps locally can also be updated programmatically by calling the [RetainGpuDump](#retaingpudump) API. A new registry key is added for this setting:
+-	A setting to retain the dump file locally is added. It is ON by default for the preview release so that the dump is available immediately for postmortem debugging. But it will be turned OFF for the retail release so that the disk space on end user's machine won't be used. This setting is exposed through PIX and D3DConfig. It can also be updated programmatically by calling the [RetainDumpFile](#retaindumpfile) API.
 
-```c++
-reg add "HKEY_CURRENT_USER\Software\Microsoft\Direct3D\Direct3D12" /v RetainGpuDump /t REG_DWORD /d 1 /f 
+- A set of new [options](#d3d12_dump_file_driver_options) is added to control the amount of data tracked and/or collected by the driver in the GPU dump. Some of these options may have performance overhead which means the application may run at a lower frame rate. Some of these options may additionally or alternatively have memory overhead which means the dump file size may increase significantly. This set is exposed through PIX and D3DConfig. It can also be updated programmatically by calling the [ConfigureDumpFile](#configuredumpfile) API.
+
+#### Add the application to d3dconfig
+
+D3DConfig settings only apply to applications in its app list. Register the application executable:
+
+```cmd
+d3dconfig.exe apps --add <exefilename>
 ```
 
-- A set of new [options](#d3d12_gpu_dump_driver_options) is added to control the amount of data tracked and/or collected by the driver in the GPU dump. Some of these options may have performance overhead which means the application may run at a lower frame rate. Some of these options may additionally or alternatively have memory overhead which means the dump file size may increase significantly. This set is exposed through PIX and D3DConfig. It can also be updated programmatically by calling the [ConfigureGpuDump](#configuregpudump) API. A new registry key is added for this setting:
+> **Notes:**
+> - A full path may also be used, but be aware that applications launched through hard links or other references may not match this path.
+> - Settings are applied to all instances of the matching exe.
 
-```c++
-reg add "HKEY_CURRENT_USER\Software\Microsoft\Direct3D\Direct3D12" /v GpuDumpDriverOptions /t REG_DWORD /d 1 /f 
+#### Retain dump file
+
+```cmd
+d3dconfig.exe device retain-dump-file=true
 ```
+
+> **Note:** All matching d3dconfig apps use this setting. Use `d3dconfig.exe apps` to see the currently configured applications.
+
+#### Dump file driver options
+
+```cmd
+d3dconfig.exe device dump-file-driver-options=1
+```
+
+> **Notes:** 
+> - d3dconfig settings are only read at device creation. Exit and restart the application to ensure settings apply.
+> - Multiple options can be set by calculating the value from the option enum values. 
+> ```e.g. d3dconfig.exe device dump-file-driver-options=65 // D3D12_DUMP_FILE_DRIVER_OPTION_NO_OVERHEAD | D3D12_DUMP_FILE_DRIVER_OPTION_EVENT_MARKERS = 0x41 = 65```
 
 ### Callbacks
 D3D12 runtime supports two callbacks in the application code.
--	It calls [D3D12_GPUDUMPBEGINCALLBACK](#d3d12_gpudumpbegincallback) callback at the start of dump creation
--	It calls [D3D12_GPUDUMPENDCALLBACK](#d3d12_gpudumpendcallback) callback at the end of dump creation
+-	It calls [D3D12_DUMPFILEBEGINCALLBACK](#d3d12_dumpfilebegincallback) callback at the start of dump creation
+-	It calls [D3D12_DUMPFILEENDCALLBACK](#d3d12_dumpfileendcallback) callback at the end of dump creation
 
 ### Dump file
-D3D12 runtime creates a GPU dump and writes the following information:
-1. GUID created by dxgkrnl in the dump. This helps correlate the live kernel dump (LKD) to the user mode GPU dump, if required internally or by IHVs for deeper investigations.
-1. [Application identity](https://microsoft.github.io/DirectX-Specs/d3d/D3D12ApplicationIdentity.html)
-1. Adapter information
-1. API objects 
-1. DRED info
-1. Device error details. These details consist of the new device error code and full call stack.
-1. Application blob added by calling [AddBlobToGpuDump](#addblobtogpudump)
+D3D12 runtime generates a dump file by incorporating information from four sources:
+
+```mermaid
+flowchart LR
+    A[D3D12 Runtime] --> D[Dump File]
+    B[Application] --> D
+    C1[Kernel Mode Driver] --> D
+    C2[User Mode Driver] --> D
+
+    style A fill:#FFB3BA
+    style B fill:#BAFFC9
+    style C1 fill:#BAE1FF
+    style C2 fill:#FFFFBA
+```
+
+## Information from D3D12 runtime
+1. GUID created by dxgkrnl: this helps correlate the live kernel dump (LKD) to the DirectX dump file, if required internally or by IHVs for deeper investigations.
+2. Metadata such as D3D12 runtime version, a bit indicating if the dump should be in the Watson upload cab etc.
+3. [Application identity](https://microsoft.github.io/DirectX-Specs/d3d/D3D12ApplicationIdentity.html)
+4. Device and dump file configuration and capabilities
+6. Adapter information
+7. OS, CPU and system memory information
+8. PIX markers aka user defined annotations
+9. DRED information
+10. D3D API objects
+11. D3D12 journal entries: a journal entry consists of an error message, hr, and a partial call stack.
+
+## Information from the application
+Application blobs added by calling [AddBlobToDumpFile](#addblobtodumpfile)
+
+## Information from the drivers
 1. GPU debug blob containing kernel mode diagnostic information specific to the application
-1. GPU debug blob containing user mode diagnostic information
-1. Metadata such as D3D12 runtime version, a bit indicating if the dump should be in the Watson upload cab etc.
+2. GPU debug blob containing user mode diagnostic information
 
-Key points about the dump file name, extension, and path:
-- The DirectX dump file uses .dxdmp as the file extension.
-- The file name format is NameOfExeWithoutExtension-yyyy-mm-dd-hh-mm-ss.dxdmp e.g. MyGame-2025-04-02-16-45-32.dxdmp
-- Windows dump files with .dmp extension are generated at this location: C:\Users\UserName\AppData\Local\CrashDumps. DirectX dump files are generated at the same location.
+### GPU Debug Blobs
+Debug blobs are utilized to collect application-specific GPU diagnostic information from both the kernel mode and user mode. The kernel mode debug blob is collected using a new DDI pfnCollectProcessDebugBlob. The user mode debug blob is collected by the DDI [pfnGetDebugBlob](#pfngetdebugblob).
 
-The dump is available to the ISV locally when the [setting to retain](#retaingpudump) it locally is turned on. This can be done in the developer scenario. Otherwise, the dump is uploaded to Watson using a WER event. The dump can be opened in PIX for postmortem debugging in both the scenarios.
-
-
-# Reconcile device error codes
-A new enum is added to dxgkrnl for device error codes and a corresponding new D3D12_DEVICE_ERROR_CODE enum is added to the D3D12 runtime. [GetDeviceErrorCode](#getdeviceerrorcode) API is provided to query the new device error code in the application.
-
-
-# GPU Debug Blobs
-Debug blobs are utilized to collect application-specific GPU diagnostic information from both the kernel mode and user mode. The kernel mode debug blob is collected using a new DDI pfncollectprocessdebugblob. The user mode debug blob is collected by a new [pfnGetDebugBlob](#pfngetdebugblob) DDI. 
-
-It is recommended that the kernel mode blob contains the following information. Some of this information may be included in the user mode blob instead if it is available in user mode. The user mode debug blob may also include other IHV specific data. The IHV has full control over the format of these blobs, as Microsoft enforces no requirements and D3D12 runtime or dxgkrnl do not process their contents. PIX Plugin implemented by the IHV decodes these blobs during postmortem debugging.
+It is recommended that the kernel mode blob contains the following information. Some of this information may be included in the user mode blob instead if it is available in the user mode. The user mode debug blob may also include other IHV specific data. The IHV has full control over the format of these blobs, as Microsoft enforces no requirements and D3D12 runtime or dxgkrnl do not process their contents. PIX Plugin implemented by the IHV decodes these blobs during postmortem debugging.
 
 1. Registers (from various categories e.g. debug, status, perf etc.) of various GPU blocks used by the application when a device error occurred. This information helps auto detect the cause of the device error at the GPU level during postmortem debugging in PIX. 
 2. Registers that help identify last completed and first incomplete draws and dispatches of the application when a device error occurred. This information helps to know till what point the frame progressed before the device error. 
 3. Shader registers of the [waves](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/hlsl-shader-model-6-0-features-for-direct3d-12#terminology) that correspond to the application when a device error occurred. This also includes per wave and per lane registers. This information helps to know the instruction pointer location, execution mask, corrupt descriptors, if the shader was stuck or moving, hit a fatal error, threw an exception, and so on which in turn helps auto detect the cause of the device error. 
 4. Shader memory of the waves that correspond to the application when a device error occurred. This information enables showing ISA of the application shaders. More importantly, this along with the information from #3 helps pinpoint the shader location causing the device error.
 5. PSO key/shader identifier that helps map ISA to HLSL files. It also helps map ISA variables, lines and functions to corresponding HLSL information. 
-6. Command list buffers containing API calls including call parameters, user markers and optionally driver events. This information allows reconstructing frames and populating the event list during postmortem debugging in PIX. It is also very helpful in detecting errors in command buffers including command list buffer corruption.
+6. Command buffers containing API calls including call parameters, user markers and optionally driver events. This information allows reconstructing frames and populating the event list during postmortem debugging in PIX. It is also very helpful in detecting errors in command buffers including command buffer corruption.
 7. Fence writeback values from memory. This information helps detect fence synchronization issues that might cause a device error.
+
+## Naming and Location
+
+Key points about the dump file name, extension, and path:
+- The DirectX dump file uses .dxdmp as the file extension. Note that it is .dxdmp_preview for the preview version indicating the file format may change between the preview releases and between the preview and the retail release.
+- The file name format is NameOfExeWithoutExtension-yyyy-mm-dd-hh-mm-ss.dxdmp e.g. MyGame-2025-04-02-16-45-32.dxdmp
+- Windows dump files with .dmp extension are generated at this location: C:\Users\UserName\AppData\Local\CrashDumps. DirectX dump files are generated at the same location.
+- This file is also used by WER to include in the cab file that is uploaded to Watson.
+
+The dump is available to the ISV locally when the [setting to retain](#retaindumpfile) it locally is turned on. This can be done in the developer scenario. The dump is also uploaded to Watson using a WER event and available to the ISV through cloud services. The dump can be opened in PIX for postmortem debugging in both the scenarios.
+
+
+# Device error code
+Currently, dxgkrnl detects an error and sets the device error code to one of the _VIDSCH_ERROR_CODE enum values. This gets translated at the user mode boundary to a D3DKMT device execution state (D3DKMT_DEVICEEXECUTION_STATE), which the D3D12 runtime then converts to one of the three DXGI error codes - DXGI_ERROR_DEVICE_REMOVED/HUNG/RESET. The details are lost in this process sometimes, misleading the ISVs. A new enum is added to dxgkrnl for device error codes and a corresponding new D3D12_DEVICE_ERROR_CODE enum is added to the D3D12 runtime. [GetDeviceErrorCode](#getdeviceerrorcode) API is provided to query the new device error code in the application.
 
 ---
 
@@ -172,30 +227,30 @@ It is recommended that the kernel mode blob contains the following information. 
 
 ## API
 
-### ID3D12DeviceExperimental
+### ID3D12DevicePreview
 
 ```c++
-typedef UINT (*D3D12_GPUDUMPBEGINCALLBACK)(UINT64 flags);
-typedef void (*D3D12_GPUDUMPENDCALLBACK)(const wchar_t* pDumpPath);
+typedef UINT (*D3D12_DUMPFILEBEGINCALLBACK)(UINT64 flags);
+typedef void (*D3D12_DUMPFILEENDCALLBACK)(const wchar_t* pDumpPath);
 
-typedef enum D3D12_GPU_DUMP_DRIVER_TIER
+typedef enum D3D12_DUMP_FILE_DRIVER_TIER
 {
-    D3D12_GPU_DUMP_DRIVER_TIER_NOT_SUPPORTED,
-    D3D12_GPU_DUMP_DRIVER_TIER_1,               // Supports only the MEDIUM_OVERHEAD and/or HIGH_OVERHEAD options
-    D3D12_GPU_DUMP_DRIVER_TIER_2,               // Supports NO_OVERHEAD and one or more additional options like SHADER_REGISTERS or RESOURCES
-} D3D12_GPU_DUMP_DRIVER_TIER;
+    D3D12_DUMP_FILE_DRIVER_TIER_NOT_SUPPORTED,
+    D3D12_DUMP_FILE_DRIVER_TIER_1,               // Supports only the MEDIUM_OVERHEAD and/or HIGH_OVERHEAD options
+    D3D12_DUMP_FILE_DRIVER_TIER_2,               // Supports NO_OVERHEAD and one or more individual options like SHADER_REGISTERS or RESOURCES
+} D3D12_DUMP_FILE_DRIVER_TIER;
 
-typedef enum D3D12_GPU_DUMP_DRIVER_OPTIONS
+typedef enum D3D12_DUMP_FILE_DRIVER_OPTIONS
 {
-    D3D12_GPU_DUMP_DRIVER_OPTION_NO_OVERHEAD        = 0x1,   // Track driver data with no overhead. This is the default.
-    D3D12_GPU_DUMP_DRIVER_OPTION_MEDIUM_OVERHEAD    = 0x2,   // Track driver data with medium overhead. It is up to the driver exactly what data this includes.
-    D3D12_GPU_DUMP_DRIVER_OPTION_HIGH_OVERHEAD      = 0x4,   // Track driver data with high overhead. It is up to the driver exactly what data this includes.
-    D3D12_GPU_DUMP_DRIVER_OPTION_NO_DATA            = 0x8,   // Track and collect no data from the driver. All other options are ignored if this is specified.
-    D3D12_GPU_DUMP_DRIVER_OPTION_SHADER_REGISTERS   = 0x10,  // Track shader general purpose registers
-    D3D12_GPU_DUMP_DRIVER_OPTION_RESOURCES          = 0x20,  // Track resources as the application executes and collect existing and recently deleted resources in the dump
-    D3D12_GPU_DUMP_DRIVER_OPTION_EVENT_MARKERS      = 0x40,  // Track application and driver event markers as the application executes
-} D3D12_GPU_DUMP_DRIVER_OPTIONS;
-DEFINE_ENUM_FLAG_OPERATORS( D3D12_GPU_DUMP_DRIVER_OPTIONS )
+    D3D12_DUMP_FILE_DRIVER_OPTION_NO_OVERHEAD        = 0x1,   // Track driver data with no overhead. This is the default.
+    D3D12_DUMP_FILE_DRIVER_OPTION_MEDIUM_OVERHEAD    = 0x2,   // Track driver data with medium overhead. It is up to the driver exactly what data this includes.
+    D3D12_DUMP_FILE_DRIVER_OPTION_HIGH_OVERHEAD      = 0x4,   // Track driver data with high overhead. It is up to the driver exactly what data this includes.
+    D3D12_DUMP_FILE_DRIVER_OPTION_NO_DATA            = 0x8,   // Track and collect no data from the driver. All other options are ignored if this is specified.
+    D3D12_DUMP_FILE_DRIVER_OPTION_SHADER_REGISTERS   = 0x10,  // Track shader general purpose registers
+    D3D12_DUMP_FILE_DRIVER_OPTION_RESOURCES          = 0x20,  // Track resources as the application executes and collect existing and recently deleted resources in the dump
+    D3D12_DUMP_FILE_DRIVER_OPTION_EVENT_MARKERS      = 0x40,  // Track application and driver event markers as the application executes
+} D3D12_DUMP_FILE_DRIVER_OPTIONS;
+DEFINE_ENUM_FLAG_OPERATORS( D3D12_DUMP_FILE_DRIVER_OPTIONS )
 
 typedef enum D3D12_DEVICE_ERROR_CODE
 {
@@ -205,63 +260,65 @@ typedef enum D3D12_DEVICE_ERROR_CODE
     D3D12_DEVICE_ERROR_UNKNOWN      = 0x88000000,
 } D3D12_DEVICE_ERROR_CODE;
 
-interface ID3D12DeviceExperimental : IUnknown
+interface ID3D12DevicePreview : IUnknown
 {
-    HRESULT ConfigureGpuDump(
-      [annotation("_In_")] D3D12_GPU_DUMP_DRIVER_OPTIONS driverOptions);
+    HRESULT ConfigureDumpFile(
+      [annotation("_In_")] D3D12_DUMP_FILE_DRIVER_OPTIONS driverOptions);
 
-    void SetGpuDumpCallbacks(
-      [annotation("_In_")] D3D12_GPUDUMPBEGINCALLBACK pBeginCallback,
-      [annotation("_In_")] D3D12_GPUDUMPENDCALLBACK pEndCallback);
+    void SetDumpFileCallbacks(
+      [annotation("_In_")] D3D12_DUMPFILEBEGINCALLBACK pBeginCallback,
+      [annotation("_In_")] D3D12_DUMPFILEENDCALLBACK pEndCallback);
 
-    HRESULT AddBlobToGpuDump(
+    HRESULT AddBlobToDumpFile(
       [annotation("_In_")] void* pBlob,
       [annotation("_In_")] UINT sizeBytes,
       [annotation("_In_")] UINT64 metadata);
 
-    void RetainGpuDump(
+    void RetainDumpFile(
       [annotation("_In_")] BOOL retain);
 
     D3D12_DEVICE_ERROR_CODE GetDeviceErrorCode();
 };
 ```
 
-#### D3D12_GPUDUMPBEGINCALLBACK
-`D3D12_GPUDUMPBEGINCALLBACK` is a pointer to the application side callback function. It is called by D3D12 runtime at the beginning of GPU dump creation. Return value of the callback determines if the dump should be created; 1 indicates that the GPU dump should be created and 0 indicates that the dump shouldn't be created. Note that this does not alter LKD creation by dxgkrnl. This callback can be used to add application side information to the dump. See [AddBlobToGpuDump](#addblobtogpudump).
+#### D3D12_DUMPFILEBEGINCALLBACK
+`D3D12_DUMPFILEBEGINCALLBACK` is a pointer to the application side callback function. It is called by D3D12 runtime at the beginning of GPU dump creation. Return value of the callback determines if the dump should be created; 1 indicates that the GPU dump should be created and 0 indicates that the dump shouldn't be created. Note that this does not alter LKD creation by dxgkrnl. This callback can be used to add application side information to the dump. See [AddBlobToDumpFile](#addblobtodumpfile).
 
 `flags` is currently unused but reserved for future use.
 
-#### D3D12_GPUDUMPENDCALLBACK
-`D3D12_GPUDUMPENDCALLBACK` is a pointer to the application side callback function. It is called by D3D12 runtime at the end of GPU dump creation. This callback can be used to copy the dump file to another location and other processing post GPU dump creation.
+#### D3D12_DUMPFILEENDCALLBACK
+`D3D12_DUMPFILEENDCALLBACK` is a pointer to the application side callback function. It is called by D3D12 runtime at the end of GPU dump creation. This callback can be used to copy the dump file to another location and other processing post GPU dump creation.
+
+> **Note:** The dump file won't be accessible after this callback returns unless retaining the dump file is enabled by calling [RetainDumpFile](#retaindumpfile) API or by using PIX or D3DConfig. Therefore, make sure to copy the dump file before returning from the callback.
 
 `pDumpPath` points to the path of the dump file created by D3D12 runtime.
 
-#### D3D12_GPU_DUMP_DRIVER_TIER
-Different tiers in `D3D12_GPU_DUMP_DRIVER_TIER` represent different GPU dump options specific to the driver. The IHV has discretion to enable individual options within each tier, provided they remain within the tier's specified overhead limits. Note that this is different from other feature tiers in D3D12.
+#### D3D12_DUMP_FILE_DRIVER_TIER
+Different tiers in `D3D12_DUMP_FILE_DRIVER_TIER` represent different GPU dump capabilities specific to the driver. The IHV has discretion to enable individual options within each tier, provided they remain within the tier's specified overhead limits. Note that this is different from other feature tiers in D3D12.
 
-#### D3D12_GPU_DUMP_DRIVER_OPTIONS
-`D3D12_GPU_DUMP_DRIVER_OPTION_NO_OVERHEAD` is an option that informs the driver to track data that has no overhead as the application executes and collect it in the GPU dump. D3D12 runtime sets this by default.
+#### D3D12_DUMP_FILE_DRIVER_OPTIONS
+`D3D12_DUMP_FILE_DRIVER_OPTION_NO_OVERHEAD` is an option that informs the driver to track data that has no overhead as the application executes and to collect it in the debug blob that is written in the dump file. D3D12 runtime sets this by default.
 
-`D3D12_GPU_DUMP_DRIVER_OPTION_MEDIUM_OVERHEAD` is an option that informs the driver to track data that has medium overhead as the application executes and collect it in the GPU dump. This can be set if `D3D12_GPU_DUMP_DRIVER_TIER_1` is supported. The selection of individual options is determined by the IHV. Direct3D does not offer a mechanism to query these specific options, as a direct one-to-one correspondence between driver settings and D3D options may not exist. If multiple overhead options are specified then the higher overhead option takes effect. e.g. if `D3D12_GPU_DUMP_DRIVER_OPTION_NO_OVERHEAD` and `D3D12_GPU_DUMP_DRIVER_OPTION_MEDIUM_OVERHEAD` are specified then `D3D12_GPU_DUMP_DRIVER_OPTION_MEDIUM_OVERHEAD` is used.
+`D3D12_DUMP_FILE_DRIVER_OPTION_MEDIUM_OVERHEAD` is an option that informs the driver to track data that has medium overhead as the application executes and to collect it in the debug blob that is written in the dump file. This can be set if `D3D12_DUMP_FILE_DRIVER_TIER_1` is supported. The selection of individual options is determined by the IHV. Direct3D does not offer a mechanism to query these specific options, as a direct one-to-one correspondence between driver settings and D3D options may not exist. If multiple overhead options are specified then the higher overhead option takes effect. e.g. if `D3D12_DUMP_FILE_DRIVER_OPTION_NO_OVERHEAD` and `D3D12_DUMP_FILE_DRIVER_OPTION_MEDIUM_OVERHEAD` are specified then `D3D12_DUMP_FILE_DRIVER_OPTION_MEDIUM_OVERHEAD` is used.
 
-`D3D12_GPU_DUMP_DRIVER_OPTION_HIGH_OVERHEAD` is an option that informs the driver to track data that has high overhead as the application executes and collect it in the GPU dump. This can be set if `D3D12_GPU_DUMP_DRIVER_TIER_1` is supported. The selection of individual options is determined by the IHV. Direct3D does not offer a mechanism to query these specific options, as a direct one-to-one correspondence between driver settings and D3D options may not exist. If multiple overhead options are specified then the higher overhead option takes effect. e.g. if `D3D12_GPU_DUMP_DRIVER_OPTION_MEDIUM_OVERHEAD` and `D3D12_GPU_DUMP_DRIVER_OPTION_HIGH_OVERHEAD` are specified then `D3D12_GPU_DUMP_DRIVER_OPTION_HIGH_OVERHEAD` is used.
+`D3D12_DUMP_FILE_DRIVER_OPTION_HIGH_OVERHEAD` is an option that informs the driver to track data that has high overhead as the application executes and to collect it in the debug blob that is written in the dump file. This can be set if `D3D12_DUMP_FILE_DRIVER_TIER_1` is supported. The selection of individual options is determined by the IHV. Direct3D does not offer a mechanism to query these specific options, as a direct one-to-one correspondence between driver settings and D3D options may not exist. If multiple overhead options are specified then the higher overhead option takes effect. e.g. if `D3D12_DUMP_FILE_DRIVER_OPTION_MEDIUM_OVERHEAD` and `D3D12_DUMP_FILE_DRIVER_OPTION_HIGH_OVERHEAD` are specified then `D3D12_DUMP_FILE_DRIVER_OPTION_HIGH_OVERHEAD` is used.
 
-`D3D12_GPU_DUMP_DRIVER_OPTION_NO_DATA` is an option that informs the driver to track and collect no data. All other options are ignored in this case. The GPU dump contains data from D3D12 runtime only in this case. 
+`D3D12_DUMP_FILE_DRIVER_OPTION_NO_DATA` is an option that informs the driver to track and collect no data. All other options are ignored in this case. The dump file contains data only from D3D12 runtime and application, if any.
 
-`D3D12_GPU_DUMP_DRIVER_OPTION_SHADER_REGISTERS` is an option that informs the driver to collect shader general purpose registers in the GPU dump. These registers are used to store variable values while the shaders are executing. This may need significant amount of memory depending on the number of shader waves present at the dump creation time.
+`D3D12_DUMP_FILE_DRIVER_OPTION_SHADER_REGISTERS` is an option that informs the driver to collect shader general purpose registers in the debug blob that is written in the dump file. These registers are used to store variable values while the shaders are executing. This may need significant amount of memory depending on the number of shader waves present at the dump creation time.
 
-`D3D12_GPU_DUMP_DRIVER_OPTION_RESOURCES` is an option that informs the driver to track resources as the application executes and collect existing and recently deleted resources in the GPU dump. This may have significant performance overhead while the application is executing and may increase the GPU dump size significantly. It is advisable to set this flag only during the development scenario.
+`D3D12_DUMP_FILE_DRIVER_OPTION_RESOURCES` is an option that informs the driver to track resources as the application executes and to collect existing and recently deleted resources in the debug blob that is written in the dump file. This may have significant performance overhead while the application is executing and may increase the dump file size significantly. It is advisable to set this flag only during the development scenario.
 
-`D3D12_GPU_DUMP_DRIVER_OPTION_EVENT_MARKERS` is an option that informs the driver to track application and driver markers. This may have significant performance overhead while the application is executing.
+`D3D12_DUMP_FILE_DRIVER_OPTION_EVENT_MARKERS` is an option that informs the driver to track application and driver markers and to collect them in the debug blob that is written in the dump file. This may have significant performance overhead while the application is executing.
 
-#### ConfigureGpuDump
-`ConfigureGpuDump()` is used to configure the amount of data tracked and/or collected in the GPU dump. Some of these options may have performance overhead which means the application may run at a lower frame rate. Some of these options may additionally or alternatively have memory overhead which means the dump file size may increase significantly. Currently, this API has options to control the data in the driver but in the future, it may be extended to control the data in D3D12 runtime.
+#### ConfigureDumpFile
+`ConfigureDumpFile()` is used to configure the amount of data tracked and/or collected in the GPU dump. Some of these options may have performance overhead which means the application may run at a lower frame rate. Some of these options may additionally or alternatively have memory overhead which means the dump file size may increase significantly. Currently, this API has options to control the data in the driver but in the future, it may be extended to control the data in D3D12 runtime.
 
-#### SetGpuDumpCallbacks
-`SetGpuDumpCallbacks()` is used to set application code callbacks to be invoked at the time of a device error.
+#### SetDumpFileCallbacks
+`SetDumpFileCallbacks()` is used to set application code callbacks to be invoked at the time of a device error.
 
-#### AddBlobToGpuDump
-`AddBlobToGpuDump()` is used to add a memory blob and metadata to the GPU dump. This API should be called only from [D3D12_GPUDUMPBEGINCALLBACK](#d3d12_gpudumpbegincallback) at the time of a device error. It can be called multiple times to add multiple blobs to the dump. Passing unique metadata for each blob helps identifying them easily during postmortem debugging. Applications can reclaim the blob memory after calling this API. A limit of 2 MB is enforced on the total sizes of blobs plus metadata.
+#### AddBlobToDumpFile
+`AddBlobToDumpFile()` is used to add a memory blob and metadata to the GPU dump. This API should be called only from [D3D12_DUMPFILEBEGINCALLBACK](#d3d12_dumpfilebegincallback) at the time of a device error. It can be called multiple times to add multiple blobs to the dump. Passing unique metadata for each blob helps identifying them easily during postmortem debugging. Applications can reclaim the blob memory after calling this API. A limit of 2 MB is enforced on the total sizes of blobs plus metadata.
 
 `pBlob` is the virtual address of the blob.
 
@@ -269,100 +326,101 @@ Different tiers in `D3D12_GPU_DUMP_DRIVER_TIER` represent different GPU dump opt
 
 `metaData` is the application defined metadata to associate with the blob.
 
-#### RetainGpuDump
-`RetainGpuDump()` is used to retain GPU dumps locally instead of uploading them to Watson. Retaining dumps locally is off by default. This setting persists until it is turned off, the device is recreated or the application is closed. It is also exposed through PIX and D3DConfig.
+#### RetainDumpFile
+`RetainDumpFile()` is used to persist the dump file locally after the device error processing is complete. Retaining dumps locally is ON by default for the preview release so that they are available immediately for postmortem debugging. But it will be turned OFF for the retail release so that the disk space on end user's machine won't be used. This setting persists until it is turned off, the device is recreated or the application is closed. It is also exposed through PIX and D3DConfig.
+
+> **Note:** Regardless of the retain dump file setting, the dump file remains accessible in the D3D12_DUMPFILEENDCALLBACK callback until the callback returns.
 
 #### GetDeviceErrorCode
 `GetDeviceErrorCode()` is used to query the code that provides more details about the device error.
 
-### D3D12_FEATURE_GPU_DUMP
+### D3D12_FEATURE_DUMP_FILE
 
-`D3D12_FEATURE_GPU_DUMP` is added to define a cap for the feature that creates a GPU dump.
+`D3D12_FEATURE_DUMP_FILE` is added to define a cap for the feature that creates a GPU dump.
 
 ```c++
-typedef struct D3D12_FEATURE_DATA_GPU_DUMP
+typedef struct D3D12_FEATURE_DATA_DUMP_FILE
 {
-    [annotation("_Out_")] BOOL Supported;                         // A GPU dump is created if the OS sends a notification on device errors, including timeouts
-    [annotation("_Out_")] D3D12_GPU_DUMP_TIER GpuDumpTier;
-    [annotation("_Out_")] UINT GpuDumpDeviceSpecificOptionsMask;  // Bits corresponding to the driver supported options in D3D12_GPU_DUMP_DRIVER_OPTIONS are set
-    [annotation("_Out_")] BOOL SupportedByKernelDriver;           // If the kernel mode driver supports collecting diagnostic information on a timeout, it is added to the GPU dump
-} D3D12_FEATURE_DATA_GPU_DUMP;
+    [annotation("_Out_")] BOOL SupportedByOS;              // The feature is supported by the OS i.e. a GPU dump is created on the OS that sends a notification on device errors including timeouts
+    [annotation("_Out_")] D3D12_DUMP_FILE_TIER DumpFileDriverTier;
+    [annotation("_Out_")] UINT DumpFileDriverOptionsMask;  // Bits corresponding to the driver supported options in D3D12_DUMP_FILE_DRIVER_OPTIONS are set
+} D3D12_FEATURE_DATA_DUMP_FILE;
 
 typedef enum D3D12_FEATURE
 {
     D3D12_FEATURE_D3D12_OPTIONS =  0,
     D3D12_FEATURE_ARCHITECTURE  =  1, // Deprecated by D3D12_FEATURE_ARCHITECTURE1
     ...
-    D3D12_FEATURE_GPU_DUMP      = 71,
+    D3D12_FEATURE_DUMP_FILE      = 71,
 ```
 
 ## DDI
 
-### D3D12DDI_GPU_DUMP_FUNCS_0121
+### D3D12DDI_DUMP_FILE_FUNCS_0121
 ```c++
-typedef struct D3D12DDI_GPU_DUMP_FUNCS_0121
+typedef struct D3D12DDI_DUMP_FILE_FUNCS_0121
 {
-    PFND3D12DDI_SET_GPU_DUMP_OPTIONS_0121 pfnSetGpuDumpOptions;
+    PFND3D12DDI_SET_DUMP_FILE_OPTIONS_0121 pfnSetDumpFileOptions;
     PFND3D12DDI_GET_DEBUG_BLOB_INFO_0121  pfnGetDebugBlobInfo;
     PFND3D12DDI_GET_DEBUG_BLOB_0121       pfnGetDebugBlob;
-} D3D12DDI_GPU_DUMP_FUNCS_0121;
+} D3D12DDI_DUMP_FILE_FUNCS_0121;
 ```
-DDI rev 121 adds `pfnSetGpuDumpOptions`, `pfnGetDebugBlobInfo` and `pfnGetDebugBlob` that D3D12 runtime can call to configure the driver for GPU dumps, get the GPU debug blob size and get the GPU debug blob, respectively. This blob contains user mode GPU diagnostic information.
+DDI rev 121 adds `pfnSetDumpFileOptions`, `pfnGetDebugBlobInfo` and `pfnGetDebugBlob` that D3D12 runtime can call to configure the driver for GPU dumps, get the GPU debug blob size and get the GPU debug blob, respectively. This blob contains user mode GPU diagnostic information.
 
-#### pfnSetGpuDumpOptions
+#### pfnSetDumpFileOptions
 ```c++
-typedef enum D3D12DDI_GPU_DUMP_TIER_0121
+typedef enum D3D12DDI_DUMP_FILE_TIER_0121
 {
-    D3D12DDI_GPU_DUMP_TIER_NOT_SUPPORTED,
-    D3D12DDI_GPU_DUMP_TIER_1,               // Supports only the MEDIUM_OVERHEAD and/or HIGH_OVERHEAD options
-    D3D12DDI_GPU_DUMP_TIER_2,               // Supports NO_OVERHEAD and one or more additional options like SHADER_REGISTERS or RESOURCES
-} D3D12DDI_GPU_DUMP_TIER_0121;
+    D3D12DDI_DUMP_FILE_TIER_NOT_SUPPORTED,
+    D3D12DDI_DUMP_FILE_TIER_1,               // Supports only the MEDIUM_OVERHEAD and/or HIGH_OVERHEAD options
+    D3D12DDI_DUMP_FILE_TIER_2,               // Supports NO_OVERHEAD and one or more individual options like SHADER_REGISTERS or RESOURCES
+} D3D12DDI_DUMP_FILE_TIER_0121;
 
-typedef enum D3D12DDI_GPU_DUMP_OPTIONS_0121
+typedef enum D3D12DDI_DUMP_FILE_OPTIONS_0121
 {
-    D3D12DDI_GPU_DUMP_OPTION_NO_OVERHEAD        = 0x1,   // Collect data with no tracking overhead
-    D3D12DDI_GPU_DUMP_OPTION_MEDIUM_OVERHEAD    = 0x2,   // Collect data with medium tracking overhead, it is up to the IHV exactly what data this includes
-    D3D12DDI_GPU_DUMP_OPTION_HIGH_OVERHEAD      = 0x4,   // Collect data with high tracking overhead, it is up to the IHV exactly what data this includes
-    D3D12DDI_GPU_DUMP_OPTION_NO_DATA            = 0x8,   // Collect nothing in the driver, useful to stop tracking if only TIER_1 is supported
-    D3D12DDI_GPU_DUMP_OPTION_SHADER_REGISTERS   = 0x10,  // Collect shader general purpose registers
-    D3D12DDI_GPU_DUMP_OPTION_RESOURCES          = 0x20,  // Track resources as the application executes and collect existing and recently deleted resources during blob creation
-    D3D12DDI_GPU_DUMP_OPTION_EVENT_MARKERS      = 0x40,  // Track application and driver event markers as the application executes
-} D3D12DDI_GPU_DUMP_OPTIONS_0121;
-DEFINE_ENUM_FLAG_OPERATORS( D3D12DDI_GPU_DUMP_OPTIONS_0121 )
+    D3D12DDI_DUMP_FILE_OPTION_NO_OVERHEAD        = 0x1,   // Collect data with no tracking overhead
+    D3D12DDI_DUMP_FILE_OPTION_MEDIUM_OVERHEAD    = 0x2,   // Collect data with medium tracking overhead, it is up to the IHV exactly what data this includes
+    D3D12DDI_DUMP_FILE_OPTION_HIGH_OVERHEAD      = 0x4,   // Collect data with high tracking overhead, it is up to the IHV exactly what data this includes
+    D3D12DDI_DUMP_FILE_OPTION_NO_DATA            = 0x8,   // Collect nothing in the driver, useful to stop tracking if only TIER_1 is supported
+    D3D12DDI_DUMP_FILE_OPTION_SHADER_REGISTERS   = 0x10,  // Collect shader general purpose registers
+    D3D12DDI_DUMP_FILE_OPTION_RESOURCES          = 0x20,  // Track resources as the application executes and collect existing and recently deleted resources during blob creation
+    D3D12DDI_DUMP_FILE_OPTION_EVENT_MARKERS      = 0x40,  // Track application and driver event markers as the application executes
+} D3D12DDI_DUMP_FILE_OPTIONS_0121;
+DEFINE_ENUM_FLAG_OPERATORS( D3D12DDI_DUMP_FILE_OPTIONS_0121 )
 
-typedef HRESULT ( APIENTRY* PFND3D12DDI_SET_GPU_DUMP_OPTIONS_0121 )(
+typedef HRESULT ( APIENTRY* PFND3D12DDI_SET_DUMP_FILE_OPTIONS_0121 )(
     _In_ D3D12DDI_HDEVICE hDrvDevice,
-    _In_ D3D12DDI_GPU_DUMP_OPTIONS_0121 options);
+    _In_ D3D12DDI_DUMP_FILE_OPTIONS_0121 options);
 ```
 
-Different tiers in `D3D12DDI_GPU_DUMP_TIER_0121` represent different GPU dump options specific to the driver. The IHV has discretion to enable individual options within each tier, provided they remain within the tier's specified overhead limits. Note that this is different from other feature tiers in D3D12.
+Different tiers in `D3D12DDI_DUMP_FILE_TIER_0121` represent different GPU dump options specific to the driver. The IHV has discretion to enable individual options within each tier, provided they remain within the tier's specified overhead limits. Note that this is different from other feature tiers in D3D12.
 
-`D3D12DDI_GPU_DUMP_OPTION_NO_OVERHEAD` is an option that informs the driver to track data with no overhead as the application executes and collect it in the debug blob. This is typically the data present on the GPU used to execute the current frame and should have negligible performance overhead. This is the default option that is passed to the driver by D3D12 runtime after device creation.
+`D3D12DDI_DUMP_FILE_OPTION_NO_OVERHEAD` is an option that informs the driver to track data that has no overhead as the application executes and to collect it in the debug blob. This is typically the data present on the GPU used to execute the current frame and should have negligible performance overhead. This is the default option that is passed to the driver by D3D12 runtime after device creation.
 
-`D3D12DDI_GPU_DUMP_OPTION_MEDIUM_OVERHEAD` is an option that informs the driver to track data with medium overhead as the application executes and collect it in the debug blob. This can be set if `D3D12DDI_GPU_DUMP_TIER_1` is supported. The selection of individual options is determined by the IHV. Direct3D does not offer a mechanism to query these specific options, as a direct one-to-one correspondence between the DDI options and D3D options may not exist. If multiple overhead options are specified then the higher overhead option takes effect. e.g. if `D3D12DDI_GPU_DUMP_OPTION_NO_OVERHEAD` and `D3D12DDI_GPU_DUMP_OPTION_MEDIUM_OVERHEAD` are specified then `D3D12DDI_GPU_DUMP_OPTION_MEDIUM_OVERHEAD` is used.
+`D3D12DDI_DUMP_FILE_OPTION_MEDIUM_OVERHEAD` is an option that informs the driver to track data that has medium overhead as the application executes and to collect it in the debug blob. This can be set if `D3D12DDI_DUMP_FILE_TIER_1` is supported. The selection of individual options is determined by the IHV. Direct3D does not offer a mechanism to query these specific options, as a direct one-to-one correspondence between the DDI options and D3D options may not exist. If multiple overhead options are specified then the higher overhead option takes effect. e.g. if `D3D12DDI_DUMP_FILE_OPTION_NO_OVERHEAD` and `D3D12DDI_DUMP_FILE_OPTION_MEDIUM_OVERHEAD` are specified then `D3D12DDI_DUMP_FILE_OPTION_MEDIUM_OVERHEAD` is used.
 
-`D3D12DDI_GPU_DUMP_OPTION_HIGH_OVERHEAD` is an option that informs the driver to track data with high overhead as the application executes and collect it in the debug blob. This can be set if `D3D12DDI_GPU_DUMP_TIER_1` is supported. The selection of individual options is determined by the IHV. Direct3D does not offer a mechanism to query these specific options, as a direct one-to-one correspondence between the DDI options and D3D options may not exist. If multiple overhead options are specified then the higher overhead option takes effect. e.g. if `D3D12DDI_GPU_DUMP_OPTION_MEDIUM_OVERHEAD` and `D3D12DDI_GPU_DUMP_OPTION_HIGH_OVERHEAD` are specified then `D3D12DDI_GPU_DUMP_OPTION_HIGH_OVERHEAD` is used.
+`D3D12DDI_DUMP_FILE_OPTION_HIGH_OVERHEAD` is an option that informs the driver to track data that has high overhead as the application executes and to collect it in the debug blob. This can be set if `D3D12DDI_DUMP_FILE_TIER_1` is supported. The selection of individual options is determined by the IHV. Direct3D does not offer a mechanism to query these specific options, as a direct one-to-one correspondence between the DDI options and D3D options may not exist. If multiple overhead options are specified then the higher overhead option takes effect. e.g. if `D3D12DDI_DUMP_FILE_OPTION_MEDIUM_OVERHEAD` and `D3D12DDI_DUMP_FILE_OPTION_HIGH_OVERHEAD` are specified then `D3D12DDI_DUMP_FILE_OPTION_HIGH_OVERHEAD` is used.
 
-`D3D12DDI_GPU_DUMP_OPTION_NO_DATA` is an option that informs the driver to track and collect no data in the user mode and kernel mode drivers. All other options are ignored in this case. It is useful to stop tracking if only `D3D12DDI_GPU_DUMP_TIER_1` is supported.
+`D3D12DDI_DUMP_FILE_OPTION_NO_DATA` is an option that informs the driver to track and collect no data in the user mode and kernel mode drivers. All other options are ignored in this case. It is useful to stop tracking if only `D3D12DDI_DUMP_FILE_TIER_1` is supported.
 
-`D3D12DDI_GPU_DUMP_CONFIG_COLLECT_SHADER_REGISTERS` is an option that informs the driver to collect shader general purpose registers in the debug blob. These registers are used to store variable values while the shaders are executing. 
+`D3D12DDI_DUMP_FILE_OPTION_SHADER_REGISTERS` is an option that informs the driver to collect shader general purpose registers in the debug blob. These registers are used to store variable values while the shaders are executing. 
 
-`D3D12DDI_GPU_DUMP_CONFIG_TRACK_AND_COLLECT_RESOURCES` is an option that informs the driver to track resources as the application executes and collect existing and recently deleted resources in the debug blob.
+`D3D12DDI_DUMP_FILE_OPTION_RESOURCES` is an option that informs the driver to track resources as the application executes and to collect existing and recently deleted resources in the debug blob.
 
-`D3D12DDI_GPU_DUMP_CONFIG_TRACK_AND_COLLECT_EVENT_MARKERS` is an option that informs the driver to track application and driver markers as the application executes and collect them in the debug blob.
+`D3D12DDI_DUMP_FILE_OPTION_EVENT_MARKERS` is an option that informs the driver to track application and driver markers as the application executes and to collect them in the debug blob.
 
 
-`pfnSetGpuDumpOptions` is used to configure the driver to control the data tracked and/or collected in the debug blobs for GPU dumps. It is called after Direct3D12 device creation. It is also called from `ID3D12DeviceExperimental::ConfigureGpuDump` API. The driver ignores the options that it does not recognize or support. Some of these options may have performance overhead which means the application may run at a lower frame rate. It is the IHV's responsibility to not turn them on for the NO_OVERHEAD option. Some of these options may additionally or alternatively have memory overhead which means the debug blob size may increase significantly.
+`pfnSetDumpFileOptions` is used to configure the driver to control the data tracked and/or collected in the debug blobs for GPU dumps. It is called after Direct3D12 device creation. It is also called from `ID3D12DevicePreview::ConfigureDumpFile` API. The driver ignores the options that it does not recognize or support. Some of these options may have performance overhead which means the application may run at a lower frame rate. It is the IHV's responsibility to not turn them on for the NO_OVERHEAD option. Some of these options may additionally or alternatively have memory overhead which means the debug blob size may increase significantly.
 
 ```c++
-typedef struct D3D12DDI_FEATURE_DATA_GPU_DUMP_0121
+typedef struct D3D12DDI_FEATURE_DATA_DUMP_FILE_0121
 {
-    _Out_ D3D12DDI_GPU_DUMP_TIER_0121 GpuDumpTier;
-    _Out_ UINT GpuDumpOptionsMask; // Set bits corresponding to the supported options in D3D12DDI_GPU_DUMP_OPTIONS_0121
-} D3D12DDI_FEATURE_DATA_GPU_DUMP_0121;
+    _Out_ D3D12DDI_DUMP_FILE_TIER_0121 DumpFileTier;
+    _Out_ UINT DumpFileOptionsMask; // Set bits corresponding to the supported options in D3D12DDI_DUMP_FILE_OPTIONS_0121
+} D3D12DDI_FEATURE_DATA_DUMP_FILE_0121;
 ```
 
-`D3D12DDI_FEATURE_DATA_GPU_DUMP_0121` is populated by querying driver capabilities with `D3D12DDI_CAPS_TYPE_GPU_DUMP` to give the GPU dump tier and options supported by the driver. `D3D12DDI_FEATURE_0121_GPU_DUMP` is added to define a cap for the driver feature that supports GPU dumps.
+`D3D12DDI_FEATURE_DATA_DUMP_FILE_0121` is populated by querying driver capabilities with `D3D12DDI_CAPS_TYPE_DUMP_FILE` to give the GPU dump tier and options supported by the driver. `D3D12DDI_FEATURE_0121_DUMP_FILE` is added to define a cap for the driver feature that supports GPU dumps.
 
 #### pfnGetDebugBlobInfo
 ```c++
@@ -397,7 +455,7 @@ This DDI is used to collect estimated blob sizes of different types of debug blo
 
 In response to this DDI call, the driver updates `DebugBlobSize` to its upper limit size estimate for the associated blob type. If it does not support a blob type, it updates `DebugBlobSize` to 0 for that blob type. This DDI is designed so new `D3D12DDI_DEBUG_BLOB_TYPE` values can be added in the future to support different types of blobs. The driver handles these cases carefully, where unrecognized blob types are treated as unsupported and `DebugBlobSize` is set to 0. 
 
-If the driver was initialized with `D3D12DDI_GPU_DUMP_OPTION_NO_DATA`, D3D12 runtime does not call this DDI and the subsequent `pfnGetDebugBlob` DDI to get the blob data at the time of the crash.
+If the driver was initialized with `D3D12DDI_DUMP_FILE_OPTION_NO_DATA`, D3D12 runtime does not call this DDI and the subsequent `pfnGetDebugBlob` DDI to get the blob data at the time of the crash.
 
 #### pfnGetDebugBlob
 ```c++
@@ -449,24 +507,38 @@ The important behaviors to test are:
 
 - Device error
   - Verify that `GetDeviceErrorCode` API gives the correct error code.
-- Dump creation
-  - Verify that a dump file is generated on a timeout irrespective of the presence of callbacks.
-  - Verify that a dump file is generated when GpuDumpBegin callback returns 1 and not generated when it returns 0.
-  - Verify that the dump file path passed to GpuDumpEnd callback points to the correct dump file.
-  - Verify that a dump file is not generated if the feature is not supported
-  - Verify that calling `ConfigureGpuDump` API causes no issues irrespective of the feature support.
-  - Verify that calling `SetGpuDumpCallbacks` API causes no issues irrespective of the feature support.
-  - Verify that the driver reports no GPU dump options if it supports D3D12_GPU_DUMP_DRIVER_TIER_NOT_SUPPORTED
+- Dump File feature support
+  - Verify that `CheckFeatureSupport(D3D12_FEATURE_DUMP_FILE)` succeeds. 
+  - Verify that `ConfigureDumpFile` API call succeeds regardless of feature support.
+  - Verify that `SetDumpFileCallbacks` API call succeeds regardless of the feature support.
+- Driver tiers
+  - Verify that driver options are reported according to the tiers (For Tier 2: NO_OVERHEAD flag is present; For Tier 1: `HIGH_OVERHEAD/MEDIUM_OVERHEAD` is present; For Not Supported: options mask is 0.)
+- Dump generation
+  - Verify that a dump file is generated on a timeout regardless of the presence of callbacks.
+  - Verify that a dump file is generated when the begin callback returns 1 and not generated when it returns 0.
+  - Verify that a dump file is not generated if the feature is not supported by the OS.
+  - Verify that the dump file is retained locally with `RetainDumpFile(TRUE)`
+  - Verify that the dump file path passed to the End callback points to the correct dump file.
+- Callbacks
+  - Verify that Begin and End callbacks are invoked correctly.
+  - Verify that multiple blobs can be added with `AddBlobToDumpFile` API calls during the Begin callback
 
-  
 Tests that require the dump file parser are added to the PIX repo.
 
 ## Driver Conformance Tests
-Driver conformance tests are written using the TAEF framework, integrate into D3DConf_12_Core.dll, and verify driver behavior.
+Driver conformance tests are written using the TAEF framework and verify behavior of the driver that supports the feature.
 
-The important behaviors to test are:
-- Verify that the driver reports D3D12_GPU_DUMP_DRIVER_OPTION_NO_OVERHEAD if it supports D3D12_GPU_DUMP_DRIVER_TIER_2
-- Verify that the driver reports either D3D12_GPU_DUMP_DRIVER_OPTION_HIGH_OVERHEAD or D3D12_GPU_DUMP_DRIVER_OPTION_MEDIUM_OVERHEAD if it supports D3D12_GPU_DUMP_DRIVER_TIER_1
+- CheckTierAndOptions
+  - Tier 2 reports `NO_OVERHEAD` and at least one individual option
+  - Tier 1 reports at least one of `MEDIUM_OVERHEAD` or `HIGH_OVERHEAD` options
+  - All drivers supporting the feature report `NO_DATA` option
+- CheckConfigureOptions
+  - `ConfigureDumpFile(NO_OVERHEAD)` and `ConfigureDumpFile(NO_DATA)` succeed
+  - `ConfigureDumpFile(0xFF)` succeeds indicating the driver silently ignores unsupported bits.
+- CheckDebugBlobPresent
+  - Verifies that the driver returns debug data by ensuring that the dump file size is larger than the file size with `NO_DATA` option.
+
+Driver conformance tests to verify the information in kernel mode and user mode debug blobs require PIX plugin and so will be added to the PIX repo.
 
 ---
 
@@ -474,4 +546,5 @@ The important behaviors to test are:
 
 |Version|Date|Details|Author|
 |-|-|-|-|
-|v0.01|12 Mar 2026|Initial draft spec|Deepali Bhagvat (PIX)| 
+|v0.01|12 Mar 2026|Initial draft spec|Deepali Bhagvat (PIX)|
+|v0.02|29 May 2026|Promoted APIs from ID3D12DeviceExperimental to ID3D12DevicePreview|Deepali Bhagvat (PIX)|
