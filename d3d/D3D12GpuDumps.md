@@ -4,6 +4,7 @@ v0.02 29 May 2026
 
 # Contents <!-- omit in toc -->
 
+- [Terms and Acronyms](#terms-and-acronyms)
 - [Overview](#overview)
 - [System Workflow](#system-workflow)
 - [GPU Debug Manager](#gpu-debug-manager)
@@ -15,11 +16,11 @@ v0.02 29 May 2026
       - [Dump file driver options](#dump-file-driver-options)
     - [Callbacks](#callbacks)
     - [Dump file](#dump-file)
-  - [Information from D3D12 runtime](#information-from-d3d12-runtime)
-  - [Information from the application](#information-from-the-application)
-  - [Information from the drivers](#information-from-the-drivers)
-    - [GPU Debug Blobs](#gpu-debug-blobs)
-  - [Naming and Location](#naming-and-location)
+      - [Information from D3D12 runtime](#information-from-d3d12-runtime)
+      - [Information from the application](#information-from-the-application)
+      - [Information from the drivers](#information-from-the-drivers)
+        - [GPU Debug Blobs](#gpu-debug-blobs)
+      - [Naming and Location](#naming-and-location)
 - [Device error code](#device-error-code)
 - [Proposed API/DDI](#proposed-apiddi)
   - [API](#api)
@@ -46,9 +47,10 @@ v0.02 29 May 2026
 - [Spec History](#spec-history)
 
 
+
 ---
 
-## Terms and Acronyms
+# Terms and Acronyms
 
 | Term | Definition |
 | -- | -- |
@@ -175,7 +177,7 @@ flowchart LR
     style C2 fill:#FFFFBA
 ```
 
-## Information from D3D12 runtime
+#### Information from D3D12 runtime
 1. GUID created by dxgkrnl: this helps correlate the live kernel dump (LKD) to the DirectX dump file, if required internally or by IHVs for deeper investigations.
 2. Metadata such as D3D12 runtime version, a bit indicating if the dump should be in the Watson upload cab etc.
 3. [Application identity](https://microsoft.github.io/DirectX-Specs/d3d/D3D12ApplicationIdentity.html)
@@ -187,14 +189,14 @@ flowchart LR
 10. D3D API objects
 11. D3D12 journal entries: a journal entry consists of an error message, hr, and a partial call stack.
 
-## Information from the application
+#### Information from the application
 Application blobs added by calling [AddBlobToDumpFile](#addblobtodumpfile)
 
-## Information from the drivers
+#### Information from the drivers
 1. GPU debug blob containing kernel mode diagnostic information specific to the application
 2. GPU debug blob containing user mode diagnostic information
 
-### GPU Debug Blobs
+##### GPU Debug Blobs
 Debug blobs are utilized to collect application-specific GPU diagnostic information from both the kernel mode and user mode. The kernel mode debug blob is collected using a new DDI pfnCollectProcessDebugBlob. The user mode debug blob is collected by the DDI [pfnGetDebugBlob](#pfngetdebugblob).
 
 It is recommended that the kernel mode blob contains the following information. Some of this information may be included in the user mode blob instead if it is available in the user mode. The user mode debug blob may also include other IHV specific data. The IHV has full control over the format of these blobs, as Microsoft enforces no requirements and D3D12 runtime or dxgkrnl do not process their contents. PIX Plugin implemented by the IHV decodes these blobs during postmortem debugging.
@@ -207,7 +209,7 @@ It is recommended that the kernel mode blob contains the following information. 
 6. Command buffers containing API calls including call parameters, user markers and optionally driver events. This information allows reconstructing frames and populating the event list during postmortem debugging in PIX. It is also very helpful in detecting errors in command buffers including command buffer corruption.
 7. Fence writeback values from memory. This information helps detect fence synchronization issues that might cause a device error.
 
-## Naming and Location
+#### Naming and Location
 
 Key points about the dump file name, extension, and path:
 - The DirectX dump file uses .dxdmp as the file extension. Note that it is .dxdmp_preview for the preview version indicating the file format may change between the preview releases and between the preview and the retail release.
