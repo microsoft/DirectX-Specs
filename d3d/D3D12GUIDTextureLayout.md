@@ -1,44 +1,57 @@
 # D3D12 GUID Texture Layout
 
 ## Table of Contents
-- [Overview](#overview)
-- [Goal](#goal)
-- [GUID Layout](#guid-layout)
-  - [GUID Type](#guid-type)
-  - [Storing Private GUIDs for Future Use](#storing-private-guids-for-future-use)
-- [API](#api)
-  - [GUID Enumeration](#guid-enumeration)
-  - [Resource Creation](#resource-creation)
-- [Example](#example)
-- [Cross Adapter Rules and Limitations](#cross-adapter-rules-and-limitations)
-  - [Cross-Adapter Sharing via Placed Resources on Shared Heaps](#cross-adapter-sharing-via-placed-resources-on-shared-heaps)
-  - [Sharing CPU-Accessible Resources via System Memory](#sharing-cpu-accessible-resources-via-system-memory)
-- [Release Staging](#release-staging)
-- [Velocity](#velocity)
-- [Feature Support](#feature-support)
-  - [Video Codec Layout GUID Support (Experimental)](#video-codec-layout-guid-support-experimental)
-- [Tier 1 Public GUIDs](#tier-1-public-guids)
-  - [D3D12_GUID_TEXTURE_LAYOUT_NULL](#d3d12_guid_texture_layout_null)
-  - [D3D12_GUID_TEXTURE_LAYOUT_ROW_MAJOR_WITH_RENDER_AND_VPBLT_CAPABILITY](#d3d12_guid_texture_layout_row_major_with_render_and_vpblt_capability)
-  - [Dimension Alignment Validation](#dimension-alignment-validation)
-  - [D3D12_GUID_TEXTURE_LAYOUT_ROW_MAJOR_WITH_RENDER_AND_VPBLT_CAPABILITY_8_ROW_ALIGNMENT (Experimental)](#d3d12_guid_texture_layout_row_major_with_render_and_vpblt_capability_8_row_alignment-experimental)
-- [DDI](#ddi)
-  - [DDI Version Requirement](#ddi-version-requirement)
-- [Validations and Tests](#validations-and-tests)
-  - [Debug layer validations](#debug-layer-validations)
-  - [Tests](#tests)
-- [Layout Standardization](#layout-standardization)
-- [Other Device Stacks](#other-device-stacks)
-- [D3D11 Support](#d3d11-support)
-- [Shipping Vehicle](#shipping-vehicle)
-- [D3DX12 Headers](#d3dx12-headers)
-- [Future Considerations](#future-considerations)
-  - [Multi-Array and Multi-Mip Support](#multi-array-and-multi-mip-support)
-  - [Cross-Adapter Resource Sharing](#cross-adapter-resource-sharing)
-  - [Cross-Adapter Layout Conversion](#cross-adapter-layout-conversion)
-  - [Cross-Adapter Displayable Support](#cross-adapter-displayable-support)
-  - [Other possible scenarios](#other-possible-scenarios)
-- [Change Log](#change-log)
+- [D3D12 GUID Texture Layout](#d3d12-guid-texture-layout)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Goal](#goal)
+  - [GUID Layout](#guid-layout)
+    - [GUID Type](#guid-type)
+    - [Storing private GUIDs for future use](#storing-private-guids-for-future-use)
+  - [API](#api)
+    - [GUID Enumeration](#guid-enumeration)
+    - [Resource Creation](#resource-creation)
+  - [Example](#example)
+  - [Cross Adapter Rules and Limitations](#cross-adapter-rules-and-limitations)
+    - [Cross-Adapter Sharing via Placed Resources on Shared Heaps](#cross-adapter-sharing-via-placed-resources-on-shared-heaps)
+    - [Sharing CPU-Accessible Resources via System Memory](#sharing-cpu-accessible-resources-via-system-memory)
+  - [Release Staging](#release-staging)
+  - [Velocity](#velocity)
+  - [Feature Support](#feature-support)
+    - [Example](#example-1)
+    - [Video Codec Layout GUID Support (Experimental)](#video-codec-layout-guid-support-experimental)
+      - [Example](#example-2)
+  - [Tier 1 Public GUIDs](#tier-1-public-guids)
+    - [D3D12\_GUID\_TEXTURE\_LAYOUT\_NULL](#d3d12_guid_texture_layout_null)
+    - [D3D12\_GUID\_TEXTURE\_LAYOUT\_ROW\_MAJOR\_WITH\_RENDER\_AND\_VPBLT\_CAPABILITY](#d3d12_guid_texture_layout_row_major_with_render_and_vpblt_capability)
+    - [Dimension Alignment Validation](#dimension-alignment-validation)
+    - [D3D12\_GUID\_TEXTURE\_LAYOUT\_ROW\_MAJOR\_WITH\_RENDER\_AND\_VPBLT\_CAPABILITY\_8\_ROW\_ALIGNMENT (Experimental)](#d3d12_guid_texture_layout_row_major_with_render_and_vpblt_capability_8_row_alignment-experimental)
+    - [Memory Layout Requirements for Planar Formats:](#memory-layout-requirements-for-planar-formats)
+    - [Multiple Planes Support](#multiple-planes-support)
+    - [Example for application that only supports a single allocation for NV12](#example-for-application-that-only-supports-a-single-allocation-for-nv12)
+  - [DDI](#ddi)
+    - [DDI Version Requirement](#ddi-version-requirement)
+    - [D3D12DDIARG\_CREATERESOURCE\_0111](#d3d12ddiarg_createresource_0111)
+    - [PFND3D12DDI\_GET\_TEXTURE\_LAYOUTS\_0118](#pfnd3d12ddi_get_texture_layouts_0118)
+    - [Extended Feature Table](#extended-feature-table)
+  - [Validations and Tests](#validations-and-tests)
+    - [Debug layer validations](#debug-layer-validations)
+    - [Tests](#tests)
+  - [Layout Standardization](#layout-standardization)
+    - [Standard Swizzle](#standard-swizzle)
+    - [Bandwidth Compressed Layout](#bandwidth-compressed-layout)
+  - [Unrestricted Buffer Texture Copy Row Pitch and Offset](#unrestricted-buffer-texture-copy-row-pitch-and-offset)
+  - [Other Device Stacks](#other-device-stacks)
+  - [D3D11 Support](#d3d11-support)
+  - [Shipping Vehicle](#shipping-vehicle)
+  - [D3DX12 Headers](#d3dx12-headers)
+  - [Future Considerations](#future-considerations)
+    - [Multi-Array and Multi-Mip Support](#multi-array-and-multi-mip-support)
+    - [Cross-Adapter Resource Sharing](#cross-adapter-resource-sharing)
+    - [Cross-Adapter Layout Conversion](#cross-adapter-layout-conversion)
+    - [Cross-Adapter Displayable Support](#cross-adapter-displayable-support)
+    - [Other possible scenarios](#other-possible-scenarios)
+  - [Change Log](#change-log)
 
 ## Overview
 
@@ -48,7 +61,7 @@ An important scenario driving this feature is camera processing where hardware M
 
 The proposed solution supports YUV textures that are laid out in CPU-accessible memory in a predictable and directly usable row-major layout, where the Y plane is followed directly by the UV plane in a single, contiguous allocation. When video processing engines support this texture as output, it replaces the staging copy by allowing VPBlit operation to write directly to an L0 CPU-accessible row-major NV12 texture, which contains data that can be used by MEP applications without further data reorganization and it's already in sysmem so we don't need a staging copy from L1 to L0. This optimization saves 2ms out of a 20ms budget (10% performance improvement). Additionally, VPBlit operations using video processing engines (25mW) are more power efficient than copy engine operations (100mW-500+mW) and can utilize 20% more bandwidth. Further optimization can be achieved when decoder can output texture with this new layout. 
 
-:::mermaid
+```mermaid
 flowchart TD
     subgraph "Current Approach"
         A1[MJPEG Decoder] --> B1[NV12/YUY2 Texture<br/>Undefined Layout]
@@ -70,7 +83,7 @@ flowchart TD
     style E1 fill:#f8d7da,stroke:#721c24,color:#721c24
     style C2 fill:#d4edda,stroke:#155724,color:#155724
     style D2 fill:#d4edda,stroke:#155724,color:#155724
-:::
+```
 
 > **Note:** Applications should prefer `D3D12_TEXTURE_LAYOUT_UNKNOWN` unless they have a clear reason to use a GUID-based layout. With unknown layout, the driver is free to choose the most optimal memory layout for the resource, which will generally yield the best performance. GUID-based layouts are intended for specific scenarios—such as the camera/video processing pipeline described above—where a predictable, standardized memory layout is required for interoperability or direct CPU access. Using a GUID-based layout without a concrete need may result in suboptimal performance compared to letting the driver select the layout.
 
