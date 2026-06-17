@@ -1,5 +1,5 @@
 # D3D12: PIX Markers <!-- omit in toc -->
-v0.05 06/01/2026
+v0.06 06/17/2026
 
 ---
 
@@ -7,7 +7,7 @@ v0.05 06/01/2026
 - [Summary](#summary)
 - [Proposed API](#proposed-api)
     - [D3D12\_USER\_DEFINED\_ANNOTATION\_MODE](#d3d12_user_defined_annotation_mode)
-    - [ID3D12Tools3](#id3d12tools3)
+    - [ID3D12DeviceTools2](#id3d12devicetools2)
     - [D3D12\_FEATURE\_USER\_DEFINED\_ANNOTATION](#d3d12_feature_user_defined_annotation)
     - [Marker Data Lifetime](#marker-data-lifetime)
     - [Thread Safety and Synchronization](#thread-safety-and-synchronization)
@@ -26,7 +26,7 @@ v0.05 06/01/2026
 
 # Summary
 
-As of 2025, [PIXEvents](https://github.com/microsoft/PixEvents) provides APIs to instrument your game, labeling regions of CPU or GPU work and marking important occurences. Common APIs include `PixBeginEvent`, `PixEndEvent`, and `PixSetMarker` which internally call `ID3D12GraphicsCommandList::BeginEvent`, `ID3D12CommandQueue::BeginEvent`, `ID3D12GraphicsCommandList::EndEvent` `ID3D12CommandQueue::EndEvent`, `ID3D12GraphicsCommandList::SetMarker` and `ID3D12CommandQueue::SetMarker` depending on the context.
+As of 2025, [PIXEvents](https://github.com/microsoft/PixEvents) provides APIs to instrument your game, labeling regions of CPU or GPU work and marking important occurrences. Common APIs include `PixBeginEvent`, `PixEndEvent`, and `PixSetMarker` which internally call `ID3D12GraphicsCommandList::BeginEvent`, `ID3D12CommandQueue::BeginEvent`, `ID3D12GraphicsCommandList::EndEvent` `ID3D12CommandQueue::EndEvent`, `ID3D12GraphicsCommandList::SetMarker` and `ID3D12CommandQueue::SetMarker` depending on the context.
 
 The limitation of these APIs is that they operate only at the runtime level and do not propagate to the driver. As a result, these markers are absent in [DX dump files](D3D12GpuDumps.md), making it difficult to trace the marker hierarchy that led to a GPU crash or TDR.
 
@@ -48,12 +48,13 @@ enum D3D12_USER_DEFINED_ANNOTATION_MODE
         D3D12_USER_DEFINED_ANNOTATION_MODE_DRIVER_RETAIL = 2,
     } D3D12_USER_DEFINED_ANNOTATION_MODE;
 ```
+
 |Enum|Meaning|
 |----|-------|
 |```D3D12_USER_DEFINED_ANNOTATION_MODE_RUNTIME_ONLY```| API does not make DDI call to UMD |
 |```D3D12_USER_DEFINED_ANNOTATION_MODE_DRIVER_RETAIL```| API makes DDI call to UMD |
 
-### ID3D12Tools3
+### ID3D12DeviceTools2
 
 ```c++
 interface ID3D12DeviceTools2 : ID3D12DeviceTool1
@@ -103,7 +104,7 @@ typedef enum D3D12_FEATURE
 
 ### Marker Data Lifetime
 
-The D3D12 runtime marker data by maintaining an internal copy whose lifetime is tied to the associated command allocator. When the command allocator is reset, all marker data linked to it is discarded. If the marker is set in the context of a command queue instead of a command list, its lifetime is instead bound to the command queue.
+The D3D12 runtime manages marker data by maintaining an internal copy whose lifetime is tied to the associated command allocator. When the command allocator is reset, all marker data linked to it is discarded. If the marker is set in the context of a command queue instead of a command list, its lifetime is instead bound to the command queue.
 
 The runtime also maintains a mapping between each marker’s data and a unique identifier known as an EventID. This EventID is passed along with the marker data to the driver, which may utilize them as needed. The driver’s handling of this data is described in [Proposed DDI](#proposed-ddi) section.
 
@@ -249,15 +250,15 @@ d3dconfig device force-driver-retail-annotations=off
 
 * Question: Historically, drivers have had the flexibility to rearrange markers relative to other GPU work. Can drivers do that for PIX markers?
 
-  This can potentially lead to incorrect marker placement in DX dump files. Specifically, markers intended to align with recorded GPU commands in the application may appear out of order in DX dump file, which complicates hang debugging scenarios. It's important to note that such reordering typically occurs within a relatively small scope of GPU work. Therefore, while the impact of marker rearrangement may sound concerning, its practical effect is often limited.However, if future observations reveal that rearrangement spans a broader scope, this issue should be revisited and addressed accordingly.
+  This can potentially lead to incorrect marker placement in DX dump files. Specifically, markers intended to align with recorded GPU commands in the application may appear out of order in DX dump file, which complicates hang debugging scenarios. It's important to note that such reordering typically occurs within a relatively small scope of GPU work. Therefore, while the impact of marker rearrangement may sound concerning, its practical effect is often limited. However, if future observations reveal that rearrangement spans a broader scope, this issue should be revisited and addressed accordingly.
 
-* Question: Can it get expesive to keep copies of marker data in D3D12 runtime? Is there some optimization that could be done here?
+* Question: Can it get expensive to keep copies of marker data in D3D12 runtime? Is there some optimization that could be done here?
 
   In practice, we do not anticipate a large volume of marker strings that would result in significant memory overhead. This is because the D3D12 runtime releases marker data upon command allocator reset. We should revisit this if this becomes a substantial issue.
 
   One way to mitigate this would be to hand over the responsibility of managing marker data to the application. We could add an extra API for this and call it "fast path" scenario for now. Since PIX events add a level of indirection, we could potentially get rid of it as well and ask applications to use the runtime API directly. The runtime does not copy the string, and instead keeps a map of marker EventID to app provided data pointer. The copy only happens when generating TDR crash dump. Of course, there's the issue of dangling pointer here though.
 
-* Question: Could PIX marker APIs be integrated with auto breadcrumbs for correaltion between D3D runtime and driver-level data?
+* Question: Could PIX marker APIs be integrated with auto breadcrumbs for correlation between D3D runtime and driver-level data?
 
   Auto breadcrumbs are a runtime-side diagnostic feature that's part of DRED. Retail marker APIs could be tracked as part of auto breadcrumbs that could facilitate cross-layer correlation. However, this might be beyond the scope of this feature.
 
@@ -268,7 +269,7 @@ d3dconfig device force-driver-retail-annotations=off
 * Validate that, with `D3D12_USER_DEFINED_ANNOTATION_MODE_DRIVER_RETAIL`, each `SetMarker` / `BeginEvent` / `EndEvent` call on `ID3D12CommandQueue` and `ID3D12GraphicsCommandList` issues exactly one matching DDI call with the expected `Metadata`, `Size`, and `pData`; and with `D3D12_USER_DEFINED_ANNOTATION_MODE_RUNTIME_ONLY` no DDI call is made.
 * Validate `ID3D12Object::SetName` propagation in both annotation modes: only device-child objects trigger `PFND3D12DDI_SET_NAME`.
 * Validate that when the driver does not report `D3D12DDI_FEATURE_0121_USER_DEFINED_ANNOTATIONS`, the marker APIs and `ID3D12Object::SetName` succeed on the app side but make no driver DDI calls.
-* Validate `SetUserDefinedAnnotationMode` rejects invalide mode and emits `D3D12_MESSAGE_ID_SET_USER_DEFINED_ANNOTATION_MODE_INVALID_ARGUMENT`.
+* Validate `SetUserDefinedAnnotationMode` rejects invalid mode and emits `D3D12_MESSAGE_ID_SET_USER_DEFINED_ANNOTATION_MODE_INVALID_ARGUMENT`.
 
 ## Conformance tests
 
@@ -288,6 +289,7 @@ WARP reports support for the PIX marker DDIs and logs the marker calls, but does
 
 | Version | Date | Details | Author |
 |-|-|-|-|
+| v0.06 | 17 Jun 2026 | Fix typos, and correct ID3D12DeviceTools2 heading | Henchhing Limbu (PIX) |
 | v0.05 | 01 Jun 2026 | Clarify RUNTIME_ONLY marker data behavior, add development vs retail use case example, expand D3DConfig override section, and flesh out Test Plan and WARP support | Henchhing Limbu (PIX) |
 | v0.04 | 30 Jan 2026 | Remove caps DDI calls and add multithreading synchronization | Henchhing Limbu (PIX) |
 | v0.03 | 20 Jan 2026 | Flesh out DDIs and update them to pass device object name | Henchhing Limbu (PIX) |
