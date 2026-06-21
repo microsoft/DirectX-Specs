@@ -612,7 +612,7 @@ The following table indicates how many coverage bits are needed for each combina
 As indicated in the above table, it is not possible to use coarse pixels to write to more than 16 samples at a time using the variable rate shading feature exposed through Direct3D12. This restriction is brought about by Direct3D12’s constraints regarding which MSAA levels are allowed with which coarse pixel size (see table under section "New model").
 
 ### Ordering and Format of Bits in the Coverage Mask
-Bits of the coverage mask adhere to a well-defined order. The mask consists of the of coverages from pixels from left-to-right, then top-to-bottom (column-major) order. Coverage bits are the low-order bits of the coverage semantic and are densely packed together. 
+Bits of the coverage mask adhere to a well-defined order. The mask consists of the of coverages from pixels from right-to-left, then bottom-to-top (row-major) order. Coverage bits are the low-order bits of the coverage semantic and are densely packed together. 
 
 The table below shows the coverage mask format for supported combinations of coarse pixel size and MSAA level.
 
