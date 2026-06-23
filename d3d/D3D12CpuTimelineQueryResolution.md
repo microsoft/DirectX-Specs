@@ -12,7 +12,7 @@ This document proposes a new D3D12 feature that allows developers to resolve que
 - [API](#api)
   - [D3D12_QUERY_HEAP_FLAGS](#d3d12_query_heap_flags)
   - [ID3D12Device::CreateQueryHeap1](#id3d12devicecreatequeryheap1)
-  - [ID3D12Device::ResolveQueryData](#id3d12commandqueueresolvequerydata)
+  - [ID3D12Device::ResolveQueryData](#id3d12deviceresolvequerydata)
 - [DDI](#ddi)
   - [D3D12DDI_QUERY_HEAP_FLAGS](#d3d12ddi_query_heap_flags)
   - [PFND3D12DDI_CREATE_QUERY_HEAP_0119](#pfnd3d12ddi_create_query_heap_0119)
@@ -81,7 +81,7 @@ The CPU Timeline Query Resolution feature introduces one new API:
 
 - **ResolveQueryData()** - CPU-based query resolution on ID3D12Device Object
 
-The design allows developers to resolve the query data on the CPU timeline after GPU execution completes. Any post processing of the query data is abstracted by the runtime and driver.
+The design allows developers to resolve the query data on the CPU timeline once the GPU work that wrote the queries has completed. The method itself performs no GPU synchronization — ensuring the relevant GPU work has finished before resolving is the application's responsibility (see the **Remarks** under [`ID3D12Device::ResolveQueryData`](#id3d12deviceresolvequerydata)). Any post processing of the query data is abstracted by the runtime and driver.
 
 For drivers or hardware that do not support native CPU resolution, the runtime provides transparent fallback by automatically generating the necessary GPU-based resolution operations.
 
@@ -169,7 +169,13 @@ HRESULT ResolveQueryData(
 - `E_INVALIDARG` - Invalid parameters
 
 **Remarks:**
-This method resolves query data on the CPU timeline after Command List which initiated the queries has completed execution on the GPU. Any required post-processing of the raw query data generated on the GPU timeline will be performed on the CPU immediately by the runtime and/or driver. 
+This method resolves query data on the CPU timeline. Any required post-processing of the raw query data generated on the GPU timeline is performed on the CPU immediately by the runtime and/or driver before this method returns.
+
+**This method does not block on the GPU and performs no implicit synchronization.** It does not wait for, flush, or otherwise track the GPU work that writes the queries being resolved. The runtime associates no implicit fence with the query heap and does not track which queue(s) may write to it.
+
+It is the **application's responsibility** to ensure that all GPU work which writes the queries in the range `[StartIndex, StartIndex + NumQueries)` has completed execution on the GPU *before* calling this method — for example, by waiting on an `ID3D12Fence` that the application signals on the command queue after submitting the command list(s) containing the corresponding `EndQuery` operations. If this method is called before that GPU work has completed, the data written to `pResolvedQueryData` is undefined.
+
+This mirrors the existing GPU-timeline `ID3D12GraphicsCommandList::ResolveQueryData`: in both cases the application must guarantee the queries have been fully written before the resolve is performed. The only difference is that resolution and readback occur synchronously on the CPU timeline rather than being scheduled on the GPU timeline. 
 
 The output buffer must be sized correctly for the query type and number of queries to resolve.
 
@@ -253,5 +259,6 @@ When a query heap is created with the `D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE` flag o
 | Version | Date | Description |
 |---------|------|-------------|
 | 1.0 | August 2025 | Initial version | 
-| 1.1 | September 2025 | Remove TOP/BOP Timestamps from proposal | 
+| 1.1 | September 2025 | Remove TOP/BOP Timestamps from proposal |
+| 1.2 | June 2026 | Clarify that CPU `ResolveQueryData` does not block on the GPU or perform implicit synchronization; the application must ensure query-writing GPU work has completed before resolving | 
 
