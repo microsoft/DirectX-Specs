@@ -175,7 +175,7 @@ This method resolves query data on the CPU timeline. Any required post-processin
 
 It is the **application's responsibility** to ensure that all GPU work which writes the queries in the range `[StartIndex, StartIndex + NumQueries)` has completed execution on the GPU *before* calling this method — for example, by waiting on an `ID3D12Fence` that the application signals on the command queue after submitting the command list(s) containing the corresponding `EndQuery` operations. If this method is called before that GPU work has completed, the data written to `pResolvedQueryData` is undefined.
 
-This mirrors the existing GPU-timeline `ID3D12GraphicsCommandList::ResolveQueryData`: in both cases the application must guarantee the queries have been fully written before the resolve is performed. The only difference is that resolution and readback occur synchronously on the CPU timeline rather than being scheduled on the GPU timeline. 
+Note that this differs from the GPU-timeline `ID3D12GraphicsCommandList::ResolveQueryData`. On the GPU timeline, a resolve recorded after the corresponding `EndQuery` is implicitly ordered after it within the same command queue — no application synchronization or resource barrier is required between the query and the resolve (for example, `BeginQuery` → `EndQuery` → `ResolveQueryData` recorded in order is well-defined as-is). The CPU-timeline resolve performed by this method is **not** implicitly ordered against the GPU work that writes the queries; the application must perform the explicit CPU/GPU synchronization described above (for example, waiting on a fence) before calling it.
 
 The output buffer must be sized correctly for the query type and number of queries to resolve.
 
@@ -186,6 +186,16 @@ The output buffer must be sized correctly for the query type and number of queri
 - **Stream output statistics queries**: size of D3D12_QUERY_DATA_SO_STATISTICS
 
 The query heap must have been created with the `D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE` flag for this method to succeed.
+
+**Debug layer validation:**
+
+When the debug layer is enabled, `ID3D12Device::ResolveQueryData` reports the following errors, bringing the CPU-timeline resolve to parity with the GPU-timeline `ID3D12GraphicsCommandList::ResolveQueryData`:
+
+- `D3D12_MESSAGE_ID_RESOLVEQUERYDATA_INVALID_QUERYHEAP` — the query heap was **not** created with the `D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE` flag. (Conversely, the GPU-timeline resolve reports the same message for a heap that **was** created with that flag.)
+- `D3D12_MESSAGE_ID_RESOLVE_QUERY_DATA_INVALID_PARAMETERS` — the range `[StartIndex, StartIndex + NumQueries)` falls outside the query heap, or `Type` is not compatible with the query heap's type.
+- `D3D12_MESSAGE_ID_RESOLVE_QUERY_INVALID_QUERY_STATE` — a query in the resolved range has never been performed (no `EndQuery` for that index has been recorded and executed on a command queue).
+
+These checks are diagnostic. As with all D3D12 query resolution, resolving a query that was never performed yields undefined data and some drivers may fault when reading it.
 
 ---
 
@@ -261,4 +271,7 @@ When a query heap is created with the `D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE` flag o
 | 1.0 | August 2025 | Initial version | 
 | 1.1 | September 2025 | Remove TOP/BOP Timestamps from proposal |
 | 1.2 | June 2026 | Clarify that CPU `ResolveQueryData` does not block on the GPU or perform implicit synchronization; the application must ensure query-writing GPU work has completed before resolving | 
+| 1.3 | June 2026 | Document debug-layer validation that CPU `ResolveQueryData` reports `RESOLVE_QUERY_INVALID_QUERY_STATE` for queries that were never performed |
+| 1.4 | June 2026 | Clarify that GPU-timeline `ResolveQueryData` is implicitly ordered after `EndQuery` within a command queue (no synchronization or resource barrier required), whereas the CPU-timeline resolve requires explicit application synchronization |
+| 1.5 | June 2026 | Document additional debug-layer validation for CPU `ResolveQueryData` (heap-flag mismatch `RESOLVEQUERYDATA_INVALID_QUERYHEAP`; out-of-range or incompatible query type `RESOLVE_QUERY_DATA_INVALID_PARAMETERS`) for parity with the GPU-timeline resolve |
 
