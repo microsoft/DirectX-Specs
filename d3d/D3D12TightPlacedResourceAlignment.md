@@ -1,4 +1,7 @@
 # Direct3D 12 Tight Placed Resource Alignment
+> Released under AgilitySDK [1.618.1](https://www.nuget.org/packages/Microsoft.Direct3D.D3D12/1.618.1) and [1.716.1-preview](https://www.nuget.org/packages/Microsoft.Direct3D.D3D12/1.716.1-preview)
+
+> Updated in AgilitySDK [1.619.4](https://www.nuget.org/packages/Microsoft.Direct3D.D3D12/1.619.4) and [1.721.2-preview](https://www.nuget.org/packages/Microsoft.Direct3D.D3D12/1.721.2-preview)
 
 ## Background
 When placed resources were introduced in D3D12, there was an intentional decision to simplify alignment restrictions and take the greatest common denominator across the IHVs.
@@ -16,8 +19,8 @@ A "Small resource" is defined as:
 1. The estimated size of the most-detailed mip level MUST be a total of the larger alignment restriction or less.
 The runtime will use an architecture-independent mechanism of size-estimation, that mimics the way standard swizzle and D3D11 tiled resources are sized.
 However, the tile sizes will be of the smaller alignment restriction for such calculations. Additional data associated with resources, which is typically associated with compression, will not be added into this size.
-So for a normal texture, when this calculated size is <= 64 KB, you can use the alignment of 4 KB.
-For an MSAA texture, when this calculated size is <= 4 MB, you can use the alignment of 64 KB.
+So for a normal texture, when this calculated size is <= 64 KiB, you can use the alignment of 4 KiB.
+For an MSAA texture, when this calculated size is <= 4 MiB, you can use the alignment of 64 KiB.
 
 There were a number of reasons for these choices, such as:
 * Improved memory bandwidth with 64KiB alignments
@@ -40,7 +43,7 @@ So simply adding an offset to SRV creation probably isn't the solution that we n
 We already have the [ID3D12Device::GetResourceAllocationInfo](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getresourceallocationinfo(uint_uint_constd3d12_resource_desc))[ [1](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device4-getresourceallocationinfo1(uint_uint_constd3d12_resource_desc_d3d12_resource_allocation_info1)), [2](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device8-getresourceallocationinfo2(uint_uint_constd3d12_resource_desc1_d3d12_resource_allocation_info1)), 3] API for developers to get allocation info based on resource desc(s).
 Under the hood this calls the [CheckResourceAllocationInfo](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/nc-d3d12umddi-pfnd3d12ddi_checkresourceallocationinfo_0088) DDI which gets alignment, size, etc. from the driver.
 `CheckResourceAllocationInfo` contains a UINT32 field for `AlignmentRestriction` as well as a `D3D12DDIARG_CREATERESOURCE_0088` struct parameter that has a bitfield of flags. 
-IHVs agree that they can all align buffers at 256B or less, we just need to allow them to report this capability rather than forcing 64KB alignment.
+IHVs agree that they can all align buffers at 256B or less, we just need to allow them to report this capability rather than forcing 64KiB alignment.
 
 We will update `D3D12DDI_RESOURCE_FLAGS_0003` to include `D3D12DDI_RESOURCE_FLAG_0111_USE_TIGHT_ALIGNMENT` to indicate to drivers that they should handle allocations for this resource in tight alignment mode.
 The `AlignmentRestriction` parameter of the DDI will be set to the minimum acceptable alignment value based on the tables below during resource creation (varies based on placed vs committed resource requirements, which can't be inferred in the `CheckResourceAllocationInfo` call the way it can in `CreateHeapAndResource`).
@@ -67,9 +70,9 @@ Textures and multisample resources were deemed less likely to benefit from tight
 
 ### Committed Resources
 Committed resources can also benefit from having their minimum alignment reduced, specifically committed buffers.
-There is some nuance here though due to the fact that a heap is implicitly created for each committed resource, and VidMm’s minimum alignment and size granularity for managing memory is 4KB.
+There is some nuance here though due to the fact that a heap is implicitly created for each committed resource, and VidMM's minimum alignment and size granularity for managing memory is 4KiB.
 Per the original User Mode Heaps spec that laid out the resource creation flow, the spirit of the DDI requires that each committed resource creation call result in 1 allocation. 
-This means that we don't want drivers to need to manage suballocations, which limits minimum alignment for committed resources to 4KB or larger.
+This means that we don't want drivers to need to manage suballocations, which limits minimum alignment for committed resources to 4KiB or larger.
 
 **Note: For drivers that report LargePageSupport for VidMM allocations, it is acceptable and optimal for allocations that are a multiple of the LargePage size to be aligned to the large page size instead of using the 4KiB alignment.**
 
@@ -81,7 +84,19 @@ This means that we don't want drivers to need to manage suballocations, which li
 |     Textures     | 4KiB | 64KiB (4KiB when it meets the definition of a Small Resource)  |
 |       MSAA       | 4KiB | 4MiB (64KiB when it meets the definition of a Small Resource)  |
 
-#### Runtime changes
+### Runtime changes
+Calls to `GetResourceAllocationInfo` will continue to function as they do today, except that when the flag bit for `D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT` is set, the alignment for that element is allowed to be aligned as tightly as possible.
+That said, we still follow the C++ algorithm for calculating a structure's size and alignment when multiple descriptors are passed in: alignment is always based on the largest alignment required, and size depends on the order of the elements.
+For a contrived example, consider a three-element array with two tiny 256B-aligned resources and a tiny 2MiB-aligned resource.
+The API will report differing sizes based on the order of the array:
+* If the 2MiB aligned resource is in the middle, then the resulting Size is 6MiB. 
+* Otherwise, the resulting Size is 4MiB. 
+
+The Alignment returned would always be 2MiB, because it's the superset of all alignments in the resource array.
+Note that in the real world you probably wouldn't do this since there would be so much space wasted on padding.
+A more realistic scenario would be to have 8192 256B resources (or the equivalent total size) followed by the 2MiB resource.
+In this case, you are no longer wasting memory on padding and are benefitting from only making a single allocation.
+
 The d3d12.h header will be updated as shown below:
 
 ```cpp
@@ -111,28 +126,56 @@ typedef enum D3D12_RESOURCE_FLAGS
 } 	D3D12_RESOURCE_FLAGS;
 ```
 
-#### Validation:
+#### Validation
 * Cases where a warning will be issued via debug layer when `D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT` is set:
   * Used along-side `D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER`, as alignment MUST be 64 KiB, or 4MiB for MSAA
 * Cases where E_INVALIDARG will be returned when `D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT` is set:
-  * Used with `D3D12_TEXTURE_LAYOUT_64KB_UNDEFINED_SWIZZLE` or `D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE` resource formats, as alignment must be 64KB. **Note that this means that Reserved Resources are not supported**.
+  * Used with `D3D12_TEXTURE_LAYOUT_64KB_UNDEFINED_SWIZZLE` or `D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE` resource formats, as alignment must be 64KiB. **Note that this means that Reserved Resources are not supported**.
   * Used when `D3D12_FEATURE_D3D12_TIGHT_ALIGNMENT` is reported as `D3D12_TIGHT_ALIGNMENT_TIER_NOT_SUPPORTED`
-  * App provided a non-zero `Alignment` in the resource desc
+  * The app-supplied `Alignment` is non-zero and not a power of two
+  * The app-supplied `Alignment` exceeds the per-type spec maximum (see the placed / committed resource tables above)
 
-Calls to `GetResourceAllocationInfo` will continue to function as they do today, except that when the flag bit for `D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT` is set, the alignment for that element is allowed to be aligned as tightly as possible.
-That said, we still follow the C++ algorithm for calculating a structure's size and alignment are used when multiple descriptors are passed in: alignment is always based on the largest alignment required, and size depends on the order of the elements.
-For a contrived example, consider a three-element array with two tiny 256B-aligned resources and a tiny 2MiB-aligned resource.
-The API will report differing sizes based on the order of the array:
-* If the 2MiB aligned resource is in the middle, then the resulting Size is 6MB. 
-* Otherwise, the resulting Size is 4MiB. 
+#### Non-zero `Alignment` as a target floor
+When `USE_TIGHT_ALIGNMENT` is set and `Alignment` in the resource desc is non-zero, the runtime treats the value as a *target floor* rather than a hard requirement.
+The runtime honors the app-supplied floor when it is a valid value (i.e. a power of two and within the per-type spec maximum) and clamps up to its own required minimum when the floor is too small.
 
-The Alignment returned would always be 2MiB, because it's the superset of all alignments in the resource array.
-Note that in the real world you probably wouldn't do this since there would be so much space wasted on padding.
-A more realistic scenario would be to have 8192 256B resources (or the equivalent total size) followed by the 2MiB resource.
-In this case, you are no longer wasting memory on padding and are benefitting from only making a single allocation.
+When the runtime has to clamp up, a debug-layer INFO message `D3D12_MESSAGE_ID_CREATERESOURCE_ALIGNMENT_OVERRIDDEN` is emitted so the override is discoverable without the app having to compare `Alignment` against `GetDesc()` afterwards.
+
+Because a non-zero `Alignment` is now legal, applications can round-trip a desc through `ID3D12Resource::GetDesc` and pass it back into `CreateCommittedResource*`, `CreatePlacedResource*`, `GetResourceAllocationInfo`, or `GetCopyableFootprints` without needing to reset `Alignment` to `0` first.
+
+> Available as of AgilitySDK [1.619.4](https://www.nuget.org/packages/Microsoft.Direct3D.D3D12/1.619.4) and [1.721.2-preview](https://www.nuget.org/packages/Microsoft.Direct3D.D3D12/1.721.2-preview)
+
+##### Choosing an `Alignment` floor for buffer use cases
+When a tight-alignment buffer will be used for a purpose that carries its own hardware alignment requirement, apps can pass that requirement as `Alignment` in the resource desc so the runtime clamps up front.
+
+Without an explicit floor, tight-alignment buffers may end up aligned as tightly as 8 bytes (`D3D12_TIGHT_ALIGNMENT_MIN_PLACED_RESOURCE_ALIGNMENT`).
+That is legal for the buffer allocation itself but produces a debug-layer error -- and, on some drivers, device removal -- once the buffer is later bound in a way that requires stricter alignment.
+Passing the appropriate floor up front avoids the error without giving up tight-alignment savings for the rest of the resource.
+
+The following buffer use cases each carry their own set of publicly-defined `d3d12.h` alignment constants.
+For each use case, pass the group's floor (its largest applicable constant, shown in **bold**) as `Alignment` when creating the buffer.
+Use cases are listed in ascending order of floor.
+
+| Use case | Floor | Alignment constant | Bytes |
+|---|---|---|---|
+| **Raw UAV / SRV** | 16 B | **`D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT`** | 16 |
+| **Raytracing acceleration-structure build inputs** | 16 B | `D3D12_RAYTRACING_AABB_BYTE_ALIGNMENT` | 8 |
+| | | `D3D12_RAYTRACING_INSTANCE_DESCS_BYTE_ALIGNMENT` | 16 |
+| | | **`D3D12_RAYTRACING_TRANSFORM3X4_BYTE_ALIGNMENT`** | 16 |
+| **`DispatchRays` shader tables** | 64 B | `D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT` | 32 |
+| | | **`D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT`** | 64 |
+| **Raytracing 2 CLAS / opacity micromaps** | 128 B | `D3D12_RAYTRACING_CLUSTER_TEMPLATE_BYTE_ALIGNMENT` | 32 |
+| | | **`D3D12_RAYTRACING_CLAS_BYTE_ALIGNMENT`** | 128 |
+| | | **`D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_BYTE_ALIGNMENT`** | 128 |
+| **Constant Buffer View target** | 256 B | `D3D12_COMMONSHADER_CONSTANT_BUFFER_PARTIAL_UPDATE_EXTENTS_BYTE_ALIGNMENT` | 16 |
+| | | **`D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT`** | 256 |
+| **Video decode bitstream / histogram buffers** | 256 B | **`D3D12_VIDEO_DECODE_MIN_BITSTREAM_OFFSET_ALIGNMENT`** | 256 |
+| | | **`D3D12_VIDEO_DECODE_MIN_HISTOGRAM_OFFSET_ALIGNMENT`** | 256 |
+
+A buffer that will be used for multiple purposes should use the max of all applicable floors.
 
 
-#### DDI
+### DDI
 The new `D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT` will be forwarded to the driver via the `D3D12DDI_RESOURCE_FLAGS_0003` bitfield.
 To ensure there is no impact to existing drivers, the flag will not be forwarded to the driver until it reports support for a new DDI cap: 
 
@@ -167,10 +210,10 @@ typedef struct D3D12DDI_TIGHT_ALIGNMENT_TIER_DATA_0111
 
 As a reminder, this bitfield is passed to the `CheckResourceAllocationInfo` DDI as a member of the `D3D12DDIARG_CREATERESOURCE_0088` parameter.
 
-IMPORTANT: Drivers should size buffers appropiately (`desc.width`) rather than assume 64KB size when `D3D12DDI_RESOURCE_FLAG_0111_USE_TIGHT_ALIGNMENT` is set.
+IMPORTANT: Drivers should size buffers appropriately (`desc.width`) rather than assume 64KiB size when `D3D12DDI_RESOURCE_FLAG_0111_USE_TIGHT_ALIGNMENT` is set.
 `CheckExistingResourceAllocationInfo_*` should also return appropriate values for resources that were created with tight alignment.
 
-#### HLK tests
+### HLK tests
 These tests will not be a part of the Germanium HLK playlist, but will be in the future playlists.
 
 * When the tight alignment flag is used with the cross adapter flag, the alignment MUST be 64KiB (or 4MiB for MSAA)
@@ -206,39 +249,8 @@ typedef enum D3D12DDI_HEAP_FLAGS
 * It makes sense for this to be a property of the resource, and it could be useful to have this context available when debugging
 
 ## How does this affect Heap alignment and offsets?
-* Heap alignment is unaffected - it must still be 64KiB aligned, unless it will contain MSAA resources, in which case it must be 4MiB aligned
-* HeapOffset isn't really affected, but since the alignment of resources (particularly buffers) can be smaller, the offsets into the heap are also allowed to be samller (though still integer multiples of the resource's alignment)
+* Heap alignment is unaffected for explicit heaps - it must still be 64KiB aligned, unless it will contain MSAA resources, in which case it must be 4MiB aligned. Implicit heaps are allowed to use VidMM's 4KiB granularity.
+* HeapOffset isn't really affected, but since the alignment of resources (particularly buffers) can be smaller, the offsets into the heap are also allowed to be smaller (though still integer multiples of the resource's alignment)
 
 ## Can this be the default behavior? That is, don't require applications to opt in for each resource?
 * Unfortunately, this isn't possible since the docs previously informed developers that it was safe to assume buffers have 64KiB alignment and sized to be the smallest multiple of 64KiB that would fit the specified width.
-
----
-
-# Open Questions
-
-## D3D Team
-* ~~Is it bad form to change the meaning of passing 0 for a parameter between API versions? (0 means default vs. 0 means tightest alignment possible)~~
-  * Nope, this should be fine 
-* Is there value in allowing ISVs the option of specifying an `alignment` other than 0, 4KiB, 64KiB, 4MiB?
-* ~~Is it actually necessary to gate this behind a cap? Even if this is the kind of thing that could just be a runtime change (see IHV question below), if we internally detect that the driver doesn't support support tight alignment we could fallback to the existing default alignment behind the scenes.~~
-  * Going with the `D3D12_RESOURCE_FLAGS` does require a cap. If we went with the new interface route, then we wouldn't need it since there is an inherent version check via `QueryInterface`
-* How does this interact with Cross Adapter sharing of resources?
-  * Will still need to be 64KiB aligned
-* Do placed resources need to be aligned to pages at a minimum ~~(4KiB iirc)~~?
-  * Unlikely. (also CPU pages are 4KiB, GPU pages are often 64KiB)
-
-## WDDM / VidMM team
-* ~~What is the current allocation granularity? Does this affect Tight Placed Resource Alignment?~~
-  * VidMm’s minimum alignment and size granularity for managing memory is 4KB, but there are no restrictions on how it is used from VidMM's perspective. If they so desired, nothing stops the driver from suballocating 4096 1-byte allocations from it, if that's what they can use.
-    * While this is VidMM's spec, for tight alignment we are requiring a minimum allocation size of 8 bytes, so in our case there is a d3d12 restriction preventing the driver from the 1-byte allocations mentioned in the answer above
-
-## All IHVs
-* What affects Buffer alignment? Can this be less than 64KiB (aligned to pages)? If so, what info does the driver need to determine alignment? What perf trade-offs are involved?
-  * General consensus is that buffers are an easy win to tighten alignments.
-* Texture alignment is currently limited to 64KiB, or 4KiB in some very specific scenarios. Can your hardware support other alignment options? What impacts this? Are there perf trade-offs?
-  * General consensus is that buffers are an easy win here, but textures are less likely to benefit since it is uncommon for games to use many tiny textures.
-* ~~Would your hardware benefit from a hint about the developer's preference for speed vs size of alignment?~~
-  * This is generally seen as ranging from unhelpful to potentially detrimental to the ecosystem
-* ~~If `AlignmentRestriction` is 0, how would your drivers respond to `CheckResourceAllocationInfo` today (`PFND3D12DDI_CHECKRESOURCEALLOCATIONINFO_0088`)?~~
-  ~~Related, what if a power of 2 that isn't 4Kib, 64Kib, or 4MiB is passed in? Could we allow developers to request arbitrary alignment restrictions, possibly based on the results of an earlier query for optimal alignment for the given resource?~~
-  * No longer relevant with the change to ignore alignment restriction value in the case of tight alignment.
