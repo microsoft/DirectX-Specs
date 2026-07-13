@@ -1076,6 +1076,8 @@ The exception is acceleration structure objects, whose state is discussed in [re
 
 Various indirect RTAS operations take arguments that are acceleration structures or memory that will be filled with an acceleration structure.  The definitions of those arguments point to this section to clarify the required resource state:
 
+Resources containing CLAS, Cluster BLAS or PTLAS data are acceleration structure buffers and are subject to the [acceleration structure memory restrictions](raytracing.md#acceleration-structure-memory-restrictions) defined in the original DXR functional specification.
+
 For enhanced barriers:
 
 The memory for the acceleration structure data must have access `D3D12_BARRIER_ACCESS_ACCELERATION_STRUCTURE_READ` for a read operation or `D3D12_BARRIER_ACCESS_ACCELERATION_STRUCTURE_WRITE` for a write or read/write.  
