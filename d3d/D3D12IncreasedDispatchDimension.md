@@ -2,7 +2,7 @@
 
 This document specifies a new D3D12 feature that relaxes the maximum 1D dispatch size for compute shaders, allowing hardware to expose larger X-dimension dispatch capabilities beyond the traditional 65,535 thread group limit.
 
-Version 1.0
+Version 1.1
 
 ---
 
@@ -126,7 +126,7 @@ All D3D12 devices must report:
 
 ### Dispatch Validation
 
-The D3D12 runtime performs the following validation for compute dispatches:
+The D3D12 debug layer performs the following checks for compute dispatches (see the **Runtime enforcement** note below for how violations are handled):
 
 **For Direct Compute Dispatches (`Dispatch`) and Dispatch Graph (CPU_INPUT):**
 - If `ThreadGroupCountX > D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION` (65,535):
@@ -134,7 +134,7 @@ The D3D12 runtime performs the following validation for compute dispatches:
   - Validate that `ThreadGroupCountZ == 1`
   - Validate that `ThreadGroupCountX <= Max1DDispatchSize`
   - If is Dispatch Graph, validate that `ThreadGroupCountX <= D3D12_WORK_GRAPHS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID (16,777,215)`
-  - If any validation fails, the debug layer issues an error and the dispatch is dropped
+  - If any of these conditions is not met, the debug layer issues an **error**; the dispatch is **not** dropped and is still passed to the driver unchanged
 - If `ThreadGroupCountX <= 65535`:
   - Apply standard validation (all dimensions must be <= 65,535)
 
@@ -144,10 +144,15 @@ The D3D12 runtime performs the following validation for compute dispatches:
   - Validate that `ThreadGroupCountZ == 1`
   - Validate that `ThreadGroupCountX <= Max1DDispatchMeshSize`
   - Validate that `ThreadGroupCountX <= D3D12_MS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID (4,194,303)`
-  - If any validation fails, the debug layer issues an error and the dispatch is dropped
+  - If any of these conditions is not met, the debug layer issues an **error**; the dispatch is **not** dropped and is still passed to the driver unchanged
 - If `ThreadGroupCountX <= 65535`:
   - Apply standard validation (all dimensions must be <= 65,535)
 
+### Runtime enforcement
+
+The runtime does not drop, clamp, or otherwise modify an oversized dispatch. When the conditions above are not met, the debug layer reports an **error**, but the dispatch is still passed to the driver unchanged — issuing a debug-layer error does not, by itself, alter runtime behaviour. This is intentional: dropping the dispatch would be a compatibility risk for existing applications.
+
+In addition, when a command list is recorded through the runtime-bypass path, the debug layer validation above does not run at all, so no error is produced and the driver receives the dispatch regardless. Drivers must therefore not rely on the runtime to reject dispatches that exceed the reported `Max1DDispatchSize` / `Max1DDispatchMeshSize` — validating and correctly handling such dispatches is the driver's responsibility.
 
 ### Backwards Compatibility
 
@@ -196,17 +201,19 @@ typedef struct D3D12DDI_D3D12_OPTIONS_DATA_0XXX
 2. **Compute Dispatch Validation (Also Work Graphs with CPU Node Input):**
    - Successful dispatch with X = 65,535, Y = 1, Z = 1 (baseline)
    - Successful dispatch with X = Max1DDispatchSize, Y = 1, Z = 1 (if supported)
-   - Failed dispatch with X > 65,535, Y > 1, Z = 1 (should fail)
-   - Failed dispatch with X > 65,535, Y = 1, Z > 1 (should fail)
-   - Failed dispatch with X > Max1DDispatchSize, Y = 1, Z = 1 (should fail)
-   - (Work Graphs) Failed dispatch with X > D3D12_WORK_GRAPHS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID (if Max1DDispatchSize greater)
+   - The following each produce a debug-layer error (the dispatch is still executed, not dropped):
+     - X > 65,535, Y > 1, Z = 1
+     - X > 65,535, Y = 1, Z > 1
+     - X > Max1DDispatchSize, Y = 1, Z = 1
+     - (Work Graphs) X > D3D12_WORK_GRAPHS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID, if Max1DDispatchSize greater
 
 3. **Mesh Dispatch Validation:**
    - Successful DispatchMesh with X = 65,535, Y = 1, Z = 1 (baseline)
    - Successful DispatchMesh with X = Max1DDispatchMeshSize, Y = 1, Z = 1 (if supported)
-   - Failed DispatchMesh with X > 65,535, Y > 1, Z = 1 (should fail)
-   - Failed DispatchMesh with X > 65,535, Y = 1, Z > 1 (should fail)
-   - Failed DispatchMesh with X > Max1DDispatchMeshSize, Y = 1, Z = 1 (should fail)
+   - The following each produce a debug-layer error (the dispatch is still executed, not dropped):
+     - X > 65,535, Y > 1, Z = 1
+     - X > 65,535, Y = 1, Z > 1
+     - X > Max1DDispatchMeshSize, Y = 1, Z = 1
 
 5. **Indirect Dispatch:**
    - Valid indirect dispatch arguments with extended X dimension for Compute
@@ -220,3 +227,4 @@ typedef struct D3D12DDI_D3D12_OPTIONS_DATA_0XXX
 | Version | Date | Description |
 |---------|------|-------------|
 | 1.0 | November 2025 | Initial specification for increased 1D dispatch dimensions |
+| 1.1 | July 2026 | Clarified runtime enforcement: oversized 1D dispatches produce a debug-layer error but are still passed to the driver unchanged (not dropped); noted that the runtime-bypass path skips this validation entirely |
