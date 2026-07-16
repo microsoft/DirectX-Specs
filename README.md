@@ -43,6 +43,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Planar Depth Stencil](d3d/PlanarDepthStencilDDISpec.md)
     * [Vulkan Compatibility Features](d3d/VulkanOn12.md)
     * [Tight Resource Alignment](d3d/D3D12TightPlacedResourceAlignment.md)
+    * [Resources and Heaps](d3d/ResourceHeaps.md)
     * [Periodic Trim Notifications](d3d/D3D12_PeriodicTrimNotifications.md)
     * [API Extensions (preview)](d3d/D3D12ApiExtensions.md)
     * Advanced Shader Delivery
