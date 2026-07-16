@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.44 6/26/2026
+v1.45 7/10/2026
 
 ---
 
@@ -124,6 +124,7 @@ v1.44 6/26/2026
       - [CheckFeatureSupport Structures](#checkfeaturesupport-structures)
         - [D3D12\_FEATURE\_D3D12\_OPTIONS5](#d3d12_feature_d3d12_options5)
         - [D3D12\_FEATURE\_D3D12\_OPTIONS\_NNN](#d3d12_feature_d3d12_options_nnn)
+          - [TemplateInstancePrefersCOMPRESSED1](#templateinstancepreferscompressed1)
         - [D3D12\_RAYTRACING\_TIER](#d3d12_raytracing_tier)
     - [CreateStateObject](#createstateobject)
       - [CreateStateObject Structures](#createstateobject-structures)
@@ -3134,13 +3135,29 @@ support level (among other unreleated features). See
 typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS_NNN
 {
     [annotation("_Out_")] BOOL ClustersAndPTLASSupported;
+    [annotation("_Out_")] BOOL TemplateInstancePrefersCOMPRESSED1;
 } D3D12_FEATURE_DATA_D3D12_OPTIONS_NNN;
 
 ```
 
-The D3D12 options struct that reports `ClustersAndPTLASSupported`. 
+The D3D12 options struct that reports `ClustersAndPTLASSupported` and the preferred vertex instantiation format for cluster templates.
 
-This means support for:
+The corresponding DDI capability is:
+
+```C++
+// D3D12DDI_D3D12_OPTIONS_DATA_0XXX - 0XXX to be determined
+typedef struct D3D12DDI_D3D12_OPTIONS_DATA_0XXX
+{
+    // ... existing fields ...
+    BOOL ClustersSupported;
+    BOOL PTLASSupported;
+    BOOL TemplateInstancePrefersCOMPRESSED1;
+} D3D12DDI_D3D12_OPTIONS_DATA_0XXX;
+```
+
+The API reports `ClustersAndPTLASSupported` as `TRUE` when the DDI reports both `ClustersSupported` and `PTLASSupported` as `TRUE`. When both DDI support fields are `TRUE`, the API reports `TemplateInstancePrefersCOMPRESSED1` directly from the corresponding DDI field. The DDI must report `TemplateInstancePrefersCOMPRESSED1` as `FALSE` unless both support fields are `TRUE`; correspondingly, the API reports it as `FALSE` whenever `ClustersAndPTLASSupported` is `FALSE`.
+
+`ClustersAndPTLASSupported` means support for:
 
 - [Clustered Geometry](raytracing2.md#clustered-geometry)
 - [Partitioned Top Level Acceleration Structures](raytracing2.md#partitioned-top-level-acceleration-structures)
@@ -3150,6 +3167,16 @@ This means support for:
 [D3D12_RAYTRACING_TIER_2_0](#d3d12_raytracing_tier) requires `ClustersAndPTLASSupported` to be `true`.  
 
 A device that supports at least `D3D12_RAYTRACING_TIER_1_1` can also report `ClustersAndPTLASSupported` to true, implying `Shader Model 6.10` is also supported.  This could be a device missing another requirement, in particular the Opacity Micromap support required from `TIER_1_2`.
+
+###### TemplateInstancePrefersCOMPRESSED1
+
+`TemplateInstancePrefersCOMPRESSED1` reports the preferred vertex instantiation format for [cluster templates](raytracing2.md#cluster-templates). It is only meaningful when `ClustersAndPTLASSupported` is `TRUE`.
+
+If `TRUE`, applications that are willing to make a per-device template format selection should prefer `D3D12_VERTEX_FORMAT_COMPRESSED1`. If `FALSE`, such applications should prefer another format, such as `D3D12_VERTEX_FORMAT_FLOAT32_3`, optionally with `PositionTruncateBitCount`. This is a performance preference only; all valid template vertex instantiation formats are supported regardless of device.
+
+This preference applies only to `VertexInstantiationFormat`, which defines the functional precision and range stored in the instantiated CLAS. `VertexSourceFormat` is selected independently and may be any format valid for template instantiation; the device converts the input positions to `VertexInstantiationFormat` during instantiation. See [Template instance format conversion semantics](raytracing2.md#template-instance-format-conversion-semantics).
+
+Independently of this preference, applications can optionally provide [`InstantiationBoundingBoxLimit`](raytracing2.md#d3d12_rtas_operation_build_cluster_templates_from_triangles_args) for any selected template format, giving the implementation advance bounds on future instance positions. See [Compressed1 with cluster templates](raytracing2.md#compressed1-with-cluster-templates) for the preference rationale and additional guidance.
 
 ---
 
@@ -9588,3 +9615,4 @@ v1.41|5/6/2026|<li>For [EmitRaytracingAccelerationStructurePostbuildInfo()](#emi
 v1.42|5/13/2026|<li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS](#d3d12_raytracing_acceleration_structure_build_flags), for `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE` and `_PERFORM_UPDATE`, made the existing TLAS/BLAS-only applicability explicit by adding "Not supported for Opacity Micromap Array builds where update doesn't apply."  Behavior is unchanged; this only removes the implicit-by-omission exclusion that was easy to miss when reading the flag list.</li>
 v1.43|5/17/2026|<li>In [CopyRaytracingAccelerationStructure()](#copyraytracingaccelerationstructure) `SourceAccelerationStructureData` parameter, added a Cluster-BLAS exception to the "operation only involves the data pointed to" rule: serializing or tools-visualization-decoding a Cluster BLAS reads through to the referenced CLAS, so all referenced CLAS must be valid for the duration of the operation on the GPU timeline.</li><li>In [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo) `pSourceAccelerationStructureData` parameter, added the symmetric Cluster-BLAS callout for the `_SERIALIZATION` and `_TOOLS_VISUALIZATION` postbuild-info sizing queries.</li><li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode), extended the `_SERIALIZE` and `_VISUALIZATION_DECODE_FOR_TOOLS` mode-level entries with the same Cluster-BLAS-to-CLAS source-liveness exception, and noted that deserialization order semantics remain order-independent (consistent with the existing TLAS-to-BLAS rule).</li><li>Cleaned up some stale references to the name `ReorderThread` which was renamed to `MaybeReorderThread`.</li>
 v1.44|6/26/2026|<li>In [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo) and [D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS](#d3d12_build_raytracing_acceleration_structure_inputs), the spec already said that any parameter that is referenced via `D3D12_GPU_VIRTUAL_ADDRESS` will not be accessed by the operation. So this memory does not need to be initialized yet or be in a particular resource state. Whether GPU addresses are null or not *can* be inspected by the operation, even though the pointers are not dereferenced.  Added this: If actual GPUVAs aren't known at the time of the call, dummy non-zero values can be used just for the purposes for the prebuild call for entires that will be replaced with real non-null GPUVAs for build.</li>
+v1.45|7/10/2026|<li>Added `TemplateInstancePrefersCOMPRESSED1` to [D3D12_FEATURE_D3D12_OPTIONS_NNN](#d3d12_feature_d3d12_options_nnn) and the corresponding DDI options structure. This performance preference guides selection of the stored vertex format for cluster template instances and is reported as `FALSE` when clustered templates are unsupported.</li>
