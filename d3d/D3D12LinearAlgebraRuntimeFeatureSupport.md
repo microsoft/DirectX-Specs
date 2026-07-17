@@ -7,6 +7,9 @@ Version 0.9 (Draft)
 ## Contents <!-- omit in toc -->
 
 - [Introduction](#introduction)
+- [Resource Alignment Requirements](#resource-alignment-requirements)
+  - [Matrix buffers (Multiply / MultiplyAdd / OuterProduct)](#matrix-buffers-multiply--multiplyadd--outerproduct)
+  - [Atomic accumulate store buffers](#atomic-accumulate-store-buffers)
 - [Granular Capability Query API](#granular-capability-query-api)
   - [D3D12\_LINEAR\_ALGEBRA\_OPERATION\_TYPE](#d3d12_linear_algebra_operation_type)
   - [D3D12\_LINEAR\_ALGEBRA\_DATATYPE](#d3d12_linear_algebra_datatype)
@@ -18,6 +21,8 @@ Version 0.9 (Draft)
     - [D3D12\_LINEAR\_ALGEBRA\_WAVE\_MATRIX\_MULTIPLY\_SUPPORT](#d3d12_linear_algebra_wave_matrix_multiply_support)
     - [D3D12\_LINEAR\_ALGEBRA\_THREADGROUP\_MATRIX\_MULTIPLY\_SUPPORT](#d3d12_linear_algebra_threadgroup_matrix_multiply_support)
     - [D3D12\_LINEAR\_ALGEBRA\_THREAD\_VECTOR\_MATRIX\_MULTIPLY\_SUPPORT](#d3d12_linear_algebra_thread_vector_matrix_multiply_support)
+      - [Supplying the vector operand](#supplying-the-vector-operand)
+      - [`linalg::Convert` support](#linalgconvert-support)
     - [D3D12\_LINEAR\_ALGEBRA\_THREAD\_OUTER\_PRODUCT\_SUPPORT](#d3d12_linear_algebra_thread_outer_product_support)
     - [D3D12\_LINEAR\_ALGEBRA\_ATOMIC\_ACCUMULATE\_STORE\_SUPPORT](#d3d12_linear_algebra_atomic_accumulate_store_support)
     - [D3D12\_FEATURE\_DATA\_LINEAR\_ALGEBRA\_MATRIX\_OPERATION\_SUPPORT](#d3d12_feature_data_linear_algebra_matrix_operation_support)
@@ -39,6 +44,10 @@ Version 0.9 (Draft)
   - [Conversion descriptors](#conversion-descriptors)
   - [Conversion APIs](#conversion-apis)
 - [D3D12 DDI Additions](#d3d12-ddi-additions)
+    - [Granular caps query](#granular-caps-query)
+    - [Enumeration caps query](#enumeration-caps-query)
+    - [Per-op-type query form advertisement](#per-op-type-query-form-advertisement)
+    - [`_1` deprecation](#_1-deprecation)
 - [Change Log](#change-log)
 ---
 
@@ -51,6 +60,27 @@ The fundamental capability here is the ability for a single GPU wave to distribu
 Additionally, this same hardware can be used to perform vector-matrix multiplication, if you construct a wave matrix out of a set of per-thread vectors. The exact mechanism for doing this is left to the driver to implement, for maximum efficiency. And some hardware has the capability to use even larger tiles that would be expensive to emulate on devices with smaller tiles - if the data can support it, allowing the driver to break down the problem using thread-group-wide matrices can help as well.
 
 With all of that said, the fundamental thing that D3D allows querying from the driver is which data types can be multiplied together using wave-level matrix multiplication hardware, what results they can produce, and what tile sizes are used.
+
+## Resource Alignment Requirements
+
+Buffers passed to linear-algebra intrinsics must meet the following base-address and size guarantees. Per-op offset and stride alignment for the HLSL-visible parameters is defined in [HLSL proposal 0035](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0035-linalg-matrix.md); the rules below are the D3D runtime-level requirements on the underlying resource that HLSL-level offsets and strides layer on top of.
+
+### Matrix buffers (Multiply / MultiplyAdd / OuterProduct)
+
+For any buffer serving as a matrix source or destination in a linear-algebra multiply, multiply-add, outer product, or matrix accumulate operation:
+
+* The buffer's base GPU virtual address, and any offset within it used as the matrix start, must be aligned to at least **128 bytes**.
+* The matrix stride must be aligned to at least **16 bytes**.
+* The buffer size must be a multiple of **16 bytes**, so that the 16-byte access covering the last row or column of the matrix is guaranteed to touch valid memory.
+
+The 128-byte / 16-byte requirements on `DestVA`, `DestSize`, and `DestStride` for [`ConvertLinearAlgebraMatrix`](#convert-matrix-to-desired-layout-and-type) are the same rule applied to the conversion destination.
+
+### Atomic accumulate store buffers
+
+For any buffer used as the destination of a vector atomic-accumulate-store operation:
+
+* The buffer's base GPU virtual address, and any offset within it used as the array start, must be aligned to at least **64 bytes**.
+* The buffer size must be a multiple of **16 bytes**. Implementations may write into the padding between the end of the array and the next 16-byte boundary, so applications must not use that padding space for any other purpose.
 
 ## Granular Capability Query API
 
@@ -235,9 +265,9 @@ typedef struct D3D12_LINEAR_ALGEBRA_THREAD_VECTOR_MATRIX_MULTIPLY_SUPPORT
 } D3D12_LINEAR_ALGEBRA_THREAD_VECTOR_MATRIX_MULTIPLY_SUPPORT;
 ```
 
-- `VectorInputType` - The HLSL-author-visible type of the input vector operand. If the HLSL vector is an `InterpretedVector`, this is the interpreted type; otherwise this is the native HLSL vector element type.
+- `VectorInputType` - The *interpretation type* of the input vector operand as consumed by the DXIL multiply. The application produces a vector at this interpretation via one of three paths (see [Supplying the vector operand](#supplying-the-vector-operand) below).
 
-- `MatrixInputType` - The type of the input matrix. This is also the precision at which the multiplication itself is performed: at the DXIL/DDI level the vector operand always matches the matrix type (differing at most in integer signedness for integer types) when the multiply executes.
+- `MatrixInputType` - The component type of the input matrix.
 
 - `BiasInputType` - The type of data that's added to the multiplication result before returning the result.
 
@@ -245,12 +275,19 @@ typedef struct D3D12_LINEAR_ALGEBRA_THREAD_VECTOR_MATRIX_MULTIPLY_SUPPORT
 
 - `SupportFlags` - Indicates level of support for this operation. See [D3D12_LINEAR_ALGEBRA_MULTIPLICATION_SUPPORT_FLAGS](#d3d12_linear_algebra_multiplication_support_flags) for the meaning of each flag.
 
-**Conversion semantics.** The application supplies the vector operand to the multiplication via one of two paths:
+##### Supplying the vector operand
 
-* As a `linalg::InterpretedVector` whose interpretation type matches `MatrixInputType` (differing at most in integer signedness). The HLSL compiler does not insert a conversion; the multiply consumes the interpretation directly. Valid only when `VectorInputType` already matches `MatrixInputType` under the same equivalence.
-* As a native HLSL vector of element type `VectorInputType`. When `VectorInputType` matches `MatrixInputType` (differing at most in integer signedness) no conversion is needed. Otherwise the HLSL compiler emits a conversion to `MatrixInputType` before the multiply. This compiler-inserted conversion is lossy when `VectorInputType` has higher precision or wider range than `MatrixInputType`, and applications using such combinations (for example INT8-quantized weight workflows that supply Fp32 activations against an SInt8 matrix) are responsible for any quantization or normalization required to make the conversion meaningful.
+`VectorInputType` and `MatrixInputType` are independent parameters of the caps query: the HLSL and DXIL specifications place no matching constraint between them. The application produces an input vector at the interpretation `VectorInputType` via one of three paths:
 
-**Native vs. emulated execution.** When the implementation can natively accelerate the requested type combination, neither `EMULATED_INPUTS` nor `EMULATED_OUTPUTS` is reported in `SupportFlags`. Either flag being set implies the operation is not natively accelerated; the two flags are independent and either, both, or neither may be reported.
+* **Native HLSL vector.** The vector's HLSL element type *is* the interpretation. `VectorInputType` equals the vector's element type.
+* **`linalg::MakeInterpretedVector<DT>(vec)`.** A re-typing wrapper around a native vector that already contains data laid out for the target interpretation (for example, an FP8 payload stored packed in `uint32_t`). `MakeInterpretedVector` does not convert data; `VectorInputType` equals `DT`.
+* **`linalg::Convert<DestTy>(vec)`.** Actually performs a conversion per the HLSL linear-algebra conversion rules and produces an `InterpretedVector<..., DestTy>`. `VectorInputType` equals `DestTy`.
+
+The `EMULATED_INPUTS` flag is the mechanism by which the driver signals that a supported combination is not run natively at `MatrixInputType` precision — for example, when the input interpretation differs from the matrix type beyond integer signedness, or when the matrix type is FP8 and the driver must widen internally. When set, the multiply may execute at higher precision than `MatrixInputType`. Similarly `EMULATED_OUTPUTS` signals internal precision higher than `VectorResultType` prior to down-conversion. Neither flag set means the operation is natively accelerated end-to-end.
+
+##### `linalg::Convert` support
+
+There is no separate capability query for `linalg::Convert`. Any driver implementing linear algebra supports every conversion whose source type it otherwise natively supports in HLSL and whose destination type appears as a supported `VectorInputType` in some vector-matrix multiply configuration, following the conversion rules documented in [the HLSL Data Conversion Rules](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0035-linalg-matrix.md#data-conversion-rules).
 
 #### D3D12_LINEAR_ALGEBRA_THREAD_OUTER_PRODUCT_SUPPORT
 
