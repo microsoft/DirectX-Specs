@@ -534,7 +534,7 @@ The `D3D12_LINEAR_ALGEBRA_TIER` enumeration is the primary mechanism for standar
 typedef enum D3D12_LINEAR_ALGEBRA_TIER
 {
     D3D12_LINEAR_ALGEBRA_TIER_NOT_SUPPORTED = 0,
-    D3D12_LINEAR_ALGEBRA_TIER_1 = 1,
+    D3D12_LINEAR_ALGEBRA_TIER_1_0 = 0x10,
 } D3D12_LINEAR_ALGEBRA_TIER;
 ```
 
@@ -542,7 +542,7 @@ typedef enum D3D12_LINEAR_ALGEBRA_TIER
 
 - **D3D12_LINEAR_ALGEBRA_TIER_NOT_SUPPORTED** - The device does not support linear algebra operations.
 
-- **D3D12_LINEAR_ALGEBRA_TIER_1** - The device supports Tier 1 linear algebra operations. See the [Tier 1 Support](#tier-1-support) section.
+- **D3D12_LINEAR_ALGEBRA_TIER_1_0** - The device supports Tier 1 linear algebra operations. See the [Tier 1 Support](#tier-1-support) section.
 
 **Usage:**
 
@@ -555,7 +555,7 @@ HRESULT hr = device->CheckFeatureSupport(
     &linearAlgebraSupport,
     sizeof(linearAlgebraSupport));
 
-if (SUCCEEDED(hr) && linearAlgebraSupport.LinearAlgebraTier >= D3D12_LINEAR_ALGEBRA_TIER_1)
+if (SUCCEEDED(hr) && linearAlgebraSupport.LinearAlgebraTier >= D3D12_LINEAR_ALGEBRA_TIER_1_0)
 {
     // Device supports Tier 1 linear algebra operations
 }
@@ -592,8 +592,8 @@ Fp16   | Fp8_E5M2 | Fp16   | Optional |
 
 Column meaning, HLSL supply paths, and conversion behavior are described under [D3D12_LINEAR_ALGEBRA_THREAD_VECTOR_MATRIX_MULTIPLY_SUPPORT](#d3d12_linear_algebra_thread_vector_matrix_multiply_support). The **Native** column governs whether tier-1 implementations are required to accelerate the row natively:
 
-* `Required` -- implementations MUST accept the row and execute it natively (no `EMULATED_INPUTS` or `EMULATED_OUTPUTS`).
-* `Optional` -- implementations MUST accept the row but MAY emulate it; the granular query reports the emulation strategy via `EMULATED_INPUTS` and/or `EMULATED_OUTPUTS`.
+* `Required` -- implementations MUST accept the row and multiply it natively (no `EMULATED_INPUTS`). `EMULATED_OUTPUTS` is permitted: as described for [`EMULATED_OUTPUTS`](#d3d12_linear_algebra_multiplication_support_flags) and for [Fp16 matrix-matrix multiplication](#matrix-matrix-operations), accumulating at a higher internal precision with a final conversion step is always allowed, so a `Required` row with a sub-32-bit result type may still report `EMULATED_OUTPUTS`.
+* `Optional` -- implementations MUST accept the row but MAY emulate it, including the multiply itself; the granular query reports the emulation strategy via `EMULATED_INPUTS` and/or `EMULATED_OUTPUTS`.
 
 Integer signedness is not required to match between the vector type and the matrix type. Every row in the table happens to list matched-signedness combinations because mixed-signedness support is not part of the tier-1 contract, but a driver may expose any mixed-signedness combination as an additional capability through the granular and enumeration queries.
 
@@ -921,4 +921,4 @@ Version | Date | Description
 0.6 | Mar 2026 | Add transpose, outer product, relax tier 1 restrictions.
 0.7 | Mar 2026 | LINALG -> LINEAR ALGEBRA. Address one more round of feedback.
 0.8 | Apr 2026 | Add matrix construction caps.
-0.9 | Jun 2026 | Granular queries take a single shape (input) and return supported (output); native shape discovery moves to the new Operation Enumeration API (#240, #244, customer ask). Vector-Matrix table split into interpretation/matrix/result with conversion semantics called out (#245).
+0.9 | Jun 2026 | Granular queries take a single shape (input) and return supported (output); native shape discovery moves to the new Operation Enumeration API (#240, #244, customer ask). Vector-Matrix table split into interpretation/matrix/result with conversion semantics called out (#245). `D3D12_LINEAR_ALGEBRA_TIER_1_0` matches the shipped `0x10` value rather than `1`. Clarified that a `Required` vector-matrix row may still report `EMULATED_OUTPUTS`, consistent with the flag's own definition and the Fp16 matrix-matrix allowance.
