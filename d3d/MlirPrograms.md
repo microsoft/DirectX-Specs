@@ -131,7 +131,7 @@ Before delving into the D3D12 interfaces to support MLIR program compilation and
 
 We start with a high-level diagram illustrating the various components (white boxes) and MLIR-based intermediate representations (yellow boxes). DXCGC is a new compiler that accepts dataflow graphs as input ("CGC Input IR") instead of HLSL. DXCGC produces an optimized MLIR bytecode output ("CGC Output IR") as a result of high-level optimization and lowering, but it leaves the final hardware codegen as a step for the driver.
 
-:::mermaid
+```mermaid
 graph LR
     input_ir["CGC Input IR"]:::mlir
     lowering_irs["CGC Lowering IRs"]:::mlir
@@ -150,7 +150,7 @@ graph LR
 
     classDef mlir fill:#ffff55, color:black;
     classDef component fill:#ffffff, color:black;
-:::
+```
 
 There are four types of MLIRs to focus on in this document:
 
@@ -167,7 +167,7 @@ The next sections will focus on the first three IRs at a high level for illustra
 
 A simple network is visualized below with network layers in blue and resource bindings in green/yellow. This is called a dataflow graph, and it represents the semantic intent of the overall computation rather than the explicit implementation.
 
-:::mermaid
+```mermaid
 graph LR
     in[<b>argument</b><br/>'in']:::io;
     conv1["<b>cgc_op.convolution</b><br/>'conv1'"]:::layer;
@@ -194,7 +194,7 @@ graph LR
     classDef layer fill:#66bbff,color:black;
     classDef const fill:#bbff66,color:black;
     classDef io fill:#ffff66,color:black;
-:::
+```
 
 The example network in the human-readable textual form is shown below:
 
@@ -239,7 +239,7 @@ The initial version of DXCGC relies on lowering to target-specific *connected su
 
 To extend our earlier example, let's say a hardware driver supports fusing `conv -> relu -> add` as a subgraph. Let's also say the upsample layer isn't explicitly implemented by the driver, so it ends up getting lowered into a fallback implementation (e.g., shader implementation). The lowered output would resemble the following:
 
-:::mermaid
+```mermaid
 graph LR
     in[<b>argument</b><br/>'in']:::io;
     conv1["<b>cgc_op.convolution</b><br/>'conv1'"]:::layer;
@@ -282,7 +282,7 @@ graph LR
     classDef layer fill:#66bbff,color:black;
     classDef const fill:#bbff66,color:black;
     classDef io fill:#ffff66,color:black;
-:::
+```
 
 DXCGC incorporates subgraphs using a declarative approach: targets tell DXCGC the types of subgraph *patterns* they support (independent of any specific graph), these patterns are applied by DXCGC transforming the Input IR, and each target is then responsible for providing implementations for matched subgraphs at runtime. Target subgraph patterns are not limited to fixed DAGs of operations shown in this contrived example. For example, a dynamic subgraph pattern could be "convolution followed by an arbitrary sequence of elementwise operations" (so-called epilogue fusion). Furthermore, subgraph patterns can declare constraints on data types, tensor shapes, memory layout, alignment, attribute values, and more. The details of how declarative subgraph patterns work are out of scope for this doc (falling under the "lowering IRs" mentioned earlier), and we will only look at the effects of subgraphs on resulting Output IR.
 
@@ -378,7 +378,7 @@ There are many details and concepts that are hidden here for simplicity, but the
 
 Partitions bridge the gap between abstract data views (tensors) and concrete data views (memrefs) as well as providing more control over execution scheduling. In this example the output IR comprises two partitions that must be independently executed with different resource bindings (solid arrows). This is visualized below, with the body of the `cgc.program` acting as a sequence of partition invocations. There is a dependency (dotted arrow) between the two partitions because of shared use of scratch memory.
 
-:::mermaid
+```mermaid
 graph
     subgraph Program Arguments
         in([%in]):::buffer;
@@ -417,7 +417,7 @@ graph
     classDef intermediate fill:#66ffff,color:black;
     classDef constant fill:#bbff66,color:black;
     classDef memview fill:#ffffff,color:black;
-:::
+```
 
 A few important things to note on the output IR:
 
@@ -471,7 +471,7 @@ cgc.module
 
 Alternatively, DXCGC could have split output IR up into three partitions:
 
-:::mermaid
+```mermaid
 graph
     subgraph Program Arguments
         out([%out]):::buffer;
@@ -518,7 +518,7 @@ graph
     classDef intermediate fill:#66ffff,color:black;
     classDef constant fill:#bbff66,color:black;
     classDef memview fill:#ffffff,color:black;
-:::
+```
 
 Ultimately, both partitionings above are valid and have pros and cons. For example, the second finer-grained partitioning is useful if the subgraph ops are expensive to compile: the client may compile all three partitions in parallel on separate threads. In the first example, the driver is required to compile both subgraph ops on a single thread. In general, the granularity of partitioning represents a tunable knob that shifts responsibility from the D3D client (many small partitions) to the driver (few large partitions).
 
@@ -563,7 +563,7 @@ As noted earlier, compiler targets such as a driver are only responsible for imp
 
 We are building an optional DXCGC runtime component that handles direct execution of output IR in a robust way, though it is intended as a starting point and not a requirement for end users. This will greatly simplify the execution flow while giving flexibility to modify or take control where needed.
 
-:::mermaid
+```mermaid
 sequenceDiagram
     participant compiler as DXCGC
     participant app as D3D Client / Application
@@ -579,7 +579,7 @@ sequenceDiagram
 
     int-->>-app: Command List
     app->>d3d: Submit Command List
-:::
+```
 
 For convenience this runtime component is built as a library with an API, but we do not envision this component as a versioned and opaque DLL component that ships in Windows; instead, this is something we intend to ship as an open-source sample that developers can modify and integrate with their engines as needed. The runtime is a helper layer that is not mandatory for correctly executing CGC Output IR, but it can simplify dependencies for applications that do not want to parse MLIR and handle fallback manually.
 
@@ -615,7 +615,7 @@ CGC IRs are composed of CGC dialects that get versioned together using semantic 
 
 A simplified view of MLIR program compilation is presented in this section. It is useful to contrast MLIR compilation with shader compilation, so we start with how compute shaders are compiled (using [*state objects*](https://microsoft.github.io/DirectX-Specs/d3d/Raytracing.html#state-objects) introduced in DXR and extended to support [*programs*](https://microsoft.github.io/DirectX-Specs/d3d/WorkGraphs.html#program) with work graphs; this is largely identical to the classic compute pipeline state object flow but uses a more generic API).
 
-:::mermaid
+```mermaid
 sequenceDiagram
     participant compiler as Shader Compiler
     participant app as Application
@@ -629,11 +629,11 @@ sequenceDiagram
     d3d->>+driver: Shader Bytecode & Root Signature
     driver-->>-d3d: ISA
     d3d-->>-app: Generic Program (alternatively: PSO)
-:::
+```
 
 MLIR compilation with DXCGC is illustrated below, and it is largely identical to how shaders are compiled into state objects. The key difference with MLIR program compilation is the need to loop over partitions in Output IR and compile each separately.
 
-:::mermaid
+```mermaid
 sequenceDiagram
     participant compiler as DXCGC
     participant app as Application
@@ -650,7 +650,7 @@ sequenceDiagram
         driver-->>-d3d: ISA
         d3d-->>-app: MLIR Program
     end
-:::
+```
 
 If there are multiple targets used in the compilation of CGC Input IR, then non-driver partitions need to be compiled using the appropriate APIs (not shown above). For example, a fallback target that provides shader or metacommand implementations of MLIR subgraphs will have partition IR translated to existing D3D12 APIs.
 
@@ -658,7 +658,7 @@ If there are multiple targets used in the compilation of CGC Input IR, then non-
 
 Shaders and MLIR programs can coexist in the same D3D command list, though they will use separate interfaces for command recording (`Dispatch` for compute shaders, `DispatchGraph` for MLIR programs). Eventually the two paths even interoperate more closely (e.g., shaders calling MLIR programs), but this is out of scope for now.
 
-:::mermaid
+```mermaid
 sequenceDiagram
     participant app as Application
     participant cmdlist as ID3D12GraphicsCommandList
@@ -675,7 +675,7 @@ sequenceDiagram
         app->>cmdlist: SetProgram
         app->>cmdlist: DispatchGraph
     end
-:::
+```
 
 Once a command list is recorded, it can be submitted to a command queue like any other D3D work. The resource binding structure for shaders (generic programs or PSOs) is a root signature. The resource binding structure for MLIR programs is the list of partition bind points in the MLIR, and resource bindings are supplied directly to the `DispatchGraph` call.
 
@@ -732,7 +732,7 @@ For MLIR programs, the strategy is a relaxed since MLIR has built-in validation 
 
 [Advanced Shader Delivery](https://devblogs.microsoft.com/directx/introducing-advanced-shader-delivery/) (or ASD) transitions shader bytecode-to-ISA compilation from a runtime step to an offline step. Normally this process requires both the D3D runtime and a hardware driver, but the design calls for the IHV shader compiler to be hoisted out of the driver into a plugin that can be invoked in an offline compile toolchain. At a conceptual level, this offline compile process looks something like the diagram below (not entirely accurate -- read the full D3D specs for details):
 
-:::mermaid
+```mermaid
 erDiagram
     client["D3D Client"]
     toolchain["Offline Compile Toolchain"]
@@ -759,7 +759,7 @@ erDiagram
 
     toolchain 1 to 1+ psdb : creates
     psdb 1 to 1+ psdb_entry : contains
-:::
+```
 
 In a nutshell:
 
@@ -1848,7 +1848,7 @@ Memory planning is the process of figuring out where the edges of a graph live i
 
 Consider the following graph with layers `A`, `B`, `C`, `D`, and `E`. For simplicity, all tensors (`in`, `a`, `b`, `c`, `d`, `out`) in the example have the same size in bytes. The interior tensors (`a`, `b`, `c`, `d`) are called *intermediates* since they are only temporarily needed while the network is executed; however, the boundary tensors (`in`, `out`) usually need to persist in memory after execution completes.
 
-:::mermaid
+```mermaid
 graph LR
     input:::io;
     output:::io;
@@ -1863,7 +1863,7 @@ graph LR
 
     classDef layer fill:#66bbff,color:black;
     classDef io fill:#ffff66,color:black;
-:::
+```
 
 A naive memory plan for this network involves simply allocating unique memory for each tensor. In this case, the memory footprint is the sum of all tensors. This is simple, but it's obviously impractical for larger networks. A slight extension of this is to page memory in and out as tensors are needed: for example, the memory storing tensor `a` can be paged in to execute layer `A`, then paged out once layers `B` and `C` complete. This solution, of course, comes at the cost of performance as paging memory across PCI-e is extremely slow.
 
@@ -1944,7 +1944,7 @@ Note how `Mem[2]` is initially occupied by tensor `a`, then repurposed to store 
 
 A subtle consequence of reusing memory locations in memory planning is the introduction of implicit dependencies that affect concurrency. In the original graph, layer `C` can run concurrently with nodes `B` and `D`; however, the memory plan above effectively makes `C` a dependency of `D` given the shared memory location. If `D` executed before `C` (or simultaneously with `C`) then it would overwrite the contents of tensor `a`.
 
-:::mermaid
+```mermaid
 graph LR
     input:::io;
     output:::io;
@@ -1960,7 +1960,7 @@ graph LR
 
     classDef layer fill:#66bbff,color:black;
     classDef io fill:#ffff66,color:black;
-:::
+```
 
 Was it smart to reuse memory in this example? If the model wouldn't fit in memory without reusing the memory location for `a` and `d` then this is absolutely a good plan. However, perhaps layers `B` and `C` only have work to occupy half the GPU: latency could be reduced by running them in parallel. Alternatively, maybe `B` fully occupies the GPU and it is better to run `C` and `D` in parallel. Ultimately, the right choice depends on the network, the hardware, and the optimization goal of minimizing memory or minimizing latency.
 
@@ -1970,7 +1970,7 @@ Memory planning is an interesting challenge with serious consequence for perform
 
 Execution scheduling is the process of figuring out when to execute (dispatch) units of work, like shader programs or MLIR programs. In D3D12 this is done using command lists and queues. Most operations within a command list are asynchronous by default; for example, two back-to-back shader dispatches are assumed to have no dependency and thus can run simultaneously if the hardware has capacity. *Barriers* are the mechanism to enforce dependencies between work items in a command list, but the legacy barrier APIs make this quite problematic for efficiently handling [dependency *graphs*](#dataflow-and-dependency-graphs).
 
-:::mermaid
+```mermaid
 graph LR
     input:::io;
     output:::io;
@@ -1985,7 +1985,7 @@ graph LR
 
     classDef layer fill:#66bbff,color:black;
     classDef io fill:#ffff66,color:black;
-:::
+```
 
 To illustrate the issue with legacy barriers being used for expressing node dependencies, consider that a barrier needs to exist between node pairs `A/B`, `A/C`, `B/D`, `C/E`, and `D/E`. If every edge was a separate resource this might look like the following in a command list:
 
@@ -2034,7 +2034,7 @@ In this case, the driver MUST synchronize between every dispatch since it has no
 
 Which of the above schedules it optimal? It is hard (or even impossible) for a D3D client to know, and it's possible that none of these may maximize utilization of the hardware. A full-fledged solution to this problem would require expressing the dependency graph more explicitly, but this is out of scope at the moment. As a consolation, however, it is important to recognize that MLIR program partitions mitigate this to an extent. Consider if nodes B, C, and D are grouped into a partition:
 
-:::mermaid
+```mermaid
 graph LR
     input:::io;
     output:::io;
@@ -2052,7 +2052,7 @@ graph LR
 
     classDef layer fill:#66bbff,color:black;
     classDef io fill:#ffff66,color:black;
-:::
+```
 
 The resulting command list would be `A, Barrier, Partition, Barrier, E`, which is significantly better than forcing an arbitrary decision on where to place nodes B/C/D. In the future, we may consider extending the work graph APIs to support the dispatch of an explicit dependency graph. The current design is not directly suitable since [joins aren't supported](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#joins---synchronizing-within-the-graph).
 
