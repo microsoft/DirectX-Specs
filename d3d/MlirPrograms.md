@@ -2088,17 +2088,6 @@ Regardless of the framework or interchange format (ONNX, GGUF, MLIR bytecode, et
     <td>v0.12</td>
     <td>07/29/2026</td>
     <td><ul>
-        <li>Replace D3D12_FEATURE_D3D12_OPTIONS_MLIR with D3D12_FEATURE_MLIR_COMPUTE_GRAPH_SUPPORT.</li>
-        <li>Replace D3D12_FEATURE_MLIR_INTERFACE_SUPPORT with D3D12_FEATURE_MLIR_COMPUTE_GRAPH_VERSION.</li>
-        <li>Update MLIR exchange API/DDI to have explicit IR version and D3D12_MLIR_EXCHANGE_TYPE.</li>
-        <li>Support for GPU descriptor handles and volatile binding.</li>
-        <li>Removed stale references to using a DX container for MLIR bytecode.</li>
-    </ul></td>
-</tr>
-<tr>
-    <td>v0.12</td>
-    <td>07/29/2026</td>
-    <td><ul>
         <li>Reflect API/DDI in Agility SDK 1.721.3-preview.</li>
         <li>Replace D3D12_FEATURE_D3D12_OPTIONS_MLIR with D3D12_FEATURE_MLIR_COMPUTE_GRAPH_SUPPORT.</li>
         <li>Replace D3D12_FEATURE_MLIR_INTERFACE_SUPPORT with D3D12_FEATURE_MLIR_COMPUTE_GRAPH_VERSION.</li>
