@@ -842,13 +842,15 @@ typedef union D3D12_VERSION_NUMBER
 } D3D12_VERSION_NUMBER;
 ```
 
-The semantic versioning parts of a CGC IR version (major, minor, patch, experimental flag) map to the `D3D12_VERSION_NUMBER` fields as follows:
+The semantic versioning parts of a CGC IR version (major, minor, patch) map to the `D3D12_VERSION_NUMBER` fields as follows:
 
-| CGC IR Version         | Version                 | VersionParts[0] | VersionParts[1] | VersionParts[2] | VersionParts[3] |
-| ---------------------- | ----------------------- | --------------- | --------------- | --------------- | --------------- |
-| `1.0.0`                | `0x0001'0000'0000'0000` | 0               | 0               | 0               | 1               |
-| `1.0.2`                | `0x0001'0000'0002'0000` | 0               | 2               | 0               | 1               |
-| `1.2.3` (experimental) | `0x0001'0002'0003'0001` | 1               | 3               | 2               | 1               |
+| CGC IR Version | Version                 | VersionParts[0] | VersionParts[1] | VersionParts[2] | VersionParts[3] |
+| -------------- | ----------------------- | --------------- | --------------- | --------------- | --------------- |
+| `1.0.0`        | `0x0001'0000'0000'0000` | 0               | 0               | 0               | 1               |
+| `1.0.2`        | `0x0001'0000'0002'0000` | 0               | 2               | 0               | 1               |
+| `1.2.3`        | `0x0001'0002'0003'0000` | 0               | 3               | 2               | 1               |
+
+`VersionParts[0]` is unused and reserved for experimental versions.
 
 The initial value of `D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION::HighestVersion` limits the version returned from the implementation. For example, if an app wants to check if the implementation supports CGC IR versions *up to and including 1.0.2 (but no higher)*:
 
@@ -866,10 +868,8 @@ if (SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_MLIR_COMPUTE_GRAPH_VERSI
 
 The initial major/minor/patch parts may be set to `0xFFFF` if capping is not desired. Examples for initial values:
 
-- To check the implementation's true maximum supported IR version: `0xFFFF'FFFF'FFFF'0000`. 
-- To check the implementation's support up to and including 1.0.x (where x is any value): `0x0001'0000'FFFF'0000`.
-
-The experimental version part should be 0 or 1, with 0 indicating stable and 1 indicating experimental.
+- To check the implementation's true maximum supported IR version: `0xFFFF'FFFF'FFFF'FFFF`. 
+- To check the implementation's support up to and including 1.0.x (where x is any value): `0x0001'0000'FFFF'FFFF`.
 
 ##### D3D12_FEATURE_DATA_MLIR_EXCHANGE
 
@@ -1058,7 +1058,7 @@ struct D3D12_MLIR_PROGRAM_DESC
 | Member                | Definition                                                                                                                                                                                                                                                   |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `ProgramName`         | Name to assign to the MLIR program in the state object. This can be used in APIs that need to reference MLIR program definitions, like `ID3D12StateObjectProperties1::GetProgramIdentifier()`. There can be multiple MLIR programs in a single state object. |
-| `pBytecode`           | A pointer to the MLIR program partition as MLIR bytecode. Neither the runtime nor drivers may access this pointer once `CreateStateObject` returns (the D3D client may free it immediately on return).      |
+| `pBytecode`           | A pointer to the MLIR program partition as MLIR bytecode. Neither the runtime nor drivers may access this pointer once `CreateStateObject` returns (the D3D client may free it immediately on return).                                                       |
 | `BytecodeSizeInBytes` | Size of `pBytecode` in bytes.                                                                                                                                                                                                                                |
 
 #### AddToStateObject
@@ -1159,10 +1159,10 @@ struct D3D12_SET_MLIR_PROGRAM_DESC
 
 Describes the program to set as active on the command list.
 
-| Member                                       | Definition                                                                                                                                                                                    |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Member                                       | Definition                                                                                                                                                                                     |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `D3D12_PROGRAM_IDENTIFIER ProgramIdentifier` | ID of the MLIR program to set. This value may be retrieved by looking up the ID using the name of an MLIR program in a state object with `ID3D12StateObjectProperties1::GetProgramIdentifier`. |
-| `D3D12_SET_MLIR_PROGRAM_FLAGS Flags`         | See [D3D12_SET_MLIR_PROGRAM_FLAGS](#d3d12_set_mlir_program_flags).                                                                                                                            |
+| `D3D12_SET_MLIR_PROGRAM_FLAGS Flags`         | See [D3D12_SET_MLIR_PROGRAM_FLAGS](#d3d12_set_mlir_program_flags).                                                                                                                             |
 
 ##### D3D12_SET_MLIR_PROGRAM_FLAGS
 
@@ -1495,50 +1495,50 @@ THROW_IF_FAILED(device->CheckFeatureSupport(D3D12_FEATURE_MLIR_EXCHANGE, &exchan
 
 This table maps API types and methods related to MLIR programs to their respective DDI types and function pointers. Unchanged interfaces are listed for completeness, but their signatures are not detailed in the sections that follow this table.
 
-| Functionality                                 | API                                             | DDI                                                 | Type       | Modification   |
-| --------------------------------------------- | ----------------------------------------------- | --------------------------------------------------- | ---------- | -------------- |
-| MLIR Exchange                                 | `ID3D12Device::CheckFeatureSupport`             | `PFND3D12DDI_GETCAPS`                               | Function   | ✅ Unchanged    |
-| MLIR Exchange                                 | `D3D12_FEATURE`                                 | `D3D12DDICAPS_TYPE`                                 | Enum       | ⚠️ **Extended** |
-| MLIR Exchange                                 | `D3D12_FEATURE_MLIR_EXCHANGE`                   | `D3D12DDICAPS_TYPE_MLIR_EXCHANGE_0119`              | Enum Value | 🆕 **New**      |
-| MLIR Exchange                                 | `D3D12_FEATURE_DATA_MLIR_EXCHANGE`              | `D3D12DDI_FEATURE_DATA_MLIR_EXCHANGE_0119`          | Struct     | 🆕 **New**      |
-| MLIR Exchange                                 | `D3D12_MLIR_EXCHANGE_TYPE`                      | `D3D12DDI_MLIR_EXCHANGE_TYPE_0119`                  | Enum       | 🆕 **New**      |
-| MLIR Exchange                                 | `D3D12_VERSION_NUMBER`                          | `D3D12DDI_VERSION_NUMBER`                           | Struct     | ✅ Unchanged    |
-| -                                             | -                                               | -                                                   | -          | -              |
-| MLIR Compute Graph - Optional Feature Support | `ID3D12Device::CheckFeatureSupport`             | `PFND3D12DDI_GETCAPS`                               | Function   | ✅ Unchanged    |
-| MLIR Compute Graph - Optional Feature Support | `D3D12_FEATURE`                                 | `D3D12DDICAPS_TYPE`                                 | Enum       | ⚠️ **Extended** |
-| MLIR Compute Graph - Optional Feature Support | `D3D12_FEATURE_MLIR_COMPUTE_GRAPH_SUPPORT`      | `D3D12DDICAPS_TYPE_MLIR_COMPUTE_GRAPH_SUPPORT_0119` | Enum Value | 🆕 **New**      |
-| MLIR Compute Graph - Optional Feature Support | `D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_SUPPORT` | `D3D12DDI_FEATURE_DATA_MLIR_COMPUTE_GRAPH_SUPPORT_0119` | Struct | 🆕 **New**      |
-| -                                             | -                                               | -                                                   | -          | -              |
-| MLIR Compute Graph - IR Version Support       | `ID3D12Device::CheckFeatureSupport`             | `PFND3D12DDI_GETCAPS`                               | Function   | ✅ Unchanged    |
-| MLIR Compute Graph - IR Version Support       | `D3D12_FEATURE`                                 | `D3D12DDICAPS_TYPE`                                 | Enum       | ⚠️ **Extended** |
-| MLIR Compute Graph - IR Version Support       | `D3D12_FEATURE_MLIR_COMPUTE_GRAPH_VERSION`      | `D3D12DDICAPS_TYPE_MLIR_COMPUTE_GRAPH_VERSION_0119` | Enum Value | 🆕 **New**      |
-| MLIR Compute Graph - IR Version Support       | `D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION` | `D3D12DDI_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION_0119` | Struct | 🆕 **New**      |
-| -                                             | -                                               | -                                                   | -          | -              |
-| MLIR Program Creation                         | `ID3D12Device::CreateStateObject`               | `PFND3D12DDI_CREATE_STATE_OBJECT_0054`              | Function   | ✅ Unchanged    |
-| MLIR Program Creation                         | `D3D12_STATE_OBJECT_DESC`                       | `D3D12DDIARG_CREATE_STATE_OBJECT_0054`              | Struct     | ✅ Unchanged    |
-| MLIR Program Creation                         | `D3D12_STATE_OBJECT_TYPE`                       | `D3D12DDI_STATE_OBJECT_TYPE`                        | Enum       | ✅ Unchanged    |
-| MLIR Program Creation                         | `D3D12_STATE_SUBOBJECT`                         | `D3D12DDI_STATE_SUBOBJECT_0054`                     | Struct     | ✅ Unchanged    |
-| MLIR Program Creation                         | `D3D12_STATE_SUBOBJECT_TYPE`                    | `D3D12DDI_STATE_SUBOBJECT_TYPE`                     | Enum       | ⚠️ **Extended** |
-| MLIR Program Creation                         | `D3D12_STATE_SUBOBJECT_TYPE_MLIR_PROGRAM`       | `D3D12DDI_STATE_SUBOBJECT_TYPE_MLIR_PROGRAM`        | Enum Value | 🆕 **New**      |
-| MLIR Program Creation                         | `D3D12_MLIR_PROGRAM_DESC`                       | `D3D12DDI_MLIR_PROGRAM_DESC_0119`                   | Struct     | 🆕 **New**      |
-| -                                             | -                                               | -                                                   | -          | -              |
-| MLIR Program Addition                         | `ID3D12Device::AddToStateObject`                | `PFND3D12DDI_ADD_TO_STATE_OBJECT_0072`              | Function   | ✅ Unchanged    |
-| -                                             | -                                               | -                                                   | -          | -              |
-| MLIR Program Execution                        | `ID3D12GraphicsCommandList::SetProgram`         | `PFND3D12DDI_SET_PROGRAM_0108`                      | Function   | ✅ Unchanged    |
-| MLIR Program Execution                        | `D3D12_SET_PROGRAM_DESC`                        | `D3D12DDI_SET_PROGRAM_DESC_0108`                    | Struct     | ⚠️ **Extended** |
-| MLIR Program Execution                        | `D3D12_PROGRAM_TYPE`                            | `D3D12DDI_PROGRAM_TYPE_0108`                        | Enum       | ⚠️ **Extended** |
-| MLIR Program Execution                        | `D3D12_PROGRAM_TYPE_MLIR_PROGRAM`               | `D3D12DDI_PROGRAM_TYPE_MLIR_PROGRAM_0119`           | Enum Value | 🆕 **New**      |
-| MLIR Program Execution                        | `D3D12_SET_MLIR_PROGRAM_DESC`                   | `D3D12DDI_SET_MLIR_PROGRAM_DESC_0119`               | Struct     | 🆕 **New**      |
-| MLIR Program Execution                        | `D3D12_SET_MLIR_PROGRAM_FLAGS`                  | `D3D12DDI_SET_MLIR_PROGRAM_FLAGS_0119`              | Enum       | 🆕 **New**      |
-| MLIR Program Execution                        | `ID3D12GraphicsCommandList::DispatchGraph`      | `PFND3D12DDI_DISPATCH_GRAPH_0108`                   | Function   | ✅ Unchanged    |
-| MLIR Program Execution                        | `D3D12_DISPATCH_GRAPH_DESC`                     | `D3D12DDI_DISPATCH_GRAPH_DESC_0108`                 | Struct     | ⚠️ **Extended** |
-| MLIR Program Execution                        | `D3D12_DISPATCH_MODE`                           | `D3D12DDI_DISPATCH_MODE_0108`                       | Enum       | ⚠️ **Extended** |
-| MLIR Program Execution                        | `D3D12_DISPATCH_MODE_MLIR_PROGRAM`              | `D3D12DDI_DISPATCH_MODE_MLIR_PROGRAM`               | Enum Value | 🆕 **New**      |
-| MLIR Program Execution                        | `D3D12_MLIR_PROGRAM_BINDINGS`                   | `D3D12DDI_MLIR_PROGRAM_BINDINGS_0119`               | Struct     | 🆕 **New**      |
-| MLIR Program Execution                        | `D3D12_MLIR_PROGRAM_BINDING`                    | `D3D12DDI_MLIR_PROGRAM_BINDING_0119`                | Struct     | 🆕 **New**      |
-| MLIR Program Execution                        | `D3D12_MLIR_PROGRAM_BINDING_FLAGS`              | `D3D12DDI_MLIR_PROGRAM_BINDING_FLAGS_0119`          | Enum       | 🆕 **New**      |
-| MLIR Program Execution                        | `D3D12_MLIR_PROGRAM_BINDING_TYPE`               | `D3D12DDI_MLIR_PROGRAM_BINDING_TYPE_0119`           | Enum       | 🆕 **New**      |
-| MLIR Program Execution                        | `D3D12_MLIR_PROGRAM_CPU_BINDING`                | `D3D12DDI_MLIR_PROGRAM_CPU_INPUT_0119`              | Struct     | 🆕 **New**      |
+| Functionality                                 | API                                             | DDI                                                     | Type       | Modification   |
+| --------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------- | ---------- | -------------- |
+| MLIR Exchange                                 | `ID3D12Device::CheckFeatureSupport`             | `PFND3D12DDI_GETCAPS`                                   | Function   | ✅ Unchanged    |
+| MLIR Exchange                                 | `D3D12_FEATURE`                                 | `D3D12DDICAPS_TYPE`                                     | Enum       | ⚠️ **Extended** |
+| MLIR Exchange                                 | `D3D12_FEATURE_MLIR_EXCHANGE`                   | `D3D12DDICAPS_TYPE_MLIR_EXCHANGE_0119`                  | Enum Value | 🆕 **New**      |
+| MLIR Exchange                                 | `D3D12_FEATURE_DATA_MLIR_EXCHANGE`              | `D3D12DDI_FEATURE_DATA_MLIR_EXCHANGE_0119`              | Struct     | 🆕 **New**      |
+| MLIR Exchange                                 | `D3D12_MLIR_EXCHANGE_TYPE`                      | `D3D12DDI_MLIR_EXCHANGE_TYPE_0119`                      | Enum       | 🆕 **New**      |
+| MLIR Exchange                                 | `D3D12_VERSION_NUMBER`                          | `D3D12DDI_VERSION_NUMBER`                               | Struct     | ✅ Unchanged    |
+| -                                             | -                                               | -                                                       | -          | -              |
+| MLIR Compute Graph - Optional Feature Support | `ID3D12Device::CheckFeatureSupport`             | `PFND3D12DDI_GETCAPS`                                   | Function   | ✅ Unchanged    |
+| MLIR Compute Graph - Optional Feature Support | `D3D12_FEATURE`                                 | `D3D12DDICAPS_TYPE`                                     | Enum       | ⚠️ **Extended** |
+| MLIR Compute Graph - Optional Feature Support | `D3D12_FEATURE_MLIR_COMPUTE_GRAPH_SUPPORT`      | `D3D12DDICAPS_TYPE_MLIR_COMPUTE_GRAPH_SUPPORT_0119`     | Enum Value | 🆕 **New**      |
+| MLIR Compute Graph - Optional Feature Support | `D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_SUPPORT` | `D3D12DDI_FEATURE_DATA_MLIR_COMPUTE_GRAPH_SUPPORT_0119` | Struct     | 🆕 **New**      |
+| -                                             | -                                               | -                                                       | -          | -              |
+| MLIR Compute Graph - IR Version Support       | `ID3D12Device::CheckFeatureSupport`             | `PFND3D12DDI_GETCAPS`                                   | Function   | ✅ Unchanged    |
+| MLIR Compute Graph - IR Version Support       | `D3D12_FEATURE`                                 | `D3D12DDICAPS_TYPE`                                     | Enum       | ⚠️ **Extended** |
+| MLIR Compute Graph - IR Version Support       | `D3D12_FEATURE_MLIR_COMPUTE_GRAPH_VERSION`      | `D3D12DDICAPS_TYPE_MLIR_COMPUTE_GRAPH_VERSION_0119`     | Enum Value | 🆕 **New**      |
+| MLIR Compute Graph - IR Version Support       | `D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION` | `D3D12DDI_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION_0119` | Struct     | 🆕 **New**      |
+| -                                             | -                                               | -                                                       | -          | -              |
+| MLIR Program Creation                         | `ID3D12Device::CreateStateObject`               | `PFND3D12DDI_CREATE_STATE_OBJECT_0054`                  | Function   | ✅ Unchanged    |
+| MLIR Program Creation                         | `D3D12_STATE_OBJECT_DESC`                       | `D3D12DDIARG_CREATE_STATE_OBJECT_0054`                  | Struct     | ✅ Unchanged    |
+| MLIR Program Creation                         | `D3D12_STATE_OBJECT_TYPE`                       | `D3D12DDI_STATE_OBJECT_TYPE`                            | Enum       | ✅ Unchanged    |
+| MLIR Program Creation                         | `D3D12_STATE_SUBOBJECT`                         | `D3D12DDI_STATE_SUBOBJECT_0054`                         | Struct     | ✅ Unchanged    |
+| MLIR Program Creation                         | `D3D12_STATE_SUBOBJECT_TYPE`                    | `D3D12DDI_STATE_SUBOBJECT_TYPE`                         | Enum       | ⚠️ **Extended** |
+| MLIR Program Creation                         | `D3D12_STATE_SUBOBJECT_TYPE_MLIR_PROGRAM`       | `D3D12DDI_STATE_SUBOBJECT_TYPE_MLIR_PROGRAM`            | Enum Value | 🆕 **New**      |
+| MLIR Program Creation                         | `D3D12_MLIR_PROGRAM_DESC`                       | `D3D12DDI_MLIR_PROGRAM_DESC_0119`                       | Struct     | 🆕 **New**      |
+| -                                             | -                                               | -                                                       | -          | -              |
+| MLIR Program Addition                         | `ID3D12Device::AddToStateObject`                | `PFND3D12DDI_ADD_TO_STATE_OBJECT_0072`                  | Function   | ✅ Unchanged    |
+| -                                             | -                                               | -                                                       | -          | -              |
+| MLIR Program Execution                        | `ID3D12GraphicsCommandList::SetProgram`         | `PFND3D12DDI_SET_PROGRAM_0108`                          | Function   | ✅ Unchanged    |
+| MLIR Program Execution                        | `D3D12_SET_PROGRAM_DESC`                        | `D3D12DDI_SET_PROGRAM_DESC_0108`                        | Struct     | ⚠️ **Extended** |
+| MLIR Program Execution                        | `D3D12_PROGRAM_TYPE`                            | `D3D12DDI_PROGRAM_TYPE_0108`                            | Enum       | ⚠️ **Extended** |
+| MLIR Program Execution                        | `D3D12_PROGRAM_TYPE_MLIR_PROGRAM`               | `D3D12DDI_PROGRAM_TYPE_MLIR_PROGRAM_0119`               | Enum Value | 🆕 **New**      |
+| MLIR Program Execution                        | `D3D12_SET_MLIR_PROGRAM_DESC`                   | `D3D12DDI_SET_MLIR_PROGRAM_DESC_0119`                   | Struct     | 🆕 **New**      |
+| MLIR Program Execution                        | `D3D12_SET_MLIR_PROGRAM_FLAGS`                  | `D3D12DDI_SET_MLIR_PROGRAM_FLAGS_0119`                  | Enum       | 🆕 **New**      |
+| MLIR Program Execution                        | `ID3D12GraphicsCommandList::DispatchGraph`      | `PFND3D12DDI_DISPATCH_GRAPH_0108`                       | Function   | ✅ Unchanged    |
+| MLIR Program Execution                        | `D3D12_DISPATCH_GRAPH_DESC`                     | `D3D12DDI_DISPATCH_GRAPH_DESC_0108`                     | Struct     | ⚠️ **Extended** |
+| MLIR Program Execution                        | `D3D12_DISPATCH_MODE`                           | `D3D12DDI_DISPATCH_MODE_0108`                           | Enum       | ⚠️ **Extended** |
+| MLIR Program Execution                        | `D3D12_DISPATCH_MODE_MLIR_PROGRAM`              | `D3D12DDI_DISPATCH_MODE_MLIR_PROGRAM`                   | Enum Value | 🆕 **New**      |
+| MLIR Program Execution                        | `D3D12_MLIR_PROGRAM_BINDINGS`                   | `D3D12DDI_MLIR_PROGRAM_BINDINGS_0119`                   | Struct     | 🆕 **New**      |
+| MLIR Program Execution                        | `D3D12_MLIR_PROGRAM_BINDING`                    | `D3D12DDI_MLIR_PROGRAM_BINDING_0119`                    | Struct     | 🆕 **New**      |
+| MLIR Program Execution                        | `D3D12_MLIR_PROGRAM_BINDING_FLAGS`              | `D3D12DDI_MLIR_PROGRAM_BINDING_FLAGS_0119`              | Enum       | 🆕 **New**      |
+| MLIR Program Execution                        | `D3D12_MLIR_PROGRAM_BINDING_TYPE`               | `D3D12DDI_MLIR_PROGRAM_BINDING_TYPE_0119`               | Enum       | 🆕 **New**      |
+| MLIR Program Execution                        | `D3D12_MLIR_PROGRAM_CPU_BINDING`                | `D3D12DDI_MLIR_PROGRAM_CPU_INPUT_0119`                  | Struct     | 🆕 **New**      |
 
 ### DDI Function Tables
 
