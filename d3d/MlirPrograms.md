@@ -1,6 +1,6 @@
 # DirectX Support for MLIR Programs (Compute Graphs) <!-- omit in toc -->
 
-Version: v0.11 - May 4, 2026
+Version: v0.12 - July 29, 2026
 
 Today, work in DirectX is primarily conveyed through a low-level intermediate language (IL) known as *shader bytecode*. The instructions in shader bytecode are closer to an assembly level of abstraction (load, store, add, multiply, etc.), and compiled shaders are associated with an execution model that maps to a specific graphics pipeline stage (vertex, pixel, compute, etc.). This places shader ILs at a level just high enough for drivers to compile down to machine code, but too low to preserve details that are useful for domain-specific optimizations (e.g., fusing neural network layers in ML inference scenarios). This spec introduces extensions to the D3D12 API and DDI to enable compute work at a higher level than shader bytecode without resorting to metacommands.
 
@@ -26,22 +26,22 @@ This doc is organized into the following major sections:
 - [MLIR Programs](#mlir-programs)
   - [Interchange Format](#interchange-format)
   - [IR Versioning](#ir-versioning)
-  - [IR Identity](#ir-identity)
   - [Compile API](#compile-api)
   - [Dispatch API](#dispatch-api)
   - [Resource Binding](#resource-binding)
+    - [Buffers](#buffers)
+    - [Textures](#textures)
   - [Synchronizing Work](#synchronizing-work)
   - [Bytecode Validation](#bytecode-validation)
-  - [D3D Debug Layer](#d3d-debug-layer)
   - [Program Precompilation](#program-precompilation)
 - [D3D12 API](#d3d12-api)
   - [Device Methods](#device-methods)
     - [CheckFeatureSupport](#checkfeaturesupport)
       - [D3D12\_FEATURE](#d3d12_feature)
-      - [D3D12\_FEATURE\_DATA\_D3D12\_OPTIONS\_MLIR](#d3d12_feature_data_d3d12_options_mlir)
-      - [D3D12\_MLIR\_PROGRAMS\_TIER](#d3d12_mlir_programs_tier)
+      - [D3D12\_FEATURE\_DATA\_MLIR\_COMPUTE\_GRAPH\_VERSION](#d3d12_feature_data_mlir_compute_graph_version)
       - [D3D12\_FEATURE\_DATA\_MLIR\_EXCHANGE](#d3d12_feature_data_mlir_exchange)
-      - [D3D12\_FEATURE\_DATA\_MLIR\_INTERFACE\_SUPPORT](#d3d12_feature_data_mlir_interface_support)
+      - [D3D12\_MLIR\_EXCHANGE\_TYPE](#d3d12_mlir_exchange_type)
+      - [D3D12\_FEATURE\_DATA\_MLIR\_COMPUTE\_GRAPH\_SUPPORT](#d3d12_feature_data_mlir_compute_graph_support)
     - [CreateStateObject](#createstateobject)
       - [D3D12\_STATE\_OBJECT\_DESC](#d3d12_state_object_desc)
       - [D3D12\_STATE\_OBJECT\_TYPE](#d3d12_state_object_type)
@@ -66,17 +66,16 @@ This doc is organized into the following major sections:
   - [Usage Examples](#usage-examples)
     - [Compiling an MLIR program](#compiling-an-mlir-program)
     - [Executing an MLIR program](#executing-an-mlir-program)
-    - [Checking support for MLIR programs](#checking-support-for-mlir-programs)
-    - [Checking support for MLIR interfaces](#checking-support-for-mlir-interfaces)
+    - [Checking support for MLIR Compute Graphs](#checking-support-for-mlir-compute-graphs)
     - [Querying subgraph transformations](#querying-subgraph-transformations)
     - [Specializing a subgraph transformation](#specializing-a-subgraph-transformation)
 - [D3D12 DDI](#d3d12-ddi)
   - [DDI Function Tables](#ddi-function-tables)
   - [D3D12DDICAPS\_TYPE](#d3d12ddicaps_type)
-  - [D3D12DDI\_OPTIONS\_DATA\_MLIR](#d3d12ddi_options_data_mlir)
-  - [D3D12DDI\_MLIR\_EXCHANGE\_0119](#d3d12ddi_mlir_exchange_0119)
-  - [D3D12DDI\_MLIR\_PROGRAMS\_TIER](#d3d12ddi_mlir_programs_tier)
-  - [D3D12DDI\_MLIR\_INTERFACE\_SUPPORT\_0119](#d3d12ddi_mlir_interface_support_0119)
+  - [D3D12DDI\_FEATURE\_DATA\_MLIR\_EXCHANGE\_0119](#d3d12ddi_feature_data_mlir_exchange_0119)
+  - [D3D12DDI\_MLIR\_EXCHANGE\_TYPE\_0119](#d3d12ddi_mlir_exchange_type_0119)
+  - [D3D12DDI\_FEATURE\_DATA\_MLIR\_COMPUTE\_GRAPH\_SUPPORT\_0119](#d3d12ddi_feature_data_mlir_compute_graph_support_0119)
+  - [D3D12DDI\_FEATURE\_DATA\_MLIR\_COMPUTE\_GRAPH\_VERSION\_0119](#d3d12ddi_feature_data_mlir_compute_graph_version_0119)
   - [D3D12DDI\_STATE\_SUBOBJECT\_TYPE](#d3d12ddi_state_subobject_type)
   - [D3D12DDI\_MLIR\_PROGRAM\_DESC\_0119](#d3d12ddi_mlir_program_desc_0119)
   - [D3D12DDI\_SET\_PROGRAM\_DESC\_0108](#d3d12ddi_set_program_desc_0108)
@@ -89,9 +88,8 @@ This doc is organized into the following major sections:
   - [D3D12DDI\_MLIR\_PROGRAM\_BINDING\_0119](#d3d12ddi_mlir_program_binding_0119)
   - [D3D12DDI\_MLIR\_PROGRAM\_BINDING\_FLAGS\_0119](#d3d12ddi_mlir_program_binding_flags_0119)
   - [D3D12DDI\_MLIR\_PROGRAM\_BINDING\_TYPE\_0119](#d3d12ddi_mlir_program_binding_type_0119)
-  - [D3D12DDI\_MLIR\_PROGRAM\_CPU\_BINDING\_0119](#d3d12ddi_mlir_program_cpu_binding_0119)
+  - [D3D12DDI\_MLIR\_PROGRAM\_CPU\_INPUT\_0119](#d3d12ddi_mlir_program_cpu_input_0119)
 - [Appendices](#appendices)
-  - [DXCGC MLIR Interfaces](#dxcgc-mlir-interfaces)
   - [Metacommand Limitations](#metacommand-limitations)
   - [Memory Planning](#memory-planning)
   - [Execution Scheduling](#execution-scheduling)
@@ -133,7 +131,7 @@ Before delving into the D3D12 interfaces to support MLIR program compilation and
 
 We start with a high-level diagram illustrating the various components (white boxes) and MLIR-based intermediate representations (yellow boxes). DXCGC is a new compiler that accepts dataflow graphs as input ("CGC Input IR") instead of HLSL. DXCGC produces an optimized MLIR bytecode output ("CGC Output IR") as a result of high-level optimization and lowering, but it leaves the final hardware codegen as a step for the driver.
 
-```mermaid
+:::mermaid
 graph LR
     input_ir["CGC Input IR"]:::mlir
     lowering_irs["CGC Lowering IRs"]:::mlir
@@ -152,7 +150,8 @@ graph LR
 
     classDef mlir fill:#ffff55, color:black;
     classDef component fill:#ffffff, color:black;
-```
+:::
+
 There are four types of MLIRs to focus on in this document:
 
 1. **Input IR**: unoptimized hardware-agnostic representation of a graph produced by an importer/tool.
@@ -168,7 +167,7 @@ The next sections will focus on the first three IRs at a high level for illustra
 
 A simple network is visualized below with network layers in blue and resource bindings in green/yellow. This is called a dataflow graph, and it represents the semantic intent of the overall computation rather than the explicit implementation.
 
-```mermaid
+:::mermaid
 graph LR
     in[<b>argument</b><br/>'in']:::io;
     conv1["<b>cgc_op.convolution</b><br/>'conv1'"]:::layer;
@@ -195,7 +194,8 @@ graph LR
     classDef layer fill:#66bbff,color:black;
     classDef const fill:#bbff66,color:black;
     classDef io fill:#ffff66,color:black;
-```
+:::
+
 The example network in the human-readable textual form is shown below:
 
 ```mlir
@@ -239,7 +239,7 @@ The initial version of DXCGC relies on lowering to target-specific *connected su
 
 To extend our earlier example, let's say a hardware driver supports fusing `conv -> relu -> add` as a subgraph. Let's also say the upsample layer isn't explicitly implemented by the driver, so it ends up getting lowered into a fallback implementation (e.g., shader implementation). The lowered output would resemble the following:
 
-```mermaid
+:::mermaid
 graph LR
     in[<b>argument</b><br/>'in']:::io;
     conv1["<b>cgc_op.convolution</b><br/>'conv1'"]:::layer;
@@ -282,7 +282,8 @@ graph LR
     classDef layer fill:#66bbff,color:black;
     classDef const fill:#bbff66,color:black;
     classDef io fill:#ffff66,color:black;
-```
+:::
+
 DXCGC incorporates subgraphs using a declarative approach: targets tell DXCGC the types of subgraph *patterns* they support (independent of any specific graph), these patterns are applied by DXCGC transforming the Input IR, and each target is then responsible for providing implementations for matched subgraphs at runtime. Target subgraph patterns are not limited to fixed DAGs of operations shown in this contrived example. For example, a dynamic subgraph pattern could be "convolution followed by an arbitrary sequence of elementwise operations" (so-called epilogue fusion). Furthermore, subgraph patterns can declare constraints on data types, tensor shapes, memory layout, alignment, attribute values, and more. The details of how declarative subgraph patterns work are out of scope for this doc (falling under the "lowering IRs" mentioned earlier), and we will only look at the effects of subgraphs on resulting Output IR.
 
 The Output IR in MLIR text form reveals both the driver and fallback subgraphs as well as how they are connected. Subgraphs appear as externally implemented functions that are associated with a concrete DAG of input IR ops and tensors (the "functional definition"). We also see an "origin" attribute on each subgraph that makes clear which target is responsible for implementing it. Subgraph invocations are organized into *partitions*, another function-like concept that serves as a bridge between abstract *tensors* and concrete *memory references* -- we'll cover this in more detail in the next section. Finally, partition invocations are organized into a *program* that serves as the main entrypoint for end-to-end execution.
@@ -377,7 +378,7 @@ There are many details and concepts that are hidden here for simplicity, but the
 
 Partitions bridge the gap between abstract data views (tensors) and concrete data views (memrefs) as well as providing more control over execution scheduling. In this example the output IR comprises two partitions that must be independently executed with different resource bindings (solid arrows). This is visualized below, with the body of the `cgc.program` acting as a sequence of partition invocations. There is a dependency (dotted arrow) between the two partitions because of shared use of scratch memory.
 
-```mermaid
+:::mermaid
 graph
     subgraph Program Arguments
         in([%in]):::buffer;
@@ -416,7 +417,8 @@ graph
     classDef intermediate fill:#66ffff,color:black;
     classDef constant fill:#bbff66,color:black;
     classDef memview fill:#ffffff,color:black;
-```
+:::
+
 A few important things to note on the output IR:
 
 - Most performance is expected to originate from driver-declared subgraphs, but fallback is provided by the DXCGC runtime (explained later) for drivers that don't yet have support for direct MLIR lowering.
@@ -469,7 +471,7 @@ cgc.module
 
 Alternatively, DXCGC could have split output IR up into three partitions:
 
-```mermaid
+:::mermaid
 graph
     subgraph Program Arguments
         out([%out]):::buffer;
@@ -516,7 +518,8 @@ graph
     classDef intermediate fill:#66ffff,color:black;
     classDef constant fill:#bbff66,color:black;
     classDef memview fill:#ffffff,color:black;
-```
+:::
+
 Ultimately, both partitionings above are valid and have pros and cons. For example, the second finer-grained partitioning is useful if the subgraph ops are expensive to compile: the client may compile all three partitions in parallel on separate threads. In the first example, the driver is required to compile both subgraph ops on a single thread. In general, the granularity of partitioning represents a tunable knob that shifts responsibility from the D3D client (many small partitions) to the driver (few large partitions).
 
 ### Partition Binding
@@ -549,7 +552,7 @@ In the optimized MLIR representations (output IR or partition IR), each partitio
 - Bind point 5 = output
 - Bind point 6 = scratch
 
-The D3D client must supply 7 bindings when executing this partition. GPU virtual addresses are used to link the bind points with D3D resources. This topic is covered in more detail later on in the section [Resource Binding](#resource-binding).
+The D3D client must supply 7 bindings when executing this partition. This topic is covered in more detail later on in the section [Resource Binding](#resource-binding).
 
 ### DXCGC Runtime
 
@@ -560,7 +563,7 @@ As noted earlier, compiler targets such as a driver are only responsible for imp
 
 We are building an optional DXCGC runtime component that handles direct execution of output IR in a robust way, though it is intended as a starting point and not a requirement for end users. This will greatly simplify the execution flow while giving flexibility to modify or take control where needed.
 
-```mermaid
+:::mermaid
 sequenceDiagram
     participant compiler as DXCGC
     participant app as D3D Client / Application
@@ -576,7 +579,8 @@ sequenceDiagram
 
     int-->>-app: Command List
     app->>d3d: Submit Command List
-```
+:::
+
 For convenience this runtime component is built as a library with an API, but we do not envision this component as a versioned and opaque DLL component that ships in Windows; instead, this is something we intend to ship as an open-source sample that developers can modify and integrate with their engines as needed. The runtime is a helper layer that is not mandatory for correctly executing CGC Output IR, but it can simplify dependencies for applications that do not want to parse MLIR and handle fallback manually.
 
 ## MLIR Programs
@@ -593,33 +597,25 @@ The previous section covered DXCGC and its use of MLIR to represent an unoptimiz
 | Compile API        | Generic Program Subobject | MLIR Program Subobject    |
 | Dispatch API       | Commandlist Dispatch      | Commandlist DispatchGraph |
 
-We covered the compiler input/output representations for DXCGC IRs in the previous section. This section will focus on the interchange format, versioning, and compile/execute APIs.
+We covered the compiler input/output representations for CGC IRs in the previous section. This section will focus on the interchange format, versioning, and compile/execute APIs.
 
 ### Interchange Format
 
-DXCGC IRs are transmitted across component boundaries using [MLIR bytecode](https://mlir.llvm.org/docs/BytecodeFormat/), which allows two components with different versions of MLIR to serialize and deserialize correctly. In order to guarantee this, however, the MLIR itself must comprise dialects that are immutable; it is for this reason that CGC IRs use CGC dialects only, at least at the public interface.
+CGC IRs are transmitted across component boundaries using [MLIR bytecode](https://mlir.llvm.org/docs/BytecodeFormat/), which allows two components with different versions of MLIR to serialize and deserialize correctly. In order to guarantee this, however, the MLIR itself must comprise dialects that are immutable; it is for this reason that CGC IRs use CGC dialects only, at least at the public interface.
 
-MLIR has a [*built-in*](https://mlir.llvm.org/docs/Dialects/Builtin/) dialect that expresses some of the same concepts in CGC dialects (`func.func`, `module`, `tensor`, and others), and there are also upstream dialects that capture high-level operations similar to `cgc_op`. These dialects are not directly usable in DXCGC IRs since we cannot guarantee they will not be broken; however, within DXCGC itself (or drivers/targets that have their own version of MLIR/LLVM) it is feasible and encouraged to convert to upstream dialects where it makes sense.
+MLIR has a [*built-in*](https://mlir.llvm.org/docs/Dialects/Builtin/) dialect that expresses some of the same concepts in CGC dialects (`func.func`, `module`, `tensor`, and others), and there are also upstream dialects that capture high-level operations similar to `cgc_op`. These dialects are not directly usable in CGC IRs since we cannot guarantee they will not be broken; however, within DXCGC itself (or drivers/targets that have their own version of MLIR/LLVM) it is feasible and encouraged to convert to upstream dialects where it makes sense.
 
-Parsing MLIR bytecode directly without depending on MLIR itself is possible, but it is limited to obtaining top-level information like the names of dialects and operations used. Interpreting the semantics of the encoded dialects requires access to definitions of the dialects, and this ultimately means taking a build-time dependency on MLIR (and thus consuming the whole LLVM repo). As an optional component, we will provide a standalone helper library for lightweight traversal of DXCGC IRs with a simple interface for the convenience of D3D12 applications and PIX. This library will be fully open source so that projects can extend or modify it if needed; there is no need to use an "official" version of this library, since any project that already consumes MLIR might prefer to simply add the DXCGC dialects (also open source) into its codebase. We anticipate that drivers might not use this library at all -- some drivers already consume MLIR -- but the DXCGC-oriented interfaces may still be useful for reference or ease of use.
+Parsing MLIR bytecode directly without depending on MLIR itself is possible, but it is limited to obtaining top-level information like the names of dialects and operations used. Interpreting the semantics of the encoded dialects requires access to definitions of the dialects, and this ultimately means taking a build-time dependency on MLIR (and thus consuming the whole LLVM repo). As an optional component, we will provide a standalone helper library for lightweight traversal of CGC IRs with a simple interface for the convenience of D3D12 applications and PIX. This library will be fully open source so that projects can extend or modify it if needed; there is no need to use an "official" version of this library, since any project that already consumes MLIR might prefer to simply add the DXCGC dialects (also open source) into its codebase. We anticipate that drivers might not use this library at all -- some drivers already consume MLIR -- but the DXCGC-oriented interfaces may still be useful for reference or ease of use.
 
 ### IR Versioning
 
-DXCGC IRs are composed of CGC dialects that get versioned together using semantic versioning; if any CGC dialect is extended, then all CGC dialects collectively get bumped together into a new updated version. To keep things backward compatible, CGC dialects are only ever extended: existing ops/types/attributes are never changed or deleted. 
-
-### IR Identity
-
-MLIR bytecode by itself is insufficient to identify *what* the encoded data represents or how it should be used. For example, how does a component know that a serialized MLIR bytecode captures CGC Input IR or CGC Output IR? The dialects and ops within the MLIR might give some clues, but deducing the semantics from the presence of specific dialects or operations is brittle. For this reason, we use the notion of "MLIR interfaces" to define the role of different types of MLIR flowing through the DirectX stack. Some examples of MLIR interfaces for DXCGC are listed in [DXCGC MLIR Interfaces](#dxcgc-mlir-interfaces).
-
-Interfaces are associated with a GUID to help the compiler, runtime, drivers, and tools easily and quickly recognize, interpret, and validate any MLIR they might encounter. The GUID may be embedded directly in the MLIR bytecode (e.g., as an attribute of the top-level module), but it may also be stored externally from the MLIR bytecode. The D3D runtime will only permit MLIR bytecode to flow between the D3D client and driver when it recognizes the MLIR interface GUID, though this restriction may be relaxed when executing with developer mode.
-
-MLIR interfaces are immutable once introduced. In other words, the full set of MLIR dialects (and their respective operations, types, etc.) must be static when an interface is introduced. This is similar to how shader models define a set of requirements, and it avoids a moving target for drivers and tools to support. Extensions to any existing MLIR interface require a new interface name and GUID.
+CGC IRs are composed of CGC dialects that get versioned together using semantic versioning; if any CGC dialect is extended, then all CGC dialects collectively get bumped together into a new updated version. To keep things backward compatible, CGC dialects are only ever extended: existing ops/types/attributes are never changed or deleted. 
 
 ### Compile API
 
 A simplified view of MLIR program compilation is presented in this section. It is useful to contrast MLIR compilation with shader compilation, so we start with how compute shaders are compiled (using [*state objects*](https://microsoft.github.io/DirectX-Specs/d3d/Raytracing.html#state-objects) introduced in DXR and extended to support [*programs*](https://microsoft.github.io/DirectX-Specs/d3d/WorkGraphs.html#program) with work graphs; this is largely identical to the classic compute pipeline state object flow but uses a more generic API).
 
-```mermaid
+:::mermaid
 sequenceDiagram
     participant compiler as Shader Compiler
     participant app as Application
@@ -633,10 +629,11 @@ sequenceDiagram
     d3d->>+driver: Shader Bytecode & Root Signature
     driver-->>-d3d: ISA
     d3d-->>-app: Generic Program (alternatively: PSO)
-```
+:::
+
 MLIR compilation with DXCGC is illustrated below, and it is largely identical to how shaders are compiled into state objects. The key difference with MLIR program compilation is the need to loop over partitions in Output IR and compile each separately.
 
-```mermaid
+:::mermaid
 sequenceDiagram
     participant compiler as DXCGC
     participant app as Application
@@ -653,14 +650,15 @@ sequenceDiagram
         driver-->>-d3d: ISA
         d3d-->>-app: MLIR Program
     end
-```
+:::
+
 If there are multiple targets used in the compilation of CGC Input IR, then non-driver partitions need to be compiled using the appropriate APIs (not shown above). For example, a fallback target that provides shader or metacommand implementations of MLIR subgraphs will have partition IR translated to existing D3D12 APIs.
 
 ### Dispatch API
 
 Shaders and MLIR programs can coexist in the same D3D command list, though they will use separate interfaces for command recording (`Dispatch` for compute shaders, `DispatchGraph` for MLIR programs). Eventually the two paths even interoperate more closely (e.g., shaders calling MLIR programs), but this is out of scope for now.
 
-```mermaid
+:::mermaid
 sequenceDiagram
     participant app as Application
     participant cmdlist as ID3D12GraphicsCommandList
@@ -677,22 +675,42 @@ sequenceDiagram
         app->>cmdlist: SetProgram
         app->>cmdlist: DispatchGraph
     end
-```
+:::
+
 Once a command list is recorded, it can be submitted to a command queue like any other D3D work. The resource binding structure for shaders (generic programs or PSOs) is a root signature. The resource binding structure for MLIR programs is the list of partition bind points in the MLIR, and resource bindings are supplied directly to the `DispatchGraph` call.
 
 ### Resource Binding
 
-The two primary mechanisms for referencing device memory in D3D12 are *GPU virtual addresses* (GPUVAs) and *descriptors*, with the former being a raw pointer and the latter capturing richer semantics about how the memory is utilized or viewed.
+The two primary mechanisms for referencing device memory in D3D12 are *GPU virtual addresses* (GPUVAs) and *descriptors*, with the former being a raw pointer and the latter capturing richer semantics about how the memory is utilized or viewed. Both mechanisms are supported when binding MLIR programs for different reasons:
 
-Descriptors are essential for shader-based workloads, but they are slightly awkward for compute workloads that don't use compute shaders: the most appropriate view type for these workloads is a UAV, but some of the [fields](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_unordered_access_view_desc) aren't entirely applicable (DXGI formats might not match with tensor formats, element-sized offset with `FirstElement` is clunky, raw UAVs aren't relevant, etc.). UAVs are also subject to some alignment constraints that make them problematic for ML workloads (e.g., eliding joins/gathers by offsetting writes to addresses that may not align with 4 current byte requirement). In light of the drawbacks of using UAVs, MLIR programs bind through GPUVAs.
+1. GPU virtual addresses are convenient and natural to use with buffer resources. The metadata used to interpret the buffer is intrinsic in the IR, so it does not need to be replicated in a descriptor.
+2. GPU descriptors are necessary for texture resources. Additionally, descriptors offer a way to indirect buffer bindings through a descriptor heap which enables an application to reuse a command list that has been previously recorded.
 
-Resource bindings are always buffers with unordered access:
+#### Buffers
+
+When an argument is a `cgc.memref` in CGC IR, the application must supply a buffer binding that is either a GPUVA or a descriptor. If a descriptor is used then it must be created as a UAV using the [byte-offset API](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/D3D12RevisedCreateViews.md).
+
+- `Format` = `DXGI_FORMAT_(R8|R16|R32)_UINT`
+  - Selected as a "universal" format with 1/2/4-byte alignment. Typeless formats would be more appropriate, but they are not permitted in SRV/UAV creation (only for resource creation). The actual type is in the IR (e.g., `cgc.memref<3x!cgc.float16>` has FLOAT16 elements and would thus use R16_UINT). Sub-byte CGC formats are packed into R8_UINT in little endian order.
+- `ViewDimension` = `D3D12_(UAV|SRV)_DIMENSION_BUFFER_BYTE_OFFSET`
+  - Byte-offset buffer views are preferred to avoid the awkward element-sized alignment and length limitations in the legacy descriptor creation APIs.
+- `BufferByteOffset.Offset` = offset in bytes from the start of the buffer resource.
+  - Still bound by alignment of the underlying element type (e.g., R16_UINT for cgc.float16 has 2-byte alignment).
+- `BufferByteOffset.Size` = length in bytes of the view.
+  - Must be equivalent to the implied size of the type in CGC IR (e.g., `cgc.memref<3x!cgc.float16>` has a minimum implied length of 3*2=6 bytes).
+- `BufferByteOffset.StructureByteStride` = 0
+  - Structured buffers add no value outside of HLSL, so this must be zero.
+- `BufferByteOffset.Flags` = `D3D12_BUFFER_(UAV|SRV)_FLAG_NONE`
+  - Raw buffers add no value outside of HLSL (and impose the `R32_TYPELESS` format and a 16-byte alignment), so the RAW flag must not be set.
+
+Buffer resources are always unordered access:
 
 - **Enhanced Barrier Access**: all resource bindings must be accessible with `D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`.
-
 - **Legacy Barrier State**: all resource bindings must be accessible with `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_UNORDERED_ACCESS`.
 
-*NOTE: binding directly through GPUVAs also removes the opportunity for recording a command list once and swapping out the bindings with volatile descriptors. In order to enable this "command list reuse" optimization we would need to add an indirection, like binding a GPUVA to a buffer that itself contains the address for the actual data for the bind point. This may be added in the future with a flag like `D3D12_MLIR_PROGRAM_BINDING_FLAG_INDIRECT` or similar. Additionally, descriptor support may be added for texture access in the future.*
+#### Textures
+
+⚠️ *Texture resources are experimental and will be explained in an incremental extension to this doc.*
 
 ### Synchronizing Work
 
@@ -708,22 +726,13 @@ The DX shader compiler performs a [*bytecode validation*](https://github.com/mic
 
 For MLIR programs, the strategy is a relaxed since MLIR has built-in validation to guarantee the compiler does not emit invalid IR. Additionally, the Partition IR for subgraph workloads is largely dependent on externally defined implementations from the IHV driver target. The driver will only need to validate that it receives subgraphs compatible with what it previously declared, which cannot be rigorously enforced or checked by DXCGC or D3D12.
 
-### D3D Debug Layer
-
-When enabled, the D3D debug layers can perform some additional runtime validation to catch developer errors. For MLIR programs this validation includes:
-
-- Validate all bindings are non-null in the `DispatchGraph` arguments.
-  - MLIR programs do not have optional bindings since memory planning and algorithm selection is finalized during compilation. All bind points should point to valid resources or they would not exist as bind points in the output IR.
-- Validate bounds on GPUVA/CPU bindings by looking up respective bind point metadata in DX container.
-  - The debug layer can ensure resources bound by the application are suitably large to not have out-of-bounds access.
-
 ### Program Precompilation
 
 ⚠️ *This section covers a feature that is planned but not fully implemented.*
 
 [Advanced Shader Delivery](https://devblogs.microsoft.com/directx/introducing-advanced-shader-delivery/) (or ASD) transitions shader bytecode-to-ISA compilation from a runtime step to an offline step. Normally this process requires both the D3D runtime and a hardware driver, but the design calls for the IHV shader compiler to be hoisted out of the driver into a plugin that can be invoked in an offline compile toolchain. At a conceptual level, this offline compile process looks something like the diagram below (not entirely accurate -- read the full D3D specs for details):
 
-```mermaid
+:::mermaid
 erDiagram
     client["D3D Client"]
     toolchain["Offline Compile Toolchain"]
@@ -750,7 +759,8 @@ erDiagram
 
     toolchain 1 to 1+ psdb : creates
     psdb 1 to 1+ psdb_entry : contains
-```
+:::
+
 In a nutshell:
 
 - The D3D client produces a *state object database* (SODB) comprising descriptions of the *state objects* (SOs) or *pipeline state objects* (PSOs) likely to be encountered at runtime along with associated shader bytecode (DXIL). In other words, all of the arguments to any future invocations of `CreateStateObject` or `CreatePipelineState` are bundled up in this SODB.
@@ -785,8 +795,8 @@ HRESULT CheckFeatureSupport(
 
 This is the generic D3D API for querying feature support and isn't specific to MLIR programs.
 
-- To query for MLIR program support, pass [D3D12_FEATURE_D3D12_OPTIONS_MLIR](#d3d12_feature) for Feature, and point pFeatureSupportData to a [D3D12_FEATURE_DATA_D3D12_OPTIONS_MLIR](#d3d12_feature_data_d3d12_options_mlir) variable. This has a member `D3D12_MLIR_PROGRAMS_TIER MlirProgramsTier`.
-- To query for MLIR interface support, pass [D3D12_FEATURE_MLIR_INTERFACE_SUPPORT](#d3d12_feature) for Feature, and point pFeatureSupportData to a [D3D12_FEATURE_DATA_MLIR_INTERFACE_SUPPORT](#d3d12_feature_data_mlir_interface_support) variable. This allows the client to check a number of specific MLIR interfaces.
+- To query for general CGC IR support, pass [D3D12_FEATURE_MLIR_COMPUTE_GRAPH_VERSION](#d3d12_feature) for Feature, and point pFeatureSupportData to a [D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION](#d3d12_feature_data_mlir_compute_graph_version) variable. The call succeeds whenever the struct size is valid; the returned `HighestVersion` indicates the max IR version supported by the implementation, clamped to the version requested by the caller. A returned version of `0` means compute graphs are not supported.
+- To query for optional compute graph features, pass [D3D12_FEATURE_MLIR_COMPUTE_GRAPH_SUPPORT](#d3d12_feature) for Feature, and point pFeatureSupportData to a [D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_SUPPORT](#d3d12_feature_data_mlir_compute_graph_support) variable. This allows the client to check a number of optional features that aren't required for a specific CGC IR version.
 - To send/receive MLIR data specific to an MLIR interface (e.g., declarative subgraph transformations), pass [D3D12_FEATURE_MLIR_EXCHANGE](#d3d12_feature) for Feature, and point pFeatureSupportData to a [D3D12_FEATURE_DATA_MLIR_EXCHANGE](#d3d12_feature_data_mlir_exchange) variable.
 
 ##### D3D12_FEATURE
@@ -799,55 +809,67 @@ enum D3D12_FEATURE
     ...
     D3D12_FEATURE_BYTECODE_BYPASS_HASH_SUPPORTED = 57,
     ...
-+   D3D12_FEATURE_D3D12_OPTIONS_MLIR             = 68,
++   D3D12_FEATURE_MLIR_COMPUTE_GRAPH_SUPPORT     = 68,
 +   D3D12_FEATURE_MLIR_EXCHANGE                  = 69,
-+   D3D12_FEATURE_MLIR_INTERFACE_SUPPORT         = 70,
++   D3D12_FEATURE_MLIR_COMPUTE_GRAPH_VERSION     = 70,
 };
 ```
 
 Three new values are added:
 
-- `D3D12_FEATURE_D3D12_OPTIONS_MLIR`: for querying general MLIR program support. See [D3D12_FEATURE_DATA_D3D12_OPTIONS_MLIR](#d3d12_feature_data_d3d12_options_mlir)
-- `D3D12_FEATURE_MLIR_EXCHANGE`: for queries encoded as MLIR. See [D3D12_FEATURE_DATA_MLIR_EXCHANGE](#d3d12_feature_data_mlir_exchange)
-- `D3D12_FEATURE_MLIR_INTERFACE_SUPPORT`: for querying specific MLIR interface support. See [D3D12_FEATURE_DATA_MLIR_INTERFACE_SUPPORT](#d3d12_feature_data_mlir_interface_support)
+- `D3D12_FEATURE_MLIR_COMPUTE_GRAPH_SUPPORT`: for querying optional compute graph features. See [D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_SUPPORT](#d3d12_feature_data_mlir_compute_graph_support).
+- `D3D12_FEATURE_MLIR_EXCHANGE`: for queries encoded as MLIR. See [D3D12_FEATURE_DATA_MLIR_EXCHANGE](#d3d12_feature_data_mlir_exchange).
+- `D3D12_FEATURE_MLIR_COMPUTE_GRAPH_VERSION`: for querying general support for compute graphs. See [D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION](#d3d12_feature_data_mlir_compute_graph_version).
 
-##### D3D12_FEATURE_DATA_D3D12_OPTIONS_MLIR
+##### D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION
 
 🆕 *This is a new D3D12 struct.*
 
 ```cpp
-struct D3D12_FEATURE_DATA_D3D12_OPTIONS_MLIR
+struct D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION
 {
-    _Out_ D3D12_MLIR_PROGRAMS_TIER MlirProgramsTier;
+    _Inout_ D3D12_VERSION_NUMBER HighestVersion;
 };
 ```
 
-This struct reports support for MLIR programs (not specific to any MLIR interface).
-
-| Member                     | Definition                                                                                                                                      |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `D3D12_MLIR_PROGRAMS_TIER` | Indicates support for MLIR programs in general (not specific to any MLIR interface). See [D3D12_MLIR_PROGRAMS_TIER](#d3d12_mlir_programs_tier). |
-
-##### D3D12_MLIR_PROGRAMS_TIER
-
-🆕 *This is a new D3D12 enum.*
+This struct reports the implementation's highest supported version of CGC IR. `D3D12_VERSION_NUMBER` is an existing struct that provides a 64-bit encoding of four 16-bit values:
 
 ```cpp
-enum D3D12_MLIR_PROGRAMS_TIER
+typedef union D3D12_VERSION_NUMBER
 {
-    D3D12_MLIR_PROGRAMS_TIER_NOT_SUPPORTED = 0,
-    D3D12_MLIR_PROGRAMS_TIER_1_0           = 10,
-    D3D12_MLIR_PROGRAMS_TIER_2_0           = 20,
-};
+    UINT64 Version;
+    UINT16 VersionParts[4];
+} D3D12_VERSION_NUMBER;
 ```
 
-Expresses support for MLIR programs. Support is typically additive, with higher tiers being more capable than earlier tiers.
+The semantic versioning parts of a CGC IR version (major, minor, patch, experimental flag) map to the `D3D12_VERSION_NUMBER` fields as follows:
 
-| Member                                   | Definition                                                                                                                                                                                 |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `D3D12_MLIR_PROGRAMS_TIER_NOT_SUPPORTED` | No support for MLIR programs on the device. Attempts to create any state objects containing MLIR programs will fail and using related APIs on command lists results in undefined behavior. |
-| `D3D12_MLIR_PROGRAMS_TIER_1_0`           | The device supports MLIR programs with `D3D12_MLIR_PROGRAM_BINDING_TYPE_GPU` bindings.                                                                                                     |
-| `D3D12_MLIR_PROGRAMS_TIER_2_0`           | The device supports MLIR programs with `D3D12_MLIR_PROGRAM_BINDING_TYPE_GPU` and `D3D12_MLIR_PROGRAM_BINDING_TYPE_CPU` bindings.                                                           |
+| CGC IR Version         | Version                 | VersionParts[0] | VersionParts[1] | VersionParts[2] | VersionParts[3] |
+| ---------------------- | ----------------------- | --------------- | --------------- | --------------- | --------------- |
+| `1.0.0`                | `0x0001'0000'0000'0000` | 0               | 0               | 0               | 1               |
+| `1.0.2`                | `0x0001'0000'0002'0000` | 0               | 2               | 0               | 1               |
+| `1.2.3` (experimental) | `0x0001'0002'0003'0001` | 1               | 3               | 2               | 1               |
+
+The initial value of `D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION::HighestVersion` limits the version returned from the implementation. For example, if an app wants to check if the implementation supports CGC IR versions *up to and including 1.0.2 (but no higher)*:
+
+```cpp
+D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION cgcVersion = { .HighestVersion = { .Version = 0x0001'0000'0002'0000 } };
+if (SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_MLIR_COMPUTE_GRAPH_VERSION, &cgcVersion, sizeof(cgcVersion))) &&
+    cgcVersion.HighestVersion.Version != 0)
+{
+    // Example: implementation's highest version is 1.0.0, return value is 0x0001'0000'0000'0000
+    // Example: implementation's highest version is 1.0.1, return value is 0x0001'0000'0001'0000
+    // Example: implementation's highest version is 1.0.2, return value is 0x0001'0000'0002'0000
+    // Example: implementation's highest version is 1.0.3, return value is 0x0001'0000'0002'0000
+}
+```
+
+The initial major/minor/patch parts may be set to `0xFFFF` if capping is not desired. Examples for initial values:
+
+- To check the implementation's true maximum supported IR version: `0xFFFF'FFFF'FFFF'0000`. 
+- To check the implementation's support up to and including 1.0.x (where x is any value): `0x0001'0000'FFFF'0000`.
+
+The experimental version part should be 0 or 1, with 0 indicating stable and 1 indicating experimental.
 
 ##### D3D12_FEATURE_DATA_MLIR_EXCHANGE
 
@@ -856,50 +878,69 @@ Expresses support for MLIR programs. Support is typically additive, with higher 
 ```cpp
 struct D3D12_FEATURE_DATA_MLIR_EXCHANGE
 {
-    GUID MlirInterface;
-    _Field_size_bytes_full_opt_(InputDataSizeInBytes) const void* pInputData;
+    D3D12_MLIR_EXCHANGE_TYPE Type;
+    D3D12_VERSION_NUMBER IRVersion;
+    _In_reads_bytes_(InputDataSizeInBytes) const void* pInputData;
     _In_ SIZE_T InputDataSizeInBytes;
-    _Field_size_bytes_full_opt_(OutputDataSizeInBytes) void* pOutputData;
-    _In_ SIZE_T* OutputDataSizeInBytes;
+    _Out_writes_bytes_opt_(*OutputDataSizeInBytes) void* pOutputData;
+    _Inout_ SIZE_T* OutputDataSizeInBytes;
 };
 ```
 
-This struct is for exchanging MLIR data (both input and output data in the [DX Container format](#interchange-format)) that conveys ML compiler-specific information including but not limited to:
+This struct is for exchanging MLIR bytecode that conveys ML compiler-specific information including but not limited to:
 
 - Discovering a driver's declarative subgraph transformation capabilities independent of any network or tensor shapes.
 - Discovering GPU hardware properties like cache sizes, tensor formats, MMA instruction alignments, and so on used for driving compilation decisions.
 - Validating a driver's subgraph transformation with concrete tensor shapes.
 
-It is not expected that a D3D12 app would directly invoke this API, and the MLIR interface GUIDs are externally defined to decouple churn in requirements from the D3D API.
+It is not expected that a D3D12 app would directly invoke this API. The exchange payloads are MLIR bytecode whose semantics are defined externally to D3D (selected by `D3D12_MLIR_EXCHANGE_TYPE` and `IRVersion`), which decouples churn in ML compiler requirements from the D3D API.
 
-| Member                  | Definition                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MlirInterface`         | Unique identifier that captures the semantics and structure of the exchange. See [DXCGC MLIR Interfaces](#dxcgc-mlir-interfaces) for examples. If the runtime does not recognize the GUID, it will fail the API call (before the respective DDI is called) and return `E_INVALIDARG`; however, this block is removed when executing with Windows developer mode active. The driver should return `DXGI_ERROR_UNSUPPORTED` if it does not support the MLIR interface. |
-| `pInputData`            | Pointer to input data (in [DX Container format](#interchange-format)) supplied by client and read by driver. May be null for some queries. Neither the runtime nor drivers may access this pointer once `CheckFeatureSupport` returns (the D3D client may free it immediately on return).                                                                                                                                                                       |
-| `InputDataSizeInBytes`  | Size in bytes of `pInputData`.                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `pOutputData`           | Pointer to output data (in [DX Container format](#interchange-format)) written by driver and read by client. May be null for some queries. Neither the runtime nor drivers may access this pointer once `CheckFeatureSupport` returns (the D3D client may free it immediately on return).                                                                                                                                                                       |
-| `OutputDataSizeInBytes` | Pointer to variable to store the size in bytes of `pOutputData`. This is written by the driver.                                                                                                                                                                                                                                                                                                                                                                      |
+| Member                  | Definition                                                                                                                                                                                                                                         |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Type`                  | Captures the semantics and structure of the exchange. The driver should return `DXGI_ERROR_UNSUPPORTED` if it does not support the exchange type.                                                                                                  |
+| `IRVersion`             | Specifies the IR version used for both input MLIR bytecode (if any) and output MLIR bytecode.                                                                                                                                                      |
+| `pInputData`            | Pointer to input MLIR bytecode supplied by client and read by driver. May be null for some queries. Neither the runtime nor drivers may access this pointer once `CheckFeatureSupport` returns (the D3D client may free it immediately on return). |
+| `InputDataSizeInBytes`  | Size in bytes of `pInputData`.                                                                                                                                                                                                                     |
+| `pOutputData`           | Pointer to output MLIR bytecode written by driver and read by client. May be null for some queries. Neither the runtime nor drivers may access this pointer once `CheckFeatureSupport` returns (the D3D client may free it immediately on return). |
+| `OutputDataSizeInBytes` | Pointer to variable to store the size in bytes of `pOutputData`. This is written by the driver.                                                                                                                                                    |
 
-##### D3D12_FEATURE_DATA_MLIR_INTERFACE_SUPPORT
+##### D3D12_MLIR_EXCHANGE_TYPE
+
+🆕 *This is a new D3D12 enum.*
+
+```cpp
+enum D3D12_MLIR_EXCHANGE_TYPE
+{
+    D3D12_MLIR_EXCHANGE_TYPE_COMPUTE_GRAPH_SUBGRAPH_DECLARATION = 0,
+    D3D12_MLIR_EXCHANGE_TYPE_COMPUTE_GRAPH_SUBGRAPH_SPECIALIZATION = 1,
+    D3D12_MLIR_EXCHANGE_TYPE_COMPUTE_GRAPH_TARGET_CONFIG = 2,
+};
+```
+
+| Value                                                            | Definition                                                                                                               |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `D3D12_MLIR_EXCHANGE_TYPE_COMPUTE_GRAPH_SUBGRAPH_DECLARATION`    | Used to receive an implementation's subgraph patterns. `pInputData` is null.                                             |
+| `D3D12_MLIR_EXCHANGE_TYPE_COMPUTE_GRAPH_SUBGRAPH_SPECIALIZATION` | Used to specialize a subgraph matched with one of the implementation's patterns. `pInputData` is the subgraph signature. |
+| `D3D12_MLIR_EXCHANGE_TYPE_COMPUTE_GRAPH_TARGET_CONFIG`           | Used to receive an implementation's target configuration. `pInputData` is null.                                          |
+
+##### D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_SUPPORT
 
 🆕 *This is a new D3D12 struct.*
 
 ```cpp
-struct D3D12_FEATURE_DATA_MLIR_INTERFACE_SUPPORT
+struct D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_SUPPORT
 {
-    _In_ UINT NumMlirInterfaces;
-    _In_reads_(*NumMlirInterfaces) const GUID *pMlirInterfacesRequested;
-    _Out_writes_(*NumMlirInterfaces) BOOL *pMlirInterfacesSupported;
+    _Out_ BOOL MultisubgraphPartitionsSupported;
+    _Out_ BOOL CpuBindingSupported;
 };
 ```
 
-This struct reports support for specific MLIR interfaces.
+This struct reports support for optional compute graph features (i.e., not baseline requirements in a CGC IR version).
 
-| Member                     | Definition                                                                                                                  |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `NumMlirInterfaces`        | The number of MLIR interfaces the client is interested in using. See [IR Identity](#ir-identity). |
-| `pMlirInterfacesRequested` | An array of GUIDs associated with the MLIR interfaces the client is interested in using.                                    |
-| `pMlirInterfacesSupported` | An array of booleans indicating if the MLIR interface is supported.                                                         |
+| Member                             | Definition                                                                           |
+| ---------------------------------- | ------------------------------------------------------------------------------------ |
+| `MultisubgraphPartitionsSupported` | The implementation supports partitions comprising multiple subgraph invocations.     |
+| `CpuBindingSupported`              | The implementation supports binding CPU pointers to MLIR programs containing CGC IR. |
 
 #### CreateStateObject
 
@@ -937,15 +978,15 @@ struct D3D12_STATE_OBJECT_DESC
 
 When compiling MLIR program workloads, type `Type` should be set to `D3D12_STATE_OBJECT_TYPE_EXECUTABLE` with at least one subobject of type `D3D12_STATE_SUBOBJECT_TYPE_MLIR_PROGRAM`.
 
-| Member          | Definition                                                  |
-| --------------- | ----------------------------------------------------------- |
-| `Type`          | See [D3D12_STATE_OBJECT_TYPE](#d3d12_state_object_type). |
-| `NumSubobjects` | Pointer to state object description of the specified type.  |
-| `pSubobjects`   | Pointer to an array of subobjects.                          |
+| Member          | Definition                                                 |
+| --------------- | ---------------------------------------------------------- |
+| `Type`          | See [D3D12_STATE_OBJECT_TYPE](#d3d12_state_object_type).   |
+| `NumSubobjects` | Pointer to state object description of the specified type. |
+| `pSubobjects`   | Pointer to an array of subobjects.                         |
 
 ##### D3D12_STATE_OBJECT_TYPE
 
-✅ *This is an existing D3D12 struct that is **unchanged**.*
+✅ *This is an existing D3D12 enum that is **unchanged**.*
 
 ```cpp
 enum D3D12_STATE_OBJECT_TYPE
@@ -991,10 +1032,9 @@ Subobject within a state object. To encapsulate an MLIR program workload, the su
 enum D3D12_STATE_SUBOBJECT_TYPE
 {
     ...   
-    D3D12_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL2 = 30,          
--   D3D12_STATE_SUBOBJECT_TYPE_MAX_VALID      = ( D3D12_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL2 + 1 ) 
-+   D3D12_STATE_SUBOBJECT_TYPE_MLIR_PROGRAM   = 31,
-+   D3D12_STATE_SUBOBJECT_TYPE_MAX_VALID      = ( D3D12_STATE_SUBOBJECT_TYPE_MLIR_PROGRAM + 1 ) 
+    D3D12_STATE_SUBOBJECT_TYPE_PIXEL_SHADER_PARTIAL_PROGRAM_FIELDS = 41,
++   D3D12_STATE_SUBOBJECT_TYPE_MLIR_PROGRAM = 42, // D3D12_MLIR_PROGRAM_DESC
+    D3D12_STATE_SUBOBJECT_TYPE_PSDB = 43,
 };
 ```
 
@@ -1018,7 +1058,7 @@ struct D3D12_MLIR_PROGRAM_DESC
 | Member                | Definition                                                                                                                                                                                                                                                   |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `ProgramName`         | Name to assign to the MLIR program in the state object. This can be used in APIs that need to reference MLIR program definitions, like `ID3D12StateObjectProperties1::GetProgramIdentifier()`. There can be multiple MLIR programs in a single state object. |
-| `pBytecode`           | A pointer to the MLIR program partition as MLIR bytecode wrapped in a [DX Container](#interchange-format). Neither the runtime nor drivers may access this pointer once `CreateStateObject` returns (the D3D client may free it immediately on return). |
+| `pBytecode`           | A pointer to the MLIR program partition as MLIR bytecode. Neither the runtime nor drivers may access this pointer once `CreateStateObject` returns (the D3D client may free it immediately on return).      |
 | `BytecodeSizeInBytes` | Size of `pBytecode` in bytes.                                                                                                                                                                                                                                |
 
 #### AddToStateObject
@@ -1121,7 +1161,7 @@ Describes the program to set as active on the command list.
 
 | Member                                       | Definition                                                                                                                                                                                    |
 | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `D3D12_PROGRAM_IDENTIFIER ProgramIdentifier` | ID of the MLIR program to set. This value may be retrieved by looking up the ID using the name of an MLIR program in a state object with `ID3D12StateObjectProperties1::GetProgramIdentifer`. |
+| `D3D12_PROGRAM_IDENTIFIER ProgramIdentifier` | ID of the MLIR program to set. This value may be retrieved by looking up the ID using the name of an MLIR program in a state object with `ID3D12StateObjectProperties1::GetProgramIdentifier`. |
 | `D3D12_SET_MLIR_PROGRAM_FLAGS Flags`         | See [D3D12_SET_MLIR_PROGRAM_FLAGS](#d3d12_set_mlir_program_flags).                                                                                                                            |
 
 ##### D3D12_SET_MLIR_PROGRAM_FLAGS
@@ -1158,7 +1198,7 @@ The `DispatchGraph` method may be used to dispatch both work graphs and MLIR pro
 ```diff
 struct D3D12_DISPATCH_GRAPH_DESC
 {
-    D3D12_DISPATCH_GRAPH_MODE Mode;
+    D3D12_DISPATCH_MODE Mode;
     union
     {
         D3D12_NODE_CPU_INPUT        NodeCPUInput;
@@ -1172,13 +1212,13 @@ struct D3D12_DISPATCH_GRAPH_DESC
 
 This struct supplies resource binding information for a single `DispatchGraph` call. For MLIR program execution, the mode must be set to `D3D12_DISPATCH_MODE_MLIR_PROGRAM` and the `MlirProgramBindings` union member used for supplying bindings.
 
-| Member              | Definition                                                    |
-| ------------------- | ------------------------------------------------------------- |
-| `NodeCPUInput`      | Not relevant to this spec.                                    |
-| `NodeGPUInput`      | Not relevant to this spec.                                    |
-| `MultiNodeCPUInput` | Not relevant to this spec.                                    |
-| `MultiNodeGPUInput` | Not relevant to this spec.                                    |
-| `MlirProgramBindings`  | See [D3D12_MLIR_PROGRAM_BINDINGS](#d3d12_mlir_program_bindings). |
+| Member                | Definition                                                       |
+| --------------------- | ---------------------------------------------------------------- |
+| `NodeCPUInput`        | Not relevant to this spec.                                       |
+| `NodeGPUInput`        | Not relevant to this spec.                                       |
+| `MultiNodeCPUInput`   | Not relevant to this spec.                                       |
+| `MultiNodeGPUInput`   | Not relevant to this spec.                                       |
+| `MlirProgramBindings` | See [D3D12_MLIR_PROGRAM_BINDINGS](#d3d12_mlir_program_bindings). |
 
 ##### D3D12_DISPATCH_MODE
 
@@ -1212,9 +1252,9 @@ struct D3D12_MLIR_PROGRAM_BINDINGS
 
 This struct is used to supply resource bindings for one execution of an active MLIR program.
 
-| Member        | Definition                                                                                                                                                                                                                                                                                     |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NumBindings` | The size of the `pBindings` array.                                                                                                                                                                                                                                                             |
+| Member        | Definition                                                                                                                                                                                                                                                                              |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NumBindings` | The size of the `pBindings` array.                                                                                                                                                                                                                                                      |
 | `pBindings`   | Pointer to an array of bindings. See [D3D12_MLIR_PROGRAM_BINDING](#d3d12_mlir_program_binding). Neither the runtime nor drivers may access this pointer once `DispatchGraph` returns (the D3D client may free it immediately on return). The runtime will not make a copy of this data. |
 
 ##### D3D12_MLIR_PROGRAM_BINDING
@@ -1229,7 +1269,8 @@ struct D3D12_MLIR_PROGRAM_BINDING
     D3D12_MLIR_PROGRAM_BINDING_TYPE Type;
     union
     {
-        D3D12_GPU_VIRTUAL_ADDRESS_RANGE GpuBinding;
+        D3D12_GPU_VIRTUAL_ADDRESS_RANGE GpuVirtualAddressBinding;
+        D3D12_GPU_DESCRIPTOR_HANDLE GpuDescriptorBinding;
         D3D12_MLIR_PROGRAM_CPU_BINDING CpuBinding;
     };
 };
@@ -1237,13 +1278,14 @@ struct D3D12_MLIR_PROGRAM_BINDING
 
 This struct is used to supply bindings for an MLIR program partition bind point. A single binding may populate one bind point. Bind points may be fed with either GPU data (typically large tensors or buffers) or CPU data (typically small parameters that don't affect compilation). If CPU data is supplied, the runtime must copy data during recording such that the application's CPU memory for the parameters is no longer referenced when the call returns.
 
-| Member           | Definition                                                                       |
-| ---------------- | -------------------------------------------------------------------------------- |
-| `BindPointIndex` | Index of the bind point to populate.                                             |
-| `Flags`          | See [D3D12_MLIR_PROGRAM_BINDING_FLAGS](#d3d12_mlir_program_binding_flags). |
-| `Type`           | Indicates the type of binding and thus which union field is used.                |
-| `GpuBinding`     | Pointer to GPU memory.                                                           |
-| `CpuBinding`     | Pointer to CPU memory.                                                           |
+| Member                     | Definition                                                                 |
+| -------------------------- | -------------------------------------------------------------------------- |
+| `BindPointIndex`           | Index of the bind point to populate.                                       |
+| `Flags`                    | See [D3D12_MLIR_PROGRAM_BINDING_FLAGS](#d3d12_mlir_program_binding_flags). |
+| `Type`                     | Indicates the type of binding and thus which union field is used.          |
+| `GpuVirtualAddressBinding` | Pointer to GPU memory.                                                     |
+| `GpuDescriptorBinding`     | Handle to a GPU descriptor.                                                |
+| `CpuBinding`               | Pointer to CPU memory.                                                     |
 
 ##### D3D12_MLIR_PROGRAM_BINDING_FLAGS
 
@@ -1252,11 +1294,13 @@ This struct is used to supply bindings for an MLIR program partition bind point.
 ```cpp
 enum D3D12_MLIR_PROGRAM_BINDING_FLAGS
 {
-    D3D12_MLIR_PROGRAM_BINDING_FLAG_NONE = 0,
+    D3D12_MLIR_PROGRAM_BINDING_FLAG_NONE = 0x0,
+    D3D12_MLIR_PROGRAM_BINDING_FLAG_VOLATILE_DESCRIPTOR = 0x1,
 };
+DEFINE_ENUM_FLAG_OPERATORS( D3D12_MLIR_PROGRAM_BINDING_FLAGS )
 ```
 
-This enum is reserved for future use.
+The `D3D12_MLIR_PROGRAM_BINDING_FLAG_VOLATILE_DESCRIPTOR` flag requires that implementations dereference GPU descriptor handles each time a command list is submitted for execution, not when it is recorded.
 
 ##### D3D12_MLIR_PROGRAM_BINDING_TYPE
 
@@ -1265,15 +1309,17 @@ This enum is reserved for future use.
 ```cpp
 enum D3D12_MLIR_PROGRAM_BINDING_TYPE
 {
-    D3D12_MLIR_PROGRAM_BINDING_TYPE_GPU = 0,
-    D3D12_MLIR_PROGRAM_BINDING_TYPE_CPU = 1,
+    D3D12_MLIR_PROGRAM_BINDING_TYPE_GPU_VIRTUAL_ADDRESS = 0,
+    D3D12_MLIR_PROGRAM_BINDING_TYPE_GPU_DESCRIPTOR      = 1,
+    D3D12_MLIR_PROGRAM_BINDING_TYPE_CPU                 = 2,
 };
 ```
 
-| Value                                 | Definition                                                       |
-| ------------------------------------- | ---------------------------------------------------------------- |
-| `D3D12_MLIR_PROGRAM_BINDING_TYPE_GPU` | Indicates a binding of GPU data in `D3D12_MLIR_PROGRAM_BINDING`. |
-| `D3D12_MLIR_PROGRAM_BINDING_TYPE_CPU` | Indicates a binding of CPU data in `D3D12_MLIR_PROGRAM_BINDING`. |
+| Value                                                 | Definition                                                                         |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `D3D12_MLIR_PROGRAM_BINDING_TYPE_GPU_VIRTUAL_ADDRESS` | Indicates a binding of `GpuVirtualAddressBinding` in `D3D12_MLIR_PROGRAM_BINDING`. |
+| `D3D12_MLIR_PROGRAM_BINDING_TYPE_GPU_DESCRIPTOR`      | Indicates a binding of `GpuDescriptorBinding` `D3D12_MLIR_PROGRAM_BINDING`.        |
+| `D3D12_MLIR_PROGRAM_BINDING_TYPE_CPU`                 | Indicates a binding of `CpuBinding` in `D3D12_MLIR_PROGRAM_BINDING`.               |
 
 ##### D3D12_MLIR_PROGRAM_CPU_BINDING
 
@@ -1334,68 +1380,38 @@ programDesc.MlirProgram.ProgramIdentifier = programId;
 programDesc.MlirProgram.Flags = D3D12_SET_MLIR_PROGRAM_FLAG_NONE;
 commandList->SetProgram(&programDesc);
 
-// Associate bind points with GPUVAs.
-std::array<D3D12_MLIR_PROGRAM_BINDING, 5> bindings;
+// Associate bind points with GPUVA ranges.
+std::array<D3D12_MLIR_PROGRAM_BINDING, 5> bindings = {};
 for (uint32_t i = 0; i < bindings.size(); i++)
 {
     bindings[i].BindPointIndex = i;
-    bindings[i].Type = D3D12_MLIR_PROGRAM_BINDING_TYPE_GPU;
-    bindings[i].GpuBinding = resources[i]->GetGPUVirtualAddress();
+    bindings[i].Flags = D3D12_MLIR_PROGRAM_BINDING_FLAG_NONE;
+    bindings[i].Type = D3D12_MLIR_PROGRAM_BINDING_TYPE_GPU_VIRTUAL_ADDRESS;
+    bindings[i].GpuVirtualAddressBinding.StartAddress = resources[i]->GetGPUVirtualAddress();
+    bindings[i].GpuVirtualAddressBinding.SizeInBytes = resources[i]->GetDesc().Width;
 }
 
 D3D12_DISPATCH_GRAPH_DESC dispatchDesc = {};
 dispatchDesc.Mode = D3D12_DISPATCH_MODE_MLIR_PROGRAM;
-dispatchDesc.MlirProgramBindings.NumBindings = bindings.size();
+dispatchDesc.MlirProgramBindings.NumBindings = static_cast<UINT>(bindings.size());
 dispatchDesc.MlirProgramBindings.pBindings = bindings.data();
 
 // Dispatch the MLIR program partition.
 commandList->DispatchGraph(&dispatchDesc);
 ```
 
-#### Checking support for MLIR programs
+#### Checking support for MLIR Compute Graphs
 
-This example illustrates a client (like DXCGC) checking for driver support of MLIR programs in general. If the driver doesn't support MLIR programs, there is no need to check individual MLIR interfaces.
-
-```cpp
-ID3D12Device* device = ...;
-
-D3D12_FEATURE_DATA_D3D12_OPTIONS_MLIR options = {};
-
-if (SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS_MLIR, &options, sizeof(options))) && 
-    options.MlirProgramsTier > D3D12_MLIR_PROGRAMS_TIER_NOT_SUPPORTED)
-{
-    // Client can use MLIR programs
-}
-```
-
-#### Checking support for MLIR interfaces
-
-This example illustrates a client (like DXCGC) checking for driver support of specific MLIR interfaces.
+This example illustrates a client (like DXCGC) checking for driver support of MLIR compute graphs up to version 1.0.0. If the implementation does not support compute graphs the returned `HighestVersion` is zero.
 
 ```cpp
 ID3D12Device* device = ...;
 
-// In this example, the client is interested in subgraph-related MLIR interfaces.
-std::array<GUID, 5> mlirInterfacesRequested = 
+D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION cgcVersion = { .HighestVersion = { .Version = 0x0001'0000'0000'0000 } };
+if (SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_MLIR_COMPUTE_GRAPH_VERSION, &cgcVersion, sizeof(cgcVersion))) &&
+    cgcVersion.HighestVersion.Version >= 0x0001'0000'0000'0000)
 {
-    CGC_SUBGRAPH_PARTITION,
-    CGC_SUBGRAPH_DECLARATION_REQUEST,
-    CGC_SUBGRAPH_DECLARATION,
-    CGC_SUBGRAPH_SPECIALIZATION_REQUEST,
-    CGC_SUBGRAPH_SPECIALIZATION,
-};
-
-std::array<bool, mlirInterfacesRequested.size()> mlirInterfacesSupported = {};
-
-D3D12_FEATURE_DATA_MLIR_INTERFACE_SUPPORT support = {};
-support.NumMlirInterfaces = mlirInterfacesRequested.size();
-support.pMlirInterfacesRequested = mlirInterfacesRequested.data();
-support.pMlirInterfacesSupported = mlirInterfacesSupported.data();
-
-if (SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_MLIR_INTERFACE_SUPPORT, &support, sizeof(support))) && 
-    std::all_of(mlirInterfacesSupported.begin(), mlirInterfacesSupported.end(), [](BOOL b) { return b; }))
-{
-    // Driver supports subgraph lowering and execution
+    // Client can use CGC IR version 1.0.0
 }
 ```
 
@@ -1410,7 +1426,8 @@ SIZE_T outputBufferSize = 0;
 
 D3D12_FEATURE_DATA_MLIR_EXCHANGE exchange = 
 {
-    .MlirInterface = CGC_SUBGRAPH_DECLARATION_REQUEST,
+    .Type = D3D12_MLIR_EXCHANGE_TYPE_COMPUTE_GRAPH_SUBGRAPH_DECLARATION,
+    .IRVersion = { .Version = 0x0001'0000'0000'0000 },
     .pInputData = nullptr,
     .InputDataSizeInBytes = 0,
     .pOutputData = nullptr,
@@ -1450,7 +1467,8 @@ SIZE_T outputBufferSize = 0;
 
 D3D12_FEATURE_DATA_MLIR_EXCHANGE exchange = 
 {
-    .MlirInterface = CGC_SUBGRAPH_SPECIALIZATION_REQUEST,
+    .Type = D3D12_MLIR_EXCHANGE_TYPE_COMPUTE_GRAPH_SUBGRAPH_SPECIALIZATION,
+    .IRVersion = { .Version = 0x0001'0000'0000'0000 },
     .pInputData = subgraphMLIR.data(),
     .InputDataSizeInBytes = subgraphMLIR.size(),
     .pOutputData = nullptr,
@@ -1477,48 +1495,50 @@ THROW_IF_FAILED(device->CheckFeatureSupport(D3D12_FEATURE_MLIR_EXCHANGE, &exchan
 
 This table maps API types and methods related to MLIR programs to their respective DDI types and function pointers. Unchanged interfaces are listed for completeness, but their signatures are not detailed in the sections that follow this table.
 
-| Functionality          | API                                         | DDI                                             | Type       | Modification   |
-| ---------------------- | ------------------------------------------- | ----------------------------------------------- | ---------- | -------------- |
-| MLIR Exchange          | `ID3D12Device::CheckFeatureSupport`         | `PFND3D12DDI_GETCAPS`                           | Function   | ✅ Unchanged    |
-| MLIR Exchange          | `D3D12_FEATURE`                             | `D3D12DDICAPS_TYPE`                             | Enum       | ⚠️ **Extended** |
-| MLIR Exchange          | `D3D12_FEATURE_MLIR_EXCHANGE`               | `D3D12DDICAPS_TYPE_MLIR_EXCHANGE_0119`          | Enum Value | 🆕 **New**      |
-| MLIR Exchange          | `D3D12_FEATURE_DATA_MLIR_EXCHANGE`          | `D3D12DDI_MLIR_EXCHANGE_0119`                   | Struct     | 🆕 **New**      |
-| -                      | -                                           | -                                               | -          | -              |
-| MLIR Program Support   | `ID3D12Device::CheckFeatureSupport`         | `PFND3D12DDI_GETCAPS`                           | Function   | ✅ Unchanged    |
-| MLIR Program Support   | `D3D12_FEATURE`                             | `D3D12DDICAPS_TYPE`                             | Enum       | ⚠️ **Extended** |
-| MLIR Program Support   | `D3D12_FEATURE_D3D12_OPTIONS_MLIR`          | `D3D12DDI_OPTIONS_DATA_MLIR`                    | Enum Value | 🆕 **New**      |
-| MLIR Program Support   | `D3D12_MLIR_PROGRAMS_TIER`                  | `D3D12DDI_MLIR_PROGRAMS_TIER`                   | Enum       | 🆕 **New**      |
-| -                      | -                                           | -                                               | -          | -              |
-| MLIR Interface Support | `ID3D12Device::CheckFeatureSupport`         | `PFND3D12DDI_GETCAPS`                           | Function   | ✅ Unchanged    |
-| MLIR Interface Support | `D3D12_FEATURE`                             | `D3D12DDICAPS_TYPE`                             | Enum       | ⚠️ **Extended** |
-| MLIR Interface Support | `D3D12_FEATURE_MLIR_INTERFACE_SUPPORT`      | `D3D12DDICAPS_TYPE_MLIR_INTERFACE_SUPPORT_0119` | Enum Value | 🆕 **New**      |
-| MLIR Interface Support | `D3D12_FEATURE_DATA_MLIR_INTERFACE_SUPPORT` | `D3D12DDI_MLIR_INTERFACE_SUPPORT_0119`          | Struct     | 🆕 **New**      |
-| -                      | -                                           | -                                               | -          | -              |
-| MLIR Program Creation  | `ID3D12Device::CreateStateObject`           | `PFND3D12DDI_CREATE_STATE_OBJECT_0054`          | Function   | ✅ Unchanged    |
-| MLIR Program Creation  | `D3D12_STATE_OBJECT_DESC`                   | `D3D12DDIARG_CREATE_STATE_OBJECT_0054`          | Struct     | ✅ Unchanged    |
-| MLIR Program Creation  | `D3D12_STATE_OBJECT_TYPE`                   | `D3D12DDI_STATE_OBJECT_TYPE`                    | Enum       | ✅ Unchanged    |
-| MLIR Program Creation  | `D3D12_STATE_SUBOBJECT`                     | `D3D12DDI_STATE_SUBOBJECT_0054`                 | Struct     | ✅ Unchanged    |
-| MLIR Program Creation  | `D3D12_STATE_SUBOBJECT_TYPE`                | `D3D12DDI_STATE_SUBOBJECT_TYPE`                 | Enum       | ⚠️ **Extended** |
-| MLIR Program Creation  | `D3D12_STATE_SUBOBJECT_TYPE_MLIR_PROGRAM`   | `D3D12DDI_STATE_SUBOBJECT_TYPE_MLIR_PROGRAM`    | Enum Value | 🆕 **New**      |
-| MLIR Program Creation  | `D3D12_MLIR_PROGRAM_DESC`                   | `D3D12DDI_MLIR_PROGRAM_DESC_0119`               | Struct     | 🆕 **New**      |
-| -                      | -                                           | -                                               | -          | -              |
-| MLIR Program Addition  | `ID3D12Device::AddToStateObject`            | `PFND3D12DDI_ADD_TO_STATE_OBJECT_0072`          | Function   | ✅ Unchanged    |
-| -                      | -                                           | -                                               | -          | -              |
-| MLIR Program Execution | `ID3D12GraphicsCommandList::SetProgram`     | `PFND3D12DDI_SET_PROGRAM_0108`                  | Function   | ✅ Unchanged    |
-| MLIR Program Execution | `D3D12_SET_PROGRAM_DESC`                    | `D3D12DDI_SET_PROGRAM_DESC_0108`                | Struct     | ⚠️ **Extended** |
-| MLIR Program Execution | `D3D12_PROGRAM_TYPE`                        | `D3D12DDI_PROGRAM_TYPE_0108`                    | Enum       | ⚠️ **Extended** |
-| MLIR Program Execution | `D3D12_PROGRAM_TYPE_MLIR_PROGRAM`           | `D3D12DDI_PROGRAM_TYPE_MLIR_PROGRAM_0119`       | Enum Value | 🆕 **New**      |
-| MLIR Program Execution | `D3D12_SET_MLIR_PROGRAM_DESC`               | `D3D12DDI_SET_MLIR_PROGRAM_DESC_0119`           | Struct     | 🆕 **New**      |
-| MLIR Program Execution | `D3D12_SET_MLIR_PROGRAM_FLAGS`              | `D3D12DDI_SET_MLIR_PROGRAM_FLAGS_0119`          | Enum       | 🆕 **New**      |
-| MLIR Program Execution | `ID3D12GraphicsCommandList::DispatchGraph`  | `PFND3D12DDI_DISPATCH_GRAPH_0108`               | Function   | ✅ Unchanged    |
-| MLIR Program Execution | `D3D12_DISPATCH_GRAPH_DESC`                 | `D3D12DDI_DISPATCH_GRAPH_DESC_0108`             | Struct     | ⚠️ **Extended** |
-| MLIR Program Execution | `D3D12_DISPATCH_MODE`                       | `D3D12DDI_DISPATCH_MODE_0108`                   | Enum       | ⚠️ **Extended** |
-| MLIR Program Execution | `D3D12_DISPATCH_MODE_MLIR_PROGRAM`          | `D3D12DDI_DISPATCH_MODE_MLIR_PROGRAM_0119`      | Enum Value | 🆕 **New**      |
-| MLIR Program Execution | `D3D12_MLIR_PROGRAM_BINDINGS`               | `D3D12DDI_MLIR_PROGRAM_BINDINGS_0119`           | Struct     | 🆕 **New**      |
-| MLIR Program Execution | `D3D12_MLIR_PROGRAM_BINDING`                | `D3D12DDI_MLIR_PROGRAM_BINDING_0119`            | Struct     | 🆕 **New**      |
-| MLIR Program Execution | `D3D12_MLIR_PROGRAM_BINDING_FLAGS`          | `D3D12DDI_MLIR_PROGRAM_BINDING_FLAGS_0119`      | Enum       | 🆕 **New**      |
-| MLIR Program Execution | `D3D12_MLIR_PROGRAM_BINDING_TYPE`           | `D3D12DDI_MLIR_PROGRAM_BINDING_TYPE_0119`       | Enum       | 🆕 **New**      |
-| MLIR Program Execution | `D3D12_MLIR_PROGRAM_CPU_BINDING`            | `D3D12DDI_MLIR_PROGRAM_CPU_BINDING_0119`        | Struct     | 🆕 **New**      |
+| Functionality                                 | API                                             | DDI                                                 | Type       | Modification   |
+| --------------------------------------------- | ----------------------------------------------- | --------------------------------------------------- | ---------- | -------------- |
+| MLIR Exchange                                 | `ID3D12Device::CheckFeatureSupport`             | `PFND3D12DDI_GETCAPS`                               | Function   | ✅ Unchanged    |
+| MLIR Exchange                                 | `D3D12_FEATURE`                                 | `D3D12DDICAPS_TYPE`                                 | Enum       | ⚠️ **Extended** |
+| MLIR Exchange                                 | `D3D12_FEATURE_MLIR_EXCHANGE`                   | `D3D12DDICAPS_TYPE_MLIR_EXCHANGE_0119`              | Enum Value | 🆕 **New**      |
+| MLIR Exchange                                 | `D3D12_FEATURE_DATA_MLIR_EXCHANGE`              | `D3D12DDI_FEATURE_DATA_MLIR_EXCHANGE_0119`          | Struct     | 🆕 **New**      |
+| MLIR Exchange                                 | `D3D12_MLIR_EXCHANGE_TYPE`                      | `D3D12DDI_MLIR_EXCHANGE_TYPE_0119`                  | Enum       | 🆕 **New**      |
+| MLIR Exchange                                 | `D3D12_VERSION_NUMBER`                          | `D3D12DDI_VERSION_NUMBER`                           | Struct     | ✅ Unchanged    |
+| -                                             | -                                               | -                                                   | -          | -              |
+| MLIR Compute Graph - Optional Feature Support | `ID3D12Device::CheckFeatureSupport`             | `PFND3D12DDI_GETCAPS`                               | Function   | ✅ Unchanged    |
+| MLIR Compute Graph - Optional Feature Support | `D3D12_FEATURE`                                 | `D3D12DDICAPS_TYPE`                                 | Enum       | ⚠️ **Extended** |
+| MLIR Compute Graph - Optional Feature Support | `D3D12_FEATURE_MLIR_COMPUTE_GRAPH_SUPPORT`      | `D3D12DDICAPS_TYPE_MLIR_COMPUTE_GRAPH_SUPPORT_0119` | Enum Value | 🆕 **New**      |
+| MLIR Compute Graph - Optional Feature Support | `D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_SUPPORT` | `D3D12DDI_FEATURE_DATA_MLIR_COMPUTE_GRAPH_SUPPORT_0119` | Struct | 🆕 **New**      |
+| -                                             | -                                               | -                                                   | -          | -              |
+| MLIR Compute Graph - IR Version Support       | `ID3D12Device::CheckFeatureSupport`             | `PFND3D12DDI_GETCAPS`                               | Function   | ✅ Unchanged    |
+| MLIR Compute Graph - IR Version Support       | `D3D12_FEATURE`                                 | `D3D12DDICAPS_TYPE`                                 | Enum       | ⚠️ **Extended** |
+| MLIR Compute Graph - IR Version Support       | `D3D12_FEATURE_MLIR_COMPUTE_GRAPH_VERSION`      | `D3D12DDICAPS_TYPE_MLIR_COMPUTE_GRAPH_VERSION_0119` | Enum Value | 🆕 **New**      |
+| MLIR Compute Graph - IR Version Support       | `D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION` | `D3D12DDI_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION_0119` | Struct | 🆕 **New**      |
+| -                                             | -                                               | -                                                   | -          | -              |
+| MLIR Program Creation                         | `ID3D12Device::CreateStateObject`               | `PFND3D12DDI_CREATE_STATE_OBJECT_0054`              | Function   | ✅ Unchanged    |
+| MLIR Program Creation                         | `D3D12_STATE_OBJECT_DESC`                       | `D3D12DDIARG_CREATE_STATE_OBJECT_0054`              | Struct     | ✅ Unchanged    |
+| MLIR Program Creation                         | `D3D12_STATE_OBJECT_TYPE`                       | `D3D12DDI_STATE_OBJECT_TYPE`                        | Enum       | ✅ Unchanged    |
+| MLIR Program Creation                         | `D3D12_STATE_SUBOBJECT`                         | `D3D12DDI_STATE_SUBOBJECT_0054`                     | Struct     | ✅ Unchanged    |
+| MLIR Program Creation                         | `D3D12_STATE_SUBOBJECT_TYPE`                    | `D3D12DDI_STATE_SUBOBJECT_TYPE`                     | Enum       | ⚠️ **Extended** |
+| MLIR Program Creation                         | `D3D12_STATE_SUBOBJECT_TYPE_MLIR_PROGRAM`       | `D3D12DDI_STATE_SUBOBJECT_TYPE_MLIR_PROGRAM`        | Enum Value | 🆕 **New**      |
+| MLIR Program Creation                         | `D3D12_MLIR_PROGRAM_DESC`                       | `D3D12DDI_MLIR_PROGRAM_DESC_0119`                   | Struct     | 🆕 **New**      |
+| -                                             | -                                               | -                                                   | -          | -              |
+| MLIR Program Addition                         | `ID3D12Device::AddToStateObject`                | `PFND3D12DDI_ADD_TO_STATE_OBJECT_0072`              | Function   | ✅ Unchanged    |
+| -                                             | -                                               | -                                                   | -          | -              |
+| MLIR Program Execution                        | `ID3D12GraphicsCommandList::SetProgram`         | `PFND3D12DDI_SET_PROGRAM_0108`                      | Function   | ✅ Unchanged    |
+| MLIR Program Execution                        | `D3D12_SET_PROGRAM_DESC`                        | `D3D12DDI_SET_PROGRAM_DESC_0108`                    | Struct     | ⚠️ **Extended** |
+| MLIR Program Execution                        | `D3D12_PROGRAM_TYPE`                            | `D3D12DDI_PROGRAM_TYPE_0108`                        | Enum       | ⚠️ **Extended** |
+| MLIR Program Execution                        | `D3D12_PROGRAM_TYPE_MLIR_PROGRAM`               | `D3D12DDI_PROGRAM_TYPE_MLIR_PROGRAM_0119`           | Enum Value | 🆕 **New**      |
+| MLIR Program Execution                        | `D3D12_SET_MLIR_PROGRAM_DESC`                   | `D3D12DDI_SET_MLIR_PROGRAM_DESC_0119`               | Struct     | 🆕 **New**      |
+| MLIR Program Execution                        | `D3D12_SET_MLIR_PROGRAM_FLAGS`                  | `D3D12DDI_SET_MLIR_PROGRAM_FLAGS_0119`              | Enum       | 🆕 **New**      |
+| MLIR Program Execution                        | `ID3D12GraphicsCommandList::DispatchGraph`      | `PFND3D12DDI_DISPATCH_GRAPH_0108`                   | Function   | ✅ Unchanged    |
+| MLIR Program Execution                        | `D3D12_DISPATCH_GRAPH_DESC`                     | `D3D12DDI_DISPATCH_GRAPH_DESC_0108`                 | Struct     | ⚠️ **Extended** |
+| MLIR Program Execution                        | `D3D12_DISPATCH_MODE`                           | `D3D12DDI_DISPATCH_MODE_0108`                       | Enum       | ⚠️ **Extended** |
+| MLIR Program Execution                        | `D3D12_DISPATCH_MODE_MLIR_PROGRAM`              | `D3D12DDI_DISPATCH_MODE_MLIR_PROGRAM`               | Enum Value | 🆕 **New**      |
+| MLIR Program Execution                        | `D3D12_MLIR_PROGRAM_BINDINGS`                   | `D3D12DDI_MLIR_PROGRAM_BINDINGS_0119`               | Struct     | 🆕 **New**      |
+| MLIR Program Execution                        | `D3D12_MLIR_PROGRAM_BINDING`                    | `D3D12DDI_MLIR_PROGRAM_BINDING_0119`                | Struct     | 🆕 **New**      |
+| MLIR Program Execution                        | `D3D12_MLIR_PROGRAM_BINDING_FLAGS`              | `D3D12DDI_MLIR_PROGRAM_BINDING_FLAGS_0119`          | Enum       | 🆕 **New**      |
+| MLIR Program Execution                        | `D3D12_MLIR_PROGRAM_BINDING_TYPE`               | `D3D12DDI_MLIR_PROGRAM_BINDING_TYPE_0119`           | Enum       | 🆕 **New**      |
+| MLIR Program Execution                        | `D3D12_MLIR_PROGRAM_CPU_BINDING`                | `D3D12DDI_MLIR_PROGRAM_CPU_INPUT_0119`              | Struct     | 🆕 **New**      |
 
 ### DDI Function Tables
 
@@ -1533,12 +1553,12 @@ typedef struct D3D12DDI_DEVICE_FUNCS_CORE_0119
     PFND3D12DDI_GET_PROGRAM_IDENTIFIER_0108 pfnGetProgramIdentifier; // for MLIR Program Execution
 } D3D12DDI_DEVICE_FUNCS_CORE_0119;
 
-typedef struct D3D12DDI_COMMAND_LIST_FUNCS_3D_0119
+typedef struct D3D12DDI_COMMAND_LIST_FUNCS_3D_0108
 {
     ...
     PFND3D12DDI_SET_PROGRAM_0108            pfnSetProgram;           // for MLIR Program Execution
     PFND3D12DDI_DISPATCH_GRAPH_0108         pfnDispatchGraph;        // for MLIR Program Execution
-} D3D12DDI_COMMAND_LIST_FUNCS_3D_0119;
+} D3D12DDI_COMMAND_LIST_FUNCS_3D_0108;
 ```
 
 See [device methods](#device-methods) and [command-list methods](#command-list-methods) for details.
@@ -1549,71 +1569,71 @@ See [device methods](#device-methods) and [command-list methods](#command-list-m
 typedef enum D3D12DDICAPS_TYPE
 {
     ...
-+   D3D12DDI_CAPS_TYPE_MLIR = 1100,
-+   D3D12DDICAPS_TYPE_MLIR_EXCHANGE_0119 = 1101,
-+   D3D12DDICAPS_TYPE_MLIR_INTERFACE_SUPPORT_0119 = 1102,
++   D3D12DDICAPS_TYPE_MLIR_COMPUTE_GRAPH_VERSION_0119 = 1100,
++   D3D12DDICAPS_TYPE_MLIR_EXCHANGE_0119              = 1101,
++   D3D12DDICAPS_TYPE_MLIR_COMPUTE_GRAPH_SUPPORT_0119 = 1102,
 } D3D12DDICAPS_TYPE;
 ```
 
-Two new values are added to the existing `D3D12DDICAPS_TYPE` enum used by the existing DDI function `PFND3D12DDI_GETCAPS`:
+Three new values are added to the existing `D3D12DDICAPS_TYPE` enum used by the existing DDI function `PFND3D12DDI_GETCAPS`:
 
-- `D3D12DDI_CAPS_TYPE_MLIR`: corresponds to the caps structure [D3D12DDI_OPTIONS_DATA_MLIR](#d3d12ddi_options_data_mlir).
-- `D3D12DDICAPS_TYPE_MLIR_EXCHANGE_0119`: corresponds to the caps structure [D3D12DDI_MLIR_EXCHANGE_0119](#d3d12ddi_mlir_exchange_0119).
-- `D3D12DDICAPS_TYPE_MLIR_INTERFACE_SUPPORT_0119`: corresponds to the caps structure [D3D12DDI_MLIR_INTERFACE_SUPPORT_0119](#d3d12ddi_mlir_interface_support_0119).
+- `D3D12DDICAPS_TYPE_MLIR_COMPUTE_GRAPH_VERSION_0119`: corresponds to the caps structure [D3D12DDI_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION_0119](#d3d12ddi_feature_data_mlir_compute_graph_version_0119).
+- `D3D12DDICAPS_TYPE_MLIR_EXCHANGE_0119`: corresponds to the caps structure [D3D12DDI_FEATURE_DATA_MLIR_EXCHANGE_0119](#d3d12ddi_feature_data_mlir_exchange_0119).
+- `D3D12DDICAPS_TYPE_MLIR_COMPUTE_GRAPH_SUPPORT_0119`: corresponds to the caps structure [D3D12DDI_FEATURE_DATA_MLIR_COMPUTE_GRAPH_SUPPORT_0119](#d3d12ddi_feature_data_mlir_compute_graph_support_0119).
 
-### D3D12DDI_OPTIONS_DATA_MLIR
-
-```cpp
-typedef struct D3D12DDI_OPTIONS_DATA_MLIR
-{
-    D3D12DDI_MLIR_PROGRAMS_TIER MlirProgramsTier;
-} D3D12DDI_OPTIONS_DATA_MLIR;
-```
-
-### D3D12DDI_MLIR_EXCHANGE_0119
+### D3D12DDI_FEATURE_DATA_MLIR_EXCHANGE_0119
 
 ```cpp
-typedef struct D3D12DDI_MLIR_EXCHANGE_0119
+typedef struct D3D12DDI_FEATURE_DATA_MLIR_EXCHANGE_0119
 {
-    GUID MlirInterface;
-    const void* pInputData;
+    D3D12DDI_MLIR_EXCHANGE_TYPE_0119 Type;
+    D3D12DDI_VERSION_NUMBER IRVersion;
+    _In_reads_bytes_(InputDataSizeInBytes) const void* pInputData;
     SIZE_T InputDataSizeInBytes;
-    void* pOutputData;
-    SIZE_T* OutputDataSizeInBytes;
-} D3D12DDI_MLIR_EXCHANGE_0119;
+    _Out_writes_bytes_opt_(*OutputDataSizeInBytes) void* pOutputData;
+    _Inout_ SIZE_T* OutputDataSizeInBytes;
+} D3D12DDI_FEATURE_DATA_MLIR_EXCHANGE_0119;
 ```
 
 The lifetime of the memory referenced by `pInputData` and `pOutputData` is the scope of the call into `PFND3D12DDI_GETCAPS`. The driver must not dereference these pointers outside the scope of the DDI call.
 
 See details in the API equivalent [D3D12_FEATURE_DATA_MLIR_EXCHANGE](#d3d12_feature_data_mlir_exchange).
 
-See details in the API equivalent [D3D12_FEATURE_DATA_D3D12_OPTIONS_MLIR](#d3d12_feature_data_d3d12_options_mlir).
-
-### D3D12DDI_MLIR_PROGRAMS_TIER
+### D3D12DDI_MLIR_EXCHANGE_TYPE_0119
 
 ```cpp
-typedef enum D3D12DDI_MLIR_PROGRAMS_TIER
+typedef enum D3D12DDI_MLIR_EXCHANGE_TYPE_0119
 {
-    D3D12DDI_MLIR_PROGRAMS_TIER_NOT_SUPPORTED = 0,
-    D3D12DDI_MLIR_PROGRAMS_TIER_1_0           = 10
-    D3D12DDI_MLIR_PROGRAMS_TIER_2_0           = 20
-} D3D12DDI_MLIR_PROGRAMS_TIER;
+    D3D12DDI_MLIR_EXCHANGE_TYPE_COMPUTE_GRAPH_SUBGRAPH_DECLARATION_0119 = 0,
+    D3D12DDI_MLIR_EXCHANGE_TYPE_COMPUTE_GRAPH_SUBGRAPH_SPECIALIZATION_0119 = 1,
+    D3D12DDI_MLIR_EXCHANGE_TYPE_COMPUTE_GRAPH_TARGET_CONFIG_0119 = 2,
+} D3D12DDI_MLIR_EXCHANGE_TYPE_0119;
 ```
 
-See details in the API equivalent [D3D12_MLIR_PROGRAMS_TIER](#d3d12_mlir_programs_tier).
+See details in the API equivalent [D3D12_MLIR_EXCHANGE_TYPE](#d3d12_mlir_exchange_type).
 
-### D3D12DDI_MLIR_INTERFACE_SUPPORT_0119
+### D3D12DDI_FEATURE_DATA_MLIR_COMPUTE_GRAPH_SUPPORT_0119
 
 ```cpp
-typedef struct D3D12DDI_MLIR_INTERFACE_SUPPORT_0119
+typedef struct D3D12DDI_FEATURE_DATA_MLIR_COMPUTE_GRAPH_SUPPORT_0119
 {
-    UINT NumMlirInterfaces;
-    const GUID* pMlirInterfacesRequested;
-    BOOL* pMlirInterfacesSupported;
-} D3D12DDI_MLIR_INTERFACE_SUPPORT_0119;
+    BOOL MultisubgraphPartitionsSupported;
+    BOOL CpuBindingSupported;
+} D3D12DDI_FEATURE_DATA_MLIR_COMPUTE_GRAPH_SUPPORT_0119;
 ```
 
-See details in the API equivalent [D3D12_FEATURE_DATA_MLIR_INTERFACE_SUPPORT](#d3d12_feature_data_mlir_interface_support).
+See details in the API equivalent [D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_SUPPORT](#d3d12_feature_data_mlir_compute_graph_support).
+
+### D3D12DDI_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION_0119
+
+```cpp
+typedef struct D3D12DDI_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION_0119
+{
+    D3D12DDI_VERSION_NUMBER HighestVersion;
+} D3D12DDI_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION_0119;
+```
+
+See details in the API equivalent [D3D12_FEATURE_DATA_MLIR_COMPUTE_GRAPH_VERSION](#d3d12_feature_data_mlir_compute_graph_version).
 
 ### D3D12DDI_STATE_SUBOBJECT_TYPE
 
@@ -1621,13 +1641,13 @@ See details in the API equivalent [D3D12_FEATURE_DATA_MLIR_INTERFACE_SUPPORT](#d
 typedef enum D3D12DDI_STATE_SUBOBJECT_TYPE
 {
     ...
-+   D3D12DDI_STATE_SUBOBJECT_TYPE_MLIR_PROGRAM = 34,
++   D3D12DDI_STATE_SUBOBJECT_TYPE_MLIR_PROGRAM = 42, // D3D12DDI_MLIR_PROGRAM_DESC_0119
 } D3D12DDI_STATE_SUBOBJECT_TYPE;
 ```
 
 One new value is added to the existing `D3D12DDI_STATE_SUBOBJECT_TYPE` enum used by the existing DDI function `PFND3D12DDI_CREATE_STATE_OBJECT_0054`:
 
-- `D3D12DDI_STATE_SUBOBJECT_TYPE_MLIR_PROGRAM`: corresponds to the caps structure [D3D12DDI_MLIR_PROGRAM_DESC_0119](#d3d12ddi_mlir_program_desc_0119).
+- `D3D12DDI_STATE_SUBOBJECT_TYPE_MLIR_PROGRAM`: the subobject `pDesc` points to a [D3D12DDI_MLIR_PROGRAM_DESC_0119](#d3d12ddi_mlir_program_desc_0119).
 
 ### D3D12DDI_MLIR_PROGRAM_DESC_0119
 
@@ -1669,7 +1689,7 @@ typedef enum D3D12DDI_PROGRAM_TYPE_0108
 {
     D3D12DDI_PROGRAM_TYPE_GENERIC_PIPELINE_0108 = 1,
     D3D12DDI_PROGRAM_TYPE_RAYTRACING_PIPELINE_0108 = 4,
-    D3D12DDI_PROGRAM_TYPE_WORK_GRAPH_0108 = 5
+    D3D12DDI_PROGRAM_TYPE_WORK_GRAPH_0108 = 5,
 +   D3D12DDI_PROGRAM_TYPE_MLIR_PROGRAM_0119 = 6
 } D3D12DDI_PROGRAM_TYPE_0108;
 ```
@@ -1729,9 +1749,11 @@ typedef enum D3D12DDI_DISPATCH_MODE_0108
     D3D12DDI_DISPATCH_MODE_NODE_GPU_INPUT_0108 = 1,
     D3D12DDI_DISPATCH_MODE_MULTI_NODE_CPU_INPUT_0108 = 2,
     D3D12DDI_DISPATCH_MODE_MULTI_NODE_GPU_INPUT_0108 = 3,
-+   D3D12DDI_DISPATCH_MODE_MLIR_PROGRAM = 4
++   D3D12DDI_DISPATCH_MODE_MLIR_PROGRAM = 4 // D3D12DDI_MLIR_PROGRAM_BINDINGS_0119
 } D3D12DDI_DISPATCH_MODE_0108;
 ```
+
+> ⚠️ Note: unlike the other MLIR program DDI additions, this enum value has **no** `_0119` suffix in `d3d12umddi.w`.
 
 See details in the API equivalent [D3D12_DISPATCH_MODE](#d3d12_dispatch_mode).
 
@@ -1759,8 +1781,9 @@ typedef struct D3D12DDI_MLIR_PROGRAM_BINDING_0119
     D3D12DDI_MLIR_PROGRAM_BINDING_TYPE_0119 Type;
     union
     {
-        D3D12DDI_GPU_VIRTUAL_ADDRESS_RANGE GpuBinding;
-        D3D12DDI_MLIR_PROGRAM_CPU_BINDING_0119 CpuBinding;
+        D3D12DDI_GPU_VIRTUAL_ADDRESS_RANGE GpuVirtualAddressBinding;
+        D3D12DDI_GPU_DESCRIPTOR_HANDLE GpuDescriptorBinding;
+        D3D12DDI_MLIR_PROGRAM_CPU_INPUT_0119 CpuBinding;
     };
 } D3D12DDI_MLIR_PROGRAM_BINDING_0119;
 ```
@@ -1772,7 +1795,8 @@ See details in the API equivalent [D3D12_MLIR_PROGRAM_BINDING](#d3d12_mlir_progr
 ```cpp
 typedef enum D3D12DDI_MLIR_PROGRAM_BINDING_FLAGS_0119
 {
-    D3D12DDI_MLIR_PROGRAM_BINDING_FLAG_NONE_0119 = 0,
+    D3D12DDI_MLIR_PROGRAM_BINDING_FLAG_NONE_0119 = 0x0,
+    D3D12DDI_MLIR_PROGRAM_BINDING_FLAG_VOLATILE_DESCRIPTOR_0119 = 0x1,
 } D3D12DDI_MLIR_PROGRAM_BINDING_FLAGS_0119;
 ```
 
@@ -1783,19 +1807,20 @@ See details in the API equivalent [D3D12_MLIR_PROGRAM_BINDING_FLAGS](#d3d12_mlir
 ```cpp
 typedef enum D3D12DDI_MLIR_PROGRAM_BINDING_TYPE_0119
 {
-    D3D12DDI_MLIR_PROGRAM_BINDING_TYPE_GPU_0119 = 0,
-    D3D12DDI_MLIR_PROGRAM_BINDING_TYPE_CPU_0119 = 1,
+    D3D12DDI_MLIR_PROGRAM_BINDING_TYPE_GPU_VIRTUAL_ADDRESS_0119 = 0,
+    D3D12DDI_MLIR_PROGRAM_BINDING_TYPE_GPU_DESCRIPTOR_0119      = 1,
+    D3D12DDI_MLIR_PROGRAM_BINDING_TYPE_CPU_0119                 = 2,
 } D3D12DDI_MLIR_PROGRAM_BINDING_TYPE_0119;
 ```
 
 See details in the API equivalent [D3D12_MLIR_PROGRAM_BINDING_TYPE](#d3d12_mlir_program_binding_type).
 
-### D3D12DDI_MLIR_PROGRAM_CPU_BINDING_0119
+### D3D12DDI_MLIR_PROGRAM_CPU_INPUT_0119
 
 ```cpp
 typedef struct D3D12DDI_MLIR_PROGRAM_CPU_INPUT_0119
 {
-    const void* pData;
+    _Field_size_bytes_full_opt_(DataSizeInBytes) const void* pData;
     UINT64 DataSizeInBytes;
 } D3D12DDI_MLIR_PROGRAM_CPU_INPUT_0119;
 ```
@@ -1805,73 +1830,6 @@ The lifetime of the memory referenced by `pData` is the scope of the call into `
 See details in the API equivalent [D3D12_MLIR_PROGRAM_CPU_BINDING](#d3d12_mlir_program_cpu_binding).
 
 ## Appendices
-
-### DXCGC MLIR Interfaces
-
-Cross-component exchanges of MLIR data (subgraph transformations, capability checks, etc.) drive the DXCGC compilation process. MLIR interfaces define the semantics and structure of serialized data exchanged between components, and each interface is associated with a GUID. Compilation targets (drivers, apps) must declare support for a subset of these interfaces to participate in the compilation process.
-
-```c
-// ------------------------------------------------------------------------
-// Compiler input/output data.
-// ------------------------------------------------------------------------
-
-// CGC Input IR.
-// {7FC4F23F-2474-4AE8-AE7A-2722118B350E}
-DEFINE_GUID(CGC_INPUT, 
-0x7fc4f23f, 0x2474, 0x4ae8, 0xae, 0x7a, 0x27, 0x22, 0x11, 0x8b, 0x35, 0xe);
-
-// CGC Output IR.
-// {F53E923F-5300-4EEF-8F1E-ADA03FFF2605}
-DEFINE_GUID(CGC_OUTPUT, 
-0xf53e923f, 0x5300, 0x4eef, 0x8f, 0x1e, 0xad, 0xa0, 0x3f, 0xff, 0x26, 0x5);
-
-// ========================================================================
-// Subgraph-related interfaces.
-//
-// Targets must support all SUBGRAPH_* interfaces if they wish to optimize
-// subgraphs (i.e., declare patterns, specialize matches, and receive
-// partitions at runtime).
-// ========================================================================
-
-// A partition of CGC Output IR comprising one or more subgraphs.
-// Targets receive data associated with this interface through the 
-// CreateStateObject API/DDI when creating an MLIR program.
-// {EAA277C3-190D-4049-A7B0-A611B11701B6}
-DEFINE_GUID(CGC_SUBGRAPH_PARTITION, 
-0xeaa277c3, 0x190d, 0x4049, 0xa7, 0xb0, 0xa6, 0x11, 0xb1, 0x17, 0x1, 0xb6);
-
-// ------------------------------------------------------------------------
-// The following two interfaces are paired in an MLIR_EXCHANGE.
-// inputData = null
-// outputData = valid MLIR containing dxpatterns (see subgraph IR spec)
-//  ------------------------------------------------------------------------
-
-// Compiler-initiated request to get all subgraph transformations from a target.
-// {EB53032A-1116-4E71-8309-54347C1E5A26}
-DEFINE_GUID(CGC_SUBGRAPH_DECLARATION_REQUEST, 
-0xeb53032a, 0x1116, 0x4e71, 0x83, 0x9, 0x54, 0x34, 0x7c, 0x1e, 0x5a, 0x26);
-
-// Target's response to SUBGRAPH_DECLARATION_REQUEST.
-// {BE441609-6AB8-4FA8-B551-019ED938C298}
-DEFINE_GUID(CGC_SUBGRAPH_DECLARATION, 
-0xbe441609, 0x6ab8, 0x4fa8, 0xb5, 0x51, 0x1, 0x9e, 0xd9, 0x38, 0xc2, 0x98);
-
-// ------------------------------------------------------------------------
-// The following two interfaces are paired in an MLIR_EXCHANGE.
-// inputData = valid MLIR (see subgraph IR spec)
-// outputData = valid MLIR (see subgraph IR spec)
-//  ------------------------------------------------------------------------
-
-// Compiler-initiated request to specialize a subgraph with concrete shapes.
-// {EBED5ED6-2206-457B-8BD0-ABFCC677195B}
-DEFINE_GUID(CGC_SUBGRAPH_SPECIALIZATION_REQUEST, 
-0xebed5ed6, 0x2206, 0x457b, 0x8b, 0xd0, 0xab, 0xfc, 0xc6, 0x77, 0x19, 0x5b);
-
-// Target's response to SUBGRAPH_SPECIALIZATION_REQUEST.
-// {F90A981E-0FCD-46D8-8AA1-166994C4DE02}
-DEFINE_GUID(CGC_SUBGRAPH_SPECIALIZATION, 
-0xf90a981e, 0xfcd, 0x46d8, 0x8a, 0xa1, 0x16, 0x69, 0x94, 0xc4, 0xde, 0x2);
-```
 
 ### Metacommand Limitations
 
@@ -1890,7 +1848,7 @@ Memory planning is the process of figuring out where the edges of a graph live i
 
 Consider the following graph with layers `A`, `B`, `C`, `D`, and `E`. For simplicity, all tensors (`in`, `a`, `b`, `c`, `d`, `out`) in the example have the same size in bytes. The interior tensors (`a`, `b`, `c`, `d`) are called *intermediates* since they are only temporarily needed while the network is executed; however, the boundary tensors (`in`, `out`) usually need to persist in memory after execution completes.
 
-```mermaid
+:::mermaid
 graph LR
     input:::io;
     output:::io;
@@ -1905,7 +1863,8 @@ graph LR
 
     classDef layer fill:#66bbff,color:black;
     classDef io fill:#ffff66,color:black;
-```
+:::
+
 A naive memory plan for this network involves simply allocating unique memory for each tensor. In this case, the memory footprint is the sum of all tensors. This is simple, but it's obviously impractical for larger networks. A slight extension of this is to page memory in and out as tensors are needed: for example, the memory storing tensor `a` can be paged in to execute layer `A`, then paged out once layers `B` and `C` complete. This solution, of course, comes at the cost of performance as paging memory across PCI-e is extremely slow.
 
 In practice, most implementations will try to reuse memory locations occupied by intermediate edges once those tensors are no longer needed. Assuming input and output tensors are preallocated (common, but not necessarily required), such a memory plan might look like this:
@@ -1985,7 +1944,7 @@ Note how `Mem[2]` is initially occupied by tensor `a`, then repurposed to store 
 
 A subtle consequence of reusing memory locations in memory planning is the introduction of implicit dependencies that affect concurrency. In the original graph, layer `C` can run concurrently with nodes `B` and `D`; however, the memory plan above effectively makes `C` a dependency of `D` given the shared memory location. If `D` executed before `C` (or simultaneously with `C`) then it would overwrite the contents of tensor `a`.
 
-```mermaid
+:::mermaid
 graph LR
     input:::io;
     output:::io;
@@ -2001,7 +1960,8 @@ graph LR
 
     classDef layer fill:#66bbff,color:black;
     classDef io fill:#ffff66,color:black;
-```
+:::
+
 Was it smart to reuse memory in this example? If the model wouldn't fit in memory without reusing the memory location for `a` and `d` then this is absolutely a good plan. However, perhaps layers `B` and `C` only have work to occupy half the GPU: latency could be reduced by running them in parallel. Alternatively, maybe `B` fully occupies the GPU and it is better to run `C` and `D` in parallel. Ultimately, the right choice depends on the network, the hardware, and the optimization goal of minimizing memory or minimizing latency.
 
 Memory planning is an interesting challenge with serious consequence for performance. The intent of this brief introduction is to highlight one of the tasks that is well-suited to a compiler algorithm and challenging for handwritten implementations.
@@ -2010,7 +1970,7 @@ Memory planning is an interesting challenge with serious consequence for perform
 
 Execution scheduling is the process of figuring out when to execute (dispatch) units of work, like shader programs or MLIR programs. In D3D12 this is done using command lists and queues. Most operations within a command list are asynchronous by default; for example, two back-to-back shader dispatches are assumed to have no dependency and thus can run simultaneously if the hardware has capacity. *Barriers* are the mechanism to enforce dependencies between work items in a command list, but the legacy barrier APIs make this quite problematic for efficiently handling [dependency *graphs*](#dataflow-and-dependency-graphs).
 
-```mermaid
+:::mermaid
 graph LR
     input:::io;
     output:::io;
@@ -2025,7 +1985,8 @@ graph LR
 
     classDef layer fill:#66bbff,color:black;
     classDef io fill:#ffff66,color:black;
-```
+:::
+
 To illustrate the issue with legacy barriers being used for expressing node dependencies, consider that a barrier needs to exist between node pairs `A/B`, `A/C`, `B/D`, `C/E`, and `D/E`. If every edge was a separate resource this might look like the following in a command list:
 
 ```
@@ -2073,7 +2034,7 @@ In this case, the driver MUST synchronize between every dispatch since it has no
 
 Which of the above schedules it optimal? It is hard (or even impossible) for a D3D client to know, and it's possible that none of these may maximize utilization of the hardware. A full-fledged solution to this problem would require expressing the dependency graph more explicitly, but this is out of scope at the moment. As a consolation, however, it is important to recognize that MLIR program partitions mitigate this to an extent. Consider if nodes B, C, and D are grouped into a partition:
 
-```mermaid
+:::mermaid
 graph LR
     input:::io;
     output:::io;
@@ -2091,7 +2052,8 @@ graph LR
 
     classDef layer fill:#66bbff,color:black;
     classDef io fill:#ffff66,color:black;
-```
+:::
+
 The resulting command list would be `A, Barrier, Partition, Barrier, E`, which is significantly better than forcing an arbitrary decision on where to place nodes B/C/D. In the future, we may consider extending the work graph APIs to support the dispatch of an explicit dependency graph. The current design is not directly suitable since [joins aren't supported](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#joins---synchronizing-within-the-graph).
 
 ### Dataflow and Dependency Graphs
@@ -2119,7 +2081,30 @@ Regardless of the framework or interchange format (ONNX, GGUF, MLIR bytecode, et
     <td>v0.11</td>
     <td>05/04/2026</td>
     <td><ul>
-        <li>Initial draft matching interfaces in Preview Agility SDK 1.720.0-preview.</li>
+        <li>Reflect API/DDI in Agility SDK 1.720.0-preview.</li>
+    </ul></td>
+</tr>
+<tr>
+    <td>v0.12</td>
+    <td>07/29/2026</td>
+    <td><ul>
+        <li>Replace D3D12_FEATURE_D3D12_OPTIONS_MLIR with D3D12_FEATURE_MLIR_COMPUTE_GRAPH_SUPPORT.</li>
+        <li>Replace D3D12_FEATURE_MLIR_INTERFACE_SUPPORT with D3D12_FEATURE_MLIR_COMPUTE_GRAPH_VERSION.</li>
+        <li>Update MLIR exchange API/DDI to have explicit IR version and D3D12_MLIR_EXCHANGE_TYPE.</li>
+        <li>Support for GPU descriptor handles and volatile binding.</li>
+        <li>Removed stale references to using a DX container for MLIR bytecode.</li>
+    </ul></td>
+</tr>
+<tr>
+    <td>v0.12</td>
+    <td>07/29/2026</td>
+    <td><ul>
+        <li>Reflect API/DDI in Agility SDK 1.721.3-preview.</li>
+        <li>Replace D3D12_FEATURE_D3D12_OPTIONS_MLIR with D3D12_FEATURE_MLIR_COMPUTE_GRAPH_SUPPORT.</li>
+        <li>Replace D3D12_FEATURE_MLIR_INTERFACE_SUPPORT with D3D12_FEATURE_MLIR_COMPUTE_GRAPH_VERSION.</li>
+        <li>Update MLIR exchange API/DDI to have explicit IR version and D3D12_MLIR_EXCHANGE_TYPE.</li>
+        <li>Support for GPU descriptor handles and volatile binding.</li>
+        <li>Removed stale references to using a DX container for MLIR bytecode.</li>
     </ul></td>
 </tr>
 </tbody>
