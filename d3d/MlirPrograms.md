@@ -688,20 +688,7 @@ The two primary mechanisms for referencing device memory in D3D12 are *GPU virtu
 
 #### Buffers
 
-When an argument is a `cgc.memref` in CGC IR, the application must supply a buffer binding that is either a GPUVA or a descriptor. If a descriptor is used then it must be created as a UAV using the [byte-offset API](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/D3D12RevisedCreateViews.md).
-
-- `Format` = `DXGI_FORMAT_(R8|R16|R32)_UINT`
-  - Selected as a "universal" format with 1/2/4-byte alignment. Typeless formats would be more appropriate, but they are not permitted in SRV/UAV creation (only for resource creation). The actual type is in the IR (e.g., `cgc.memref<3x!cgc.float16>` has FLOAT16 elements and would thus use R16_UINT). Sub-byte CGC formats are packed into R8_UINT in little endian order.
-- `ViewDimension` = `D3D12_(UAV|SRV)_DIMENSION_BUFFER_BYTE_OFFSET`
-  - Byte-offset buffer views are preferred to avoid the awkward element-sized alignment and length limitations in the legacy descriptor creation APIs.
-- `BufferByteOffset.Offset` = offset in bytes from the start of the buffer resource.
-  - Still bound by alignment of the underlying element type (e.g., R16_UINT for cgc.float16 has 2-byte alignment).
-- `BufferByteOffset.Size` = length in bytes of the view.
-  - Must be equivalent to the implied size of the type in CGC IR (e.g., `cgc.memref<3x!cgc.float16>` has a minimum implied length of 3*2=6 bytes).
-- `BufferByteOffset.StructureByteStride` = 0
-  - Structured buffers add no value outside of HLSL, so this must be zero.
-- `BufferByteOffset.Flags` = `D3D12_BUFFER_(UAV|SRV)_FLAG_NONE`
-  - Raw buffers add no value outside of HLSL (and impose the `R32_TYPELESS` format and a 16-byte alignment), so the RAW flag must not be set.
+When an argument is a `cgc.memref` in CGC IR, the application must supply a buffer binding that is either a GPUVA or a descriptor. If a descriptor is used then it must be created as a buffer UAV that is compatible with the `cgc.memref` value in CGC IR. For example, if using the [byte-offset API](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/D3D12RevisedCreateViews.md) the `BufferByteOffset.Size` must be equivalent to the to the implied size of the type in CGC IR (e.g., `cgc.memref<3x!cgc.float16>` has a minimum implied length of 3*2=6 bytes). Care must be taken to ensure the alignment and stride of the view is compatible with the offset and element stride of the `cgc.memref`. Sub-byte CGC formats are packed into byte-sized elements in little endian order.
 
 Buffer resources are always unordered access:
 
