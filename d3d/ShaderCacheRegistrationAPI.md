@@ -238,6 +238,8 @@ Represents an application or game installed on a system. Each application can ha
     - `void** ppvComponent`: A pointer to receive the component interface.
 - **Return Type**: `HRESULT`
 
+**NOTE**: There is a special component name, "default" (case-sensitive) that should be used when the application is not explicitly expecting to find a component by a different name. This string is the one that D3D12 will use during device initialization to find a PSDB that's used to accelerate `CreatePipelineState` and `CreateStateObject` without explicit steering to an alternate PSDB by the application. Additional information about explicit PSDB selection will be available soon.
+
 `RemoveComponent`
 
 - **Description**: Removes a component from the application.
