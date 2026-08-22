@@ -572,10 +572,6 @@ The command list must have a [work list signature](#work-list-signature) bound v
 
 The per-list input is described by [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input) (Tier 1) or [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) (Tier 2, adding `SignatureIndex` and `NextDispatchList`). The input carries per-list flags ([`D3D12_DISPATCH_LIST_FLAGS`](#d3d12_dispatch_list_flags) / [`_FLAGS1`](#d3d12_dispatch_list_flags1)), a GPU VA of the primary list, and a GPU VA of the program table.
 
-> The name [`DispatchList`](#dispatchlist) is plural because a single CPU-side call can execute a chain of lists when [continuations](#dispatch-list-continuations) are used (Tier 2). Without continuations, the call executes exactly one list. The shape of [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input) parallels `D3D12_MULTI_NODE_GPU_INPUT` in [Work Graphs DispatchGraph](WorkGraphs.md#dispatchgraph).
-
-> A single-program dispatch is just `NumProgramInputs == 1`; there is no separate single-input flavor. The struct is named [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input) (singular) because it describes a single list.
-
 ---
 
 ## Primary record layout
@@ -3260,7 +3256,7 @@ A driver reporting [`_TIER_2`](#d3d12_work_lists_tier) must implement every entr
 
 # Open Issues
 
-- **Ability for Work List records to set additional state, in particular graphics state.  The more state that Work Lists can modify, the lower the likelihood that apps will have to break batches because an unsupported state change is needed. Below are some candidates to consider - just listing the command list API name for which a Work List equivalent command argument could be defined.  Even if a bunch of these turn out to be easy, it's also possible that supporting too many at once will have unique overhead, so we may want to limit to the most important + cheapest.  We might also defer these additions to a future Tier and/or limit to the most critical states, mostly to allow the rest of the feature to be shipped first:
+- **Ability for Work List records to set additional state, in particular graphics state.**  The more state that Work Lists can modify, the lower the likelihood that apps will have to break batches because an unsupported state change is needed. Below are some candidates to consider - just listing the command list API name for which a Work List equivalent command argument could be defined.  Even if a bunch of these turn out to be easy, it's also possible that supporting too many at once will have unique overhead, so we may want to limit to the most important + cheapest.  We might also defer these additions to a future Tier and/or limit to the most critical states, mostly to allow the rest of the feature to be shipped first:
 
   - `IASetPrimitiveTopology`
   - `OMSetStencilRef` / `OMSetFrontAndBackStencilRef`
