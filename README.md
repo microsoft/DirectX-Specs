@@ -23,7 +23,6 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Programmable Sample Positions](d3d/ProgrammableSamplePositions.md)
     * [Rasterizer Ordered Views](d3d/RasterOrderViews.md)
     * [Raytracing](d3d/Raytracing.md)
-    * [Raytracing2](d3d/Raytracing2.md)
     * [R9G9B9E5_SHAREDEXP RTV and UAV support](d3d/D3D12R9G9B9E5Format.md)
     * [Sampler Feedback](d3d/SamplerFeedback.md)
     * [Tiled Resources Tier 4](d3d/D3D12TiledResourceTier4.md)
@@ -110,6 +109,8 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
 * In-development specifications
     * [D3D APIs for Shader Model 6.10 Linear Algebra](d3d/D3D12LinearAlgebraRuntimeFeatureSupport.md)
     * [MLIR Programs & Compute Graphs](d3d/MlirPrograms.md)
+    * [Raytracing2](d3d/Raytracing2.md) (work in progress, not in preview yet)
+    * [Work Lists](d3d/WorkLists.md) (work in progress, not in preview yet)
 
 _These D3D12 specs were written as incremental deltas, with a separate spec per feature area.
 Baseline information about rendering pipeline behaviors that are common between D3D11 and D3D12
