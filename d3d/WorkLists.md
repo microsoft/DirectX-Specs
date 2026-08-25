@@ -2783,7 +2783,7 @@ DEFINE_ENUM_FLAG_OPERATORS(D3D12_DISPATCH_LIST_FLAGS);
 
 > The four transitions, each following from that rule:
 >
-> - **Ordered list followed by an ordered list.** The new list lands after the earlier list's records, so rasterization and output-merger results stay in submission order across the boundary. This is the back-to-back case, and it needs no flag on either list.
+> - **Ordered list followed by an ordered list.** The new list lands after the earlier list's records, so rasterization and output-merger results stay in submission order across the boundary. This is the back-to-back case, and it needs no wait/flush flags on either list.
 > - **Ordered list followed by an unordered list.** The new list may begin launching and retiring before the earlier list's records have retired, so results may interleave. The earlier list being ordered does not hold it back: the second list's flag is what decides.
 > - **Unordered list followed by an ordered list.** The new list lands after all outstanding work, the earlier list's included, and the implementation may retire that work first even though the earlier list never asked to be ordered. Again the second list's flag decides.
 > - **Unordered list followed by an unordered list.** Neither is contained, and nothing is ordered across the boundary.
