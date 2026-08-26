@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.45 7/10/2026
+v1.46 8/26/2026
 
 ---
 
@@ -5319,6 +5319,23 @@ from the view description
 (`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV`) shown below. E.g.
 CreateShaderResourceView(NULL,pViewDesc).
 
+A NULL acceleration structure, meaning one bound to a shader as described in this section and used
+with any shader-visible trace entry point ([TraceRay()](#traceray),
+[RayQuery::TraceRayInline()](#rayquery-tracerayinline) or [HitObject::TraceRay()](#hitobject-traceray)),
+is a GPUVA of `0`.  This is distinct from an instance whose `AccelerationStructure` pointer is NULL,
+which is an inactive instance discarded at build time, see
+[Inactive primitives and instances](#inactive-primitives-and-instances).
+
+For a root descriptor SRV this is an exception to the rule in
+[NULL Descriptors](ResourceBinding.md#null-descriptors) of the resource binding spec, which states
+that if the pointer value of a root descriptor is `0` and the GPU dereferences it, behavior is
+undefined including device reset.  For acceleration structure SRVs a GPUVA of `0` is well defined
+and forces a miss instead.
+Since both of the bindings above reduce to a GPUVA, this applies equally to a root descriptor SRV
+and to a descriptor heap based SRV whose `Location` is `0`.  Because the resource parameter is
+always NULL when creating these SRVs, a null descriptor is not a separate case.  Leaving a root
+argument unset is not the same thing, since that is uninitialized state rather than a GPUVA of `0`.
+
 ```C++
 typedef struct D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV
 {
@@ -6089,7 +6106,7 @@ void TraceRay(RaytracingAccelerationStructure AccelerationStructure,
 
 Parameter                           | Definition
 ---------                           | ----------
-`RaytracingAccelerationStructure AccelerationStructure` | Top-level acceleration structure to use. Specifying a NULL acceleration structure forces a miss.
+`RaytracingAccelerationStructure AccelerationStructure` | Top-level acceleration structure to use. Specifying a NULL acceleration structure forces a miss, see [Additional SRV type](#additional-srv-type) for what NULL means here.
 `uint RayFlags` | Valid combination of [Ray flags](#ray-flags). Only defined ray flags are propagated by the system, e.g. visible to the [RayFlags()](#rayflags) shader intrinsic.  Presence of unknown flags results in undefined behavior.
 `uint InstanceInclusionMask` |<p>Bottom 8 bits of InstanceInclusionMask are used to include/reject geometry instances based on the InstanceMask in each [instance](#d3d12_raytracing_instance_desc):</p><p>`if(!((InstanceInclusionMask & InstanceMask) & 0xff)) { ignore intersection }`</p>
 `uint RayContributionToHitGroupIndex` | Offset to add into [Addressing calculations within shader tables](#addressing-calculations-within-shader-tables) for hit group indexing. Only the bottom 4 bits of this value are used.
@@ -6715,7 +6732,7 @@ void RayQuery::TraceRayInline(
 
 Parameter                           | Definition
 ---------                           | ----------
-`RaytracingAccelerationStructure AccelerationStructure` | Top-level acceleration structure to use. Specifying a NULL acceleration structure forces a miss.
+`RaytracingAccelerationStructure AccelerationStructure` | Top-level acceleration structure to use. Specifying a NULL acceleration structure forces a miss, see [Additional SRV type](#additional-srv-type) for what NULL means here.
 `uint RayFlags` | Valid combination of [Ray flags](#ray-flags). Only defined ray flags are propagated by the system, e.g. visible to the [RayFlags()](#rayflags) shader intrinsic.  These flags are OR'd with the [RayQuery](#rayquery)'s ray flags, and the combination must be valid (see the definition of each flag).  Presence of unknown flags results in undefined behavior.
 `uint InstanceInclusionMask` | <p>Bottom 8 bits of InstanceInclusionMask are used to include/reject geometry instances based on the InstanceMask in each [instance](#d3d12_raytracing_instance_desc):</p><p>`if(!((InstanceInclusionMask & InstanceMask) & 0xff)) { ignore intersection }`</p>
 `RayDesc Ray` | [Ray](#ray-description-structure) to be traced. See [Ray-extents](#ray-extents) for bounds on valid ray parameters.
@@ -9616,3 +9633,4 @@ v1.42|5/13/2026|<li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS](#d3
 v1.43|5/17/2026|<li>In [CopyRaytracingAccelerationStructure()](#copyraytracingaccelerationstructure) `SourceAccelerationStructureData` parameter, added a Cluster-BLAS exception to the "operation only involves the data pointed to" rule: serializing or tools-visualization-decoding a Cluster BLAS reads through to the referenced CLAS, so all referenced CLAS must be valid for the duration of the operation on the GPU timeline.</li><li>In [EmitRaytracingAccelerationStructurePostbuildInfo()](#emitraytracingaccelerationstructurepostbuildinfo) `pSourceAccelerationStructureData` parameter, added the symmetric Cluster-BLAS callout for the `_SERIALIZATION` and `_TOOLS_VISUALIZATION` postbuild-info sizing queries.</li><li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode), extended the `_SERIALIZE` and `_VISUALIZATION_DECODE_FOR_TOOLS` mode-level entries with the same Cluster-BLAS-to-CLAS source-liveness exception, and noted that deserialization order semantics remain order-independent (consistent with the existing TLAS-to-BLAS rule).</li><li>Cleaned up some stale references to the name `ReorderThread` which was renamed to `MaybeReorderThread`.</li>
 v1.44|6/26/2026|<li>In [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo) and [D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS](#d3d12_build_raytracing_acceleration_structure_inputs), the spec already said that any parameter that is referenced via `D3D12_GPU_VIRTUAL_ADDRESS` will not be accessed by the operation. So this memory does not need to be initialized yet or be in a particular resource state. Whether GPU addresses are null or not *can* be inspected by the operation, even though the pointers are not dereferenced.  Added this: If actual GPUVAs aren't known at the time of the call, dummy non-zero values can be used just for the purposes for the prebuild call for entires that will be replaced with real non-null GPUVAs for build.</li>
 v1.45|7/10/2026|<li>Added `TemplateInstancePrefersCOMPRESSED1` to [D3D12_FEATURE_D3D12_OPTIONS_NNN](#d3d12_feature_d3d12_options_nnn) and the corresponding DDI options structure. This performance preference guides selection of the stored vertex format for cluster template instances and is reported as `FALSE` when clustered templates are unsupported.</li>
+v1.46|8/26/2026|<li>In [Additional SRV type](#additional-srv-type), defined what a NULL acceleration structure is for a shader-visible binding: a GPUVA of `0`, which applies equally to a root descriptor SRV and to a descriptor heap based SRV whose `Location` is `0`, since both bindings reduce to a GPUVA.  A null descriptor is not a separate case because the resource parameter is always NULL for these SRVs, and an unset root argument is uninitialized state rather than a GPUVA of `0`.  This is distinct from an instance with a NULL `AccelerationStructure` pointer, which is an inactive instance.  For a root descriptor SRV this is called out as an exception to [NULL Descriptors](ResourceBinding.md#null-descriptors) in the resource binding spec, which is updated with the matching note.  The definition is scoped to any shader-visible trace entry point.  The [TraceRay()](#traceray) and [RayQuery::TraceRayInline()](#rayquery-tracerayinline) parameter rows cross-reference it; [HitObject::TraceRay()](#hitobject-traceray) has no parameter row of its own and inherits those definitions.</li>
