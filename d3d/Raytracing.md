@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.46 8/26/2026
+v1.47 8/26/2026
 
 ---
 
@@ -280,6 +280,7 @@ v1.46 8/26/2026
       - [BuiltInTrianglePositions](#builtintrianglepositions)
   - [RayQuery](#rayquery)
     - [RayQuery flags](#rayquery-flags)
+    - [RayQuery flags on pre Shader Model 6.9 shaders](#rayquery-flags-on-pre-shader-model-69-shaders)
     - [RayQuery intrinsics](#rayquery-intrinsics)
       - [RayQuery enums](#rayquery-enums)
         - [COMMITTED\_STATUS](#committed_status)
@@ -1423,7 +1424,9 @@ For inline raytracing via [RayQuery](#rayquery) objects, the `RayQuery` object t
 ```C++
 RayQuery<RAY_FLAGS,RAYQUERY_FLAGS>
 ```
-See [RayQuery flags](#rayquery-flags), which has a `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` flag.
+See [RayQuery flags](#rayquery-flags), which has a `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` flag.  Shaders compiled
+before Shader Model 6.9 cannot specify it, since the template parameter carrying it did not exist; those shaders opt
+in at pipeline creation instead, see [RayQuery flags on pre Shader Model 6.9 shaders](#rayquery-flags-on-pre-shader-model-69-shaders).
 
 - If OMMs are known not to be used, it is more efficient to not specify the `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` flag. 
 - If the flag is omitted and an OMM is encountered during ray traversal, behavior is undefined.
@@ -1482,6 +1485,7 @@ Device methods extended to support Opacity Micromaps:
 - [CreateStateObject()](#createstateobject) 
   - added `D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS` in [D3D12_RAYTRACING_PIPELINE_FLAG](#d3d12_raytracing_pipeline_flags)
   - added `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` in a new [RayQuery flags](#rayquery-flags) template parameter to [RayQuery](#rayquery)
+  - for shaders compiled before Shader Model 6.9, which cannot specify that template parameter, added `D3D12_STATE_OBJECT_FLAG_RAYQUERY_ALLOW_OPACITY_MICROMAPS_ON_PRE_SM69_SHADERS` in [D3D12_STATE_OBJECT_FLAGS](#d3d12_state_object_flags), see [RayQuery flags on pre Shader Model 6.9 shaders](#rayquery-flags-on-pre-shader-model-69-shaders)
 - [CheckDriverMatchingIdentifier()](#checkdrivermatchingidentifier)
   - added `D3D12_SERIALIZED_DATA_RAYTRACING_OPACITY_MICROMAP_ARRAY` in [D3D12_SERIALIZED_DATA_TYPE](#d3d12_serialized_data_type)
 
@@ -1919,7 +1923,7 @@ requirement applies to.
 | [Global root signature](#d3d12_global_root_signature)           | Optional, if present must match shader entry | Call graph reachable from shader entry. More discussion at [D3D12_GLOBAL_ROOT_SIGNATURE](#d3d12_global_root_signature).                                           |
 | [Local root signature](#d3d12_local_root_signature)            | Optional, if present must match shader entry | Call graph reachable from shader entry (not including calls through shader tables). More discussion at [D3D12_LOCAL_ROOT_SIGNATURE](#d3d12_local_root_signature). |
 | [Node mask](#d3d12_node_mask)                                  | Optional, if present match for all exports   | Full state object. More discussion at [D3D12_NODE_MASK](#d3d12_node_mask).                                                                                        |
-| [State object config](#d3d12_state_object_config)               | Optional, if present match for all exports   | Local state object only, doesn't need to match contained state objects. More discussion at [D3D12_STATE_OBJECT_CONFIG](#d3d12_state_object_config)                |
+| [State object config](#d3d12_state_object_config)               | Optional, if present match for all exports   | Local state object only, doesn't need to match contained state objects. More discussion at [D3D12_STATE_OBJECT_CONFIG](#d3d12_state_object_config). |
 
 ---
 
@@ -3344,7 +3348,7 @@ with various shaders in a state object is [here](#subobject-association-requirem
 
 This subobject defines general properties of a state object. The
 presence of this subobject in a state object is **optional**. If
-present, all exports in the state object must be associated with the
+present, all exports defined by that state object description must be associated with the
 same subobject (or one with a matching definition). This consistency
 requirement does not apply across existing collections that are included
 in a larger state object, with the exception of the presence of the `D3D12_STATE_OBJECT_FLAG_ALLOW_STATE_OBJECT_ADDITIONS` flag, detailed below.
@@ -3364,6 +3368,8 @@ typedef enum D3D12_STATE_OBJECT_FLAGS
     D3D12_STATE_OBJECT_FLAG_ALLOW_LOCAL_DEPENDENCIES_ON_EXTERNAL_DEFINITONS = 0x1,
     D3D12_STATE_OBJECT_FLAG_ALLOW_EXTERNAL_DEPENDENCIES_ON_LOCAL_DEFINITIONS = 0x2,
     D3D12_STATE_OBJECT_FLAG_ALLOW_STATE_OBJECT_ADDITIONS = 0x4,
+    D3D12_STATE_OBJECT_FLAG_RAYQUERY_ALLOW_OPACITY_MICROMAPS_ON_PRE_SM69_SHADERS  = 0x800,
+    D3D12_STATE_OBJECT_FLAG_RAYQUERY_ALLOW_CLUSTERED_GEOMETRY_ON_PRE_SM69_SHADERS = 0x1000,
 } D3D12_STATE_OBJECT_FLAGS;
 ```
 
@@ -3372,6 +3378,8 @@ Value                               | Definition
 `D3D12_STATE_OBJECT_FLAG_ALLOW_LOCAL_DEPENDENCIES_ON_EXTERNAL_DEFINITONS` | <p>This applies to state objects of type collection only, ignored otherwise.</p><p>The exports from this collection are allowed to have unresolved references (dependencies) that would have to be resolved (defined) when the collection is included in a containing state object (e.g. RTPSO). This includes depending on an externally defined subobject associations to associate an external subobject (e.g. root signature) to a local export.</p><p>In the absence of this flag (**default**), all exports in this collection must have their dependencies fully locally resolved, including any necessary subobject associations being defined locally. Advanced implementations/drivers will have enough information to compile the code in the collection and not need to keep around any uncompiled code (unless the `D3D12_STATE_OBJECT_FLAG_ALLOW_EXTERNAL_DEPENDENCIES_ON_LOCAL_DEFINITIONS` flag is set). So that when the collection is used in a containing state object (e.g. RTPSO), minimal work needs to be done by the driver, ideally a "cheap" link at most.</p><p>Even with this flag, there is never visibility of code across separate state object definitions that are combined incrementally via the [AddToStateObject()](#addtostateobject) API.</p>
 `D3D12_STATE_OBJECT_FLAG_ALLOW_EXTERNAL_DEPENDENCIES_ON_LOCAL_DEFINITIONS` | <p>This applies to state objects of type collection only, ignored otherwise.</p><p>If a collection is included in another state object (e.g. RTPSO), allow shaders / functions in the rest of the containing state object to depend on (e.g. call) exports from this collection.</p><p> In the absence of this flag (default), exports from this collection cannot be directly referenced by other parts of containing state objects (e.g. RTPSO). This can reduce memory footprint for the collection slightly since drivers don't need to keep uncompiled code in the collection on the off chance that it may get called by some external function that would then compile all the code together. That said, if not all necessary subobject associations have been locally defined for code in this collection, the driver may not be able to compile shader code yet and may still need to keep uncompiled code around.</p><p>A subobject association defined externally that associates an external subobject to a local export does not count as an external dependency on a local definition, so the presence or absence of this flag does not affect whether the association is allowed or not. On the other hand if the current collection defines a subobject association for a locally defined subobject to an external export (e.g. shader), that counts as an external dependency on a local definition, so this flag must be set.</p><p>Also, regardless of the presence or absence of this flag, shader entrypoints (such as hit groups or miss shaders) in the collection are visible as entrypoints to a containing state object (e.g. RTPSO) if exported by it. In the case of an RTPSO, the exported entrypoints can be used in shader tables for raytracing.</p><p>Even with this flag, there is never visibility of code across separate state object definitions that are combined incrementally via the [AddToStateObject()](#addtostateobject) API.</p>
 `D3D12_STATE_OBJECT_FLAG_ALLOW_STATE_OBJECT_ADDITIONS` |  <p>The presence of this flag in an executable state object, e.g. raytracing pipeline, allows the state object to be passed into [AddToStateObject()](#addtostateobject) calls, either as the original state object, or the portion being added.</p><p>The presence of this flag in a collection state object means the collection can be imported by executable state objects (e.g. raytracing pipelines) regardless of whether they have also set this flag.  The absence of this flag in a collection state object means the collection can only be imported by executable state objects that also do not set this flag.
+`D3D12_STATE_OBJECT_FLAG_RAYQUERY_ALLOW_OPACITY_MICROMAPS_ON_PRE_SM69_SHADERS` | <p>*Not shipped yet, expected to be available with the next retail Agility SDK release.*</p><p>For [RayQuery](#rayquery) objects declared in shaders in this state object that are compiled to a shader model earlier than 6.9, behave as if [RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS](#rayquery-flags) had been specified.  See [RayQuery flags on pre Shader Model 6.9 shaders](#rayquery-flags-on-pre-shader-model-69-shaders).</p><p>This is the state object form of the opt-in.  The `D3D12_PIPELINE_STATE_FLAGS` value of the same name is for pipelines created outside a state object and is not permitted here.</p><p>This flag may differ between an [AddToStateObject()](#addtostateobject) addition and the existing state object.  Each value applies only to the shaders defined by its own state object description.</p>
+`D3D12_STATE_OBJECT_FLAG_RAYQUERY_ALLOW_CLUSTERED_GEOMETRY_ON_PRE_SM69_SHADERS` | <p>*Not shipped yet, expected to be available when [clustered geometry](raytracing2.md#clustered-geometry) goes into preview.*</p><p>The equivalent of the row above, for [RAYQUERY_FLAG_ALLOW_CLUSTERED_GEOMETRY](#rayquery-flags), including the [AddToStateObject()](#addtostateobject) behavior.</p>
 
 ---
 
@@ -3664,7 +3672,7 @@ Value                               | Definition
 `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_TRIANGLES` | <p>For any [TraceRay()](#traceray) call within this raytracing pipeline, add in the `RAY_FLAG_SKIP_TRIANGLES` [Ray flag](#ray-flags). The resulting combination of ray flags must be valid.  The presence of this flag in a raytracing pipeline config does not show up in a [RayFlags()](#rayflags) call from a shader.  Implementations may be able to optimize pipelines knowing that a particular primitive type need not be considered.</p>
 `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_PROCEDURAL_PRIMITIVES` | <p>For any [TraceRay()](#traceray) call within this raytracing pipeline, add in the `RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES` [Ray flag](#ray-flags). The resulting combination of ray flags must be valid.  The presence of this flag in a raytracing pipeline config does not show up in a [RayFlags()](#rayflags) call from a shader. Implementations may be able to optimize pipelines knowing that a particular primitive type need not be considered.</p>
 `D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS` | If this flag is specified, the pipeline supports Opacity Micromaps. If a triangle with an OMM is encountered during traversal with this flag cleared, behavior is undefined. This flag should not be set if there are no OMMs present, since it may incur a small penalty on traversal performance overall.  This flag is part of the [Opacity Micromaps](#opacity-micromaps) feature. This flag applies to accessing OMMs via [TraceRay()](#traceray), whereas for [RayQuery::TraceRayInline()](#rayquery-tracerayinline), the same is accomplished by specifying [RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS](#rayquery-flags) in the second template parameter to [RayQuery](#rayquery).
-`D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY` | If this flag is specified, the pipeline supports [clustered geometry](raytracing2.md#clustered-geometry). Behavior is undefined if an acceleration structure with clustered geometry is accessed from a pipeline that didn't specify this flag. 
+`D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY` | If this flag is specified, the pipeline supports [clustered geometry](raytracing2.md#clustered-geometry). If an acceleration structure with clustered geometry is encountered during traversal with this flag cleared, behavior is undefined. This flag should not be set if there is no clustered geometry present, since it may incur a small penalty on traversal performance overall.  This flag applies to accessing clustered geometry via [TraceRay()](#traceray), whereas for [RayQuery::TraceRayInline()](#rayquery-tracerayinline), the same is accomplished by specifying [RAYQUERY_FLAG_ALLOW_CLUSTERED_GEOMETRY](#rayquery-flags) in the second template parameter to [RayQuery](#rayquery).
 
 ---
 
@@ -5499,7 +5507,6 @@ enum RAYTRACING_PIPELINE_FLAG : uint
     RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS      = 0x400,
     RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY     = 0x800,
 };
-
 ```
 
 For definitions of the flags, see the D3D12 API equivalent, [D3D12_RAYTRACING_PIPELINE_FLAGS](#d3d12_raytracing_pipeline_flags).
@@ -6570,7 +6577,114 @@ Value                               | Definition
 ---------                           | ----------
 `RAYQUERY_FLAG_NONE` | No options selected.
 `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` | If this flag is specified, the rayquery object supports Opacity Micromaps. If a triangle with an OMM is encountered during traversal with this flag cleared, behavior is undefined. This flag should not be set if there are no OMMs present, since it may incur a small penalty on traversal performance overall.  This is the rayquery equivalent for [TraceRayInline()](#rayquery-tracerayinline) of what the [D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS](#d3d12_raytracing_pipeline_flags) flag accomplishes for non-inline [TraceRay()](#traceray). This flag is also documented in a separate [HLSL Opacity Micromaps](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0024-opacity-micromaps.md) spec.
-`RAYQUERY_FLAG_ALLOW_CLUSTERED_GEOMETRY` | If this flag is specified, the pipeline supports [clustered geometry](raytracing2.md#clustered-geometry). Behavior is undefined if an acceleration structure with clustered geometry is accessed from a pipeline that didn't specify this flag.  This is the rayquery equivalent for [TraceRayInline()](#rayquery-tracerayinline) of what the [D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY](#d3d12_raytracing_pipeline_flags) flag accomplishes for non-inline [TraceRay()](#traceray). This flag is also documented in a separate [HLSL Clustered Geometry](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0045-clustered-geometry.md) spec.
+`RAYQUERY_FLAG_ALLOW_CLUSTERED_GEOMETRY` | If this flag is specified, the rayquery object supports [clustered geometry](raytracing2.md#clustered-geometry). Behavior is undefined if an acceleration structure with clustered geometry is accessed from a rayquery object that didn't specify this flag.  This is the rayquery equivalent for [TraceRayInline()](#rayquery-tracerayinline) of what the [D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY](#d3d12_raytracing_pipeline_flags) flag accomplishes for non-inline [TraceRay()](#traceray). This flag is also documented in a separate [HLSL Clustered Geometry](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0045-clustered-geometry.md) spec.
+
+---
+
+### RayQuery flags on pre Shader Model 6.9 shaders
+
+> *Not shipped yet.  The Opacity Micromap flags below are expected to be available with the next retail Agility SDK
+> release.  The clustered geometry flags are expected as soon as [clustered geometry](raytracing2.md#clustered-geometry)
+> goes into preview.*
+
+The [RAYQUERY_FLAGS](#rayquery-flags) template parameter was added in Shader Model 6.9, so a shader compiled to an
+earlier shader model has no way to express these opt-ins.
+
+This matters when an application wants to reuse the same [RayQuery](#rayquery) shader both on newer devices, where
+Opacity Micromaps or [clustered geometry](raytracing2.md#clustered-geometry) may be present, and on older devices
+whose drivers were never updated to Shader Model 6.9 and which do not support those features either.  The shader code
+itself may happen to be agnostic to these features and need nothing else from Shader Model 6.9, in which case having
+to compile separate variants purely to express the opt-in is unwelcome.
+
+There is a cost to consider.  Allowing for Opacity Micromaps while not actually using them can incur some traversal
+inefficiency on some devices that support OMM.  It is up to the application to decide whether the shader
+permutation bloat of separate variants is worth being optimal in both the non-OMM and OMM cases.  An implementation
+for which this cost matters has the option of exposing Shader Model 6.9, so that applications targeting it can use the
+per-object [RAYQUERY_FLAGS](#rayquery-flags) template parameter instead.
+
+For those shaders the equivalent opt-in is available at pipeline creation instead.  Where it is specified depends on
+how the pipeline is created.
+
+**Pipelines created outside a state object**, via `CreateGraphicsPipelineState`, `CreateComputePipelineState` or
+`CreatePipelineState`, use `D3D12_PIPELINE_STATE_FLAGS`:
+
+```C++
+typedef enum D3D12_PIPELINE_STATE_FLAGS
+{
+    ...
+    D3D12_PIPELINE_STATE_FLAG_RAYQUERY_ALLOW_OPACITY_MICROMAPS_ON_PRE_SM69_SHADERS  = 0x80,
+    D3D12_PIPELINE_STATE_FLAG_RAYQUERY_ALLOW_CLUSTERED_GEOMETRY_ON_PRE_SM69_SHADERS = 0x100,
+} D3D12_PIPELINE_STATE_FLAGS;
+```
+
+Value                               | Definition
+---------                           | ----------
+`D3D12_PIPELINE_STATE_FLAG_RAYQUERY_ALLOW_OPACITY_MICROMAPS_ON_PRE_SM69_SHADERS` | <p>*Not shipped yet, expected to be available with the next retail Agility SDK release.*</p><p>For [RayQuery](#rayquery) objects declared in shaders in this pipeline that are compiled to a shader model earlier than 6.9, behave as if [RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS](#rayquery-flags) had been specified.</p>
+`D3D12_PIPELINE_STATE_FLAG_RAYQUERY_ALLOW_CLUSTERED_GEOMETRY_ON_PRE_SM69_SHADERS` | <p>*Not shipped yet, expected to be available when [clustered geometry](raytracing2.md#clustered-geometry) goes into preview.*</p><p>The equivalent of the row above, for [RAYQUERY_FLAG_ALLOW_CLUSTERED_GEOMETRY](#rayquery-flags).</p>
+
+These are the only members of `D3D12_PIPELINE_STATE_FLAGS` that this spec defines.  The enum itself is shared with the rest of D3D12 and its other values are documented with the features that introduced them.
+
+These values are **not** permitted in a state object, including in the `FLAGS` subobject a generic program can list.
+The opt-in has to be known when a shader is compiled, and in a state object that can happen before the generic program
+exists, so a pipeline creation time flag is too late to express it.  State objects use the separate mechanism below.
+
+**State objects**, including raytracing pipelines, use
+[D3D12_STATE_OBJECT_FLAGS](#d3d12_state_object_flags), which is carried by
+[D3D12_STATE_OBJECT_CONFIG](#d3d12_state_object_config) and so is
+[associated](#subobject-association-behavior) with shader exports, making it available at compile time:
+
+```C++
+typedef enum D3D12_STATE_OBJECT_FLAGS
+{
+    ...
+    D3D12_STATE_OBJECT_FLAG_RAYQUERY_ALLOW_OPACITY_MICROMAPS_ON_PRE_SM69_SHADERS  = 0x800,
+    D3D12_STATE_OBJECT_FLAG_RAYQUERY_ALLOW_CLUSTERED_GEOMETRY_ON_PRE_SM69_SHADERS = 0x1000,
+} D3D12_STATE_OBJECT_FLAGS;
+```
+
+> *These values are not shipped yet, though their values are fixed.  [D3D12_STATE_OBJECT_CONFIG](#d3d12_state_object_config)
+> can also be declared in HLSL and delivered in a DXIL library, and until the compiler defines these values an
+> application doing that can define them itself, for example
+> `#define D3D12_STATE_OBJECT_FLAG_RAYQUERY_ALLOW_OPACITY_MICROMAPS_ON_PRE_SM69_SHADERS 0x800`.  Note the failure
+> modes differ: a flag a runtime does not recognize is rejected when it arrives in a DXIL library, whereas the same
+> flag specified through the API is dropped and creation succeeds.*
+
+Each flag means: for [RayQuery](#rayquery) objects declared in shaders in this pipeline that are compiled to a shader
+model earlier than 6.9, behave as if the corresponding [RAYQUERY_FLAGS](#rayquery-flags) value had been specified.
+[RayQuery](#rayquery) is available starting at Shader Model 6.5, so the shader models these flags apply to are 6.5
+through 6.8.
+
+These flags govern traversal only.  The [RayQuery](#rayquery) members that report clustered geometry, such as
+[`CommittedClusterId()`](raytracing2.md#rayquery-committedclusterid), were added in Shader Model 6.9, so a pre-6.9 shader can traverse an acceleration structure
+using these features but cannot inspect what it hit through them.
+
+Shaders compiled to Shader Model 6.9 or higher are unaffected.  Their [RayQuery](#rayquery) objects use whatever
+[RAYQUERY_FLAGS](#rayquery-flags) they declare, and these pipeline flags neither add to nor override them.  A pipeline
+containing a mixture of shader models is valid, and a flag applies only to the pre-6.9 portions of it.  Setting a flag
+when no pre-6.9 [RayQuery](#rayquery) object is present is valid and has no effect.
+
+Within one state object description, these follow the existing
+[D3D12_STATE_OBJECT_CONFIG](#d3d12_state_object_config) match rule listed with the other
+[subobject association requirements](#subobject-association-requirements): if present they must match for all exports,
+and they do not need to match those of a contained state object.  So a collection whose shaders are fully resolved
+within it keeps the flags it was compiled with, and an executable or raytracing pipeline containing it does not have to
+declare the same ones.
+
+The flags also do not need to match across [AddToStateObject()](#addtostateobject) calls.  The shaders in an addition
+are separate from those in the existing state object and may traverse different acceleration structures.  Each
+addition's flags apply to the shaders it adds; existing shaders retain the behavior they were compiled with.
+
+The opt-in is required when the features might be used, in the same way it is for a Shader Model 6.9 shader.  If the
+flag is not set, [RayQuery](#rayquery) objects in pre-6.9 shaders in that pipeline do not support the feature, and if
+an acceleration structure using it is encountered during traversal, behavior is undefined.  Implementations may
+specialize inline traversal on that basis.
+
+Applications don't need to condition these flags on device capabilities or driver version.  A pre-6.9 shader which might
+traverse acceleration structures using these features sets the corresponding flag, and that is the whole rule.  The
+flags are valid to specify anywhere, and have no effect where the feature is not present.  Any driver that supports
+one of these features treats pre-6.9 [RayQuery](#rayquery) objects as having opted in to it if it does not understand
+the flag, which is what makes ignoring driver version safe, and matches what shipping Opacity Micromap drivers
+already do.
 
 ---
 
@@ -9634,3 +9748,4 @@ v1.43|5/17/2026|<li>In [CopyRaytracingAccelerationStructure()](#copyraytracingac
 v1.44|6/26/2026|<li>In [GetRaytracingAccelerationStructurePrebuildInfo()](#getraytracingaccelerationstructureprebuildinfo) and [D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS](#d3d12_build_raytracing_acceleration_structure_inputs), the spec already said that any parameter that is referenced via `D3D12_GPU_VIRTUAL_ADDRESS` will not be accessed by the operation. So this memory does not need to be initialized yet or be in a particular resource state. Whether GPU addresses are null or not *can* be inspected by the operation, even though the pointers are not dereferenced.  Added this: If actual GPUVAs aren't known at the time of the call, dummy non-zero values can be used just for the purposes for the prebuild call for entires that will be replaced with real non-null GPUVAs for build.</li>
 v1.45|7/10/2026|<li>Added `TemplateInstancePrefersCOMPRESSED1` to [D3D12_FEATURE_D3D12_OPTIONS_NNN](#d3d12_feature_d3d12_options_nnn) and the corresponding DDI options structure. This performance preference guides selection of the stored vertex format for cluster template instances and is reported as `FALSE` when clustered templates are unsupported.</li>
 v1.46|8/26/2026|<li>In [Additional SRV type](#additional-srv-type), defined what a NULL acceleration structure is for a shader-visible binding: a GPUVA of `0`, which applies equally to a root descriptor SRV and to a descriptor heap based SRV whose `Location` is `0`, since both bindings reduce to a GPUVA.  A null descriptor is not a separate case because the resource parameter is always NULL for these SRVs, and an unset root argument is uninitialized state rather than a GPUVA of `0`.  This is distinct from an instance with a NULL `AccelerationStructure` pointer, which is an inactive instance.  For a root descriptor SRV this is called out as an exception to [NULL Descriptors](ResourceBinding.md#null-descriptors) in the resource binding spec, which is updated with the matching note.  The definition is scoped to any shader-visible trace entry point.  The [TraceRay()](#traceray) and [RayQuery::TraceRayInline()](#rayquery-tracerayinline) parameter rows cross-reference it; [HitObject::TraceRay()](#hitobject-traceray) has no parameter row of its own and inherits those definitions.</li>
+v1.47|8/26/2026|<li>Added a way for shaders compiled before Shader Model 6.9 to opt in to Opacity Micromaps and [clustered geometry](raytracing2.md#clustered-geometry) for [RayQuery](#rayquery), which they otherwise cannot do since the [RAYQUERY_FLAGS](#rayquery-flags) template parameter was added in Shader Model 6.9.  This lets an application reuse one [RayQuery](#rayquery) shader across newer devices where these features may be present and older devices whose drivers were never updated to Shader Model 6.9, without compiling separate variants purely to express the opt-in.  See [RayQuery flags on pre Shader Model 6.9 shaders](#rayquery-flags-on-pre-shader-model-69-shaders), which adds `RAYQUERY_ALLOW_OPACITY_MICROMAPS_ON_PRE_SM69_SHADERS` and `RAYQUERY_ALLOW_CLUSTERED_GEOMETRY_ON_PRE_SM69_SHADERS` values to `D3D12_PIPELINE_STATE_FLAGS` for pipelines created outside a state object, and to [D3D12_STATE_OBJECT_FLAGS](#d3d12_state_object_flags) for state objects, raytracing pipelines included.  The `D3D12_PIPELINE_STATE_FLAGS` values are not permitted in a state object, since the opt-in has to be known when a shader is compiled and that can precede the generic program which would carry them.  None are shipped yet.</li><li>Three normative points in that section beyond the flags themselves.  A driver that supports one of these features but predates the corresponding flag must behave as if pre-6.9 [RayQuery](#rayquery) objects had opted in, which is what makes it safe for applications not to condition the flags on driver version.  The shader model that governs is that of the compilation unit which declared the [RayQuery](#rayquery) object, not that of any other code operating on it.  And the flags need not match across [AddToStateObject()](#addtostateobject) calls: each addition controls its own shaders while existing shaders retain the behavior they were compiled with.</li><li>In [D3D12_RAYTRACING_PIPELINE_FLAGS](#d3d12_raytracing_pipeline_flags), scoped `D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY` to [TraceRay()](#traceray) and pointed at the [RayQuery](#rayquery) equivalent, matching how the neighboring `D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS` row was already worded.  The two rows previously disagreed about whether [RayQuery](#rayquery) was covered.</li>
