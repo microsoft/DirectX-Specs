@@ -1,7 +1,7 @@
 <h1>D3D12 Work Lists</h1>
 <h2>GPU-Driven Rendering with Dynamic Program Selection</h2>
 
-v0.851 8/25/2026
+v0.852 9/11/2026
 
 ---
 
@@ -14,9 +14,11 @@ v0.851 8/25/2026
   - [Workflow](#workflow)
   - [Binding sources at record execution](#binding-sources-at-record-execution)
 - [Dispatch Model](#dispatch-model)
+  - [Dispatch input layout](#dispatch-input-layout)
   - [Primary record layout](#primary-record-layout)
-  - [MaxGraphicsProgramInputsPerPrimaryList](#maxgraphicsprograminputsperprimarylist)
+  - [Primary-record limits](#primary-record-limits)
 - [Work List Signature](#work-list-signature)
+  - [Secondary-list shape](#secondary-list-shape)
   - [Per-binding source: primary list vs secondary list](#per-binding-source-primary-list-vs-secondary-list)
   - [Argument layouts and the signature objects](#argument-layouts-and-the-signature-objects)
   - [Record byte layouts](#record-byte-layouts)
@@ -124,6 +126,7 @@ v0.851 8/25/2026
         - [D3D12\_SET\_WORK\_LIST\_DESC1](#d3d12_set_work_list_desc1)
     - [DispatchList](#dispatchlist)
       - [DispatchList Structures](#dispatchlist-structures)
+        - [D3D12\_DISPATCH\_LIST\_DESC](#d3d12_dispatch_list_desc)
         - [D3D12\_DISPATCH\_LIST\_INPUT](#d3d12_dispatch_list_input)
         - [D3D12\_DISPATCH\_LIST\_FLAGS](#d3d12_dispatch_list_flags)
         - [Primary record headers](#primary-record-headers)
@@ -133,6 +136,7 @@ v0.851 8/25/2026
         - [D3D12\_WORK\_LIST\_INLINE\_RAYTRACING\_RECORD](#d3d12_work_list_inline_raytracing_record)
     - [DispatchList1](#dispatchlist1)
       - [DispatchList1 Structures](#dispatchlist1-structures)
+        - [D3D12\_DISPATCH\_LIST\_DESC1](#d3d12_dispatch_list_desc1)
         - [D3D12\_DISPATCH\_LIST\_INPUT1](#d3d12_dispatch_list_input1)
         - [D3D12\_DISPATCH\_LIST\_FLAGS1](#d3d12_dispatch_list_flags1)
   - [Interfaces](#interfaces)
@@ -179,7 +183,7 @@ Four core capabilities sit behind that summary, available at `WORK_LISTS_TIER_1`
 
 - **Per-binding source choice.** Some bindings naturally vary per draw (per-instance vertex / instance counts, per-execution root parameters); others are shared across many draws using the same PSO (a per-material CBV, a per-batch root constant). Work Lists lets each argument declare which kind it is, so shared bindings live once in shared per-PSO-batch memory instead of being duplicated in every per-draw record (the way they would under `ExecuteIndirect`). See [Per-binding source](#per-binding-source-primary-list-vs-secondary-list) for the formal model.
 
-- **Fully GPU-resident inputs.** Every input the implementation reads at dispatch time, the record count, the per-record buffers, the program table, even the dispatch input struct itself, lives in GPU memory. A producer compute shader can populate the full pipeline end-to-end with no CPU readback and no fixed CPU-side worst case; the dispatch picks it up where the producer left it.
+- **GPU-resident work description.** The actual record counts, records, program-table contents and [dispatch input header](#dispatch-input-layout) live in GPU memory. A producer compute shader can author the work without CPU readback, within the [bounds](#primary-record-limits) supplied in the CPU-side call descriptor. The descriptor supplies the initial header's GPU address and sizing bounds, not the actual record counts.
 
 Optionally, per-program **local root arguments** may live alongside each program identifier in the program table, the way they do in raytracing shader records, so per-program bindings that would otherwise be replicated in every record live once per PSO.
 
@@ -195,7 +199,7 @@ Combined, the two let an entire GPU-driven pipeline, such as multiple rounds of 
 
 ## Work List Sketches
 
-Here are a few introductory diagrams to give an idea of some of the workload shapes possible with Work Lists.  For simplicity these diagrams omit the initial setup objects that let the app explain to the D3D system what the Work List shape will be.  What you see here are examples of what can be done once configured.  The rest of the spec covers all the details.
+Here are a few introductory diagrams to give an idea of some of the workload shapes possible with Work Lists.  For simplicity these diagrams omit the initial setup objects that let the app explain to the D3D system what the Work List shape will be.  What you see here are examples of what can be done once configured.  In each shape, the [dispatch input header](#dispatch-input-layout) is immediately followed by its primary records.  The rest of the spec covers all the details.
 
 The simplest shape is a single list of records. Each record selects an entry in the program table, which names the pipeline that record runs, and carries that pipeline's arguments, ending with the dispatch trigger that launches the work. One list can drive several different pipelines: below, a draw and two mesh dispatches sit side by side, and the two mesh records select different program table entries naming the same pipeline, differing only in the local root arguments bound with it.
 
@@ -229,7 +233,7 @@ A glossary of the terms used throughout the spec. Each entry points at the secti
 
 - **Executable class.** Each [program command signature](#createprogramcommandsignature) is classified by its dispatch-trigger argument as **graphics-class** (`_DRAW` / `_DRAW_INDEXED` / `_DISPATCH_MESH`), **compute-class** (`_DISPATCH` / `_FIXED_DISPATCH`), or **raytracing-class** (`_DISPATCH_RAYS_DIMENSIONS`). See [Dispatch Model](#dispatch-model) and [Root signature bindings](#root-signature-bindings).
 
-- **Primary record / primary list.** A [`DispatchList`](#dispatchlist) consumes a **primary list** of **primary records**. Each primary record's contents depend on its signature's executable class and per-arg source choices; see [Primary record layout](#primary-record-layout) for the possible record shapes.
+- **Primary record / primary list.** A [`DispatchList`](#dispatchlist) consumes a **primary list** of **primary records** immediately following its fixed [dispatch input header](#dispatch-input-layout). Each primary record's contents depend on its work list signature's executable class and secondary-list shape, and its program command signature's per-arg source choices; see [Primary record layout](#primary-record-layout).
 
 - **Secondary record / secondary list.** When any of a [program command signature](#createprogramcommandsignature)'s args have `Source == SOURCE_SECONDARY_RECORD`, each primary record points at a **secondary list** of **secondary records** (one per execution); each secondary record carries one execution's value for those args. Signatures whose args are all primary-sourced have no secondary list. See [Per-binding source](#per-binding-source-primary-list-vs-secondary-list).
 
@@ -268,7 +272,7 @@ The diagram below shows the objects and data structures involved in a Work List 
 │  │ ID3D12ProgramCommandSignatures │     │ Generic Program(s)         │     │
 │  │ "PCS" (one per PSO arg shape)  │     │  /  RTPSO shaders          │     │
 │  │  - pArgumentDescs[]            │     │                            │     │
-│  │  - SecondaryRecordByteStride   ◄─────┤  + ProgramCommandSig assoc │     │
+│  │ - SecondaryRecordStrideInBytes |◄────┤  + ProgramCommandSig assoc │     │
 │  │  - pGlobalRootSignature        │     │  + (opt) LocalRootsig,     │     │
 │  │    (optional; uniform across   │     │    declared in PCS' args   │     │
 │  │     all PCSes in the WLS)      │     │    for convenience, or in  │     │
@@ -303,8 +307,8 @@ The diagram below shows the objects and data structures involved in a Work List 
 Legend for the components diagram:
 
 - **Generic Program(s) / RTPSO shaders**: each is a shader entity declared in an `ID3D12StateObject` that carries a program command signature association. Graphics-class / compute-class: a generic-program subobject, reached into a program table by program identifier. Raytracing-class: the raytracing shaders a dispatch invokes (raygen / miss / hit-group / callable), reached through the standard shader tables in the SetProgram-bound [`D3D12_WORK_LIST_RAYTRACING_BINDING`](#d3d12_work_list_raytracing_binding); other shaders in the same RTPSO may carry a different association or none. The diagram draws one box for compactness. See [State object integration for program-table programs](#state-object-integration-for-program-table-programs) and [Raytracing pipeline programs](#raytracing-pipeline-programs).
-- **`ID3D12WorkListSignature`**: the per-list container. References one or more `ID3D12ProgramCommandSignature`s via `pProgramCommandSignatures[]` plus a `SubobjectMask` that selects which state-object subobjects may vary across the associated programs. Primary-list stride travels with each [`DispatchList`](#dispatchlist) call in [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input); program-table per-slot stride and slot count travel with each [`SetProgram`](#setprogram) bind in [`D3D12_WORK_LIST_PROGRAM_TABLE_BINDING`](#d3d12_work_list_program_table_binding) (for non-raytracing signatures).
-- **`ID3D12ProgramCommandSignature`**: the **per-PSO binding layout artifact**. Carries `pArgumentDescs[]` (each arg has a `Type`, a `Source`, and a `Binding`), `SecondaryRecordByteStride`, and an optional `pGlobalRootSignature` (shared across every program command signature in the same work list signature when present; see [Uniformity constraints](#uniformity-constraints-across-program-command-signatures)). The program command signature is the single declaration of the per-PSO arg layout: which args feed which root-sig slots, where each arg's bytes come from, and which root signature each slot lives in (the global and local root signatures complete the binding shape). Local root signature contents are authored either inline via [`_INLINE_*` args](#supported-argument-types) (implicit local root signature path) or via a `D3D12_LOCAL_ROOT_SIGNATURE` state-object subobject + `D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION` (explicit local root signature path); see [Local root signatures](#local-root-signatures). Analog of `ID3D12CommandSignature` in `ExecuteIndirect`, scoped per-program rather than globally bound.
+- **`ID3D12WorkListSignature`**: the per-list container. References one or more `ID3D12ProgramCommandSignature`s via `pProgramCommandSignatures[]` plus a `SubobjectMask` that selects which state-object subobjects may vary across the associated programs. The contained PCSes must agree on their [secondary-list shape](#secondary-list-shape). Primary-list stride travels with each [`DispatchList`](#dispatchlist) call in [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input); program-table per-slot stride and slot count travel with each [`SetProgram`](#setprogram) bind in [`D3D12_WORK_LIST_PROGRAM_TABLE_BINDING`](#d3d12_work_list_program_table_binding) (for non-raytracing signatures).
+- **`ID3D12ProgramCommandSignature`**: the **per-PSO binding layout artifact**. Carries `pArgumentDescs[]` (each arg has a `Type`, a `Source`, and a `Binding`), `SecondaryRecordStrideInBytes`, and an optional `pGlobalRootSignature` (shared across every program command signature in the same work list signature when present; see [Uniformity constraints](#uniformity-constraints-across-program-command-signatures)). The program command signature is the single declaration of the per-PSO arg layout: which args feed which root-sig slots, where each arg's bytes come from, and which root signature each slot lives in (the global and local root signatures complete the binding shape). Local root signature contents are authored either inline via [`_INLINE_*` args](#supported-argument-types) (implicit local root signature path) or via a `D3D12_LOCAL_ROOT_SIGNATURE` state-object subobject + `D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION` (explicit local root signature path); see [Local root signatures](#local-root-signatures). Analog of `ID3D12CommandSignature` in `ExecuteIndirect`, scoped per-program rather than globally bound.
 - **`+ ProgramCommandSig assoc`** (line inside the Generic Program(s) / RTPSO shaders box, with arrow `◄─────` to the program command signature box): every shader Work Lists can dispatch has a program command signature associated with it in its `ID3D12StateObject` via `D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION` (the standard state-object association mechanism; see [Raytracing.md's Default associations](Raytracing.md#default-associations) section for the all-shaders-in-one shorthand commonly used with RTPSOs). The association is the compile-time HW specialization input. Graphics-class and compute-class generic programs carrying it remain exclusive to Work Lists. Raytracing is different: the same RTPSO can be used both by Work Lists and by ordinary `DispatchRays`. Only the raytracing shaders a work list dispatch actually invokes need the selected work list signature's program command signature. See [State object integration for program-table programs](#state-object-integration-for-program-table-programs) and [Using the same RTPSO with and without Work Lists](#using-the-same-rtpso-with-and-without-work-lists).
 - **`+ (opt) Local RS`** (line inside the Generic Program(s) / RTPSO shaders box): an optional **per-PSO** local root signature for the program. The local root signature is the per program command signature binding space (vs the global root signature which is shared across program command signatures in a work list signature); it's what unlocks per-PSO arg customization beyond the shared global root signature. Two authoring paths: declared inline via [`_INLINE_*` args](#supported-argument-types) on the program command signature (implicit local root signature path; runtime synthesizes the local root signature and auto-injects it as a state-object subobject covering the program command signature's associated shaders), or declared as a standard `D3D12_LOCAL_ROOT_SIGNATURE` state-object subobject + `D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION` (explicit local root signature path; per the standard `D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION` rules, which allow per-export associations, a default-association covering everything else, or any mix). Both paths work for graphics-class and compute-class; raytracing-class supports only the explicit path (see [validation rule 21](#compatibility-and-validation)). The byte storage of the resulting local root arguments differs by class: graphics-class and compute-class store them in the per-slot space following the program identifier in the program table (see [Local root signatures](#local-root-signatures)); raytracing-class stores them in shader-table records inside the bound [`D3D12_WORK_LIST_RAYTRACING_BINDING`](#d3d12_work_list_raytracing_binding) (the standard raytracing shader-record layout).
 - **`pSignature` / `pSignatures[i]`**: the bound work list signature (single in the direct-bind path; selected by `SignatureIndex` from the bound signature array in the array-bind path). See [Binding via SetProgram](#binding-via-setprogram) for the two bind paths and [Uniformity constraints](#uniformity-constraints-across-program-command-signatures) for what signatures in an array must share.
@@ -315,17 +319,16 @@ Once these objects are bound (via [`SetProgram`](#setprogram) with `D3D12_PROGRA
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                       GPU-RESIDENT DATA                                    │
 │                                                                            │
-│   ┌──────────────────────────────────────────────┐                         │
-│   │  D3D12_DISPATCH_LIST_INPUT1 (GPU memory)     │                         │
-│   │  ┌─ NumProgramInputs                         │                         │
-│   │  ├─ Flags                                    │                         │
-│   │  ├─ SignatureIndex = i (Tier 2)              │                         │
-│   │  ├─ ProgramInputs.StrideInBytes              │                         │
-│   │  ├─ ProgramInputs ────────────────────┐      │                         │
-│   │  └─ NextDispatchList   (Tier 2)       │      │                         │
-│   └───────────────────────────────────────┼──────┘                         │
-│   ┌──────────────────────────┐  ┌─────────▼──────────────────────────────┐ │
-│   │ Program Table[i]         │  │ Primary List                           │ │
+│                                 ┌────────────────────────────────────────┐ │
+│                                 │ D3D12_DISPATCH_LIST_INPUT1 header      │ │
+│                                 │   NumPrimaryRecords                    │ │
+│                                 │   PrimaryRecordStrideInBytes           │ │
+│                                 │   Flags                                │ │
+│                                 │   SignatureIndex = i (Tier 2)          │ │
+│                                 │   NextDispatchList (Tier 2)            │ │
+│                                 ├────────────────────────────────────────┤ │
+│   ┌──────────────────────────┐  │ Primary List (immediately at byte 24)  │ │
+│   │ Program Table[i]         │  │                                        │ │
 │   │ (SetProgram-bound;       │  │ (D3D12_WORK_LIST_PRIMARY_RECORD[])     │ │
 │   │  pBindings[i])           │  │                                        │ │
 │   │ ┌──────────────────────┐ │  │ ┌────────────────────────────────────┐ │ │
@@ -365,8 +368,8 @@ Legend for the GPU-resident diagram:
 - **`id(A)`, `id(B)`, `id(C)`**: program identifiers obtained via `ID3D12StateObjectProperties1::GetProgramIdentifier`. Slot 2's "stale record" might be an invalid id, such as for a program identifier whose program has been deleted, fine as long as executing lists don't reference this slot.
 - **Program table stride**: the per-slot stride is the `Table.StrideInBytes` field of the [`D3D12_WORK_LIST_PROGRAM_TABLE_BINDING`](#d3d12_work_list_program_table_binding) supplied at [`SetProgram`](#setprogram) time, app-chosen as `0` or at least `sizeof(D3D12_PROGRAM_IDENTIFIER) = 32` bytes. A `0` stride is the broadcast form (every index resolves to the single record at the table's start address); when the stride is `32`, the table reduces to identifier-only records (no local root arguments).
 - **`args`** in each slot: the local root arguments payload, packed exactly per the local root signature associated (in the state object) with the program identified by that slot. See [Local root signatures](#local-root-signatures).
-- **Primary list**: each entry is a [primary record](#primary-record-layout) using the [`D3D12_WORK_LIST_PRIMARY_RECORD`](#d3d12_work_list_primary_record) hybrid header (`ProgramTableIndex`, `NumSecondaryRecords`, `SecondaryRecords`); some entries (like `[1]` in this diagram) also carry inline primary-sourced arg payload after the header (the `MyMaterialSRV = 0xFFFF` shown), packed in the signature's `pArgumentDescs` order.
-- **Secondary lists**: each `SecondaryRecords` pointer resolves to a buffer of secondary records whose layout (`SecondaryRecordByteStride` and the per-arg byte packing) comes from the [program command signature](#createprogramcommandsignature) associated with the PSO that primary record's `ProgramTableIndex` selects. **Different primary records pointing at different PSOs can have secondary lists with different shapes and strides.** The example uses this freedom:
+- **Primary list**: starts immediately after the [dispatch input header](#dispatch-input-layout), at byte 24 for the Tier 2 header shown (byte 16 for Tier 1). Each entry is a [primary record](#primary-record-layout) using the [`D3D12_WORK_LIST_PRIMARY_RECORD`](#d3d12_work_list_primary_record) hybrid header (`ProgramTableIndex`, `NumSecondaryRecords`, `SecondaryRecords`); every PCS in this work list signature has secondary-sourced arguments. Some entries (like `[1]` in this diagram) also carry inline primary-sourced arg payload after the record header (the `MyMaterialSRV = 0xFFFF` shown), packed in the signature's `pArgumentDescs` order.
+- **Secondary lists**: each `SecondaryRecords` pointer resolves to a buffer of secondary records whose layout (`SecondaryRecordStrideInBytes` and the per-arg byte packing) comes from the [program command signature](#createprogramcommandsignature) associated with the PSO that primary record's `ProgramTableIndex` selects. **Different primary records pointing at different PSOs can have secondary lists with different shapes and strides.** The example uses this freedom:
   - Primary record `[0]` selects a PSO whose program command signature sources `MyMaterialSRV` per-execution (it appears in every secondary record) and also has an extra `MyTintColor` arg unique to this PSO (via [`Binding == LOCAL_ROOT_SIGNATURE`](#d3d12_indirect_argument_binding), which doesn't participate in cross-program command signature uniformity).
   - Primary record `[1]` selects a PSO whose program command signature sources `MyMaterialSRV` from the primary record (the inline `MyMaterialSRV = 0xFFFF` shown there), so its secondary records don't carry that arg at all and the secondary stride is smaller.
   - Both program command signatures share the same global root signature and touch the same global root parameters (uniformity satisfied for global-bound args); they differ in per-arg `Source` choice and in their local-root-sig-bound extra args.
@@ -421,7 +424,8 @@ The diagram below shows the order of operations across the CPU and GPU timelines
                     │     when binding one signature directly  │
                     │     with no validation hooks.            │
                     │  5. Source GPU memory for the dispatch   │
-                    │     input, primary list, secondary lists │
+                    │     header + trailing primary list,      │
+                    │     secondary lists                      │
                     │     (if any), and program table (non-RT  │
                     │     only; RT uses SetProgram-bound RTPSO │
                     │     + shader tables instead). Either CPU │
@@ -461,10 +465,11 @@ The diagram below shows the order of operations across the CPU and GPU timelines
                     │     the secondary lists and selecting    │
                     │     program-table slots)                 │
                     │   - the outer D3D12_DISPATCH_LIST_INPUT  │
-                    │     struct (NumProgramInputs, Flags,     │
-                    │     ProgramInputs.StrideInBytes,         │
-                    │     ProgramInputs; on Tier 2 also        │
-                    │     SignatureIndex, NextDispatchList)    │
+                    │     header: NumPrimaryRecords,           │
+                    │     PrimaryRecordStrideInBytes, Flags;   │
+                    │     Tier 1 ends with ReservedPadding;    │
+                    │     Tier 2 ends with SignatureIndex,     │
+                    │     NextDispatchList                     │
                     │                                          │
                     │  Whatever writes each input barriers it  │
                     │  to SHADER_RESOURCE before DispatchList  │
@@ -489,8 +494,8 @@ The diagram below shows the order of operations across the CPU and GPU timelines
                     │  (Tier 2) If _ALLOW_NEXT_DISPATCH_LIST_  │
                     │  CONTINUATION is set, the GPU reads      │
                     │  NextDispatchList and, if non-null,      │
-                    │  re-enters as if DispatchList1 were      │
-                    │  called again. The read may happen at    │
+                    │  starts the next list under the original │
+                    │  call's bounds. The read may happen at   │
                     │  any time unless _END_WITH_WAIT_FOR_     │
                     │  COMPLETION is set, which defers it to   │
                     │  this list's retire point. The next      │
@@ -505,6 +510,8 @@ The diagram below shows the order of operations across the CPU and GPU timelines
 ```
 
 > Abbreviations in diagram: PSO = pipeline state object; RT = raytracing; RTPSO = raytracing pipeline state object; HW = hardware; IA = input assembler.
+
+At command-list recording time, the application supplies a CPU-side [`D3D12_DISPATCH_LIST_DESC`](#d3d12_dispatch_list_desc) or [`D3D12_DISPATCH_LIST_DESC1`](#d3d12_dispatch_list_desc1) to the dispatch method. Its values are copied during the call; the GPU-resident work in steps 7 and 8 uses the recorded header address and bounds without retaining the caller's descriptor storage.
 
 ---
 
@@ -532,7 +539,7 @@ Every shader-visible binding slot lives in one of two root signatures, and gets 
 │ _INLINE_STATIC_SAMPLER    │  _INLINE_ROOT_PARAMETER with │  Source=_PROGRAM_TABLE_RECORD│
 │ args, OR via state-object │  non-_PROGRAM_TABLE_RECORD   │  or _INLINE_STATIC_SAMPLER + │
 │ D3D12_LOCAL_ROOT_SIGNATURE│  Source)                     │  Source=_STATIC for baked-in │
-│ subobject + association)  │                              │  static samplers).           │
+│ subobject + association)  │                              │  static samplers.            │
 ├───────────────────────────┼──────────────────────────────┼──────────────────────────────┤
 │ LocalRootSig (raytracing) │  not available; RT-class     │  shader-table record bytes   │
 │ (RT-class shaders use the │  PCSes cannot have LRS args  │  (standard raytracing        │
@@ -566,26 +573,52 @@ Local root signature slots are inherently per program command signature, so loca
 
 # Dispatch Model
 
-[`DispatchList`](#dispatchlist) (Tier 1) and [`DispatchList1`](#dispatchlist1) (Tier 2) execute work across one or more programs, with per-program batches of records specified in GPU memory. The call reads its parameters, how many programs are launched, how many records each consumes, which program table to consult, which signature applies (Tier 2), whether to chain to a follow-on list (Tier 2), from GPU memory at execution time, so an upstream compute pass can fully author the dispatch with no CPU involvement.
+[`DispatchList`](#dispatchlist) (Tier 1) and [`DispatchList1`](#dispatchlist1) (Tier 2) execute work across one or more programs, with per-program batches of records specified in GPU memory. Each method takes a required pointer to a CPU-side call descriptor, [`D3D12_DISPATCH_LIST_DESC`](#d3d12_dispatch_list_desc) or [`D3D12_DISPATCH_LIST_DESC1`](#d3d12_dispatch_list_desc1), carrying the initial GPU header address and application-supplied sizing bounds. Actual counts, records, program selection and Tier 2 signature selection and continuations are read from GPU memory at execution time, so an upstream compute pass can author them without CPU readback.
 
 The command list must have a [work list signature](#work-list-signature) bound via [`SetProgram`](#setprogram) before the call. Tier 1 binds a single signature directly via [`D3D12_PROGRAM_TYPE_WORK_LIST`](#d3d12_program_type). Tier 2 additionally supports the array bind path ([`D3D12_PROGRAM_TYPE_WORK_LIST1`](#d3d12_program_type) with [`ID3D12WorkListSignatureArray`](#createworklistsignaturearray)) for multi-signature dispatch and for single-signature dispatch with [GPU Timeline Validation Hooks](#gpu-timeline-validation-hooks). The global root signature on the bound signature applies to every record.
 
-The per-list input is described by [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input) (Tier 1) or [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) (Tier 2, adding `SignatureIndex` and `NextDispatchList`). The input carries per-list flags ([`D3D12_DISPATCH_LIST_FLAGS`](#d3d12_dispatch_list_flags) / [`_FLAGS1`](#d3d12_dispatch_list_flags1)), a GPU VA of the primary list, and a GPU VA of the program table.
+The per-list input is described by [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input) (Tier 1) or [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) (Tier 2, adding `SignatureIndex` and `NextDispatchList`). It is a fixed header carrying the primary-record count, per-list flags ([`D3D12_DISPATCH_LIST_FLAGS`](#d3d12_dispatch_list_flags) / [`_FLAGS1`](#d3d12_dispatch_list_flags1)), and primary-record byte stride, immediately followed by the primary list. The program table remains in the [`SetProgram`](#setprogram)-bound binding.
+
+---
+
+## Dispatch input layout
+
+The `DispatchListInput` member of [`D3D12_DISPATCH_LIST_DESC`](#d3d12_dispatch_list_desc) / [`D3D12_DISPATCH_LIST_DESC1`](#d3d12_dispatch_list_desc1) addresses the fixed GPU header, not the first primary record. Each header starts at an 8-byte-aligned GPU virtual address. The primary-record array follows immediately at `DispatchListInput + sizeof(header)`, with no intervening gap or separately supplied primary-list address:
+
+| Field | Tier 1 byte offset | Tier 2 byte offset | Size |
+|---|---|---|---|
+| [`NumPrimaryRecords`](#d3d12_dispatch_list_input) (`UINT`) | 0 | 0 | 4 bytes |
+| [`PrimaryRecordStrideInBytes`](#d3d12_dispatch_list_input) (`UINT`) | 4 | 4 | 4 bytes |
+| [`Flags`](#d3d12_dispatch_list_flags) ([Tier 2 flags](#d3d12_dispatch_list_flags1)) | 8 | 8 | 4 bytes |
+| [`ReservedPadding`](#d3d12_dispatch_list_input) (must be 0) | 12 | absent | 4 bytes |
+| [`SignatureIndex`](#d3d12_dispatch_list_input1) (`UINT`) | absent | 12 | 4 bytes |
+| [`NextDispatchList`](#d3d12_dispatch_list_input1) | absent | 16 | 8 bytes |
+| **End of header / first primary record** | **16** | **24** | |
+
+The header sizes are exactly 16 bytes for [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input) and 24 bytes for [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1). Both start with the same count, stride and flags prefix. Tier 1's explicit [`ReservedPadding`](#d3d12_dispatch_list_input) supplies the last 4 bytes needed to align its trailing records; Tier 2 instead has [`SignatureIndex`](#d3d12_dispatch_list_input1) followed by the naturally aligned 8-byte [`NextDispatchList`](#d3d12_dispatch_list_input1), with no reserved padding field. Both header sizes are multiples of 8, so an aligned header also aligns the first primary record without an extra gap. The 8-byte GPU address requirement applies even though the Tier 1 C++ struct's `UINT`-sized members only require 4-byte natural alignment. These offsets and sizes apply equally to the C++ declarations, their HLSL transcriptions, and the [DDI mirrors](#gpu-resident-structs).
+
+[`PrimaryRecordStrideInBytes`](#d3d12_dispatch_list_input) is a 32-bit `UINT` field (`uint32_t` in HLSL). Its value directly specifies the byte stride between primary records; there is no separate effective-stride extraction.
+
+For primary-record index `i` in `[0, NumPrimaryRecords)`, the GPU virtual address is `DispatchListInput + sizeof(header) + UINT64(i) * PrimaryRecordStrideInBytes`, using the header type of the dispatch entry point. The header and trailing primary records occupy a contiguous GPU virtual address span. The primary-record stride includes each record's own [header](#primary-record-layout), inline argument bytes, and trailing padding, not the dispatch input header.
+
+When [`NumPrimaryRecords`](#d3d12_dispatch_list_input) is `0`, no primary records are read or required to exist after the header, and [`PrimaryRecordStrideInBytes`](#d3d12_dispatch_list_input) is ignored and unconstrained. The fixed header alone is sufficient for an empty list; Tier 1's [`ReservedPadding`](#d3d12_dispatch_list_input) must still be zero, and the Tier 2 [continuation rules](#dispatch-list-continuations) still apply. Synthesizing a [validator pointer](#_primary_list_pointer) to the nominal start of the trailing array does not read or require storage there.
+
+Each Tier 2 continuation starts at its own header, addressed by [`NextDispatchList`](#d3d12_dispatch_list_input1), and has its own immediately following primary list. Headers in a chain need not be adjacent to each other. [Secondary lists](#per-binding-source-primary-list-vs-secondary-list) remain independently addressed by their primary records, and [program-table storage](#program-table) is unchanged.
 
 ---
 
 ## Primary record layout
 
-Each entry of the primary list (`D3D12_DISPATCH_LIST_INPUT::ProgramInputs`) is a **primary record**. For non-raytracing-class signatures, a primary record carries the program-table index for the program to execute, optionally a pointer to a secondary list of secondary records, and optionally inline primary-sourced argument bytes. For raytracing-class signatures, the RTPSO is bound at [`SetProgram`](#setprogram) time so the program-table-index field is dropped; the primary record carries just the optional secondary-list pointer plus inline primary-sourced argument bytes. Which fixed header applies is driven by the signature's executable class and per-argument source choices, see [Per-binding source](#per-binding-source-primary-list-vs-secondary-list). The byte-level layout (offsets, padding rules) is normative in [Primary record layout](#primary-record-layout).
+Each entry of the primary list immediately following the [dispatch input header](#dispatch-input-layout) is a **primary record**. For non-raytracing-class signatures, a primary record carries the program-table index for the program to execute, optionally a pointer to a secondary list of secondary records, and optionally inline primary-sourced argument bytes. For raytracing-class signatures, the RTPSO is bound at [`SetProgram`](#setprogram) time so the program-table-index field is dropped; the primary record carries just the optional secondary-list pointer plus inline primary-sourced argument bytes. The work list signature's executable class and [secondary-list shape](#secondary-list-shape) select one fixed header for every primary record in the list; the selected program's PCS determines its inline argument layout.
 
-| Signature class | Any `SOURCE_SECONDARY_RECORD` arg? | Primary record struct |
+| Signature class | Secondary-list shape | Primary record struct |
 |---|---|---|
-| Graphics / Compute | No | [`D3D12_WORK_LIST_INLINE_PRIMARY_RECORD`](#primary-record-headers) |
-| Graphics / Compute | Yes | [`D3D12_WORK_LIST_PRIMARY_RECORD`](#primary-record-headers) |
-| Raytracing | No | [`D3D12_WORK_LIST_INLINE_RAYTRACING_RECORD`](#primary-record-headers) |
-| Raytracing | Yes | [`D3D12_WORK_LIST_RAYTRACING_RECORD`](#primary-record-headers) |
+| Graphics / Compute | Fully inline | [`D3D12_WORK_LIST_INLINE_PRIMARY_RECORD`](#primary-record-headers) |
+| Graphics / Compute | Hybrid | [`D3D12_WORK_LIST_PRIMARY_RECORD`](#primary-record-headers) |
+| Raytracing | Fully inline | [`D3D12_WORK_LIST_INLINE_RAYTRACING_RECORD`](#primary-record-headers) |
+| Raytracing | Hybrid | [`D3D12_WORK_LIST_RAYTRACING_RECORD`](#primary-record-headers) |
 
-For both structs, the inline arg payload (when present) follows the fixed header in memory, packed in `pArgumentDescs` order. The total size of each primary record (header plus any inline tail plus trailing pad) is the dispatch input's `ProgramInputs.StrideInBytes`.
+For each layout, the inline arg payload (when present) follows the fixed header in memory, packed in `pArgumentDescs` order. The total size of each primary record (header plus any inline tail plus trailing pad) is `PrimaryRecordStrideInBytes`.
 
 The byte layouts are:
 
@@ -620,25 +653,52 @@ The byte layouts are:
 |---|---|
 | `[0..]`   | inline primary-sourced arg payload (in `pArgumentDescs` order, filtered to `SOURCE_PRIMARY_RECORD`); absent when no args are `SOURCE_PRIMARY_RECORD` |
 
-App responsibility: set the per-dispatch [`D3D12_DISPATCH_LIST_INPUT::ProgramInputs.StrideInBytes`](#d3d12_dispatch_list_input) to fit the chosen header + inline tail + any trailing pad, 8-byte aligned. (The dispatch input declares this stride so the implementation can walk the primary list without inspecting individual records.)
+App responsibility: when `NumPrimaryRecords > 0`, set [`D3D12_DISPATCH_LIST_INPUT::PrimaryRecordStrideInBytes`](#d3d12_dispatch_list_input) to fit the chosen header + inline tail + any trailing pad, 8-byte aligned. (The dispatch input declares this stride so the implementation can walk the primary list without inspecting individual records.)
 
 ---
 
-## MaxGraphicsProgramInputsPerPrimaryList
+## Primary-record limits
 
-The `MaxGraphicsProgramInputsPerPrimaryList` argument to [`DispatchList`](#dispatchlist) and [`DispatchList1`](#dispatchlist1) is the application's upper bound on the largest single primary list's `NumProgramInputs` value within this call (the maximum over each individual list in a [continuation chain](#dispatch-list-continuations), *not* the sum across continuations). Implementations may use this bound to size internal graphics buffers allocated at command-list recording time. Exceeding the bound at execution time is undefined behavior.
+The CPU-side dispatch descriptor supplies upper bounds on the GPU-resident [`NumPrimaryRecords`](#d3d12_dispatch_list_input). Implementations may use these bounds to size internal resources at command-list recording time. Exceeding the applicable bound at execution time is undefined behavior.
 
-For pure compute / raytracing chains (no graphics-class records anywhere), pass 0.
+For [`DispatchList`](#dispatchlist), [`D3D12_DISPATCH_LIST_DESC::MaxPrimaryRecords`](#d3d12_dispatch_list_desc) bounds the one primary list, whether its executable class is graphics, compute or raytracing. The class is known at recording time from the work list signature bound by [`SetProgram`](#binding-via-setprogram): all of its eligible program command signatures belong to that class. Determining the class requires no inspection of GPU-resident headers, records or program-table contents. The actual `NumPrimaryRecords` is GPU-resident and need not be known at recording time, so the application supplies the bound separately.
+
+For [`DispatchList1`](#dispatchlist1), [`D3D12_DISPATCH_LIST_DESC1`](#d3d12_dispatch_list_desc1) supplies one bound per executable class, since GPU-resident [`SignatureIndex`](#signature-selection) can select a different class for each list:
+
+| Selected signature's executable class | Bound on that list's `NumPrimaryRecords` |
+|---|---|
+| Graphics | `MaxGraphicsPrimaryRecordsPerList` |
+| Compute | `MaxComputePrimaryRecordsPerList` |
+| Raytracing | `MaxRaytracingPrimaryRecordsPerList` |
+
+Each bound applies to **each individual list** of its class, including the head and every [continuation](#dispatch-list-continuations), not the chain-wide sum. These bounds count primary records, not secondary records, shader threads or total executions. All descriptor maxima remain fixed for the complete recorded call and all continuations. [`MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists) separately bounds the number of graphics-class lists; compute-class and raytracing-class list counts have no corresponding cap.
+
+A primary-record bound of `0` permits only empty lists of the corresponding class. A bound for a class that never executes may be zero or nonzero. An empty graphics-class list still counts against `MaxGraphicsPrimaryLists`, even when `MaxGraphicsPrimaryRecordsPerList` is zero.
 
 ---
 
 # Work List Signature
 
-A **work list signature** ([`ID3D12WorkListSignature`](#createworklistsignature)) is the per-list container that groups one or more [**program command signatures**](#createprogramcommandsignature) (per-PSO indirect-argument layouts) plus a `SubobjectMask` declaring which state-object subobjects may vary across the associated programs. Every contained program command signature must reference the same **global root signature** (the runtime enforces this at signature creation). Primary-list stride, program-table per-slot stride, and program-table slot count are *not* baked into the signature, they travel with each [`DispatchList`](#dispatchlist) call (see [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input)) so apps can resize / re-stride without recreating the signature.
+A **work list signature** ([`ID3D12WorkListSignature`](#createworklistsignature)) is the per-list container that groups one or more [**program command signatures**](#createprogramcommandsignature) (per-PSO indirect-argument layouts) plus a `SubobjectMask` declaring which state-object subobjects may vary across the associated programs. Every contained program command signature must reference the same **global root signature** and agree on the [secondary-list shape](#secondary-list-shape) (the runtime enforces these at signature creation). Primary-list stride, program-table per-slot stride, and program-table slot count are *not* baked into the signature, they travel with each [`DispatchList`](#dispatchlist) call (see [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input)) so apps can resize / re-stride without recreating the signature.
 
 The unit of compile-time HW specialization is the program command signature, not the work list signature: each [generic program](#state-object-integration-for-program-table-programs) eligible to appear in the program table is associated with exactly one program command signature at state-object creation, so the driver sees that PSO's indirect-argument layout (which args come from where, which root params they update) while it is still compiling the program.
 
 A work list signature with a single program command signature is the common case (all PSOs in the list share one arg layout). Graphics-class and compute-class work list signatures may contain multiple program command signatures, letting different PSOs in the same list use different per-record arg layouts; each primary record selects the program and its associated signature through `ProgramTableIndex`. A raytracing-class work list signature contains exactly one program command signature because raytracing records have no `ProgramTableIndex` or other PCS selector. Tier 2 changes the raytracing PCS only by selecting a different one-PCS work list signature through `SignatureIndex`. Cross-class chaining likewise uses separate work list signatures; a single work list signature cannot mix executable classes.
+
+---
+
+## Secondary-list shape
+
+[`CreateWorkListSignature`](#createworklistsignature) determines the secondary-list shape from the enclosed `pProgramCommandSignatures[]`. Every contained PCS must agree on whether its argument list contains any argument with `Source == D3D12_INDIRECT_ARGUMENT_SOURCE_SECONDARY_RECORD`:
+
+- If **every** PCS has **no** such argument, all primary records use the fully-inline shape.
+- If **every** PCS has **at least one** such argument, all primary records use the hybrid shape.
+
+[`CreateWorkListSignature`](#createworklistsignature) rejects a mixture of fully-inline and hybrid program command signatures. The shape is inferred from the PCS set; no separate mode flag or description field is supplied. Both shapes are supported at every Work Lists tier, with no additional capability query.
+
+This invariant concerns only the presence of secondary-sourced arguments. Corresponding arguments need not have identical sources, layouts and secondary strides may differ per PCS, and the dispatch trigger need not be secondary-sourced: a primary-sourced trigger with a secondary-sourced binding is hybrid too. `SecondaryRecordStrideInBytes == 0` does not determine shape; it is also the legal broadcast stride for a hybrid PCS.
+
+The consistency requirement is per **work list signature**, not per signature array or continuation chain. Different work list signatures in a Tier 2 array may have different shapes while retaining the existing array-wide [global-root-signature and binding uniformity constraints](#uniformity-constraints-across-program-command-signatures).
 
 ---
 
@@ -648,13 +708,13 @@ Each argument in a [program command signature](#createprogramcommandsignature) h
 
 `SOURCE_PRIMARY_RECORD` is useful when a binding (e.g., a per-material root constant or CBV) is the same across many invocations of one program selection, it lives once in the primary record instead of being duplicated in every secondary record. When **no** argument of a given program command signature is `SOURCE_SECONDARY_RECORD`, primary records selecting that command sig don't have a secondary list at all and the primary record IS the record (see [Primary record layout](#primary-record-layout)).
 
-Different program command signatures within the same work list signature can independently choose per-arg sources, so one PSO's secondary record can be small (few `SOURCE_SECONDARY_RECORD` args) while another's is large; each program command signature carries its own `SecondaryRecordByteStride`.
+Within the work list signature's consistent [secondary-list shape](#secondary-list-shape), different program command signatures can independently choose per-arg sources, so one PSO's secondary record can be small (few `SOURCE_SECONDARY_RECORD` args) while another's is large; each program command signature carries its own `SecondaryRecordStrideInBytes`.
 
 ---
 
 ## Argument layouts and the signature objects
 
-The per-record argument layout is described by an array of [`D3D12_WORK_LIST_ARGUMENT_DESC`](#d3d12_work_list_argument_desc) entries on a [program command signature](#createprogramcommandsignature), each carrying a `Type` (from the shared `D3D12_INDIRECT_ARGUMENT_TYPE` enum), a `Source` (from [`D3D12_INDIRECT_ARGUMENT_SOURCE`](#d3d12_indirect_argument_source)), a `Binding` (from [`D3D12_INDIRECT_ARGUMENT_BINDING`](#d3d12_indirect_argument_binding)), and a type-specific payload (root parameter index, vertex buffer slot, etc.). Each program command signature also carries its own optional `pGlobalRootSignature` (must match across all program command signatures in a work list signature when non-null; see [Uniformity constraints](#uniformity-constraints-across-program-command-signatures) and its own `SecondaryRecordByteStride`. Local root signature for the program command signature is authored either inline via [`_INLINE_ROOT_PARAMETER`](#_inline_root_parameter) / [`_INLINE_STATIC_SAMPLER`](#_inline_static_sampler) args in `pArgumentDescs` (implicit local root signature path) or via a standard `D3D12_LOCAL_ROOT_SIGNATURE` state-object subobject + association (explicit local root signature path); see [Local root signatures](#local-root-signatures). A program command signature is created via [`CreateProgramCommandSignature`](#createprogramcommandsignature) from a [`D3D12_PROGRAM_COMMAND_SIGNATURE_DESC`](#d3d12_program_command_signature_desc).
+The per-record argument layout is described by an array of [`D3D12_WORK_LIST_ARGUMENT_DESC`](#d3d12_work_list_argument_desc) entries on a [program command signature](#createprogramcommandsignature), each carrying a `Type` (from the shared `D3D12_INDIRECT_ARGUMENT_TYPE` enum), a `Source` (from [`D3D12_INDIRECT_ARGUMENT_SOURCE`](#d3d12_indirect_argument_source)), a `Binding` (from [`D3D12_INDIRECT_ARGUMENT_BINDING`](#d3d12_indirect_argument_binding)), and a type-specific payload (root parameter index, vertex buffer slot, etc.). Each program command signature also carries its own optional `pGlobalRootSignature` (must match across all program command signatures in a work list signature when non-null; see [Uniformity constraints](#uniformity-constraints-across-program-command-signatures) and its own `SecondaryRecordStrideInBytes`. Local root signature for the program command signature is authored either inline via [`_INLINE_ROOT_PARAMETER`](#_inline_root_parameter) / [`_INLINE_STATIC_SAMPLER`](#_inline_static_sampler) args in `pArgumentDescs` (implicit local root signature path) or via a standard `D3D12_LOCAL_ROOT_SIGNATURE` state-object subobject + association (explicit local root signature path); see [Local root signatures](#local-root-signatures). A program command signature is created via [`CreateProgramCommandSignature`](#createprogramcommandsignature) from a [`D3D12_PROGRAM_COMMAND_SIGNATURE_DESC`](#d3d12_program_command_signature_desc).
 
 The set of program command signatures that may be referenced by a single list, plus the `SubobjectMask` over varying state-object subobjects, is described by [`D3D12_WORK_LIST_SIGNATURE_DESC`](#d3d12_work_list_signature_desc), which [`CreateWorkListSignature`](#createworklistsignature) consumes to produce an [`ID3D12WorkListSignature`](#id3d12worklistsignature). Primary-list stride, program-table stride, and program-table slot count come in per-dispatch via [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input). Compile-time HW specialization happens once each program command signature is associated with generic programs in a state object (see [State object integration for program-table programs](#state-object-integration-for-program-table-programs)); the driver sees the per-PSO indirect-argument layout while it is still compiling the program.
 
@@ -687,10 +747,10 @@ Each arg occupies the size below and is placed at its natural alignment within i
 
 ### Stride derivation
 
-The runtime computes the minimum stride for each record class by walking the program command signature args once: placing each arg at the next natural-alignment boundary that fits, summing the sizes plus padding, then rounding the total up to 8-byte for the stride. **User-specified strides must not be less than the minimum stride implied by the arg data** (they may be larger if the app wants extra trailing padding per record). The one exception is `SecondaryRecordByteStride`, which may also be `0` as a broadcast form (every secondary index resolves to the record at the secondary list's start address); see below.
+The runtime computes the minimum stride for each record class by walking the program command signature args once: placing each arg at the next natural-alignment boundary that fits, summing the sizes plus padding, then rounding the total up to 8-byte for the stride. **User-specified strides must not be less than the minimum stride implied by the arg data** (they may be larger if the app wants extra trailing padding per record). The one exception is `SecondaryRecordStrideInBytes`, which may also be `0` as a broadcast form (every secondary index resolves to the record at the secondary list's start address); see below.
 
-- `ProgramInputs.StrideInBytes` (per-dispatch, on [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input)): must be ≥ the minimum primary-record size (header + inline tail) and 8-byte aligned.
-- `SecondaryRecordByteStride` (per program command signature, on [`D3D12_PROGRAM_COMMAND_SIGNATURE_DESC`](#d3d12_program_command_signature_desc)): must be `0` or at least the minimum secondary-record size, and (when non-zero) 8-byte aligned. A `0` stride is the broadcast form: every secondary index resolves to the record at the secondary list's start address. A program command signature with no `Source == _SECONDARY_RECORD` args must use `0`.
+- [`PrimaryRecordStrideInBytes`](#d3d12_dispatch_list_input) (per dispatch): when `NumPrimaryRecords > 0`, must be ≥ the minimum primary-record size (header + inline tail) and 8-byte aligned.
+- `SecondaryRecordStrideInBytes` (per program command signature, on [`D3D12_PROGRAM_COMMAND_SIGNATURE_DESC`](#d3d12_program_command_signature_desc)): must be `0` or at least the minimum secondary-record size, and (when non-zero) 8-byte aligned. A `0` stride is the broadcast form: every secondary index resolves to the record at the secondary list's start address. A program command signature with no `Source == _SECONDARY_RECORD` args must use `0`.
 
 Apps that want to know the resulting per-arg offsets can compute them with the same rule, applied to their `_INLINE_*` args' declaration order (which is the order the runtime uses when synthesizing the local root signature). The synthesized [`ID3D12RootSignature*`](#id3d12programcommandsignature) itself is also available via [`GetSynthesizedLocalRootSignature`](#id3d12programcommandsignature) for inspection, reuse, or association with a different state object.
 
@@ -937,7 +997,7 @@ System-generated GPU virtual address bound as a root descriptor in the [primary 
 
 > Tier 2 only. Validation hooks API.
 
-System-generated GPU virtual address bound as a root descriptor in the [primary list validator](#validation-hook-areas). The value is the GPU virtual address read from the current dispatch list header's `ProgramInputs` field. Per-record byte count: `0`.
+System-generated GPU virtual address bound as a root descriptor in the [primary list validator](#validation-hook-areas). The value is the current dispatch list header's GPU virtual address plus `sizeof(D3D12_DISPATCH_LIST_INPUT1)` (24 bytes; see [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1)), the start of its trailing primary-record array. It is synthesized from the header address, not read from a field. This synthesis does not access the array; when `NumPrimaryRecords == 0`, the nominal array address need not have storage behind it and must not be dereferenced. Per-record byte count: `0`.
 
 `Source` must be `SOURCE_SYSTEM`; `Binding` must be `GLOBAL_ROOT_SIGNATURE`, as for [`_DISPATCH_LIST_HEADER_POINTER`](#_dispatch_list_header_pointer). Only valid in a primary list validator's program command signature.
 
@@ -998,10 +1058,10 @@ For all other argument types in the table above, the per-record byte layout is t
 
 Two strides describe the in-memory layout of records, both 8-byte aligned:
 
-- `ProgramInputs.StrideInBytes`, the stride between primary records in the primary list (`D3D12_DISPATCH_LIST_INPUT::ProgramInputs`). Must fit the chosen primary record header, one of [`D3D12_WORK_LIST_PRIMARY_RECORD`](#d3d12_work_list_primary_record), [`D3D12_WORK_LIST_INLINE_PRIMARY_RECORD`](#d3d12_work_list_inline_primary_record), [`D3D12_WORK_LIST_RAYTRACING_RECORD`](#d3d12_work_list_raytracing_record), or [`D3D12_WORK_LIST_INLINE_RAYTRACING_RECORD`](#d3d12_work_list_inline_raytracing_record) per the signature's executable class and per-arg source choices, plus any inline arg payload plus trailing pad.
-- `SecondaryRecordByteStride`, on each [`D3D12_PROGRAM_COMMAND_SIGNATURE_DESC`](#d3d12_program_command_signature_desc), the stride between secondary records in each secondary list (pointed at by `D3D12_WORK_LIST_PRIMARY_RECORD::SecondaryRecords`). A non-zero stride must fit the packed `SOURCE_SECONDARY_RECORD` args plus trailing pad; a `0` stride is the broadcast form (every secondary index resolves to the list's start address), which is also the required value when the program command signature has no `SOURCE_SECONDARY_RECORD` args.
+- [`PrimaryRecordStrideInBytes`](#d3d12_dispatch_list_input) is the stride between primary records immediately following the [dispatch input header](#dispatch-input-layout). When `NumPrimaryRecords > 0`, it must fit the chosen primary record header, one of [`D3D12_WORK_LIST_PRIMARY_RECORD`](#d3d12_work_list_primary_record), [`D3D12_WORK_LIST_INLINE_PRIMARY_RECORD`](#d3d12_work_list_inline_primary_record), [`D3D12_WORK_LIST_RAYTRACING_RECORD`](#d3d12_work_list_raytracing_record), or [`D3D12_WORK_LIST_INLINE_RAYTRACING_RECORD`](#d3d12_work_list_inline_raytracing_record) per the work list signature's executable class and secondary-list shape, plus any inline arg payload plus trailing pad.
+- `SecondaryRecordStrideInBytes`, on each [`D3D12_PROGRAM_COMMAND_SIGNATURE_DESC`](#d3d12_program_command_signature_desc), the stride between secondary records in each secondary list (pointed at by `D3D12_WORK_LIST_PRIMARY_RECORD::SecondaryRecords`). A non-zero stride must fit the packed `SOURCE_SECONDARY_RECORD` args plus trailing pad; a `0` stride is the broadcast form (every secondary index resolves to the list's start address), which is also the required value when the program command signature has no `SOURCE_SECONDARY_RECORD` args.
 
-If natural arg packing yields a non-8-byte-multiple size (e.g. a signature containing `D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT` / [`_DISPATCH`](#supported-argument-types) / [`_DISPATCH_MESH`](#supported-argument-types) / [`_DRAW_INDEXED`](#supported-argument-types) in some combinations), the app pads up to the next 8-byte boundary. There is no per-list or per-record stride override, the implementation walks both lists using the signature's stride values.
+If natural arg packing yields a non-8-byte-multiple size (e.g. a signature containing `D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT` / [`_DISPATCH`](#supported-argument-types) / [`_DISPATCH_MESH`](#supported-argument-types) / [`_DRAW_INDEXED`](#supported-argument-types) in some combinations), the app pads up to the next 8-byte boundary. The implementation walks the primary list using the dispatch header's stride and each secondary list using its PCS's stride; individual records do not override those strides.
 
 ---
 
@@ -1033,8 +1093,8 @@ Reset-to-zero vs. restore-original is an open question, see [Open Issues](#open-
 
 **Counting unit.** The counter post-increments per **shader invocation** (per PSO launch), not per primary record, not per record traversal. The exact mapping:
 
-- For **hybrid** signatures (signatures with any `SOURCE_SECONDARY_RECORD` arg), one secondary record = one shader invocation. The counter goes `0, 1, 2, ...` across the secondary records, in array order, across all primary records in `ProgramInputs` order. Primary records themselves do *not* increment the counter; they only delimit batches of secondary records.
-- For **fully-inline** signatures (no `SOURCE_SECONDARY_RECORD` args), each primary record *is* one shader invocation (no secondary list under it). The counter goes `0, 1, 2, ...` across the primary records in `ProgramInputs` array order.
+- For **hybrid** signatures (signatures with any `SOURCE_SECONDARY_RECORD` arg), one secondary record = one shader invocation. The counter goes `0, 1, 2, ...` across the secondary records, in array order, across all primary records in primary-list order. Primary records themselves do *not* increment the counter; they only delimit batches of secondary records.
+- For **fully-inline** signatures (no `SOURCE_SECONDARY_RECORD` args), each primary record *is* one shader invocation (no secondary list under it). The counter goes `0, 1, 2, ...` across the primary records in primary-list order.
 
 Within a list:
 
@@ -1258,7 +1318,9 @@ ComPtr<ID3D12ProgramCommandSignature> pPCS = /* CreateProgramCommandSignature(..
 // shaders in the same RTPSO may use a different PCS or none.
 ComPtr<ID3D12StateObject> pRTPipelineSO = /* CreateStateObject(...) */;
 
-// 3. Wrap the program command signature in a work list signature.
+// 3. Wrap the program command signature in a work list signature. Its shape
+// follows pPCS: hybrid if any arg is SOURCE_SECONDARY_RECORD, or fully inline
+// otherwise (e.g. PRIMARY_RECORD-sourced ray dimensions only).
 ComPtr<ID3D12WorkListSignature> pWLS = /* CreateWorkListSignature with pPCS */;
 
 // 4. Build the SetProgram binding. The Type discriminator is _RAYTRACING; the
@@ -1284,9 +1346,11 @@ pCmdList->SetProgram(&progDesc);
 // 5. Per-execution, the primary list (or its secondary list, depending on the
 // program command signature's Source choice) carries D3D12_DISPATCH_RAYS_DIMENSIONS values: 12 bytes
 // of {Width, Height, Depth}. The bound RTPSO and shader tables apply to every
-// dispatch.
-pCmdList->DispatchList(/* GPU VA of D3D12_DISPATCH_LIST_INPUT */,
-                       /* MaxGraphicsProgramInputsPerPrimaryList */ 0);
+// dispatch. The primary list immediately follows D3D12_DISPATCH_LIST_INPUT.
+D3D12_DISPATCH_LIST_DESC dispatchDesc = {};
+dispatchDesc.DispatchListInput = /* GPU VA of D3D12_DISPATCH_LIST_INPUT */;
+dispatchDesc.MaxPrimaryRecords = /* upper bound on emitted primary records */;
+pCmdList->DispatchList(&dispatchDesc);
 ```
 
 ---
@@ -1311,6 +1375,8 @@ Before calling [`DispatchList`](#dispatchlist) / [`DispatchList1`](#dispatchlist
 
 The direct-bind path uses [`D3D12_PROGRAM_TYPE_WORK_LIST`](#d3d12_program_type) and [`D3D12_SET_WORK_LIST_DESC`](#d3d12_set_work_list_desc) (one signature + one tagged binding, no validation hooks), valid on every Tier 1+ device. The array bind path uses [`D3D12_PROGRAM_TYPE_WORK_LIST1`](#d3d12_program_type) and [`D3D12_SET_WORK_LIST_DESC1`](#d3d12_set_work_list_desc1) (`pSignatureArray` with one or more signatures + parallel `pBindings[]` + optional `ValidationProgramTable`), only valid on devices reporting `WORK_LISTS_TIER_2`.
 
+For [`DispatchList`](#dispatchlist), the directly bound work list signature determines the executable class at command-list recording time, so [`MaxPrimaryRecords`](#d3d12_dispatch_list_desc) bounds that single list for any class. For [`DispatchList1`](#dispatchlist1), the selected signature determines which [per-class primary-record bound](#primary-record-limits) applies to each list.
+
 Each signature's paired binding is carried in a [`D3D12_WORK_LIST_BINDING`](#d3d12_work_list_binding): for graphics-class and compute-class signatures the binding's `ProgramTable` member ([`D3D12_WORK_LIST_PROGRAM_TABLE_BINDING`](#d3d12_work_list_program_table_binding)) names the program-table buffer (plus its stride and slot count); for raytracing-class signatures the binding's `pRaytracing` member ([`D3D12_WORK_LIST_RAYTRACING_BINDING`](#d3d12_work_list_raytracing_binding)) names the RTPSO and four shader tables. A single binding for the direct-bind case, or one per signature in the array case. All bindings persist across continuations and are shared by every list in the chain (per [Compatibility rules 14 and 18](#compatibility-and-validation)); apps that need to change a binding must re-issue [`SetProgram`](#setprogram). The bound signature (or signature array) remains bound until [`SetProgram`](#setprogram) or `SetPipelineState` is called with a different program or pipeline state.
 
 ---
@@ -1330,7 +1396,7 @@ A Tier 2 caller that needs only single-signature dispatch (and where the debug l
 
 Tier 2 adds GPU-driven continuation chains, multi-signature dispatch, and the [GPU Timeline Validation Hooks](#gpu-timeline-validation-hooks) mechanism. The added surface:
 
-- **[`DispatchList1`](#dispatchlist1)**, the Tier 2 dispatch entry point; takes [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) and a [`MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists) upper-bound arg.
+- **[`DispatchList1`](#dispatchlist1)**, the Tier 2 dispatch entry point; takes a CPU-side [`D3D12_DISPATCH_LIST_DESC1`](#d3d12_dispatch_list_desc1) with the GPU address of the first [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1), [per-class primary-record bounds](#primary-record-limits), and the [`MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists) bound.
 - **[`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1)**, per-list input adding `SignatureIndex` (multi-signature selection) and `NextDispatchList` (continuation pointer).
 - **[`D3D12_DISPATCH_LIST_FLAGS1`](#d3d12_dispatch_list_flags1)**, adds [`_ALLOW_NEXT_DISPATCH_LIST_CONTINUATION`](#d3d12_dispatch_list_flags1), [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1), and [`_END_WITH_MEMORY_FLUSH`](#d3d12_dispatch_list_flags1).
 - **[`CreateWorkListSignatureArray`](#createworklistsignaturearray)**, creates the multi-signature aggregation object [`ID3D12WorkListSignatureArray`](#id3d12worklistsignaturearray), bound for dispatch via [`SetProgram`](#setprogram) with `D3D12_PROGRAM_TYPE_WORK_LIST1`.
@@ -1342,7 +1408,7 @@ Continuation chains use [`_INPUT1`](#d3d12_dispatch_list_input1) end-to-end, eve
 
 ## MaxGraphicsPrimaryLists
 
-The `MaxGraphicsPrimaryLists` arg to [`DispatchList1`](#dispatchlist1) is the application's upper bound on the number of graphics-class primary lists in this call's continuation chain (including the head list when it is graphics-class). Graphics-class includes signatures whose dispatch-trigger argument is [`_DRAW`](#supported-argument-types), [`_DRAW_INDEXED`](#supported-argument-types), or [`_DISPATCH_MESH`](#supported-argument-types). Implementations may use this bound to size resources allocated at command-list recording time. Exceeding the bound at execution time is undefined behavior.
+The `MaxGraphicsPrimaryLists` member of [`D3D12_DISPATCH_LIST_DESC1`](#d3d12_dispatch_list_desc1) is the application's upper bound on the number of graphics-class primary lists in this call's continuation chain (including the head list when it is graphics-class). Empty graphics-class lists count too. A value of `0` permits no graphics-class lists, even empty ones. Graphics-class includes signatures whose dispatch-trigger argument is [`_DRAW`](#supported-argument-types), [`_DRAW_INDEXED`](#supported-argument-types), or [`_DISPATCH_MESH`](#supported-argument-types). Implementations may use this bound to size resources allocated at command-list recording time. Exceeding the bound at execution time is undefined behavior.
 
 Examples:
 
@@ -1375,7 +1441,7 @@ With the two-level signature object model (a work list signature wrapping one or
 - For a single [`ID3D12WorkListSignature`](#createworklistsignature) bound directly: its own `pProgramCommandSignatures[]`. Validated at [`CreateWorkListSignature`](#createworklistsignature).
 - For Tier 2 multi-signature dispatch via [`ID3D12WorkListSignatureArray`](#createworklistsignaturearray): the union of `pProgramCommandSignatures[]` across every bound work list signature in the array. Validated at [`CreateWorkListSignatureArray`](#createworklistsignaturearray); within a single work list signature it's already validated by the constructor.
 
-Apply to the relevant set:
+The [secondary-list shape](#secondary-list-shape) is uniform within each work list signature, but need not match across work list signatures in an array. The following constraints apply to the relevant set:
 
 1. **Shared global root signature.** Every program command signature in the set must reference the same `pGlobalRootSignature`. Within a single work list signature this is validated by [`CreateWorkListSignature`](#createworklistsignature), which sources the shared root signature from `pProgramCommandSignatures[0]->pGlobalRootSignature` and validates that every other program command signature in the work list signature uses the same one. Across work list signatures in a signature array, [`CreateWorkListSignatureArray`](#createworklistsignaturearray) validates that `pSignatures[0]->pProgramCommandSignatures[0]->pGlobalRootSignature` matches the same field for every other program command signature reachable from every other work list signature in the array. This remains one shared GRS even when continuation slots select different RTPSOs: the command list has one compute-root binding state across the complete `DispatchList1` call and its continuations, and command-list-provided global arguments not overridden by records come from that state.
 2. **Identical set of updated root parameters within a class.** Graphics-class program command signatures ([`_DRAW`](#supported-argument-types) / [`_DRAW_INDEXED`](#supported-argument-types) / [`_DISPATCH_MESH`](#supported-argument-types) trailing) all write the same set of graphics root parameter indices; compute-class ([`_DISPATCH`](#supported-argument-types) / [`_FIXED_DISPATCH`](#_fixed_dispatch) trailing) and raytracing-class ([`_DISPATCH_RAYS_DIMENSIONS`](#_dispatch_rays_dimensions) trailing) program command signatures all write the same set of compute root parameter indices. Graphics-class may touch a completely different set of `RootParameterIndex` values than compute-class, because the two classes write to independent binding sets, see [Root signature bindings](#root-signature-bindings). Within a class, different program command signatures may use different argument *types* for a given root parameter (e.g. one updates root constant 3 with `INCREMENTING_CONSTANT`, another with a literal `CONSTANT`), but each must update exactly the same set of root parameter slots in its class's binding set. The rule applies *per `Binding`*: args declared with [`Binding == GLOBAL_ROOT_SIGNATURE`](#d3d12_indirect_argument_binding) participate in this uniformity check on the shared global root signature; args declared with `Binding == LOCAL_ROOT_SIGNATURE` are program-local and need not match across program command signatures. This guarantees that no global root parameter is unexpectedly carried over from a previous list when a new list of the same class with a different program command signature starts.
@@ -1399,15 +1465,17 @@ When a list is issued with [`_ALLOW_NEXT_DISPATCH_LIST_CONTINUATION`](#d3d12_dis
 
 1. The GPU reads `D3D12_DISPATCH_LIST_INPUT1::NextDispatchList` from GPU memory. The timing of this read depends on [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1) (see below).
 2. If the value is null, the [`DispatchList1`](#dispatchlist1) call ends after the current list retires.
-3. If the value is non-null, the GPU treats it as if `DispatchList1(NextDispatchList, MaxGraphicsPrimaryLists, MaxGraphicsProgramInputsPerPrimaryList)` had just been issued, including re-evaluating `NumProgramInputs`, `Flags`, `SignatureIndex`, the `ProgramInputs` array, and (potentially) another `NextDispatchList`. There is no recursion limit imposed by the API beyond [`MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists)'s graphics-list bound; each chained list pays its own state-leakage reset and may itself opt into further continuation.
+3. If the value is non-null, the GPU starts another list at that GPU header address under the original call's recorded [`D3D12_DISPATCH_LIST_DESC1`](#d3d12_dispatch_list_desc1) bounds. It re-evaluates `NumPrimaryRecords`, `Flags`, `SignatureIndex`, `PrimaryRecordStrideInBytes`, the primary records immediately following that header, and (potentially) another `NextDispatchList`. The selected signature determines which [primary-record bound](#primary-record-limits) applies; [`MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists) continues to bound the graphics-list count across the whole chain. No CPU descriptor is read or modified by following the pointer. There is no recursion limit imposed by the API beyond that graphics-list bound; each chained list follows the [state-leakage and reset rules](#effect-of-continuations-on-per-list-state) and may itself opt into further continuation.
 
 The timing of the `NextDispatchList` read depends only on whether this list sets [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1). Whether a graphics-class list retires its records in order, which is what [`_ALLOW_OUT_OF_ORDER_GRAPHICS`](#d3d12_dispatch_list_flags) controls, does not affect it. That flag describes *retirement* order within a list, while a continuation is about *launch* order, and the implementation may run ahead on that:
 
-**No wait: the next list may launch before this one retires.** With only [`_ALLOW_NEXT_DISPATCH_LIST_CONTINUATION`](#d3d12_dispatch_list_flags1) set, the implementation may read `NextDispatchList` at any time, including at launch, and may overlap the launch of the next list with the tail of the current one. The app asserts that the next [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) (the one this list's `NextDispatchList` points at, and what that one references) is already valid by the time this list runs, written from the CPU, by earlier GPU work with appropriate barriers before the [`DispatchList1`](#dispatchlist1) call, or by an earlier list in the chain that set the wait. Shaders in *this* list must not author any part of it, nor any data the next list consumes; a list that does either sets the wait instead ([rule 13](#compatibility-and-validation)). Such a chain runs with no barrier between its lists, and the implementation launches through it as greedily as it has room for.
+**No wait: the next list may launch before this one retires.** With only [`_ALLOW_NEXT_DISPATCH_LIST_CONTINUATION`](#d3d12_dispatch_list_flags1) set, the implementation may read `NextDispatchList` at any time, including at launch, and may overlap the launch of the next list with the tail of the current one. The app asserts that the next [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) (the header this list's `NextDispatchList` points at, its trailing primary records, and what they reference) is already valid by the time this list runs, written from the CPU, by earlier GPU work with appropriate barriers before the [`DispatchList1`](#dispatchlist1) call, or by an earlier list in the chain that set the wait. Shaders in *this* list must not author any part of it, nor any data the next list consumes; a list that does either sets the wait instead ([rule 13](#compatibility-and-validation)). Such a chain runs with no barrier between its lists, and the implementation launches through it as greedily as it has room for.
 
-**Wait: the next list launches only after preceding work retires.** The app sets [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1). The implementation defers reading `NextDispatchList` until preceding work has fully retired, so shaders inside the current list are free to write into the memory holding the next [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) (and its referenced arrays and record buffers) and then publish the pointer by writing it into the `NextDispatchList` field. Any list whose shaders author the next list's input needs this, whatever its class. An in-order graphics-class list is no exception: its records retire in order, but that says nothing about when the implementation reads the pointer, and the shader that wrote it may belong to any record.
+**Wait: the next list launches only after preceding work retires.** The app sets [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1). The implementation defers reading `NextDispatchList` until preceding work has fully retired, so shaders inside the current list are free to write into the memory holding the next [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) (its header, trailing primary records, and referenced record buffers) and then publish the pointer by writing it into the `NextDispatchList` field. Any list whose shaders author the next list's input needs this, whatever its class. An in-order graphics-class list is no exception: its records retire in order, but that says nothing about when the implementation reads the pointer, and the shader that wrote it may belong to any record.
 
-The deferral covers the whole of the *next* [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1), not just the current list's `NextDispatchList` field that points at it. Step 3 above re-evaluates the next list's `NumProgramInputs`, `Flags`, `SignatureIndex` and `ProgramInputs` array as a consequence of following the pointer, so none of them is read before the retire point and a producer shader may author any of them. `NextDispatchList` is named on its own in step 1 only because it is the field whose read timing the flag controls.
+The deferral covers the whole of the *next* [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) header and its trailing primary-record array, not just the current list's `NextDispatchList` field that points at it. Step 3 above re-evaluates the next list's `NumPrimaryRecords`, `Flags`, `SignatureIndex`, `PrimaryRecordStrideInBytes` and primary records as a consequence of following the pointer, so none of them is read before the retire point and a producer shader may author any of them. Those reads occur after any [`_END_WITH_MEMORY_FLUSH`](#d3d12_dispatch_list_flags1) the producing list also requested. `NextDispatchList` is named on its own in step 1 only because it is the field whose read timing the flag controls.
+
+**Per-list wait boundary.** For `A(wait) -> B(no-wait) -> C`, where `A` continues to `B` within one `DispatchList1` call and `C` is an ordinary command recorded after the call, the wait at `A`'s end is satisfied once `A` and all work preceding that boundary in the command list have retired. This happens before either `B` or `C` starts. The wait does not order `B` before `C`: they may overlap subject to other execution-order and dependency rules.
 
 Memory visibility of a producer's writes (so the next list actually sees them, rather than stale cached values) is the app's call between two options:
 
@@ -1418,9 +1486,9 @@ Supplying neither is an application error. These two options are the only mechan
 
 Under either option, a producer publishing to the next list does not need to order its own writes against each other. That relief comes from [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1) rather than from the flush, and a producer sets that flag anyway under [rule 13](#compatibility-and-validation): with the wait set the next list does not begin until the current list has retired, so it cannot observe intermediate state whichever option is chosen. What is unnecessary in both cases is splitting the writes into phases: record bodies first, a barrier placed to separate them, then the fields that trigger consumption. What the implementation-managed option changes is the cost of making those writes visible, one flush at list-end rather than per-write coherence. Neither option speaks to ordering that shaders within the current list must observe of each other.
 
-The memory holding the next [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) (and everything it references) is subject to the same resource-state and alignment requirements as the original list's input, see [Resource States and Synchronization](#resource-states-and-synchronization).
+The memory holding the next [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) header, its trailing primary records, and everything they reference is subject to the same resource-state and alignment requirements as the original list's input, see [Resource States and Synchronization](#resource-states-and-synchronization).
 
-> **Continuation chain length is bounded for graphics, otherwise unbounded.** The [`MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists) arg to [`DispatchList1`](#dispatchlist1) caps the count of graphics-class lists the chain may execute (see [DispatchList1](#dispatchlist1)); non-graphics lists do not count and the chain may follow `NextDispatchList` for them indefinitely. Each continuation is, semantically, a fresh [`DispatchList1`](#dispatchlist1), so the cost of chaining N times is roughly N times the cost of issuing N separate [`DispatchList1`](#dispatchlist1) calls. Chains do not accumulate driver state and do not require unbounded internal storage.
+> **Continuation chain length is bounded for graphics, otherwise unbounded.** [`D3D12_DISPATCH_LIST_DESC1::MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists) caps the count of graphics-class lists the chain may execute; non-graphics lists do not count and the chain may follow `NextDispatchList` for them indefinitely. Each continuation runs a fresh per-list dispatch under the original call's fixed bounds. The [primary-record limits](#primary-record-limits) bound each list individually, not the number of compute-class or raytracing-class lists. Chains do not accumulate driver state and do not require unbounded internal storage.
 >
 > What *does* still apply is normal command-list execution timing. A [`DispatchList1`](#dispatchlist1) call (one list or a long chain) executes inside the GPU scheduler's preemption / TDR (Timeout Detection and Recovery) window. A multi-second chain may be killed by TDR exactly the same way an oversized `Dispatch` or `ExecuteIndirect` would be, this is a host/scheduler property, not a Work-Lists-specific limit. Apps needing long-running chains must disable the timeout through their environment's mechanism; this spec does not include one.
 
@@ -1447,9 +1515,9 @@ Debug-layer validation of continuation chains is handled by the [GPU Timeline Va
 
 This section summarizes the execution-order and binding-lifetime rules defined in detail elsewhere in the spec; the cross-references below point to the normative definitions. It's intended as a quick reference for readers who want one place to look up "what happens when, and what state crosses what boundary."
 
-- Graphics-class records (`DRAW`, `DRAW_INDEXED`, `DISPATCH_MESH`) execute in array order: primary records in `ProgramInputs` order, and within each primary record its secondary records in array order. The [`D3D12_DISPATCH_LIST_FLAG_ALLOW_OUT_OF_ORDER_GRAPHICS`](#d3d12_dispatch_list_flags) flag opts the list out of this ordering, in which case graphics records may launch and retire in any order across primary records and across the secondary records within a primary record.
-- At a list boundary the next list's flags decide what happens, and an implementation reads only those. A graphics-class list without [`_ALLOW_OUT_OF_ORDER_GRAPHICS`](#d3d12_dispatch_list_flags) lands after work already in flight, so rasterization and output-merger results stay in submission order across the boundary; one that sets the flag may overtake it. Anything a shader reads needs [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1) on the earlier list either way. See [Ordering across a list boundary](#d3d12_dispatch_list_flags) in the flag description, and [rule 13](#compatibility-and-validation).
-- Compute records (`DISPATCH`) and raytracing records ([`_DISPATCH_RAYS_DIMENSIONS`](#_dispatch_rays_dimensions)) are never guaranteed to be launched or to execute in `ProgramInputs` order, with or without the flag above, matching standalone `Dispatch` and `DispatchRays` which have no inter-invocation ordering.
+- Graphics-class records (`DRAW`, `DRAW_INDEXED`, `DISPATCH_MESH`) execute in array order: primary records in primary-list order, and within each primary record its secondary records in array order. The [`D3D12_DISPATCH_LIST_FLAG_ALLOW_OUT_OF_ORDER_GRAPHICS`](#d3d12_dispatch_list_flags) flag opts the list out of this ordering, in which case graphics records may launch and retire in any order across primary records and across the secondary records within a primary record.
+- For graphics record ordering at a list boundary, only the next list's graphics-ordering flag is consulted. A graphics-class list without [`_ALLOW_OUT_OF_ORDER_GRAPHICS`](#d3d12_dispatch_list_flags) lands after work already in flight, so rasterization and output-merger results stay in submission order across the boundary; one that sets the flag may overtake it. Anything a shader reads needs [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1) on the earlier list either way. See [Ordering across a list boundary](#d3d12_dispatch_list_flags) in the flag description, and [rule 13](#compatibility-and-validation).
+- Compute records (`DISPATCH`) and raytracing records ([`_DISPATCH_RAYS_DIMENSIONS`](#_dispatch_rays_dimensions)) are never guaranteed to be launched or to execute in primary-list order, with or without the flag above, matching standalone `Dispatch` and `DispatchRays` which have no inter-invocation ordering.
 - For graphics-class and compute-class records, the program is selected once per primary record based on its `ProgramTableIndex` and applies to every execution that primary record drives (one execution in the fully-inline case; `NumSecondaryRecords` executions in the hybrid case); local root arguments are sourced from the same program-table slot, alongside the program identifier. For raytracing-class records (whose primary record headers have no `ProgramTableIndex`), the RTPSO is fixed for the entire list, bound at [`SetProgram`](#setprogram) time via [`D3D12_WORK_LIST_RAYTRACING_BINDING`](#d3d12_work_list_raytracing_binding); per-shader local root arguments come from the shader-table records named in that binding, per the standard raytracing model.
 - Within a list, each record's shader invocation receives the per-record arg values supplied by its own record's bytes; the [Uniformity constraints](#uniformity-constraints-across-program-command-signatures) ensure complete coverage so no record "inherits" from another. Records may execute in any order (always for compute-class and raytracing-class; opt-in via [`_ALLOW_OUT_OF_ORDER_GRAPHICS`](#d3d12_dispatch_list_flags) for graphics-class), so "previous record" has no defined meaning at the per-execution view.
 - At end of the entire [`DispatchList`](#dispatchlist) call (after every continuation list has retired), bindings touched by any signature in the chain are reset per [State leakage and reset](#state-leakage-and-reset). There is no reset between lists within the chain, because no in-flight binding state is observable to any shader invocation (each gets a fully configured set from its own record's bytes).
@@ -1483,11 +1551,11 @@ Across program command signatures (within a work list signature, and across work
 8. **Identical set of updated root parameters within a class.** Graphics-class program command signatures write the same set of `RootParameterIndex` values (for args with `Binding == GLOBAL_ROOT_SIGNATURE`); compute-class program command signatures (including raytracing-class) write the same set. Cross-class sets may differ (the two classes write to independent binding sets). Args with `Binding == LOCAL_ROOT_SIGNATURE` are program-local and need not match. See [Uniformity constraints](#uniformity-constraints-across-program-command-signatures) for the underlying rule.
 9. **Identical set of touched IA slots across graphics-class program command signatures.** Graphics-class program command signatures used together must touch the same set of vertex-buffer slot indices (via [`_VERTEX_BUFFER_VIEW`](#supported-argument-types) args) and agree on the presence/absence of an [`_INDEX_BUFFER_VIEW`](#supported-argument-types) arg. See [Uniformity constraints](#uniformity-constraints-across-program-command-signatures) for the underlying rule.
 
-Tier 2 chains:
+Dispatch bounds and Tier 2 chains:
 
 10. **Continuation chains use [`_INPUT1`](#d3d12_dispatch_list_input1) throughout.** Every `D3D12_DISPATCH_LIST_INPUT1::NextDispatchList` in a Tier 2 chain must point at another [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) (not a Tier 1 [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input)). The implementation reads chain entries as [`_INPUT1`](#d3d12_dispatch_list_input1).
-11. **[`MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists) upper bound.** The number of graphics-class lists actually executed by a [`DispatchList1`](#dispatchlist1) call's chain must not exceed the [`MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists) arg the app passed. A list counts whether or not it executes any records, since in a produced chain the app cannot know which links will turn out empty and so could not evaluate a bound that excluded them. Exceeding the bound is undefined behavior.
-12. **[`MaxGraphicsProgramInputsPerPrimaryList`](#maxgraphicsprograminputsperprimarylist) upper bound.** Within any single graphics-class primary list actually executed by a [`DispatchList`](#dispatchlist) / [`DispatchList1`](#dispatchlist1) call (head list or any continuation list), `NumProgramInputs` must not exceed the [`MaxGraphicsProgramInputsPerPrimaryList`](#maxgraphicsprograminputsperprimarylist) arg the app passed. Exceeding the bound is undefined behavior.
+11. **[`MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists) upper bound.** The number of graphics-class lists actually executed by a [`DispatchList1`](#dispatchlist1) call's chain must not exceed the `MaxGraphicsPrimaryLists` value recorded from [`D3D12_DISPATCH_LIST_DESC1`](#d3d12_dispatch_list_desc1). A list counts whether or not it executes any records, since in a produced chain the app cannot know which links will turn out empty and so could not evaluate a bound that excluded them. Exceeding the bound is undefined behavior.
+12. **[Primary-record upper bounds](#primary-record-limits).** For [`DispatchList`](#dispatchlist), the single list's `NumPrimaryRecords` must not exceed [`D3D12_DISPATCH_LIST_DESC::MaxPrimaryRecords`](#d3d12_dispatch_list_desc), regardless of executable class. For [`DispatchList1`](#dispatchlist1), each list's `NumPrimaryRecords` must not exceed the original [`D3D12_DISPATCH_LIST_DESC1`](#d3d12_dispatch_list_desc1)'s `MaxGraphicsPrimaryRecordsPerList`, `MaxComputePrimaryRecordsPerList` or `MaxRaytracingPrimaryRecordsPerList`, according to the selected signature's class. The bounds apply per list, not to sums across continuations. Exceeding a bound is undefined behavior. Actual counts are GPU-resident, so this is an execution-time requirement, not a check made by reading GPU memory during command-list recording; no normal-path GPU validation is required.
 13. **A list whose shaders author the next list must set the wait.** Record ordering does not sequence a continuation. [`_ALLOW_OUT_OF_ORDER_GRAPHICS`](#d3d12_dispatch_list_flags) describes *retirement* order within a graphics-class list, and compute-class and raytracing-class records never have a defined order at all. Reading `NextDispatchList` and launching the next list is *launch* order, which the implementation is free to run ahead on. A list whose shaders write any part of the next [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1), or data the next list consumes, must set [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1), whatever its class. Without it the implementation may read the pointer and launch the next list before the shader that wrote it has retired.
 
 Program table binding stability:
@@ -1526,12 +1594,13 @@ SetProgram binding-class matching:
     (b) **Range**: `RootParameterIndex` must be a valid index into the targeted root sig (`pGlobalRootSignature` for `Binding == _GLOBAL_ROOT_SIGNATURE`; the synthesized or explicit local root signature for `Binding == _LOCAL_ROOT_SIGNATURE`). For `_VERTEX_BUFFER_VIEW` args, the VB slot index must be within valid D3D12 VB slot range.
     (c) **IA arg validity per executable class**: compute-class and raytracing-class program command signatures (dispatch-trigger `_DISPATCH` / `_FIXED_DISPATCH` / `_DISPATCH_RAYS_DIMENSIONS`) must not contain `_VERTEX_BUFFER_VIEW` or `_INDEX_BUFFER_VIEW` args (no IA bindings in these classes). `_INDEX_BUFFER_VIEW` further requires the program command signature's dispatch-trigger to be `_DRAW_INDEXED`, and at most one such arg per program command signature.
     (d) **VB slot uniqueness**: no single VB slot may be touched by more than one `_VERTEX_BUFFER_VIEW` arg in a single program command signature.
-    (e) **Stride sizing**: `ProgramInputs.StrideInBytes` (per dispatch, on [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input)) must be 8-byte aligned AND at least the minimum-required-size for that record class (computed per the per-arg natural alignment packing rules; see [Record byte layouts](#record-byte-layouts)). `SecondaryRecordByteStride` (per program command signature, on [`D3D12_PROGRAM_COMMAND_SIGNATURE_DESC`](#d3d12_program_command_signature_desc)) must be `0` or at least the minimum secondary-record size, and 8-byte aligned when non-zero; a `0` stride is the broadcast form, and is the required value when the program command signature has no `Source == _SECONDARY_RECORD` args.
-    Rejected at [`CreateProgramCommandSignature`](#createprogramcommandsignature), or at [`DispatchList`](#dispatchlist) for the per-dispatch `ProgramInputs.StrideInBytes`.
+    (e) **Stride sizing**: when `NumPrimaryRecords > 0`, `PrimaryRecordStrideInBytes` on [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input) / [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) must be 8-byte aligned AND at least the minimum-required-size for that record class (computed per the per-arg natural alignment packing rules; see [Record byte layouts](#record-byte-layouts)). `SecondaryRecordStrideInBytes` (per program command signature, on [`D3D12_PROGRAM_COMMAND_SIGNATURE_DESC`](#d3d12_program_command_signature_desc)) must be `0` or at least the minimum secondary-record size, and 8-byte aligned when non-zero; a `0` stride is the broadcast form, and is the required value when the program command signature has no `Source == _SECONDARY_RECORD` args.
+    Per-PCS violations are rejected at [`CreateProgramCommandSignature`](#createprogramcommandsignature). The per-dispatch stride and [contiguous input addressing requirements](#dispatch-input-layout) apply at execution, since the header is GPU-authored; violations are undefined behavior and require GPU-based validation to diagnose.
 
 26. **`pGlobalRootSignature` presence.** [`D3D12_PROGRAM_COMMAND_SIGNATURE_DESC::pGlobalRootSignature`](#d3d12_program_command_signature_desc) must be non-null when the program command signature has any arg with `Binding == _GLOBAL_ROOT_SIGNATURE` (those args reference root-parameter slots in it, per [rule 25(b)](#compatibility-and-validation)), OR when any program/shader the program command signature is associated with has a global root signature in scope (an explicit `D3D12_GLOBAL_ROOT_SIGNATURE` subobject or a DXIL-embedded root signature, whether or not the shader references any of its parameters), so the runtime can bind it on the command list for those shaders. The program command signature may override some, all, or none of those bindings per-record via args with `Binding == _GLOBAL_ROOT_SIGNATURE`. May be null only when the program command signature has no `Binding == _GLOBAL_ROOT_SIGNATURE` args and no associated shader has a global root signature in scope. When non-null, must equal the `pGlobalRootSignature` of every other program command signature in the same work list signature ([Uniformity constraints](#uniformity-constraints-across-program-command-signatures)). Rejected at [`CreateProgramCommandSignature`](#createprogramcommandsignature) (presence/absence based on arg content) or at state-object creation (when an associated program has a global root signature in scope that the program command signature doesn't supply).
-27. **A fully-inline raytracing-class signature takes no secondary list validator.** [`D3D12_PROGRAM_COMMAND_SIGNATURE_DESC::RecordValidationProgramTableIndex`](#d3d12_program_command_signature_desc) must be `0` when a **raytracing-class** program command signature has no `SOURCE_SECONDARY_RECORD` args. The restriction is raytracing-specific because the validator fires only for raytracing-class *hybrid* primary records, so a fully-inline raytracing-class signature would designate a validator that can never be invoked. Graphics-class and compute-class signatures invoke it once per primary record whether or not that record has a secondary list, so a fully-inline signature of those classes may legitimately designate one to validate its primary records. This is not the same condition as `SecondaryRecordByteStride == 0`, which is also the legal broadcast form for a signature that does have secondary-sourced args. Rejected at [`CreateProgramCommandSignature`](#createprogramcommandsignature).
+27. **A fully-inline raytracing-class signature takes no secondary list validator.** [`D3D12_PROGRAM_COMMAND_SIGNATURE_DESC::RecordValidationProgramTableIndex`](#d3d12_program_command_signature_desc) must be `0` when a **raytracing-class** program command signature has no `SOURCE_SECONDARY_RECORD` args. The restriction is raytracing-specific because the validator fires only for raytracing-class *hybrid* primary records, so a fully-inline raytracing-class signature would designate a validator that can never be invoked. Graphics-class and compute-class signatures invoke it once per primary record whether or not that record has a secondary list, so a fully-inline signature of those classes may legitimately designate one to validate its primary records. This is not the same condition as `SecondaryRecordStrideInBytes == 0`, which is also the legal broadcast form for a signature that does have secondary-sourced args. Rejected at [`CreateProgramCommandSignature`](#createprogramcommandsignature).
 28. **Producer writes must be published, and the consumer must be sequenced after them.** A producer shader whose writes are consumed by a later list in a [continuation chain](#dispatch-list-continuations) must publish them. It does that either by using globally coherent writes, or by the list setting [`_END_WITH_MEMORY_FLUSH`](#d3d12_dispatch_list_flags1). Doing neither is undefined behavior. Publication alone is not sufficient: the consumer must also not read early, which comes only from [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1) on the producing list (see [rule 13](#compatibility-and-validation)). `DeviceMemoryBarrier` is not a third mechanism and does not substitute for either: it orders writes within a shader rather than making them visible. Unlike the other rules here this one is undiagnosable: the flush is visible to the debug layer as a flag, but whether a shader used globally coherent writes is a shader-authoring property that no API-entry check and no GPU-timeline validator observes.
+29. **Work list signature shape consistency.** [`CreateWorkListSignature`](#createworklistsignature) rejects a mixture of fully-inline and hybrid PCSes under the [secondary-list shape](#secondary-list-shape) rule. Shape is inferred from secondary-source presence in the contained PCSes, not supplied through an additional field. This is a per-work-list-signature check, not an array-wide shape constraint.
 
 ---
 
@@ -1553,9 +1622,9 @@ Four validation areas cover the layers of state a dispatch list reads as it exec
 
 The first three areas (signature-selection, primary list, secondary list) use the validation-program-table machinery described in the rest of this section; the fourth (shader validation) is a debug-layer-only behavior with no API surface, included here for completeness.
 
-1. **Signature-selection validation**, designated by [`D3D12_SET_WORK_LIST_DESC1::SignatureSelectionValidationProgramTableIndex`](#d3d12_set_work_list_desc1). Invoked once per dispatch list, before the work list signature is selected from the bound array (that is, before the per-signature [primary list validation](#validation-hook-areas), which runs after selection). Binding: [`DISPATCH_LIST_HEADER_POINTER`](#system-generated-validator-pointer-arg-types) only; the other pointer args identify per-signature state (program table, primary list) that does not exist yet, because no signature has been chosen. The GPU validation shader reads `SignatureIndex` from the [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) header and range-checks it against the bound `NumBindings`, which the GPU validation implementation delivers via additional bindings on the validation shader, sourced from tracking structures the debug layer maintains (the same way the other areas receive non-header context). On an out-of-range index it neutralizes the list, clamping `SignatureIndex` to `0` and zeroing `NumProgramInputs` (see [Validator defensive neutralization patterns](#validator-defensive-neutralization-patterns)), so the following selection dereferences a valid slot and processes no records. This is the only area not reached through `pSignatures[SignatureIndex]`, which is exactly why it is the only place `SignatureIndex` itself can be validated. Unlike the primary-list and secondary-list validators, which loop over variable-length lists and declare their grid via a `_FIXED_DISPATCH` arg on their own program command signature, this validator inspects only the fixed-size header, so it declares a `(1, 1, 1)` grid.
+1. **Signature-selection validation**, designated by [`D3D12_SET_WORK_LIST_DESC1::SignatureSelectionValidationProgramTableIndex`](#d3d12_set_work_list_desc1). Invoked once per dispatch list, before the work list signature is selected from the bound array (that is, before the per-signature [primary list validation](#validation-hook-areas), which runs after selection). Binding: [`DISPATCH_LIST_HEADER_POINTER`](#system-generated-validator-pointer-arg-types) only. Although the trailing primary list's address is derivable from the header address, its decoding context and the program-table binding depend on the signature not yet selected; no other pointer arg is exposed at this stage. The GPU validation shader reads `SignatureIndex` from the [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) header and range-checks it against the bound `NumBindings`, which the GPU validation implementation delivers via additional bindings on the validation shader, sourced from tracking structures the debug layer maintains (the same way the other areas receive non-header context). On an out-of-range index it neutralizes the list, clamping `SignatureIndex` to `0` and zeroing `NumPrimaryRecords` (see [Validator defensive neutralization patterns](#validator-defensive-neutralization-patterns)), so the following selection dereferences a valid slot and processes no records. This is the only area not reached through `pSignatures[SignatureIndex]`, which is exactly why it is the only place `SignatureIndex` itself can be validated. Unlike the primary-list and secondary-list validators, which loop over variable-length lists and declare their grid via a `_FIXED_DISPATCH` arg on their own program command signature, this validator inspects only the fixed-size header, so it declares a `(1, 1, 1)` grid.
 
-2. **Primary list validation**, designated by [`D3D12_WORK_LIST_SIGNATURE_DESC::ListValidationProgramTableIndex`](#d3d12_work_list_signature_desc). Invoked once per dispatch list, before any record processing. Bindings: [`DISPATCH_LIST_HEADER_POINTER`](#system-generated-validator-pointer-arg-types), [`PROGRAM_TABLE_POINTER`](#system-generated-validator-pointer-arg-types), [`PRIMARY_LIST_POINTER`](#system-generated-validator-pointer-arg-types). The GPU validation shader can read the [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) header at the header pointer, the primary list bytes at the primary-list pointer (the total reachable length is `NumProgramInputs * ProgramInputs.StrideInBytes`, computable from the header), and bytes at the program-table pointer. State not present in those bytes (the SetProgram-bound `SlotCount` and `ByteStride`, the argument layout each program command signature defines, descriptor heap bases) is not directly visible; the GPU validation implementation delivers any such context via additional bindings on the validation shader, sourced from tracking structures the debug layer maintains (whether those bindings live in the validation shader's global root signature or local root signature is an implementation detail). Dispatched at the grid declared by a [`_FIXED_DISPATCH`](#_fixed_dispatch) arg on the primary list validator's own program command signature (typically `(N, 1, 1)`). The validation shader picks a convenient `[numthreads(...)]` size and loops internally over `NumProgramInputs` primary records as needed; the implementation does not scale the grid by the data.
+2. **Primary list validation**, designated by [`D3D12_WORK_LIST_SIGNATURE_DESC::ListValidationProgramTableIndex`](#d3d12_work_list_signature_desc). Invoked once per dispatch list, before any record processing. Bindings: [`DISPATCH_LIST_HEADER_POINTER`](#system-generated-validator-pointer-arg-types), [`PROGRAM_TABLE_POINTER`](#system-generated-validator-pointer-arg-types), [`PRIMARY_LIST_POINTER`](#system-generated-validator-pointer-arg-types). The GPU validation shader can read the [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) header at the header pointer, the trailing primary list bytes at the synthesized primary-list pointer, and bytes at the program-table pointer. For a nonzero count, the primary-list span is `UINT64(NumPrimaryRecords) * PrimaryRecordStrideInBytes`, computable from the header; the validator must establish valid, non-overflowing addressing and accessible storage before reading records. For zero count it ignores the stride and does not read any trailing record bytes. State not present in those bytes (the recorded [primary-record bound](#primary-record-limits) for the selected signature's class, the SetProgram-bound `SlotCount` and `ByteStride`, the argument layout each program command signature defines, descriptor heap bases) is not directly visible; the GPU validation implementation delivers any such context via additional bindings on the validation shader, sourced from tracking structures the debug layer maintains (whether those bindings live in the validation shader's global root signature or local root signature is an implementation detail). Dispatched at the grid declared by a [`_FIXED_DISPATCH`](#_fixed_dispatch) arg on the primary list validator's own program command signature (typically `(N, 1, 1)`). The validation shader picks a convenient `[numthreads(...)]` size and loops internally over `NumPrimaryRecords` primary records as needed; the implementation does not scale the grid by the data.
 
 3. **Secondary list validation**, designated by [`D3D12_PROGRAM_COMMAND_SIGNATURE_DESC::RecordValidationProgramTableIndex`](#d3d12_program_command_signature_desc). Invoked per primary record whose program command signature declares a non-zero index, after the primary list validation shader and a barrier, before that primary record's program executions. For graphics-class and compute-class the record selects its program command signature via its `ProgramTableIndex`; for raytracing-class (whose records carry no `ProgramTableIndex`) the program command signature is the single one bound with the RTPSO, so the validator fires once per raytracing-class hybrid primary record over that record's secondary list. A *raytracing-class* program command signature whose records are fully-inline (no `SOURCE_SECONDARY_RECORD` args) can never invoke the validator, since it fires only for hybrid raytracing-class records, and must set the index to 0 per [rule 27](#compatibility-and-validation). Graphics-class and compute-class signatures are not restricted this way: the validator is invoked per primary record for them, so a fully-inline signature may designate one to validate its primary records. The selected work list signature's single raytracing-class program command signature supplies the index; no per-record selection picks among program command signatures (see [Uniformity constraints](#uniformity-constraints-across-program-command-signatures)). Bindings: [`PRIMARY_RECORD_POINTER`](#system-generated-validator-pointer-arg-types), [`SECONDARY_LIST_POINTER`](#system-generated-validator-pointer-arg-types). The GPU validation shader can read the primary record at the primary-record pointer and bytes at the secondary-list pointer. For a fully-inline graphics-class or compute-class signature there is no secondary list, so the secondary-list pointer is null and there are no secondary records to step; the validator runs once for that primary record and validates the record itself. State not present in those bytes (the program command signature's secondary-record stride needed to step record-to-record, the program command signature's argument layout needed to interpret each record's contents, descriptor heap bases) is not directly visible; the GPU validation implementation delivers any such context via additional bindings on the validation shader, sourced from tracking structures the debug layer maintains (root-signature placement is an implementation detail). Dispatched at the grid declared by a [`_FIXED_DISPATCH`](#_fixed_dispatch) arg on the secondary list validator's own program command signature (typically `(N, 1, 1)`). The validation shader picks a convenient `[numthreads(...)]` size and loops internally over `NumSecondaryRecords` secondary records as needed, or over none in the fully-inline case; the implementation does not scale the grid by the data.
 
@@ -1585,7 +1654,7 @@ Most of these are validator-only, but three record pointers are valid in a norma
 |---|---|---|
 | [`D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_LIST_HEADER_POINTER`](#_dispatch_list_header_pointer) | GPU virtual address of the current dispatch list's [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) | Primary list validator; signature-selection validator |
 | [`D3D12_INDIRECT_ARGUMENT_TYPE_PROGRAM_TABLE_POINTER`](#_program_table_pointer) | GPU virtual address of the program table (the `StartAddress` field of the SetProgram-bound binding for the current signature; graphics/compute only) | Primary list validator; data program command signature (GBV / conformance testing) |
-| [`D3D12_INDIRECT_ARGUMENT_TYPE_PRIMARY_LIST_POINTER`](#_primary_list_pointer) | GPU virtual address of the primary list (from the header's `ProgramInputs` field) | Primary list validator |
+| [`D3D12_INDIRECT_ARGUMENT_TYPE_PRIMARY_LIST_POINTER`](#_primary_list_pointer) | GPU virtual address of the trailing primary list, synthesized as the current header GPUVA + `sizeof(D3D12_DISPATCH_LIST_INPUT1)`; synthesis does not access record storage | Primary list validator |
 | [`D3D12_INDIRECT_ARGUMENT_TYPE_PRIMARY_RECORD_POINTER`](#_primary_record_pointer) | GPU virtual address of the primary record driving the current invocation | Secondary list validation; data program command signature (per-execution; GBV / conformance testing) |
 | [`D3D12_INDIRECT_ARGUMENT_TYPE_SECONDARY_LIST_POINTER`](#_secondary_list_pointer) | GPU virtual address of the secondary list (from the current primary record's `SecondaryRecords` field), or null for a fully-inline primary record | Secondary list validation |
 | [`D3D12_INDIRECT_ARGUMENT_TYPE_SECONDARY_RECORD_POINTER`](#_secondary_record_pointer) | GPU virtual address of the secondary record driving the current execution (hybrid lists) | Data program command signature (per-execution; GBV / conformance testing) |
@@ -1603,7 +1672,7 @@ struct { UINT RootParameterIndex; } SecondaryRecordPointer;      // _SECONDARY_R
 
 `RootParameterIndex` on each selects the validator's root-descriptor slot the synthesized GPU virtual address is written to.
 
-Two of these arg types, [`_PROGRAM_TABLE_POINTER`](#_program_table_pointer) and [`_PRIMARY_RECORD_POINTER`](#_primary_record_pointer), are valid both in a validator program command signature and in a normal (data) program command signature, where the implementation binds them per-execution as described above. [`_SECONDARY_RECORD_POINTER`](#_secondary_record_pointer) is data-only (it has no validator use). The other three, `DISPATCH_LIST_HEADER_POINTER`, `PRIMARY_LIST_POINTER`, and `SECONDARY_LIST_POINTER`, are validator-only: including one in a data program command signature is invalid (caught at [`CreateProgramCommandSignature`](#createprogramcommandsignature)). The signature-selection validator runs before a signature is chosen, so only `DISPATCH_LIST_HEADER_POINTER` has a defined value for it; the other pointer args identify per-signature state that does not exist yet, so the implementation has nothing to bind for them. Because a validator's role is fixed at bind time by which index field selects it, not at `CreateProgramCommandSignature`, this is an authoring constraint on the debug layer: the program command signature that `SignatureSelectionValidationProgramTableIndex` points at should declare only `DISPATCH_LIST_HEADER_POINTER`.
+Two of these arg types, [`_PROGRAM_TABLE_POINTER`](#_program_table_pointer) and [`_PRIMARY_RECORD_POINTER`](#_primary_record_pointer), are valid both in a validator program command signature and in a normal (data) program command signature, where the implementation binds them per-execution as described above. [`_SECONDARY_RECORD_POINTER`](#_secondary_record_pointer) is data-only (it has no validator use). The other three, `DISPATCH_LIST_HEADER_POINTER`, `PRIMARY_LIST_POINTER`, and `SECONDARY_LIST_POINTER`, are validator-only: including one in a data program command signature is invalid (caught at [`CreateProgramCommandSignature`](#createprogramcommandsignature)). The signature-selection validator runs before a signature is chosen and exposes only `DISPATCH_LIST_HEADER_POINTER`, as specified under [Validation hook areas](#validation-hook-areas); deriving the trailing array address does not expand this stage's pointer-arg availability. Because a validator's role is fixed at bind time by which index field selects it, not at `CreateProgramCommandSignature`, this is an authoring constraint on the debug layer: the program command signature that `SignatureSelectionValidationProgramTableIndex` points at should declare only `DISPATCH_LIST_HEADER_POINTER`.
 
 ---
 
@@ -1624,14 +1693,14 @@ The order is a strict pipeline: signature-selection validation runs first (guard
 For each dispatch list (the head list of a [`DispatchList`](#dispatchlist) / [`DispatchList1`](#dispatchlist1) call and every continuation list in the chain) **when a [`ValidationProgramTable`](#binding-the-validation-program-table) is bound** (Tier 2 array-bind via [`D3D12_SET_WORK_LIST_DESC1`](#d3d12_set_work_list_desc1) with non-null `ValidationProgramTable`), the implementation:
 
 1. **Signature-selection validation.** If the bound [`D3D12_SET_WORK_LIST_DESC1`](#d3d12_set_work_list_desc1)'s `SignatureSelectionValidationProgramTableIndex` is non-zero, dispatches the signature-selection validator with a `DISPATCH_LIST_HEADER_POINTER` binding synthesized from the header, before `SignatureIndex` is read for selection. The dispatch grid is declared by a `_FIXED_DISPATCH` arg on the signature-selection validator's own program command signature, typically `(1, 1, 1)` since the check inspects only the fixed-size header. When the index field is zero, no signature-selection validator runs and an out-of-range `SignatureIndex` is undefined behavior.
-2. Waits for signature-selection validation to complete (UAV barrier; the validator may have clamped `SignatureIndex` and/or zeroed `NumProgramInputs`) and re-reads the header. From this point `SignatureIndex` is in range `[0, NumBindings)` and is treated as fixed for selection.
+2. Waits for signature-selection validation to complete (UAV barrier; the validator may have clamped `SignatureIndex` and/or zeroed `NumPrimaryRecords`) and re-reads the header. From this point `SignatureIndex` is in range `[0, NumBindings)` and is treated as fixed for selection.
 3. Reads the dispatch list header to identify the work list signature via `pSignatures[SignatureIndex]` (array bind is the prerequisite for any validator invocation; direct bind never enters this cycle since [`D3D12_SET_WORK_LIST_DESC`](#d3d12_set_work_list_desc) has no `ValidationProgramTable` field).
-4. **Primary list validation.** If the signature's `ListValidationProgramTableIndex` is non-zero, dispatches the primary list validator with `DISPATCH_LIST_HEADER_POINTER`, `PROGRAM_TABLE_POINTER`, and `PRIMARY_LIST_POINTER` bindings synthesized from the header. The dispatch grid is declared by a `_FIXED_DISPATCH` arg on the primary list validator's own program command signature (typically `(N, 1, 1)`). The validator shader picks its own `[numthreads(...)]` size and loops internally over `NumProgramInputs` records as needed; the implementation does not scale the grid by the data.
+4. **Primary list validation.** If the signature's `ListValidationProgramTableIndex` is non-zero, dispatches the primary list validator with [`DISPATCH_LIST_HEADER_POINTER`](#_dispatch_list_header_pointer) bound to the current header GPUVA, [`PROGRAM_TABLE_POINTER`](#_program_table_pointer) from the selected binding, and [`PRIMARY_LIST_POINTER`](#_primary_list_pointer) synthesized as header GPUVA + 24, the size of [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1). Synthesizing these bindings does not read the primary records. The dispatch grid is declared by a `_FIXED_DISPATCH` arg on the primary list validator's own program command signature (typically `(N, 1, 1)`). The validator shader picks its own `[numthreads(...)]` size and loops internally over `NumPrimaryRecords` records as needed; the implementation does not scale the grid by the data.
 5. Waits for primary list validation to complete (UAV barrier; the validator may have written to the header to neutralize the list).
-6. Re-reads the header. From this point on, the header is treated as immutable for this dispatch list.
+6. Re-reads the header and uses its current [`NumPrimaryRecords`](#d3d12_dispatch_list_input1) and [`PrimaryRecordStrideInBytes`](#d3d12_dispatch_list_input1) to traverse the trailing primary list for secondary validation. Zero count means no primary records are read, regardless of the stride. Header fields are then treated as immutable except for the scheduled validator count repairs below and producer writes to `NextDispatchList` under [Next-list pointer semantics](#next-list-pointer-semantics).
 7. **Secondary list validation (all primary records in parallel).** For each primary record whose program command signature has a non-zero `RecordValidationProgramTableIndex`, dispatches the secondary list validator with `PRIMARY_RECORD_POINTER` and `SECONDARY_LIST_POINTER` bindings (for raytracing-class the program command signature is the single RTPSO-bound one, and only hybrid primary records have a secondary list to dispatch against; for a fully-inline graphics-class or compute-class record the secondary-list pointer is null and there are no secondary records). The dispatch grid is declared by a `_FIXED_DISPATCH` arg on the secondary list validator's own program command signature (typically `(N, 1, 1)`). The validator shader picks its own `[numthreads(...)]` size and loops internally over `NumSecondaryRecords` records as needed; the implementation does not scale the grid by the data. Per-primary-record secondary list validation invocations are independent and the implementation may run them concurrently.
-8. Waits for **all** secondary list validator invocations to complete (UAV barrier across the entire set of per-primary-record dispatches). Validators may have written to their primary records to truncate `NumSecondaryRecords`, to the header to truncate `NumProgramInputs`, or to neutralize via the [Validator defensive neutralization patterns](#validator-defensive-neutralization-patterns).
-9. Re-reads the header and per-primary-record fields. From this point on, the primary list and each primary record's `NumSecondaryRecords` / `SecondaryRecords` are treated as immutable for execution purposes.
+8. Waits for **all** secondary list validator invocations to complete (UAV barrier across the entire set of per-primary-record dispatches). Validators may have written to their primary records to truncate `NumSecondaryRecords`, to the header to truncate `NumPrimaryRecords`, or to neutralize via the [Validator defensive neutralization patterns](#validator-defensive-neutralization-patterns).
+9. Re-reads the header and per-primary-record fields, consuming the current count and record contents rather than values cached before validation. If the count is zero, no trailing primary-record storage is read. From this point on, the primary list and each primary record's `NumSecondaryRecords` / `SecondaryRecords` are treated as immutable for execution purposes.
 10. Proceeds with record processing as defined by [Dispatch Model](#dispatch-model). **Shader validation** runs automatically: if the debug layer has wrapped or rewritten the user's shaders to inject validation code, each execution carries that validation code with it; the implementation does not explicitly invoke a separate shader-validation dispatch.
 
 The per-record secondary list validator can be invoked either per primary record (one dispatch per record) or batched per `(program command signature, set of records using it)` pair (one dispatch per pair, with internal thread fan-out across records). The choice is an implementation detail. Either way, all secondary list validation invocations together must complete and their writes be visible before any record processing begins.
@@ -1646,8 +1715,8 @@ For [continuation chains](#dispatch-list-continuations), the entire ten-step cyc
 
 A validation shader can defensively neutralize bad records by writing back through any of its bindings declared as a UAV-bound root descriptor (the alternative is read-only, for shaders that only inspect). On detecting an unrecoverable error, the validator writes zeros to a count field that the implementation re-reads, or zeros to an arg-count field inside a record that becomes a no-op draw / dispatch. Four levels of neutralization are available, choose whichever scopes the damage to the right granularity:
 
-- **Signature selection.** The signature-selection validator, with a UAV-bound `DISPATCH_LIST_HEADER_POINTER`, clamps an out-of-range `SignatureIndex` into range (e.g. to `0`) and writes `NumProgramInputs = 0`, so selection lands on a valid slot and the list executes no records. The implementation re-reads the header after signature-selection validation, before selecting the signature.
-- **Whole list.** A primary list validator with a UAV-bound `DISPATCH_LIST_HEADER_POINTER` writes `NumProgramInputs = 0` (or a smaller value, to truncate processing at the first invalid record). The implementation re-reads the header before record processing.
+- **Signature selection.** The signature-selection validator, with a UAV-bound `DISPATCH_LIST_HEADER_POINTER`, clamps an out-of-range `SignatureIndex` into range (e.g. to `0`) and writes `NumPrimaryRecords = 0`, so selection lands on a valid slot and the list executes no records. The implementation re-reads the header after signature-selection validation, before selecting the signature.
+- **Whole list.** A primary list validator with a UAV-bound `DISPATCH_LIST_HEADER_POINTER` writes `NumPrimaryRecords = 0` (or a smaller value, to truncate processing at the first invalid record). An invalid stride or inaccessible trailing-record range can therefore be neutralized without accessing any primary-record storage. There is no primary-list address field to repair or redirect; the primary list stays immediately after the same header. The implementation re-reads the header before record processing.
 - **One primary record's secondary list** (hybrid records only). A secondary list validator with a UAV-bound `PRIMARY_RECORD_POINTER` writes `NumSecondaryRecords = 0` on its dispatched-against primary record (or a smaller value, to truncate processing at the first invalid secondary record). A fully-inline primary record has no such field, and offset 4 there is inline arg payload, so a validator must not write it and should neutralize through the per-execution pattern below instead. The implementation re-reads the affected primary record's fields before processing it.
 - **One per-execution invocation.** Any validator with UAV access to the record carrying a dispatch-trigger arg (the primary record via `PRIMARY_LIST_POINTER` or `PRIMARY_RECORD_POINTER`, or a secondary record via `SECONDARY_LIST_POINTER`) can zero the dispatch-trigger arg's bytes for that invocation: `VertexCountPerInstance = 0` / `InstanceCount = 0` for `_DRAW`, `IndexCountPerInstance = 0` / `InstanceCount = 0` for `_DRAW_INDEXED`, `ThreadGroupCountX/Y/Z = 0` for `_DISPATCH` / `_DISPATCH_MESH`, `Width = 0` / `Height = 0` / `Depth = 0` for `_DISPATCH_RAYS_DIMENSIONS`. The implementation still invokes the dispatch-trigger but the GPU produces no shader work. Useful when only some executions in a record are bad and the validator wants to keep the rest.
 
@@ -1722,6 +1791,8 @@ Queries (timestamp, occlusion, pipeline statistics) that wrap a [`DispatchList`]
 
 The state objects that source program identifiers are *not* referenced by the bound work list signature (or signature array), the runtime treats program identifiers as opaque values once they are in a table. Applications must keep referenced state objects alive while any outstanding [`DispatchList`](#dispatchlist) work could use their identifiers, exactly as they would for any [`SetProgram`](#setprogram) consumer.
 
+The CPU-side [`D3D12_DISPATCH_LIST_DESC`](#d3d12_dispatch_list_desc) / [`D3D12_DISPATCH_LIST_DESC1`](#d3d12_dispatch_list_desc1) storage need only remain valid for the API call. Its values are copied during command recording; this does not shorten the lifetimes of the GPU input, record or resource storage used by the recorded dispatch.
+
 ---
 
 ## PIX and debug
@@ -1736,17 +1807,19 @@ Buffer resource states required during [`DispatchList`](#dispatchlist) / [`Dispa
 
 | Resource | Required State |
 |---|---|
-| [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input) struct (including continuation targets) | Accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`) |
+| [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input) / [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) header (including continuation targets) | Accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`) |
 | Primary list (primary records, plus any secondary lists they reference) | Accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`) |
 | Record buffers | Accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`) |
 | Program table buffer(s) bound at [`SetProgram`](#setprogram) (via [`D3D12_WORK_LIST_PROGRAM_TABLE_BINDING::Table.StartAddress`](#d3d12_work_list_program_table_binding); one per non-raytracing signature in the array case). Contents must be immutable from when [`SetProgram`](#setprogram) executes on the GPU until every referencing [`DispatchList`](#dispatchlist) / [`DispatchList1`](#dispatchlist1) chain completes (per Compatibility rule 14). | Accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`) |
 | Raytracing-class shader-table buffers (`RayGenerationShaderRecord`, `MissShaderTable`, `HitGroupTable`, `CallableShaderTable`) bound at [`SetProgram`](#setprogram) via [`D3D12_WORK_LIST_RAYTRACING_BINDING`](#d3d12_work_list_raytracing_binding) for raytracing-class signatures. Contents must be immutable from when [`SetProgram`](#setprogram) executes on the GPU until every referencing [`DispatchList`](#dispatchlist) / [`DispatchList1`](#dispatchlist1) chain completes (per Compatibility rule 18). | Accessible as a shader resource per the standard raytracing shader-table rules (see [Raytracing.md](Raytracing.md)). |
 
+The resources backing each dispatch input header and its contiguous trailing primary-record array must remain alive and GPU-addressable until all referencing dispatches retire. An empty list requires only the fixed header, as specified in [Dispatch input layout](#dispatch-input-layout). Contiguous storage does not change producer publication or validator writeback timing.
+
 The application writes records into each program table buffer (see [Populating the program table](#populating-the-program-table)). The application must ensure those writes are complete and the buffer is transitioned to a readable state before [`DispatchList`](#dispatchlist) reads it. The barrier kind depends on how the table was populated (UAV writes vs. copy operations vs. initial CPU upload).
 
 If a shader populates the [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input) struct, the primary list, any secondary lists, the program table, or any other record buffers (compute is most common, but any shader's UAV writes work), appropriate barriers must be inserted between the producer work and the [`DispatchList`](#dispatchlist) call.
 
-For [continuations](#dispatch-list-continuations) (Tier 2): resource states cannot change between lists in a chain, the GPU runs the chain without CPU intervention to issue barriers. The app must put every next-list resource ([`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input), `ProgramInputs` array, record buffers, plus the SetProgram-bound program-table or raytracing shader-table buffers depending on signature class) into `*_COMMON` or `*_SHADER_RESOURCE` access **before** the original [`DispatchList`](#dispatchlist) is issued, and leave it there for the duration. For incrementally generated or sequenced chains ([`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1)), producer shaders inside an earlier list write into these same buffers as UAVs, the buffers must therefore be in an access state that also permits UAV writes (typically `_COMMON`); the producers must publish their writes by one of the two mechanisms described under [Next-list pointer semantics](#next-list-pointer-semantics), globally coherent writes or the list setting [`_END_WITH_MEMORY_FLUSH`](#d3d12_dispatch_list_flags1), so the implementation observes consistent contents when the wait completes. Supplying neither is undefined behavior, see [rule 28](#compatibility-and-validation).
+For [continuations](#dispatch-list-continuations) (Tier 2): resource states cannot change between lists in a chain, the GPU runs the chain without CPU intervention to issue barriers. The app must put every next-list resource ([`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) header and its trailing primary-record array, referenced record buffers, plus the SetProgram-bound program-table or raytracing shader-table buffers depending on signature class) into `*_COMMON` or `*_SHADER_RESOURCE` access **before** the original [`DispatchList`](#dispatchlist) is issued, and leave it there for the duration. For incrementally generated or sequenced chains ([`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1)), producer shaders inside an earlier list write into these same buffers as UAVs, the buffers must therefore be in an access state that also permits UAV writes (typically `_COMMON`); the producers must publish their writes by one of the two mechanisms described under [Next-list pointer semantics](#next-list-pointer-semantics), globally coherent writes or the list setting [`_END_WITH_MEMORY_FLUSH`](#d3d12_dispatch_list_flags1), so the implementation observes consistent contents when the wait completes. Supplying neither is undefined behavior, see [rule 28](#compatibility-and-validation).
 
 ---
 
@@ -1839,22 +1912,24 @@ void CullAndEmit(uint3 dtid : SV_DispatchThreadID)
 // --- Not shown ----------------------------------------------------------------
 // A real implementation also writes:
 //
-//   1. The primary list (D3D12_WORK_LIST_PRIMARY_RECORD[]) in pPrimaryListBuffer:
-//      one primary record per active ProgramTableIndex, each carrying:
-//        ProgramTableIndex   = i
-//        NumSecondaryRecords = g_SecondaryCounts[i]
-//        SecondaryRecords    = GPU VA of i's region inside g_SecondaryBuffer
-//      (No inline arg tail: every signature arg is SOURCE_SECONDARY_RECORD.)
-//
-//   2. D3D12_DISPATCH_LIST_INPUT in pDispatchInputBuffer:
+//   1. D3D12_DISPATCH_LIST_INPUT at byte 0 of pDispatchInputBuffer:
 //        {
-//          NumProgramInputs             = count of active primary records,
-//          Flags                        = D3D12_DISPATCH_LIST_FLAG_NONE,
-//          ProgramInputs.StartAddress   = pPrimaryListBuffer GPU VA,
-//          ProgramInputs.StrideInBytes  = sizeof(D3D12_WORK_LIST_PRIMARY_RECORD),   // 16
+//          NumPrimaryRecords          = count of active primary records,
+//          PrimaryRecordStrideInBytes = sizeof(D3D12_WORK_LIST_PRIMARY_RECORD),   // 16
+//          Flags                      = D3D12_DISPATCH_LIST_FLAG_NONE,
+//          ReservedPadding            = 0,
 //        }
 //      (program table GPU VA, stride, and slot count are not in the input;
 //       they are bound at SetProgram time below.)
+//
+//   2. The primary list (D3D12_WORK_LIST_PRIMARY_RECORD[]) immediately after
+//      that 16-byte header in the SAME buffer, at byte 16 + primaryIndex * 16:
+//        ProgramTableIndex   = i
+//        NumSecondaryRecords = g_SecondaryCounts[i]
+//        SecondaryRecords    = GPU VA of i's region inside g_SecondaryBuffer
+//      One primary record per active ProgramTableIndex; no inline arg tail
+//      because no arg is SOURCE_PRIMARY_RECORD. For zero active programs,
+//      only the header is needed and no primary records are written.
 //
 // Both writes happen in GPU memory; no CPU readback is required between
 // CullAndEmit and DispatchList. Omitted to keep the focus on the per-program
@@ -1928,7 +2003,7 @@ args[3].InlineStaticSampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;  // 
 D3D12_PROGRAM_COMMAND_SIGNATURE_DESC pcsDesc = {};
 pcsDesc.NumArgumentDescs           = 4;
 pcsDesc.pArgumentDescs             = args;
-pcsDesc.SecondaryRecordByteStride  = sizeof(SecondaryRecord);             // 24 bytes
+pcsDesc.SecondaryRecordStrideInBytes  = sizeof(SecondaryRecord);             // 24 bytes
 pcsDesc.pGlobalRootSignature       = pRootSig;
 // No pDefaultLocalRootSignature field - removed in favor of inline args
 // (implicit-LRS path, demonstrated by args[2]/args[3]) or a separate
@@ -1970,7 +2045,11 @@ device->CreateWorkListSignature(&wlsDesc, IID_PPV_ARGS(&pWlSig));
 
 // Per-dispatch strides + slot count we will use below in D3D12_DISPATCH_LIST_INPUT.
 // No arg has Source == _PRIMARY_RECORD -> primary record is just the hybrid header.
-const UINT64 kPrimaryRecordByteStride = sizeof(D3D12_WORK_LIST_PRIMARY_RECORD);  // 16 bytes
+const UINT kPrimaryRecordStrideInBytes = sizeof(D3D12_WORK_LIST_PRIMARY_RECORD);    // 16 bytes
+const UINT64 kDispatchInputBufferSize = sizeof(D3D12_DISPATCH_LIST_INPUT)
+                                       + UINT64(3) * kPrimaryRecordStrideInBytes; // 16 + 3 * 16 = 64
+// Allocate pDispatchInputBuffer with kDispatchInputBufferSize bytes for the
+// fixed header and up to three primary records. No separate primary-list buffer.
 // Stride = 32-byte identifier + 16 bytes (float4 per-material tint LRA tail), 8-byte aligned.
 // args[2] declares an LRS root constant slot whose Source is _PROGRAM_TABLE_RECORD,
 // so per-program bytes for that slot live in the LRA tail of each program-table record.
@@ -2031,7 +2110,7 @@ cmdList->SetPipelineState(pCullPSO);
 cmdList->Dispatch((maxObjectCount + 63) / 64, 1, 1);
 
 // 7. Barriers: compute UAV writes -> shader-resource reads for DispatchList.
-//    Each producer buffer (g_SecondaryBuffer, primary list, D3D12_DISPATCH_LIST_INPUT)
+//    Each producer buffer (g_SecondaryBuffer, pDispatchInputBuffer with its trailing primary list)
 //    transitions UNORDERED_ACCESS -> NON_PIXEL_SHADER_RESOURCE (or, under enhanced
 //    barriers, ACCESS_UNORDERED_ACCESS -> ACCESS_SHADER_RESOURCE with SYNC_COMPUTE_SHADING
 //    -> SYNC_EXECUTE_INDIRECT).
@@ -2060,17 +2139,18 @@ setProgramDesc.Type     = D3D12_PROGRAM_TYPE_WORK_LIST;
 setProgramDesc.WorkList = setWorkListDesc;
 cmdList->SetProgram(&setProgramDesc);
 
-// 9. DispatchList: per-dispatch inputs (count, flags, primary list VA) live in
-//    GPU memory authored by the culling shader; the program table is supplied
-//    by SetProgram above.
-//    MaxGraphicsProgramInputsPerPrimaryList = 3 here: the table is populated
+// 9. DispatchList: the header (count, flags, primary-record stride) and its
+//    immediately following primary records live in GPU memory authored by the
+//    culling shader; the program table is supplied by SetProgram above.
+//    MaxPrimaryRecords = 3 here: the table is populated
 //    with 3 candidate programs (Opaque, Transparent, Shadow) and the design
-//    emits one primary record per active ProgramTableIndex, so NumProgramInputs
-//    is at most 3 (1-3 depending on which programs have visible objects this
-//    frame). Pass the worst case; graphics-class records always require sizing
-//    the graphics buffer.
-cmdList->DispatchList(pDispatchInputBuffer->GetGPUVirtualAddress(),
-                      /* MaxGraphicsProgramInputsPerPrimaryList */ 3);
+//    emits one primary record per active ProgramTableIndex, so NumPrimaryRecords
+//    is at most 3 (0-3 depending on which programs have visible objects this
+//    frame). Supply the bound even though the GPU authors the actual count.
+D3D12_DISPATCH_LIST_DESC dispatchDesc = {};
+dispatchDesc.DispatchListInput = pDispatchInputBuffer->GetGPUVirtualAddress();
+dispatchDesc.MaxPrimaryRecords = 3;
+cmdList->DispatchList(&dispatchDesc);
 ```
 
 ---
@@ -2083,7 +2163,7 @@ Work Lists exposes a single tier capability, [`D3D12_WORK_LISTS_TIER`](#d3d12_wo
 
 ## Tier 1
 
-Tier 1 is the baseline: program command signature creation ([`CreateProgramCommandSignature`](#createprogramcommandsignature)) plus work list signature creation ([`CreateWorkListSignature`](#createworklistsignature)) wrapping one or more program command signatures, direct work list signature binding via [`SetProgram`](#setprogram) with `D3D12_PROGRAM_TYPE_WORK_LIST`, GPU-driven program selection from a program table (for graphics-class and compute-class signatures), [`D3D12_INDIRECT_ARGUMENT_TYPE_DESCRIPTOR_TABLE`](#_descriptor_table) (a Work-Lists-specific argument type not in the `ExecuteIndirect` argument set), the [`_ALLOW_OUT_OF_ORDER_GRAPHICS`](#d3d12_dispatch_list_flags) per-list flag, and [`MaxGraphicsProgramInputsPerPrimaryList`](#maxgraphicsprograminputsperprimarylist) on [`DispatchList`](#dispatchlist) for graphics-buffer sizing. Local root arguments are supported (the [`ByteStride`](#d3d12_work_list_program_table_binding) declared at [`SetProgram`](#setprogram) time may exceed the identifier size to hold them); the shader-record-style record layout is part of the baseline.
+Tier 1 is the baseline: program command signature creation ([`CreateProgramCommandSignature`](#createprogramcommandsignature)) plus work list signature creation ([`CreateWorkListSignature`](#createworklistsignature)) wrapping one or more program command signatures, direct work list signature binding via [`SetProgram`](#setprogram) with `D3D12_PROGRAM_TYPE_WORK_LIST`, GPU-driven program selection from a program table (for graphics-class and compute-class signatures), [`D3D12_INDIRECT_ARGUMENT_TYPE_DESCRIPTOR_TABLE`](#_descriptor_table) (a Work-Lists-specific argument type not in the `ExecuteIndirect` argument set), the [`_ALLOW_OUT_OF_ORDER_GRAPHICS`](#d3d12_dispatch_list_flags) per-list flag, and [`DispatchList`](#dispatchlist) with a CPU-side [`D3D12_DISPATCH_LIST_DESC`](#d3d12_dispatch_list_desc) whose `MaxPrimaryRecords` bounds the single list for any executable class. Local root arguments are supported (the [`ByteStride`](#d3d12_work_list_program_table_binding) declared at [`SetProgram`](#setprogram) time may exceed the identifier size to hold them); the shader-record-style record layout is part of the baseline.
 
 Tier 1 devices that additionally report `DispatchRaysSupported` can also create and bind raytracing-class program command signatures (those with a [`_DISPATCH_RAYS_DIMENSIONS`](#_dispatch_rays_dimensions) dispatch-trigger argument) via the same direct-bind path, with the RTPSO and shader tables bound as a [`D3D12_WORK_LIST_RAYTRACING_BINDING`](#d3d12_work_list_raytracing_binding) in [`D3D12_SET_WORK_LIST_DESC`](#d3d12_set_work_list_desc) instead of a program table; see [Raytracing pipeline programs](#raytracing-pipeline-programs).
 
@@ -2093,7 +2173,7 @@ Tier 1 devices that additionally report `DispatchRaysSupported` can also create 
 
 ## Tier 2
 
-At Tier 2 the entire [Tier 2 Dispatch Features](#tier-2-dispatch-features) surface is available: [`DispatchList1`](#dispatchlist1) with [`MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists) and [`MaxGraphicsProgramInputsPerPrimaryList`](#maxgraphicsprograminputsperprimarylist), [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1), [`D3D12_DISPATCH_LIST_FLAGS1`](#d3d12_dispatch_list_flags1) (continuation + wait + memory-flush flags), [`CreateWorkListSignatureArray`](#createworklistsignaturearray) with `D3D12_WORK_LIST_SIGNATURE_ARRAY_DESC` (the array bind path, used both for multi-signature dispatch via `SignatureIndex` and for single-signature dispatch when validation hooks are needed), and the [GPU Timeline Validation Hooks](#gpu-timeline-validation-hooks) mechanism (validation index fields on the signature descs, a `ValidationProgramTable` field on [`D3D12_SET_WORK_LIST_DESC1`](#d3d12_set_work_list_desc1) only, 5 system-generated pointer arg types, and the SetProgram-bound binding immutability rules on program tables and raytracing bindings for the duration of dispatch ([Compatibility rules 14 and 18](#compatibility-and-validation))). At Tier 1 there is no GPU-side validation hook surface; the debug layer validates work lists by recording its own compute [`DispatchList`](#dispatchlist) into the command list immediately before the app's `DispatchList` (the GPU runs the validation work first, then the app's work), with no API surface required.
+At Tier 2 the entire [Tier 2 Dispatch Features](#tier-2-dispatch-features) surface is available: [`DispatchList1`](#dispatchlist1) with a CPU-side [`D3D12_DISPATCH_LIST_DESC1`](#d3d12_dispatch_list_desc1) carrying [per-class primary-record bounds](#primary-record-limits) and [`MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists), [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1), [`D3D12_DISPATCH_LIST_FLAGS1`](#d3d12_dispatch_list_flags1) (continuation + wait + memory-flush flags), [`CreateWorkListSignatureArray`](#createworklistsignaturearray) with `D3D12_WORK_LIST_SIGNATURE_ARRAY_DESC` (the array bind path, used both for multi-signature dispatch via `SignatureIndex` and for single-signature dispatch when validation hooks are needed), and the [GPU Timeline Validation Hooks](#gpu-timeline-validation-hooks) mechanism (validation index fields on the signature descs, a `ValidationProgramTable` field on [`D3D12_SET_WORK_LIST_DESC1`](#d3d12_set_work_list_desc1) only, 5 system-generated pointer arg types, and the SetProgram-bound binding immutability rules on program tables and raytracing bindings for the duration of dispatch ([Compatibility rules 14 and 18](#compatibility-and-validation))). At Tier 1 there is no GPU-side validation hook surface; the debug layer validates work lists by recording its own compute [`DispatchList`](#dispatchlist) into the command list immediately before the app's `DispatchList` (the GPU runs the validation work first, then the app's work), with no API surface required.
 
 ---
 
@@ -2162,8 +2242,8 @@ typedef enum D3D12_WORK_LISTS_TIER
 | Tier | Capabilities |
 |---|---|
 | `_NOT_SUPPORTED` | Work Lists are not available on this device. |
-| `_TIER_1` | All of the core Work List API surface: [`CreateProgramCommandSignature`](#createprogramcommandsignature) (per-PSO arg layout), [`CreateWorkListSignature`](#createworklistsignature) (per-list container wrapping one or more program command signatures plus the `SubobjectMask`), [`DispatchList`](#dispatchlist) (with [`MaxGraphicsProgramInputsPerPrimaryList`](#maxgraphicsprograminputsperprimarylist) for graphics-buffer sizing), direct signature binding via [`SetProgram`](#setprogram) with `D3D12_PROGRAM_TYPE_WORK_LIST`, GPU-driven program selection from a program table, [`D3D12_INDIRECT_ARGUMENT_TYPE_DESCRIPTOR_TABLE`](#_descriptor_table) (a Work-Lists-specific argument type not in the `ExecuteIndirect` argument set), and the [`_ALLOW_OUT_OF_ORDER_GRAPHICS`](#d3d12_dispatch_list_flags) per-list flag. Local root arguments are supported (the [`ByteStride`](#d3d12_work_list_program_table_binding) declared at [`SetProgram`](#setprogram) time may exceed the identifier size to hold them); the shader-record-style record layout is part of the baseline. |
-| `_TIER_2` | Covers everything in `_TIER_1` plus the entire [Tier 2 Dispatch Features](#tier-2-dispatch-features) surface: [`DispatchList1`](#dispatchlist1) (with [`MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists) and [`MaxGraphicsProgramInputsPerPrimaryList`](#maxgraphicsprograminputsperprimarylist)), [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1), [`D3D12_DISPATCH_LIST_FLAGS1`](#d3d12_dispatch_list_flags1) (continuation + wait + memory-flush flags), and [`CreateWorkListSignatureArray`](#createworklistsignaturearray) with `D3D12_WORK_LIST_SIGNATURE_ARRAY_DESC` (multi-signature dispatch via `SignatureIndex`). Enables [multi-signature dispatch](#signature-selection) and [GPU-driven continuations](#dispatch-list-continuations). |
+| `_TIER_1` | All of the core Work List API surface: [`CreateProgramCommandSignature`](#createprogramcommandsignature) (per-PSO arg layout), [`CreateWorkListSignature`](#createworklistsignature) (per-list container wrapping one or more program command signatures plus the `SubobjectMask`), [`DispatchList`](#dispatchlist) (with [`D3D12_DISPATCH_LIST_DESC::MaxPrimaryRecords`](#d3d12_dispatch_list_desc) for the single list's executable class), direct signature binding via [`SetProgram`](#setprogram) with `D3D12_PROGRAM_TYPE_WORK_LIST`, GPU-driven program selection from a program table, [`D3D12_INDIRECT_ARGUMENT_TYPE_DESCRIPTOR_TABLE`](#_descriptor_table) (a Work-Lists-specific argument type not in the `ExecuteIndirect` argument set), and the [`_ALLOW_OUT_OF_ORDER_GRAPHICS`](#d3d12_dispatch_list_flags) per-list flag. Local root arguments are supported (the [`ByteStride`](#d3d12_work_list_program_table_binding) declared at [`SetProgram`](#setprogram) time may exceed the identifier size to hold them); the shader-record-style record layout is part of the baseline. |
+| `_TIER_2` | Covers everything in `_TIER_1` plus the entire [Tier 2 Dispatch Features](#tier-2-dispatch-features) surface: [`DispatchList1`](#dispatchlist1) (with [`D3D12_DISPATCH_LIST_DESC1`](#d3d12_dispatch_list_desc1)'s [per-class primary-record bounds](#primary-record-limits) and [`MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists)), [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1), [`D3D12_DISPATCH_LIST_FLAGS1`](#d3d12_dispatch_list_flags1) (continuation + wait + memory-flush flags), and [`CreateWorkListSignatureArray`](#createworklistsignaturearray) with `D3D12_WORK_LIST_SIGNATURE_ARRAY_DESC` (multi-signature dispatch via `SignatureIndex`). Enables [multi-signature dispatch](#signature-selection) and [GPU-driven continuations](#dispatch-list-continuations). |
 
 The Tier 1 API surface (program command signature + work list signature creation + direct binding + [`DispatchList`](#dispatchlist)) is available on every Tier 1+ device. Tier 2 additionally exposes the `_1` dispatch surface plus [`CreateWorkListSignatureArray`](#createworklistsignaturearray) (the array bind path, used for multi-signature dispatch and for single-signature dispatch with [GPU Timeline Validation Hooks](#gpu-timeline-validation-hooks)); Tier 1 devices don't expose these entry points. Calling a Tier 2 entry point on a Tier 1 device fails at the API boundary.
 
@@ -2187,7 +2267,7 @@ HRESULT ID3D12DeviceN::CreateProgramCommandSignature(
 
 A **program command signature** describes the per-PSO arg layout: how each argument is sourced (primary record vs secondary record), which root signature binding each updates, and the per-PSO local root signature (if any). A [work list signature](#work-list-signature) carries one or more of these; each [generic program](#state-object-integration-for-program-table-programs) eligible to appear in this list's program table is associated with exactly one of them at state-object creation time, so the driver knows the per-PSO arg layout while it is still compiling the program.
 
-All command signatures bound together inside a single [`ID3D12WorkListSignature`](#id3d12worklistsignature) must reference the same `pGlobalRootSignature` when non-null (see [Uniformity constraints](#uniformity-constraints-across-program-command-signatures)). What CAN vary across them within a single work list signature: which root args are sourced from primary record vs secondary record vs command-list state, the per-PSO secondary record stride, and the per-PSO local root signature (each program command signature has its own local root signature, declared inline via [`_INLINE_*`](#_inline_root_parameter) args or via state-object subobject + association; see [Local root signatures](#local-root-signatures)).
+All command signatures bound together inside a single [`ID3D12WorkListSignature`](#id3d12worklistsignature) must reference the same `pGlobalRootSignature` when non-null (see [Uniformity constraints](#uniformity-constraints-across-program-command-signatures)). Within the work list signature's consistent [secondary-list shape](#secondary-list-shape), what CAN vary across them: which root args are sourced from primary record vs secondary record vs command-list state, the per-PSO secondary record stride, and the per-PSO local root signature (each program command signature has its own local root signature, declared inline via [`_INLINE_*`](#_inline_root_parameter) args or via state-object subobject + association; see [Local root signatures](#local-root-signatures)).
 
 See [Work List Signature](#work-list-signature) for the conceptual overview of the two-level signature object model (work list signature + program command signatures).
 
@@ -2208,7 +2288,7 @@ typedef struct D3D12_PROGRAM_COMMAND_SIGNATURE_DESC
     // with Binding = _LOCAL_ROOT_SIGNATURE when using the implicit-LRS path).
     UINT NumArgumentDescs;
     const D3D12_WORK_LIST_ARGUMENT_DESC* pArgumentDescs;
-    UINT SecondaryRecordByteStride;        // stride of each secondary record under this
+    UINT SecondaryRecordStrideInBytes;        // stride of each secondary record under this
                                            // program command sig; required to be 0 when no
                                            // arg is SOURCE_SECONDARY_RECORD, and also legal
                                            // as the broadcast form when such args do exist
@@ -2234,9 +2314,9 @@ typedef struct D3D12_PROGRAM_COMMAND_SIGNATURE_DESC
 | Member | Description |
 |---|---|
 | `NumArgumentDescs` / `pArgumentDescs` | Argument layout for PSOs associated with this program command sig. See [`D3D12_WORK_LIST_ARGUMENT_DESC`](#d3d12_work_list_argument_desc). |
-| `SecondaryRecordByteStride` | Byte stride of each secondary record under a primary record selecting this program command sig. Derivable from `pArgumentDescs` (sum of secondary-sourced arg sizes, with alignment); declared explicitly so the implementation can walk secondary lists without re-deriving. A `0` stride is the broadcast form (every secondary index resolves to the record at the secondary list's start address), matching raytracing shader tables and Work Graphs; it is also the required value when the program command signature has no `SOURCE_SECONDARY_RECORD` args. A non-zero stride must be at least the minimum secondary-record size. |
+| `SecondaryRecordStrideInBytes` | Byte stride of each secondary record under a primary record selecting this program command sig. Derivable from `pArgumentDescs` (sum of secondary-sourced arg sizes, with alignment); declared explicitly so the implementation can walk secondary lists without re-deriving. A `0` stride is the broadcast form (every secondary index resolves to the record at the secondary list's start address), matching raytracing shader tables and Work Graphs; it is also the required value when the program command signature has no `SOURCE_SECONDARY_RECORD` args. A non-zero stride must be at least the minimum secondary-record size. |
 | `pGlobalRootSignature` | Optional. Required when the program command signature has any arg with `Binding == _GLOBAL_ROOT_SIGNATURE`, or when any associated shader has a global root signature in scope; may be null otherwise. When non-null, must match the `pGlobalRootSignature` of every other program command sig held by the same [`ID3D12WorkListSignature`](#id3d12worklistsignature) per [Uniformity constraints](#uniformity-constraints-across-program-command-signatures). Args declared in `pArgumentDescs` with `Binding == _GLOBAL_ROOT_SIGNATURE` update root-parameter slots in this root signature. There is no implicit-global root signature path on the program command signature (global root signature is shared across program command signatures; defining it inline per program command signature would create redundancy; apps that want to skip authoring a separate root sig pass the same `ID3D12RootSignature*` to every program command signature in the work list signature via this field). |
-| `RecordValidationProgramTableIndex` | (Tier 2 only; must be 0 at Tier 1) Optional. If non-zero, identifies the slot in the bound [validation program table](#validation-program-table) of the [secondary list validator](#validation-hook-areas) the implementation invokes for each primary record selecting this program command signature. `0` disables this validation area for this program command signature. Must be `0` when a *raytracing-class* program command signature has no `SOURCE_SECONDARY_RECORD` args, per [rule 27](#compatibility-and-validation), which explains why the restriction is raytracing-specific, distinguishes it from `SecondaryRecordByteStride == 0`, and gives its enforcement point. For raytracing-class (whose records carry no `ProgramTableIndex` to select among them), the work list signature's single program command signature supplies this index, per [Uniformity constraints](#uniformity-constraints-across-program-command-signatures). The exactly-one-raytracing-program-command-signature requirement is enforced at [`CreateWorkListSignature`](#createworklistsignature). The validator's dispatch grid is declared by a [`_FIXED_DISPATCH`](#_fixed_dispatch) arg on the validator's own program command signature, not here. See [GPU Timeline Validation Hooks](#gpu-timeline-validation-hooks). |
+| `RecordValidationProgramTableIndex` | (Tier 2 only; must be 0 at Tier 1) Optional. If non-zero, identifies the slot in the bound [validation program table](#validation-program-table) of the [secondary list validator](#validation-hook-areas) the implementation invokes for each primary record selecting this program command signature. `0` disables this validation area for this program command signature. Must be `0` when a *raytracing-class* program command signature has no `SOURCE_SECONDARY_RECORD` args, per [rule 27](#compatibility-and-validation), which explains why the restriction is raytracing-specific, distinguishes it from `SecondaryRecordStrideInBytes == 0`, and gives its enforcement point. For raytracing-class (whose records carry no `ProgramTableIndex` to select among them), the work list signature's single program command signature supplies this index, per [Uniformity constraints](#uniformity-constraints-across-program-command-signatures). The exactly-one-raytracing-program-command-signature requirement is enforced at [`CreateWorkListSignature`](#createworklistsignature). The validator's dispatch grid is declared by a [`_FIXED_DISPATCH`](#_fixed_dispatch) arg on the validator's own program command signature, not here. See [GPU Timeline Validation Hooks](#gpu-timeline-validation-hooks). |
 
 Used by:
 
@@ -2256,7 +2336,7 @@ HRESULT ID3D12DeviceN::CreateWorkListSignature(
 );
 ```
 
-A **work list signature** is the per-list container for one or more [program command signatures](#createprogramcommandsignature) plus a `SubobjectMask` that selects which state-object subobjects may vary across the associated programs. The driver sees the full set of per-PSO arg layouts at signature creation time and at state-object association time, enabling compile-time specialization. Primary-list stride, program-table stride, and program-table slot count are per-dispatch (see [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input)).
+A **work list signature** is the per-list container for one or more [program command signatures](#createprogramcommandsignature) plus a `SubobjectMask` that selects which state-object subobjects may vary across the associated programs. Creation checks [secondary-list shape consistency](#secondary-list-shape) across the contained PCSes. The driver sees the full set of per-PSO arg layouts at signature creation time and can infer their common shape; it also sees the per-PSO arg layouts at state-object association time, enabling compile-time specialization. Primary-list stride, program-table stride, and program-table slot count are per-dispatch (see [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input)).
 
 See [Work List Signature](#work-list-signature) for the conceptual overview.
 
@@ -2356,7 +2436,7 @@ typedef enum D3D12_INDIRECT_ARGUMENT_SOURCE
 
 | Value | Description |
 |---|---|
-| `_PRIMARY_RECORD` | The arg's bytes are sourced from the primary record (the entry of the primary list addressed by `D3D12_DISPATCH_LIST_INPUT::ProgramInputs`). One copy per primary record, shared across every execution that primary record drives. |
+| `_PRIMARY_RECORD` | The arg's bytes are sourced from the primary record (an entry of the primary list immediately following the [dispatch input header](#dispatch-input-layout)). One copy per primary record, shared across every execution that primary record drives. |
 | `_SECONDARY_RECORD` | The arg's bytes are sourced from the secondary record (the per-execution entry of the secondary list the primary record points at). One copy per execution. |
 | `_SYSTEM` | The arg's value is synthesized by the implementation at invocation time; no record bytes are read for this arg. Required for arg types whose value is system-supplied (e.g. [`_INCREMENTING_CONSTANT`](#_incrementing_constant), [validator pointer arg types](#system-generated-validator-pointer-arg-types)). |
 | `_PROGRAM_TABLE_RECORD` | The arg's bytes are sourced from the program-table record's LRA storage (LRA tail bytes in the program-table slot). One copy per program-table record, shared across every execution of that program. Valid only on [`_INLINE_ROOT_PARAMETER`](#_inline_root_parameter) args with `Binding == _LOCAL_ROOT_SIGNATURE`. The arg's `DestOffsetIn32BitValues` / `Num32BitValuesToSet` DWORD sub-range of a constants slot (or a whole non-constants slot) comes from the program-table record's LRA bytes set when populating the program table. Composable with per-execution sources at other sub-ranges of the same constants slot. See [Local root signatures](#local-root-signatures). |
@@ -2683,7 +2763,7 @@ typedef struct D3D12_SET_WORK_LIST_DESC1
 | `pSignatureArray` | The [`ID3D12WorkListSignatureArray`](#createworklistsignaturearray) to bind. Each `D3D12_DISPATCH_LIST_INPUT1::SignatureIndex` indexes into this array and, in parallel, into `pBindings[]`. Apps that need one signature paired with several different bindings put the same signature pointer at more than one slot in the array passed to [`CreateWorkListSignatureArray`](#createworklistsignaturearray), and give each of those slots its own `pBindings[]` entry. A continuation chain uses this to swap program tables between phases, or, for raytracing-class, to swap the RTPSO and shader tables while keeping the one program command signature that signature carries. A signature array of size 1 is allowed; the array form is also the way to attach a `ValidationProgramTable` to a single-signature Tier 2 setup. |
 | `NumBindings` / `pBindings` | Per-signature [tagged bindings](#d3d12_work_list_binding), parallel to `pSignatureArray->pSignatures[]`. Must satisfy `NumBindings == pSignatureArray->NumSignatures`, and `pBindings[i].Type` must match the executable class of `pSignatureArray->pSignatures[i]` (a non-RT signature pairs with a `PROGRAM_TABLE` binding; an RT signature pairs with a `RAYTRACING` binding). Bindings persist across continuations. Apps that need the same binding paired with multiple different signatures may simply repeat the same binding values at multiple slots. Each array slot may pair a different one-PCS raytracing work list signature with a different RTPSO and shader-table binding. The binding itself carries no program command signature; that comes from the parallel `pSignatureArray->pSignatures[i]` slot (see [validation rule 20](#compatibility-and-validation)). |
 | `ValidationProgramTable` | Optional [validation program table binding](#d3d12_work_list_program_table_binding). `ValidationProgramTable.Table.StartAddress == 0` means no validation, in which case `ByteStride` and `SlotCount` must also be 0. When non-null, every non-zero validation index field on every signature in the array (and on every program command signature referenced by any signature in the array), plus the `SignatureSelectionValidationProgramTableIndex` on this struct, is interpreted against this table; slot `0` is reserved as the "no validator" sentinel. See [GPU Timeline Validation Hooks](#gpu-timeline-validation-hooks). |
-| `SignatureSelectionValidationProgramTableIndex` | (Tier 2 only.) Optional; `0` = no validator. If non-zero, the slot in the bound `ValidationProgramTable` of the [signature-selection validator](#validation-hook-areas), dispatched once per dispatch list before `SignatureIndex` selects a signature, to range-check `SignatureIndex` against `NumBindings` and neutralize a bad list (clamp the index to `0`, zero `NumProgramInputs`). Interpreted against `ValidationProgramTable`; ignored when that table is null. See [GPU Timeline Validation Hooks](#gpu-timeline-validation-hooks). |
+| `SignatureSelectionValidationProgramTableIndex` | (Tier 2 only.) Optional; `0` = no validator. If non-zero, the slot in the bound `ValidationProgramTable` of the [signature-selection validator](#validation-hook-areas), dispatched once per dispatch list before `SignatureIndex` selects a signature, to range-check `SignatureIndex` against `NumBindings` and neutralize a bad list (clamp the index to `0`, zero `NumPrimaryRecords`). Interpreted against `ValidationProgramTable`; ignored when that table is null. See [GPU Timeline Validation Hooks](#gpu-timeline-validation-hooks). |
 
 Used by:
 
@@ -2693,28 +2773,46 @@ Used by:
 
 ### DispatchList
 
-`DispatchList` is a command list method that executes work across one or more programs, with per-program batches of records specified in GPU memory. Every parameter that drives the dispatch (including how many programs are launched and how many records each one consumes) is read from GPU memory at execution time, so an upstream compute pass can fully author the dispatch with no CPU involvement. [`DispatchList1`](#tier-2-dispatch-features) is the Tier 2 dispatch entry point; it adds support for multi-signature dispatch and GPU-driven continuation chains.
+`DispatchList` is a command list method that executes one primary list across one or more programs. The CPU-side descriptor supplies the GPU input header address and a bound on primary records; actual counts and records are read from GPU memory at execution time. [`DispatchList1`](#tier-2-dispatch-features) is the Tier 2 dispatch entry point; it adds support for multi-signature dispatch and GPU-driven continuation chains.
 
 ```c++
 void ID3D12GraphicsCommandList::DispatchList(
-    D3D12_GPU_VIRTUAL_ADDRESS DispatchListInput,                // points to D3D12_DISPATCH_LIST_INPUT in
-                                                                // GPU memory
-    UINT                      MaxGraphicsProgramInputsPerPrimaryList
+    _In_ const D3D12_DISPATCH_LIST_DESC* pDesc
 );
 ```
 
 | Parameter | Description |
 |---|---|
-| `DispatchListInput` | GPU virtual address of a [D3D12_DISPATCH_LIST_INPUT](#d3d12_dispatch_list_input) struct in GPU memory. Must be 8-byte aligned. The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`). |
-| `MaxGraphicsProgramInputsPerPrimaryList` | Upper bound on the head primary list's `NumProgramInputs` for graphics-class dispatch. See [MaxGraphicsProgramInputsPerPrimaryList](#maxgraphicsprograminputsperprimarylist) for the full description; for Tier 1 there is no continuation chain, so this is just the head list's expected `NumProgramInputs`. Pass 0 for pure compute / raytracing dispatches. |
+| `pDesc` | Required CPU pointer to a [`D3D12_DISPATCH_LIST_DESC`](#d3d12_dispatch_list_desc). The descriptor is copied during command recording and need only remain valid for this API call. |
 
-The command list must have a [work list signature](#work-list-signature) bound via [`SetProgram`](#setprogram) before calling `DispatchList`. Tier 1 binds a single signature directly via [`D3D12_PROGRAM_TYPE_WORK_LIST`](#d3d12_program_type). Tier 2 additionally supports the array bind path ([`D3D12_PROGRAM_TYPE_WORK_LIST1`](#d3d12_program_type) with [`ID3D12WorkListSignatureArray`](#createworklistsignaturearray)) for multi-signature dispatch and for single-signature dispatch with [GPU Timeline Validation Hooks](#gpu-timeline-validation-hooks). The global root signature on the bound signature applies to every record.
-
-> The name `DispatchList` is plural because a single CPU-side call can execute a chain of lists when [continuations](#dispatch-list-continuations) are used (Tier 2). Without continuations, the call executes exactly one list. The shape of [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input) parallels `D3D12_MULTI_NODE_GPU_INPUT` in [Work Graphs DispatchGraph](WorkGraphs.md#dispatchgraph).
+The command list must have a single [work list signature](#work-list-signature) bound directly via [`SetProgram`](#setprogram) with [`D3D12_PROGRAM_TYPE_WORK_LIST`](#d3d12_program_type) before calling `DispatchList`. Its executable class is known at command-list recording time and `MaxPrimaryRecords` bounds that list for whichever class the signature uses. The global root signature on the bound signature applies to every record. Array bindings require [`DispatchList1`](#dispatchlist1); see [Compatibility of bind type with dispatch method](#compatibility-of-bind-type-with-dispatch-method).
 
 ---
 
 #### DispatchList Structures
+
+---
+
+##### D3D12_DISPATCH_LIST_DESC
+
+```c++
+typedef struct D3D12_DISPATCH_LIST_DESC
+{
+    D3D12_GPU_VIRTUAL_ADDRESS DispatchListInput;
+    UINT                      MaxPrimaryRecords;
+} D3D12_DISPATCH_LIST_DESC;
+```
+
+CPU-side call descriptor for [`DispatchList`](#dispatchlist). Its values are copied during command recording; it is not part of the GPU input layout or an HLSL payload.
+
+| Member | Description |
+|---|---|
+| `DispatchListInput` | GPU virtual address of a [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input) header, not of this CPU descriptor. Must be 8-byte aligned. The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`). |
+| `MaxPrimaryRecords` | Upper bound on the single list's `NumPrimaryRecords`, for the executable class of the directly bound work list signature. `0` permits an empty list. See [Primary-record limits](#primary-record-limits). |
+
+Used by:
+
+- [DispatchList](#dispatchlist) - `pDesc` parameter
 
 ---
 
@@ -2723,13 +2821,15 @@ The command list must have a [work list signature](#work-list-signature) bound v
 ```c++
 typedef struct D3D12_DISPATCH_LIST_INPUT
 {
-    UINT                                  NumProgramInputs; // primary list count
-    D3D12_DISPATCH_LIST_FLAGS             Flags;
-    D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE  ProgramInputs;    // primary-list GPU VA + per-record stride
-} D3D12_DISPATCH_LIST_INPUT;    // 24 bytes
+    UINT                       NumPrimaryRecords;
+    UINT                       PrimaryRecordStrideInBytes;
+    D3D12_DISPATCH_LIST_FLAGS  Flags;
+    UINT                       ReservedPadding; // must be 0
+    // Primary records immediately follow this fixed header at byte 16.
+} D3D12_DISPATCH_LIST_INPUT;    // 16 bytes; GPU address must be 8-byte aligned
 ```
 
-GPU-side input struct for [`DispatchList`](#dispatchlist). This struct definition shown from `d3d12.h` can be copied to HLSL with the following definitions:
+GPU-side fixed header for [`DispatchList`](#dispatchlist), followed immediately by its primary-record array as defined in [Dispatch input layout](#dispatch-input-layout). This struct definition shown from `d3d12.h` can be copied to HLSL with the following definitions; shader byte-buffer loads and stores use the same field offsets:
 
 ```c++
 typedef uint32_t UINT;
@@ -2740,19 +2840,20 @@ typedef uint64_t D3D12_GPU_VIRTUAL_ADDRESS;
 
 | Member | Description |
 |---|---|
-| `NumProgramInputs` | Number of entries in the `ProgramInputs` array (the primary list). Read from GPU memory at `DispatchList` time. `0` is legal: the list executes no records. In a Tier 2 continuation chain this includes a list in the middle of the chain, which continues into the next list if it sets [`_ALLOW_NEXT_DISPATCH_LIST_CONTINUATION`](#d3d12_dispatch_list_flags1) with a non-null `NextDispatchList` (both Tier 2 fields, on [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1)). The Tier 2 [signature-selection validator](#validation-hook-areas) depends on `0` being legal, since it neutralizes a list it rejects by zeroing this field. Because that neutralization changes only this field, `ProgramInputs` is not read when this is `0`, and its `StartAddress` and `StrideInBytes` are then unconstrained. Neutralizing a list that way suppresses its records but not its continuation: a list rejected for an out-of-range `SignatureIndex` still follows its `NextDispatchList`, authored by the same producer, which is part of why that producer code is [correctness-critical](#dispatch-list-continuations). |
-| `Flags` | A bitwise OR of [D3D12_DISPATCH_LIST_FLAGS](#d3d12_dispatch_list_flags) values controlling per-list options. |
-| `ProgramInputs` | GPU virtual address and per-record stride of the primary list, an array of `NumProgramInputs` [primary records](#primary-record-layout) using one of the [Primary record headers](#primary-record-headers). When `NumProgramInputs > 0`, `StartAddress` and `StrideInBytes` must be 8-byte aligned; the stride must fit the worst-case primary record across every program command signature this dispatch will reference (header + inline primary-sourced tail + trailing pad). The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`). |
+| `NumPrimaryRecords` | Number of primary records immediately following the header, subject to the [primary-record limits](#primary-record-limits). Read from GPU memory at `DispatchList` time. `0` is legal: the list executes no records, with the empty-list storage and stride rules in [Dispatch input layout](#dispatch-input-layout). In a Tier 2 continuation chain this includes a list in the middle of the chain, which continues into the next list if it sets [`_ALLOW_NEXT_DISPATCH_LIST_CONTINUATION`](#d3d12_dispatch_list_flags1) with a non-null `NextDispatchList` (both Tier 2 fields, on [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1)). The Tier 2 [signature-selection validator](#validation-hook-areas) depends on `0` being legal, since it neutralizes a list it rejects by zeroing this field alone. Neutralizing a list that way suppresses its records but not its continuation: a list rejected for an out-of-range `SignatureIndex` still follows its `NextDispatchList`, authored by the same producer, which is part of why that producer code is [correctness-critical](#dispatch-list-continuations). |
+| `PrimaryRecordStrideInBytes` | 32-bit byte stride between [primary records](#primary-record-layout) in the trailing array. When `NumPrimaryRecords > 0`, the stride must be 8-byte aligned and fit the worst-case primary record across every program command signature this dispatch will reference (primary-record header + inline primary-sourced tail + trailing pad). The array's address is derived from the header address, not stored in this field. Its memory has the same shader-resource access requirements as the header. See [Dispatch input layout](#dispatch-input-layout) for the wide address/range arithmetic and zero-count rules. |
+| `Flags` | A bitwise OR of [`D3D12_DISPATCH_LIST_FLAGS`](#d3d12_dispatch_list_flags) values controlling per-list options. |
+| `ReservedPadding` | Must be 0, including for an empty list. Completes the fixed 16-byte header so the trailing records start at an 8-byte-aligned address. It is part of the header, not an additional gap before the records. |
 
 > The SetProgram-bound tagged binding (either a program-table binding's GPU VA / per-slot stride / slot count, or a raytracing binding's RTPSO + shader tables) is bound at command-list level via [`SetProgram`](#setprogram) and persists across continuations. See [`D3D12_SET_WORK_LIST_DESC`](#d3d12_set_work_list_desc) (Tier 1+, single signature + single binding, direct-bind path) and [`D3D12_SET_WORK_LIST_DESC1`](#d3d12_set_work_list_desc1) (Tier 2, signature array + parallel bindings keyed by `SignatureIndex`).
 
 > Multi-signature dispatch (selecting a signature per list) and continuation chains (a list reading the next list's address from GPU memory) are [Tier 2 additions](#tier-2-dispatch-features); the additional per-list fields they need live on [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1).
 
-> A single-program dispatch is just `NumProgramInputs == 1`; there is no separate single-input flavor. The struct is named `D3D12_DISPATCH_LIST_INPUT` (singular) because it describes a single list.
+> A single-program dispatch is just `NumPrimaryRecords == 1`; there is no separate single-input flavor. The struct is named `D3D12_DISPATCH_LIST_INPUT` (singular) because it describes a single list.
 
 Used by:
 
-- [DispatchList](#dispatchlist) - `DispatchListInput` parameter
+- [D3D12_DISPATCH_LIST_DESC](#d3d12_dispatch_list_desc) - `DispatchListInput` member
 
 ---
 
@@ -2771,7 +2872,7 @@ DEFINE_ENUM_FLAG_OPERATORS(D3D12_DISPATCH_LIST_FLAGS);
 
 | Flag | Description |
 |---|---|
-| `_ALLOW_OUT_OF_ORDER_GRAPHICS` | Permits the implementation to launch and retire graphics-class records (`DRAW`, `DRAW_INDEXED`, `DISPATCH_MESH`) out of `ProgramInputs` order and out of per-program record order. Apps that need rasterization order across the records of a list (e.g. for blending or stencil correctness) must leave this flag clear. Compute-class (`_DISPATCH`, `_FIXED_DISPATCH`) and raytracing-class (`_DISPATCH_RAYS_DIMENSIONS`) records are never guaranteed to be launched or retired in `ProgramInputs` order, with or without this flag. Leaving the flag clear also carries a cost at a list boundary: the list lands after work already in flight, and the implementation may retire that work first, so the boundary may serialize. Setting it gives that up in both directions. See [Execution Order and State Scoping](#execution-order-and-state-scoping), and the note below on ordering across a list boundary. |
+| `_ALLOW_OUT_OF_ORDER_GRAPHICS` | Permits the implementation to launch and retire graphics-class records (`DRAW`, `DRAW_INDEXED`, `DISPATCH_MESH`) out of primary-list order and out of per-program record order. Apps that need rasterization order across the records of a list (e.g. for blending or stencil correctness) must leave this flag clear. Compute-class (`_DISPATCH`, `_FIXED_DISPATCH`) and raytracing-class (`_DISPATCH_RAYS_DIMENSIONS`) records are never guaranteed to be launched or retired in primary-list order, with or without this flag. Leaving the flag clear also carries a cost at a list boundary: the list lands after work already in flight, and the implementation may retire that work first, so the boundary may serialize. Setting it gives that up in both directions. See [Execution Order and State Scoping](#execution-order-and-state-scoping), and the note below on ordering across a list boundary. |
 
 > **Scope: the in-order guarantee covers records and the executions they drive, not what happens inside an execution.** A list without this flag runs its records in order, and where a record has secondary records, those run in order too. The guarantee follows the order the records are walked. It stops at the execution: one execution is one `DRAW`, one `DRAW_INDEXED`, or one `DispatchMesh`, and this flag does not change what happens inside it. The same holds for [rasterizer-ordered views](RasterOrderViews.md#semantics), whose ordering guarantee covers overlapping pixel shader invocations generated by a single draw, and so by a single execution. Whether *setting* the flag should additionally relax rasterization order within an execution is an [open issue](#open-issues).
 
@@ -2804,20 +2905,20 @@ Used by:
 
 ##### Primary record headers
 
-Each entry of the primary list (`D3D12_DISPATCH_LIST_INPUT::ProgramInputs`) is a **primary record**. For non-raytracing-class signatures, a primary record carries the program-table index, optionally a pointer to a secondary list, and optionally inline primary-sourced argument bytes. For raytracing-class signatures, the RTPSO is bound at [`SetProgram`](#setprogram) time so the program-table-index field is absent. Which fixed header applies is driven by the signature's executable class and per-argument source choices.
+Each entry of the primary list immediately following the [dispatch input header](#dispatch-input-layout) is a **primary record**. For non-raytracing-class signatures, a primary record carries the program-table index, optionally a pointer to a secondary list, and optionally inline primary-sourced argument bytes. For raytracing-class signatures, the RTPSO is bound at [`SetProgram`](#setprogram) time so the program-table-index field is absent. The work list signature's executable class and [secondary-list shape](#secondary-list-shape) determine the fixed header for every primary record; the selected PCS determines the inline payload.
 
-| Signature class | Any `SOURCE_SECONDARY_RECORD` arg? | Primary record struct |
+| Signature class | Secondary-list shape | Primary record struct |
 |---|---|---|
-| Graphics / Compute | No | [`D3D12_WORK_LIST_INLINE_PRIMARY_RECORD`](#d3d12_work_list_inline_primary_record) |
-| Graphics / Compute | Yes | [`D3D12_WORK_LIST_PRIMARY_RECORD`](#d3d12_work_list_primary_record) |
-| Raytracing | No | [`D3D12_WORK_LIST_INLINE_RAYTRACING_RECORD`](#d3d12_work_list_inline_raytracing_record) |
-| Raytracing | Yes | [`D3D12_WORK_LIST_RAYTRACING_RECORD`](#d3d12_work_list_raytracing_record) |
+| Graphics / Compute | Fully inline | [`D3D12_WORK_LIST_INLINE_PRIMARY_RECORD`](#d3d12_work_list_inline_primary_record) |
+| Graphics / Compute | Hybrid | [`D3D12_WORK_LIST_PRIMARY_RECORD`](#d3d12_work_list_primary_record) |
+| Raytracing | Fully inline | [`D3D12_WORK_LIST_INLINE_RAYTRACING_RECORD`](#d3d12_work_list_inline_raytracing_record) |
+| Raytracing | Hybrid | [`D3D12_WORK_LIST_RAYTRACING_RECORD`](#d3d12_work_list_raytracing_record) |
 
-For both structs, the inline arg payload (when present) follows the fixed header in memory, packed in `pArgumentDescs` order. The total size of each primary record (header plus any inline tail plus trailing pad) is the dispatch input's `ProgramInputs.StrideInBytes`.
+For each layout, the inline arg payload (when present) follows the fixed header in memory, packed in `pArgumentDescs` order. The total size of each primary record (header plus any inline tail plus trailing pad) is `PrimaryRecordStrideInBytes`.
 
 Used by:
 
-- [D3D12_DISPATCH_LIST_INPUT](#d3d12_dispatch_list_input) - `ProgramInputs` member (element type)
+- [D3D12_DISPATCH_LIST_INPUT](#d3d12_dispatch_list_input) / [D3D12_DISPATCH_LIST_INPUT1](#d3d12_dispatch_list_input1) - trailing primary-record array (element type)
 
 ---
 
@@ -2831,10 +2932,10 @@ typedef struct D3D12_WORK_LIST_PRIMARY_RECORD
     UINT                      ProgramTableIndex;
     UINT                      NumSecondaryRecords;
     D3D12_GPU_VIRTUAL_ADDRESS SecondaryRecords;     // stride = signature's
-                                                    // SecondaryRecordByteStride
+                                                    // SecondaryRecordStrideInBytes
     // Followed in memory by inline primary-sourced arg payload (variable size),
     // packed per the signature's SOURCE_PRIMARY_RECORD args in pArgumentDescs order.
-    // Padded so total primary record size == the dispatch input's ProgramInputs.StrideInBytes.
+    // Padded so total primary record size == PrimaryRecordStrideInBytes.
 } D3D12_WORK_LIST_PRIMARY_RECORD;
 ```
 
@@ -2842,13 +2943,13 @@ typedef struct D3D12_WORK_LIST_PRIMARY_RECORD
 |---|---|
 | `ProgramTableIndex` | Index into the program table identifying which program to use for the executions this primary record drives. Must be a valid index within the bound program table's `SlotCount` (from [`D3D12_WORK_LIST_PROGRAM_TABLE_BINDING`](#d3d12_work_list_program_table_binding) at [`SetProgram`](#setprogram) time). |
 | `NumSecondaryRecords` | Number of entries in the secondary list. Each secondary record drives one execution with the program selected by `ProgramTableIndex`. |
-| `SecondaryRecords` | GPU virtual address of the secondary list, an array of `NumSecondaryRecords` secondary records, each `SecondaryRecordByteStride` bytes (from the signature). The address must be 8-byte aligned. The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`). |
+| `SecondaryRecords` | GPU virtual address of the secondary list, an array of `NumSecondaryRecords` secondary records, each `SecondaryRecordStrideInBytes` bytes (from the signature). The address must be 8-byte aligned. The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`). |
 
 Multiple primary records may reference the same `ProgramTableIndex`. This allows batching of executions with the same program from different contiguous secondary-list buffers.
 
 Used by:
 
-- [D3D12_DISPATCH_LIST_INPUT](#d3d12_dispatch_list_input) - `ProgramInputs` member (hybrid-signature element type)
+- [D3D12_DISPATCH_LIST_INPUT](#d3d12_dispatch_list_input) / [D3D12_DISPATCH_LIST_INPUT1](#d3d12_dispatch_list_input1) - trailing primary-record array (hybrid-signature element type)
 
 ---
 
@@ -2862,7 +2963,7 @@ typedef struct D3D12_WORK_LIST_INLINE_PRIMARY_RECORD
     UINT ProgramTableIndex;
     // Followed in memory by inline arg payload (variable size),
     // packed per every signature arg in pArgumentDescs order.
-    // Padded so total primary record size == the dispatch input's ProgramInputs.StrideInBytes.
+    // Padded so total primary record size == PrimaryRecordStrideInBytes.
 } D3D12_WORK_LIST_INLINE_PRIMARY_RECORD;
 ```
 
@@ -2874,7 +2975,7 @@ Each primary record drives exactly one execution. `NumSecondaryRecords` and `Sec
 
 Used by:
 
-- [D3D12_DISPATCH_LIST_INPUT](#d3d12_dispatch_list_input) - `ProgramInputs` member (fully-inline-signature element type)
+- [D3D12_DISPATCH_LIST_INPUT](#d3d12_dispatch_list_input) / [D3D12_DISPATCH_LIST_INPUT1](#d3d12_dispatch_list_input1) - trailing primary-record array (fully-inline-signature element type)
 
 ---
 
@@ -2888,23 +2989,23 @@ typedef struct D3D12_WORK_LIST_RAYTRACING_RECORD
     UINT                      NumSecondaryRecords;
     UINT                      ReservedPadding;      // must be 0; aligns the GPUVA field below
     D3D12_GPU_VIRTUAL_ADDRESS SecondaryRecords;     // stride = signature's
-                                                    // SecondaryRecordByteStride
+                                                    // SecondaryRecordStrideInBytes
     // Followed in memory by inline primary-sourced arg payload (variable size),
     // packed per the signature's SOURCE_PRIMARY_RECORD args in pArgumentDescs order.
-    // Padded so total primary record size == the dispatch input's ProgramInputs.StrideInBytes.
+    // Padded so total primary record size == PrimaryRecordStrideInBytes.
 } D3D12_WORK_LIST_RAYTRACING_RECORD;
 ```
 
 | Member | Description |
 |---|---|
 | `NumSecondaryRecords` | Number of entries in the secondary list. Each secondary record drives one ray-dispatch execution against the bound RTPSO + shader tables. |
-| `SecondaryRecords` | GPU virtual address of the secondary list, an array of `NumSecondaryRecords` secondary records, each `SecondaryRecordByteStride` bytes (from the signature). The address must be 8-byte aligned. The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`). |
+| `SecondaryRecords` | GPU virtual address of the secondary list, an array of `NumSecondaryRecords` secondary records, each `SecondaryRecordStrideInBytes` bytes (from the signature). The address must be 8-byte aligned. The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`). |
 
 For a raytracing-class signature with a single `_DISPATCH_RAYS_DIMENSIONS` arg whose `Source` is `SECONDARY_RECORD`, each secondary record is a [`D3D12_DISPATCH_RAYS_DIMENSIONS`](#d3d12_dispatch_rays_dimensions) value (12 bytes). The same primary record can drive many ray dispatches with varying grid dimensions, batched under one entry in the primary list.
 
 Used by:
 
-- [D3D12_DISPATCH_LIST_INPUT](#d3d12_dispatch_list_input) - `ProgramInputs` member (raytracing-class hybrid-signature element type)
+- [D3D12_DISPATCH_LIST_INPUT](#d3d12_dispatch_list_input) / [D3D12_DISPATCH_LIST_INPUT1](#d3d12_dispatch_list_input1) - trailing primary-record array (raytracing-class hybrid-signature element type)
 
 ---
 
@@ -2927,7 +3028,7 @@ Each primary record drives exactly one execution. `NumSecondaryRecords` and `Sec
 
 Used by:
 
-- [D3D12_DISPATCH_LIST_INPUT](#d3d12_dispatch_list_input) - `ProgramInputs` member (raytracing-class fully-inline-signature element type)
+- [D3D12_DISPATCH_LIST_INPUT](#d3d12_dispatch_list_input) / [D3D12_DISPATCH_LIST_INPUT1](#d3d12_dispatch_list_input1) - trailing primary-record array (raytracing-class fully-inline-signature element type)
 
 ---
 
@@ -2937,24 +3038,64 @@ Used by:
 
 ```c++
 void ID3D12GraphicsCommandListN::DispatchList1(
-    D3D12_GPU_VIRTUAL_ADDRESS DispatchListInput,                // points to D3D12_DISPATCH_LIST_INPUT1
-                                                                // in GPU memory
-    UINT                      MaxGraphicsPrimaryLists,
-    UINT                      MaxGraphicsProgramInputsPerPrimaryList
+    _In_ const D3D12_DISPATCH_LIST_DESC1* pDesc
 );
 ```
 
 | Parameter | Description |
 |---|---|
-| `DispatchListInput` | GPU virtual address of a [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1). 8-byte aligned. Same resource-state requirements as the Tier 1 input (see [`DispatchList`](#dispatchlist)). |
-| `MaxGraphicsPrimaryLists` | Application's upper bound on the number of graphics-class primary lists in this call's continuation chain. See [MaxGraphicsPrimaryLists](#maxgraphicsprimarylists) for the full description and examples. |
-| `MaxGraphicsProgramInputsPerPrimaryList` | Upper bound on the largest single primary list's `NumProgramInputs` within this call (per individual list in the chain, *not* the sum across continuations). See [MaxGraphicsProgramInputsPerPrimaryList](#maxgraphicsprograminputsperprimarylist). |
+| `pDesc` | Required CPU pointer to a [`D3D12_DISPATCH_LIST_DESC1`](#d3d12_dispatch_list_desc1). The descriptor is copied during command recording and need only remain valid for this API call. Its maxima apply unchanged to the head list and all continuations. |
+
+The command list must have a work list signature or signature array bound through one of the [compatible `SetProgram` bind paths](#compatibility-of-bind-type-with-dispatch-method). Each list uses the primary-record bound for its selected signature's executable class.
 
 Mixing Tier 1 inputs ([`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input)) into a Tier 2 chain is invalid; see [Dispatch List Continuations](#dispatch-list-continuations) for chain semantics.
 
 ---
 
 #### DispatchList1 Structures
+
+---
+
+##### D3D12_DISPATCH_LIST_DESC1
+
+> Tier 2 only.
+
+```c++
+typedef struct D3D12_DISPATCH_LIST_DESC1
+{
+    D3D12_GPU_VIRTUAL_ADDRESS DispatchListInput;
+    UINT                      MaxGraphicsPrimaryRecordsPerList;
+    UINT                      MaxComputePrimaryRecordsPerList;
+    UINT                      MaxRaytracingPrimaryRecordsPerList;
+    UINT                      MaxGraphicsPrimaryLists;
+} D3D12_DISPATCH_LIST_DESC1;
+```
+
+CPU-side call descriptor for [`DispatchList1`](#dispatchlist1). Its values are copied during command recording; it is not part of the GPU input layout or an HLSL payload. Each continuation follows another GPU header while retaining the original call's bounds.
+
+| Member | Description |
+|---|---|
+| `DispatchListInput` | GPU virtual address of the first [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) header. Must be 8-byte aligned, with the same resource-state requirements as [`D3D12_DISPATCH_LIST_DESC::DispatchListInput`](#d3d12_dispatch_list_desc). |
+| `MaxGraphicsPrimaryRecordsPerList` | Upper bound on `NumPrimaryRecords` in each individual graphics-class list, including the head and any continuations. See [Primary-record limits](#primary-record-limits). |
+| `MaxComputePrimaryRecordsPerList` | Upper bound on `NumPrimaryRecords` in each individual compute-class list, including the head and any continuations. See [Primary-record limits](#primary-record-limits). |
+| `MaxRaytracingPrimaryRecordsPerList` | Upper bound on `NumPrimaryRecords` in each individual raytracing-class list, including the head and any continuations. See [Primary-record limits](#primary-record-limits). |
+| `MaxGraphicsPrimaryLists` | Upper bound on the number of graphics-class lists in the complete chain, including empty graphics-class lists. See [MaxGraphicsPrimaryLists](#maxgraphicsprimarylists). |
+
+For example, a chain with any number of compute lists of at most 8 primary records each, at most one graphics list of at most 3 primary records, and any number of raytracing lists of at most 2 primary records uses:
+
+```c++
+D3D12_DISPATCH_LIST_DESC1 dispatchDesc = {};
+dispatchDesc.DispatchListInput                  = firstDispatchInputVA;
+dispatchDesc.MaxGraphicsPrimaryRecordsPerList   = 3;
+dispatchDesc.MaxComputePrimaryRecordsPerList    = 8;
+dispatchDesc.MaxRaytracingPrimaryRecordsPerList = 2;
+dispatchDesc.MaxGraphicsPrimaryLists            = 1;
+cmdList->DispatchList1(&dispatchDesc);
+```
+
+Used by:
+
+- [DispatchList1](#dispatchlist1) - `pDesc` parameter
 
 ---
 
@@ -2965,20 +3106,18 @@ Mixing Tier 1 inputs ([`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input))
 ```c++
 typedef struct D3D12_DISPATCH_LIST_INPUT1
 {
-    UINT                                  NumProgramInputs;
-    D3D12_DISPATCH_LIST_FLAGS1             Flags;
-    UINT                                  SignatureIndex;          // selects both the signature and
-                                                                   // its paired binding (program table OR
-                                                                   // raytracing) from the SetProgram-bound
-                                                                   // parallel arrays
-    UINT                                  ReservedPadding;         // must be 0; aligns UINT64 fields below
-    D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE  ProgramInputs;           // primary-list GPU VA + per-record stride
-    D3D12_GPU_VIRTUAL_ADDRESS             NextDispatchList;        // GPU VA of another
-                                                                   // D3D12_DISPATCH_LIST_INPUT1, or null
-} D3D12_DISPATCH_LIST_INPUT1;    // 40 bytes
+    UINT                       NumPrimaryRecords;
+    UINT                       PrimaryRecordStrideInBytes;
+    D3D12_DISPATCH_LIST_FLAGS1 Flags;
+    UINT                       SignatureIndex;   // selects both the signature and its paired
+                                                 // binding (program table or raytracing) from
+                                                 // the SetProgram-bound parallel arrays
+    D3D12_GPU_VIRTUAL_ADDRESS  NextDispatchList; // GPU VA of another INPUT1 header, or 0
+    // Primary records immediately follow this fixed header at byte 24.
+} D3D12_DISPATCH_LIST_INPUT1;    // 24 bytes; GPU address must be 8-byte aligned
 ```
 
-GPU-side input struct for [`DispatchList1`](#dispatchlist1). Same HLSL transcription as [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input) plus a typedef for the Tier 2 flags enum:
+GPU-side fixed header for [`DispatchList1`](#dispatchlist1), followed immediately by its primary-record array. [Dispatch input layout](#dispatch-input-layout) defines the shared count/stride/flags prefix and naturally aligned [`NextDispatchList`](#d3d12_dispatch_list_input1); this header has no reserved padding field. Copy this declaration to HLSL with the same aliases as [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input), plus a typedef for the Tier 2 flags enum:
 
 ```c++
 typedef uint32_t D3D12_DISPATCH_LIST_FLAGS1;
@@ -2986,16 +3125,15 @@ typedef uint32_t D3D12_DISPATCH_LIST_FLAGS1;
 
 | Member | Description |
 |---|---|
-| `NumProgramInputs` | Same as [`D3D12_DISPATCH_LIST_INPUT::NumProgramInputs`](#d3d12_dispatch_list_input). |
+| `NumPrimaryRecords` | Same as [`D3D12_DISPATCH_LIST_INPUT::NumPrimaryRecords`](#d3d12_dispatch_list_input). |
+| `PrimaryRecordStrideInBytes` | Same 32-bit stride and empty-list rules as [`D3D12_DISPATCH_LIST_INPUT::PrimaryRecordStrideInBytes`](#d3d12_dispatch_list_input). For a nonempty list the stride must fit the worst-case primary record across every program command signature reachable from the work list signature selected by [`SignatureIndex`](#signature-selection). |
 | `Flags` | A bitwise OR of [`D3D12_DISPATCH_LIST_FLAGS1`](#d3d12_dispatch_list_flags1) values. |
 | `SignatureIndex` | Index into the bound [`D3D12_SET_WORK_LIST_DESC1`](#d3d12_set_work_list_desc1)'s parallel arrays, selecting *both* the signature (`pSignatureArray->pSignatures[SignatureIndex]`) and the paired [binding](#d3d12_work_list_binding) (`pBindings[SignatureIndex]`) for this list. The two arrays are parallel and the same index picks both. Apps that want to mix and match (e.g. use the same signature with different bindings across continuations, or the same binding with different signatures) achieve this by repeating the signature pointer or the binding values at multiple slots in the respective arrays. Must be 0 when a signature is bound directly via [`D3D12_SET_WORK_LIST_DESC`](#d3d12_set_work_list_desc) (single bound signature + single bound binding). See [Signature Selection](#signature-selection). |
-| `ReservedPadding` | Must be 0. Pads the `ProgramInputs` address-and-stride value below to its natural 8-byte alignment so the GPU-side layout is unambiguous for shader authors. |
-| `ProgramInputs` | Same address-and-stride shape as the Tier 1 field. Its `StrideInBytes` must fit the worst-case primary record across every program command signature reachable from the work list signature selected by `SignatureIndex`. |
-| `NextDispatchList` | GPU virtual address of another `D3D12_DISPATCH_LIST_INPUT1`, or 0 (no continuation). Must be 0 or 8-byte aligned. Ignored unless [`D3D12_DISPATCH_LIST_FLAG1_ALLOW_NEXT_DISPATCH_LIST_CONTINUATION`](#d3d12_dispatch_list_flags1) is set in `Flags`. See [Dispatch List Continuations](#dispatch-list-continuations). |
+| `NextDispatchList` | GPU virtual address of another [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1), or 0 (no continuation). Must be 0 or 8-byte aligned. Ignored unless [`D3D12_DISPATCH_LIST_FLAG1_ALLOW_NEXT_DISPATCH_LIST_CONTINUATION`](#d3d12_dispatch_list_flags1) is set in `Flags`. See [Dispatch List Continuations](#dispatch-list-continuations). |
 
 Used by:
 
-- [DispatchList1](#dispatchlist1) - `DispatchListInput` parameter
+- [D3D12_DISPATCH_LIST_DESC1](#d3d12_dispatch_list_desc1) - `DispatchListInput` member
 
 ---
 
@@ -3019,8 +3157,8 @@ DEFINE_ENUM_FLAG_OPERATORS(D3D12_DISPATCH_LIST_FLAGS1);
 | Flag | Description |
 |---|---|
 | [`_ALLOW_OUT_OF_ORDER_GRAPHICS`](#d3d12_dispatch_list_flags) | Same semantics as in [D3D12_DISPATCH_LIST_FLAGS](#d3d12_dispatch_list_flags); included here so a Tier 2 caller doesn't need to mix two flag enums. |
-| `_ALLOW_NEXT_DISPATCH_LIST_CONTINUATION` | The GPU reads `NextDispatchList` and, if non-null, treats it as a fresh `DispatchList1` invocation pointing at that address. See [Dispatch List Continuations](#dispatch-list-continuations) for read-timing semantics. |
-| `_END_WITH_WAIT_FOR_COMPLETION` | Supplies the *synchronization* half of a barrier at the end of this list, with [`D3D12_BARRIER_SYNC_ALL`](D3D12EnhancedBarriers.md#d3d12_barrier_sync_all) as both the `SyncBefore` and the `SyncAfter` scope. It transitions no access and flushes nothing, see `_END_WITH_MEMORY_FLUSH` for the access half. What follows, meaning the next list in a continuation chain or the commands recorded after `DispatchList1` in the same command list, does not begin until preceding work has fully retired. That covers everything this list launched and work already submitted on this command list. Within a continuation chain, this defers the read of `NextDispatchList` to the retire point, and with it the whole of the next [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) it points at. That happens after any [`_END_WITH_MEMORY_FLUSH`](#d3d12_dispatch_list_flags1) this list also requested. A list sets it when its shaders write the next list, or produce data the next list consumes, whatever its class. For work recorded after `DispatchList1`, this flag is equivalent to a barrier the app records itself immediately after the call. Record ordering does not substitute for it: output-merger operations stay in submission order across the boundary only when the next list is an in-order graphics-class list, and record ordering supplies no ordering for other data dependencies (see [Execution Order and State Scoping](#execution-order-and-state-scoping)). |
+| `_ALLOW_NEXT_DISPATCH_LIST_CONTINUATION` | The GPU reads `NextDispatchList` and, if non-null, starts another list at that GPU header address under the original call's recorded bounds. See [Dispatch List Continuations](#dispatch-list-continuations) for read-timing semantics. |
+| `_END_WITH_WAIT_FOR_COMPLETION` | Supplies the *synchronization* half of a barrier at the end of this list, with [`D3D12_BARRIER_SYNC_ALL`](D3D12EnhancedBarriers.md#d3d12_barrier_sync_all) as both the `SyncBefore` and the `SyncAfter` scope. It transitions no access and flushes nothing, see `_END_WITH_MEMORY_FLUSH` for the access half. Both later continuation work and commands recorded after `DispatchList1` in the same command list are after this barrier and do not begin until this list and all work preceding its boundary in the command list have fully retired. The wait applies even if `_ALLOW_NEXT_DISPATCH_LIST_CONTINUATION` is unset or `NextDispatchList` is null. Within a continuation chain, this defers the read of `NextDispatchList` to the retire point, and with it the whole of the next [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1) header and its trailing primary-record array. That happens after any [`_END_WITH_MEMORY_FLUSH`](#d3d12_dispatch_list_flags1) this list also requested. A list sets it when its shaders write the next list, or produce data the next list consumes, whatever its class. When the final list sets this flag, commands after `DispatchList1` are synchronized as if the application had recorded a synchronization barrier immediately after the call. A wait on an earlier list does not, by itself, require later lists to finish before commands after `DispatchList1` can start. Record ordering does not substitute for it: output-merger operations stay in submission order across the boundary only when the next list is an in-order graphics-class list, and record ordering supplies no ordering for other data dependencies (see [Execution Order and State Scoping](#execution-order-and-state-scoping)). |
 | `_END_WITH_MEMORY_FLUSH` | Lets shaders in this list write UAVs normally, without having to make those writes globally coherent, and still have what follows see them once it runs. Visibility only: it does not hold the next list back, so a producer in a continuation chain pairs it with [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1) ([rule 13](#compatibility-and-validation)). What follows means the next list in a continuation chain, or the commands recorded after `DispatchList1` in the same command list, and the two are treated alike. At the end of this list the implementation makes the writes visible, including any still sitting in caches that later work would not otherwise see. That applies across the whole command list rather than only this list's shaders. In barrier terms this is the *access* half, over shader UAV writes ([`D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`](D3D12EnhancedBarriers.md#d3d12_barrier_access_unordered_access)). The precise access scope is tracked in [Open Issues](#open-issues). [Rasterizer-ordered view](RasterOrderViews.md#semantics) writes are included too, since those are UAV writes as well. [`D3D12_BARRIER_ACCESS_RENDER_TARGET`](D3D12EnhancedBarriers.md#d3d12_barrier_access_render_target) and [`D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE`](D3D12EnhancedBarriers.md#d3d12_barrier_access_depth_stencil_write) are **not** covered, and do not need to be. Later lists draw into the same bound targets, blending and depth/stencil testing against earlier output. When the next list is an in-order graphics-class list, it lands after work already in flight, so those results stay coherent across lists as they do across draws. What output-merger results need at a list boundary is *ordering*, not visibility, and the next list provides it whenever it is an in-order graphics-class list (see [Execution Order and State Scoping](#execution-order-and-state-scoping)). Independent of `_END_WITH_WAIT_FOR_COMPLETION` because the two are the two halves of a barrier: this flag is the access half, the wait is the sync half, and an app asks for either or both. Setting both is a global barrier at the end of the list. |
 
 Used by:
@@ -3076,7 +3214,7 @@ Used by:
 
 ### ID3D12WorkListSignature
 
-The per-list signature object created by [`CreateWorkListSignature`](#createworklistsignature). Opaque to apps after creation; references one or more [`ID3D12ProgramCommandSignature`](#id3d12programcommandsignature)s (the per-PSO arg layouts) plus a `SubobjectMask` that selects which state-object subobjects may vary across associated programs. Primary-list stride, program-table stride, and program-table slot count are per-dispatch (see [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input)). Bound for dispatch directly via [`SetProgram`](#setprogram) with `D3D12_PROGRAM_TYPE_WORK_LIST`, and referenced inside an [`ID3D12WorkListSignatureArray`](#id3d12worklistsignaturearray) for Tier 2 multi-signature dispatch. See [Work List Signature](#work-list-signature) for the conceptual overview.
+The per-list signature object created by [`CreateWorkListSignature`](#createworklistsignature). Opaque to apps after creation; references one or more [`ID3D12ProgramCommandSignature`](#id3d12programcommandsignature)s (the per-PSO arg layouts) plus a `SubobjectMask` that selects which state-object subobjects may vary across associated programs. Its [secondary-list shape](#secondary-list-shape) is inferred from the contained PCSes and checked for consistency at creation. Primary-list stride, program-table stride, and program-table slot count are per-dispatch (see [`D3D12_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input)). Bound for dispatch directly via [`SetProgram`](#setprogram) with `D3D12_PROGRAM_TYPE_WORK_LIST`, and referenced inside an [`ID3D12WorkListSignatureArray`](#id3d12worklistsignaturearray) for Tier 2 multi-signature dispatch. See [Work List Signature](#work-list-signature) for the conceptual overview.
 
 Derives from `ID3D12DeviceChild`. No own methods.
 
@@ -3168,7 +3306,7 @@ The DDI surface mirrors the API surface 1:1, including the Tier 1 / Tier 2 split
 // SOURCE_PRIMARY_RECORD / SOURCE_SECONDARY_RECORD / SOURCE_PROGRAM_TABLE_RECORD /
 // SOURCE_SYSTEM / SOURCE_STATIC choice and per-arg GLOBAL/LOCAL root sig
 // Binding; inline LRS root params/static samplers via the _INLINE_*
-// arg types), SecondaryRecordByteStride, optional pGlobalRootSignature
+// arg types), SecondaryRecordStrideInBytes, optional pGlobalRootSignature
 // (uniform across all program command signatures in the parent work list signature).
 typedef HRESULT (APIENTRY* PFND3D12DDI_CREATEPROGRAMCOMMANDSIGNATURE)(
     D3D12DDI_HDEVICE                                  hDevice,
@@ -3178,6 +3316,7 @@ typedef HRESULT (APIENTRY* PFND3D12DDI_CREATEPROGRAMCOMMANDSIGNATURE)(
 
 // Creates the work list signature: contains one or more hProgramCommandSignatures
 // plus the SubobjectMask (compile-time HW spec input).
+// Secondary-list shape is inferred from the contained PCSes.
 // Primary-record stride is per-dispatch in D3D12DDI_DISPATCH_LIST_INPUT(_1);
 // program-table stride and slot count are per-binding in the
 // D3D12DDI_WORK_LIST_BINDING the runtime forwards at SetProgram time
@@ -3190,6 +3329,8 @@ typedef HRESULT (APIENTRY* PFND3D12DDI_CREATEWORKLISTSIGNATURE)(
 );
 ```
 
+The runtime validates [secondary-list shape consistency](#secondary-list-shape) at `CreateWorkListSignature`. The driver derives the same shape from the forwarded PCS set; no new DDI flag or description field is needed. Shape is determined by secondary-source presence, not secondary stride, and need not be uniform across a Tier 2 signature array.
+
 **Synthesized local root signature handoff.** When a program command signature uses the implicit local root signature path (its `pArgumentDescs[]` contains `_INLINE_*` args), the *runtime* synthesizes an `ID3D12RootSignature` from those args and injects it into the state object as an ordinary `D3D12_LOCAL_ROOT_SIGNATURE` subobject, associated (via [`D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION`](Raytracing.md#d3d12_subobject_to_exports_association)) with the same shaders the program command signature is associated with, through the existing state-object-creation DDI. So the driver ends up seeing the inline-defined local root signature as a normal subobject association on those shaders, exactly as it would an app-authored explicit local root signature: the local-root-signature slot structure reaches the driver through that association, and the driver does not synthesize the local root signature object itself. The `_INLINE_*` args forwarded separately in `D3D12DDI_PROGRAM_COMMAND_SIGNATURE_DESC` convey only the per-record byte layout (which local-root-signature bytes are sourced per-record versus from the program-table record), not a request to construct the local root signature object. Each forwarded `_INLINE_ROOT_PARAMETER` carries its `Source` and, for constants slots, `DestOffsetIn32BitValues` / `Num32BitValuesToSet`, so the driver can place each DWORD sub-range (a single constants slot may be split across the program-table record and per-record sources).
 
 ---
@@ -3197,15 +3338,19 @@ typedef HRESULT (APIENTRY* PFND3D12DDI_CREATEWORKLISTSIGNATURE)(
 ### Tier 1 DDI
 
 ```c++
-// DispatchList: per-list input points to D3D12DDI_DISPATCH_LIST_INPUT (no
-// SignatureIndex, no NextDispatchList, Tier 1 flags only); MaxGraphicsProgramInputsPerPrimaryList
-// is the recording-time upper bound used for graphics-buffer sizing.
+typedef struct D3D12DDI_DISPATCH_LIST_DESC_0125
+{
+    D3D12DDI_GPU_VIRTUAL_ADDRESS DispatchListInput;
+    UINT                         MaxPrimaryRecords;
+} D3D12DDI_DISPATCH_LIST_DESC_0125;
+
 typedef void (APIENTRY* PFND3D12DDI_DISPATCHLIST)(
-    D3D12DDI_HCOMMANDLIST        hCommandList,
-    D3D12DDI_GPU_VIRTUAL_ADDRESS DispatchListInput,
-    UINT                         MaxGraphicsProgramInputsPerPrimaryList
+    D3D12DDI_HCOMMANDLIST                        hCommandList,
+    _In_ const D3D12DDI_DISPATCH_LIST_DESC_0125* pDesc
 );
 ```
+
+`pDesc` is a required CPU pointer, consumed during command recording; its storage need only remain valid for the DDI call. `D3D12DDI_DISPATCH_LIST_DESC_0125` mirrors [`D3D12_DISPATCH_LIST_DESC`](#d3d12_dispatch_list_desc): `DispatchListInput` directly addresses the GPU-resident `D3D12DDI_DISPATCH_LIST_INPUT_0125` header, and `MaxPrimaryRecords` bounds the one list for the executable class of the bound work list signature. The driver may use the bound for resource sizing without knowing the GPU-resident actual count.
 
 Tier 1 has no separate program-object create DDI; a work list signature is bound directly via the runtime's [`SetProgram`](#setprogram) plumbing (with the runtime forwarding `hWorkListSignature` to the driver).
 
@@ -3224,23 +3369,49 @@ typedef HRESULT (APIENTRY* PFND3D12DDI_CREATEWORKLISTSIGNATUREARRAY)(
     D3D12DDI_HWORKLISTSIGNATUREARRAY                 hWorkListSignatureArray
 );
 
-// DispatchList1: per-list input points to D3D12DDI_DISPATCH_LIST_INPUT1 (adds
-// SignatureIndex, NextDispatchList, Tier 2 flags); MaxGraphicsPrimaryLists and
-// MaxGraphicsProgramInputsPerPrimaryList are recording-time upper bounds used
-// for resource sizing.
+typedef struct D3D12DDI_DISPATCH_LIST_DESC1_0125
+{
+    D3D12DDI_GPU_VIRTUAL_ADDRESS DispatchListInput;
+    UINT                         MaxGraphicsPrimaryRecordsPerList;
+    UINT                         MaxComputePrimaryRecordsPerList;
+    UINT                         MaxRaytracingPrimaryRecordsPerList;
+    UINT                         MaxGraphicsPrimaryLists;
+} D3D12DDI_DISPATCH_LIST_DESC1_0125;
+
 typedef void (APIENTRY* PFND3D12DDI_DISPATCHLIST_1)(
-    D3D12DDI_HCOMMANDLIST        hCommandList,
-    D3D12DDI_GPU_VIRTUAL_ADDRESS DispatchListInput,
-    UINT                         MaxGraphicsPrimaryLists,
-    UINT                         MaxGraphicsProgramInputsPerPrimaryList
+    D3D12DDI_HCOMMANDLIST                         hCommandList,
+    _In_ const D3D12DDI_DISPATCH_LIST_DESC1_0125* pDesc
 );
 ```
+
+`pDesc` is a required CPU pointer, consumed during command recording; its storage need only remain valid for the DDI call. `D3D12DDI_DISPATCH_LIST_DESC1_0125` mirrors [`D3D12_DISPATCH_LIST_DESC1`](#d3d12_dispatch_list_desc1): `DispatchListInput` directly addresses the first GPU-resident `D3D12DDI_DISPATCH_LIST_INPUT1_0125` header. Each class-specific maximum bounds `NumPrimaryRecords` in each individual list of that class, while `MaxGraphicsPrimaryLists` separately bounds the number of graphics-class lists, including empty ones. The driver may use the recorded bounds for resource sizing; they remain fixed across the complete call and all continuations, with the same [zero-count and execution-validity rules](#primary-record-limits) as the API.
 
 ---
 
 ### GPU-resident structs
 
-The GPU-resident input and record structs (`D3D12DDI_DISPATCH_LIST_INPUT` / [`_INPUT1`](#d3d12_dispatch_list_input1), `D3D12DDI_WORK_LIST_PRIMARY_RECORD`, `D3D12DDI_WORK_LIST_INLINE_PRIMARY_RECORD`, `D3D12DDI_WORK_LIST_RAYTRACING_RECORD`, `D3D12DDI_WORK_LIST_INLINE_RAYTRACING_RECORD`) have the same byte layout as their API counterparts. Drivers walk these directly from GPU memory at dispatch time; the runtime does not transform them between API and DDI.
+The GPU-resident input and record structs (`D3D12DDI_DISPATCH_LIST_INPUT_0125` / [`D3D12DDI_DISPATCH_LIST_INPUT1_0125`](#d3d12_dispatch_list_input1), `D3D12DDI_WORK_LIST_PRIMARY_RECORD`, `D3D12DDI_WORK_LIST_INLINE_PRIMARY_RECORD`, `D3D12DDI_WORK_LIST_RAYTRACING_RECORD`, `D3D12DDI_WORK_LIST_INLINE_RAYTRACING_RECORD`) have the same byte layout as their API counterparts. Drivers walk these directly from GPU memory at dispatch time; the runtime does not transform them between API and DDI.
+
+```c++
+typedef struct D3D12DDI_DISPATCH_LIST_INPUT_0125
+{
+    UINT                                NumPrimaryRecords;
+    UINT                                PrimaryRecordStrideInBytes;
+    D3D12DDI_DISPATCH_LIST_FLAGS_0125   Flags;
+    UINT                                ReservedPadding;        // must be 0
+} D3D12DDI_DISPATCH_LIST_INPUT_0125;    // 16 bytes; GPU address must be 8-byte aligned
+
+typedef struct D3D12DDI_DISPATCH_LIST_INPUT1_0125
+{
+    UINT                                NumPrimaryRecords;
+    UINT                                PrimaryRecordStrideInBytes;
+    D3D12DDI_DISPATCH_LIST_FLAGS1_0125  Flags;
+    UINT                                SignatureIndex;
+    D3D12DDI_GPU_VIRTUAL_ADDRESS        NextDispatchList;
+} D3D12DDI_DISPATCH_LIST_INPUT1_0125;   // 24 bytes; GPU address must be 8-byte aligned
+```
+
+The DDI input GPUVA and [`NextDispatchList`](#d3d12_dispatch_list_input1) address the 8-byte-aligned headers above. Primary records start immediately at header GPUVA + 16 or + 24, respectively, with the exact offsets and addressing rules in [Dispatch input layout](#dispatch-input-layout). No independently addressed primary-list pointer or range is forwarded or read. Validator [`PRIMARY_LIST_POINTER`](#_primary_list_pointer) bindings are synthesized from the current header GPUVA, not fetched from a header field; all existing validation scheduling, header re-read, and continuation wait/publication rules apply to this trailing storage.
 
 The per-execution payload of [`_DISPATCH_RAYS_DIMENSIONS`](#_dispatch_rays_dimensions) in a raytracing-class program command signature is a `D3D12DDI_DISPATCH_RAYS_DIMENSIONS_0125` (1:1 mirror of `D3D12_DISPATCH_RAYS_DIMENSIONS`: `Width`, `Height`, `Depth`, 12 bytes); the RTPSO and shader tables are bound separately at command-list level (see the per-signature binding subsection below).
 
@@ -3254,7 +3425,7 @@ Each bound signature carries a tagged `D3D12DDI_WORK_LIST_BINDING` (1:1 mirror o
 
 The GPU Timeline Validation Hooks feature (see [GPU Timeline Validation Hooks](#gpu-timeline-validation-hooks)) mirrors 1:1 into the DDI: the corresponding DDI desc structs gain the same fields as the API desc structs (`RecordValidationProgramTableIndex` on `D3D12DDI_PROGRAM_COMMAND_SIGNATURE_DESC`; `ListValidationProgramTableIndex` on `D3D12DDI_WORK_LIST_SIGNATURE_DESC`; a `ValidationProgramTable` field of type `D3D12DDI_WORK_LIST_PROGRAM_TABLE_BINDING` (using the same struct as the regular program table binding) and a `SignatureSelectionValidationProgramTableIndex` field on the DDI counterpart of [`D3D12_SET_WORK_LIST_DESC1`](#d3d12_set_work_list_desc1) only; the DDI counterpart of [`D3D12_SET_WORK_LIST_DESC`](#d3d12_set_work_list_desc) has no `ValidationProgramTable` field). No additional DDI entry points are required: validation programs are regular generic compute programs declared in state objects (their identifiers acquired via the existing program-identifier DDI), the validation program table is opaque GPU memory the driver walks at dispatch time, and the table is bound through the existing `SetProgram` desc path.
 
-The system-generated [argument types](#supported-argument-types) (`_DISPATCH_LIST_HEADER_POINTER`, `_PROGRAM_TABLE_POINTER`, `_PRIMARY_LIST_POINTER`, `_PRIMARY_RECORD_POINTER`, `_SECONDARY_LIST_POINTER`, `_SECONDARY_RECORD_POINTER`) appear in the same `D3D12DDI_INDIRECT_ARGUMENT_TYPE` enum as the existing arg types. The driver synthesizes the GPU virtual address values at dispatch time from the relevant header / record fields and binds them as root descriptors at the declared `RootParameterIndex`: into the validation program's root signature for the validator-context args, and into the executing list shader's root signature (per-execution) for the three record pointers (`_PROGRAM_TABLE_POINTER`, `_PRIMARY_RECORD_POINTER`, `_SECONDARY_RECORD_POINTER`) declared in a data program command signature. The driver invokes the signature-selection validator, the primary list validator, and the secondary list validators (one per program command signature) in the order described in [Validator invocation order and barriers](#validator-invocation-order-and-barriers).
+The system-generated [argument types](#supported-argument-types) (`_DISPATCH_LIST_HEADER_POINTER`, `_PROGRAM_TABLE_POINTER`, `_PRIMARY_LIST_POINTER`, `_PRIMARY_RECORD_POINTER`, `_SECONDARY_LIST_POINTER`, `_SECONDARY_RECORD_POINTER`) appear in the same `D3D12DDI_INDIRECT_ARGUMENT_TYPE` enum as the existing arg types. The driver synthesizes the GPU virtual address values at dispatch time from the current header and record addresses, relevant header / record fields, and the selected SetProgram binding as specified under [System-generated validator pointer arg types](#system-generated-validator-pointer-arg-types). It binds them as root descriptors at the declared `RootParameterIndex`: into the validation program's root signature for the validator-context args, and into the executing list shader's root signature (per-execution) for the three record pointers (`_PROGRAM_TABLE_POINTER`, `_PRIMARY_RECORD_POINTER`, `_SECONDARY_RECORD_POINTER`) declared in a data program command signature. The driver invokes the signature-selection validator, the primary list validator, and the secondary list validators (one per program command signature) in the order described in [Validator invocation order and barriers](#validator-invocation-order-and-barriers).
 
 Capability reporting for GPU Timeline Validation Hooks support is unconditional within Tier 2: every Tier 2 implementation supports the validation hooks; Tier 1 has no validation-hook surface (no validators, no validation program table) and uses CPU-side debug-layer validation instead (see the section's opening callout). The one Tier-1 element of this area is the data program command signature use of the three record pointers (`_PROGRAM_TABLE_POINTER`, `_PRIMARY_RECORD_POINTER`, `_SECONDARY_RECORD_POINTER`), which tier-1 GPU-Based Validation binds into its patched list shaders.
 
@@ -3337,14 +3508,15 @@ v0.5|4/14/2026|<ul><li>Rewritten around a [`WorkList`](#dispatch-model) dispatch
 v0.6|4/22/2026|<ul><li>State-object-only program sourcing (RT-style compile-time HW specialization).</li><li>Pipeline table renamed to **[program table](#program-table)** throughout (avoids collision with raytracing [shader tables](Raytracing.md#shader-record)).</li><li>Dispatch verb renamed `WorkList` -> [`DispatchList`](#dispatchlist).</li><li>Dispatch input fully GPU-resident, count included.</li><li>Program table simplified to an app-managed buffer of `D3D12_PROGRAM_IDENTIFIER`s.</li></ul>
 v0.7|5/15/2026|<ul><li>Bindings not touched by a config's cmd sig inherit command-list state (matches `ExecuteIndirect`).</li><li>New arg types [`_DESCRIPTOR_TABLE`](#_descriptor_table) and `_DISPATCH_RAYS` (raytracing becomes a fourth executable class).</li><li>Per-slot [local root arguments](#local-root-signatures) (raytracing-shader-record style).</li><li>[Tier 2](#tier-2-dispatch-features): GPU-resident [continuations](#dispatch-list-continuations) + multi-config dispatch + [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1).</li><li>New [Interaction with other command-list features](#interaction-with-other-command-list-features) section.</li><li>`DispatchRaysSupported` is an independent capability orthogonal to tier.</li></ul>
 v0.75|5/27/2026|<ul><li>Work List Signature consolidation: single [`ID3D12WorkListSignature`](#id3d12worklistsignature) replaces v0.7's three-object model.</li><li>Per-binding source choice ([`_PRIMARY_RECORD`](#d3d12_indirect_argument_source) vs [`_SECONDARY_RECORD`](#d3d12_indirect_argument_source)).</li><li>Program table layout absorbed into the signature desc.</li><li>Root signatures absorbed: `pGlobalRootSignature` required, `pDefaultLocalRootSignature` optional.</li><li>[Tier 1](#tier-1) / [Tier 2](#tier-2) dispatch surface split: [`DispatchList`](#dispatchlist) + [`_INPUT`](#d3d12_dispatch_list_input) + [`_FLAGS`](#d3d12_dispatch_list_flags) at Tier 1; [`DispatchList1`](#dispatchlist1) + [`_INPUT1`](#d3d12_dispatch_list_input1) + [`_FLAGS1`](#d3d12_dispatch_list_flags1) ([continuations](#dispatch-list-continuations), [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1), [`_END_WITH_MEMORY_FLUSH`](#d3d12_dispatch_list_flags1)) at Tier 2.</li><li>Multi-signature Tier 2 dispatch via [`ID3D12WorkListSignatureArray`](#id3d12worklistsignaturearray).</li><li>End-of-call reset is once per [`DispatchList`](#dispatchlist) call (not per continuation list).</li><li>[Class-separated binding sets](#root-signature-bindings) called out (graphics-class vs compute / raytracing-class).</li><li>Fresh type isolates from `ExecuteIndirect`.</li></ul>
-v0.76|6/9/2026|<ul><li>Two-level signature split: new [`ID3D12ProgramCommandSignature`](#id3d12programcommandsignature) (per-PSO arg layout, secondary record stride, global root signature, optional default local root signature); [`ID3D12WorkListSignature`](#id3d12worklistsignature) becomes the per-list container wrapping one or more.</li><li>Per-arg override of which root signature an arg targets ([`_GLOBAL_ROOT_SIGNATURE`](#d3d12_indirect_argument_binding) vs [`_LOCAL_ROOT_SIGNATURE`](#d3d12_indirect_argument_binding)), so each PSO may have a different number of local-root args.</li><li>[Uniformity constraints](#uniformity-constraints-across-program-command-signatures) rewritten to apply across the set of program command signatures used together.</li><li>[`MaxGraphicsProgramInputsPerPrimaryList`](#maxgraphicsprograminputsperprimarylist) added to [`DispatchList`](#dispatchlist) / [`DispatchList1`](#dispatchlist1).</li><li>Primary-list and program-table shape (stride, slot count) moved from the signature desc to per-dispatch.</li><li>[Program table](#program-table) moved from [`_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input) to [`SetProgram`](#setprogram) time, with contents immutable for the binding's lifetime ([rule 14](#compatibility-and-validation)).</li><li>New tagged [`D3D12_WORK_LIST_BINDING`](#d3d12_work_list_binding) ([`_PROGRAM_TABLE`](#d3d12_work_list_binding_type), [`_RAYTRACING`](#d3d12_work_list_binding_type)); [`SetProgram`](#setprogram) types unified as [`_WORK_LIST`](#d3d12_program_type) / [`_WORK_LIST1`](#d3d12_program_type).</li><li>Program command signatures must be associated with RTPSO shaders as they are with generic programs.</li><li>[Raytracing redesign](#raytracing-pipeline-programs): RTPSO and four shader tables move out of the program table into a `SetProgram`-bound [`_RAYTRACING`](#d3d12_work_list_raytracing_binding) binding; `_DISPATCH_RAYS` payload shrinks 100 to 12 bytes ([dimensions only](#d3d12_dispatch_rays_dimensions)). Two raytracing-class [primary record headers](#primary-record-headers) added, [`D3D12_WORK_LIST_RAYTRACING_RECORD`](#d3d12_work_list_raytracing_record) and [`D3D12_WORK_LIST_INLINE_RAYTRACING_RECORD`](#d3d12_work_list_inline_raytracing_record).</li><li>[GPU Timeline Validation Hooks](#gpu-timeline-validation-hooks) (Tier 2): three-area validation model, [`_SYSTEM`](#d3d12_indirect_argument_source) arg source, five [validator pointer arg types](#system-generated-validator-pointer-arg-types), `RecordValidationProgramTableIndex` / `ListValidationProgramTableIndex` with per-area `DispatchGridX`, `ValidationProgramTable` on [`_DESC1`](#d3d12_set_work_list_desc1), [neutralization patterns](#validator-defensive-neutralization-patterns).</li><li>[Validation rules](#compatibility-and-validation) 14 to 20 added.</li></ul>
+v0.76|6/9/2026|<ul><li>Two-level signature split: new [`ID3D12ProgramCommandSignature`](#id3d12programcommandsignature) (per-PSO arg layout, secondary record stride, global root signature, optional default local root signature); [`ID3D12WorkListSignature`](#id3d12worklistsignature) becomes the per-list container wrapping one or more.</li><li>Per-arg override of which root signature an arg targets ([`_GLOBAL_ROOT_SIGNATURE`](#d3d12_indirect_argument_binding) vs [`_LOCAL_ROOT_SIGNATURE`](#d3d12_indirect_argument_binding)), so each PSO may have a different number of local-root args.</li><li>[Uniformity constraints](#uniformity-constraints-across-program-command-signatures) rewritten to apply across the set of program command signatures used together.</li><li>[`MaxGraphicsProgramInputsPerPrimaryList`](#primary-record-limits) added to [`DispatchList`](#dispatchlist) / [`DispatchList1`](#dispatchlist1).</li><li>Primary-list and program-table shape (stride, slot count) moved from the signature desc to per-dispatch.</li><li>[Program table](#program-table) moved from [`_DISPATCH_LIST_INPUT`](#d3d12_dispatch_list_input) to [`SetProgram`](#setprogram) time, with contents immutable for the binding's lifetime ([rule 14](#compatibility-and-validation)).</li><li>New tagged [`D3D12_WORK_LIST_BINDING`](#d3d12_work_list_binding) ([`_PROGRAM_TABLE`](#d3d12_work_list_binding_type), [`_RAYTRACING`](#d3d12_work_list_binding_type)); [`SetProgram`](#setprogram) types unified as [`_WORK_LIST`](#d3d12_program_type) / [`_WORK_LIST1`](#d3d12_program_type).</li><li>Program command signatures must be associated with RTPSO shaders as they are with generic programs.</li><li>[Raytracing redesign](#raytracing-pipeline-programs): RTPSO and four shader tables move out of the program table into a `SetProgram`-bound [`_RAYTRACING`](#d3d12_work_list_raytracing_binding) binding; `_DISPATCH_RAYS` payload shrinks 100 to 12 bytes ([dimensions only](#d3d12_dispatch_rays_dimensions)). Two raytracing-class [primary record headers](#primary-record-headers) added, [`D3D12_WORK_LIST_RAYTRACING_RECORD`](#d3d12_work_list_raytracing_record) and [`D3D12_WORK_LIST_INLINE_RAYTRACING_RECORD`](#d3d12_work_list_inline_raytracing_record).</li><li>[GPU Timeline Validation Hooks](#gpu-timeline-validation-hooks) (Tier 2): three-area validation model, [`_SYSTEM`](#d3d12_indirect_argument_source) arg source, five [validator pointer arg types](#system-generated-validator-pointer-arg-types), `RecordValidationProgramTableIndex` / `ListValidationProgramTableIndex` with per-area `DispatchGridX`, `ValidationProgramTable` on [`_DESC1`](#d3d12_set_work_list_desc1), [neutralization patterns](#validator-defensive-neutralization-patterns).</li><li>[Validation rules](#compatibility-and-validation) 14 to 20 added.</li></ul>
 v0.77|6/14/2026|<ul><li>**Implicit local root signature authoring via inline args** (graphics-class and compute-class only). New [`_INLINE_ROOT_PARAMETER`](#_inline_root_parameter) / [`_INLINE_STATIC_SAMPLER`](#_inline_static_sampler) arg types declare a local root signature inline; the runtime synthesizes it and auto-injects it as a state-object subobject. The explicit path is preserved. No implicit-global analog.</li><li>New [`_PROGRAM_TABLE_RECORD`](#d3d12_indirect_argument_source) source: bytes from the program-table record's LRA tail, valid only on `_INLINE_ROOT_PARAMETER` args with `Binding == _LOCAL_ROOT_SIGNATURE`. New [`_STATIC`](#d3d12_indirect_argument_source) source: no per-execution payload, required on `_INLINE_STATIC_SAMPLER` args.</li><li>`pDefaultLocalRootSignature` **removed**; [`pGlobalRootSignature`](#d3d12_program_command_signature_desc) is now optional.</li><li>New [`GetSynthesizedLocalRootSignature`](#id3d12programcommandsignature), returning `S_FALSE` on the explicit path.</li><li>**Raytracing-class signatures cannot customize local root signature args per invocation** ([rule 21](#compatibility-and-validation)): RT local root values come from shader-table records, so both `Binding == _LOCAL_ROOT_SIGNATURE` and the `_INLINE_*` types are forbidden there. Documentation correction; earlier text implied otherwise.</li><li>Validation rules 22 to 26 added: implicit local root signature semantics, inline arg constraints, arg-list well-formedness, per-arg integrity, `pGlobalRootSignature` presence.</li><li>**Per-arg natural alignment** in [record byte layouts](#record-byte-layouts), deliberately unlike `ExecuteIndirect`'s tight packing.</li></ul>
 v0.78|6/17/2026|<ul><li>**`_PROGRAM_TABLE_RECORD` generalized to a composable sub-range source.** Previously it claimed the whole constants slot (`DestOffsetIn32BitValues` / `Num32BitValuesToSet` forced to 0, no mixing with per-execution sources on the slot). Now an [`_INLINE_ROOT_PARAMETER`](#_inline_root_parameter) arg with `Source == _PROGRAM_TABLE_RECORD` fills an explicit `DestOffset` / `Num` DWORD sub-range like any other constants source, so a single constants slot can compose per-program (program-table-record) and per-execution sub-ranges, non-overlapping. The program-table footprint is always stated explicitly (no implicit whole-slot default). See [validation rules 23 and 25](#compatibility-and-validation).</li><li>[`GetSynthesizedLocalRootSignature`](#id3d12programcommandsignature) return-object contract specified: the returned `ID3D12RootSignature*` is AddRef'd (caller releases), its lifetime is independent of the program command signature, and repeated calls are identity-stable.</li><li>[`pGlobalRootSignature`](#d3d12_program_command_signature_desc) presence condition completed ([validation rule 26](#compatibility-and-validation)): non-null is also required when any arg targets the global root signature, not only when associated shaders use global root signature bindings.</li><li>DDI: the synthesized local root signature handoff is documented. The runtime synthesizes the `ID3D12RootSignature` from the inline args and injects it as an ordinary `D3D12_LOCAL_ROOT_SIGNATURE` subobject; the driver treats it like an app-authored explicit local root signature.</li><li>Internal-consistency reconciliation: program-table local root arguments are described uniformly as the per-program-record portion (the bytes not overridden per-record) across all sites; inline multi-arg constants ordering and sizing rules completed ([validation rules 23-25](#compatibility-and-validation)); cross-references tidied.</li></ul>
 v0.79|6/24/2026|<ul><li>**Rule 26 (`pGlobalRootSignature` presence) disambiguation.** Replaced the ambiguous 'uses global root signature bindings' phrasing with a precise 'has a global root signature in scope (an explicit `D3D12_GLOBAL_ROOT_SIGNATURE` subobject or a DXIL-embedded root signature, whether or not the shader references any of its parameters)' definition, applied across [validation rule 26](#compatibility-and-validation), the state-object-integration global-root-signature bullet, and the [`pGlobalRootSignature`](#d3d12_program_command_signature_desc) member-table row. Normative-text-only; the in-scope reading matches the state-object-association-overrides-DXIL semantics and the shared global-root-signature uniformity constraint.</li><li>**Program table [`ByteStride`](#d3d12_work_list_program_table_binding) 8-byte alignment.** `ByteStride` must now be a multiple of 8 bytes, so every array-indexed slot at `N * ByteStride` keeps its `D3D12_PROGRAM_IDENTIFIER` 8-byte aligned.</li><li>**Record-class determination made complementary.** A primary record is fully-inline when the program command signature has **no** `SOURCE_SECONDARY_RECORD` args (the exact complement of the hybrid condition), replacing the 'every arg is `SOURCE_PRIMARY_RECORD`' phrasing that left a record-byte-transparent `SOURCE_SYSTEM` arg such as `_INCREMENTING_CONSTANT` falling between fully-inline and hybrid. Both determination tables and the fully-inline byte-layout rows (now filtered to `SOURCE_PRIMARY_RECORD`, matching hybrid) updated. Clarification only; matches shipping behavior.</li></ul>
-v0.80|7/4/2026|<ul><li>**Raytracing-class secondary-list validators defined.** The validator fires once per raytracing-class hybrid primary record using the single RTPSO-bound signature's `RecordValidationProgramTableIndex`, which must be `0` when that signature has no `SOURCE_SECONDARY_RECORD` args and uniform across the raytracing-class signatures reachable together.</li><li>**Broadcast strides.** `SecondaryRecordByteStride == 0` and program-table `Table.StrideInBytes == 0` now both mean every index resolves to the record at the start address, matching raytracing shader tables. Non-zero strides keep their existing floors.</li><li>**Signature-selection validation area added** ([`SignatureSelectionValidationProgramTableIndex`](#d3d12_set_work_list_desc1)), running once per list before selection to range-check `SignatureIndex` and neutralize a bad list. Array-level because a per-signature validator is itself selected by the index it would check.</li><li>**Record pointers usable in data shaders** for GBV and conformance testing: [`_PROGRAM_TABLE_POINTER`](#_program_table_pointer), [`_PRIMARY_RECORD_POINTER`](#_primary_record_pointer) and the new [`_SECONDARY_RECORD_POINTER`](#_secondary_record_pointer) are valid in a data program command signature, bound per-execution, available at **Tier 1**. The header, primary-list and secondary-list pointers stay validator-only.</li><li>**Record-pointer executable-class scope.** `_PROGRAM_TABLE_POINTER` is graphics-class and compute-class only; the record pointers are valid on all classes.</li><li>**New [`_FIXED_DISPATCH`](#_fixed_dispatch) compute dispatch-trigger**, thread-group counts fixed on the arg. Validator dispatch grids are now declared this way, replacing the removed `RecordValidationDispatchGridX` and `ListValidationDispatchGridX` fields.</li><li>**Program command signatures are a compile-time specialization input**, associated with shader exports via `D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION`; link-step association is rejected.</li><li>**Local root argument sourcing clarified.** A descriptor table's record payload is the 8-byte `D3D12_GPU_DESCRIPTOR_HANDLE`; conventional local args on the explicit path are record or system sourced and draw un-overridden bytes from the LRA tail, with `_PROGRAM_TABLE_RECORD` implicit-path-only.</li><li>**Record-class complement completed** at `SecondaryRecordByteStride`, and the [per-arg alignment table](#per-arg-natural-alignment) now lists each arg's record size alongside its alignment.</li></ul>
+v0.80|7/4/2026|<ul><li>**Raytracing-class secondary-list validators defined.** The validator fires once per raytracing-class hybrid primary record using the single RTPSO-bound signature's `RecordValidationProgramTableIndex`, which must be `0` when that signature has no `SOURCE_SECONDARY_RECORD` args and uniform across the raytracing-class signatures reachable together.</li><li>**Broadcast strides.** `SecondaryRecordStrideInBytes == 0` and program-table `Table.StrideInBytes == 0` now both mean every index resolves to the record at the start address, matching raytracing shader tables. Non-zero strides keep their existing floors.</li><li>**Signature-selection validation area added** ([`SignatureSelectionValidationProgramTableIndex`](#d3d12_set_work_list_desc1)), running once per list before selection to range-check `SignatureIndex` and neutralize a bad list. Array-level because a per-signature validator is itself selected by the index it would check.</li><li>**Record pointers usable in data shaders** for GBV and conformance testing: [`_PROGRAM_TABLE_POINTER`](#_program_table_pointer), [`_PRIMARY_RECORD_POINTER`](#_primary_record_pointer) and the new [`_SECONDARY_RECORD_POINTER`](#_secondary_record_pointer) are valid in a data program command signature, bound per-execution, available at **Tier 1**. The header, primary-list and secondary-list pointers stay validator-only.</li><li>**Record-pointer executable-class scope.** `_PROGRAM_TABLE_POINTER` is graphics-class and compute-class only; the record pointers are valid on all classes.</li><li>**New [`_FIXED_DISPATCH`](#_fixed_dispatch) compute dispatch-trigger**, thread-group counts fixed on the arg. Validator dispatch grids are now declared this way, replacing the removed `RecordValidationDispatchGridX` and `ListValidationDispatchGridX` fields.</li><li>**Program command signatures are a compile-time specialization input**, associated with shader exports via `D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION`; link-step association is rejected.</li><li>**Local root argument sourcing clarified.** A descriptor table's record payload is the 8-byte `D3D12_GPU_DESCRIPTOR_HANDLE`; conventional local args on the explicit path are record or system sourced and draw un-overridden bytes from the LRA tail, with `_PROGRAM_TABLE_RECORD` implicit-path-only.</li><li>**Record-class complement completed** at `SecondaryRecordStrideInBytes`, and the [per-arg alignment table](#per-arg-natural-alignment) now lists each arg's record size alongside its alignment.</li></ul>
 v0.81|7/9/2026|<ul><li>**Public contract corrections.** Documented `ID3D12ProgramCommandSignature::GetDesc()` and its object-lifetime-bound returned description; adopted the canonical `D3D12DDI_OPTIONS_DATA_WORK_LISTS` capability-data name; made the raytracing binding union arm an indirect `pRaytracing` payload for stable array-element extensibility; and reused standard GPU-VA meta-types for program-table, primary-list, and raytracing shader-table bindings.</li></ul>
 v0.82|7/24/2026|<ul><li>**Raytracing continuation and program command signature scoping.** Tier 2 continuation slots may bind different RTPSO, PCS, and shader-table combinations; `SignatureIndex` selects each one-PCS raytracing work list signature and its paired binding. Every PCS across the signature array still shares one `pGlobalRootSignature`, matching the command list's single compute-root binding state across the full chain. PCS compatibility is scoped to the shaders a dispatch actually invokes, leaving unused shader-table entries unconstrained; mismatch is undefined behavior and diagnosing it requires GPU-based validation. Whole-RTPSO PCS uniformity is not required. This supersedes the v0.80 constraint that `RecordValidationProgramTableIndex` be uniform across the raytracing-class program command signatures reachable together: a raytracing work list signature now contains exactly one program command signature, and that one supplies the index. PCS associations do not change ordinary direct or indirect ray-dispatch semantics, so compatible shader identifiers and shader tables remain reusable.</li><li>**Work-Lists-specific ray dimensions argument.** Added `D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_RAYS_DIMENSIONS` with a 12-byte `D3D12_DISPATCH_RAYS_DIMENSIONS` record payload. The existing `D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_RAYS` remains the ExecuteIndirect full-`D3D12_DISPATCH_RAYS_DESC` argument and is not valid in a Work Lists PCS.</li></ul>
-v0.83|8/20/2026|<ul><li>**Restatement corrections.** `RecordValidationProgramTableIndex` no longer equates having no `SOURCE_SECONDARY_RECORD` args with `SecondaryRecordByteStride == 0`, which v0.80 separated by making a `0` stride the broadcast form. The condition becomes [rule 27](#compatibility-and-validation), scoped to raytracing-class because the validator fires only for *hybrid* raytracing-class records; graphics-class and compute-class signatures invoke it once per primary record and may designate one even when fully-inline, in which case the secondary-list pointer is null and the validator validates the primary record. The [`pRaytracingStateObject`](#d3d12_work_list_raytracing_binding) row and rule 19 attribute the shared global root signature to the program command signatures used together in one [`DispatchList`](#dispatchlist) call, covering the direct-bind and array-bind paths alike, name their enforcement points, and drop the description of `pGlobalRootSignature` as a work list signature member. Completes the v0.81 `pRaytracing` union-arm rename.</li><li>**Continuation clarifications.** [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1) defers the whole of the *next* [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1), not just the `NextDispatchList` field pointing at it, and that read happens after any [`_END_WITH_MEMORY_FLUSH`](#d3d12_dispatch_list_flags1) the list requested. Zero `NumProgramInputs` is legal anywhere in a chain: no records execute, `ProgramInputs` is unread and unconstrained, and the list still counts against [`MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists). Publishing to the next list never requires ordering a producer's own writes under either visibility option, since the wait rather than the flush is what stops the next list observing intermediate state; neither speaks to ordering within the current list. New [rule 28](#compatibility-and-validation): a producer must publish by coherent writes or by the flush, and doing neither is undefined and undiagnosable. The coherent write is what publishes; `DeviceMemoryBarrier` orders within a shader, and is neither a publication mechanism nor required after the final store.</li></ul>
+v0.83|8/20/2026|<ul><li>**Restatement corrections.** `RecordValidationProgramTableIndex` no longer equates having no `SOURCE_SECONDARY_RECORD` args with `SecondaryRecordStrideInBytes == 0`, which v0.80 separated by making a `0` stride the broadcast form. The condition becomes [rule 27](#compatibility-and-validation), scoped to raytracing-class because the validator fires only for *hybrid* raytracing-class records; graphics-class and compute-class signatures invoke it once per primary record and may designate one even when fully-inline, in which case the secondary-list pointer is null and the validator validates the primary record. The [`pRaytracingStateObject`](#d3d12_work_list_raytracing_binding) row and rule 19 attribute the shared global root signature to the program command signatures used together in one [`DispatchList`](#dispatchlist) call, covering the direct-bind and array-bind paths alike, name their enforcement points, and drop the description of `pGlobalRootSignature` as a work list signature member. Completes the v0.81 `pRaytracing` union-arm rename.</li><li>**Continuation clarifications.** [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1) defers the whole of the *next* [`D3D12_DISPATCH_LIST_INPUT1`](#d3d12_dispatch_list_input1), not just the `NextDispatchList` field pointing at it, and that read happens after any [`_END_WITH_MEMORY_FLUSH`](#d3d12_dispatch_list_flags1) the list requested. Zero `NumPrimaryRecords` is legal anywhere in a chain: no records execute, `ProgramInputs` is unread and unconstrained, and the list still counts against [`MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists). Publishing to the next list never requires ordering a producer's own writes under either visibility option, since the wait rather than the flush is what stops the next list observing intermediate state; neither speaks to ordering within the current list. New [rule 28](#compatibility-and-validation): a producer must publish by coherent writes or by the flush, and doing neither is undefined and undiagnosable. The coherent write is what publishes; `DeviceMemoryBarrier` orders within a shader, and is neither a publication mechanism nor required after the final store.</li></ul>
 v0.84|8/21/2026|<ul><li>Added introductory diagrams.</li><li>In [Open Issues](#open-issues) listed we need to consider the option for Work Lists to change states like primitive topology, stencil ref etc., perhaps in a future release to give more time, and/or scoped to the most critical to limit complexity.</li></ul>
 v0.85|8/22/2026|<ul><li>**Moving to the next list does not always need a barrier.** *(Withdrawn in v0.851; retained for history. Record retirement does not sequence a continuation, and a producer sets the wait whatever its class, per [rule 13](#compatibility-and-validation).)* If a graphics-class list runs its records in order, the next list starts once the last record finishes, and `NextDispatchList` is read at that point. Nothing else has to finish first, so work that was already running when [`DispatchList1`](#dispatchlist1) was called keeps going. A list whose records have no defined order still needs [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1). Applications set the same flags as before. What changed is why: an in-order list is sequenced by its own last record retiring, rather than by a wait the spec supplied on its behalf.</li><li>**The wait is no longer implied, and covers more when set.** *(The clause "and does not need it, since the sequencing above already orders the chain" was withdrawn in v0.851; the rest of this bullet stands.)* An in-order graphics-class list no longer supplies [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1) implicitly, and does not need it, since the sequencing above already orders the chain. A list that sets it explicitly gets a wider barrier than v0.84 described: v0.84 scoped it to the work the list itself launched, and it now covers all preceding work in the command list, which is what [`D3D12_BARRIER_SYNC_ALL`](D3D12EnhancedBarriers.md#d3d12_barrier_sync_all) describes.</li><li>**The flush no longer requires the wait.** [`_END_WITH_MEMORY_FLUSH`](#d3d12_dispatch_list_flags1) may now be set on its own. It says when this list's writes become visible. The wait says what is ordered after them. It now states that it applies to shader writes, including [ROVs](RasterOrderViews.md#semantics), and not to output-merger results.</li><li>**Out-of-order scope.** [`_ALLOW_OUT_OF_ORDER_GRAPHICS`](#d3d12_dispatch_list_flags) is now stated to apply across records and the executions they drive, and not within an execution.</li><li>**Producer code.** Authoring `NextDispatchList` is now described as correctness-critical rather than security-critical.</li><li>**New [Open Issues](#open-issues).** Whether the flag should also relax ordering within an execution, and whether output-merger results stay coherent across a list boundary.</li></ul>
 v0.851|8/25/2026|<ul><li>**In-order no longer advances the chain.** v0.85 said an in-order graphics list's `NextDispatchList` is read after its last record retires, so the chain moved on with no barrier. Withdrawn. Record ordering says when records *retire*, while a continuation is about when the next list *launches*. A list whose shaders write the next list, or data it reads, now sets [`_END_WITH_WAIT_FOR_COMPLETION`](#d3d12_dispatch_list_flags1), whatever its class. A chain already in place needs no wait.</li><li>**The next list's flags decide what happens at a boundary.** An implementation reads only the flags of the list it is starting. An ordered list lands after work already in flight and may retire it first, so rasterization and output-merger results stay in submission order with no flag. An unordered list may overtake, and is pinned only where what follows is itself ordered. Anything a shader reads is the exception and still needs the wait. All four transitions are spelled out in the flag description. Because the next list, when ordered, may retire outstanding work, the guarantee holds without knowing what the previous list did, so the v0.85 open issue asking whether hardware provides it is removed.</li><li>**[`_ALLOW_OUT_OF_ORDER_GRAPHICS`](#d3d12_dispatch_list_flags) also decides whether a boundary may serialize**, where it used to be about rasterization order within a list only.</li><li>**The flags are the two halves of a barrier.** The wait is the sync half, with [`D3D12_BARRIER_SYNC_ALL`](D3D12EnhancedBarriers.md#d3d12_barrier_sync_all) on both sides. The flush is the access half, over shader UAV writes. Setting both is a global barrier at the end of the list. Two new [Open Issues](#open-issues) cover the exact access scope and how each flag alone would be expressed.</li><li>**Follow-through.** The overview stated the producer requirement correctly and then contradicted it in the sketch walkthrough; the walkthrough now matches. The shader-managed publication note credits the wait that sequences a producer, and the v0.85 row above is marked where it still read as current.</li></ul>
+v0.852|9/11/2026|<ul><li>**Consistent record shape.** [`CreateWorkListSignature`](#createworklistsignature) requires all contained program command signatures to be fully inline or all hybrid, without a new flag. Different work list signatures may use different shapes.</li><li>**Contiguous primary records.** [Dispatch input headers](#dispatch-input-layout) use `NumPrimaryRecords` and 32-bit `PrimaryRecordStrideInBytes`, with primary records immediately following the 16-byte Tier 1 or 24-byte Tier 2 header. API, HLSL, DDI and validation follow the new layout.</li><li>**CPU-side dispatch descriptors.** [`DispatchList`](#dispatchlist) and [`DispatchList1`](#dispatchlist1) take [`D3D12_DISPATCH_LIST_DESC`](#d3d12_dispatch_list_desc) and [`D3D12_DISPATCH_LIST_DESC1`](#d3d12_dispatch_list_desc1) pointers instead of scalar arguments; DDI entry points mirror the change.</li><li>**Primary-record limits.** [Bounds](#primary-record-limits) are `MaxPrimaryRecords` for Tier 1 and per-list graphics, compute and raytracing maxima for Tier 2, fixed across continuations. [`MaxGraphicsPrimaryLists`](#maxgraphicsprimarylists) remains a separate graphics-list-count bound.</li></ul>
