@@ -2443,7 +2443,7 @@ On return, a pointer the compiler interface specified by riid.
 Database Files:
 
 - If a specified file does not exist, it is created.  If it exists, it is opened for modification.
-- Value types may be stored in seperate databases.  For example, PDBs may be stored in a seperate database file than object code.
+- Value types may be stored in separate databases.  For example, PDBs may be stored in a separate database file than object code.
 
 #### Method ID3D12CompilerFactory::CreateCompiler
 
