@@ -398,9 +398,6 @@ This API is intended for development time use only. Therefore it is only
 allowed when the D3D12 SDK layers are present on the machine. The API
 fails with E_FAIL if the D3D12 SDK layers are not present.
 
-The debug layer will issue a warning if the GetClockCalibration API is
-used without SetStablePowerState being called first.
-
 This API is implemented with new kernel-mode DDIs which are described
 separately.
 
