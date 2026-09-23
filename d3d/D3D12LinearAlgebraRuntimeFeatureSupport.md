@@ -581,18 +581,17 @@ It is valid for drivers to use higher internal precision for Fp16 multiplication
 
 ### Vector-Matrix Operations
 
-Vector | Matrix   | Result | Native   |
--------|----------|--------|----------|
-SInt8  | SInt8    | SInt32 | Required |
-UInt8  | UInt8    | SInt32 | Required |
-Fp32   | SInt8    | SInt32 | Required |
-Fp16   | Fp16     | Fp16   | Required |
-Fp16   | Fp8_E4M3 | Fp16   | Optional |
-Fp16   | Fp8_E5M2 | Fp16   | Optional |
+Vector    | Matrix   | Result | Native inputs | Native outputs |
+----------|----------|--------|---------------|----------------|
+SInt8     | SInt8    | SInt32 | Required      | Required       |
+UInt8     | UInt8    | SInt32 | Required      | Required       |
+Fp16      | Fp16     | Fp16   | Required      | Optional       |
+Fp8_E4M3  | Fp8_E4M3 | Fp16   | Optional      | Optional       |
+Fp8_E5M2  | Fp8_E5M2 | Fp16   | Optional      | Optional       |
 
-Column meaning, HLSL supply paths, and conversion behavior are described under [D3D12_LINEAR_ALGEBRA_THREAD_VECTOR_MATRIX_MULTIPLY_SUPPORT](#d3d12_linear_algebra_thread_vector_matrix_multiply_support). The **Native** column governs whether tier-1 implementations are required to accelerate the row natively:
+Column meaning, HLSL supply paths, and conversion behavior are described under [D3D12_LINEAR_ALGEBRA_THREAD_VECTOR_MATRIX_MULTIPLY_SUPPORT](#d3d12_linear_algebra_thread_vector_matrix_multiply_support). The **Native** columns governs whether tier-1 implementations are required to accelerate the row natively:
 
-* `Required` -- implementations MUST accept the row and multiply it natively (no `EMULATED_INPUTS`). `EMULATED_OUTPUTS` is permitted: as described for [`EMULATED_OUTPUTS`](#d3d12_linear_algebra_multiplication_support_flags) and for [Fp16 matrix-matrix multiplication](#matrix-matrix-operations), accumulating at a higher internal precision with a final conversion step is always allowed, so a `Required` row with a sub-32-bit result type may still report `EMULATED_OUTPUTS`.
+* `Required` -- implementations MUST accept the row and multiply it natively (no `EMULATED_INPUTS` or `EMULATED_OUTPUTS`, depending on the column).
 * `Optional` -- implementations MUST accept the row but MAY emulate it, including the multiply itself; the granular query reports the emulation strategy via `EMULATED_INPUTS` and/or `EMULATED_OUTPUTS`.
 
 Integer signedness is not required to match between the vector type and the matrix type. Every row in the table happens to list matched-signedness combinations because mixed-signedness support is not part of the tier-1 contract, but a driver may expose any mixed-signedness combination as an additional capability through the granular and enumeration queries.
