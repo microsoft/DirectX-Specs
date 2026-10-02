@@ -212,6 +212,8 @@ This query indicates a driver's level of support for general operations on wave-
 
 - `Shape` - The M×N dimensions of the matrix being queried. See [D3D12_LINEAR_ALGEBRA_MATRIX_CONSTRUCTION_SHAPE](#d3d12_linear_algebra_matrix_construction_shape).
 
+For any `(ComponentType, Shape)` reported as supported by the [wave-scope](#d3d12_linear_algebra_wave_matrix_multiply_support) or [threadgroup-scope](#d3d12_linear_algebra_threadgroup_matrix_multiply_support) multiplication queries, this query must also report support for that component type and shape -- every matrix that can participate in a supported multiplication must also be constructible. Drivers that support multiple multiplication tilings for the same type combination (for example 4x16x16 alongside 16x4x16) implicitly support construction at each tiling.
+
 - `Supported` - On output, `TRUE` if the driver can construct the requested matrix.
 
 #### D3D12_LINEAR_ALGEBRA_WAVE_MATRIX_MULTIPLY_INPUTS
@@ -460,7 +462,7 @@ This API enumerates the native configurations the driver supports for a given op
 
 ### Enumeration Entry Structures
 
-Each enumeration entry describes one fully-specified native configuration. For wave-scope and threadgroup-scope multiplication, the enumeration is flat: one entry per `(type combination, tile shape)` pair. Drivers that support multiple tilings for the same type combination report each as a separate entry. Configurations the driver supports only with emulation are included, with the appropriate `EMULATED_INPUTS` / `EMULATED_OUTPUTS` flag set in `SupportFlags`.
+Each enumeration entry describes one fully-specified native configuration. For operation types whose native support is expressed in terms of tile shapes (matrix construction, wave-scope multiply, threadgroup-scope multiply), the enumeration is flat: one entry per `(type combination, tile shape)` pair. Drivers that support multiple tilings for the same type combination report each as a separate entry. Configurations the driver supports only with emulation are included, with the appropriate `EMULATED_INPUTS` / `EMULATED_OUTPUTS` flag set in `SupportFlags`.
 
 For operation types that depend on wave size, each entry reports the inclusive range `[MinWaveSize, MaxWaveSize]` over which the rest of the entry's fields apply. Every power-of-2 wave size in that range that also lies in the device's valid wave size range is supported by the entry. Drivers whose support is not contiguous in wave size emit a separate entry per contiguous range.
 
