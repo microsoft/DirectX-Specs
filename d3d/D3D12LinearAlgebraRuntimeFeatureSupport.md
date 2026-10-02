@@ -1,6 +1,6 @@
 # D3D12 Linear Algebra Runtime Feature Support <!-- omit in toc -->
 
-Version 0.9 (Draft)
+Version 0.10 (Draft)
 
 ---
 
@@ -15,6 +15,9 @@ Version 0.9 (Draft)
   - [D3D12\_LINEAR\_ALGEBRA\_DATATYPE](#d3d12_linear_algebra_datatype)
   - [D3D12\_LINEAR\_ALGEBRA\_OPERATION\_SUPPORT\_QUERY](#d3d12_linear_algebra_operation_support_query)
     - [D3D12\_LINEAR\_ALGEBRA\_MATRIX\_SHAPE](#d3d12_linear_algebra_matrix_shape)
+    - [D3D12\_LINEAR\_ALGEBRA\_MATRIX\_USE](#d3d12_linear_algebra_matrix_use)
+    - [D3D12\_LINEAR\_ALGEBRA\_MATRIX\_SCOPE](#d3d12_linear_algebra_matrix_scope)
+    - [D3D12\_LINEAR\_ALGEBRA\_MATRIX\_CONSTRUCTION\_SHAPE](#d3d12_linear_algebra_matrix_construction_shape)
     - [D3D12\_LINEAR\_ALGEBRA\_MATRIX\_CONSTRUCTION\_SUPPORT](#d3d12_linear_algebra_matrix_construction_support)
     - [D3D12\_LINEAR\_ALGEBRA\_WAVE\_MATRIX\_MULTIPLY\_INPUTS](#d3d12_linear_algebra_wave_matrix_multiply_inputs)
     - [D3D12\_LINEAR\_ALGEBRA\_MULTIPLICATION\_SUPPORT\_FLAGS](#d3d12_linear_algebra_multiplication_support_flags)
@@ -134,7 +137,46 @@ typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_SHAPE
 } D3D12_LINEAR_ALGEBRA_MATRIX_SHAPE;
 ```
 
-- `M`, `K`, `N` - Matrix dimensions following the formula MxK * KxN = MxN. Each matrix shape simultaneously names a supported A matrix (MxK), B matrix (KxN), and accumulator matrix (MxN) layout. The same shape type is used for both matrix construction and matrix multiplication queries.
+- `M`, `K`, `N` - Matrix dimensions following the formula MxK * KxN = MxN. Each matrix shape simultaneously names a supported A matrix (MxK), B matrix (KxN), and accumulator matrix (MxN). Multiplication queries use this shape. Matrix construction queries one matrix at a time and uses [D3D12_LINEAR_ALGEBRA_MATRIX_CONSTRUCTION_SHAPE](#d3d12_linear_algebra_matrix_construction_shape).
+
+#### D3D12_LINEAR_ALGEBRA_MATRIX_USE
+``` cpp
+typedef enum D3D12_LINEAR_ALGEBRA_MATRIX_USE
+{
+    D3D12_LINEAR_ALGEBRA_MATRIX_USE_A = 0,
+    D3D12_LINEAR_ALGEBRA_MATRIX_USE_B = 1,
+    D3D12_LINEAR_ALGEBRA_MATRIX_USE_ACCUMULATOR = 2,
+} D3D12_LINEAR_ALGEBRA_MATRIX_USE;
+```
+
+The operand role of the matrix being constructed. Values match HLSL `linalg::MatrixUse`. Register layout depends on this role, so the same component type and dimensions can be supported for one use and unsupported for another.
+
+- `D3D12_LINEAR_ALGEBRA_MATRIX_USE_A` - Left-hand matrix of a multiplication. Its dimensions are M rows by K columns.
+- `D3D12_LINEAR_ALGEBRA_MATRIX_USE_B` - Right-hand matrix of a multiplication. Its dimensions are K rows by N columns.
+- `D3D12_LINEAR_ALGEBRA_MATRIX_USE_ACCUMULATOR` - Accumulator matrix of a multiplication. Its dimensions are M rows by N columns.
+
+#### D3D12_LINEAR_ALGEBRA_MATRIX_SCOPE
+``` cpp
+typedef enum D3D12_LINEAR_ALGEBRA_MATRIX_SCOPE
+{
+    D3D12_LINEAR_ALGEBRA_MATRIX_SCOPE_THREAD = 0,
+    D3D12_LINEAR_ALGEBRA_MATRIX_SCOPE_WAVE = 1,
+    D3D12_LINEAR_ALGEBRA_MATRIX_SCOPE_THREADGROUP = 2,
+} D3D12_LINEAR_ALGEBRA_MATRIX_SCOPE;
+```
+
+The scope of the matrix being constructed. Values match HLSL `linalg::MatrixScope`. This query covers wave-scope and threadgroup-scope matrices. `D3D12_LINEAR_ALGEBRA_MATRIX_SCOPE_THREAD` is present so the values match HLSL; a construction query with that scope returns `Supported = FALSE`. Thread-scope vector-matrix dimensions are not part of this query.
+
+#### D3D12_LINEAR_ALGEBRA_MATRIX_CONSTRUCTION_SHAPE
+``` cpp
+typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_CONSTRUCTION_SHAPE
+{
+    UINT M; // Rows of the matrix being constructed
+    UINT N; // Columns of the matrix being constructed
+} D3D12_LINEAR_ALGEBRA_MATRIX_CONSTRUCTION_SHAPE;
+```
+
+- `M`, `N` - Row and column counts of the single matrix being constructed. These are the `M` and `N` parameters of HLSL `linalg::Matrix<ComponentType, M, N, Use, Scope>`.
 
 #### D3D12_LINEAR_ALGEBRA_MATRIX_CONSTRUCTION_SUPPORT
 ``` cpp
@@ -142,28 +184,35 @@ typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_CONSTRUCTION_SUPPORT
 {
     // Inputs
     D3D12_LINEAR_ALGEBRA_DATATYPE ComponentType;
+    D3D12_LINEAR_ALGEBRA_MATRIX_USE Use;
+    D3D12_LINEAR_ALGEBRA_MATRIX_SCOPE Scope;
     UINT WaveSize;
-    D3D12_LINEAR_ALGEBRA_MATRIX_SHAPE Shape;
+    UINT ThreadGroupSize;
+    D3D12_LINEAR_ALGEBRA_MATRIX_CONSTRUCTION_SHAPE Shape;
 
     // Outputs
     BOOL Supported;
 } D3D12_LINEAR_ALGEBRA_MATRIX_CONSTRUCTION_SUPPORT;
 ```
 
-This query indicates a driver's level of support for general operations on wave-scope and group-scope matrices. Since matrices at these scopes can be loaded, stored, manipulated, and converted without actually being used in a multiplication operation, multiplication support is not sufficient. Essentially, a driver that responds positively to this query indicates that it knows how to lay out these components in registers. If a driver supports a particular component type and shape, then it must support:
-* Loading a matrix of that type and shape from buffer or group-shared memory, and similarly for storing (`Load()`/`Store()`).
+This query indicates a driver's level of support for general operations on wave-scope and group-scope matrices. Since matrices at these scopes can be loaded, stored, manipulated, and converted without actually being used in a multiplication operation, multiplication support is not sufficient. Essentially, a driver that responds positively to this query indicates that it knows how to lay out these components in registers for the requested component type, use, scope, and dimensions. If a driver supports a particular construction, then it must support:
+* Loading a matrix of that type, use, scope, and shape from buffer or group-shared memory, and similarly for storing (`Load()`/`Store()`).
 * Operating on elements of a matrix (`Length()`/`GetCoordinate()`/`Get()`/`Set()`/`Splat()`).
-* Being used as a source or destination of a conversion (`Cast()`).
+* Being used as a source or destination of a conversion (`Cast()`). A cast is supported when both the source construction and the destination construction are supported, including the destination component type and use.
 
 - `ComponentType` - The matrix component type being queried.
 
+- `Use` - The operand role being queried. See [D3D12_LINEAR_ALGEBRA_MATRIX_USE](#d3d12_linear_algebra_matrix_use).
+
+- `Scope` - `D3D12_LINEAR_ALGEBRA_MATRIX_SCOPE_WAVE` or `D3D12_LINEAR_ALGEBRA_MATRIX_SCOPE_THREADGROUP`. `D3D12_LINEAR_ALGEBRA_MATRIX_SCOPE_THREAD` returns `Supported = FALSE`.
+
 - `WaveSize` - The wave size for the shader constructing the matrix. Must be a power of 2 in the device's valid wave size range, or else 0 to indicate any.
 
-- `Shape` - The matrix shape being queried. Application matrix shapes that are an integer multiple of any native shape in each dimension are reported as supported, so apps can either query a known native shape (discovered via the [Operation Enumeration API](#operation-enumeration-api)) or directly query the matrix size they wish to construct.
+- `ThreadGroupSize` - The number of threads in the group constructing the matrix. For `D3D12_LINEAR_ALGEBRA_MATRIX_SCOPE_WAVE` this must be 0.
 
-- `Supported` - On output, `TRUE` if the driver can construct the requested shape for the requested component type.
+- `Shape` - The M×N dimensions of the matrix being queried. See [D3D12_LINEAR_ALGEBRA_MATRIX_CONSTRUCTION_SHAPE](#d3d12_linear_algebra_matrix_construction_shape).
 
-For any `(ComponentType, Shape)` reported as supported by the [wave-scope](#d3d12_linear_algebra_wave_matrix_multiply_support) or [threadgroup-scope](#d3d12_linear_algebra_threadgroup_matrix_multiply_support) multiplication queries, this query must also report support for that component type and shape -- every matrix that can participate in a supported multiplication must also be constructible. Drivers that support multiple multiplication tilings for the same type combination (for example 4x16x16 alongside 16x4x16) implicitly support construction at each tiling.
+- `Supported` - On output, `TRUE` if the driver can construct the requested matrix.
 
 #### D3D12_LINEAR_ALGEBRA_WAVE_MATRIX_MULTIPLY_INPUTS
 ``` cpp
@@ -411,17 +460,23 @@ This API enumerates the native configurations the driver supports for a given op
 
 ### Enumeration Entry Structures
 
-Each enumeration entry describes one fully-specified native configuration. For operation types whose native support is expressed in terms of tile shapes (matrix construction, wave-scope multiply, threadgroup-scope multiply), the enumeration is flat: one entry per `(type combination, tile shape)` pair. Drivers that support multiple tilings for the same type combination report each as a separate entry. Configurations the driver supports only with emulation are included, with the appropriate `EMULATED_INPUTS` / `EMULATED_OUTPUTS` flag set in `SupportFlags`.
+Each enumeration entry describes one fully-specified native configuration. For wave-scope and threadgroup-scope multiplication, the enumeration is flat: one entry per `(type combination, tile shape)` pair. Drivers that support multiple tilings for the same type combination report each as a separate entry. Configurations the driver supports only with emulation are included, with the appropriate `EMULATED_INPUTS` / `EMULATED_OUTPUTS` flag set in `SupportFlags`.
 
 For operation types that depend on wave size, each entry reports the inclusive range `[MinWaveSize, MaxWaveSize]` over which the rest of the entry's fields apply. Every power-of-2 wave size in that range that also lies in the device's valid wave size range is supported by the entry. Drivers whose support is not contiguous in wave size emit a separate entry per contiguous range.
+
+For operation types that report a threadgroup-size range, each entry reports the inclusive range `[MinThreadGroupSize, MaxThreadGroupSize]` over which the rest of the entry's fields apply. Every multiple of `MinThreadGroupSize` in that range, up to and including `MaxThreadGroupSize`, is supported by the entry. Drivers whose support is not contiguous in threadgroup size emit a separate entry per contiguous range. Wave-scope matrix-construction entries set both fields to 0; those entries do not describe a threadgroup-size range.
 
 ```cpp
 typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_CONSTRUCTION_ENUMERATION_ENTRY
 {
     D3D12_LINEAR_ALGEBRA_DATATYPE ComponentType;
+    D3D12_LINEAR_ALGEBRA_MATRIX_USE Use;
+    D3D12_LINEAR_ALGEBRA_MATRIX_SCOPE Scope;
     UINT MinWaveSize;
     UINT MaxWaveSize;
-    D3D12_LINEAR_ALGEBRA_MATRIX_SHAPE Shape;
+    UINT MinThreadGroupSize;
+    UINT MaxThreadGroupSize;
+    D3D12_LINEAR_ALGEBRA_MATRIX_CONSTRUCTION_SHAPE Shape;
 } D3D12_LINEAR_ALGEBRA_MATRIX_CONSTRUCTION_ENUMERATION_ENTRY;
 
 typedef struct D3D12_LINEAR_ALGEBRA_WAVE_MATRIX_MULTIPLY_ENUMERATION_ENTRY
@@ -890,10 +945,15 @@ The runtime continues to load `_1` drivers and exposes the granular
 application query into the corresponding `_1` DDI call(s):
 
 * `MATRIX_CONSTRUCTION_SUPPORT`: runtime reads `MinM/MinK/MinN` from the `_1`
-  DDI and returns `Supported = TRUE` iff the application's `Shape` is an integer
-  multiple of `(MinM, MinK, MinN)` in each dimension. (The `_1` DDI only reports
-  a single tiling, so drivers using `_1` cannot express multi-tiling support;
-  this is a `_1` limitation, not a runtime translation issue.)
+  DDI. The application's `Shape` is the M×N size of one operand, selected by
+  `Use`. `Supported` is `TRUE` when those two dimensions are positive integer
+  multiples of that operand's extents in the single `_1` tiling: `Use == A`
+  requires `M` multiple of `MinM` and `N` multiple of `MinK`; `Use == B`
+  requires `M` multiple of `MinK` and `N` multiple of `MinN`; `Use == ACCUMULATOR`
+  requires `M` multiple of `MinM` and `N` multiple of `MinN`. `_1` does not take
+  `Scope` or `ThreadGroupSize` and reports one tiling, so the translated answer
+  does not vary by scope or threadgroup size and cannot express multi-tiling.
+  Both are `_1` limitations.
 * `WAVE_MATRIX_MULTIPLY_SUPPORT`: runtime reads the native shape array from the
   `_1` DDI and returns supported iff the application's `Shape` is an integer
   multiple of any reported native shape in each dimension.
@@ -921,3 +981,4 @@ Version | Date | Description
 0.7 | Mar 2026 | LINALG -> LINEAR ALGEBRA. Address one more round of feedback.
 0.8 | Apr 2026 | Add matrix construction caps.
 0.9 | Jun 2026 | Granular queries take a single shape (input) and return supported (output); native shape discovery moves to the new Operation Enumeration API (#240, #244, customer ask). Vector-Matrix table split into interpretation/matrix/result with conversion semantics called out (#245). `D3D12_LINEAR_ALGEBRA_TIER_1_0` matches the shipped `0x10` value rather than `1`. Clarified that a `Required` vector-matrix row may still report `EMULATED_OUTPUTS`, consistent with the flag's own definition and the Fp16 matrix-matrix allowance.
+0.10 | Oct 2026 | Matrix construction takes an M×N shape plus `Use`, `Scope`, and `ThreadGroupSize`. Supported constructions are the A, B, and accumulator matrices of the wave-scope and threadgroup-scope multiplication tables.
