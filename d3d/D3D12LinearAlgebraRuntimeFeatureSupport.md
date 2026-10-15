@@ -1,6 +1,6 @@
 # D3D12 Linear Algebra Runtime Feature Support <!-- omit in toc -->
 
-Version 0.10 (Draft)
+Version 0.11 (Draft)
 
 ---
 
@@ -280,12 +280,10 @@ typedef struct D3D12_LINEAR_ALGEBRA_THREADGROUP_MATRIX_MULTIPLY_SUPPORT
     // Inputs
     D3D12_LINEAR_ALGEBRA_WAVE_MATRIX_MULTIPLY_INPUTS WaveInputs;
     D3D12_LINEAR_ALGEBRA_MATRIX_SHAPE Shape;
+    UINT ThreadGroupSize;
 
     // Outputs
     D3D12_LINEAR_ALGEBRA_MULTIPLICATION_SUPPORT_FLAGS SupportFlags;
-    UINT MinThreadGroupSize;
-    UINT MaxThreadGroupSize;
-    UINT PreferredThreadGroupSize;
 } D3D12_LINEAR_ALGEBRA_THREADGROUP_MATRIX_MULTIPLY_SUPPORT;
 ```
 
@@ -293,13 +291,10 @@ typedef struct D3D12_LINEAR_ALGEBRA_THREADGROUP_MATRIX_MULTIPLY_SUPPORT
 
 - `Shape` - The matrix shape being queried. Application matrix shapes that are an integer multiple of any native shape in each dimension are reported as supported. There is no limitation on maximum matrix size, though larger matrices may result in significantly adverse performance. Native shapes can be discovered via the [Operation Enumeration API](#operation-enumeration-api).
 
-- `SupportFlags` - Indicates whether the operation is supported, and whether any emulation of the requested data types would occur. See [D3D12_LINEAR_ALGEBRA_MULTIPLICATION_SUPPORT_FLAGS](#d3d12_linear_algebra_multiplication_support_flags) for the meaning of each flag.
+- `ThreadGroupSize` - The number of threads in the group performing the multiplication. The value must be non-zero and within the device's supported threadgroup-size limits.
 
-- `MinThreadGroupSize` - The minimum number of threads in a group that can perform this multiplication for the requested shape.
+- `SupportFlags` - Indicates whether the operation is supported for the requested threadgroup size, and whether any emulation of the requested data types would occur. See [D3D12_LINEAR_ALGEBRA_MULTIPLICATION_SUPPORT_FLAGS](#d3d12_linear_algebra_multiplication_support_flags) for the meaning of each flag. Applications that need to discover all supported threadgroup sizes for a type and shape combination, including `PreferredThreadGroupSize`, can use the [Operation Enumeration API](#operation-enumeration-api).
 
-- `MaxThreadGroupSize` - The maximum number of threads in a group that can perform this multiplication for the requested shape. Valid sizes are then multiples of the minimum, up to and including the maximum.
-
-- `PreferredThreadGroupSize` - The driver's estimate for the most efficient thread group size to perform this multiplication for the requested shape. This may be zero, indicating that there are trade-offs (e.g. register pressure vs throughput) and it is not possible for the driver to report an optimal size.
 
 #### D3D12_LINEAR_ALGEBRA_THREAD_VECTOR_MATRIX_MULTIPLY_SUPPORT
 ``` cpp
@@ -456,9 +451,9 @@ if (SUCCEEDED(hr) &&
 
 ## Operation Enumeration API
 
-The granular query API in the previous section answers the question *"is this exact configuration supported?"* -- useful for runtime validation but inconvenient for applications that want to *discover* the configurations a driver natively supports without iterating the entire cross-product of types, shapes, and wave sizes. The Operation Enumeration API directly returns the flat list of native configurations for a given operation type.
+The granular query API in the previous section answers the question *"is this exact configuration supported?"* -- useful for runtime validation but inconvenient for applications that want to *discover* the configurations a driver natively supports without iterating the entire cross-product of types, shapes, wave sizes, and threadgroup sizes. The Operation Enumeration API directly returns the flat list of native configurations for a given operation type.
 
-This API enumerates the native configurations the driver supports for a given operation type. The relationship to the granular query is one-directional: every configuration the enumeration returns must be reported as supported by the granular query (including any integer multiple of a returned shape, where the operation type has a shape), and conversely the granular query reports as supported only configurations covered by the enumeration's flat list expanded with the integer-multiples rule.
+This API enumerates the native configurations the driver supports for a given operation type. The relationship to the granular query is one-directional: every configuration the enumeration returns must be reported as supported by the granular query (including any integer multiple of a returned shape, where the operation type has a shape, and every threadgroup size represented by a returned range), and conversely the granular query reports as supported only configurations covered by the enumeration's flat list expanded with the integer-multiples rules.
 
 ### Enumeration Entry Structures
 
@@ -466,7 +461,9 @@ Each enumeration entry describes one fully-specified native configuration. For o
 
 For operation types that depend on wave size, each entry reports the inclusive range `[MinWaveSize, MaxWaveSize]` over which the rest of the entry's fields apply. Every power-of-2 wave size in that range that also lies in the device's valid wave size range is supported by the entry. Drivers whose support is not contiguous in wave size emit a separate entry per contiguous range.
 
-For operation types that report a threadgroup-size range, each entry reports the inclusive range `[MinThreadGroupSize, MaxThreadGroupSize]` over which the rest of the entry's fields apply. Every multiple of `MinThreadGroupSize` in that range, up to and including `MaxThreadGroupSize`, is supported by the entry. Drivers whose support is not contiguous in threadgroup size emit a separate entry per contiguous range. Wave-scope matrix-construction entries set both fields to 0; those entries do not describe a threadgroup-size range.
+For operation types that report a threadgroup-size range, each entry reports the inclusive range `[MinThreadGroupSize, MaxThreadGroupSize]` over which the rest of the entry's fields apply. Every multiple of `MinThreadGroupSize` in that range, up to and including `MaxThreadGroupSize`, is supported by the entry. Drivers emit separate entries when the supported sizes cannot be expressed by one such range. For example, sizes 32, 64, 128, and 256, but not 96, are represented by ranges `[32, 64]` and `[128, 256]`. Wave-scope matrix-construction entries set both fields to 0; those entries do not describe a threadgroup-size range.
+
+`PreferredThreadGroupSize` is reported by `D3D12_LINEAR_ALGEBRA_THREADGROUP_MATRIX_MULTIPLY_ENUMERATION_ENTRY`. It is the driver's estimate for the most efficient threadgroup size within that entry's `[MinThreadGroupSize, MaxThreadGroupSize]` range. It may be zero when there are trade-offs (for example register pressure versus throughput) and the driver cannot report an optimal size. It does not add sizes outside that range. Matrix-construction entries do not report a preferred size.
 
 ```cpp
 typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_CONSTRUCTION_ENUMERATION_ENTRY
@@ -928,9 +925,12 @@ device init. Required behavior:
 * Reported form support is fixed for the lifetime of the device.
 
 When both forms are advertised for an operation type, granular and enumeration
-results MUST be self-consistent: for every `(types, shape)` combination the
-enumeration would expand to (including every integer-multiple shape of any
-native shape), the granular query MUST report supported, and vice versa. The
+results MUST be self-consistent: for every `(types, shape, wave size,
+threadgroup size)` combination the enumeration would expand to (including
+every integer-multiple shape of any native shape and every threadgroup size
+represented by an enumeration entry), the granular query MUST report
+supported, and vice versa. Fields that do not apply to an operation type are
+omitted from the combination. The
 D3D12 debug layer cross-checks this invariant on every application-level
 granular call when both forms are advertised.
 
@@ -959,8 +959,14 @@ application query into the corresponding `_1` DDI call(s):
 * `WAVE_MATRIX_MULTIPLY_SUPPORT`: runtime reads the native shape array from the
   `_1` DDI and returns supported iff the application's `Shape` is an integer
   multiple of any reported native shape in each dimension.
-* `THREADGROUP_MATRIX_MULTIPLY_SUPPORT`: shape input was already present in
-  `_1`; the runtime forwards the query directly.
+* `THREADGROUP_MATRIX_MULTIPLY_SUPPORT`: the runtime passes the type and shape
+  inputs to the `_1` DDI and reads its support flags, `MinThreadGroupSize`, and
+  `MaxThreadGroupSize` outputs. It returns the `_1` support flags iff `_1`
+  reports the operation as supported and the requested `ThreadGroupSize` is
+  within the inclusive range and is a multiple of `MinThreadGroupSize`;
+  otherwise it returns no support flags.
+  Because `_1` can report only one range, it cannot represent non-contiguous
+  sets that require multiple enumeration entries.
 * Other operation types: `_1` and `_2` granular shapes are identical; the
   runtime forwards directly.
 
@@ -984,3 +990,4 @@ Version | Date | Description
 0.8 | Apr 2026 | Add matrix construction caps.
 0.9 | Jun 2026 | Granular queries take a single shape (input) and return supported (output); native shape discovery moves to the new Operation Enumeration API (#240, #244, customer ask). Vector-Matrix table split into interpretation/matrix/result with conversion semantics called out (#245). `D3D12_LINEAR_ALGEBRA_TIER_1_0` matches the shipped `0x10` value rather than `1`. Clarified that a `Required` vector-matrix row may still report `EMULATED_OUTPUTS`, consistent with the flag's own definition and the Fp16 matrix-matrix allowance.
 0.10 | Oct 2026 | Matrix construction takes an M×N shape plus `Use`, `Scope`, and `ThreadGroupSize`. Supported constructions are the A, B, and accumulator matrices of the wave-scope and threadgroup-scope multiplication tables.
+0.11 | Oct 2026 | Threadgroup matrix multiplication takes `ThreadGroupSize` as a granular-query input. Supported threadgroup-size ranges, including non-contiguous sets, and `PreferredThreadGroupSize` are discovered through operation enumeration.
