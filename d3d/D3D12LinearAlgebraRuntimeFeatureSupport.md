@@ -620,7 +620,9 @@ As mentioned in the [introduction](#introduction), the primary capability being 
 
 ### Matrix-Matrix Operations
 
-  A         |  B         |   Acc.  | Native   |
+The requirements below apply to wave-scope multiplication. Threadgroup-scope multiplication is optional at tier 1; if it is supported, the same type and [native dimension](#native-matrix-dimensions) requirements apply.
+
+  A          |  B         |   Acc.  | Native   |
 ------------|------------|---------|----------|
   UInt8     |  UInt8     |  SInt32 | Required |
   SInt8     |  SInt8     |  SInt32 | Required |
@@ -660,7 +662,7 @@ Due to hardware diversity, both emulation of the conversion to FP8, as well as e
 
 For wave-scope and threadgroup-scope multiplication, the driver natively supports one or more tile shapes per type combination, discoverable via the [Operation Enumeration API](#operation-enumeration-api). Application matrix shapes are accepted by the driver -- and reported as supported by the granular [wave-scope](#d3d12_linear_algebra_wave_matrix_multiply_support) and [threadgroup-scope](#d3d12_linear_algebra_threadgroup_matrix_multiply_support) queries -- when they are an integer multiple of one of those native shapes in each dimension; matrices smaller than the smallest native shape are not supported.
 
-For a supported wave-scope or threadgroup-scope data type, there must be at least one reported shape whose *largest* component is less than or equal to 16 for types that are 16-bit or larger, or whose largest bit size is 256 for types that are smaller than 16-bit. This ensures that 16x16x16 will always be a valid tile shape for 16-bit types, while smaller types may support a minimum size of 32x16x16.
+Every dimension of a reported shape must be a power of two. For a supported wave-scope or threadgroup-scope data type, there must be at least one reported shape whose *largest* component is less than or equal to 16 for types that are 16-bit or larger, or whose largest component is at most 256 bits (32 elements for 8-bit types) for types that are smaller than 16-bit. This ensures that 16x16x16 will always be a valid tile shape for 16-bit types, and 32x32x32 for 8-bit types.
 
 Applications that want to use smaller shapes will need to query them on a case-by-case basis. Hardware that wants to expose larger tile sizes must do so alongside a size that meets this requirement.
 
@@ -991,3 +993,4 @@ Version | Date | Description
 0.9 | Jun 2026 | Granular queries take a single shape (input) and return supported (output); native shape discovery moves to the new Operation Enumeration API (#240, #244, customer ask). Vector-Matrix table split into interpretation/matrix/result with conversion semantics called out (#245). `D3D12_LINEAR_ALGEBRA_TIER_1_0` matches the shipped `0x10` value rather than `1`. Clarified that a `Required` vector-matrix row may still report `EMULATED_OUTPUTS`, consistent with the flag's own definition and the Fp16 matrix-matrix allowance.
 0.10 | Oct 2026 | Matrix construction takes an M×N shape plus `Use`, `Scope`, and `ThreadGroupSize`. Supported constructions are the A, B, and accumulator matrices of the wave-scope and threadgroup-scope multiplication tables.
 0.11 | Oct 2026 | Threadgroup matrix multiplication takes `ThreadGroupSize` as a granular-query input. Supported threadgroup-size ranges, including non-contiguous sets, and `PreferredThreadGroupSize` are discovered through operation enumeration.
+0.12 | Oct 2026 | Native matrix dimensions must be powers of two, and the limit for types smaller than 16-bit is at most 256 bits. Tier 1 matrix-matrix requirements apply to wave scope, and to threadgroup scope when it is supported.
