@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.48 9/8/2026
+v1.49 10/19/2026
 
 ---
 
@@ -689,23 +689,28 @@ HLSL details are [here](#intersection-shader).
 
 ### Minor intersection shader details
 
-Intersection shaders may be executed redundantly. There is no guarantee
-that for a given ray that the intersection shader only executes once for
-a given procedural primitive encountered in the acceleration structure.
-Multiple invocations for a given ray and primitive would be redundant
-(wasteful), yet implementations are free to have this behavior if the
-implementation believes the tradeoff is worth it for some reason. The
-implication of this is apps must be careful about authoring side effects
-into intersection shaders, such as doing UAV writes from them or in
-particular finding different intersections each invocation. The results
-may differ depending on the implementation.
+Unless the geometry specifies
+[`D3D12_RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION`](#d3d12_raytracing_geometry_flags),
+an implementation may invoke an intersection shader redundantly for a
+given ray and procedural primitive instance. Such invocations are
+redundant (wasteful), but an implementation may choose them if it believes
+the tradeoff is worthwhile. Applications must therefore
+take care when authoring side effects in intersection shaders, such as
+UAV writes or finding different intersections on successive invocations.
+Such behavior may produce implementation-dependent results.
 
-Regardless if multiple invocations of intersection shaders occur for a
-given ray, the implementation must always honor the app's choice of
-[flags](#d3d12_raytracing_geometry_flags) on the geometry, which may include
-`D3D12_RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION`.
-With this flag, the [any hit shader](#any-hit-shaders) (described next)
-must only execute once for a given intersection on a given ray.
+When `D3D12_RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION` is
+specified, the implementation must not redundantly invoke the intersection
+shader for the same ray and procedural primitive instance.
+
+This flag does not coalesce or suppress separate application-authored
+calls to [ReportHit()](#reporthit). An intersection shader may call
+`ReportHit()` multiple times, and each executed call is processed
+independently under the normal hit-processing rules, even if multiple
+calls supply identical arguments. Consequently, separate calls may each
+invoke the [any hit shader](#any-hit-shaders). The flag does not override
+the rules for ray intervals, opacity, or termination of the intersection
+shader or ray traversal.
 
 ---
 
@@ -2131,8 +2136,8 @@ invalid. Observable meaning in any way that becomes visible during
 raytracing operations beyond just performance difference. Exceptions
 are:
 
-- Intersection shader invocation counts, which are allowed to be
-  duplicated.
+- Redundant intersection-shader invocations, subject to the restrictions
+  described in [Minor intersection shader details](#minor-intersection-shader-details).
 
 - If an application has **not** set the [flag](#d3d12_raytracing_geometry_flags)
   `D3D12_RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION`
@@ -4295,7 +4300,7 @@ Value                               | Definition
 ---------                           | ----------
 `D3D12_RAYTRACING_GEOMETRY_FLAG_NONE` | No options specified.
 `D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE` | When rays encounter this geometry, the geometry acts as if no any hit shader is present. It is recommended to use this flag liberally, as it can enable important ray processing optimizations. Note that this behavior can be overridden on a per-instance basis with [D3D12_RAYTRACING_INSTANCE_FLAGS](#d3d12_raytracing_instance_flags) and on a per-ray basis using [Ray flags](#ray-flags) in [TraceRay()](#traceray) and [RayQuery::TraceRayInline()](#rayquery-tracerayinline).
-`D3D12_RAYTRACING_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION` | <p>By default, the system is free to trigger an [any hit shader](#any-hit-shaders) more than once for a given ray-primitive intersection. This flexibility helps improve the traversal efficiency of acceleration structures in certain cases. For instance, if the acceleration structure is implemented internally with bounding volumes, the implementation may find it beneficial to store relatively long triangles in multiple bounding boxes rather than a larger single box.</p><p>However, some application use cases require that intersections be reported to the any hit shader at most once. This flag enables that guarantee for the given geometry, potentially with some performance impact.</p><p>This flag applies to all [geometry types](#d3d12_raytracing_geometry_type).</p>
+`D3D12_RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION` | <p>By default, the system is free to trigger an [any hit shader](#any-hit-shaders) more than once for a given ray-primitive intersection. This flexibility helps improve the traversal efficiency of acceleration structures in certain cases. For instance, if the acceleration structure is implemented internally with bounding volumes, the implementation may find it beneficial to store relatively long triangles in multiple bounding boxes rather than a larger single box.</p><p>However, some application use cases require that intersections be reported to the any hit shader at most once. This flag enables that guarantee for the given geometry, potentially with some performance impact.</p><p>This flag applies to all [geometry types](#d3d12_raytracing_geometry_type).</p><p>For procedural primitives, this guarantee prevents implementation-generated redundant intersection-shader invocations; it does not combine separate application-authored `ReportHit()` calls. See [Minor intersection shader details](#minor-intersection-shader-details).</p>
 
 ---
 
@@ -9756,3 +9761,4 @@ v1.45|7/10/2026|<li>Added `TemplateInstancePrefersCOMPRESSED1` to [D3D12_FEATURE
 v1.46|8/26/2026|<li>In [Additional SRV type](#additional-srv-type), defined what a NULL acceleration structure is for a shader-visible binding: a GPUVA of `0`, which applies equally to a root descriptor SRV and to a descriptor heap based SRV whose `Location` is `0`, since both bindings reduce to a GPUVA.  A null descriptor is not a separate case because the resource parameter is always NULL for these SRVs, and an unset root argument is uninitialized state rather than a GPUVA of `0`.  This is distinct from an instance with a NULL `AccelerationStructure` pointer, which is an inactive instance.  For a root descriptor SRV this is called out as an exception to [NULL Descriptors](ResourceBinding.md#null-descriptors) in the resource binding spec, which is updated with the matching note.  The definition is scoped to any shader-visible trace entry point.  The [TraceRay()](#traceray) and [RayQuery::TraceRayInline()](#rayquery-tracerayinline) parameter rows cross-reference it; [HitObject::TraceRay()](#hitobject-traceray) has no parameter row of its own and inherits those definitions.</li>
 v1.47|8/26/2026|<li>Added a way for shaders compiled before Shader Model 6.9 to opt in to Opacity Micromaps and [clustered geometry](raytracing2.md#clustered-geometry) for [RayQuery](#rayquery), which they otherwise cannot do since the [RAYQUERY_FLAGS](#rayquery-flags) template parameter was added in Shader Model 6.9.  This lets an application reuse one [RayQuery](#rayquery) shader across newer devices where these features may be present and older devices whose drivers were never updated to Shader Model 6.9, without compiling separate variants purely to express the opt-in.  See [RayQuery flags on pre Shader Model 6.9 shaders](#rayquery-flags-on-pre-shader-model-69-shaders), which adds `RAYQUERY_ALLOW_OPACITY_MICROMAPS_ON_PRE_SM69_SHADERS` and `RAYQUERY_ALLOW_CLUSTERED_GEOMETRY_ON_PRE_SM69_SHADERS` values to `D3D12_PIPELINE_STATE_FLAGS` for pipelines created outside a state object, and to [D3D12_STATE_OBJECT_FLAGS](#d3d12_state_object_flags) for state objects, raytracing pipelines included.  The `D3D12_PIPELINE_STATE_FLAGS` values are not permitted in a state object, since the opt-in has to be known when a shader is compiled and that can precede the generic program which would carry them.  None are shipped yet.</li><li>Three normative points in that section beyond the flags themselves.  A driver that supports one of these features but predates the corresponding flag must behave as if pre-6.9 [RayQuery](#rayquery) objects had opted in, which is what makes it safe for applications not to condition the flags on driver version.  The shader model that governs is that of the compilation unit which declared the [RayQuery](#rayquery) object, not that of any other code operating on it.  And the flags need not match across [AddToStateObject()](#addtostateobject) calls: each addition controls its own shaders while existing shaders retain the behavior they were compiled with.</li><li>In [D3D12_RAYTRACING_PIPELINE_FLAGS](#d3d12_raytracing_pipeline_flags), scoped `D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY` to [TraceRay()](#traceray) and pointed at the [RayQuery](#rayquery) equivalent, matching how the neighboring `D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS` row was already worded.  The two rows previously disagreed about whether [RayQuery](#rayquery) was covered.</li>
 v1.48|9/8/2026|<li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode), clarified that tools visualization contains decoded input data but retains external references to built acceleration structures and Opacity Micromap arrays. Distinguished the Cluster BLAS source-liveness requirement from recursively copying referenced CLASes into the visualization result.</li><li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc), clarified that deserialization pointer fixups relocate references to corresponding original objects or copies, not substitute different OMM arrays or acceleration structures. Deserialization is not an OMM linkage update. Referenced objects may still be deserialized in any order.</li>
+v1.49|10/19/2026|<li>Clarified in [Minor intersection shader details](#minor-intersection-shader-details) and [D3D12_RAYTRACING_GEOMETRY_FLAGS](#d3d12_raytracing_geometry_flags) that `D3D12_RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION` prevents implementation-generated redundant intersection-shader invocations for the same ray and procedural primitive instance, without coalescing separate application-authored [ReportHit()](#reporthit) calls. Aligned the [Preservation of triangle set](#preservation-of-triangle-set) duplication exception.</li>
