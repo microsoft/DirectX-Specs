@@ -109,6 +109,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
 
 * In-development specifications
     * [D3D APIs for Shader Model 6.10 Linear Algebra](d3d/D3D12LinearAlgebraRuntimeFeatureSupport.md)
+    * [GPU Timeline Descriptor Copying](d3d/D3D12GpuTimelineCopyDescriptors.md)
     * [MLIR Programs & Compute Graphs](d3d/MlirPrograms.md)
     * [Raytracing2](d3d/Raytracing2.md) (work in progress, not in preview yet)
     * [Work Lists](d3d/WorkLists.md) (work in progress, not in preview yet)
