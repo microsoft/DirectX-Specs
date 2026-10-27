@@ -92,6 +92,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Debug Layer Message Callbacks](d3d/MessageCallback.md)
     * [Independent Devices](d3d/IndependentDevices.md)
     * [WriteBufferImmediate](d3d/D3D12WriteBufferImmediate.md)
+    * [CheckFeatureSupport1](d3d/D3D12CheckFeatureSupportWithSDKVersion.md)
   
 * GPU Debugging
     * [DirectX Dump Files](d3d/D3D12GpuDumps.md)
