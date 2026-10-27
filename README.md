@@ -98,6 +98,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [DirectX Dump Files](d3d/D3D12GpuDumps.md)
     * [Debug Break](d3d/D3D12DebugBreak.md)
     * [PIX Markers](d3d/D3D12PIXMarkers.md)
+    * [Driver Reported Messages](d3d/D3D12DriverReportedMessages.md)
     
 * Tools
     * [Recreate At GPUVA](d3d/RecreateAtGpuva-public.md)
