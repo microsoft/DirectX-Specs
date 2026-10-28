@@ -14,3 +14,4 @@ The D3D12 Video Encode API consists of multiple specs, the original spec for H26
 8. [D3D12_Video_Encoding_LowerResolution_2Pass](D3D12_Video_Encoding_LowerResolution_2Pass.md)
 9. [D3D12_Video_Encoding_HEVC_ReferenceListExtension](D3D12_Video_Encoding_HEVC_ReferenceListExtension.md)
 10. [D3D12_Video_Encoding_SpatialAdaptiveQP](D3D12_Video_Encoding_SpatialAdaptiveQP.md)
+11. [D3D12_Video_Encoding_CPU_Resolve](D3D12_Video_Encoding_CPU_Resolve.md)
