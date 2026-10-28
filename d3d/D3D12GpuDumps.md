@@ -51,8 +51,9 @@ v0.03 27 Oct 2026
 ---
 
 # Terms and Acronyms
+
 | Term | Definition |
-| -- | -- |
+| --- | --- |
 | TDR | Timeout Detection and Recovery, a feature in Windows that detects when the GPU is taking longer than expected to complete an operation. It then resets the GPU to prevent the entire system from becoming unresponsive. |
 | dxgkrnl | GPU scheduler, a component of the DirectX graphics kernel subsystem in Windows, responsible for timeout detection and recovery (TDR) |
 | LKD | Live kernel dump, a TDR LKD created by dxgkrnl on a TDR |
