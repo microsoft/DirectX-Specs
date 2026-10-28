@@ -63,6 +63,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Runtime Bypass](d3d/D3D12RuntimeBypass.md)
     * [Command Queue Dynamic Priority](d3d/D3D12_CommandQueue_Dynamic_Priority.md)
     * [Guid Texture Layout](d3d/D3D12GUIDTextureLayout.md)
+    * [Async Commands](d3d/D3D12AsyncCommands.md) ([fallback](d3d/D3D12AsyncCommandsFallback.md))
 
 * Video
     * [Motion Estimation](d3d/D3D12_Video_Motion_Estimation.md)
