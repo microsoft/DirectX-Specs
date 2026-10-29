@@ -112,6 +112,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
 
 * In-development specifications
     * [D3D APIs for Shader Model 6.10 Linear Algebra](d3d/D3D12LinearAlgebraRuntimeFeatureSupport.md)
+    * [ExecuteTileMappings](d3d/D3D12ExecuteTileMappings.md)
     * [MLIR Programs & Compute Graphs](d3d/MlirPrograms.md)
     * [Work Lists](d3d/WorkLists.md) (work in progress, not in preview yet)
 
