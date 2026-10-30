@@ -99,6 +99,8 @@ HRESULT CheckRaytracingSupport(
 }
 ```
 
+Unlike `CheckFeatureSupport`, `CheckFeatureSupport1` takes an `SDKVersion` argument. Pass Agility SDK version (such as `D3D12_SDK_VERSION`) application was built against, runtime uses it to avoid reporting capability tiers that were released after the application’s SDK.
+
 If `QueryInterface` returns `E_NOINTERFACE`, the runtime does not support `CheckFeatureSupport1`. The application may use `CheckFeatureSupport` as a compatibility fallback, subject to the limitations described in [Backward Compatibility & Breaking Changes](#backward-compatibility--breaking-changes).
 
 Applications should continue testing tiers with `>=` rather than exact equality. Version-aware clamping protects applications from capability values introduced after their SDK, but does not replace correct capability checks.
