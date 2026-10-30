@@ -967,7 +967,7 @@ Applications create an `ID3D12DSRDeviceFactory` using `D3D12GetInterface`:
 CComPtr<ID3D12DSRDeviceFactory> pDSRDeviceFactory;
 CComPtr<IDSRDevice> pDSRDevice;
 ThrowFailure(D3D12GetInterface(CLSID_D3D12DSRDeviceFactory, IID_PPV_ARGS(&pDSRDeviceFactory)));
-ThrowFailure(pDSRDeviceFactory->CreateDSRDevice(pD3D12Device, 1, IID_PPV_ARGS(&pDSRDevice)));
+ThrowFailure(pDSRDeviceFactory->CreateDSRDevice(pD3D12Device, IID_PPV_ARGS(&pDSRDevice)));
 ```
 
 The purpose of using the D3D12 runtime for `ID3D12DSRDeviceFactory` creation is to support DirectSR as an Agility SDK redistributable component. `D3D12GetInterface` loads `directsr.dll` from the same location as `d3d12core.dll`.
@@ -994,7 +994,7 @@ HRESULT ID3D12DSRDeviceFactory::CreateDSRDevice(
     THROW_HRESULT_FAILURE(D3D12GetInterface(CLSID_D3D12DSRDeviceFactory, IID_PPV_ARGS(&pDSRDeviceFactory)));
 
     ATL::CComPtr<IDSRDevice> pDSRDevice;
-    THROW_HRESULT_FAILURE(pDSRDeviceFactory->CreateDSRDevice(pD3D12Device, 1, IID_PPV_ARGS(&pDSRDevice)));
+    THROW_HRESULT_FAILURE(pDSRDeviceFactory->CreateDSRDevice(pD3D12Device, IID_PPV_ARGS(&pDSRDevice)));
 ```
 
 ### Enumerating super resolution variants
