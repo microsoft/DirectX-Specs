@@ -27,7 +27,7 @@ previous executions have completed before submitting new executions).
 
 ### Queue types
 
-Command queues can be created by calling [`ID3D12Device::CreateCommandQueue`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nf-d3d12-id3d12device-createcommandqueue). The `Type` field of `D3D12_COMMAND_QUEUE_DESC` is a [`D3D12_COMMAND_LIST_TYPE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_command_list_type) indicating what type of queue should be created, and therefore, what type of commands can be submitted to that queue. Remember that bundles can only be called from direct command lists and can't be submitted directly to a queue. The supported queue types are:
+Command queues can be created by calling [`ID3D12Device::CreateCommandQueue`](command-queues.md#id3d12device-createcommandqueue). The `Type` field of `D3D12_COMMAND_QUEUE_DESC` is a [`D3D12_COMMAND_LIST_TYPE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_command_list_type) indicating what type of queue should be created, and therefore, what type of commands can be submitted to that queue. Remember that bundles can only be called from direct command lists and can't be submitted directly to a queue. The supported queue types are:
 
 - [`D3D12_COMMAND_LIST_TYPE_DIRECT`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_command_list_type)
 - [`D3D12_COMMAND_LIST_TYPE_COMPUTE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_command_list_type)
@@ -35,6 +35,7 @@ Command queues can be created by calling [`ID3D12Device::CreateCommandQueue`](ht
 - [`D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_list_type)
 - [`D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_list_type)
 - [`D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_list_type)
+- [`D3D12_COMMAND_LIST_TYPE_NONE`](#synchronization-only-queues)
 
 In general, DIRECT queues and command lists accept graphics, compute, and copy commands, COMPUTE queues and command lists accept compute and copy related commands, and COPY queues and command lists accept only copy commands.
 
@@ -49,6 +50,104 @@ Video [GPU extension initialization/execution](video-extension-commands.md#exten
 Encoding's [object and recording contract](video-encoding.md#encoding-recording) includes encoder/heap serialization and recorded execution order, creation-description copies distinct from GPU storage, caller-owned COM references without assumed recording AddRef, and lifetime through unsubmitted recordings that will execute and completion of submitted uses. Reconfiguration does not mutate immutable creation properties or supply codec-header/DPB policy.
 
 Meta-command discovery, resource-parameter layouts and initialization/execution are defined in the subordinate [Meta commands reference](meta-commands.md).
+
+The [command-queue chapter](command-queues.md) defines creation,
+creator IDs, the returned description and the four dynamic-priority methods.
+
+<a id="synchronization-only-queues"></a>
+
+### Synchronization-only queues
+
+`D3D12_COMMAND_LIST_TYPE_NONE` selects a runtime-managed synchronization-only
+queue. It supports queued fence Signal/Wait operations, but cannot execute
+command lists or perform queue tile-mapping operations. This queue type does
+not make `NONE` a valid type for command-list or command-allocator creation.
+
+Its Signal/Wait operations retain queue-timeline ordering; they are not
+immediate CPU fence updates or a requirement for the calling CPU thread to
+wait for the fence threshold. The runtime manages its synchronization
+transport without a UMD command-queue object. The UMD queue-DDI transport
+rules do not imply that these operations invoke those DDIs.
+
+<a id="queue-creation-priority"></a>
+
+### Creation priority for grouped queues
+
+Hardware scheduling may associate DIRECT and COMPUTE queues with a scheduling
+group. For grouped queues created without
+`D3D12_COMMAND_QUEUE_FLAG_ALLOW_DYNAMIC_PRIORITY`,
+`D3D12_COMMAND_QUEUE_DESC.Priority` does not
+cause the runtime to set the corresponding kernel-context scheduling priority.
+This compatibility behavior does not waive validation of the requested
+priority, global-realtime privileges or the applicable support requirements.
+
+`ID3D12CommandQueue::GetDesc` reports the queue's stored creation priority,
+not its current kernel scheduling priority. For a grouped queue created
+without `D3D12_COMMAND_QUEUE_FLAG_ALLOW_DYNAMIC_PRIORITY`, successful
+creation or that returned priority value does not establish that the requested
+priority was applied to the kernel scheduling context.
+
+Where the negotiated queue-creation DDI carries `QueueCreationFlags` and
+UMD-based global-realtime priority is supported for the queue's workload,
+the runtime must still set
+`D3D12DDI_COMMAND_QUEUE_CREATION_FLAG_GLOBAL_REALTIME_PRIORITY` for a
+`D3D12_COMMAND_QUEUE_PRIORITY_GLOBAL_REALTIME` request, including for a grouped
+queue. Omitting kernel priority setting must not suppress this UMD request.
+Passing the flag does not mean that the runtime set the group's kernel
+scheduling priority.
+
+**History.** The compatibility path's omission of kernel priority setting originated
+as a bug. Correcting it caused application compatibility regressions, so the
+prior behavior was restored and is retained for compatibility.
+
+<a id="dynamic-queue-priority"></a>
+
+### Dynamic queue priority
+
+`D3D12_COMMAND_QUEUE_FLAG_ALLOW_DYNAMIC_PRIORITY` opts a queue into dynamic
+priority setting. An adjustment through an opt-in queue applies to the
+scheduling group that contains it, including the other queues in that group.
+Opt-in queues are not grouped with queues that lack this flag.
+
+Creating an opt-in queue that joins an existing group overrides that group's
+process and global priority settings according to the new queue's creation
+priority. The creation priority is not merely inherited from the existing
+group, and no separate setter call is required to request the override.
+
+| `D3D12_COMMAND_QUEUE_PRIORITY` | `D3D12_COMMAND_QUEUE_PROCESS_PRIORITY` | `D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY` |
+| -------- | -------- | -------- |
+| `D3D12_COMMAND_QUEUE_PRIORITY_GLOBAL_REALTIME` | `D3D12_COMMAND_QUEUE_PROCESS_PRIORITY_HIGH` | `D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY_HARD_REALTIME` |
+| `D3D12_COMMAND_QUEUE_PRIORITY_HIGH` | `D3D12_COMMAND_QUEUE_PROCESS_PRIORITY_HIGH` | `D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY_DEFAULT` |
+| `D3D12_COMMAND_QUEUE_PRIORITY_NORMAL` | `D3D12_COMMAND_QUEUE_PROCESS_PRIORITY_NORMAL` | `D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY_DEFAULT` |
+
+An ignored request to `ID3D12CommandQueue1::SetProcessPriority` or
+`SetGlobalPriority` returns `S_FALSE`, not `S_OK`. It does not replace the
+prior cached setting returned by the corresponding getter. The getters
+report runtime-maintained priority state, not an independent readback of
+the current OS scheduling state. `GetDesc` continues to report the stored
+creation description rather than these mutable settings.
+
+<a id="hardware-scheduling-queue-groupings"></a>
+
+### Hardware-scheduling grouping query
+
+`ID3D12Device::CheckFeatureSupport` accepts
+`D3D12_FEATURE_HARDWARE_SCHEDULING_QUEUE_GROUPINGS` (selector value `60`)
+with a `D3D12_FEATURE_DATA_HARDWARE_SCHEDULING_QUEUE_GROUPINGS` payload and
+its exact `sizeof` as the data size. The payload has no input fields.
+
+```cpp
+typedef struct D3D12_FEATURE_DATA_HARDWARE_SCHEDULING_QUEUE_GROUPINGS
+{
+    UINT ComputeQueuesPer3DQueue;
+} D3D12_FEATURE_DATA_HARDWARE_SCHEDULING_QUEUE_GROUPINGS;
+```
+
+`ComputeQueuesPer3DQueue`
+
+When reported as greater than zero, indicates the maximum number of `COMPUTE` command queues (with the same `CreatorID`) that can be grouped together with a `DIRECT` queue in the same scheduling group.
+
+When reported as zero, means that scheduling groups do not group more than one queue.
 
 <a id="recording-lifecycle"></a>
 
@@ -341,6 +440,64 @@ The debug layer will issue an error if it can't prove that there are no pending 
 
 The debug layer will issue an error if `Reset` is called concurrently by multiple threads (on the same allocator object).
 
+<a id="executebundle"></a>
+
+### ID3D12GraphicsCommandList::ExecuteBundle
+
+#### Declaration
+
+```cpp
+void ExecuteBundle(ID3D12GraphicsCommandList* pCommandList);
+```
+
+#### Behavior
+
+Executes a bundle.
+
+`pCommandList` must identify a closed BUNDLE from the same device. The caller must be an open DIRECT recording; a bundle cannot execute another bundle. The bundle's device-node selection must include the parent's execution node. Descriptor heaps explicitly set by the bundle must match the parent's corresponding heaps. Recording the call selects the bundle recording at that call, not a later re-recording of the same bundle object.
+
+The [bundle entry/exit state contract](command-list-state.md#base-bundle-state), [root/descriptor inheritance](command-list-state.md#resource-binding) and [static descriptor/data promises](command-list-state.md#static-descriptors) remain canonical. A bundle does not inherit the parent's PSO or primitive topology. This wrapper is not predicated, but eligible work inside the bundle uses the inherited predicate under the [operation matrix](counters-queries-and-predication.md#predication-operation-matrix); its state effects are not skipped with that work.
+
+The bundle's contents must satisfy the parent's [render-pass admission and dependencies](output-merger.md#render-pass-operation-surface). The [recording-generation and allocator-storage rules](#command-storage), [object/resource lifetime](#lifetime), [residency](resources.md#residency) and [binding lifetime](binding.md#table-indexing-and-descriptor-lifetime) apply through all uses of the selected recording. Resetting/re-recording the bundle object does not retarget an earlier parent recording, and resetting its allocator does not make old references valid. This CPU recording call neither submits the parent to a queue nor waits for GPU completion.
+
+#### Parameters
+
+##### pCommandList
+
+Specifies the [ID3D12GraphicsCommandList](#executebundle) that determines the bundle to be executed.
+
+#### Return values
+
+This method returns no value. Recording failures are reported through the parent's [deferred Close result](#deferred-recording-errors), not a direct HRESULT returned by `ExecuteBundle`. The common first-recorded-error precedence remains applicable, including when a validation failure records `E_INVALIDARG`.
+
+#### Runtime validation
+
+The runtime will validate that the "callee" is a bundle and that the
+"caller" is a direct command list. The runtime will also validate that
+the bundle has been closed. If the contract is violated, the runtime
+will silently drop the call.
+
+Validation failure will result in [Close](#close) returning E_INVALIDARG.
+
+#### Debug layer
+
+The debug layer will issue an error if it detects that any resource referenced by the command list has been destroyed.
+
+The debug layer will also validate that the command allocator associated with the bundle has not been reset since [Close](#close) was called on the command list.  This validation occurs at `ExecuteBundle` time, and when the parent command list is executed on a command queue.
+
+<a id="bundle-driver"></a>
+
+#### PFND3D12DDI_EXECUTE_BUNDLE
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_EXECUTE_BUNDLE )(
+    D3D12DDI_HCOMMANDLIST, D3D12DDI_HCOMMANDLIST );
+```
+
+The first `D3D12DDI_HCOMMANDLIST` is the parent direct command list; the second is the closed bundle. Both `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnExecuteBundle` and `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnExecuteBundle` use this same signature and these ordinary driver handles. The API-handle table does not change this entry into an API-handle argument pair.
+
+The UMD records execution of the selected bundle generation, preserving the [API context, state, predicate and lifetime contract](#executebundle). The ABI does not require either CPU expansion or one particular GPU indirection strategy. Passing the two handles transfers no COM reference or allocation ownership. The driver must preserve the selected recording's meaning when the bundle object is later reset; the allocator-storage lifetime obligation remains with the application. This `VOID` DDI uses [recording error reporting](#lifecycle-driver-errors), not an operation HRESULT or GPU-completion result.
+
 <a id="lifecycle-driver"></a>
 
 ### Driver responsibilities and error reporting
@@ -349,7 +506,7 @@ The driver must preserve previously recorded command streams and bundle referenc
 
 For DDI versions using the `_0040` reset arguments, the runtime supplies a command-recorder handle associated with the allocator's command pool. Earlier reset arguments supply a command-allocator handle. The initial pipeline-state object is not an argument to either reset structure: the runtime initializes pipeline and other applicable state with state-setting DDIs. This API behavior does not require an application to negotiate a DDI version.
 
-Closing a list invokes the close-list DDI when no previously recorded error prevents it. Resetting an allocator invokes the corresponding pool/allocator storage-reset DDI; it is not a request to wait for GPU completion. The subordinate [driver command-recording objects reference](command-recording-objects.md#object-model) defines allocator/pool/recorder/list associations, recording-generation IDs, private storage and versioned creation/reset/destruction interfaces. Its [failed-recording rules](command-recording-objects.md#failed-recording) define logical closure, recorder reuse and cleanup without guaranteed Close-DDI delivery. [Runtime UMD initialization](driver-initialization.md) owns capability and table negotiation; [command-list state](command-list-state.md) owns pipeline and other initial/reset state.
+Closing a list invokes the close-list DDI when no previously recorded error prevents it. Resetting an allocator invokes the corresponding pool/allocator storage-reset DDI; it is not a request to wait for GPU completion. The [driver recording-object model](#object-model) defines allocator/pool/recorder/list associations, recording-generation IDs, private storage and versioned creation/reset/destruction interfaces. Its [failed-recording rules](execution.md#failed-recording) define logical closure, recorder reuse and cleanup without guaranteed Close-DDI delivery. [Runtime UMD initialization](devices-and-capabilities.md#runtime-driver-initialization) owns capability and table negotiation; [command-list state](command-list-state.md) owns pipeline and other initial/reset state.
 
 <a id="lifecycle-driver-errors"></a>
 
@@ -370,6 +527,356 @@ list.
 A successful command-list Reset starts a new recording, but errors reported through the command-list error callback while initializing that recording are stored for Close to report. Reset's HRESULT does not replace the requirement to check Close.
 
 Driver-reported errors are translated before the resulting command-list error is stored. A driver-reported `E_OUTOFMEMORY` remains `E_OUTOFMEMORY` unless the device has already been removed. Driver-reported device removal or application error removes the device and is translated to `DXGI_ERROR_DEVICE_REMOVED`; the more specific device reason is available from [GetDeviceRemovedReason](diagnostics.md#id3d12device-getdeviceremovedreason). If an earlier command-list error has already been recorded, it remains the error returned by Close and later Reset. Device removal does not replace that earlier stored error.
+
+<a id="driver-recording-objects"></a>
+
+### Driver recording objects and storage
+
+<a id="object-model"></a>
+
+#### Objects and recording lifetime
+
+The application command allocator supplies storage for recorded commands; an
+application command list is the object through which commands are recorded.
+At the driver interface using the `_0040` recording-object protocol, a command
+pool owns command storage, a command recorder supplies the CPU recording
+machinery, and a driver command list identifies a command-list object.
+The older protocol combines the pool/recording-storage role in a driver
+command allocator.
+
+An application allocator permits at most one recording list at a time.
+This API restriction is not a one-recorder-per-pool DDI restriction. Several
+driver recorders may target the same pool and record concurrently. Each
+recorder may be used for only one recording at a time. The driver must support
+concurrent recording through distinct recorders sharing a pool; this does not
+permit concurrent calls on the same command-list object.
+
+Reset associates a driver list's new recording with the supplied recorder.
+Normal Close ends recording and releases that recorder's recording use.
+The [failed-recording rules](#failed-recording) distinguish logical API
+closure from delivery of the Close DDI. The recorder's use is a
+recording lease, not allocation and destruction of a recorder for every
+recording. Creation of an initially recording application list can require
+both driver-list creation and recording initialization; there is no requirement
+that each such DDI call identify a different recording.
+
+Recorded commands remain backed by their pool after Close. An idle recorder
+may be reused, retargeted or destroyed while older recordings execute, provided
+their pool storage remains valid. Reusing the recorder or resetting the
+command-list object does not reset that storage or prove GPU completion.
+The [recorded-stream and bundle-storage rules](execution.md#command-storage)
+apply independently of recorder reuse.
+
+<a id="recording-identifiers"></a>
+
+##### Recording-generation identifiers
+
+The `UINT64 ID` in driver-list creation and reset identifies a recording
+generation, not the persistent application or driver command-list object.
+Valid IDs must be unique within the driver device, apart from eventual
+64-bit wraparound. Zero and `UINT64_MAX` are reserved; `UINT64_MAX` denotes
+no current recording, including initially closed creation.
+
+Creation and an implicit reset that initialize the same recording may use
+the same ID. A later recording established by application Reset receives
+a new valid ID. The contract does not prescribe a counter, starting value,
+ordering of IDs or uniqueness across distinct driver devices.
+
+<a id="target-and-reclamation"></a>
+
+##### Targets, reset and destruction
+
+The runtime may change a recorder's pool target only while that recorder is
+idle. An idle recorder may retain a stale, non-owning target identity; it does
+not keep the target pool alive. Before recording resumes, the runtime must
+establish a valid target association. This is not a null-handle unbinding
+protocol.
+
+A pool must not be reset while a CPU recording is using it or before all
+GPU uses of its recorded storage have completed. As with application allocator
+Reset, the application is responsible for GPU-completion synchronization.
+Reset makes that storage available for reuse and invalidates the old
+recordings, even if their command-list objects still exist. An invalidated
+recording must not subsequently be submitted or selected for execution.
+Destroying the pool likewise requires no active CPU recording or outstanding
+GPU use and ends the validity of its recorded storage. Neither operation
+waits for the application to make otherwise invalid use safe.
+
+Before destroying a recorder, its associated command list must be closed or
+destroyed. Destroying a command list may abandon an open recording without a
+preceding Close DDI; the driver must release that recording's CPU recorder
+use during abandonment. This does not allow destruction of a recorder still
+used by a live recording list.
+
+Destroying a list ends its driver-object lifetime, not the lifetime of
+pool-backed recordings that are still executing. Driver cleanup must also
+obey the [command-list resource-lifetime rule](execution.md#driver-responsibilities):
+referenced resources may already have been destroyed. Cleanup must not
+require an implicit Close that accesses those resources.
+
+<a id="failed-recording"></a>
+
+##### Failed recording and recorder reuse
+
+A stored recording error makes the failed recording non-executable and
+prevents that command-list object from being reset again. Application Close
+still ends the logical recording and releases its allocator/recorder recording
+use, even when the runtime omits the Close DDI. If the device remains usable,
+a different compatible list may begin recording with that allocator/recorder
+while the failed list object remains alive. This permission does not reset
+pool storage or relax its GPU-use and reclamation requirements.
+
+An error callback does not itself release the runtime's recording ownership.
+In particular, an error reported during Reset or its state initialization
+can be stored for Close to report even when the application Reset returns
+`S_OK`. Until application Close or list destruction ends that recording,
+the runtime must not reuse its recorder for another recording. The driver
+may clean up failed-recording state earlier, provided it preserves the
+other recordings and object lifetimes required by this contract. A retained
+lifetime reference is distinct from active recording ownership.
+
+The driver must tolerate later reuse, idle retargeting or destruction of the
+recorder after logical recording closure without a preceding Close DDI.
+The [associated-list destruction precondition](#target-and-reclamation)
+uses this logical closed state, not guaranteed delivery of a Close DDI.
+Later cleanup or destruction of the failed list must not release, reset or
+invalidate recording state or backing allocations now used by a successor
+recording, or dereference a recorder or pool object whose lifetime has ended.
+The driver must not require an implicit Close or access to already-destroyed
+referenced resources to perform that cleanup.
+
+<a id="private-storage"></a>
+
+#### Private storage and errors
+
+For each allocator, pool, recorder or list, the runtime queries the matching
+private size, allocates the supplied driver-private region, and supplies its
+driver handle at creation. Size queries return a byte count as `SIZE_T`, not
+an `HRESULT`, and do not construct the object. Creation arguments used for
+sizing describe the object to be created; output/private handles are supplied
+for creation, not returned as newly allocated COM objects by the driver.
+
+The actual supplied private pointer is aligned to `MEMORY_ALLOCATION_ALIGNMENT`:
+16 bytes on Win64 and 8 bytes on Win32. The runtime owns this region. The
+driver owns auxiliary allocations it makes for the object and must release
+them during destruction. The driver's Destroy DDI does not free the supplied
+runtime-owned private region.
+
+Creation returns an `HRESULT`. On failure the driver must clean up its partial
+initialization and auxiliary allocations; the runtime does not call Destroy
+for a failed creation. After successful creation, subsequent abandonment or
+initialization failure requires destruction of that successfully created
+object before its supplied storage is released.
+
+The VOID command-list Reset and Close DDIs do not return the application method's `HRESULT`.
+The [recording-error callback and deferred-error rules](execution.md#lifecycle-driver-errors)
+govern recording failures and the runtime's suppression of later recording
+calls. Application allocator Reset's GPU-completion precondition is not
+implemented by waiting inside the pool/allocator reset DDI.
+
+The [CPU threading contract](execution.md#threading) and the pool/recorder
+concurrency rules above apply together. Interface selection and table/callback
+lifetimes follow [Runtime UMD initialization](devices-and-capabilities.md#table-selection).
+The runtime owns the API-to-DDI adaptation; applications do not negotiate
+these DDI versions.
+
+<a id="recording-descriptions"></a>
+
+#### Shared recording descriptions
+
+`D3D12DDI_COMMAND_LIST_TYPE` distinguishes direct-style recording from bundles.
+It is not the application's full `D3D12_COMMAND_LIST_TYPE` enumeration;
+compute, copy and video API enum values must not be cast to this DDI enum.
+`QueueFlags` identifies the workload capabilities of the recording machinery.
+The paging flag is a driver-interface flag, not an additional application
+command-list type.
+
+```cpp
+typedef enum D3D12DDI_COMMAND_LIST_TYPE
+{
+    D3D12DDI_COMMAND_LIST_TYPE_DIRECT  = 0,
+    D3D12DDI_COMMAND_LIST_TYPE_BUNDLE  = 1,
+} D3D12DDI_COMMAND_LIST_TYPE;
+
+typedef enum D3D12DDI_COMMAND_QUEUE_FLAGS
+{
+    D3D12DDI_COMMAND_QUEUE_FLAG_NONE                = 0x00000000,
+    D3D12DDI_COMMAND_QUEUE_FLAG_3D                  = 0x00000001,
+    D3D12DDI_COMMAND_QUEUE_FLAG_COMPUTE             = 0x00000002,
+    D3D12DDI_COMMAND_QUEUE_FLAG_COPY                = 0x00000004,
+    D3D12DDI_COMMAND_QUEUE_FLAG_PAGING              = 0x00000008,
+    D3D12DDI_COMMAND_QUEUE_FLAG_0020_VIDEO_LEGACY   = 0x00000010, // Deprecated
+    D3D12DDI_COMMAND_QUEUE_FLAG_0022_VIDEO_DECODE   = 0x00000010,
+    D3D12DDI_COMMAND_QUEUE_FLAG_0022_VIDEO_PROCESS  = 0x00000020,
+    D3D12DDI_COMMAND_QUEUE_FLAG_0053_VIDEO_ENCODE   = 0x00000040,
+
+} D3D12DDI_COMMAND_QUEUE_FLAGS;
+
+typedef enum D3D12DDI_COMMAND_LIST_FLAGS
+{
+    D3D12DDI_COMMAND_LIST_FLAG_NONE                             = 0x00000000,
+    D3D12DDI_COMMAND_LIST_FLAG_ENABLE_MARKERS                   = 0x00000001,
+    D3D12DDI_COMMAND_LIST_FLAG_0010_ENABLE_FULLPIPELINE_MARKERS = 0x00000002,
+} D3D12DDI_COMMAND_LIST_FLAGS;
+```
+
+`CommandListFlags` carries diagnostic-marker controls, including the full-pipeline
+marker flag named with the `_0010` suffix. It is not the application's
+`D3D12_COMMAND_LIST_FLAGS` creation-flags type. `NodeMask` selects the list's
+device node under the [device/node model](devices-and-capabilities.md#adapter-identity-and-linked-nodes).
+Neither these fields nor queue flags replace the recording-generation ID.
+
+<a id="legacy-allocators"></a>
+
+<a id="command-pools"></a>
+
+#### Command pools
+
+The `_0040` protocol separates pool storage from the recorder. `PoolFlags`
+has only the `NONE` value in this declaration. The size query reports private
+pool bytes; Create initializes the supplied pool handle for the driver device.
+Reset reclaims that pool's recording storage under the
+[CPU/GPU preconditions](#target-and-reclamation); Destroy releases its
+driver-owned allocations and ends the pool object.
+
+```cpp
+typedef enum D3D12DDI_COMMAND_POOL_FLAGS
+{
+    D3D12DDI_COMMAND_POOL_FLAG_NONE          = 0x00000000
+} D3D12DDI_COMMAND_POOL_FLAGS;
+
+typedef struct D3D12DDIARG_CREATE_COMMAND_POOL_0040
+{
+    D3D12DDI_COMMAND_POOL_FLAGS PoolFlags;
+} D3D12DDIARG_CREATE_COMMAND_POOL_0040;
+
+typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALC_PRIVATE_COMMAND_POOL_SIZE_0040 )( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_COMMAND_POOL_0040* );
+typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATE_COMMAND_POOL_0040 ) ( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_COMMAND_POOL_0040*, D3D12DDI_HCOMMANDPOOL_0040 );
+typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_COMMAND_POOL_0040 ) ( D3D12DDI_HDEVICE, D3D12DDI_HCOMMANDPOOL_0040 );
+typedef VOID ( APIENTRY* PFND3D12DDI_RESET_COMMAND_POOL_0040 ) ( D3D12DDI_HDEVICE, D3D12DDI_HCOMMANDPOOL_0040 );
+```
+
+<a id="command-recorders"></a>
+
+#### Command recorders
+
+`QueueFlags` describes the recorder's workload capabilities; `RecorderFlags`
+has only the `NONE` value in this declaration. The size query reports private
+recorder bytes; Create initializes the supplied recorder handle. Creation does
+not begin a command-list recording or supply a pool target.
+
+`PFND3D12DDI_COMMAND_RECORDER_SET_COMMAND_POOL_AS_TARGET_0040` takes, in order,
+the driver device, recorder and pool handles. It establishes the recorder's
+target under the [idle-target rules](#target-and-reclamation); it does not
+reset the pool or invalidate its older recordings. Destroy releases the
+recorder's driver-owned allocations under the associated-list precondition,
+without reclaiming unrelated, still-valid pool-backed recordings.
+
+```cpp
+typedef enum D3D12DDI_COMMAND_RECORDER_FLAGS
+{
+    D3D12DDI_COMMAND_RECORDER_FLAG_NONE = 0x00000000
+} D3D12DDI_COMMAND_RECORDER_FLAGS;
+
+typedef struct D3D12DDIARG_CREATE_COMMAND_RECORDER_0040
+{
+    D3D12DDI_COMMAND_QUEUE_FLAGS QueueFlags;
+    D3D12DDI_COMMAND_RECORDER_FLAGS RecorderFlags;
+} D3D12DDIARG_CREATE_COMMAND_RECORDER_0040;
+
+typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALC_PRIVATE_COMMAND_RECORDER_SIZE_0040 )( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_COMMAND_RECORDER_0040* );
+typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATE_COMMAND_RECORDER_0040 ) ( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_COMMAND_RECORDER_0040*, D3D12DDI_HCOMMANDRECORDER_0040 );
+typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_COMMAND_RECORDER_0040 ) ( D3D12DDI_HDEVICE, D3D12DDI_HCOMMANDRECORDER_0040 );
+typedef VOID ( APIENTRY* PFND3D12DDI_COMMAND_RECORDER_SET_COMMAND_POOL_AS_TARGET_0040 ) ( D3D12DDI_HDEVICE, D3D12DDI_HCOMMANDRECORDER_0040, D3D12DDI_HCOMMANDPOOL_0040 );
+```
+
+<a id="command-lists"></a>
+
+#### Command-list creation and recording
+
+The `_0040` size query reports private list bytes. Create takes the driver
+device, creation description, supplied driver-private list handle and runtime
+list handle, in that order. The runtime handle identifies the list when the
+driver calls its runtime callbacks; it is not the private-storage handle.
+The creation description contains no pool or recorder handle.
+
+Reset takes the existing driver list and a description containing the recorder
+for the new recording, its generation ID and marker flags. The recorder must
+be available for that recording and have a valid target pool. Reset starts a
+new recording without reclaiming old pool storage. The runtime supplies the
+initial pipeline state and other applicable state through state-setting DDIs,
+not through these reset arguments; the canonical
+[initial/reset state](command-list-state.md) defines those contributions.
+
+Close takes the driver list, finishes its recording and releases recorder use;
+it neither submits the commands nor proves GPU completion. Destroy takes the
+driver device and list handles. It releases list-owned auxiliary state and
+supports [abandonment without Close](#target-and-reclamation). Both functions
+are shared with the older allocator-based protocol.
+
+```cpp
+typedef struct D3D12DDIARG_CREATE_COMMAND_LIST_0040
+{
+    D3D12DDI_COMMAND_LIST_TYPE   Type;
+    D3D12DDI_COMMAND_QUEUE_FLAGS QueueFlags;
+    UINT64                       ID;
+    D3D12DDI_COMMAND_LIST_FLAGS  CommandListFlags;
+    UINT                         NodeMask;
+} D3D12DDIARG_CREATE_COMMAND_LIST_0040;
+
+typedef struct D3D12DDIARG_RESETCOMMANDLIST_0040
+{
+    D3D12DDI_HCOMMANDRECORDER_0040   hDrvCommandRecorder;
+    UINT64                           ID;
+    D3D12DDI_COMMAND_LIST_FLAGS      CommandListFlags;
+} D3D12DDIARG_RESETCOMMANDLIST_0040;
+
+typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALC_PRIVATE_COMMAND_LIST_SIZE_0040 )( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_COMMAND_LIST_0040* );
+typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATE_COMMAND_LIST_0040 ) ( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_COMMAND_LIST_0040*, D3D12DDI_HCOMMANDLIST, D3D12DDI_HRTCOMMANDLIST );
+typedef VOID ( APIENTRY* PFND3D12DDI_RESETCOMMANDLIST_0040 )( D3D12DDI_HCOMMANDLIST, _In_ CONST D3D12DDIARG_RESETCOMMANDLIST_0040*);
+typedef VOID ( APIENTRY* PFND3D12DDI_CLOSECOMMANDLIST )( D3D12DDI_HCOMMANDLIST );
+typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYCOMMANDLIST ) ( D3D12DDI_HDEVICE, D3D12DDI_HCOMMANDLIST );
+```
+
+<a id="work-command-handles"></a>
+
+### Current work-command handle representations
+
+```cpp
+typedef struct D3D12DDI_RUNTIME_BYPASS_HEADER
+{
+    const void* pInterfaceVtable;
+    void*   pDriverObject;
+} D3D12DDI_RUNTIME_BYPASS_HEADER;
+
+D3D10DDI_H( D3D12DDI_API_HCOMMANDLIST )
+
+inline D3D12DDI_HCOMMANDLIST GetDriverCommandListHandle(D3D12DDI_API_HCOMMANDLIST ApiHandle)
+{
+    D3D12DDI_RUNTIME_BYPASS_HEADER* pBypassHeader = (D3D12DDI_RUNTIME_BYPASS_HEADER*)ApiHandle.pDrvPrivate;
+    D3D12DDI_HCOMMANDLIST hCommandList;
+
+    hCommandList.pDrvPrivate = pBypassHeader->pDriverObject;
+    return hCommandList;
+}
+```
+
+The current command-list layouts are alternative representations. In `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108`, the ordinary draw/dispatch entries receive `D3D12DDI_HCOMMANDLIST`. Their API-compatible counterparts in `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114` instead receive `D3D12DDI_API_HCOMMANDLIST`; all remaining ordered draw counts/starts, signed base vertex and dispatch group counts retain the linked logical API meanings.
+
+The API handle identifies the application-side object/header, not the driver's ordinary command-list storage. The published `GetDriverCommandListHandle` helper obtains `pDriverObject` from that header. The driver must not treat the API handle itself as its ordinary private-object pointer. Neither the handle nor the header transfers COM ownership or changes the normal recording/object lifetime. The header's interface-table member does not make driver-private memory interchangeable with an application object.
+
+These are conditional selected-table contracts, not a guarantee of bypass support or a particular performance benefit on every device. Changing representation does not relax input, state, resource, predicate, render-pass or recording-error requirements and does not prove that the runtime validated or clamped the arguments. Bundle execution retains its explicitly ordinary handle pair in both tables.
+
+| Current member | Signature | Contract |
+| --- | --- | --- |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnDrawInstanced` | `PFND3D12DDI_DRAWINSTANCED` | [Responsibility](vertex-processing.md#driver-draw) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnDrawIndexedInstanced` | `PFND3D12DDI_DRAWINDEXEDINSTANCED` | [Responsibility](vertex-processing.md#driver-draw) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnDispatch` | `PFND3D12DDI_DISPATCH` | [Responsibility](compute.md#driver-dispatch) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnExecuteBundle` | `PFND3D12DDI_EXECUTE_BUNDLE` | [Responsibility](execution.md#bundle-driver) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnDrawInstanced` | `PFND3D12DDI_DRAWINSTANCED_0114` | [Responsibility](vertex-processing.md#driver-draw) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnDrawIndexedInstanced` | `PFND3D12DDI_DRAWINDEXEDINSTANCED_0114` | [Responsibility](vertex-processing.md#driver-draw) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnDispatch` | `PFND3D12DDI_DISPATCH_0114` | [Responsibility](compute.md#driver-dispatch) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnExecuteBundle` | `PFND3D12DDI_EXECUTE_BUNDLE` | [Responsibility](execution.md#bundle-driver) |
 
 <a id="submission"></a>
 
@@ -393,6 +900,9 @@ void ExecuteCommandLists(
 #### Behavior
 
 `ExecuteCommandLists` submits an array of command lists for execution.
+
+Synchronization-only queues do not accept this operation; their supported
+operation model is defined [above](#synchronization-only-queues).
 
 #### Parameters
 
@@ -436,6 +946,45 @@ Debug validation checks previous execution of the recorded stream, deferred reso
 
 The debug layer issues an error if it detects that any resource referenced by the command lists, including queries, has been destroyed.
 
+<a id="execute-command-lists-ddi"></a>
+
+### PFND3D12DDI_EXECUTECOMMANDLISTS
+
+UMD's `PFND3D12DDI_EXECUTECOMMANDLISTS` function executes an array of command lists submitted by an application.
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_EXECUTECOMMANDLISTS ) (
+    D3D12DDI_HCOMMANDQUEUE,
+    UINT Count,
+    _In_reads_(Count) CONST D3D12DDI_HCOMMANDLIST* pCommandLists
+    );
+```
+
+The first argument identifies the UMD queue. `Count` gives the number of
+driver command-list handles in `pCommandLists`; these are not COM interface
+pointers. The UMD executes the supplied recordings under the
+[application ordering and recording-lifetime contract](execution.md#execute-command-lists)
+and [driver recording-storage rules](execution.md#object-model).
+Runtime adaptation does not establish a universal one-to-one relationship
+between an application call, a DDI call and a kernel command-buffer submission.
+
+Drivers must implement command list execution DDIs in a free threaded
+manner so that multiple queues can accept command lists for execution
+concurrently.
+
+On a kernel-mediated submission path, when the command list execution DDI is called, the driver must immediately
+call the command buffer submission callback. Drivers may not defer
+submission of command buffers until a later time.
+
+The DDI returns no `HRESULT`. Returning does not establish GPU completion
+or permit reuse of recording storage still in use. An execution failure that
+the UMD cannot resolve is reported through `PFND3D12DDI_SETERROR_CB`, not
+through the command-list recording-error callback or an application return
+value. Callback failures may be handled within the execution attempt, but
+do not provide a recoverable execution-error return channel to the application.
+Device removal observation remains governed by the
+[completion/removal rules](execution.md#completion-lifetime).
+
 <a id="submission-threading"></a>
 
 ### Submission threading
@@ -471,6 +1020,111 @@ The user-mode driver's `PFND3D12DDI_EXECUTECOMMANDLISTS` function executes an ar
 `PFND3D12DDI_EXECUTECOMMANDLISTS` receives the driver's queue handle, a count, and an array of driver command-list handles. The application API submits interface pointers; the driver entry point does not receive that application pointer array. Driver execution must preserve the submission-boundary ordering and completion/flush requirements above.
 
 Queue `Signal`/`Wait` operations preserve the queue's ordering contract even when runtime, operating-system, and driver synchronization transports differ. Do not infer a universal one-to-one fence-DDI call sequence from the API signatures. [Recorded storage and driver error reporting](#lifecycle-driver) remain applicable.
+
+<a id="driver-submission-transport"></a>
+
+### Driver submission transport
+
+The callbacks below are not a requirement that every submission transport use
+the same kernel call sequence.
+
+<a id="shared-callback-contract"></a>
+
+#### Shared callback contract and handle domains
+
+The shared callbacks are supplied through the device's `pKTCallbacks`
+`D3DDDI_DEVICECALLBACKS` table. Their first `HANDLE hDevice` identifies the
+runtime device callback context, not a UMD-private `D3D12DDI_HDEVICE` or an
+application command queue. Table lifetime and interface selection follow
+[Runtime UMD initialization](devices-and-capabilities.md#table-selection).
+
+Context and hardware-queue `HANDLE` values returned by these D3D12 runtime
+callbacks are opaque runtime handles. The runtime translates them to kernel
+handles when performing the operation. In contrast, returned `D3DKMT_HANDLE`
+synchronization-object values are OS synchronization-object handles. Neither
+kind is interchangeable with a UMD private-fence handle or a COM pointer.
+
+In the declarations below, `_In_` descriptions provide the request and
+`_Inout_` descriptions also return the indicated results. Array counts and
+fixed-array capacities are part of the corresponding payload contract;
+counts must describe the supplied arrays, and reserved flag bits must be
+zero. The callback's `HRESULT` reports its operation, not GPU completion.
+Some removal paths can return `S_OK` after the device has failed, so success
+does not independently establish a healthy device.
+
+<a id="internal-contexts"></a>
+
+#### UMD-internal contexts and hardware queues
+
+```cpp
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_CREATECONTEXTCB)(
+    _In_ HANDLE hDevice, _Inout_ D3DDDICB_CREATECONTEXT*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_CREATECONTEXTVIRTUALCB)(
+    _In_ HANDLE hDevice, _Inout_ D3DDDICB_CREATECONTEXTVIRTUAL*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_DESTROYCONTEXTCB)(
+    _In_ HANDLE hDevice, _In_ CONST D3DDDICB_DESTROYCONTEXT*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_CREATEHWQUEUECB)(
+    _In_ HANDLE hDevice, _Inout_ D3DDDICB_CREATEHWQUEUE*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_DESTROYHWQUEUECB)(
+    _In_ HANDLE hDevice, _In_ CONST D3DDDICB_DESTROYHWQUEUE*);
+```
+
+The shared CreateContext forms create device-associated contexts for driver
+internal work. Both supply node ordinal, engine affinity, context flags and
+private KMD data, returning `hContext`; the non-virtual form additionally
+returns the software-submission command buffer and allocation/patch lists.
+The virtual form creates a GPU-virtual-address context. These are distinct
+from [queue/group-associated context callbacks](command-queues.md#context-creation-callbacks).
+
+CreateHwQueue supplies a context handle and hardware-queue flags/private
+data, and returns a hardware-queue handle plus its progress-fence handle and
+CPU/GPU addresses. At the `_0050` queue/group interface, the shared creation
+callback is for internal contexts, not for creating a global hardware queue
+against a context owned by an application queue or scheduling group.
+
+The UMD requests destruction of its internal hardware queues and contexts
+through the matching shared Destroy callbacks. These actually destroy the
+internal objects; the shared context callback is not the
+[legacy D3D12 compatibility no-op](command-queues.md#legacy-destroy-context).
+Shared DestroyContext rejects queue/group-owned contexts, and shared
+DestroyHwQueue rejects queue/group-owned contexts or hardware queues.
+The shared callbacks are not an escape from the managed-object creation
+window or runtime ownership of application-associated objects.
+
+If the specified context has not finished the work that is currently queued to it, the `pfnDestroyContextCb` function blocks until the context finishes its work and then returns.
+
+<a id="kernel-submission"></a>
+
+#### Kernel-mediated command-buffer submission
+
+```cpp
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_RENDERCB)(
+    _In_ HANDLE hDevice, _Inout_ D3DDDICB_RENDER*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_SUBMITCOMMANDCB)(
+    _In_ HANDLE hDevice, _In_ CONST D3DDDICB_SUBMITCOMMAND*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_SUBMITCOMMANDTOHWQUEUECB)(
+    _In_ HANDLE hDevice, _In_ CONST D3DDDICB_SUBMITCOMMANDTOHWQUEUE*);
+```
+
+The `pfnRenderCb` function submits the current command buffer for rendering to the display miniport driver.
+
+`pfnSubmitCommandCb` is used to submit command buffers on contexts that support graphics processing unit (GPU) virtual addressing. These contexts generate commands directly from user mode, manage their own command buffer pool and don't make use of allocation or patch location list.
+
+`pfnSubmitCommandCb` replaces the old [pfnRenderCb](#kernel-submission) for such contexts and must be used in its place. Contexts that operate in legacy patch mode must continue to use the old `pfnRenderCb`.
+
+Although the user mode driver doesn't generate patch locations it must still generate a list of the primaries that are being written to. The video memory manager uses the allocation list to determine which primary allocations are being referenced for write by each command buffer. This information is used to synchronize rendering to the primaries with `Flip` operations.
+
+| Callback | Request and result responsibilities |
+|---|---|
+| `PFND3DDDI_RENDERCB` | Supply the context, command offset/byte length, allocation and patch counts, broadcast contexts and any resize requests in `D3DDDICB_RENDER`. The in/out payload returns the next command-buffer/list information for continued legacy recording. |
+| `PFND3DDDI_SUBMITCOMMANDCB` | Supply GPU command address/length, broadcast contexts, written primaries and submission private data in `D3DDDICB_SUBMITCOMMAND`. Broadcast contexts must belong to one queue and must not be scheduling-group-owned contexts. |
+| `PFND3DDDI_SUBMITCOMMANDTOHWQUEUECB` | Supply the hardware-queue handle, command address/length, progress-fence ID, written primaries and private data in `D3DDDICB_SUBMITCOMMANDTOHWQUEUE`. The runtime translates the hardware-queue handle and performs the kernel submission. |
+
+Submission private data is input to the KMD, not a return-data channel.
+The runtime may augment the submitted written-primary set with tracked
+application references. A successful callback is not a GPU-completion
+notification; the callback also does not replace the driver's obligations
+to preserve queue ordering and report an unresolvable execution failure.
 
 <a id="completion"></a>
 
@@ -649,6 +1303,266 @@ The result describes the fence's effective creation properties, not a guarantee 
 
 The flags returned by `GetCreationFlags` are used mainly for opening a shared fence.
 
+<a id="fence-driver-objects"></a>
+
+### Fence driver objects and backing
+
+<a id="fence-creation-descriptions"></a>
+
+#### Fence backing and creation descriptions
+
+```cpp
+typedef struct D3D12DDI_FENCE_PLACEMENT
+{
+    D3DGPU_VIRTUAL_ADDRESS BaseAddress;
+} D3D12DDI_FENCE_PLACEMENT;
+
+typedef enum D3D12DDI_FENCE_FLAGS
+{
+    D3D12DDI_FENCE_FLAG_NONE           = 0x0,
+    D3D12DDI_FENCE_FLAG_BOTTOM_OF_PIPE = 0x1,
+} D3D12DDI_FENCE_FLAGS;
+
+typedef struct D3D12DDI_FENCE
+{
+    D3D12DDI_FENCE_PLACEMENT FenceValue;
+    D3D12DDI_FENCE_PLACEMENT FenceMonitoredValue;
+    D3D12DDI_FENCE_FLAGS Flags;
+} D3D12DDI_FENCE;
+
+typedef enum D3D12DDI_FENCE_TYPE_0112 {
+   D3D12DDI_FENCE_TYPE_MONITORED = 0,
+   D3D12DDI_FENCE_TYPE_NATIVE = 1,
+   D3D12DDI_FENCE_TYPE_OPENED_NATIVE = 2,
+   D3D12DDI_FENCE_TYPE_COMMAND_LIST_SCOPED = 3,
+} D3D12DDI_FENCE_TYPE_0112;
+```
+
+`FenceValue.BaseAddress` describes the value's GPU placement when supplied.
+`FenceMonitoredValue` is a retained, unused placement in this contract. The
+runtime supplies a zero `BaseAddress` there; it does not identify a second
+usable GPU location.
+
+`Flags` is also retained and unused in this contract. The declared `NONE`
+and `BOTTOM_OF_PIPE` values do not impose additional signal-placement or
+ordering behavior. The [queue timeline and ordering rules](execution.md#fence-operations),
+not this field, determine operation semantics. In particular, the
+`BOTTOM_OF_PIPE` name is not an additional completion guarantee.
+
+```cpp
+typedef struct D3D12DDI_COMMAND_LIST_SCOPED_FENCE
+{
+    UINT64 **ppFenceValue;
+} D3D12DDI_COMMAND_LIST_SCOPED_FENCE;
+```
+
+```cpp
+
+typedef struct D3D12DDIARG_CREATE_FENCE_0116
+{
+   D3D12DDI_FENCE_TYPE_0112 FenceType;
+   union {
+      D3D12DDI_FENCE MonitoredFenceArgs;
+      D3DKMT_CREATENATIVEFENCE *pNativeFenceArgs;
+      D3DKMT_OPENNATIVEFENCEFROMNTHANDLE *pNativeFenceOpenArgs;
+      D3D12DDI_COMMAND_LIST_SCOPED_FENCE CLScopedFenceArgs;
+   };
+} D3D12DDIARG_CREATE_FENCE_0116;
+```
+
+`FenceType` selects the active union member and the
+[creation protocol](#fence-creation-lifecycle). Command-list-scoped creation
+requires the applicable [fence-barrier support and API flags](execution.md#fence-flags);
+the description's version suffix alone does not establish support for every
+fence kind. The [size-query rules](#fence-private-sizing) determine which
+description fields are valid during sizing, independently of creation.
+
+<a id="fence-private-sizing"></a>
+
+#### Fence private-size queries
+
+```cpp
+typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEFENCESIZE_0116 )( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_FENCE_0116* );
+```
+
+`PFND3D12DDI_CALCPRIVATEFENCESIZE_0116` returns the required driver-private
+storage size in bytes as `SIZE_T`. The device handle supplies the driver
+device context.
+
+Within the `_0116` creation description supplied to the size query,
+only `FenceType` is valid. The remaining payload is zero-initialized, not
+a complete creation request. The driver must calculate the size without
+consuming creation-only payload data or dereferencing native-create,
+native-open or command-list-scoped output pointers, where applicable to the selected fence kind. Those pointers are null
+in the size query; the applicable creation call supplies its payload later.
+
+For `D3D12DDI_FENCE_TYPE_OPENED_NATIVE`, the returned size must accommodate
+both opened-native and monitored fence creation. The runtime may use that
+same private allocation for `D3D12DDI_FENCE_TYPE_MONITORED` creation after a
+failed native-open attempt, without another size query or reallocation.
+This requirement does not make the reported sizes identical for every
+fence kind or device; it requires the opened-native size result to cover
+both of these possible uses.
+
+<a id="fence-creation-lifecycle"></a>
+
+#### Fence creation and destruction
+
+The following DDIs initialize or destroy UMD fence state. A CreateFence DDI
+is also used to initialize a driver object for an opened shared fence; its
+name does not mean that every invocation creates a new OS synchronization
+object. The runtime selects the form from the negotiated device table and
+the representation from the OS/device fence capabilities and application
+request; the function-pointer revision alone does not choose `FenceType`.
+
+```cpp
+
+typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEFENCE_0116 )( D3D12DDI_HDEVICE, D3D12DDI_HFENCE, D3D12DDI_HRTFENCE, _In_ CONST D3D12DDIARG_CREATE_FENCE_0116* );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYFENCE )( D3D12DDI_HDEVICE, D3D12DDI_HFENCE );
+```
+
+The device argument identifies the UMD device. `D3D12DDI_HFENCE` identifies
+the runtime-provided driver-private region, not an OS synchronization object.
+The size query returns required private bytes, excluding runtime storage;
+the actual private pointer is aligned to 16 bytes on Win64 and 8 bytes on
+Win32. The UMD initializes that region and owns its auxiliary allocations,
+but must not free the runtime-provided region.
+
+The monitored payload's `D3D12DDI_FENCE` contains `FenceValue` and
+`FenceMonitoredValue` GPU-VA placements and `Flags`. In the runtime's
+monitored-fence creation path, `FenceValue.BaseAddress` supplies the available
+GPU address, `FenceMonitoredValue.BaseAddress` is zero and `Flags` is
+`D3D12DDI_FENCE_FLAG_BOTTOM_OF_PIPE`. A zero value address supplies no GPU
+backing location; driver-object creation alone does not establish that a
+fence can be used by a GPU fence barrier.
+
+Creation receives `D3D12DDI_HRTFENCE`, the runtime fence association used
+by the native callbacks. `FenceType` selects the creation payload.
+
+For the callback that creates or opens this runtime-associated native fence,
+the UMD supplies the received `hRTFence`. A null callback association instead
+denotes a separate UMD-internal object, with the distinct ownership described
+in the [native-callback contract](#native-fence-callbacks).
+
+| `FenceType` | Creation payload and UMD responsibility |
+|---|---|
+| `D3D12DDI_FENCE_TYPE_MONITORED` | Consume `MonitoredFenceArgs`, the runtime-supplied monitored backing description. The runtime manages the associated OS synchronization object. |
+| `D3D12DDI_FENCE_TYPE_NATIVE` | Use `pNativeFenceArgs` with the native-create callback to create the OS object and obtain its handle/mappings. |
+| `D3D12DDI_FENCE_TYPE_OPENED_NATIVE` | Follow the versioned shared-open protocol below; do not treat an opened fence as a fresh native-create request. |
+| `D3D12DDI_FENCE_TYPE_COMMAND_LIST_SCOPED` | Return the scoped CPU value address through `CLScopedFenceArgs.ppFenceValue`, as defined below. |
+
+`pNativeFenceOpenArgs` supplies the shared-open request, and the UMD
+calls the native-open callback to perform the open and exchange private data.
+The [native-callback ownership and failure rules](#native-fence-callbacks)
+apply; an opened-native failure and monitored retry must also satisfy the
+[sizing envelope](#fence-private-sizing).
+
+Creation returns `S_OK` on success or a failing `HRESULT`. On failure the
+UMD unwinds its partial state and auxiliary allocations; the runtime does
+not call DestroyFence for that failed UMD creation. Successful creation
+requires destruction if the driver object is later retired or abandoned,
+including after a subsequent application-object initialization failure.
+DestroyFence receives the UMD device and successful driver fence handle,
+returns no `HRESULT`, and releases UMD state without freeing the supplied
+private region or independently releasing a runtime-owned OS object.
+
+The runtime calls DestroyFence before releasing its associated OS-object
+ownership. Monitored, native and command-list-scoped representations have
+driver-visible objects on these paths; a runtime-managed legacy non-monitored
+fence does not imply a UMD CreateFence/DestroyFence pair. A size query alone
+does not commit the runtime to subsequently creating a driver object.
+Application [fence lifetimes and operation restrictions](execution.md#completion)
+remain separate from this transport selection.
+
+<a id="scoped-fence-output"></a>
+
+#### Command-list-scoped fence output
+
+For command-list-scoped creation, `CLScopedFenceArgs` supplies the output
+description defined in [Fence backing and creation descriptions](#fence-creation-descriptions).
+
+Unlike other fence creation DDI args, the `D3D12DDI_COMMAND_LIST_SCOPED_FENCE` arguments have an output parameter, expecting the driver to provide the CPU address of the CL-scoped fence. The driver-provided address contains the most current CL-Scoped fence value at the start and end of command buffer execution. It is not expected that this address is updated as the fence is signaled during command buffer execution on the GPU.
+
+Successful scoped creation must write a non-null, suitably aligned, writable
+`UINT64` value address through `ppFenceValue`. The runtime writes the
+application's initial fence value to that slot after the UMD creation DDI
+succeeds, and uses the slot for CPU Signal operations. The UMD must ensure
+the backing remains valid until fence destruction; the output cannot refer
+to temporary storage that expires when the creation call returns. This does
+not require one particular allocation mechanism or transfer ownership of
+UMD-managed backing to the runtime.
+
+This value address is not a native OS synchronization-object handle, and its
+boundary-update contract is not a promise of per-signal CPU observation
+during GPU command-buffer execution. The
+[command-list-scoped API restrictions](fence-barriers.md#fence-kinds)
+and modern [size-query input rules](#fence-private-sizing) still apply:
+`ppFenceValue` is not a live output slot during sizing.
+
+<a id="native-fence-callbacks"></a>
+
+#### Native-fence creation and opening callbacks
+
+The UMD calls the runtime's native-fence callbacks to create or open an OS
+native-fence synchronization object and exchange private driver data with
+the kernel-mode driver. These are driver-to-runtime calls, not UMD-implemented
+creation DDIs.
+
+```cpp
+typedef HRESULT (APIENTRY CALLBACK *PFND3D12DDI_CREATENATIVEFENCE_CB_0112)(
+    D3D12DDI_HRTDEVICE hRTDevice,
+    D3D12DDI_HRTFENCE hRTFence,
+    _Inout_ D3DKMT_CREATENATIVEFENCE *pArgs
+);
+
+typedef HRESULT (APIENTRY CALLBACK *PFND3D12DDI_OPENNATIVEFENCE_CB_0116)(
+    D3D12DDI_HRTDEVICE hRTDevice,
+    D3D12DDI_HRTFENCE hRTFence,
+    _Inout_ D3DKMT_OPENNATIVEFENCEFROMNTHANDLE *pArgs
+);
+```
+
+`hRTDevice` identifies the runtime device context for the operation.
+`hRTFence` optionally associates the result with a runtime fence object;
+it is not a UMD private-fence handle or the OS synchronization-object handle.
+`pArgs` carries the native creation request or shared NT-handle open request.
+On success, the in/out payload returns the OS synchronization-object handle,
+fence mappings and updated private driver data. The callback's `HRESULT`
+reports success or failure of that operation, not success of the enclosing
+UMD creation DDI.
+
+<a id="ownership"></a>
+
+##### Ownership
+
+With a non-null `hRTFence`, the runtime adopts the created or opened OS
+synchronization object and owns its release. The UMD owns its driver-side
+state and auxiliary allocations, not independent destruction of that
+runtime-associated OS object.
+
+With a null `hRTFence`, the callbacks may create or open UMD-internal native
+fences independently of an application fence object. The UMD is responsible
+for eventually releasing the returned OS synchronization object through the
+appropriate destruction path; no application-fence runtime object will
+perform that cleanup.
+
+<a id="native-fence-creation-failure"></a>
+
+##### Failure after callback success
+
+A successful runtime-associated callback does not commit the enclosing UMD
+CreateFence DDI to success. The UMD may still return a failing `HRESULT`.
+It must unwind its own partial driver state and UMD-owned auxiliary objects.
+The runtime does not call DestroyFence for a failed UMD CreateFence DDI.
+
+The runtime remains responsible for releasing the OS synchronization object
+already adopted through the callback. It must release that object if the
+attempt is abandoned, and before retrying with another representation.
+Such a retry must also meet the [private-sizing requirements](#fence-private-sizing);
+callback success is not permission to leak an earlier OS object, overwrite
+an outstanding ownership association or use an insufficient private allocation.
+
 <a id="queue-signal"></a>
 
 ### ID3D12CommandQueue::Signal
@@ -664,7 +1578,7 @@ HRESULT Signal(
 
 #### Behavior
 
-Use this method to set a fence value from the GPU side. Use [ID3D12Fence::Signal](#fence-signal) to set a fence from the CPU side.
+Use this method to set a fence value on the queue timeline. Use [ID3D12Fence::Signal](#fence-signal) to set a fence from the CPU side.
 
 The target must be writable; [read-only status fences](#status-fences) cannot be signaled. Command-list-scoped fences cannot be used with queue `Signal`.
 
@@ -682,7 +1596,7 @@ The value to set the fence to.
 
 This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues).
 
-A successful return queues the signal; it does not wait for the GPU to reach it. The completion relationship is defined in [Fence values and timelines](#fence-operations).
+A successful return on a device that has not failed queues the signal; it does not wait for the GPU to reach it. The completion relationship is defined in [Fence values and timelines](#fence-operations). A [native UMD device-failure report](execution.md#native-queue-errors) need not be reflected as failure from this call.
 
 <a id="queue-waits"></a>
 
@@ -718,6 +1632,94 @@ The threshold refers to the fence's synchronization value, not to a sentinel fro
 #### Return values
 
 This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues).
+
+A [native UMD device-failure report](execution.md#native-queue-errors)
+need not be reflected in a failing return from this call; device status and
+the API's `HRESULT` remain distinct observations.
+
+<a id="queue-signal-wait"></a>
+
+### Queue Signal and Wait DDIs
+
+`PFND3D12DDI_SIGNAL_FENCE` and `PFND3D12DDI_WAIT_FOR_FENCE` receive the driver
+queue handle and a fence-operation description. `Fence` and `Value` identify
+the requested fence operation; `PhysicalAdapterMask` is an output used by the
+runtime-broadcast path described below. These DDIs return no `HRESULT`;
+their signatures are not the application methods' return-value contract.
+The [application fence timelines and queue ordering](execution.md#fence-operations)
+remain applicable. These are UMD queue-DDI contracts;
+[synchronization-only queues](execution.md#synchronization-only-queues)
+use their runtime-managed path rather than a UMD command-queue object.
+
+```cpp
+typedef struct D3D12DDIARG_FENCE_OPERATION
+{
+    D3D12DDI_HFENCE Fence;
+    UINT64 Value;
+    UINT PhysicalAdapterMask;
+} D3D12DDIARG_FENCE_OPERATION;
+
+typedef void( APIENTRY* PFND3D12DDI_SIGNAL_FENCE )( D3D12DDI_HCOMMANDQUEUE, D3D12DDIARG_FENCE_OPERATION*);
+typedef void( APIENTRY* PFND3D12DDI_WAIT_FOR_FENCE )( D3D12DDI_HCOMMANDQUEUE, D3D12DDIARG_FENCE_OPERATION*);
+```
+
+For native fences, the UMD is responsible for the requested signal or wait,
+using the appropriate runtime/OS handoff or driver-submitted GPU operation
+for the submission mode. The runtime does not append another kernel
+signal/wait operation after this DDI, and ignores `PhysicalAdapterMask` on
+this path. Before returning, the UMD must have queued the operation or
+arranged its submission without requiring another application call.
+Return does not establish GPU completion. This submission requirement does
+not make a wait independent of the producers that can satisfy its threshold.
+
+For non-native fences, implicit multi-GPU handling can invoke the same DDIs
+to obtain the physical-adapter broadcast scope. The runtime then submits the
+corresponding operation using the selected kernel contexts or hardware
+queues. Other ordinary non-native paths can submit through the runtime
+without invoking these DDIs; there is no universal one-to-one API/DDI/kernel
+call sequence.
+
+On that non-native runtime-broadcast path, mask bits select underlying
+physical adapters, not the application's `NodeMask`. The UMD must return a
+mask selecting at least one eligible physical-adapter context or hardware
+queue for the requested operation. A zero mask or an otherwise empty eligible
+target set is not a supported way to suppress the runtime broadcast. This
+output requirement does not apply to the ignored mask on the native path.
+
+<a id="native-queue-errors"></a>
+
+#### Failure reporting for native operations
+
+The native UMD Signal/Wait path does not provide a recoverable operation-error
+channel. If the UMD cannot arrange the requested operation, it must report
+device failure through the callback `PFND3D12DDI_SETERROR_CB`.
+An out-of-memory condition is not a recoverable UMD operation result on this
+path. This is device-failure reporting, not a command-list recording error
+deferred until Close.
+
+```cpp
+typedef VOID (APIENTRY CALLBACK *PFND3D12DDI_SETERROR_CB)( D3D10DDI_HRTDEVICE, HRESULT );
+```
+
+The first callback argument identifies the runtime device context; the
+second is the reported failure `HRESULT`. The legacy device-handle spelling
+in the released typedef does not change this callback's D3D12 runtime role.
+For these native operation DDIs, the callback reports device failure rather
+than supplying a recoverable operation result. Other DDIs' error contracts
+remain specific to their own call sites.
+
+A synchronous device-failure report does not guarantee that the original
+application Signal/Wait call returns a failing `HRESULT`; it does not
+guarantee `S_OK` either. Device removal is observed through
+[GetDeviceRemovedReason](diagnostics.md#id3d12device-getdeviceremovedreason)
+and the established [completion/removal notification rules](execution.md#completion-lifetime),
+independently of that return. A successful return is not proof of a healthy
+device or successful GPU execution.
+
+The runtime's own validation and non-native transport work may still return
+their normal `HRESULT` failures, including recoverable allocation failures.
+The native UMD failure model must not be generalized into a device-fatal
+interpretation of every application Signal/Wait error.
 
 <a id="fence-signal"></a>
 
@@ -886,6 +1888,137 @@ A completion value is useful for storage reuse only when its signal follows the 
 
 `hEvent` names an application-supplied Windows event, not an event created by these D3D12 methods. Event-handle ownership and CPU waits follow the [Windows event-object contract](https://learn.microsoft.com/en-us/windows/win32/sync/event-objects). These notifications do not retain unrelated resources referenced by recorded GPU work.
 
+<a id="driver-synchronization-transport"></a>
+
+### Driver synchronization transport
+
+<a id="internal-sync-objects"></a>
+
+#### Driver-owned synchronization objects
+
+```cpp
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_CREATESYNCHRONIZATIONOBJECTCB)(
+    _In_ HANDLE hDevice, _Inout_ D3DDDICB_CREATESYNCHRONIZATIONOBJECT*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_CREATESYNCHRONIZATIONOBJECT2CB)(
+    _In_ HANDLE hDevice, _Inout_ D3DDDICB_CREATESYNCHRONIZATIONOBJECT2*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_DESTROYSYNCHRONIZATIONOBJECTCB)(
+    _In_ HANDLE hDevice, _In_ CONST D3DDDICB_DESTROYSYNCHRONIZATIONOBJECT*);
+```
+
+The creation callbacks take `Info` describing the synchronization-object
+type and attributes and return its OS `hSyncObject`. The `2` form carries
+the extended object information, including monitored-fence mappings where
+applicable. The UMD manages its internal object's lifetime and releases
+its OS handle through DestroySynchronizationObject.
+
+This ownership is not permission to independently destroy an OS object
+adopted by a runtime fence. That separate
+[native-fence association and cleanup contract](execution.md#native-fence-callbacks)
+continues to apply even when the UMD knows the OS handle.
+
+<a id="context-sync-callbacks"></a>
+
+#### Context-stream and CPU synchronization
+
+```cpp
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_WAITFORSYNCHRONIZATIONOBJECTCB)(
+    _In_ HANDLE hDevice, _In_ CONST D3DDDICB_WAITFORSYNCHRONIZATIONOBJECT*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_SIGNALSYNCHRONIZATIONOBJECTCB)(
+    _In_ HANDLE hDevice, _In_ CONST D3DDDICB_SIGNALSYNCHRONIZATIONOBJECT*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_WAITFORSYNCHRONIZATIONOBJECT2CB)(
+    _In_ HANDLE hDevice, _In_ CONST D3DDDICB_WAITFORSYNCHRONIZATIONOBJECT2*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_SIGNALSYNCHRONIZATIONOBJECT2CB)(
+    _In_ HANDLE hDevice, _In_ CONST D3DDDICB_SIGNALSYNCHRONIZATIONOBJECT2*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_WAITFORSYNCHRONIZATIONOBJECTFROMCPUCB)(
+    _In_ HANDLE hDevice, _In_ CONST D3DDDICB_WAITFORSYNCHRONIZATIONOBJECTFROMCPU*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_SIGNALSYNCHRONIZATIONOBJECTFROMCPUCB)(
+    _In_ HANDLE hDevice, _In_ CONST D3DDDICB_SIGNALSYNCHRONIZATIONOBJECTFROMCPU*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_WAITFORSYNCHRONIZATIONOBJECTFROMGPUCB)(
+    _In_ HANDLE hDevice, _In_ CONST D3DDDICB_WAITFORSYNCHRONIZATIONOBJECTFROMGPU*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_SIGNALSYNCHRONIZATIONOBJECTFROMGPUCB)(
+    _In_ HANDLE hDevice, _In_ CONST D3DDDICB_SIGNALSYNCHRONIZATIONOBJECTFROMGPU*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_SIGNALSYNCHRONIZATIONOBJECTFROMGPU2CB)(
+    _In_ HANDLE hDevice, _In_ CONST D3DDDICB_SIGNALSYNCHRONIZATIONOBJECTFROMGPU2*);
+```
+
+| Family | Input and operation |
+|---|---|
+| `WaitForSynchronizationObjectCB` / `SignalSynchronizationObjectCB` | Supply `hContext`, an OS-object array and `ObjectCount`; wait or signal in that context stream. Signal also carries its operation flags. |
+| `WaitForSynchronizationObject2CB` | Adds the object-type-specific `FenceValue` threshold to the context/object request. |
+| `SignalSynchronizationObject2CB` | Adds broadcast contexts and a flags-selected fence-value or CPU-event payload. `Flags.EnqueueCpuEvent` selects `CpuEventHandle`, not `FenceValue`. |
+| `WaitForSynchronizationObjectFromCpuCB` | Supply OS-object/value arrays, flags and optional `hAsyncEvent`. On a usable device, null selects a blocking CPU wait; a non-null event requests notification when the wait condition is satisfied. This is not a queued GPU wait. |
+| `SignalSynchronizationObjectFromCpuCB` | Supply OS-object/value arrays for CPU-side signaling. It is not insertion of a signal after prior work in a GPU context. |
+| `WaitForSynchronizationObjectFromGpuCB` | Supply `hContext`, OS objects and the object-type-selected scalar or monitored-fence threshold array for a context-stream wait. |
+| `SignalSynchronizationObjectFromGpuCB` | Supply `hContext`, OS objects and monitored-fence values for GPU-stream signaling. |
+| `SignalSynchronizationObjectFromGpu2CB` | Uses a counted broadcast-context array and an object-type/flags-selected scalar value, monitored-value array or CPU event. It is not interchangeable with the single-context form's payload. |
+
+These are synchronization-object operations, not application COM-fence
+methods. A queued wait may require a later producer. CPU and GPU forms have
+different placement and notification contracts; one must not be substituted
+for the other merely because their names contain Signal or Wait.
+
+<a id="hardware-queue-sync"></a>
+
+#### Hardware-queue synchronization
+
+```cpp
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_SUBMITWAITFORSYNCOBJECTSTOHWQUEUECB)(
+    _In_ HANDLE hDevice, _In_ CONST D3DDDICB_SUBMITWAITFORSYNCOBJECTSTOHWQUEUE*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_SUBMITSIGNALSYNCOBJECTSTOHWQUEUECB)(
+    _In_ HANDLE hDevice, _In_ CONST D3DDDICB_SUBMITSIGNALSYNCOBJECTSTOHWQUEUE*);
+```
+
+The wait callback supplies one runtime hardware-queue handle and counted
+OS-object/fence-value arrays. The signal callback supplies counted broadcast
+hardware-queue handles, OS-object/value arrays and signal flags. The runtime
+translates the hardware-queue handles and inserts the corresponding kernel
+operations. These callbacks do not release the handles or establish that a
+wait has been satisfied or a signal reached by the GPU before return.
+The [native versus non-native queue-fence routing](execution.md#queue-signal-wait)
+determines which party arranges an application's operation.
+
+<a id="native-shared-callback"></a>
+
+#### Native-fence callback selection
+
+```cpp
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_CREATENATIVEFENCECB)(
+    _In_ HANDLE hDevice, _Inout_ D3DKMT_CREATENATIVEFENCE*);
+```
+
+The D3D12 shared callback table does not supply
+`PFND3DDDI_CREATENATIVEFENCECB`. Native-fence operations use the
+[D3D12 native-create/open callbacks](execution.md#native-fence-callbacks)
+for the documented associated or UMD-internal native-fence operations.
+The generic typedef is not an alias for the D3D12 callback with an additional
+runtime-fence association.
+
+<a id="downlevel-sync-callbacks"></a>
+
+#### Downlevel synchronization callback table
+
+```cpp
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3D12DDI_CREATESYNCHRONIZATIONOBJECT2CB)(
+    _In_ D3D12DDI_HRTDEVICE hDevice, _Inout_ D3D12DDICB_CREATESYNCHRONIZATIONOBJECT2*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3D12DDI_WAITFORSYNCHRONIZATIONOBJECT2CB)(
+    _In_ D3D12DDI_HRTDEVICE hDevice, _In_ CONST D3D12DDICB_WAITFORSYNCHRONIZATIONOBJECT2*);
+typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3D12DDI_SIGNALSYNCHRONIZATIONOBJECT2CB)(
+    _In_ D3D12DDI_HRTDEVICE hDevice, _In_ CONST D3D12DDICB_SIGNALSYNCHRONIZATIONOBJECT2*);
+```
+
+These three signatures belong to `D3D12DDI_DOWNLEVEL_SUPPORT_CALLBACKS_0054`,
+not the ordinary core callback table or the shared `D3DDDI_DEVICECALLBACKS`
+slots. When that downlevel table is supplied, use its runtime-device handle
+and `D3D12DDICB_*` payloads rather than substituting the similarly named
+shared callback types.
+
+Creation supplies `Info` and returns the OS `hSyncObject`. Wait supplies
+`hContext`, an object array/count and `FenceValue` for a context-stream wait.
+Signal supplies context/object arrays, broadcast contexts and flags selecting
+a fence value or CPU event. The callbacks return an `HRESULT` for the
+requested operation, not GPU completion. Their separate table ownership
+does not imply that every D3D12 device supplies downlevel support.
+
 <a id="lifetime"></a>
 
 ## Object and resource lifetime
@@ -898,6 +2031,11 @@ All APIs on ID3D12GraphicsCommandList do not hold references to the objects
 passed into those APIs. This means applications are responsible for
 ensuring that a command list is never submitted for execution that
 references a destroyed resource.
+
+The [destruction-notifier interface](devices-and-capabilities.md#destruction-notifications)
+observes CPU object destruction. Its callbacks and cancellation IDs do not
+retain recorded resource uses, prove GPU completion, or replace these
+application lifetime requirements.
 
 ### Resource lifetime separated from binding
 
@@ -944,6 +2082,13 @@ The D3D12 threading behavior is not configurable.
 <a id="driver-responsibilities"></a>
 
 ## Driver responsibilities
+
+Driver fence [private-sizing requirements](execution.md#fence-private-sizing)
+and [native-fence callback ownership and failure cleanup](execution.md#native-fence-callbacks)
+are defined in this chapter, alongside
+the [queue Signal/Wait transport split](execution.md#queue-signal-wait).
+The [native operation error contract](execution.md#native-queue-errors)
+distinguishes device-failure reporting from the application method's `HRESULT`.
 
 ### Threading
 

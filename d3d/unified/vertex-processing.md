@@ -2,6 +2,14 @@
 
 # Input assembly and vertex processing
 
+The current vertex and input-layout driver object creation/sizing/destruction contracts
+are defined with [pipeline component creation](pipeline-state.md#driver-shader-objects)
+and its [exact slot associations](pipeline-state.md#driver-object-slots).
+They do not add application shader/state object APIs or replace this stage's
+execution, linkage, capability or resource-lifetime rules. The
+[element-layout driver representation](pipeline-state.md#driver-element-layout)
+resolves input semantics to shader registers.
+
 <a id="input-assembly"></a>
 
 ## Input assembly
@@ -1258,13 +1266,44 @@ the same render-target array index, rendering results in the overlapping
 area are undefined given the flexibility implementations have in
 progressing through work over separate views.
 
+<a id="setviewinstancemask"></a>
+
+### ID3D12GraphicsCommandList1::SetViewInstanceMask
+
+#### Declaration
+
+```cpp
+void SetViewInstanceMask(UINT Mask);
+```
+
+#### Behavior
+
+Set a mask controlling which view instances are enabled for subsequent
+draws. If bit *i* starting from the LSB is set, view instance *i* is
+enabled. This enables coarsely culling draws from particular views that
+an application knows will not be covered.
+
+The mask is honored only by PSOs that enable view instancing and set
+`D3D12_VIEW_INSTANCING_FLAG_ENABLE_VIEW_INSTANCE_MASKING`. It does not change
+the PSO's view-instance declaration. Initial/reset values and the distinct
+bundle input/output behavior follow the
+[canonical view-mask state](command-list-state.md#view-mask).
+
+#### Parameters
+
+`Mask` supplies the view-enable bits, numbered from the least-significant bit.
+
+#### Return values
+
+This method does not return a value.
+
 <a id="driver"></a>
 
 ## Driver responsibilities
 
 The runtime resolves API input-layout semantics against the vertex shader's signature when constructing pipeline state. The address-generation model above describes the driver/hardware interpretation, not a second application layout API. Drivers implement bound view extents, strides, input-element formats/classification, detailed topology, instancing and selected cut state consistently with the draw parameters. Command-list state and resource access remain subject to the negotiated DDI and the canonical lifetime/synchronization rules.
 
-The published `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108` surface identifies these callbacks:
+The `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108` table contains these driver entry points:
 
 ```cpp
 PFND3D12DDI_DRAWINSTANCED                                              pfnDrawInstanced;
@@ -1276,3 +1315,123 @@ PFND3D12DDI_SET_INDEX_BUFFER_STRIP_CUT_VALUE_0099                      pfnIASetI
 ```
 
 Driver support for unrestricted vertex element alignment (potentially unaligned input element layouts) is reported via `UnrestrictedVertexElementAlignmentSupported` in `D3D12DDI_OPTIONS_DATA_0091` when `GetCaps` is called with `D3D12DDICAPS_TYPE_OPTIONS_0091`; available starting with DDI version `e_DDI_12_8_0091`.
+
+<a id="driver-state"></a>
+
+### Input binding and view-mask DDIs
+
+```cpp
+typedef struct D3D12DDI_INDEX_BUFFER_VIEW
+{
+    D3D12DDI_GPU_VIRTUAL_ADDRESS BufferLocation;
+    UINT SizeInBytes;
+    DXGI_FORMAT Format;
+} D3D12DDI_INDEX_BUFFER_VIEW;
+
+typedef struct D3D12DDI_VERTEX_BUFFER_VIEW
+{
+    D3D12DDI_GPU_VIRTUAL_ADDRESS BufferLocation;
+    UINT SizeInBytes;
+    UINT StrideInBytes;
+} D3D12DDI_VERTEX_BUFFER_VIEW;
+
+typedef enum D3D12DDI_INDEX_BUFFER_STRIP_CUT_VALUE
+{
+    D3D12DDI_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED = 0,
+    D3D12DDI_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFF = 1,
+    D3D12DDI_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF = 2
+} D3D12DDI_INDEX_BUFFER_STRIP_CUT_VALUE;
+```
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_IA_SETTOPOLOGY_0003 )(
+    D3D12DDI_HCOMMANDLIST, D3D12DDI_PRIMITIVE_TOPOLOGY );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_IA_SET_INDEX_BUFFER )(
+    D3D12DDI_HCOMMANDLIST,
+    _In_opt_ CONST D3D12DDI_INDEX_BUFFER_VIEW* pDesc);
+
+typedef VOID ( APIENTRY* PFND3D12DDI_IA_SET_VERTEX_BUFFERS_0003 )(
+    D3D12DDI_HCOMMANDLIST,
+    _In_ UINT StartSlot,
+    _In_ UINT NumViews,
+    _In_reads_opt_(NumViews) CONST D3D12DDI_VERTEX_BUFFER_VIEW * pViews );
+
+typedef VOID(APIENTRY* PFND3D12DDI_SET_INDEX_BUFFER_STRIP_CUT_VALUE_0099)(
+    D3D12DDI_HCOMMANDLIST, D3D12DDI_INDEX_BUFFER_STRIP_CUT_VALUE IBStripCutValue);
+
+typedef VOID ( APIENTRY* PFND3D12DDI_SETVIEWINSTANCEMASK_0033 )( D3D12DDI_HCOMMANDLIST, UINT Mask );
+```
+
+| Driver entry | Canonical API contract |
+|---|---|
+| `PFND3D12DDI_IA_SETTOPOLOGY_0003` | [IASetPrimitiveTopology](#iasetprimitivetopology): the driver topology enum represents the selected detailed topology after runtime conversion, not the PSO's coarser topology class |
+| `PFND3D12DDI_IA_SET_INDEX_BUFFER` | [IASetIndexBuffer](#iasetindexbuffer): optional driver buffer view with GPU address, byte extent and index format |
+| `PFND3D12DDI_IA_SET_VERTEX_BUFFERS_0003` | [IASetVertexBuffers](#iasetvertexbuffers): replace or clear the specified slot range using driver GPU-address/byte-size/stride views |
+| `PFND3D12DDI_SET_INDEX_BUFFER_STRIP_CUT_VALUE_0099` | [IASetIndexBufferStripCutValue](#iasetindexbufferstripcutvalue): dynamic cut selection, with the API's capability and PSO permission requirements |
+| `PFND3D12DDI_SETVIEWINSTANCEMASK_0033` | [SetViewInstanceMask](#setviewinstancemask): view-enable bits and the canonical PSO/default/bundle contract |
+
+These runtime-to-driver DDIs receive `D3D12DDI_HCOMMANDLIST`, not an
+application command-list interface pointer. The driver consumes the logical
+view values during the call; it cannot depend on the caller's view structures
+remaining valid afterward. Buffer views carry GPU virtual addresses rather
+than descriptor-heap handles or retained resource COM objects. Resource
+[execution lifetime](execution.md#lifetime), residency and access requirements
+are not changed by binding a view.
+
+`pDesc` is optional: null unbinds the index buffer. A null vertex-view array
+clears the selected slot range; a zero view count changes no slots. The
+corresponding API entries define valid formats, alignment, byte/stride bounds
+and slots outside the updated range. Runtime argument conversion preserves
+those logical contracts, not identity between API and driver enum types.
+Dynamic strip-cut changes and PSO reselection follow the
+[canonical dynamic-state rules](command-list-state.md#dynamic-state).
+
+Call-time capture is distinct from initial state and bundle inheritance.
+The [canonical graphics-state rules](command-list-state.md#base-graphics)
+and each linked API's recording-context requirements remain applicable.
+Driver-reported recording failures use the shared
+[recording-error/deferred-Close contract](execution.md#lifecycle-driver-errors);
+`VOID` alone does not establish allowed error codes or removal of validation.
+
+<a id="driver-draw"></a>
+
+### Direct draw DDIs
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_DRAWINSTANCED )(
+    D3D12DDI_HCOMMANDLIST, UINT, UINT, UINT, UINT );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_DRAWINDEXEDINSTANCED )(
+    D3D12DDI_HCOMMANDLIST, UINT, UINT, UINT, INT, UINT );
+```
+
+| Driver entry | Canonical API contract and ordered fields |
+|---|---|
+| `PFND3D12DDI_DRAWINSTANCED` | [DrawInstanced](#drawinstanced): VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation |
+| `PFND3D12DDI_DRAWINDEXEDINSTANCED` | [DrawIndexedInstanced](#drawindexedinstanced): IndexCountPerInstance, InstanceCount, StartIndexLocation, signed BaseVertexLocation, StartInstanceLocation |
+
+The first parameter identifies the ordinary driver command list, not an
+application interface pointer. The remaining fields retain the named API's
+logical meanings and order; `BaseVertexLocation` remains signed. The UMD
+records work using the current graphics state and the
+[address-generation rules](#address-generation), not a new vertex/index
+buffer description supplied with the draw.
+
+The linked API contracts define zero-work, valid recording contexts and
+pipeline/root/resource requirements. Eligible GPU work follows
+[predication's operation matrix](counters-queries-and-predication.md#predication-operation-matrix);
+predication does not suppress required CPU recording/validation behavior.
+Driver-reported recording failures follow the shared
+[callback/deferred-Close contract](execution.md#lifecycle-driver-errors).
+These `VOID` calls neither report GPU completion nor promise one physical
+hardware command for each API invocation.
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_DRAWINSTANCED_0114 )(D3D12DDI_API_HCOMMANDLIST, UINT, UINT, UINT, UINT );
+typedef VOID ( APIENTRY* PFND3D12DDI_DRAWINDEXEDINSTANCED_0114 )(D3D12DDI_API_HCOMMANDLIST, UINT, UINT, UINT, INT, UINT );
+```
+
+The `_0114` entries are the API-handle forms of the [two ordinary draw contracts](#driver-draw). Their first argument uses the [published API command-list handle representation](execution.md#work-command-handles); their remaining arguments are unchanged: non-indexed counts/starts in API order, and indexed counts/start index, signed `BaseVertexLocation`, then start instance.
+
+Both current representations record the same logical draw using the existing pipeline, addressing, zero-work, context, predicate, lifetime and [recording-error](execution.md#lifecycle-driver-errors) contracts. The handle change is not a new vertex/index description or a guarantee of prior validation, execution or GPU completion.

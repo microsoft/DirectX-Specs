@@ -6,6 +6,12 @@ A pixel shader consumes rasterizer-produced/interpolated primitive data, compute
 
 Shared [lane/wave terminology](common-shader-internals.md#execution-terminology) and [wave capabilities](common-shader-internals.md#waves) apply. Pixel-specific quads, helper invocations, discard, ROV ordering and VRS execution are defined here. The stage supports applicable DXBC SM5.0/5.1 and DXIL SM6.x programs; this does not expose every historical profile or every instruction on every device.
 
+The current pixel driver object creation/sizing/destruction contracts
+are defined with [pipeline component creation](pipeline-state.md#driver-shader-objects)
+and its [exact slot associations](pipeline-state.md#driver-object-slots).
+They do not add application shader/state object APIs or replace this stage's
+execution, linkage, capability or resource-lifetime rules.
+
 <a id="representations"></a>
 
 ## Capabilities and representations

@@ -1822,8 +1822,78 @@ typedef VOID(APIENTRY* PFND3D12DDI_SET_DEPTH_BIAS_STATE_0099)(
     D3D12DDI_HCOMMANDLIST, FLOAT DepthBias, FLOAT DepthBiasClamp, FLOAT SlopeScaledDepthBias);
 ```
 
-Driver compilation and fixed-function execution must preserve the selected clipping/transform, snapping/culling, line/fill, multisample, conservative and sample-pattern contracts. State-capability reporting and shader/PSO compatibility do not waive rasterizer behavior requirements. The public current command-list aggregate identifies `pfnRsSetViewports`, `pfnRsSetScissorRects`, `pfnSetSamplePositions` and `pfnRSSetDepthBias`; it does not, by itself, define their complete callback ABI.
+Driver compilation and fixed-function execution must preserve the selected clipping/transform, snapping/culling, line/fill, multisample, conservative and sample-pattern contracts. State-capability reporting and shader/PSO compatibility do not waive rasterizer behavior requirements.
 
 The published [dynamic driver state](../VulkanOn12.md#dynamic-pipeline-state-depth-bias-ib-strip-cut) retains its distinction between API permission flags and driver hints: setting a PSO still programs its described values. The [pipeline driver owner](pipeline-state.md#driver) supplies the selected aggregate/creation contract.
 
 Required ranges, tier/shape rules and resource/pattern compatibility are validity requirements, not guarantees that retail recording filters every malformed argument before the driver sees it. Diagnostic coverage and valid device execution are distinct.
+
+<a id="driver-state"></a>
+
+### Rasterizer recording-state DDIs
+
+```cpp
+typedef struct D3D12DDI_VIEWPORT
+{
+    FLOAT TopLeftX;
+    FLOAT TopLeftY;
+    FLOAT Width;
+    FLOAT Height;
+    FLOAT MinDepth;
+    FLOAT MaxDepth;
+} D3D12DDI_VIEWPORT;
+
+typedef struct D3D12DDI_SAMPLE_POSITION
+{
+    INT8 X;
+    INT8 Y;
+} D3D12DDI_SAMPLE_POSITION;
+
+typedef RECT D3D12DDI_RECT;
+```
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_RS_SETVIEWPORTS_0003 )(
+    D3D12DDI_HCOMMANDLIST, _In_range_(0, D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE) UINT Count, _In_reads_(Count) CONST D3D12DDI_VIEWPORT* );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_RS_SETSCISSORRECTS_0003 )(
+    D3D12DDI_HCOMMANDLIST, _In_range_(0, D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE) UINT Count, _In_reads_(Count) CONST D3D12DDI_RECT* );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_SETSAMPLEPOSITIONS_0027 )(
+    D3D12DDI_HCOMMANDLIST,
+    UINT NumSamplesPerPixel,
+    UINT NumPixels,
+    __in_ecount(NumSamplesPerPixel*NumPixels) D3D12DDI_SAMPLE_POSITION* pSamplePositions
+);
+```
+
+| Driver entry | Canonical API contract |
+|---|---|
+| `PFND3D12DDI_RS_SETVIEWPORTS_0003` | [RSSetViewports](#rssetviewports): replace the complete counted viewport set |
+| `PFND3D12DDI_RS_SETSCISSORRECTS_0003` | [RSSetScissorRects](#rssetscissorrects): replace the complete counted scissor set |
+| `PFND3D12DDI_SETSAMPLEPOSITIONS_0027` | [SetSamplePositions](#setsamplepositions): the declared pixel/sample dimensions and ordered sample-position pattern |
+| `PFND3D12DDI_SET_DEPTH_BIAS_STATE_0099` | [RSSetDepthBias](#rssetdepthbias): constant bias, clamp and slope-scaled bias, with the API's capability/PSO permission requirements |
+
+The driver viewport fields have the logical meanings in
+[D3D12_VIEWPORT](#d3d12-viewport); `D3D12DDI_RECT` has the signed pixel edges
+of [D3D12_RECT](#d3d12-rect). `Count` replaces the complete corresponding
+set, including disabling entries omitted by the new count.
+The driver records the supplied array values during the call rather than
+retaining the caller's array pointer.
+
+`D3D12DDI_SAMPLE_POSITION` contains the signed X/Y fields of
+[D3D12_SAMPLE_POSITION](#d3d12-sample-position). Their
+[coordinate units and range](#sample-position-coordinates) and
+[pixel/sample ordering](#programmable-samples) govern the driver values.
+`NumSamplesPerPixel * NumPixels` gives the custom-pattern element count.
+The zero/zero/null reset, tier-dependent pattern shape, centroid ordering
+and depth-content/operation compatibility remain the
+[programmable-sample contract](#setsamplepositions).
+
+The ordinary command-list handle identifies driver recording state, not an
+API interface. Array capture does not redefine initial/reset state or bundle
+inheritance. Each linked API's list/render-pass context and the
+[canonical state contributions](command-list-state.md#base-graphics) apply.
+Reported recording failures follow the
+[recording-error/deferred-Close contract](execution.md#lifecycle-driver-errors),
+not a recoverable HRESULT from these `VOID` setters.

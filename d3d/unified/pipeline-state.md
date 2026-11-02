@@ -1450,9 +1450,61 @@ Driver/runtime version incompatibility can be reported as `D3D12_ERROR_DRIVER_VE
 
 Creation resolves shader bytecode, root signatures and fixed-function descriptions into the driver objects and aggregate required by the negotiated DDI. Runtime validation and shader compilation are distinct from debug diagnostics. A driver-facing aggregate can carry both compute and graphics handle fields even though the application creates one compatible pipeline kind at a time.
 
-The 0099 pipeline creation payload and its private-size/create callbacks are:
-```c++
-typedef struct D3D12DDIARG_CREATE_PIPELINE_STATE_0099
+```cpp
+typedef enum D3D12DDI_PRIMITIVE_TOPOLOGY_TYPE
+{
+    D3D12DDI_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED = 0,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_TYPE_POINT = 1,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_TYPE_LINE = 2,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE = 3,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_TYPE_PATCH = 4,
+} D3D12DDI_PRIMITIVE_TOPOLOGY_TYPE;
+```
+
+```cpp
+typedef struct D3D12DDI_LIBRARY_REFERENCE_0010
+{
+    D3D12DDI_HPIPELINELIBRARY hLibrary;
+    UINT PipelineIndex;
+} D3D12DDI_LIBRARY_REFERENCE_0010;
+```
+
+```cpp
+typedef struct D3D12DDI_VIEW_INSTANCE_LOCATION
+{
+    UINT ViewportArrayIndex;
+    UINT RenderTargetArrayIndex;
+} D3D12DDI_VIEW_INSTANCE_LOCATION;
+```
+
+```cpp
+typedef enum D3D12DDI_VIEW_INSTANCING_FLAGS
+{
+    D3D12DDI_VIEW_INSTANCING_FLAG_NONE = 0x0,
+    D3D12DDI_VIEW_INSTANCING_FLAG_ENABLE_VIEW_INSTANCE_MASKING = 0x1,
+} D3D12DDI_VIEW_INSTANCING_FLAGS;
+```
+
+```cpp
+typedef struct D3D12DDI_VIEW_INSTANCING_DESC
+{
+    UINT ViewInstanceCount;
+    _Field_size_full_(ViewInstanceCount) const D3D12DDI_VIEW_INSTANCE_LOCATION* pViewInstanceLocations;
+    D3D12DDI_VIEW_INSTANCING_FLAGS Flags;
+} D3D12DDI_VIEW_INSTANCING_DESC;
+```
+
+```cpp
+typedef enum D3D12DDI_PIPELINE_STATE_FLAGS
+{
+    D3D12DDI_PIPELINE_STATE_FLAG_NONE = 0x0,
+    D3D12DDI_PIPELINE_STATE_FLAG_DYNAMIC_DEPTH_BIAS = 0x4,
+    D3D12DDI_PIPELINE_STATE_FLAG_DYNAMIC_INDEX_BUFFER_STRIP_CUT = 0x8,
+} D3D12DDI_PIPELINE_STATE_FLAGS;
+```
+
+```cpp
+typedef struct D3D12DDIARG_CREATE_PIPELINE_STATE_0119
 {
     D3D12DDI_HSHADER hComputeShader;
     D3D12DDI_HSHADER hVertexShader;
@@ -1477,17 +1529,1222 @@ typedef struct D3D12DDIARG_CREATE_PIPELINE_STATE_0099
     D3D12DDI_VIEW_INSTANCING_DESC ViewInstancingDesc;
     D3D12DDI_HSHADER hMeshShader;
     D3D12DDI_HSHADER hAmplificationShader;
-
-    /// Pipeline state flags
     D3D12DDI_PIPELINE_STATE_FLAGS Flags;
-
-} D3D12DDIARG_CREATE_PIPELINE_STATE_0099;
-
-typedef HRESULT(APIENTRY* PFND3D12DDI_CREATE_PIPELINE_STATE_0099) (D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_PIPELINE_STATE_0099*, D3D12DDI_HPIPELINESTATE, D3D12DDI_HRTPIPELINESTATE);
-typedef SIZE_T(APIENTRY* PFND3D12DDI_CALC_PRIVATE_PIPELINE_STATE_SIZE_0099)(D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_PIPELINE_STATE_0099*);
-
+    CONST UINT* pComputeShaderCode;
+    CONST UINT* pVertexShaderCode;
+    CONST UINT* pPixelShaderCode;
+    CONST UINT* pDomainShaderCode;
+    CONST UINT* pHullShaderCode;
+    CONST UINT* pGeometryShaderCode;
+    CONST UINT* pMeshShaderCode;
+    CONST UINT* pAmplificationShaderCode;
+} D3D12DDIARG_CREATE_PIPELINE_STATE_0119;
 ```
 
 For drivers, the dynamic depth-bias and strip-cut creation flags are only _hints_ about whether or not state is allowed to be changed; it does not alter the behavior of calls to `pfnSetPipelineState`. When setting the pipeline state, the depth bias state and IB strip cut must still be set according to their descriptions in the pipeline state object, regardless of the presence of their corresponding dynamic flags.
 
 Support for dynamic depth bias and index buffer strip cut is implied by, and must be supported on, drivers that report their DDI version to be 0099 or greater.
+
+<a id="driver-object-lifetime"></a>
+
+### Driver object storage and lifetime
+
+The creation callbacks below construct driver-private representations of
+pipeline components and ordinary PSOs. They are not new application
+shader, blend-state, rasterizer, depth/stencil or input-layout interfaces.
+The runtime translates the [API creation descriptions](#apis) and may
+share immutable components; repeated application creation does not promise
+one new object or one DDI call for every component.
+
+Each size query returns a `SIZE_T` byte requirement for CPU private driver
+storage, not resource video memory. The runtime reserves at least the
+reported space and passes the typed driver handle by value, with its
+private pointer identifying that region. The driver initializes its
+object there; this is not an output-handle pointer or permission to free
+runtime-owned storage. Destruction ends the placed object before the
+runtime reclaims that storage. Exact runtime offsets, extra allocation
+overhead and cache strategy are not ABI contracts.
+
+Creation descriptions and their arrays are borrowed inputs to the call.
+Top-level state, shader, layout and PSO argument structures can be
+temporary storage. The driver copies any input data it needs after the
+call unless its specific owning contract supplies a longer lifetime.
+An implementation retaining an internal copy does not extend the
+[application creation-input lifetime](#creation-validation).
+
+A PSO retains its shader/state/root dependencies through driver PSO
+destruction. Component objects can be shared by other PSOs; destroying
+one PSO is not permission to destroy those components. The matching
+component destroy call ends that object's lifetime. The runtime-retained PSO
+dependencies keep root objects alive through
+dependent shader destruction. Retaining those objects does not extend a
+separate guarantee for root-creation description/header storage.
+
+These are CPU object/input lifetimes, not GPU-completion signals.
+Applications still satisfy [recording/execution lifetime](execution.md#lifetime).
+Library references and [runtime cache lookup](runtime-cache-discovery.md#compiled-value-lookup)
+retain their own permitted-call and ownership contracts.
+
+<a id="driver-creation-errors"></a>
+
+### Creation results and device error reporting
+
+The size queries return `SIZE_T`, component create/destroy callbacks
+return `VOID`, and current ordinary PSO creation returns `HRESULT`. These
+channels are not interchangeable. In particular a void creator does
+not acquire an `HRESULT` return or defer its result to command-list Close.
+
+For the selected component creation calls, `PFND3D12DDI_SETERROR_CB`
+reports failure within the active calling thread's creation context.
+`E_OUTOFMEMORY` is the recoverable allocation failure on this path. The
+runtime consumes that result before returning from creation; an
+out-of-context report is not a delayed recoverable result for an earlier
+call. The ordinary PSO `HRESULT` is processed through this creation policy.
+`S_OK` is the successful driver-creation result; the application's `S_FALSE`
+validation-only path is not successful final driver PSO creation.
+The runtime also normalizes legacy `D3DERR_OUTOFVIDEOMEMORY` to `E_OUTOFMEMORY`.
+`D3DDDIERR_DEVICEREMOVED` maps to `DXGI_ERROR_DEVICE_REMOVED`;
+`D3DDDIERR_APPLICATIONERROR` maps to `DXGI_ERROR_INVALID_CALL`. Both are
+device-failure paths. Unexpected failures become
+`DXGI_ERROR_DRIVER_INTERNAL_ERROR` and invalidate the device. Existing
+removal can supersede an otherwise returned creation result.
+
+Sizing and destruction have no recoverable allocation-error channel.
+A size value is a byte requirement, not a cast `HRESULT` or a new defined
+zero/max-value error code. Runtime input validation and its normal API
+HRESULTs are separate from accepted driver creation reports.
+The [native queue failure model](execution.md#native-queue-errors) and
+[deferred recording errors](execution.md#lifecycle-driver-errors) must
+not be substituted for this per-call creation contract.
+
+Failure does not establish a successfully initialized object. The
+driver cleans up its failed partial initialization; it cannot depend
+on a matching destroy call for an object not successfully created.
+
+<a id="driver-object-slots"></a>
+
+### Current core-device slot associations
+
+| Current slot | Published signature and contract |
+|---|---|
+| `pfnCalcPrivateBlendStateSize` | [PFND3D12DDI_CALCPRIVATEBLENDSTATESIZE_0010](#ddi-pfnd3d12ddi-calcprivateblendstatesize-0010) |
+| `pfnCalcPrivateDepthStencilStateSize` | [PFND3D12DDI_CALCPRIVATEDEPTHSTENCILSTATESIZE_0095](#ddi-pfnd3d12ddi-calcprivatedepthstencilstatesize-0095) |
+| `pfnCalcPrivateElementLayoutSize` | [PFND3D12DDI_CALCPRIVATEELEMENTLAYOUTSIZE_0010](#ddi-pfnd3d12ddi-calcprivateelementlayoutsize-0010) |
+| `pfnCalcPrivateGeometryShaderWithStreamOutput` | [PFND3D12DDI_CALC_PRIVATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026](#ddi-pfnd3d12ddi-calc-private-geometry-shader-with-stream-output-0026) |
+| `pfnCalcPrivateMeshShaderSize` | [PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026](#ddi-pfnd3d12ddi-calc-private-shader-size-0026) |
+| `pfnCalcPrivatePipelineStateSize` | [PFND3D12DDI_CALC_PRIVATE_PIPELINE_STATE_SIZE_0119](#ddi-pfnd3d12ddi-calc-private-pipeline-state-size-0119) |
+| `pfnCalcPrivateRasterizerStateSize` | [PFND3D12DDI_CALCPRIVATERASTERIZERSTATESIZE_0102](#ddi-pfnd3d12ddi-calcprivaterasterizerstatesize-0102) |
+| `pfnCalcPrivateShaderSize` | [PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026](#ddi-pfnd3d12ddi-calc-private-shader-size-0026) |
+| `pfnCalcPrivateTessellationShaderSize` | [PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026](#ddi-pfnd3d12ddi-calc-private-shader-size-0026) |
+| `pfnCreateAmplificationShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
+| `pfnCreateBlendState` | [PFND3D12DDI_CREATEBLENDSTATE_0010](#ddi-pfnd3d12ddi-createblendstate-0010) |
+| `pfnCreateComputeShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
+| `pfnCreateDepthStencilState` | [PFND3D12DDI_CREATEDEPTHSTENCILSTATE_0095](#ddi-pfnd3d12ddi-createdepthstencilstate-0095) |
+| `pfnCreateDomainShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
+| `pfnCreateElementLayout` | [PFND3D12DDI_CREATEELEMENTLAYOUT_0010](#ddi-pfnd3d12ddi-createelementlayout-0010) |
+| `pfnCreateGeometryShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
+| `pfnCreateGeometryShaderWithStreamOutput` | [PFND3D12DDI_CREATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026](#ddi-pfnd3d12ddi-create-geometry-shader-with-stream-output-0026) |
+| `pfnCreateHullShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
+| `pfnCreateMeshShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
+| `pfnCreatePipelineState` | [PFND3D12DDI_CREATE_PIPELINE_STATE_0119](#ddi-pfnd3d12ddi-create-pipeline-state-0119) |
+| `pfnCreatePixelShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
+| `pfnCreateRasterizerState` | [PFND3D12DDI_CREATERASTERIZERSTATE_0102](#ddi-pfnd3d12ddi-createrasterizerstate-0102) |
+| `pfnCreateVertexShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
+| `pfnDestroyBlendState` | [PFND3D12DDI_DESTROYBLENDSTATE](#ddi-pfnd3d12ddi-destroyblendstate) |
+| `pfnDestroyDepthStencilState` | [PFND3D12DDI_DESTROYDEPTHSTENCILSTATE](#ddi-pfnd3d12ddi-destroydepthstencilstate) |
+| `pfnDestroyElementLayout` | [PFND3D12DDI_DESTROYELEMENTLAYOUT](#ddi-pfnd3d12ddi-destroyelementlayout) |
+| `pfnDestroyPipelineState` | [PFND3D12DDI_DESTROY_PIPELINE_STATE](#ddi-pfnd3d12ddi-destroy-pipeline-state) |
+| `pfnDestroyRasterizerState` | [PFND3D12DDI_DESTROYRASTERIZERSTATE](#ddi-pfnd3d12ddi-destroyrasterizerstate) |
+| `pfnDestroyShader` | [PFND3D12DDI_DESTROYSHADER](#ddi-pfnd3d12ddi-destroyshader) |
+
+<a id="driver-element-layout"></a>
+
+### Element-layout arguments
+
+The runtime resolves input semantics and linkage into register-oriented
+`D3D12DDIARG_INPUT_ELEMENT_DESC` entries. `NumElements` counts `pVertexElements`
+entries; `InputRegister` is the resolved shader register, not a semantic
+string. The [input-layout constraints](#input-layout-constraints) and
+[IA traversal](vertex-processing.md#input-assembly) remain canonical.
+Unused inputs can produce no driver element-layout object, so an API
+input-layout description does not imply a non-null `hElementLayout`.
+
+<a id="driver-type-d3d12ddi-input-classification"></a>
+
+#### D3D12DDI_INPUT_CLASSIFICATION
+
+```cpp
+typedef enum D3D12DDI_INPUT_CLASSIFICATION
+{
+    D3D12DDI_INPUT_CLASSIFICIATION_PER_VERTEX_DATA = 0,
+    D3D12DDI_INPUT_CLASSIFICIATION_PER_INSTANCE_DATA = 1
+} D3D12DDI_INPUT_CLASSIFICATION;
+```
+
+<a id="driver-type-d3d12ddiarg-input-element-desc"></a>
+
+#### D3D12DDIARG_INPUT_ELEMENT_DESC
+
+```cpp
+typedef struct D3D12DDIARG_INPUT_ELEMENT_DESC
+{
+    UINT InputSlot;
+    UINT AlignedByteOffset;
+    DXGI_FORMAT Format;
+    D3D12DDI_INPUT_CLASSIFICATION InputSlotClass;
+    UINT InstanceDataStepRate;
+    UINT InputRegister;
+} D3D12DDIARG_INPUT_ELEMENT_DESC;
+```
+
+<a id="driver-type-d3d12ddiarg-createelementlayout-0010"></a>
+
+#### D3D12DDIARG_CREATEELEMENTLAYOUT_0010
+
+```cpp
+typedef struct D3D12DDIARG_CREATEELEMENTLAYOUT_0010
+{
+    CONST D3D12DDIARG_INPUT_ELEMENT_DESC* pVertexElements;
+    UINT                                  NumElements;
+    D3D12DDI_LIBRARY_REFERENCE_0010       LibraryReference;
+} D3D12DDIARG_CREATEELEMENTLAYOUT_0010;
+```
+
+<a id="driver-blend-state"></a>
+
+### Blend-state arguments
+
+These fields carry the [blend-state](#blend-state) and
+[output-merger](output-merger.md#output-merger) meanings in driver form,
+not the binary layout of an API pointer. The render-target array has
+`D3D12DDI_SIMULTANEOUS_RENDER_TARGET_COUNT` (8) entries. Independent-blend,
+logic-operation and alpha-factor capability/validity rules remain at their
+API owners. `LibraryReference` carries the existing library handle/index;
+it does not replace the complete state description. Published enum comments
+do not replace the complete arithmetic/format rules at those owners.
+
+<a id="driver-type-d3d12ddi-blend-op"></a>
+
+#### D3D12DDI_BLEND_OP
+
+```cpp
+typedef enum D3D12DDI_BLEND_OP
+{
+    D3D12DDI_BLEND_OP_ADD = 1,
+    D3D12DDI_BLEND_OP_SUBTRACT = 2,
+    D3D12DDI_BLEND_OP_REV_SUBTRACT = 3,
+    D3D12DDI_BLEND_OP_MIN = 4, // min semantics are like min shader instruction
+    D3D12DDI_BLEND_OP_MAX = 5, // max semantics are like max shader instruction
+} D3D12DDI_BLEND_OP;
+```
+
+<a id="driver-type-d3d12ddi-blend"></a>
+
+#### D3D12DDI_BLEND
+
+```cpp
+typedef enum D3D12DDI_BLEND
+{
+    D3D12DDI_BLEND_ZERO = 1,
+    D3D12DDI_BLEND_ONE = 2,
+    D3D12DDI_BLEND_SRC_COLOR = 3, // PS output oN.rgb (N is current RT being blended)
+    D3D12DDI_BLEND_INV_SRC_COLOR = 4, // 1.0f - PS output oN.rgb
+    D3D12DDI_BLEND_SRC_ALPHA = 5, // PS output oN.a
+    D3D12DDI_BLEND_INV_SRC_ALPHA = 6, // 1.0f - PS output oN.a
+    D3D12DDI_BLEND_DEST_ALPHA = 7, // RT(N).a (N is current RT being blended)
+    D3D12DDI_BLEND_INV_DEST_ALPHA = 8, // 1.0f - RT(N).a
+    D3D12DDI_BLEND_DEST_COLOR = 9, // RT(N).rgb
+    D3D12DDI_BLEND_INV_DEST_COLOR = 10,// 1.0f - RT(N).rgb
+    D3D12DDI_BLEND_SRC_ALPHASAT = 11,// (f,f,f,1), f = min(1 - RT(N).a, oN.a)
+    // 12 reserved (was BOTHSRCALPHA)
+    // 13 reserved (was BOTH_INV_SRC_ALPHA)
+    D3D12DDI_BLEND_BLEND_FACTOR = 14,
+    D3D12DDI_BLEND_INVBLEND_FACTOR = 15,
+    D3D12DDI_BLEND_SRC1_COLOR = 16, // PS output o1.rgb
+    D3D12DDI_BLEND_INV_SRC1_COLOR = 17, // 1.0f - PS output o1.rgb
+    D3D12DDI_BLEND_SRC1_ALPHA = 18, // PS output o1.a
+    D3D12DDI_BLEND_INV_SRC1_ALPHA = 19, // 1.0f - PS output o1.a
+    D3D12DDI_BLEND_ALPHA_FACTOR = 20,
+    D3D12DDI_BLEND_INV_ALPHA_FACTOR = 21
+} D3D12DDI_BLEND;
+```
+
+<a id="driver-type-d3d12ddi-logic-op"></a>
+
+#### D3D12DDI_LOGIC_OP
+
+```cpp
+typedef enum D3D12DDI_LOGIC_OP
+{
+                                   // Operation:
+                                   // (s == PS output, d = RTV contents)
+    D3D12DDI_LOGIC_OP_CLEAR = 0,      // 0
+    D3D12DDI_LOGIC_OP_SET,            // 1
+    D3D12DDI_LOGIC_OP_COPY,           // s
+    D3D12DDI_LOGIC_OP_COPY_INVERTED,  // ~s
+    D3D12DDI_LOGIC_OP_NOOP,           // d
+    D3D12DDI_LOGIC_OP_INVERT,         // ~d
+    D3D12DDI_LOGIC_OP_AND,            // s & d
+    D3D12DDI_LOGIC_OP_NAND,           // ~(s & d)
+    D3D12DDI_LOGIC_OP_OR,             // s | d
+    D3D12DDI_LOGIC_OP_NOR,            // ~(s | d)
+    D3D12DDI_LOGIC_OP_XOR,            // s ^ d
+    D3D12DDI_LOGIC_OP_EQUIV,          // ~(s ^ d)
+    D3D12DDI_LOGIC_OP_AND_REVERSE,    // s & ~d
+    D3D12DDI_LOGIC_OP_AND_INVERTED,   // ~s & d
+    D3D12DDI_LOGIC_OP_OR_REVERSE,     // s | ~d
+    D3D12DDI_LOGIC_OP_OR_INVERTED,    // ~s | d
+} D3D12DDI_LOGIC_OP;
+```
+
+<a id="driver-type-d3d12ddi-color-write-enable"></a>
+
+#### D3D12DDI_COLOR_WRITE_ENABLE
+
+```cpp
+typedef enum D3D12DDI_COLOR_WRITE_ENABLE
+{
+    D3D12DDI_COLOR_WRITE_ENABLE_RED = 1,
+    D3D12DDI_COLOR_WRITE_ENABLE_GREEN = 2,
+    D3D12DDI_COLOR_WRITE_ENABLE_BLUE = 4,
+    D3D12DDI_COLOR_WRITE_ENABLE_ALPHA = 8,
+    D3D12DDI_COLOR_WRITE_ENABLE_ALL = (D3D12DDI_COLOR_WRITE_ENABLE_RED|D3D12DDI_COLOR_WRITE_ENABLE_GREEN|
+        D3D12DDI_COLOR_WRITE_ENABLE_BLUE|D3D12DDI_COLOR_WRITE_ENABLE_ALPHA),
+} D3D12DDI_COLOR_WRITE_ENABLE;
+```
+
+<a id="driver-type-d3d12ddi-render-target-blend-desc"></a>
+
+#### D3D12DDI_RENDER_TARGET_BLEND_DESC
+
+```cpp
+typedef struct D3D12DDI_RENDER_TARGET_BLEND_DESC
+{
+    BOOL BlendEnable;
+    BOOL LogicOpEnable; // LogicOpEnable and BlendEnable can't both be true
+    D3D12DDI_BLEND SrcBlend;
+    D3D12DDI_BLEND DestBlend;
+    D3D12DDI_BLEND_OP BlendOp;
+    D3D12DDI_BLEND SrcBlendAlpha;
+    D3D12DDI_BLEND DestBlendAlpha;
+    D3D12DDI_BLEND_OP BlendOpAlpha;
+    D3D12DDI_LOGIC_OP LogicOp;
+    UINT8 RenderTargetWriteMask; // D3D12DDI_COLOR_WRITE_ENABLE
+} D3D12DDI_RENDER_TARGET_BLEND_DESC;
+```
+
+<a id="driver-type-d3d12ddi-blend-desc-0010"></a>
+
+#### D3D12DDI_BLEND_DESC_0010
+
+```cpp
+typedef struct D3D12DDI_BLEND_DESC_0010
+{
+    BOOL AlphaToCoverageEnable; // relevant to multisample antialiasing only
+    BOOL IndependentBlendEnable; // if FALSE, then first entry in RenderTarget array is replicated to other entries
+    D3D12DDI_RENDER_TARGET_BLEND_DESC RenderTarget[D3D12DDI_SIMULTANEOUS_RENDER_TARGET_COUNT];
+    D3D12DDI_LIBRARY_REFERENCE_0010  LibraryReference;
+} D3D12DDI_BLEND_DESC_0010;
+```
+
+<a id="driver-depth-stencil"></a>
+
+### Depth/stencil arguments
+
+The current `_0095` description preserves independent front/back read/write
+masks and operations, face enablement and `DepthBoundsTestEnable`. The
+[depth/stencil state](#depth-stencil) and
+[depth-bounds contract](output-merger.md#depth-bounds) supply their meanings
+and capability requirements. `FrontEnable`/`BackEnable` are driver description
+controls, not separate application face-enable setters. The runtime can
+normalize a disabled or always-pass/keep no-op stencil face to a disabled
+face with neutral operations and zero masks; the driver consumes the
+received state, not an assumed bitwise copy of the API description.
+Older named layouts are not substituted for these current fields.
+
+<a id="driver-type-d3d12ddi-depth-write-mask"></a>
+
+#### D3D12DDI_DEPTH_WRITE_MASK
+
+```cpp
+typedef enum D3D12DDI_DEPTH_WRITE_MASK
+{
+    D3D12DDI_DEPTH_WRITE_MASK_ZERO = 0,
+    D3D12DDI_DEPTH_WRITE_MASK_ALL = 1
+} D3D12DDI_DEPTH_WRITE_MASK;
+```
+
+<a id="driver-type-d3d12ddi-comparison-func"></a>
+
+#### D3D12DDI_COMPARISON_FUNC
+
+```cpp
+typedef enum D3D12DDI_COMPARISON_FUNC
+{
+    D3D12DDI_COMPARISON_FUNC_NEVER = 1,
+    D3D12DDI_COMPARISON_FUNC_LESS = 2,
+    D3D12DDI_COMPARISON_FUNC_EQUAL = 3,
+    D3D12DDI_COMPARISON_FUNC_LESS_EQUAL = 4,
+    D3D12DDI_COMPARISON_FUNC_GREATER = 5,
+    D3D12DDI_COMPARISON_FUNC_NOT_EQUAL = 6,
+    D3D12DDI_COMPARISON_FUNC_GREATER_EQUAL = 7,
+    D3D12DDI_COMPARISON_FUNC_ALWAYS = 8
+} D3D12DDI_COMPARISON_FUNC;
+```
+
+<a id="driver-type-d3d12ddi-stencil-op"></a>
+
+#### D3D12DDI_STENCIL_OP
+
+```cpp
+typedef enum D3D12DDI_STENCIL_OP
+{
+    D3D12DDI_STENCIL_OP_KEEP = 1,
+    D3D12DDI_STENCIL_OP_ZERO = 2,
+    D3D12DDI_STENCIL_OP_REPLACE = 3,
+    D3D12DDI_STENCIL_OP_INCR_SAT = 4,
+    D3D12DDI_STENCIL_OP_DECR_SAT = 5,
+    D3D12DDI_STENCIL_OP_INVERT = 6,
+    D3D12DDI_STENCIL_OP_INCR = 7,
+    D3D12DDI_STENCIL_OP_DECR = 8
+} D3D12DDI_STENCIL_OP;
+```
+
+<a id="driver-type-d3d12ddi-depth-stencilop-desc"></a>
+
+#### D3D12DDI_DEPTH_STENCILOP_DESC
+
+```cpp
+typedef struct D3D12DDI_DEPTH_STENCILOP_DESC
+{
+    D3D12DDI_STENCIL_OP StencilFailOp;
+    D3D12DDI_STENCIL_OP StencilDepthFailOp;
+    D3D12DDI_STENCIL_OP StencilPassOp;
+    D3D12DDI_COMPARISON_FUNC StencilFunc;
+} D3D12DDI_DEPTH_STENCILOP_DESC;
+```
+
+<a id="driver-type-d3d12ddi-depth-stencil-desc-0095"></a>
+
+#### D3D12DDI_DEPTH_STENCIL_DESC_0095
+
+```cpp
+typedef struct D3D12DDI_DEPTH_STENCIL_DESC_0095
+{
+    BOOL DepthEnable;
+    D3D12DDI_DEPTH_WRITE_MASK DepthWriteMask;
+    D3D12DDI_COMPARISON_FUNC DepthFunc;
+    BOOL StencilEnable;
+    BOOL FrontEnable;
+    BOOL BackEnable;
+    UINT8 FrontFaceStencilReadMask;
+    UINT8 FrontFaceStencilWriteMask;
+    D3D12DDI_DEPTH_STENCILOP_DESC FrontFace;
+    D3D12DDI_DEPTH_STENCILOP_DESC BackFace;
+    D3D12DDI_LIBRARY_REFERENCE_0010 LibraryReference;
+    BOOL DepthBoundsTestEnable;
+    UINT8 BackFaceStencilReadMask;
+    UINT8 BackFaceStencilWriteMask;
+} D3D12DDI_DEPTH_STENCIL_DESC_0095;
+```
+
+<a id="driver-rasterizer"></a>
+
+### Rasterizer arguments
+
+The current `_0102` description uses `FLOAT` `DepthBias` and the explicit
+`LineRasterizationMode`, alongside clipping, culling, forced samples and
+conservative rasterization. Their [versioned rasterizer](#versioned-rasterizer)
+and [line selection](rasterization.md#line-mode-selection) rules remain
+canonical; declaration of a field does not bypass its capability gate.
+The runtime's D3D12 rasterizer description supplies `ScissorEnable` = `TRUE`;
+it does not introduce an application scissor-disable state. The command
+list still supplies the [scissor rectangles](rasterization.md#scissor).
+
+<a id="driver-type-d3d12ddi-fill-mode"></a>
+
+#### D3D12DDI_FILL_MODE
+
+```cpp
+typedef enum D3D12DDI_FILL_MODE
+{
+    // 1 was POINT, unused in D3D10+
+    D3D12DDI_FILL_MODE_WIREFRAME = 2,
+    D3D12DDI_FILL_MODE_SOLID     = 3
+} D3D12DDI_FILL_MODE;
+```
+
+<a id="driver-type-d3d12ddi-cull-mode"></a>
+
+#### D3D12DDI_CULL_MODE
+
+```cpp
+typedef enum D3D12DDI_CULL_MODE
+{
+    D3D12DDI_CULL_MODE_NONE  = 1,
+    D3D12DDI_CULL_MODE_FRONT = 2,
+    D3D12DDI_CULL_MODE_BACK  = 3
+} D3D12DDI_CULL_MODE;
+```
+
+<a id="driver-type-d3d12ddi-line-rasterization-mode"></a>
+
+#### D3D12DDI_LINE_RASTERIZATION_MODE
+
+```cpp
+typedef enum D3D12DDI_LINE_RASTERIZATION_MODE
+{
+    D3D12DDI_LINE_RASTERIZATION_MODE_ALIASED,
+    D3D12DDI_LINE_RASTERIZATION_MODE_ALPHA_ANTIALIASED,
+    D3D12DDI_LINE_RASTERIZATION_MODE_QUADRILATERAL_WIDE,
+    D3D12DDI_LINE_RASTERIZATION_MODE_QUADRILATERAL_NARROW,
+} D3D12DDI_LINE_RASTERIZATION_MODE;
+```
+
+<a id="driver-type-d3d12ddi-conservative-rasterization-mode"></a>
+
+#### D3D12DDI_CONSERVATIVE_RASTERIZATION_MODE
+
+```cpp
+typedef enum D3D12DDI_CONSERVATIVE_RASTERIZATION_MODE
+{
+    D3D12DDI_CONSERVATIVE_RASTERIZATION_MODE_OFF = 0, // Default
+    D3D12DDI_CONSERVATIVE_RASTERIZATION_MODE_ON  = 1
+} D3D12DDI_CONSERVATIVE_RASTERIZATION_MODE;
+```
+
+<a id="driver-type-d3d12ddi-rasterizer-desc-0102"></a>
+
+#### D3D12DDI_RASTERIZER_DESC_0102
+
+```cpp
+typedef struct D3D12DDI_RASTERIZER_DESC_0102
+{
+    D3D12DDI_FILL_MODE FillMode;
+    D3D12DDI_CULL_MODE CullMode;
+    BOOL FrontCounterClockwise;
+    FLOAT DepthBias;
+    FLOAT DepthBiasClamp;
+    FLOAT SlopeScaledDepthBias;
+    BOOL DepthClipEnable;
+    BOOL ScissorEnable;
+    D3D12DDI_LINE_RASTERIZATION_MODE LineRasterizationMode;
+    UINT ForcedSampleCount;
+    D3D12DDI_CONSERVATIVE_RASTERIZATION_MODE ConservativeRasterizationMode;
+    D3D12DDI_LIBRARY_REFERENCE_0010 LibraryReference;
+} D3D12DDI_RASTERIZER_DESC_0102;
+```
+
+<a id="driver-shader-objects"></a>
+
+### Shader and stream-output arguments
+
+VS, PS, GS, HS, DS, CS, AS and MS denote vertex, pixel, geometry, hull,
+domain, compute, amplification and mesh shader stages, respectively.
+
+`pShaderCode` is driver-facing compiled shader data, not HLSL source,
+a GPU virtual address or a guarantee of byte identity with the original
+API buffer. `IOSignatures` selects `Standard` for ordinary stage I/O,
+`Tessellation` for HS/DS patch interfaces and `Mesh` for primitive/vertex MS
+outputs, as appropriate to the stage. CS/AS do not gain graphics-stage
+linkage merely from sharing the argument type. Counts describe signature
+entries, not byte sizes. Current `_0012` entries carry `Stream`; deprecated
+union member names remain published layout aliases, not new required
+historical callback interfaces.
+
+The published full-signature descriptions below can include registers
+unused by one particular shader. They assist driver compilation; they do
+not require all adjacent stage signatures to be identical. Their system
+value/component/minimum-precision tags retain the shader representation's
+meaning, including [minimum precision](common-shader-internals.md#minimum-precision).
+
+`ShaderCodeHash` supplies 16 hash bytes for shader/cache identity; it is not
+shader code or an ownership token. Create flags retain their named tracing/
+optimization meanings without removing supported-program/target requirements.
+`LibraryReference` remains the library/index input. The [root compatibility](binding.md#pipeline-compatibility)
+and [stage linkage](#compatibility) contracts still apply.
+
+GS/SO arguments nest `CreateShader` and count `pOutputStreamDecl` entries and
+`BufferStridesInBytes` elements independently. `RegisterMask` selects the low
+xyzw bits of `RegisterIndex`, not a semantic-name pointer. `RasterizedStream`
+and buffer-stride/capture behavior retain [stream output](geometry-shaders-and-stream-output.md#stream-output).
+A nonempty capture declaration can use the GS/SO path without application
+GS code. With no SO entries the ordinary GS size/create path is used.
+HS/DS use the tessellation size slot; MS uses the mesh size slot; VS/PS/CS/AS
+and ordinary GS use the ordinary shader size slot. Stage-specific create
+slots remain distinct even though eight share one function-pointer type.
+
+> **Draft qualification:** Published signature-superset/compiler-use comments
+> below are retained source contracts, not independently established behavior
+> of every hardware/driver compiler. They do not define a new shader memory model.
+
+<a id="driver-type-d3d12ddi-create-shader-flags"></a>
+
+#### D3D12DDI_CREATE_SHADER_FLAGS
+
+```cpp
+typedef enum D3D12DDI_CREATE_SHADER_FLAGS
+{
+    D3D12DDI_CREATE_SHADER_FLAG_NONE = 0x0,
+    D3D12DDI_CREATE_SHADER_FLAG_ENABLE_SHADER_TRACING = 0x1,
+    D3D12DDI_CREATE_SHADER_FLAG_DISABLE_OPTIMIZATION_0024 = 0x2,
+} D3D12DDI_CREATE_SHADER_FLAGS;
+```
+
+<a id="driver-type-d3d12ddi-shadercache-hash"></a>
+
+#### D3D12DDI_SHADERCACHE_HASH
+
+```cpp
+typedef struct D3D12DDI_SHADERCACHE_HASH
+{
+    BYTE Hash[16];
+} D3D12DDI_SHADERCACHE_HASH;
+```
+
+<a id="driver-type-d3d12ddiarg-signature-entry"></a>
+
+#### D3D12DDIARG_SIGNATURE_ENTRY
+
+```cpp
+typedef struct D3D12DDIARG_SIGNATURE_ENTRY
+{
+    D3D10_SB_NAME SystemValue; // D3D10_SB_NAME_UNDEFINED if the particular entry doesn't have a system name.
+    UINT Register;
+    BYTE Mask;// (D3D10_SB_OPERAND_4_COMPONENT_MASK >> 4), meaning 4 LSBs are xyzw respectively
+    D3D10_SB_REGISTER_COMPONENT_TYPE RegisterComponentType;
+    D3D11_SB_OPERAND_MIN_PRECISION   MinPrecision;
+} D3D12DDIARG_SIGNATURE_ENTRY;
+```
+
+<a id="driver-type-d3d12ddiarg-signature-entry-0012"></a>
+
+#### D3D12DDIARG_SIGNATURE_ENTRY_0012
+
+```cpp
+typedef struct D3D12DDIARG_SIGNATURE_ENTRY_0012
+{
+    D3D10_SB_NAME SystemValue; // D3D10_SB_NAME_UNDEFINED if the particular entry doesn't have a system name.
+    UINT Register;
+    BYTE Mask;// (D3D10_SB_OPERAND_4_COMPONENT_MASK >> 4), meaning 4 LSBs are xyzw respectively
+    BYTE Stream; // This field was inserted in _0012 and will not break old drivers since it doesn't change struct size.
+                 // It is used to help drivers that use a DXBC->DXIL converter, for GS output signatures
+    D3D10_SB_REGISTER_COMPONENT_TYPE RegisterComponentType;
+    D3D11_SB_OPERAND_MIN_PRECISION   MinPrecision;
+} D3D12DDIARG_SIGNATURE_ENTRY_0012;
+```
+
+<a id="driver-type-d3d12ddiarg-stage-io-signatures"></a>
+
+#### D3D12DDIARG_STAGE_IO_SIGNATURES
+
+```cpp
+typedef struct D3D12DDIARG_STAGE_IO_SIGNATURES
+{
+// A signature is basically the union of all registers input and output by any
+// shader sharing the signature.  Thus, a signature may be a superset of what a
+// given shader may happen to actually input or output.  Another way to think
+// of a signature is that hardware should assume for an input signature that
+// the upstream stage in the pipeline may provide some or all the data in the
+// signature laid out as specified.  Similarly, hardware should assume for an output
+// signature that the downstream stage in the pipeline may consume some or all
+// of the data in the signature laid out as specified.
+//
+// The reason this full signature is passed to the driver is to assist in the event
+// input/output registers need to be reordered during shader compilation.
+// Such reordering may depend on knowing all of the registers in the signature,
+// as well as which ones have system names ("position", "clipDistance" etc),
+// including registers that don't happen to be present in the current shader.
+//
+// The declarations within the shader code itself will show which registers
+// are actually used by a particular shader (possibly a subset of these signatures).
+// If some hardware doesn't need to reorder input/output registers at
+// compile-time, the full signatures provided by this structure can be
+// completely ignored.  The reference rasterizer, for example, doesn't
+// need the information provided here at all.
+//
+    union
+    {
+        D3D12DDIARG_SIGNATURE_ENTRY*        pInputSignatureDeprecated;
+        D3D12DDIARG_SIGNATURE_ENTRY_0012*   pInputSignature; // new field inserted in padding area
+    };
+    UINT                                    NumInputSignatureEntries;
+    union
+    {
+        D3D12DDIARG_SIGNATURE_ENTRY*        pOutputSignatureDeprecated;
+        D3D12DDIARG_SIGNATURE_ENTRY_0012*   pOutputSignature; // new field inserted in padding area
+    };
+    UINT                                    NumOutputSignatureEntries;
+} D3D12DDIARG_STAGE_IO_SIGNATURES;
+```
+
+<a id="driver-type-d3d12ddiarg-tessellation-io-signatures"></a>
+
+#### D3D12DDIARG_TESSELLATION_IO_SIGNATURES
+
+```cpp
+typedef struct D3D12DDIARG_TESSELLATION_IO_SIGNATURES
+{
+// A signature is basically the union of all registers input and output by any
+// shader sharing the signature.  Thus, a signature may be a superset of what a
+// given shader may happen to actually input or output.  Another way to think
+// of a signature is that hardware should assume for an input signature that
+// the upstream stage in the pipeline may provide some or all the data in the
+// signature laid out as specified.  Similarly, hardware should assume for an output
+// signature that the downstream stage in the pipeline may consume some or all
+// of the data in the signature laid out as specified.
+//
+// The reason this full signature is passed to the driver is to assist in the event
+// input/output registers need to be reordered during shader compilation.
+// Such reordering may depend on knowing all of the registers in the signature,
+// as well as which ones have system names ("position", "clipDistance" etc),
+// including registers that don't happen to be present in the current shader.
+//
+// The declarations within the shader code itself will show which registers
+// are actually used by a particular shader (possibly a subset of these signatures).
+// If some hardware doesn't need to reorder input/output registers at
+// compile-time, the full signatures provided by this structure can be
+// completely ignored.  The reference rasterizer, for example, doesn't
+// need the information provided here at all.
+//
+    union
+    {
+        D3D12DDIARG_SIGNATURE_ENTRY*        pInputSignatureDeprecated;
+        D3D12DDIARG_SIGNATURE_ENTRY_0012*   pInputSignature; // new field inserted in padding area
+    };
+    UINT                                    NumInputSignatureEntries;
+    union
+    {
+        D3D12DDIARG_SIGNATURE_ENTRY*        pOutputSignatureDeprecated;
+        D3D12DDIARG_SIGNATURE_ENTRY_0012*   pOutputSignature; // new field inserted in padding area
+    };
+    UINT                                    NumOutputSignatureEntries;
+    union
+    {
+        D3D12DDIARG_SIGNATURE_ENTRY*        pPatchConstantSignatureDeprecated;
+        D3D12DDIARG_SIGNATURE_ENTRY_0012*   pPatchConstantSignature; // new field inserted in padding area
+    };
+    UINT                                    NumPatchConstantSignatureEntries;
+} D3D12DDIARG_TESSELLATION_IO_SIGNATURES;
+```
+
+<a id="driver-type-d3d12ddiarg-mesh-io-signatures"></a>
+
+#### D3D12DDIARG_MESH_IO_SIGNATURES
+
+```cpp
+typedef struct D3D12DDIARG_MESH_IO_SIGNATURES
+{
+// A signature is basically the union of all registers input and output by any
+// shader sharing the signature.  Thus, a signature may be a superset of what a
+// given shader may happen to actually input or output.  Another way to think
+// of a signature is that hardware should assume for an input signature that
+// the upstream stage in the pipeline may provide some or all the data in the
+// signature laid out as specified.  Similarly, hardware should assume for an output
+// signature that the downstream stage in the pipeline may consume some or all
+// of the data in the signature laid out as specified.
+//
+// The reason this full signature is passed to the driver is to assist in the event
+// input/output registers need to be reordered during shader compilation.
+// Such reordering may depend on knowing all of the registers in the signature,
+// as well as which ones have system names ("position", "clipDistance" etc),
+// including registers that don't happen to be present in the current shader.
+//
+// The declarations within the shader code itself will show which registers
+// are actually used by a particular shader (possibly a subset of these signatures).
+// If some hardware doesn't need to reorder input/output registers at
+// compile-time, the full signatures provided by this structure can be
+// completely ignored.  The reference rasterizer, for example, doesn't
+// need the information provided here at all.
+//
+    D3D12DDIARG_SIGNATURE_ENTRY_0012*       pPrimitiveOutputSignature;
+    UINT                                    NumPrimitiveOutputSignatureEntries;
+    D3D12DDIARG_SIGNATURE_ENTRY_0012*       pVertexOutputSignature;
+    UINT                                    NumVertexOutputSignatureEntries;
+} D3D12DDIARG_MESH_IO_SIGNATURES;
+```
+
+<a id="driver-type-d3d12ddiarg-stream-output-declaration-entry"></a>
+
+#### D3D12DDIARG_STREAM_OUTPUT_DECLARATION_ENTRY
+
+```cpp
+typedef struct D3D12DDIARG_STREAM_OUTPUT_DECLARATION_ENTRY
+{
+    UINT Stream;
+    UINT OutputSlot;
+    UINT RegisterIndex;
+    BYTE RegisterMask; // (D3D10_SB_OPERAND_4_COMPONENT_MASK >> 4), meaning 4 LSBs are xyzw respectively
+} D3D12DDIARG_STREAM_OUTPUT_DECLARATION_ENTRY;
+```
+
+<a id="driver-type-d3d12ddiarg-create-shader-0026"></a>
+
+#### D3D12DDIARG_CREATE_SHADER_0026
+
+```cpp
+typedef struct D3D12DDIARG_CREATE_SHADER_0026
+{
+    D3D12DDI_HROOTSIGNATURE hRootSignature;
+    CONST UINT* pShaderCode;
+    union
+    {
+        CONST D3D12DDIARG_STAGE_IO_SIGNATURES* Standard;
+        CONST D3D12DDIARG_TESSELLATION_IO_SIGNATURES* Tessellation;
+        CONST D3D12DDIARG_MESH_IO_SIGNATURES* Mesh;
+    } IOSignatures;
+    D3D12DDI_CREATE_SHADER_FLAGS Flags;
+    D3D12DDI_LIBRARY_REFERENCE_0010 LibraryReference;
+    D3D12DDI_SHADERCACHE_HASH ShaderCodeHash;
+} D3D12DDIARG_CREATE_SHADER_0026;
+```
+
+<a id="driver-type-d3d12ddiarg-create-geometry-shader-with-stream-output-0026"></a>
+
+#### D3D12DDIARG_CREATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026
+
+```cpp
+typedef struct D3D12DDIARG_CREATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026
+{
+    D3D12DDIARG_CREATE_SHADER_0026                      CreateShader;
+    CONST D3D12DDIARG_STREAM_OUTPUT_DECLARATION_ENTRY*  pOutputStreamDecl;
+    UINT                                                NumEntries;
+    CONST UINT*                                         BufferStridesInBytes;
+    UINT                                                NumStrides;
+    UINT                                                RasterizedStream;
+} D3D12DDIARG_CREATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026;
+```
+
+<a id="driver-pso-creation"></a>
+
+### Current ordinary PSO arguments
+
+The [current aggregate declaration](#driver) combines driver shader,
+fixed-state and root handles with output/sample/topology/node state,
+`ViewInstancingDesc`, `LibraryReference`, creation `Flags` and per-stage code
+pointers. These are driver representations, not an API structure cast.
+A null internal component supplies a null handle; application-stage
+absence alone does not determine every internal handle (for example,
+stream-output capture without an application GS).
+
+The runtime supplies `D3D12DDI_HRTPIPELINESTATE` separately from driver private
+storage for the callbacks allowed by the [runtime cache contract](runtime-cache-discovery.md#compiled-value-lookup).
+It is not a COM output pointer, GPU completion value or additional driver
+allocation. Ordinary [graphics](#id3d12device-creategraphicspipelinestate),
+[compute](#id3d12device-createcomputepipelinestate) and [stream](#id3d12device2-createpipelinestate)
+creation still produce one compatible program kind; aggregate fields do
+not authorize arbitrary graphics/compute mixing.
+
+The [pipeline-library driver contract](shader-delivery-and-caching.md#pipeline-library-driver-indices)
+defines the library-local index, add/load association and opaque byte/storage
+lifetimes. `LibraryReference` identifies a library/index association; it does
+not carry the whole API serialization blob or transfer ownership of the PSO's
+private allocation.
+
+<a id="driver-creation-entries"></a>
+
+### Current creation entry reference
+
+<a id="ddi-pfnd3d12ddi-calcprivateblendstatesize-0010"></a>
+
+#### PFND3D12DDI_CALCPRIVATEBLENDSTATESIZE_0010
+
+##### Declaration
+
+```cpp
+typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEBLENDSTATESIZE_0010 )(
+    D3D12DDI_HDEVICE, _In_ CONST D3D12DDI_BLEND_DESC_0010* );
+```
+
+##### Behavior
+
+The CalcPrivateBlendStateSize function determines the size of the user-mode display driver's private region of memory (that is, the size of internal driver structures, not the size of the resource video memory) for a blend state.
+
+The first argument identifies the driver device; the second is the
+current typed input description. The returned `SIZE_T` is the private byte
+requirement for that description under the [storage contract](#driver-object-lifetime).
+It neither constructs the object nor returns an `HRESULT`.
+
+<a id="ddi-pfnd3d12ddi-calcprivatedepthstencilstatesize-0095"></a>
+
+#### PFND3D12DDI_CALCPRIVATEDEPTHSTENCILSTATESIZE_0095
+
+##### Declaration
+
+```cpp
+typedef SIZE_T(APIENTRY* PFND3D12DDI_CALCPRIVATEDEPTHSTENCILSTATESIZE_0095)(
+    D3D12DDI_HDEVICE, _In_ CONST D3D12DDI_DEPTH_STENCIL_DESC_0095*);
+```
+
+##### Behavior
+
+The first argument identifies the driver device; the second is the
+current typed input description. The returned `SIZE_T` is the private byte
+requirement for that description under the [storage contract](#driver-object-lifetime).
+It neither constructs the object nor returns an `HRESULT`.
+
+<a id="ddi-pfnd3d12ddi-calcprivateelementlayoutsize-0010"></a>
+
+#### PFND3D12DDI_CALCPRIVATEELEMENTLAYOUTSIZE_0010
+
+##### Declaration
+
+```cpp
+typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEELEMENTLAYOUTSIZE_0010 )(
+    D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATEELEMENTLAYOUT_0010* );
+```
+
+##### Behavior
+
+The CalcPrivateElementLayoutSize function determines the size of the user-mode display driver's private region of memory (that is, the size of internal driver structures, not the size of the resource video memory) for an element layout.
+
+The first argument identifies the driver device; the second is the
+current typed input description. The returned `SIZE_T` is the private byte
+requirement for that description under the [storage contract](#driver-object-lifetime).
+It neither constructs the object nor returns an `HRESULT`.
+
+<a id="ddi-pfnd3d12ddi-calcprivaterasterizerstatesize-0102"></a>
+
+#### PFND3D12DDI_CALCPRIVATERASTERIZERSTATESIZE_0102
+
+##### Declaration
+
+```cpp
+typedef SIZE_T(APIENTRY* PFND3D12DDI_CALCPRIVATERASTERIZERSTATESIZE_0102)(
+    D3D12DDI_HDEVICE, _In_ CONST D3D12DDI_RASTERIZER_DESC_0102*);
+```
+
+##### Behavior
+
+The first argument identifies the driver device; the second is the
+current typed input description. The returned `SIZE_T` is the private byte
+requirement for that description under the [storage contract](#driver-object-lifetime).
+It neither constructs the object nor returns an `HRESULT`.
+
+<a id="ddi-pfnd3d12ddi-calc-private-geometry-shader-with-stream-output-0026"></a>
+
+#### PFND3D12DDI_CALC_PRIVATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026
+
+##### Declaration
+
+```cpp
+typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALC_PRIVATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026 )(
+    D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026* );
+```
+
+##### Behavior
+
+Calculates the private size for a geometry shader with stream output.
+
+The first argument identifies the driver device; the second is the
+current typed input description. The returned `SIZE_T` is the private byte
+requirement for that description under the [storage contract](#driver-object-lifetime).
+It neither constructs the object nor returns an `HRESULT`.
+
+<a id="ddi-pfnd3d12ddi-calc-private-pipeline-state-size-0119"></a>
+
+#### PFND3D12DDI_CALC_PRIVATE_PIPELINE_STATE_SIZE_0119
+
+##### Declaration
+
+```cpp
+typedef SIZE_T(APIENTRY* PFND3D12DDI_CALC_PRIVATE_PIPELINE_STATE_SIZE_0119)(D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_PIPELINE_STATE_0119*);
+```
+
+##### Behavior
+
+The first argument identifies the driver device; the second is the
+current typed input description. The returned `SIZE_T` is the private byte
+requirement for that description under the [storage contract](#driver-object-lifetime).
+It neither constructs the object nor returns an `HRESULT`.
+
+<a id="ddi-pfnd3d12ddi-calc-private-shader-size-0026"></a>
+
+#### PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026
+
+##### Declaration
+
+```cpp
+typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026 )(
+    D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_SHADER_0026* );
+```
+
+##### Behavior
+
+Determines the size of the user-mode display driver's private region of memory (that is, the size of internal driver structures, not the size of the resource video memory) for a shader.
+
+The first argument identifies the driver device; the second is the
+current typed input description. The returned `SIZE_T` is the private byte
+requirement for that description under the [storage contract](#driver-object-lifetime).
+It neither constructs the object nor returns an `HRESULT`.
+
+<a id="ddi-pfnd3d12ddi-createblendstate-0010"></a>
+
+#### PFND3D12DDI_CREATEBLENDSTATE_0010
+
+##### Declaration
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_CREATEBLENDSTATE_0010 )(
+    D3D12DDI_HDEVICE, _In_ CONST D3D12DDI_BLEND_DESC_0010*, D3D12DDI_HBLENDSTATE );
+```
+
+##### Behavior
+
+Creates a blend state.
+
+The arguments supply the driver device, the current typed description
+and a by-value typed handle to caller-reserved private storage. This `VOID`
+creator initializes that object; it does not return a newly allocated
+handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
+and [synchronous device-callback error policy](#driver-creation-errors)
+apply, together with the payload and stage rules above.
+
+<a id="ddi-pfnd3d12ddi-createdepthstencilstate-0095"></a>
+
+#### PFND3D12DDI_CREATEDEPTHSTENCILSTATE_0095
+
+##### Declaration
+
+```cpp
+typedef VOID(APIENTRY* PFND3D12DDI_CREATEDEPTHSTENCILSTATE_0095)(
+    D3D12DDI_HDEVICE, _In_ CONST D3D12DDI_DEPTH_STENCIL_DESC_0095*,
+    D3D12DDI_HDEPTHSTENCILSTATE);
+```
+
+##### Behavior
+
+The arguments supply the driver device, the current typed description
+and a by-value typed handle to caller-reserved private storage. This `VOID`
+creator initializes that object; it does not return a newly allocated
+handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
+and [synchronous device-callback error policy](#driver-creation-errors)
+apply, together with the payload and stage rules above.
+
+<a id="ddi-pfnd3d12ddi-createelementlayout-0010"></a>
+
+#### PFND3D12DDI_CREATEELEMENTLAYOUT_0010
+
+##### Declaration
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_CREATEELEMENTLAYOUT_0010 )(
+    D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATEELEMENTLAYOUT_0010*, D3D12DDI_HELEMENTLAYOUT );
+```
+
+##### Behavior
+
+Creates an element layout.
+
+The arguments supply the driver device, the current typed description
+and a by-value typed handle to caller-reserved private storage. This `VOID`
+creator initializes that object; it does not return a newly allocated
+handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
+and [synchronous device-callback error policy](#driver-creation-errors)
+apply, together with the payload and stage rules above.
+
+<a id="ddi-pfnd3d12ddi-createrasterizerstate-0102"></a>
+
+#### PFND3D12DDI_CREATERASTERIZERSTATE_0102
+
+##### Declaration
+
+```cpp
+typedef VOID(APIENTRY* PFND3D12DDI_CREATERASTERIZERSTATE_0102)(
+    D3D12DDI_HDEVICE, _In_ CONST D3D12DDI_RASTERIZER_DESC_0102*, D3D12DDI_HRASTERIZERSTATE);
+```
+
+##### Behavior
+
+The arguments supply the driver device, the current typed description
+and a by-value typed handle to caller-reserved private storage. This `VOID`
+creator initializes that object; it does not return a newly allocated
+handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
+and [synchronous device-callback error policy](#driver-creation-errors)
+apply, together with the payload and stage rules above.
+
+<a id="ddi-pfnd3d12ddi-create-geometry-shader-with-stream-output-0026"></a>
+
+#### PFND3D12DDI_CREATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026
+
+##### Declaration
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_CREATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026 )(
+    D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026*, D3D12DDI_HSHADER );
+```
+
+##### Behavior
+
+The arguments supply the driver device, the current typed description
+and a by-value typed handle to caller-reserved private storage. This `VOID`
+creator initializes that object; it does not return a newly allocated
+handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
+and [synchronous device-callback error policy](#driver-creation-errors)
+apply, together with the payload and stage rules above.
+
+<a id="ddi-pfnd3d12ddi-create-pipeline-state-0119"></a>
+
+#### PFND3D12DDI_CREATE_PIPELINE_STATE_0119
+
+##### Declaration
+
+```cpp
+typedef HRESULT(APIENTRY* PFND3D12DDI_CREATE_PIPELINE_STATE_0119) (D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_PIPELINE_STATE_0119*, D3D12DDI_HPIPELINESTATE, D3D12DDI_HRTPIPELINESTATE);
+```
+
+##### Behavior
+
+The arguments supply the driver device, current aggregate, by-value
+`D3D12DDI_HPIPELINESTATE` identifying caller-reserved private storage, and the
+separate runtime `D3D12DDI_HRTPIPELINESTATE`. The [PSO argument contract](#driver-pso-creation),
+[storage/dependency lifetime](#driver-object-lifetime) and
+[creation `HRESULT` policy](#driver-creation-errors) apply. Successful
+creation establishes the object later passed to DestroyPipelineState.
+
+<a id="ddi-pfnd3d12ddi-create-shader-0026"></a>
+
+#### PFND3D12DDI_CREATE_SHADER_0026
+
+##### Declaration
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_CREATE_SHADER_0026 )(
+    D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_SHADER_0026*, D3D12DDI_HSHADER );
+```
+
+##### Behavior
+
+The user-mode display driver's **PFND3D12DDI_CREATE_SHADER_0026** callback function creates a shader.
+
+The arguments supply the driver device, the current typed description
+and a by-value typed handle to caller-reserved private storage. This `VOID`
+creator initializes that object; it does not return a newly allocated
+handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
+and [synchronous device-callback error policy](#driver-creation-errors)
+apply, together with the payload and stage rules above.
+
+<a id="ddi-pfnd3d12ddi-destroyblendstate"></a>
+
+#### PFND3D12DDI_DESTROYBLENDSTATE
+
+##### Declaration
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYBLENDSTATE )(
+    D3D12DDI_HDEVICE, D3D12DDI_HBLENDSTATE );
+```
+
+##### Behavior
+
+Destroys a blend state.
+
+The arguments identify the driver device and existing typed driver
+object. The driver ends that placed object's lifetime without freeing the
+runtime's private region. The `VOID` call supplies no output or completion
+value; [storage/dependency ordering](#driver-object-lifetime) and the
+[destruction error rule](#driver-creation-errors) apply.
+
+<a id="ddi-pfnd3d12ddi-destroydepthstencilstate"></a>
+
+#### PFND3D12DDI_DESTROYDEPTHSTENCILSTATE
+
+##### Declaration
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYDEPTHSTENCILSTATE )(
+    D3D12DDI_HDEVICE, D3D12DDI_HDEPTHSTENCILSTATE );
+```
+
+##### Behavior
+
+Destroy depth stencil state.
+
+The arguments identify the driver device and existing typed driver
+object. The driver ends that placed object's lifetime without freeing the
+runtime's private region. The `VOID` call supplies no output or completion
+value; [storage/dependency ordering](#driver-object-lifetime) and the
+[destruction error rule](#driver-creation-errors) apply.
+
+<a id="ddi-pfnd3d12ddi-destroyelementlayout"></a>
+
+#### PFND3D12DDI_DESTROYELEMENTLAYOUT
+
+##### Declaration
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYELEMENTLAYOUT )(
+    D3D12DDI_HDEVICE, D3D12DDI_HELEMENTLAYOUT );
+```
+
+##### Behavior
+
+Destroy element layout.
+
+The arguments identify the driver device and existing typed driver
+object. The driver ends that placed object's lifetime without freeing the
+runtime's private region. The `VOID` call supplies no output or completion
+value; [storage/dependency ordering](#driver-object-lifetime) and the
+[destruction error rule](#driver-creation-errors) apply.
+
+<a id="ddi-pfnd3d12ddi-destroyrasterizerstate"></a>
+
+#### PFND3D12DDI_DESTROYRASTERIZERSTATE
+
+##### Declaration
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYRASTERIZERSTATE )(
+    D3D12DDI_HDEVICE, D3D12DDI_HRASTERIZERSTATE );
+```
+
+##### Behavior
+
+Destroy rasterizer state.
+
+The arguments identify the driver device and existing typed driver
+object. The driver ends that placed object's lifetime without freeing the
+runtime's private region. The `VOID` call supplies no output or completion
+value; [storage/dependency ordering](#driver-object-lifetime) and the
+[destruction error rule](#driver-creation-errors) apply.
+
+<a id="ddi-pfnd3d12ddi-destroyshader"></a>
+
+#### PFND3D12DDI_DESTROYSHADER
+
+##### Declaration
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYSHADER )(
+    D3D12DDI_HDEVICE, D3D12DDI_HSHADER );
+```
+
+##### Behavior
+
+Destroy shader.
+
+The arguments identify the driver device and existing typed driver
+object. The driver ends that placed object's lifetime without freeing the
+runtime's private region. The `VOID` call supplies no output or completion
+value; [storage/dependency ordering](#driver-object-lifetime) and the
+[destruction error rule](#driver-creation-errors) apply.
+
+<a id="ddi-pfnd3d12ddi-destroy-pipeline-state"></a>
+
+#### PFND3D12DDI_DESTROY_PIPELINE_STATE
+
+##### Declaration
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_PIPELINE_STATE ) ( D3D12DDI_HDEVICE, D3D12DDI_HPIPELINESTATE );
+```
+
+##### Behavior
+
+Destroys the pipeline state.
+
+The arguments identify the driver device and existing typed driver
+object. The driver ends that placed object's lifetime without freeing the
+runtime's private region. The `VOID` call supplies no output or completion
+value; [storage/dependency ordering](#driver-object-lifetime) and the
+[destruction error rule](#driver-creation-errors) apply.

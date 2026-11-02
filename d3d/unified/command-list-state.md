@@ -237,6 +237,8 @@ The blend factor is (1.0, 1.0, 1.0, 1.0). Predication is disabled.
 
 ### Bundle entry and exit
 
+The full [ExecuteBundle API and driver contract](execution.md#executebundle) defines its parameter, recording admission, selected-recording lifetime and errors. The state rules below remain canonical.
+
 `ExecuteBundle` is defined such that the pipeline
 state, primitive topology and other state set in bundle will spill back
 to apply on the parent command list upon returning. Note that
@@ -501,7 +503,7 @@ The dirty-state fields are in [`D3D12_META_COMMAND_DESC`](meta-commands.md#d3d12
 
 ## Annotations
 
-**Related APIs:** `ID3D12GraphicsCommandList::BeginEvent`, `ID3D12GraphicsCommandList::EndEvent`, `ID3D12GraphicsCommandList::SetMarker`.
+**Related APIs:** [ID3D12GraphicsCommandList::BeginEvent](diagnostics.md#id3d12graphicscommandlist-beginevent), [ID3D12GraphicsCommandList::EndEvent](diagnostics.md#id3d12graphicscommandlist-endevent), [ID3D12GraphicsCommandList::SetMarker](diagnostics.md#id3d12graphicscommandlist-setmarker), [ID3D12VideoDecodeCommandList::BeginEvent](diagnostics.md#id3d12videodecodecommandlist-beginevent), [ID3D12VideoDecodeCommandList::EndEvent](diagnostics.md#id3d12videodecodecommandlist-endevent), [ID3D12VideoDecodeCommandList::SetMarker](diagnostics.md#id3d12videodecodecommandlist-setmarker), [ID3D12VideoEncodeCommandList::BeginEvent](diagnostics.md#id3d12videoencodecommandlist-beginevent), [ID3D12VideoEncodeCommandList::EndEvent](diagnostics.md#id3d12videoencodecommandlist-endevent), [ID3D12VideoEncodeCommandList::SetMarker](diagnostics.md#id3d12videoencodecommandlist-setmarker), [ID3D12VideoProcessCommandList::BeginEvent](diagnostics.md#id3d12videoprocesscommandlist-beginevent), [ID3D12VideoProcessCommandList::EndEvent](diagnostics.md#id3d12videoprocesscommandlist-endevent), [ID3D12VideoProcessCommandList::SetMarker](diagnostics.md#id3d12videoprocesscommandlist-setmarker).
 
 The D3D12 runtime manages marker data by maintaining an internal copy whose lifetime is tied to the associated command allocator. When the command allocator is reset, all marker data linked to it is discarded. If the marker is set in the context of a command queue instead of a command list, its lifetime is instead bound to the command queue.
 

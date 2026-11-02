@@ -1161,6 +1161,8 @@ Immediate writes can be optionally supported on video command queues. All other 
 
 For a video command-list type that supports `WriteBufferImmediate`, as reported by `D3D12_FEATURE_DATA_D3D12_OPTIONS3::WriteBufferImmediateSupportFlags`, its destination-buffer access uses `D3D12_BARRIER_ACCESS_COPY_DEST` and `D3D12_BARRIER_SYNC_COPY`. This does not enable general texture/buffer copy methods on a video command list. The corresponding video `SetPredication` method uses the predication access/scope; an alias bit does not enable `ExecuteIndirect` on a video list.
 
+The full [immediate-write API, modes and recording contract](resource-operations.md#writebufferimmediate-contract) defines the common operation; these video access/scope rules do not broaden its per-list availability.
+
 #### Copy queues
 
 Texture subresources used on Copy queues use `D3D12_BARRIER_LAYOUT_COMMON`.
@@ -2415,6 +2417,11 @@ typedef struct D3D12DDI_BUFFER_BARRIER_0088 {
   D3D12DDI_HRESOURCE      hResource;
 } D3D12DDI_BUFFER_BARRIER_0088;
 ```
+
+The [atomic buffer-copy contract](resource-operations.md#atomic-copy-driver)
+uses these current ranged acquire/release payloads internally around its
+primary-element copy. Its dependency resources are ordering inputs, not
+additional copy source/destination pairs or an application range-barrier API.
 
 #### D3D12DDI_RANGED_BARRIER_FLAGS_0094
 

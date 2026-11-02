@@ -1424,6 +1424,8 @@ For the format-specific cases below, a payload-size mismatch returns `E_INVALIDA
 
 These query cases require the corresponding exact payload size. `NumQualityLevels` describes quality indices from zero through `NumQualityLevels - 1` when nonzero; zero does not establish a supported multisample configuration.
 
+The [current driver queries](#driver-format-queries) provide optional-format flags and multisample quality data. Their [driver-mask/API-mask relationship](#driver-format-mask) is not raw bitwise identity.
+
 #### D3D12_FORMAT_SUPPORT1
 
 ```cpp
@@ -1944,8 +1946,156 @@ typedef VOID (APIENTRY* PFND3D12DDI_CREATE_DEPTH_STENCIL_VIEW)(
 | UAV counter resource and byte offset | Carry the counter association separately from the data buffer and apply the validated storage offset |
 | Depth/stencil plane selection | Preserve logical aspect selection without exposing a physical texture layout |
 
-The callbacks above receive a device handle, a pointer to the corresponding versioned view description, and a CPU destination handle; they return `VOID`.
+The DDIs above receive a device handle, a pointer to the corresponding versioned view description, and a CPU destination handle; they return `VOID`.
+
+The logical API contracts are associated precisely as follows, after the
+runtime's resource/default/range/handle adaptation above. The driver encodes
+the selected logical view in the supplied destination; the association is
+not a claim of identical API/DDI signatures or raw hardware descriptor bytes.
+
+| Driver entry | Canonical API contract |
+|---|---|
+| `PFND3D12DDI_CREATE_SHADER_RESOURCE_VIEW_0002` | [CreateShaderResourceView](#id3d12device-createshaderresourceview) |
+| `PFND3D12DDI_CREATE_UNORDERED_ACCESS_VIEW_0002` | [CreateUnorderedAccessView](#id3d12device-createunorderedaccessview) |
+| `PFND3D12DDI_CREATE_RENDER_TARGET_VIEW_0002` | [CreateRenderTargetView](#id3d12device-createrendertargetview) |
+| `PFND3D12DDI_CREATE_DEPTH_STENCIL_VIEW` | [CreateDepthStencilView](#id3d12device-createdepthstencilview) |
 
 Driver support for format list casting is reported via `RelaxedFormatCastingSupported` in `D3D12DDI_OPTIONS_DATA_0090` when `GetCaps` is called with `D3D12DDICAPS_TYPE_OPTIONS_0090`; available starting with DDI version `e_DDI_12_8_0090`.
 
 The runtime resolves omitted default view descriptions into the appropriate resource-derived view information before driver descriptor creation. The resource dimensions and sample configuration determine the driver-facing view kind; depth/stencil plane selection and API component mapping retain their specified logical meanings. Driver support reporting must distinguish the applicable view, load/store/atomic and multisample operations rather than claim support from the format name alone.
+
+<a id="driver-sampler-feedback-view"></a>
+
+### Paired sampler-feedback descriptor
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_CREATE_SAMPLER_FEEDBACK_UNORDERED_ACCESS_VIEW_0075 ) ( _In_ D3D12DDI_HDEVICE hDrvDevice, _In_ D3D12DDI_HRESOURCE hDrvTargetedResource, _In_ D3D12DDI_HRESOURCE hDrvFeedbackResource, _In_ D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor );
+```
+
+The driver receives the resolved targeted-resource and feedback-resource
+handles, plus the destination driver CPU descriptor handle. It encodes the
+paired association under the
+[CreateSamplerFeedbackUnorderedAccessView](#create-sampler-feedback-uav)
+contract, including permitted null associations, rather than treating the
+feedback resource alone as an ordinary UAV description.
+
+Sampler-feedback support uses the negotiated capability and the `_0075`
+descriptor-creation form. This entry returns `VOID`, not a recoverable
+creation `HRESULT`. Its descriptor generation follows the shared
+[no individual descriptor allocation/destruction](binding.md#driver-descriptors)
+and ordinary runtime descriptor-error responsibilities.
+
+<a id="driver-format-queries"></a>
+
+### Current driver format-query callbacks
+
+```cpp
+#define D3D12DDI_FORMAT_SUPPORT_SHADER_SAMPLE            0x00000001 // format can be sampled with any filter in shaders
+#define D3D12DDI_FORMAT_SUPPORT_RENDERTARGET             0x00000002 // format can be a renderTarget
+#define D3D12DDI_FORMAT_SUPPORT_BLENDABLE                0x00000004 // format is blendable (can only be set if format can be renderTarget)
+#define D3D12DDI_FORMAT_SUPPORT_MULTISAMPLE_RENDERTARGET 0x00000008 // format can be used as RenderTarget with some sample count > 1.
+#define D3D12DDI_FORMAT_SUPPORT_MULTISAMPLE_LOAD         0x00000010 // format can be used as source for 'ld2dms'
+#define D3D12DDI_FORMAT_SUPPORT_DECODER_OUTPUT           0x00000020 // format can be used as decoder output
+#define D3D12DDI_FORMAT_SUPPORT_VIDEO_PROCESSOR_OUTPUT   0x00000040 // format can be used as video processor output
+#define D3D12DDI_FORMAT_SUPPORT_VIDEO_PROCESSOR_INPUT    0x00000080 // format can be used as video processor input
+#define D3D12DDI_FORMAT_SUPPORT_VERTEX_BUFFER            0x00000100 // format can be used as vertex buffer
+#define D3D12DDI_FORMAT_SUPPORT_UAV_WRITES               0x00000200 // format can be written to through a UAV
+#define D3D12DDI_FORMAT_SUPPORT_BUFFER                   0x00000400 // format can used in a typed Buffer view
+#define D3D12DDI_FORMAT_SUPPORT_CAPTURE                  0x00000800 // format that can be supported as an output to the video capture engine
+#define D3D12DDI_FORMAT_SUPPORT_VIDEO_ENCODER            0x00001000 // format can be supported as an input to a hardware MFT
+#define D3D12DDI_FORMAT_SUPPORT_OUTPUT_MERGER_LOGIC_OP   0x00002000 // format supports logic op
+#define D3D12DDI_FORMAT_SUPPORT_SHADER_GATHER            0x00004000 // format supports gather4
+#define D3D12DDI_FORMAT_SUPPORT_MULTIPLANE_OVERLAY       0x00008000 // format supports multi plane overlay
+#define D3D12DDI_FORMAT_SUPPORT_TILED                    0x00010000 // format supports use in a tiled Texture1D/2D/Cube/Array (not incl Texture3D)
+#define D3D12DDI_FORMAT_SUPPORT_UAV_READS                0x00020000 // format supports Typed UAV Loads
+#define D3D12DDI_FORMAT_SUPPORT_DISPLAY                  0x00200000 // format supports Display (0x00100000 is reserved for displayables in d3d11)
+#define D3D12DDI_FORMAT_SUPPORT_NOT_SUPPORTED            0x80000000 // format is not supported at all. Currently only valid for DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM. (Set only this bit)
+
+typedef enum D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAGS
+{
+    D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAG_NONE            = 0,
+    D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAG_TILED_RESOURCE  = 0x1
+} D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAGS;
+
+typedef VOID ( APIENTRY* PFND3D12DDI_CHECKFORMATSUPPORT )(
+    D3D12DDI_HDEVICE, DXGI_FORMAT, _Out_ UINT* );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
+    D3D12DDI_HDEVICE hDevice,
+    DXGI_FORMAT Format,
+    UINT SampleCount,
+    D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAGS Flags,
+    _Out_ UINT* pNumQualityLevels
+);
+```
+
+`D3D12DDI_DEVICE_FUNCS_CORE_0119::pfnCheckFormatSupport` and `pfnCheckMultisampleQualityLevels` use these unversioned signatures. Their first argument is the ordinary driver device handle, not an adapter, command list or compiler handle.
+
+Both callbacks synchronously write a caller-supplied `UINT` output. That pointer is writable call-duration storage, not a capacity, a returned allocation or memory the driver may retain after return. The driver writes the complete result; it must not treat a zero-initialized temporary as a substitute for producing its output.
+
+These are `VOID` device queries, not HRESULT-returning application methods or command-list recording operations. Unsupported optional support or zero quality levels are data results, not recoverable driver HRESULTs. The valid-input queries provide no per-query recoverable failure channel; device failure remains separate. They do not use deferred command-list Close, allocate a resource, perform a transition or establish GPU completion. API validation can prevent dispatch, and initialization/other runtime work can query the same callback, so there is no one-to-one API/DDI call count.
+
+<a id="driver-format-support"></a>
+
+#### PFND3D12DDI_CHECKFORMATSUPPORT
+
+Implemented by the client driver to check the format support.
+
+`PFND3D12DDI_CHECKFORMATSUPPORT` receives the driver device, a `DXGI_FORMAT` and a writable optional-format-support mask. The published `D3D12DDI_FORMAT_SUPPORT_*` values describe features that are optional for applicable formats. A zero driver mask means no such optional bits were reported; it does not mean every required resource/view/operation capability for the format is absent.
+
+The runtime starts the application `Support1`/`Support2` result from the format's required capabilities and then incorporates eligible optional reports. A driver bit cannot legalize an operation the format does not permit. The driver mask is not either API enum and must not be copied directly into an application support word. For example, driver `SHADER_SAMPLE` is `0x1`, while API `D3D12_FORMAT_SUPPORT1_SHADER_SAMPLE` is `0x200`; those are not interchangeable meanings for bit zero.
+
+The special `D3D12DDI_FORMAT_SUPPORT_NOT_SUPPORTED` result is the published whole-format rejection for `DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM`, and is returned alone, not OR'd with capability bits. It is not a generic replacement for zero optional support or a way to waive required-format capabilities. The [API query result contract](#check-feature-support) separately governs nonexistent/unavailable formats, initialized output masks and failure when no support is computed.
+
+Resource dimensions, ordinary shader loads/comparison/monochrome operations, mip support, depth/stencil, within-layout casting, baseline atomics, resolve and other required uses are supplied by their applicable format requirements rather than independent flags in this optional mask. Existing [typed-UAV groups](#typed-uav-loads), [shared-exponent support](#shared-exponent-support), [view/casting restrictions](#interpretation) and operation-specific capability requirements remain in force; this query does not create an unrestricted per-format permission matrix.
+
+<a id="driver-format-mask"></a>
+
+##### Optional driver bits and API reporting
+
+The table names the meanings of all published driver bits. API names shortened to `Support1.*` and `Support2.*` have prefixes `D3D12_FORMAT_SUPPORT1_` and `D3D12_FORMAT_SUPPORT2_`. An indicated optional mapping is applied only where that format is eligible; required capabilities do not need the corresponding optional driver bit.
+
+| Driver bit suffix | API reporting relationship / meaning |
+| --- | --- |
+| `SHADER_SAMPLE` | Optional shader sampling -> `Support1.SHADER_SAMPLE`. |
+| `RENDERTARGET` | Optional render-target use -> `Support1.RENDER_TARGET`; it does not by itself establish optional scanout support under the current separate-display-bit rule. |
+| `BLENDABLE` | Optional blending -> `Support1.BLENDABLE`, only when render-target use is supported. |
+| `MULTISAMPLE_RENDERTARGET` | Optional multisampled render-target use -> `Support1.MULTISAMPLE_RENDERTARGET`; sample-count quality is queried separately. |
+| `MULTISAMPLE_LOAD` | Optional multisample loads -> `Support1.MULTISAMPLE_LOAD`. |
+| `DECODER_OUTPUT` | Decoder-output format reporting -> `Support1.DECODER_OUTPUT` when the applicable video interface and format support are exposed. |
+| `VIDEO_PROCESSOR_OUTPUT` | Video-processor output -> `Support1.VIDEO_PROCESSOR_OUTPUT` under video/format eligibility. |
+| `VIDEO_PROCESSOR_INPUT` | Video-processor input -> `Support1.VIDEO_PROCESSOR_INPUT` under video/format eligibility. |
+| `VERTEX_BUFFER` | Optional vertex input -> `Support1.IA_VERTEX_BUFFER`. |
+| `UAV_WRITES` | Optional typed-UAV view/store -> `Support1.TYPED_UNORDERED_ACCESS_VIEW` and `Support2.UAV_TYPED_STORE`; this is not typed-load or atomic support. |
+| `BUFFER` | Optional typed-buffer view support -> `Support1.BUFFER`. |
+| `CAPTURE` | Capture-engine output format reporting; this driver bit is not an extra bit in the public API support words declared above. |
+| `VIDEO_ENCODER` | Video-encoder input format reporting -> `Support1.VIDEO_ENCODER` under video/format eligibility. |
+| `OUTPUT_MERGER_LOGIC_OP` | Published per-format logic-operation report; the API result also follows format requirements and device logic-operation capability, not a raw copy of this bit. |
+| `SHADER_GATHER` | Optional gather -> `Support1.SHADER_GATHER`. |
+| `MULTIPLANE_OVERLAY` | Multiplane-overlay reporting -> `Support2.MULTIPLANE_OVERLAY`; it is not permission for every view or display configuration. |
+| `TILED` | Published tiled 1D/2D/cube/array report, excluding 3D in this bit's definition; API `Support2.TILED` is derived from format requirements and tiled-resource capability, not a raw copy. |
+| `UAV_READS` | Optional typed-UAV load -> `Support2.UAV_TYPED_LOAD`, additionally gated by the applicable typed-load capability/group and typed-UAV write eligibility. |
+| `DISPLAY` | Required for optional scanout reporting as `Support1.DISPLAY` under the current separate-display-bit interface; eligible displayable formats also use it for `Support2.DISPLAYABLE`. The two API uses remain distinct. |
+| `NOT_SUPPORTED` | Whole-format rejection under the restricted format rule above; not an API support bit. |
+
+Typed-UAV load reporting is not enabled by `UAV_READS` alone: the applicable additional/minimum typed-load format capability and typed-UAV store eligibility must also be satisfied. The [load-format groups](#typed-uav-loads) remain canonical. Individual atomic-operation flags and operand-width capabilities are not additional fields in this driver mask; their requirements, including [typed-resource 64-bit capability reporting](amplification-and-mesh-shaders.md#d3d12_feature_data_d3d12_options9), remain separate.
+
+Logic-op and tiled API support are derived from their format/device requirements. Sampler-feedback support follows the [feedback capability and paired-view contract](#create-sampler-feedback-uav), not a new optional-driver-mask bit. Video flags retain their separate interface/format conditions.
+
+The separate display-bit reporting contract is available from driver DDI revision `_0107`. For these current drivers, optional scanout requires the driver's `DISPLAY` bit; render-target support alone must not cause API `Support1.DISPLAY` to be reported. Displayable support is a distinct API use of the bit with its own format eligibility. This is format-support reporting, not a guarantee of every presentation path or color-space combination.
+
+For `DXGI_FORMAT_R9G9B9E5_SHAREDEXP`, the optional render-target/UAV support group is not reported for driver DDI revisions below `_0107`, regardless of optional flags returned by such a driver. The format's preexisting shader-resource uses are unaffected. For eligible drivers, the [R9G9B9E5 group](#shared-exponent-support) retains its all-or-nothing rule, including the derived resolve capability when the group is supported. For `NV12`, shader-load reporting follows shader-sample support because this DDI has no independent shader-load flag. Neither derived rule makes unrelated load, sampling, view or resource operations legal.
+
+<a id="driver-multisample-quality"></a>
+
+#### PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS
+
+Implemented by the client driver to check multi-sample quality levels.
+
+`PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS` receives the driver device, `Format`, `SampleCount`, `D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAGS` and writable `pNumQualityLevels`. Driver `NONE` is zero and `TILED_RESOURCE` is `0x1`; the latter asks about the tiled-resource configuration, not an additional quality index. The output is a count: nonzero `N` supplies ordinary quality indices `0` through `N - 1`; zero reports no quality levels for that configuration.
+
+Format support for multisampled use and the separate quality result must both satisfy the [API query contract](#d3d12-feature-data-multisample-quality-levels). The frontend can answer sample count 1 locally, without this DDI. Counts zero or greater than the API maximum 32 fail the API support calculation; unsupported otherwise-valid configurations can instead produce successful API queries with zero quality levels. Driver invocation is not itself proof that all resource/view/sample-pattern requirements are met.
+
+For the tiled flag, format/tiled-resource capability can force the exposed count to zero even after the driver returned a positive count. The runtime caps an exposed driver count at `0x80000000`, reserving the upper half of the `UINT` quality-value range for separately defined standard/custom sample-pattern values. That cap does not declare every numeric index a valid pattern independently of the reported count, nor replace [multisample/sample-position requirements](rasterization.md#programmable-samples).
+
+The DDI's zero count is ordinary query data, not a recoverable HRESULT. The API's exact-payload-size, failure-versus-zero-support and flag/resource requirements remain at the [feature-query validation owner](#check-feature-support). A result is not resource creation, residency or GPU completion.

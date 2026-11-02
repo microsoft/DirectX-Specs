@@ -14,6 +14,12 @@ This is a **qualified draft**. The qualifications below distinguish published
 contracts and scoped runtime validation from unestablished algorithm,
 precision and hardware guarantees.
 
+The [command-list annotation reference](diagnostics.md#command-list-annotations)
+defines the three internal BeginEvent/EndEvent/SetMarker support methods
+on `ID3D12VideoProcessCommandList`. Their recording and allocator-data lifetime
+follows [common annotation state](command-list-state.md#annotations), not
+a new video processing mode or GPU synchronization operation.
+
 <a id="process-model"></a>
 
 ## Processing model and shared contracts
@@ -1688,11 +1694,12 @@ sizes. Neither is the application's output-picture allocation.
 
 The layouts and callback typedefs below are selected published WDK contracts.
 DDI suffixes identify contract versions; they are not new API identities or
-universal hardware capability guarantees. The `_0032` input creation
-description includes fixed `FieldType`; `_0043` moves field type to each
-recorded input argument. The output layout remains `_0032` in both recording
-forms. This explains the baseline versus per-call field-type distinction
-without inferring a one-to-one call for every runtime wrapper.
+universal hardware capability guarantees. The current creation description supplies the output and counted input
+stream descriptions and protected-session association. `FieldType` is
+supplied in each recorded input argument. The output stream description
+and recording-output layout retain their `_0032` representations; an older
+nested type name does not make that current field layout obsolete. No
+one-to-one driver call is inferred for every runtime wrapper.
 
 The shared DDI format/sample/size/scale layouts retain their
 [decode capability-payload owner](video-decode.md#ddi-capability-payloads).
@@ -2172,20 +2179,6 @@ typedef struct D3D12DDI_VIDEO_PROCESS_INPUT_STREAM_RATE_INFO_0032
 
 <a id="d3d12ddiarg-video-process-input-stream-arguments-0032"></a>
 
-### D3D12DDIARG_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS_0032
-
-```cpp
-typedef struct D3D12DDIARG_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS_0032
-{
-    D3D12DDI_VIDEO_PROCESS_INPUT_STREAM_0020 InputStream[2];
-    D3D12DDI_VIDEO_PROCESS_TRANSFORM_0032 Transform;
-    D3D12DDI_VIDEO_PROCESS_INPUT_STREAM_FLAGS_0020 Flags;
-    D3D12DDI_VIDEO_PROCESS_INPUT_STREAM_RATE_INFO_0032 RateInfo;
-    INT FilterLevels[D3D12DDI_VIDEO_PROCESS_MAX_FILTERS_0020];
-    D3D12DDI_VIDEO_PROCESS_ALPHA_BLENDING_0020 AlphaBlending;
-} D3D12DDIARG_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS_0032;
-```
-
 <a id="d3d12ddiarg-video-process-output-stream-arguments-0032"></a>
 
 ### D3D12DDIARG_VIDEO_PROCESS_OUTPUT_STREAM_ARGUMENTS_0032
@@ -2200,52 +2193,13 @@ typedef struct D3D12DDIARG_VIDEO_PROCESS_OUTPUT_STREAM_ARGUMENTS_0032
 
 <a id="d3d12ddiarg-video-process-input-stream-arguments-0043"></a>
 
-### D3D12DDIARG_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS_0043
-
-```cpp
-typedef struct D3D12DDIARG_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS_0043
-{
-    D3D12DDI_VIDEO_PROCESS_INPUT_STREAM_0020 InputStream[2];
-    D3D12DDI_VIDEO_PROCESS_TRANSFORM_0032 Transform;
-    D3D12DDI_VIDEO_PROCESS_INPUT_STREAM_FLAGS_0020 Flags;
-    D3D12DDI_VIDEO_PROCESS_INPUT_STREAM_RATE_INFO_0032 RateInfo;
-    INT FilterLevels[D3D12DDI_VIDEO_PROCESS_MAX_FILTERS_0020];
-    D3D12DDI_VIDEO_PROCESS_ALPHA_BLENDING_0020 AlphaBlending;
-    D3D12DDI_VIDEO_FIELD_TYPE_0020 FieldType;
-} D3D12DDIARG_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS_0043;
-```
-
 <a id="pfnd3d12ddi-calcprivatevideoprocessorsize-0032"></a>
-
-### PFND3D12DDI_CALCPRIVATEVIDEOPROCESSORSIZE_0032
-
-```cpp
-typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEVIDEOPROCESSORSIZE_0032 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_PROCESSOR_0032* pArgs);
-```
 
 <a id="pfnd3d12ddi-createvideoprocessor-0032"></a>
 
-### PFND3D12DDI_CREATEVIDEOPROCESSOR_0032
-
-```cpp
-typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEOPROCESSOR_0032 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_PROCESSOR_0032* pArgs, D3D12DDI_HVIDEOPROCESSOR_0020 hDrvVideoProcessor);
-```
-
 <a id="pfnd3d12ddi-calcprivatevideoprocessorsize-0043"></a>
 
-### PFND3D12DDI_CALCPRIVATEVIDEOPROCESSORSIZE_0043
-
-```cpp
-typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEVIDEOPROCESSORSIZE_0043 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_PROCESSOR_0043* pArgs);
-```
-
 <a id="pfnd3d12ddi-createvideoprocessor-0043"></a>
-
-### PFND3D12DDI_CREATEVIDEOPROCESSOR_0043
-
-```cpp
-typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEOPROCESSOR_0043 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_PROCESSOR_0043* pArgs, D3D12DDI_HVIDEOPROCESSOR_0020 hDrvVideoProcessor);
-```
 
 <a id="pfnd3d12ddi-destroyvideoprocessor-0021"></a>
 
@@ -2257,31 +2211,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYVIDEOPROCESSOR_0021 )( D3D12DDI_HDEV
 
 <a id="pfnd3d12ddi-video-process-frame-0032"></a>
 
-### PFND3D12DDI_VIDEO_PROCESS_FRAME_0032
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_PROCESS_FRAME_0032) (
-    D3D12DDI_HCOMMANDLIST hDrvCommandList,
-    D3D12DDI_HVIDEOPROCESSOR_0020 hDrvVideoProcessor,
-    const D3D12DDIARG_VIDEO_PROCESS_OUTPUT_STREAM_ARGUMENTS_0032*   pOutputParameters,
-    const D3D12DDIARG_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS_0032*    pInputStreamParameters,
-    UINT NumInputStreams
-    );
-```
-
 <a id="pfnd3d12ddi-video-process-frame-0043"></a>
-
-### PFND3D12DDI_VIDEO_PROCESS_FRAME_0043
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_PROCESS_FRAME_0043) (
-    D3D12DDI_HCOMMANDLIST hDrvCommandList,
-    D3D12DDI_HVIDEOPROCESSOR_0020 hDrvVideoProcessor,
-    const D3D12DDIARG_VIDEO_PROCESS_OUTPUT_STREAM_ARGUMENTS_0032*   pOutputParameters,
-    const D3D12DDIARG_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS_0043*    pInputStreamParameters,
-    UINT NumInputStreams
-    );
-```
 
 <a id="process-ddi-associations"></a>
 
@@ -2341,7 +2271,19 @@ The handle of a video processor.
 
 None
 
-#### Driver baseline frame processing
+<a id="current-process-frame-ddi"></a>
+
+#### Driver frame processing
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_PROCESS_FRAME_0106) (
+    D3D12DDI_HCOMMANDLIST hDrvCommandList,
+    D3D12DDI_HVIDEOPROCESSOR_0020 hDrvVideoProcessor,
+    const D3D12DDIARG_VIDEO_PROCESS_OUTPUT_STREAM_ARGUMENTS_0032*   pOutputParameters,
+    const D3D12DDIARG_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS_0106*    pInputStreamParameters,
+    UINT NumInputStreams
+    );
+```
 
 Performs a video processing operation on one or more input samples and writes the result to an output surface.
 
@@ -2357,11 +2299,11 @@ The video processor instance to use for this video process call. The video proce
 
 `pOutputParameters`
 
-The output arguments for the video process. The available parameters are in the [D3D12DDIARG_VIDEO_PROCESS_OUTPUT_STREAM_ARGUMENTS](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ns-d3d12umddi-d3d12ddiarg_video_process_output_stream_arguments_0032) structure.
+The output arguments for the video process. The available parameters are in the [D3D12DDIARG_VIDEO_PROCESS_OUTPUT_STREAM_ARGUMENTS_0032](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ns-d3d12umddi-d3d12ddiarg_video_process_output_stream_arguments_0032) structure.
 
 `pInputStreamParameters`
 
-Specifies an array of input parameters. The available parameters are in the [D3D12DDIARG_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ns-d3d12umddi-d3d12ddiarg_video_process_input_stream_arguments_0032) structure.
+Specifies an array of input parameters. The available parameters are in the [D3D12DDIARG_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS_0106](#process-input-arguments) structure.
 
 `NumInputStreams`
 
@@ -2371,42 +2313,147 @@ The count of input streams.
 
 None
 
-#### Driver per-call field-type processing
+<a id="current-processor-abi"></a>
 
-The **PFND3D12DDI\_VIDEO\_PROCESS\_FRAME\_0043** callback function performs a video processing operation on one or more input samples and writes the result to an output surface.
+### Current processor creation and argument layouts
 
-##### Parameters
+```cpp
+typedef enum D3D12DDI_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION_FLAGS_0111_0
+{
+    D3D12DDI_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION_FLAG_0111_0_NONE = 0x0,
+    D3D12DDI_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION_FLAG_0111_0_ENABLE = 0x1,
+} D3D12DDI_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION_FLAGS_0111_0;
+```
 
-`hDrvCommandList`
+```cpp
+typedef enum D3D12DDI_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE_0106
+{
+    D3D12DDI_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE_0106_TRILINEAR = 0,
+    D3D12DDI_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE_0106_TETRAHEDRAL = 1,
+} D3D12DDI_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE_0106;
+```
 
-A handle to the driver's data for the command list. The driver uses this region of memory to store internal data structures that are related to its command list.
+```cpp
+typedef enum D3D12DDI_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_0106
+{
+    D3D12DDI_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_0106_17x17x17 = 0,
+    D3D12DDI_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_0106_33x33x33 = 1,
+    D3D12DDI_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_0106_45x45x45 = 2,
+    D3D12DDI_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_0106_65x65x65 = 3,
+} D3D12DDI_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_0106;
+```
 
-`hDrvVideoProcessor`
+```cpp
+typedef struct D3D12DDI_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION_0111_0
+{
+    D3D12DDI_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION_FLAGS_0111_0 ConfigFlags;
+    DXGI_COLOR_SPACE_TYPE UpsampledChromaInput;
+    DXGI_FORMAT Format1DLUT;
+    DXGI_FORMAT Format3DLUT;
+    DXGI_COLOR_SPACE_TYPE ColorSpace3DLUTOutput;
+    D3D12DDI_VIDEO_PROCESS_3DLUT_INTERPOLATION_MODE_0106 Interpolation3DLUT;
+    D3D12DDI_VIDEO_PROCESS_3DLUT_TABLE_DIMENSION_0106 Dimension3DLUT;
+} D3D12DDI_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION_0111_0;
+```
 
-The video processor instance to use for this video process call.
+```cpp
+typedef struct D3D12DDI_VIDEO_PROCESSOR_INPUT_STREAM_DESC_0106
+{
+    DXGI_FORMAT Format;
+    DXGI_COLOR_SPACE_TYPE ColorSpace;
+    DXGI_RATIONAL SourceAspectRatio;
+    DXGI_RATIONAL DestinationAspectRatio;
+    DXGI_RATIONAL FrameRate;
+    D3D12DDI_VIDEO_SIZE_RANGE_0032 SourceSizeRange;
+    D3D12DDI_VIDEO_SIZE_RANGE_0032 DestinationSizeRange;
+    BOOL EnableOrientation;
+    D3D12DDI_VIDEO_PROCESS_FILTER_FLAGS_0020 FilterFlags;
+    D3D12DDI_VIDEO_FRAME_STEREO_FORMAT_0020 StereoFormat;
+    D3D12DDI_VIDEO_PROCESS_DEINTERLACE_FLAGS_0020 DeinterlaceMode;
+    BOOL EnableAlphaBlending;
+    D3D12DDI_VIDEO_PROCESS_LUMA_KEY_0020 LumaKey;
+    UINT NumPastFrames;
+    UINT NumFutureFrames;
+    BOOL EnableAutoProcessing;
+    D3D12DDI_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION_0111_0 ConfigurationLUT;
+} D3D12DDI_VIDEO_PROCESSOR_INPUT_STREAM_DESC_0106;
+```
 
-`pOutputParameters`
+```cpp
+typedef struct D3D12DDIARG_CREATE_VIDEO_PROCESSOR_0106
+{
+    UINT NodeMask;
+    D3D12DDI_VIDEO_PROCESS_OUTPUT_STREAM_DESC_0032 OutputStream;
+    D3D12DDI_VIDEO_PROCESSOR_INPUT_STREAM_DESC_0106* pInputStreams;
+    UINT NumInputStreams;
+    D3D12DDI_HPROTECTEDRESOURCESESSION_0030 hDrvProtectedResourceSession;
+} D3D12DDIARG_CREATE_VIDEO_PROCESSOR_0106;
+```
 
-A [**D3D12DDIARG\_VIDEO\_PROCESS\_OUTPUT\_STREAM\_ARGUMENTS\_0032**](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ns-d3d12umddi-d3d12ddiarg_video_process_output_stream_arguments_0032) structure to hold the output arguments for the video process.
+```cpp
+typedef enum D3D12DDI_VIDEO_PROCESS_LUT_UPDATE_FLAGS_0111_0
+{
+    D3D12DDI_VIDEO_PROCESS_LUT_UPDATE_FLAG_0111_0_NONE = 0x0,
+    D3D12DDI_VIDEO_PROCESS_LUT_UPDATE_FLAG_0111_0_CSC = 0x1,
+    D3D12DDI_VIDEO_PROCESS_LUT_UPDATE_FLAG_0111_0_1DLUT = 0x2,
+    D3D12DDI_VIDEO_PROCESS_LUT_UPDATE_FLAG_0111_0_1DLUT_SPACING = 0x4,
+    D3D12DDI_VIDEO_PROCESS_LUT_UPDATE_FLAG_0111_0_3DLUT = 0x8,
+} D3D12DDI_VIDEO_PROCESS_LUT_UPDATE_FLAGS_0111_0;
+```
 
-`pInputStreamParameters`
+```cpp
+typedef struct D3D12DDI_VIDEO_PROCESS_TRANSFORM_LUT_0111_0
+{
+    // LUT Compound config
+    D3D12DDI_VIDEO_PROCESS_LUT_TRANSFORM_CONFIGURATION_0111_0 Configuration;
 
-A [**D3D12DDIARG\_VIDEO\_PROCESS\_INPUT\_STREAM\_ARGUMENTS\_0043**](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ns-d3d12umddi-d3d12ddiarg_video_process_input_stream_arguments_0043) structure with the input arguments for the video process.
+    // LUT Compound flags
+    D3D12DDI_VIDEO_PROCESS_LUT_UPDATE_FLAGS_0111_0 UpdateFlags;
 
-`NumInputStreams`
+    // CSC
+    float pCSCMatrix[4][3];
 
-The number of input streams.
+    // 1DLUT
+    D3D12DDI_HRESOURCE hDrv1DLUTtransform;
+    UINT Subresource1DLUT;
+    D3D12DDI_HRESOURCE hDrv1DLUTInputSpacing;
+    UINT Subresource1DLUTInputSpacing;
 
-##### Return values
+    // 3DLUT
+    D3D12DDI_HRESOURCE hDrv3DLUTTransform; // No subresource for Texture3D
+} D3D12DDI_VIDEO_PROCESS_TRANSFORM_LUT_0111_0;
+```
 
-None
+<a id="process-input-arguments"></a>
 
-| Published table | Selected field | Callback type |
+```cpp
+typedef struct D3D12DDIARG_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS_0106
+{
+    D3D12DDI_VIDEO_PROCESS_INPUT_STREAM_0020 InputStream[2];
+    D3D12DDI_VIDEO_PROCESS_TRANSFORM_0032 Transform;
+    D3D12DDI_VIDEO_PROCESS_INPUT_STREAM_FLAGS_0020 Flags;
+    D3D12DDI_VIDEO_PROCESS_INPUT_STREAM_RATE_INFO_0032 RateInfo;
+    INT FilterLevels[D3D12DDI_VIDEO_PROCESS_MAX_FILTERS_0020];
+    D3D12DDI_VIDEO_PROCESS_ALPHA_BLENDING_0020 AlphaBlending;
+    D3D12DDI_VIDEO_FIELD_TYPE_0020 FieldType;
+    D3D12DDI_VIDEO_PROCESS_TRANSFORM_LUT_0111_0 LUTMode;
+} D3D12DDIARG_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS_0106;
+```
+
+```cpp
+typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEVIDEOPROCESSORSIZE_0106 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_PROCESSOR_0106* pArgs);
+```
+
+```cpp
+typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEOPROCESSOR_0106 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_PROCESSOR_0106* pArgs, D3D12DDI_HVIDEOPROCESSOR_0020 hDrvVideoProcessor);
+```
+
+| Current table | Member | Callback typedef |
 |---|---|---|
-| `D3D12DDI_DEVICE_FUNCS_VIDEO_0033` | `pfnCalcPrivateVideoProcessorSize`, `pfnCreateVideoProcessor`, `pfnDestroyVideoProcessor` | `_0032` size/create, `_0021` destroy above |
-| `D3D12DDI_DEVICE_FUNCS_VIDEO_0043` | `pfnCalcPrivateVideoProcessorSize`, `pfnCreateVideoProcessor`, `pfnDestroyVideoProcessor` | `_0043` size/create, `_0021` destroy above |
-| `D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_PROCESS_0032` | `pfnProcessFrame` | `PFND3D12DDI_VIDEO_PROCESS_FRAME_0032` |
-| `D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_PROCESS_0043` | `pfnProcessFrame` | `PFND3D12DDI_VIDEO_PROCESS_FRAME_0043` |
+| `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnCalcPrivateVideoProcessorSize` | `PFND3D12DDI_CALCPRIVATEVIDEOPROCESSORSIZE_0106` |
+| `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnCreateVideoProcessor` | `PFND3D12DDI_CREATEVIDEOPROCESSOR_0106` |
+| `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnDestroyVideoProcessor` | `PFND3D12DDI_DESTROYVIDEOPROCESSOR_0021` |
+| `D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_PROCESS_0106` | `pfnProcessFrame` | `PFND3D12DDI_VIDEO_PROCESS_FRAME_0106` |
 
 `D3D12DDICAPS_TYPE_VIDEO_0020_PROCESS_SUPPORT` uses
 `D3D12DDI_VIDEO_PROCESS_SUPPORT_DATA_0032` for the selected support layout;

@@ -2,7 +2,7 @@
 
 # Resource operations
 
-This chapter specifies ordinary command-list copies, descriptor-addressed clears, resolves and resource discard. These commands operate on the resources, subresources and views supplied to the call, rather than on draw attachment bindings.
+This chapter specifies command-list copies, immediate buffer writes, descriptor-addressed clears, resolves and resource discard. These commands operate on the resources, subresources and views supplied to the call, rather than on draw attachment bindings.
 
 This is a source-preserving draft. The selected copy, clear, resolve and discard contracts include the applicable maintainer resolutions; source-only requirements are not claims of universal implementation verification.
 
@@ -27,6 +27,12 @@ The declaring interface for the base methods is `ID3D12GraphicsCommandList`; the
 None of these ordinary methods may be called inside an open render pass. Render-pass beginning/ending clear, resolve and discard accesses are different operations, governed by the [pass access types](output-merger.md#render-pass-access). Their `NO_ACCESS` pairing/terminal-flow and suspend/resume qualifications remain at that owner.
 
 All eleven methods return `void`; none returns a per-call `HRESULT`. Recording failure and `Close` results follow [command-list errors](execution.md#close). An API's invalid-usage rule, a core runtime check and a debug-layer diagnostic are distinct contracts; a missing diagnostic does not make a call valid.
+
+The tables and eleven-method render-pass restriction in this section cover
+the copy/clear/resolve and graphics DiscardResource methods. The separate
+[immediate-write entries](#immediate-buffer-writes) and video discard
+entries define their own declaring-list and recording contexts; they do not
+inherit a blanket ban from this table.
 
 The application must supply the access/layout appropriate to the operation under [enhanced barriers](synchronization.md#barrier-access). The corresponding legacy path remains supported under [resource states](synchronization.md#legacy-resource-states), including its [promotion/decay rules](synchronization.md#legacy-promotion-and-decay).
 
@@ -876,6 +882,527 @@ typedef enum D3D12_TILE_COPY_FLAGS {
 ##### Remarks
 
 This enum is used by the [CopyTiles](#copytiles) method.
+
+<a id="atomic-buffer-copies"></a>
+
+## Atomic buffer copies
+
+`AtomicCopyBufferUINT` and `AtomicCopyBufferUINT64` record a copy of one
+32-bit or 64-bit primary element, respectively. The dependency list
+identifies payload data whose updates precede publication of that
+element; it is not an array of additional copy source/destination pairs.
+The operation does not copy those dependent resource contents.
+
+Both are declared by `ID3D12GraphicsCommandList1` and require an open
+`DIRECT`, `COMPUTE` or `COPY` recording, not a bundle. They are forbidden
+inside an [open render pass](output-merger.md#render-pass-recording).
+The `UINT64` form requires `UMA` on every node selected by the command list.
+Natural alignment and in-bounds primary extents are required: both
+source and destination addresses must align to the copied width.
+
+Source and destination use the [copy access/state contract](#recording-and-access).
+CPU argument arrays are consumed during recording; the resources retain
+the [recorded-use/GPU lifetime obligations](execution.md#lifetime).
+A use case involving already dispatched rendering does not allow calls
+on a closed/executing recording or mutation of submitted commands.
+Predication follows the [exact operation matrix](counters-queries-and-predication.md#predication-operation-matrix),
+including its existing WARP-only evidence qualification.
+
+> **Draft qualification:** The published logical-publication guarantee
+> below is an operation contract, not independently established hardware
+> conformance. It does not define a general shader/CPU memory model,
+> arbitrary concurrent writer protocol or a GPU-completion guarantee.
+
+<a id="atomic-copy-dependencies"></a>
+
+### Dependency ranges
+
+```cpp
+typedef struct D3D12_RANGE_UINT64
+{
+    UINT64 Begin;
+    UINT64 End; // One past end, so (End - Begin) = Size
+} D3D12_RANGE_UINT64;
+
+typedef struct D3D12_SUBRESOURCE_RANGE_UINT64
+{
+    UINT Subresource;
+    D3D12_RANGE_UINT64 Range;
+} D3D12_SUBRESOURCE_RANGE_UINT64;
+```
+
+<a id="d3d12-range-uint64"></a>
+
+#### D3D12_RANGE_UINT64
+
+##### `Begin`
+
+The offset, in bytes, denoting the beginning of a memory range.
+
+##### `End`
+
+The offset, in bytes, denoting the end of a memory range.
+**End** is one-past-the-end.
+
+<a id="d3d12-subresource-range-uint64"></a>
+
+#### D3D12_SUBRESOURCE_RANGE_UINT64
+
+##### `Subresource`
+
+The index of the subresource.
+
+##### `Range`
+
+A memory range within the subresource.
+
+`Dependencies` counts corresponding entries in both arrays. A nonzero
+count requires both arrays and a non-null resource at every index.
+Zero permits no dependency entries; it does not synchronize unspecified
+payload data. The debug layer warns for zero dependencies rather than
+making that warning a retail failure.
+
+`Range` is a byte interval [`Begin`, `End`), not texel coordinates. Generic
+ranges can be empty, but an atomic-copy dependency requires `Begin` < `End`.
+`UINT64_MAX` as `End` denotes the end of the selected subresource.
+`D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES` requires the whole-resource
+sentinel `Begin` = 0, `End` = `UINT64_MAX`; it is not a literal memory extent.
+
+The layout names below have the `D3D12_TEXTURE_LAYOUT_` prefix.
+For a buffer, a single selected `Subresource` is 0, and a finite `End`
+cannot exceed the buffer size. A selected texture subresource must be
+in range. Packed-mip subresources and textures with `UNKNOWN` or `ROW_MAJOR`
+layout require `Begin` = 0, `End` = `UINT64_MAX`. For a standard mip of a
+64KB-tiled texture, a finite `End` cannot exceed its tile-allocation size.
+For `64KB_UNDEFINED_SWIZZLE`, `Begin` and finite `End` must align to the
+64-KiB tile size; `UINT64_MAX` remains the end-of-subresource sentinel.
+`64KB_STANDARD_SWIZZLE` does not acquire that extra tile-alignment rule.
+These are byte ranges of the resource representation, not an assumed
+tightly packed texture footprint or a new general range-barrier API.
+
+<a id="id3d12graphicscommandlist1-atomiccopybufferuint"></a>
+
+### ID3D12GraphicsCommandList1::AtomicCopyBufferUINT
+
+#### Declaration
+
+```cpp
+void AtomicCopyBufferUINT( ID3D12Resource* pDstBuffer, UINT64 DstOffset, ID3D12Resource* pSrcBuffer, UINT64 SrcOffset, UINT Dependencies, ID3D12Resource*const* ppDependentResources, const D3D12_SUBRESOURCE_RANGE_UINT64* pDependentSubresourceRanges );
+```
+
+#### Behavior
+
+Atomically copies a primary data element of type UINT from one resource to another, along with optional dependent resources.
+
+These 'dependent resources' are so-named because they depend upon the primary data element to locate them, typically the key element is an address, index, or other handle that refers to one or more of the dependent resources indirectly.
+
+This function supports a primary data element of type UINT (32bit). A different version of this function, [AtomicCopyBufferUINT64](#id3d12graphicscommandlist1-atomiccopybufferuint64), supports a primary data element of type UINT64 (64bit).
+
+#### Parameters
+
+##### `pDstBuffer`
+
+Type: **ID3D12Resource***
+
+The resource that the UINT primary data element is copied into.
+
+##### `DstOffset`
+
+Type: **UINT64**
+
+An offset into the destination resource buffer that specifies where the primary data element is copied into, in bytes. This offset combined with the base address of the resource buffer must result in a memory address that's naturally aligned for UINT values.
+
+##### `pSrcBuffer`
+
+Type: **ID3D12Resource***
+
+The resource that the UINT primary data element is copied from. This data is typically an address, index, or other handle that shader code can use to locate the most-recent version of latency-sensitive information.
+
+##### `SrcOffset`
+
+Type: **UINT64**
+
+An offset into the source resource buffer that specifies where the primary data element is copied from, in bytes. This offset combined with the base address of the resource buffer must result in a memory address that's naturally aligned for UINT values.
+
+##### `Dependencies`
+
+Type: **UINT**
+
+The number of dependent resources.
+
+##### `ppDependentResources`
+
+Type: `ID3D12Resource* const*`
+
+An array of resources that contain the dependent elements of the data payload.
+
+##### `pDependentSubresourceRanges`
+
+Type: **const [D3D12_SUBRESOURCE_RANGE_UINT64](#d3d12-subresource-range-uint64)***
+
+An array of subresource ranges that specify the dependent elements of the data payload. These elements are completely updated before the primary data element is itself atomically copied. This ensures that the entire operation is logically atomic; that is, the primary data element never refers to an incomplete data payload.
+
+#### Context
+
+This method is typically used to update resources for which normal rendering pipeline latency can be detrimental to user experience. For example, an application can compute a view matrix from the latest user input (such as from the sensors of a head-mounted display), and use this function to update and activate this matrix in command lists already dispatched to the GPU to reduce perceived latency between input and rendering.
+
+<a id="id3d12graphicscommandlist1-atomiccopybufferuint64"></a>
+
+### ID3D12GraphicsCommandList1::AtomicCopyBufferUINT64
+
+#### Declaration
+
+```cpp
+void AtomicCopyBufferUINT64( ID3D12Resource* pDstBuffer, UINT64 DstOffset, ID3D12Resource* pSrcBuffer, UINT64 SrcOffset, UINT Dependencies, ID3D12Resource*const* ppDependentResources, const D3D12_SUBRESOURCE_RANGE_UINT64* pDependentSubresourceRanges );
+```
+
+#### Behavior
+
+Atomically copies a primary data element of type UINT64 from one resource to another, along with optional dependent resources.
+
+These 'dependent resources' are so-named because they depend upon the primary data element to locate them, typically the key element is an address, index, or other handle that refers to one or more of the dependent resources indirectly.
+
+This function supports a primary data element of type UINT64 (64bit). A different version of this function, [AtomicCopyBufferUINT](#id3d12graphicscommandlist1-atomiccopybufferuint), supports a primary data element of type UINT (32bit).
+
+#### Parameters
+
+##### `pDstBuffer`
+
+Type: **ID3D12Resource***
+
+The resource that the UINT64 primary data element is copied into.
+
+##### `DstOffset`
+
+Type: **UINT64**
+
+An offset into the destination resource buffer that specifies where the primary data element is copied into, in bytes. This offset combined with the base address of the resource buffer must result in a memory address that's naturally aligned for UINT64 values.
+
+##### `pSrcBuffer`
+
+Type: **ID3D12Resource***
+
+The resource that the UINT64 primary data element is copied from. This data is typically an address, index, or other handle that shader code can use to locate the most-recent version of latency-sensitive information.
+
+##### `SrcOffset`
+
+Type: **UINT64**
+
+An offset into the source resource buffer that specifies where the primary data element is copied from, in bytes. This offset combined with the base address of the resource buffer must result in a memory address that's naturally aligned for UINT64 values.
+
+##### `Dependencies`
+
+Type: **UINT**
+
+The number of dependent resources.
+
+##### `ppDependentResources`
+
+Type: `ID3D12Resource* const*`
+
+An array of resources that contain the dependent elements of the data payload.
+
+##### `pDependentSubresourceRanges`
+
+Type: **const [D3D12_SUBRESOURCE_RANGE_UINT64](#d3d12-subresource-range-uint64)***
+
+An array of subresource ranges that specify the dependent elements of the data payload. These elements are completely updated before the primary data element is itself atomically copied. This ensures that the entire operation is logically atomic; that is, the primary data element never refers to an incomplete data payload.
+
+#### Context
+
+This method is typically used to update resources for which normal rendering pipeline latency can be detrimental to user experience. For example, an application can compute a view matrix from the latest user input (such as from the sensors of a head-mounted display), and use this function to update and activate this matrix in command lists already dispatched to the GPU to reduce perceived latency between input and rendering.
+
+<a id="atomic-copy-validation"></a>
+
+### Recording results and validation
+
+Both methods return `void`, not a per-call `HRESULT` or a completion value.
+The [common recording/error contract](execution.md#recording-lifecycle)
+governs invalid recordings and `Close` results. Current core validation
+rejects null primary buffers, non-buffer primary resources, misaligned
+offsets, overflowing/out-of-bounds primary extents, non-`UMA` `UINT64` use,
+missing nonempty dependency arrays and invalid dependency resources or
+ranges. Recording allocation failure is also a recording error.
+Checked-layer copy-state/residency diagnostics remain distinct from
+retail validation and actual driver/hardware conformance.
+
+For a dependency texture with a 64KB-tiled layout, current validation
+also rejects the resource if `GetResourceTiling` returns no selected
+subresource record or reports neither standard nor packed mips.
+
+<a id="atomic-copy-driver"></a>
+
+### Current driver atomic-copy association
+
+The current command-list `pfnAtomicCopyBufferRegion` slot uses
+[PFND3D12DDI_COPYBUFFERREGION_0003](#driver-api-associations), the same
+signature as ordinary buffer copy but not the same operation contract.
+The runtime supplies driver resource-plus-byte-offset placements and
+`SrcBytes` = 4 or 8. The dependency arrays are not additional arguments
+of that copy signature and are not resource-copy payloads.
+
+On the enhanced-barrier path, the runtime represents each dependency
+as a current [ranged acquire barrier](synchronization.md#enhanced-driver),
+followed by a source primary range acquire with `D3D12DDI_RANGED_BARRIER_FLAG_ATOMIC_COPY_0094`. It invokes
+the atomic-copy slot, then emits a destination primary range release
+with `D3D12DDI_RANGED_BARRIER_FLAG_ATOMIC_COPY_0094`. Primary ranges use subresource 0 and [offset, offset +
+copied width); dependency ranges retain their selected resource,
+subresource and bounds. Current ranged flags/types and barrier signature
+retain their canonical owner; these internal ranges do not expand the
+application Barrier API to arbitrary buffer subregions.
+
+Legacy-barrier operation remains supported without requiring the
+`EnhancedBarriersSupported` capability. Both transports implement the same
+API contract, without a one-to-one API/DDI call-count guarantee.
+
+<a id="immediate-buffer-writes"></a>
+
+## Immediate buffer writes
+
+<a id="writebufferimmediate-contract"></a>
+
+### Parameters, access and availability
+
+```cpp
+typedef struct D3D12_WRITEBUFFERIMMEDIATE_PARAMETER
+{
+    D3D12_GPU_VIRTUAL_ADDRESS Dest;
+    UINT32 Value;
+} D3D12_WRITEBUFFERIMMEDIATE_PARAMETER;
+
+typedef enum D3D12_WRITEBUFFERIMMEDIATE_MODE
+{
+    D3D12_WRITEBUFFERIMMEDIATE_MODE_DEFAULT = 0,
+    D3D12_WRITEBUFFERIMMEDIATE_MODE_MARKER_IN = 0x1,
+    D3D12_WRITEBUFFERIMMEDIATE_MODE_MARKER_OUT = 0x2
+} D3D12_WRITEBUFFERIMMEDIATE_MODE;
+```
+
+Immediate write operations use 4-byte aligned GPU virtual addresses to designate write destinations.
+
+Each entry supplies a 32-bit value and a GPU virtual destination address
+in buffer storage; there is no source resource or deferred CPU-data read.
+`Count` gives the number of entries. The optional mode array has the same
+element count; a null mode pointer selects DEFAULT for every entry.
+The address/alignment and valid-mode requirements apply even when modes
+are omitted. A zero count writes no values but does not waive support or
+recording-context requirements.
+
+The parameter/mode arrays are consumed during recording. Their CPU memory
+need not remain valid until GPU execution, whereas the destination storage
+must remain valid and resident for the GPU use under
+[execution lifetime](execution.md#lifetime). `Dest` is a GPU address, not a
+CPU pointer, descriptor handle or new resource allocation.
+
+The receiving buffer requires legacy `D3D12_RESOURCE_STATE_COPY_DEST`, or
+the corresponding enhanced `D3D12_BARRIER_ACCESS_COPY_DEST` access and
+`D3D12_BARRIER_SYNC_COPY` dependency scopes under
+[the synchronization contract](synchronization.md#barrier-sync).
+The operation does not itself transition the resource.
+
+Support for the recording list's type is reported by
+[`OPTIONS3.WriteBufferImmediateSupportFlags`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options3),
+together with the device's existing required-support contract. A declaration
+or driver table slot does not grant unsupported video/list use. The
+[render-pass operation contract](output-merger.md#render-pass-operation-surface)
+and [predication matrix](counters-queries-and-predication.md#predication-operation-matrix)
+remain applicable: supported immediate writes may be recorded inside an
+open pass without consuming that pass's writes. COPY lists have no predicate
+selection; bundles use the inherited predicate where applicable.
+
+MARKER_IN and MARKER_OUT constrain local command-stream timing, not a new
+global cache-visibility or CPU synchronization model. They do not replace
+required access dependencies, fences or CPU/GPU completion synchronization.
+Completion of ExecuteCommandLists in the multi-context qualification means
+completion of submitted GPU work, not return of the CPU submission method.
+Invalid-input diagnosis is not guaranteed for every malformed address/mode;
+reported recording errors follow the
+[shared callback/deferred-Close contract](execution.md#lifecycle-driver-errors).
+
+The architecture qualifications below concern tile-based deferred rendering
+(TBDR) and implicit linked display adapter (LDA) operation.
+
+<a id="writebufferimmediate-modes"></a>
+
+### Modes and marker ordering
+
+`D3D12_WRITEBUFFERIMMEDIATE_MODE_DEFAULT`
+
+The write operation behaves the same as normal copy write operations.
+
+`D3D12_WRITEBUFFERIMMEDIATE_MODE_MARKER_IN`
+
+The write operation is guaranteed to occur after any preceding commands in the stream have started, including previous WriteBufferImmediate operations.
+
+`D3D12_WRITEBUFFERIMMEDIATE_MODE_MARKER_OUT`
+
+The write operation is deferred until ALL previous commands in the stream have completed execution in the GPU pipeline, including previous WriteBufferImmediate MARKER_IN operations. However, the MARKER_OUT write operation may occur before any other caches are flushed meaning data from previous commands is not guaranteed to be globally visible. MARKER_OUT copies do NOT block subsequent operations from starting execution. If there are no previous operations in the stream the operation behaves like a MARKER_IN copy.
+
+MARKER_OUT Operations can be reordered in the command stream after subsequent operations except other MARKER_OUT WriteBufferImmediate operations.
+
+Immediate writes are not intended to force cache flushing and are not expected to introduce significant performance losses. Drivers should avoid stalling the GPU pipeline, regardless of write mode.
+
+GPU schedulers must not move WriteBufferImmediate operations using MARKER_IN or MARKER_OUT ahead of previous commands. However, subsequent commands can be moved ahead of these WriteBufferImmediate operations. This may help tile-based deferred renderers with batching commands in tiles.
+
+<a id="writebufferimmediate-multicontext"></a>
+
+### Tiled and multi-context execution
+
+Tile-based renderers may repeatedly run commands or ranges of commands on multiple tiles, potentially resulting in “later” commands being completed on one tile while “earlier” commands are started on the next tile. If a GPU-fault occurs during this period, coinciding MARKER_IN and MARKER_OUT writes may appear to be written out-of-sequence. To address this TBDR drivers can keep the marker writes in sync by reporting marker writes as they complete on a given tile. If a GPU fault occurs, the marker writes must reflect the status of the commands being executed for the faulting tile. If no fault occurs, then the last executed tile markers are expected to be written.
+
+There are cases (such as implicit LDA) where command lists distribute some operations across multiple GPUs concurrently. Like TBDR, the marker writes must reflect the status of the commands being executed for the faulting context. If no fault occurs, then the order of WriteBufferImmediate writes is undetermined until completion of ExecuteCommandLists.
+
+<a id="id3d12graphicscommandlist2-writebufferimmediate"></a>
+
+### ID3D12GraphicsCommandList2::WriteBufferImmediate
+
+#### Declaration
+
+```cpp
+void WriteBufferImmediate(
+    UINT Count,
+    const D3D12_WRITEBUFFERIMMEDIATE_PARAMETER *pParams,
+    const D3D12_WRITEBUFFERIMMEDIATE_MODE *pModes
+);
+```
+
+#### Behavior
+
+Writes a number of 32-bit immediate values to the specified buffer locations directly from the command stream.
+
+The [shared immediate-write contract](#writebufferimmediate-contract), including the matching list-type support bit, modes, access, lifetime and recording-context requirements, applies.
+
+#### Parameters
+
+`Count`
+
+The number of entries in the `pParams` and optional `pModes` arrays.
+
+`pParams`
+
+The address of an array containing a number of [D3D12_WRITEBUFFERIMMEDIATE_PARAMETER](#writebufferimmediate-contract) structures equal to `Count`.
+
+`pModes`
+
+The address of an array containing a number of  [D3D12_WRITEBUFFERIMMEDIATE_MODE](#writebufferimmediate-modes) elements equal to `Count`. The default value is `null`; passing `null` causes the system to write all immediate values using `D3D12_WRITEBUFFERIMMEDIATE_MODE_DEFAULT`.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12videodecodecommandlist-writebufferimmediate"></a>
+
+### ID3D12VideoDecodeCommandList::WriteBufferImmediate
+
+#### Declaration
+
+```cpp
+void WriteBufferImmediate(
+    UINT Count,
+    const D3D12_WRITEBUFFERIMMEDIATE_PARAMETER *pParams,
+    const D3D12_WRITEBUFFERIMMEDIATE_MODE *pModes
+);
+```
+
+#### Behavior
+
+Writes a number of 32-bit immediate values to the specified buffer locations directly from the command stream.
+
+The [shared immediate-write contract](#writebufferimmediate-contract), including the matching list-type support bit, modes, access, lifetime and recording-context requirements, applies.
+
+#### Parameters
+
+`Count`
+
+The number of elements in the *pParams* and *pModes* arrays.
+
+`pParams`
+
+The address of an array of [D3D12_WRITEBUFFERIMMEDIATE_PARAMETER](#writebufferimmediate-contract) structures of size *Count*.
+
+`pModes`
+
+The address of an array of [D3D12_WRITEBUFFERIMMEDIATE_MODE](#writebufferimmediate-modes) elements of size *Count*. The default value is `null`. Passing `null` causes the system to write all immediate values using **D3D12_WRITEBUFFERIMMEDIATE_MODE_DEFAULT**.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12videoprocesscommandlist-writebufferimmediate"></a>
+
+### ID3D12VideoProcessCommandList::WriteBufferImmediate
+
+#### Declaration
+
+```cpp
+void WriteBufferImmediate(
+    UINT Count,
+    const D3D12_WRITEBUFFERIMMEDIATE_PARAMETER *pParams,
+    const D3D12_WRITEBUFFERIMMEDIATE_MODE *pModes
+);
+```
+
+#### Behavior
+
+Writes a number of 32-bit immediate values to the specified buffer locations directly from the command stream.
+
+The [shared immediate-write contract](#writebufferimmediate-contract), including the matching list-type support bit, modes, access, lifetime and recording-context requirements, applies.
+
+#### Parameters
+
+`Count`
+
+The number of elements in the *pParams* and *pModes* arrays.
+
+`pParams`
+
+The address of an array of [D3D12_WRITEBUFFERIMMEDIATE_PARAMETER](#writebufferimmediate-contract) structures of size *Count*.
+
+`pModes`
+
+The address of an array of [D3D12_WRITEBUFFERIMMEDIATE_MODE](#writebufferimmediate-modes) elements of size *Count*. The default value is `null`. Passing `null` causes the system to write all immediate values using **D3D12_WRITEBUFFERIMMEDIATE_MODE_DEFAULT**.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12videoencodecommandlist-writebufferimmediate"></a>
+
+### ID3D12VideoEncodeCommandList::WriteBufferImmediate
+
+#### Declaration
+
+```cpp
+void WriteBufferImmediate(
+    UINT Count,
+    const D3D12_WRITEBUFFERIMMEDIATE_PARAMETER *pParams,
+    const D3D12_WRITEBUFFERIMMEDIATE_MODE *pModes
+);
+```
+
+#### Behavior
+
+Writes a number of 32-bit immediate values to the specified buffer locations directly from the command stream.
+
+The [shared immediate-write contract](#writebufferimmediate-contract), including the matching list-type support bit, modes, access, lifetime and recording-context requirements, applies.
+
+#### Parameters
+
+`Count`
+
+The number of elements in the *pParams* and *pModes* arrays.
+
+`pParams`
+
+The address of an array of [D3D12_WRITEBUFFERIMMEDIATE_PARAMETER](#writebufferimmediate-contract) structures of size *Count*.
+
+`pModes`
+
+The address of an array of [D3D12_WRITEBUFFERIMMEDIATE_MODE](#writebufferimmediate-modes) elements of size *Count*. The default value is `null`. Passing `null` causes the system to write all immediate values using **D3D12_WRITEBUFFERIMMEDIATE_MODE_DEFAULT**.
+
+#### Return values
+
+This method does not return a value.
 
 <a id="clear-commands"></a>
 
@@ -2081,6 +2608,120 @@ For [D3D12_COMMAND_LIST_TYPE_DIRECT](https://learn.microsoft.com/en-us/windows/d
 
 **DiscardResource** is not supported on command lists with either [D3D12_COMMAND_LIST_TYPE_BUNDLE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_command_list_type) or **D3D12\_COMMAND\_LIST\_TYPE\_COPY**.
 
+<a id="id3d12videodecodecommandlist-discardresource"></a>
+
+### ID3D12VideoDecodeCommandList::DiscardResource
+
+#### Declaration
+
+```cpp
+void DiscardResource(
+    ID3D12Resource* pResource,
+    const D3D12_DISCARD_REGION* pRegion
+);
+```
+
+#### Behavior
+
+Indicates that the current contents of a resource can be discarded.  The current contents of the resource are no longer valid allowing optimizations for subsequent operations such as [ResourceBarrier](synchronization.md#decode-resource-barrier).
+
+This is the same discard hint and undefined-content/initialization
+contract as [ordinary discard](#discardresource), on the matching video
+command-list type. The graphics entry's DIRECT/COMPUTE resource-flag/state
+cases are not additional video state requirements. The resource must remain
+compatible with the video queue's [access/layout contract](synchronization.md#queue-compatibility),
+with protected-session, residency and execution lifetime preserved.
+[Predication policy](counters-queries-and-predication.md#predication-operation-matrix)
+classifies video discard as unpredicated; a discard hint may be ignored and
+does not promise clearing, preserved old bytes or deallocation.
+
+#### Parameters
+
+`pResource` identifies the resource. Optional `pRegion` selects the
+rectangle/subresource range; null selects the whole resource. The
+[discard-region contract](#d3d12-discard-region) defines counted arrays,
+subresource bounds and buffer/2D rectangular restrictions.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12videoprocesscommandlist-discardresource"></a>
+
+### ID3D12VideoProcessCommandList::DiscardResource
+
+#### Declaration
+
+```cpp
+void DiscardResource(
+    ID3D12Resource* pResource,
+    const D3D12_DISCARD_REGION* pRegion
+);
+```
+
+#### Behavior
+
+Indicates that the current contents of a resource can be discarded.  The current contents of the resource are no longer valid allowing optimizations for subsequent operations such as [ResourceBarrier](synchronization.md#process-resource-barrier).
+
+This is the same discard hint and undefined-content/initialization
+contract as [ordinary discard](#discardresource), on the matching video
+command-list type. The graphics entry's DIRECT/COMPUTE resource-flag/state
+cases are not additional video state requirements. The resource must remain
+compatible with the video queue's [access/layout contract](synchronization.md#queue-compatibility),
+with protected-session, residency and execution lifetime preserved.
+[Predication policy](counters-queries-and-predication.md#predication-operation-matrix)
+classifies video discard as unpredicated; a discard hint may be ignored and
+does not promise clearing, preserved old bytes or deallocation.
+
+#### Parameters
+
+`pResource` identifies the resource. Optional `pRegion` selects the
+rectangle/subresource range; null selects the whole resource. The
+[discard-region contract](#d3d12-discard-region) defines counted arrays,
+subresource bounds and buffer/2D rectangular restrictions.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12videoencodecommandlist-discardresource"></a>
+
+### ID3D12VideoEncodeCommandList::DiscardResource
+
+#### Declaration
+
+```cpp
+void DiscardResource(
+    ID3D12Resource* pResource,
+    const D3D12_DISCARD_REGION* pRegion
+);
+```
+
+#### Behavior
+
+Indicates that the current contents of a resource can be discarded.  The current contents of the resource are no longer valid allowing optimizations for subsequent operations such as [ResourceBarrier](synchronization.md#encode-resource-barrier).
+
+This is the same discard hint and undefined-content/initialization
+contract as [ordinary discard](#discardresource), on the matching video
+command-list type. The graphics entry's DIRECT/COMPUTE resource-flag/state
+cases are not additional video state requirements. The resource must remain
+compatible with the video queue's [access/layout contract](synchronization.md#queue-compatibility),
+with protected-session, residency and execution lifetime preserved.
+[Predication policy](counters-queries-and-predication.md#predication-operation-matrix)
+classifies video discard as unpredicated; a discard hint may be ignored and
+does not promise clearing, preserved old bytes or deallocation.
+
+#### Parameters
+
+`pResource` identifies the resource. Optional `pRegion` selects the
+rectangle/subresource range; null selects the whole resource. The
+[discard-region contract](#d3d12-discard-region) defines counted arrays,
+subresource bounds and buffer/2D rectangular restrictions.
+
+#### Return values
+
+This method does not return a value.
+
 <a id="d3d12-discard-region"></a>
 
 ### D3D12_DISCARD_REGION
@@ -2141,11 +2782,11 @@ Feedback maps have the separately specified [clear/discard initialization interp
 
 ## Driver and hardware contract
 
-The callbacks below are versioned independently of the command-list function-table version. For example, `D3D12DDI_COMMAND_LIST_FUNCS_3D_0033` contains `_0003` copy/clear/discard callbacks, unnumbered resource-copy/tile/whole-resolve callbacks, and `_0027` regional resolve.
+The DDIs below are versioned independently of the command-list function-table version. For example, `D3D12DDI_COMMAND_LIST_FUNCS_3D_0033` contains `_0003` copy/clear/discard DDIs, unnumbered resource-copy/tile/whole-resolve DDIs, and `_0027` regional resolve.
 
 The runtime translates application objects/descriptors to driver command-list, resource and descriptor handles. Buffer copies use placements containing resource plus byte offset. Texture copies additionally describe the selected physical subresource or pitched buffer layout. A view clear carries explicit driver descriptors, values and rectangles; UAV clears retain GPU handle, CPU handle and resource together. Discard carries its rectangle/subresource range. Resolve carries explicit source/destination resources, subresources, format and, for regional resolve, destination coordinates, source rectangle and mode.
 
-The declarations establish spelling and parameter layout. Their behavior remains the API, feature and hardware requirements above; checked-layer diagnostics are not driver callbacks and are not per-call retail return values.
+The declarations establish spelling and parameter layout. Their behavior remains the API, feature and hardware requirements above; checked-layer diagnostics neither define driver validation responsibilities nor supply per-call retail return values.
 
 <a id="driver-copy-types"></a>
 
@@ -2228,8 +2869,6 @@ typedef struct D3D12DDIARG_DISCARD_RESOURCE_0003
 
 The shared driver coordinate/region definition is owned by [Resources](resources.md#tiled-driver-types).
 
-The shared driver coordinate/region definition is owned by [Resources](resources.md#tiled-driver-types).
-
 ```cpp
 typedef enum D3D12DDI_TILE_COPY_FLAGS
 {
@@ -2248,7 +2887,7 @@ BC physical dimensions count complete compression blocks. A logical width of 6 t
 
 <a id="driver-callbacks"></a>
 
-### Ordinary operation callbacks
+### Ordinary operation DDIs
 
 #### PFND3D12DDI_COPYBUFFERREGION_0003
 
@@ -2369,6 +3008,104 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DISCARD_RESOURCE_0003 )(
     D3D12DDI_HRESOURCE hDrvResource,
     CONST D3D12DDIARG_DISCARD_RESOURCE_0003* pRegion );
 ```
+
+<a id="ddi-writebufferimmediate"></a>
+
+#### PFND3D12DDI_WRITEBUFFERIMMEDIATE_0032
+
+```cpp
+typedef struct D3D12DDI_WRITEBUFFERIMMEDIATE_PARAMETER_0032
+{
+    D3D12DDI_GPU_VIRTUAL_ADDRESS                            Dst;
+    UINT32                                                  Value;
+} D3D12DDI_WRITEBUFFERIMMEDIATE_PARAMETER_0032;
+
+typedef enum D3D12DDI_WRITEBUFFERIMMEDIATE_MODE_0032
+{
+    D3D12DDI_WRITEBUFFERIMMEDIATE_MODE_DEFAULT               = 0x0,
+    D3D12DDI_WRITEBUFFERIMMEDIATE_MODE_MARKER_IN             = 0x1,
+    D3D12DDI_WRITEBUFFERIMMEDIATE_MODE_MARKER_OUT            = 0x2,
+} D3D12DDI_WRITEBUFFERIMMEDIATE_MODE_0032;
+
+typedef VOID ( APIENTRY* PFND3D12DDI_WRITEBUFFERIMMEDIATE_0032 )(
+    D3D12DDI_HCOMMANDLIST,
+    UINT Count,
+    _In_reads_(Count) CONST D3D12DDI_WRITEBUFFERIMMEDIATE_PARAMETER_0032 *pParams,
+    _In_reads_opt_(Count) CONST D3D12DDI_WRITEBUFFERIMMEDIATE_MODE_0032 *pModes
+    );
+```
+
+The parameter records have the API's logical address/value meanings:
+API `Dest` corresponds to driver `Dst`, and both carry the GPU address,
+not a CPU pointer or resource handle. `Value` remains the immediate 32-bit
+value. Driver mode values correspond to DEFAULT, MARKER_IN and MARKER_OUT
+without changing their local timing/visibility qualifications.
+
+The UMD consumes the Count parameter/mode entries during the recording call
+and cannot depend on the caller's arrays remaining valid afterward.
+A null mode array supplies DEFAULT for every entry. The negotiated table
+and reported [list-type support](#writebufferimmediate-contract) select
+applicability; the shared graphics/video typedef does not require every
+video queue to expose this API. A `VOID` return is not GPU completion,
+CPU visibility of marker data or a recoverable per-write HRESULT.
+
+<a id="driver-api-associations"></a>
+
+### API associations and recording responsibilities
+
+| Driver entry | Precise logical API contract |
+|---|---|
+| `PFND3D12DDI_COPYBUFFERREGION_0003` | [CopyBufferRegion](#copybufferregion) via `pfnCopyBufferRegion`; [atomic buffer copies](#atomic-copy-driver) via the distinct `pfnAtomicCopyBufferRegion` slot |
+| `PFND3D12DDI_COPYTEXTUREREGION_0003` | [CopyTextureRegion](#copytextureregion) |
+| `PFND3D12DDI_RESOURCECOPY` | [CopyResource](#copyresource) |
+| `PFND3D12DDI_COPYTILES` | [CopyTiles](#copytiles) |
+| `PFND3D12DDI_CLEAR_RENDER_TARGET_VIEW_0003` | [ClearRenderTargetView](#clearrendertargetview) |
+| `PFND3D12DDI_CLEAR_DEPTH_STENCIL_VIEW_0003` | [ClearDepthStencilView](#cleardepthstencilview) |
+| `PFND3D12DDI_CLEAR_UNORDERED_ACCESS_VIEW_UINT_0003` | [ClearUnorderedAccessViewUint](#clearunorderedaccessviewuint) |
+| `PFND3D12DDI_CLEAR_UNORDERED_ACCESS_VIEW_FLOAT_0003` | [ClearUnorderedAccessViewFloat](#clearunorderedaccessviewfloat) |
+| `PFND3D12DDI_RESOURCERESOLVESUBRESOURCE` | [ResolveSubresource](#resolvesubresource) |
+| `PFND3D12DDI_RESOURCERESOLVESUBRESOURCEREGION_0027` | [ResolveSubresourceRegion](#resolvesubresourceregion) |
+| `PFND3D12DDI_DISCARD_RESOURCE_0003` | [DiscardResource](#discardresource); [decode](#id3d12videodecodecommandlist-discardresource), [process](#id3d12videoprocesscommandlist-discardresource), [encode](#id3d12videoencodecommandlist-discardresource) |
+| `PFND3D12DDI_WRITEBUFFERIMMEDIATE_0032` | [WriteBufferImmediate](#id3d12graphicscommandlist2-writebufferimmediate); [decode](#id3d12videodecodecommandlist-writebufferimmediate), [process](#id3d12videoprocesscommandlist-writebufferimmediate), [encode](#id3d12videoencodecommandlist-writebufferimmediate) |
+
+These runtime-to-driver operations receive driver command-list/resource/
+descriptor representations, not COM interface pointers. The runtime can
+normalize layouts, values and handles, elide empty work, or use an older
+fallback; the association table does not promise one API/DDI/hardware call
+per operation.
+
+Buffer-copy placements carry resource handles and byte offsets. Texture
+locations instead use the selected [placement/layout representation](#driver-copy-types);
+SELECT_SUBRESOURCE's offset selects the subresource, while pitched-buffer
+placements carry byte offsets and layout data. CPU layout, box, rectangle
+and value arrays are call-borrowed; the driver must capture what recording
+needs, not retain those pointers until GPU execution. Resource and descriptor
+contents retain their distinct [execution](execution.md#lifetime) and
+[CPU-descriptor](binding.md#descriptor-population) lifetimes.
+
+RTV/DSV values arrive after the runtime normalization described by the
+[RTV](#clearrendertargetview) and [DSV](#cleardepthstencilview) entries;
+direct passthrough does not promise identical incoming bits for every API
+value. Subsequent format conversion follows the separate
+[clear-conversion contract](#clear-conversion). UAV clear retains all
+three inputs: driver GPU handle in the current heap, driver CPU descriptor
+handle and driver resource, with the selected UINT or FLOAT values.
+No clear returns a new view/resource or owns the referenced COM object.
+
+Whole-resource and resolve calls preserve destination-before-source roles.
+Whole resolve has the API's ordinary resolve interpretation; regional resolve
+also carries coordinates, optional rectangle, format and mode. GPU input
+validity, sample/format rules and [predication](counters-queries-and-predication.md#predication-operation-matrix)
+remain the precise API/hardware contracts, not checks proved by a DDI call.
+Shared discard preserves its selected range and hint semantics on graphics/
+video paths; the driver does not infer a generic discard resource state.
+
+All selected recording DDIs return VOID. Reported recording failures use
+the [shared callback/deferred-Close contract](execution.md#lifecycle-driver-errors);
+signature/result type alone neither defines allowed failures nor removes API
+validation. No call supplies implicit resource transitions, residency or GPU
+completion. Existing [render-pass context](output-merger.md#render-pass-operation-surface),
+protection and per-operation access rules remain in force.
 
 Copy commands run on the GPU. Resource copies must not impose significant CPU work proportional to the data size. Drivers/hardware swizzle or deswizzle pitched buffer transfers and tile transfers as required, preserve bitwise reinterpretation rather than numerically converting copied data, and implement the clear conversion, region, sample and precision requirements above.
 

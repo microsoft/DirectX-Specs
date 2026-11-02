@@ -551,7 +551,7 @@ This method returns one of the [Direct3D 12 Return Codes](https://learn.microsof
 
 This method takes UNICODE names.
 
-Note that this is simply a convenience wrapper around [ID3D12Object::SetPrivateData](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12object-setprivatedata) with **WKPDID\_D3DDebugObjectNameW**. Therefore names which are set with `SetName` can be retrieved with [ID3D12Object::GetPrivateData](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12object-getprivatedata) with the same GUID. Additionally, D3D12 supports narrow strings for names, using the **WKPDID\_D3DDebugObjectName** GUID directly instead.
+Note that this is simply a convenience wrapper around [ID3D12Object::SetPrivateData](devices-and-capabilities.md#id3d12object-setprivatedata) with **WKPDID\_D3DDebugObjectNameW**. Therefore names which are set with `SetName` can be retrieved with [ID3D12Object::GetPrivateData](devices-and-capabilities.md#id3d12object-getprivatedata) with the same GUID. Additionally, D3D12 supports narrow strings for names, using the **WKPDID\_D3DDebugObjectName** GUID directly instead.
 
 #### Ownership
 
@@ -559,11 +559,475 @@ The name is copied as object private data; the application retains ownership of 
 
 `Name` must point to a readable, null-terminated UTF-16 string. A null pointer is not an empty name; an empty string consists of its terminating wide null character. The string is copied, including its terminator. Allocation of the copied name can fail with `E_OUTOFMEMORY`; the method does not return a borrowed pointer to the input.
 
+<a id="command-list-annotations"></a>
+
+## Command-list instrumentation annotations
+
+The declaring graphics and video interfaces below expose annotation
+support methods, not pipeline bindings or new work-dispatch commands.
+All require an open recording under the
+[common list lifecycle/error contract](execution.md#recording-lifecycle).
+Metadata remains internal; these entries do not define a public packet
+encoding or arbitrary malformed-input behavior.
+
+Graphics clients use the PIX event-runtime helpers. The video methods
+are internal-only support interfaces; they do not define a direct
+application encoding or a matching PIX helper overload for every
+video interface.
+
+Metadata/payload storage is consumed or captured during the API call.
+Caller ownership is not transferred. Runtime-owned list marker data
+follows the [allocator/recording annotation lifetime](command-list-state.md#annotations):
+a fresh recording does not inherit an earlier open event region,
+device annotation mode is not reset, and resetting the list is not
+reclaiming allocator-backed annotation storage.
+
+Recording annotations does not create a fence, transition resource
+access, guarantee DRED collection or GPU completion, or select the
+memory-write ordering modes of WriteBufferImmediate.
+
+<a id="list-annotation-payload"></a>
+
+### Internal list annotation parameters
+
+`Metadata`, optional input `pData` and `Size` are internal support arguments.
+When supplied, `pData` identifies the payload bytes described by `Size`.
+`Size` describes the payload byte span, not a string or element count;
+no text terminator or ownership transfer follows. The producing
+instrumentation runtime defines the valid encoding; this reference
+does not assign application-controlled metadata tags or a new
+recoverable HRESULT protocol.
+
+<a id="id3d12graphicscommandlist-setmarker"></a>
+
+### ID3D12GraphicsCommandList::SetMarker
+
+#### Declaration
+
+```cpp
+void SetMarker(UINT Metadata, const void* pData, UINT Size);
+```
+
+#### Behavior
+
+To insert instrumentation markers at the current location within a D3D12 command list, use the `PIXSetMarker` function.  This is provided by the [WinPixEventRuntime](https://devblogs.microsoft.com/pix/winpixeventruntime/) NuGet package.
+
+The [shared command-list annotation context](#command-list-annotations)
+and recording/allocator ownership rules apply. This is the entry declared
+by `ID3D12GraphicsCommandList`, not a separate inherited method on each derived interface.
+
+#### Parameters
+
+`Metadata`, `pData` and `Size` use the
+[internal list annotation parameter contract](#list-annotation-payload).
+These parameters are internal, not an application-defined public format.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12graphicscommandlist-beginevent"></a>
+
+### ID3D12GraphicsCommandList::BeginEvent
+
+#### Declaration
+
+```cpp
+void BeginEvent(UINT Metadata, const void* pData, UINT Size);
+```
+
+#### Behavior
+
+To mark the start of an instrumentation region at the current location within a D3D12 command list, use the `PIXBeginEvent` function or `PIXScopedEvent` macro.  These are provided by the [WinPixEventRuntime](https://devblogs.microsoft.com/pix/winpixeventruntime/) NuGet package.
+
+The [shared command-list annotation context](#command-list-annotations)
+and recording/allocator ownership rules apply. This is the entry declared
+by `ID3D12GraphicsCommandList`, not a separate inherited method on each derived interface.
+
+#### Parameters
+
+`Metadata`, `pData` and `Size` use the
+[internal list annotation parameter contract](#list-annotation-payload).
+These parameters are internal, not an application-defined public format.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12graphicscommandlist-endevent"></a>
+
+### ID3D12GraphicsCommandList::EndEvent
+
+#### Declaration
+
+```cpp
+void EndEvent();
+```
+
+#### Behavior
+
+To mark the end of an instrumentation region at the current location within a D3D12 command list, use the `PIXEndEvent` function or `PIXScopedEvent` macro.  These are provided by the [WinPixEventRuntime](https://devblogs.microsoft.com/pix/winpixeventruntime/) NuGet package.
+
+The [shared command-list annotation context](#command-list-annotations)
+and recording/allocator ownership rules apply. This is the entry declared
+by `ID3D12GraphicsCommandList`, not a separate inherited method on each derived interface.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12videodecodecommandlist-setmarker"></a>
+
+### ID3D12VideoDecodeCommandList::SetMarker
+
+#### Declaration
+
+```cpp
+void SetMarker( UINT Metadata, const void* pData, UINT Size);
+```
+
+#### Behavior
+
+For internal use only. Not intended to be called directly.
+
+The [shared command-list annotation context](#command-list-annotations)
+and recording/allocator ownership rules apply. This is the entry declared
+by `ID3D12VideoDecodeCommandList`, not a separate inherited method on each derived interface.
+
+#### Parameters
+
+`Metadata`, `pData` and `Size` use the
+[internal list annotation parameter contract](#list-annotation-payload).
+These parameters are internal, not an application-defined public format.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12videodecodecommandlist-beginevent"></a>
+
+### ID3D12VideoDecodeCommandList::BeginEvent
+
+#### Declaration
+
+```cpp
+void BeginEvent( UINT Metadata, const void* pData, UINT Size);
+```
+
+#### Behavior
+
+For internal use only. Not intended to be called directly.
+
+The [shared command-list annotation context](#command-list-annotations)
+and recording/allocator ownership rules apply. This is the entry declared
+by `ID3D12VideoDecodeCommandList`, not a separate inherited method on each derived interface.
+
+#### Parameters
+
+`Metadata`, `pData` and `Size` use the
+[internal list annotation parameter contract](#list-annotation-payload).
+These parameters are internal, not an application-defined public format.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12videodecodecommandlist-endevent"></a>
+
+### ID3D12VideoDecodeCommandList::EndEvent
+
+#### Declaration
+
+```cpp
+void EndEvent();
+```
+
+#### Behavior
+
+For internal use only. Not intended to be called directly.
+
+The [shared command-list annotation context](#command-list-annotations)
+and recording/allocator ownership rules apply. This is the entry declared
+by `ID3D12VideoDecodeCommandList`, not a separate inherited method on each derived interface.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12videoprocesscommandlist-setmarker"></a>
+
+### ID3D12VideoProcessCommandList::SetMarker
+
+#### Declaration
+
+```cpp
+void SetMarker( UINT Metadata, const void* pData, UINT Size);
+```
+
+#### Behavior
+
+For internal use only. Not intended to be called directly.
+
+The [shared command-list annotation context](#command-list-annotations)
+and recording/allocator ownership rules apply. This is the entry declared
+by `ID3D12VideoProcessCommandList`, not a separate inherited method on each derived interface.
+
+#### Parameters
+
+`Metadata`, `pData` and `Size` use the
+[internal list annotation parameter contract](#list-annotation-payload).
+These parameters are internal, not an application-defined public format.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12videoprocesscommandlist-beginevent"></a>
+
+### ID3D12VideoProcessCommandList::BeginEvent
+
+#### Declaration
+
+```cpp
+void BeginEvent( UINT Metadata, const void* pData, UINT Size);
+```
+
+#### Behavior
+
+For internal use only. Not intended to be called directly.
+
+The [shared command-list annotation context](#command-list-annotations)
+and recording/allocator ownership rules apply. This is the entry declared
+by `ID3D12VideoProcessCommandList`, not a separate inherited method on each derived interface.
+
+#### Parameters
+
+`Metadata`, `pData` and `Size` use the
+[internal list annotation parameter contract](#list-annotation-payload).
+These parameters are internal, not an application-defined public format.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12videoprocesscommandlist-endevent"></a>
+
+### ID3D12VideoProcessCommandList::EndEvent
+
+#### Declaration
+
+```cpp
+void EndEvent();
+```
+
+#### Behavior
+
+For internal use only. Not intended to be called directly.
+
+The [shared command-list annotation context](#command-list-annotations)
+and recording/allocator ownership rules apply. This is the entry declared
+by `ID3D12VideoProcessCommandList`, not a separate inherited method on each derived interface.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12videoencodecommandlist-setmarker"></a>
+
+### ID3D12VideoEncodeCommandList::SetMarker
+
+#### Declaration
+
+```cpp
+void SetMarker( UINT Metadata, const void* pData, UINT Size);
+```
+
+#### Behavior
+
+For internal use only. Not intended to be called directly.
+
+The [shared command-list annotation context](#command-list-annotations)
+and recording/allocator ownership rules apply. This is the entry declared
+by `ID3D12VideoEncodeCommandList`, not a separate inherited method on each derived interface.
+
+#### Parameters
+
+`Metadata`, `pData` and `Size` use the
+[internal list annotation parameter contract](#list-annotation-payload).
+These parameters are internal, not an application-defined public format.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12videoencodecommandlist-beginevent"></a>
+
+### ID3D12VideoEncodeCommandList::BeginEvent
+
+#### Declaration
+
+```cpp
+void BeginEvent( UINT Metadata, const void* pData, UINT Size);
+```
+
+#### Behavior
+
+For internal use only. Not intended to be called directly.
+
+The [shared command-list annotation context](#command-list-annotations)
+and recording/allocator ownership rules apply. This is the entry declared
+by `ID3D12VideoEncodeCommandList`, not a separate inherited method on each derived interface.
+
+#### Parameters
+
+`Metadata`, `pData` and `Size` use the
+[internal list annotation parameter contract](#list-annotation-payload).
+These parameters are internal, not an application-defined public format.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12videoencodecommandlist-endevent"></a>
+
+### ID3D12VideoEncodeCommandList::EndEvent
+
+#### Declaration
+
+```cpp
+void EndEvent();
+```
+
+#### Behavior
+
+For internal use only. Not intended to be called directly.
+
+The [shared command-list annotation context](#command-list-annotations)
+and recording/allocator ownership rules apply. This is the entry declared
+by `ID3D12VideoEncodeCommandList`, not a separate inherited method on each derived interface.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="queue-annotations"></a>
+
+## Queue instrumentation annotations
+
+Not intended to be called directly.  Use the
+[PIX event runtime](https://devblogs.microsoft.com/pix/winpixeventruntime/) to insert events into a command queue.
+
+These methods annotate a command queue for instrumentation; they are
+distinct from command-list BeginEvent/EndEvent/SetMarker recordings.
+They do not define a GPU fence, residency operation, resource barrier or
+the memory-write modes of WriteBufferImmediate. Their VOID return is
+not a completion or capture-delivery guarantee.
+
+[Synchronization-only queues](execution.md#synchronization-only-queues)
+support synchronization rather than these annotation methods; an
+unsupported annotation call is invalid usage and can invalidate the
+device. Ordinary core/video queue annotation support must not be
+inferred from a command-list DRED breadcrumb rule.
+
+<a id="queue-annotation-payload"></a>
+
+### Internal annotation arguments
+
+`Metadata`, `pData` and `Size` are internal support arguments, not an
+application-defined public serialization format. The event runtime
+supplies the compatible metadata tag and optional input payload;
+`Size` is its byte count, not a string or element count.
+
+Payload bytes are consumed or captured during the API call; caller
+storage ownership is not transferred and need not extend to later GPU
+completion. These parameters provide no output buffer or HRESULT
+channel. No particular encoding, terminator or arbitrary malformed
+metadata behavior is defined here; use the supported event-runtime
+helpers rather than constructing raw internal packets.
+
+<a id="id3d12commandqueue-setmarker"></a>
+
+### ID3D12CommandQueue::SetMarker
+
+#### Declaration
+
+```cpp
+void SetMarker(UINT Metadata, const void* pData, UINT Size);
+```
+
+#### Behavior
+
+To insert instrumentation markers at the current location within a D3D12 command queue, use the `PIXSetMarker` function.  This is provided by the [WinPixEventRuntime](https://devblogs.microsoft.com/pix/winpixeventruntime/) NuGet package.
+
+The [shared queue annotation context](#queue-annotations) applies; this is
+a support method for the event runtime, not a direct application
+instrumentation interface.
+
+#### Parameters
+
+`Metadata`, optional input `pData`, and `Size` use the
+[internal annotation argument contract](#queue-annotation-payload).
+They are all internal parameters; the helper/runtime defines their encoding.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12commandqueue-beginevent"></a>
+
+### ID3D12CommandQueue::BeginEvent
+
+#### Declaration
+
+```cpp
+void BeginEvent(UINT Metadata, const void* pData, UINT Size);
+```
+
+#### Behavior
+
+To mark the start of an instrumentation region at the current location within a D3D12 command queue, use the `PIXBeginEvent` function or `PIXScopedEvent` macro.  These are provided by the [WinPixEventRuntime](https://devblogs.microsoft.com/pix/winpixeventruntime/) NuGet package.
+
+The [shared queue annotation context](#queue-annotations) applies; this is
+a support method for the event runtime, not a direct application
+instrumentation interface.
+
+#### Parameters
+
+`Metadata`, optional input `pData`, and `Size` use the
+[internal annotation argument contract](#queue-annotation-payload).
+They are all internal parameters; the helper/runtime defines their encoding.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="id3d12commandqueue-endevent"></a>
+
+### ID3D12CommandQueue::EndEvent
+
+#### Declaration
+
+```cpp
+void EndEvent();
+```
+
+#### Behavior
+
+To mark the end of an instrumentation region at the current location within a D3D12 command queue, use the `PIXEndEvent` function or `PIXScopedEvent` macro.  These are provided by the [WinPixEventRuntime](https://devblogs.microsoft.com/pix/winpixeventruntime/) NuGet package.
+
+The [shared queue annotation context](#queue-annotations) applies; this is
+a support method for the event runtime, not a direct application
+instrumentation interface.
+
+#### Return values
+
+This method does not return a value.
+
 <a id="dred"></a>
 
 ## Device Removed Extended Data
 
-The runtime controls DRED collection and assembles its diagnostic records. Automatic breadcrumbs use GPU progress writes backed by system memory that survives device removal; the driver must support the existing-heaps facility described below. GPU page-fault reporting depends on the GPU and driver. Diagnostic support is not a requirement that every invalid access produces a page fault or identifies one faulting operation. DRED allocation kinds correspond numerically to the published `D3D12DDI_HANDLETYPE` values; these output records are not new driver entry points.
+The runtime controls DRED collection and assembles its diagnostic records. Automatic breadcrumbs use GPU progress writes backed by system memory that survives device removal; the driver must support the [existing system-memory diagnostic heap facility](resources.md#existing-memory-heaps). GPU page-fault reporting depends on the GPU and driver. Diagnostic support is not a requirement that every invalid access produces a page fault or identifies one faulting operation. DRED allocation kinds correspond numerically to the published `D3D12DDI_HANDLETYPE` values; these output records are not new driver entry points.
 
 DRED extends the debugging toolset by providing additional data about the state of GPU workload execution at (or near) the time of the GPU error.  DRED data includes automatic breadcrumbs (with optional PIX event/marker context) and GPU Page Fault analysis. DRED data can be examined in a user-mode debugger or with the use of the DRED interface APIs.
 

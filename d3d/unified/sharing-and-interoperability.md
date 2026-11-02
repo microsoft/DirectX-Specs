@@ -50,7 +50,7 @@ Creating shared heaps with `D3D12_HEAP_FLAG_SHARED` is not supported on CPU-acce
 
 The CPU-accessible [GPU upload heap](resources.md#gpu-upload) likewise does not support creation with shared heap flags.
 
-These CPU-access restrictions apply when creating heaps with shared flags. They are not a blanket prohibition on opening compatible existing or imported CPU-accessible backing. Such import/open paths have distinct requirements; their availability does not make CPU-accessible shared-flag creation legal. The [heap-property](resources.md#heap-properties) and [CPU-access](resources.md#cpu-access) contracts remain applicable to the backing being used.
+These CPU-access restrictions apply when creating heaps with shared flags. They are not a blanket prohibition on opening compatible existing or imported CPU-accessible backing. The [existing-memory heap imports](resources.md#existing-memory-heaps) have distinct requirements; their availability does not make CPU-accessible shared-flag creation legal. The [heap-property](resources.md#heap-properties) and [CPU-access](resources.md#cpu-access) contracts remain applicable to the backing being used.
 
 Precluding a non-deterministic choice of undefined texture layout can significantly impair deferred rendering scenarios on some GPUs, so it is not the default behavior for placed and committed resources. Deferred rendering is impaired on some GPU architectures because deterministic texture layouts decrease the effective memory bandwidth achieved when rendering simultaneously to multiple render target textures of the same format and size. GPU architectures are evolving away from leveraging non-deterministic texture layouts in order to support standardized swizzle patterns and standardized layouts efficiently for deferred rendering.
 
@@ -703,29 +703,12 @@ The full [heap/resource creation and allocation driver contract](resources.md#he
 
 ### Published heap/resource open ABI
 
-`D3D12DDI_HEAP_AND_RESOURCE_SIZES` reports the byte sizes of the driver's private heap and resource storage. `D3D12DDIARG_OPENHEAP_0003::NumAllocations` counts the entries of `pOpenAllocationInfo`; the underlying [D3DDDI_OPENALLOCATIONINFO](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3dukmdt/ns-d3dukmdt-_d3dddi_openallocationinfo) is the published allocation-open information type. `PrivateDriverDataSize` is the byte size of the driver-private input data, not an application-owned reflection payload. The heap/resource handles are runtime/driver DDI handles, not the application NT handle or COM pointer.
-
-```cpp
-typedef struct D3D12DDI_HEAP_AND_RESOURCE_SIZES
-{
-    SIZE_T Heap;
-    SIZE_T Resource;
-} D3D12DDI_HEAP_AND_RESOURCE_SIZES;
-
-typedef struct D3D12DDIARG_OPENHEAP_0003
-{
-    UINT                           NumAllocations;             // in : Number of open allocation structs
-    D3DDDI_OPENALLOCATIONINFO*     pOpenAllocationInfo;        // in : Array of open allocation structs
-    D3D12DDI_HKMRESOURCE           hKMResource;                // in : Kernel resource handle
-    VOID*                          pPrivateDriverData;         // in : Ptr to per reosurce PrivateDriverData
-    UINT                           PrivateDriverDataSize;      // in : Size of resource pPrivateDriverData
-    D3D12DDI_RESOURCE_STATES       InitialResourceState;       // in : Initial resource state
-} D3D12DDIARG_OPENHEAP_0003;
-
-typedef D3D12DDI_HEAP_AND_RESOURCE_SIZES ( APIENTRY* PFND3D12DDI_CALCPRIVATEOPENEDHEAPANDRESOURCESIZES_0003 )(
-    D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_OPENHEAP_0003* );
-typedef HRESULT ( APIENTRY* PFND3D12DDI_OPENHEAPANDRESOURCE_0003 )( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_OPENHEAP_0003*, D3D12DDI_HHEAP, D3D12DDI_HRTRESOURCE, D3D12DDI_HRESOURCE );
-```
+Heap/resource opening uses the [current open description and lifecycle](resources.md#open-heap-resource-ddi)
+and [private-size contract](resources.md#heap-resource-private-sizing).
+The runtime's open-allocation records and driver-private metadata are not
+application resource descriptions or transferable COM objects. The
+protected-session, local-object ownership and synchronization requirements
+remain defined by those contracts and this chapter's shared-handle rules.
 
 <a id="canonical-contributors"></a>
 

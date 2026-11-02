@@ -4,6 +4,12 @@
 
 A mesh graphics pipeline executes a mesh shader (MS), optionally preceded by an amplification shader (AS), instead of the input-assembly/VS/HS/tessellator/DS/GS geometry path. The mesh stage supplies vertices and primitives to the rasterizer. It does not use fixed-function input assembly or stream-output capture. [Mesh pipeline creation](pipeline-state.md#mesh-pipelines), [graphics root-signature compatibility](binding.md#pipeline-compatibility) and [initial/reset/bundle pipeline selection](command-list-state.md#pipeline-selection) define the shared selection and binding contracts.
 
+The current amplification/mesh driver object creation/sizing/destruction contracts
+are defined with [pipeline component creation](pipeline-state.md#driver-shader-objects)
+and its [exact slot associations](pipeline-state.md#driver-object-slots).
+They do not add application shader/state object APIs or replace this stage's
+execution, linkage, capability or resource-lifetime rules.
+
 <a id="overview"></a>
 
 ## Conceptual high level overview

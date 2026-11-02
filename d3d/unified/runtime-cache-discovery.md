@@ -116,13 +116,9 @@ A value lookup is not an object-creation result. A PSDB miss can still be satisf
 
 ### Runtime shader-cache DDI reference
 
-The following are driver-to-runtime shader-cache callbacks, not [offline compiler-plugin cache callbacks](compiler-plugin-foundation.md#compiler-plugin-foundation). The extended feature is `D3D12DDI_FEATURE_0021_SHADERCACHING`; the runtime callback-table type is `D3D12DDI_TABLE_TYPE_0021_SHADERCACHE_CALLBACKS`. The negotiated shader-caching feature version selects the callback layout; it is not the PSDB's stored compiler ABI version.
+Runtime shader-cache value callbacks are driver-to-runtime, not [offline compiler-plugin cache callbacks](compiler-plugin-foundation.md#compiler-plugin-foundation). The extended feature is `D3D12DDI_FEATURE_0021_SHADERCACHING`; the runtime callback-table type is `D3D12DDI_TABLE_TYPE_0021_SHADERCACHE_CALLBACKS`. The shader-caching feature version is not the PSDB's stored compiler ABI version.
 
-| Shader-caching feature version | Value | Callback table | Get/store signatures |
-|---|---:|---|---|
-| `D3D12DDI_FEATURE_VERSION_SHADERCACHE_0021_0` | 1 | `D3D12DDI_SHADERCACHE_CALLBACKS_0021` | `_CB_0021`, single untyped value, writable runtime cache |
-| `D3D12DDI_FEATURE_VERSION_SHADERCACHE_0114_0` | 2 | `D3D12DDI_SHADERCACHE_CALLBACKS_0114` | `_CB_0114`, separate object-code and compiler-metadata outputs |
-| `D3D12DDI_FEATURE_VERSION_SHADERCACHE_0118_0` | 3 | `D3D12DDI_SHADERCACHE_CALLBACKS_0118` | Same `_CB_0114` get/store signatures |
+The current interface uses `D3D12DDI_FEATURE_VERSION_SHADERCACHE_0118_0` (3), `D3D12DDI_SHADERCACHE_CALLBACKS_0118` and `D3D12DDI_SHADERCACHE_FUNCS_0118`. The callback table contains get/store/unused-value notification; get and store retain their `_CB_0114` signatures. The driver function table contains the runtime-to-driver `pfnShaderCacheGetCaps`. The optional allocation function remains the nested `pCallbackFunc` argument to get, not a separate current driver-table slot.
 
 The typed get/store members are `pfnShaderCacheGetValueCb` and `pfnShaderCacheStoreValueCb`.
 
@@ -177,44 +173,103 @@ The typed get path returns `S_OK` for a successful lookup/probe, `DXGI_ERROR_NOT
 
 `D3D12DDI_SHADER_CACHE_GET_VALUE_FLAG_NONE` is zero; `D3D12DDI_SHADER_CACHE_GET_VALUE_FLAG_STORED_VALUES_ONLY` is `0x1`. Version 3 additionally defines `D3D12DDI_SHADER_CACHE_GET_VALUE_FLAG_0118_PSDB_MISS_EXPECTED` (`0x2`) for lookup accounting; it does not itself change the selected cache slots. Unrecognized get flags return `E_INVALIDARG`. Cache statistics do not change the returned value's ownership or prove completion of an object from a partial value hit.
 
-<a id="legacy-runtime-cache-callbacks"></a>
+[Cached PSO blobs](shader-delivery-and-caching.md#cached-pso-blobs) and [pipeline libraries](shader-delivery-and-caching.md#pipeline-libraries) retain their separate compatibility and loading behavior; a direct reuse path need not perform these cache callbacks.
 
-#### Version-1 value callbacks
+<a id="runtime-cache-current-roles"></a>
+
+#### Current layouts and role associations
 
 ```cpp
-#define D3D12DDI_FEATURE_VERSION_SHADERCACHE_0021_0 1u
-
-typedef struct D3D12DDI_SHADERCACHE_HASH
+typedef union D3D12DDI_VERSION_NUMBER
 {
-    BYTE Hash[16];
-} D3D12DDI_SHADERCACHE_HASH;
+    UINT64 Version;
+    UINT16 VersionParts[4];
+} D3D12DDI_VERSION_NUMBER;
 
-typedef HRESULT (APIENTRY CALLBACK *PFND3D12DDI_SHADERCACHEGETVALUE_CB_0021)(
-    D3D12DDI_HRTDEVICE hRTDevice,
-    D3D12DDI_HRTPIPELINESTATE hRTPSO,
-    _In_ const D3D12DDI_SHADERCACHE_HASH* pPrecomputedHash,
-    _In_reads_bytes_(KeyLen) const void* pKey,
-    SIZE_T KeyLen,
-    _Out_writes_bytes_opt_(*pValueLen) void* pValue,
-    _Inout_ SIZE_T* pValueLen);
-typedef HRESULT(APIENTRY CALLBACK *PFND3D12DDI_SHADERCACHESTOREVALUE_CB_0021)(
-    D3D12DDI_HRTDEVICE hRTDevice,
-    D3D12DDI_HRTPIPELINESTATE hRTPSO,
-    _In_ const D3D12DDI_SHADERCACHE_HASH* pPrecomputedHash,
-    _In_reads_bytes_(KeyLen) const void* pKey,
-    SIZE_T KeyLen,
-    _In_reads_bytes_(ValueLen) const void* pValue,
-    SIZE_T ValueLen);
-
-// D3D12DDI_TABLE_TYPE_0021_SHADERCACHE_CALLBACKS with D3D12DDI_FEATURE_VERSION_SHADERCACHE_0021_0
-typedef struct D3D12DDI_SHADERCACHE_CALLBACKS_0021
+typedef enum D3D12DDICAPS_TYPE_SHADERCACHE
 {
-    PFND3D12DDI_SHADERCACHEGETVALUE_CB_0021   pfnShaderCacheGetValueCb;
-    PFND3D12DDI_SHADERCACHESTOREVALUE_CB_0021 pfnShaderCacheStoreValueCb;
-} D3D12DDI_SHADERCACHE_CALLBACKS_0021;
+    D3D12DDICAPS_TYPE_SHADERCACHE_ABI_SUPPORT   = 0,
+} D3D12DDICAPS_TYPE_SHADERCACHE;
+
+typedef struct D3D12DDIARG_SHADERCACHE_GETCAPS
+{
+    D3D12DDICAPS_TYPE_SHADERCACHE Type;
+    VOID* pInfo;
+    VOID* pData;
+    UINT DataSize;
+} D3D12DDIARG_SHADERCACHE_GETCAPS;
+
+typedef HRESULT (APIENTRY *PFND3D12DDI_SHADERCACHE_GETCAPS)(
+    D3D12DDI_HDEVICE hDrvDevice,
+    _In_ CONST D3D12DDIARG_SHADERCACHE_GETCAPS* pArgs
+    );
+
+typedef enum D3D12DDI_SHADER_CACHE_UNUSED_VALUE_FLAGS
+{
+    D3D12DDI_SHADER_CACHE_UNUSED_VALUE_FLAG_NONE                           = 0x00000000,
+
+} D3D12DDI_SHADER_CACHE_UNUSED_VALUE_FLAGS;
+
+typedef struct D3D12DDI_SHADERCACHE_ABI_SUPPORT_DATA_0118
+{
+    WCHAR szAdapterFamily[128];
+    UINT64 MinimumABISupportVersion;
+    UINT64 MaximumABISupportVersion;
+    D3D12DDI_VERSION_NUMBER CompilerVersion;
+    D3D12DDI_VERSION_NUMBER ApplicationProfileVersion;
+} D3D12DDI_SHADERCACHE_ABI_SUPPORT_DATA_0118;
+
+typedef HRESULT(APIENTRY CALLBACK *PFND3D12DDI_SHADERCACHEUNUSEDVALUE_CB)(
+    D3D12DDI_HRTDEVICE hRTDevice,
+    D3D12DDI_HANDLE_AND_TYPE hRTObject,
+    _In_reads_bytes_(KeySize) const void* pKey,
+    SIZE_T KeySize,
+    D3D12DDI_SHADER_CACHE_UNUSED_VALUE_FLAGS Flags
+    );
+
+typedef struct D3D12DDI_SHADERCACHE_CALLBACKS_0118
+{
+    PFND3D12DDI_SHADERCACHEGETVALUE_CB_0114   pfnShaderCacheGetValueCb;
+    PFND3D12DDI_SHADERCACHESTOREVALUE_CB_0114 pfnShaderCacheStoreValueCb;
+    PFND3D12DDI_SHADERCACHEUNUSEDVALUE_CB     pfnShaderCacheUnusedValueCb;
+} D3D12DDI_SHADERCACHE_CALLBACKS_0118;
+
+typedef struct D3D12DDI_SHADERCACHE_FUNCS_0118
+{
+    PFND3D12DDI_SHADERCACHE_GETCAPS             pfnShaderCacheGetCaps;
+} D3D12DDI_SHADERCACHE_FUNCS_0118;
 ```
 
-The version-1 callbacks address the runtime device and optional PSO context, a key and `D3D12DDI_SHADERCACHE_HASH` (16 bytes); they retrieve/store one untyped value in the writable runtime cache, not the registered PSDB slot. For get, `pValueLen` is required and is the buffer capacity on input and returned value size on output. A null `pValue` with zero capacity queries the required size; an undersized buffer fails. The driver supplies the output buffer. This older callback does not acquire the typed runtime callback's two-cache search behavior merely because a PSDB is registered. [Cached PSO blobs](shader-delivery-and-caching.md#cached-pso-blobs) and [pipeline libraries](shader-delivery-and-caching.md#pipeline-libraries) retain their separate compatibility and loading behavior; a direct reuse path need not perform these cache callbacks.
+The current callable roles have distinct directions and ownership:
+
+| Current role | Direction | Contract |
+| --- | --- | --- |
+| `D3D12DDI_DEVICE_FUNCS_CORE_0119::pfnImplicitShaderCacheControl` | runtime-to-driver | [Responsibility](shader-delivery-and-caching.md#driver-implicit-cache-control) |
+| `D3D12DDI_SHADERCACHE_CALLBACKS_0118::pfnShaderCacheGetValueCb` | driver-to-runtime | [Responsibility](runtime-cache-discovery.md#runtime-shader-cache-ddi) |
+| `D3D12DDI_SHADERCACHE_CALLBACKS_0118::pfnShaderCacheStoreValueCb` | driver-to-runtime | [Responsibility](runtime-cache-discovery.md#compiled-value-lookup) |
+| `D3D12DDI_SHADERCACHE_CALLBACKS_0118::pfnShaderCacheUnusedValueCb` | driver-to-runtime | [Responsibility](runtime-cache-discovery.md#runtime-cache-unused-value) |
+| `D3D12DDI_SHADERCACHE_FUNCS_0118::pfnShaderCacheGetCaps` | runtime-to-driver | [Responsibility](runtime-cache-discovery.md#runtime-cache-driver-caps) |
+| `PFND3D12DDI_SHADERCACHEGETVALUE_CB_0114::pCallbackFunc` | runtime-to-driver | [Responsibility](runtime-cache-discovery.md#runtime-shader-cache-ddi) |
+
+Get/store and allocation retain the complete [lookup, input/output and result contracts](#runtime-shader-cache-ddi) above. Store requires object code and permits optional compiler metadata. The get allocation callback is driver-supplied and called synchronously by the runtime; its returned storage remains driver-owned, including allocations made before another requested output fails. It is not a runtime-owned value-release API.
+
+<a id="runtime-cache-driver-caps"></a>
+
+#### PFND3D12DDI_SHADERCACHE_GETCAPS
+
+The runtime calls `pfnShaderCacheGetCaps` through `D3D12DDI_SHADERCACHE_FUNCS_0118` with the driver device handle and a borrowed `D3D12DDIARG_SHADERCACHE_GETCAPS` header. For `D3D12DDICAPS_TYPE_SHADERCACHE_ABI_SUPPORT`, `pInfo` is null, `pData` addresses writable `D3D12DDI_SHADERCACHE_ABI_SUPPORT_DATA_0118`, and `DataSize` is `sizeof(D3D12DDI_SHADERCACHE_ABI_SUPPORT_DATA_0118)`. This is a fixed output payload, not a null-output size query or an output-array count. The driver must not retain the caller's header or output pointer beyond the call.
+
+On `S_OK`, the driver supplies the inline 128-element `WCHAR` adapter-family array, inclusive 64-bit minimum/maximum ABI bounds, compiler version and application-profile version. The version union's four `UINT16` parts and `UINT64 Version` are alternative views of one value. The [ABI-support field meanings](devices-and-capabilities.md#d3d12_feature_data_shadercache_abi_support), [driver/compiler reporting consistency](#preference-and-reporting) and [PSDB compatibility predicate](#compatibility) retain their separate contracts; the shader-caching feature version is not a compiler ABI or shader-model number.
+
+This ABI query is mandatory once the current shader-caching interface is selected. The driver must provide its supported data on a successful query. A failed driver query is reported as `DXGI_ERROR_DRIVER_INTERNAL_ERROR`, not a recoverable cache miss, automatic PSDB-disable fallback, or a usable zero/default compatibility range. In particular, driver `E_OUTOFMEMORY` and `DXGI_ERROR_UNSUPPORTED` are not preserved as recoverable results of this mandatory query. Existing device-failure handling is not waived. Absence of the shader-caching interface is a separate capability/availability condition, not the result of a failed selected query.
+
+<a id="runtime-cache-unused-value"></a>
+
+#### PFND3D12DDI_SHADERCACHEUNUSEDVALUE_CB
+
+`pfnShaderCacheUnusedValueCb` reports an unused compiled-value hit for a runtime object. The driver supplies `hRTDevice`, the runtime PSO/state-object context in `hRTObject`, its key pointer and `KeySize`, and `D3D12DDI_SHADER_CACHE_UNUSED_VALUE_FLAG_NONE` (zero). A null object handle leaves the notification unassociated with an individual object. The driver must supply valid runtime handles and input storage for the synchronous call; the key byte count must fit `UINT_MAX`. Unknown flag bits or a key byte count greater than `UINT_MAX` return `E_INVALIDARG`.
+
+An accepted notification returns `S_OK`. This is accounting, not a get/store/delete operation: it does not search for the key, return value bytes, free an allocator-returned buffer, or evict the cache entry. Success does not establish that the key exists, that a compiled value was consumed, or that object creation/GPU execution completed. The notification does not transfer ownership of the key, object or any value allocation. It has no output value and is not an allocation-release pairing for [typed retrieval](#runtime-shader-cache-ddi).
 
 <a id="delivery-selection-and-reporting"></a>
 

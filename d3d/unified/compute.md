@@ -2,6 +2,12 @@
 
 # Compute execution
 
+The current compute driver object creation/sizing/destruction contracts
+are defined with [pipeline component creation](pipeline-state.md#driver-shader-objects)
+and its [exact slot associations](pipeline-state.md#driver-object-slots).
+They do not add application shader/state object APIs or replace this stage's
+execution, linkage, capability or resource-lifetime rules.
+
 <a id="stage-model"></a>
 
 ## Stage model
@@ -399,3 +405,35 @@ Dispatch records work on DIRECT and COMPUTE command lists and BUNDLE recordings,
 ## Indirect execution
 
 `D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH` consumes `D3D12_DISPATCH_ARGUMENTS`; `DISPATCH_MESH` consumes the mesh dispatch record. Their grids use the corresponding [shared dimensions](#shared-grid-limits), not a separate legacy maximum. The [indirect execution contract](indirect-execution.md#executeindirect) owns signature, count/argument-buffer, root-state and post-call state behavior. Validation of a CPU API call does not imply that every GPU-resident argument record is checked before execution.
+
+<a id="driver-dispatch"></a>
+
+## Ordinary dispatch DDI
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_DISPATCH )(
+    D3D12DDI_HCOMMANDLIST, UINT, UINT, UINT );
+```
+
+`PFND3D12DDI_DISPATCH` implements the logical
+[Dispatch](#dispatch) operation. After the ordinary driver command-list
+handle, the three `UINT` arguments are `ThreadGroupCountX`,
+`ThreadGroupCountY` and `ThreadGroupCountZ`, in that order. They count
+groups, not threads; the shader supplies the per-group dimensions.
+
+The runtime forwards these dimensions unchanged. Their validity and
+expanded-grid capabilities remain the
+[shared dimension/validation contract](#dispatch-validation); driver
+invocation does not imply that invalid dimensions were filtered or clamped.
+The API's recording-context, zero-work, pipeline/root/resource and
+predication rules apply. Returning from this recording DDI does not guarantee
+GPU completion; reported recording failures follow the shared
+[callback/deferred-Close contract](execution.md#lifecycle-driver-errors).
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_DISPATCH_0114 )(D3D12DDI_API_HCOMMANDLIST, UINT, UINT, UINT );
+```
+
+The `_0114` entry is the API-handle form of the [ordinary dispatch contract](#driver-dispatch). Its first argument uses the [published API command-list handle representation](execution.md#work-command-handles); the next three `UINT`s remain `ThreadGroupCountX`, `ThreadGroupCountY` and `ThreadGroupCountZ`, not per-group thread dimensions.
+
+The same [grid/capability and validation rules](#dispatch-validation), recording contexts, zero-work, pipeline/root/resource and predication requirements apply to both representations. API-handle dispatch does not imply argument clamping, extra CPU validation, submission or GPU completion. Its `VOID` result retains the same [recording-error channel](execution.md#lifecycle-driver-errors).

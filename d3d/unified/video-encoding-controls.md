@@ -2611,7 +2611,7 @@ Released declaration: [`D3D12_VIDEO_ENCODER_SUPPORT_FLAGS`](video-encoding-types
 
 Driver reports `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGION_NOTIFICATION_*_AVAILABLE` to report hardware capabilities that would allow user to wait for interrupt notifications using fences.
 
-Please note that the runtime will require the published R8 core-DDI build 111 ([`D3D12DDI_SUPPORTED_0111`](video-encoding-driver.md#d3d12ddi-supported-0111)) or higher DDI version reported by the driver and also verify [`DXGK_VIDSCHCAPS.No64BitAtomics`](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3dkmddi/ns-d3dkmddi-_dxgk_vidschcaps) is reported as `FALSE` by the driver in addition to `D3D12DDI_VIDEO_ENCODER_SUPPORT_FLAG_0104_SUBREGION_NOTIFICATION_*_AVAILABLE` to be reported by the driver, before reporting `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGION_NOTIFICATION_*_AVAILABLE`. This is a synchronization requirement for the [`FenceValueGPUVirtualAddress`](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3dukmdt/ns-d3dukmdt-_d3dddi_synchronizationobjectinfo2) of the fences, to point to an underlying 64 bit fence value and the GPU to be able to atomically signal/update it.
+Please note that the runtime will require the published R8 core-DDI build 111 ([`D3D12DDI_SUPPORTED_0111`](video-encoding.md#d3d12ddi-supported-0111)) or higher DDI version reported by the driver and also verify [`DXGK_VIDSCHCAPS.No64BitAtomics`](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3dkmddi/ns-d3dkmddi-_dxgk_vidschcaps) is reported as `FALSE` by the driver in addition to `D3D12DDI_VIDEO_ENCODER_SUPPORT_FLAG_0104_SUBREGION_NOTIFICATION_*_AVAILABLE` to be reported by the driver, before reporting `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGION_NOTIFICATION_*_AVAILABLE`. This is a synchronization requirement for the [`FenceValueGPUVirtualAddress`](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3dukmdt/ns-d3dukmdt-_d3dddi_synchronizationobjectinfo2) of the fences, to point to an underlying 64 bit fence value and the GPU to be able to atomically signal/update it.
 
 <a id="source-s04-004"></a>
 
@@ -2763,11 +2763,11 @@ Released declaration: [`D3D12_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_ARGUMENTS1`](vide
 
 *DDI associated structure*
 
-Released declaration: [`D3D12DDI_VIDEO_ENCODER_SUBREGION_COMPRESSED_BITSTREAM_0102`](video-encoding-driver.md#d3d12ddi-video-encoder-subregion-compressed-bitstream-0102).
+Released declaration: [`D3D12DDI_VIDEO_ENCODER_SUBREGION_COMPRESSED_BITSTREAM_0102`](video-encoding.md#d3d12ddi-video-encoder-subregion-compressed-bitstream-0102).
 
 *Driver implementation notes:*
 
-On the published R8 core-DDI build 111 ([`D3D12DDI_SUPPORTED_0111`](video-encoding-driver.md#d3d12ddi-supported-0111)) and higher Core DDI versions, on `ID3D12Fence*` creation, the D3D12 runtime calls [`PFND3D12DDI_CREATEFENCE`](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/nc-d3d12umddi-pfnd3d12ddi_createfence) with the `D3D12DDI_HFENCE` and `D3D12DDIARG_CREATE_FENCE` with `D3D12DDIARG_CREATE_FENCE.FenceValue.BaseAddress` containing the `FenceValueGPUVirtualAddress` of the synchronization object.
+Driver fences used for subregion notifications follow the [canonical fence-creation contract](execution.md#fence-creation-lifecycle). For monitored backing, `D3D12DDIARG_CREATE_FENCE_0116.MonitoredFenceArgs.FenceValue.BaseAddress` supplies the GPU value address. Other fence kinds use their corresponding canonical payloads and creation/open protocols.
 
 When receiving `D3D12DDI_HFENCE* hDrvSubregionFences` to notify each subregion completion, the driver already has the `FenceValueGPUVirtualAddress`, which is a read-write mapping of the fence value for the GPU. A driver can signal a new fence value by inserting a GPU write command for this address into a command buffer, and the DirectX graphics kernel will unblock waiters for this fence object value when receiving the interrupt [`DXGK_INTERRUPT_MONITORED_FENCE_SIGNALED`](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3dkmddi/ne-d3dkmddi-_dxgk_interrupt_type).
 

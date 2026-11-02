@@ -920,7 +920,7 @@ This is separate from predication policy, feature availability and proof of univ
 | Conditional; typed work | [`ID3D12GraphicsCommandList::ExecuteIndirect`](indirect-execution.md#recording-contexts) | Admission of the wrapper is not a grant for arbitrary work. DRAW, DRAW_INDEXED and DISPATCH_MESH forms retain their raster/pipeline/capability contracts. Argument/count buffers must already satisfy indirect-argument access, bounds/alignment and root-signature requirements; they must not consume writes from this pass. The non-raster typed-work qualification below applies. |
 | Conditional; contents | `ID3D12GraphicsCommandList::ExecuteBundle` | Bundle type/inheritance and command legality remain required. Executed contents must be pass-conformant; the wrapper does not grant forbidden operations or relax pass resource dependencies. Work-graph program selection/dispatch is not supported in bundles. |
 | Conditional; qualified below | `ID3D12GraphicsCommandList10::DispatchGraph`, [`ID3D12GraphicsCommandList10::SetProgram`](state-objects.md#setprogram) | The current recording gate admits both calls. The work-graph dispatch path requires `WorkGraphsTier` and valid program/backing-memory/input state; `SetProgram` requirements depend on the selected program kind. Both retain pass access promises, and neither is a blanket GPU-ordering barrier. The work-graph qualification below remains explicit. |
-| Conditional | `ID3D12GraphicsCommandList2::WriteBufferImmediate` | Immediate writes are admitted while the pass is open, subject to `D3D12_FEATURE_DATA_D3D12_OPTIONS3::WriteBufferImmediateSupportFlags`, 4-byte-aligned destination addresses, `COPY_DEST` buffer access and the [mode/ordering contract](../D3D12WriteBufferImmediate.md#2-hardware-requirements). They do not permit consuming same-pass writes or constitute a general cache-visibility guarantee. |
+| Conditional | `ID3D12GraphicsCommandList2::WriteBufferImmediate` | Immediate writes are admitted while the pass is open, subject to `D3D12_FEATURE_DATA_D3D12_OPTIONS3::WriteBufferImmediateSupportFlags`, 4-byte-aligned destination addresses, `COPY_DEST` buffer access and the [mode/ordering contract](resource-operations.md#writebufferimmediate-modes). They do not permit consuming same-pass writes or constitute a general cache-visibility guarantee. |
 | Conditional; dependency scope | `ID3D12GraphicsCommandList::ResourceBarrier`, `ID3D12GraphicsCommandList7::Barrier` | Only the conformant [render-pass barrier/dependency cases](synchronization.md#render-pass-barriers) are permitted. Admission is not permission for an aliasing/UAV barrier or a transition that consumes current-pass attachment writes. |
 | Conditional; shared fence contract | `ID3D12CommandListFenceBarriers::SignalBarrier`, `ID3D12CommandListFenceBarriers::WaitBarrier` | The [signal](fence-barriers.md#signal-barrier) and [wait](fence-barriers.md#wait-barrier) requirements and pass dependency promises apply. Recording admission does not create an exception for consuming writes from the current pass. |
 | Conditional | `ID3D12GraphicsCommandList::BeginQuery`, `ID3D12GraphicsCommandList::EndQuery`, `ID3D12GraphicsCommandList::SetPredication` | The [query/predication owner](counters-queries-and-predication.md#predication-operation-matrix) defines applicable types, scopes, buffers and effects. Query resolves remain prohibited; this table changes no predicate policy. |
@@ -1606,22 +1606,80 @@ None.
 
 The runtime passes PSO blend/depth/stencil descriptions and dynamic output state to the driver; hardware implements the tests, masks, comparisons, blending/logic operations, precision and ordered attachment updates defined above. Driver-private state-object sizes/handles are not application API objects.
 
-The public command-list driver table identifies `PFND3D12DDI_OM_SETBLENDFACTOR`, `PFND3D12DDI_OM_SETSTENCILREF`, `PFND3D12DDI_OM_SET_RENDER_TARGETS_0003`, `PFND3D12DDI_OM_SETDEPTHBOUNDS_0025` and `PFND3D12DDI_OM_SETFRONTANDBACKSTENCILREF_0095`. A table field's presence is not an independently documented full ABI/behavior contract for every callback. No missing public callback ABI is reconstructed from private implementation.
+The following recording DDIs bind output descriptors and dynamic values using driver handle representations.
 
 Render-pass acceleration and fallback use the [tier/minimum-DDI contract](#render-pass-support). The driver may move conformant barriers to the pass beginning only under the exact [synchronization conditions](synchronization.md#render-pass-barriers). Emulation does not change the public application's access promises. Checked-layer diagnostics do not establish retail validation behavior.
+
+<a id="driver-state"></a>
+
+### Output binding and dynamic-state DDIs
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_OM_SETBLENDFACTOR )(
+    D3D12DDI_HCOMMANDLIST, CONST FLOAT[4] );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_OM_SETSTENCILREF )(
+    D3D12DDI_HCOMMANDLIST, UINT );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_OM_SETDEPTHBOUNDS_0025 )(
+    D3D12DDI_HCOMMANDLIST, FLOAT Min, FLOAT Max);
+
+typedef VOID ( APIENTRY* PFND3D12DDI_OM_SET_RENDER_TARGETS_0003 )(
+    D3D12DDI_HCOMMANDLIST,
+    _In_ UINT NumRenderTargetDescriptors,
+    _In_ CONST D3D12DDI_CPU_DESCRIPTOR_HANDLE* pRenderTargetDescriptors,
+    _In_ BOOL RTsSingleHandleToDescriptorRange,
+    _In_opt_ CONST D3D12DDI_CPU_DESCRIPTOR_HANDLE* pDepthStencilDescriptor);
+```
+
+| Driver entry | Canonical API contract |
+|---|---|
+| `PFND3D12DDI_OM_SETBLENDFACTOR` | [OMSetBlendFactor](#omsetblendfactor): four floating-point components, also supplying the alpha component used by scalar alpha-factor blend modes |
+| `PFND3D12DDI_OM_SETSTENCILREF` | [OMSetStencilRef](#omsetstencilref): one reference sets both faces |
+| `PFND3D12DDI_OM_SETFRONTANDBACKSTENCILREF_0095` | [OMSetFrontAndBackStencilRef](#omsetfrontandbackstencilref): separate references; this does not change the PSO masks |
+| `PFND3D12DDI_OM_SETDEPTHBOUNDS_0025` | [OMSetDepthBounds](#omsetdepthbounds): normalized dynamic Min/Max values; the PSO separately enables the test |
+| `PFND3D12DDI_OM_SET_RENDER_TARGETS_0003` | [OMSetRenderTargets](#omsetrendertargets): driver CPU RTV/DSV handles and the declared contiguous-range versus handle-array mode |
+
+These runtime-to-driver DDIs receive the ordinary driver command-list
+handle. Scalar/array values retain the linked API's logical meanings after
+runtime adaptation. A null blend-factor pointer means `{1,1,1,1}`;
+the driver must not assume it always receives a materialized four-value
+array. Common and independent stencil-reference calls preserve their distinct
+face-selection meanings and the independent feature's capability gate.
+The runtime converts NaN `Min` and NaN `Max` independently to zero before
+forwarding depth bounds; clamp/inverted-range/unbound-depth behavior remains
+the [depth-bounds algorithm](#depth-bounds).
+
+Attachment handles are [driver CPU descriptor handles](binding.md#driver-heaps),
+not resource handles, GPU descriptor-table bases or raw API interface pointers.
+The runtime may translate or shadow handles before the call. A true
+`RTsSingleHandleToDescriptorRange` selects a contiguous range in that driver
+handle domain; false selects the counted array of handles. The driver must
+not substitute API handle increments for the driver's descriptor stride.
+Zero RTV count unbinds all RTVs, and a null DSV pointer unbinds depth/stencil.
+
+The UMD consumes binding descriptors and caller arrays during recording;
+it must not depend on their CPU contents remaining unchanged until GPU
+execution. This does not release the referenced resources or shorten their
+[execution lifetime](execution.md#lifetime). Binding does not itself perform
+a resource transition. The APIs' attachment/PSO compatibility, render-pass
+context and [canonical state rules](command-list-state.md#base-graphics)
+remain applicable. Driver-reported recording failures follow
+[the shared callback/deferred-Close contract](execution.md#lifecycle-driver-errors),
+not a per-setter creation HRESULT.
 
 Support for independent front-face and back-face references and masks is implied by, and must be supported on, drivers that report their DDI version to be `e_DDI_12_8_0095` or greater.
 
 The public independent-stencil contribution describes the `D3D12DDI_DEPTH_STENCIL_DESC_0095` mask extension and size/create callbacks, while the final application layout is the separately declared `D3D12_DEPTH_STENCIL_DESC2`. These are different contracts, not interchangeable struct layouts. The owning [PSO driver contract](pipeline-state.md#driver) retains state-object creation/lifetime responsibilities.
-
-The public render-pass DDI retains the `_0053` table, callback and access-aggregate identities while incorporating `_0101` local-preservation fields, access values and read-only flags. The minimum `D3D12DDI_SUPPORTED_0101` gate does not imply that the callbacks are renamed `_0101`. The exact public layouts below are available; no unavailable private layout is reconstructed.
 
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_OM_SETFRONTANDBACKSTENCILREF_0095 )(
       D3D12DDI_HCOMMANDLIST, /*FrontStencilRef*/ UINT, /*BackStencilRef*/ UINT );
 ```
 
-The depth-bounds design's `_0011` callback/state-description fragments are historical, not current declarations to rename. The public current table identifies the `_0025` depth-bounds callback; the PSO carries the enable bit, the dynamic call supplies Min/Max, and the runtime converts NaNs before driver forwarding. Its numerical clamp permission, inverted-range handling and no-depth-buffer behavior remain the [hardware test contract](#depth-bounds).
+The `_0025` depth-bounds DDI supplies dynamic Min/Max after runtime NaN conversion; the PSO carries the enable bit. Its numerical clamp permission, inverted-range handling and no-depth-buffer behavior remain the [hardware test contract](#depth-bounds).
+
+The public render-pass DDI retains the `_0053` table, callback and access-aggregate identities while incorporating `_0101` local-preservation fields, access values and read-only flags. The minimum `D3D12DDI_SUPPORTED_0101` gate does not imply that the callbacks are renamed `_0101`. The exact public layouts below are available; no unavailable private layout is reconstructed.
 
 <a id="render-pass-driver-declarations"></a>
 
@@ -1782,6 +1840,28 @@ typedef struct D3D12DDI_RENDER_PASS_FUNCS_0053 {
 
 The driver attachment descriptions use driver CPU descriptor handles and independent beginning/ending accesses for depth and stencil. The access `Type` selects the union member. Clear parameters carry `D3D12DDI_CLEAR_VALUES`; local parameters carry `UINT` borders; resolve parameters carry source/destination **resource** handles, a count/array of subresource parameters, format, resolve mode and the source-preservation flag. `SrcSubresource` and `DstSubresource` are indices, not command-list handles. Destination X/Y and the source rectangle identify the region; the destination region has the source rectangle's width/height. These driver fields implement the [attachment access](#render-pass-access), [local descriptor/flow](#preserve-local-descriptors), [resolve](#render-pass-resolve) and [read-only binding](#read-only-depth-stencil-pass) contracts above, not separate application objects or implicit state transitions.
 
+<a id="render-pass-driver-contracts"></a>
+
+### Current render-pass callback contracts
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_BEGIN_RENDER_PASS_0053 ) (
+    D3D12DDI_HCOMMANDLIST,
+    UINT NumRenderTargets,
+    _In_reads_opt_(NumRenderTargets) CONST D3D12DDIARG_RENDER_PASS_RENDER_TARGET_DESC_0053* pRenderTargets,
+    _In_opt_ CONST D3D12DDIARG_RENDER_PASS_DEPTH_STENCIL_DESC_0053* pDepthStencil,
+    D3D12DDIARG_RENDER_PASS_FLAGS_0053 Flags);
+
+typedef VOID ( APIENTRY* PFND3D12DDI_END_RENDER_PASS_0053 ) (
+    D3D12DDI_HCOMMANDLIST);
+```
+
+`D3D12DDI_RENDER_PASS_FUNCS_0053::pfnBeginRenderPass` and `pfnEndRenderPass` are the current render-pass callback pair. The table and signatures keep their `_0053` identities while their payloads include the published `_0101` local-preservation and read-only extensions. `Flags` is an enum value passed by value, not an enum pointer. Both callbacks receive an ordinary driver command-list handle; selecting an API-handle main command-list table does not change this separate feature table's signatures.
+
+These are the native driver path for [BeginRenderPass](#beginrenderpass) and [EndRenderPass](#endrenderpass), under the existing [availability/tier/minimum-DDI contract](#render-pass-support). Runtime emulation instead records the equivalent ordinary binding/access work and does not require these callbacks. A driver reporting acceleration does not imply that every checked or translated API path invokes the native pair.
+
+The [attachment/access and payload-field contract](#render-pass-driver-declarations), [recording admission](#render-pass-operation-surface), [barrier/dependency contract](synchronization.md#render-pass-barriers) and [pass boundary versus access-work predication](counters-queries-and-predication.md#predication-operation-matrix) remain canonical. These `VOID` calls record operations, not GPU completion or a direct HRESULT. Failures use the shared [recording-error channel](execution.md#lifecycle-driver-errors) and first-error precedence. Error or abandoned-recording cleanup follows the [recording lifecycle](execution.md#failed-recording); a matching End callback is not guaranteed after a recording failure.
+
 ### PFND3D12DDI_BEGIN_RENDER_PASS_0053
 
 #### Declaration
@@ -1837,6 +1917,18 @@ The [**D3D12DDI\_RENDER\_PASS\_BEGINNING\_ACCESS\_TYPE\_0053**](https://learn.mi
 
 For more information, see [D3D12 Render Passes](https://learn.microsoft.com/en-us/windows-hardware/drivers/display/d3d12-render-passes).
 
+<a id="render-pass-driver-begin"></a>
+
+#### Current recording contract
+
+The first argument identifies the driver command list being recorded. `NumRenderTargets` counts the complete attachment-description array supplied in `pRenderTargets`, not merely the entries bound to raster slots. A zero color count permits a null color-array pointer; the optional depth/stencil description is independent, under the [API attachment-admission requirements](#beginrenderpass). Descriptions include all declared pass surfaces, including non-raster local-access/flow entries. The driver must not discard those declarations when applying the [raster-binding compaction rule](#surfaces-that-beginrenderpass-binds-for-raster).
+
+Attachment `cpuDescriptor` fields are driver CPU descriptor handles, not application descriptor values to be reinterpreted as resource handles. Resolve source/destination fields are driver resource handles after runtime adaptation. The existing [field/union rules](#render-pass-driver-declarations) distinguish color/depth/stencil beginning and ending accesses, active clear/local/resolve members, formats, regions and flags; binding does not supply an application-required transition.
+
+The attachment-description array and depth/stencil/access headers are borrowed only through Begin. The driver must capture the pass information it needs for subsequent recording and End rather than retaining those temporary headers. The nested resolve `pSubresourceParameters` array is different: on a normally completed Begin/End path its storage remains alive and intact through the corresponding End callback, so the driver may retain that pointer until End returns. The runtime can rely on the [application's explicit resolve-array lifetime](#d3d12_render_pass_ending_access_resolve_parameters); it need not allocate a separate copy for the driver. The driver may instead copy the array. Retaining a pointer does not transfer ownership or permission to free it, and does not shorten referenced-resource execution lifetime.
+
+The declared beginning/ending accesses and flags retain their [access semantics](#render-pass-access), including the visible [suspend/resume qualification](#suspend-and-resume). The CPU input-lifetime distinction does not decide which access effects occur at a suspending or resuming boundary.
+
 ### PFND3D12DDI_END_RENDER_PASS_0053
 
 #### Declaration
@@ -1862,3 +1954,11 @@ For more information, see [Direct3D 12 Render Passes](https://learn.microsoft.co
 #### Return values
 
 None
+
+<a id="render-pass-driver-end"></a>
+
+#### Current recording contract
+
+The sole argument identifies the driver command list containing the open native pass. End receives no new attachment array, resolve parameters or flags; the driver uses the Begin information it captured. It records the applicable ending actions under [EndRenderPass](#endrenderpass), the [declared accesses](#render-pass-access) and the existing [suspend/resume qualification](#suspend-and-resume). It does not by itself establish GPU completion or restore pre-pass bindings; the [canonical post-pass state](command-list-state.md#render-pass) remains applicable.
+
+On the normally completed path, return from this callback ends the nested resolve-array CPU-storage guarantee for the corresponding Begin/End pair. The driver must copy any such data it needs beyond that point, including data needed by later GPU execution; the input pointer is not persistent GPU storage. Recording failure or abandonment does not require a matching End callback and does not extend the caller's CPU-array lifetime until such a callback arrives. Cleanup must not dereference that array after its API-defined lifetime. This cutoff is an input-lifetime rule, not a resolution of the provisional access/continuation rules for suspended/resumed pass segments. Referenced resources retain their independent execution lifetime, and failures retain the common recording-error/cleanup contract.

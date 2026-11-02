@@ -9,6 +9,12 @@ It is a **qualified draft**, not a complete hardware/codec conformance
 specification. The explicit qualifications below withhold unsupported
 generalisations; capability reports remain scoped to their input tuple.
 
+The [command-list annotation reference](diagnostics.md#command-list-annotations)
+defines the three internal BeginEvent/EndEvent/SetMarker support methods
+on `ID3D12VideoDecodeCommandList`. Their recording and allocator-data lifetime
+follows [common annotation state](command-list-state.md#annotations), not
+a new video processing mode or GPU synchronization operation.
+
 <a id="decode-discovery"></a>
 
 ## Discovery and query protocol
@@ -1875,10 +1881,11 @@ the capability type determines the payload. This callback boundary does not
 require one driver query for each application query: the runtime can validate,
 cache and translate results.
 
-Published decoder creation uses `D3D12DDIARG_CREATE_VIDEO_DECODER_0032`
-(`NodeMask`, `Configuration`). Heap creation uses
-`D3D12DDIARG_CREATE_VIDEO_DECODER_HEAP_0033` (node/configuration, dimensions,
-format, frame/bit rates and maximum picture-buffer count). Driver handles are
+Published decoder creation uses `D3D12DDIARG_CREATE_VIDEO_DECODER_0072`
+(`NodeMask`, `Configuration`, protected-session association). Heap creation uses
+`D3D12DDIARG_CREATE_VIDEO_DECODER_HEAP_0072` (node/configuration, dimensions,
+format, frame/bit rates, maximum picture-buffer count and protected-session
+association). Driver handles are
 not COM interface pointers. The application's descriptor is not a command
 to allocate output/reference pictures implicitly.
 
@@ -1909,11 +1916,7 @@ If this callback function succeeds, it returns **S\_OK**. Otherwise, it returns 
 
 ### Decoder private CPU-object sizing
 
-`PFND3D12DDI_CALCPRIVATEVIDEODECODERSIZE_0032` calculates the size of a video decoder. The D3D runtime allocates memory for storing the driver's CPU object representing the video decoder.
-
-```cpp
-typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEVIDEODECODERSIZE_0032 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_DECODER_0032* pArgs);
-```
+`PFND3D12DDI_CALCPRIVATEVIDEODECODERSIZE_0072` calculates the size of a video decoder. The D3D runtime allocates memory for storing the driver's CPU object representing the video decoder.
 
 #### Parameters
 
@@ -1935,11 +1938,7 @@ The runtime allocates memory for storing the driver CPU object that represents t
 
 ### Decoder-heap private CPU-object sizing
 
-`PFND3D12DDI_CALCPRIVATEVIDEODECODERHEAPSIZE_0033` calculates the size of a video decoder heap. The D3D runtime allocates memory for storing the driver's CPU object representing the video decoder heap.
-
-```cpp
-typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEVIDEODECODERHEAPSIZE_0033 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_DECODER_HEAP_0033* pArgs);
-```
+`PFND3D12DDI_CALCPRIVATEVIDEODECODERHEAPSIZE_0072` calculates the size of a video decoder heap. The D3D runtime allocates memory for storing the driver's CPU object representing the video decoder heap.
 
 #### Parameters
 
@@ -1957,11 +1956,7 @@ Returns the size of the heap in bytes.
 
 ### Decoder creation
 
-`PFND3D12DDI_CREATEVIDEODECODER_0032` creates a video decoder.
-
-```cpp
-typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEODECODER_0032 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_DECODER_0032* pArgs, D3D12DDI_HVIDEODECODER_0020 hDrvVideoDecoder );
-```
+`PFND3D12DDI_CREATEVIDEODECODER_0072` creates a video decoder.
 
 #### Parameters
 
@@ -1979,11 +1974,7 @@ The video decoder.
 
 ### Decoder-heap creation
 
-`PFND3D12DDI_CREATEVIDEODECODERHEAP_0033` creates a video decoder heap.
-
-```cpp
-typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEODECODERHEAP_0033 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_DECODER_HEAP_0033*, D3D12DDI_HVIDEODECODERHEAP_0032 hDrvVideoDecoderHeap );
-```
+`PFND3D12DDI_CREATEVIDEODECODERHEAP_0072` creates a video decoder heap.
 
 #### Parameters
 
@@ -2001,16 +1992,7 @@ The video decoder heap.
 
 ### Decode-frame recording callback
 
-**PFND3D12DDI\_VIDEO\_DECODE\_FRAME\_0032** records a decode frame operation to the command list. Inputs, outputs, and parameters for the decode are specified as arguments to this method.
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_DECODE_FRAME_0032 )(
-    D3D12DDI_HCOMMANDLIST hDrvCommandList,
-    D3D12DDI_HVIDEODECODER_0020 hDrvDecoder,
-    const D3D12DDI_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS_0021* pOutputStreamParameters,
-    const D3D12DDI_VIDEO_DECODE_INPUT_STREAM_ARGUMENTS_0032* pInputStreamParameters
-    );
-```
+**PFND3D12DDI\_VIDEO\_DECODE\_FRAME\_0041\_1** records a decode frame operation to the command list. Inputs, outputs, and parameters for the decode are specified as arguments to this method.
 
 #### Parameters
 
@@ -2129,14 +2111,6 @@ DEFINE_GUID(D3D12DDI_VIDEO_DECODE_BITSTREAM_ENCRYPTION_NONE, 0x1b81beD0, 0xa0c7,
 ```
 
 ```cpp
-typedef struct D3D12DDIARG_CREATE_VIDEO_DECODER_0032
-{
-    UINT NodeMask;
-    D3D12DDI_VIDEO_DECODE_CONFIGURATION_0020    Configuration;
-} D3D12DDIARG_CREATE_VIDEO_DECODER_0032;
-```
-
-```cpp
 typedef struct D3D12DDIARG_CREATE_VIDEO_DECODER_HEAP_0033
 {
     UINT NodeMask;
@@ -2220,26 +2194,6 @@ typedef struct D3D12DDI_VIDEO_DECODE_INPUT_STREAM_ARGUMENTS_0032
 #### Output, conversion and histogram variants
 
 ```cpp
-typedef struct D3D12DDI_VIDEO_DECODE_CONVERSION_ARGUMENTS_0021
-{
-    BOOL Enable;
-    D3D12DDI_HRESOURCE hDrvReferenceTexture2D;
-    UINT ReferenceSubresource;
-    DXGI_COLOR_SPACE_TYPE OutputColorSpace;
-    DXGI_COLOR_SPACE_TYPE DecodeColorSpace;
-} D3D12DDI_VIDEO_DECODE_CONVERSION_ARGUMENTS_0021;
-```
-
-```cpp
-typedef struct D3D12DDI_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS_0021
-{
-    D3D12DDI_HRESOURCE hDrvOutputTexture2D;
-    UINT OutputSubresource;
-    D3D12DDI_VIDEO_DECODE_CONVERSION_ARGUMENTS_0021 ConversionArguments;
-} D3D12DDI_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS_0021;
-```
-
-```cpp
 #define D3D12DDI_VIDEO_DECODE_MAX_HISTOGRAM_COMPONENTS 4
 ```
 
@@ -2249,16 +2203,6 @@ typedef struct D3D12DDI_VIDEO_DECODE_COMPONENT_HISTOGRAM_0041
     UINT64 Offset;
     D3D12DDI_HRESOURCE hDrvBuffer;
 } D3D12DDI_VIDEO_DECODE_COMPONENT_HISTOGRAM_0041;
-```
-
-```cpp
-typedef struct D3D12DDI_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS_0041
-{
-    D3D12DDI_HRESOURCE hDrvOutputTexture2D;
-    UINT OutputSubresource;
-    D3D12DDI_VIDEO_DECODE_CONVERSION_ARGUMENTS_0021 ConversionArguments;
-    D3D12DDI_VIDEO_DECODE_COMPONENT_HISTOGRAM_0041 Histograms[D3D12DDI_VIDEO_DECODE_MAX_HISTOGRAM_COMPONENTS];
-} D3D12DDI_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS_0041;
 ```
 
 ```cpp
@@ -2284,21 +2228,12 @@ typedef struct D3D12DDI_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS_0041_1
 } D3D12DDI_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS_0041_1;
 ```
 
-The `_0021` output has the base conversion layout. The `_0041` output adds
-four histogram destinations while retaining that conversion layout. The
-`_0041_1` output instead uses the conversion layout with explicit output
-dimensions. Their respective decode callbacks name these exact output types;
-the application method name does not select a driver table merely by
-matching its numeric suffix.
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_DECODE_FRAME_0041 )(
-    D3D12DDI_HCOMMANDLIST hDrvCommandList,
-    D3D12DDI_HVIDEODECODER_0020 hDrvDecoder,
-    const D3D12DDI_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS_0041* pOutputStreamParameters,
-    const D3D12DDI_VIDEO_DECODE_INPUT_STREAM_ARGUMENTS_0032* pInputStreamParameters
-    );
-```
+The current decode callback uses the `_0032` input-stream arguments and
+`_0041_1` output-stream arguments. The output supplies four histogram
+destinations and the `_0041` conversion layout with explicit output
+dimensions. The `_0033` heap-creation description remains part of the
+heap-size capability payload; current heap-object creation uses `_0072`.
+These are current nested-layout roles, not separate historical decode calls.
 
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYVIDEODECODER_0021 )( D3D12DDI_HDEVICE hDrvDevice, D3D12DDI_HVIDEODECODER_0020 hDrvVideoDecoder );
@@ -2551,20 +2486,58 @@ typedef enum D3D12DDI_VIDEO_SCALE_SUPPORT_FLAGS_0022
 
 <a id="ddi-table-members"></a>
 
-### Selected driver-table members
+### Current driver declarations and table members
 
-| Published table | Member | Callback typedef |
+```cpp
+typedef struct D3D12DDIARG_CREATE_VIDEO_DECODER_HEAP_0072
+{
+    UINT NodeMask;
+    D3D12DDI_VIDEO_DECODE_CONFIGURATION_0020    Configuration;
+    UINT                                        DecodeWidth;
+    UINT                                        DecodeHeight;
+    DXGI_FORMAT                                 Format;
+    DXGI_RATIONAL                               FrameRate;
+    UINT                                        BitRate;
+    UINT                                        MaxDecodePictureBufferCount;
+    D3D12DDI_HPROTECTEDRESOURCESESSION_0030     hDrvProtectedResourceSession;
+} D3D12DDIARG_CREATE_VIDEO_DECODER_HEAP_0072;
+```
+
+```cpp
+typedef struct D3D12DDIARG_CREATE_VIDEO_DECODER_0072
+{
+    UINT NodeMask;
+    D3D12DDI_VIDEO_DECODE_CONFIGURATION_0020    Configuration;
+    D3D12DDI_HPROTECTEDRESOURCESESSION_0030     hDrvProtectedResourceSession;
+} D3D12DDIARG_CREATE_VIDEO_DECODER_0072;
+```
+
+```cpp
+typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEVIDEODECODERHEAPSIZE_0072 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_DECODER_HEAP_0072* pArgs);
+```
+
+```cpp
+typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEVIDEODECODERSIZE_0072 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_DECODER_0072* pArgs);
+```
+
+```cpp
+typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEODECODERHEAP_0072 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_DECODER_HEAP_0072*, D3D12DDI_HVIDEODECODERHEAP_0032 hDrvVideoDecoderHeap );
+```
+
+```cpp
+typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEODECODER_0072 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_DECODER_0072* pArgs, D3D12DDI_HVIDEODECODER_0020 hDrvVideoDecoder );
+```
+
+| Current table | Member | Callback typedef |
 |---|---|---|
-| `D3D12DDI_DEVICE_FUNCS_VIDEO_0033` | `pfnGetCaps` | `PFND3D12DDI_VIDEO_GETCAPS` |
-| `D3D12DDI_DEVICE_FUNCS_VIDEO_0033` | `pfnCalcPrivateVideoDecoderSize` | `PFND3D12DDI_CALCPRIVATEVIDEODECODERSIZE_0032` |
-| `D3D12DDI_DEVICE_FUNCS_VIDEO_0033` | `pfnCreateVideoDecoder` | `PFND3D12DDI_CREATEVIDEODECODER_0032` |
-| `D3D12DDI_DEVICE_FUNCS_VIDEO_0033` | `pfnDestroyVideoDecoder` | `PFND3D12DDI_DESTROYVIDEODECODER_0021` |
-| `D3D12DDI_DEVICE_FUNCS_VIDEO_0033` | `pfnCalcPrivateVideoDecoderHeapSize` | `PFND3D12DDI_CALCPRIVATEVIDEODECODERHEAPSIZE_0033` |
-| `D3D12DDI_DEVICE_FUNCS_VIDEO_0033` | `pfnCreateVideoDecoderHeap` | `PFND3D12DDI_CREATEVIDEODECODERHEAP_0033` |
-| `D3D12DDI_DEVICE_FUNCS_VIDEO_0033` | `pfnDestroyVideoDecoderHeap` | `PFND3D12DDI_DESTROYVIDEODECODERHEAP_0032` |
-| `D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_DECODE_0032` | `pfnDecodeFrame` | `PFND3D12DDI_VIDEO_DECODE_FRAME_0032` |
-| `D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_DECODE_0041` | `pfnDecodeFrame` | `PFND3D12DDI_VIDEO_DECODE_FRAME_0041` |
-| `D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_DECODE_0041_1` | `pfnDecodeFrame` | `PFND3D12DDI_VIDEO_DECODE_FRAME_0041_1` |
+| `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnGetCaps` | `PFND3D12DDI_VIDEO_GETCAPS` |
+| `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnCalcPrivateVideoDecoderSize` | `PFND3D12DDI_CALCPRIVATEVIDEODECODERSIZE_0072` |
+| `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnCreateVideoDecoder` | `PFND3D12DDI_CREATEVIDEODECODER_0072` |
+| `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnDestroyVideoDecoder` | `PFND3D12DDI_DESTROYVIDEODECODER_0021` |
+| `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnCalcPrivateVideoDecoderHeapSize` | `PFND3D12DDI_CALCPRIVATEVIDEODECODERHEAPSIZE_0072` |
+| `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnCreateVideoDecoderHeap` | `PFND3D12DDI_CREATEVIDEODECODERHEAP_0072` |
+| `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnDestroyVideoDecoderHeap` | `PFND3D12DDI_DESTROYVIDEODECODERHEAP_0032` |
+| `D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_DECODE_0094` | `pfnDecodeFrame` | `PFND3D12DDI_VIDEO_DECODE_FRAME_0041_1` |
 
 These table-member associations identify the callable ABI. They do not
 make the tables interchangeable or require the runtime to call a particular

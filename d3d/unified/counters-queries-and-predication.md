@@ -1535,19 +1535,89 @@ For render passes translated into ordinary clear/resolve operations, beginning-a
 
 The driver provides opaque query storage, typed query production/resolution and buffer-sampled predication under the negotiated DDI. Query heap creation, Begin/End, GPU resolution, CPU resolution and predicate selection are distinct contracts; a query object is not directly bound as a predicate. Drivers must implement the result layouts and operation policies specified above. Validation diagnostics are not a guarantee that every invalid query or lifetime/order error is detected.
 
+<a id="ddi-query-lifetime"></a>
+
+### Query-heap types and lifetime
+
+```cpp
+typedef enum D3D12DDI_QUERY_HEAP_TYPE
+{
+    D3D12DDI_QUERY_HEAP_TYPE_OCCLUSION                      = 0,
+    D3D12DDI_QUERY_HEAP_TYPE_TIMESTAMP                      = 1,
+    D3D12DDI_QUERY_HEAP_TYPE_PIPELINE_STATISTICS            = 2,
+    D3D12DDI_QUERY_HEAP_TYPE_SO_STATISTICS                  = 3,
+    D3D12DDI_QUERY_HEAP_TYPE_0020_VIDEO_DECODE_STATISTICS   = 4,
+    D3D12DDI_QUERY_HEAP_TYPE_0032_COPY_QUEUE_TIMESTAMP      = 5,
+    D3D12DDI_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1           = 7,
+} D3D12DDI_QUERY_HEAP_TYPE;
+
+typedef enum D3D12DDI_QUERY_TYPE
+{
+    D3D12DDI_QUERY_TYPE_OCCLUSION                       = 0,
+    D3D12DDI_QUERY_TYPE_BINARY_OCCLUSION                = 1,
+    D3D12DDI_QUERY_TYPE_TIMESTAMP                       = 2,
+    D3D12DDI_QUERY_TYPE_PIPELINE_STATISTICS             = 3,
+    D3D12DDI_QUERY_TYPE_SO_STATISTICS_STREAM0           = 4,
+    D3D12DDI_QUERY_TYPE_SO_STATISTICS_STREAM1           = 5,
+    D3D12DDI_QUERY_TYPE_SO_STATISTICS_STREAM2           = 6,
+    D3D12DDI_QUERY_TYPE_SO_STATISTICS_STREAM3           = 7,
+    D3D12DDI_QUERY_TYPE_0020_VIDEO_DECODE_STATISTICS    = 8,
+    D3D12DDI_QUERY_TYPE_PIPELINE_STATISTICS1            = 10,
+
+} D3D12DDI_QUERY_TYPE;
+
+typedef enum D3D12DDI_PREDICATION_OP
+{
+    D3D12DDI_PREDICATION_OP_EQUAL_ZERO     = 0,
+    D3D12DDI_PREDICATION_OP_NOT_EQUAL_ZERO = 1,
+} D3D12DDI_PREDICATION_OP;
+
+typedef struct D3D12DDIARG_CREATE_QUERY_HEAP_0001
+{
+    D3D12DDI_QUERY_HEAP_TYPE    Type;
+    UINT                        Count;
+    UINT                        NodeMask;
+} D3D12DDIARG_CREATE_QUERY_HEAP_0001;
+```
+
+```cpp
+typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALC_PRIVATE_QUERY_HEAP_SIZE_0001 )( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_QUERY_HEAP_0001* );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_QUERY_HEAP ) ( D3D12DDI_HDEVICE, D3D12DDI_HQUERYHEAP );
+```
+
+The sizing DDI returns required driver-private object bytes as `SIZE_T`,
+not an `HRESULT`, resolved-record size or total resource video-memory
+allocation. The Create DDI returns an `HRESULT` and receives the
+runtime-supplied private region through
+`D3D12DDI_HQUERYHEAP`. The UMD initializes its opaque query state and owns
+any additional backing/auxiliary allocations it requires; it does not own
+the supplied private region. No particular opaque backing layout or
+allocation mechanism is imposed.
+
+On failed driver Create, the UMD unwinds partial state and additional
+allocations; the runtime does not call DestroyQueryHeap for that failed
+creation. After driver Create succeeds, later abandonment or API
+initialization failure requires destruction of that driver object.
+DestroyQueryHeap releases UMD-owned state/backing without freeing the
+runtime-supplied private region.
+
+The logical creation request follows [CreateQueryHeap](#createqueryheap).
+The ordinary payload carries driver `Type`, query-element `Count` and
+selected `NodeMask`, not CPU-result flags. Its heap/query enums identify
+the logical kinds in the [issuance table](#query-support), after runtime
+representation conversion. They do not waive capability, node, count or
+command-list support requirements. The separate
+[CPU flag/path selection](#cpu-query-flags) and
+[native-or-fallback CPU resolution contract](#ddi-cpu-resolution) remain
+distinct from these ordinary storage DDIs.
+
 <a id="ddi-create-query-heap"></a>
 
 ### PFND3D12DDI_CREATE_QUERY_HEAP_0001
 
 ```cpp
-PFND3D12DDI_CREATE_QUERY_HEAP_0001 Pfnd3d12ddiCreateQueryHeap0001;
-
-HRESULT Pfnd3d12ddiCreateQueryHeap0001(
-  D3D12DDI_HDEVICE unnamedParam1,
-  const D3D12DDIARG_CREATE_QUERY_HEAP_0001 *unnamedParam2,
-  D3D12DDI_HQUERYHEAP unnamedParam3
-)
-{...}
+typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATE_QUERY_HEAP_0001 ) ( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_QUERY_HEAP_0001*, D3D12DDI_HQUERYHEAP );
 ```
 
 #### Parameters
@@ -1569,15 +1639,7 @@ A query heap handle.
 ### PFND3D12DDI_BEGIN_END_QUERY_0003
 
 ```cpp
-PFND3D12DDI_BEGIN_END_QUERY_0003 Pfnd3d12ddiBeginEndQuery0003;
-
-VOID Pfnd3d12ddiBeginEndQuery0003(
-  D3D12DDI_HCOMMANDLIST unnamedParam1,
-  D3D12DDI_HQUERYHEAP unnamedParam2,
-  D3D12DDI_QUERY_TYPE unnamedParam3,
-  UINT unnamedParam4
-)
-{...}
+typedef VOID ( APIENTRY* PFND3D12DDI_BEGIN_END_QUERY_0003 )( D3D12DDI_HCOMMANDLIST, D3D12DDI_HQUERYHEAP, D3D12DDI_QUERY_TYPE, UINT );
 ```
 
 #### Parameters
@@ -1602,27 +1664,38 @@ The type of query. Resolve is used by applications to transform a query result p
 
 `unnamedParam4`
 
-*StartElement*
+*Index*
 
-The value of the start element.
+The zero-based index of the single query element.
+
+#### Driver behavior
+
+`pfnBeginQuery` and `pfnEndQuery` are distinct table slots sharing this
+function-pointer type. The selected slot identifies the phase; there is no
+extra Begin/End boolean parameter. After the ordinary driver command-list
+and query-heap handles, the third argument is the query type and the fourth
+is the index of one element, not a count or destination byte offset.
+
+The [query lifecycle](#query-lifecycle) defines matching intervals and
+reuse/completion rules. Timestamp and video-decode-statistics queries are
+End-only. Shared graphics/video declarations and slots do not introduce a
+supported video interval-query type; the
+[issuance support table](#query-support) controls valid combinations.
 
 <a id="ddi-resolve-query"></a>
 
 ### PFND3D12DDI_RESOLVE_QUERY_DATA
 
 ```cpp
-PFND3D12DDI_RESOLVE_QUERY_DATA Pfnd3d12ddiResolveQueryData;
-
-VOID Pfnd3d12ddiResolveQueryData(
-  D3D12DDI_HCOMMANDLIST unnamedParam1,
-  D3D12DDI_HQUERYHEAP unnamedParam2,
-  D3D12DDI_QUERY_TYPE unnamedParam3,
-  UINT StartElement,
-  UINT ElementCount,
-  D3D12DDI_HRESOURCE hDrvDestinationBuffer,
-  UINT64 DestinationOffset
-)
-{...}
+typedef VOID ( APIENTRY* PFND3D12DDI_RESOLVE_QUERY_DATA )(
+    D3D12DDI_HCOMMANDLIST,
+    D3D12DDI_HQUERYHEAP,
+    D3D12DDI_QUERY_TYPE,
+    UINT StartElement,
+    UINT ElementCount,
+    D3D12DDI_HRESOURCE hDrvDestinationBuffer,
+    UINT64 DestinationOffset
+    );
 ```
 
 #### Parameters
@@ -1661,20 +1734,32 @@ The handle of a destination buffer.
 
 The destination offset.
 
+#### Driver behavior
+
+The destination is a driver resource handle, not a CPU output pointer,
+descriptor-heap handle or query-heap byte address. `StartElement` and
+`ElementCount` select consecutive query elements; `DestinationOffset` is
+the byte offset in that buffer. The UMD resolves opaque query storage into
+the [typed public result records](#result-layout), preserving field order,
+width, record size and consecutive-record placement. Opaque heap storage
+need not share that layout.
+
+Issuance and [application GPU-resolution support](#gpu-resolve-support)
+are separate. The CPU_RESOLVE restriction applies to application command-list
+ResolveQueryData calls; it does not prohibit the runtime's internal
+ordinary-DDI resolution into fallback buffers under the
+[CPU-resolution fallback contract](#cpu-resolution).
+The [lifecycle/access contract](#query-lifecycle) governs producer completion,
+reuse, resource access and lifetime; CPU consumption still requires GPU
+completion. Recording this `VOID` DDI does not provide a CPU readiness or
+completion result, and it is not the separate CPU-timeline resolve method.
+
 <a id="ddi-set-predication"></a>
 
 ### PFND3D12DDI_SET_PREDICATION
 
 ```cpp
-PFND3D12DDI_SET_PREDICATION Pfnd3d12ddiSetPredication;
-
-VOID Pfnd3d12ddiSetPredication(
-  D3D12DDI_HCOMMANDLIST unnamedParam1,
-  D3D12DDI_HRESOURCE unnamedParam2,
-  UINT64 unnamedParam3,
-  D3D12DDI_PREDICATION_OP unnamedParam4
-)
-{...}
+typedef VOID ( APIENTRY* PFND3D12DDI_SET_PREDICATION )( D3D12DDI_HCOMMANDLIST, D3D12DDI_HRESOURCE, UINT64, D3D12DDI_PREDICATION_OP );
 ```
 
 #### Parameters
@@ -1701,10 +1786,52 @@ The byte offset of the 64-bit predicate source.
 
 A predication operation. For more information, see the [D3D12DDI_PREDICATION_OP](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ne-d3d12umddi-d3d12ddi_predication_op) enumeration.
 
-The Begin/End callback's heap, type and index identify one query element. The resolve callback's first/count range selects consecutive elements and its destination offset is a byte offset into the result buffer. In SetPredication, the third argument is the byte offset of the 64-bit source and the fourth selects the skip comparison. Their width, support, ordering and result-shape obligations are the corresponding API contracts above.
+#### Driver behavior
+
+The resource handle identifies the driver buffer supplying the predicate;
+the third argument is an eight-byte-aligned byte offset and the fourth is
+the driver comparison operation. The selected source is a 64-bit value,
+not a 32-bit command count, a query index or an opaque query-heap record.
+All 64 bits participate.
+
+The enum names select the condition for skipping eligible work, not the
+condition for executing it: the [predicate truth table](#predication)
+defines both comparisons. The GPU captures the selected value when the
+SetPredication command executes, not during CPU recording and not anew for
+each later operation. A null driver resource handle disables predication;
+the offset is zero and the operation is EQUAL_ZERO in that form.
+The exact [state/access rules](#predicate-state) and
+[operation matrix](#predication-operation-matrix) remain canonical.
+
+<a id="ddi-recording-contracts"></a>
+
+### Recording API associations and shared rules
+
+| Driver slot / operation | Precise API contracts |
+|---|---|
+| `pfnBeginQuery` using `PFND3D12DDI_BEGIN_END_QUERY_0003` | [Graphics](#graphics-beginquery), [decode](#videodecode-beginquery), [process](#videoprocess-beginquery), [encode](#videoencode-beginquery), subject to the issuance table |
+| `pfnEndQuery` using `PFND3D12DDI_BEGIN_END_QUERY_0003` | [Graphics](#graphics-endquery), [decode](#videodecode-endquery), [process](#videoprocess-endquery), [encode](#videoencode-endquery) |
+| `PFND3D12DDI_RESOLVE_QUERY_DATA` | [Graphics](#graphics-resolvequerydata), [decode](#videodecode-resolvequerydata), [process](#videoprocess-resolvequerydata), [encode](#videoencode-resolvequerydata) |
+| `PFND3D12DDI_SET_PREDICATION` | [Graphics](#graphics-setpredication), [decode](#videodecode-setpredication), [process](#videoprocess-setpredication), [encode](#videoencode-setpredication) |
+
+These recording DDIs receive ordinary driver command-list, heap and
+resource handles after runtime object resolution, not application interface
+pointers. Shared signatures do not make unsupported heap/query/list
+combinations valid or imply byte-identical API and driver objects.
+Query production/resolution and predicate selection obey their linked API
+recording, render-pass, initialization and lifetime rules.
+
+Driver-reported recording failures follow the shared
+[callback/deferred-Close contract](execution.md#lifecycle-driver-errors);
+`VOID` alone proves neither allowed errors nor removal of validation.
+Query and resolve operations follow the
+[predication operation policy](#predication-operation-matrix), rather than
+being implicitly skipped with predicated draws. CPU-resolution flags,
+completion and fallback behavior remain defined by the
+[CPU-resolution owner](#cpu-resolution).
 
 <a id="ddi-cpu-resolution"></a>
 
 ### CPU-timeline driver resolution
 
-The CPU-resolution driver path resolves completed opaque query records into the API-defined CPU output layout. Native support and runtime fallback must preserve the CPU method's nonblocking/completion and result-format contract. This is distinct from the command-list GPU-resolution callback above.
+The CPU-resolution driver path resolves completed opaque query records into the API-defined CPU output layout. Native support and runtime fallback must preserve the CPU method's nonblocking/completion and result-format contract. This is distinct from the command-list GPU-resolution DDI above.

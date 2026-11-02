@@ -703,6 +703,12 @@ The library retains the stored PSO information/reference, so releasing the
 application's PSO reference does not invalidate the library entry. Renaming the
 PSO afterward does not rename an existing library entry.
 
+A failed `StorePipeline` must leave the library's application-visible
+name/entry mapping unchanged. Failure is not permission to publish the
+requested name as a successful stored entry. This requirement concerns
+that mapping, not rollback of every private driver allocation or cache
+side effect.
+
 <a id="id3d12pipelinelibrary-loadgraphicspipeline"></a>
 
 ### ID3D12PipelineLibrary::LoadGraphicsPipeline
@@ -993,7 +999,7 @@ The published driver capability payload
 `D3D12DDI_D3D12_OPTIONS_DATA_0080::DriverManagedShaderCachePresent` reports a
 driver-managed cache. Its control callback is
 `PFND3D12DDI_IMPLICITSHADERCACHECONTROL_0080`, with a `void` return type.
-`D3D12DDI_DEVICE_FUNCS_CORE_0080::pfnImplicitShaderCacheControl` carries that
+`D3D12DDI_DEVICE_FUNCS_CORE_0119::pfnImplicitShaderCacheControl` carries that
 callback. The `DISABLE`, `ENABLE` and `CLEAR` bits are 1, 2 and 4.
 
 Pipeline libraries use the published `_0010` private-size, create, destroy,
@@ -1044,3 +1050,252 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_SERIALIZE_LIBRARY_0010 )(
     D3D12DDI_HPIPELINELIBRARY hLibrary,
     _Out_ VOID *pBlob );
 ```
+
+<a id="driver-implicit-cache-control"></a>
+
+### PFND3D12DDI_IMPLICITSHADERCACHECONTROL_0080
+
+The **pfnImplicitShaderCacheControl** callback function can optionally perform an application-requested action on the driver-managed shader cache.
+
+If the driver reports true for `DriverManagedShaderCachePresent`, then the driver should also provide a non-null function for `D3D12DDI_DEVICE_FUNCS_CORE_0119::pfnImplicitShaderCacheControl`.
+
+The runtime calls **pfnImplicitShaderCacheControl** in response to an application request for cache control. These application requests are considered as hints to the driver.
+
+The runtime supplies the driver device handle and `D3D12DDI_IMPLICIT_SHADER_CACHE_CONTROL_FLAGS_0080`. The bits `DISABLE`, `ENABLE` and `CLEAR` are 1, 2 and 4 and may combine a clear with an enable or disable. The [application validation and permissions](#id3d12device9-shadercachecontrol) reject simultaneous enable/disable, zero or unknown flags before normal dispatch. Enable/disable remain developer-mode operations; clear-only control is permitted without developer mode when `SHADER_CONTROL_CLEAR` is supported.
+
+`DriverManagedShaderCachePresent` identifies the driver-managed cache. The runtime forwards an applicable request to `D3D12DDI_DEVICE_FUNCS_CORE_0119::pfnImplicitShaderCacheControl`; device initialization can also convey an already configured disabled state. This is not a one-to-one call for every named cache kind or every rejected application request. The callback concerns the driver's implicit cache, not registration of a PSDB or the typed runtime get/store callbacks.
+
+The callback returns `void`, with no recoverable control-result HRESULT or completion output. The driver treats the request as a hint; return does not certify deletion of every entry or an atomic transaction across all selected cache kinds. The [control scope/failure-ordering contract](#cache-control-scope) owns runtime sessions and earlier side effects. Driver failure reporting must not be used to manufacture a recoverable HRESULT for this callback.
+
+<a id="pipeline-library-driver"></a>
+
+### Pipeline-library driver objects and initial bytes
+
+The current _0010 callbacks below remain the library ABI in the selected
+core-device table. They construct and operate on a driver-private library,
+not an application cache session, offline compiler cache or new COM object.
+The [API library support/threading/lifetime rules](#pipeline-libraries)
+remain canonical.
+
+The private-size query returns `SIZE_T` bytes for the driver's CPU object,
+not serialized data or video memory. The runtime reserves at least those
+bytes and passes `D3D12DDI_HPIPELINELIBRARY` by value, identifying the
+private region. The driver initializes that region and destroys its placed
+object when requested; it does not free runtime-owned storage. The creator
+has an `HRESULT` result, not an output-handle pointer or runtime-library-handle
+argument. Unsuccessful initialization does not establish a matching successful
+object; clean up failed partial driver initialization without relying on a
+subsequent destroy call.
+
+`D3D12DDIARG_CREATE_PIPELINE_LIBRARY_0010` supplies `InitialDataSize` bytes
+through `pInitialData`. Both the private-size query and create callback must
+receive the same driver-private initial byte extent, not the whole
+runtime-wrapped API serialization blob. Fresh driver-library creation uses
+zero size and a null pointer. A zero driver-byte count is not by itself a
+statement that the whole API blob has no metadata.
+
+The argument header is borrowed for the call. After successful creation,
+the driver may retain the supplied immutable initial byte view for the
+library's lifetime. Destruction ends the library's use of that view.
+A size query without successful creation establishes no retained
+library-input lifetime. The driver does not own/free
+the backing storage; the [API retained-input obligation](#id3d12device1-createpipelinelibrary)
+keeps the complete backing allocation alive. A driver may instead copy or
+materialize its own data. This library-specific storage guarantee must not
+be replaced by the ordinary PSO creation-only input lifetime.
+
+Runtime wrapper bytes and driver bytes are opaque and distinct. No private
+header, offsets or vendor serialization format is defined here. A size
+query does not certify that the driver's initial-data format is supported;
+actual creation can reject incompatible initial data.
+
+<a id="pipeline-library-driver-indices"></a>
+
+### Names, indices, PSOs and load references
+
+`StorePipeline` performs the runtime's name/entry validation and supplies
+the driver add callback with `hDevice`, `hLibrary`, `hPipelineState` and the
+runtime-assigned `UINT` `PipelineIndex`. No name string is passed in that DDI.
+An invalid or duplicate-name call can fail before the driver add operation;
+there is no unconditional one-API/one-DDI call-count guarantee.
+
+`PipelineIndex` identifies an association within the supplied library, not
+a pointer, API name, physical node or globally unique object. Multiple
+indices may describe the same PSO information. On successful add the driver
+makes that PSO's cache information available through the association. The
+runtime's names/complete-description checks remain separate. Failure does
+not establish a successful stored entry; the [failed-store mapping rule](#id3d12pipelinelibrary-storepipeline)
+applies without turning private cache side effects into a transaction.
+
+Subsequent component/PSO creation carries `hLibrary` and `PipelineIndex` in
+[D3D12DDI_LIBRARY_REFERENCE_0010](pipeline-state.md#driver). The association
+must retain its meaning across driver serialization/recreation so the
+runtime's restored entry indices resolve the corresponding driver data.
+A reference is an optimization input, not a replacement for the complete
+current [PSO creation arguments](pipeline-state.md#driver-pso-creation).
+There is no separate pipeline-library load callback in this six-entry family.
+Loads can reuse a retained PSO or create one using the library reference.
+
+The runtime retains stored PSO information/references under the API lifetime
+contract; add does not transfer ownership of the PSO's private allocation to
+the driver library. A surviving PSO does not by itself extend the validity
+of a destroyed library handle or its reclaimed initial bytes. The respective
+object destruction/storage contracts still govern driver references.
+
+<a id="pipeline-library-driver-serialization"></a>
+
+### Private object size, serialized size and output storage
+
+`CalcPrivatePipelineLibrarySize` describes the CPU private object allocation.
+`CalcSerializedLibrarySize` describes the driver's current serialized byte
+requirement. The API `GetSerializedSize` can include additional runtime
+metadata; its total is not the driver's byte count and none of these sizes
+is a shader-code size or a GPU completion value.
+
+The runtime supplies `SerializeLibrary` with `hDevice`, `hLibrary` and writable
+`pBlob` storage for the driver bytes. This callback has no capacity argument
+or replacement-size output. Its writable extent is the serialized-size
+requirement for the same library contents; it is not permission to write
+runtime wrapper bytes or an arbitrary larger API buffer. Maintain compatible
+contents across sizing/serialization and use the [API synchronization and
+snapshot contract](#id3d12pipelinelibrary-getserializedsize). Zero driver
+bytes do not imply zero API serialization metadata or a universal minimum
+blob size.
+
+The destination is borrowed only for the call and remains caller-owned.
+A null output is not a new size-query idiom. Successful return completes
+the driver-byte write; it does not persist data to disk, transfer an
+allocation or certify future compatibility. Failed serialization is not a
+valid saved library and does not guarantee zeroed or transactionally restored
+output bytes. Later recreation has its separate retained-input lifetime.
+
+<a id="pipeline-library-driver-errors"></a>
+
+### Per-call library results and failures
+
+The two size queries return `SIZE_T` byte counts, destroy returns `VOID`,
+and create/add/serialize return `HRESULT`. The size/destroy entries have no
+recoverable `HRESULT` error channel or defined zero/max-value error code.
+Storage ownership follows the [current creation storage model](pipeline-state.md#driver-object-lifetime),
+but the accepted library results remain specific to these calls.
+
+`CreatePipelineLibrary` returns `S_OK` on success or may return `E_OUTOFMEMORY`.
+`E_INVALIDARG` is permitted to reject initial library data on load; the runtime
+translates that rejection to `D3D12_ERROR_DRIVER_VERSION_MISMATCH`. It is not
+a valid recoverable result for fresh creation with no initial data; the
+runtime treats that case as an invalid driver result. Runtime validation
+of the whole API blob has its own `E_INVALIDARG`/compatibility outcomes and
+can stop before any actual driver-library creation.
+
+`AddPipelineStateToLibrary` and `SerializeLibrary` permit recoverable
+`E_OUTOFMEMORY`, not arbitrary `E_INVALIDARG` passthrough. In particular an
+undersized API `Serialize` buffer is rejected by the runtime before this
+capacity-less driver writer, not a new driver buffer-size result. The
+[current device-removal/error normalization](pipeline-state.md#driver-creation-errors)
+remains: unexpected driver results invalidate the device, device/application
+failure reports retain their mappings, and removal can supersede an
+otherwise returned result. These are not command-list errors deferred to
+Close or the native queue's different allocation-failure model.
+
+<a id="pipeline-library-driver-slots"></a>
+
+### Exact current slot associations
+
+| Current core-device slot | Published signature/contract |
+|---|---|
+| `pfnCalcPrivatePipelineLibrarySize` | [PFND3D12DDI_CALC_PRIVATE_PIPELINE_LIBRARY_SIZE_0010](#ddi-pfnd3d12ddi-calc-private-pipeline-library-size-0010) |
+| `pfnCreatePipelineLibrary` | [PFND3D12DDI_CREATE_PIPELINE_LIBRARY_0010](#ddi-pfnd3d12ddi-create-pipeline-library-0010) |
+| `pfnDestroyPipelineLibrary` | [PFND3D12DDI_DESTROY_PIPELINE_LIBRARY_0010](#ddi-pfnd3d12ddi-destroy-pipeline-library-0010) |
+| `pfnAddPipelineStateToLibrary` | [PFND3D12DDI_ADD_PIPELINE_STATE_TO_LIBRARY_0010](#ddi-pfnd3d12ddi-add-pipeline-state-to-library-0010) |
+| `pfnCalcSerializedLibrarySize` | [PFND3D12DDI_CALC_SERIALIZED_LIBRARY_SIZE_0010](#ddi-pfnd3d12ddi-calc-serialized-library-size-0010) |
+| `pfnSerializeLibrary` | [PFND3D12DDI_SERIALIZE_LIBRARY_0010](#ddi-pfnd3d12ddi-serialize-library-0010) |
+
+<a id="ddi-pfnd3d12ddi-calc-private-pipeline-library-size-0010"></a>
+
+#### PFND3D12DDI_CALC_PRIVATE_PIPELINE_LIBRARY_SIZE_0010
+
+**Declaration:** [PFND3D12DDI_CALC_PRIVATE_PIPELINE_LIBRARY_SIZE_0010](#cache-ddi-declarations), in the exact published callback family above.
+
+##### Behavior
+
+Calculates the pipeline library size.
+
+The inputs are the driver device and current library-create description.
+Return the CPU private byte requirement under the [storage/initial-data contract](#pipeline-library-driver).
+The query does not create a library or validate its serialized format.
+
+<a id="ddi-pfnd3d12ddi-create-pipeline-library-0010"></a>
+
+#### PFND3D12DDI_CREATE_PIPELINE_LIBRARY_0010
+
+**Declaration:** [PFND3D12DDI_CREATE_PIPELINE_LIBRARY_0010](#cache-ddi-declarations), in the exact published callback family above.
+
+##### Behavior
+
+Create a pipeline library.
+
+The inputs are the driver device, borrowed create-description header and
+by-value driver library handle to caller-reserved private storage. Initial
+bytes have the [retained driver-input lifetime](#pipeline-library-driver).
+The [load rejection/fresh-create error distinction](#pipeline-library-driver-errors)
+applies; successful creation is paired with the destroy callback.
+
+<a id="ddi-pfnd3d12ddi-destroy-pipeline-library-0010"></a>
+
+#### PFND3D12DDI_DESTROY_PIPELINE_LIBRARY_0010
+
+**Declaration:** [PFND3D12DDI_DESTROY_PIPELINE_LIBRARY_0010](#cache-ddi-declarations), in the exact published callback family above.
+
+##### Behavior
+
+Destroys the pipeline library.
+
+The arguments identify the driver device and successfully created driver
+library. Destroy the placed object and stop using its borrowed initial
+bytes before the runtime reclaims library/private backing storage. The
+call does not free caller allocations or signal GPU completion.
+
+<a id="ddi-pfnd3d12ddi-add-pipeline-state-to-library-0010"></a>
+
+#### PFND3D12DDI_ADD_PIPELINE_STATE_TO_LIBRARY_0010
+
+**Declaration:** [PFND3D12DDI_ADD_PIPELINE_STATE_TO_LIBRARY_0010](#cache-ddi-declarations), in the exact published callback family above.
+
+##### Behavior
+
+Adds the input pipeline state to the corresponding library.
+
+The arguments identify the device, library, existing driver PSO and
+library-local `PipelineIndex`. The [name/index/reference contract](#pipeline-library-driver-indices)
+and [failure mapping](#pipeline-library-driver-errors) apply. Successful
+association is not ownership transfer of a PSO or a new API name.
+
+<a id="ddi-pfnd3d12ddi-calc-serialized-library-size-0010"></a>
+
+#### PFND3D12DDI_CALC_SERIALIZED_LIBRARY_SIZE_0010
+
+**Declaration:** [PFND3D12DDI_CALC_SERIALIZED_LIBRARY_SIZE_0010](#cache-ddi-declarations), in the exact published callback family above.
+
+##### Behavior
+
+Calculates serialized library size.
+
+The device/library handles select the current driver-library contents.
+Return their serialized driver-byte requirement, not the API wrapper's
+total or CPU private-object size. The [same-contents size/output contract](#pipeline-library-driver-serialization)
+applies.
+
+<a id="ddi-pfnd3d12ddi-serialize-library-0010"></a>
+
+#### PFND3D12DDI_SERIALIZE_LIBRARY_0010
+
+**Declaration:** [PFND3D12DDI_SERIALIZE_LIBRARY_0010](#cache-ddi-declarations), in the exact published callback family above.
+
+##### Behavior
+
+Implemented by the client driver to serialize the library.
+
+The device/library handles select the contents and `pBlob` supplies their
+writable driver-byte output. No size argument is passed. The [exact writable
+extent and borrowed-output contract](#pipeline-library-driver-serialization)
+and [per-call result policy](#pipeline-library-driver-errors) apply.

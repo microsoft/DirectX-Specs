@@ -1278,6 +1278,8 @@ bundle execution, and `DATA_STATIC_WHILE_SET_AT_EXECUTE` is only
 making promises about the static-ness within a subset of command list /
 bundle execution.
 
+<a id="descriptor-range-defaults"></a>
+
 **Valid Descriptor Range Flags Settings**    | **Remarks**
 ---|---
 | none                              | <p>Descriptors static (default).</p><p>Default assumptions for data:</p><p>**For SRV/CBV**: `DATA_STATIC_WHILE_SET_AT_EXECUTE`</p><p>**For UAV**: `DATA_VOLATILE`</p><p>The goal is these defaults for SRV/CBV will safely fit the usage patterns for the majority of root signatures where applications have not thought about the flag settings at all, giving drivers ample optimization opportunity for free that wasn't captured by root signature version 1.0.</p>
@@ -1297,6 +1299,8 @@ earlier, except that for root descriptors only `DATA_*` flags apply. By
 definition, root descriptors are static, as they are directly set into
 command lists / bundles, so there is no root descriptor equivalent to
 the flag `D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE`.
+
+<a id="root-descriptor-defaults"></a>
 
 **Valid Root Descriptor Flags Settings**     | **Remarks**
 ---|---
@@ -2416,11 +2420,11 @@ A [`D3D_ROOT_SIGNATURE_VERSION`](https://learn.microsoft.com/en-us/windows/deskt
 
 `[out] ppBlob`
 
-A pointer to a memory block that receives a pointer to the [ID3DBlob](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/ff728743%28v=vs.85%29) interface that you can use to access the serialized root signature.
+A pointer to a memory block that receives a pointer to the [ID3DBlob](devices-and-capabilities.md#binary-data-blobs) interface that you can use to access the serialized root signature.
 
 `[out, optional] ppErrorBlob`
 
-A pointer to a memory block that receives a pointer to the [ID3DBlob](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/ff728743%28v=vs.85%29) interface that you can use to access serializer error messages, or **NULL** if there are no errors.
+A pointer to a memory block that receives a pointer to the [ID3DBlob](devices-and-capabilities.md#binary-data-blobs) interface that you can use to access serializer error messages, or **NULL** if there are no errors.
 
 #### Return values
 
@@ -2455,11 +2459,11 @@ Specifies a [`D3D12_VERSIONED_ROOT_SIGNATURE_DESC`](https://learn.microsoft.com/
 
 `[out] ppBlob`
 
-A pointer to a memory block that receives a pointer to the [ID3DBlob](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/ff728743%28v=vs.85%29) interface that you can use to access the serialized root signature.
+A pointer to a memory block that receives a pointer to the [ID3DBlob](devices-and-capabilities.md#binary-data-blobs) interface that you can use to access the serialized root signature.
 
 `[out, optional] ppErrorBlob`
 
-A pointer to a memory block that receives a pointer to the [ID3DBlob](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/ff728743%28v=vs.85%29) interface that you can use to access serializer error messages, or **NULL** if there are no errors.
+A pointer to a memory block that receives a pointer to the [ID3DBlob](devices-and-capabilities.md#binary-data-blobs) interface that you can use to access serializer error messages, or **NULL** if there are no errors.
 
 #### Return values
 
@@ -3158,6 +3162,39 @@ GetCPUDescriptorHandleForHeapStart must return 0 for the handle. Shader-visible 
 
 API and DDI visibility flags are not numerically interchangeable. The runtime supplies DDI CPU visibility independently of the application's shader-visible choice; all public API descriptor heaps support CPU descriptor access.
 
+The size query returns required driver-private object bytes as `SIZE_T`,
+not an `HRESULT` and not the descriptor-handle increment. Creation receives
+the driver device, the heap description and the runtime-supplied
+`D3D12DDI_HDESCRIPTORHEAP` private region. The UMD owns its auxiliary backing
+allocations, not the supplied region. The reported private size need not be
+an equation of descriptor count times descriptor byte stride.
+
+The UMD initializes its heap state and required backing during creation,
+returning an `HRESULT`. On failure it unwinds its partial state and auxiliary
+allocations; the runtime does not call DestroyDescriptorHeap for failed UMD
+creation. After successful creation, later abandonment or API initialization
+failure requires destruction of that driver object. DestroyDescriptorHeap
+releases UMD-owned state/backing without freeing the supplied private region.
+Individual descriptors still have no independent destruction operation.
+
+The logical request follows
+[CreateDescriptorHeap](#id3d12device-createdescriptorheap), after the runtime
+translates node/visibility information into the driver description. A
+successful driver creation is not itself a GPU-completion event or permission
+to release backing still required by application work.
+
+The descriptor-size query supplies the byte stride for the requested driver
+heap type; it does not return the size of the handle structure. Its API
+association is [GetDescriptorHandleIncrementSize](#id3d12device-getdescriptorhandleincrementsize),
+subject to the handle processing described above. The heap-start queries take
+the driver device and successfully created driver heap handle. Their API
+associations are the
+[CPU](#id3d12descriptorheap-getcpudescriptorhandleforheapstart) and
+[GPU](#id3d12descriptorheap-getgpudescriptorhandleforheapstart) heap-start methods.
+They return locations, not separately owned allocations. The runtime may cache
+or translate these handles; a query does not make an otherwise non-bindable
+heap shader-visible.
+
 <a id="driver-descriptors"></a>
 
 ### Heap binding and descriptor creation
@@ -3175,11 +3212,65 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_DESCRIPTOR_HEAPS_0003 )(
     _In_reads_(NumDescriptorHeaps) D3D12DDI_HDESCRIPTORHEAP* pDescriptorHeaps );
 ```
 
+The logical binding contract is
+[SetDescriptorHeaps](#id3d12graphicscommandlist-setdescriptorheaps).
+The runtime resolves the API heap objects to `D3D12DDI_HDESCRIPTORHEAP`
+entries before this call; the driver selects those heaps for the supplied
+driver command list. This does not create descriptors or transfer heap
+ownership. Heap replacement, root-table invalidation and bundle matching
+follow the [canonical binding-change rules](command-list-state.md#binding-changes)
+and [bundle binding rules](command-list-state.md#bundle-bindings).
+
 All methods for generating descriptors are free threaded.
 
 Note that there is no "destroy" for a descriptor -- any external
 allocations a descriptor may refer to in the driver/hardware (such as a
 texture) already have a separate object owning its lifetime.
+
+<a id="driver-cbv-samplers"></a>
+
+### CBV and sampler creation
+
+```cpp
+typedef struct D3D12DDI_CONSTANT_BUFFER_VIEW_DESC
+{
+    D3D12DDI_GPU_VIRTUAL_ADDRESS BufferLocation;
+    UINT SizeInBytes;
+    UINT Padding;
+} D3D12DDI_CONSTANT_BUFFER_VIEW_DESC;
+
+typedef VOID ( APIENTRY* PFND3D12DDI_CREATE_CONSTANT_BUFFER_VIEW )( D3D12DDI_HDEVICE, _In_ CONST D3D12DDI_CONSTANT_BUFFER_VIEW_DESC*, _In_ D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor );
+
+typedef struct D3D12DDIARG_CREATE_SAMPLER_0096
+{
+    CONST D3D12DDI_SAMPLER_DESC_0096* pSamplerDesc;
+} D3D12DDIARG_CREATE_SAMPLER_0096;
+
+typedef VOID(APIENTRY* PFND3D12DDI_CREATE_SAMPLER_0096)(D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_SAMPLER_0096*, _In_ D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor);
+```
+
+| Driver entry | Logical API contract and adaptation |
+|---|---|
+| `PFND3D12DDI_CREATE_CONSTANT_BUFFER_VIEW` | [CreateConstantBufferView](#id3d12device-createconstantbufferview): encode the validated buffer address/byte-size interpretation at the supplied driver CPU descriptor handle |
+| `PFND3D12DDI_CREATE_SAMPLER_0096` | [CreateSampler](#id3d12device-createsampler) and [CreateSampler2](#id3d12device11-createsampler2): the outer argument points to the extended driver description; its flags select unsigned versus floating-point border color and the applicable coordinate mode |
+
+For a null CBV API description, the runtime supplies a logical zero
+`BufferLocation`/`SizeInBytes` description to the driver. `Padding` carries
+no additional CBV semantic input. API null/default rules must not be inferred
+from whether a driver payload pointer is null.
+
+The sampler payload uses driver representations, not a promise of bit-identical
+API/DDI enums or structures. CreateSampler supplies the ordinary no-extra-flags meaning through the
+extended driver representation; CreateSampler2 additionally selects typed
+border color and flags. Integer-border and non-normalized-coordinate requirements
+remain defined by the corresponding API/feature contracts. Descriptor generation
+writes the specified heap location; it does not return a newly allocated sampler
+object or a per-descriptor ownership token.
+
+These descriptor-generation DDIs return `VOID`, not a recoverable creation
+`HRESULT`. Unresolvable driver failures use `PFND3D12DDI_SETERROR_CB`,
+not the command-list recording-error channel. This is distinct from the
+`HRESULT` returned when creating the descriptor-heap object itself.
 
 <a id="driver-copies"></a>
 
@@ -3216,13 +3307,26 @@ typedef VOID (APIENTRY* PFND3D12DDI_COPY_DESCRIPTORS_SIMPLE_0003)(
 );
 ```
 
+The corresponding [CopyDescriptors](#id3d12device-copydescriptors) and
+[CopyDescriptorsSimple](#id3d12device-copydescriptorssimple) contracts define
+source/destination eligibility, range traversal, equal copied totals,
+optional range-size arrays and the contiguous simple form. The UMD receives
+the driver device, the matching heap type and driver CPU descriptor handles;
+these logical copy rules are reused rather than defined by hardware byte layout.
+
+The runtime may adapt handles and route shadowed descriptors before invoking
+the driver. A DDI call is not a guarantee of byte-identical API handles or
+a universal one-to-one API/DDI call sequence. Both copy DDIs return `VOID`;
+they neither construct heap objects nor transfer ownership of referenced
+resources to the copied descriptors.
+
 <a id="driver-signatures"></a>
 
 ### Root-signature versions and promises
 
 The runtime will fill in defaults for these flags if the application
-specified none. The defaults are documented with the API version of
-these flags earlier.
+specified none. The defaults are documented with the [API version of
+these flags](#descriptor-range-defaults).
 
 ```C++
 typedef enum D3D12DDI_DESCRIPTOR_RANGE_FLAGS
@@ -3239,8 +3343,8 @@ DEFINE_ENUM_FLAG_OPERATORS( D3D12DDI_DESCRIPTOR_RANGE_FLAGS );
 ```
 
 The runtime will fill in defaults for these flags if the application
-specified none. The defaults are documented with the API version of
-these flags earlier.
+specified none. The defaults are documented with the [API version of
+these flags](#root-descriptor-defaults).
 
 ```C++
 typedef enum D3D12DDI_ROOT_DESCRIPTOR_FLAGS
@@ -3254,35 +3358,141 @@ typedef enum D3D12DDI_ROOT_DESCRIPTOR_FLAGS
 DEFINE_ENUM_FLAG_OPERATORS( D3D12DDI_ROOT_DESCRIPTOR_FLAGS );
 ```
 
-The version-1.1 DDI receives the runtime's version-1.0-to-1.1 conversion with explicit volatility flags. Version 1.2 uses the corresponding newer DDI payload below.
+<a id="driver-root-descriptions"></a>
 
-```C++
-D3D12DDI_H( D3D12DDI_HROOTSIGNATURE )
+#### Driver root-description types
 
-typedef struct D3D12DDIARG_CREATE_ROOT_SIGNATURE_0013
+The driver root-description representations are:
+
+```cpp
+typedef enum D3D12DDI_DESCRIPTOR_RANGE_TYPE
 {
-    D3D12DDI_ROOT_SIGNATURE_VERSION Version;
-    // Pointer contents valid for lifetime of the root signature
+    D3D12DDI_DESCRIPTOR_RANGE_TYPE_SRV,
+    D3D12DDI_DESCRIPTOR_RANGE_TYPE_UAV,
+    D3D12DDI_DESCRIPTOR_RANGE_TYPE_CBV,
+    D3D12DDI_DESCRIPTOR_RANGE_TYPE_SAMPLER
+} D3D12DDI_DESCRIPTOR_RANGE_TYPE;
+
+typedef enum D3D12DDI_ROOT_PARAMETER_TYPE
+{
+    D3D12DDI_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+    D3D12DDI_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
+    D3D12DDI_ROOT_PARAMETER_TYPE_CBV,
+    D3D12DDI_ROOT_PARAMETER_TYPE_SRV,
+    D3D12DDI_ROOT_PARAMETER_TYPE_UAV
+} D3D12DDI_ROOT_PARAMETER_TYPE;
+
+typedef enum D3D12DDI_SHADER_VISIBILITY
+{
+    D3D12DDI_SHADER_VISIBILITY_ALL = 0,
+    D3D12DDI_SHADER_VISIBILITY_VERTEX = 1,
+    D3D12DDI_SHADER_VISIBILITY_HULL = 2,
+    D3D12DDI_SHADER_VISIBILITY_DOMAIN = 3,
+    D3D12DDI_SHADER_VISIBILITY_GEOMETRY = 4,
+    D3D12DDI_SHADER_VISIBILITY_PIXEL = 5,
+    D3D12DDI_SHADER_VISIBILITY_AMPLIFICATION = 6,
+    D3D12DDI_SHADER_VISIBILITY_MESH = 7,
+} D3D12DDI_SHADER_VISIBILITY;
+
+typedef enum D3D12DDI_ROOT_SIGNATURE_FLAGS
+{
+    D3D12DDI_ROOT_SIGNATURE_FLAG_NONE                                   = 0x0,
+    D3D12DDI_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT     = 0x1,
+    D3D12DDI_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS         = 0x2,
+    D3D12DDI_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS           = 0x4,
+    D3D12DDI_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS         = 0x8,
+    D3D12DDI_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS       = 0x10,
+    D3D12DDI_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS          = 0x20,
+    D3D12DDI_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT                    = 0x40,
+    D3D12DDI_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE                   = 0x80,
+    D3D12DDI_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS  = 0x100,
+    D3D12DDI_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS           = 0x200,
+    D3D12DDI_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED      = 0x400,
+    D3D12DDI_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED          = 0x800,
+} D3D12DDI_ROOT_SIGNATURE_FLAGS;
+
+typedef enum D3D12DDI_STATIC_BORDER_COLOR
+{
+    D3D12DDI_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, // 0.0f,0.0f,0.0f,0.0f
+    D3D12DDI_STATIC_BORDER_COLOR_OPAQUE_BLACK, // 0.0f,0.0f,0.0f,1.0f
+    D3D12DDI_STATIC_BORDER_COLOR_OPAQUE_WHITE, // 1.0f,1.0f,1.0f,1.0f
+    D3D12DDI_STATIC_BORDER_COLOR_OPAQUE_BLACK_UINT, // 0u,0u,0u,1u
+    D3D12DDI_STATIC_BORDER_COLOR_OPAQUE_WHITE_UINT  // 1u,1u,1u,1u
+} D3D12DDI_STATIC_BORDER_COLOR;
+
+typedef enum D3D12DDI_ROOT_SIGNATURE_VERSION
+{
+    D3D12DDI_ROOT_SIGNATURE_VERSION_1_1  = 0x2,
+    D3D12DDI_ROOT_SIGNATURE_VERSION_1_2  = 0x3,
+} D3D12DDI_ROOT_SIGNATURE_VERSION;
+
+#define D3D12DDI_DESCRIPTOR_RANGE_OFFSET_APPEND -1
+
+typedef struct D3D12DDI_ROOT_CONSTANTS
+{
+    UINT ShaderRegister;
+    UINT RegisterSpace;
+    UINT Num32BitValues;
+} D3D12DDI_ROOT_CONSTANTS;
+
+typedef struct D3D12DDI_DESCRIPTOR_RANGE_0013
+{
+    D3D12DDI_DESCRIPTOR_RANGE_TYPE RangeType;
+    UINT NumDescriptors;
+    UINT BaseShaderRegister;
+    UINT RegisterSpace;
+    D3D12DDI_DESCRIPTOR_RANGE_FLAGS Flags;
+    UINT OffsetInDescriptorsFromTableStart;
+} D3D12DDI_DESCRIPTOR_RANGE_0013;
+
+typedef struct D3D12DDI_ROOT_DESCRIPTOR_TABLE_0013
+{
+    UINT NumDescriptorRanges;
+    CONST D3D12DDI_DESCRIPTOR_RANGE_0013* pDescriptorRanges;
+} D3D12DDI_ROOT_DESCRIPTOR_TABLE_0013;
+
+typedef struct D3D12DDI_ROOT_DESCRIPTOR_0013
+{
+    UINT ShaderRegister;
+    UINT RegisterSpace;
+    D3D12DDI_ROOT_DESCRIPTOR_FLAGS Flags;
+} D3D12DDI_ROOT_DESCRIPTOR_0013;
+
+typedef struct D3D12DDI_ROOT_PARAMETER_0013
+{
+    D3D12DDI_ROOT_PARAMETER_TYPE ParameterType;
     union
     {
-        CONST D3D12DDI_ROOT_SIGNATURE_0013* pRootSignature_1_1;
+        D3D12DDI_ROOT_DESCRIPTOR_TABLE_0013 DescriptorTable;
+        D3D12DDI_ROOT_CONSTANTS             Constants;
+        D3D12DDI_ROOT_DESCRIPTOR_0013       Descriptor;
     };
-    UINT NodeMask;
-} D3D12DDIARG_CREATE_ROOT_SIGNATURE_0013;
+    D3D12DDI_SHADER_VISIBILITY ShaderVisibility;
+} D3D12DDI_ROOT_PARAMETER_0013;
 
-typedef SIZE_T ( APIENTRY*
-    PFND3D12DDI_CALC_PRIVATE_ROOT_SIGNATURE_SIZE_0013 )(
-    D3D12DDI_HDEVICE, _In_ CONST
-    D3D12DDIARG_CREATE_ROOT_SIGNATURE_0013* );
-
-typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATE_ROOT_SIGNATURE_0013) (
-    D3D12DDI_HDEVICE, _In_ CONST
-    D3D12DDIARG_CREATE_ROOT_SIGNATURE_0013*,
-    D3D12DDI_HROOTSIGNATURE );
-
-typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_ROOT_SIGNATURE ) (
-    D3D12DDI_HDEVICE, D3D12DDI_HROOTSIGNATURE );
 ```
+
+`NumParameters` and `NumStaticSamplers` bound the corresponding arrays.
+`ParameterType` selects the `DescriptorTable`, `Constants` or `Descriptor`
+union member, with the logical parameter kind and
+[shader visibility](#shader-visibility) defined by the
+[root-signature descriptions](#signature-descriptions).
+
+A descriptor table supplies `NumDescriptorRanges` driver range records.
+Their type, count, shader register, register space and table-relative
+offset have the logical meanings in [descriptor ranges](#descriptor-ranges);
+`D3D12DDI_DESCRIPTOR_RANGE_OFFSET_APPEND` supplies the append-offset sentinel.
+Root constants supply the register/space and number of 32-bit values.
+Root descriptors supply their register/space and normalized data flags.
+The range and descriptor records carry the explicit descriptor/data promises.
+
+`Version` identifies the normalized description revision. Version 1.2 retains the version-1.1 root
+parameter representation and changes the static-sampler representation
+as shown below. Static sampler filtering, addressing, comparison, LOD and
+border-color meanings remain defined by [sampler fields](#sampler-fields);
+the [version/flag requirements](#signature-descriptions) and
+[coordinate-mode requirements](#non-normalized-samplers) still apply.
+These driver structures are not the serialized blob format.
 
 To support static samplers, `D3D12DDI_STATIC_SAMPLER_0100` includes a flags field.
 
@@ -3308,7 +3518,7 @@ typedef struct D3D12DDI_STATIC_SAMPLER_0100
 } D3D12DDI_STATIC_SAMPLER_0100;
 ```
 
-New root signature DDIs enable the use of `D3D12DDI_STATIC_SAMPLER_0100`.
+The version-1.2 root-signature description uses `D3D12DDI_STATIC_SAMPLER_0100`.
 
 ```c++
 typedef struct D3D12DDI_ROOT_SIGNATURE_0100
@@ -3334,26 +3544,71 @@ typedef struct D3D12DDIARG_CREATE_ROOT_SIGNATURE_0100
 } D3D12DDIARG_CREATE_ROOT_SIGNATURE_0100;
 ```
 
-The corresponding core functions enable the creation of the new root signature.
+The corresponding core functions size and create a version-1.2 root signature.
 
 ```c++
 
 typedef SIZE_T(APIENTRY* PFND3D12DDI_CALC_PRIVATE_ROOT_SIGNATURE_SIZE_0100)(D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_ROOT_SIGNATURE_0100*);
 typedef HRESULT(APIENTRY* PFND3D12DDI_CREATE_ROOT_SIGNATURE_0100) (D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_ROOT_SIGNATURE_0100*, D3D12DDI_HROOTSIGNATURE);
 
-typedef struct D3D12DDI_DEVICE_FUNCS_CORE_0100
-{
-    ...
-    PFND3D12DDI_CALC_PRIVATE_ROOT_SIGNATURE_SIZE_0100    pfnCalcPrivateRootSignatureSize;
-    PFND3D12DDI_CREATE_ROOT_SIGNATURE_0100               pfnCreateRootSignature;
-
-    ...
-} D3D12DDI_DEVICE_FUNCS_CORE_0100;
 ```
+
+<a id="driver-root-lifecycle"></a>
+
+#### Root-object lifecycle and ownership
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_ROOT_SIGNATURE ) ( D3D12DDI_HDEVICE, D3D12DDI_HROOTSIGNATURE );
+```
+
+The size query returns the required driver-private root-object storage in
+bytes as `SIZE_T`. It is not the serialized root-signature blob size or an
+`HRESULT`. The runtime supplies that private region through
+`D3D12DDI_HROOTSIGNATURE` to the matching Create DDI. The UMD initializes
+its driver object there and owns any additional allocations it makes; it
+does not own the supplied region. These signatures have no separate
+runtime root-signature handle parameter.
+
+Creation returns an `HRESULT`. If it fails, the UMD must unwind its
+partially initialized state and additional allocations; the runtime does
+not call DestroyRootSignature for failed driver creation. After successful
+driver creation, later abandonment or API initialization failure requires
+destruction of that driver object. DestroyRootSignature receives the driver
+device and the successfully created root handle, releases UMD-owned state,
+and does not free the runtime-supplied private region.
+
+The logical request is
+[CreateRootSignature](#id3d12device-createrootsignature), after runtime
+deserialization, validation, version conversion and explicit-default
+normalization. The driver receives a normalized description,
+not the application's serialized blob. `NodeMask` identifies the selected
+DDI-visible nodes. The `_0100` sizing/creation pair uses the corresponding
+declared static-sampler representation shown above.
 
 <a id="driver-binding"></a>
 
 ### Root binding
+
+These runtime-to-driver entry points implement the following logical
+API contracts after handle adaptation. `D3D12DDI_HCOMMANDLIST` identifies
+the driver recording object, not an API interface pointer. Root-signature
+selection uses the created `D3D12DDI_HROOTSIGNATURE`; a null driver root
+handle represents the API's unset operation. Graphics and compute slots
+have separate bind sets even when they share a function-pointer type.
+
+In the pass-through descriptions below, "directly" describes logical
+parameter values after the handle adaptation above, not byte-identical
+API/DDI objects or handle representations.
+
+| Driver entry / slots | Canonical API contracts |
+|---|---|
+| `PFND3D12DDI_SET_ROOT_SIGNATURE` | [SetGraphicsRootSignature](#id3d12graphicscommandlist-setgraphicsrootsignature), [SetComputeRootSignature](#id3d12graphicscommandlist-setcomputerootsignature) |
+| `PFND3D12DDI_SET_ROOT_DESCRIPTOR_TABLE` | [SetGraphicsRootDescriptorTable](#id3d12graphicscommandlist-setgraphicsrootdescriptortable), [SetComputeRootDescriptorTable](#id3d12graphicscommandlist-setcomputerootdescriptortable) |
+| `PFND3D12DDI_SET_ROOT_32BIT_CONSTANT` | [SetGraphicsRoot32BitConstant](#id3d12graphicscommandlist-setgraphicsroot32bitconstant), [SetComputeRoot32BitConstant](#id3d12graphicscommandlist-setcomputeroot32bitconstant) |
+| `PFND3D12DDI_SET_ROOT_32BIT_CONSTANTS_0003` | [SetGraphicsRoot32BitConstants](#id3d12graphicscommandlist-setgraphicsroot32bitconstants), [SetComputeRoot32BitConstants](#id3d12graphicscommandlist-setcomputeroot32bitconstants) |
+| `PFND3D12DDI_SET_ROOT_BUFFER_VIEW`, CBV slots | [SetGraphicsRootConstantBufferView](#id3d12graphicscommandlist-setgraphicsrootconstantbufferview), [SetComputeRootConstantBufferView](#id3d12graphicscommandlist-setcomputerootconstantbufferview) |
+| `PFND3D12DDI_SET_ROOT_BUFFER_VIEW`, SRV slots | [SetGraphicsRootShaderResourceView](#id3d12graphicscommandlist-setgraphicsrootshaderresourceview), [SetComputeRootShaderResourceView](#id3d12graphicscommandlist-setcomputerootshaderresourceview) |
+| `PFND3D12DDI_SET_ROOT_BUFFER_VIEW`, UAV slots | [SetGraphicsRootUnorderedAccessView](#id3d12graphicscommandlist-setgraphicsrootunorderedaccessview), [SetComputeRootUnorderedAccessView](#id3d12graphicscommandlist-setcomputerootunorderedaccessview) |
 
 See the API reference for details on the flags and inheritance behavior
 between command lists and bundles.
@@ -3416,6 +3671,22 @@ PFND3D12DDI_SET_ROOT_BUFFER_VIEW pfnSetGraphicsRootShaderResourceView;
 PFND3D12DDI_SET_ROOT_BUFFER_VIEW pfnSetComputeRootUnorderedAccessView;
 PFND3D12DDI_SET_ROOT_BUFFER_VIEW pfnSetGraphicsRootUnorderedAccessView;
 ```
+
+The named API entries define parameter indices and types, DWORD offsets,
+partial constant updates, address restrictions and applicable command-list
+types. The group-constant DDI must capture the source values during the
+call; it cannot depend on the caller's `pSrcData` remaining valid afterward.
+Descriptor-table bases use driver GPU descriptor handles, whereas root
+buffer views use GPU virtual addresses; neither is a CPU descriptor handle.
+Handle adaptation does not change the logical table/constant/address contract.
+
+Root-signature changes, redundant selection of the same signature,
+heap-change invalidation and bundle inheritance follow
+[canonical resource-binding state](command-list-state.md#resource-binding).
+These `VOID` recording DDIs do not return a recoverable creation `HRESULT`.
+Errors reported by the driver while recording follow the shared
+[recording-error callback and deferred-Close contract](execution.md#lifecycle-driver-errors);
+the result type alone does not establish error policy or remove API validation.
 
 <a id="driver-clearing"></a>
 

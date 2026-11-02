@@ -748,9 +748,9 @@ The root-constant parameters at indices 2 and 6 must each have at least one valu
 
 ## Driver and hardware responsibilities
 
-The runtime validates and translates the public description and calls the driver's command-signature creation callbacks. The public DDI uses `D3D12DDIARG_CREATE_COMMAND_SIGNATURE_0001` with `ByteStride`, `NumArgumentDescs`, `pArgumentDescs`, `hRootSignature` and `NodeMask`. Its descriptor array uses `D3D12DDI_INDIRECT_ARGUMENT_DESC`, whose union includes the tier-1.1 incrementing-constant target. `D3D12DDI_INDIRECT_ARGUMENT_TYPE` includes draw, compute, ray and mesh work along with the state-changing arguments.
+The runtime validates and translates the public description and calls the driver's command-signature creation DDIs. The public DDI uses `D3D12DDIARG_CREATE_COMMAND_SIGNATURE_0001` with `ByteStride`, `NumArgumentDescs`, `pArgumentDescs`, `hRootSignature` and `NodeMask`. Its descriptor array uses `D3D12DDI_INDIRECT_ARGUMENT_DESC`, whose union includes the tier-1.1 incrementing-constant target. `D3D12DDI_INDIRECT_ARGUMENT_TYPE` includes draw, compute, ray and mesh work along with the state-changing arguments.
 
-The size and creation callback names retain their `_0001` suffix; execution uses `PFND3D12DDI_EXECUTE_INDIRECT`. These callback suffixes are independent of command-list table revisions. For example, `D3D12DDI_COMMAND_LIST_FUNCS_3D_0033` contains `pfnExecuteIndirect` of that unversioned execution-callback type, not a callback renamed to `_0033`. The ray, mesh and incrementing-constant argument additions do not require newly named creation or execution callbacks.
+The size and creation DDI names retain their `_0001` suffix; execution uses `PFND3D12DDI_EXECUTE_INDIRECT`. These DDI suffixes are independent of command-list table revisions. For example, `D3D12DDI_COMMAND_LIST_FUNCS_3D_0033` contains `pfnExecuteIndirect` of that unversioned execution-DDI type, not a DDI renamed to `_0033`. The ray, mesh and incrementing-constant argument additions do not require newly named creation or execution DDIs.
 
 ```cpp
 typedef struct D3D12DDIARG_HRESOURCE_PLACEMENT
@@ -855,9 +855,63 @@ typedef VOID ( APIENTRY* PFND3D12DDI_EXECUTE_INDIRECT )(
 
 **Destruction:** Destroys a command signature.
 
-The size callback returns the driver's private command-signature storage size; creation returns an `HRESULT`; destruction releases the driver object. `PFND3D12DDI_EXECUTE_INDIRECT` receives the command list and signature handles, maximum count, and argument/count buffer placements. Each placement's `BaseAddress.UMD` carries the resource handle and byte offset; a null count-resource handle denotes the no-count-buffer form. The driver/hardware must interpret the selected argument format and offsets and enforce the unsigned minimum of API maximum and GPU count. The [canonical state-reset contract](command-list-state.md#indirect) assigns the post-call resetting DDI calls to the runtime.
+The size DDI returns the driver's private command-signature storage size; creation returns an `HRESULT`; destruction releases the driver object. `PFND3D12DDI_EXECUTE_INDIRECT` receives the command list and signature handles, maximum count, and argument/count buffer placements. Each placement's `BaseAddress.UMD` carries the resource handle and byte offset; a null count-resource handle denotes the no-count-buffer form. The driver/hardware must interpret the selected argument format and offsets and enforce the unsigned minimum of API maximum and GPU count. The [canonical state-reset contract](command-list-state.md#indirect) assigns the post-call resetting DDI calls to the runtime.
 
 Mesh work's [DispatchMesh DDI and stage responsibilities](amplification-and-mesh-shaders.md#mesh-driver), and ray work's [raytracing driver contract](raytracing-pipelines.md#driver-dispatch), remain distinct from signature creation and indirect interpretation. Tier-1.1's system-generated constant consumes no argument bytes; an implementation must supply its zero-based sequence and reset the affected state.
+
+<a id="driver-lifetime"></a>
+
+### Driver-object lifetime and execution inputs
+
+The sizing DDI reports required driver-private object bytes as `SIZE_T`,
+not the size of the GPU argument buffer and not an `HRESULT`. The runtime
+supplies that private region through `D3D12DDI_HCOMMANDSIGNATURE` to the
+Create DDI. The UMD initializes its state there and owns its additional
+allocations, not the supplied region. A sizing call does not construct
+the object.
+
+Failed driver creation must unwind partial driver state and allocations;
+the runtime does not call DestroyCommandSignature for a failed Create.
+After successful driver creation, later abandonment requires destruction of
+that driver object. DestroyCommandSignature releases UMD-owned state
+without freeing the runtime-supplied private region. The runtime keeps an
+associated root-signature object alive for this driver object's lifetime;
+destroying the command signature does not transfer root-signature destruction
+to the UMD.
+
+The lifecycle's logical API association is
+[CreateCommandSignature](#createcommandsignature). The creation arguments
+and their `pArgumentDescs` array are borrowed for the call. The UMD must
+capture the signature information it needs afterward into its own state,
+rather than retain those input pointers. This array is the signature's
+ordered metadata, not GPU argument records consumed by ExecuteIndirect.
+
+`NumArgumentDescs` counts descriptions in one signature.
+`ByteStride` is the byte step between complete command records, including
+record padding, not the size of each individual argument. The
+[record-layout contract](#argument-records) defines the consumed bytes.
+`hRootSignature` is the associated driver root handle, or null when no root
+arguments are changed, under the API's if-and-only-if association rule.
+`NodeMask` carries the selected creation nodes after runtime processing;
+it is not a GPU record count or per-dispatch dimension.
+
+`PFND3D12DDI_EXECUTE_INDIRECT` implements the
+[ExecuteIndirect API contract](#executeindirect) after resolving the API
+signature and resources to driver handles. Argument/count placements are
+passed by value; their `BaseAddress.UMD` members identify driver resources
+and resource-relative byte offsets, not API interfaces, CPU record pointers
+or bare GPU virtual addresses. The absent count buffer has a null resource
+handle and zero offset.
+
+The argument/count contents remain GPU execution inputs; recording the DDI
+is not a CPU readback or proof of their validity. The API's
+[byte extents](#execute-validation), [typed-work contexts](#recording-contexts),
+GPU count limit, resource lifetime and access requirements remain applicable.
+Signature metadata capture does not snapshot GPU argument/count bytes.
+The [runtime's post-call state resets](command-list-state.md#indirect) still
+apply for zero or predicated-off generated work. Reported recording failures
+use the [shared callback/deferred-Close contract](execution.md#lifecycle-driver-errors);
+returning from this `VOID` DDI does not report GPU completion.
 
 Both of the following implementations are acceptable:
 
