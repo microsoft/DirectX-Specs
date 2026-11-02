@@ -1,5 +1,5 @@
 # D3D12: PIX Markers <!-- omit in toc -->
-v0.06 06/17/2026
+v0.07 10/12/2026
 
 ---
 
@@ -36,19 +36,16 @@ This functionality is designed to integrate seamlessly with any Windows tooling,
 
 # Proposed API
 
-_Note: The interface numbers are subject to change._
-
 ### D3D12_USER_DEFINED_ANNOTATION_MODE
 
 ```c++
 typedef
 enum D3D12_USER_DEFINED_ANNOTATION_MODE
     {
-        D3D12_USER_DEFINED_ANNOTATION_MODE_RUNTIME_ONLY = 1,
-        D3D12_USER_DEFINED_ANNOTATION_MODE_DRIVER_RETAIL = 2,
+        D3D12_USER_DEFINED_ANNOTATION_MODE_RUNTIME_ONLY = 0,
+        D3D12_USER_DEFINED_ANNOTATION_MODE_DRIVER_RETAIL = 1,
     } D3D12_USER_DEFINED_ANNOTATION_MODE;
 ```
-
 |Enum|Meaning|
 |----|-------|
 |```D3D12_USER_DEFINED_ANNOTATION_MODE_RUNTIME_ONLY```| API does not make DDI call to UMD |
@@ -57,11 +54,11 @@ enum D3D12_USER_DEFINED_ANNOTATION_MODE
 ### ID3D12DeviceTools2
 
 ```c++
-interface ID3D12DeviceTools2 : ID3D12DeviceTool1
+interface ID3D12DeviceTools2 : ID3D12DeviceTools1
 {
-    void SetUserDefinedAnnotationMode(D3D12_USER_DEFINED_ANNOTATION_MODE mode);
+    HRESULT SetUserDefinedAnnotationMode(D3D12_USER_DEFINED_ANNOTATION_MODE mode);
     D3D12_USER_DEFINED_ANNOTATION_MODE GetUserDefinedAnnotationMode();
-}
+};
 ```
 
 `ID3D12DeviceTools2` interface can be QueryInterface'd from an `ID3D12Device` object. This interface will always be supported by newer versions of D3D12 going forward.
@@ -76,6 +73,8 @@ Similar APIs exist for `ID3D12CommandQueue` and `ID3D12VideoProcessCommandList`.
 This means that any configuration applied using `ID3D12DeviceTools2` will apply to subsequent device children, such as `ID3D12GraphicsCommandList`, `ID3D12CommandQueue` and `ID3D12VideoProcessCommandList`, created using the device interface. If the annotation mode is modified after some device child objects have already been created, the new setting will only apply to device children that are created after the change. Previously created device children will continue using the annotation mode that was active at the time of their creation. 
 
 For `ID3D12Object::SetName(LPCWSTR Name)`, it is important to note that only device children objects will make DDI calls to UMD.
+
+`SetUserDefinedAnnotationMode` returns `S_OK` for a valid mode and `E_INVALIDARG` for an invalid mode, leaving the previous mode unchanged on failure.
 
 By default, the runtime annotation mode is `D3D12_USER_DEFINED_ANNOTATION_MODE_RUNTIME_ONLY`.
 
@@ -98,19 +97,21 @@ typedef enum D3D12_FEATURE
     D3D12_FEATURE_D3D12_OPTIONS                         =  0,
     D3D12_FEATURE_ARCHITECTURE                          =  1, // Deprecated by D3D12_FEATURE_ARCHITECTURE1
     ...
-    D3D12_FEATURE_USER_DEFINED_ANNOTATION
+    D3D12_FEATURE_USER_DEFINED_ANNOTATION               = 73,
 } D3D12_FEATURE;
 ```
+
+Setting `DRIVER_RETAIL` succeeds even without driver support. In this case, the runtime still copies and tracks marker data, but marker and naming APIs make no annotation DDI calls.
 
 ### Marker Data Lifetime
 
 The D3D12 runtime manages marker data by maintaining an internal copy whose lifetime is tied to the associated command allocator. When the command allocator is reset, all marker data linked to it is discarded. If the marker is set in the context of a command queue instead of a command list, its lifetime is instead bound to the command queue.
 
-The runtime also maintains a mapping between each marker’s data and a unique identifier known as an EventID. This EventID is passed along with the marker data to the driver, which may utilize them as needed. The driver’s handling of this data is described in [Proposed DDI](#proposed-ddi) section.
+The runtime also maintains a mapping between each marker’s data and a unique identifier known as an AnnotationID. This AnnotationID is passed along with the marker data to the driver, which may utilize them as needed. The driver’s handling of this data is described in [Proposed DDI](#proposed-ddi) section.
 
-It's important to note that the driver is responsible for managing the lifetime of data that's passed through `PFND3D12DDI_SET_NAME`.
+It's important to note that the driver is responsible for managing the lifetime of data that's passed through `PFND3D12DDI_SET_NAME_0121`.
 
-Note that when the annotation mode is `D3D12_USER_DEFINED_ANNOTATION_MODE_RUNTIME_ONLY`, the runtime does not retain a copy of marker data. This is intentional to avoid the bookkeeping cost: since no marker EventID is ever issued to the driver in this mode, the runtime has no need to map an EventID back to marker data.
+Note that when the annotation mode is `D3D12_USER_DEFINED_ANNOTATION_MODE_RUNTIME_ONLY`, the runtime does not retain a copy of marker data. This is intentional to avoid the bookkeeping cost: since no marker AnnotationID is ever issued to the driver in this mode, the runtime has no need to map an AnnotationID back to marker data.
 
 ### Thread Safety and Synchronization 
 Applications are responsible for synchronizing calls to `SetUserDefinedAnnotationMode` with device child object creation. The annotation mode is device specific mutable state that can be modified concurrently by multiple threads. For example, one thread may set the mode to `D3D12_USER_DEFINED_ANNOTATION_MODE_DRIVER_RETAIL` and create a command queue, while another thread sets the mode to `D3D12_USER_DEFINED_ANNOTATION_MODE_RUNTIME_ONLY` and create a command list. Although the intended behavior is for command queue marker APIs to be forwarded to the driver and command list marker APIs to be remain runtime-only, subsequent mode changes may occur before object creation completes, causing both objects to use the most recently set mode.
@@ -124,77 +125,77 @@ DDI rev 121 adds `D3D12DDI_USER_DEFINED_ANNOTATION_FUNCS_0121`.
 ```c++
 //----------------------------------------------------------------------------------------------------------------------------------
 // D3D12 PIX Markers
-// Feature: D3D12DDI_FEATURE_0121_USER_DEFINED_ANNOTATIONS
-// Version: D3D12DDI_FEATURE_VERSION_USER_DEFINED_ANNOTATIONS_0121_0
+// Feature: D3D12DDI_FEATURE_0121_USER_DEFINED_ANNOTATION
+// Version: D3D12DDI_FEATURE_VERSION_USER_DEFINED_ANNOTATION_0121_0
 // Usermode DDI Min Version: D3D12DDI_SUPPORTED_0121
 //
 //----------------------------------------------------------------------------------------------------------------------------------
 
-#define D3D12DDI_FEATURE_VERSION_USER_DEFINED_ANNOTATIONS_0121_0 1u
-#define D3D12DDI_FEATURE_VERSION_USER_DEFINED_ANNOTATIONS_LATEST D3D12DDI_FEATURE_VERSION_USER_DEFINED_ANNOTATIONS_0121_0
+#define D3D12DDI_FEATURE_VERSION_USER_DEFINED_ANNOTATION_0121_0 1u
+#define D3D12DDI_FEATURE_VERSION_USER_DEFINED_ANNOTATION_LATEST D3D12DDI_FEATURE_VERSION_USER_DEFINED_ANNOTATION_0121_0
 
-// Command Queue 
-typedef VOID ( APIENTRY* PFND3D12DDI_COMMAND_QUEUE_BEGIN_EVENT_ON_DRIVER )(
-    D3D12DDI_HCOMMANDQUEUE,                     // in: Runtime handle
+// Command Queue
+typedef VOID ( APIENTRY* PFND3D12DDI_COMMAND_QUEUE_BEGIN_EVENT_0121 )(
+    D3D12DDI_HCOMMANDQUEUE,                     // in: Driver handle
     UINT Metadata,                              // in: Runtime marker format data version
     _In_reads_(Size) CONST VOID* pData,         // in: Pointer to runtime marker data
     UINT Size,                                  // in: Size in bytes of runtime marker data
-    UINT64 EventID);                            // in: ID mapping to runtime marker data
+    UINT64 AnnotationID);                       // in: ID mapping to runtime marker data
 
-typedef VOID (APIENTRY* PFND3D12DDI_COMMAND_QUEUE_END_EVENT_ON_DRIVER )(
-    D3D12DDI_HCOMMANDQUEUE,                     // in: Runtime handle
-    UINT64 EventID);                            // in: ID mapping to runtime marker data
+typedef VOID (APIENTRY* PFND3D12DDI_COMMAND_QUEUE_END_EVENT_0121 )(
+    D3D12DDI_HCOMMANDQUEUE,                     // in: Driver handle
+    UINT64 AnnotationID);                       // in: ID mapping to runtime marker data
 
-typedef VOID ( APIENTRY* PFND3D12DDI_COMMAND_QUEUE_SET_MARKER_ON_DRIVER )(
-    D3D12DDI_HCOMMANDQUEUE,                     // in: Runtime handle
+typedef VOID ( APIENTRY* PFND3D12DDI_COMMAND_QUEUE_SET_MARKER_0121 )(
+    D3D12DDI_HCOMMANDQUEUE,                     // in: Driver handle
     UINT Metadata,                              // in: Runtime marker format data version
     _In_reads_(Size) CONST VOID* pData,         // in: Pointer to runtime marker data
     UINT Size,                                  // in: Size in bytes of runtime marker data
-    UINT64 EventID);                            // in: ID mapping to runtime marker data
+    UINT64 AnnotationID);                       // in: ID mapping to runtime marker data
 
 // Command List
-typedef VOID (APIENTRY* PFND3D12DDI_COMMAND_LIST_SET_MARKER_ON_DRIVER )(
-    D3D12DDI_HCOMMANDLIST,                      // in: Runtime handle
+typedef VOID (APIENTRY* PFND3D12DDI_COMMAND_LIST_SET_MARKER_0121 )(
+    D3D12DDI_HCOMMANDLIST,                      // in: Driver handle
     UINT Metadata,                              // in: Runtime marker format data version
-    CONST VOID* pData,                          // in: Pointer to runtime marker data
+    _In_reads_(Size) CONST VOID* pData,         // in: Pointer to runtime marker data
     UINT Size,                                  // in: Size in bytes of runtime marker data
-    UINT64 EventID);                            // in: ID mapping to runtime marker data
+    UINT64 AnnotationID);                       // in: ID mapping to runtime marker data
 
-typedef VOID (APIENTRY* PFND3D12DDI_COMMAND_LIST_END_EVENT_ON_DRIVER)(
-    D3D12DDI_HCOMMANDLIST,                      // in: Runtime handle
-    UINT64 EventID);                            // in: ID mapping to runtime marker data
+typedef VOID (APIENTRY* PFND3D12DDI_COMMAND_LIST_END_EVENT_0121)(
+    D3D12DDI_HCOMMANDLIST,                      // in: Driver handle
+    UINT64 AnnotationID);                       // in: ID mapping to runtime marker data
 
-typedef VOID (APIENTRY* PFND3D12DDI_COMMAND_LIST_BEGIN_EVENT_ON_DRIVER)(
-    D3D12DDI_HCOMMANDLIST,                      // in: Runtime handle
+typedef VOID (APIENTRY* PFND3D12DDI_COMMAND_LIST_BEGIN_EVENT_0121)(
+    D3D12DDI_HCOMMANDLIST,                      // in: Driver handle
     UINT Metadata,                              // in: Runtime marker format data version
-    CONST VOID* pData,                          // in: Pointer to runtime marker data
+    _In_reads_(Size) CONST VOID* pData,         // in: Pointer to runtime marker data
     UINT Size,                                  // in: Size in bytes of runtime marker data
-    UINT64 EventID);                            // in: ID mapping to runtime marker data
+    UINT64 AnnotationID);                       // in: ID mapping to runtime marker data
 
 // SetName
-typedef VOID (APIENTRY* PFND3D12DDI_SET_NAME)(
-    D3D12DDI_HANDLE_AND_TYPE,                   // in: Runtime handle and handle type
-    _In_opt_ LPCWSTR Name);                     // _In_opt_: Name associated with the command list. nullptr if there's no associated name
+typedef VOID (APIENTRY* PFND3D12DDI_SET_NAME_0121)(
+    D3D12DDI_HANDLE_AND_TYPE,                   // in: Driver handle and type
+    _In_ LPCWSTR pName);                        // in: Pointer to name string
 
 typedef struct D3D12DDI_USER_DEFINED_ANNOTATION_FUNCS_0121
 {
     // Command Queue
-    PFND3D12DDI_COMMAND_QUEUE_BEGIN_EVENT     pfnCmdQueueBeginEvent;
-    PFND3D12DDI_COMMAND_QUEUE_END_EVENT       pfnCmdQueueEndEvent;
-    PFND3D12DDI_COMMAND_QUEUE_SET_MARKER      pfnCmdQueueSetMarker;
+    PFND3D12DDI_COMMAND_QUEUE_BEGIN_EVENT_0121  pfnCommandQueueBeginEvent;
+    PFND3D12DDI_COMMAND_QUEUE_END_EVENT_0121    pfnCommandQueueEndEvent;
+    PFND3D12DDI_COMMAND_QUEUE_SET_MARKER_0121   pfnCommandQueueSetMarker;
 
     // Command List
-    PFND3D12DDI_COMMAND_LIST_BEGIN_EVENT      pfnCmdListBeginEvent;
-    PFND3D12DDI_COMMAND_LIST_END_EVENT        pfnCmdListEndEvent;
-    PFND3D12DDI_COMMAND_LIST_SET_MARKER       pfnCmdListSetMarker;
+    PFND3D12DDI_COMMAND_LIST_BEGIN_EVENT_0121   pfnCommandListBeginEvent;
+    PFND3D12DDI_COMMAND_LIST_END_EVENT_0121     pfnCommandListEndEvent;
+    PFND3D12DDI_COMMAND_LIST_SET_MARKER_0121    pfnCommandListSetMarker;
 
-    PFND3D12DDI_SET_NAME                      pfnSetName;
+    PFND3D12DDI_SET_NAME_0121                   pfnSetName;
 } D3D12DDI_USER_DEFINED_ANNOTATION_FUNCS_0121;
 ```
 
-Drivers are expected to embed runtime marker EventIDs in GPU crash reports to enable the runtime to associate those IDs with corresponding marker data. This correlation allows the runtime to include relevant marker information in the crash dump. Access to runtime marker data is provided to drivers to support decoding by IHV tools. Drivers may disregard this data if such decoding is not required.
+Drivers are expected to embed runtime marker AnnotationIDs in GPU crash reports to enable the runtime to associate those IDs with corresponding marker data. This correlation allows the runtime to include relevant marker information in the crash dump. Access to runtime marker data is provided to drivers to support decoding by IHV tools. Drivers may disregard this data if such decoding is not required.
 
-Unlike marker EventIDs, device object names are optional and may be included only if the driver manages the associated device object name data.
+Unlike marker AnnotationIDs, device object names are optional and may be included only if the driver manages the associated device object name data.
 
 # Use Case Example
 
@@ -256,7 +257,7 @@ d3dconfig device force-driver-retail-annotations=off
 
   In practice, we do not anticipate a large volume of marker strings that would result in significant memory overhead. This is because the D3D12 runtime releases marker data upon command allocator reset. We should revisit this if this becomes a substantial issue.
 
-  One way to mitigate this would be to hand over the responsibility of managing marker data to the application. We could add an extra API for this and call it "fast path" scenario for now. Since PIX events add a level of indirection, we could potentially get rid of it as well and ask applications to use the runtime API directly. The runtime does not copy the string, and instead keeps a map of marker EventID to app provided data pointer. The copy only happens when generating TDR crash dump. Of course, there's the issue of dangling pointer here though.
+  One way to mitigate this would be to hand over the responsibility of managing marker data to the application. We could add an extra API for this and call it "fast path" scenario for now. Since PIX events add a level of indirection, we could potentially get rid of it as well and ask applications to use the runtime API directly. The runtime does not copy the string, and instead keeps a map of marker AnnotationID to app provided data pointer. The copy only happens when generating TDR crash dump. Of course, there's the issue of dangling pointer here though.
 
 * Question: Could PIX marker APIs be integrated with auto breadcrumbs for correlation between D3D runtime and driver-level data?
 
@@ -267,8 +268,8 @@ d3dconfig device force-driver-retail-annotations=off
 ## Functional tests
 
 * Validate that, with `D3D12_USER_DEFINED_ANNOTATION_MODE_DRIVER_RETAIL`, each `SetMarker` / `BeginEvent` / `EndEvent` call on `ID3D12CommandQueue` and `ID3D12GraphicsCommandList` issues exactly one matching DDI call with the expected `Metadata`, `Size`, and `pData`; and with `D3D12_USER_DEFINED_ANNOTATION_MODE_RUNTIME_ONLY` no DDI call is made.
-* Validate `ID3D12Object::SetName` propagation in both annotation modes: only device-child objects trigger `PFND3D12DDI_SET_NAME`.
-* Validate that when the driver does not report `D3D12DDI_FEATURE_0121_USER_DEFINED_ANNOTATIONS`, the marker APIs and `ID3D12Object::SetName` succeed on the app side but make no driver DDI calls.
+* Validate `ID3D12Object::SetName` propagation in both annotation modes: only device-child objects trigger `PFND3D12DDI_SET_NAME_0121`.
+* Validate that when the driver does not report `D3D12DDI_FEATURE_0121_USER_DEFINED_ANNOTATION`, the marker APIs and `ID3D12Object::SetName` succeed on the app side but make no driver DDI calls.
 * Validate `SetUserDefinedAnnotationMode` rejects invalid mode and emits `D3D12_MESSAGE_ID_SET_USER_DEFINED_ANNOTATION_MODE_INVALID_ARGUMENT`.
 
 ## Conformance tests
@@ -289,6 +290,7 @@ WARP reports support for the PIX marker DDIs and logs the marker calls, but does
 
 | Version | Date | Details | Author |
 |-|-|-|-|
+| v0.07 | 12 Oct 2026 | Correct API/DDI declarations | Henchhing Limbu (PIX) |
 | v0.06 | 17 Jun 2026 | Fix typos, and correct ID3D12DeviceTools2 heading | Henchhing Limbu (PIX) |
 | v0.05 | 01 Jun 2026 | Clarify RUNTIME_ONLY marker data behavior, add development vs retail use case example, expand D3DConfig override section, and flesh out Test Plan and WARP support | Henchhing Limbu (PIX) |
 | v0.04 | 30 Jan 2026 | Remove caps DDI calls and add multithreading synchronization | Henchhing Limbu (PIX) |

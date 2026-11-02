@@ -12,6 +12,9 @@ v1.0
 - [Intro](#intro)
 - [Format List Casting](#format-list-casting)
   - [Definition](#definition)
+  - [Querying the Castable Format List](#querying-the-castable-format-list)
+    - [`ID3D12Resource3::GetCastableFormatsCount`](#id3d12resource3getcastableformatscount)
+    - [`ID3D12Resource3::GetCastableFormats`](#id3d12resource3getcastableformats)
   - [DDI](#ddi)
   - [Tests: HLK Conformance](#tests-hlk-conformance)
     - [`D3DConf_12_RelaxedFormatCasting::FormatListCasting`](#d3dconf_12_relaxedformatcastingformatlistcasting)
@@ -149,8 +152,67 @@ Formats "casted" in this way are _reinterpreted_ as the target format for consum
 
 Refer to [CreateCommittedResource3](D3D12EnhancedBarriers.md#id3d12device10-createcommittedresource3), [CreatePlacedResource2](D3D12EnhancedBarriers.md#id3d12device10-createplacedresource2), and [CreateReservedResource2](D3D12EnhancedBarriers.md#id3d12device10-createreservedresource2) in Enhanced Barriers for documentation on the new API fields, `NumCastableFormats` and `pCastableFormats` used to specify the list.
 
+### Querying the Castable Format List
+
+The cast list was originally write-only: it could be specified at resource creation, but could not be retrieved from an existing resource. Components that operate on resources they did not create, such as layers, translation layers, and tools, had to track each resource's cast list themselves. `ID3D12Resource3` adds two methods that return the cast list a resource was created with.
+
+```c++
+interface ID3D12Resource3 : ID3D12Resource2
+{
+    D3D12_RESOURCE_DESC2 GetDesc2();
+    UINT32 GetCastableFormatsCount();
+    HRESULT GetCastableFormats(_Inout_ DXGI_FORMAT* pCastableFormats);
+};
+```
+
+`GetDesc2` is part of the same interface but is not related to format list casting; it is documented in the [GUID Texture Layout](D3D12GUIDTextureLayout.md) spec.
+
+The cast list is the list passed through `NumCastableFormats` and `pCastableFormats` to any resource creation API that accepts one, such as `CreateCommittedResource3`, `CreatePlacedResource2`, and `CreateReservedResource2`. It is fixed at creation and does not change for the lifetime of the resource. Formats are returned in the same order they were specified at creation.
+
+#### `ID3D12Resource3::GetCastableFormatsCount`
+
+```c++
+UINT32 GetCastableFormatsCount();
+```
+
+Returns the number of formats in the resource's cast list, which is the `NumCastableFormats` value specified at creation. Returns 0 if the resource was created without a cast list, including resources created through APIs that do not accept one.
+
+#### `ID3D12Resource3::GetCastableFormats`
+
+```c++
+HRESULT GetCastableFormats(_Inout_ DXGI_FORMAT* pCastableFormats);
+```
+
+| Parameter | Description |
+|--|--|
+| `pCastableFormats` | Caller-allocated array of at least `GetCastableFormatsCount()` elements. On success, the first `GetCastableFormatsCount()` elements are overwritten with the resource's cast list. |
+
+Return values:
+* `S_OK`: The cast list was written to `pCastableFormats`.
+* `E_POINTER`: `pCastableFormats` is `NULL`. This is returned even if the cast list is empty, so callers should check `GetCastableFormatsCount()` first.
+
+This method does not take an element count, so the runtime cannot validate the size of the caller's array. Passing an array with fewer than `GetCastableFormatsCount()` elements results in undefined behavior.
+
+Example:
+
+```c++
+ComPtr<ID3D12Resource3> resource3;
+if (SUCCEEDED(resource->QueryInterface(IID_PPV_ARGS(&resource3))))
+{
+    UINT32 count = resource3->GetCastableFormatsCount();
+    if (count > 0)
+    {
+        std::vector<DXGI_FORMAT> formats(count);
+        HRESULT hr = resource3->GetCastableFormats(formats.data());
+        // On success, formats[i] matches pCastableFormats[i] passed at creation.
+    }
+}
+```
+
 ### DDI
 Driver support for format list casting is reported via `RelaxedFormatCastingSupported` in `D3D12DDI_OPTIONS_DATA_0090` when `GetCaps` is called with `D3D12DDICAPS_TYPE_OPTIONS_0090`; available starting with DDI version `e_DDI_12_8_0090`.
+
+Querying the cast list through `ID3D12Resource3` is handled entirely by the runtime and does not require any additional driver support.
 
 ### Tests: HLK Conformance
 #### `D3DConf_12_RelaxedFormatCasting::FormatListCasting`

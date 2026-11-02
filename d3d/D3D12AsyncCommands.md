@@ -6,6 +6,11 @@ This spec proposes `ID3D12GraphicsCommandList` Copy, Resolve, and Clear methods 
 - [Copy and Resolve Serialization](#copy-and-resolve-serialization)
 - [Clear Serialization](#clear-serialization)
 - [Interop with synchronous legacy commands](#interop-with-synchronous-legacy-commands)
+- [Availability and runtime contract](#availability-and-runtime-contract)
+  - [Migration from the experimental async command surface](#migration-from-the-experimental-async-command-surface)
+  - [Feature support](#feature-support)
+  - [Runtime fallback](#runtime-fallback)
+  - [Command list type, bundle, and render pass support](#command-list-type-bundle-and-render-pass-support)
 - [API Design](#api-design)
   - [D3D12\_CLEAR\_DATA struct](#d3d12_clear_data-struct)
   - [CopyBufferRegions method](#copybufferregions-method)
@@ -125,11 +130,80 @@ The legacy `Copy*`, `Clear*`, and `Resolve*` commands must not be assumed to be 
 
 ---
 
+## Availability and runtime contract
+
+* Async commands are available in retail as of 1.620.
+* The commands are supported as a block, so there are no per-command caps to check.
+* The commands are exposed on `ID3D12GraphicsCommandList12`.
+
+### Migration from the experimental async command surface
+
+This is a breaking change relative to the previous experimental async command surface.
+Two elements of the previous surface are retired.
+The standalone `ID3D12CommandListAsyncCommands` interface is removed, and callers must query `ID3D12GraphicsCommandList12` instead.
+The `D3D12AsyncCommandsExperiment` experimental feature is retired.
+Enabling that experimental feature is no longer required or supported to obtain the async command methods.
+
+### Feature support
+
+Apps query support with `CheckFeatureSupport` and `D3D12_FEATURE_ASYNC_COMMANDS`, which fills a `D3D12_FEATURE_DATA_ASYNC_COMMANDS` struct.
+
+``` C++
+typedef enum D3D12_ASYNC_COMMANDS_IMPL
+{
+    D3D12_ASYNC_COMMANDS_IMPL_NOT_SUPPORTED    = 0,
+    D3D12_ASYNC_COMMANDS_IMPL_FALLBACK         = 1,
+    D3D12_ASYNC_COMMANDS_IMPL_NATIVE           = 2,
+} D3D12_ASYNC_COMMANDS_IMPL;
+
+typedef struct D3D12_FEATURE_DATA_ASYNC_COMMANDS
+{
+    D3D12_ASYNC_COMMANDS_IMPL Impl;
+} D3D12_FEATURE_DATA_ASYNC_COMMANDS;
+```
+
+`D3D12_ASYNC_COMMANDS_IMPL_NATIVE` means the driver implements the async command DDIs.
+`D3D12_ASYNC_COMMANDS_IMPL_FALLBACK` means the runtime implements the async command methods with legacy commands, because the app opted in to the runtime fallback or the fallback is forced.
+`D3D12_ASYNC_COMMANDS_IMPL_NOT_SUPPORTED` means neither is available, and the async command methods must not be called.
+Code that tests `Impl` must compare against the enum values rather than treat it as a boolean.
+
+### Runtime fallback
+
+The runtime can implement the async command methods with legacy commands on devices whose driver doesn't support them natively.
+The fallback is opt-in.
+Before creating the device, an app gets `ID3D12AsyncCommandsFallback` with `CLSID_D3D12AsyncCommandsFallback` and calls `SetFallbackLayerEnabled(TRUE)`, either through `ID3D12DeviceFactory::GetConfigurationInterface` for devices that factory creates, or through `D3D12GetInterface` for devices created with `D3D12CreateDevice`.
+Developers can also force the fallback for an app with `d3dconfig device force-async-commands-fallback=true`, which is useful for testing the fallback on hardware with native support.
+The fallback requires Enhanced Barriers, and it has limitations that the native path doesn't.
+See the [Async Commands fallback spec](D3D12AsyncCommandsFallback.md) for details.
+
+### Command list type, bundle, and render pass support
+
+Each async command method is valid only on specific `D3D12_COMMAND_LIST_TYPE` values.
+The following table lists the supported command list types, whether the method is allowed in a bundle, and whether the method is allowed inside a render pass.
+
+| API | Direct | Compute | Copy | Bundle | Render pass |
+|---|---|---|---|---|---|
+| `CopyBufferRegions`, `CopyTextureRegions`, `CopyResources`, `CopyTilesAsync` | ✓ | ✓ | ✓ | | |
+| `ResolveQueryDataAsync` | ✓ | ✓ | ✓ | | |
+| `ResolveSubresourceRegionAsync` | ✓ | | | | |
+| `FillBuffers`, `ClearTextureSubresources` | ✓ | ✓ | | | |
+| `ClearBoundRenderTargetViews`, `ClearBoundDepthStencilView` | ✓ | | | ✓ | ✓ |
+
+#### Bundle late binding for ClearBound methods
+
+`ClearBoundDepthStencilView` and `ClearBoundRenderTargetViews` operate on the currently bound depth stencil view and render target views.
+A bundle cannot call `OMSetRenderTargets`, so a bundle does not establish its own bound views.
+When one of these methods is recorded in a bundle, the bound views are not resolved at bundle record time.
+The bound views are resolved when the bundle is executed by `ExecuteBundle`, using the output merger state of the parent command list at that point.
+The same bundle can therefore clear different views on each execution, depending on the parent command list bindings in effect when `ExecuteBundle` is called.
+
+---
+
 ## API Design
 
 ### D3D12_CLEAR_DATA struct
 
-Used by the `ID3D12GraphicsCommandListNext` clear methods to provide explicit 4-component clear values.
+Used by the `ID3D12GraphicsCommandList12` clear methods to provide explicit 4-component clear values.
 
 ``` C++
 typedef struct D3D12_CLEAR_DATA
@@ -274,7 +348,7 @@ Formats such as palettized formats, video-decode-output-only and `DXGI_FORMAT_SA
 Copies a set of buffer regions from source buffers to destination buffers.
 
 ``` C++
-void ID3D12GraphicsCommandListNext::CopyBufferRegions(
+void ID3D12GraphicsCommandList12::CopyBufferRegions(
     [in] UINT NumRegions,
     [in] ID3D12Resource * const *ppDestBuffers,
     [in] const UINT64 *pDestOffsets,
@@ -317,6 +391,9 @@ None
 **Remarks:**
 
 Unlike `ID3D12GraphicsCommandList::CopyBufferRegion`, synchronization with interdependent commands requires enhanced barriers using `D3D12_BARRIER_SYNC_COPY` and `D3D12_BARRIER_ACCESS_COPY_[SOURCE|DEST]` (or equivalent aggregate sync and access bits).
+
+`CopyBufferRegions` is supported on `D3D12_COMMAND_LIST_TYPE_DIRECT`, `D3D12_COMMAND_LIST_TYPE_COMPUTE`, and `D3D12_COMMAND_LIST_TYPE_COPY`.
+`CopyBufferRegions` is not allowed in a bundle and is not allowed inside a render pass.
 
 The order of individual region copies is not guaranteed. Therefore, overlapping destination regions result in non-deterministic data. The debug layer reports when destination regions overlap.
 
@@ -520,6 +597,17 @@ typedef struct D3D12_TEXTURE_COPY_DESC
 Type: `D3D12_TEXTURE_COPY_DESC_TYPE`  
 Type of copy operation. See [D3D12_TEXTURE_COPY_DESC_TYPE](#d3d12_texture_copy_desc_type-enum)
 
+`NumRegions`  
+Type: `UINT`  
+Number of copy regions in the array pointed to by `pCopyRegions`.
+When `NumRegions` is zero, the operation copies the full source region to destination offsets 0, 0, and 0.
+
+`pCopyRegions`  
+Type: `const D3D12_TEXTURE_COPY_REGION*`  
+Pointer to an array of `D3D12_TEXTURE_COPY_REGION` elements.
+The pointer must be valid when `NumRegions` is greater than zero.
+The pointer is ignored when `NumRegions` is zero.
+
 `TextureTextureCopy`  
 Type: `D3D12_TEXTURE_TEXTURE_COPY_DESC`  
 Used when `Type` is `D3D12_TEXTURE_COPY_DESC_TYPE_TEXTURE_TO_TEXTURE`. Describes a region copy between two texture subresources.
@@ -533,7 +621,7 @@ Used with `Type` is `D3D12_TEXTURE_COPY_DESC_TYPE_BUFFER_TO_TEXTURE` or `D3D12_T
 Performs a batched copy of texture regions.
 
 ``` C++
-void ID3D12GraphicsCommandListNext::CopyTextureRegions(
+void ID3D12GraphicsCommandList12::CopyTextureRegions(
     UINT NumCopyDescs,
     [in] const D3D12_TEXTURE_COPY_DESC* pCopyDescs
     );
@@ -557,12 +645,15 @@ None
 
 Similar to `ID3D12GraphicsCommandList::CopyTextureRegion` except with batched copy mechanics and without implied serialization. Synchronization with other Copy operations requires enhanced barriers using `D3D12_BARRIER_SYNC_COPY` and `D3D12_BARRIER_ACCESS_COPY_[SOURCE|DEST]` (or equivalent aggregate sync and access bits).
 
+`CopyTextureRegions` is supported on `D3D12_COMMAND_LIST_TYPE_DIRECT`, `D3D12_COMMAND_LIST_TYPE_COMPUTE`, and `D3D12_COMMAND_LIST_TYPE_COPY`.
+`CopyTextureRegions` is not allowed in a bundle and is not allowed inside a render pass.
+
 ### CopyResources
 
 Copies the entire contents of the source resource to the destination resource concurrently with other Copy operations.
 
 ``` C++
-void ID3D12GraphicsCommandListNext::CopyResources(
+void ID3D12GraphicsCommandList12::CopyResources(
     [in] UINT NumSourceDestPairs,
     [in] ID3D12Resource* const* ppDestResources,
     [in] ID3D12Resource* const* ppSourceResources
@@ -608,12 +699,15 @@ None
 
 Similar to `ID3D12GraphicsCommandList::CopyResource` except with batched copy mechanics and without implied serialization with other Copy operations. Synchronization with other Copy operations requires enhanced barriers using `D3D12_BARRIER_SYNC_COPY` and `D3D12_BARRIER_ACCESS_COPY_[SOURCE|DEST]` (or equivalent aggregate sync and access bits).
 
+`CopyResources` is supported on `D3D12_COMMAND_LIST_TYPE_DIRECT`, `D3D12_COMMAND_LIST_TYPE_COMPUTE`, and `D3D12_COMMAND_LIST_TYPE_COPY`.
+`CopyResources` is not allowed in a bundle and is not allowed inside a render pass.
+
 ### CopyTilesAsync
 
 Copies tiles from buffer to tiled resource or vice versa asynchronously with other Copy operations.
 
 ``` C++
-void ID3D12GraphicsCommandListNext::CopyTilesAsync(
+void ID3D12GraphicsCommandList12::CopyTilesAsync(
     [in] ID3D12Resource* pTiledResource,
     [in] const D3D12_TILED_RESOURCE_COORDINATE* pTileRegionStartCoordinate,
     [in] const D3D12_TILE_REGION_SIZE* pTileRegionSize,
@@ -657,7 +751,14 @@ None
 
 Similar to `ID3D12GraphicsCommandList::CopyTiles` except with no implied serialization with other Copy operations. Synchronization with other Copy operations requires enhanced barriers using `D3D12_BARRIER_SYNC_COPY` and `D3D12_BARRIER_ACCESS_COPY_[SOURCE|DEST]` (or equivalent aggregate sync and access bits).
 
-Note: `D3D12_TILE_COPY_FLAG_NO_HAZARD` is deprecated and has no effect on the behavior of `ID3D12GraphicsCommandListNext::CopyTilesAsync` or `ID3D12GraphicsCommandListNext::CopyTiles`.
+`Flags` selects the copy direction.
+`D3D12_TILE_COPY_FLAG_LINEAR_BUFFER_TO_SWIZZLED_TILED_RESOURCE` copies from `pBuffer` to `pTiledResource`, and `D3D12_TILE_COPY_FLAG_SWIZZLED_TILED_RESOURCE_TO_LINEAR_BUFFER` copies from `pTiledResource` to `pBuffer`.
+Both resources must have the corresponding copy-source or copy-destination access.
+
+Note: `D3D12_TILE_COPY_FLAG_NO_HAZARD` is deprecated and has no effect on the behavior of `ID3D12GraphicsCommandList12::CopyTilesAsync` or `ID3D12GraphicsCommandList12::CopyTiles`.
+
+`CopyTilesAsync` is supported on `D3D12_COMMAND_LIST_TYPE_DIRECT`, `D3D12_COMMAND_LIST_TYPE_COMPUTE`, and `D3D12_COMMAND_LIST_TYPE_COPY`.
+`CopyTilesAsync` is not allowed in a bundle and is not allowed inside a render pass.
 
 ### ResolveSubresourceRegionAsync
 
@@ -729,12 +830,19 @@ None
 
 Similar to `ID3D12GraphicsCommandList::ResolveSubresourceRegion` except with no implied serialization with other Resolve operations. Synchronization with other Resolve operations requires enhanced barriers using `D3D12_BARRIER_SYNC_RESOLVE` and `D3D12_BARRIER_ACCESS_RESOLVE_[SOURCE|DEST]` (or equivalent aggregate sync and access bits).
 
+`ResolveSubresourceRegionAsync` is supported only on `D3D12_COMMAND_LIST_TYPE_DIRECT`.
+`ResolveSubresourceRegionAsync` is not allowed in a bundle and is not allowed inside a render pass.
+
 ### ResolveQueryDataAsync
 
-Extracts data from a query asynchronously with other Copy operations. ResolveQueryData works with all heap types (default, upload, and readback).
+Extracts data from a query asynchronously with other Copy operations.
+
+The destination resource must not be on a D3D12_HEAP_TYPE_UPLOAD heap.
+ResolveQueryDataAsync requires a destination resource that supports GPU writes.
+Resources on D3D12_HEAP_TYPE_UPLOAD heaps support only D3D12_RESOURCE_STATE_GENERIC_READ or D3D12_RESOURCE_STATE_RESOLVE_SOURCE and cannot satisfy this requirement.
 
 ``` C++
-void ID3D12GraphicsCommandListNext::ResolveQueryDataAsync(
+void ID3D12GraphicsCommandList12::ResolveQueryDataAsync(
     [in] ID3D12QueryHeap* pQueryHeap,
     [in] D3D12_QUERY_TYPE Type,
     [in] UINT StartIndex,
@@ -776,14 +884,17 @@ None
 
 **Remarks:**
 
-Similar to `ID3D12GraphicsCommandListNext::ResolveQueryData` except with no implied serialization with other Resolve operations. Synchronization with other Resolve operations requires enhanced barriers using `D3D12_BARRIER_SYNC_COPY` and `D3D12_BARRIER_ACCESS_COPY_[SOURCE|DEST]` (or equivalent aggregate sync and access bits).
+Similar to `ID3D12GraphicsCommandList12::ResolveQueryData` except with no implied serialization with other Resolve operations. Synchronization with other Resolve operations requires enhanced barriers using `D3D12_BARRIER_SYNC_COPY` and `D3D12_BARRIER_ACCESS_COPY_[SOURCE|DEST]` (or equivalent aggregate sync and access bits).
+
+`ResolveQueryDataAsync` is supported on `D3D12_COMMAND_LIST_TYPE_DIRECT`, `D3D12_COMMAND_LIST_TYPE_COMPUTE`, and `D3D12_COMMAND_LIST_TYPE_COPY`.
+`ResolveQueryDataAsync` is not allowed in a bundle and is not allowed inside a render pass.
 
 ### ClearBoundDepthStencilView
 
 Clears the currently bound DSV subresource per the most recent [OMSetRenderTargets](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-omsetrendertargets).
 
 ``` C++
-void ID3D12GraphicsCommandListNext::ClearBoundDepthStencilView(
+void ID3D12GraphicsCommandList12::ClearBoundDepthStencilView(
     [in] D3D12_CLEAR_FLAGS ClearFlags,
     [in] FLOAT Depth,
     [in] UINT8 Stencil,
@@ -834,12 +945,15 @@ Note that `ClearBoundDepthStencilView` follows the same raster-order rules as Dr
 
 Developers must use enhanced barriers with `D3D12_TEXTURE_BARRIER_FLAG_DISCARD` to initialize depth metadata on aliased or tiled resource prior to writing to using `ClearBoundDepthStencilView`. Unlike `ClearDepthStencilView`, `ClearBoundDepthStencilView` cannot be used for tiled or placed resource initialization.
 
+`ClearBoundDepthStencilView` is supported on `D3D12_COMMAND_LIST_TYPE_DIRECT` and in bundles of type `D3D12_COMMAND_LIST_TYPE_BUNDLE`, and is allowed inside a render pass.
+When `ClearBoundDepthStencilView` is recorded in a bundle, the bound views are resolved from the parent command list output merger state at `ExecuteBundle`, because a bundle cannot call `OMSetRenderTargets`.
+
 ### ClearBoundRenderTargetViews
 
 Clears currently bound RTV subresources per the most recent [OMSetRenderTargets](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-omsetrendertargets).
 
 ``` C++
-void ID3D12GraphicsCommandListNext::ClearBoundRenderTargetViews(
+void ID3D12GraphicsCommandList12::ClearBoundRenderTargetViews(
     [in] UINT RenderTargetMask,
     [in] const D3D12_CLEAR_DATA *pClearValues,
     [in opt] const UINT *pNumRegions,
@@ -855,7 +969,9 @@ Mask of render targets to clear. The render target index is implied by the bit p
 
 `[in] pClearValues`  
 Type: `const D3D12_CLEAR_DATA *`  
-Pointer to an array of up to 8 `D3D12_CLEAR_DATA` values representing the values to clear corresponding RTV starting at `FirstRenderTargetIndex`. The clear color index in the array directly corresponds to the slot index of the bound render target being cleared. Only clear values in array indices corresponding with non-zero bits in `RenderTargetMask` are considered. The size of the array must be no less than the position of the most-significant non-zero bit in `RenderTargetMask`.
+Pointer to an array of up to 8 `D3D12_CLEAR_DATA` values representing the values to clear the corresponding RTVs.
+`pClearValues[i]` is the clear value for the render target slot selected by bit `i` of `RenderTargetMask`.
+Only clear values in array indices corresponding with non-zero bits in `RenderTargetMask` are considered. The size of the array must be no less than the position of the most-significant non-zero bit in `RenderTargetMask`.
 
 `[in] pNumRegions`  
 Type: `const UINT *`  
@@ -911,11 +1027,16 @@ Also unlike `ClearRenderTargetView`, floating point clear values cannot be used 
 
 `ClearBoundRenderTargetViews` is considered a raster operation, similar to `DrawInstanced`, `DrawIndexedInstanced` and draw-type `ExecuteIndirect`. Therefore, target resources must use layout `D3D12_BARRIER_LAYOUT_RENDER_TARGET` and dependent commands must synchronize with barriers using `D3D12_BARRIER_SYNC_RENDER_TARGET` and `D3D12_BARRIER_ACCESS_RENDER_TARGET` (or equivalent aggregate sync and access bits).
 
-`ClearBoundRenderTargetViews` supports clears in the middle of a render pass without requiring drivers to break up tiling or otherwise rearrange work to maintain ordering semantics. Additionally, using the currently bound DSV makes it more apparent that the clear is done as a graphics pipeline operation, in sequence with the output merger and `Draw*` operations.
+`ClearBoundRenderTargetViews` supports clears in the middle of a render pass without requiring drivers to break up tiling or otherwise rearrange work to maintain ordering semantics. Additionally, using the currently bound RTV makes it more apparent that the clear is done as a graphics pipeline operation, in sequence with the output merger and `Draw*` operations.
 
 Note that `ClearBoundRenderTargetViews` follows the same raster-order rules as Draw commands, meaning that individual pixels are updated in the order in which raster commands are issued in the command buffer. This ensures that pixel writes by `ClearBoundRenderTargetViews` are properly serialized with other `ClearBoundRenderTargetViews` calls along with `Draw*` and draw-type `ExecuteIndirect` commands. This means that `ClearBoundRenderTargetViews` can be combined sequentially with other raster commands barrier-free, the same way that sequential `Draw*` calls do not require barriers when updating the same render targets.
 
 Developers must use enhanced barriers with `D3D12_TEXTURE_BARRIER_FLAG_DISCARD` to initialize render target metadata on aliased or tiled resource prior to writing to using `ClearBoundRenderTargetViews`. Unlike `ClearRenderTargetView`, `ClearBoundRenderTargetViews` cannot be used for tiled or placed resource initialization.
+
+`ClearBoundRenderTargetViews` is supported on `D3D12_COMMAND_LIST_TYPE_DIRECT` and in bundles of type `D3D12_COMMAND_LIST_TYPE_BUNDLE`, and is allowed inside a render pass.
+When `ClearBoundRenderTargetViews` is recorded in a bundle, the bound views are resolved from the parent command list output merger state at `ExecuteBundle`, because a bundle cannot call `OMSetRenderTargets`.
+Inside a render pass, render target slot `i` is the `i`th render target that the render pass binds for drawing.
+Render targets whose beginning access is `D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_NO_ACCESS`, `D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE_LOCAL_SRV`, or `D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE_LOCAL_UAV` aren't bound for drawing, so the render targets after them move down a slot.
 
 ### D3D12_CLEAR_TEXTURE_DESC struct
 
@@ -981,7 +1102,7 @@ Block compressed formats, as well as some video formats, represent 2x2 or 4x4 pi
 Clears a set of texture subresource regions.
 
 ``` C++
-void ID3D12GraphicsCommandListNext::ClearTextureSubresources(
+void ID3D12GraphicsCommandList12::ClearTextureSubresources(
     [in] UINT NumClearDescs,
     [in] const D3D12_CLEAR_TEXTURE_DESC *pClearDescs
     );
@@ -1022,6 +1143,9 @@ Block compressed textures cannot be created with `D3D12_RESOURCE_FLAG_ALLOW_REND
 
 For block-compressed textures, clear region offsets must be multiples of 4, and sizes must either be multiples of 4 or equal to the logical width/height of the subresource.
 
+`ClearTextureSubresources` is supported on `D3D12_COMMAND_LIST_TYPE_DIRECT` and `D3D12_COMMAND_LIST_TYPE_COMPUTE`.
+`ClearTextureSubresources` is not allowed in a bundle and is not allowed inside a render pass.
+
 ### D3D12_FILL_BUFFER_DESC struct
 
 ``` C++
@@ -1053,6 +1177,7 @@ Value to use for fill pattern. If `Format` is `DXGI_FORMAT_UNKNOWN`, the fill pa
 `[in] Format`  
 Type: `DXGI_FORMAT`  
 Specifies the format of the fill data. If `DXGI_FORMAT_UNKNOWN`, the fill uses the raw pattern contained in `FillValue.Bytes` as described above. Typeless formats are not supported.
+`DXGI_FORMAT_R1_UNORM` is not supported by `FillBuffers`.
 
 `[in] RawPatternSizeInBytes`  
 Type: `UINT`  
@@ -1083,7 +1208,7 @@ If `Format` is `DXGI_FORMAT_UNKNOWN` then `RawPatternSizeInBytes` must be 1, 2, 
 Fills buffer memory with repeating patterns.
 
 ``` C++
-void ID3D12GraphicsCommandListNext::FillBuffers(
+void ID3D12GraphicsCommandList12::FillBuffers(
     [in] UINT NumFillDescs,
     [in] const D3D12_FILL_BUFFER_DESC *pFillDescs
     );
@@ -1107,15 +1232,26 @@ None
 
 Batch fills buffer memory ranges.
 
+Each destination buffer must have copy-destination access when `FillBuffers` executes. A buffer in unordered-access state must be transitioned before it is filled.
+
 `FillBuffers` is treated as a Copy operation. Barriers using synchronization scope `D3D12_BARRIER_SYNC_COPY` and access bit `D3D12_BARRIER_ACCESS_COPY_DEST` are required to manage dependent accesses.
 
 Although considered a copy operation, `FillBuffers` cannot be used on copy queues.
 
 Overlapping buffer fill regions in a single `FillBuffers` operation can result in non-deterministic data. The debug layer may report overlapping regions.
 
+The debug layer reports an error for each descriptor whose `Format` is `DXGI_FORMAT_R1_UNORM`, including descriptors with a zero `RepeatCount`.
+
+`FillBuffers` is supported on `D3D12_COMMAND_LIST_TYPE_DIRECT` and `D3D12_COMMAND_LIST_TYPE_COMPUTE`.
+`FillBuffers` is not allowed in a bundle and is not allowed inside a render pass.
+
 ---
 
 ## DDI Design
+
+The command list type, bundle, and render pass legality defined in the API Design section applies identically to the corresponding async command DDI functions.
+Each DDI function is valid on the same `D3D12_COMMAND_LIST_TYPE` values as its API method, with the same bundle and render pass rules.
+The async command DDI functions remain in the existing 0114 async commands DDI table, and this transition introduces no DDI revision.
 
 Used by [D3D12DDI_CLEAR_DATA](#d3d12ddi_clear_data-struct) to describe a 4-component value type.
 
@@ -1312,11 +1448,14 @@ Texture source subresources must use one of the following layouts:
 
 `NumRegions`  
 Type: `UINT`  
-Number of regions to copy.
+Number of copy regions in the array pointed to by `pRegions`.
+When `NumRegions` is zero, the operation copies the full source region to destination offsets 0, 0, and 0.
 
-`pRegions`
-Type: `const D3D12DDI_TEXTURE_COPY_REGION *`
-Pointer to an array of `D3D12DDI_TEXTURE_COPY_REGION` structs that defined the source and dest locations.
+`pRegions`  
+Type: `const D3D12DDI_TEXTURE_COPY_REGION*`  
+Pointer to an array of `D3D12DDI_TEXTURE_COPY_REGION` elements.
+The pointer must be valid when `NumRegions` is greater than zero.
+The pointer is ignored when `NumRegions` is zero.
 
 ### PFND3D12DDI_COPY_TEXTURE_REGIONS function
 
@@ -1539,7 +1678,11 @@ Synchronization with other Resolve operations requires enhanced barriers using `
 
 ### PFND3D12DDI_RESOLVE_QUERY_DATA_ASYNC function
 
-Extracts data from a query asynchronously with other Copy operations. ResolveQueryData works with all heap types (default, upload, and readback).
+Extracts data from a query asynchronously with other Copy operations.
+
+The destination resource must not be on a D3D12_HEAP_TYPE_UPLOAD heap.
+ResolveQueryDataAsync requires a destination resource that supports GPU writes.
+Resources on D3D12_HEAP_TYPE_UPLOAD heaps support only D3D12_RESOURCE_STATE_GENERIC_READ or D3D12_RESOURCE_STATE_RESOLVE_SOURCE and cannot satisfy this requirement.
 
 ``` C++
 typedef VOID ( APIENTRY* PFND3D12DDI_RESOLVE_QUERY_DATA_ASYNC )( 
@@ -1676,7 +1819,9 @@ Mask of render targets to clear. The render target index is implied by the bit p
 
 `pClearValues`  
 Type: `const D3D12DDI_CLEAR_DATA *`  
-Pointer to an array of up to 8 `D3D12DDI_CLEAR_DATA` values representing the values to clear corresponding RTV starting at `FirstRenderTargetIndex`. Only clear values in array indices corresponding to non-zero bits in `RenderTargetMask` are considered. The size of the array must be no less than the position of the most-significant non-zero bit in `RenderTargetMask`.
+Pointer to an array of up to 8 `D3D12DDI_CLEAR_DATA` values representing the values to clear the corresponding RTVs.
+`pClearValues[i]` is the clear value for the render target slot selected by bit `i` of `RenderTargetMask`.
+Only clear values in array indices corresponding to non-zero bits in `RenderTargetMask` are considered. The size of the array must be no less than the position of the most-significant non-zero bit in `RenderTargetMask`.
 
 `pNumRegions`  
 Type: `const UINT *`  
@@ -1696,9 +1841,9 @@ None
 
 `PFND3D12DDI_CLEAR_BOUND_RENDER_TARGET_VIEWS` can be used to clear specific array slices in an array RTV. The `pRegions->front` and `pRegions->back` members represent offsets from `FirstArraySlice` specified during RTV creation where `front` is the first array slice to clear and `back` is one-past the last array slice to clear.
 
-`PFND3D12DDI_CLEAR_BOUND_RENDER_TARGET_VIEWS` must adhere to the same raster ordering as `Draw*` calls. This means that pixels writes by `PFND3D12DDI_CLEAR_BOUND_RENDER_TARGET_VIEWS` are serialized with other `PFND3D12DDI_CLEAR_BOUND_RENDER_TARGET_VIEWS` and with `Draw*` commands. Synchronization with other commands requires enhanced barriers using `D3D12DDI_BARRIER_SYNC_RENDER_TARGET` and `D3D12DDI_BARRIER_ACCESS_RENDER_TARGET_[READ|WRITE]` (or equivalent aggregate sync and access bits).
+`PFND3D12DDI_CLEAR_BOUND_RENDER_TARGET_VIEWS` must adhere to the same raster ordering as `Draw*` calls. This means that pixels writes by `PFND3D12DDI_CLEAR_BOUND_RENDER_TARGET_VIEWS` are serialized with other `PFND3D12DDI_CLEAR_BOUND_RENDER_TARGET_VIEWS` and with `Draw*` commands. Synchronization with other commands requires enhanced barriers using `D3D12DDI_BARRIER_SYNC_RENDER_TARGET` and `D3D12DDI_BARRIER_ACCESS_RENDER_TARGET` (or equivalent aggregate sync and access bits).
 
-`PFND3D12DDI_CLEAR_BOUND_RENDER_TARGET_VIEWS` supports clears in the middle of a render pass without requiring drivers to break up tiling or otherwise rearrange work to maintain ordering semantics. Additionally, using the currently bound DSV makes it more apparent that the clear is done as a graphics pipeline operation, in sequence with the output merger and `Draw*` operations.
+`PFND3D12DDI_CLEAR_BOUND_RENDER_TARGET_VIEWS` supports clears in the middle of a render pass without requiring drivers to break up tiling or otherwise rearrange work to maintain ordering semantics. Additionally, using the currently bound RTV makes it more apparent that the clear is done as a graphics pipeline operation, in sequence with the output merger and `Draw*` operations.
 
 ### D3D12DDI_CLEAR_TEXTURE_DESC struct
 
@@ -1813,6 +1958,7 @@ Value to use for fill pattern. If `Format` is `DXGI_FORMAT_UNKNOWN`, the fill pa
 `Format`  
 Type: `DXGI_FORMAT`  
 Specifies the format of the fill data. If `DXGI_FORMAT_UNKNOWN`, the fill uses the raw pattern contained in `FillValue.Bytes` as described above.
+`DXGI_FORMAT_R1_UNORM` is not supported by `PFND3D12DDI_FILL_BUFFERS`.
 
 `RawPatternSizeInBytes`  
 Type: `UINT`  
@@ -1869,6 +2015,8 @@ None
 **Remarks:**
 
 Batch fills buffer memory ranges.
+
+Each destination buffer must have `D3D12DDI_BARRIER_ACCESS_COPY_DEST` access when `PFND3D12DDI_FILL_BUFFERS` executes.
 
 `PFND3D12DDI_FILL_BUFFERS` is treated as a Copy operation. Barriers using synchronization scope `D3D12DDI_BARRIER_SYNC_COPY` and access bit `D3D12DDI_BARRIER_ACCESS_COPY_DEST` are required to manage dependent accesses.
 

@@ -115,9 +115,9 @@ Support is reported by `ClustersAndPTLASSupported` in [D3D12_FEATURE_OPTIONS_NNN
 
 There is a [D3D12_RAYTRACING_TIER_2_0](raytracing.md#d3d12_raytracing_tier) which requires all of the above, in addition to all features from previous tiers.  Some [D3D12_RAYTRACING_TIER_1_1](raytracing.md#d3d12_raytracing_tier) hardware may support the feature caps described above, given they only require driver update, but not support [Opacity Micromaps](raytracing.md#opacity-micromaps) required with [D3D12_RAYTRACING_TIER_1_2](raytracing.md#d3d12_raytracing_tier)+.
 
-> These features are currently being developed.  Release likely starts with a ~late summer 2026 preview.  The spec is posted early given the features are aligned across hardware vendors, still subject to refinement before shipping.
+> These features are currently in preview.
 > 
-> The small HLSL parts are also published as proposals already: [HLSL support for Clustered Geometry in Raytracing](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0045-clustered-geometry.md) and [HLSL TriangleObjectPositions](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0041-triangle-object-positions.md).
+> The small HLSL parts are also published here: [HLSL support for Clustered Geometry in Raytracing](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0045-clustered-geometry.md) and [HLSL TriangleObjectPositions](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0041-triangle-object-positions.md).
 
 ---
 

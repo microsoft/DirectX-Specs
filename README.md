@@ -23,6 +23,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Programmable Sample Positions](d3d/ProgrammableSamplePositions.md)
     * [Rasterizer Ordered Views](d3d/RasterOrderViews.md)
     * [Raytracing](d3d/Raytracing.md)
+    * [Raytracing2](d3d/Raytracing2.md) 
     * [R9G9B9E5_SHAREDEXP RTV and UAV support](d3d/D3D12R9G9B9E5Format.md)
     * [Sampler Feedback](d3d/SamplerFeedback.md)
     * [Tiled Resources Tier 4](d3d/D3D12TiledResourceTier4.md)
@@ -63,6 +64,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Runtime Bypass](d3d/D3D12RuntimeBypass.md)
     * [Command Queue Dynamic Priority](d3d/D3D12_CommandQueue_Dynamic_Priority.md)
     * [Guid Texture Layout](d3d/D3D12GUIDTextureLayout.md)
+    * [Async Commands](d3d/D3D12AsyncCommands.md) ([fallback](d3d/D3D12AsyncCommandsFallback.md))
 
 * Video
     * [Motion Estimation](d3d/D3D12_Video_Motion_Estimation.md)
@@ -92,11 +94,13 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [Debug Layer Message Callbacks](d3d/MessageCallback.md)
     * [Independent Devices](d3d/IndependentDevices.md)
     * [WriteBufferImmediate](d3d/D3D12WriteBufferImmediate.md)
+    * [CheckFeatureSupport1](d3d/D3D12CheckFeatureSupportWithSDKVersion.md)
   
 * GPU Debugging
     * [DirectX Dump Files](d3d/D3D12GpuDumps.md)
     * [Debug Break](d3d/D3D12DebugBreak.md)
     * [PIX Markers](d3d/D3D12PIXMarkers.md)
+    * [Driver Reported Messages](d3d/D3D12DriverReportedMessages.md)
     
 * Tools
     * [Recreate At GPUVA](d3d/RecreateAtGpuva-public.md)
@@ -108,8 +112,8 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
 
 * In-development specifications
     * [D3D APIs for Shader Model 6.10 Linear Algebra](d3d/D3D12LinearAlgebraRuntimeFeatureSupport.md)
+    * [ExecuteTileMappings](d3d/D3D12ExecuteTileMappings.md)
     * [MLIR Programs & Compute Graphs](d3d/MlirPrograms.md)
-    * [Raytracing2](d3d/Raytracing2.md) (work in progress, not in preview yet)
     * [Work Lists](d3d/WorkLists.md) (work in progress, not in preview yet)
 
 _These D3D12 specs were written as incremental deltas, with a separate spec per feature area.
