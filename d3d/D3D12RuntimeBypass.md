@@ -184,6 +184,10 @@ typedef struct D3D12DDI_COMMAND_LIST_FUNCS_3D_0114
     PFND3D12DDI_DISPATCH_0114                                               pfnDispatch;
     ...
 ```
+### OMSetDepthBounds NaN handling
+
+For `OMSetDepthBounds`, the driver's API-handle entry point (`PFND3D12DDI_OM_SETDEPTHBOUNDS_0114`) must independently treat each NaN `Min` or `Max` as 0 before any subsequent use of the depth-bounds range. Unlike the runtime-interposed path described in [Depth Bounds Test](DepthBoundsTest.md), direct runtime-bypass calls do not perform runtime NaN-to-zero conversion, so the driver must not rely on that conversion. All other depth-bounds semantics are unchanged.
+
 ### Example DDI implementation - WARP
 
 The WARP driver implementation of these new DDI entrypoints is very straight forward as it simply resolves the DDI object using the provided helpers and forwards to the DDI entry points which already exist.
