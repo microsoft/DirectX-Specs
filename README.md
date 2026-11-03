@@ -115,6 +115,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * [ExecuteTileMappings](d3d/D3D12ExecuteTileMappings.md)
     * [MLIR Programs & Compute Graphs](d3d/MlirPrograms.md)
     * [Work Lists](d3d/WorkLists.md) (work in progress, not in preview yet)
+    * [D3D12_Video_Encoding_ReadableReconpic](D3D12_Video_Encoding_ReadableReconpic.md)
 
 _These D3D12 specs were written as incremental deltas, with a separate spec per feature area.
 Baseline information about rendering pipeline behaviors that are common between D3D11 and D3D12
