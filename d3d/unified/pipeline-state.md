@@ -1,10 +1,30 @@
 # Pipeline state and shader linkage
 
+<!-- d3d12-review-legend:begin -->
+
+> [!NOTE]
+> **Draft provenance annotations.**
+> Underlining marks pending replacement wording or authored list items. Warning boxes
+> mark authored, mixed or reopened passages awaiting editorial review.
+> Editorial adoption does not establish factual or hardware verification. Exact approved factual
+> corrections do not trigger a marker. Unmarked text elsewhere, declarations
+> and structural Markdown are not assertions of approval.
+> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
+
+<!-- d3d12-review-legend:end -->
+
 <a id="ordinary-pipeline-state"></a>
 
 ## Ordinary pipeline state
 
-A pipeline state object (PSO) groups shader programs and the fixed-function state needed to prepare their execution. Its creation description is immutable; selecting the object changes command-list pipeline state, not the description. Graphics and compute creation have distinct descriptions, while pipeline-state streams provide a versioned tagged representation.
+<!-- d3d12-review-alert:begin:pipeline:N-intro:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> A pipeline state object (PSO) groups shader programs and the fixed-function state needed to prepare their execution. Its creation description is immutable; selecting the object changes command-list pipeline state, not the description. Graphics and compute creation have distinct descriptions, while pipeline-state streams provide a versioned tagged representation.
+
+<!-- d3d12-review-alert:end:pipeline:N-intro:0 -->
 
 Grouping this large amount of state into a single PSO enables drivers to
 perform as much pre-processing of hardware commands as possible, no
@@ -14,11 +34,25 @@ create Pipeline State Objects up-front (on the order of hundreds) where
 driver pre-processing can happen, and then use those PSOs to change the
 rendering state during the course of rendering.
 
-The API imposes no fixed limit on the number of live pipeline state objects; creation remains subject to allocation and device constraints.
+<ins><!-- d3d12-review-inline:begin:pipeline:C-count:0 -->The API imposes no fixed limit on the number of live pipeline state objects; creation remains subject to allocation and device constraints.<!-- d3d12-review-inline:end:pipeline:C-count:0 --></ins>
 
-[Initial/reset and bundle pipeline selection](command-list-state.md#pipeline-selection) and [dynamic state overrides](command-list-state.md#dynamic-state) are canonical command-list contracts. Root-signature selection and compatibility are defined by [Binding](binding.md#pipeline-compatibility); selecting a PSO does not bind root arguments or replace descriptor lifetime/synchronization requirements.
+<!-- d3d12-review-alert:begin:pipeline:N-state-owners:0 -->
 
-[State objects](state-objects.md#object-model) define collections, libraries, subobject associations, linking and named executable programs. [Generic programs](state-objects.md#generic-programs) reuse the graphics/compute pipeline definitions here; their missing-subobject defaults are defined [with generic-program construction](state-objects.md#defaults-for-subobjects-missing-from-a-generic-program), not as command-list Reset defaults.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> [Initial/reset and bundle pipeline selection](command-list-state.md#pipeline-selection) and [dynamic state overrides](command-list-state.md#dynamic-state) are canonical command-list contracts. Root-signature selection and compatibility are defined by [Binding](binding.md#pipeline-compatibility); selecting a PSO does not bind root arguments or replace descriptor lifetime/synchronization requirements.
+
+<!-- d3d12-review-alert:end:pipeline:N-state-owners:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:N-shared-state-objects-owner:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> [State objects](state-objects.md#object-model) define collections, libraries, subobject associations, linking and named executable programs. [Generic programs](state-objects.md#generic-programs) reuse the graphics/compute pipeline definitions here; their missing-subobject defaults are defined [with generic-program construction](state-objects.md#defaults-for-subobjects-missing-from-a-generic-program), not as command-list Reset defaults.
+
+<!-- d3d12-review-alert:end:pipeline:N-shared-state-objects-owner:0 -->
 
 <a id="descriptions"></a>
 
@@ -38,7 +72,7 @@ typedef struct D3D12_SHADER_BYTECODE
 } D3D12_SHADER_BYTECODE;
 ```
 
-`pShaderBytecode`
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_SHADER_BYTECODE:0 -->`pShaderBytecode`<!-- d3d12-review-inline:end:pipeline:P-D3D12_SHADER_BYTECODE:0 --></ins>
 
 A pointer to a memory block that contains the shader data.
 
@@ -56,7 +90,7 @@ typedef struct D3D12_CACHED_PIPELINE_STATE
 } D3D12_CACHED_PIPELINE_STATE;
 ```
 
-`pCachedBlob`
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_CACHED_PIPELINE_STATE:0 -->`pCachedBlob`<!-- d3d12-review-inline:end:pipeline:P-D3D12_CACHED_PIPELINE_STATE:0 --></ins>
 
 Specifies pointer that references the memory location of the cache.
 
@@ -64,7 +98,14 @@ Specifies pointer that references the memory location of the cache.
 
 Specifies the size of the cache in bytes.
 
-`pShaderBytecode` and `BytecodeLength` describe a compiled shader blob. The program's stage must match its slot in the aggregate or stream, and its shader-model requirements must be supported by the device. Shader resource declarations and root-signature layout must satisfy [binding compatibility](binding.md#pipeline-compatibility).
+<!-- d3d12-review-alert:begin:pipeline:N-bytecode:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `pShaderBytecode` and `BytecodeLength` describe a compiled shader blob. The program's stage must match its slot in the aggregate or stream, and its shader-model requirements must be supported by the device. Shader resource declarations and root-signature layout must satisfy [binding compatibility](binding.md#pipeline-compatibility).
+
+<!-- d3d12-review-alert:end:pipeline:N-bytecode:0 -->
 
 <a id="graphics-description"></a>
 
@@ -99,37 +140,37 @@ typedef struct D3D12_GRAPHICS_PIPELINE_STATE_DESC
 } D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 ```
 
-`pRootSignature`
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:0 -->`pRootSignature`<!-- d3d12-review-inline:end:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:0 --></ins>
 
 A pointer to the [ID3D12RootSignature](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12rootsignature) object.
 
 `VS`
 
-A [`D3D12_SHADER_BYTECODE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_shader_bytecode) structure that describes the vertex shader.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:3 -->A [`D3D12_SHADER_BYTECODE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_shader_bytecode) structure that describes the vertex shader.<!-- d3d12-review-inline:end:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:3 --></ins>
 
 `PS`
 
-A [`D3D12_SHADER_BYTECODE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_shader_bytecode) structure that describes the pixel shader.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:5 -->A [`D3D12_SHADER_BYTECODE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_shader_bytecode) structure that describes the pixel shader.<!-- d3d12-review-inline:end:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:5 --></ins>
 
 `DS`
 
-A [`D3D12_SHADER_BYTECODE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_shader_bytecode) structure that describes the domain shader.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:7 -->A [`D3D12_SHADER_BYTECODE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_shader_bytecode) structure that describes the domain shader.<!-- d3d12-review-inline:end:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:7 --></ins>
 
 `HS`
 
-A [`D3D12_SHADER_BYTECODE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_shader_bytecode) structure that describes the hull shader.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:9 -->A [`D3D12_SHADER_BYTECODE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_shader_bytecode) structure that describes the hull shader.<!-- d3d12-review-inline:end:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:9 --></ins>
 
 `GS`
 
-A [`D3D12_SHADER_BYTECODE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_shader_bytecode) structure that describes the geometry shader.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:11 -->A [`D3D12_SHADER_BYTECODE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_shader_bytecode) structure that describes the geometry shader.<!-- d3d12-review-inline:end:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:11 --></ins>
 
 `StreamOutput`
 
-A [`D3D12_STREAM_OUTPUT_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_stream_output_desc) structure that describes stream-output declarations and buffer strides.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:13 -->A [`D3D12_STREAM_OUTPUT_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_stream_output_desc) structure that describes stream-output declarations and buffer strides.<!-- d3d12-review-inline:end:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:13 --></ins>
 
 `BlendState`
 
-A [`D3D12_BLEND_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_blend_desc) structure that describes the blend state.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:15 -->A [`D3D12_BLEND_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_blend_desc) structure that describes the blend state.<!-- d3d12-review-inline:end:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:15 --></ins>
 
 `SampleMask`
 
@@ -137,23 +178,23 @@ The sample mask for the blend state.
 
 `RasterizerState`
 
-A [`D3D12_RASTERIZER_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc) structure that describes the rasterizer state.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:19 -->A [`D3D12_RASTERIZER_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc) structure that describes the rasterizer state.<!-- d3d12-review-inline:end:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:19 --></ins>
 
 `DepthStencilState`
 
-A [`D3D12_DEPTH_STENCIL_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencil_desc) structure that describes the depth-stencil state.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:21 -->A [`D3D12_DEPTH_STENCIL_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencil_desc) structure that describes the depth-stencil state.<!-- d3d12-review-inline:end:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:21 --></ins>
 
 `InputLayout`
 
-A [`D3D12_INPUT_LAYOUT_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_input_layout_desc) structure that describes the input-buffer data for the input-assembler stage.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:23 -->A [`D3D12_INPUT_LAYOUT_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_input_layout_desc) structure that describes the input-buffer data for the input-assembler stage.<!-- d3d12-review-inline:end:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:23 --></ins>
 
 `IBStripCutValue`
 
-Specifies the properties of the index buffer in a [`D3D12_INDEX_BUFFER_STRIP_CUT_VALUE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_index_buffer_strip_cut_value) enumeration.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:25 -->Specifies the properties of the index buffer in a [`D3D12_INDEX_BUFFER_STRIP_CUT_VALUE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_index_buffer_strip_cut_value) enumeration.<!-- d3d12-review-inline:end:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:25 --></ins>
 
 `PrimitiveTopologyType`
 
-A [`D3D12_PRIMITIVE_TOPOLOGY_TYPE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_primitive_topology_type)-typed value for the type of primitive, and ordering of the primitive data.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:27 -->A [`D3D12_PRIMITIVE_TOPOLOGY_TYPE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_primitive_topology_type)-typed value for the type of primitive, and ordering of the primitive data.<!-- d3d12-review-inline:end:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:27 --></ins>
 
 `NumRenderTargets`
 
@@ -177,11 +218,11 @@ For single GPU operation, set this to zero. If there are multiple GPU nodes, set
 
 `CachedPSO`
 
-A cached pipeline state object, as a [`D3D12_CACHED_PIPELINE_STATE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_cached_pipeline_state) structure. pCachedBlob and CachedBlobSizeInBytes may be set to NULL and 0 respectively.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:39 -->A cached pipeline state object, as a [`D3D12_CACHED_PIPELINE_STATE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_cached_pipeline_state) structure. pCachedBlob and CachedBlobSizeInBytes may be set to NULL and 0 respectively.<!-- d3d12-review-inline:end:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:39 --></ins>
 
 `Flags`
 
-A [`D3D12_PIPELINE_STATE_FLAGS`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_pipeline_state_flags) enumeration constant such as for "tool debug".
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:41 -->A [`D3D12_PIPELINE_STATE_FLAGS`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_pipeline_state_flags) enumeration constant such as for "tool debug".<!-- d3d12-review-inline:end:pipeline:P-D3D12_GRAPHICS_PIPELINE_STATE_DESC:41 --></ins>
 
 <a id="compute-description"></a>
 
@@ -200,13 +241,13 @@ typedef struct D3D12_COMPUTE_PIPELINE_STATE_DESC
 } D3D12_COMPUTE_PIPELINE_STATE_DESC;
 ```
 
-`pRootSignature`
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_COMPUTE_PIPELINE_STATE_DESC:0 -->`pRootSignature`<!-- d3d12-review-inline:end:pipeline:P-D3D12_COMPUTE_PIPELINE_STATE_DESC:0 --></ins>
 
 A pointer to the [ID3D12RootSignature](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12rootsignature) object.
 
 `CS`
 
-A [`D3D12_SHADER_BYTECODE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_shader_bytecode) structure that describes the compute shader.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_COMPUTE_PIPELINE_STATE_DESC:3 -->A [`D3D12_SHADER_BYTECODE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_shader_bytecode) structure that describes the compute shader.<!-- d3d12-review-inline:end:pipeline:P-D3D12_COMPUTE_PIPELINE_STATE_DESC:3 --></ins>
 
 `NodeMask`
 
@@ -214,21 +255,35 @@ For single GPU operation, set this to zero. If there are multiple GPU nodes, set
 
 `CachedPSO`
 
-A cached pipeline state object, as a [`D3D12_CACHED_PIPELINE_STATE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_cached_pipeline_state) structure. pCachedBlob and CachedBlobSizeInBytes may be set to NULL and 0 respectively.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_COMPUTE_PIPELINE_STATE_DESC:7 -->A cached pipeline state object, as a [`D3D12_CACHED_PIPELINE_STATE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_cached_pipeline_state) structure. pCachedBlob and CachedBlobSizeInBytes may be set to NULL and 0 respectively.<!-- d3d12-review-inline:end:pipeline:P-D3D12_COMPUTE_PIPELINE_STATE_DESC:7 --></ins>
 
 `Flags`
 
-A [`D3D12_PIPELINE_STATE_FLAGS`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_pipeline_state_flags) enumeration constant such as for "tool debug".
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_COMPUTE_PIPELINE_STATE_DESC:9 -->A [`D3D12_PIPELINE_STATE_FLAGS`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_pipeline_state_flags) enumeration constant such as for "tool debug".<!-- d3d12-review-inline:end:pipeline:P-D3D12_COMPUTE_PIPELINE_STATE_DESC:9 --></ins>
 
 <a id="streams"></a>
 
 ## Pipeline-state streams
 
-For recorded offline-compilation inputs, the [database stream and root-signature substitutions](state-object-databases-and-identity.md#storage-only-forms) define storage/reconstruction independently of actual pipeline creation. A successful database store/find does not create a PSO or validate the input against driver capabilities; the complete stream and creation requirements here still apply.
+<!-- d3d12-review-alert:begin:pipeline:D121-stored-pipeline-inputs:0 -->
 
-[ID3D12Compiler::CompilePipelineState](compiler-invocation-and-cache-output.md#id3d12compiler-compilepipelinestate) defines offline compilation and output storage. Its [input forms and target validation](compiler-invocation-and-cache-output.md#input-ownership) use serialized roots rather than live device roots and do not produce a device PSO. The ordinary creation and stream requirements here retain their own consuming-API scope.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> For recorded offline-compilation inputs, the [database stream and root-signature substitutions](state-object-databases-and-identity.md#storage-only-forms) define storage/reconstruction independently of actual pipeline creation. A successful database store/find does not create a PSO or validate the input against driver capabilities; the complete stream and creation requirements here still apply.
 
-Subobjects are the constituent components of a pipeline state
+<!-- d3d12-review-alert:end:pipeline:D121-stored-pipeline-inputs:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:D131-offline-pipeline-inputs:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> [ID3D12Compiler::CompilePipelineState](compiler-invocation-and-cache-output.md#id3d12compiler-compilepipelinestate) defines offline compilation and output storage. Its [input forms and target validation](compiler-invocation-and-cache-output.md#input-ownership) use serialized roots rather than live device roots and do not produce a device PSO. The ordinary creation and stream requirements here retain their own consuming-API scope.
+
+<!-- d3d12-review-alert:end:pipeline:D131-offline-pipeline-inputs:0 -->
+
+<ins><!-- d3d12-review-inline:begin:pipeline:C-stream-model:0 -->Subobjects are the constituent components of a pipeline state
 object. A pipeline state stream is constructed from a grouping (within a
 struct) of these subobjects, which from a technical perspective are
 structs that contain a pair of subobject type enum followed by the
@@ -236,7 +291,7 @@ respective subobject desc. The D3DX12 stream elements
 represent these pairs, and allow short-form construction of custom
 streams. The runtime assumes the stream is
 constructed from structs of enum+desc pairs, which defines the padding
-expected by the runtime.
+expected by the runtime.<!-- d3d12-review-inline:end:pipeline:C-stream-model:0 --></ins>
 
 #### D3D12_PIPELINE_STATE_STREAM_DESC
 
@@ -248,19 +303,19 @@ typedef struct D3D12_PIPELINE_STATE_STREAM_DESC
 } D3D12_PIPELINE_STATE_STREAM_DESC;
 ```
 
-`SizeInBytes`
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_PIPELINE_STATE_STREAM_DESC:0 -->`SizeInBytes`<!-- d3d12-review-inline:end:pipeline:P-D3D12_PIPELINE_STATE_STREAM_DESC:0 --></ins>
 
 Specifies the size of the opaque data structure pointed to by the pPipelineStateSubobjectStream member, in bytes.
 
 `pPipelineStateSubobjectStream`
 
-Specifies the address of a data structure that describes as a bytestream an arbitrary pipeline state subobject.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_PIPELINE_STATE_STREAM_DESC:3 -->Specifies the address of a data structure that describes as a bytestream an arbitrary pipeline state subobject.<!-- d3d12-review-inline:end:pipeline:P-D3D12_PIPELINE_STATE_STREAM_DESC:3 --></ins>
 
-The format of the provided stream should consist of an alternating set of **[`D3D12_PIPELINE_STATE_SUBOBJECT_TYPE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_pipeline_state_subobject_type)**, and the corresponding subobject types for them (for example, **D3D12\_PIPELINE\_STATE\_SUBOBJECT\_TYPE\_RASTERIZER** pairs with **[`D3D12_RASTERIZER_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc)**). In terms of alignment, the D3D12 runtime expects subobjects to be individual struct pairs of enum-struct, rather than a continuous set of fields. It also expects them to be aligned to the natural word alignment of the system. This can be achieved either using `alignas(void*)`, or making a `union` of the enum + subobject and a `void*`.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-stream-layout:0 -->The format of the provided stream should consist of an alternating set of **[`D3D12_PIPELINE_STATE_SUBOBJECT_TYPE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_pipeline_state_subobject_type)**, and the corresponding subobject types for them (for example, **D3D12\_PIPELINE\_STATE\_SUBOBJECT\_TYPE\_RASTERIZER** pairs with **[`D3D12_RASTERIZER_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc)**). In terms of alignment, the D3D12 runtime expects subobjects to be individual struct pairs of enum-struct, rather than a continuous set of fields. It also expects them to be aligned to the natural word alignment of the system. This can be achieved either using `alignas(void*)`, or making a `union` of the enum + subobject and a `void*`.<!-- d3d12-review-inline:end:pipeline:P-stream-layout:0 --></ins>
 
-It isn't sufficient to simply union the **D3D12\_PIPELINE\_STATE\_SUBOBJECT\_TYPE** with a **void\***, because this will result in certain subobjects being misaligned. For example, **D3D12\_PIPELINE\_STATE\_SUBOBJECT\_TYPE\_PRIMITIVE\_TOPOLOGY** is followed by a **[`D3D12_PRIMITIVE_TOPOLOGY_TYPE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_primitive_topology_type)** enum. If the subobject type is unioned with a **void\***, then there will be additional padding between these 2 members, resulting in corruption of the stream. The union therefore contains the complete enum/payload record, not just its tag.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-stream-layout:1 -->It isn't sufficient to simply union the **D3D12\_PIPELINE\_STATE\_SUBOBJECT\_TYPE** with a **void\***, because this will result in certain subobjects being misaligned. For example, **D3D12\_PIPELINE\_STATE\_SUBOBJECT\_TYPE\_PRIMITIVE\_TOPOLOGY** is followed by a **[`D3D12_PRIMITIVE_TOPOLOGY_TYPE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_primitive_topology_type)** enum. If the subobject type is unioned with a **void\***, then there will be additional padding between these 2 members, resulting in corruption of the stream. The union therefore contains the complete enum/payload record, not just its tag.<!-- d3d12-review-inline:end:pipeline:P-stream-layout:1 --></ins>
 
-An example of a suitable subobject for use with **[`D3D12_RASTERIZER_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc)** is shown here:
+<ins><!-- d3d12-review-inline:begin:pipeline:P-stream-layout:2 -->An example of a suitable subobject for use with **[`D3D12_RASTERIZER_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc)** is shown here:<!-- d3d12-review-inline:end:pipeline:P-stream-layout:2 --></ins>
 
 ```cpp
 struct alignas(void*) StreamingRasterizerDesc
@@ -272,7 +327,7 @@ public:
 };
 ```
 
-The runtime will determine the type of a pipeline stream (valid types being **COMPUTE**, **GRAPHICS**, and **MESH**), by which subobject type, out of **VS** (vertex shader), **CS** (compute shader), and **MS** (mesh shader), is found. If the runtime finds none of these shaders, it will fail pipeline creation. If it finds multiple of these shaders which are not null, it will also fail. This means it is legal to have both, for example, a **CS** and **VS** in your stream object, provided only one has a non-null pointer for the shader bytecode for any given call to **[ID3D12Device2::CreatePipelineState](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device2-createpipelinestate)**. Empty shader slots and other irrelevant subobjects do not add stages to the selected program; they do not waive tag/layout validity or other applicable creation checks. If a subobject is not provided (excluding the above required subobjects), the runtime will provide a default value for it.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-stream-layout:4 -->The runtime will determine the type of a pipeline stream (valid types being **COMPUTE**, **GRAPHICS**, and **MESH**), by which subobject type, out of **VS** (vertex shader), **CS** (compute shader), and **MS** (mesh shader), is found. If the runtime finds none of these shaders, it will fail pipeline creation. If it finds multiple of these shaders which are not null, it will also fail. This means it is legal to have both, for example, a **CS** and **VS** in your stream object, provided only one has a non-null pointer for the shader bytecode for any given call to **[ID3D12Device2::CreatePipelineState](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device2-createpipelinestate)**. Empty shader slots and other irrelevant subobjects do not add stages to the selected program; they do not waive tag/layout validity or other applicable creation checks. If a subobject is not provided (excluding the above required subobjects), the runtime will provide a default value for it.<!-- d3d12-review-inline:end:pipeline:P-stream-layout:4 --></ins>
 
 <a id="stream-tags"></a>
 
@@ -315,46 +370,81 @@ typedef enum D3D12_PIPELINE_STATE_SUBOBJECT_TYPE
 } D3D12_PIPELINE_STATE_SUBOBJECT_TYPE;
 ```
 
-The following payload types accompany their `D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_*` tags:
+<!-- d3d12-review-alert:begin:pipeline:N-tag-table:0 -->
 
-| Tag suffix | Payload |
-|---|---|
-| `ROOT_SIGNATURE` | `ID3D12RootSignature*` |
-| `VS` | `D3D12_SHADER_BYTECODE` |
-| `PS` | `D3D12_SHADER_BYTECODE` |
-| `DS` | `D3D12_SHADER_BYTECODE` |
-| `HS` | `D3D12_SHADER_BYTECODE` |
-| `GS` | `D3D12_SHADER_BYTECODE` |
-| `CS` | `D3D12_SHADER_BYTECODE` |
-| `STREAM_OUTPUT` | `D3D12_STREAM_OUTPUT_DESC` |
-| `BLEND` | `D3D12_BLEND_DESC` |
-| `SAMPLE_MASK` | `UINT` |
-| `RASTERIZER` | `D3D12_RASTERIZER_DESC` |
-| `DEPTH_STENCIL` | `D3D12_DEPTH_STENCIL_DESC` |
-| `INPUT_LAYOUT` | `D3D12_INPUT_LAYOUT_DESC` |
-| `IB_STRIP_CUT_VALUE` | `D3D12_INDEX_BUFFER_STRIP_CUT_VALUE` |
-| `PRIMITIVE_TOPOLOGY` | `D3D12_PRIMITIVE_TOPOLOGY_TYPE` |
-| `RENDER_TARGET_FORMATS` | `D3D12_RT_FORMAT_ARRAY` |
-| `DEPTH_STENCIL_FORMAT` | `DXGI_FORMAT` |
-| `SAMPLE_DESC` | `DXGI_SAMPLE_DESC` |
-| `NODE_MASK` | `UINT` |
-| `CACHED_PSO` | `D3D12_CACHED_PIPELINE_STATE` |
-| `FLAGS` | `D3D12_PIPELINE_STATE_FLAGS` |
-| `DEPTH_STENCIL1` | `D3D12_DEPTH_STENCIL_DESC1` |
-| `VIEW_INSTANCING` | `D3D12_VIEW_INSTANCING_DESC` |
-| `AS` | `D3D12_SHADER_BYTECODE` |
-| `MS` | `D3D12_SHADER_BYTECODE` |
-| `DEPTH_STENCIL2` | `D3D12_DEPTH_STENCIL_DESC2` |
-| `RASTERIZER1` | `D3D12_RASTERIZER_DESC1` |
-| `RASTERIZER2` | `D3D12_RASTERIZER_DESC2` |
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The following payload types accompany their `D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_*` tags:
 
-A versioned payload retains its own declared size; fields introduced by a newer payload version use their defined defaults when the older version is selected. The applicable pipeline-creation validation still applies.
+<!-- d3d12-review-alert:end:pipeline:N-tag-table:0 -->
 
-A stream must have nonempty, non-null storage containing complete supported records; an unknown tag or repeated subobject is invalid. Different versions of the same logical state, such as DEPTH_STENCIL/DEPTH_STENCIL1/DEPTH_STENCIL2 or the rasterizer versions, are alternatives, not additive independent records. Record order does not select precedence or authorize duplicates.
+<!-- d3d12-review-alert:begin:pipeline:N-tag-table:1 -->
 
-Omitted common stream members include an all-bits sample mask, sample description `{1, 0}`, no input-layout/stream-output entries, and disabled view instancing. Ordinary graphics topology defaults to triangle. Mesh topology omission is instead inferred from the mesh program; an explicit concrete topology must agree with that program. When depth/stencil state is omitted, depth is disabled if no DSV format is supplied, and enabled by the default state when a DSV format is supplied. An explicit depth/stencil record is not replaced by this omission rule.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Tag suffix | Payload |
+> |---|---|
+> | `ROOT_SIGNATURE` | `ID3D12RootSignature*` |
+> | `VS` | `D3D12_SHADER_BYTECODE` |
+> | `PS` | `D3D12_SHADER_BYTECODE` |
+> | `DS` | `D3D12_SHADER_BYTECODE` |
+> | `HS` | `D3D12_SHADER_BYTECODE` |
+> | `GS` | `D3D12_SHADER_BYTECODE` |
+> | `CS` | `D3D12_SHADER_BYTECODE` |
+> | `STREAM_OUTPUT` | `D3D12_STREAM_OUTPUT_DESC` |
+> | `BLEND` | `D3D12_BLEND_DESC` |
+> | `SAMPLE_MASK` | `UINT` |
+> | `RASTERIZER` | `D3D12_RASTERIZER_DESC` |
+> | `DEPTH_STENCIL` | `D3D12_DEPTH_STENCIL_DESC` |
+> | `INPUT_LAYOUT` | `D3D12_INPUT_LAYOUT_DESC` |
+> | `IB_STRIP_CUT_VALUE` | `D3D12_INDEX_BUFFER_STRIP_CUT_VALUE` |
+> | `PRIMITIVE_TOPOLOGY` | `D3D12_PRIMITIVE_TOPOLOGY_TYPE` |
+> | `RENDER_TARGET_FORMATS` | `D3D12_RT_FORMAT_ARRAY` |
+> | `DEPTH_STENCIL_FORMAT` | `DXGI_FORMAT` |
+> | `SAMPLE_DESC` | `DXGI_SAMPLE_DESC` |
+> | `NODE_MASK` | `UINT` |
+> | `CACHED_PSO` | `D3D12_CACHED_PIPELINE_STATE` |
+> | `FLAGS` | `D3D12_PIPELINE_STATE_FLAGS` |
+> | `DEPTH_STENCIL1` | `D3D12_DEPTH_STENCIL_DESC1` |
+> | `VIEW_INSTANCING` | `D3D12_VIEW_INSTANCING_DESC` |
+> | `AS` | `D3D12_SHADER_BYTECODE` |
+> | `MS` | `D3D12_SHADER_BYTECODE` |
+> | `DEPTH_STENCIL2` | `D3D12_DEPTH_STENCIL_DESC2` |
+> | `RASTERIZER1` | `D3D12_RASTERIZER_DESC1` |
+> | `RASTERIZER2` | `D3D12_RASTERIZER_DESC2` |
 
-A zero-initialized graphics description is not the default-state description: enums, blend factors and masks must have valid specified values. Defaults for omitted stream records do not turn zero bytes supplied as an explicit record into an omitted record.
+<!-- d3d12-review-alert:end:pipeline:N-tag-table:1 -->
+
+<ins><!-- d3d12-review-inline:begin:pipeline:C-stream-defaults:0 -->A versioned payload retains its own declared size; fields introduced by a newer payload version use their defined defaults when the older version is selected. The applicable pipeline-creation validation still applies.<!-- d3d12-review-inline:end:pipeline:C-stream-defaults:0 --></ins>
+
+<!-- d3d12-review-alert:begin:pipeline:N-stream-validity:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> A stream must have nonempty, non-null storage containing complete supported records; an unknown tag or repeated subobject is invalid. Different versions of the same logical state, such as DEPTH_STENCIL/DEPTH_STENCIL1/DEPTH_STENCIL2 or the rasterizer versions, are alternatives, not additive independent records. Record order does not select precedence or authorize duplicates.
+
+<!-- d3d12-review-alert:end:pipeline:N-stream-validity:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:N-stream-defaults:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Omitted common stream members include an all-bits sample mask, sample description `{1, 0}`, no input-layout/stream-output entries, and disabled view instancing. Ordinary graphics topology defaults to triangle. Mesh topology omission is instead inferred from the mesh program; an explicit concrete topology must agree with that program. When depth/stencil state is omitted, depth is disabled if no DSV format is supplied, and enabled by the default state when a DSV format is supplied. An explicit depth/stencil record is not replaced by this omission rule.
+
+<!-- d3d12-review-alert:end:pipeline:N-stream-defaults:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:N-zero-init:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> A zero-initialized graphics description is not the default-state description: enums, blend factors and masks must have valid specified values. Defaults for omitted stream records do not turn zero bytes supplied as an explicit record into an omitted record.
+
+<!-- d3d12-review-alert:end:pipeline:N-zero-init:0 -->
 
 <a id="supporting-state"></a>
 
@@ -401,11 +491,25 @@ typedef struct D3D12_INPUT_LAYOUT_DESC
 
 #### D3D12_SO_DECLARATION_ENTRY
 
-Defined in [D3D12_SO_DECLARATION_ENTRY](geometry-shaders-and-stream-output.md#so-declaration-entry).
+<!-- d3d12-review-alert:begin:pipeline:F-T-D3D12_SO_DECLARATION_ENTRY:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Defined in [D3D12_SO_DECLARATION_ENTRY](geometry-shaders-and-stream-output.md#so-declaration-entry).
+
+<!-- d3d12-review-alert:end:pipeline:F-T-D3D12_SO_DECLARATION_ENTRY:0 -->
 
 #### D3D12_STREAM_OUTPUT_DESC
 
-Defined in [D3D12_STREAM_OUTPUT_DESC](geometry-shaders-and-stream-output.md#stream-output-desc).
+<!-- d3d12-review-alert:begin:pipeline:F-T-D3D12_STREAM_OUTPUT_DESC:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Defined in [D3D12_STREAM_OUTPUT_DESC](geometry-shaders-and-stream-output.md#stream-output-desc).
+
+<!-- d3d12-review-alert:end:pipeline:F-T-D3D12_STREAM_OUTPUT_DESC:0 -->
 
 #### D3D12_INDEX_BUFFER_STRIP_CUT_VALUE
 
@@ -433,13 +537,13 @@ typedef enum D3D12_PRIMITIVE_TOPOLOGY_TYPE
 
 #### D3D12_INPUT_ELEMENT_DESC members
 
-`SemanticName`
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_INPUT_ELEMENT_DESC:0 -->`SemanticName`<!-- d3d12-review-inline:end:pipeline:P-D3D12_INPUT_ELEMENT_DESC:0 --></ins>
 
 The HLSL semantic associated with this element in a shader input-signature. See [HLSL Semantics](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-semantics) for more info.
 
 `SemanticIndex`
 
-The semantic index for the element. A semantic index modifies a semantic, with an integer index number. A semantic index is only needed in a case where there is more than one element with the same semantic. For example, a 4x4 matrix would have four components each with the semantic name **matrix**, however each of the four components would have different semantic indices (0, 1, 2, and 3).
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_INPUT_ELEMENT_DESC:3 -->The semantic index for the element. A semantic index modifies a semantic, with an integer index number. A semantic index is only needed in a case where there is more than one element with the same semantic. For example, a 4x4 matrix would have four components each with the semantic name **matrix**, however each of the four components would have different semantic indices (0, 1, 2, and 3).<!-- d3d12-review-inline:end:pipeline:P-D3D12_INPUT_ELEMENT_DESC:3 --></ins>
 
 `Format`
 
@@ -447,7 +551,7 @@ A [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat
 
 `InputSlot`
 
-An integer value that identifies the input-assembler slot. For more info, see [Input Slots](https://learn.microsoft.com/en-us/windows/desktop/direct3d11/d3d10-graphics-programming-guide-input-assembler-stage-getting-started). Valid values are from 0 through 31 (`D3D12_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT` slots).
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_INPUT_ELEMENT_DESC:7 -->An integer value that identifies the input-assembler slot. For more info, see [Input Slots](https://learn.microsoft.com/en-us/windows/desktop/direct3d11/d3d10-graphics-programming-guide-input-assembler-stage-getting-started). Valid values are from 0 through 31 (`D3D12_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT` slots).<!-- d3d12-review-inline:end:pipeline:P-D3D12_INPUT_ELEMENT_DESC:7 --></ins>
 
 `AlignedByteOffset`
 
@@ -459,13 +563,13 @@ A value that identifies the input data class for a single input slot.
 
 `InstanceDataStepRate`
 
-The number of instances to draw using the same per-instance data before advancing in the buffer by one element. This value must be 0 for an element that contains per-vertex data (the slot class is set to the D3D12\_INPUT\_CLASSIFICATION\_PER\_VERTEX\_DATA member of [`D3D12_INPUT_CLASSIFICATION`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_input_classification)).
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_INPUT_ELEMENT_DESC:13 -->The number of instances to draw using the same per-instance data before advancing in the buffer by one element. This value must be 0 for an element that contains per-vertex data (the slot class is set to the D3D12\_INPUT\_CLASSIFICATION\_PER\_VERTEX\_DATA member of [`D3D12_INPUT_CLASSIFICATION`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_input_classification)).<!-- d3d12-review-inline:end:pipeline:P-D3D12_INPUT_ELEMENT_DESC:13 --></ins>
 
 #### D3D12_INPUT_LAYOUT_DESC members
 
-`pInputElementDescs`
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_INPUT_LAYOUT_DESC:0 -->`pInputElementDescs`<!-- d3d12-review-inline:end:pipeline:P-D3D12_INPUT_LAYOUT_DESC:0 --></ins>
 
-An array of [`D3D12_INPUT_ELEMENT_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_input_element_desc) structures that describe the data types of the input-assembler stage.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_INPUT_LAYOUT_DESC:1 -->An array of [`D3D12_INPUT_ELEMENT_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_input_element_desc) structures that describe the data types of the input-assembler stage.<!-- d3d12-review-inline:end:pipeline:P-D3D12_INPUT_LAYOUT_DESC:1 --></ins>
 
 `NumElements`
 
@@ -473,27 +577,69 @@ The number of input-data types in the array of input elements that the **pInputE
 
 #### D3D12_SO_DECLARATION_ENTRY members
 
-Defined in [D3D12_SO_DECLARATION_ENTRY](geometry-shaders-and-stream-output.md#so-declaration-entry).
+<!-- d3d12-review-alert:begin:pipeline:F-P-D3D12_SO_DECLARATION_ENTRY:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Defined in [D3D12_SO_DECLARATION_ENTRY](geometry-shaders-and-stream-output.md#so-declaration-entry).
+
+<!-- d3d12-review-alert:end:pipeline:F-P-D3D12_SO_DECLARATION_ENTRY:0 -->
 
 #### D3D12_STREAM_OUTPUT_DESC members
 
-Defined in [D3D12_STREAM_OUTPUT_DESC](geometry-shaders-and-stream-output.md#stream-output-desc).
+<!-- d3d12-review-alert:begin:pipeline:F-P-D3D12_STREAM_OUTPUT_DESC:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Defined in [D3D12_STREAM_OUTPUT_DESC](geometry-shaders-and-stream-output.md#stream-output-desc).
+
+<!-- d3d12-review-alert:end:pipeline:F-P-D3D12_STREAM_OUTPUT_DESC:0 -->
 
 <a id="input-layout-constraints"></a>
 
 #### Input-layout and stream-output constraints
 
-`SemanticName` and `SemanticIndex` identify shader input/output signature entries, not the buffer byte offset. Element formats must support vertex input and be compatible with the vertex-shader input signature. Stream output declarations describe shader output components and gaps; an empty declaration does not make an otherwise invalid shader-stage combination legal. `PrimitiveTopologyType` is the PSO's point/line/triangle/patch class; the command-list [primitive topology](vertex-processing.md#topology-enumeration) supplies the corresponding detailed list/strip/adjacency/patch selection. [Input assembly and direct draws](vertex-processing.md#input-assembly) define vertex/index fetching, primitive assembly and generated identifiers.
+<!-- d3d12-review-alert:begin:pipeline:N-input-context:0 -->
 
-A nonempty input-layout or stream-output count requires the corresponding valid array storage. Input-layout elements cannot exceed `D3D12_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT` (32). `D3D12_APPEND_ALIGNED_ELEMENT` requests appended element placement rather than making `AlignedByteOffset` an optional field. Stream output may use `D3D12_SO_NO_RASTERIZED_STREAM` to select no rasterized stream. Elements sharing an `InputSlot` must have the same `InputSlotClass` and `InstanceDataStepRate`. For per-instance data, a step rate of zero means that the instance data is never advanced. `D3D12_APPEND_ALIGNED_ELEMENT` places an element after the preceding element in the same input slot, rounded up to the new element format's required alignment. If it is the first element in that slot, its appended offset is zero.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `SemanticName` and `SemanticIndex` identify shader input/output signature entries, not the buffer byte offset. Element formats must support vertex input and be compatible with the vertex-shader input signature. Stream output declarations describe shader output components and gaps; an empty declaration does not make an otherwise invalid shader-stage combination legal. `PrimitiveTopologyType` is the PSO's point/line/triangle/patch class; the command-list [primitive topology](vertex-processing.md#topology-enumeration) supplies the corresponding detailed list/strip/adjacency/patch selection. [Input assembly and direct draws](vertex-processing.md#input-assembly) define vertex/index fetching, primitive assembly and generated identifiers.
 
-A nonempty input layout requires the root signature's `D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT` permission; enabled stream output requires `D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT`. These creation conditions are distinct from actually binding vertex or stream-output buffers on the command list.
+<!-- d3d12-review-alert:end:pipeline:N-input-context:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:N-input-storage:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> A nonempty input-layout or stream-output count requires the corresponding valid array storage. Input-layout elements cannot exceed `D3D12_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT` (32). `D3D12_APPEND_ALIGNED_ELEMENT` requests appended element placement rather than making `AlignedByteOffset` an optional field. Stream output may use `D3D12_SO_NO_RASTERIZED_STREAM` to select no rasterized stream. Elements sharing an `InputSlot` must have the same `InputSlotClass` and `InstanceDataStepRate`. For per-instance data, a step rate of zero means that the instance data is never advanced. `D3D12_APPEND_ALIGNED_ELEMENT` places an element after the preceding element in the same input slot, rounded up to the new element format's required alignment. If it is the first element in that slot, its appended offset is zero.
+
+<!-- d3d12-review-alert:end:pipeline:N-input-storage:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:N-root-permissions:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> A nonempty input layout requires the root signature's `D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT` permission; enabled stream output requires `D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT`. These creation conditions are distinct from actually binding vertex or stream-output buffers on the command list.
+
+<!-- d3d12-review-alert:end:pipeline:N-root-permissions:0 -->
 
 <a id="blend-state"></a>
 
 ### Blend and output formats
 
-These descriptions select the [output-merger blend/logic behavior](output-merger.md#blending), including [dual-source requirements](output-merger.md#dual-source-blending), [precision](output-merger.md#blending-precision), [write masks](output-merger.md#write-masks) and [alpha-to-coverage](output-merger.md#alpha-to-coverage). Description/PSO creation and compatibility remain defined here.
+<!-- d3d12-review-alert:begin:pipeline:N-om-blend-behavior:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> These descriptions select the [output-merger blend/logic behavior](output-merger.md#blending), including [dual-source requirements](output-merger.md#dual-source-blending), [precision](output-merger.md#blending-precision), [write masks](output-merger.md#write-masks) and [alpha-to-coverage](output-merger.md#alpha-to-coverage). Description/PSO creation and compatibility remain defined here.
+
+<!-- d3d12-review-alert:end:pipeline:N-om-blend-behavior:0 -->
 
 #### D3D12_BLEND
 
@@ -614,7 +760,7 @@ typedef struct D3D12_RT_FORMAT_ARRAY
 
 #### D3D12_BLEND_DESC members
 
-`AlphaToCoverageEnable`
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_BLEND_DESC:0 -->`AlphaToCoverageEnable`<!-- d3d12-review-inline:end:pipeline:P-D3D12_BLEND_DESC:0 --></ins>
 
 Specifies whether to use alpha-to-coverage as a multisampling technique when setting a pixel to a render target. For more info about using alpha-to-coverage, see [Alpha-To-Coverage](https://learn.microsoft.com/en-us/windows/desktop/direct3d11/d3d10-graphics-programming-guide-blend-state).
 
@@ -622,15 +768,15 @@ Specifies whether to use alpha-to-coverage as a multisampling technique when set
 
 Specifies whether to enable independent blending in simultaneous render targets. Set to **TRUE** to enable independent blending. If set to **FALSE**, only the **RenderTarget**[0] members are used; **RenderTarget**[1..7] are ignored.
 
-Logic operations cannot be combined with blending; the shared restrictions are stated below.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_BLEND_DESC:4 -->Logic operations cannot be combined with blending; the shared restrictions are stated below.<!-- d3d12-review-inline:end:pipeline:P-D3D12_BLEND_DESC:4 --></ins>
 
 `RenderTarget[8]`
 
-An array of [`D3D12_RENDER_TARGET_BLEND_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_render_target_blend_desc) structures that describe the blend states for render targets; these correspond to the eight render targets that can be bound to the [output-merger stage](https://learn.microsoft.com/en-us/windows/desktop/direct3d11/d3d10-graphics-programming-guide-output-merger-stage) at one time.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_BLEND_DESC:6 -->An array of [`D3D12_RENDER_TARGET_BLEND_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_render_target_blend_desc) structures that describe the blend states for render targets; these correspond to the eight render targets that can be bound to the [output-merger stage](https://learn.microsoft.com/en-us/windows/desktop/direct3d11/d3d10-graphics-programming-guide-output-merger-stage) at one time.<!-- d3d12-review-inline:end:pipeline:P-D3D12_BLEND_DESC:6 --></ins>
 
 #### D3D12_RENDER_TARGET_BLEND_DESC members
 
-`BlendEnable`
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:0 -->`BlendEnable`<!-- d3d12-review-inline:end:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:0 --></ins>
 
 Specifies whether to enable (or disable) blending. Set to **TRUE** to enable blending.
 
@@ -648,41 +794,55 @@ It's not valid for *LogicOpEnable* and *BlendEnable* to both be **TRUE**.
 
 `SrcBlend`
 
-A [`D3D12_BLEND`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_blend)-typed value that specifies the operation to perform on the RGB value that the pixel shader outputs. The **BlendOp** member defines how to combine the **SrcBlend** and **DestBlend** operations.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:9 -->A [`D3D12_BLEND`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_blend)-typed value that specifies the operation to perform on the RGB value that the pixel shader outputs. The **BlendOp** member defines how to combine the **SrcBlend** and **DestBlend** operations.<!-- d3d12-review-inline:end:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:9 --></ins>
 
 `DestBlend`
 
-A [`D3D12_BLEND`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_blend)-typed value that specifies the operation to perform on the current RGB value in the render target. The **BlendOp** member defines how to combine the **SrcBlend** and **DestBlend** operations.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:11 -->A [`D3D12_BLEND`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_blend)-typed value that specifies the operation to perform on the current RGB value in the render target. The **BlendOp** member defines how to combine the **SrcBlend** and **DestBlend** operations.<!-- d3d12-review-inline:end:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:11 --></ins>
 
 `BlendOp`
 
-A [`D3D12_BLEND_OP`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_blend_op)-typed value that defines how to combine the **SrcBlend** and **DestBlend** operations.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:13 -->A [`D3D12_BLEND_OP`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_blend_op)-typed value that defines how to combine the **SrcBlend** and **DestBlend** operations.<!-- d3d12-review-inline:end:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:13 --></ins>
 
 `SrcBlendAlpha`
 
-A [`D3D12_BLEND`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_blend)-typed value that specifies the operation to perform on the alpha value that the pixel shader outputs. Blend options that end in \_COLOR are not allowed. The **BlendOpAlpha** member defines how to combine the **SrcBlendAlpha** and **DestBlendAlpha** operations.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:15 -->A [`D3D12_BLEND`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_blend)-typed value that specifies the operation to perform on the alpha value that the pixel shader outputs. Blend options that end in \_COLOR are not allowed. The **BlendOpAlpha** member defines how to combine the **SrcBlendAlpha** and **DestBlendAlpha** operations.<!-- d3d12-review-inline:end:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:15 --></ins>
 
 `DestBlendAlpha`
 
-A [`D3D12_BLEND`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_blend)-typed value that specifies the operation to perform on the current alpha value in the render target. Blend options that end in \_COLOR are not allowed. The **BlendOpAlpha** member defines how to combine the **SrcBlendAlpha** and **DestBlendAlpha** operations.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:17 -->A [`D3D12_BLEND`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_blend)-typed value that specifies the operation to perform on the current alpha value in the render target. Blend options that end in \_COLOR are not allowed. The **BlendOpAlpha** member defines how to combine the **SrcBlendAlpha** and **DestBlendAlpha** operations.<!-- d3d12-review-inline:end:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:17 --></ins>
 
 `BlendOpAlpha`
 
-A [`D3D12_BLEND_OP`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_blend_op)-typed value that defines how to combine the **SrcBlendAlpha** and **DestBlendAlpha** operations.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:19 -->A [`D3D12_BLEND_OP`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_blend_op)-typed value that defines how to combine the **SrcBlendAlpha** and **DestBlendAlpha** operations.<!-- d3d12-review-inline:end:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:19 --></ins>
 
 `LogicOp`
 
-A [`D3D12_LOGIC_OP`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_logic_op)-typed value that specifies the logical operation to configure for the render target.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:21 -->A [`D3D12_LOGIC_OP`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_logic_op)-typed value that specifies the logical operation to configure for the render target.<!-- d3d12-review-inline:end:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:21 --></ins>
 
 `RenderTargetWriteMask`
 
-A combination of [`D3D12_COLOR_WRITE_ENABLE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_color_write_enable)-typed values that are combined by using a bitwise OR operation. The resulting value specifies a write mask.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:23 -->A combination of [`D3D12_COLOR_WRITE_ENABLE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_color_write_enable)-typed values that are combined by using a bitwise OR operation. The resulting value specifies a write mask.<!-- d3d12-review-inline:end:pipeline:P-D3D12_RENDER_TARGET_BLEND_DESC:23 --></ins>
 
-When you set the **LogicOpEnable** member of the first element of the **RenderTarget** array (**RenderTarget**[0]) to **TRUE**, you must also set the **BlendEnable** member of **RenderTarget**[0] to **FALSE**, and the **IndependentBlendEnable** member of `D3D12_BLEND_DESC` to **FALSE**. This reflects the limitation in hardware that you can't mix logic operations with blending across multiple render targets, and that when you use a logic operation, you must apply the same logic operation to all render targets.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-logic-exclusion:0 -->When you set the **LogicOpEnable** member of the first element of the **RenderTarget** array (**RenderTarget**[0]) to **TRUE**, you must also set the **BlendEnable** member of **RenderTarget**[0] to **FALSE**, and the **IndependentBlendEnable** member of `D3D12_BLEND_DESC` to **FALSE**. This reflects the limitation in hardware that you can't mix logic operations with blending across multiple render targets, and that when you use a logic operation, you must apply the same logic operation to all render targets.<!-- d3d12-review-inline:end:pipeline:P-logic-exclusion:0 --></ins>
 
-`D3D12_BLEND_ALPHA_FACTOR` and `D3D12_BLEND_INV_ALPHA_FACTOR` use the alpha component of the command-list blend factor and require `D3D12_FEATURE_DATA_D3D12_OPTIONS13.AlphaBlendFactorSupported`. Logic-operation use has its own `D3D12_FEATURE_DATA_D3D12_OPTIONS.OutputMergerLogicOp` capability; the two feature conditions are independent.
+<!-- d3d12-review-alert:begin:pipeline:N-alpha-factor:0 -->
 
-`NumRenderTargets` selects the active `RTVFormats` entries and cannot exceed eight. `DSVFormat`, active render-target formats and `SampleDesc` describe the attachments expected by the pipeline, not bindings of resource views. [Formats and views](formats.md#support) defines per-format and sample support. The [R9G9B9E5 write-mask restriction](../D3D12R9G9B9E5Format.md#interaction-with-rendertargetwritemask) is an additional named format constraint.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `D3D12_BLEND_ALPHA_FACTOR` and `D3D12_BLEND_INV_ALPHA_FACTOR` use the alpha component of the command-list blend factor and require `D3D12_FEATURE_DATA_D3D12_OPTIONS13.AlphaBlendFactorSupported`. Logic-operation use has its own `D3D12_FEATURE_DATA_D3D12_OPTIONS.OutputMergerLogicOp` capability; the two feature conditions are independent.
+
+<!-- d3d12-review-alert:end:pipeline:N-alpha-factor:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:N-formats:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `NumRenderTargets` selects the active `RTVFormats` entries and cannot exceed eight. `DSVFormat`, active render-target formats and `SampleDesc` describe the attachments expected by the pipeline, not bindings of resource views. [Formats and views](formats.md#support) defines per-format and sample support. The [R9G9B9E5 write-mask restriction](../D3D12R9G9B9E5Format.md#interaction-with-rendertargetwritemask) is an additional named format constraint.
+
+<!-- d3d12-review-alert:end:pipeline:N-formats:0 -->
 
 <a id="rasterizer"></a>
 
@@ -787,13 +947,13 @@ typedef struct D3D12_RASTERIZER_DESC2
 } D3D12_RASTERIZER_DESC2;
 ```
 
-`FillMode`
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_RASTERIZER_DESC:0 -->`FillMode`<!-- d3d12-review-inline:end:pipeline:P-D3D12_RASTERIZER_DESC:0 --></ins>
 
-A [`D3D12_FILL_MODE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_fill_mode)-typed value that specifies the fill mode to use when rendering.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_RASTERIZER_DESC:1 -->A [`D3D12_FILL_MODE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_fill_mode)-typed value that specifies the fill mode to use when rendering.<!-- d3d12-review-inline:end:pipeline:P-D3D12_RASTERIZER_DESC:1 --></ins>
 
 `CullMode`
 
-A [`D3D12_CULL_MODE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_cull_mode)-typed value that specifies that triangles facing the specified direction are not drawn.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_RASTERIZER_DESC:3 -->A [`D3D12_CULL_MODE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_cull_mode)-typed value that specifies that triangles facing the specified direction are not drawn.<!-- d3d12-review-inline:end:pipeline:P-D3D12_RASTERIZER_DESC:3 --></ins>
 
 `FrontCounterClockwise`
 
@@ -815,50 +975,78 @@ Scalar on a given pixel's slope. For info about depth bias, see [Depth Bias](ras
 
 Specifies whether to enable clipping based on distance.
 
-The depth-clipping selector does not disable the other required clipping stages; detailed clipping and line algorithms are defined by [rasterization](rasterization.md#clipping).
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_RASTERIZER_DESC:14 -->The depth-clipping selector does not disable the other required clipping stages; detailed clipping and line algorithms are defined by [rasterization](rasterization.md#clipping).<!-- d3d12-review-inline:end:pipeline:P-D3D12_RASTERIZER_DESC:14 --></ins>
 
 `MultisampleEnable`
 
-Selects the line algorithm together with AntialiasedLineEnable; the [line-mode description](#versioned-rasterizer) links the full interpretation. This field does not enable or disable point/triangle multisampling.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_RASTERIZER_DESC:16 -->Selects the line algorithm together with AntialiasedLineEnable; the [line-mode description](#versioned-rasterizer) links the full interpretation. This field does not enable or disable point/triangle multisampling.<!-- d3d12-review-inline:end:pipeline:P-D3D12_RASTERIZER_DESC:16 --></ins>
 
 `AntialiasedLineEnable`
 
-Specifies whether to enable line antialiasing; only applies if doing line drawing and **MultisampleEnable** is **FALSE**. See the [line-mode description](#versioned-rasterizer).
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_RASTERIZER_DESC:18 -->Specifies whether to enable line antialiasing; only applies if doing line drawing and **MultisampleEnable** is **FALSE**. See the [line-mode description](#versioned-rasterizer).<!-- d3d12-review-inline:end:pipeline:P-D3D12_RASTERIZER_DESC:18 --></ins>
 
 `ForcedSampleCount`
 
 Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types)**
 
-The sample count that is forced while UAV rendering or rasterizing. Valid values are 0, 1, 4, 8, and optionally 16. 0 indicates that the sample count is not forced.
-**Note** If you want to render with **ForcedSampleCount** set to 1 or greater, you must follow these guidelines:
-- Don't bind depth-stencil views.
-- Disable depth testing.
-- Ensure the shader doesn't output depth.
-- If you have any render-target views bound ([`D3D12_DESCRIPTOR_HEAP_TYPE_RTV`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_descriptor_heap_type)) and **ForcedSampleCount** is greater than 1, ensure that every render target has only a single sample.
-- Don't operate the shader at sample frequency. Therefore, [ID3D12ShaderReflection::IsSampleFrequencyShader](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflection-issamplefrequencyshader) returns **FALSE**.
+<!-- d3d12-review-alert:begin:pipeline:P-D3D12_RASTERIZER_DESC:21 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> The sample count that is forced while UAV rendering or rasterizing. Valid values are 0, 1, 4, 8, and optionally 16. 0 indicates that the sample count is not forced.
+> **Note** If you want to render with **ForcedSampleCount** set to 1 or greater, you must follow these guidelines:
+> - Don't bind depth-stencil views.
+> - Disable depth testing.
+> - Ensure the shader doesn't output depth.
+> - If you have any render-target views bound ([`D3D12_DESCRIPTOR_HEAP_TYPE_RTV`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_descriptor_heap_type)) and **ForcedSampleCount** is greater than 1, ensure that every render target has only a single sample.
+> - Don't operate the shader at sample frequency. Therefore, [ID3D12ShaderReflection::IsSampleFrequencyShader](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflection-issamplefrequencyshader) returns **FALSE**.
+
+<!-- d3d12-review-alert:end:pipeline:P-D3D12_RASTERIZER_DESC:21 -->
 
 Otherwise, rendering behavior is undefined.
 `ConservativeRaster`
 
-A [`D3D12_CONSERVATIVE_RASTERIZATION_MODE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_conservative_rasterization_mode)-typed value that identifies whether conservative rasterization is on or off.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_RASTERIZER_DESC:23 -->A [`D3D12_CONSERVATIVE_RASTERIZATION_MODE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_conservative_rasterization_mode)-typed value that identifies whether conservative rasterization is on or off.<!-- d3d12-review-inline:end:pipeline:P-D3D12_RASTERIZER_DESC:23 --></ins>
 
 <a id="versioned-rasterizer"></a>
 
 #### Versioned rasterizer fields
 
-To set the initial dynamic depth bias state, `D3D12_RASTERIZER_DESC1` has a `FLOAT` declared `DepthBias`. The value is part of the rasterizer payload supplied during pipeline creation; the command-list setter selects that object. Providing a non-integral value on unsupported hardware will result in a debug layer warning, as those values will be cast to `INT` before being submitted to the driver.
+<ins><!-- d3d12-review-inline:begin:pipeline:C-float-bias:0 -->To set the initial dynamic depth bias state, `D3D12_RASTERIZER_DESC1` has a `FLOAT` declared `DepthBias`. The value is part of the rasterizer payload supplied during pipeline creation; the command-list setter selects that object. Providing a non-integral value on unsupported hardware will result in a debug layer warning, as those values will be cast to `INT` before being submitted to the driver.<!-- d3d12-review-inline:end:pipeline:C-float-bias:0 --></ins>
 
-`D3D12_RASTERIZER_DESC2` replaces the two legacy line-selection BOOLs with `LineRasterizationMode`. `D3D12_FEATURE_DATA_D3D12_OPTIONS19` reports `RasterizerDesc2Supported` indicating that the struct itself is supported, and `NarrowQuadrilateralLinesSupported` indicating that `D3D12_LINE_RASTERIZATION_MODE_QUADRILATERAL_NARROW` can be used.
+<ins><!-- d3d12-review-inline:begin:pipeline:C-line-version:0 -->`D3D12_RASTERIZER_DESC2` replaces the two legacy line-selection BOOLs with `LineRasterizationMode`. `D3D12_FEATURE_DATA_D3D12_OPTIONS19` reports `RasterizerDesc2Supported` indicating that the struct itself is supported, and `NarrowQuadrilateralLinesSupported` indicating that `D3D12_LINE_RASTERIZATION_MODE_QUADRILATERAL_NARROW` can be used.<!-- d3d12-review-inline:end:pipeline:C-line-version:0 --></ins>
 
-The [rasterization line-mode table](rasterization.md#line-mode-selection) defines the legacy Boolean combinations and explicit enum selection, including wide/narrow coverage. These are interpretation rules for the selected rasterizer description; PSO availability and capability gates remain here.
+<!-- d3d12-review-alert:begin:pipeline:N-line-modes:0 -->
 
-Enabling conservative rasterization requires a supported `D3D12_FEATURE_DATA_D3D12_OPTIONS.ConservativeRasterizationTier`. Its [fill-mode restriction](rasterization.md#conservative-fill-modes-interaction), [topology interaction](rasterization.md#conservative-ia-primitive-topology-interaction) and [coverage rules](rasterization.md#conservative-rasterization-rules-interaction) remain part of that feature contract, not a consequence of the ON enumerant merely existing.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The [rasterization line-mode table](rasterization.md#line-mode-selection) defines the legacy Boolean combinations and explicit enum selection, including wide/narrow coverage. These are interpretation rules for the selected rasterizer description; PSO availability and capability gates remain here.
+
+<!-- d3d12-review-alert:end:pipeline:N-line-modes:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:N-conservative:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Enabling conservative rasterization requires a supported `D3D12_FEATURE_DATA_D3D12_OPTIONS.ConservativeRasterizationTier`. Its [fill-mode restriction](rasterization.md#conservative-fill-modes-interaction), [topology interaction](rasterization.md#conservative-ia-primitive-topology-interaction) and [coverage rules](rasterization.md#conservative-rasterization-rules-interaction) remain part of that feature contract, not a consequence of the ON enumerant merely existing.
+
+<!-- d3d12-review-alert:end:pipeline:N-conservative:0 -->
 
 <a id="depth-stencil"></a>
 
 ### Depth/stencil descriptions
 
-The selected fields control the [output-merger depth/stencil algorithms](output-merger.md#depth-stencil), [per-face stencil/reference interaction](output-merger.md#independent-stencil), [depth bounds](output-merger.md#depth-bounds) and [read-only-view write gating](output-merger.md#read-only-depth-stencil). Their dynamic setter contracts are in [Output merger](output-merger.md#output-apis); canonical reset/bundle values remain in Command-list state.
+<!-- d3d12-review-alert:begin:pipeline:N-om-depth-stencil-behavior:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The selected fields control the [output-merger depth/stencil algorithms](output-merger.md#depth-stencil), [per-face stencil/reference interaction](output-merger.md#independent-stencil), [depth bounds](output-merger.md#depth-bounds) and [read-only-view write gating](output-merger.md#read-only-depth-stencil). Their dynamic setter contracts are in [Output merger](output-merger.md#output-apis); canonical reset/bundle values remain in Command-list state.
+
+<!-- d3d12-review-alert:end:pipeline:N-om-depth-stencil-behavior:0 -->
 
 #### D3D12_DEPTH_WRITE_MASK
 
@@ -979,35 +1167,35 @@ typedef struct D3D12_DEPTH_STENCIL_DESC2
 
 #### D3D12_DEPTH_STENCILOP_DESC members
 
-`StencilFailOp`
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_DEPTH_STENCILOP_DESC:0 -->`StencilFailOp`<!-- d3d12-review-inline:end:pipeline:P-D3D12_DEPTH_STENCILOP_DESC:0 --></ins>
 
-A [`D3D12_STENCIL_OP`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_stencil_op)-typed value that identifies the stencil operation to perform when stencil testing fails.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_DEPTH_STENCILOP_DESC:1 -->A [`D3D12_STENCIL_OP`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_stencil_op)-typed value that identifies the stencil operation to perform when stencil testing fails.<!-- d3d12-review-inline:end:pipeline:P-D3D12_DEPTH_STENCILOP_DESC:1 --></ins>
 
 `StencilDepthFailOp`
 
-A [`D3D12_STENCIL_OP`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_stencil_op)-typed value that identifies the stencil operation to perform when stencil testing passes and depth testing fails.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_DEPTH_STENCILOP_DESC:3 -->A [`D3D12_STENCIL_OP`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_stencil_op)-typed value that identifies the stencil operation to perform when stencil testing passes and depth testing fails.<!-- d3d12-review-inline:end:pipeline:P-D3D12_DEPTH_STENCILOP_DESC:3 --></ins>
 
 `StencilPassOp`
 
-A [`D3D12_STENCIL_OP`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_stencil_op)-typed value that identifies the stencil operation to perform when stencil testing and depth testing both pass.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_DEPTH_STENCILOP_DESC:5 -->A [`D3D12_STENCIL_OP`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_stencil_op)-typed value that identifies the stencil operation to perform when stencil testing and depth testing both pass.<!-- d3d12-review-inline:end:pipeline:P-D3D12_DEPTH_STENCILOP_DESC:5 --></ins>
 
 `StencilFunc`
 
-A [`D3D12_COMPARISON_FUNC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_comparison_func)-typed value that identifies the function that compares stencil data against existing stencil data.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_DEPTH_STENCILOP_DESC:7 -->A [`D3D12_COMPARISON_FUNC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_comparison_func)-typed value that identifies the function that compares stencil data against existing stencil data.<!-- d3d12-review-inline:end:pipeline:P-D3D12_DEPTH_STENCILOP_DESC:7 --></ins>
 
 #### D3D12_DEPTH_STENCIL_DESC members
 
-`DepthEnable`
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_DEPTH_STENCIL_DESC:0 -->`DepthEnable`<!-- d3d12-review-inline:end:pipeline:P-D3D12_DEPTH_STENCIL_DESC:0 --></ins>
 
 Specifies whether to enable depth testing. Set this member to **TRUE** to enable depth testing.
 
 `DepthWriteMask`
 
-A [`D3D12_DEPTH_WRITE_MASK`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_depth_write_mask)-typed value that identifies a portion of the depth-stencil buffer that can be modified by depth data.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_DEPTH_STENCIL_DESC:3 -->A [`D3D12_DEPTH_WRITE_MASK`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_depth_write_mask)-typed value that identifies a portion of the depth-stencil buffer that can be modified by depth data.<!-- d3d12-review-inline:end:pipeline:P-D3D12_DEPTH_STENCIL_DESC:3 --></ins>
 
 `DepthFunc`
 
-A [`D3D12_COMPARISON_FUNC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_comparison_func)-typed value that identifies a function that compares depth data against existing depth data.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_DEPTH_STENCIL_DESC:5 -->A [`D3D12_COMPARISON_FUNC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_comparison_func)-typed value that identifies a function that compares depth data against existing depth data.<!-- d3d12-review-inline:end:pipeline:P-D3D12_DEPTH_STENCIL_DESC:5 --></ins>
 
 `StencilEnable`
 
@@ -1023,23 +1211,51 @@ Identify a portion of the depth-stencil buffer for writing stencil data.
 
 `FrontFace`
 
-A [`D3D12_DEPTH_STENCILOP_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_depth_stencilop_desc) structure that describes how to use the results of the depth test and the stencil test for front-facing primitives as defined by rasterizer winding state.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_DEPTH_STENCIL_DESC:13 -->A [`D3D12_DEPTH_STENCILOP_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_depth_stencilop_desc) structure that describes how to use the results of the depth test and the stencil test for front-facing primitives as defined by rasterizer winding state.<!-- d3d12-review-inline:end:pipeline:P-D3D12_DEPTH_STENCIL_DESC:13 --></ins>
 
 `BackFace`
 
-A [`D3D12_DEPTH_STENCILOP_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_depth_stencilop_desc) structure that describes how to use the results of the depth test and the stencil test for back-facing primitives as defined by rasterizer winding state.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_DEPTH_STENCIL_DESC:15 -->A [`D3D12_DEPTH_STENCILOP_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_depth_stencilop_desc) structure that describes how to use the results of the depth test and the stencil test for back-facing primitives as defined by rasterizer winding state.<!-- d3d12-review-inline:end:pipeline:P-D3D12_DEPTH_STENCIL_DESC:15 --></ins>
 
-`D3D12_DEPTH_STENCIL_DESC1` adds `DepthBoundsTestEnable`; support is reported by `D3D12_FEATURE_DATA_D3D12_OPTIONS2.DepthBoundsTestSupported`. `D3D12_DEPTH_STENCIL_DESC2` moves the read/write masks into its per-face `D3D12_DEPTH_STENCILOP_DESC1` members. Independent front/back support is reported by `D3D12_FEATURE_DATA_D3D12_OPTIONS14.IndependentFrontAndBackStencilRefMaskSupported`. Actual bound stencil references and depth bounds remain [command-list state](command-list-state.md#stencil-references), not mutable fields in an already created object.
+<!-- d3d12-review-alert:begin:pipeline:N-depth-versions:0 -->
 
-When independent front/back stencil masks are unsupported, the front and back read masks must match each other, and the front and back write masks must match each other. This does not prohibit the DESC2 representation when those masks agree.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `D3D12_DEPTH_STENCIL_DESC1` adds `DepthBoundsTestEnable`; support is reported by `D3D12_FEATURE_DATA_D3D12_OPTIONS2.DepthBoundsTestSupported`. `D3D12_DEPTH_STENCIL_DESC2` moves the read/write masks into its per-face `D3D12_DEPTH_STENCILOP_DESC1` members. Independent front/back support is reported by `D3D12_FEATURE_DATA_D3D12_OPTIONS14.IndependentFrontAndBackStencilRefMaskSupported`. Actual bound stencil references and depth bounds remain [command-list state](command-list-state.md#stencil-references), not mutable fields in an already created object.
+
+<!-- d3d12-review-alert:end:pipeline:N-depth-versions:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:N-mask-fallback:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> When independent front/back stencil masks are unsupported, the front and back read masks must match each other, and the front and back write masks must match each other. This does not prohibit the DESC2 representation when those masks agree.
+
+<!-- d3d12-review-alert:end:pipeline:N-mask-fallback:0 -->
 
 <a id="state-defaults"></a>
 
 ### State-description defaults
 
-These tables describe standard state defaults. Aggregate callers supply their inline state descriptions explicitly; stream omission and version-upgrade rules determine when a default is supplied by the runtime.
+<!-- d3d12-review-alert:begin:pipeline:N-default-scope:0 -->
 
-Selecting the original `D3D12_DEPTH_STENCIL_DESC` supplies `DepthBoundsTestEnable == FALSE` when it is expanded to the newer description. The common stencil read/write masks in DESC and DESC1 are propagated to both faces of DESC2. Their standard 0xff read/write defaults therefore apply to each face. The standard legacy rasterizer defaults have both line-selection BOOLs false, corresponding to `D3D12_LINE_RASTERIZATION_MODE_ALIASED`; conversion to DESC1/DESC2 preserves the selected bias/line state rather than accumulating separate records.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> These tables describe standard state defaults. Aggregate callers supply their inline state descriptions explicitly; stream omission and version-upgrade rules determine when a default is supplied by the runtime.
+
+<!-- d3d12-review-alert:end:pipeline:N-default-scope:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:N-version-defaults:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Selecting the original `D3D12_DEPTH_STENCIL_DESC` supplies `DepthBoundsTestEnable == FALSE` when it is expanded to the newer description. The common stencil read/write masks in DESC and DESC1 are propagated to both faces of DESC2. Their standard 0xff read/write defaults therefore apply to each face. The standard legacy rasterizer defaults have both line-selection BOOLs false, corresponding to `D3D12_LINE_RASTERIZATION_MODE_ALIASED`; conversion to DESC1/DESC2 preserves the selected bias/line state rather than accumulating separate records.
+
+<!-- d3d12-review-alert:end:pipeline:N-version-defaults:0 -->
 
 #### D3D12_BLEND_DESC defaults
 
@@ -1109,17 +1325,31 @@ typedef enum D3D12_PIPELINE_STATE_FLAGS
 } D3D12_PIPELINE_STATE_FLAGS;
 ```
 
-`D3D12_PIPELINE_STATE_FLAG_TOOL_DEBUG` requests additional compilation information for debugging. The public flag contract restricts this application flag to WARP devices.
+<!-- d3d12-review-alert:begin:pipeline:N-tool-debug:0 -->
 
-`D3D12_PIPELINE_STATE_FLAG_DYNAMIC_DEPTH_BIAS` and `D3D12_PIPELINE_STATE_FLAG_DYNAMIC_INDEX_BUFFER_STRIP_CUT` permit their respective dynamic commands only with the corresponding device support. Creation flags do not make the PSO mutable. [Override legality, reselection and bundle effects](command-list-state.md#dynamic-application-state) and [driver state application](command-list-state.md#dynamic-driver-state) remain canonical there.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `D3D12_PIPELINE_STATE_FLAG_TOOL_DEBUG` requests additional compilation information for debugging. The public flag contract restricts this application flag to WARP devices.
+
+<!-- d3d12-review-alert:end:pipeline:N-tool-debug:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:N-dynamic:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `D3D12_PIPELINE_STATE_FLAG_DYNAMIC_DEPTH_BIAS` and `D3D12_PIPELINE_STATE_FLAG_DYNAMIC_INDEX_BUFFER_STRIP_CUT` permit their respective dynamic commands only with the corresponding device support. Creation flags do not make the PSO mutable. [Override legality, reselection and bundle effects](command-list-state.md#dynamic-application-state) and [driver state application](command-list-state.md#dynamic-driver-state) remain canonical there.
+
+<!-- d3d12-review-alert:end:pipeline:N-dynamic:0 -->
 
 <a id="mesh-pipelines"></a>
 
 ### Mesh and amplification pipelines
 
-`ID3D12Device2::CreatePipelineState`, along with a pipeline state stream descriptor that has a mesh shader
+<ins><!-- d3d12-review-inline:begin:pipeline:C-mesh:0 -->`ID3D12Device2::CreatePipelineState`, along with a pipeline state stream descriptor that has a mesh shader
 and (optionally) an amplification shader attached,
-creates a graphics pipeline state object.
+creates a graphics pipeline state object.<!-- d3d12-review-inline:end:pipeline:C-mesh:0 --></ins>
 
 The descriptor:
 
@@ -1133,9 +1363,23 @@ The descriptor:
 
 5.  must use DXIL bytecode for all attached shaders
 
-Mesh/amplification creation requires `D3D12_FEATURE_DATA_D3D12_OPTIONS7.MeshShaderTier` other than `D3D12_MESH_SHADER_TIER_NOT_SUPPORTED`. The stream uses the MS and optional AS tags; a mesh pipeline can also include its pixel shader. Mesh [signature linkage](amplification-and-mesh-shaders.md#signature-linkage), [payloads](amplification-and-mesh-shaders.md#mesh-payload) and [dispatch](amplification-and-mesh-shaders.md#dispatchmesh) retain their owning definitions.
+<!-- d3d12-review-alert:begin:pipeline:N-mesh-cap:0 -->
 
-PSO creation validates the AS-produced and MS-consumed payload sizes for agreement and checks the [combined payload/output storage limits](amplification-and-mesh-shaders.md#amplification-and-mesh-shader). View instancing also imposes storage requirements: output attributes and shared storage that depend on `SV_ViewID` are expanded for the declared views under the applicable tier, and must fit the [mesh output-space limit](amplification-and-mesh-shaders.md#mesh-shader-output-size-limits) and [per-view shared-storage rules](amplification-and-mesh-shaders.md#sv_viewid). This is not satisfied merely by each shader validating independently with one view. Automatic validation coverage for ViewID-dependent groupshared storage is incomplete; the [mesh validation-coverage limit](amplification-and-mesh-shaders.md#mesh-view-validation) distinguishes required storage limits from achieved detection.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Mesh/amplification creation requires `D3D12_FEATURE_DATA_D3D12_OPTIONS7.MeshShaderTier` other than `D3D12_MESH_SHADER_TIER_NOT_SUPPORTED`. The stream uses the MS and optional AS tags; a mesh pipeline can also include its pixel shader. Mesh [signature linkage](amplification-and-mesh-shaders.md#signature-linkage), [payloads](amplification-and-mesh-shaders.md#mesh-payload) and [dispatch](amplification-and-mesh-shaders.md#dispatchmesh) retain their owning definitions.
+
+<!-- d3d12-review-alert:end:pipeline:N-mesh-cap:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:N-mesh-creation-limits:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> PSO creation validates the AS-produced and MS-consumed payload sizes for agreement and checks the [combined payload/output storage limits](amplification-and-mesh-shaders.md#amplification-and-mesh-shader). View instancing also imposes storage requirements: output attributes and shared storage that depend on `SV_ViewID` are expanded for the declared views under the applicable tier, and must fit the [mesh output-space limit](amplification-and-mesh-shaders.md#mesh-shader-output-size-limits) and [per-view shared-storage rules](amplification-and-mesh-shaders.md#sv_viewid). This is not satisfied merely by each shader validating independently with one view. Automatic validation coverage for ViewID-dependent groupshared storage is incomplete; the [mesh validation-coverage limit](amplification-and-mesh-shaders.md#mesh-view-validation) distinguishes required storage limits from achieved detection.
+
+<!-- d3d12-review-alert:end:pipeline:N-mesh-creation-limits:0 -->
 
 <a id="view-instancing"></a>
 
@@ -1189,15 +1433,15 @@ ViewInstanceCount as 0 (disabled) or 1 (the same).
 
 ---
 
-`ViewportArrayIndex`
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_VIEW_INSTANCE_LOCATION:0 -->`ViewportArrayIndex`<!-- d3d12-review-inline:end:pipeline:P-D3D12_VIEW_INSTANCE_LOCATION:0 --></ins>
 
 The index of the viewport in the viewports array to be used by the view instance associated with this location.
 
 `RenderTargetArrayIndex`
 
-The render-target array-slice index used by this view instance; this is not an output-merger render-target slot number.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_VIEW_INSTANCE_LOCATION:3 -->The render-target array-slice index used by this view instance; this is not an output-merger render-target slot number.<!-- d3d12-review-inline:end:pipeline:P-D3D12_VIEW_INSTANCE_LOCATION:3 --></ins>
 
-`ViewInstanceCount`
+<ins><!-- d3d12-review-inline:begin:pipeline:P-D3D12_VIEW_INSTANCING_DESC:0 -->`ViewInstanceCount`<!-- d3d12-review-inline:end:pipeline:P-D3D12_VIEW_INSTANCING_DESC:0 --></ins>
 
 Specifies the number of views to be used, up to D3D12\_MAX\_VIEW\_INSTANCE\_COUNT.
 
@@ -1209,9 +1453,23 @@ The address of a memory location that contains **ViewInstanceCount** view instan
 
 Configures view instancing with additional options.
 
-`ViewInstanceCount` cannot exceed `D3D12_MAX_VIEW_INSTANCE_COUNT` (4). `D3D12_FEATURE_DATA_D3D12_OPTIONS3.ViewInstancingTier` reports the supported tier. View locations and masking are defined by [view instancing](../ViewInstancing.md#view-instance-locations); the command-list [view mask](command-list-state.md#view-mask) is not stored as a mutable PSO field.
+<!-- d3d12-review-alert:begin:pipeline:N-view-gate:0 -->
 
-A view count greater than one or `D3D12_VIEW_INSTANCING_FLAG_ENABLE_VIEW_INSTANCE_MASKING` requires `ViewInstancingTier` other than `D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED`. A count of one additionally requires device support for Shader Model 6.1 or higher, even if the shaders do not consume `SV_ViewID`. A count of zero retains the disabled behavior without imposing that creation requirement; shaders that use `SV_ViewID` still require their shader-model support. Supported tiers do not introduce an additional prohibition on shader output of viewport/render-target array indices. [View-dependent stage storage and work ordering](vertex-processing.md#geometry-view-instancing) define the interstage execution contract.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `ViewInstanceCount` cannot exceed `D3D12_MAX_VIEW_INSTANCE_COUNT` (4). `D3D12_FEATURE_DATA_D3D12_OPTIONS3.ViewInstancingTier` reports the supported tier. View locations and masking are defined by [view instancing](../ViewInstancing.md#view-instance-locations); the command-list [view mask](command-list-state.md#view-mask) is not stored as a mutable PSO field.
+
+<!-- d3d12-review-alert:end:pipeline:N-view-gate:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:N-view-support:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> A view count greater than one or `D3D12_VIEW_INSTANCING_FLAG_ENABLE_VIEW_INSTANCE_MASKING` requires `ViewInstancingTier` other than `D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED`. A count of one additionally requires device support for Shader Model 6.1 or higher, even if the shaders do not consume `SV_ViewID`. A count of zero retains the disabled behavior without imposing that creation requirement; shaders that use `SV_ViewID` still require their shader-model support. Supported tiers do not introduce an additional prohibition on shader output of viewport/render-target array indices. [View-dependent stage storage and work ordering](vertex-processing.md#geometry-view-instancing) define the interstage execution contract.
+
+<!-- d3d12-review-alert:end:pipeline:N-view-support:0 -->
 
 <a id="apis"></a>
 
@@ -1221,11 +1479,32 @@ A view count greater than one or `D3D12_VIEW_INSTANCING_FLAG_ENABLE_VIEW_INSTANC
 
 ### Common creation validation and results
 
-Creation descriptions, their nested arrays/strings, shader byte buffers and cache input must be valid while the creation call consumes them. The created PSO maintains its internal shader/state/root-signature dependencies; shader bytecode and inline state descriptions are input data, not separately bound state objects. Repeated creation is not a guarantee of object identity or absence of driver work. [Recording and execution lifetime](execution.md#lifetime) remains a separate application contract.
+<!-- d3d12-review-alert:begin:pipeline:N-creation-inputs:0 -->
 
-For successful validation-only creation, a null `ppPipelineState` returns `S_FALSE` rather than a pipeline object. This is not an allocation-free or driver-call-free probe: runtime/shader/state validation can create internal subobjects, and it does not exercise final driver PSO creation.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Creation descriptions, their nested arrays/strings, shader byte buffers and cache input must be valid while the creation call consumes them. The created PSO maintains its internal shader/state/root-signature dependencies; shader bytecode and inline state descriptions are input data, not separately bound state objects. Repeated creation is not a guarantee of object identity or absence of driver work. [Recording and execution lifetime](execution.md#lifetime) remains a separate application contract.
 
-Successful object creation returns `S_OK`. Failed creation clears a supplied output pointer. Invalid descriptions/program combinations can return `E_INVALIDARG`; allocation failure can return `E_OUTOFMEMORY`, and driver failures can propagate. Cached-data compatibility has the additional [named error conditions](#cached-data).
+<!-- d3d12-review-alert:end:pipeline:N-creation-inputs:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:N-validation-only:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> For successful validation-only creation, a null `ppPipelineState` returns `S_FALSE` rather than a pipeline object. This is not an allocation-free or driver-call-free probe: runtime/shader/state validation can create internal subobjects, and it does not exercise final driver PSO creation.
+
+<!-- d3d12-review-alert:end:pipeline:N-validation-only:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:N-creation-results:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Successful object creation returns `S_OK`. Failed creation clears a supplied output pointer. Invalid descriptions/program combinations can return `E_INVALIDARG`; allocation failure can return `E_OUTOFMEMORY`, and driver failures can propagate. Cached-data compatibility has the additional [named error conditions](#cached-data).
+
+<!-- d3d12-review-alert:end:pipeline:N-creation-results:0 -->
 
 <a id="id3d12device-creategraphicspipelinestate"></a>
 
@@ -1245,15 +1524,29 @@ HRESULT CreateGraphicsPipelineState(
 
 Creates a graphics pipeline state object.
 
-Uses the [graphics description](#graphics-description) and [compatibility rules](#compatibility). The resulting object is an `ID3D12PipelineState`.
+<!-- d3d12-review-alert:begin:pipeline:N-id3d12device-creategraphicspipelinestate:0 -->
 
-The driver can use [runtime compiled-value lookup](runtime-cache-discovery.md#compiled-value-lookup) while processing this ordinary creation description.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Uses the [graphics description](#graphics-description) and [compatibility rules](#compatibility). The resulting object is an `ID3D12PipelineState`.
+
+<!-- d3d12-review-alert:end:pipeline:N-id3d12device-creategraphicspipelinestate:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:D148-id3d12device-creategraphicspipelinestate:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The driver can use [runtime compiled-value lookup](runtime-cache-discovery.md#compiled-value-lookup) while processing this ordinary creation description.
+
+<!-- d3d12-review-alert:end:pipeline:D148-id3d12device-creategraphicspipelinestate:0 -->
 
 #### Parameters
 
 `[in] pDesc`
 
-A pointer to a [`D3D12_GRAPHICS_PIPELINE_STATE_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_graphics_pipeline_state_desc) structure that describes graphics pipeline state.
+<ins><!-- d3d12-review-inline:begin:pipeline:Q-id3d12device-creategraphicspipelinestate:2 -->A pointer to a [`D3D12_GRAPHICS_PIPELINE_STATE_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_graphics_pipeline_state_desc) structure that describes graphics pipeline state.<!-- d3d12-review-inline:end:pipeline:Q-id3d12device-creategraphicspipelinestate:2 --></ins>
 
 `riid`
 
@@ -1261,7 +1554,7 @@ The globally unique identifier (**GUID**) for the pipeline state interface ([ID3
 
 `[out] ppPipelineState`
 
-A pointer to a memory block that receives a pointer to the [ID3D12PipelineState](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12pipelinestate) interface for the pipeline state object. The pipeline state object is an immutable state object.
+<ins><!-- d3d12-review-inline:begin:pipeline:Q-id3d12device-creategraphicspipelinestate:6 -->A pointer to a memory block that receives a pointer to the [ID3D12PipelineState](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12pipelinestate) interface for the pipeline state object. The pipeline state object is an immutable state object.<!-- d3d12-review-inline:end:pipeline:Q-id3d12device-creategraphicspipelinestate:6 --></ins>
 
 #### Return values
 
@@ -1285,15 +1578,29 @@ HRESULT CreateComputePipelineState(
 
 Creates a compute pipeline state object.
 
-Uses the [compute description](#compute-description). The compute shader and root signature must be compatible.
+<!-- d3d12-review-alert:begin:pipeline:N-id3d12device-createcomputepipelinestate:0 -->
 
-The driver can use [runtime compiled-value lookup](runtime-cache-discovery.md#compiled-value-lookup) while processing this ordinary creation description.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Uses the [compute description](#compute-description). The compute shader and root signature must be compatible.
+
+<!-- d3d12-review-alert:end:pipeline:N-id3d12device-createcomputepipelinestate:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:D148-id3d12device-createcomputepipelinestate:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The driver can use [runtime compiled-value lookup](runtime-cache-discovery.md#compiled-value-lookup) while processing this ordinary creation description.
+
+<!-- d3d12-review-alert:end:pipeline:D148-id3d12device-createcomputepipelinestate:0 -->
 
 #### Parameters
 
 `[in] pDesc`
 
-A pointer to a [`D3D12_COMPUTE_PIPELINE_STATE_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_compute_pipeline_state_desc) structure that describes compute pipeline state.
+<ins><!-- d3d12-review-inline:begin:pipeline:Q-id3d12device-createcomputepipelinestate:2 -->A pointer to a [`D3D12_COMPUTE_PIPELINE_STATE_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_compute_pipeline_state_desc) structure that describes compute pipeline state.<!-- d3d12-review-inline:end:pipeline:Q-id3d12device-createcomputepipelinestate:2 --></ins>
 
 `riid`
 
@@ -1301,7 +1608,7 @@ The globally unique identifier (**GUID**) for the pipeline state interface ([ID3
 
 `[out] ppPipelineState`
 
-A pointer to a memory block that receives a pointer to the [ID3D12PipelineState](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12pipelinestate) interface for the pipeline state object. The pipeline state object is an immutable state object.
+<ins><!-- d3d12-review-inline:begin:pipeline:Q-id3d12device-createcomputepipelinestate:6 -->A pointer to a memory block that receives a pointer to the [ID3D12PipelineState](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12pipelinestate) interface for the pipeline state object. The pipeline state object is an immutable state object.<!-- d3d12-review-inline:end:pipeline:Q-id3d12device-createcomputepipelinestate:6 --></ins>
 
 #### Return values
 
@@ -1325,15 +1632,29 @@ HRESULT CreatePipelineState(
 
 Creates a pipeline state object from a pipeline state stream description.
 
-Uses the [tagged stream layout and pipeline selection rules](#streams). Payload representation, padding and relevant creation conditions remain part of this contract.
+<!-- d3d12-review-alert:begin:pipeline:N-id3d12device2-createpipelinestate:0 -->
 
-The driver can use [runtime compiled-value lookup](runtime-cache-discovery.md#compiled-value-lookup) while processing this ordinary creation description.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Uses the [tagged stream layout and pipeline selection rules](#streams). Payload representation, padding and relevant creation conditions remain part of this contract.
+
+<!-- d3d12-review-alert:end:pipeline:N-id3d12device2-createpipelinestate:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:D148-id3d12device2-createpipelinestate:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The driver can use [runtime compiled-value lookup](runtime-cache-discovery.md#compiled-value-lookup) while processing this ordinary creation description.
+
+<!-- d3d12-review-alert:end:pipeline:D148-id3d12device2-createpipelinestate:0 -->
 
 #### Parameters
 
 `pDesc`
 
-The address of a [`D3D12_PIPELINE_STATE_STREAM_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_pipeline_state_stream_desc) structure that describes the pipeline state.
+<ins><!-- d3d12-review-inline:begin:pipeline:Q-id3d12device2-createpipelinestate:2 -->The address of a [`D3D12_PIPELINE_STATE_STREAM_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_pipeline_state_stream_desc) structure that describes the pipeline state.<!-- d3d12-review-inline:end:pipeline:Q-id3d12device2-createpipelinestate:2 --></ins>
 
 `riid`
 
@@ -1343,7 +1664,7 @@ The **REFIID**, or **GUID**, of the interface to the pipeline state can be obtai
 
 `[out] ppPipelineState`
 
-A pointer to a memory block that receives a pointer to the [ID3D12PipelineState](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12pipelinestate) interface for the pipeline state object.
+<ins><!-- d3d12-review-inline:begin:pipeline:Q-id3d12device2-createpipelinestate:7 -->A pointer to a memory block that receives a pointer to the [ID3D12PipelineState](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12pipelinestate) interface for the pipeline state object.<!-- d3d12-review-inline:end:pipeline:Q-id3d12device2-createpipelinestate:7 --></ins>
 
 The pipeline state object is an immutable state object.
 
@@ -1355,7 +1676,14 @@ This method returns **E\_OUTOFMEMORY** if there is insufficient memory to create
 
 ### Legacy cached-blob retrieval
 
-The full [ID3D12PipelineState::GetCachedBlob contract](shader-delivery-and-caching.md#id3d12pipelinestate-getcachedblob) defines the supported legacy retrieval method, output ownership and results. The [cached-data contract](#cached-data) below retains cached-PSO input and creation requirements.
+<!-- d3d12-review-alert:begin:pipeline:D117-cached-blob-forward:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The full [ID3D12PipelineState::GetCachedBlob contract](shader-delivery-and-caching.md#id3d12pipelinestate-getcachedblob) defines the supported legacy retrieval method, output ownership and results. The [cached-data contract](#cached-data) below retains cached-PSO input and creation requirements.
+
+<!-- d3d12-review-alert:end:pipeline:D117-cached-blob-forward:0 -->
 
 <a id="id3d12graphicscommandlist-setpipelinestate"></a>
 
@@ -1373,7 +1701,14 @@ void SetPipelineState(
 
 Sets all shaders and programs most of the fixed-function state of the graphics processing unit (GPU) pipeline.
 
-Selects an ordinary graphics or compute PSO. [Initial/reset and bundle effects](command-list-state.md#pipeline-selection), [root-signature independence](binding.md#pipeline-compatibility) and [dynamic override reselection](command-list-state.md#dynamic-application-state) apply.
+<!-- d3d12-review-alert:begin:pipeline:N-id3d12graphicscommandlist-setpipelinestate:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Selects an ordinary graphics or compute PSO. [Initial/reset and bundle effects](command-list-state.md#pipeline-selection), [root-signature independence](binding.md#pipeline-compatibility) and [dynamic override reselection](command-list-state.md#dynamic-application-state) apply.
+
+<!-- d3d12-review-alert:end:pipeline:N-id3d12graphicscommandlist-setpipelinestate:0 -->
 
 #### Parameters
 
@@ -1387,7 +1722,14 @@ None
 
 #### Recording preconditions and lifetime
 
-`pPipelineState` must be a non-null compatible PSO for the device and command-list node; this method has no null-unbind operation. It is valid on DIRECT, COMPUTE and BUNDLE recordings, not COPY. Selection itself is not a compute-only PSO-kind restriction on COMPUTE recordings. The subsequently issued work still requires a compatible selected program and a recording type supporting that work. The [recording/execution lifetime rules](execution.md#lifetime) apply to this API's recorded PSO reference; debug tracking is not a promise that the command list owns a COM reference.
+<!-- d3d12-review-alert:begin:pipeline:N-setter-preconditions:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `pPipelineState` must be a non-null compatible PSO for the device and command-list node; this method has no null-unbind operation. It is valid on DIRECT, COMPUTE and BUNDLE recordings, not COPY. Selection itself is not a compute-only PSO-kind restriction on COMPUTE recordings. The subsequently issued work still requires a compatible selected program and a recording type supporting that work. The [recording/execution lifetime rules](execution.md#lifetime) apply to this API's recorded PSO reference; debug tracking is not a promise that the command list owns a COM reference.
+
+<!-- d3d12-review-alert:end:pipeline:N-setter-preconditions:0 -->
 
 <a id="compatibility"></a>
 
@@ -1396,10 +1738,10 @@ None
 The runtime validates:
 
 - Whether the linkage between the shader stages is correct.
-- If the **HS** and **DS** members are specified, the **PrimitiveTopologyType** member for topology type must be set to [`D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_primitive_topology_type).
+- <ins><!-- d3d12-review-inline:begin:pipeline:P-validation:1 -->If the **HS** and **DS** members are specified, the **PrimitiveTopologyType** member for topology type must be set to [`D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_primitive_topology_type).<!-- d3d12-review-inline:end:pipeline:P-validation:1 --></ins>
 - Whether sample frequency execution isn't allowed with the center multi-sample anti-aliasing (MSAA) pattern.
 - Whether anti-aliasing lines aren't allowed with the center MSAA pattern.
-- If the **ForcedSampleCount** member of [`D3D12_RASTERIZER_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc) that **RasterizerState** specifies isn't zero:
+- <ins><!-- d3d12-review-inline:begin:pipeline:P-validation:1 -->If the **ForcedSampleCount** member of [`D3D12_RASTERIZER_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc) that **RasterizerState** specifies isn't zero:<!-- d3d12-review-inline:end:pipeline:P-validation:1 --></ins>
     - Depth/stencil must be disabled.
     - Pixel shader can't output depth.
     - Pixel shader can't run at sample frequency.
@@ -1408,47 +1750,110 @@ The runtime validates:
 - Whether pixel shader output type is compatible with render target format.
 - Whether the sample count and quality are supported for the render target/depth stencil formats.
 
-Traditional graphics creation requires a vertex shader; compute creation requires a compute shader. Hull and domain shaders occur together and use patch topology. The hull shader's output control-point count and tessellator domain must match the domain shader's declarations; both their control-point and patch-constant signatures must match. A geometry shader's input primitive must agree with the preceding topology or tessellator output. Other stage linkages check consumed inputs and their compatible semantics/types/components, not identical complete signatures; that subset rule does not relax the HS/DS interfaces. [Vertex processing and tessellation](vertex-processing.md#vertex-processing) define the stage execution, factor and patch-identity contracts.
+<!-- d3d12-review-alert:begin:pipeline:N-linkage:0 -->
 
-Active shader stages within one graphics PSO must not mix DXBC and DXIL bytecode. This is a consistency requirement on the bytecode family, not a requirement that every stage use the identical shader-model number. Mixing those families is invalid and creation returns `E_INVALIDARG`.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Traditional graphics creation requires a vertex shader; compute creation requires a compute shader. Hull and domain shaders occur together and use patch topology. The hull shader's output control-point count and tessellator domain must match the domain shader's declarations; both their control-point and patch-constant signatures must match. A geometry shader's input primitive must agree with the preceding topology or tessellator output. Other stage linkages check consumed inputs and their compatible semantics/types/components, not identical complete signatures; that subset rule does not relax the HS/DS interfaces. [Vertex processing and tessellation](vertex-processing.md#vertex-processing) define the stage execution, factor and patch-identity contracts.
+
+<!-- d3d12-review-alert:end:pipeline:N-linkage:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:N-bytecode-family:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Active shader stages within one graphics PSO must not mix DXBC and DXIL bytecode. This is a consistency requirement on the bytecode family, not a requirement that every stage use the identical shader-model number. Mixing those families is invalid and creation returns `E_INVALIDARG`.
+
+<!-- d3d12-review-alert:end:pipeline:N-bytecode-family:0 -->
 
 <a id="no-output-samples"></a>
 
 ### Sample configuration without output attachments
 
-When `NumRenderTargets == 0` and `DSVFormat == DXGI_FORMAT_UNKNOWN`, the valid multisample counts are reported by `D3D12_FEATURE_DATA_D3D12_OPTIONS19.SupportedSampleCountsWithNoOutputs`, not a format-specific quality query. Bit n represents sample count `2^n`; a value of 1 reports single-sample-only support. Counts greater than one require their reported bit. Rasterization defines the [no-output sample-frequency path and mandatory capability floor](rasterization.md#no-output-samples).
+<!-- d3d12-review-alert:begin:pipeline:N-no-output-mask:0 -->
 
-D3D12 allows `DXGI_SAMPLE_DESC::Count` to be > 1 when no render targets or depth stencil are bound. In this case, rasterization behaves as with setting `ForcedSampleCount` > 1, except that sample-frequency pixel shader execution is allowed and well-defined. `DXGI_SAMPLE_DESC::Quality` must be 0 or `D3D12_STANDARD_MULTISAMPLE_PATTERN`. When programmable sample positions are set on the command list, those sample positions are used by this type of rendering as well.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> When `NumRenderTargets == 0` and `DSVFormat == DXGI_FORMAT_UNKNOWN`, the valid multisample counts are reported by `D3D12_FEATURE_DATA_D3D12_OPTIONS19.SupportedSampleCountsWithNoOutputs`, not a format-specific quality query. Bit n represents sample count `2^n`; a value of 1 reports single-sample-only support. Counts greater than one require their reported bit. Rasterization defines the [no-output sample-frequency path and mandatory capability floor](rasterization.md#no-output-samples).
 
-Existing interactions with `ForcedSampleCount` remain:
-* If `DXGI_SAMPLE_DESC::Count` > 1, `ForcedSampleCount` must be 0 or 1. 0 indicates multisample rasterization, while 1 indicates single-sample rasterization. If there are render targets or depth stencil bound, the results of rasterization and pixel shading are broadcast to all samples for the pixel.
-* If `DXGI_SAMPLE_DESC::Count` == 1, `ForcedSampleCount` may be larger, but the existing target-independent rasterization restrictions remain.
+<!-- d3d12-review-alert:end:pipeline:N-no-output-mask:0 -->
+
+<ins><!-- d3d12-review-inline:begin:pipeline:C-no-output-samples:0 -->D3D12 allows `DXGI_SAMPLE_DESC::Count` to be > 1 when no render targets or depth stencil are bound. In this case, rasterization behaves as with setting `ForcedSampleCount` > 1, except that sample-frequency pixel shader execution is allowed and well-defined. `DXGI_SAMPLE_DESC::Quality` must be 0 or `D3D12_STANDARD_MULTISAMPLE_PATTERN`. When programmable sample positions are set on the command list, those sample positions are used by this type of rendering as well.<!-- d3d12-review-inline:end:pipeline:C-no-output-samples:0 --></ins>
+
+<!-- d3d12-review-alert:begin:pipeline:C-no-output-samples:1 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> Existing interactions with `ForcedSampleCount` remain:
+> * If `DXGI_SAMPLE_DESC::Count` > 1, `ForcedSampleCount` must be 0 or 1. 0 indicates multisample rasterization, while 1 indicates single-sample rasterization. If there are render targets or depth stencil bound, the results of rasterization and pixel shading are broadcast to all samples for the pixel.
+> * If `DXGI_SAMPLE_DESC::Count` == 1, `ForcedSampleCount` may be larger, but the existing target-independent rasterization restrictions remain.
+
+<!-- d3d12-review-alert:end:pipeline:C-no-output-samples:1 -->
 
 <a id="execution-compatibility"></a>
 
 ### Execution compatibility
 
-Graphics, compute and mesh shader sets are not additive pipeline bindings. The selected program's root signature must satisfy [shader/root-signature compatibility](binding.md#pipeline-compatibility), and the selected PSO and command-list root signature must match when work is executed. Attachment descriptions require [format/sample support](formats.md#support) and compatible active views; passing one creation check does not waive descriptor, resource-lifetime or synchronization requirements.
+<!-- d3d12-review-alert:begin:pipeline:N-compatibility:0 -->
 
-[Indirect work types](indirect-execution.md#work-types) select the graphics or compute root-argument bind point and retain their workload's pipeline requirements. [Command-signature root matching](indirect-execution.md#execute-debug) is separate from the pipeline/root compatibility rules here.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Graphics, compute and mesh shader sets are not additive pipeline bindings. The selected program's root signature must satisfy [shader/root-signature compatibility](binding.md#pipeline-compatibility), and the selected PSO and command-list root signature must match when work is executed. Attachment descriptions require [format/sample support](formats.md#support) and compatible active views; passing one creation check does not waive descriptor, resource-lifetime or synchronization requirements.
+
+<!-- d3d12-review-alert:end:pipeline:N-compatibility:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:N-indirect-canonical-owner:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> [Indirect work types](indirect-execution.md#work-types) select the graphics or compute root-argument bind point and retain their workload's pipeline requirements. [Command-signature root matching](indirect-execution.md#execute-debug) is separate from the pipeline/root compatibility rules here.
+
+<!-- d3d12-review-alert:end:pipeline:N-indirect-canonical-owner:0 -->
 
 <a id="cached-data"></a>
 
 ## Cached pipeline data
 
-Per-PSO cached blobs and pipeline libraries are supported legacy caching mechanisms. Their complete [retrieval, storage and serialization contracts](shader-delivery-and-caching.md) remain distinct from the PSO creation inputs described here. Explicit offline driver/pipeline compilation and driver-cache control are the forward-facing directions; this classification does not remove or change the legacy callable contracts.
+<!-- d3d12-review-alert:begin:pipeline:D117-legacy-cache-context:0 -->
 
-`D3D12_CACHED_PIPELINE_STATE` is filled with the data retrieved from [ID3D12PipelineState::GetCachedBlob](shader-delivery-and-caching.md#id3d12pipelinestate-getcachedblob). This cached PSO contains data specific to the hardware, driver, and machine that it was retrieved from. The cached bytes are an optimization input; the complete creation description is still required. The rest of the data in the PSO needs to still be valid, and needs to match the cached PSO, otherwise E\_INVALIDARG might be returned.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Per-PSO cached blobs and pipeline libraries are supported legacy caching mechanisms. Their complete [retrieval, storage and serialization contracts](shader-delivery-and-caching.md) remain distinct from the PSO creation inputs described here. Explicit offline driver/pipeline compilation and driver-cache control are the forward-facing directions; this classification does not remove or change the legacy callable contracts.
 
-Driver/runtime version incompatibility can be reported as `D3D12_ERROR_DRIVER_VERSION_MISMATCH`; a different adapter can be reported as `D3D12_ERROR_ADAPTER_NOT_FOUND`.
+<!-- d3d12-review-alert:end:pipeline:D117-legacy-cache-context:0 -->
 
-`CachedPSO.pCachedBlob == nullptr` with `CachedBlobSizeInBytes == 0` supplies no cache input. A cached blob is not a stand-alone serialized replacement for the shader/state description or a resource/descriptor binding. [Shader cache and pipeline-library management](shader-delivery-and-caching.md) has a separate callable/lifetime contract.
+<ins><!-- d3d12-review-inline:begin:pipeline:P-cache-compat:0 -->`D3D12_CACHED_PIPELINE_STATE` is filled with the data retrieved from [ID3D12PipelineState::GetCachedBlob](shader-delivery-and-caching.md#id3d12pipelinestate-getcachedblob). This cached PSO contains data specific to the hardware, driver, and machine that it was retrieved from. The cached bytes are an optimization input; the complete creation description is still required. The rest of the data in the PSO needs to still be valid, and needs to match the cached PSO, otherwise E\_INVALIDARG might be returned.<!-- d3d12-review-inline:end:pipeline:P-cache-compat:0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:pipeline:P-cache-compat:1 -->Driver/runtime version incompatibility can be reported as `D3D12_ERROR_DRIVER_VERSION_MISMATCH`; a different adapter can be reported as `D3D12_ERROR_ADAPTER_NOT_FOUND`.<!-- d3d12-review-inline:end:pipeline:P-cache-compat:1 --></ins>
+
+<!-- d3d12-review-alert:begin:pipeline:N-cache-owner:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `CachedPSO.pCachedBlob == nullptr` with `CachedBlobSizeInBytes == 0` supplies no cache input. A cached blob is not a stand-alone serialized replacement for the shader/state description or a resource/descriptor binding. [Shader cache and pipeline-library management](shader-delivery-and-caching.md) has a separate callable/lifetime contract.
+
+<!-- d3d12-review-alert:end:pipeline:N-cache-owner:0 -->
 
 <a id="driver"></a>
 
 ## Driver responsibilities
 
-Creation resolves shader bytecode, root signatures and fixed-function descriptions into the driver objects and aggregate required by the negotiated DDI. Runtime validation and shader compilation are distinct from debug diagnostics. A driver-facing aggregate can carry both compute and graphics handle fields even though the application creates one compatible pipeline kind at a time.
+<!-- d3d12-review-alert:begin:pipeline:N-driver:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Creation resolves shader bytecode, root signatures and fixed-function descriptions into the driver objects and aggregate required by the negotiated DDI. Runtime validation and shader compilation are distinct from debug diagnostics. A driver-facing aggregate can carry both compute and graphics handle fields even though the application creates one compatible pipeline kind at a time.
+
+<!-- d3d12-review-alert:end:pipeline:N-driver:0 -->
 
 ```cpp
 typedef enum D3D12DDI_PRIMITIVE_TOPOLOGY_TYPE
@@ -1541,7 +1946,7 @@ typedef struct D3D12DDIARG_CREATE_PIPELINE_STATE_0119
 } D3D12DDIARG_CREATE_PIPELINE_STATE_0119;
 ```
 
-For drivers, the dynamic depth-bias and strip-cut creation flags are only _hints_ about whether or not state is allowed to be changed; it does not alter the behavior of calls to `pfnSetPipelineState`. When setting the pipeline state, the depth bias state and IB strip cut must still be set according to their descriptions in the pipeline state object, regardless of the presence of their corresponding dynamic flags.
+<ins><!-- d3d12-review-inline:begin:pipeline:D-flags:0 -->For drivers, the dynamic depth-bias and strip-cut creation flags are only _hints_ about whether or not state is allowed to be changed; it does not alter the behavior of calls to `pfnSetPipelineState`. When setting the pipeline state, the depth bias state and IB strip cut must still be set according to their descriptions in the pipeline state object, regardless of the presence of their corresponding dynamic flags.<!-- d3d12-review-inline:end:pipeline:D-flags:0 --></ins>
 
 Support for dynamic depth bias and index buffer strip cut is implied by, and must be supported on, drivers that report their DDI version to be 0099 or greater.
 
@@ -1549,17 +1954,31 @@ Support for dynamic depth bias and index buffer strip cut is implied by, and mus
 
 ### Current ordinary PSO selection
 
-These runtime-to-driver entries select the ordinary graphics/compute PSO
-described by [SetPipelineState](#id3d12graphicscommandlist-setpipelinestate).
-The command-list argument uses the ordinary driver handle in the first
-table and the [API-header representation](execution.md#work-command-handles)
-in the second. These are conditional current representations, not a
-universal direct-dispatch or performance guarantee.
+<!-- d3d12-review-alert:begin:pipeline:PS-pso-roles:0 -->
 
-| Current table member | Signature | Object argument |
-|---|---|---|
-| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnSetPipelineState` | `PFND3D12DDI_SET_PIPELINE_STATE` | `D3D12DDI_HPIPELINESTATE` |
-| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnSetPipelineState` | `PFND3D12DDI_SET_PIPELINE_STATE_0114` | `D3D12DDI_API_HPIPELINESTATE` |
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> These runtime-to-driver entries select the ordinary graphics/compute PSO
+> described by [SetPipelineState](#id3d12graphicscommandlist-setpipelinestate).
+> The command-list argument uses the ordinary driver handle in the first
+> table and the [API-header representation](execution.md#work-command-handles)
+> in the second. These are conditional current representations, not a
+> universal direct-dispatch or performance guarantee.
+
+<!-- d3d12-review-alert:end:pipeline:PS-pso-roles:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:PS-pso-roles:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Current table member | Signature | Object argument |
+> |---|---|---|
+> | `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnSetPipelineState` | `PFND3D12DDI_SET_PIPELINE_STATE` | `D3D12DDI_HPIPELINESTATE` |
+> | `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnSetPipelineState` | `PFND3D12DDI_SET_PIPELINE_STATE_0114` | `D3D12DDI_API_HPIPELINESTATE` |
+
+<!-- d3d12-review-alert:end:pipeline:PS-pso-roles:1 -->
 
 ```cpp
 D3D10DDI_H( D3D12DDI_API_HPIPELINESTATE )
@@ -1581,161 +2000,266 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_PIPELINE_STATE )(
 typedef VOID ( APIENTRY* PFND3D12DDI_SET_PIPELINE_STATE_0114 )(D3D12DDI_API_HCOMMANDLIST, D3D12DDI_API_HPIPELINESTATE );
 ```
 
-The ordinary object handle identifies the driver PSO created under the
-[object storage/lifetime contract](#driver-object-lifetime). The API object
-handle instead identifies an application-side runtime-bypass header.
-`GetDriverPipelineStateHandle` obtains the ordinary object from
-`pDriverObject`; the header layout is defined with the
-[command-list transport](execution.md#work-command-handles).
-The API handle itself is not ordinary driver-private storage.
+<!-- d3d12-review-alert:begin:pipeline:PS-pso-object-values:0 -->
 
-The published helper is not null-safe and does not define a null-unset
-operation. The API requires a non-null compatible PSO for the device and
-command-list node. Conversion neither constructs a new PSO nor transfers
-COM ownership; the API's recorded-object lifetime remains required.
-It does not select a global root signature or establish the required root
-arguments, descriptor heaps, residency or resource synchronization.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The ordinary object handle identifies the driver PSO created under the
+> [object storage/lifetime contract](#driver-object-lifetime). The API object
+> handle instead identifies an application-side runtime-bypass header.
+> `GetDriverPipelineStateHandle` obtains the ordinary object from
+> `pDriverObject`; the header layout is defined with the
+> [command-list transport](execution.md#work-command-handles).
+> The API handle itself is not ordinary driver-private storage.
 
-Both callbacks program the selected PSO's contained state. Selecting the
-same PSO again still restores its described depth-bias and strip-cut values;
-the dynamic creation flags are permission hints, not permission to preserve
-an earlier override. The [canonical dynamic application/driver state](command-list-state.md#dynamic-state)
-and [single pipeline/program selection](command-list-state.md#pipeline-selection)
-remain the owners.
+<!-- d3d12-review-alert:end:pipeline:PS-pso-object-values:0 -->
 
-Selection is valid on DIRECT, COMPUTE and BUNDLE recordings, not COPY.
-It does not impose a new compute-only PSO-kind restriction on a COMPUTE
-recording, nor authorize work unsupported by that recording. The API's
-[render-pass recording conditions](output-merger.md#render-pass-operation-surface),
-bundle effects and lifetime requirements remain applicable.
-These `VOID` setters neither return a recoverable creation `HRESULT` nor
-report GPU completion; recording failures use the
-[callback/deferred-Close contract](execution.md#lifecycle-driver-errors).
-Handle conversion is not proof of argument validation.
+<!-- d3d12-review-alert:begin:pipeline:PS-pso-object-values:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The published helper is not null-safe and does not define a null-unset
+> operation. The API requires a non-null compatible PSO for the device and
+> command-list node. Conversion neither constructs a new PSO nor transfers
+> COM ownership; the API's recorded-object lifetime remains required.
+> It does not select a global root signature or establish the required root
+> arguments, descriptor heaps, residency or resource synchronization.
+
+<!-- d3d12-review-alert:end:pipeline:PS-pso-object-values:1 -->
+
+<!-- d3d12-review-alert:begin:pipeline:PS-pso-state-errors:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Both callbacks program the selected PSO's contained state. Selecting the
+> same PSO again still restores its described depth-bias and strip-cut values;
+> the dynamic creation flags are permission hints, not permission to preserve
+> an earlier override. The [canonical dynamic application/driver state](command-list-state.md#dynamic-state)
+> and [single pipeline/program selection](command-list-state.md#pipeline-selection)
+> remain the owners.
+
+<!-- d3d12-review-alert:end:pipeline:PS-pso-state-errors:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:PS-pso-state-errors:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Selection is valid on DIRECT, COMPUTE and BUNDLE recordings, not COPY.
+> It does not impose a new compute-only PSO-kind restriction on a COMPUTE
+> recording, nor authorize work unsupported by that recording. The API's
+> [render-pass recording conditions](output-merger.md#render-pass-operation-surface),
+> bundle effects and lifetime requirements remain applicable.
+> These `VOID` setters neither return a recoverable creation `HRESULT` nor
+> report GPU completion; recording failures use the
+> [callback/deferred-Close contract](execution.md#lifecycle-driver-errors).
+> Handle conversion is not proof of argument validation.
+
+<!-- d3d12-review-alert:end:pipeline:PS-pso-state-errors:1 -->
 
 <a id="driver-object-lifetime"></a>
 
 ### Driver object storage and lifetime
 
-The creation callbacks below construct driver-private representations of
-pipeline components and ordinary PSOs. They are not new application
-shader, blend-state, rasterizer, depth/stencil or input-layout interfaces.
-The runtime translates the [API creation descriptions](#apis) and may
-share immutable components; repeated application creation does not promise
-one new object or one DDI call for every component.
+<!-- d3d12-review-alert:begin:pipeline:PC-storage:0 -->
 
-Each size query returns a `SIZE_T` byte requirement for CPU private driver
-storage, not resource video memory. The runtime reserves at least the
-reported space and passes the typed driver handle by value, with its
-private pointer identifying that region. The driver initializes its
-object there; this is not an output-handle pointer or permission to free
-runtime-owned storage. Destruction ends the placed object before the
-runtime reclaims that storage. Exact runtime offsets, extra allocation
-overhead and cache strategy are not ABI contracts.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The creation callbacks below construct driver-private representations of
+> pipeline components and ordinary PSOs. They are not new application
+> shader, blend-state, rasterizer, depth/stencil or input-layout interfaces.
+> The runtime translates the [API creation descriptions](#apis) and may
+> share immutable components; repeated application creation does not promise
+> one new object or one DDI call for every component.
 
-Creation descriptions and their arrays are borrowed inputs to the call.
-Top-level state, shader, layout and PSO argument structures can be
-temporary storage. The driver copies any input data it needs after the
-call unless its specific owning contract supplies a longer lifetime.
-An implementation retaining an internal copy does not extend the
-[application creation-input lifetime](#creation-validation).
+<!-- d3d12-review-alert:end:pipeline:PC-storage:0 -->
 
-A PSO retains its shader/state/root dependencies through driver PSO
-destruction. Component objects can be shared by other PSOs; destroying
-one PSO is not permission to destroy those components. The matching
-component destroy call ends that object's lifetime. The runtime-retained PSO
-dependencies keep root objects alive through
-dependent shader destruction. Retaining those objects does not extend a
-separate guarantee for root-creation description/header storage.
+<!-- d3d12-review-alert:begin:pipeline:PC-storage:1 -->
 
-These are CPU object/input lifetimes, not GPU-completion signals.
-Applications still satisfy [recording/execution lifetime](execution.md#lifetime).
-Library references and [runtime cache lookup](runtime-cache-discovery.md#compiled-value-lookup)
-retain their own permitted-call and ownership contracts.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Each size query returns a `SIZE_T` byte requirement for CPU private driver
+> storage, not resource video memory. The runtime reserves at least the
+> reported space and passes the typed driver handle by value, with its
+> private pointer identifying that region. The driver initializes its
+> object there; this is not an output-handle pointer or permission to free
+> runtime-owned storage. Destruction ends the placed object before the
+> runtime reclaims that storage. Exact runtime offsets, extra allocation
+> overhead and cache strategy are not ABI contracts.
+
+<!-- d3d12-review-alert:end:pipeline:PC-storage:1 -->
+
+<!-- d3d12-review-alert:begin:pipeline:PC-inputs:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Creation descriptions and their arrays are borrowed inputs to the call.
+> Top-level state, shader, layout and PSO argument structures can be
+> temporary storage. The driver copies any input data it needs after the
+> call unless its specific owning contract supplies a longer lifetime.
+> An implementation retaining an internal copy does not extend the
+> [application creation-input lifetime](#creation-validation).
+
+<!-- d3d12-review-alert:end:pipeline:PC-inputs:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:PC-inputs:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> A PSO retains its shader/state/root dependencies through driver PSO
+> destruction. Component objects can be shared by other PSOs; destroying
+> one PSO is not permission to destroy those components. The matching
+> component destroy call ends that object's lifetime. The runtime-retained PSO
+> dependencies keep root objects alive through
+> dependent shader destruction. Retaining those objects does not extend a
+> separate guarantee for root-creation description/header storage.
+
+<!-- d3d12-review-alert:end:pipeline:PC-inputs:1 -->
+
+<!-- d3d12-review-alert:begin:pipeline:PC-inputs:2 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> These are CPU object/input lifetimes, not GPU-completion signals.
+> Applications still satisfy [recording/execution lifetime](execution.md#lifetime).
+> Library references and [runtime cache lookup](runtime-cache-discovery.md#compiled-value-lookup)
+> retain their own permitted-call and ownership contracts.
+
+<!-- d3d12-review-alert:end:pipeline:PC-inputs:2 -->
 
 <a id="driver-creation-errors"></a>
 
 ### Creation results and device error reporting
 
-The size queries return `SIZE_T`, component create/destroy callbacks
-return `VOID`, and current ordinary PSO creation returns `HRESULT`. These
-channels are not interchangeable. In particular a void creator does
-not acquire an `HRESULT` return or defer its result to command-list Close.
+<!-- d3d12-review-alert:begin:pipeline:PC-errors:0 -->
 
-For the selected component creation calls, `PFND3D12DDI_SETERROR_CB`
-reports failure within the active calling thread's creation context.
-`E_OUTOFMEMORY` is the recoverable allocation failure on this path. The
-runtime consumes that result before returning from creation; an
-out-of-context report is not a delayed recoverable result for an earlier
-call. The ordinary PSO `HRESULT` is processed through this creation policy.
-`S_OK` is the successful driver-creation result; the application's `S_FALSE`
-validation-only path is not successful final driver PSO creation.
-The runtime also normalizes legacy `D3DERR_OUTOFVIDEOMEMORY` to `E_OUTOFMEMORY`.
-`D3DDDIERR_DEVICEREMOVED` maps to `DXGI_ERROR_DEVICE_REMOVED`;
-`D3DDDIERR_APPLICATIONERROR` maps to `DXGI_ERROR_INVALID_CALL`. Both are
-device-failure paths. Unexpected failures become
-`DXGI_ERROR_DRIVER_INTERNAL_ERROR` and invalidate the device. Existing
-removal can supersede an otherwise returned creation result.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The size queries return `SIZE_T`, component create/destroy callbacks
+> return `VOID`, and current ordinary PSO creation returns `HRESULT`. These
+> channels are not interchangeable. In particular a void creator does
+> not acquire an `HRESULT` return or defer its result to command-list Close.
 
-Sizing and destruction have no recoverable allocation-error channel.
-A size value is a byte requirement, not a cast `HRESULT` or a new defined
-zero/max-value error code. Runtime input validation and its normal API
-HRESULTs are separate from accepted driver creation reports.
-The [native queue failure model](execution.md#native-queue-errors) and
-[deferred recording errors](execution.md#lifecycle-driver-errors) must
-not be substituted for this per-call creation contract.
+<!-- d3d12-review-alert:end:pipeline:PC-errors:0 -->
 
-Failure does not establish a successfully initialized object. The
-driver cleans up its failed partial initialization; it cannot depend
-on a matching destroy call for an object not successfully created.
+<!-- d3d12-review-alert:begin:pipeline:PC-errors:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> For the selected component creation calls, `PFND3D12DDI_SETERROR_CB`
+> reports failure within the active calling thread's creation context.
+> `E_OUTOFMEMORY` is the recoverable allocation failure on this path. The
+> runtime consumes that result before returning from creation; an
+> out-of-context report is not a delayed recoverable result for an earlier
+> call. The ordinary PSO `HRESULT` is processed through this creation policy.
+> `S_OK` is the successful driver-creation result; the application's `S_FALSE`
+> validation-only path is not successful final driver PSO creation.
+> The runtime also normalizes legacy `D3DERR_OUTOFVIDEOMEMORY` to `E_OUTOFMEMORY`.
+> `D3DDDIERR_DEVICEREMOVED` maps to `DXGI_ERROR_DEVICE_REMOVED`;
+> `D3DDDIERR_APPLICATIONERROR` maps to `DXGI_ERROR_INVALID_CALL`. Both are
+> device-failure paths. Unexpected failures become
+> `DXGI_ERROR_DRIVER_INTERNAL_ERROR` and invalidate the device. Existing
+> removal can supersede an otherwise returned creation result.
+
+<!-- d3d12-review-alert:end:pipeline:PC-errors:1 -->
+
+<!-- d3d12-review-alert:begin:pipeline:PC-errors:2 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Sizing and destruction have no recoverable allocation-error channel.
+> A size value is a byte requirement, not a cast `HRESULT` or a new defined
+> zero/max-value error code. Runtime input validation and its normal API
+> HRESULTs are separate from accepted driver creation reports.
+> The [native queue failure model](execution.md#native-queue-errors) and
+> [deferred recording errors](execution.md#lifecycle-driver-errors) must
+> not be substituted for this per-call creation contract.
+
+<!-- d3d12-review-alert:end:pipeline:PC-errors:2 -->
+
+<!-- d3d12-review-alert:begin:pipeline:PC-errors:3 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Failure does not establish a successfully initialized object. The
+> driver cleans up its failed partial initialization; it cannot depend
+> on a matching destroy call for an object not successfully created.
+
+<!-- d3d12-review-alert:end:pipeline:PC-errors:3 -->
 
 <a id="driver-object-slots"></a>
 
 ### Current core-device slot associations
 
-| Current slot | Published signature and contract |
-|---|---|
-| `pfnCalcPrivateBlendStateSize` | [PFND3D12DDI_CALCPRIVATEBLENDSTATESIZE_0010](#ddi-pfnd3d12ddi-calcprivateblendstatesize-0010) |
-| `pfnCalcPrivateDepthStencilStateSize` | [PFND3D12DDI_CALCPRIVATEDEPTHSTENCILSTATESIZE_0095](#ddi-pfnd3d12ddi-calcprivatedepthstencilstatesize-0095) |
-| `pfnCalcPrivateElementLayoutSize` | [PFND3D12DDI_CALCPRIVATEELEMENTLAYOUTSIZE_0010](#ddi-pfnd3d12ddi-calcprivateelementlayoutsize-0010) |
-| `pfnCalcPrivateGeometryShaderWithStreamOutput` | [PFND3D12DDI_CALC_PRIVATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026](#ddi-pfnd3d12ddi-calc-private-geometry-shader-with-stream-output-0026) |
-| `pfnCalcPrivateMeshShaderSize` | [PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026](#ddi-pfnd3d12ddi-calc-private-shader-size-0026) |
-| `pfnCalcPrivatePipelineStateSize` | [PFND3D12DDI_CALC_PRIVATE_PIPELINE_STATE_SIZE_0119](#ddi-pfnd3d12ddi-calc-private-pipeline-state-size-0119) |
-| `pfnCalcPrivateRasterizerStateSize` | [PFND3D12DDI_CALCPRIVATERASTERIZERSTATESIZE_0102](#ddi-pfnd3d12ddi-calcprivaterasterizerstatesize-0102) |
-| `pfnCalcPrivateShaderSize` | [PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026](#ddi-pfnd3d12ddi-calc-private-shader-size-0026) |
-| `pfnCalcPrivateTessellationShaderSize` | [PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026](#ddi-pfnd3d12ddi-calc-private-shader-size-0026) |
-| `pfnCreateAmplificationShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
-| `pfnCreateBlendState` | [PFND3D12DDI_CREATEBLENDSTATE_0010](#ddi-pfnd3d12ddi-createblendstate-0010) |
-| `pfnCreateComputeShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
-| `pfnCreateDepthStencilState` | [PFND3D12DDI_CREATEDEPTHSTENCILSTATE_0095](#ddi-pfnd3d12ddi-createdepthstencilstate-0095) |
-| `pfnCreateDomainShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
-| `pfnCreateElementLayout` | [PFND3D12DDI_CREATEELEMENTLAYOUT_0010](#ddi-pfnd3d12ddi-createelementlayout-0010) |
-| `pfnCreateGeometryShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
-| `pfnCreateGeometryShaderWithStreamOutput` | [PFND3D12DDI_CREATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026](#ddi-pfnd3d12ddi-create-geometry-shader-with-stream-output-0026) |
-| `pfnCreateHullShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
-| `pfnCreateMeshShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
-| `pfnCreatePipelineState` | [PFND3D12DDI_CREATE_PIPELINE_STATE_0119](#ddi-pfnd3d12ddi-create-pipeline-state-0119) |
-| `pfnCreatePixelShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
-| `pfnCreateRasterizerState` | [PFND3D12DDI_CREATERASTERIZERSTATE_0102](#ddi-pfnd3d12ddi-createrasterizerstate-0102) |
-| `pfnCreateVertexShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
-| `pfnDestroyBlendState` | [PFND3D12DDI_DESTROYBLENDSTATE](#ddi-pfnd3d12ddi-destroyblendstate) |
-| `pfnDestroyDepthStencilState` | [PFND3D12DDI_DESTROYDEPTHSTENCILSTATE](#ddi-pfnd3d12ddi-destroydepthstencilstate) |
-| `pfnDestroyElementLayout` | [PFND3D12DDI_DESTROYELEMENTLAYOUT](#ddi-pfnd3d12ddi-destroyelementlayout) |
-| `pfnDestroyPipelineState` | [PFND3D12DDI_DESTROY_PIPELINE_STATE](#ddi-pfnd3d12ddi-destroy-pipeline-state) |
-| `pfnDestroyRasterizerState` | [PFND3D12DDI_DESTROYRASTERIZERSTATE](#ddi-pfnd3d12ddi-destroyrasterizerstate) |
-| `pfnDestroyShader` | [PFND3D12DDI_DESTROYSHADER](#ddi-pfnd3d12ddi-destroyshader) |
+<!-- d3d12-review-alert:begin:pipeline:PC-slots:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Current slot | Published signature and contract |
+> |---|---|
+> | `pfnCalcPrivateBlendStateSize` | [PFND3D12DDI_CALCPRIVATEBLENDSTATESIZE_0010](#ddi-pfnd3d12ddi-calcprivateblendstatesize-0010) |
+> | `pfnCalcPrivateDepthStencilStateSize` | [PFND3D12DDI_CALCPRIVATEDEPTHSTENCILSTATESIZE_0095](#ddi-pfnd3d12ddi-calcprivatedepthstencilstatesize-0095) |
+> | `pfnCalcPrivateElementLayoutSize` | [PFND3D12DDI_CALCPRIVATEELEMENTLAYOUTSIZE_0010](#ddi-pfnd3d12ddi-calcprivateelementlayoutsize-0010) |
+> | `pfnCalcPrivateGeometryShaderWithStreamOutput` | [PFND3D12DDI_CALC_PRIVATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026](#ddi-pfnd3d12ddi-calc-private-geometry-shader-with-stream-output-0026) |
+> | `pfnCalcPrivateMeshShaderSize` | [PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026](#ddi-pfnd3d12ddi-calc-private-shader-size-0026) |
+> | `pfnCalcPrivatePipelineStateSize` | [PFND3D12DDI_CALC_PRIVATE_PIPELINE_STATE_SIZE_0119](#ddi-pfnd3d12ddi-calc-private-pipeline-state-size-0119) |
+> | `pfnCalcPrivateRasterizerStateSize` | [PFND3D12DDI_CALCPRIVATERASTERIZERSTATESIZE_0102](#ddi-pfnd3d12ddi-calcprivaterasterizerstatesize-0102) |
+> | `pfnCalcPrivateShaderSize` | [PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026](#ddi-pfnd3d12ddi-calc-private-shader-size-0026) |
+> | `pfnCalcPrivateTessellationShaderSize` | [PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026](#ddi-pfnd3d12ddi-calc-private-shader-size-0026) |
+> | `pfnCreateAmplificationShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
+> | `pfnCreateBlendState` | [PFND3D12DDI_CREATEBLENDSTATE_0010](#ddi-pfnd3d12ddi-createblendstate-0010) |
+> | `pfnCreateComputeShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
+> | `pfnCreateDepthStencilState` | [PFND3D12DDI_CREATEDEPTHSTENCILSTATE_0095](#ddi-pfnd3d12ddi-createdepthstencilstate-0095) |
+> | `pfnCreateDomainShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
+> | `pfnCreateElementLayout` | [PFND3D12DDI_CREATEELEMENTLAYOUT_0010](#ddi-pfnd3d12ddi-createelementlayout-0010) |
+> | `pfnCreateGeometryShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
+> | `pfnCreateGeometryShaderWithStreamOutput` | [PFND3D12DDI_CREATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026](#ddi-pfnd3d12ddi-create-geometry-shader-with-stream-output-0026) |
+> | `pfnCreateHullShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
+> | `pfnCreateMeshShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
+> | `pfnCreatePipelineState` | [PFND3D12DDI_CREATE_PIPELINE_STATE_0119](#ddi-pfnd3d12ddi-create-pipeline-state-0119) |
+> | `pfnCreatePixelShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
+> | `pfnCreateRasterizerState` | [PFND3D12DDI_CREATERASTERIZERSTATE_0102](#ddi-pfnd3d12ddi-createrasterizerstate-0102) |
+> | `pfnCreateVertexShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
+> | `pfnDestroyBlendState` | [PFND3D12DDI_DESTROYBLENDSTATE](#ddi-pfnd3d12ddi-destroyblendstate) |
+> | `pfnDestroyDepthStencilState` | [PFND3D12DDI_DESTROYDEPTHSTENCILSTATE](#ddi-pfnd3d12ddi-destroydepthstencilstate) |
+> | `pfnDestroyElementLayout` | [PFND3D12DDI_DESTROYELEMENTLAYOUT](#ddi-pfnd3d12ddi-destroyelementlayout) |
+> | `pfnDestroyPipelineState` | [PFND3D12DDI_DESTROY_PIPELINE_STATE](#ddi-pfnd3d12ddi-destroy-pipeline-state) |
+> | `pfnDestroyRasterizerState` | [PFND3D12DDI_DESTROYRASTERIZERSTATE](#ddi-pfnd3d12ddi-destroyrasterizerstate) |
+> | `pfnDestroyShader` | [PFND3D12DDI_DESTROYSHADER](#ddi-pfnd3d12ddi-destroyshader) |
+
+<!-- d3d12-review-alert:end:pipeline:PC-slots:0 -->
 
 <a id="driver-element-layout"></a>
 
 ### Element-layout arguments
 
-The runtime resolves input semantics and linkage into register-oriented
-`D3D12DDIARG_INPUT_ELEMENT_DESC` entries. `NumElements` counts `pVertexElements`
-entries; `InputRegister` is the resolved shader register, not a semantic
-string. The [input-layout constraints](#input-layout-constraints) and
-[IA traversal](vertex-processing.md#input-assembly) remain canonical.
-Unused inputs can produce no driver element-layout object, so an API
-input-layout description does not imply a non-null `hElementLayout`.
+<!-- d3d12-review-alert:begin:pipeline:PC-arguments-element:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The runtime resolves input semantics and linkage into register-oriented
+> `D3D12DDIARG_INPUT_ELEMENT_DESC` entries. `NumElements` counts `pVertexElements`
+> entries; `InputRegister` is the resolved shader register, not a semantic
+> string. The [input-layout constraints](#input-layout-constraints) and
+> [IA traversal](vertex-processing.md#input-assembly) remain canonical.
+> Unused inputs can produce no driver element-layout object, so an API
+> input-layout description does not imply a non-null `hElementLayout`.
+
+<!-- d3d12-review-alert:end:pipeline:PC-arguments-element:0 -->
 
 <a id="driver-type-d3d12ddi-input-classification"></a>
 
@@ -1782,14 +2306,21 @@ typedef struct D3D12DDIARG_CREATEELEMENTLAYOUT_0010
 
 ### Blend-state arguments
 
-These fields carry the [blend-state](#blend-state) and
-[output-merger](output-merger.md#output-merger) meanings in driver form,
-not the binary layout of an API pointer. The render-target array has
-`D3D12DDI_SIMULTANEOUS_RENDER_TARGET_COUNT` (8) entries. Independent-blend,
-logic-operation and alpha-factor capability/validity rules remain at their
-API owners. `LibraryReference` carries the existing library handle/index;
-it does not replace the complete state description. Published enum comments
-do not replace the complete arithmetic/format rules at those owners.
+<!-- d3d12-review-alert:begin:pipeline:PC-arguments-blend:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> These fields carry the [blend-state](#blend-state) and
+> [output-merger](output-merger.md#output-merger) meanings in driver form,
+> not the binary layout of an API pointer. The render-target array has
+> `D3D12DDI_SIMULTANEOUS_RENDER_TARGET_COUNT` (8) entries. Independent-blend,
+> logic-operation and alpha-factor capability/validity rules remain at their
+> API owners. `LibraryReference` carries the existing library handle/index;
+> it does not replace the complete state description. Published enum comments
+> do not replace the complete arithmetic/format rules at those owners.
+
+<!-- d3d12-review-alert:end:pipeline:PC-arguments-blend:0 -->
 
 <a id="driver-type-d3d12ddi-blend-op"></a>
 
@@ -1919,16 +2450,23 @@ typedef struct D3D12DDI_BLEND_DESC_0010
 
 ### Depth/stencil arguments
 
-The current `_0095` description preserves independent front/back read/write
-masks and operations, face enablement and `DepthBoundsTestEnable`. The
-[depth/stencil state](#depth-stencil) and
-[depth-bounds contract](output-merger.md#depth-bounds) supply their meanings
-and capability requirements. `FrontEnable`/`BackEnable` are driver description
-controls, not separate application face-enable setters. The runtime can
-normalize a disabled or always-pass/keep no-op stencil face to a disabled
-face with neutral operations and zero masks; the driver consumes the
-received state, not an assumed bitwise copy of the API description.
-Older named layouts are not substituted for these current fields.
+<!-- d3d12-review-alert:begin:pipeline:PC-arguments-depth:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The current `_0095` description preserves independent front/back read/write
+> masks and operations, face enablement and `DepthBoundsTestEnable`. The
+> [depth/stencil state](#depth-stencil) and
+> [depth-bounds contract](output-merger.md#depth-bounds) supply their meanings
+> and capability requirements. `FrontEnable`/`BackEnable` are driver description
+> controls, not separate application face-enable setters. The runtime can
+> normalize a disabled or always-pass/keep no-op stencil face to a disabled
+> face with neutral operations and zero masks; the driver consumes the
+> received state, not an assumed bitwise copy of the API description.
+> Older named layouts are not substituted for these current fields.
+
+<!-- d3d12-review-alert:end:pipeline:PC-arguments-depth:0 -->
 
 <a id="driver-type-d3d12ddi-depth-write-mask"></a>
 
@@ -2020,14 +2558,21 @@ typedef struct D3D12DDI_DEPTH_STENCIL_DESC_0095
 
 ### Rasterizer arguments
 
-The current `_0102` description uses `FLOAT` `DepthBias` and the explicit
-`LineRasterizationMode`, alongside clipping, culling, forced samples and
-conservative rasterization. Their [versioned rasterizer](#versioned-rasterizer)
-and [line selection](rasterization.md#line-mode-selection) rules remain
-canonical; declaration of a field does not bypass its capability gate.
-The runtime's D3D12 rasterizer description supplies `ScissorEnable` = `TRUE`;
-it does not introduce an application scissor-disable state. The command
-list still supplies the [scissor rectangles](rasterization.md#scissor).
+<!-- d3d12-review-alert:begin:pipeline:PC-arguments-raster:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The current `_0102` description uses `FLOAT` `DepthBias` and the explicit
+> `LineRasterizationMode`, alongside clipping, culling, forced samples and
+> conservative rasterization. Their [versioned rasterizer](#versioned-rasterizer)
+> and [line selection](rasterization.md#line-mode-selection) rules remain
+> canonical; declaration of a field does not bypass its capability gate.
+> The runtime's D3D12 rasterizer description supplies `ScissorEnable` = `TRUE`;
+> it does not introduce an application scissor-disable state. The command
+> list still supplies the [scissor rectangles](rasterization.md#scissor).
+
+<!-- d3d12-review-alert:end:pipeline:PC-arguments-raster:0 -->
 
 <a id="driver-type-d3d12ddi-fill-mode"></a>
 
@@ -2107,44 +2652,86 @@ typedef struct D3D12DDI_RASTERIZER_DESC_0102
 
 ### Shader and stream-output arguments
 
-VS, PS, GS, HS, DS, CS, AS and MS denote vertex, pixel, geometry, hull,
-domain, compute, amplification and mesh shader stages, respectively.
+<!-- d3d12-review-alert:begin:pipeline:PC-arguments-shader:0 -->
 
-`pShaderCode` is driver-facing compiled shader data, not HLSL source,
-a GPU virtual address or a guarantee of byte identity with the original
-API buffer. `IOSignatures` selects `Standard` for ordinary stage I/O,
-`Tessellation` for HS/DS patch interfaces and `Mesh` for primitive/vertex MS
-outputs, as appropriate to the stage. CS/AS do not gain graphics-stage
-linkage merely from sharing the argument type. Counts describe signature
-entries, not byte sizes. Current `_0012` entries carry `Stream`; deprecated
-union member names remain published layout aliases, not new required
-historical callback interfaces.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> VS, PS, GS, HS, DS, CS, AS and MS denote vertex, pixel, geometry, hull,
+> domain, compute, amplification and mesh shader stages, respectively.
 
-The published full-signature descriptions below can include registers
-unused by one particular shader. They assist driver compilation; they do
-not require all adjacent stage signatures to be identical. Their system
-value/component/minimum-precision tags retain the shader representation's
-meaning, including [minimum precision](common-shader-internals.md#minimum-precision).
+<!-- d3d12-review-alert:end:pipeline:PC-arguments-shader:0 -->
 
-`ShaderCodeHash` supplies 16 hash bytes for shader/cache identity; it is not
-shader code or an ownership token. Create flags retain their named tracing/
-optimization meanings without removing supported-program/target requirements.
-`LibraryReference` remains the library/index input. The [root compatibility](binding.md#pipeline-compatibility)
-and [stage linkage](#compatibility) contracts still apply.
+<!-- d3d12-review-alert:begin:pipeline:PC-arguments-shader:1 -->
 
-GS/SO arguments nest `CreateShader` and count `pOutputStreamDecl` entries and
-`BufferStridesInBytes` elements independently. `RegisterMask` selects the low
-xyzw bits of `RegisterIndex`, not a semantic-name pointer. `RasterizedStream`
-and buffer-stride/capture behavior retain [stream output](geometry-shaders-and-stream-output.md#stream-output).
-A nonempty capture declaration can use the GS/SO path without application
-GS code. With no SO entries the ordinary GS size/create path is used.
-HS/DS use the tessellation size slot; MS uses the mesh size slot; VS/PS/CS/AS
-and ordinary GS use the ordinary shader size slot. Stage-specific create
-slots remain distinct even though eight share one function-pointer type.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `pShaderCode` is driver-facing compiled shader data, not HLSL source,
+> a GPU virtual address or a guarantee of byte identity with the original
+> API buffer. `IOSignatures` selects `Standard` for ordinary stage I/O,
+> `Tessellation` for HS/DS patch interfaces and `Mesh` for primitive/vertex MS
+> outputs, as appropriate to the stage. CS/AS do not gain graphics-stage
+> linkage merely from sharing the argument type. Counts describe signature
+> entries, not byte sizes. Current `_0012` entries carry `Stream`; deprecated
+> union member names remain published layout aliases, not new required
+> historical callback interfaces.
+
+<!-- d3d12-review-alert:end:pipeline:PC-arguments-shader:1 -->
+
+<!-- d3d12-review-alert:begin:pipeline:PC-arguments-shader:2 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The published full-signature descriptions below can include registers
+> unused by one particular shader. They assist driver compilation; they do
+> not require all adjacent stage signatures to be identical. Their system
+> value/component/minimum-precision tags retain the shader representation's
+> meaning, including [minimum precision](common-shader-internals.md#minimum-precision).
+
+<!-- d3d12-review-alert:end:pipeline:PC-arguments-shader:2 -->
+
+<!-- d3d12-review-alert:begin:pipeline:PC-arguments-shader:3 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `ShaderCodeHash` supplies 16 hash bytes for shader/cache identity; it is not
+> shader code or an ownership token. Create flags retain their named tracing/
+> optimization meanings without removing supported-program/target requirements.
+> `LibraryReference` remains the library/index input. The [root compatibility](binding.md#pipeline-compatibility)
+> and [stage linkage](#compatibility) contracts still apply.
+
+<!-- d3d12-review-alert:end:pipeline:PC-arguments-shader:3 -->
+
+<!-- d3d12-review-alert:begin:pipeline:PC-arguments-shader:4 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> GS/SO arguments nest `CreateShader` and count `pOutputStreamDecl` entries and
+> `BufferStridesInBytes` elements independently. `RegisterMask` selects the low
+> xyzw bits of `RegisterIndex`, not a semantic-name pointer. `RasterizedStream`
+> and buffer-stride/capture behavior retain [stream output](geometry-shaders-and-stream-output.md#stream-output).
+> A nonempty capture declaration can use the GS/SO path without application
+> GS code. With no SO entries the ordinary GS size/create path is used.
+> HS/DS use the tessellation size slot; MS uses the mesh size slot; VS/PS/CS/AS
+> and ordinary GS use the ordinary shader size slot. Stage-specific create
+> slots remain distinct even though eight share one function-pointer type.
+
+<!-- d3d12-review-alert:end:pipeline:PC-arguments-shader:4 -->
+
+<!-- d3d12-review-context:begin:pipeline:PC-arguments-shader:5 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
 
 > **Draft qualification:** Published signature-superset/compiler-use comments
 > below are retained source contracts, not independently established behavior
 > of every hardware/driver compiler. They do not define a new shader memory model.
+
+<!-- d3d12-review-context:end:pipeline:PC-arguments-shader:5 -->
 
 <a id="driver-type-d3d12ddi-create-shader-flags"></a>
 
@@ -2387,27 +2974,48 @@ typedef struct D3D12DDIARG_CREATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026
 
 ### Current ordinary PSO arguments
 
-The [current aggregate declaration](#driver) combines driver shader,
-fixed-state and root handles with output/sample/topology/node state,
-`ViewInstancingDesc`, `LibraryReference`, creation `Flags` and per-stage code
-pointers. These are driver representations, not an API structure cast.
-A null internal component supplies a null handle; application-stage
-absence alone does not determine every internal handle (for example,
-stream-output capture without an application GS).
+<!-- d3d12-review-alert:begin:pipeline:PC-pso:0 -->
 
-The runtime supplies `D3D12DDI_HRTPIPELINESTATE` separately from driver private
-storage for the callbacks allowed by the [runtime cache contract](runtime-cache-discovery.md#compiled-value-lookup).
-It is not a COM output pointer, GPU completion value or additional driver
-allocation. Ordinary [graphics](#id3d12device-creategraphicspipelinestate),
-[compute](#id3d12device-createcomputepipelinestate) and [stream](#id3d12device2-createpipelinestate)
-creation still produce one compatible program kind; aggregate fields do
-not authorize arbitrary graphics/compute mixing.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The [current aggregate declaration](#driver) combines driver shader,
+> fixed-state and root handles with output/sample/topology/node state,
+> `ViewInstancingDesc`, `LibraryReference`, creation `Flags` and per-stage code
+> pointers. These are driver representations, not an API structure cast.
+> A null internal component supplies a null handle; application-stage
+> absence alone does not determine every internal handle (for example,
+> stream-output capture without an application GS).
 
-The [pipeline-library driver contract](shader-delivery-and-caching.md#pipeline-library-driver-indices)
-defines the library-local index, add/load association and opaque byte/storage
-lifetimes. `LibraryReference` identifies a library/index association; it does
-not carry the whole API serialization blob or transfer ownership of the PSO's
-private allocation.
+<!-- d3d12-review-alert:end:pipeline:PC-pso:0 -->
+
+<!-- d3d12-review-alert:begin:pipeline:PC-pso:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The runtime supplies `D3D12DDI_HRTPIPELINESTATE` separately from driver private
+> storage for the callbacks allowed by the [runtime cache contract](runtime-cache-discovery.md#compiled-value-lookup).
+> It is not a COM output pointer, GPU completion value or additional driver
+> allocation. Ordinary [graphics](#id3d12device-creategraphicspipelinestate),
+> [compute](#id3d12device-createcomputepipelinestate) and [stream](#id3d12device2-createpipelinestate)
+> creation still produce one compatible program kind; aggregate fields do
+> not authorize arbitrary graphics/compute mixing.
+
+<!-- d3d12-review-alert:end:pipeline:PC-pso:1 -->
+
+<!-- d3d12-review-alert:begin:pipeline:PL-pso-library-owner:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The [pipeline-library driver contract](shader-delivery-and-caching.md#pipeline-library-driver-indices)
+> defines the library-local index, add/load association and opaque byte/storage
+> lifetimes. `LibraryReference` identifies a library/index association; it does
+> not carry the whole API serialization blob or transfer ownership of the PSO's
+> private allocation.
+
+<!-- d3d12-review-alert:end:pipeline:PL-pso-library-owner:0 -->
 
 <a id="driver-creation-entries"></a>
 
@@ -2426,12 +3034,19 @@ typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEBLENDSTATESIZE_0010 )(
 
 ##### Behavior
 
-The CalcPrivateBlendStateSize function determines the size of the user-mode display driver's private region of memory (that is, the size of internal driver structures, not the size of the resource video memory) for a blend state.
+<ins><!-- d3d12-review-inline:begin:pipeline:PC-primary-PFND3D12DDI_CALCPRIVATEBLENDSTATESIZE_0010:0 -->The CalcPrivateBlendStateSize function determines the size of the user-mode display driver's private region of memory (that is, the size of internal driver structures, not the size of the resource video memory) for a blend state.<!-- d3d12-review-inline:end:pipeline:PC-primary-PFND3D12DDI_CALCPRIVATEBLENDSTATESIZE_0010:0 --></ins>
 
-The first argument identifies the driver device; the second is the
-current typed input description. The returned `SIZE_T` is the private byte
-requirement for that description under the [storage contract](#driver-object-lifetime).
-It neither constructs the object nor returns an `HRESULT`.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_CALCPRIVATEBLENDSTATESIZE_0010:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The first argument identifies the driver device; the second is the
+> current typed input description. The returned `SIZE_T` is the private byte
+> requirement for that description under the [storage contract](#driver-object-lifetime).
+> It neither constructs the object nor returns an `HRESULT`.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_CALCPRIVATEBLENDSTATESIZE_0010:0 -->
 
 <a id="ddi-pfnd3d12ddi-calcprivatedepthstencilstatesize-0095"></a>
 
@@ -2446,10 +3061,17 @@ typedef SIZE_T(APIENTRY* PFND3D12DDI_CALCPRIVATEDEPTHSTENCILSTATESIZE_0095)(
 
 ##### Behavior
 
-The first argument identifies the driver device; the second is the
-current typed input description. The returned `SIZE_T` is the private byte
-requirement for that description under the [storage contract](#driver-object-lifetime).
-It neither constructs the object nor returns an `HRESULT`.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_CALCPRIVATEDEPTHSTENCILSTATESIZE_0095:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The first argument identifies the driver device; the second is the
+> current typed input description. The returned `SIZE_T` is the private byte
+> requirement for that description under the [storage contract](#driver-object-lifetime).
+> It neither constructs the object nor returns an `HRESULT`.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_CALCPRIVATEDEPTHSTENCILSTATESIZE_0095:0 -->
 
 <a id="ddi-pfnd3d12ddi-calcprivateelementlayoutsize-0010"></a>
 
@@ -2464,12 +3086,19 @@ typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEELEMENTLAYOUTSIZE_0010 )(
 
 ##### Behavior
 
-The CalcPrivateElementLayoutSize function determines the size of the user-mode display driver's private region of memory (that is, the size of internal driver structures, not the size of the resource video memory) for an element layout.
+<ins><!-- d3d12-review-inline:begin:pipeline:PC-primary-PFND3D12DDI_CALCPRIVATEELEMENTLAYOUTSIZE_0010:0 -->The CalcPrivateElementLayoutSize function determines the size of the user-mode display driver's private region of memory (that is, the size of internal driver structures, not the size of the resource video memory) for an element layout.<!-- d3d12-review-inline:end:pipeline:PC-primary-PFND3D12DDI_CALCPRIVATEELEMENTLAYOUTSIZE_0010:0 --></ins>
 
-The first argument identifies the driver device; the second is the
-current typed input description. The returned `SIZE_T` is the private byte
-requirement for that description under the [storage contract](#driver-object-lifetime).
-It neither constructs the object nor returns an `HRESULT`.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_CALCPRIVATEELEMENTLAYOUTSIZE_0010:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The first argument identifies the driver device; the second is the
+> current typed input description. The returned `SIZE_T` is the private byte
+> requirement for that description under the [storage contract](#driver-object-lifetime).
+> It neither constructs the object nor returns an `HRESULT`.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_CALCPRIVATEELEMENTLAYOUTSIZE_0010:0 -->
 
 <a id="ddi-pfnd3d12ddi-calcprivaterasterizerstatesize-0102"></a>
 
@@ -2484,10 +3113,17 @@ typedef SIZE_T(APIENTRY* PFND3D12DDI_CALCPRIVATERASTERIZERSTATESIZE_0102)(
 
 ##### Behavior
 
-The first argument identifies the driver device; the second is the
-current typed input description. The returned `SIZE_T` is the private byte
-requirement for that description under the [storage contract](#driver-object-lifetime).
-It neither constructs the object nor returns an `HRESULT`.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_CALCPRIVATERASTERIZERSTATESIZE_0102:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The first argument identifies the driver device; the second is the
+> current typed input description. The returned `SIZE_T` is the private byte
+> requirement for that description under the [storage contract](#driver-object-lifetime).
+> It neither constructs the object nor returns an `HRESULT`.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_CALCPRIVATERASTERIZERSTATESIZE_0102:0 -->
 
 <a id="ddi-pfnd3d12ddi-calc-private-geometry-shader-with-stream-output-0026"></a>
 
@@ -2502,12 +3138,19 @@ typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALC_PRIVATE_GEOMETRY_SHADER_WITH_STREAM_
 
 ##### Behavior
 
-Calculates the private size for a geometry shader with stream output.
+<ins><!-- d3d12-review-inline:begin:pipeline:PC-primary-PFND3D12DDI_CALC_PRIVATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026:0 -->Calculates the private size for a geometry shader with stream output.<!-- d3d12-review-inline:end:pipeline:PC-primary-PFND3D12DDI_CALC_PRIVATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026:0 --></ins>
 
-The first argument identifies the driver device; the second is the
-current typed input description. The returned `SIZE_T` is the private byte
-requirement for that description under the [storage contract](#driver-object-lifetime).
-It neither constructs the object nor returns an `HRESULT`.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_CALC_PRIVATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The first argument identifies the driver device; the second is the
+> current typed input description. The returned `SIZE_T` is the private byte
+> requirement for that description under the [storage contract](#driver-object-lifetime).
+> It neither constructs the object nor returns an `HRESULT`.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_CALC_PRIVATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026:0 -->
 
 <a id="ddi-pfnd3d12ddi-calc-private-pipeline-state-size-0119"></a>
 
@@ -2521,10 +3164,17 @@ typedef SIZE_T(APIENTRY* PFND3D12DDI_CALC_PRIVATE_PIPELINE_STATE_SIZE_0119)(D3D1
 
 ##### Behavior
 
-The first argument identifies the driver device; the second is the
-current typed input description. The returned `SIZE_T` is the private byte
-requirement for that description under the [storage contract](#driver-object-lifetime).
-It neither constructs the object nor returns an `HRESULT`.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_CALC_PRIVATE_PIPELINE_STATE_SIZE_0119:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The first argument identifies the driver device; the second is the
+> current typed input description. The returned `SIZE_T` is the private byte
+> requirement for that description under the [storage contract](#driver-object-lifetime).
+> It neither constructs the object nor returns an `HRESULT`.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_CALC_PRIVATE_PIPELINE_STATE_SIZE_0119:0 -->
 
 <a id="ddi-pfnd3d12ddi-calc-private-shader-size-0026"></a>
 
@@ -2539,12 +3189,19 @@ typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026 )(
 
 ##### Behavior
 
-Determines the size of the user-mode display driver's private region of memory (that is, the size of internal driver structures, not the size of the resource video memory) for a shader.
+<ins><!-- d3d12-review-inline:begin:pipeline:PC-primary-PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026:0 -->Determines the size of the user-mode display driver's private region of memory (that is, the size of internal driver structures, not the size of the resource video memory) for a shader.<!-- d3d12-review-inline:end:pipeline:PC-primary-PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026:0 --></ins>
 
-The first argument identifies the driver device; the second is the
-current typed input description. The returned `SIZE_T` is the private byte
-requirement for that description under the [storage contract](#driver-object-lifetime).
-It neither constructs the object nor returns an `HRESULT`.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The first argument identifies the driver device; the second is the
+> current typed input description. The returned `SIZE_T` is the private byte
+> requirement for that description under the [storage contract](#driver-object-lifetime).
+> It neither constructs the object nor returns an `HRESULT`.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026:0 -->
 
 <a id="ddi-pfnd3d12ddi-createblendstate-0010"></a>
 
@@ -2559,14 +3216,21 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CREATEBLENDSTATE_0010 )(
 
 ##### Behavior
 
-Creates a blend state.
+<ins><!-- d3d12-review-inline:begin:pipeline:PC-primary-PFND3D12DDI_CREATEBLENDSTATE_0010:0 -->Creates a blend state.<!-- d3d12-review-inline:end:pipeline:PC-primary-PFND3D12DDI_CREATEBLENDSTATE_0010:0 --></ins>
 
-The arguments supply the driver device, the current typed description
-and a by-value typed handle to caller-reserved private storage. This `VOID`
-creator initializes that object; it does not return a newly allocated
-handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
-and [synchronous device-callback error policy](#driver-creation-errors)
-apply, together with the payload and stage rules above.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_CREATEBLENDSTATE_0010:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The arguments supply the driver device, the current typed description
+> and a by-value typed handle to caller-reserved private storage. This `VOID`
+> creator initializes that object; it does not return a newly allocated
+> handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
+> and [synchronous device-callback error policy](#driver-creation-errors)
+> apply, together with the payload and stage rules above.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_CREATEBLENDSTATE_0010:0 -->
 
 <a id="ddi-pfnd3d12ddi-createdepthstencilstate-0095"></a>
 
@@ -2582,12 +3246,19 @@ typedef VOID(APIENTRY* PFND3D12DDI_CREATEDEPTHSTENCILSTATE_0095)(
 
 ##### Behavior
 
-The arguments supply the driver device, the current typed description
-and a by-value typed handle to caller-reserved private storage. This `VOID`
-creator initializes that object; it does not return a newly allocated
-handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
-and [synchronous device-callback error policy](#driver-creation-errors)
-apply, together with the payload and stage rules above.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_CREATEDEPTHSTENCILSTATE_0095:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The arguments supply the driver device, the current typed description
+> and a by-value typed handle to caller-reserved private storage. This `VOID`
+> creator initializes that object; it does not return a newly allocated
+> handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
+> and [synchronous device-callback error policy](#driver-creation-errors)
+> apply, together with the payload and stage rules above.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_CREATEDEPTHSTENCILSTATE_0095:0 -->
 
 <a id="ddi-pfnd3d12ddi-createelementlayout-0010"></a>
 
@@ -2602,14 +3273,21 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CREATEELEMENTLAYOUT_0010 )(
 
 ##### Behavior
 
-Creates an element layout.
+<ins><!-- d3d12-review-inline:begin:pipeline:PC-primary-PFND3D12DDI_CREATEELEMENTLAYOUT_0010:0 -->Creates an element layout.<!-- d3d12-review-inline:end:pipeline:PC-primary-PFND3D12DDI_CREATEELEMENTLAYOUT_0010:0 --></ins>
 
-The arguments supply the driver device, the current typed description
-and a by-value typed handle to caller-reserved private storage. This `VOID`
-creator initializes that object; it does not return a newly allocated
-handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
-and [synchronous device-callback error policy](#driver-creation-errors)
-apply, together with the payload and stage rules above.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_CREATEELEMENTLAYOUT_0010:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The arguments supply the driver device, the current typed description
+> and a by-value typed handle to caller-reserved private storage. This `VOID`
+> creator initializes that object; it does not return a newly allocated
+> handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
+> and [synchronous device-callback error policy](#driver-creation-errors)
+> apply, together with the payload and stage rules above.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_CREATEELEMENTLAYOUT_0010:0 -->
 
 <a id="ddi-pfnd3d12ddi-createrasterizerstate-0102"></a>
 
@@ -2624,12 +3302,19 @@ typedef VOID(APIENTRY* PFND3D12DDI_CREATERASTERIZERSTATE_0102)(
 
 ##### Behavior
 
-The arguments supply the driver device, the current typed description
-and a by-value typed handle to caller-reserved private storage. This `VOID`
-creator initializes that object; it does not return a newly allocated
-handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
-and [synchronous device-callback error policy](#driver-creation-errors)
-apply, together with the payload and stage rules above.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_CREATERASTERIZERSTATE_0102:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The arguments supply the driver device, the current typed description
+> and a by-value typed handle to caller-reserved private storage. This `VOID`
+> creator initializes that object; it does not return a newly allocated
+> handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
+> and [synchronous device-callback error policy](#driver-creation-errors)
+> apply, together with the payload and stage rules above.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_CREATERASTERIZERSTATE_0102:0 -->
 
 <a id="ddi-pfnd3d12ddi-create-geometry-shader-with-stream-output-0026"></a>
 
@@ -2644,12 +3329,19 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CREATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0
 
 ##### Behavior
 
-The arguments supply the driver device, the current typed description
-and a by-value typed handle to caller-reserved private storage. This `VOID`
-creator initializes that object; it does not return a newly allocated
-handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
-and [synchronous device-callback error policy](#driver-creation-errors)
-apply, together with the payload and stage rules above.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_CREATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The arguments supply the driver device, the current typed description
+> and a by-value typed handle to caller-reserved private storage. This `VOID`
+> creator initializes that object; it does not return a newly allocated
+> handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
+> and [synchronous device-callback error policy](#driver-creation-errors)
+> apply, together with the payload and stage rules above.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_CREATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026:0 -->
 
 <a id="ddi-pfnd3d12ddi-create-pipeline-state-0119"></a>
 
@@ -2663,12 +3355,19 @@ typedef HRESULT(APIENTRY* PFND3D12DDI_CREATE_PIPELINE_STATE_0119) (D3D12DDI_HDEV
 
 ##### Behavior
 
-The arguments supply the driver device, current aggregate, by-value
-`D3D12DDI_HPIPELINESTATE` identifying caller-reserved private storage, and the
-separate runtime `D3D12DDI_HRTPIPELINESTATE`. The [PSO argument contract](#driver-pso-creation),
-[storage/dependency lifetime](#driver-object-lifetime) and
-[creation `HRESULT` policy](#driver-creation-errors) apply. Successful
-creation establishes the object later passed to DestroyPipelineState.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_CREATE_PIPELINE_STATE_0119:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The arguments supply the driver device, current aggregate, by-value
+> `D3D12DDI_HPIPELINESTATE` identifying caller-reserved private storage, and the
+> separate runtime `D3D12DDI_HRTPIPELINESTATE`. The [PSO argument contract](#driver-pso-creation),
+> [storage/dependency lifetime](#driver-object-lifetime) and
+> [creation `HRESULT` policy](#driver-creation-errors) apply. Successful
+> creation establishes the object later passed to DestroyPipelineState.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_CREATE_PIPELINE_STATE_0119:0 -->
 
 <a id="ddi-pfnd3d12ddi-create-shader-0026"></a>
 
@@ -2683,14 +3382,21 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CREATE_SHADER_0026 )(
 
 ##### Behavior
 
-The user-mode display driver's **PFND3D12DDI_CREATE_SHADER_0026** callback function creates a shader.
+<ins><!-- d3d12-review-inline:begin:pipeline:PC-primary-PFND3D12DDI_CREATE_SHADER_0026:0 -->The user-mode display driver's **PFND3D12DDI_CREATE_SHADER_0026** callback function creates a shader.<!-- d3d12-review-inline:end:pipeline:PC-primary-PFND3D12DDI_CREATE_SHADER_0026:0 --></ins>
 
-The arguments supply the driver device, the current typed description
-and a by-value typed handle to caller-reserved private storage. This `VOID`
-creator initializes that object; it does not return a newly allocated
-handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
-and [synchronous device-callback error policy](#driver-creation-errors)
-apply, together with the payload and stage rules above.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_CREATE_SHADER_0026:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The arguments supply the driver device, the current typed description
+> and a by-value typed handle to caller-reserved private storage. This `VOID`
+> creator initializes that object; it does not return a newly allocated
+> handle through a pointer. Its [borrowed-input/storage contract](#driver-object-lifetime)
+> and [synchronous device-callback error policy](#driver-creation-errors)
+> apply, together with the payload and stage rules above.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_CREATE_SHADER_0026:0 -->
 
 <a id="ddi-pfnd3d12ddi-destroyblendstate"></a>
 
@@ -2705,13 +3411,20 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYBLENDSTATE )(
 
 ##### Behavior
 
-Destroys a blend state.
+<ins><!-- d3d12-review-inline:begin:pipeline:PC-primary-PFND3D12DDI_DESTROYBLENDSTATE:0 -->Destroys a blend state.<!-- d3d12-review-inline:end:pipeline:PC-primary-PFND3D12DDI_DESTROYBLENDSTATE:0 --></ins>
 
-The arguments identify the driver device and existing typed driver
-object. The driver ends that placed object's lifetime without freeing the
-runtime's private region. The `VOID` call supplies no output or completion
-value; [storage/dependency ordering](#driver-object-lifetime) and the
-[destruction error rule](#driver-creation-errors) apply.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_DESTROYBLENDSTATE:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The arguments identify the driver device and existing typed driver
+> object. The driver ends that placed object's lifetime without freeing the
+> runtime's private region. The `VOID` call supplies no output or completion
+> value; [storage/dependency ordering](#driver-object-lifetime) and the
+> [destruction error rule](#driver-creation-errors) apply.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_DESTROYBLENDSTATE:0 -->
 
 <a id="ddi-pfnd3d12ddi-destroydepthstencilstate"></a>
 
@@ -2726,13 +3439,20 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYDEPTHSTENCILSTATE )(
 
 ##### Behavior
 
-Destroy depth stencil state.
+<ins><!-- d3d12-review-inline:begin:pipeline:PC-primary-PFND3D12DDI_DESTROYDEPTHSTENCILSTATE:0 -->Destroy depth stencil state.<!-- d3d12-review-inline:end:pipeline:PC-primary-PFND3D12DDI_DESTROYDEPTHSTENCILSTATE:0 --></ins>
 
-The arguments identify the driver device and existing typed driver
-object. The driver ends that placed object's lifetime without freeing the
-runtime's private region. The `VOID` call supplies no output or completion
-value; [storage/dependency ordering](#driver-object-lifetime) and the
-[destruction error rule](#driver-creation-errors) apply.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_DESTROYDEPTHSTENCILSTATE:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The arguments identify the driver device and existing typed driver
+> object. The driver ends that placed object's lifetime without freeing the
+> runtime's private region. The `VOID` call supplies no output or completion
+> value; [storage/dependency ordering](#driver-object-lifetime) and the
+> [destruction error rule](#driver-creation-errors) apply.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_DESTROYDEPTHSTENCILSTATE:0 -->
 
 <a id="ddi-pfnd3d12ddi-destroyelementlayout"></a>
 
@@ -2747,13 +3467,20 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYELEMENTLAYOUT )(
 
 ##### Behavior
 
-Destroy element layout.
+<ins><!-- d3d12-review-inline:begin:pipeline:PC-primary-PFND3D12DDI_DESTROYELEMENTLAYOUT:0 -->Destroy element layout.<!-- d3d12-review-inline:end:pipeline:PC-primary-PFND3D12DDI_DESTROYELEMENTLAYOUT:0 --></ins>
 
-The arguments identify the driver device and existing typed driver
-object. The driver ends that placed object's lifetime without freeing the
-runtime's private region. The `VOID` call supplies no output or completion
-value; [storage/dependency ordering](#driver-object-lifetime) and the
-[destruction error rule](#driver-creation-errors) apply.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_DESTROYELEMENTLAYOUT:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The arguments identify the driver device and existing typed driver
+> object. The driver ends that placed object's lifetime without freeing the
+> runtime's private region. The `VOID` call supplies no output or completion
+> value; [storage/dependency ordering](#driver-object-lifetime) and the
+> [destruction error rule](#driver-creation-errors) apply.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_DESTROYELEMENTLAYOUT:0 -->
 
 <a id="ddi-pfnd3d12ddi-destroyrasterizerstate"></a>
 
@@ -2768,13 +3495,20 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYRASTERIZERSTATE )(
 
 ##### Behavior
 
-Destroy rasterizer state.
+<ins><!-- d3d12-review-inline:begin:pipeline:PC-primary-PFND3D12DDI_DESTROYRASTERIZERSTATE:0 -->Destroy rasterizer state.<!-- d3d12-review-inline:end:pipeline:PC-primary-PFND3D12DDI_DESTROYRASTERIZERSTATE:0 --></ins>
 
-The arguments identify the driver device and existing typed driver
-object. The driver ends that placed object's lifetime without freeing the
-runtime's private region. The `VOID` call supplies no output or completion
-value; [storage/dependency ordering](#driver-object-lifetime) and the
-[destruction error rule](#driver-creation-errors) apply.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_DESTROYRASTERIZERSTATE:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The arguments identify the driver device and existing typed driver
+> object. The driver ends that placed object's lifetime without freeing the
+> runtime's private region. The `VOID` call supplies no output or completion
+> value; [storage/dependency ordering](#driver-object-lifetime) and the
+> [destruction error rule](#driver-creation-errors) apply.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_DESTROYRASTERIZERSTATE:0 -->
 
 <a id="ddi-pfnd3d12ddi-destroyshader"></a>
 
@@ -2789,13 +3523,20 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYSHADER )(
 
 ##### Behavior
 
-Destroy shader.
+<ins><!-- d3d12-review-inline:begin:pipeline:PC-primary-PFND3D12DDI_DESTROYSHADER:0 -->Destroy shader.<!-- d3d12-review-inline:end:pipeline:PC-primary-PFND3D12DDI_DESTROYSHADER:0 --></ins>
 
-The arguments identify the driver device and existing typed driver
-object. The driver ends that placed object's lifetime without freeing the
-runtime's private region. The `VOID` call supplies no output or completion
-value; [storage/dependency ordering](#driver-object-lifetime) and the
-[destruction error rule](#driver-creation-errors) apply.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_DESTROYSHADER:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The arguments identify the driver device and existing typed driver
+> object. The driver ends that placed object's lifetime without freeing the
+> runtime's private region. The `VOID` call supplies no output or completion
+> value; [storage/dependency ordering](#driver-object-lifetime) and the
+> [destruction error rule](#driver-creation-errors) apply.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_DESTROYSHADER:0 -->
 
 <a id="ddi-pfnd3d12ddi-destroy-pipeline-state"></a>
 
@@ -2809,10 +3550,66 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_PIPELINE_STATE ) ( D3D12DDI_HDEVICE
 
 ##### Behavior
 
-Destroys the pipeline state.
+<ins><!-- d3d12-review-inline:begin:pipeline:PC-primary-PFND3D12DDI_DESTROY_PIPELINE_STATE:0 -->Destroys the pipeline state.<!-- d3d12-review-inline:end:pipeline:PC-primary-PFND3D12DDI_DESTROY_PIPELINE_STATE:0 --></ins>
 
-The arguments identify the driver device and existing typed driver
-object. The driver ends that placed object's lifetime without freeing the
-runtime's private region. The `VOID` call supplies no output or completion
-value; [storage/dependency ordering](#driver-object-lifetime) and the
-[destruction error rule](#driver-creation-errors) apply.
+<!-- d3d12-review-alert:begin:pipeline:PC-entry-PFND3D12DDI_DESTROY_PIPELINE_STATE:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The arguments identify the driver device and existing typed driver
+> object. The driver ends that placed object's lifetime without freeing the
+> runtime's private region. The `VOID` call supplies no output or completion
+> value; [storage/dependency ordering](#driver-object-lifetime) and the
+> [destruction error rule](#driver-creation-errors) apply.
+
+<!-- d3d12-review-alert:end:pipeline:PC-entry-PFND3D12DDI_DESTROY_PIPELINE_STATE:0 -->
+
+<a id="pipeline-root-signature-retrieval"></a>
+
+## Retrieving a pipeline state's root signature
+
+<a id="api-id3d12pipelinestate1-getrootsignature"></a>
+
+### ID3D12PipelineState1::GetRootSignature
+
+#### Declaration
+
+```cpp
+HRESULT GetRootSignature(
+    REFIID riid,
+    void** ppvRootSignature);
+```
+
+#### Behavior
+
+<!-- d3d12-review-alert:begin:pipeline:AB-id3d12pipelinestate1-getrootsignature-contract:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Retrieves the root signature associated with the PSO. This does not select it on a command list or transfer ownership of the PSO.
+
+<!-- d3d12-review-alert:end:pipeline:AB-id3d12pipelinestate1-getrootsignature-contract:0 -->
+
+#### Parameters
+
+<!-- d3d12-review-alert:begin:pipeline:AB-id3d12pipelinestate1-getrootsignature-contract:2 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `riid` selects an interface; `ppvRootSignature` receives the caller-owned COM reference.
+
+<!-- d3d12-review-alert:end:pipeline:AB-id3d12pipelinestate1-getrootsignature-contract:2 -->
+
+#### Return values
+
+<!-- d3d12-review-alert:begin:pipeline:AB-id3d12pipelinestate1-getrootsignature-contract:4 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Returns the interface-query HRESULT; null output is invalid. A valid PSO has a root signature; unexpected internal absence is a failure, not successful null retrieval.
+
+<!-- d3d12-review-alert:end:pipeline:AB-id3d12pipelinestate1-getrootsignature-contract:4 -->

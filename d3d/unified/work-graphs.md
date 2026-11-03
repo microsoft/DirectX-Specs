@@ -1,12 +1,53 @@
 # Work-graph execution
 
-Work graphs are a system for GPU based work creation in D3D12.
+<!-- d3d12-review-legend:begin -->
 
-This chapter defines compute-node execution, records, dispatch inputs and node/entrypoint reflection for `D3D12_WORK_GRAPHS_TIER_1_0`. Node shaders use Shader Model 6.8 or later. Device support is reported by `WorkGraphsTier` in `D3D12_FEATURE_DATA_D3D12_OPTIONS21`; the [capability contract](state-objects.md#d3d12_work_graphs_tier) defines the supported values.
+> [!NOTE]
+> **Draft provenance annotations.**
+> Underlining marks pending replacement wording or authored list items. Warning boxes
+> mark authored, mixed or reopened passages awaiting editorial review.
+> Editorial adoption does not establish factual or hardware verification. Exact approved factual
+> corrections do not trigger a marker. Unmarked text elsewhere, declarations
+> and structural Markdown are not assertions of approval.
+> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
 
-[State objects](state-objects.md#work-graphs) defines graph construction, node IDs and population order, shader-export renaming and node overrides. [Program selection](state-objects.md#setprogram) defines the work graph bound for execution and its local-root table and backing-memory binding. [Work-graph initialization](state-objects.md#d3d12_set_work_graph_flags) defines `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE`; command-list reset is not backing-memory initialization.
+<!-- d3d12-review-legend:end -->
 
-[Common shader internals](common-shader-internals.md) defines shared wave/lane and program/storage concepts. [Compute](compute.md#thread-groups) defines compute thread groups and their system-generated identifiers; [work-graph grids](compute.md#work-graph-grids) defines configured versus actual grid limits, the shader-attribute versus state-object-override distinction, expanded one-dimensional grids and the independent total-group limit. [Binding](binding.md#local-signatures) owns root/descriptor representation. [Resource lifetime](resources.md) and [synchronization](synchronization.md#operation-specific-contracts) retain their common contracts.
+<!-- d3d12-review-alert:begin:work-graphs:N-scope:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Work graphs are a system for GPU based work creation in D3D12.
+
+<!-- d3d12-review-alert:end:work-graphs:N-scope:0 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:N-scope:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> This chapter defines compute-node execution, records, dispatch inputs and node/entrypoint reflection for `D3D12_WORK_GRAPHS_TIER_1_0`. Node shaders use Shader Model 6.8 or later. Device support is reported by `WorkGraphsTier` in `D3D12_FEATURE_DATA_D3D12_OPTIONS21`; the [capability contract](state-objects.md#d3d12_work_graphs_tier) defines the supported values.
+
+<!-- d3d12-review-alert:end:work-graphs:N-scope:1 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:N-scope:2 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> [State objects](state-objects.md#work-graphs) defines graph construction, node IDs and population order, shader-export renaming and node overrides. [Program selection](state-objects.md#setprogram) defines the work graph bound for execution and its local-root table and backing-memory binding. [Work-graph initialization](state-objects.md#d3d12_set_work_graph_flags) defines `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE`; command-list reset is not backing-memory initialization.
+
+<!-- d3d12-review-alert:end:work-graphs:N-scope:2 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:N-scope:3 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> [Common shader internals](common-shader-internals.md) defines shared wave/lane and program/storage concepts. [Compute](compute.md#thread-groups) defines compute thread groups and their system-generated identifiers; [work-graph grids](compute.md#work-graph-grids) defines configured versus actual grid limits, the shader-attribute versus state-object-override distinction, expanded one-dimensional grids and the independent total-group limit. [Binding](binding.md#local-signatures) owns root/descriptor representation. [Resource lifetime](resources.md) and [synchronization](synchronization.md#operation-specific-contracts) retain their common contracts.
+
+<!-- d3d12-review-alert:end:work-graphs:N-scope:3 -->
 
 <a id="nodes-and-invocation"></a>
 
@@ -16,14 +57,14 @@ This chapter defines compute-node execution, records, dispatch inputs and node/e
 
 ### Overview
 
-The app can define a set of nodes.  At each compute node there is a fixed shader.  Command lists can send records to nodes, initiating work: groups of shader invocations.  Nodes can also send records to other nodes, generating more work.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-overview:2 -->The app can define a set of nodes.  At each compute node there is a fixed shader.  Command lists can send records to nodes, initiating work: groups of shader invocations.  Nodes can also send records to other nodes, generating more work.<!-- d3d12-review-inline:end:work-graphs:C-overview:2 --></ins>
 
 Multiple nodes can use the same shader, specialized in some way.  Multiple nodes can share input, meaning multiple different shaders can be launched for a given input.  Multiple nodes can write to the same destination node.
 
 Independent of node input/outputs, shaders can directly access memory via SRVs, UAVs etc.
 
-The following graph illustrates node connectivity:
-![example graph](../images/workgraphs/ExampleGraph.png)
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-overview:5 -->The following graph illustrates node connectivity:
+![example graph](../images/workgraphs/ExampleGraph.png)<!-- d3d12-review-inline:end:work-graphs:C-overview:5 --></ins>
 
 Shaders can run when (a) input is available, and (b) if not a leaf node, sufficient output storage is reserved by the system.  This is for the system to worry about for the most part - the system will find a way to schedule all generated work.  That said, the app has some influence on how much backing storage the system can use in order to make progress.
 
@@ -31,7 +72,7 @@ Cycles in the flow of execution are not allowed, except that a node can target i
 
 When a producing shader outputs to a consumer, the execution of the consumer may happen later, independent of the progress of the producing shader.  Deadlock may occur if a producing shader's completion is dependent on the execution of a consumer shader.  There is no return from the consumer to the producer.
 
-Nodes can be set up with different semantics in terms of how shaders are invoked relative to inputs.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-overview:9 -->Nodes can be set up with different semantics in terms of how shaders are invoked relative to inputs.<!-- d3d12-review-inline:end:work-graphs:C-overview:9 --></ins>
 
 <a id="feeding-nodes"></a>
 
@@ -39,17 +80,17 @@ Nodes can be set up with different semantics in terms of how shaders are invoked
 
 The system manages input data arriving at a node to generate a set of shader launches.
 
-How node inputs are queued is opaque / owned by the driver.  There is flexibility for how backing storage for node inputs is handled, discussed in [backing storage](#backing-memory).
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-feeding:3 -->How node inputs are queued is opaque / owned by the driver.  There is flexibility for how backing storage for node inputs is handled, discussed in [backing storage](#backing-memory).<!-- d3d12-review-inline:end:work-graphs:C-feeding:3 --></ins>
 
 The sequence that records get consumed / dequed at a node is unordered / unpredictable.  This provides maximum flexibility for implementations.
 
 Independent of this unordered dequeueing, the order that records are enqueued is also unordered.  Input order is unpredictable simply because input can arrive from multiple GPU sources/threads running concurrently.
 
-Input records at a node are of a fixed size - the size of the input struct declared in the node's shader.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-feeding:6 -->Input records at a node are of a fixed size - the size of the input struct declared in the node's shader.<!-- d3d12-review-inline:end:work-graphs:C-feeding:6 --></ins>
 
 The backing physical memory footprint a system needs to execute a graph (to handle the possibility spilling out of caches for instance) is owned by the application - see [backing memory](#backing-memory).  To simplify implementations, there are [node output limits](#node-output-limits), and [node input limits](#node-input-limits).
 
-Input record size can be 0 - discussed under [record struct](#record-struct).  This simply means the node input is purely of a logical capacity.  An app might want to manage data storage between nodes manually (e.g. in UAVs).
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-feeding:8 -->Input record size can be 0 - discussed under [record struct](#record-struct).  This simply means the node input is purely of a logical capacity.  An app might want to manage data storage between nodes manually (e.g. in UAVs).<!-- d3d12-review-inline:end:work-graphs:C-feeding:8 --></ins>
 
 <a id="broadcasting-launch-nodes"></a>
 
@@ -65,7 +106,7 @@ The thread group is fixed in the shader.
 
 All thread groups that are launched share the same set of input parameters.  The exception is the usual system ID values which identify individual threads within the group/grid.
 
-For wave packing see [Thread visibility in wave operations](#thread-visibility-in-wave-operations).
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-broadcasting:7 -->For wave packing see [Thread visibility in wave operations](#thread-visibility-in-wave-operations).<!-- d3d12-review-inline:end:work-graphs:C-broadcasting:7 --></ins>
 
 <a id="coalescing-launch-nodes"></a>
 
@@ -93,7 +134,7 @@ Any time a shader declares it expects some number greater than 1 as the maximum 
 
 The number of records sent to any given thread group launch is implementation-defined, and not necessarily repeatable on a given implementation.  This is true independent of the method that produces the input -- i.e. whether it comes from another node or from DispatchGraph.  And it is true regardless size of input records, including 0 size records in particular.
 
-For wave packing see [Thread visibility in wave operations](#thread-visibility-in-wave-operations).
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-coalescing:13 -->For wave packing see [Thread visibility in wave operations](#thread-visibility-in-wave-operations).<!-- d3d12-review-inline:end:work-graphs:C-coalescing:13 --></ins>
 
 <a id="thread-launch-nodes"></a>
 
@@ -107,7 +148,7 @@ While a coalescing launch node can express what a thread launch node can do, it 
 
 ![thread launch](../images/workgraphs/ThreadLaunchNode.png)
 
-For wave packing see [Thread visibility in wave operations](#thread-visibility-in-wave-operations).
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-thread:6 -->For wave packing see [Thread visibility in wave operations](#thread-visibility-in-wave-operations).<!-- d3d12-review-inline:end:work-graphs:C-thread:6 --></ins>
 
 <a id="shader-invocation-at-a-node"></a>
 
@@ -120,7 +161,7 @@ A node can run a shader when the shader's declared requirements are met:
 
 If the shader at a node is configured to produce a grid of compute thread groups as part of one logical invocation, the system can execute individual thread groups as their output capacity is reserved, as opposed to waiting for output capacity for the entire set of thread groups atomically.
 
-Implementations cannot perform redundant invocations of the requested set of thread groups / dispatch grid of a node's shader based on a given input if there could be any side effects (such as via UAV accessses and node outputs) that vary over redundant invocations.   Certainly the inputs to a node can only produce the one set of output records that the node's shader invocations are intended to produce.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-invocation:5 -->Implementations cannot perform redundant invocations of the requested set of thread groups / dispatch grid of a node's shader based on a given input if there could be any side effects (such as via UAV accessses and node outputs) that vary over redundant invocations.   Certainly the inputs to a node can only produce the one set of output records that the node's shader invocations are intended to produce.<!-- d3d12-review-inline:end:work-graphs:C-invocation:5 --></ins>
 
 <a id="hlsl"></a>
 
@@ -132,7 +173,7 @@ Implementations cannot perform redundant invocations of the requested set of thr
 
 Shaders at nodes are currently only compute shaders authored in a library, target lib_6_8 or above. The attribute `[Shader("node")]` on a shader function indicates it can be used in a work graph. A given function entry may only have one `Shader` attribute denoting its type, however shader entry functions are callable as ordinary functions, which enables code reuse between shader stages.
 
-The attribute name `"Shader"` is case insensitive.  The string must be lowercase.
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-target:3 -->The attribute name `"Shader"` is case insensitive.  The string must be lowercase.<!-- d3d12-review-inline:end:work-graphs:H-target:3 --></ins>
 
 <a id="shader-function-attributes"></a>
 
@@ -144,17 +185,24 @@ Attribute names are case insensitive.  Strings are case sensitive.
 
 DXIL definition [here](../WorkGraphs.md#dxil-shader-function-attributes).
 
-attribute                     | required | description
-------------------------------|:--------:|------------
-`[NodeLaunch("mode")]`    | N  |  `"mode"` can be `"broadcasting"`, `"coalescing"` or `"thread"`.  Default if `NodeLaunch` attribute is not present is `"broadcasting"`.
-`[NodeIsProgramEntry]`      | N | Node can receive input records from outside the graph - e.g. from a commmand list.  Any node in a graph that has an input that isn't targetted by other node(s) must either specify this attribute, or it must be separately indicated when constructing the work graph.  Nodes interior to a graph can optionally set this attribute to indicate that not only are they fed from the graph they are also fed from outside.  A graph can have multiple entrypoints.  This can be overridden/selected when constructing a work graph as part of the [definition of a node](state-objects.md#d3d12_node).
-`[NodeID("nodeName")]` or `[NodeID("nodeName",arrayIndex)]` | N | Name for the node.  In the absence of this attribute, the shader function name is the node name.  There is also an optional uint `arrayIndex` parameter, meaning the shader is actually at slot `nodeName[arrayIndex]` in an array of nodes with the collective ID `nodeName`.  The absence of `arrayIndex` means `arrayIndex` is `0`, which is also the case if `NodeID` isn't specified at all (using the shader function name). This can be overridden via the `Rename` option when constructing a work graph as part of the [definition of a node](state-objects.md#d3d12_node).  All nodes are implicitly part of an array of nodes with the given node name string, albeit typically this array happens to be of size 1 (when the app is simply using the node in a non-arrayed way).  If array indexing isn't needed, the second component can be any value, typically 0 but whatever the choice, the index is still considered as part of the identity of the node.  Gaps in a given node array are allowed.  Behavior is undefined if a shader outputs to an empty array index (via dynamic indexing the output node array in the shader). See [Node array constraints](#node-array-constraints).
-`[NodeLocalRootArgumentsTableIndex(index)]` | N | `uint index` indicates the record index into the local root arguments table [bound](state-objects.md#d3d12_set_work_graph_desc) when the work graph is used.  In the absence of this attribute, or it is set to `-1`, and a node's shader has a local root signature associated with it, the index defaults to an unused value 0,1,2.. (skipping over any entries that have been used by explicit `[NodeLocalRootArgumentsTableIndex(index)]` values).  Default indices are assigned in the order the node is added to the work graph - see the discussion of the order of graph node population in [D3D12_WORK_GRAPH_DESC](state-objects.md#d3d12_work_graph_desc).  This index can be overridden when constructing a work graph as part of the [definition of a node](state-objects.md#d3d12_node).  Multiple nodes can only point to the same location in the local root arguments table if they use the same local root signature.
-`[NumThreads(x,y,z)]`|Y (except N for thread launch node)| Thread group size.  This is part of standard compute shaders.
-`[NodeShareInputOf("nodeName")]` or `[NodeShareInputOf("nodeName",arrayIndex)]` | N | Share the input of the specified NodeID with this node.  See [sharing input records across nodes](#sharing-input-records-across-nodes).  If N nodes share an input, N-1 of the nodes must point to the remaining node as the one they are all sharing the input of.  This sharing definition can also be overridden (assigning/changing/disabling the sharing target) when constructing a work graph as part of the [definition of a node](state-objects.md#d3d12_node), such as if the node to share with needs to be renamed.
-`[NodeDispatchGrid(x,y,z)]`|N (`BroadcastingLaunch` must have this or `NodeMaxDispatchGrid`)|Define the number of thread groups to launch for a `BroadcastingLaunch` node. In its absence, the [node definition](state-objects.md#d3d12_node) must declare it, or it must appear as [SV_DispatchGrid](#sv_dispatchgrid) in the input record - dynamic dispatch grid size.  If the declaration appears in both the shader and the node definition, the definition in the node overrides. This attribute cannot be used if the launch mode is not `BroadcastingLaunch`.  The shader-authored and state-object-override limits are defined in [work-graph grids](compute.md#work-graph-grids).
-`[NodeMaxDispatchGrid(x,y,z)]`|N (`BroadcastingLaunch` must have this or `NodeDispatchGrid`)| Declares the maximum dispatch grid size when the input record includes [SV_DispatchGrid](#sv_dispatchgrid) - dynamic dispatch grid size.  This attribute cannot be specified if the dispatch grid size is not dynamic or if the launch mode is not `BroadcastingLaunch`. If the declaration appears in both the shader and the node definition, the definition in the node overrides.   The shader-authored and state-object-override limits are defined in [work-graph grids](compute.md#work-graph-grids).
-`[NodeMaxRecursionDepth(count)]`|N|`uint count` indicates the maximum depth of recursion of the current node.  This attribute is required when the shader is used in such a way that the NodeID for one of its outputs is the same ID as the node itself.  If no output node name matches the current node name, including via renaming of output NodeID or shader's NodeID, recursion is not actually happening, and this MaxRecursion declaration doesn't apply.  Setting this to 0 is the equivalent of not specifying this attribute - no recursion.  To help shader code know where it is in recursion, there are a couple of options: [Node output IsValid() method](#node-output-isvalid-method) and [GetRemainingRecursionLevels()](#getremainingrecursionlevels).
+<!-- d3d12-review-alert:begin:work-graphs:H-function-attributes:5 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> attribute                     | required | description
+> ------------------------------|:--------:|------------
+> `[NodeLaunch("mode")]`    | N  |  `"mode"` can be `"broadcasting"`, `"coalescing"` or `"thread"`.  Default if `NodeLaunch` attribute is not present is `"broadcasting"`.
+> `[NodeIsProgramEntry]`      | N | Node can receive input records from outside the graph - e.g. from a commmand list.  Any node in a graph that has an input that isn't targetted by other node(s) must either specify this attribute, or it must be separately indicated when constructing the work graph.  Nodes interior to a graph can optionally set this attribute to indicate that not only are they fed from the graph they are also fed from outside.  A graph can have multiple entrypoints.  This can be overridden/selected when constructing a work graph as part of the [definition of a node](state-objects.md#d3d12_node).
+> `[NodeID("nodeName")]` or `[NodeID("nodeName",arrayIndex)]` | N | Name for the node.  In the absence of this attribute, the shader function name is the node name.  There is also an optional uint `arrayIndex` parameter, meaning the shader is actually at slot `nodeName[arrayIndex]` in an array of nodes with the collective ID `nodeName`.  The absence of `arrayIndex` means `arrayIndex` is `0`, which is also the case if `NodeID` isn't specified at all (using the shader function name). This can be overridden via the `Rename` option when constructing a work graph as part of the [definition of a node](state-objects.md#d3d12_node).  All nodes are implicitly part of an array of nodes with the given node name string, albeit typically this array happens to be of size 1 (when the app is simply using the node in a non-arrayed way).  If array indexing isn't needed, the second component can be any value, typically 0 but whatever the choice, the index is still considered as part of the identity of the node.  Gaps in a given node array are allowed.  Behavior is undefined if a shader outputs to an empty array index (via dynamic indexing the output node array in the shader). See [Node array constraints](#node-array-constraints).
+> `[NodeLocalRootArgumentsTableIndex(index)]` | N | `uint index` indicates the record index into the local root arguments table [bound](state-objects.md#d3d12_set_work_graph_desc) when the work graph is used.  In the absence of this attribute, or it is set to `-1`, and a node's shader has a local root signature associated with it, the index defaults to an unused value 0,1,2.. (skipping over any entries that have been used by explicit `[NodeLocalRootArgumentsTableIndex(index)]` values).  Default indices are assigned in the order the node is added to the work graph - see the discussion of the order of graph node population in [D3D12_WORK_GRAPH_DESC](state-objects.md#d3d12_work_graph_desc).  This index can be overridden when constructing a work graph as part of the [definition of a node](state-objects.md#d3d12_node).  Multiple nodes can only point to the same location in the local root arguments table if they use the same local root signature.
+> `[NumThreads(x,y,z)]`|Y (except N for thread launch node)| Thread group size.  This is part of standard compute shaders.
+> `[NodeShareInputOf("nodeName")]` or `[NodeShareInputOf("nodeName",arrayIndex)]` | N | Share the input of the specified NodeID with this node.  See [sharing input records across nodes](#sharing-input-records-across-nodes).  If N nodes share an input, N-1 of the nodes must point to the remaining node as the one they are all sharing the input of.  This sharing definition can also be overridden (assigning/changing/disabling the sharing target) when constructing a work graph as part of the [definition of a node](state-objects.md#d3d12_node), such as if the node to share with needs to be renamed.
+> `[NodeDispatchGrid(x,y,z)]`|N (`BroadcastingLaunch` must have this or `NodeMaxDispatchGrid`)|Define the number of thread groups to launch for a `BroadcastingLaunch` node. In its absence, the [node definition](state-objects.md#d3d12_node) must declare it, or it must appear as [SV_DispatchGrid](#sv_dispatchgrid) in the input record - dynamic dispatch grid size.  If the declaration appears in both the shader and the node definition, the definition in the node overrides. This attribute cannot be used if the launch mode is not `BroadcastingLaunch`.  The shader-authored and state-object-override limits are defined in [work-graph grids](compute.md#work-graph-grids).
+> `[NodeMaxDispatchGrid(x,y,z)]`|N (`BroadcastingLaunch` must have this or `NodeDispatchGrid`)| Declares the maximum dispatch grid size when the input record includes [SV_DispatchGrid](#sv_dispatchgrid) - dynamic dispatch grid size.  This attribute cannot be specified if the dispatch grid size is not dynamic or if the launch mode is not `BroadcastingLaunch`. If the declaration appears in both the shader and the node definition, the definition in the node overrides.   The shader-authored and state-object-override limits are defined in [work-graph grids](compute.md#work-graph-grids).
+> `[NodeMaxRecursionDepth(count)]`|N|`uint count` indicates the maximum depth of recursion of the current node.  This attribute is required when the shader is used in such a way that the NodeID for one of its outputs is the same ID as the node itself.  If no output node name matches the current node name, including via renaming of output NodeID or shader's NodeID, recursion is not actually happening, and this MaxRecursion declaration doesn't apply.  Setting this to 0 is the equivalent of not specifying this attribute - no recursion.  To help shader code know where it is in recursion, there are a couple of options: [Node output IsValid() method](#node-output-isvalid-method) and [GetRemainingRecursionLevels()](#getremainingrecursionlevels).
+
+<!-- d3d12-review-alert:end:work-graphs:H-function-attributes:5 -->
 
 
 <a id="node-shader-parameters"></a>
@@ -165,7 +213,7 @@ Node shaders support three categories of parameters:
 
 - an optional [Node input declaration](#node-input-declaration)
 - zero or more [Node output declarations](#node-output-declaration)
-- zero or more [Node Shader system values](#node-shader-system-values) depending on launch mode
+- <ins><!-- d3d12-review-inline:begin:work-graphs:H-system-values:3 -->zero or more [Node Shader system values](#node-shader-system-values) depending on launch mode<!-- d3d12-review-inline:end:work-graphs:H-system-values:3 --></ins>
 
 #### Node Shader system values
 
@@ -177,12 +225,19 @@ For [Broadcasting launch](#broadcasting-launch-nodes), all compute shader system
 
 Here's a table of the supported compute shader system value inputs:
 
-|system value semantic         | supported launch modes | description |
-|------------------------------|:---------:|-------------|
-| `SV_GroupThreadID` | [Broadcasting](#broadcasting-launch-nodes), [Coalescing](#coalescing-launch-nodes) | Thread ID within group |
-| `SV_GroupIndex` | [Broadcasting](#broadcasting-launch-nodes), [Coalescing](#coalescing-launch-nodes) | Flattened thread index within group |
-| `SV_GroupID` | [Broadcasting](#broadcasting-launch-nodes) | Group ID within dispatch |
-| `SV_DispatchThreadID` | [Broadcasting](#broadcasting-launch-nodes) | Thread ID within dispatch |
+<!-- d3d12-review-alert:begin:work-graphs:H-system-values:8 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> |system value semantic         | supported launch modes | description |
+> |------------------------------|:---------:|-------------|
+> | `SV_GroupThreadID` | [Broadcasting](#broadcasting-launch-nodes), [Coalescing](#coalescing-launch-nodes) | Thread ID within group |
+> | `SV_GroupIndex` | [Broadcasting](#broadcasting-launch-nodes), [Coalescing](#coalescing-launch-nodes) | Flattened thread index within group |
+> | `SV_GroupID` | [Broadcasting](#broadcasting-launch-nodes) | Group ID within dispatch |
+> | `SV_DispatchThreadID` | [Broadcasting](#broadcasting-launch-nodes) | Thread ID within dispatch |
+
+<!-- d3d12-review-alert:end:work-graphs:H-system-values:8 -->
 
 <a id="record-struct"></a>
 
@@ -206,9 +261,9 @@ Record structs can optionally use attributes.  There is currently only one:
 
 ##### NodeTrackRWInputSharing
 
-If the node might call [FinishedCrossGroupSharing](#finishedcrossgroupsharing) it must specify `[NodeTrackRWInputSharing]` on the record struct type used in the `RWDispatchNodeInputRecord` `recordType` template argument.  Some implementations need to allocate 4 bytes extra in the record (upstream in the producer) to support this.  The upstream producer node must also use the `[NodeTrackRWInputSharing]` attribute on the record struct type used for the node output.  The easiest way to do this is to use the same structure declaration with the attribute for both the producer and consumer nodes.
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-record:8 -->If the node might call [FinishedCrossGroupSharing](#finishedcrossgroupsharing) it must specify `[NodeTrackRWInputSharing]` on the record struct type used in the `RWDispatchNodeInputRecord` `recordType` template argument.  Some implementations need to allocate 4 bytes extra in the record (upstream in the producer) to support this.  The upstream producer node must also use the `[NodeTrackRWInputSharing]` attribute on the record struct type used for the node output.  The easiest way to do this is to use the same structure declaration with the attribute for both the producer and consumer nodes.<!-- d3d12-review-inline:end:work-graphs:H-record:8 --></ins>
 
-A struct using `[NodeTrackRWInputSharing]` is not allowed in the template argument for any node-input-record object other than `RWDispatchNodeInputRecord`.
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-record:9 -->A struct using `[NodeTrackRWInputSharing]` is not allowed in the template argument for any node-input-record object other than `RWDispatchNodeInputRecord`.<!-- d3d12-review-inline:end:work-graphs:H-record:9 --></ins>
 
 Outside of the template argument for node and record object types, this attribute has no effect elsewhere in HLSL.
 
@@ -220,7 +275,7 @@ struct [NodeTrackRWInputSharing] MySharedRecord
 };
 ```
 
-Additionally, this attribute must be on the struct used directly in the type.  For instance, if the attribute is on a struct from which your record struct is derived, it has no effect.
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-record:12 -->Additionally, this attribute must be on the struct used directly in the type.  For instance, if the attribute is on a struct from which your record struct is derived, it has no effect.<!-- d3d12-review-inline:end:work-graphs:H-record:12 --></ins>
 
 ```hlsl
 struct [NodeTrackRWInputSharing] MySharedRecord
@@ -255,11 +310,18 @@ If the type is `uint` or `uint16_t`, this defines the `x` component of the dispa
 
 If the type is `uint2` or `uint16_t2`, this defines the `x` and `y` components of the dispatch grid, and the `z` component is 1.
 
-If this type is `uint3` or `uint16_t3`, this defines the `x` `y` and `z` components of the dispatch grid.
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-record:23 -->If this type is `uint3` or `uint16_t3`, this defines the `x` `y` and `z` components of the dispatch grid.<!-- d3d12-review-inline:end:work-graphs:H-record:23 --></ins>
 
-The `x` `y` and `z` values used to launch at a node cannot exceed the `NodeMaxDispatchGrid` values [declared in the shader](#shader-function-attributes) or [declared for the node](state-objects.md#d3d12_shader_node), otherwise behavior is undefined.
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-record:24 -->The `x` `y` and `z` values used to launch at a node cannot exceed the `NodeMaxDispatchGrid` values [declared in the shader](#shader-function-attributes) or [declared for the node](state-objects.md#d3d12_shader_node), otherwise behavior is undefined.<!-- d3d12-review-inline:end:work-graphs:H-record:24 --></ins>
 
-A typed node record requires a complete, nonempty structure, not a scalar or resource object used as the template argument. Scalar, vector and matrix data can be members; vector members are limited to four components. Members are recursively checked through arrays, nested structures and base structures. Resource/object members are not node-record data. The struct attribute `NodeTrackRWInputSharing` is not inherited from a base structure; its direct placement and the compatible object types are specified above.
+<!-- d3d12-review-alert:begin:work-graphs:N-record-type-validation:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> A typed node record requires a complete, nonempty structure, not a scalar or resource object used as the template argument. Scalar, vector and matrix data can be members; vector members are limited to four components. Members are recursively checked through arrays, nested structures and base structures. Resource/object members are not node-record data. The struct attribute `NodeTrackRWInputSharing` is not inherited from a base structure; its direct placement and the compatible object types are specified above.
+
+<!-- d3d12-review-alert:end:work-graphs:N-record-type-validation:0 -->
 
 <a id="objects"></a>
 
@@ -279,19 +341,33 @@ A typed node record requires a complete, nonempty structure, not a scalar or res
 
 #### Output Node Objects
 
-| Object | Template Arguments | Methods | Description |
-|---|---|---|---|
-| [NodeOutput](#node-output-declaration) | `recordType` | [GetThreadNodeOutputRecords](#getthreadnodeoutputrecords)<br>[GetGroupNodeOutputRecords](#getgroupnodeoutputrecords)<br>[IsValid](#node-output-isvalid-method) | Defines an output and record type for spawning nodes |
-| [NodeOutputArray](#node-output-declaration) | `recordType` | [`operator[]`](#node-output-array-indexing) | Defines an array of node outputs |
-| [EmptyNodeOutput](#node-output-declaration) | | [`{Group\|Thread}IncrementOutputCount`](#incrementoutputcount)<br>[IsValid](#node-output-isvalid-method) | Defines an empty output for spawning nodes with no record data |
-| [EmptyNodeOutputArray](#node-output-declaration) | | [`operator[]`](#node-output-array-indexing) | Defines an array of empty node outputs |
+<!-- d3d12-review-alert:begin:work-graphs:H-objects:5 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> | Object | Template Arguments | Methods | Description |
+> |---|---|---|---|
+> | [NodeOutput](#node-output-declaration) | `recordType` | [GetThreadNodeOutputRecords](#getthreadnodeoutputrecords)<br>[GetGroupNodeOutputRecords](#getgroupnodeoutputrecords)<br>[IsValid](#node-output-isvalid-method) | Defines an output and record type for spawning nodes |
+> | [NodeOutputArray](#node-output-declaration) | `recordType` | [`operator[]`](#node-output-array-indexing) | Defines an array of node outputs |
+> | [EmptyNodeOutput](#node-output-declaration) | | [`{Group\|Thread}IncrementOutputCount`](#incrementoutputcount)<br>[IsValid](#node-output-isvalid-method) | Defines an empty output for spawning nodes with no record data |
+> | [EmptyNodeOutputArray](#node-output-declaration) | | [`operator[]`](#node-output-array-indexing) | Defines an array of empty node outputs |
+
+<!-- d3d12-review-alert:end:work-graphs:H-objects:5 -->
 
 #### Output Record Objects
 
-| Object | Template Arguments | Methods | Description |
-|---|---|---|---|
-| [ThreadNodeOutputRecords](#getthreadnodeoutputrecords) | `recordType` | [Get](#array-records-access)<br>[`operator[]`](#array-records-access)<br>[OutputComplete](#outputcomplete) | set of zero or more records for each thread |
-| [GroupNodeOutputRecords](#getgroupnodeoutputrecords) | `recordType` | [Get](#array-records-access)<br>[`operator[]`](#array-records-access)<br>[OutputComplete](#outputcomplete) | set of zero or more records with shared access across the thread group |
+<!-- d3d12-review-alert:begin:work-graphs:H-objects:7 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> | Object | Template Arguments | Methods | Description |
+> |---|---|---|---|
+> | [ThreadNodeOutputRecords](#getthreadnodeoutputrecords) | `recordType` | [Get](#array-records-access)<br>[`operator[]`](#array-records-access)<br>[OutputComplete](#outputcomplete) | set of zero or more records for each thread |
+> | [GroupNodeOutputRecords](#getgroupnodeoutputrecords) | `recordType` | [Get](#array-records-access)<br>[`operator[]`](#array-records-access)<br>[OutputComplete](#outputcomplete) | set of zero or more records with shared access across the thread group |
+
+<!-- d3d12-review-alert:end:work-graphs:H-objects:7 -->
 
 <a id="node-input-declaration"></a>
 
@@ -308,7 +384,7 @@ Options for [Broadcasting launch](#broadcasting-launch-nodes):
 - `globallycoherent RWDispatchNodeInputRecord<`*recordType*`>` *nameInShader*
   - Same as previous except loads/stores to the record will be used for cross group communication.  See [Producer - consumer dataflow through UAVs](#producer---consumer-dataflow-through-uavs).  The `globallycoherent` is optional, see the discussion of `NODE_INPUT_MEMORY` in [Barrier()](#barrier).
 - *nothing*
-  - no input record declaration simply launches one dispatch grid of thread groups for every empty input record sent to the node.  The dispatch grid size must be declared at the shader or node.   The shader is left to manually access its resource bindings for any necessary context information.  Nodes that output to this type of node use `EmptyNodeOutput` which lets a counter of empty records be incremented.
+  - <ins><!-- d3d12-review-inline:begin:work-graphs:H-input:4 -->no input record declaration simply launches one dispatch grid of thread groups for every empty input record sent to the node.  The dispatch grid size must be declared at the shader or node.   The shader is left to manually access its resource bindings for any necessary context information.  Nodes that output to this type of node use `EmptyNodeOutput` which lets a counter of empty records be incremented.<!-- d3d12-review-inline:end:work-graphs:H-input:4 --></ins>
 
 Options for [Coalescing launch](#coalescing-launch-nodes):
 
@@ -339,16 +415,23 @@ Notes about all of the above objects:
 
 #### Node input attributes
 
-attribute                     | required | description
-------------------------------|:--------:|------------
-`[MaxRecords(maxCount)]`    | N (for `{RW}GroupNodeInputRecords` or `EmptyNodeInput` only)  |  Maximum record or EmptyNodeInput count for coalescing-launch input.  Default is 1 if unspecified.
-`globallycoherent` | N (for `RWDispatchNodeInputRecord` only) | Stores and loads bypass fastest caches, so they can be used for cross group communication.  See [Producer - consumer dataflow through UAVs](#producer---consumer-dataflow-through-uavs).
+<!-- d3d12-review-alert:begin:work-graphs:H-input:10 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> attribute                     | required | description
+> ------------------------------|:--------:|------------
+> `[MaxRecords(maxCount)]`    | N (for `{RW}GroupNodeInputRecords` or `EmptyNodeInput` only)  |  Maximum record or EmptyNodeInput count for coalescing-launch input.  Default is 1 if unspecified.
+> `globallycoherent` | N (for `RWDispatchNodeInputRecord` only) | Stores and loads bypass fastest caches, so they can be used for cross group communication.  See [Producer - consumer dataflow through UAVs](#producer---consumer-dataflow-through-uavs).
+
+<!-- d3d12-review-alert:end:work-graphs:H-input:10 -->
 
 <a id="node-output-declaration"></a>
 
 ### Node output declaration
 
-Node output can be in one of the following forms.  See [Node output](#node-output) for examples.  A shader declares 0 or more outputs.
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-output:2 -->Node output can be in one of the following forms.  See [Node output](#node-output) for examples.  A shader declares 0 or more outputs.<!-- d3d12-review-inline:end:work-graphs:H-output:2 --></ins>
 
 - *attribute-list* `NodeOutput<`*recordType*`>` *nameInShader*
 - *attribute-list* `NodeOutputArray<`*recordType*`>` *nameInShader*
@@ -370,20 +453,27 @@ For more on arrays see [Node array constraints](#node-array-constraints).
 
 #### Node output attributes
 
-attribute                        |required|description
----------------------------------|:------:|-----------
-`[MaxRecords(count)]`      |Y (this or below attribute)|Given uint `count` declaration, the thread group can output `0...count` records to this output.  Exceeding this results in undefined behavior.  For `NodeOutputArray`, count applies across all the output nodes in the array (not count per node). This attribute can be overridden via the `NumOutputOverrides / pOutputOverrides` option when constructing a work graph as part of the [definition of a node](state-objects.md#d3d12_shader_node).  See [Node output limits](#node-output-limits).
-`[MaxRecordsSharedWith(nameInShader)]`|Y (this or above attribute)|The budget for output records for this output is shared with another previously declared output, identified by it's name in the shader.  That output must have a `[MaxRecords(count)]` attribute.  Any number of outputs can share a budget together, and they don't have to have the same record type (including size of the record type).  The system may choose to manage output space reservations for mixed size outputs in some conservative manner behind the scenes, invisible to the app.  Different sets of outputs can have separate budgets - the number of budgets is the number of `[MaxRecords(count)]` declarations, and other output declarations each share with any one of these. This attribute can be overridden via the `NumOutputOverrides / pOutputOverrides` option when constructing a work graph as part of the [definition of a node](state-objects.md#d3d12_shader_node).
-`[NodeID("nodeName")]` or `[NodeID("nodeName",baseArrayIndex)]`|N|Define the name of the output node.  In the absence of this attribute, the node name defaults to the same as the local variable name (*nameInshader* above).   The variant with the `uint baseArrayIndex` parameter defines a node name including array index (defaults to 0 in its absence).  It is a `base` index in the sense that for `NodeOutputArray<recordType>` which defines an array of nodes, baseArrayIndex defines where the local shaders view of the array starts in a node array that may be larger. This attribute can be overridden via the `NumOutputOverrides / pOutputOverrides` option when constructing a work graph as part of the [definition of a node](state-objects.md#d3d12_shader_node).  All nodes are implicitly part of an array of nodes with the given node name string, albeit typically this array happens to be of size 1 (when the app is simply using the node in a non-arrayed way).  If array indexing isn't needed, the second component can be any value, typically 0 but whatever the choice, the index is still considered as part of the identity of the node.  Gaps in a given node array are allowed.  Behavior is undefined if a shader outputs to an empty array index (via dynamic indexing the output node array in the shader).
-`[AllowSparseNodes]`|N|Allow a work graph to be created where there may not be a node present for this output.  Or if it is an output array, some of entries in the array may not have nodes present.  In the absence of this attribute, by default the output must point to a node in the work graph.  Or if it is an output array, the entire output range must have nodes in the work graph.  To help shader code know if an output node is present, there is the node output [IsValid()](#node-output-isvalid-method) method.  Also see [AddToStateObject](state-objects.md#addtostateobject) which allows adding new nodes to a work graph after it is initially created in the gaps within an `[AllowSparseNodes]` node array range.  Empty space between used array slots will likely incur proportionate storage overhead for implementations - something to be aware of, but may be perfectly fine overall.
-`[NodeArraySize(count)]` | Y (for `NodeOutputArray` or `EmptyNodeOutputArray`, unless `[UnboundedSparseNodes]` is specified) | Specifies the output array size for `NodeOutputArray` or `EmptyNodeOutputArray` objects.  `[NodeArraySize(0xffffffff)]` is equivalent to setting `[UnboundedSparseNodes]` and `[AllowSparseNodes]`.
-`[UnboundedSparseNodes]`|N|No limit to array size for `NodeOutputArray` or `EmptyNodeOutputArray` objects.  This is equivalent to setting `[NodeArraySize(0xffffffff)]`, and also implies `[AllowSparseNodes]`, so those don't need to be set.  Like `[AllowSparseNodes]`, allow a work graph to be created where not all entries in the array are present.  To help shader code know if an output node is present, there is the node output [IsValid()](#node-output-isvalid-method) method.  Unbounded can be useful if when a shader is being authored, the precise number of nodes it will output to isn't known.  In particular this can be useful with [AddToStateObject](state-objects.md#addtostateobject), adding new nodes on the fly after a graph is initially constructed, such as shader permutations.  Even though the array size is unbounded, the starting array index for the array is based on the `NodeID` for the output (just like bounded arrays).  There is still a limit on maximum array index actually used for any given node used in the graph, described in [Node count limits](#node-count-limits).  `UnboundedSparseNodes` should only be used when actually needed (as opposed to applying it blindly to every node output just in case), particularly if [AddToStateObject](state-objects.md#addtostateobject) has been opted-into with the `D3D12_STATE_OBJECT_FLAG_ALLOW_STATE_OBJECT_ADDITIONS` state object flag.  Here there can be minor additional overhead for some drivers to manage unbounded arrays, worth it if neeeded, but unnecessary to take on everywhere that relatively small fixed array sizes would suffice.
+<!-- d3d12-review-alert:begin:work-graphs:H-output:9 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> attribute                        |required|description
+> ---------------------------------|:------:|-----------
+> `[MaxRecords(count)]`      |Y (this or below attribute)|Given uint `count` declaration, the thread group can output `0...count` records to this output.  Exceeding this results in undefined behavior.  For `NodeOutputArray`, count applies across all the output nodes in the array (not count per node). This attribute can be overridden via the `NumOutputOverrides / pOutputOverrides` option when constructing a work graph as part of the [definition of a node](state-objects.md#d3d12_shader_node).  See [Node output limits](#node-output-limits).
+> `[MaxRecordsSharedWith(nameInShader)]`|Y (this or above attribute)|The budget for output records for this output is shared with another previously declared output, identified by it's name in the shader.  That output must have a `[MaxRecords(count)]` attribute.  Any number of outputs can share a budget together, and they don't have to have the same record type (including size of the record type).  The system may choose to manage output space reservations for mixed size outputs in some conservative manner behind the scenes, invisible to the app.  Different sets of outputs can have separate budgets - the number of budgets is the number of `[MaxRecords(count)]` declarations, and other output declarations each share with any one of these. This attribute can be overridden via the `NumOutputOverrides / pOutputOverrides` option when constructing a work graph as part of the [definition of a node](state-objects.md#d3d12_shader_node).
+> `[NodeID("nodeName")]` or `[NodeID("nodeName",baseArrayIndex)]`|N|Define the name of the output node.  In the absence of this attribute, the node name defaults to the same as the local variable name (*nameInshader* above).   The variant with the `uint baseArrayIndex` parameter defines a node name including array index (defaults to 0 in its absence).  It is a `base` index in the sense that for `NodeOutputArray<recordType>` which defines an array of nodes, baseArrayIndex defines where the local shaders view of the array starts in a node array that may be larger. This attribute can be overridden via the `NumOutputOverrides / pOutputOverrides` option when constructing a work graph as part of the [definition of a node](state-objects.md#d3d12_shader_node).  All nodes are implicitly part of an array of nodes with the given node name string, albeit typically this array happens to be of size 1 (when the app is simply using the node in a non-arrayed way).  If array indexing isn't needed, the second component can be any value, typically 0 but whatever the choice, the index is still considered as part of the identity of the node.  Gaps in a given node array are allowed.  Behavior is undefined if a shader outputs to an empty array index (via dynamic indexing the output node array in the shader).
+> `[AllowSparseNodes]`|N|Allow a work graph to be created where there may not be a node present for this output.  Or if it is an output array, some of entries in the array may not have nodes present.  In the absence of this attribute, by default the output must point to a node in the work graph.  Or if it is an output array, the entire output range must have nodes in the work graph.  To help shader code know if an output node is present, there is the node output [IsValid()](#node-output-isvalid-method) method.  Also see [AddToStateObject](state-objects.md#addtostateobject) which allows adding new nodes to a work graph after it is initially created in the gaps within an `[AllowSparseNodes]` node array range.  Empty space between used array slots will likely incur proportionate storage overhead for implementations - something to be aware of, but may be perfectly fine overall.
+> `[NodeArraySize(count)]` | Y (for `NodeOutputArray` or `EmptyNodeOutputArray`, unless `[UnboundedSparseNodes]` is specified) | Specifies the output array size for `NodeOutputArray` or `EmptyNodeOutputArray` objects.  `[NodeArraySize(0xffffffff)]` is equivalent to setting `[UnboundedSparseNodes]` and `[AllowSparseNodes]`.
+> `[UnboundedSparseNodes]`|N|No limit to array size for `NodeOutputArray` or `EmptyNodeOutputArray` objects.  This is equivalent to setting `[NodeArraySize(0xffffffff)]`, and also implies `[AllowSparseNodes]`, so those don't need to be set.  Like `[AllowSparseNodes]`, allow a work graph to be created where not all entries in the array are present.  To help shader code know if an output node is present, there is the node output [IsValid()](#node-output-isvalid-method) method.  Unbounded can be useful if when a shader is being authored, the precise number of nodes it will output to isn't known.  In particular this can be useful with [AddToStateObject](state-objects.md#addtostateobject), adding new nodes on the fly after a graph is initially constructed, such as shader permutations.  Even though the array size is unbounded, the starting array index for the array is based on the `NodeID` for the output (just like bounded arrays).  There is still a limit on maximum array index actually used for any given node used in the graph, described in [Node count limits](#node-count-limits).  `UnboundedSparseNodes` should only be used when actually needed (as opposed to applying it blindly to every node output just in case), particularly if [AddToStateObject](state-objects.md#addtostateobject) has been opted-into with the `D3D12_STATE_OBJECT_FLAG_ALLOW_STATE_OBJECT_ADDITIONS` state object flag.  Here there can be minor additional overhead for some drivers to manage unbounded arrays, worth it if neeeded, but unnecessary to take on everywhere that relatively small fixed array sizes would suffice.
+
+<!-- d3d12-review-alert:end:work-graphs:H-output:9 -->
 
 <a id="node-output-array-indexing"></a>
 
 ### Node output array indexing
 
-`NodeOutputArray` and `EmptyNodeOutputArray` must be indexed with `operator[]` to retrieve individual `NodeOutput` or `EmptyNodeOutput` objects, respectively.  All built-in functions and methods operate on the individual object types, not on the array object types.  For a `NodeOutputArray`, for example: `myNodeArray[i].IsValid()` or `myNodeArray[i].GetThreadNodeOutputRecords(count)`.
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-indexing:2 -->`NodeOutputArray` and `EmptyNodeOutputArray` must be indexed with `operator[]` to retrieve individual `NodeOutput` or `EmptyNodeOutput` objects, respectively.  All built-in functions and methods operate on the individual object types, not on the array object types.  For a `NodeOutputArray`, for example: `myNodeArray[i].IsValid()` or `myNodeArray[i].GetThreadNodeOutputRecords(count)`.<!-- d3d12-review-inline:end:work-graphs:H-indexing:2 --></ins>
 
 <a id="record-access"></a>
 
@@ -399,9 +489,9 @@ Record access example:
 
 #### Array records access
 
-Record objects that may hold more than one record (`{RW}GroupNodeInputRecords`, `ThreadNodeOutputRecords` and `GroupNodeOutputRecords`) have a `Get(int index=0)` method and an `operator[]` to access a contained record.  The `index` parameter for the `Get` method defaults to `0`, so it can be used the same way as for single-record access when only accessing the first record.
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-access:7 -->Record objects that may hold more than one record (`{RW}GroupNodeInputRecords`, `ThreadNodeOutputRecords` and `GroupNodeOutputRecords`) have a `Get(int index=0)` method and an `operator[]` to access a contained record.  The `index` parameter for the `Get` method defaults to `0`, so it can be used the same way as for single-record access when only accessing the first record.<!-- d3d12-review-inline:end:work-graphs:H-access:7 --></ins>
 
-Record access examples:
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-access:8 -->Record access examples:<!-- d3d12-review-inline:end:work-graphs:H-access:8 --></ins>
 
 - `myRecords.Get().field` - access `field` from the first record
 - `myRecords.Get(i).field` - access `field` from record at index `i`
@@ -409,29 +499,50 @@ Record access examples:
 
 #### Record access examples
 
-See [Node input](#node-input) for more examples, as well as [Examples of input and output use in shaders](#examples-of-input-and-output-use-in-shaders).
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-access:11 -->See [Node input](#node-input) for more examples, as well as [Examples of input and output use in shaders](#examples-of-input-and-output-use-in-shaders).<!-- d3d12-review-inline:end:work-graphs:H-access:11 --></ins>
 
-`recordType` is the record structure declared by the shader. A read-only input returns a read-only reference; the `RW` input and allocated-output variants return writable references. `index` selects a record, not a node. For coalesced input it is bounded by `Count()`, and for allocated output it is bounded by the count requested for that thread or group.
+<!-- d3d12-review-alert:begin:work-graphs:N-shader-signatures:0 -->
 
-| Object | Access operation | Result |
-|---|---|---|
-| `DispatchNodeInputRecord<recordType>`, `ThreadNodeInputRecord<recordType>` | `Get()` | Read-only reference to the input record |
-| `RWDispatchNodeInputRecord<recordType>`, `RWThreadNodeInputRecord<recordType>` | `Get()` | Writable reference to the input record |
-| `GroupNodeInputRecords<recordType>` | `Get(int index = 0)`, `[index]` | Read-only reference to the selected coalesced record |
-| `RWGroupNodeInputRecords<recordType>` | `Get(int index = 0)`, `[index]` | Writable reference to the selected coalesced record |
-| `ThreadNodeOutputRecords<recordType>` | `Get(int index = 0)`, `[index]` | Writable reference to a record allocated for this thread |
-| `GroupNodeOutputRecords<recordType>` | `Get(int index = 0)`, `[index]` | Writable reference to a record allocated for this group |
-| `NodeOutputArray<recordType>` | `[index]` | Selected `NodeOutput<recordType>` object |
-| `EmptyNodeOutputArray` | `[index]` | Selected `EmptyNodeOutput` object |
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `recordType` is the record structure declared by the shader. A read-only input returns a read-only reference; the `RW` input and allocated-output variants return writable references. `index` selects a record, not a node. For coalesced input it is bounded by `Count()`, and for allocated output it is bounded by the count requested for that thread or group.
 
-```hlsl
-recordType copy = inputRecord.Get();
-outputRecords.Get(i) = copy;
-outputRecords[i].field = value;
-NodeOutput<recordType> selectedOutput = outputNodes[nodeIndex];
-```
+<!-- d3d12-review-alert:end:work-graphs:N-shader-signatures:0 -->
 
-These are shader object operations, not CPU COM methods. Record access requires a live object containing that record. Zero-count allocations do not provide an indexable record; null and stale objects are governed by [object semantics](#node-and-record-object-semantics-in-shaders).
+<!-- d3d12-review-alert:begin:work-graphs:N-shader-signatures:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Object | Access operation | Result |
+> |---|---|---|
+> | `DispatchNodeInputRecord<recordType>`, `ThreadNodeInputRecord<recordType>` | `Get()` | Read-only reference to the input record |
+> | `RWDispatchNodeInputRecord<recordType>`, `RWThreadNodeInputRecord<recordType>` | `Get()` | Writable reference to the input record |
+> | `GroupNodeInputRecords<recordType>` | `Get(int index = 0)`, `[index]` | Read-only reference to the selected coalesced record |
+> | `RWGroupNodeInputRecords<recordType>` | `Get(int index = 0)`, `[index]` | Writable reference to the selected coalesced record |
+> | `ThreadNodeOutputRecords<recordType>` | `Get(int index = 0)`, `[index]` | Writable reference to a record allocated for this thread |
+> | `GroupNodeOutputRecords<recordType>` | `Get(int index = 0)`, `[index]` | Writable reference to a record allocated for this group |
+> | `NodeOutputArray<recordType>` | `[index]` | Selected `NodeOutput<recordType>` object |
+> | `EmptyNodeOutputArray` | `[index]` | Selected `EmptyNodeOutput` object |
+>
+> ```hlsl
+> recordType copy = inputRecord.Get();
+> outputRecords.Get(i) = copy;
+> outputRecords[i].field = value;
+> NodeOutput<recordType> selectedOutput = outputNodes[nodeIndex];
+> ```
+>
+
+<!-- d3d12-review-alert:end:work-graphs:N-shader-signatures:1 -->
+<!-- d3d12-review-alert:begin:work-graphs:N-shader-signatures:2 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> These are shader object operations, not CPU COM methods. Record access requires a live object containing that record. Zero-count allocations do not provide an indexable record; null and stale objects are governed by [object semantics](#node-and-record-object-semantics-in-shaders).
+
+<!-- d3d12-review-alert:end:work-graphs:N-shader-signatures:2 -->
 
 <a id="input-lifetime"></a>
 
@@ -443,7 +554,7 @@ These are shader object operations, not CPU COM methods. Record access requires 
 
 The system keeps an input record alive for all invocations of a shader consuming that input from a node.  For a coalescing launch node this would be all the threads in a thread group.  For a broadcasting launch node, this would be all threads in all thread groups across the dispatch grid of thread groups.
 
-Only when the system knows all invocations of these shaders have finished reading the input can its storage be released.  Basic ways the system could track inputs are finished with is tracking that all spawned shaders that use the input have completed execution, or implementing reference counting on the allocation.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-scratch:3 -->Only when the system knows all invocations of these shaders have finished reading the input can its storage be released.  Basic ways the system could track inputs are finished with is tracking that all spawned shaders that use the input have completed execution, or implementing reference counting on the allocation.<!-- d3d12-review-inline:end:work-graphs:C-scratch:3 --></ins>
 
 The application can take advantage of this input lifetime to use the input as scratch storage that it wants shared across the dispatched threads.  The scope is all threads in the dispatch grid if applicable, not just a given thread group.  Shaders are allowed read + write access (including atomics) to their input record.  If the shader writes to its input record, the guarantee is the system can't duplicate that record for any reason for different shader launches.
 
@@ -498,15 +609,22 @@ For broadcasting launch nodes, where multiple thread groups can be launched for 
     }
 ```
 
+<!-- d3d12-review-context:begin:work-graphs:C-scratch:10 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+
 > In the bounding box calculation example, the code that sees [FinishedCrossGroupSharing()](#finishedcrossgroupsharing) return `true` can do something like frustum culling on the box and/or copying the box into a record to be sent to some other node for further processing.
 
-For coalescing or thread launch nodes, input records aren't shared across thread groups, instead a given input is only visible to a single thread group.  As such, [FinishedCrossGroupSharing()](#finishedcrossgroupsharing) doesn't apply here.  The utility in these nodes for `RWThreadNodeInputRecord` or `RWGroupNodeInputRecords` (the latter for coalescing launch with multiple inputs available) is simply allowing the shader to use the input records as scratch space if desired (e.g. when the input data is finished with or transforming the input data in place), instead of having to allocate additional local variables for such storage.
+<!-- d3d12-review-context:end:work-graphs:C-scratch:10 -->
+
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-scratch:11 -->For coalescing or thread launch nodes, input records aren't shared across thread groups, instead a given input is only visible to a single thread group.  As such, [FinishedCrossGroupSharing()](#finishedcrossgroupsharing) doesn't apply here.  The utility in these nodes for `RWThreadNodeInputRecord` or `RWGroupNodeInputRecords` (the latter for coalescing launch with multiple inputs available) is simply allowing the shader to use the input records as scratch space if desired (e.g. when the input data is finished with or transforming the input data in place), instead of having to allocate additional local variables for such storage.<!-- d3d12-review-inline:end:work-graphs:C-scratch:11 --></ins>
 
 Of course the app could figure this out on its own by using an atomic on a scratch variable in its input record too.  And in fact that might be worth doing for more complex situations, such as coordinating multiple stages of execution across all dispatched threads.  For the simple [FinishedCrossGroupSharing()](#finishedcrossgroupsharing) case though, the system might be able to do better, or it might just use an additional atomic counter behind the scenes - no worse than an app doing this manually.
 
 Unfortunately [FinishedCrossGroupSharing()](#finishedcrossgroupsharing) can't be called in graph entrypoint nodes, reason discussed in the spec for the [FinishedCrossGroupSharing()](#finishedcrossgroupsharing) intrinsic.
 
-If a node might call [FinishedCrossGroupSharing()](#finishedcrossgroupsharing) it must specify the `[`[NodeTrackRWInputSharing](#nodetrackrwinputsharing)`]` attribute on the [record struct](#record-struct).  Matching this, the upstream node that produces the input record must specify the `[`[NodeTrackRWInputSharing](#nodetrackrwinputsharing)`]` on the corresponding [record struct](#record-struct) as well.  The easiest way to do this is to use the same structure declaration with the attribute for both the producer and consumer nodes.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-scratch:14 -->If a node might call [FinishedCrossGroupSharing()](#finishedcrossgroupsharing) it must specify the `[`[NodeTrackRWInputSharing](#nodetrackrwinputsharing)`]` attribute on the [record struct](#record-struct).  Matching this, the upstream node that produces the input record must specify the `[`[NodeTrackRWInputSharing](#nodetrackrwinputsharing)`]` on the corresponding [record struct](#record-struct) as well.  The easiest way to do this is to use the same structure declaration with the attribute for both the producer and consumer nodes.<!-- d3d12-review-inline:end:work-graphs:C-scratch:14 --></ins>
 
 <a id="sharing-input-records-across-nodes"></a>
 
@@ -514,7 +632,7 @@ If a node might call [FinishedCrossGroupSharing()](#finishedcrossgroupsharing) i
 
 Multiple nodes can share the same input.  This is broadcasting one input to multiple shaders.
 
-This is configured in the declaration of a node by stating that it shares the same input as another node ID.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-sharing:3 -->This is configured in the declaration of a node by stating that it shares the same input as another node ID.<!-- d3d12-review-inline:end:work-graphs:C-sharing:3 --></ins>
 
 In HLSL, this means specifiying `[NodeShareInputOf("nodeIDWhoseInputToShare",optionalArrayIndex)]` in the configuration block preceding the shader definition.
 This name can be overridden in the work graph declaration as well, including specifying NULL for the node ID to disable sharing that might have been declared in the shader.
@@ -525,7 +643,7 @@ The system has to finish launching the shaders for all nodes sharing the input b
 
 Input records declared as `RW{Dispatch|Thread}NodeInputRecord` or `RWGroupNodeInputRecords` (see [Shaders can use input record lifetime for scoped scratch storage](#shaders-can-use-input-record-lifetime-for-scoped-scratch-storage)) cannot be shared across nodes.
 
-The following are some other limitations that exist to reduce driver complexity.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-sharing:8 -->The following are some other limitations that exist to reduce driver complexity.<!-- d3d12-review-inline:end:work-graphs:C-sharing:8 --></ins>
 
 A node that recurses, is directly targeted by another node, or is an entrypoint cannot share the input of another node.  And a node can't share the input of a node that recurses.
 
@@ -533,7 +651,7 @@ A node whose input is shared to other node(s) can't get its input both from othe
 
 No more than 256 nodes can share an input.  This number happens to be related for a possible implementation to the maximum number of outputs from a node, same number.
 
-If nodes share an input, this incurs an extra cost on the producing node's [node output limits](#node-output-limits).
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-sharing:12 -->If nodes share an input, this incurs an extra cost on the producing node's [node output limits](#node-output-limits).<!-- d3d12-review-inline:end:work-graphs:C-sharing:12 --></ins>
 
 <a id="wave-semantics"></a>
 
@@ -549,13 +667,13 @@ Wave operations in shaders exhibit the following rules for thread visibility:
 
 #### Support for WaveSize shader function attribute
 
-For HLSL shaders in general there is a `WaveSize(N)` shader function attribute for forcing a wave size for a shader out of the options a given device supports.  This is also supported for node shaders of all launch types. The shared fixed/ranged `WaveSize` rules are defined in [Compute](compute.md#wave-size).
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-wave:6 -->For HLSL shaders in general there is a `WaveSize(N)` shader function attribute for forcing a wave size for a shader out of the options a given device supports.  This is also supported for node shaders of all launch types. The shared fixed/ranged `WaveSize` rules are defined in [Compute](compute.md#wave-size).<!-- d3d12-review-inline:end:work-graphs:C-wave:6 --></ins>
 
 <a id="quad-and-derivative-operation-semantics"></a>
 
 ### Quad and derivative operation semantics
 
-Quad and derivative operations are invalid in thread launch nodes since there is not a sufficiently sized thread group available.  Other launch modes support these operations as long as the thread group size meets the [compute quad and derivative requirements](compute.md#compute-quads).
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-quad:2 -->Quad and derivative operations are invalid in thread launch nodes since there is not a sufficiently sized thread group available.  Other launch modes support these operations as long as the thread group size meets the [compute quad and derivative requirements](compute.md#compute-quads).<!-- d3d12-review-inline:end:work-graphs:C-quad:2 --></ins>
 
 <a id="nonuniformresourceindex-semantics"></a>
 
@@ -569,16 +687,23 @@ myBufferArray[NonUniformResourceIndex(index)].Load(...)
 
 From the perspective of work graphs, the following specific considerations apply:
 
-- **Input record members**: For thread launch nodes, since threads at a node may be packed into a wave, input record members are likely to be nonuniform unless the shader author knows there are fields in the input that are repeated across all records.  For other launch modes, the input record or input-record array is shared by the thread group; selecting different records from a coalesced input array can still produce nonuniform member values.
+- <ins><!-- d3d12-review-inline:begin:work-graphs:C-nonuniform:5 -->**Input record members**: For thread launch nodes, since threads at a node may be packed into a wave, input record members are likely to be nonuniform unless the shader author knows there are fields in the input that are repeated across all records.  For other launch modes, the input record or input-record array is shared by the thread group; selecting different records from a coalesced input array can still produce nonuniform member values.<!-- d3d12-review-inline:end:work-graphs:C-nonuniform:5 --></ins>
 - **Local root arguments**: Constant per node, meaning uniform.
 
-Should an implementation pack threads from multiple thread groups (not from thread launch nodes) into a wave, or pack threads/groups from different nodes into a wave, this must not have any functionally visible side effects for shader code.  In the case of deciding when to specify `NonUniformResourceIndex`, applications don't need to worry about this possibility.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-nonuniform:6 -->Should an implementation pack threads from multiple thread groups (not from thread launch nodes) into a wave, or pack threads/groups from different nodes into a wave, this must not have any functionally visible side effects for shader code.  In the case of deciding when to specify `NonUniformResourceIndex`, applications don't need to worry about this possibility.<!-- d3d12-review-inline:end:work-graphs:C-nonuniform:6 --></ins>
 
 <a id="graph-validation"></a>
 
 ## Graph, input and output budgets
 
-The following limits use the record types, launch modes and input-sharing rules defined above. Construction validates these requirements after applying [node overrides](state-objects.md#d3d12_shader_node). Node identity and population order remain defined by [State objects](state-objects.md#node-id).
+<!-- d3d12-review-alert:begin:work-graphs:N-budget-prerequisites:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The following limits use the record types, launch modes and input-sharing rules defined above. Construction validates these requirements after applying [node overrides](state-objects.md#d3d12_shader_node). Node identity and population order remain defined by [State objects](state-objects.md#node-id).
+
+<!-- d3d12-review-alert:end:work-graphs:N-budget-prerequisites:0 -->
 
 <a id="node-limits"></a>
 
@@ -678,7 +803,7 @@ Constraints on nodes in the same array:
 - Input record access mode must be the same - see `RW` vs read-only vs `EmptyNodeInput` in [Node input declaration](#node-input-declaration)
 - If any node in an array has a static dispatch grid size (e.g. declares `[NodeDispatchGrid()]`), all nodes must do so.
 - The launch mode for all nodes in an array must match.
-- For the purpose of enforcing the maximum allowed graph depth limit described in [Node count limits](#node-count-limits), the depth of any given entry in a node array is defined to be equal to the maximum depth any other part of the same node array appears at in the graph.  This can apply if it looks like different parts of a graph are targetting different regions of one array from different depths - the whole array counts as being at the highest depth.  A byproduct of this is that a node in an array cannot target another node in the same array (else the max-depth rule would go to infinity).  Self-recursion of a node in an array is fine, and the increase in depth for self recursion of a node doesn't increase the depth of other nodes in the same array.
+- <ins><!-- d3d12-review-inline:begin:work-graphs:C-graph-limits:31 -->For the purpose of enforcing the maximum allowed graph depth limit described in [Node count limits](#node-count-limits), the depth of any given entry in a node array is defined to be equal to the maximum depth any other part of the same node array appears at in the graph.  This can apply if it looks like different parts of a graph are targetting different regions of one array from different depths - the whole array counts as being at the highest depth.  A byproduct of this is that a node in an array cannot target another node in the same array (else the max-depth rule would go to infinity).  Self-recursion of a node in an array is fine, and the increase in depth for self recursion of a node doesn't increase the depth of other nodes in the same array.<!-- d3d12-review-inline:end:work-graphs:C-graph-limits:31 --></ins>
 
 <a id="record-operations"></a>
 
@@ -716,7 +841,7 @@ Unfortunately `FinishedCrossGroupSharing()` can't be called on nodes that are en
 
 Both producer and consumer nodes must specify the `[`[NodeTrackRWInputSharing](#nodetrackrwinputsharing)`]` attribute on the [record struct](#record-struct) if the consumer might call `FinishedCrossGroupSharing()`.  This tells the producer's driver shader compilation to allocate 4 byte of extra space per record if needed by the implementation, discussed above.  And this space counts against its [node output limits](#node-output-limits).
 
-DXIL definition [here](../WorkGraphs.md#lowering-finishedcrossgroupsharing).
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-input-methods:15 -->DXIL definition [here](../WorkGraphs.md#lowering-finishedcrossgroupsharing).<!-- d3d12-review-inline:end:work-graphs:H-input-methods:15 --></ins>
 
 <a id="methods-operating-on-node-output"></a>
 
@@ -771,10 +896,10 @@ The record counts passed in to `GetThreadNodeOutputRecords()` count against the 
 Notes about the `ThreadNodeOutputRecords` object:
 
 - This behaves as an object holding a handle value.  Assignment and function parameter passing with matching object types will copy handle values, rather than copying contents of records.   See [Node and record object semantics in shaders](#node-and-record-object-semantics-in-shaders) for implications.
-- `ThreadNodeOutputRecords` objects have an `operator[]` defined that retrieves a reference to the record at the provided array index.  This reference is used for member access or copying in/out of functions or for assignments using the record type.  For convenience, a `Get(int index=0)` is also defined with a default index of `0`, so that the first record can be accessed in the same way as objects that only hold a single record.
+- <ins><!-- d3d12-review-inline:begin:work-graphs:H-output-methods:13 -->`ThreadNodeOutputRecords` objects have an `operator[]` defined that retrieves a reference to the record at the provided array index.  This reference is used for member access or copying in/out of functions or for assignments using the record type.  For convenience, a `Get(int index=0)` is also defined with a default index of `0`, so that the first record can be accessed in the same way as objects that only hold a single record.<!-- d3d12-review-inline:end:work-graphs:H-output-methods:13 --></ins>
 - See the requirement that a matching [OutputComplete()](#outputcomplete) call must be present after any call to  `GetThreadNodeOutputRecords()`.
 
-Examples of using output record objects are shown in [Node output](#node-output) as well as [Examples of input and output use in shaders](#examples-of-input-and-output-use-in-shaders).
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-output-methods:14 -->Examples of using output record objects are shown in [Node output](#node-output) as well as [Examples of input and output use in shaders](#examples-of-input-and-output-use-in-shaders).<!-- d3d12-review-inline:end:work-graphs:H-output-methods:14 --></ins>
 
 DXIL definition [here](../WorkGraphs.md#lowering-get-nodeoutputrecords).
 
@@ -827,11 +952,11 @@ It's allowed for `NumRecords` to be `0`, in which case, the node handle is not u
 Notes about `GroupNodeOutputRecords` object:
 
 - This behaves as an object holding a handle value.  Assignment and function parameter passing with matching object types will copy handle values, rather than copying contents of records.  See [Node and record object semantics in shaders](#node-and-record-object-semantics-in-shaders) for implications.
-- `GroupNodeOutputRecords` objects have an `operator[]` defined that retrieves a reference to the record at the provided array index.  This reference is used for member access or copying in/out of functions or for assignments using the record type.  For convenience, a `Get(int index=0)` is also defined with a default index of `0`, so that the first record can be accessed in the same way as objects that only hold a single record.
+- <ins><!-- d3d12-review-inline:begin:work-graphs:H-output-methods:27 -->`GroupNodeOutputRecords` objects have an `operator[]` defined that retrieves a reference to the record at the provided array index.  This reference is used for member access or copying in/out of functions or for assignments using the record type.  For convenience, a `Get(int index=0)` is also defined with a default index of `0`, so that the first record can be accessed in the same way as objects that only hold a single record.<!-- d3d12-review-inline:end:work-graphs:H-output-methods:27 --></ins>
 - All of the above objects can be passed as parameters into internal linkage function calls.  Internal linkage refers to static functions defined within the same module that are not `export` functions.
 - See the requirement that a matching [OutputComplete()](#outputcomplete) call must be present after any call to  `GetGroupNodeOutputRecords()`.
 
-Examples of using output record objects are shown in [Node output](#node-output) as well as [Examples of input and output use in shaders](#examples-of-input-and-output-use-in-shaders).
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-output-methods:28 -->Examples of using output record objects are shown in [Node output](#node-output) as well as [Examples of input and output use in shaders](#examples-of-input-and-output-use-in-shaders).<!-- d3d12-review-inline:end:work-graphs:H-output-methods:28 --></ins>
 
 DXIL definition [here](../WorkGraphs.md#lowering-get-nodeoutputrecords).
 
@@ -864,7 +989,7 @@ If the node declares an output that is an array of empty node outputs, as `Empty
 myEmptyOutputs[i].ThreadIncrementOutputCount(perThreadCount);
 ```
 
-`{Group|Thread}IncrementOutputCount()` may be called multiple times on an output by a thread group.  The count passed in each time (applicable for the thread group as whole for `GroupIncrementOutputCount()` or per thread for `ThreadIncrementOutputCount()`) takes away from the record budget declared for the output node or group of output nodes.  See `MaxRecords` and `MaxRecordsSharedWith` in [node output attributes](#node-output-attributes).  Incrementing more than the declared maximum produces undefined behavior.
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-output-methods:41 -->`{Group|Thread}IncrementOutputCount()` may be called multiple times on an output by a thread group.  The count passed in each time (applicable for the thread group as whole for `GroupIncrementOutputCount()` or per thread for `ThreadIncrementOutputCount()`) takes away from the record budget declared for the output node or group of output nodes.  See `MaxRecords` and `MaxRecordsSharedWith` in [node output attributes](#node-output-attributes).  Incrementing more than the declared maximum produces undefined behavior.<!-- d3d12-review-inline:end:work-graphs:H-output-methods:41 --></ins>
 
 An example of using `IncrementOutputCount` is shown in [Node output](#node-output).
 
@@ -872,7 +997,7 @@ DXIL definition [here](../WorkGraphs.md#lowering-incrementoutputcount).
 
 #### OutputComplete
 
-After obtaining zero or more output records by calling `Get{Group|Thread}NodeOutputRecords()`, and a thread group is later finished using the returned `ThreadNodeOutputRecords`/`GroupNodeOutputRecords` object for writing a set of zero or more records, it must call `records.OutputComplete()` at least once, otherwise behavior is undefined.  This may or may not be all the records the shader will output to a given node output.
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-output-methods:45 -->After obtaining zero or more output records by calling `Get{Group|Thread}NodeOutputRecords()`, and a thread group is later finished using the returned `ThreadNodeOutputRecords`/`GroupNodeOutputRecords` object for writing a set of zero or more records, it must call `records.OutputComplete()` at least once, otherwise behavior is undefined.  This may or may not be all the records the shader will output to a given node output.<!-- d3d12-review-inline:end:work-graphs:H-output-methods:45 --></ins>
 
 ```hlsl
 // Overloads that indicate a subset of node outputs are complete:
@@ -895,7 +1020,7 @@ For details on passing data outside of records using UAVs, see [Producer - consu
 
 Variables representing output records (or output nodes) can be assigned to other such variables freely, which internally just copies the handle to the object, not copying the object.  The compiler tries to deduce that for every call to `records = Get*NodeOutputRecords()`, at least one matching call to `records.OutputComplete()` will execute.  If the compiler's validator thinks a path won't call the required `records.OutputComplete()` it will report an error.  This validation may be too strict or loose in complex control flow or assignment use cases.
 
-If function calls remain in the code after any inlining, calls to `records.OutputComplete()` must be in the same function as the call to `Get*NodeOutputRecords()` that it matches with.  This avoids the compiler needing its analysis to span function boundaries.
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-output-methods:54 -->If function calls remain in the code after any inlining, calls to `records.OutputComplete()` must be in the same function as the call to `Get*NodeOutputRecords()` that it matches with.  This avoids the compiler needing its analysis to span function boundaries.<!-- d3d12-review-inline:end:work-graphs:H-output-methods:54 --></ins>
 
 Also see [Node and record object semantics in shaders](#node-and-record-object-semantics-in-shaders) for more nuance around how  uninitialized or null objects behave wrt `OutputComplete()`.
 
@@ -916,7 +1041,7 @@ Suppose an output node may sometimes not be populated in a work graph, enabled v
 
 Similarly, for a recursive node, `IsValid()` can be called on the recursive output to know if the leaf has been reached, based on the declared `[NodeMaxRecursionDepth]` [shader function attribute](#shader-function-attributes).  To query fine-grained recursion progress, there is [GetRemainingRecursionLevels()](#getremainingrecursionlevels).
 
-DXIL definition [here](../WorkGraphs.md#lowering-node-output-isvalid-method).
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-output-methods:63 -->DXIL definition [here](../WorkGraphs.md#lowering-node-output-isvalid-method).<!-- d3d12-review-inline:end:work-graphs:H-output-methods:63 --></ins>
 
 <a id="node-and-record-object-semantics-in-shaders"></a>
 
@@ -951,10 +1076,17 @@ Local variables of these object types are initialized to a null value before ass
 One operation is allowed on null object values of the appropriate type: [OutputComplete()](#outputcomplete).
 All other operations, including Read/write operations, result in undefined behavior when performed on an object holding a null value.
 
-[OutputComplete()](#outputcomplete) uses an `inout` parameter for the record object, and clears the object handle to null after the call.
-This means extra [OutputComplete()](#outputcomplete) calls on the same object that now has a null handle are legal and will result in a no-op.
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-object-semantics:14 -->[OutputComplete()](#outputcomplete) uses an `inout` parameter for the record object, and clears the object handle to null after the call.
+This means extra [OutputComplete()](#outputcomplete) calls on the same object that now has a null handle are legal and will result in a no-op.<!-- d3d12-review-inline:end:work-graphs:H-object-semantics:14 --></ins>
 
-Input lifetime does not require a shader call named `InputComplete`. The system releases input records after their consuming invocations finish using them, subject to the cross-group and cross-node sharing rules above. `FinishedCrossGroupSharing()` is the explicit broadcasting `RWDispatchNodeInputRecord` coordination operation; it is not an output allocation completion operation.
+<!-- d3d12-review-alert:begin:work-graphs:N-input-complete:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Input lifetime does not require a shader call named `InputComplete`. The system releases input records after their consuming invocations finish using them, subject to the cross-group and cross-node sharing rules above. `FinishedCrossGroupSharing()` is the explicit broadcasting `RWDispatchNodeInputRecord` coordination operation; it is not an output allocation completion operation.
+
+<!-- d3d12-review-alert:end:work-graphs:N-input-complete:0 -->
 
 <a id="getremainingrecursionlevels"></a>
 
@@ -968,7 +1100,7 @@ For a node that recurses, returns how many levels of recursion remain (`0` at th
 
 If a recursive shader only cares about whether it has reached the leaf of recursion or not (as opposed to exactly how far in the recursion chain), the node output [IsValid()](#node-output-isvalid-method) method is an alternative way to know.
 
-DXIL definition [here](../WorkGraphs.md#lowering-getremainingrecursionlevels).
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-recursion-intrinsic:5 -->DXIL definition [here](../WorkGraphs.md#lowering-getremainingrecursionlevels).<!-- d3d12-review-inline:end:work-graphs:H-recursion-intrinsic:5 --></ins>
 
 <a id="barrier"></a>
 
@@ -1019,19 +1151,26 @@ void Barrier(NodeRecordObject o, uint SemanticFlags)
 
 ```
 
-|`MEMORY_TYPE_FLAG`|Definition|
-|-|-|
-|`UAV_MEMORY`|All UAVs accessed by the shader.|
-|`GROUP_SHARED_MEMORY`|Group shared memory for the current thread group. |
-|`NODE_INPUT_MEMORY`|Input record memory, particularly when declared as read-write.  For cross-group dataflow through [RWDispatchNodeInputRecord](#node-input-declaration), note there is a `globallycoherent` [node input attribute](#node-input-attributes) available.  If that is used, or accesses are done via atomics, the only time barrier would be necessary on `NODE_INPUT_MEMORY` would be to prevent the compiler from migrating related code across the barrier (not necessary for visibility of the data across threads). |
-|`NODE_OUTPUT_MEMORY`|Output record memory.  Not needed to make data visible to [OutputComplete()](#outputcomplete).  Rather, this is for the case of threads in a group communicating with each other through writes/reads in allocated node output memory while it is being prepared, before calling `OutputComplete()`.|
-|`ALL_MEMORY`|Shorthand for all memory type flags combined.|
+<!-- d3d12-review-alert:begin:work-graphs:H-barrier:7 -->
 
-|`BARRIER_SEMANTIC_FLAG`|Definition|
-|-|-|
-|`GROUP_SYNC`|Synchronize threads in group to the current location in the shader.|
-|`GROUP_SCOPE`|Scope for memory visibility is current thread group.  Subsumed by `DEVICE_SCOPE`.|
-|`DEVICE_SCOPE`|Scope for memory visibility is device.  This only relevant for memory accesses to `globallycoherent` resources or atomics, to ensure the rest of the device sees the accesses in the correct order.  For load/store to non-`globallycoherent` resources this accomplishes nothing more than `GROUP_SCOPE`. |
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> |`MEMORY_TYPE_FLAG`|Definition|
+> |-|-|
+> |`UAV_MEMORY`|All UAVs accessed by the shader.|
+> |`GROUP_SHARED_MEMORY`|Group shared memory for the current thread group. |
+> |`NODE_INPUT_MEMORY`|Input record memory, particularly when declared as read-write.  For cross-group dataflow through [RWDispatchNodeInputRecord](#node-input-declaration), note there is a `globallycoherent` [node input attribute](#node-input-attributes) available.  If that is used, or accesses are done via atomics, the only time barrier would be necessary on `NODE_INPUT_MEMORY` would be to prevent the compiler from migrating related code across the barrier (not necessary for visibility of the data across threads). |
+> |`NODE_OUTPUT_MEMORY`|Output record memory.  Not needed to make data visible to [OutputComplete()](#outputcomplete).  Rather, this is for the case of threads in a group communicating with each other through writes/reads in allocated node output memory while it is being prepared, before calling `OutputComplete()`.|
+> |`ALL_MEMORY`|Shorthand for all memory type flags combined.|
+>
+> |`BARRIER_SEMANTIC_FLAG`|Definition|
+> |-|-|
+> |`GROUP_SYNC`|Synchronize threads in group to the current location in the shader.|
+> |`GROUP_SCOPE`|Scope for memory visibility is current thread group.  Subsumed by `DEVICE_SCOPE`.|
+> |`DEVICE_SCOPE`|Scope for memory visibility is device.  This only relevant for memory accesses to `globallycoherent` resources or atomics, to ensure the rest of the device sees the accesses in the correct order.  For load/store to non-`globallycoherent` resources this accomplishes nothing more than `GROUP_SCOPE`. |
+
+<!-- d3d12-review-alert:end:work-graphs:H-barrier:7 -->
 
 A `Barrier()` call using `GROUP_SYNC` must be called from uniform flow control in the thread group.
 
@@ -1055,7 +1194,7 @@ This table identifies shader stages to which different `MemoryTypeFlags` apply:
 |`NODE_OUTPUT_MEMORY`| node shaders only |
 |`ALL_MEMORY`| usable in all shader stages, automatically masked to applicable bits |
 
-If both `DEVICE_SCOPE` and `GROUP_SCOPE` are specified in `SemanticFlags`, then `GROUP_SCOPE` is ignored and masked off.
+<ins><!-- d3d12-review-inline:begin:work-graphs:H-barrier:16 -->If both `DEVICE_SCOPE` and `GROUP_SCOPE` are specified in `SemanticFlags`, then `GROUP_SCOPE` is ignored and masked off.<!-- d3d12-review-inline:end:work-graphs:H-barrier:16 --></ins>
 
 #### Barrier Rules
 
@@ -1157,13 +1296,20 @@ Due to a lack of uniform analysis in the compiler/validator, handle uniformity i
 - Use of Work Graph handles are not allowed in other shader stages.
 - Pointers to record or node handles are not allowed in DXIL.  HLSL constructs that would produce pointers, such as arrays are allowed as long as they are optimized away for DXIL.
 
-- Functions returning a handle value or that have a handle pointer as a parameter are not allowed in DXIL.  These are allowed in HLSL, but must be inlined for DXIL.
+- <ins><!-- d3d12-review-inline:begin:work-graphs:H-handle-lowering-semantics:11 -->Functions returning a handle value or that have a handle pointer as a parameter are not allowed in DXIL.  These are allowed in HLSL, but must be inlined for DXIL.<!-- d3d12-review-inline:end:work-graphs:H-handle-lowering-semantics:11 --></ins>
 
 <a id="node-examples"></a>
 
 ## Node input and output examples
 
-The examples in this chapter preserve the source's schematic HLSL: ellipses, application helper functions and application-defined values stand for the omitted application work. They illustrate the record and execution contract; they are not complete independently compilable programs.
+<!-- d3d12-review-alert:begin:work-graphs:N-example-context:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The examples in this chapter preserve the source's schematic HLSL: ellipses, application helper functions and application-defined values stand for the omitted application work. They illustrate the record and execution contract; they are not complete independently compilable programs.
+
+<!-- d3d12-review-alert:end:work-graphs:N-example-context:0 -->
 
 <a id="node-input"></a>
 
@@ -1316,7 +1462,7 @@ Here is a variation of zero-sized records using broadcast semantics, whereby a d
 
 ```
 
-For more see [Examples of input and output use in shaders](#examples-of-input-and-output-use-in-shaders).
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-input-examples:15 -->For more see [Examples of input and output use in shaders](#examples-of-input-and-output-use-in-shaders).<!-- d3d12-review-inline:end:work-graphs:C-input-examples:15 --></ins>
 
 <a id="node-output"></a>
 
@@ -1326,7 +1472,7 @@ Shaders can freely access UAVs of course.
 
 In addition, shaders can declare nodes they want to write to.  Outputs are generated per-thread group - threads in the thread group must work together to generate the set of output for the group.
 
-Each such output declaration specifies various [attributes](#node-output-attributes) like max output records.  The record type is the template argument in the output declaration; the shader body requests storage and fills records of that type.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-output-examples:4 -->Each such output declaration specifies various [attributes](#node-output-attributes) like max output records.  The record type is the template argument in the output declaration; the shader body requests storage and fills records of that type.<!-- d3d12-review-inline:end:work-graphs:C-output-examples:4 --></ins>
 
 Below are some examples illustrating node output variations.
 
@@ -1473,18 +1619,18 @@ Some output examples are shown here:
     outRec.OutputComplete();
 ```
 
-A call to `records.OutputComplete()` must be reached for every call to `Get*NodeOutputRecords()` - see [OutputComplete()](#outputcomplete) for more detail.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-output-examples:15 -->A call to `records.OutputComplete()` must be reached for every call to `Get*NodeOutputRecords()` - see [OutputComplete()](#outputcomplete) for more detail.<!-- d3d12-review-inline:end:work-graphs:C-output-examples:15 --></ins>
 
 Once outputs have been declared, any threads in the thread group can collectively generate any of the output.
 
-For an EmptyNodeOutput (like `myProgressCounter` above), the shader calls `{Group|Thread}IncrementOutputCount(n)` to select the logical output count, otherwise 0 outputs are assumed when the shader finishes execution.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-output-examples:17 -->For an EmptyNodeOutput (like `myProgressCounter` above), the shader calls `{Group|Thread}IncrementOutputCount(n)` to select the logical output count, otherwise 0 outputs are assumed when the shader finishes execution.<!-- d3d12-review-inline:end:work-graphs:C-output-examples:17 --></ins>
 
 ```hlsl
     myProgressCounter.GroupIncrementOutputCount(12); // see myProgressCounter declared
                                                      // above
 ```
 
-For more see [Examples of input and output use in shaders](#examples-of-input-and-output-use-in-shaders).
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-output-examples:19 -->For more see [Examples of input and output use in shaders](#examples-of-input-and-output-use-in-shaders).<!-- d3d12-review-inline:end:work-graphs:C-output-examples:19 --></ins>
 
 <a id="recursion"></a>
 
@@ -1582,7 +1728,7 @@ If the app knows that 3 is the worst case recursion depth, it can manually speci
 
 To enable a single shader to be reused in multiple places in a graph as above, the input and output node IDs declared in the shader can be renamed when the shader is assigned to a node.
 
-In addition, an output declared by a shader can be left unassigned when it is used at a given node (opt-in with the `[AllowSparseNodes]` or `[UnboundedSparseNodes]` [output attribute](#node-output-attributes)), such as at `Round3Phase2` in the example graph above, which doesn't need to recurse to `CyclePhase1Shader` any more.  This tells the system that it doesn't need to reserve storage for that output when deciding to launch the shader at that node.  The app promises that when the shader executes it will not write to that output - any code in the shader that writes to it will get skipped due to flow control.  If the shader violates this promise and tries to write to an unreserved output, behavior is undefined.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-recursion:13 -->In addition, an output declared by a shader can be left unassigned when it is used at a given node (opt-in with the `[AllowSparseNodes]` or `[UnboundedSparseNodes]` [output attribute](#node-output-attributes)), such as at `Round3Phase2` in the example graph above, which doesn't need to recurse to `CyclePhase1Shader` any more.  This tells the system that it doesn't need to reserve storage for that output when deciding to launch the shader at that node.  The app promises that when the shader executes it will not write to that output - any code in the shader that writes to it will get skipped due to flow control.  If the shader violates this promise and tries to write to an unreserved output, behavior is undefined.<!-- d3d12-review-inline:end:work-graphs:C-recursion:13 --></ins>
 
 <a id="examples-of-input-and-output-use-in-shaders"></a>
 
@@ -1724,15 +1870,36 @@ void main( GroupNodeInputRecords<MY_STRUCT> inputRecord,
 }
 ```
 
-In these schematics, omitted application work initializes every record field that a consumer reads. Group-output writes are distributed among threads without conflicting writes, with barriers where threads read each other's partial results. The binning example assumes only the stated one thread allocates in each of its two per-thread steps, leaving two records of the shared four-record budget. The recursive example classifies a child as a box or a leaf, not both.
+<!-- d3d12-review-alert:begin:work-graphs:N-example-invariants:0 -->
 
-In the object-passing example, helper functions preserve the live-handle, valid-index and group-uniform-allocation/completion rules. `C` is group-uniform. The cumulative records requested by helpers, all per-thread allocations and the `C` group allocations remain within the declared 256-record budget and the record-size/storage limits. Completing a batch does not replenish the invocation's declared output-count budget.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> In these schematics, omitted application work initializes every record field that a consumer reads. Group-output writes are distributed among threads without conflicting writes, with barriers where threads read each other's partial results. The binning example assumes only the stated one thread allocates in each of its two per-thread steps, leaving two records of the shared four-record budget. The recursive example classifies a child as a box or a leaf, not both.
+
+<!-- d3d12-review-alert:end:work-graphs:N-example-invariants:0 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:N-example-invariants:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> In the object-passing example, helper functions preserve the live-handle, valid-index and group-uniform-allocation/completion rules. `C` is group-uniform. The cumulative records requested by helpers, all per-thread allocations and the `C` group allocations remain within the declared 256-record budget and the record-size/storage limits. Completing a batch does not replenish the invocation's declared output-count budget.
+
+<!-- d3d12-review-alert:end:work-graphs:N-example-invariants:1 -->
 
 <a id="producer---consumer-dataflow-through-uavs"></a>
 
 ## Published graph-specific UAV handoff
 
-The following rules are the published graph-specific producer/consumer handoff contract. They do not replace the common [synchronization and resource-access requirements](synchronization.md#operation-specific-contracts). Record completion is distinct from handoff of unrelated UAV data.
+<!-- d3d12-review-alert:begin:work-graphs:N-handoff-scope:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The following rules are the published graph-specific producer/consumer handoff contract. They do not replace the common [synchronization and resource-access requirements](synchronization.md#operation-specific-contracts). Record completion is distinct from handoff of unrelated UAV data.
+
+<!-- d3d12-review-alert:end:work-graphs:N-handoff-scope:0 -->
 
 ### Producer - consumer dataflow through UAVs
 
@@ -1862,13 +2029,20 @@ void myConsumer(
 
 ### Record backing storage
 
-The system manages storage for node input records in a backing memory pool allocated by apps.  The amount of memory to allocate is defined by [backing-memory requirements](state-objects.md#getworkgraphmemoryrequirements).  Ideally records stay in on chip caches as much as possible during shader execution, but the backing memory provides a place for the system to spill when needed.  This backing memory is also used to represent any other context state about work graph execution.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-backing:2 -->The system manages storage for node input records in a backing memory pool allocated by apps.  The amount of memory to allocate is defined by [backing-memory requirements](state-objects.md#getworkgraphmemoryrequirements).  Ideally records stay in on chip caches as much as possible during shader execution, but the backing memory provides a place for the system to spill when needed.  This backing memory is also used to represent any other context state about work graph execution.<!-- d3d12-review-inline:end:work-graphs:C-backing:2 --></ins>
 
 The separation of work graph definition from backing memory means an app can use multiple different sets of backing memory with the same work graph.  Each set represents an independent state of work graph execution. This could be necessary, for instance, if an app asks the GPU to run command lists on parallel device queues where each command list happens to use the same work graph.  Each invocation has independent context memory so there are no conflicts.
 
-Memory in individual records is only initialized when a shader writes to it as part of its output, or it is initialized as part of initiating work from a command list (described later).  This data is only defined to be valid as long as a record is waiting to be consumed or being consumed at a node input, and it is read/writeable by shaders that declare an RW input record.  The write option means that shaders can put shared scratch storage in the input record whose lifetime is scoped to all shaders that are invoked by the record.  Once any shader invocations that need to be invoked based on an input record have finished reading the record, the system returns the record back the pool, where the memory contents become undefined until it gets reused.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-backing:4 -->Memory in individual records is only initialized when a shader writes to it as part of its output, or it is initialized as part of initiating work from a command list (described later).  This data is only defined to be valid as long as a record is waiting to be consumed or being consumed at a node input, and it is read/writeable by shaders that declare an RW input record.  The write option means that shaders can put shared scratch storage in the input record whose lifetime is scoped to all shaders that are invoked by the record.  Once any shader invocations that need to be invoked based on an input record have finished reading the record, the system returns the record back the pool, where the memory contents become undefined until it gets reused.<!-- d3d12-review-inline:end:work-graphs:C-backing:4 --></ins>
 
-[Backing-memory binding and requirements](state-objects.md#backing-memory) defines the allocation size/granularity and bound range. [Synchronization](synchronization.md#operation-specific-contracts) defines the prohibition on parallel queue use of the same graph backing memory. [Initialization](state-objects.md#d3d12_set_work_graph_flags) defines when the backing memory must be initialized and when graph work must have completed before initialization. Record payload initialization is not backing-store initialization.
+<!-- d3d12-review-alert:begin:work-graphs:N-backing-owners:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> [Backing-memory binding and requirements](state-objects.md#backing-memory) defines the allocation size/granularity and bound range. [Synchronization](synchronization.md#operation-specific-contracts) defines the prohibition on parallel queue use of the same graph backing memory. [Initialization](state-objects.md#d3d12_set_work_graph_flags) defines when the backing memory must be initialized and when graph work must have completed before initialization. Record payload initialization is not backing-store initialization.
+
+<!-- d3d12-review-alert:end:work-graphs:N-backing-owners:0 -->
 
 <a id="no-deadlocks--system-overload"></a>
 
@@ -1898,7 +2072,7 @@ Consider a graph with two nodes, A -\> B.  Suppose A will execute several thread
 
 Similarly, consider a graph with a join, where producer nodes C and D both want to send data to E.  But the nature of the dependency is that C and D must finish some paired set of work before E can process the collective result.
 
-Here are a couple of ways to accomplish this synchronization without an explicit graph join operation:
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-joins:5 -->Here are a couple of ways to accomplish this synchronization without an explicit graph join operation:<!-- d3d12-review-inline:end:work-graphs:C-joins:5 --></ins>
 
 Take the example with nodes C and D feeding E.
 
@@ -1912,7 +2086,7 @@ In this fashion, application shader code can accomplish arbitrarily complex sync
 
 A consideration in favor of breaking up large logical graphs into sections, at least for now, is when data flows across nodes using explicit writes to UAVs (if records aren't sufficient), memory accesses must be done bypassing the fastest caches, such as using `globallycoherent` UAVs.  This is discussed in [Producer - consumer data flow through UAVs](#producer---consumer-dataflow-through-uavs).  Breaking up a graph would mean that UAV accesses within the graph can benefit from caches, given that there is bulk synchronization at the command list happening at the breaking point between separate graph invocations.  And further this would allow cases like one graph generating a texture via UAV writes and a subsequent one reading the data via texture filtering as an SRV with the benefits of memory caches intact within each graph.
 
-See [FinishedCrossGroupSharing](#finishedcrossgroupsharing) for a limited join scenario that is explicitly supported across the thread groups of a given dispatch when they happen to be sharing read/write access to an input record.  This one only exists because it was simple to do initially.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-joins:12 -->See [FinishedCrossGroupSharing](#finishedcrossgroupsharing) for a limited join scenario that is explicitly supported across the thread groups of a given dispatch when they happen to be sharing read/write access to an input record.  This one only exists because it was simple to do initially.<!-- d3d12-review-inline:end:work-graphs:C-joins:12 --></ins>
 
 <a id="scheduling-considerations-for-the-driver"></a>
 
@@ -1940,25 +2114,46 @@ In areas where a graph has branches, nodes of a similar depth in the graph from 
 
 Consider an implementation that uses a robust pool distribution following the above strategy.  Suppose it also happens to allocate the absolute minimum size for each pool - no larger than the maximum output a single thread group can produce at a given node. And suppose the implementation somehow manages to schedule work execution in some worst possible order.  The robust pool distribution guarantees that work will still complete.
 
-Thus, given work completion is trivial to guarantee, an implementation need only focus on how to maximize performance/bandwidth by taking advantage of larger than minimal pool sizes to account for GPU characteristics like number of execution units.  An implementation might also choose to use some simple heuristics in work scheduling order, if the most trivial "just run anything that's ready" scheduling strategy leaves a lot of performance on the table.
+<ins><!-- d3d12-review-inline:begin:work-graphs:C-scheduling:13 -->Thus, given work completion is trivial to guarantee, an implementation need only focus on how to maximize performance/bandwidth by taking advantage of larger than minimal pool sizes to account for GPU characteristics like number of execution units.  An implementation might also choose to use some simple heuristics in work scheduling order, if the most trivial "just run anything that's ready" scheduling strategy leaves a lot of performance on the table.<!-- d3d12-review-inline:end:work-graphs:C-scheduling:13 --></ins>
 
 <a id="interactions"></a>
 
 ### Interactions with other D3D12 features
 
-- Work Graphs do not support accessing protected content.
+- <ins><!-- d3d12-review-inline:begin:work-graphs:C-interactions:2 -->Work Graphs do not support accessing protected content.<!-- d3d12-review-inline:end:work-graphs:C-interactions:2 --></ins>
 - Work Graphs can't be used in bundles.
-- Node invocation accounting is defined by [pipeline statistics](counters-queries-and-predication.md#pipeline-statistics).
+- <ins><!-- d3d12-review-inline:begin:work-graphs:C-interactions:2 -->Node invocation accounting is defined by [pipeline statistics](counters-queries-and-predication.md#pipeline-statistics).<!-- d3d12-review-inline:end:work-graphs:C-interactions:2 --></ins>
 
 <a id="dispatch-inputs"></a>
 
 ## Dispatch input descriptions
 
-`DispatchGraph` submits input records to the currently selected work graph; this is not an `ExecuteIndirect` command-signature opcode. The four dispatch modes distinguish a single node-input description from a batch of node-input descriptions, and CPU-captured input from GPU-read input. Multiple descriptions can target one entrypoint; entrypoint indices are not node indices or node-array indices.
+<!-- d3d12-review-alert:begin:work-graphs:N-dispatch-ownership:0 -->
 
-For CPU modes, the descriptions and record payloads are consumed during recording and copied as required by the driver. GPU modes contain GPU virtual addresses, not host pointers: the nested descriptions and their payloads are read during execution. The application supplies resources and producer/consumer synchronization so those GPU reads see the intended descriptors and records. [Synchronization](synchronization.md#operation-specific-contracts) defines submission versus completion, repeated dispatches without implicit barriers and command-list access synchronization.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `DispatchGraph` submits input records to the currently selected work graph; this is not an `ExecuteIndirect` command-signature opcode. The four dispatch modes distinguish a single node-input description from a batch of node-input descriptions, and CPU-captured input from GPU-read input. Multiple descriptions can target one entrypoint; entrypoint indices are not node indices or node-array indices.
 
-The common resource [access/layout contract](synchronization.md#access-sync-compatibility) and [lifetime contract](resources.md) apply to every referenced GPU range. Changing a GPU descriptor or record before its consuming work has finished is not made safe by the CPU return from `DispatchGraph`.
+<!-- d3d12-review-alert:end:work-graphs:N-dispatch-ownership:0 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:N-dispatch-ownership:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> For CPU modes, the descriptions and record payloads are consumed during recording and copied as required by the driver. GPU modes contain GPU virtual addresses, not host pointers: the nested descriptions and their payloads are read during execution. The application supplies resources and producer/consumer synchronization so those GPU reads see the intended descriptors and records. [Synchronization](synchronization.md#operation-specific-contracts) defines submission versus completion, repeated dispatches without implicit barriers and command-list access synchronization.
+
+<!-- d3d12-review-alert:end:work-graphs:N-dispatch-ownership:1 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:N-dispatch-ownership:2 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The common resource [access/layout contract](synchronization.md#access-sync-compatibility) and [lifetime contract](resources.md) apply to every referenced GPU range. Changing a GPU descriptor or record before its consuming work has finished is not made safe by the CPU return from `DispatchGraph`.
+
+<!-- d3d12-review-alert:end:work-graphs:N-dispatch-ownership:2 -->
 
 <a id="d3d12_dispatch_graph_desc"></a>
 
@@ -1979,15 +2174,22 @@ typedef struct D3D12_DISPATCH_GRAPH_DESC
 
 ```
 
-Member                           | Definition
----------                           | ----------
-`Mode` | Which entry in the union to use.  See [D3D12_DISPATCH_MODE](#d3d12_dispatch_mode).
-`NodeCPUInput` | See [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input).
-`NodeGPUInput` | See [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input).  In GPU memory.  The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`).  Address must be 8 byte aligned.
-`MultiNodeCPUInput` | See [D3D12_MULTI_NODE_CPU_INPUT](#d3d12_multi_node_cpu_input).
-`MultiNodeGPUInput` | See [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input).  In GPU memory.  The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`).  Address must be 8 byte aligned.
+<!-- d3d12-review-alert:begin:work-graphs:T-D3D12_DISPATCH_GRAPH_DESC:3 -->
 
-Referenced by [DispatchGraph()](#dispatchgraph)
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> Member                           | Definition
+> ---------                           | ----------
+> `Mode` | Which entry in the union to use.  See [D3D12_DISPATCH_MODE](#d3d12_dispatch_mode).
+> `NodeCPUInput` | See [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input).
+> `NodeGPUInput` | See [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input).  In GPU memory.  The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`).  Address must be 8 byte aligned.
+> `MultiNodeCPUInput` | See [D3D12_MULTI_NODE_CPU_INPUT](#d3d12_multi_node_cpu_input).
+> `MultiNodeGPUInput` | See [D3D12_MULTI_NODE_GPU_INPUT](#d3d12_multi_node_gpu_input).  In GPU memory.  The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`).  Address must be 8 byte aligned.
+
+<!-- d3d12-review-alert:end:work-graphs:T-D3D12_DISPATCH_GRAPH_DESC:3 -->
+
+<ins><!-- d3d12-review-inline:begin:work-graphs:T-D3D12_DISPATCH_GRAPH_DESC:4 -->Referenced by [DispatchGraph()](#dispatchgraph)<!-- d3d12-review-inline:end:work-graphs:T-D3D12_DISPATCH_GRAPH_DESC:4 --></ins>
 
 <a id="d3d12_dispatch_mode"></a>
 
@@ -2022,14 +2224,21 @@ typedef struct D3D12_NODE_CPU_INPUT
 } D3D12_NODE_CPU_INPUT;
 ```
 
-Member                           | Definition
----------                           | ----------
-`UINT EntrypointIndex` | Provides index of a given entry to a work graph.  See the [GetEntrypointIndex](#getentrypointindex) API.
-`UINT NumRecords` | Number of records to add. `NumRecords` is always used - even with empty records the count of empty work items still drives node invocations.
-`const void* pRecords` | Record definitions, laid out with the same member packing and struct size rules that C uses.  If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be set to NULL if desired.  The data is copied/saved by the driver at the [DispatchGraph()](#dispatchgraph) call during command-list recording.  So immediately after the [DispatchGraph()](#dispatchgraph) call returns on the CPU timeline, the data pointed to is no longer referenced by the system and the caller has free ownership of the memory again. The address must be aligned to the largest scalar member size and be a multiple of 4 bytes.  The alignment requirement for a given entrypoint can be queried by [GetEntrypointRecordAlignmentInBytes()](#getentrypointrecordalignmentinbytes).
-`UINT64 RecordStrideInBytes` | Distance between the start of each record in bytes. If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be set to 0 if desired.  `RecordStrideInBytes` can be 0 to replicate a single record, and if it is nonzero, it must be at least as big as the entrypoint's input record size, which can be retrieved via [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) for convenience.  Stride must be aligned to the largest scalar member size and be a multiple of 4 bytes.  The alignment requirement for a given entrypoint can be queried by [GetEntrypointRecordAlignmentInBytes()](#getentrypointrecordalignmentinbytes).
+<!-- d3d12-review-alert:begin:work-graphs:T-D3D12_NODE_CPU_INPUT:5 -->
 
-Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> Member                           | Definition
+> ---------                           | ----------
+> `UINT EntrypointIndex` | Provides index of a given entry to a work graph.  See the [GetEntrypointIndex](#getentrypointindex) API.
+> `UINT NumRecords` | Number of records to add. `NumRecords` is always used - even with empty records the count of empty work items still drives node invocations.
+> `const void* pRecords` | Record definitions, laid out with the same member packing and struct size rules that C uses.  If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be set to NULL if desired.  The data is copied/saved by the driver at the [DispatchGraph()](#dispatchgraph) call during command-list recording.  So immediately after the [DispatchGraph()](#dispatchgraph) call returns on the CPU timeline, the data pointed to is no longer referenced by the system and the caller has free ownership of the memory again. The address must be aligned to the largest scalar member size and be a multiple of 4 bytes.  The alignment requirement for a given entrypoint can be queried by [GetEntrypointRecordAlignmentInBytes()](#getentrypointrecordalignmentinbytes).
+> `UINT64 RecordStrideInBytes` | Distance between the start of each record in bytes. If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be set to 0 if desired.  `RecordStrideInBytes` can be 0 to replicate a single record, and if it is nonzero, it must be at least as big as the entrypoint's input record size, which can be retrieved via [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) for convenience.  Stride must be aligned to the largest scalar member size and be a multiple of 4 bytes.  The alignment requirement for a given entrypoint can be queried by [GetEntrypointRecordAlignmentInBytes()](#getentrypointrecordalignmentinbytes).
+
+<!-- d3d12-review-alert:end:work-graphs:T-D3D12_NODE_CPU_INPUT:5 -->
+
+<ins><!-- d3d12-review-inline:begin:work-graphs:T-D3D12_NODE_CPU_INPUT:6 -->Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).<!-- d3d12-review-inline:end:work-graphs:T-D3D12_NODE_CPU_INPUT:6 --></ins>
 
 <a id="d3d12_node_gpu_input"></a>
 
@@ -2052,7 +2261,7 @@ Member                           | Definition
 `UINT NumRecords` | Number of records to add. `NumRecords` is always used - even with empty records the count of empty work items still drives node invocations.
 `D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE Records` | Record definitions, laid out with the same member packing and struct size rules that C uses. The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`).  If the target node's [input declaration](#node-input-declaration) declares an empty node input, or there is no input declaration (an alternate mode of empty node input), this parameter is ignored by the system and can be zeroed out if desired.  Stride can be 0 to replicate a single record, and if it is nonzero, it must be at least as big as the entrypoint's input record size, which can be retrieved via [GetEntrypointRecordSizeInBytes()](#getentrypointrecordsizeinbytes) for convenience.  Address and stride must also be aligned to the largest scalar member size and be a multiple of 4 bytes.  The alignment requirement for a given entrypoint can be queried by [GetEntrypointRecordAlignmentInBytes()](#getentrypointrecordalignmentinbytes). The system does not alter the record data, except if the records are consumed by a node that writes to its input records (see `RW{Dispatch\|Thread}NodeInputRecord` and `RWGroupNodeInputRecords` in [Node input declaration](#node-input-declaration)), in which case the contents of the writeable portions of the input records becomes undefined during graph execution.
 
-Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).
+<ins><!-- d3d12-review-inline:begin:work-graphs:T-D3D12_NODE_GPU_INPUT:5 -->Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).<!-- d3d12-review-inline:end:work-graphs:T-D3D12_NODE_GPU_INPUT:5 --></ins>
 
 <a id="d3d12_multi_node_cpu_input"></a>
 
@@ -2078,7 +2287,7 @@ Member                           | Definition
 `const D3D12_NODE_CPU_INPUT* pNodeInputs` | Array of [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input).  Address must be `8` byte aligned.
 `UINT64 NodeInputStrideInBytes` | Distance between `D3D12_NODE_CPU_INPUT` structs pointed to by pNodeInputs.  Stride can be 0 to replicate the input, otherwise the stride must be at least as large as `D3D12_NODE_CPU_INPUT`. Stride must be `8` byte aligned.
 
-Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).
+<ins><!-- d3d12-review-inline:begin:work-graphs:T-D3D12_MULTI_NODE_CPU_INPUT:6 -->Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).<!-- d3d12-review-inline:end:work-graphs:T-D3D12_MULTI_NODE_CPU_INPUT:6 --></ins>
 
 <a id="d3d12_multi_node_gpu_input"></a>
 
@@ -2095,12 +2304,19 @@ typedef struct D3D12_MULTI_NODE_GPU_INPUT
 
 ```
 
-Member                           | Definition
----------                           | ----------
-`UINT NumNodeInputs` | Number of entries in the array `NodeInputs`.
-`D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE NodeInputs` | Array of [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) with custom data stride.   Stride can be 0 to replicate the input, otherwise the stride must be at least as large as `D3D12_NODE_GPU_INPUT`.  Address and stride must be `8` byte aligned.  The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`).
+<!-- d3d12-review-alert:begin:work-graphs:T-D3D12_MULTI_NODE_GPU_INPUT:4 -->
 
-Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> Member                           | Definition
+> ---------                           | ----------
+> `UINT NumNodeInputs` | Number of entries in the array `NodeInputs`.
+> `D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE NodeInputs` | Array of [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input) with custom data stride.   Stride can be 0 to replicate the input, otherwise the stride must be at least as large as `D3D12_NODE_GPU_INPUT`.  Address and stride must be `8` byte aligned.  The memory must be accessible as a shader resource (`D3D12_BARRIER_ACCESS_COMMON` or `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`, or with legacy resource state `D3D12_RESOURCE_STATE_COMMON` or `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`).
+
+<!-- d3d12-review-alert:end:work-graphs:T-D3D12_MULTI_NODE_GPU_INPUT:4 -->
+
+<ins><!-- d3d12-review-inline:begin:work-graphs:T-D3D12_MULTI_NODE_GPU_INPUT:5 -->Referenced by [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).<!-- d3d12-review-inline:end:work-graphs:T-D3D12_MULTI_NODE_GPU_INPUT:5 --></ins>
 
 <a id="d3d12_gpu_virtual_address_and_stride"></a>
 
@@ -2114,19 +2330,68 @@ typedef struct D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE
 } D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE;
 ```
 
-`D3D12_GPU_VIRTUAL_ADDRESS` is an unsigned 64-bit GPU address. `StartAddress` supplies the address and `StrideInBytes` supplies a 64-bit byte stride; neither is a CPU pointer.
+<!-- d3d12-review-alert:begin:work-graphs:N-layout:0 -->
 
-For the GPU layouts, `D3D12_NODE_GPU_INPUT` has `EntrypointIndex` at byte 0, `NumRecords` at byte 4 and `Records` at byte 8 (`StartAddress` at byte 8 and `StrideInBytes` at byte 16), totaling 24 bytes. `D3D12_MULTI_NODE_GPU_INPUT` has `NumNodeInputs` at byte 0 and `NodeInputs` at byte 8, including the intervening alignment padding, totaling 24 bytes. GPU-resident descriptions are 8-byte aligned. A shader producing these descriptions must reproduce these layouts, including padding, rather than place a 64-bit address immediately after the first 32-bit count.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `D3D12_GPU_VIRTUAL_ADDRESS` is an unsigned 64-bit GPU address. `StartAddress` supplies the address and `StrideInBytes` supplies a 64-bit byte stride; neither is a CPU pointer.
 
-The CPU descriptions use host pointers. Their layout follows the host C ABI, not an interchangeable GPU pointer interpretation. In a 64-bit host ABI the two node-input descriptions have corresponding 24-byte layouts; CPU callers use the actual `sizeof` of their CPU types for descriptor strides. The 64-bit stride fields do not convert a CPU pointer to a GPU address.
+<!-- d3d12-review-alert:end:work-graphs:N-layout:0 -->
 
-For a nonempty record, address and nonzero stride satisfy both the largest-scalar-member alignment and the 4-byte minimum granularity. The size/alignment reflection methods below include the required input padding. A 2-byte scalar-only record therefore has reflected size 4 and alignment 4. A record containing an 8-byte scalar requires an 8-byte aligned address/stride; a vector does not introduce an extra vector-sized alignment in the C-style member packing.
+<!-- d3d12-review-alert:begin:work-graphs:N-layout:1 -->
 
-For a count `N`, byte stride `S` and record size `R`, records occur at `base + i*S` for `0 <= i < N`. For nonempty records and `N > 0`, the last accessed record ends at `base + (N-1)*S + R`; with `S == 0` every input uses the same record. For a batch of descriptors the same arithmetic applies using the appropriate CPU or GPU descriptor size and `NodeInputStrideInBytes` or `NodeInputs.StrideInBytes`. Address and byte-range calculations must be representable and must identify accessible storage; integer wrap does not create a valid range. Counts are 32-bit unsigned values while addresses and strides are 64-bit values: a caller computing byte ranges must not truncate the multiplication to 32 bits.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> For the GPU layouts, `D3D12_NODE_GPU_INPUT` has `EntrypointIndex` at byte 0, `NumRecords` at byte 4 and `Records` at byte 8 (`StartAddress` at byte 8 and `StrideInBytes` at byte 16), totaling 24 bytes. `D3D12_MULTI_NODE_GPU_INPUT` has `NumNodeInputs` at byte 0 and `NodeInputs` at byte 8, including the intervening alignment padding, totaling 24 bytes. GPU-resident descriptions are 8-byte aligned. A shader producing these descriptions must reproduce these layouts, including padding, rather than place a 64-bit address immediately after the first 32-bit count.
 
-`NumRecords == 0` supplies no records. `NumNodeInputs == 0` supplies no node-input descriptions. These are not one implicit empty record. For an empty-input entrypoint, `NumRecords` still counts logical work items even though payload address and payload stride are ignored. This does not remove the outer GPU-description address/alignment requirements in a GPU mode: its outer description address must be nonzero and reference an accessible description even if a count within that description is zero. For CPU multi-node input a nonzero `NumNodeInputs` requires accessible node-input descriptions. Each supplied node-input description selects a valid entrypoint in `[0, GetNumEntrypoints(WorkGraphIndex))`, where `WorkGraphIndex` identifies the bound graph.
+<!-- d3d12-review-alert:end:work-graphs:N-layout:1 -->
 
-An actual dynamic grid read from `SV_DispatchGrid` must respect the configured node maximum and the [work-graph grid limits](compute.md#work-graph-grids). A fixed grid is configured at the node and is not read from the payload. CPU inspection of CPU records does not imply CPU validation of GPU-produced descriptors, counts, addresses or grid contents. Invalid indices, ranges, sizes or configured maxima do not acquire a defined wrapping, clamping or sanitization behavior from an absent diagnostic.
+<!-- d3d12-review-alert:begin:work-graphs:N-layout:2 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The CPU descriptions use host pointers. Their layout follows the host C ABI, not an interchangeable GPU pointer interpretation. In a 64-bit host ABI the two node-input descriptions have corresponding 24-byte layouts; CPU callers use the actual `sizeof` of their CPU types for descriptor strides. The 64-bit stride fields do not convert a CPU pointer to a GPU address.
+
+<!-- d3d12-review-alert:end:work-graphs:N-layout:2 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:N-layout:3 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> For a nonempty record, address and nonzero stride satisfy both the largest-scalar-member alignment and the 4-byte minimum granularity. The size/alignment reflection methods below include the required input padding. A 2-byte scalar-only record therefore has reflected size 4 and alignment 4. A record containing an 8-byte scalar requires an 8-byte aligned address/stride; a vector does not introduce an extra vector-sized alignment in the C-style member packing.
+
+<!-- d3d12-review-alert:end:work-graphs:N-layout:3 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:N-layout:4 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> For a count `N`, byte stride `S` and record size `R`, records occur at `base + i*S` for `0 <= i < N`. For nonempty records and `N > 0`, the last accessed record ends at `base + (N-1)*S + R`; with `S == 0` every input uses the same record. For a batch of descriptors the same arithmetic applies using the appropriate CPU or GPU descriptor size and `NodeInputStrideInBytes` or `NodeInputs.StrideInBytes`. Address and byte-range calculations must be representable and must identify accessible storage; integer wrap does not create a valid range. Counts are 32-bit unsigned values while addresses and strides are 64-bit values: a caller computing byte ranges must not truncate the multiplication to 32 bits.
+
+<!-- d3d12-review-alert:end:work-graphs:N-layout:4 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:N-layout:5 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `NumRecords == 0` supplies no records. `NumNodeInputs == 0` supplies no node-input descriptions. These are not one implicit empty record. For an empty-input entrypoint, `NumRecords` still counts logical work items even though payload address and payload stride are ignored. This does not remove the outer GPU-description address/alignment requirements in a GPU mode: its outer description address must be nonzero and reference an accessible description even if a count within that description is zero. For CPU multi-node input a nonzero `NumNodeInputs` requires accessible node-input descriptions. Each supplied node-input description selects a valid entrypoint in `[0, GetNumEntrypoints(WorkGraphIndex))`, where `WorkGraphIndex` identifies the bound graph.
+
+<!-- d3d12-review-alert:end:work-graphs:N-layout:5 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:N-layout:6 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> An actual dynamic grid read from `SV_DispatchGrid` must respect the configured node maximum and the [work-graph grid limits](compute.md#work-graph-grids). A fixed grid is configured at the node and is not read from the payload. CPU inspection of CPU records does not imply CPU validation of GPU-produced descriptors, counts, addresses or grid contents. Invalid indices, ranges, sizes or configured maxima do not acquire a defined wrapping, clamping or sanitization behavior from an absent diagnostic.
+
+<!-- d3d12-review-alert:end:work-graphs:N-layout:6 -->
 
 <a id="dispatchgraph"></a>
 
@@ -2142,45 +2407,108 @@ void DispatchGraph(const D3D12_DISPATCH_GRAPH_DESC* pDesc);
 
 #### Behavior
 
-`DispatchGraph` initiates work in the selected work graph using the input description identified by `pDesc`.
+<!-- d3d12-review-alert:begin:work-graphs:A-DispatchGraph-behavior:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `DispatchGraph` initiates work in the selected work graph using the input description identified by `pDesc`.
+
+<!-- d3d12-review-alert:end:work-graphs:A-DispatchGraph-behavior:0 -->
 
 #### Parameters
 
-Parameter                           | Definition
----------                           | ----------
-`pDesc` | See [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).
+<!-- d3d12-review-alert:begin:work-graphs:A-DispatchGraph:1 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> Parameter                           | Definition
+> ---------                           | ----------
+> `pDesc` | See [D3D12_DISPATCH_GRAPH_DESC](#d3d12_dispatch_graph_desc).
+
+<!-- d3d12-review-alert:end:work-graphs:A-DispatchGraph:1 -->
 
 #### Execution context
 
-See [submission and completion](synchronization.md#operation-specific-contracts).
+<ins><!-- d3d12-review-inline:begin:work-graphs:A-DispatchGraph:3 -->See [submission and completion](synchronization.md#operation-specific-contracts).<!-- d3d12-review-inline:end:work-graphs:A-DispatchGraph:3 --></ins>
 
 `DispatchGraph` can only be called within command lists of type `DIRECT` or `COMPUTE`.  `BUNDLE` is not supported given that bundles are meant to be reused across command lists, and the [backing memory](#backing-memory) for work graphs can't be used for parallel graph invocations.
 
-For compute nodes, the appropriate sync in a command-list `Barrier()` call is `D3D12_BARRIER_SYNC_COMPUTE_SHADING`.
+<ins><!-- d3d12-review-inline:begin:work-graphs:A-DispatchGraph:5 -->For compute nodes, the appropriate sync in a command-list `Barrier()` call is `D3D12_BARRIER_SYNC_COMPUTE_SHADING`.<!-- d3d12-review-inline:end:work-graphs:A-DispatchGraph:5 --></ins>
 
-Note the discussion in [D3D12_SET_WORK_GRAPH_FLAGS](state-objects.md#d3d12_set_work_graph_flags) on `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` for semantics around [backing memory](#backing-memory).
+<ins><!-- d3d12-review-inline:begin:work-graphs:A-DispatchGraph:6 -->Note the discussion in [D3D12_SET_WORK_GRAPH_FLAGS](state-objects.md#d3d12_set_work_graph_flags) on `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` for semantics around [backing memory](#backing-memory).<!-- d3d12-review-inline:end:work-graphs:A-DispatchGraph:6 --></ins>
 
 #### Return values
 
-This method returns no value.
+<!-- d3d12-review-alert:begin:work-graphs:A-DispatchGraph-results:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> This method returns no value.
+
+<!-- d3d12-review-alert:end:work-graphs:A-DispatchGraph-results:1 -->
 
 #### Recording, validation and pass context
 
-`pDesc` must point to a valid `D3D12_DISPATCH_GRAPH_DESC` and must not be null. `Mode` must be one of the four declared `D3D12_DISPATCH_MODE` values; the corresponding union member supplies input. A work graph must be selected by [SetProgram](state-objects.md#setprogram), with compatible root/descriptor bindings. The CPU-input rules above apply at recording; GPU-input descriptions and records are not CPU snapshots. Command-list recording errors follow the [common recording contract](execution.md); this void method is not an `HRESULT` result or a promise to sanitize malformed GPU data.
+<!-- d3d12-review-alert:begin:work-graphs:A-DispatchGraph-results:3 -->
 
-The debug layer can inspect CPU-side entrypoint indices, record alignment and strides, and CPU-resident dynamic-grid fields; for GPU-input modes the CPU can inspect the outer GPU address/range, not arbitrary future GPU contents. The required grid maxima remain application requirements independently of which checks are performed.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `pDesc` must point to a valid `D3D12_DISPATCH_GRAPH_DESC` and must not be null. `Mode` must be one of the four declared `D3D12_DISPATCH_MODE` values; the corresponding union member supplies input. A work graph must be selected by [SetProgram](state-objects.md#setprogram), with compatible root/descriptor bindings. The CPU-input rules above apply at recording; GPU-input descriptions and records are not CPU snapshots. Command-list recording errors follow the [common recording contract](execution.md); this void method is not an `HRESULT` result or a promise to sanitize malformed GPU data.
 
-For an open render pass, the [operation-admission and preservation rules](output-merger.md#render-pass-operation-surface) apply. Recording admission does not by itself establish that graph-internal UAV communication, input/backing-memory writes or `INITIALIZE` are compatible with pass-local preservation or suspend/resume. That interaction remains qualified; it is not inferred from the rule for an ordinary compute `Dispatch`.
+<!-- d3d12-review-alert:end:work-graphs:A-DispatchGraph-results:3 -->
 
-The [predication policy](counters-queries-and-predication.md) and [command-list state](command-list-state.md) remain canonical; GPU-input mode does not create a new indirect command-signature operation.
+<!-- d3d12-review-alert:begin:work-graphs:A-DispatchGraph-results:4 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The debug layer can inspect CPU-side entrypoint indices, record alignment and strides, and CPU-resident dynamic-grid fields; for GPU-input modes the CPU can inspect the outer GPU address/range, not arbitrary future GPU contents. The required grid maxima remain application requirements independently of which checks are performed.
+
+<!-- d3d12-review-alert:end:work-graphs:A-DispatchGraph-results:4 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:A-DispatchGraph-results:5 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> For an open render pass, the [operation-admission and preservation rules](output-merger.md#render-pass-operation-surface) apply. Recording admission does not by itself establish that graph-internal UAV communication, input/backing-memory writes or `INITIALIZE` are compatible with pass-local preservation or suspend/resume. That interaction remains qualified; it is not inferred from the rule for an ordinary compute `Dispatch`.
+
+<!-- d3d12-review-alert:end:work-graphs:A-DispatchGraph-results:5 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:A-DispatchGraph-results:6 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The [predication policy](counters-queries-and-predication.md) and [command-list state](command-list-state.md) remain canonical; GPU-input mode does not create a new indirect command-signature operation.
+
+<!-- d3d12-review-alert:end:work-graphs:A-DispatchGraph-results:6 -->
 
 <a id="reflection"></a>
 
 ## Node and entrypoint reflection
 
-The methods below are declared by `ID3D12WorkGraphProperties`. They query the state object's work-graph metadata on the CPU. `WorkGraphIndex` selects a graph using the [graph metadata APIs](state-objects.md#graph-metadata). Node indices enumerate graph nodes; entrypoint indices enumerate graph entries, and are the indices used by `DispatchGraph`. A `D3D12_NODE_ID` is the [name/array-index identity](state-objects.md#d3d12_node_id), not a shader export name or a record address. Population and index assignment remain defined by [graph construction](state-objects.md#d3d12_work_graph_desc).
+<!-- d3d12-review-alert:begin:work-graphs:N-reflection-context:0 -->
 
-`GetNumWorkGraphs`, `GetProgramName`, `GetWorkGraphIndex`, `GetNodeLocalRootArgumentsTableIndex` and `GetWorkGraphMemoryRequirements` are defined in [State objects](state-objects.md#graph-metadata), not repeated here.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The methods below are declared by `ID3D12WorkGraphProperties`. They query the state object's work-graph metadata on the CPU. `WorkGraphIndex` selects a graph using the [graph metadata APIs](state-objects.md#graph-metadata). Node indices enumerate graph nodes; entrypoint indices enumerate graph entries, and are the indices used by `DispatchGraph`. A `D3D12_NODE_ID` is the [name/array-index identity](state-objects.md#d3d12_node_id), not a shader export name or a record address. Population and index assignment remain defined by [graph construction](state-objects.md#d3d12_work_graph_desc).
+
+<!-- d3d12-review-alert:end:work-graphs:N-reflection-context:0 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:N-reflection-context:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `GetNumWorkGraphs`, `GetProgramName`, `GetWorkGraphIndex`, `GetNodeLocalRootArgumentsTableIndex` and `GetWorkGraphMemoryRequirements` are defined in [State objects](state-objects.md#graph-metadata), not repeated here.
+
+<!-- d3d12-review-alert:end:work-graphs:N-reflection-context:1 -->
 
 <a id="getnumnodes"></a>
 
@@ -2194,19 +2522,33 @@ UINT GetNumNodes(UINT WorkGraphIndex);
 
 #### Behavior
 
-Returns the number of nodes in the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).
+<ins><!-- d3d12-review-inline:begin:work-graphs:A-GetNumNodes:0 -->Returns the number of nodes in the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).<!-- d3d12-review-inline:end:work-graphs:A-GetNumNodes:0 --></ins>
 
 #### Return values
 
-Returns `0` if the `WorkGraphIndex` is invalid.
+<ins><!-- d3d12-review-inline:begin:work-graphs:A-GetNumNodes:2 -->Returns `0` if the `WorkGraphIndex` is invalid.<!-- d3d12-review-inline:end:work-graphs:A-GetNumNodes:2 --></ins>
+
+<!-- d3d12-review-context:begin:work-graphs:A-GetNumNodes:3 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
 
 > It isn't strictly necessary to use this method, as an app might know from when it created the graph how many nodes are in it.  Even so, this method could help verify that assumptions are correct.
 
+<!-- d3d12-review-context:end:work-graphs:A-GetNumNodes:3 -->
+
 #### Parameters
 
-| Parameter | Definition |
-|---|---|
-| `WorkGraphIndex` | Graph index in `[0, GetNumWorkGraphs())`. |
+<!-- d3d12-review-alert:begin:work-graphs:A-GetNumNodes-parameters:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Parameter | Definition |
+> |---|---|
+> | `WorkGraphIndex` | Graph index in `[0, GetNumWorkGraphs())`. |
+
+<!-- d3d12-review-alert:end:work-graphs:A-GetNumNodes-parameters:1 -->
 
 <a id="getnodeid"></a>
 
@@ -2220,7 +2562,7 @@ D3D12_NODE_ID GetNodeID(UINT WorkGraphIndex, UINT NodeIndex);
 
 #### Behavior
 
-Returns the ID of the node at index `NodeIndex` (`[0... NumNodes-1]`) in the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).
+<ins><!-- d3d12-review-inline:begin:work-graphs:A-GetNodeID:0 -->Returns the ID of the node at index `NodeIndex` (`[0... NumNodes-1]`) in the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).<!-- d3d12-review-inline:end:work-graphs:A-GetNodeID:0 --></ins>
 
 #### Return values
 
@@ -2228,14 +2570,28 @@ Returns `{nullptr,0}` if `WorkGraphIndex` or `NodeIndex` are invalid.
 
 This method is the inverse of [GetNodeIndex](#getnodeindex).
 
+<!-- d3d12-review-context:begin:work-graphs:A-GetNodeID:4 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+
 > It isn't strictly necessary to use this method, as an app can choose to understand what order nodes are populated in the graph relative to the description passed into the work graph creation API (including any auto population of nodes that may have been requested), described in [D3D12_WORK_GRAPH_DESC](state-objects.md#d3d12_work_graph_desc).  Even so, this method could help verify that assumptions are correct.
+
+<!-- d3d12-review-context:end:work-graphs:A-GetNodeID:4 -->
 
 #### Parameters
 
-| Parameter | Definition |
-|---|---|
-| `WorkGraphIndex` | Graph index in `[0, GetNumWorkGraphs())`. |
-| `NodeIndex` | Node index in `[0, GetNumNodes(WorkGraphIndex))`. |
+<!-- d3d12-review-alert:begin:work-graphs:A-GetNodeID-parameters:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Parameter | Definition |
+> |---|---|
+> | `WorkGraphIndex` | Graph index in `[0, GetNumWorkGraphs())`. |
+> | `NodeIndex` | Node index in `[0, GetNumNodes(WorkGraphIndex))`. |
+
+<!-- d3d12-review-alert:end:work-graphs:A-GetNodeID-parameters:1 -->
 
 <a id="getnodeindex"></a>
 
@@ -2249,22 +2605,36 @@ UINT GetNodeIndex(UINT WorkGraphIndex, D3D12_NODE_ID NodeID);
 
 #### Behavior
 
-Returns the node index (`[0... NumNodes-1]`) of the node named `NodeID` in the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).
+<ins><!-- d3d12-review-inline:begin:work-graphs:A-GetNodeIndex:0 -->Returns the node index (`[0... NumNodes-1]`) of the node named `NodeID` in the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).<!-- d3d12-review-inline:end:work-graphs:A-GetNodeIndex:0 --></ins>
 
 #### Return values
 
-Returns `-1` if `WorkGraphIndex` is invalid or `NodeID` does not identify a node in the work graph.
+<ins><!-- d3d12-review-inline:begin:work-graphs:A-GetNodeIndex:2 -->Returns `-1` if `WorkGraphIndex` is invalid or `NodeID` does not identify a node in the work graph.<!-- d3d12-review-inline:end:work-graphs:A-GetNodeIndex:2 --></ins>
 
 This method is the inverse of [GetNodeID](#getnodeid).
 
+<!-- d3d12-review-context:begin:work-graphs:A-GetNodeIndex:4 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+
 > It isn't strictly necessary to use this method, as an app can choose to understand what order nodes are populated in the graph relative to the description passed into the work graph creation API (including any auto population of nodes that may have been requested), described in [D3D12_WORK_GRAPH_DESC](state-objects.md#d3d12_work_graph_desc).  Even so, this method could help verify that assumptions are correct.
+
+<!-- d3d12-review-context:end:work-graphs:A-GetNodeIndex:4 -->
 
 #### Parameters
 
-| Parameter | Definition |
-|---|---|
-| `WorkGraphIndex` | Graph index in `[0, GetNumWorkGraphs())`. |
-| `NodeID` | Name and array-index pair to look up in this graph. |
+<!-- d3d12-review-alert:begin:work-graphs:A-GetNodeIndex-parameters:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Parameter | Definition |
+> |---|---|
+> | `WorkGraphIndex` | Graph index in `[0, GetNumWorkGraphs())`. |
+> | `NodeID` | Name and array-index pair to look up in this graph. |
+
+<!-- d3d12-review-alert:end:work-graphs:A-GetNodeIndex-parameters:1 -->
 
 <a id="getnumentrypoints"></a>
 
@@ -2278,19 +2648,33 @@ UINT GetNumEntrypoints(UINT WorkGraphIndex);
 
 #### Behavior
 
-Returns the number of entrypoints in the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).
+<ins><!-- d3d12-review-inline:begin:work-graphs:A-GetNumEntrypoints:0 -->Returns the number of entrypoints in the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).<!-- d3d12-review-inline:end:work-graphs:A-GetNumEntrypoints:0 --></ins>
 
 #### Return values
 
 Returns `-1` if the `WorkGraphIndex` is invalid.
 
+<!-- d3d12-review-context:begin:work-graphs:A-GetNumEntrypoints:3 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+
 > It isn't strictly necessary to use this method, as an app might know from when it created the graph how many entrypoints there are.  Even so, this method could help verify that assumptions are correct.
+
+<!-- d3d12-review-context:end:work-graphs:A-GetNumEntrypoints:3 -->
 
 #### Parameters
 
-| Parameter | Definition |
-|---|---|
-| `WorkGraphIndex` | Graph index in `[0, GetNumWorkGraphs())`. |
+<!-- d3d12-review-alert:begin:work-graphs:A-GetNumEntrypoints-parameters:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Parameter | Definition |
+> |---|---|
+> | `WorkGraphIndex` | Graph index in `[0, GetNumWorkGraphs())`. |
+
+<!-- d3d12-review-alert:end:work-graphs:A-GetNumEntrypoints-parameters:1 -->
 
 <a id="getentrypointid"></a>
 
@@ -2304,7 +2688,7 @@ D3D12_NODE_ID GetEntrypointID(UINT WorkGraphIndex, UINT EntrypointIndex);
 
 #### Behavior
 
-Returns the Node ID of entrypoint index `EntrypointIndex` (`[0... NumEntrypoints-1]`) in the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).
+<ins><!-- d3d12-review-inline:begin:work-graphs:A-GetEntrypointID:0 -->Returns the Node ID of entrypoint index `EntrypointIndex` (`[0... NumEntrypoints-1]`) in the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).<!-- d3d12-review-inline:end:work-graphs:A-GetEntrypointID:0 --></ins>
 
 #### Return values
 
@@ -2312,14 +2696,28 @@ Returns `{nullptr,0}` if the `WorkGraphIndex` or `EntrypointIndex` are invalid.
 
 This method is the inverse of [GetEntrypointIndex](#getentrypointindex).
 
+<!-- d3d12-review-context:begin:work-graphs:A-GetEntrypointID:4 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+
 > It isn't strictly necessary to use this method, as an app can choose to understand what the node ID will be for a given entrypoint index based on the order nodes are populated in the graph relative to the description passed into the work graph creation API (including any auto population of nodes that may have been requested), described in [D3D12_WORK_GRAPH_DESC](state-objects.md#d3d12_work_graph_desc).  Even so, this method could help verify that assumptions are correct.
+
+<!-- d3d12-review-context:end:work-graphs:A-GetEntrypointID:4 -->
 
 #### Parameters
 
-| Parameter | Definition |
-|---|---|
-| `WorkGraphIndex` | Graph index in `[0, GetNumWorkGraphs())`. |
-| `EntrypointIndex` | Entry index in `[0, GetNumEntrypoints(WorkGraphIndex))`. |
+<!-- d3d12-review-alert:begin:work-graphs:A-GetEntrypointID-parameters:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Parameter | Definition |
+> |---|---|
+> | `WorkGraphIndex` | Graph index in `[0, GetNumWorkGraphs())`. |
+> | `EntrypointIndex` | Entry index in `[0, GetNumEntrypoints(WorkGraphIndex))`. |
+
+<!-- d3d12-review-alert:end:work-graphs:A-GetEntrypointID-parameters:1 -->
 
 <a id="getentrypointindex"></a>
 
@@ -2333,22 +2731,36 @@ UINT GetEntrypointIndex(UINT WorkGraphIndex, D3D12_NODE_ID NodeID);
 
 #### Behavior
 
-Returns the entrypoint index (`[0... NumEntrypoints-1]`) for the specified entrypoint NodeID in the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).
+<ins><!-- d3d12-review-inline:begin:work-graphs:A-GetEntrypointIndex:0 -->Returns the entrypoint index (`[0... NumEntrypoints-1]`) for the specified entrypoint NodeID in the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).<!-- d3d12-review-inline:end:work-graphs:A-GetEntrypointIndex:0 --></ins>
 
 #### Return values
 
-Returns `-1` if the `WorkGraphIndex` is invalid or `NodeID` is not an entrypoint in the work graph.
+<ins><!-- d3d12-review-inline:begin:work-graphs:A-GetEntrypointIndex:2 -->Returns `-1` if the `WorkGraphIndex` is invalid or `NodeID` is not an entrypoint in the work graph.<!-- d3d12-review-inline:end:work-graphs:A-GetEntrypointIndex:2 --></ins>
 
 This method is the inverse of [GetEntrypointID](#getentrypointid).
 
+<!-- d3d12-review-context:begin:work-graphs:A-GetEntrypointIndex:4 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+
 > It isn't strictly necessary to use this method, as an app can choose to understand what the entrypoint index will be for a given node ID based on the order nodes are populated in the graph relative to the description passed into the work graph creation API (including any auto population of nodes that may have been requested), described in [D3D12_WORK_GRAPH_DESC](state-objects.md#d3d12_work_graph_desc).  Even so, this method could help verify that assumptions are correct.
+
+<!-- d3d12-review-context:end:work-graphs:A-GetEntrypointIndex:4 -->
 
 #### Parameters
 
-| Parameter | Definition |
-|---|---|
-| `WorkGraphIndex` | Graph index in `[0, GetNumWorkGraphs())`. |
-| `NodeID` | Name and array-index pair to look up in this graph. |
+<!-- d3d12-review-alert:begin:work-graphs:A-GetEntrypointIndex-parameters:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Parameter | Definition |
+> |---|---|
+> | `WorkGraphIndex` | Graph index in `[0, GetNumWorkGraphs())`. |
+> | `NodeID` | Name and array-index pair to look up in this graph. |
+
+<!-- d3d12-review-alert:end:work-graphs:A-GetEntrypointIndex-parameters:1 -->
 
 <a id="getentrypointrecordsizeinbytes"></a>
 
@@ -2362,9 +2774,9 @@ UINT GetEntrypointRecordSizeInBytes(UINT WorkGraphIndex, UINT EntrypointIndex);
 
 #### Behavior
 
-Returns the record size of entry point index `EntrypointIndex` (`[0... NumEntrypoints-1]`) in the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).
+<ins><!-- d3d12-review-inline:begin:work-graphs:A-GetEntrypointRecordSizeInBytes:0 -->Returns the record size of entry point index `EntrypointIndex` (`[0... NumEntrypoints-1]`) in the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).<!-- d3d12-review-inline:end:work-graphs:A-GetEntrypointRecordSizeInBytes:0 --></ins>
 
-This includes any padding necessary to meet the input record size requirements described in [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and equivalently in [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input).  For instance a record that just contains a uint16 (which appears to be 2 bytes) actually counts as 4 bytes due to the minimum granularity specified in those sections.
+<ins><!-- d3d12-review-inline:begin:work-graphs:A-GetEntrypointRecordSizeInBytes:1 -->This includes any padding necessary to meet the input record size requirements described in [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and equivalently in [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input).  For instance a record that just contains a uint16 (which appears to be 2 bytes) actually counts as 4 bytes due to the minimum granularity specified in those sections.<!-- d3d12-review-inline:end:work-graphs:A-GetEntrypointRecordSizeInBytes:1 --></ins>
 
 #### Return values
 
@@ -2372,14 +2784,28 @@ Returns `-1` if the `WorkGraphIndex` or `EntrypointIndex` are invalid.
 
 Returns `0` for entrypoints that have empty input.
 
+<!-- d3d12-review-context:begin:work-graphs:A-GetEntrypointRecordSizeInBytes:5 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+
 > This method can be handy as a confirmation that a graph's input is what the app expects.  Apps really need to know this from looking at the shaders they authored (to even know what data to pass), but this serves as an optional sanity check. This reflects what [DispatchGraph()](#dispatchgraph) expects for input.
+
+<!-- d3d12-review-context:end:work-graphs:A-GetEntrypointRecordSizeInBytes:5 -->
 
 #### Parameters
 
-| Parameter | Definition |
-|---|---|
-| `WorkGraphIndex` | Graph index in `[0, GetNumWorkGraphs())`. |
-| `EntrypointIndex` | Entry index in `[0, GetNumEntrypoints(WorkGraphIndex))`. |
+<!-- d3d12-review-alert:begin:work-graphs:A-GetEntrypointRecordSizeInBytes-parameters:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Parameter | Definition |
+> |---|---|
+> | `WorkGraphIndex` | Graph index in `[0, GetNumWorkGraphs())`. |
+> | `EntrypointIndex` | Entry index in `[0, GetNumEntrypoints(WorkGraphIndex))`. |
+
+<!-- d3d12-review-alert:end:work-graphs:A-GetEntrypointRecordSizeInBytes-parameters:1 -->
 
 <a id="getentrypointrecordalignmentinbytes"></a>
 
@@ -2393,9 +2819,9 @@ UINT GetEntrypointRecordAlignmentInBytes(UINT WorkGraphIndex, UINT EntrypointInd
 
 #### Behavior
 
-Returns the record alignment of entry point index `EntrypointIndex` (`[0... NumEntrypoints-1]`) in the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).
+<ins><!-- d3d12-review-inline:begin:work-graphs:A-GetEntrypointRecordAlignmentInBytes:0 -->Returns the record alignment of entry point index `EntrypointIndex` (`[0... NumEntrypoints-1]`) in the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).<!-- d3d12-review-inline:end:work-graphs:A-GetEntrypointRecordAlignmentInBytes:0 --></ins>
 
-This includes any padding necessary to meet the input record alignment requirements described in [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and equivalently in [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input).  For instance a record that just contains a uint16 (which appears to be 2 bytes) actually counts as requiring a 4 byte alignment due to the minimum granularity specified in those sections.
+<ins><!-- d3d12-review-inline:begin:work-graphs:A-GetEntrypointRecordAlignmentInBytes:1 -->This includes any padding necessary to meet the input record alignment requirements described in [D3D12_NODE_CPU_INPUT](#d3d12_node_cpu_input) and equivalently in [D3D12_NODE_GPU_INPUT](#d3d12_node_gpu_input).  For instance a record that just contains a uint16 (which appears to be 2 bytes) actually counts as requiring a 4 byte alignment due to the minimum granularity specified in those sections.<!-- d3d12-review-inline:end:work-graphs:A-GetEntrypointRecordAlignmentInBytes:1 --></ins>
 
 #### Return values
 
@@ -2403,24 +2829,59 @@ Returns `-1` if the `WorkGraphIndex` or `EntrypointIndex` are invalid.
 
 Returns `0` for entrypoints that have empty input.
 
+<!-- d3d12-review-context:begin:work-graphs:A-GetEntrypointRecordAlignmentInBytes:5 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+
 > This method can be handy as a confirmation that a graph's input is what the app expects.  Apps really need to know this from looking at the shaders they authored (to even know what data to pass), but this serves as an optional sanity check. This reflects what [DispatchGraph()](#dispatchgraph) expects for input.
+
+<!-- d3d12-review-context:end:work-graphs:A-GetEntrypointRecordAlignmentInBytes:5 -->
 
 #### Parameters
 
-| Parameter | Definition |
-|---|---|
-| `WorkGraphIndex` | Graph index in `[0, GetNumWorkGraphs())`. |
-| `EntrypointIndex` | Entry index in `[0, GetNumEntrypoints(WorkGraphIndex))`. |
+<!-- d3d12-review-alert:begin:work-graphs:A-GetEntrypointRecordAlignmentInBytes-parameters:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Parameter | Definition |
+> |---|---|
+> | `WorkGraphIndex` | Graph index in `[0, GetNumWorkGraphs())`. |
+> | `EntrypointIndex` | Entry index in `[0, GetNumEntrypoints(WorkGraphIndex))`. |
+
+<!-- d3d12-review-alert:end:work-graphs:A-GetEntrypointRecordAlignmentInBytes-parameters:1 -->
 
 <a id="driver-contracts"></a>
 
 ## Driver and compiler contracts
 
-The runtime passes resolved node properties, record metadata and graph connectivity to the driver during state-object construction. Properties passed by the runtime take precedence over shader declarations. The driver uses this graph and the supplied backing-memory range to implement input storage, scheduling and progress; HLSL record operations are shader/compiler operations, not a separate CPU callback for every operation.
+<!-- d3d12-review-alert:begin:work-graphs:N-ddi:0 -->
 
-The public dispatch DDI is `PFND3D12DDI_DISPATCH_GRAPH_0108` in `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnDispatchGraph`. The published `0114` table uses `PFND3D12DDI_DISPATCH_GRAPH_0114` with `D3D12DDI_API_HCOMMANDLIST` and the same `D3D12DDI_DISPATCH_GRAPH_DESC_0108` input structure. These are versioned table contracts, not invented one-to-one callbacks for record allocation/completion. [State-object driver contracts](state-objects.md#driver-contracts) define creation, program identifiers, memory requirements and program selection.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The runtime passes resolved node properties, record metadata and graph connectivity to the driver during state-object construction. Properties passed by the runtime take precedence over shader declarations. The driver uses this graph and the supplied backing-memory range to implement input storage, scheduling and progress; HLSL record operations are shader/compiler operations, not a separate CPU callback for every operation.
 
-The exact public dispatch/input declarations follow. CPU input pointers identify CPU descriptions/data at recording. The GPU-mode union members identify GPU-resident descriptions read during execution; their nested addresses/strides retain the API layout and access requirements above. The resolved node-property declarations and their complete per-field contracts remain canonical in State objects, with the exact destinations below.
+<!-- d3d12-review-alert:end:work-graphs:N-ddi:0 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:N-ddi:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The public dispatch DDI is `PFND3D12DDI_DISPATCH_GRAPH_0108` in `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnDispatchGraph`. The published `0114` table uses `PFND3D12DDI_DISPATCH_GRAPH_0114` with `D3D12DDI_API_HCOMMANDLIST` and the same `D3D12DDI_DISPATCH_GRAPH_DESC_0108` input structure. These are versioned table contracts, not invented one-to-one callbacks for record allocation/completion. [State-object driver contracts](state-objects.md#driver-contracts) define creation, program identifiers, memory requirements and program selection.
+
+<!-- d3d12-review-alert:end:work-graphs:N-ddi:1 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:N-ddi:2 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The exact public dispatch/input declarations follow. CPU input pointers identify CPU descriptions/data at recording. The GPU-mode union members identify GPU-resident descriptions read during execution; their nested addresses/strides retain the API layout and access requirements above. The resolved node-property declarations and their complete per-field contracts remain canonical in State objects, with the exact destinations below.
+
+<!-- d3d12-review-alert:end:work-graphs:N-ddi:2 -->
 
 <a id="d3d12ddi_dispatch_mode_0108"></a>
 
@@ -2550,46 +3011,88 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DISPATCH_GRAPH_0114 )(D3D12DDI_API_HCOMMAND
 PFND3D12DDI_DISPATCH_GRAPH_0114                                         pfnDispatchGraph;
 ```
 
-For `PFND3D12DDI_DISPATCH_GRAPH_0108`, the first argument is the driver command-list handle. The `0114` callback's first argument is the API command-list handle. The second argument in either callback points to `D3D12DDI_DISPATCH_GRAPH_DESC_0108`. Both callbacks return no value. `Mode` selects the union member with the same single/multiple-node and CPU/GPU distinction as the API. `D3D12DDI_GPU_VIRTUAL_ADDRESS_AND_STRIDE` embeds the 64-bit GPU address and 64-bit byte stride, not a pointer to an address-and-stride object.
+<!-- d3d12-review-alert:begin:work-graphs:N-driver-parameters:0 -->
 
-The runtime-resolved construction metadata used by dispatch has the following canonical definitions:
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> For `PFND3D12DDI_DISPATCH_GRAPH_0108`, the first argument is the driver command-list handle. The `0114` callback's first argument is the API command-list handle. The second argument in either callback points to `D3D12DDI_DISPATCH_GRAPH_DESC_0108`. Both callbacks return no value. `Mode` selects the union member with the same single/multiple-node and CPU/GPU distinction as the API. `D3D12DDI_GPU_VIRTUAL_ADDRESS_AND_STRIDE` embeds the 64-bit GPU address and 64-bit byte stride, not a pointer to an address-and-stride object.
 
-| Contract | Complete declaration and field behavior |
-|---|---|
-| Node identity | [D3D12DDI_NODE_ID_0108](state-objects.md#d3d12ddi_node_id_0108) |
-| Input/output kind and flags | [D3D12DDI_NODE_IO_KIND_0108](state-objects.md#d3d12ddi_node_io_kind_0108), [D3D12DDI_NODE_IO_FLAGS_0108](state-objects.md#d3d12ddi_node_io_flags_0108) |
-| Dynamic grid location, component count and width | [D3D12DDI_RECORD_DISPATCH_GRID_0108](state-objects.md#d3d12ddi_record_dispatch_grid_0108) |
-| Stable node and connectivity links | [D3D12DDI_NODE_0108](state-objects.md#d3d12ddi_node_0108), [D3D12DDI_NODE_LIST_ENTRY_0108](state-objects.md#d3d12ddi_node_list_entry_0108) |
-| Output record size, sparse range, count/shared-count budgets and output list | [D3D12DDI_NODE_OUTPUT_0108](state-objects.md#d3d12ddi_node_output_0108) |
-| Broadcasting record input, group-shared usage, recursion, root-table index, input sharing, fixed/dynamic grid and outputs | [D3D12DDI_BROADCASTING_LAUNCH_NODE_PROPERTIES_0108](state-objects.md#d3d12ddi_broadcasting_launch_node_properties_0108) |
-| Coalescing record input, input-array maximum, group-shared usage, recursion, root-table index, sharing and outputs | [D3D12DDI_COALESCING_LAUNCH_NODE_PROPERTIES_0108](state-objects.md#d3d12ddi_coalescing_launch_node_properties_0108) |
-| Thread record input, recursion, root-table index, sharing and outputs | [D3D12DDI_THREAD_LAUNCH_NODE_PROPERTIES_0108](state-objects.md#d3d12ddi_thread_launch_node_properties_0108) |
-| Shader and node-property selection | [D3D12DDI_SHADER_NODE_0108](state-objects.md#d3d12ddi_shader_node_0108), [D3D12DDI_NODE_PROPERTIES_TYPE_0108](state-objects.md#d3d12ddi_node_properties_type_0108) |
-| Graph version, nodes and entrypoint lists | [D3D12DDI_WORK_GRAPH_DESC_0108](state-objects.md#d3d12ddi_work_graph_desc_0108) |
+<!-- d3d12-review-alert:end:work-graphs:N-driver-parameters:0 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:N-driver-parameters:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The runtime-resolved construction metadata used by dispatch has the following canonical definitions:
+
+<!-- d3d12-review-alert:end:work-graphs:N-driver-parameters:1 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:N-driver-parameters:2 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Contract | Complete declaration and field behavior |
+> |---|---|
+> | Node identity | [D3D12DDI_NODE_ID_0108](state-objects.md#d3d12ddi_node_id_0108) |
+> | Input/output kind and flags | [D3D12DDI_NODE_IO_KIND_0108](state-objects.md#d3d12ddi_node_io_kind_0108), [D3D12DDI_NODE_IO_FLAGS_0108](state-objects.md#d3d12ddi_node_io_flags_0108) |
+> | Dynamic grid location, component count and width | [D3D12DDI_RECORD_DISPATCH_GRID_0108](state-objects.md#d3d12ddi_record_dispatch_grid_0108) |
+> | Stable node and connectivity links | [D3D12DDI_NODE_0108](state-objects.md#d3d12ddi_node_0108), [D3D12DDI_NODE_LIST_ENTRY_0108](state-objects.md#d3d12ddi_node_list_entry_0108) |
+> | Output record size, sparse range, count/shared-count budgets and output list | [D3D12DDI_NODE_OUTPUT_0108](state-objects.md#d3d12ddi_node_output_0108) |
+> | Broadcasting record input, group-shared usage, recursion, root-table index, input sharing, fixed/dynamic grid and outputs | [D3D12DDI_BROADCASTING_LAUNCH_NODE_PROPERTIES_0108](state-objects.md#d3d12ddi_broadcasting_launch_node_properties_0108) |
+> | Coalescing record input, input-array maximum, group-shared usage, recursion, root-table index, sharing and outputs | [D3D12DDI_COALESCING_LAUNCH_NODE_PROPERTIES_0108](state-objects.md#d3d12ddi_coalescing_launch_node_properties_0108) |
+> | Thread record input, recursion, root-table index, sharing and outputs | [D3D12DDI_THREAD_LAUNCH_NODE_PROPERTIES_0108](state-objects.md#d3d12ddi_thread_launch_node_properties_0108) |
+> | Shader and node-property selection | [D3D12DDI_SHADER_NODE_0108](state-objects.md#d3d12ddi_shader_node_0108), [D3D12DDI_NODE_PROPERTIES_TYPE_0108](state-objects.md#d3d12ddi_node_properties_type_0108) |
+> | Graph version, nodes and entrypoint lists | [D3D12DDI_WORK_GRAPH_DESC_0108](state-objects.md#d3d12ddi_work_graph_desc_0108) |
+
+<!-- d3d12-review-alert:end:work-graphs:N-driver-parameters:2 -->
 
 <a id="driver-current-graph-dispatch"></a>
 
 ### Current graph-dispatch recording boundary
 
-Both current `pfnDispatchGraph` forms retain the
-[published dispatch/input graph](#driver-contracts). Only the command-list
-representation changes: ordinary `D3D12DDI_HCOMMANDLIST` versus
-`D3D12DDI_API_HCOMMANDLIST` under the
-[work-command handle contract](execution.md#work-command-handles).
-Neither representation transfers ownership or proves prior input validation.
+<!-- d3d12-review-alert:begin:work-graphs:CS-graph-dispatch:0 -->
 
-`Mode` selects one of the four defined CPU/GPU, single/batched input
-interpretations. For CPU modes the driver captures the outer description,
-strided node-input descriptions and required record bytes before returning;
-the shallow runtime forwarding does not provide a hidden deep copy.
-For GPU modes the nested descriptions and records remain GPU reads with
-the complete [layout, count, stride, alignment and range rules](#dispatch-inputs).
-Zero counts and empty records retain their distinct meanings; 64-bit byte
-strides do not turn host pointers into GPU addresses.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Both current `pfnDispatchGraph` forms retain the
+> [published dispatch/input graph](#driver-contracts). Only the command-list
+> representation changes: ordinary `D3D12DDI_HCOMMANDLIST` versus
+> `D3D12DDI_API_HCOMMANDLIST` under the
+> [work-command handle contract](execution.md#work-command-handles).
+> Neither representation transfers ownership or proves prior input validation.
 
-The [DispatchGraph contract](#dispatchgraph) owns program/compute-root
-selection, backing-memory initialization, recording/predication/context and
-resource synchronization. Driver scheduling/record operations do not acquire
-extra CPU DDIs per shader intrinsic. These void callbacks return neither
-GPU completion nor a per-call `HRESULT`; recording errors retain the
-[shared driver path](execution.md#lifecycle-driver-errors).
+<!-- d3d12-review-alert:end:work-graphs:CS-graph-dispatch:0 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:CS-graph-dispatch:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `Mode` selects one of the four defined CPU/GPU, single/batched input
+> interpretations. For CPU modes the driver captures the outer description,
+> strided node-input descriptions and required record bytes before returning;
+> the shallow runtime forwarding does not provide a hidden deep copy.
+> For GPU modes the nested descriptions and records remain GPU reads with
+> the complete [layout, count, stride, alignment and range rules](#dispatch-inputs).
+> Zero counts and empty records retain their distinct meanings; 64-bit byte
+> strides do not turn host pointers into GPU addresses.
+
+<!-- d3d12-review-alert:end:work-graphs:CS-graph-dispatch:1 -->
+
+<!-- d3d12-review-alert:begin:work-graphs:CS-graph-dispatch:2 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The [DispatchGraph contract](#dispatchgraph) owns program/compute-root
+> selection, backing-memory initialization, recording/predication/context and
+> resource synchronization. Driver scheduling/record operations do not acquire
+> extra CPU DDIs per shader intrinsic. These void callbacks return neither
+> GPU completion nor a per-call `HRESULT`; recording errors retain the
+> [shared driver path](execution.md#lifecycle-driver-errors).
+
+<!-- d3d12-review-alert:end:work-graphs:CS-graph-dispatch:2 -->

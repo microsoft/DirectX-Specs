@@ -2,28 +2,55 @@
 
 # Amplification and mesh shaders
 
-A mesh graphics pipeline executes a mesh shader (MS), optionally preceded by an amplification shader (AS), instead of the input-assembly/VS/HS/tessellator/DS/GS geometry path. The mesh stage supplies vertices and primitives to the rasterizer. It does not use fixed-function input assembly or stream-output capture. [Mesh pipeline creation](pipeline-state.md#mesh-pipelines), [graphics root-signature compatibility](binding.md#pipeline-compatibility) and [initial/reset/bundle pipeline selection](command-list-state.md#pipeline-selection) define the shared selection and binding contracts.
+<!-- d3d12-review-legend:begin -->
 
-The current amplification/mesh driver object creation/sizing/destruction contracts
-are defined with [pipeline component creation](pipeline-state.md#driver-shader-objects)
-and its [exact slot associations](pipeline-state.md#driver-object-slots).
-They do not add application shader/state object APIs or replace this stage's
-execution, linkage, capability or resource-lifetime rules.
+> [!NOTE]
+> **Draft provenance annotations.**
+> Underlining marks pending replacement wording or authored list items. Warning boxes
+> mark authored, mixed or reopened passages awaiting editorial review.
+> Editorial adoption does not establish factual or hardware verification. Exact approved factual
+> corrections do not trigger a marker. Unmarked text elsewhere, declarations
+> and structural Markdown are not assertions of approval.
+> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
+
+<!-- d3d12-review-legend:end -->
+
+<!-- d3d12-review-alert:begin:mesh:N-selection:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> A mesh graphics pipeline executes a mesh shader (MS), optionally preceded by an amplification shader (AS), instead of the input-assembly/VS/HS/tessellator/DS/GS geometry path. The mesh stage supplies vertices and primitives to the rasterizer. It does not use fixed-function input assembly or stream-output capture. [Mesh pipeline creation](pipeline-state.md#mesh-pipelines), [graphics root-signature compatibility](binding.md#pipeline-compatibility) and [initial/reset/bundle pipeline selection](command-list-state.md#pipeline-selection) define the shared selection and binding contracts.
+
+<!-- d3d12-review-alert:end:mesh:N-selection:0 -->
+
+<!-- d3d12-review-alert:begin:mesh:PC-stage-creation-owner:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The current amplification/mesh driver object creation/sizing/destruction contracts
+> are defined with [pipeline component creation](pipeline-state.md#driver-shader-objects)
+> and its [exact slot associations](pipeline-state.md#driver-object-slots).
+> They do not add application shader/state object APIs or replace this stage's
+> execution, linkage, capability or resource-lifetime rules.
+
+<!-- d3d12-review-alert:end:mesh:PC-stage-creation-owner:0 -->
 
 <a id="overview"></a>
 
 ## Conceptual high level overview
 
-A Mesh shader is a type of shader that combines vertex and primitive processing.
+<ins><!-- d3d12-review-inline:begin:mesh:M-overview:0 -->A Mesh shader is a type of shader that combines vertex and primitive processing.
 VS, HS, DS, and GS shader stages are replaced with Amplification Shader and Mesh Shader.
-Roughly, Mesh shaders replace VS+GS or DS+GS shaders and Amplification shaders replace VS+HS.
+Roughly, Mesh shaders replace VS+GS or DS+GS shaders and Amplification shaders replace VS+HS.<!-- d3d12-review-inline:end:mesh:M-overview:0 --></ins>
 
 The Amplification shader allows users to decide how many Mesh shader groups to run
 and passes data to those groups.
 
-![shader stages diagram](../images/meshshader/shader_flow.png)
+<ins><!-- d3d12-review-inline:begin:mesh:M-overview:2 -->![shader stages diagram](../images/meshshader/shader_flow.png)<!-- d3d12-review-inline:end:mesh:M-overview:2 --></ins>
 
-The Mesh shader runs in threadgroups launched by [DispatchMesh](#dispatchmesh), or by the [amplification shader](#dispatchmesh-intrinsic).
+<ins><!-- d3d12-review-inline:begin:mesh:M-overview:3 -->The Mesh shader runs in threadgroups launched by [DispatchMesh](#dispatchmesh), or by the [amplification shader](#dispatchmesh-intrinsic).<!-- d3d12-review-inline:end:mesh:M-overview:3 --></ins>
 
 Mesh shader threadgroups have access to groupshared memory like compute shaders.
 Shader writers are free to declare groupshared arrays up to the maximum
@@ -38,7 +65,7 @@ primitives for a total of 18 vertices and 6 primitives per threadgroup.
 This gives sufficient freedom to the shader writer to balance the ALU
 loads in threads and avoid wasting lanes.
 
-The following output rules apply:
+<ins><!-- d3d12-review-inline:begin:mesh:M-overview:6 -->The following output rules apply:<!-- d3d12-review-inline:end:mesh:M-overview:6 --></ins>
 
 1.  The output vertices for all output primitives must be written by the mesh
     shader in the output, otherwise behavior is undefined.
@@ -49,15 +76,15 @@ The following output rules apply:
     and writing to vertex or primitive attributes or indices
     results in undefined behavior.
 
-Per-primitive output is distinct from per-vertex output.
+<ins><!-- d3d12-review-inline:begin:mesh:M-overview:8 -->Per-primitive output is distinct from per-vertex output.
 The packed size in rows of attributes for [`vertices`](#vertex-attributes)
 plus the packed size in rows of attributes for [`primitives`](#primitive-attributes)
-cannot exceed 32 rows (where each row is a vector of 4 attributes).
+cannot exceed 32 rows (where each row is a vector of 4 attributes).<!-- d3d12-review-inline:end:mesh:M-overview:8 --></ins>
 
 The Mesh shader can be attached to a Pixel shader if desired, but does not
 have to be if the app just wants to do UAV accesses but no rasterization.
 
-In the case that there is a Pixel shader,
+<ins><!-- d3d12-review-inline:begin:mesh:M-overview:10 -->In the case that there is a Pixel shader,
 in the Mesh shader to Pixel shader pipeline,
 signature elements are not aligned between stages by packing location.
 Instead, Pixel shader input elements must be matched to output elements
@@ -72,7 +99,7 @@ should be placed in the attribute structure for [`vertices`](#vertex-attributes)
 and marked with the `nointerpolation` modifier.
 In the case that there is a pixel shader input aligned with a mesh shader per-primitive output,
 and that attribute is not marked as nointerpolation, the driver will still force the attribute to nointerpolate
-in order to maintain functionality.
+in order to maintain functionality.<!-- d3d12-review-inline:end:mesh:M-overview:10 --></ins>
 
 Vertex order is determined by the order of the vertex [`indices`](#vertex-indices) for the primitive.
 The first vertex is the one referenced by the first index in this vector.
@@ -86,12 +113,12 @@ Primitive attributes do not require any interpolation modifiers to be specified,
 
 **Inputs** to the Mesh shader don't have IA enabled.
 
-Since IA is disabled, each thread of the Mesh shader receives inputs
+<ins><!-- d3d12-review-inline:begin:mesh:M-overview:13 -->Since IA is disabled, each thread of the Mesh shader receives inputs
 similar to those in a compute shader, meaning just thread IDs,
 plus a group-uniform mesh [`payload`](#mesh-payload) from an Amplification shader, if any.
 It's up to the shader author to read indices, read vertices, and output primitives.
 Geometry culling and amplification are possible,
-similar to what a Geometry Shader can do now.
+similar to what a Geometry Shader can do now.<!-- d3d12-review-inline:end:mesh:M-overview:13 --></ins>
 
 The number of threads in a threadgroup must be declared with the
 [`[numthreads(X, Y, Z)]`](#numthreads) attribute,
@@ -104,14 +131,14 @@ which specifies the current view being computed by the Mesh shader group.
 The model exposed to the user is the same as with the shader stages of the existing vertex pipeline.
 You write your mesh shader as if the group is computing only one view, with some constraints.
 
-In order to enable single-pass multi-view implementation for Tier 3 View Instancing,
+<ins><!-- d3d12-review-inline:begin:mesh:M-overview:16 -->In order to enable single-pass multi-view implementation for Tier 3 View Instancing,
 certain constraints will be enforced on what is allowed to be dependent on [`SV_ViewID`](#sv_viewid).
 This ensures that vertices and primitives produced for each view align across views,
 while vertex and primitive attributes can vary per-view.
 The primitive attribute [`SV_CullPrimitive`](#sv_cullprimitive) allows you to cull primitives
 on a per-view basis, which translates to a view mask on multi-view implementations.
 The attribute and groupshared limits apply after expansion for the view count on Tier 3 View Instancing.
-More details in the [`SV_ViewID`](#sv_viewid) section.
+More details in the [`SV_ViewID`](#sv_viewid) section.<!-- d3d12-review-inline:end:mesh:M-overview:16 --></ins>
 
 Programmable amplification support is done using an Amplification shader. This
 shader stage can be used to replace the hardware tessellator. The idea
@@ -125,8 +152,8 @@ Mesh shader, many instances of it, if needed.
 
 ## Availability and pipeline selection
 
-To determine whether mesh and amplification shaders are supported, call `CheckFeatureSupport` using the `D3D12_FEATURE` enum,
-`D3D12_FEATURE_D3D12_OPTIONS7`, which populates `pFeatureSupportData` with the structure `D3D12_FEATURE_DATA_D3D12_OPTIONS7`.
+<ins><!-- d3d12-review-inline:begin:mesh:M-capability:0 -->To determine whether mesh and amplification shaders are supported, call `CheckFeatureSupport` using the `D3D12_FEATURE` enum,
+`D3D12_FEATURE_D3D12_OPTIONS7`, which populates `pFeatureSupportData` with the structure `D3D12_FEATURE_DATA_D3D12_OPTIONS7`.<!-- d3d12-review-inline:end:mesh:M-capability:0 --></ins>
 
 <a id="d3d12_mesh_shader_tier"></a>
 
@@ -173,26 +200,61 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS9
 
 ### D3D12_FEATURE_DATA_D3D12_OPTIONS10
 
-The shared `D3D12_FEATURE_DATA_D3D12_OPTIONS10` declaration is defined in [Pixel shaders](pixel-shaders.md#vrs-types).
+<!-- d3d12-review-alert:begin:mesh:N-options10-canonical-owner:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The shared `D3D12_FEATURE_DATA_D3D12_OPTIONS10` declaration is defined in [Pixel shaders](pixel-shaders.md#vrs-types).
+
+<!-- d3d12-review-alert:end:mesh:N-options10-canonical-owner:0 -->
 
 <a id="d3d12_tri_state"></a>
 
 ### D3D12_TRI_STATE
 
-`D3D12_TRI_STATE` and its culled-primitive capability interpretation are defined in [Counters, queries, and predication](counters-queries-and-predication.md#d3d12_tri_state).
+<!-- d3d12-review-alert:begin:mesh:QF-tri-state:0 -->
 
-The complete [`D3D12_FEATURE_DATA_D3D12_OPTIONS12` declaration](synchronization.md#enhanced-barriers) is shared with enhanced-barrier support. Its `MSPrimitivesPipelineStatisticIncludesCulledPrimitives` member uses `D3D12_TRI_STATE` and has the mesh-specific meaning defined [by the query contract](counters-queries-and-predication.md#culled-primitives).
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `D3D12_TRI_STATE` and its culled-primitive capability interpretation are defined in [Counters, queries, and predication](counters-queries-and-predication.md#d3d12_tri_state).
 
-`MeshShaderTier` other than `D3D12_MESH_SHADER_TIER_NOT_SUPPORTED` advertises AS/MS support. The shader stages begin with `as_6_5` and `ms_6_5` and use DXIL. `OPTIONS9.MeshShaderPipelineStatsSupported` controls the [AS/MS statistics fields](counters-queries-and-predication.md#mesh-statistics); `MeshShaderSupportsFullRangeRenderTargetArrayIndex` controls the [render-target-array index range](#render-target-array-index); `MSPrimitivesPipelineStatisticIncludesCulledPrimitives` describes the [culled-primitive statistic](counters-queries-and-predication.md#culled-primitives). `DerivativesInMeshAndAmplificationShadersSupported` gates [derivative-dependent operations](#derivatives). `OPTIONS10.MeshShaderPerPrimitiveShadingRateSupported` gates mesh output of `SV_ShadingRate`. The other members retain their own feature contracts.
+<!-- d3d12-review-alert:end:mesh:QF-tri-state:0 -->
 
-The [mesh PSO contract](pipeline-state.md#mesh-pipelines) requires MS and permits AS and PS; it excludes the ordinary geometry shader stages and input-layout/stream-output declarations. Graphics-stage visibility and deny flags apply to AS/MS root arguments under the [visibility and root flags](binding.md#shader-visibility). Lack of a pixel shader does not itself disable depth/stencil rasterization. Dispatch uses the graphics root bindings and applicable graphics output state, not the compute root bindings.
+<!-- d3d12-review-alert:begin:mesh:N-options12-owner:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The complete [`D3D12_FEATURE_DATA_D3D12_OPTIONS12` declaration](synchronization.md#enhanced-barriers) is shared with enhanced-barrier support. Its `MSPrimitivesPipelineStatisticIncludesCulledPrimitives` member uses `D3D12_TRI_STATE` and has the mesh-specific meaning defined [by the query contract](counters-queries-and-predication.md#culled-primitives).
+
+<!-- d3d12-review-alert:end:mesh:N-options12-owner:0 -->
+
+<!-- d3d12-review-alert:begin:mesh:N-capability-members:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `MeshShaderTier` other than `D3D12_MESH_SHADER_TIER_NOT_SUPPORTED` advertises AS/MS support. The shader stages begin with `as_6_5` and `ms_6_5` and use DXIL. `OPTIONS9.MeshShaderPipelineStatsSupported` controls the [AS/MS statistics fields](counters-queries-and-predication.md#mesh-statistics); `MeshShaderSupportsFullRangeRenderTargetArrayIndex` controls the [render-target-array index range](#render-target-array-index); `MSPrimitivesPipelineStatisticIncludesCulledPrimitives` describes the [culled-primitive statistic](counters-queries-and-predication.md#culled-primitives). `DerivativesInMeshAndAmplificationShadersSupported` gates [derivative-dependent operations](#derivatives). `OPTIONS10.MeshShaderPerPrimitiveShadingRateSupported` gates mesh output of `SV_ShadingRate`. The other members retain their own feature contracts.
+
+<!-- d3d12-review-alert:end:mesh:N-capability-members:0 -->
+
+<!-- d3d12-review-alert:begin:mesh:N-pipeline:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The [mesh PSO contract](pipeline-state.md#mesh-pipelines) requires MS and permits AS and PS; it excludes the ordinary geometry shader stages and input-layout/stream-output declarations. Graphics-stage visibility and deny flags apply to AS/MS root arguments under the [visibility and root flags](binding.md#shader-visibility). Lack of a pixel shader does not itself disable depth/stencil rasterization. Dispatch uses the graphics root bindings and applicable graphics output state, not the compute root bindings.
+
+<!-- d3d12-review-alert:end:mesh:N-pipeline:0 -->
 
 <a id="amplification-and-mesh-shader"></a>
 
 ## Amplification shader and Mesh shader
 
-The amplification shader creates an output structure for child threadgroups and
-sets the number of child threadgroups to launch, which are then used to run mesh shaders.
+<ins><!-- d3d12-review-inline:begin:mesh:M-amplification-and-mesh-shader:0 -->The amplification shader creates an output structure for child threadgroups and
+sets the number of child threadgroups to launch, which are then used to run mesh shaders.<!-- d3d12-review-inline:end:mesh:M-amplification-and-mesh-shader:0 --></ins>
 
 For clarification, the way an amplification shader outputs child threadgroups
 can be seen as similar to how the hull shader outputs tessellation factors.
@@ -205,14 +267,21 @@ There is no "return" semantics from the Mesh shader into the Amplification shade
 -- all the Amplification shader does is send the number of child Mesh shaders to
 launch to the system.
 
-|  | Required support when mesh shading is supported |
-|--|--|
-|Amplification shader                        | Mandatory |
-|Amplification shader outputs to Mesh shader |  Up to 16k bytes per instance    |
-|Mesh shader                        |  Mandatory   |
-|Mesh shader maximum threads per group            |  128 |
-|Mesh shader max output verts       |  256 |
-|Mesh shader max output prims       |  256 |
+<!-- d3d12-review-alert:begin:mesh:M-amplification-and-mesh-shader:4 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> |  | Required support when mesh shading is supported |
+> |--|--|
+> |Amplification shader                        | Mandatory |
+> |Amplification shader outputs to Mesh shader |  Up to 16k bytes per instance    |
+> |Mesh shader                        |  Mandatory   |
+> |Mesh shader maximum threads per group            |  128 |
+> |Mesh shader max output verts       |  256 |
+> |Mesh shader max output prims       |  256 |
+
+<!-- d3d12-review-alert:end:mesh:M-amplification-and-mesh-shader:4 -->
 
 Amplification shader output payload must not exceed 16k bytes per instance.
 
@@ -224,9 +293,23 @@ The size of these two combined must not exceed 47k bytes.
 
 ## DXIL stage model
 
-AS and MS have DXIL entry functions with thread-group dimensions in their stage properties. AS produces a payload and dispatches child MS groups; it has no rasterizer-output signature. MS has separate per-vertex and per-primitive output signatures, maximum vertex/primitive counts, output topology and payload-size properties. System-generated thread/group identifiers are obtained through DXIL operations rather than ordinary input-signature elements. An MS group consumes the shared payload when AS is active and writes indexed vertex attributes, primitive attributes and primitive connectivity after setting its output counts.
+<!-- d3d12-review-alert:begin:mesh:N-dxil:0 -->
 
-`DispatchMesh` and `GetMeshPayload` express payload production/consumption; `SetMeshOutputCounts`, `EmitIndices`, `StoreVertexOutput` and `StorePrimitiveOutput` express mesh output data flow. The stage and HLSL rules in this chapter describe their cooperation; exact operation operands, effects and validation belong to the complete intrinsic reference, not this overview.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> AS and MS have DXIL entry functions with thread-group dimensions in their stage properties. AS produces a payload and dispatches child MS groups; it has no rasterizer-output signature. MS has separate per-vertex and per-primitive output signatures, maximum vertex/primitive counts, output topology and payload-size properties. System-generated thread/group identifiers are obtained through DXIL operations rather than ordinary input-signature elements. An MS group consumes the shared payload when AS is active and writes indexed vertex attributes, primitive attributes and primitive connectivity after setting its output counts.
+
+<!-- d3d12-review-alert:end:mesh:N-dxil:0 -->
+
+<!-- d3d12-review-alert:begin:mesh:N-dxil:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `DispatchMesh` and `GetMeshPayload` express payload production/consumption; `SetMeshOutputCounts`, `EmitIndices`, `StoreVertexOutput` and `StorePrimitiveOutput` express mesh output data flow. The stage and HLSL rules in this chapter describe their cooperation; exact operation operands, effects and validation belong to the complete intrinsic reference, not this overview.
+
+<!-- d3d12-review-alert:end:mesh:N-dxil:1 -->
 
 <a id="dispatchmesh"></a>
 
@@ -244,22 +327,36 @@ void DispatchMesh(
 
 ### Behavior
 
-DispatchMesh launches the threadgroups for the amplification shader or the mesh shader in a case where no amplification shader is attached.
-The API group counts follow the [shared mesh grid limits](compute.md#shared-grid-limits), including the capability-conditioned one-dimensional X limit and independent 22-bit total.
+<ins><!-- d3d12-review-inline:begin:mesh:M-dispatch:0 -->DispatchMesh launches the threadgroups for the amplification shader or the mesh shader in a case where no amplification shader is attached.
+The API group counts follow the [shared mesh grid limits](compute.md#shared-grid-limits), including the capability-conditioned one-dimensional X limit and independent 22-bit total.<!-- d3d12-review-inline:end:mesh:M-dispatch:0 --></ins>
 
-If there is an amplification shader, it will internally use an HLSL version of DispatchMesh to launch child mesh groups; the separate [AS-child grid scope](compute.md#shared-grid-limits) applies.
+<ins><!-- d3d12-review-inline:begin:mesh:M-dispatch:1 -->If there is an amplification shader, it will internally use an HLSL version of DispatchMesh to launch child mesh groups; the separate [AS-child grid scope](compute.md#shared-grid-limits) applies.<!-- d3d12-review-inline:end:mesh:M-dispatch:1 --></ins>
 
 ### Parameters
 
-`ThreadGroupCountX`, `ThreadGroupCountY` and `ThreadGroupCountZ` give the number of groups in each dimension of the dispatch grid. With AS active this is the AS grid; otherwise it is the MS grid. These are group counts, not the per-group thread dimensions declared by `numthreads`.
+<!-- d3d12-review-alert:begin:mesh:N-dispatch-parameters:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `ThreadGroupCountX`, `ThreadGroupCountY` and `ThreadGroupCountZ` give the number of groups in each dimension of the dispatch grid. With AS active this is the AS grid; otherwise it is the MS grid. These are group counts, not the per-group thread dimensions declared by `numthreads`.
+
+<!-- d3d12-review-alert:end:mesh:N-dispatch-parameters:0 -->
 
 ### Return values
 
-None
+<ins><!-- d3d12-review-inline:begin:mesh:P-DispatchMesh-return:0 -->None<!-- d3d12-review-inline:end:mesh:P-DispatchMesh-return:0 --></ins>
 
 ### Recording and execution constraints
 
-`DispatchMesh` records graphics work on DIRECT command lists and BUNDLE recordings, not COMPUTE or COPY lists. A zero count in any dimension launches no groups for that dispatch. The required mesh pipeline, graphics root arguments, descriptors, targets and dynamic output state must be established when the work executes. A bundle follows the canonical [pipeline selection](command-list-state.md#pipeline-selection) and [resource-binding inheritance](command-list-state.md#resource-binding) contracts. Recording does not transition resources, establish residency or extend resource lifetimes; [resource lifetime](execution.md#lifetime), [residency](resources.md#residency) and [vertex-shading synchronization](synchronization.md#barrier-sync) apply.
+<!-- d3d12-review-alert:begin:mesh:N-dispatch-state:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `DispatchMesh` records graphics work on DIRECT command lists and BUNDLE recordings, not COMPUTE or COPY lists. A zero count in any dimension launches no groups for that dispatch. The required mesh pipeline, graphics root arguments, descriptors, targets and dynamic output state must be established when the work executes. A bundle follows the canonical [pipeline selection](command-list-state.md#pipeline-selection) and [resource-binding inheritance](command-list-state.md#resource-binding) contracts. Recording does not transition resources, establish residency or extend resource lifetimes; [resource lifetime](execution.md#lifetime), [residency](resources.md#residency) and [vertex-shading synchronization](synchronization.md#barrier-sync) apply.
+
+<!-- d3d12-review-alert:end:mesh:N-dispatch-state:0 -->
 
 <a id="indirect-dispatch"></a>
 
@@ -274,7 +371,14 @@ typedef struct D3D12_DISPATCH_MESH_ARGUMENTS
 } D3D12_DISPATCH_MESH_ARGUMENTS;
 ```
 
-`D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH` selects a mesh-dispatch action in a command signature. Its argument data is the three `UINT` fields of `D3D12_DISPATCH_MESH_ARGUMENTS`, not a union member added to `D3D12_INDIRECT_ARGUMENT_DESC`. A dispatch-only argument record occupies 12 bytes; the command signature's `ByteStride` covers all its argument data and may include padding. The [indirect execution contract](indirect-execution.md#executeindirect) defines signature/root-argument construction, buffer/count limits, execution and post-operation state. The mesh-dispatch argument itself clears no bindings; signature-modified arguments retain their canonical clearing rules. Indirect dispatch uses the same mesh pipeline and dispatch dimension constraints as direct dispatch.
+<!-- d3d12-review-alert:begin:mesh:N-indirect:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH` selects a mesh-dispatch action in a command signature. Its argument data is the three `UINT` fields of `D3D12_DISPATCH_MESH_ARGUMENTS`, not a union member added to `D3D12_INDIRECT_ARGUMENT_DESC`. A dispatch-only argument record occupies 12 bytes; the command signature's `ByteStride` covers all its argument data and may include padding. The [indirect execution contract](indirect-execution.md#executeindirect) defines signature/root-argument construction, buffer/count limits, execution and post-operation state. The mesh-dispatch argument itself clears no bindings; signature-modified arguments retain their canonical clearing rules. Indirect dispatch uses the same mesh pipeline and dispatch dimension constraints as direct dispatch.
+
+<!-- d3d12-review-alert:end:mesh:N-indirect:0 -->
 
 <a id="thread-groups"></a>
 
@@ -284,32 +388,46 @@ typedef struct D3D12_DISPATCH_MESH_ARGUMENTS
 
 ### List of HLSL elements for Mesh shader
 
-| Function Name | Mandatory/optional for shader to use |
-|---|---|
-| [`[numthreads(X, Y, Z)]`](#numthreads)                | Mandatory, `X*Y*Z <= 128` |
-| [`[outputtopology(T)]`](#outputtopology)              | Required: `T` is `"line"` or `"triangle"` |
-| [`SV_DispatchThreadID`](#sv_dispatchthreadid)   | Optional input |
-| [`SV_GroupThreadID`](#sv_groupthreadid)               | Optional input |
-| [`SV_GroupIndex`](#sv_groupindex)                     | Optional input |
-| [`SV_GroupID`](#sv_groupid)                           | Optional input |
-| [`SetMeshOutputCounts(numVertices, numPrimitives)`](#setmeshoutputcounts) | Optional |
-| vertex [`indices`](#vertex-indices)                   | Required |
-| attributes for [`vertices`](#vertex-attributes)       | Required with at least `SV_Position` |
-| attributes for [`primitives`](#primitive-attributes)  | Optional |
-| mesh [`payload`](#mesh-payload)                       | Optional payload from Amplification shader, `payload size <= 16k` |
-| [`SV_ViewID`](#sv_viewid)                             | Optional input view ID for the group |
-| [`SV_CullPrimitive`](#sv_cullprimitive)               | Optional per-primitive cull flag |
-| `groupshared` memory                                  | Optional, total size <= 28k |
+<!-- d3d12-review-alert:begin:mesh:M-mesh-interface:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> | Function Name | Mandatory/optional for shader to use |
+> |---|---|
+> | [`[numthreads(X, Y, Z)]`](#numthreads)                | Mandatory, `X*Y*Z <= 128` |
+> | [`[outputtopology(T)]`](#outputtopology)              | Required: `T` is `"line"` or `"triangle"` |
+> | [`SV_DispatchThreadID`](#sv_dispatchthreadid)   | Optional input |
+> | [`SV_GroupThreadID`](#sv_groupthreadid)               | Optional input |
+> | [`SV_GroupIndex`](#sv_groupindex)                     | Optional input |
+> | [`SV_GroupID`](#sv_groupid)                           | Optional input |
+> | [`SetMeshOutputCounts(numVertices, numPrimitives)`](#setmeshoutputcounts) | Optional |
+> | vertex [`indices`](#vertex-indices)                   | Required |
+> | attributes for [`vertices`](#vertex-attributes)       | Required with at least `SV_Position` |
+> | attributes for [`primitives`](#primitive-attributes)  | Optional |
+> | mesh [`payload`](#mesh-payload)                       | Optional payload from Amplification shader, `payload size <= 16k` |
+> | [`SV_ViewID`](#sv_viewid)                             | Optional input view ID for the group |
+> | [`SV_CullPrimitive`](#sv_cullprimitive)               | Optional per-primitive cull flag |
+> | `groupshared` memory                                  | Optional, total size <= 28k |
+
+<!-- d3d12-review-alert:end:mesh:M-mesh-interface:0 -->
 
 <a id="amplification-interface"></a>
 
 ### List of HLSL elements for Amplification shader
 
-| Function Name | Mandatory/optional for Amplification shader |
-|---|---|
-| [`[numthreads(X, Y, Z)]`](#numthreads)                | Mandatory, `X*Y*Z <= 128` |
-| [DispatchMesh(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ, MeshPayload)](#dispatchmesh-intrinsic)  | Mandatory, `sizeof(MeshPayload) <= 16k` |
-| `groupshared` memory                                  | Optional, total size <= 32k |
+<!-- d3d12-review-alert:begin:mesh:M-amplification-interface:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> | Function Name | Mandatory/optional for Amplification shader |
+> |---|---|
+> | [`[numthreads(X, Y, Z)]`](#numthreads)                | Mandatory, `X*Y*Z <= 128` |
+> | [DispatchMesh(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ, MeshPayload)](#dispatchmesh-intrinsic)  | Mandatory, `sizeof(MeshPayload) <= 16k` |
+> | `groupshared` memory                                  | Optional, total size <= 32k |
+
+<!-- d3d12-review-alert:end:mesh:M-amplification-interface:0 -->
 
 <a id="numthreads"></a>
 
@@ -320,9 +438,9 @@ typedef struct D3D12_DISPATCH_MESH_ARGUMENTS
 void main(...)
 ```
 
-This is a mandatory function attribute on the entry point of an amplification or mesh shader.
+<ins><!-- d3d12-review-inline:begin:mesh:M-numthreads:1 -->This is a mandatory function attribute on the entry point of an amplification or mesh shader.
 It specifies the launch size of the shader threadgroup, just like with compute shader.
-The dimensions are positive and `X * Y * Z <= 128`.
+The dimensions are positive and `X * Y * Z <= 128`.<!-- d3d12-review-inline:end:mesh:M-numthreads:1 --></ins>
 
 The implementation must call the Mesh shader with the number of
 user-available threads in each dimension equal to X, Y and Z,
@@ -332,13 +450,13 @@ All output vertices for all output primitives must be set by the same
 threadgroup. Sharing of output vertices or output indices between Mesh
 shader threadgroups is not possible.
 
-A shader exceeding the supported thread-group limits is invalid.
+<ins><!-- d3d12-review-inline:begin:mesh:M-numthreads:4 -->A shader exceeding the supported thread-group limits is invalid.<!-- d3d12-review-inline:end:mesh:M-numthreads:4 --></ins>
 
 <a id="system-value-semantics"></a>
 
 ### System Value Semantics
 
-AS thread/group identifiers are relative to the invoking DispatchMesh API call. Each of the following four MS system-values is computed in the following way:
+<ins><!-- d3d12-review-inline:begin:mesh:M-system-value-semantics:0 -->AS thread/group identifiers are relative to the invoking DispatchMesh API call. Each of the following four MS system-values is computed in the following way:<!-- d3d12-review-inline:end:mesh:M-system-value-semantics:0 --></ins>
 
 If an Amplification Shader is used, system values are computed with respect to the DispatchMesh intrinsic called by the Amplification Shader.
 
@@ -401,7 +519,14 @@ This is computed as explained above in [System Value Semantics](#system-value-se
 
 For a more detailed description see the [HLSL docs](https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/sv-groupid).
 
-For declared group dimensions `(X,Y,Z)`, `SV_GroupThreadID` ranges from `(0,0,0)` through `(X-1,Y-1,Z-1)`. `SV_DispatchThreadID = SV_GroupID * (X,Y,Z) + SV_GroupThreadID`, componentwise. `SV_GroupIndex = SV_GroupThreadID.z * X * Y + SV_GroupThreadID.y * X + SV_GroupThreadID.x`. MS identifiers are local to its parent's dispatch, not an accumulated index across different AS groups.
+<!-- d3d12-review-alert:begin:mesh:N-identifiers:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> For declared group dimensions `(X,Y,Z)`, `SV_GroupThreadID` ranges from `(0,0,0)` through `(X-1,Y-1,Z-1)`. `SV_DispatchThreadID = SV_GroupID * (X,Y,Z) + SV_GroupThreadID`, componentwise. `SV_GroupIndex = SV_GroupThreadID.z * X * Y + SV_GroupThreadID.y * X + SV_GroupThreadID.x`. MS identifiers are local to its parent's dispatch, not an accumulated index across different AS groups.
+
+<!-- d3d12-review-alert:end:mesh:N-identifiers:0 -->
 
 <a id="mesh-outputs"></a>
 
@@ -535,7 +660,7 @@ The following scenarios produce undefined behavior.
 The hardware implementation is not required to clamp or mask out of bounds writes.
 Optional runtime validation (GBV) may catch these cases and issue errors.
 
-1.  The function is called from divergent flow control.
+1.  <ins><!-- d3d12-review-inline:begin:mesh:M-setmeshoutputcounts:10 -->The function is called from divergent flow control.<!-- d3d12-review-inline:end:mesh:M-setmeshoutputcounts:10 --></ins>
 
 2.  `numVertices` is greater than the array dimension of the
     [`vertices`](#vertex-attributes).
@@ -556,15 +681,15 @@ Optional runtime validation (GBV) may catch these cases and issue errors.
 
 ### Shared Output Arrays
 
-There are three output parameters on the mesh shader
+<ins><!-- d3d12-review-inline:begin:mesh:M-shared-output-arrays:0 -->There are three output parameters on the mesh shader
 defining arrays of output shared across the group,
 so that the threads in the Mesh shader group can
-cooperate on filling in the values.
+cooperate on filling in the values.<!-- d3d12-review-inline:end:mesh:M-shared-output-arrays:0 --></ins>
 
-The dimensions of these arrays define the maximum number of
+<ins><!-- d3d12-review-inline:begin:mesh:M-shared-output-arrays:1 -->The dimensions of these arrays define the maximum number of
 vertices and primitives that may be output from this shader.
 The array dimension must be included, even if it is `1`.
-The maximum declared vertex and primitive counts are each 256.
+The maximum declared vertex and primitive counts are each 256.<!-- d3d12-review-inline:end:mesh:M-shared-output-arrays:1 --></ins>
 
 Each array cannot be read from,
 and can only be written to after a call to
@@ -701,28 +826,35 @@ You can write individual attributes, and leave others unwritten if they will not
 If you write to the same attribute at the same primitive index,
 the last value written will be the value exported from the Mesh shader.
 
-This structure must have system-value or user-defined semantics defined for all elements.
+<ins><!-- d3d12-review-inline:begin:mesh:M-primitive-attributes:3 -->This structure must have system-value or user-defined semantics defined for all elements.
 `SV_RenderTargetArrayIndex` and `SV_ViewportArrayIndex` and [`SV_CullPrimitive`](#sv_cullprimitive)
-can only be per-primitive attributes in a mesh shader.
+can only be per-primitive attributes in a mesh shader.<!-- d3d12-review-inline:end:mesh:M-primitive-attributes:3 --></ins>
 
-`SV_ShadingRate` is subject to the mesh-specific capability below and the [per-primitive VRS rules](pixel-shaders.md#vrs-primitive), including their viewport-indexing and combiner restrictions. When set from a mesh shader, `SV_ShadingRate` functions as an actual per-primitive attribute-- not, say, a per-provoking-vertex attribute.
+<ins><!-- d3d12-review-inline:begin:mesh:M-primitive-attributes:4 -->`SV_ShadingRate` is subject to the mesh-specific capability below and the [per-primitive VRS rules](pixel-shaders.md#vrs-primitive), including their viewport-indexing and combiner restrictions. When set from a mesh shader, `SV_ShadingRate` functions as an actual per-primitive attribute-- not, say, a per-provoking-vertex attribute.<!-- d3d12-review-inline:end:mesh:M-primitive-attributes:4 --></ins>
 
 Writing to this array must occur after the [`SetMeshOutputCounts`](#setmeshoutputcounts) call.
 See that section for information on output size and indexing behavior and restrictions.
 
 Applications are only permitted to set SV_ShadingRate from the MS (mesh shader) stage if the MeshShaderPerPrimitiveShadingRateSupported cap is TRUE. If an application tries to set SV_ShadingRate from a mesh shader and the MeshShaderPerPrimitiveShadingRateSupported cap is FALSE, the rendering behavior is undefined.
 
+<!-- d3d12-review-context:begin:mesh:V-mesh-shading-rate:1 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+
 > #### Remark
 > The MeshShaderPerPrimitiveShadingRateSupported cap was added in a Windows release after the initial release of variable rate shading went out. With this in mind, the runtime does not strictly validate setting of MS per-primitive shading rates against the cap because that could mean an application-breaking change. Instead, SDK layers produce a softer-than-error message if the application tries to set a per-primitive shading rate from MS but the cap does not permit it.
+
+<!-- d3d12-review-context:end:mesh:V-mesh-shading-rate:1 -->
 
 <a id="signature-linkage"></a>
 
 ### Signature Linkage
 
-In the Mesh shader pipeline, signature elements must be linked
+<ins><!-- d3d12-review-inline:begin:mesh:M-signature-linkage:0 -->In the Mesh shader pipeline, signature elements must be linked
 by matching semantic name, and semantic index.
 For system values, linkage is by the system value type and semantic index.
-Elements must not be linked by the packed location.
+Elements must not be linked by the packed location.<!-- d3d12-review-inline:end:mesh:M-signature-linkage:0 --></ins>
 
 Packing locations are still set for vertex and primitive elements in signatures,
 but these may not match the pixel shader locations,
@@ -742,15 +874,22 @@ in the size limit calculation defined in the
 
 ### Mesh shader output size limits
 
-Given:
+<ins><!-- d3d12-review-inline:begin:mesh:M-mesh-shader-output-size-limits:0 -->Given:<!-- d3d12-review-inline:end:mesh:M-mesh-shader-output-size-limits:0 --></ins>
 
-| Variable | Definition |
-|---|---|
-| `n_verts`, `n_prims` | Declared maximum output vertex and primitive counts (array dimensions), not the dynamically selected counts |
-| `n_vert_attr`, `n_prim_attr` | Total number of vertex or primitive scalar attributes |
-| `n_views` | Number of views for Tier 3 View Instancing, otherwise == 1 |
-| `n_vert_per_view_attr`, `n_prim_per_view_attr` | Number of scalar attributes dependent on [`SV_ViewID`](#sv_viewid) |
-| `n_vert_view_shared_attr`, `n_prim_view_shared_attr` | Number of scalar attributes **not** dependent on [`SV_ViewID`](#sv_viewid) |
+<!-- d3d12-review-alert:begin:mesh:M-mesh-shader-output-size-limits:1 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> | Variable | Definition |
+> |---|---|
+> | `n_verts`, `n_prims` | Declared maximum output vertex and primitive counts (array dimensions), not the dynamically selected counts |
+> | `n_vert_attr`, `n_prim_attr` | Total number of vertex or primitive scalar attributes |
+> | `n_views` | Number of views for Tier 3 View Instancing, otherwise == 1 |
+> | `n_vert_per_view_attr`, `n_prim_per_view_attr` | Number of scalar attributes dependent on [`SV_ViewID`](#sv_viewid) |
+> | `n_vert_view_shared_attr`, `n_prim_view_shared_attr` | Number of scalar attributes **not** dependent on [`SV_ViewID`](#sv_viewid) |
+
+<!-- d3d12-review-alert:end:mesh:M-mesh-shader-output-size-limits:1 -->
 
 and the following definitions:
 
@@ -784,9 +923,23 @@ with per-view attributes expanded by the number of views.
 
 #### View-expanded output costing
 
-For PSO view-expansion costing, one 32-bit attribute is always reserved for `SV_ViewportArrayIndex`, whether or not it was declared. Charge that scalar on the vertex side: omit any declared `SV_ViewportArrayIndex` element from the ordinary vertex/primitive scalar sums and add one to `n_vert_view_shared_attr` in the equations above. Do not count that semantic again as a primitive attribute or multiply its fixed reservation by the view count. `SV_CullPrimitive` contributes no packed attribute storage.
+<!-- d3d12-review-alert:begin:mesh:N-view-output-cost:0 -->
 
-The compiler/DXIL single-view check uses declared signature elements; it is not the final PSO view-expanded cost. These PSO reservation rules must not be applied as an additional reserved scalar to every single-view compiler calculation.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> For PSO view-expansion costing, one 32-bit attribute is always reserved for `SV_ViewportArrayIndex`, whether or not it was declared. Charge that scalar on the vertex side: omit any declared `SV_ViewportArrayIndex` element from the ordinary vertex/primitive scalar sums and add one to `n_vert_view_shared_attr` in the equations above. Do not count that semantic again as a primitive attribute or multiply its fixed reservation by the view count. `SV_CullPrimitive` contributes no packed attribute storage.
+
+<!-- d3d12-review-alert:end:mesh:N-view-output-cost:0 -->
+
+<!-- d3d12-review-alert:begin:mesh:N-view-output-cost:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The compiler/DXIL single-view check uses declared signature elements; it is not the final PSO view-expanded cost. These PSO reservation rules must not be applied as an additional reserved scalar to every single-view compiler calculation.
+
+<!-- d3d12-review-alert:end:mesh:N-view-output-cost:1 -->
 
 <a id="payload-and-amplification"></a>
 
@@ -838,17 +991,17 @@ The intended use is to have the whole group of threads cooperate on constructing
 It also means that you cannot amplify the number of unique MeshPayload contents
 beyond the number of Amplification shader groups launched by the API.
 
-The child group counts follow the [shared mesh grid limits](compute.md#shared-grid-limits), including the expanded one-dimensional X capability and independent 22-bit total. Violating those constraints produces undefined behavior.
+<ins><!-- d3d12-review-inline:begin:mesh:M-dispatchmesh-intrinsic:3 -->The child group counts follow the [shared mesh grid limits](compute.md#shared-grid-limits), including the expanded one-dimensional X capability and independent 22-bit total. Violating those constraints produces undefined behavior.<!-- d3d12-review-inline:end:mesh:M-dispatchmesh-intrinsic:3 --></ins>
 
 A payload of data passed to all instances of Mesh shaders invoked by this
 call is passed through the MeshPayload parameter.
 
-The payload type, specified by `payload_t` here, must be a user-defined struct
+<ins><!-- d3d12-review-inline:begin:mesh:M-dispatchmesh-intrinsic:5 -->The payload type, specified by `payload_t` here, must be a user-defined struct
 type. The size of this type must match the size of the type used in the Mesh
 shader for the [mesh payload input](#mesh-payload). The maximum size
-allowed for this structure is 16k bytes.
+allowed for this structure is 16k bytes.<!-- d3d12-review-inline:end:mesh:M-dispatchmesh-intrinsic:5 --></ins>
 
-For the amplification shader, the payload structure counts against its 32-KiB groupshared allowance. A 16-KiB payload leaves 16 KiB for other AS groupshared storage. The incoming MS payload is accounted separately from the MS 28-KiB groupshared allowance; it is not subtracted from that allowance. The independent 16-KiB payload, 32-KiB aligned mesh-output and 47-KiB combined payload/output limits still apply.
+<ins><!-- d3d12-review-inline:begin:mesh:M-dispatchmesh-intrinsic:6 -->For the amplification shader, the payload structure counts against its 32-KiB groupshared allowance. A 16-KiB payload leaves 16 KiB for other AS groupshared storage. The incoming MS payload is accounted separately from the MS 28-KiB groupshared allowance; it is not subtracted from that allowance. The independent 16-KiB payload, 32-KiB aligned mesh-output and 47-KiB combined payload/output limits still apply.<!-- d3d12-review-inline:end:mesh:M-dispatchmesh-intrinsic:6 --></ins>
 
 The structure is not flattened into a packed signature layout, but instead
 passed with the data layout specified by the native structure.  Data layout
@@ -858,11 +1011,11 @@ should be the same as for structured buffers.
 
 ### Programmable Primitive Amplification
 
-A limited form of primitive amplification as in GS-amplification is
+<ins><!-- d3d12-review-inline:begin:mesh:M-programmable-primitive-amplification:0 -->A limited form of primitive amplification as in GS-amplification is
 supported with Mesh shaders. It's possible to amplify input point
 geometry with up to 1:V and/or 1:P ratio where V is the number of output
 vertices declared by the mesh shader and P is the number of output
-primitives declared by the mesh shader.
+primitives declared by the mesh shader.<!-- d3d12-review-inline:end:mesh:M-programmable-primitive-amplification:0 --></ins>
 
 However, programmable amplification as in Amplification shaders can't be done in a
 single threadgroup because expansion factors are decided by the program
@@ -875,25 +1028,32 @@ Amplification in Mesh shaders.
 
 ## View instancing and culling
 
-The [shared graphics view-instancing contract](vertex-processing.md#geometry-view-instancing) owns tiers, view masks, logical view dependencies and common retirement rules. The following are the mesh-specific dependency, output-storage and groupshared contributions; AS does not receive `SV_ViewID`.
+<!-- d3d12-review-alert:begin:mesh:N-view-owner:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The [shared graphics view-instancing contract](vertex-processing.md#geometry-view-instancing) owns tiers, view masks, logical view dependencies and common retirement rules. The following are the mesh-specific dependency, output-storage and groupshared contributions; AS does not receive `SV_ViewID`.
+
+<!-- d3d12-review-alert:end:mesh:N-view-owner:0 -->
 
 <a id="sv_viewid"></a>
 
 ### SV_ViewID
 
-`SV_ViewID` is special in the way it allows for a driver to create a version of
+<ins><!-- d3d12-review-inline:begin:mesh:M-sv_viewid:0 -->`SV_ViewID` is special in the way it allows for a driver to create a version of
 the shader that computes all views in a single shader pass. It does this by
-duplicating SV_ViewID dependent values, computations, and attributes.
+duplicating SV_ViewID dependent values, computations, and attributes.<!-- d3d12-review-inline:end:mesh:M-sv_viewid:0 --></ins>
 
-`SV_ViewID` expansion must fit the available storage for the selected view count and dependent attributes.
+<ins><!-- d3d12-review-inline:begin:mesh:M-sv_viewid:1 -->`SV_ViewID` expansion must fit the available storage for the selected view count and dependent attributes.<!-- d3d12-review-inline:end:mesh:M-sv_viewid:1 --></ins>
 
-For Mesh shader, this is complicated by accessing group shared memory.
+<ins><!-- d3d12-review-inline:begin:mesh:M-sv_viewid:2 -->For Mesh shader, this is complicated by accessing group shared memory.
 Group shared memory dependent on `SV_ViewID` must be similarly expanded
 by the number of views.
-Both attribute and groupshared expansion must fit their storage limits. The [validation-coverage distinction](#mesh-view-validation) applies.
+Both attribute and groupshared expansion must fit their storage limits. The [validation-coverage distinction](#mesh-view-validation) applies.<!-- d3d12-review-inline:end:mesh:M-sv_viewid:2 --></ins>
 
-Dynamically indexed arrays written to with `SV_ViewID` dependent values
-must be expanded by multiplying the size by the number of views.
+<ins><!-- d3d12-review-inline:begin:mesh:M-sv_viewid:3 -->Dynamically indexed arrays written to with `SV_ViewID` dependent values
+must be expanded by multiplying the size by the number of views.<!-- d3d12-review-inline:end:mesh:M-sv_viewid:3 --></ins>
 
 If a temporary or groupshared array is indexed by a value dependent on `SV_ViewID`,
 the compiler (or DXIL validator) will issue an error,
@@ -905,12 +1065,12 @@ or efficiency and consistency between multi-pass and single-pass implementations
 however, values read from global memory at an address that is dependent on `SV_ViewID`
 are considered dependent as well.
 
-Note: SV_ViewID is only available as an input to a Mesh Shader, not an
-Amplification Shader.
+<ins><!-- d3d12-review-inline:begin:mesh:M-sv_viewid:6 -->Note: SV_ViewID is only available as an input to a Mesh Shader, not an
+Amplification Shader.<!-- d3d12-review-inline:end:mesh:M-sv_viewid:6 --></ins>
 
-Note: SV_ViewID is available as an input to Pixel Shader that does
+<ins><!-- d3d12-review-inline:begin:mesh:M-sv_viewid:7 -->Note: SV_ViewID is available as an input to Pixel Shader that does
 not consume attribute space (system generated value), and therefore cannot be
-written as an output from Mesh Shader.
+written as an output from Mesh Shader.<!-- d3d12-review-inline:end:mesh:M-sv_viewid:7 --></ins>
 
 In addition to the storage expansions, some constraints are required to enable
 a single-pass implementation.
@@ -926,24 +1086,31 @@ Amplification shaders do not support `SV_ViewID` input.
 
 #### Validation coverage
 
-Required ViewID-expanded storage limits apply independently of automatic validation coverage. Compiler/validation metadata does not comprehensively describe ViewID-dependent groupshared storage. Successful shader or PSO validation therefore does not establish that every such expansion fits or that all violations were detected. This limitation does not relax the output, groupshared or dependency constraints above.
+<!-- d3d12-review-alert:begin:mesh:N-view-validation:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Required ViewID-expanded storage limits apply independently of automatic validation coverage. Compiler/validation metadata does not comprehensively describe ViewID-dependent groupshared storage. Successful shader or PSO validation therefore does not establish that every such expansion fits or that all violations were detected. This limitation does not relax the output, groupshared or dependency constraints above.
+
+<!-- d3d12-review-alert:end:mesh:N-view-validation:0 -->
 
 <a id="sv_cullprimitive"></a>
 
 ### SV_CullPrimitive
 
-This is a per-primitive boolean culling value that indicates whether to cull
+<ins><!-- d3d12-review-inline:begin:mesh:M-sv_cullprimitive:0 -->This is a per-primitive boolean culling value that indicates whether to cull
 the primitive for the current view (SV_ViewID).  Hardware that expands views
 inline can turn this into a per-view mask value in place of SV_ViewportArrayIndex.
 SV_CullPrimitive will not consume space in the primitive signature.
 The special viewport reservation is defined by [view-expanded output costing](#view-output-costing).
-No attributes are counted for SV_CullPrimitive.
+No attributes are counted for SV_CullPrimitive.<!-- d3d12-review-inline:end:mesh:M-sv_cullprimitive:0 --></ins>
 
 <a id="sv_primitiveid-in-the-pixel-shader"></a>
 
 ### SV_PrimitiveID in the Pixel Shader
 
-When mesh shaders are used, there is no system generated PrimitiveID
+<ins><!-- d3d12-review-inline:begin:mesh:M-sv_primitiveid-in-the-pixel-shader:0 -->When mesh shaders are used, there is no system generated PrimitiveID
 (uint SV_PrimitiveID) value. If a pixel shader inputs SV_PrimitiveID
 and is paired with a mesh shader, the mesh shader must include SV_PrimitiveID
 as part of its primitive outputs and must manually output a value of its choosing
@@ -951,41 +1118,55 @@ for each primitive. So this behaves no differently than any other mesh shader pr
 without a special name. The basic purpose here is to allow pixel shaders
 that were written to work with other shaders like geometry shaders,
 where SV_PrimitiveID does exist, or vertex shaders, where the PrimitiveID is auto-generated,
-to be shared with the mesh shader as well.
+to be shared with the mesh shader as well.<!-- d3d12-review-inline:end:mesh:M-sv_primitiveid-in-the-pixel-shader:0 --></ins>
 
 <a id="derivatives"></a>
 
 ## Derivatives and quad operations
 
-These stage-specific derivatives feed the shared [LOD/anisotropy calculation](common-shader-internals.md#lod-and-anisotropy) and [sampling/addressing precision rules](common-shader-internals.md#sampling-precision). The common texture algorithm does not change this stage's quad formation or participating-lane requirements.
+<!-- d3d12-review-alert:begin:mesh:N-common-lod-algorithms:0 -->
 
-Derivative and derivative-dependent texture sample operations must be supported
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> These stage-specific derivatives feed the shared [LOD/anisotropy calculation](common-shader-internals.md#lod-and-anisotropy) and [sampling/addressing precision rules](common-shader-internals.md#sampling-precision). The common texture algorithm does not change this stage's quad formation or participating-lane requirements.
+
+<!-- d3d12-review-alert:end:mesh:N-common-lod-algorithms:0 -->
+
+<ins><!-- d3d12-review-inline:begin:mesh:D-capability:0 -->Derivative and derivative-dependent texture sample operations must be supported
 in compute shaders
-on devices that support `D3D_SHADER_MODEL_6_6`.
+on devices that support `D3D_SHADER_MODEL_6_6`.<!-- d3d12-review-inline:end:mesh:D-capability:0 --></ins>
 
 Derivative and derivative-dependent texture sample operations must be supported
 in amplification and mesh shaders
 on devices that support `D3D_SHADER_MODEL_6_6`
 and have the `DerivativesInMeshAndAmplificationShadersSupported` capability.
 
-Quad read operations require the applicable shader model and `WaveOps` support; their availability does not by itself permit derivative-dependent sampling.
+<ins><!-- d3d12-review-inline:begin:mesh:D-capability:2 -->Quad read operations require the applicable shader model and `WaveOps` support; their availability does not by itself permit derivative-dependent sampling.<!-- d3d12-review-inline:end:mesh:D-capability:2 --></ins>
 
-For derivative operations, `numthreads` must have X divisible by four with Y=Z=1 (1D quads), or X and Y both divisible by two (2D quads). Other group shapes are invalid for these operations. The [quad layouts and lane mapping](compute.md#compute-quads) define the exact 1D/2D mapping; the [derivative and texture-operation definitions](../HLSL_SM_6_6_Derivatives.md#added-functions) define the available operations. These are shader-model/capability conditions, not additional restrictions on every mesh dispatch.
+<!-- d3d12-review-alert:begin:mesh:N-quad-rules:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> For derivative operations, `numthreads` must have X divisible by four with Y=Z=1 (1D quads), or X and Y both divisible by two (2D quads). Other group shapes are invalid for these operations. The [quad layouts and lane mapping](compute.md#compute-quads) define the exact 1D/2D mapping; the [derivative and texture-operation definitions](../HLSL_SM_6_6_Derivatives.md#added-functions) define the available operations. These are shader-model/capability conditions, not additional restrictions on every mesh dispatch.
+
+<!-- d3d12-review-alert:end:mesh:N-quad-rules:0 -->
 
 <a id="rasterization-order"></a>
 
 ## Rasterization order
 
-When rasterization is enabled (pixel shader or depth only rendering) and the pipeline contains an amplification shader and/or mesh shader,
-the following rasterization ordering guarantees apply:
+<ins><!-- d3d12-review-inline:begin:mesh:M-rasterization-order:0 -->When rasterization is enabled (pixel shader or depth only rendering) and the pipeline contains an amplification shader and/or mesh shader,
+the following rasterization ordering guarantees apply:<!-- d3d12-review-inline:end:mesh:M-rasterization-order:0 --></ins>
 
-Triangles generated by any individual mesh shader thread group are always retired by the rasterizer in the order that thread group specified its primitive outputs.
-This remains true for all the cases in the rest of this discussion, where ordering with respect to neighboring thread groups is discussed.
+<ins><!-- d3d12-review-inline:begin:mesh:M-rasterization-order:1 -->Triangles generated by any individual mesh shader thread group are always retired by the rasterizer in the order that thread group specified its primitive outputs.
+This remains true for all the cases in the rest of this discussion, where ordering with respect to neighboring thread groups is discussed.<!-- d3d12-review-inline:end:mesh:M-rasterization-order:1 --></ins>
 
-Pixel shader invocations (any shader invocations) may not execute in order. Rather only the resulting render-target/depth/stencil buffer accesses must honor any specified ordering,
+<ins><!-- d3d12-review-inline:begin:mesh:M-rasterization-order:2 -->Pixel shader invocations (any shader invocations) may not execute in order. Rather only the resulting render-target/depth/stencil buffer accesses must honor any specified ordering,
 over any given target location, e.g. render-target/depth sample.
 If the application needs UAV accesses during pixel shader invocation to be ordered over any given target location,
-the RasterizerOrderedViews (ROV) feature needs to be used in the pixel shader.
+the RasterizerOrderedViews (ROV) feature needs to be used in the pixel shader.<!-- d3d12-review-inline:end:mesh:M-rasterization-order:2 --></ins>
 
 If the pipeline state includes a mesh shader but no amplification shader, the outputs of each thread group are retired by the rasterizer sequentially
 with respect to neighboring thread groups. So all primitives generated by the DispatchMesh() API call are retired by the rasterizer in a fully defined order. The ordering of thread groups is defined as:
@@ -1018,27 +1199,48 @@ with the exception of the arbitrary ordering of mesh shader rasterization retire
 
 ## Pipeline statistics
 
-The complete [AS/MS pipeline statistics result, capability and invocation units](counters-queries-and-predication.md#mesh-statistics) are defined in the general query chapter. Stage execution, output and ordering rules remain here.
+<!-- d3d12-review-alert:begin:mesh:QF-mesh-stats:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The complete [AS/MS pipeline statistics result, capability and invocation units](counters-queries-and-predication.md#mesh-statistics) are defined in the general query chapter. Stage execution, output and ordering rules remain here.
+
+<!-- d3d12-review-alert:end:mesh:QF-mesh-stats:0 -->
 
 <a id="msprimitives-and-view-instancing"></a>
 
 ### MSPrimitives and view instancing
 
-See [MSPrimitives and view instancing](counters-queries-and-predication.md#msprimitives-and-view-instancing).
+<!-- d3d12-review-alert:begin:mesh:QF-ms-view-stats:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> See [MSPrimitives and view instancing](counters-queries-and-predication.md#msprimitives-and-view-instancing).
+
+<!-- d3d12-review-alert:end:mesh:QF-ms-view-stats:0 -->
 
 <a id="culled-primitives-effect-on-msprimitives"></a>
 
 ### Culled primitives' effect on MSPrimitives
 
-See [culled primitives and MSPrimitives](counters-queries-and-predication.md#culled-primitives).
+<!-- d3d12-review-alert:begin:mesh:QF-ms-culled-stats:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> See [culled primitives and MSPrimitives](counters-queries-and-predication.md#culled-primitives).
+
+<!-- d3d12-review-alert:end:mesh:QF-ms-culled-stats:0 -->
 
 <a id="render-target-array-index"></a>
 
 ## SV_RenderTargetArrayIndex limitations based on queryable capability
 
-Some target hardware has limitations where mesh shaders that write to the SV_RenderTargetArrayIndex
+<ins><!-- d3d12-review-inline:begin:mesh:M-render-target-array-index:0 -->Some target hardware has limitations where mesh shaders that write to the SV_RenderTargetArrayIndex
 attribute are limited to outputting a 3 bit value. This allows for selecting between at most 8 render-target array slices.
-On such hardware, outputting an index value larger than 7 produces undefined behavior.
+On such hardware, outputting an index value larger than 7 produces undefined behavior.<!-- d3d12-review-inline:end:mesh:M-render-target-array-index:0 --></ins>
 
 Other hardware, however, does not possess a limitation on valid output values of SV_RenderTargetArrayIndex
 and has support for full 11-bit render target array indexing.
@@ -1064,13 +1266,20 @@ introduced support for mesh shaders. Applications running on an operating system
 D3D12_FEATURE_DATA_D3D12_OPTIONS9 is not available must assume that mesh shaders only support a
 maximum render target array index of 7 and going beyond this produces undefined results.
 
-Drivers report `MeshShaderSupportsFullRangeRenderTargetArrayIndex`; drivers that report false or use an older DDI without this capability are treated as not supporting the full range.
+<ins><!-- d3d12-review-inline:begin:mesh:M-render-target-array-index:7 -->Drivers report `MeshShaderSupportsFullRangeRenderTargetArrayIndex`; drivers that report false or use an older DDI without this capability are treated as not supporting the full range.<!-- d3d12-review-inline:end:mesh:M-render-target-array-index:7 --></ins>
 
 <a id="mesh-driver"></a>
 
 ## Driver responsibilities
 
-PSO creation checks the selected AS/MS pipeline, payload agreement and declared output limits under [mesh PSO creation](pipeline-state.md#mesh-pipelines). The required view-expanded storage limits apply even when [automatic validation coverage](#mesh-view-validation) is incomplete. The driver implements the selected thread groups, AS-to-MS payload delivery, mesh output assembly and rasterization ordering under the negotiated DDI. Shader validation and optional debug/GPU-based validation do not promise that every invalid shader or dynamic output error is rejected by retail execution.
+<!-- d3d12-review-alert:begin:mesh:N-driver:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> PSO creation checks the selected AS/MS pipeline, payload agreement and declared output limits under [mesh PSO creation](pipeline-state.md#mesh-pipelines). The required view-expanded storage limits apply even when [automatic validation coverage](#mesh-view-validation) is incomplete. The driver implements the selected thread groups, AS-to-MS payload delivery, mesh output assembly and rasterization ordering under the negotiated DDI. Shader validation and optional debug/GPU-based validation do not promise that every invalid shader or dynamic output error is rejected by retail execution.
+
+<!-- d3d12-review-alert:end:mesh:N-driver:0 -->
 
 <a id="dispatchmesh-ddi"></a>
 
@@ -1110,19 +1319,33 @@ Thread group count in Z direction.
 
 ### Current mesh-dispatch forms
 
-These runtime-to-driver callbacks implement
-[DispatchMesh](#dispatchmesh) with the same three scalar group counts.
-The ordinary form receives `D3D12DDI_HCOMMANDLIST`, identifying driver
-storage; the compatible form receives `D3D12DDI_API_HCOMMANDLIST`,
-identifying the application-side header under the
-[work-command handle contract](execution.md#work-command-handles).
-The handles are not interchangeable, and passing either transfers no COM
-ownership. Conditional direct dispatch does not establish prior validation.
+<!-- d3d12-review-alert:begin:mesh:MD-current-roles:0 -->
 
-| Current table member | Signature | API contract |
-|---|---|---|
-| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnDispatchMesh` | `PFND3D12DDI_DISPATCH_MESH_0074` | [DispatchMesh](#dispatchmesh) |
-| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnDispatchMesh` | `PFND3D12DDI_DISPATCH_MESH_0114` | [DispatchMesh](#dispatchmesh) |
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> These runtime-to-driver callbacks implement
+> [DispatchMesh](#dispatchmesh) with the same three scalar group counts.
+> The ordinary form receives `D3D12DDI_HCOMMANDLIST`, identifying driver
+> storage; the compatible form receives `D3D12DDI_API_HCOMMANDLIST`,
+> identifying the application-side header under the
+> [work-command handle contract](execution.md#work-command-handles).
+> The handles are not interchangeable, and passing either transfers no COM
+> ownership. Conditional direct dispatch does not establish prior validation.
+
+<!-- d3d12-review-alert:end:mesh:MD-current-roles:0 -->
+
+<!-- d3d12-review-alert:begin:mesh:MD-current-roles:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Current table member | Signature | API contract |
+> |---|---|---|
+> | `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnDispatchMesh` | `PFND3D12DDI_DISPATCH_MESH_0074` | [DispatchMesh](#dispatchmesh) |
+> | `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnDispatchMesh` | `PFND3D12DDI_DISPATCH_MESH_0114` | [DispatchMesh](#dispatchmesh) |
+
+<!-- d3d12-review-alert:end:mesh:MD-current-roles:1 -->
 
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_DISPATCH_MESH_0074 )(
@@ -1131,50 +1354,92 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DISPATCH_MESH_0074 )(
 typedef VOID ( APIENTRY* PFND3D12DDI_DISPATCH_MESH_0114 )(D3D12DDI_API_HCOMMANDLIST, UINT, UINT, UINT );
 ```
 
-After the command-list handle, the three `UINT` arguments are
-`ThreadGroupCountX`, `ThreadGroupCountY` and `ThreadGroupCountZ`, in that
-order. Their values are captured for the recorded work; there is no
-caller-owned CPU description or payload pointer to retain. These are group
-counts, not per-group `numthreads` dimensions or shader-thread invocation counts.
-With AS active they launch the parent AS grid; otherwise they launch MS groups.
+<!-- d3d12-review-alert:begin:mesh:MD-counts-grids:0 -->
 
-The [shared mesh grid rules](compute.md#shared-grid-limits) require ordinary
-per-axis bounds of 65,535, or expanded X up to `Max1DDispatchMeshSize` only
-when Y=Z=1, together with the independent mathematical `X*Y*Z < 2^22`
-limit (at most 4,194,303 groups). `Max1DDispatchMeshSize` is independent of
-the compute `Max1DDispatchSize`. A zero dimension launches no groups but does not
-waive other validity constraints. The
-[forwarding and validation contract](compute.md#dispatch-validation) does not
-clamp oversized arguments or promise that invalid dimensions were filtered.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> After the command-list handle, the three `UINT` arguments are
+> `ThreadGroupCountX`, `ThreadGroupCountY` and `ThreadGroupCountZ`, in that
+> order. Their values are captured for the recorded work; there is no
+> caller-owned CPU description or payload pointer to retain. These are group
+> counts, not per-group `numthreads` dimensions or shader-thread invocation counts.
+> With AS active they launch the parent AS grid; otherwise they launch MS groups.
 
-The [AS DispatchMesh intrinsic](#dispatchmesh-intrinsic) launches a separate
-child MS grid with its own applicable bounds and shader-produced payload.
-It is not an additional CPU callback or a fourth pointer argument here;
-valid parent dimensions do not establish valid child dimensions.
+<!-- d3d12-review-alert:end:mesh:MD-counts-grids:0 -->
 
-The [mesh pipeline](pipeline-state.md#mesh-pipelines) and
-[availability](#availability) contracts require the selected MS/optional-AS
-graphics pipeline and compatible graphics-root/output state, not compute-root
-state. Mesh dispatch does not re-enable input assembly or stream-output capture.
-Both callbacks record DIRECT/BUNDLE graphics work, not COMPUTE/COPY work.
-Bundle selection and inherited bindings retain the
-[complete operation's recording constraints](#dispatchmesh).
-In an open render pass, mesh dispatch is a conditional compatible raster
-workload under the [operation surface](output-merger.md#render-pass-operation-surface),
-not a compute workload.
+<!-- d3d12-review-alert:begin:mesh:MD-counts-grids:1 -->
 
-The [AS/MS payload and output](#amplification-and-mesh-shader) and
-[rasterization retirement ordering](#rasterization-order) contracts remain
-driver responsibilities. Ordered target retirement is not ordered shader
-invocation execution. The [predication matrix](counters-queries-and-predication.md#predication-operation-matrix)
-and [mesh statistics](counters-queries-and-predication.md#mesh-statistics)
-retain predicate, capability, invocation-unit and view/culling distinctions.
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The [shared mesh grid rules](compute.md#shared-grid-limits) require ordinary
+> per-axis bounds of 65,535, or expanded X up to `Max1DDispatchMeshSize` only
+> when Y=Z=1, together with the independent mathematical `X*Y*Z < 2^22`
+> limit (at most 4,194,303 groups). `Max1DDispatchMeshSize` is independent of
+> the compute `Max1DDispatchSize`. A zero dimension launches no groups but does not
+> waive other validity constraints. The
+> [forwarding and validation contract](compute.md#dispatch-validation) does not
+> clamp oversized arguments or promise that invalid dimensions were filtered.
 
-Capturing scalar counts does not snapshot GPU resources, create shader payload
-storage on the CPU, transition resources or establish residency.
-[Resource lifetime](execution.md#lifetime) and the operation's synchronization
-requirements remain. The `VOID` callbacks provide no per-call `HRESULT` or
-GPU-completion result; failures use the
-[recording driver error path](execution.md#lifecycle-driver-errors).
-The [separate 12-byte indirect record](#indirect-dispatch) does not change
-these scalar CPU callback parameters or its own command-signature rules.
+<!-- d3d12-review-alert:end:mesh:MD-counts-grids:1 -->
+
+<!-- d3d12-review-alert:begin:mesh:MD-counts-grids:2 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The [AS DispatchMesh intrinsic](#dispatchmesh-intrinsic) launches a separate
+> child MS grid with its own applicable bounds and shader-produced payload.
+> It is not an additional CPU callback or a fourth pointer argument here;
+> valid parent dimensions do not establish valid child dimensions.
+
+<!-- d3d12-review-alert:end:mesh:MD-counts-grids:2 -->
+
+<!-- d3d12-review-alert:begin:mesh:MD-graphics-state:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The [mesh pipeline](pipeline-state.md#mesh-pipelines) and
+> [availability](#availability) contracts require the selected MS/optional-AS
+> graphics pipeline and compatible graphics-root/output state, not compute-root
+> state. Mesh dispatch does not re-enable input assembly or stream-output capture.
+> Both callbacks record DIRECT/BUNDLE graphics work, not COMPUTE/COPY work.
+> Bundle selection and inherited bindings retain the
+> [complete operation's recording constraints](#dispatchmesh).
+> In an open render pass, mesh dispatch is a conditional compatible raster
+> workload under the [operation surface](output-merger.md#render-pass-operation-surface),
+> not a compute workload.
+
+<!-- d3d12-review-alert:end:mesh:MD-graphics-state:0 -->
+
+<!-- d3d12-review-alert:begin:mesh:MD-graphics-state:1 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The [AS/MS payload and output](#amplification-and-mesh-shader) and
+> [rasterization retirement ordering](#rasterization-order) contracts remain
+> driver responsibilities. Ordered target retirement is not ordered shader
+> invocation execution. The [predication matrix](counters-queries-and-predication.md#predication-operation-matrix)
+> and [mesh statistics](counters-queries-and-predication.md#mesh-statistics)
+> retain predicate, capability, invocation-unit and view/culling distinctions.
+
+<!-- d3d12-review-alert:end:mesh:MD-graphics-state:1 -->
+
+<!-- d3d12-review-alert:begin:mesh:MD-graphics-state:2 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Capturing scalar counts does not snapshot GPU resources, create shader payload
+> storage on the CPU, transition resources or establish residency.
+> [Resource lifetime](execution.md#lifetime) and the operation's synchronization
+> requirements remain. The `VOID` callbacks provide no per-call `HRESULT` or
+> GPU-completion result; failures use the
+> [recording driver error path](execution.md#lifecycle-driver-errors).
+> The [separate 12-byte indirect record](#indirect-dispatch) does not change
+> these scalar CPU callback parameters or its own command-signature rules.
+
+<!-- d3d12-review-alert:end:mesh:MD-graphics-state:2 -->

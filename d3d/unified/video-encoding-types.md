@@ -2,12 +2,32 @@
 
 # Video encoding type reference
 
-**Qualified draft.** The [encoding contract](video-encoding.md) owns the conceptual and API route.
-This reference supplies the selected released application-facing declarations.
-Array counts, pointer alternatives, field widths, values and separate versioned
-types retain their respective contracts.
-Declaration presence does not assert support for a codec/configuration tuple.
-`DataSize` describes the selected pointed-to payload, not the wrapper itself.
+<!-- d3d12-review-legend:begin -->
+
+> [!NOTE]
+> **Draft provenance annotations.**
+> Underlining marks pending replacement wording or authored list items. Warning boxes
+> mark authored, mixed or reopened passages awaiting editorial review.
+> Editorial adoption does not establish factual or hardware verification. Exact approved factual
+> corrections do not trigger a marker. Unmarked text elsewhere, declarations
+> and structural Markdown are not assertions of approval.
+> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
+
+<!-- d3d12-review-legend:end -->
+
+<!-- d3d12-review-alert:begin:video-encoding-types:type-intro:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> **Qualified draft.** The [encoding contract](video-encoding.md) owns the conceptual and API route.
+> This reference supplies the selected released application-facing declarations.
+> Array counts, pointer alternatives, field widths, values and separate versioned
+> types retain their respective contracts.
+> Declaration presence does not assert support for a codec/configuration tuple.
+> `DataSize` describes the selected pointed-to payload, not the wrapper itself.
+
+<!-- d3d12-review-alert:end:video-encoding-types:type-intro:0 -->
 
 <a id="encoding-av1-tile-bounds"></a>
 
@@ -581,7 +601,14 @@ typedef enum D3D12_VIDEO_ENCODER_AV1_COMP_PREDICTION_TYPE
 
 ## D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAGS
 
-The declaration below lists this family's selected members; it is not an exhaustive inventory of separately specified extensions.
+<!-- d3d12-review-alert:begin:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAGS:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The declaration below lists this family's selected members; it is not an exhaustive inventory of separately specified extensions.
+
+<!-- d3d12-review-alert:end:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAGS:0 -->
 
 ```cpp
 typedef enum D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAGS
@@ -1341,7 +1368,14 @@ typedef enum D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_CUSIZE {
 
 ## D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAGS
 
-The declaration below lists this family's selected members; it is not an exhaustive inventory of separately specified extensions.
+<!-- d3d12-review-alert:begin:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAGS:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The declaration below lists this family's selected members; it is not an exhaustive inventory of separately specified extensions.
+
+<!-- d3d12-review-alert:end:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAGS:0 -->
 
 ```cpp
 typedef enum D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAGS
@@ -1514,7 +1548,14 @@ typedef enum D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS
 
 ## D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS1
 
-The declaration below lists this family's selected members; it is not an exhaustive inventory of separately specified extensions.
+<!-- d3d12-review-alert:begin:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS1:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The declaration below lists this family's selected members; it is not an exhaustive inventory of separately specified extensions.
+
+<!-- d3d12-review-alert:end:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS1:0 -->
 
 ```cpp
 typedef enum D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS1
@@ -3224,7 +3265,14 @@ typedef enum D3D12_VIDEO_ENCODER_SUBREGION_COMPRESSED_BITSTREAM_BUFFER_MODE
 
 ## D3D12_VIDEO_ENCODER_SUPPORT_FLAGS
 
-The declaration below lists this family's selected members; it is not an exhaustive inventory of separately specified extensions.
+<!-- d3d12-review-alert:begin:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_SUPPORT_FLAGS:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The declaration below lists this family's selected members; it is not an exhaustive inventory of separately specified extensions.
+
+<!-- d3d12-review-alert:end:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_SUPPORT_FLAGS:0 -->
 
 ```cpp
 typedef enum D3D12_VIDEO_ENCODER_SUPPORT_FLAGS
