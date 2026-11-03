@@ -1105,3 +1105,76 @@ Thread group count in Y direction.
 `unnamedParam4`
 
 Thread group count in Z direction.
+
+<a id="driver-current-mesh-dispatch"></a>
+
+### Current mesh-dispatch forms
+
+These runtime-to-driver callbacks implement
+[DispatchMesh](#dispatchmesh) with the same three scalar group counts.
+The ordinary form receives `D3D12DDI_HCOMMANDLIST`, identifying driver
+storage; the compatible form receives `D3D12DDI_API_HCOMMANDLIST`,
+identifying the application-side header under the
+[work-command handle contract](execution.md#work-command-handles).
+The handles are not interchangeable, and passing either transfers no COM
+ownership. Conditional direct dispatch does not establish prior validation.
+
+| Current table member | Signature | API contract |
+|---|---|---|
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnDispatchMesh` | `PFND3D12DDI_DISPATCH_MESH_0074` | [DispatchMesh](#dispatchmesh) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnDispatchMesh` | `PFND3D12DDI_DISPATCH_MESH_0114` | [DispatchMesh](#dispatchmesh) |
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_DISPATCH_MESH_0074 )(
+    D3D12DDI_HCOMMANDLIST, UINT, UINT, UINT );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_DISPATCH_MESH_0114 )(D3D12DDI_API_HCOMMANDLIST, UINT, UINT, UINT );
+```
+
+After the command-list handle, the three `UINT` arguments are
+`ThreadGroupCountX`, `ThreadGroupCountY` and `ThreadGroupCountZ`, in that
+order. Their values are captured for the recorded work; there is no
+caller-owned CPU description or payload pointer to retain. These are group
+counts, not per-group `numthreads` dimensions or shader-thread invocation counts.
+With AS active they launch the parent AS grid; otherwise they launch MS groups.
+
+The [shared mesh grid rules](compute.md#shared-grid-limits) require ordinary
+per-axis bounds of 65,535, or expanded X up to `Max1DDispatchMeshSize` only
+when Y=Z=1, together with the independent mathematical `X*Y*Z < 2^22`
+limit (at most 4,194,303 groups). `Max1DDispatchMeshSize` is independent of
+the compute `Max1DDispatchSize`. A zero dimension launches no groups but does not
+waive other validity constraints. The
+[forwarding and validation contract](compute.md#dispatch-validation) does not
+clamp oversized arguments or promise that invalid dimensions were filtered.
+
+The [AS DispatchMesh intrinsic](#dispatchmesh-intrinsic) launches a separate
+child MS grid with its own applicable bounds and shader-produced payload.
+It is not an additional CPU callback or a fourth pointer argument here;
+valid parent dimensions do not establish valid child dimensions.
+
+The [mesh pipeline](pipeline-state.md#mesh-pipelines) and
+[availability](#availability) contracts require the selected MS/optional-AS
+graphics pipeline and compatible graphics-root/output state, not compute-root
+state. Mesh dispatch does not re-enable input assembly or stream-output capture.
+Both callbacks record DIRECT/BUNDLE graphics work, not COMPUTE/COPY work.
+Bundle selection and inherited bindings retain the
+[complete operation's recording constraints](#dispatchmesh).
+In an open render pass, mesh dispatch is a conditional compatible raster
+workload under the [operation surface](output-merger.md#render-pass-operation-surface),
+not a compute workload.
+
+The [AS/MS payload and output](#amplification-and-mesh-shader) and
+[rasterization retirement ordering](#rasterization-order) contracts remain
+driver responsibilities. Ordered target retirement is not ordered shader
+invocation execution. The [predication matrix](counters-queries-and-predication.md#predication-operation-matrix)
+and [mesh statistics](counters-queries-and-predication.md#mesh-statistics)
+retain predicate, capability, invocation-unit and view/culling distinctions.
+
+Capturing scalar counts does not snapshot GPU resources, create shader payload
+storage on the CPU, transition resources or establish residency.
+[Resource lifetime](execution.md#lifetime) and the operation's synchronization
+requirements remain. The `VOID` callbacks provide no per-call `HRESULT` or
+GPU-completion result; failures use the
+[recording driver error path](execution.md#lifecycle-driver-errors).
+The [separate 12-byte indirect record](#indirect-dispatch) does not change
+these scalar CPU callback parameters or its own command-signature rules.

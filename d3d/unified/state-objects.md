@@ -3374,6 +3374,99 @@ Parameter                           | Definition
 
 At API see [SetProgram](#setprogram).
 
+<a id="driver-program-selection"></a>
+
+### Current raytracing and program selection
+
+The following callbacks retain their distinct API operations. The
+`_0114` forms use the [API command-list header](execution.md#work-command-handles)
+rather than ordinary driver recording storage. They are conditional current
+representations, not a guarantee of direct dispatch on every device.
+
+| Current table member | Signature | API contract |
+|---|---|---|
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnSetPipelineState1` | `PFND3D12DDI_SET_PIPELINE_STATE1_0054` | [SetPipelineState1](#setpipelinestate1) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnSetPipelineState1` | `PFND3D12DDI_SET_PIPELINE_STATE1_0114` | [SetPipelineState1](#setpipelinestate1) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnSetProgram` | `PFND3D12DDI_SET_PROGRAM_0108` | [SetProgram](#setprogram) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnSetProgram` | `PFND3D12DDI_SET_PROGRAM_0114` | [SetProgram](#setprogram) |
+
+```cpp
+D3D10DDI_H( D3D12DDI_API_HSTATEOBJECT )
+
+inline D3D12DDI_HSTATEOBJECT_0054 GetDriverStateObjectHandle(D3D12DDI_API_HSTATEOBJECT ApiHandle)
+{
+    D3D12DDI_RUNTIME_BYPASS_HEADER* pBypassHeader = (D3D12DDI_RUNTIME_BYPASS_HEADER*)ApiHandle.pDrvPrivate;
+    D3D12DDI_HSTATEOBJECT_0054 hStateObject;
+
+    hStateObject.pDrvPrivate = pBypassHeader->pDriverObject;
+    return hStateObject;
+}
+```
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_SET_PIPELINE_STATE1_0114 )(D3D12DDI_API_HCOMMANDLIST, D3D12DDI_API_HSTATEOBJECT );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_SET_PROGRAM_0114 )(D3D12DDI_API_HCOMMANDLIST, _In_ const D3D12DDI_SET_PROGRAM_DESC_0108* pDesc );
+```
+
+The ordinary raytracing selector receives `D3D12DDI_HSTATEOBJECT_0054`;
+its counterpart receives `D3D12DDI_API_HSTATEOBJECT`.
+`GetDriverStateObjectHandle` obtains the ordinary driver object from
+the API header's `pDriverObject`. It is not a null-safe root-signature
+conversion or a new null-unset operation.
+
+The selected object must satisfy [SetPipelineState1](#setpipelinestate1):
+an executable raytracing pipeline state object, not a collection or an
+ordinary PSO, with the required device/node compatibility and support.
+Passing either handle transfers no COM ownership and does not replace the
+API's object lifetime or the existing [driver lifetime contract](#driver-lifetime).
+The handle does not stand for a program identifier or select a global root
+signature.
+
+Both program callbacks receive `D3D12DDI_SET_PROGRAM_DESC_0108`; changing
+the command-list handle does not create a different program-description
+revision. Its [type tag](#d3d12ddi_program_type_0108) selects
+`GenericPipeline` (1) or `WorkGraph` (5) in the
+[typed driver description](#d3d12ddi_set_program_desc_0108).
+Use the corresponding active member, not the other union storage.
+The [opaque four-word program identifier](#d3d12ddi_program_identifier_0108)
+is not an API object handle, shader identifier or GPU address and must not
+be decoded with an object-header helper. Its
+[validity and underlying state-object lifetime](#getprogramidentifier)
+remain required.
+
+The driver captures the CPU description's selected values during the call;
+it cannot retain the caller's `pDesc` as a later source of those values.
+This implements the [API CPU-copy guarantee](#setprogram), not a copy of
+GPU memory referenced by the description. Generic selection uses its
+[identifier payload](#d3d12ddi_set_generic_pipeline_desc_0108).
+Work-graph selection retains the [flags and GPU ranges](#d3d12ddi_set_work_graph_desc_0108),
+including byte sizes/strides, [shared driver range types](raytracing-pipelines.md#driver-dispatch)
+and the API's [backing/local-root alignment, extent and access requirements](#d3d12_set_work_graph_desc).
+Those GPU allocations retain their independent execution lifetime,
+residency and synchronization requirements.
+
+The [single logical selection](command-list-state.md#pipeline-selection)
+governs all three selection APIs; these callbacks do not establish additive
+ordinary, raytracing and work-graph pipelines. Generic programs select their
+associated shaders/fixed-function state without selecting a global root
+signature. The complete [SetPipelineState1](#setpipelinestate1) and
+[SetProgram](#setprogram) contracts retain their distinct capabilities,
+bundle rules and [render-pass admission](output-merger.md#render-pass-operation-surface).
+In particular, raytracing object selection is forbidden in an open pass;
+generic selection retains its supported DIRECT/COMPUTE/BUNDLE contexts,
+whereas work-graph selection is not supported in bundles.
+
+The [work-graph initialization flag](#d3d12_set_work_graph_flags) is GPU work
+with its stated ordering requirements, not a harmless state-only reset.
+An initialization request cannot be omitted merely because the same program
+was already selected; command-list Reset does not itself initialize backing
+memory. Selection and optional initialization retain their
+[unpredicated contract](counters-queries-and-predication.md#predication-operation-matrix).
+These `VOID` callbacks use the
+[recording-error/deferred-Close contract](execution.md#lifecycle-driver-errors),
+not a per-selection creation `HRESULT` or proof of GPU completion.
+
 <a id="ddi-tables"></a>
 
 ### Callback table membership
@@ -3403,3 +3496,52 @@ At API see [SetProgram](#setprogram).
 | `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108` | `pfnSetProgram` | `PFND3D12DDI_SET_PROGRAM_0108` |
 
 Work-graph creation descriptors contain runtime-resolved node and entrypoint lists, not API autopopulation requests. `D3D12DDI_WORK_GRAPH_DESC_0108::Version` identifies the graph version for additions. The [driver node-construction structures](#d3d12ddi_node_0108) define the node launch/input/output metadata consumed by those lists. The driver program-identifier and backing-memory queries take a program name; the runtime-facing API uses the object's work-graph index for metadata queries. The program-selection callback consumes the opaque identifier and supplied backing-memory/local-root ranges.
+
+<a id="driver-current-state-object-services"></a>
+
+### Current state-object lifecycle and property services
+
+The current core-device table retains the state-object size/create/destroy
+and incremental-addition callbacks declared above. Sizing returns the required
+driver-private CPU-object byte count; it is not GPU backing-memory sizing.
+Creation and addition construct a new driver object in runtime-provided
+storage and return `HRESULT`. The driver owns cleanup of unsuccessful
+construction; a successfully created object receives destruction even if
+later runtime initialization abandons it. Destruction releases driver-owned
+state, not the runtime's private-storage allocation.
+
+The outer creation/addition argument is call-borrowed. In contrast, the
+[resolved subobject graph](#driver-contracts), including runtime-owned shader
+data, remains valid for the state object's lifetime. This is not a requirement
+to copy that persistent graph at each callback. The runtime has already
+materialized shader-defined subobjects and resolved export associations;
+the driver still performs the [link validation](#export-summaries) assigned
+to it.
+
+Addition retains the [parent-description versus parent-object distinction](#driver-lifetime):
+child use preserves the required creation descriptions, but does not keep
+the parent's driver handle alive. The driver tracks any internal parent
+data needed by a surviving child. API addition/configuration/stack-inheritance
+rules remain those of [incremental addition](#addtostateobject).
+
+The shader-identifier and stack-property callbacks receive the ordinary
+driver state-object handle, not a COM pointer or API object header.
+[GetShaderIdentifier](#getshaderidentifier) returns borrowed identifier bytes,
+not a GPU address; identifier validity and unavailable-export behavior remain
+the complete API contract. Shader/pipeline stack sizes are `UINT` at the
+DDI and `UINT64` at the API. The invalid shader-stack result is the 32-bit
+value `0xffffffff`, widened without losing that sentinel. Values at or above
+`0xffffffff` are rejected by the runtime before the stack setter is narrowed.
+The [stack property and recording-time](raytracing-pipelines.md#id3d12stateobjectpropertiessetpipelinestacksize)
+rules are not a new dispatch-description field.
+
+[GetProgramIdentifier](#getprogramidentifier) returns the four-`UINT64`
+opaque program identifier by value. It is not a shader-identifier pointer;
+zero/unusable identifiers and state-object lifetime retain the API rules.
+[GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements) takes a
+program name at the DDI, after the runtime resolves its API work-graph index.
+The driver writes minimum/maximum byte sizes and size granularity to CPU
+output storage during the call. A valid zero minimum is not an allocation
+failure; querying sizes does not allocate/initialize backing memory or
+complete GPU work. Selection, initialization and progress guarantees remain
+with the [backing-memory contract](#backing-memory).

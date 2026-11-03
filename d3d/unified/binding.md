@@ -3688,6 +3688,102 @@ Errors reported by the driver while recording follow the shared
 [recording-error callback and deferred-Close contract](execution.md#lifecycle-driver-errors);
 the result type alone does not establish error policy or remove API validation.
 
+<a id="driver-root-binding-forms"></a>
+
+#### Current handle representations
+
+The root-binding entries in `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108`
+use the ordinary driver handles shown above. The corresponding entries in
+`D3D12DDI_COMMAND_LIST_FUNCS_3D_0114` use the API-handle signatures below.
+These are distinct current command-list representations, not simultaneous
+sets of callbacks on one command list. Selection follows the
+[current command-list transport contract](execution.md#work-command-handles).
+The representation changes object-handle interpretation, not the logical
+root-argument operation.
+
+The member names below occur in both tables; each graphics/compute cell selects the named
+API operation, including its graphics/compute bind set and root parameter kind.
+
+| Ordinary type / API-handle type | Graphics member / API contract | Compute member / API contract |
+|---|---|---|
+| `PFND3D12DDI_SET_ROOT_SIGNATURE` / `PFND3D12DDI_SET_ROOT_SIGNATURE_0114` | `pfnSetGraphicsRootSignature` / [SetGraphicsRootSignature](#id3d12graphicscommandlist-setgraphicsrootsignature) | `pfnSetComputeRootSignature` / [SetComputeRootSignature](#id3d12graphicscommandlist-setcomputerootsignature) |
+| `PFND3D12DDI_SET_ROOT_DESCRIPTOR_TABLE` / `PFND3D12DDI_SET_ROOT_DESCRIPTOR_TABLE_0114` | `pfnSetGraphicsRootDescriptorTable` / [SetGraphicsRootDescriptorTable](#id3d12graphicscommandlist-setgraphicsrootdescriptortable) | `pfnSetComputeRootDescriptorTable` / [SetComputeRootDescriptorTable](#id3d12graphicscommandlist-setcomputerootdescriptortable) |
+| `PFND3D12DDI_SET_ROOT_32BIT_CONSTANT` / `PFND3D12DDI_SET_ROOT_32BIT_CONSTANT_0114` | `pfnSetGraphicsRoot32BitConstant` / [SetGraphicsRoot32BitConstant](#id3d12graphicscommandlist-setgraphicsroot32bitconstant) | `pfnSetComputeRoot32BitConstant` / [SetComputeRoot32BitConstant](#id3d12graphicscommandlist-setcomputeroot32bitconstant) |
+| `PFND3D12DDI_SET_ROOT_32BIT_CONSTANTS_0003` / `PFND3D12DDI_SET_ROOT_32BIT_CONSTANTS_0114` | `pfnSetGraphicsRoot32BitConstants` / [SetGraphicsRoot32BitConstants](#id3d12graphicscommandlist-setgraphicsroot32bitconstants) | `pfnSetComputeRoot32BitConstants` / [SetComputeRoot32BitConstants](#id3d12graphicscommandlist-setcomputeroot32bitconstants) |
+| `PFND3D12DDI_SET_ROOT_BUFFER_VIEW` / `PFND3D12DDI_SET_ROOT_BUFFER_VIEW_0114` | `pfnSetGraphicsRootConstantBufferView` / [SetGraphicsRootConstantBufferView](#id3d12graphicscommandlist-setgraphicsrootconstantbufferview) | `pfnSetComputeRootConstantBufferView` / [SetComputeRootConstantBufferView](#id3d12graphicscommandlist-setcomputerootconstantbufferview) |
+| `PFND3D12DDI_SET_ROOT_BUFFER_VIEW` / `PFND3D12DDI_SET_ROOT_BUFFER_VIEW_0114` | `pfnSetGraphicsRootShaderResourceView` / [SetGraphicsRootShaderResourceView](#id3d12graphicscommandlist-setgraphicsrootshaderresourceview) | `pfnSetComputeRootShaderResourceView` / [SetComputeRootShaderResourceView](#id3d12graphicscommandlist-setcomputerootshaderresourceview) |
+| `PFND3D12DDI_SET_ROOT_BUFFER_VIEW` / `PFND3D12DDI_SET_ROOT_BUFFER_VIEW_0114` | `pfnSetGraphicsRootUnorderedAccessView` / [SetGraphicsRootUnorderedAccessView](#id3d12graphicscommandlist-setgraphicsrootunorderedaccessview) | `pfnSetComputeRootUnorderedAccessView` / [SetComputeRootUnorderedAccessView](#id3d12graphicscommandlist-setcomputerootunorderedaccessview) |
+
+The API-handle callbacks receive `D3D12DDI_API_HCOMMANDLIST`, interpreted
+using the [command-list header and conversion helper](execution.md#work-command-handles),
+not as `D3D12DDI_HCOMMANDLIST` private storage. Signature selection also
+receives `D3D12DDI_API_HROOTSIGNATURE`. For a non-null root handle,
+`pDrvPrivate` identifies the same kind of public runtime-bypass header;
+`pDriverObject` identifies the ordinary driver root-signature object.
+The published root helper below performs that conversion. A null API root
+handle converts to a null driver root handle and unsets the named root
+signature. This does not make a null command-list handle valid.
+
+Passing either object handle transfers no COM ownership. The root signature
+must remain compatible with the command list's device and selected nodes;
+changing representation does not move it to a different device/node domain.
+The existing [root-object lifetime contract](#driver-root-lifecycle) remains
+in force.
+
+```cpp
+D3D10DDI_H( D3D12DDI_API_HROOTSIGNATURE )
+
+inline D3D12DDI_HROOTSIGNATURE GetDriverRootSignatureHandle(D3D12DDI_API_HROOTSIGNATURE ApiHandle)
+{
+    D3D12DDI_RUNTIME_BYPASS_HEADER* pBypassHeader = (D3D12DDI_RUNTIME_BYPASS_HEADER*)ApiHandle.pDrvPrivate;
+    D3D12DDI_HROOTSIGNATURE hRootSignature;
+
+    hRootSignature.pDrvPrivate = (pBypassHeader) ? pBypassHeader->pDriverObject : NULL;
+    return hRootSignature;
+}
+```
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_SET_ROOT_SIGNATURE_0114 )(D3D12DDI_API_HCOMMANDLIST, _In_ D3D12DDI_API_HROOTSIGNATURE);
+typedef VOID ( APIENTRY* PFND3D12DDI_SET_ROOT_DESCRIPTOR_TABLE_0114 )(D3D12DDI_API_HCOMMANDLIST, _In_ UINT RootParameterIndex,_In_ D3D12DDI_GPU_DESCRIPTOR_HANDLE BaseDescriptor );
+typedef VOID ( APIENTRY* PFND3D12DDI_SET_ROOT_32BIT_CONSTANT_0114 )(D3D12DDI_API_HCOMMANDLIST, UINT RootParameterIndex, UINT SrcData, UINT DestOffsetIn32BitValues);
+typedef VOID ( APIENTRY* PFND3D12DDI_SET_ROOT_32BIT_CONSTANTS_0114 )(D3D12DDI_API_HCOMMANDLIST, UINT RootParameterIndex, UINT Num32BitValuesToSet, CONST void* pSrcData, UINT DestOffsetIn32BitValues );
+typedef VOID ( APIENTRY* PFND3D12DDI_SET_ROOT_BUFFER_VIEW_0114 )(D3D12DDI_API_HCOMMANDLIST, UINT RootParameterIndex, _In_ D3D12DDI_GPU_VIRTUAL_ADDRESS BufferLocation);
+```
+
+For both representations, `RootParameterIndex` is the logical zero-based
+root-parameter index, not a shader register or register space. The
+[shared setter contract](#root-setter-parameters) determines the required
+parameter kind. Single constants preserve the 32 bits of `SrcData`;
+`Num32BitValuesToSet` and `DestOffsetIn32BitValues` are counts/offsets of
+32-bit values, not bytes. Partial updates preserve the other constants.
+The group setter captures the source values during the call: `pSrcData`
+is borrowed only for that call, not retained as a root-description array.
+
+`BaseDescriptor` is a driver GPU descriptor handle for the table in the
+matching currently selected shader-visible heap, not a CPU descriptor handle
+or a resource GPU virtual address. Recording a table base does not establish
+an unconditional snapshot of all table contents or extend their lifetime:
+[table initialization](#table-initialization),
+[descriptor lifetime](#table-indexing) and
+[static/volatile promises](#static-promises) still govern accesses.
+
+The six buffer-view slots in each representation receive `BufferLocation`, a GPU virtual
+address, with the CBV/SRV/UAV kind selected by the member and root parameter.
+The [root-descriptor resource, bounds and alignment requirements](#root-descriptors)
+remain unchanged; the DDI adds no buffer-size field. A zero GPU address or
+zero table base is not the null-root-signature unset operation. In particular,
+the [null acceleration-structure SRV exception](#acceleration-structure-srvs)
+does not make zero an ordinary null root CBV/buffer SRV/UAV.
+
+Both representations follow the same [signature-change, redundant-selection,
+heap-change and bundle rules](command-list-state.md#resource-binding).
+Graphics and compute arguments remain independent. Handle adaptation neither
+establishes residency/synchronization nor relaxes resource or descriptor
+lifetimes. These `VOID` setters use the existing
+[recording-error and deferred-Close contract](execution.md#lifecycle-driver-errors);
+they do not introduce a recoverable creation `HRESULT`.
+
 <a id="driver-clearing"></a>
 
 ### Root clearing

@@ -4633,3 +4633,36 @@ portable CPU record format.
 #### Return values
 
 Returns no value. It records work; it neither waits for completion nor inserts the caller's cross-queue fence dependencies.
+
+<a id="driver-current-encode-operations"></a>
+
+### Current encode and input-layout recording behavior
+
+`PFND3D12DDI_VIDEO_ENCODE_FRAME_0103_0` records an encode-frame operation
+on the driver video-encode command list. The operation retains
+[EncodeFrame](#id3d12videoencodecommandlist2--encodeframe) and
+[EncodeFrame1](#id3d12videoencodecommandlist4--encodeframe1) behavior:
+the selected encoder/heap and translated sequence, picture, reference and
+input controls determine the frame; bitstream and opaque metadata
+destinations are GPU outputs, not CPU return buffers. Optional input maps,
+statistics and notification features keep their independent capability and
+version requirements. The application still supplies the codec headers
+assigned to it and resolves output metadata separately.
+
+`PFND3D12DDI_VIDEO_RESOLVE_INPUT_PARAM_LAYOUT_0103_0` records the
+[ResolveInputParamLayout operation](#id3d12videoencodecommandlist4--resolveinputparamlayout).
+Its session information and selected hardware-agnostic GPU maps are
+converted to the driver-specific opaque layout in `hDrvOpaqueLayoutBuffer`
+for a later consuming encode. This is not encoding or output-metadata
+resolution. The application owns that buffer and allocates the size reported
+for the selected input by the layout-resolution capability query.
+Inputs require encode-read access; the destination requires encode-write
+for resolution and encode-read for its consuming encode. Resolution precedes
+the consumer on the same list, or completes with the required interqueue
+fence synchronization.
+
+Both callbacks capture needed CPU descriptions during recording, without
+snapshotting the referenced GPU data. They retain the full
+[recording/resource lifetime](#encoding-recording), control and synchronization
+contracts and return no value; neither reports GPU completion or inserts
+the application's cross-queue dependencies.

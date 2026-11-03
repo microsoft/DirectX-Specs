@@ -2566,3 +2566,30 @@ The runtime-resolved construction metadata used by dispatch has the following ca
 | Thread record input, recursion, root-table index, sharing and outputs | [D3D12DDI_THREAD_LAUNCH_NODE_PROPERTIES_0108](state-objects.md#d3d12ddi_thread_launch_node_properties_0108) |
 | Shader and node-property selection | [D3D12DDI_SHADER_NODE_0108](state-objects.md#d3d12ddi_shader_node_0108), [D3D12DDI_NODE_PROPERTIES_TYPE_0108](state-objects.md#d3d12ddi_node_properties_type_0108) |
 | Graph version, nodes and entrypoint lists | [D3D12DDI_WORK_GRAPH_DESC_0108](state-objects.md#d3d12ddi_work_graph_desc_0108) |
+
+<a id="driver-current-graph-dispatch"></a>
+
+### Current graph-dispatch recording boundary
+
+Both current `pfnDispatchGraph` forms retain the
+[published dispatch/input graph](#driver-contracts). Only the command-list
+representation changes: ordinary `D3D12DDI_HCOMMANDLIST` versus
+`D3D12DDI_API_HCOMMANDLIST` under the
+[work-command handle contract](execution.md#work-command-handles).
+Neither representation transfers ownership or proves prior input validation.
+
+`Mode` selects one of the four defined CPU/GPU, single/batched input
+interpretations. For CPU modes the driver captures the outer description,
+strided node-input descriptions and required record bytes before returning;
+the shallow runtime forwarding does not provide a hidden deep copy.
+For GPU modes the nested descriptions and records remain GPU reads with
+the complete [layout, count, stride, alignment and range rules](#dispatch-inputs).
+Zero counts and empty records retain their distinct meanings; 64-bit byte
+strides do not turn host pointers into GPU addresses.
+
+The [DispatchGraph contract](#dispatchgraph) owns program/compute-root
+selection, backing-memory initialization, recording/predication/context and
+resource synchronization. Driver scheduling/record operations do not acquire
+extra CPU DDIs per shader intrinsic. These void callbacks return neither
+GPU completion nor a per-call `HRESULT`; recording errors retain the
+[shared driver path](execution.md#lifecycle-driver-errors).

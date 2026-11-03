@@ -1897,3 +1897,70 @@ inheritance. Each linked API's list/render-pass context and the
 Reported recording failures follow the
 [recording-error/deferred-Close contract](execution.md#lifecycle-driver-errors),
 not a recoverable HRESULT from these `VOID` setters.
+
+<a id="driver-raster-state-forms"></a>
+
+#### Current rasterizer-state representations
+
+The selected entries use ordinary `D3D12DDI_HCOMMANDLIST` handles in
+`D3D12DDI_COMMAND_LIST_FUNCS_3D_0108` and `D3D12DDI_API_HCOMMANDLIST` in
+`D3D12DDI_COMMAND_LIST_FUNCS_3D_0114`. The latter identifies the application-side
+header, not ordinary driver-private storage; follow the
+[command-list header and conversion contract](execution.md#work-command-handles).
+These are conditional alternative table representations, not universal
+availability or a transfer of COM ownership.
+
+| Member in each table | Ordinary type | API-handle type | API contract |
+|---|---|---|---|
+| `pfnRsSetViewports` | `PFND3D12DDI_RS_SETVIEWPORTS_0003` | `PFND3D12DDI_RS_SETVIEWPORTS_0114` | [RSSetViewports](#rssetviewports) |
+| `pfnRsSetScissorRects` | `PFND3D12DDI_RS_SETSCISSORRECTS_0003` | `PFND3D12DDI_RS_SETSCISSORRECTS_0114` | [RSSetScissorRects](#rssetscissorrects) |
+| `pfnSetSamplePositions` | `PFND3D12DDI_SETSAMPLEPOSITIONS_0027` | `PFND3D12DDI_SETSAMPLEPOSITIONS_0114` | [SetSamplePositions](#setsamplepositions) |
+| `pfnRSSetDepthBias` | `PFND3D12DDI_SET_DEPTH_BIAS_STATE_0099` | `PFND3D12DDI_SET_DEPTH_BIAS_STATE_0114` | [RSSetDepthBias](#rssetdepthbias) |
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_RS_SETVIEWPORTS_0114 )(D3D12DDI_API_HCOMMANDLIST, _In_range_(0, D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE) UINT Count, _In_reads_(Count) CONST D3D12DDI_VIEWPORT* );
+typedef VOID ( APIENTRY* PFND3D12DDI_RS_SETSCISSORRECTS_0114 )(D3D12DDI_API_HCOMMANDLIST, _In_range_(0, D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE) UINT Count, _In_reads_(Count) CONST D3D12DDI_RECT* );
+typedef VOID ( APIENTRY* PFND3D12DDI_SETSAMPLEPOSITIONS_0114 )(D3D12DDI_API_HCOMMANDLIST, UINT NumSamplesPerPixel, UINT NumPixels, __in_ecount(NumSamplesPerPixel*NumPixels) D3D12DDI_SAMPLE_POSITION* pSamplePositions);
+typedef VOID ( APIENTRY* PFND3D12DDI_SET_DEPTH_BIAS_STATE_0114)(D3D12DDI_API_HCOMMANDLIST, FLOAT, FLOAT, FLOAT);
+```
+
+For both viewport and scissor forms, `Count` replaces the complete set;
+zero disables all entries, rather than leaving the previous set unchanged.
+The [viewport](#rssetviewports) and [scissor](#rssetscissorrects) APIs retain
+their count limit of 16, field/range requirements and atomic replacement
+semantics. The records contain viewport floats or signed rectangle edges,
+not GPU addresses or descriptor handles. The driver captures their input
+values during the call, not by retaining the caller's array storage.
+
+Both sample-position forms receive `NumSamplesPerPixel`, then `NumPixels`,
+then the ordered position array. The product is an element count, not a byte
+count. The [signed coordinate fields and 1/16-pixel units](#sample-position-coordinates),
+[tier/pattern shape and pixel/sample order](#programmable-samples) and
+[explicit zero/zero/null reset](#setsamplepositions) remain unchanged.
+Capture the custom positions during the call; no caller-array lifetime is
+extended to GPU execution. Restoring defaults removes the override; it does
+not program a table of all-zero positions or bypass feature availability.
+
+The three ordered depth-bias arguments are floating-point `DepthBias`,
+`DepthBiasClamp` and `SlopeScaledDepthBias`; the API-handle form does not
+convert constant bias back to the older integer PSO field. Their meanings
+remain the [depth-bias equation](#depth-bias) and
+[RSSetDepthBias](#rssetdepthbias) contract. Device support and the dynamic
+PSO permission flag remain required. Dynamic selection does not modify
+the PSO description, and selecting a PSO again restores its described bias
+even when that PSO has the dynamic flag.
+
+Viewports and scissors remain DIRECT-only setters; bundles inherit them and
+cannot set them. Sample positions and dynamic bias retain their DIRECT/BUNDLE
+contexts and their distinct
+[sample-pattern](command-list-state.md#sample-positions) and
+[PSO-derived](command-list-state.md#dynamic-state) initial/bundle rules.
+The linked [API entries](#rasterizer-apis) and
+[render-pass context](command-list-state.md#render-pass) remain applicable.
+Sample-position admission inside a pass does not relax depth-content,
+copy/clear/resolve or layout-transition pattern requirements.
+
+Handle/array adaptation neither establishes residency/synchronization nor
+proves validation or clamping. These `VOID` setters use the
+[recording-error/deferred-Close contract](execution.md#lifecycle-driver-errors),
+not a recoverable creation `HRESULT`.

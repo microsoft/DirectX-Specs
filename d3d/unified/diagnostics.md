@@ -4304,3 +4304,63 @@ Asserts the specified texture layout in the command queue validation model. [Syn
 #### Return values
 
 None. This is a `void` diagnostic operation, not a `BOOL` or `HRESULT` completion query.
+
+<a id="driver-marker-allocation-comment"></a>
+
+## Driver marker, allocation and shader-comment queries
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_SET_MARKER )( D3D12DDI_HCOMMANDLIST, UINT64 );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_GET_DEBUG_ALLOCATION_INFO_0014 )(
+    D3D12DDI_HDEVICE hDevice,
+    D3D12DDI_HANDLE_AND_TYPE Object,
+    _Inout_ UINT* pNumVirtualAddressInfos,
+    _Out_writes_to_opt_(*pNumVirtualAddressInfos, *pNumVirtualAddressInfos) D3D12DDI_DEBUG_VIRTUAL_ADDRESS_ALLOCATION_INFO_0012* pVirtualAddressInfos,
+    _Inout_ UINT* pNumKMTInfos,
+    _Out_writes_to_opt_(*pNumKMTInfos, *pNumKMTInfos) D3D12DDI_DEBUG_KMT_ALLOCATION_INFO_0014* pKMTInfos
+    );
+
+typedef struct D3D12DDI_DEBUG_VIRTUAL_ADDRESS_ALLOCATION_INFO_0012
+{
+    UINT32 PhysicalAdapterIndex;
+    D3D12DDI_GPU_VIRTUAL_ADDRESS StartAddress;
+    D3D12DDI_GPU_VIRTUAL_ADDRESS EndAddress;
+} D3D12DDI_DEBUG_VIRTUAL_ADDRESS_ALLOCATION_INFO_0012;
+
+typedef struct D3D12DDI_DEBUG_KMT_ALLOCATION_INFO_0014
+{
+    UINT32 PhysicalAdapterIndex;
+    D3DKMT_HANDLE hAllocation;
+    UINT64 Offset;
+    UINT64 Size;
+} D3D12DDI_DEBUG_KMT_ALLOCATION_INFO_0014;
+
+typedef HRESULT ( APIENTRY* PFND3D12DDI_RETRIEVE_SHADER_COMMENT_0003 )(
+    D3D12DDI_HDEVICE, D3D12DDI_HPIPELINESTATE, _Out_writes_z_(*CharacterCountIncludingNullTerminator) WCHAR * pBuffer, _Inout_ SIZE_T * CharacterCountIncludingNullTerminator );
+```
+
+The driver `SetMarker` entry receives an ordinary driver command-list handle
+and one `UINT64` runtime marker sequence number. It is not the application's
+`Metadata`, byte pointer and byte count tuple, nor a graphics binding setter.
+The same scalar ABI is retained in both current 3D layouts and the selected
+video tables. Marker recording does not establish a resource barrier or
+completion fence; application annotation/event-region rules retain their
+own command-family contracts.
+
+`GetDebugAllocationInfo` takes a tagged driver object, not a kernel object
+handle. It reports per-physical-adapter GPU address ranges and kernel
+allocation handle/offset/size records through two independent count/array
+pairs. Null arrays support size queries; supplied arrays have the input
+capacities specified by their counts. The driver reports current counts
+even if they have changed since an earlier query, but does not write beyond
+the supplied capacities. These snapshots are not immutable allocation lists,
+residency operations or GPU synchronization. KMT allocation information is
+not thread information.
+
+`RetrieveShaderComment` queries a driver PSO's optional wide-character
+comment. Its in/out `SIZE_T` counts `WCHAR` elements including the terminator,
+not bytes. The runtime's `WKPDID_CommentStringW` private-data path translates
+the byte count to/from characters. Failure remains `HRESULT`; an unavailable
+comment is not an empty success-shaped payload. Returned comment text is
+diagnostic data, not a shader identifier, executable bytecode or cache key.

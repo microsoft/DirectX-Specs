@@ -157,8 +157,9 @@ values are relevant.
 
 `DepthBoundsTestEnable` is selected by the PSO; `OMSetDepthBounds` sets the minimum and maximum floating-point depth bounds. The runtime will not clamp or validate the input, but
 implementations may clamp to the range \[0,1\] if necessary. NaNs must
-be treated as 0, but the runtime will convert NaNs to 0 on behalf of
-the implementation. If the range is inverted (i.e. min > max), then
+be treated as 0. When the runtime interposes, it converts NaNs to 0 on
+behalf of the implementation. A direct [API-handle driver entry](#driver-depth-bounds-forms)
+must perform that conversion itself. If the range is inverted (i.e. min > max), then
 implementations must treat the Depth Bounds Test as always failing.
 
 Any Pixel Shader invocation that fails the Depth Bounds Test (i.e.
@@ -592,7 +593,7 @@ void OMSetRenderTargets(
 
 Sets CPU descriptor handles for the render targets and depth stencil.
 
-Descriptors are consumed when the call is recorded; the CPU descriptor memory can subsequently be reused under the [CPU-descriptor lifetime contract](binding.md#descriptor-population). The bound resources themselves retain the [execution lifetime](execution.md#lifetime) requirements. The [attachment compatibility rules](#attachments) apply at rendering, including PSO/output format and multisample compatibility. The method cannot be called inside an active render pass.
+Descriptors are consumed when the call is recorded; the CPU descriptor memory can subsequently be reused under the [CPU-descriptor lifetime contract](binding.md#descriptor-heaps). The bound resources themselves retain the [execution lifetime](execution.md#lifetime) requirements. The [attachment compatibility rules](#attachments) apply at rendering, including PSO/output format and multisample compatibility. The method cannot be called inside an active render pass.
 
 #### Parameters
 
@@ -748,7 +749,7 @@ void OMSetDepthBounds(
 
 Changes the depth bounds dynamically.
 
-Sets the dynamic range used when the PSO enables depth-bounds testing. `DepthBoundsTestSupported` must be supported. The complete [depth-bounds algorithm](#depth-bounds), including runtime NaN conversion, implementation clamping permission, inverted range, unbound-depth behavior and early/late side effects, applies. [Initialization/reset and bundles](command-list-state.md#depth-bounds) are defined by command-list state.
+Sets the dynamic range used when the PSO enables depth-bounds testing. `DepthBoundsTestSupported` must be supported. The complete [depth-bounds algorithm](#depth-bounds), including NaN-to-zero semantics, implementation clamping permission, inverted range, unbound-depth behavior and early/late side effects, applies. [Initialization/reset and bundles](command-list-state.md#depth-bounds) are defined by command-list state.
 
 #### Parameters
 
@@ -1667,6 +1668,146 @@ context and [canonical state rules](command-list-state.md#base-graphics)
 remain applicable. Driver-reported recording failures follow
 [the shared callback/deferred-Close contract](execution.md#lifecycle-driver-errors),
 not a per-setter creation HRESULT.
+
+<a id="driver-output-binding-forms"></a>
+
+**Current blend/stencil/attachment representations.**
+
+The entries below use ordinary `D3D12DDI_HCOMMANDLIST` handles in
+`D3D12DDI_COMMAND_LIST_FUNCS_3D_0108` and `D3D12DDI_API_HCOMMANDLIST` in
+`D3D12DDI_COMMAND_LIST_FUNCS_3D_0114`. The API handle identifies the
+application-side header rather than ordinary driver-private storage;
+the [shared header/conversion contract](execution.md#work-command-handles)
+applies. These are conditional alternative table representations, not a
+universal direct-dispatch guarantee or a transfer of COM ownership.
+
+| Member in each table | Ordinary type | API-handle type | API contract |
+|---|---|---|---|
+| `pfnOmSetBlendFactor` | `PFND3D12DDI_OM_SETBLENDFACTOR` | `PFND3D12DDI_OM_SETBLENDFACTOR_0114` | [OMSetBlendFactor](#omsetblendfactor) |
+| `pfnOmSetStencilRef` | `PFND3D12DDI_OM_SETSTENCILREF` | `PFND3D12DDI_OM_SETSTENCILREF_0114` | [OMSetStencilRef](#omsetstencilref) |
+| `pfnOmSetFrontAndBackStencilRef` | `PFND3D12DDI_OM_SETFRONTANDBACKSTENCILREF_0095` | `PFND3D12DDI_OM_SETFRONTANDBACKSTENCILREF_0114` | [OMSetFrontAndBackStencilRef](#omsetfrontandbackstencilref) |
+| `pfnOMSetRenderTargets` | `PFND3D12DDI_OM_SET_RENDER_TARGETS_0003` | `PFND3D12DDI_OM_SET_RENDER_TARGETS_0114` | [OMSetRenderTargets](#omsetrendertargets) |
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_OM_SETBLENDFACTOR_0114 )(D3D12DDI_API_HCOMMANDLIST, CONST FLOAT[4] );
+typedef VOID ( APIENTRY* PFND3D12DDI_OM_SETSTENCILREF_0114 )(D3D12DDI_API_HCOMMANDLIST, UINT );
+typedef VOID ( APIENTRY* PFND3D12DDI_OM_SETFRONTANDBACKSTENCILREF_0114 )(D3D12DDI_API_HCOMMANDLIST, UINT, UINT );
+typedef VOID ( APIENTRY* PFND3D12DDI_OM_SET_RENDER_TARGETS_0114 )(D3D12DDI_API_HCOMMANDLIST, _In_ UINT NumRenderTargetDescriptors, _In_ CONST D3D12DDI_CPU_DESCRIPTOR_HANDLE* pRenderTargetDescriptors, _In_ BOOL RTsSingleHandleToDescriptorRange, _In_opt_ CONST D3D12DDI_CPU_DESCRIPTOR_HANDLE* pDepthStencilDescriptor);
+```
+
+For both blend-factor forms, the pointer supplies four floating-point
+components in RGBA order; null selects `{1,1,1,1}`. The driver cannot assume
+the runtime materialized a non-null default array. Capture the selected
+values during the call, not by retaining the caller's storage.
+The [blend-constant contract](#omsetblendfactor) applies even when the
+currently selected PSO does not consume that constant.
+
+The scalar `ALPHA_FACTOR` / `INV_ALPHA_FACTOR` modes use the fourth
+component of the same constant, not an independently selected constant.
+Their [capability requirement](#configuration) and
+[format-specific blend precision/range rules](#blending-precision) remain
+unchanged. Updating the constant does not modify the PSO's factor selections.
+
+The common-reference forms set the same `UINT StencilRef` for both faces.
+The independent forms instead receive `UINT FrontStencilRef`, then
+`UINT BackStencilRef`; they require the
+[independent-reference capability](#omsetfrontandbackstencilref).
+The arguments remain `UINT` values, not a guarantee of runtime pretruncation
+to a byte. Their participating stencil bits, test/update behavior and
+pixel-shader replacement follow the [stencil algorithm](#stencil).
+
+Neither reference setter changes the PSO's front/back read or write masks.
+The [canonical reference state](command-list-state.md#stencil-references)
+retains zero initialization, bundle inheritance and spill-back.
+
+Both attachment forms receive the RTV count, the driver CPU-handle input,
+the contiguous-range flag and the optional driver DSV handle input, in that
+order. The [API count limit of eight and attachment compatibility](#omsetrendertargets)
+remain applicable. Zero RTV count unbinds all RTVs independently of whether
+a DSV is supplied; null `pDepthStencilDescriptor` unbinds the DSV independently
+of the RTV set.
+
+With `RTsSingleHandleToDescriptorRange` true, the RTV input supplies one
+driver handle identifying a contiguous range of the stated count. False
+supplies the counted array of individual driver handles. These are
+[driver CPU descriptor handles](binding.md#driver-heaps), not resource
+handles, GPU descriptor-table bases or a promise of bit-identical API handles.
+Use the driver descriptor stride for a driver range, not the application's
+handle increment.
+
+The UMD consumes the caller's handle inputs and captures the referenced
+CPU descriptors during recording; it cannot depend on those input arrays
+or descriptor contents remaining unchanged until GPU execution.
+This does not retain resource COM objects, end the resources'
+[execution lifetime](execution.md#lifetime), or make binding a resource
+transition. The [CPU-descriptor reuse rule](binding.md#descriptor-heaps)
+and attachment access requirements remain in force.
+
+Changing the command-list handle representation does not remove required
+API-to-DDI descriptor adaptation or attachment bookkeeping. The runtime
+may still need to interpose before calling the API-handle DDI; that signature
+alone does not authorize direct dispatch with untranslated application
+descriptor handles. The driver still interprets the descriptor inputs in
+their declared driver domain.
+
+Attachment binding remains a DIRECT-list operation, forbidden in bundles
+and inside an open render pass. Blend and stencil references retain their
+DIRECT/BUNDLE contexts and permitted in-pass recording, with their named
+capability and [render-pass legality](#render-pass-operation-surface) rules.
+The [output-binding](command-list-state.md#output-bindings),
+[blend/default](command-list-state.md#base-graphics) and
+[stencil-reference](command-list-state.md#stencil-references) state owners
+remain canonical.
+
+These `VOID` setters neither return a recoverable creation `HRESULT` nor
+establish GPU completion. Reported recording failures use the
+[callback/deferred-Close contract](execution.md#lifecycle-driver-errors);
+handle adaptation is not proof of argument validation, clamping, residency
+or synchronization.
+
+<a id="driver-depth-bounds-forms"></a>
+
+**Current depth-bounds representations.**
+
+The selected entries use ordinary `D3D12DDI_HCOMMANDLIST` handles in
+`D3D12DDI_COMMAND_LIST_FUNCS_3D_0108` and `D3D12DDI_API_HCOMMANDLIST` in
+`D3D12DDI_COMMAND_LIST_FUNCS_3D_0114`. The latter identifies the application-side
+header, not ordinary driver-private storage; follow the
+[command-list header and conversion contract](execution.md#work-command-handles).
+These are conditional alternative table representations, not universal
+availability or a transfer of COM ownership.
+
+| Member in each table | Ordinary type | API-handle type | API contract |
+|---|---|---|---|
+| `pfnOMSetDepthBounds` | `PFND3D12DDI_OM_SETDEPTHBOUNDS_0025` | `PFND3D12DDI_OM_SETDEPTHBOUNDS_0114` | [OMSetDepthBounds](#omsetdepthbounds) |
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_OM_SETDEPTHBOUNDS_0114 )(D3D12DDI_API_HCOMMANDLIST, FLOAT Min, FLOAT Max);
+```
+
+The ordinary `PFND3D12DDI_OM_SETDEPTHBOUNDS_0025` receives `Min`, then
+`Max`, after runtime NaN-to-zero conversion. This is not a promise that
+finite inputs have been clamped to `[0,1]`, reordered or validated.
+
+`PFND3D12DDI_OM_SETDEPTHBOUNDS_0114` must itself treat each NaN `Min`
+and each NaN `Max` as zero. A direct API call can reach this driver entry
+without executing the runtime conversion method. The driver must not rely
+on preconversion: use the zero values for the same
+[depth-bounds algorithm](#depth-bounds), including range interpretation.
+Calls through an interposed runtime may already supply zero; the required
+result is identical. This requirement concerns NaN conversion, not mandatory
+clamping of other floating-point values.
+
+Both forms implement [OMSetDepthBounds](#omsetdepthbounds), not the PSO
+enable/disable toggle. The device-support requirement, optional clamping,
+inverted-range rejection, unbound-depth behavior and early/late depth/UAV
+effects remain at the [algorithm owner](#depth-bounds).
+The [range defaults, reset and bundle inheritance](command-list-state.md#depth-bounds)
+are unchanged. DIRECT/BUNDLE recording and the
+[render-pass context](command-list-state.md#render-pass) still apply.
+The `VOID` result neither reports GPU completion nor returns a recoverable
+creation `HRESULT`; reported recording failures follow the
+[shared callback/deferred-Close contract](execution.md#lifecycle-driver-errors).
 
 Support for independent front-face and back-face references and masks is implied by, and must be supported on, drivers that report their DDI version to be `e_DDI_12_8_0095` or greater.
 

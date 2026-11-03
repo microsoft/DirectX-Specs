@@ -1928,3 +1928,113 @@ A handle to the command list.
 A handle to the resource that contains the shading rate image.
 
 Both callbacks return no value. Their enum parameters retain the VRS per-axis rate/combiner interpretation. The driver resource handle represents the selected image, not a CPU pointer to texels.
+
+<a id="driver-vrs-state"></a>
+
+#### Current VRS state representations
+
+These runtime-to-driver callbacks implement the two named VRS state APIs.
+Only rate selection changes to an API command-list handle in the newer
+layout. Image binding retains the ordinary driver command-list and resource
+handle pair in both layouts.
+
+| Current table member | Signature | API contract |
+|---|---|---|
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnRSSetShadingRate` | `PFND3D12DDI_RS_SET_SHADING_RATE_0062` | [RSSetShadingRate](#rssetshadingrate) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnRSSetShadingRate` | `PFND3D12DDI_RS_SET_SHADING_RATE_0114` | [RSSetShadingRate](#rssetshadingrate) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnRSSetShadingRateImage` | `PFND3D12DDI_RS_SET_SHADING_RATE_IMAGE_0062` | [RSSetShadingRateImage](#rssetshadingrateimage) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnRSSetShadingRateImage` | `PFND3D12DDI_RS_SET_SHADING_RATE_IMAGE_0062` | [RSSetShadingRateImage](#rssetshadingrateimage) |
+
+`D3D12DDI_API_HCOMMANDLIST` identifies the application-side header rather
+than ordinary driver-private storage; follow the
+[shared header/conversion contract](execution.md#work-command-handles).
+The table choice is conditional, not universal direct dispatch or feature
+availability. It does not make the image callback accept API object pointers.
+Passing either handle form transfers no COM ownership.
+
+```cpp
+typedef enum D3D12DDI_SHADING_RATE_0062
+{
+    D3D12DDI_SHADING_RATE_0062_1X1 = 0x0,
+    D3D12DDI_SHADING_RATE_0062_1X2 = 0x1,
+    D3D12DDI_SHADING_RATE_0062_2X1 = 0x4,
+    D3D12DDI_SHADING_RATE_0062_2X2 = 0x5,
+    D3D12DDI_SHADING_RATE_0062_2X4 = 0x6,
+    D3D12DDI_SHADING_RATE_0062_4X2 = 0x9,
+    D3D12DDI_SHADING_RATE_0062_4X4 = 0xA
+} D3D12DDI_SHADING_RATE_0062;
+
+typedef enum D3D12DDI_SHADING_RATE_COMBINER_0062
+{
+    D3D12DDI_SHADING_RATE_COMBINER_0062_PASSTHROUGH = 0,
+    D3D12DDI_SHADING_RATE_COMBINER_0062_OVERRIDE = 1,
+    D3D12DDI_SHADING_RATE_COMBINER_0062_MIN = 2,
+    D3D12DDI_SHADING_RATE_COMBINER_0062_MAX = 3,
+    D3D12DDI_SHADING_RATE_COMBINER_0062_SUM = 4,
+} D3D12DDI_SHADING_RATE_COMBINER_0062;
+
+typedef VOID ( APIENTRY* PFND3D12DDI_RS_SET_SHADING_RATE_0062 )(
+    D3D12DDI_HCOMMANDLIST,
+    D3D12DDI_SHADING_RATE_0062 ShadingRate,
+    _In_reads_opt_(D3D12_RS_SET_SHADING_RATE_COMBINER_COUNT) const D3D12DDI_SHADING_RATE_COMBINER_0062* Combiners);
+
+typedef VOID ( APIENTRY* PFND3D12DDI_RS_SET_SHADING_RATE_0114 )(D3D12DDI_API_HCOMMANDLIST, D3D12DDI_SHADING_RATE_0062 ShadingRate,_In_reads_opt_(D3D12_RS_SET_SHADING_RATE_COMBINER_COUNT) const D3D12DDI_SHADING_RATE_COMBINER_0062* Combiners);
+
+typedef VOID ( APIENTRY* PFND3D12DDI_RS_SET_SHADING_RATE_IMAGE_0062 )(
+    D3D12DDI_HCOMMANDLIST,
+    D3D12DDI_HRESOURCE hShadingRateImage);
+```
+
+The driver rate enum has the same numeric encodings and X/Y interpretation
+as the [API rate enum](#vrs-encodings); the driver combiner enum corresponds
+to the [API combiner values](#vrs-types). These encodings do not advertise
+support for every listed rate. The [tier/additional-rate requirements](#vrs-tiering)
+and [coarse-size/MSAA support table](#vrs-support) remain applicable.
+
+For either rate callback, a non-null `Combiners` points to exactly two
+elements: command/primitive first, then image. The driver captures those
+values during the call, not by retaining caller array storage.
+Null sets both combiners to `PASSTHROUGH`, not the previous pair;
+the driver must not assume a materialized default array is supplied.
+The [sequential per-axis logarithmic combination](#vrs-combiners) applies,
+not MIN/MAX/SUM on the packed shading-rate enum.
+
+`VariableRateShadingSumCombinerSupported` is independent of
+`AdditionalShadingRatesSupported`. Unsupported SUM retains the owner's
+undefined-rendering/soft-diagnostic policy, not a new strict retail rejection.
+The shader/image contribution normalization rules do not legalize arbitrary
+invalid API enum values. Per-primitive viewport and mesh-source eligibility
+retain their [separate capabilities](#vrs-tiering); the setters do not replace
+those shader/PSO or forced-fine requirements.
+
+In both tables the image callback receives `D3D12DDI_HCOMMANDLIST`, then
+`D3D12DDI_HRESOURCE`. The runtime supplies ordinary driver handles after
+object adaptation; the resource handle is not an `ID3D12Resource*`, CPU
+texel pointer, descriptor-table base or snapshot of the image contents.
+A null driver resource handle selects a 1x1 image contribution everywhere.
+Missing/OOB texels likewise contribute 1x1 before combining; none of these
+cases independently forces the final effective rate to 1x1.
+
+Image binding requires Tier 2 and preserves the
+[complete resource/heap/format/dimension/layout/tile contract](#vrs-image).
+The GPU consumes live image data under the owner's access/lifetime rules.
+The required source state or enhanced layout/access applies when a draw
+uses the image, not merely when this setter is recorded. Binding does not
+perform that transition or grant simultaneous shader access to an image
+being used as a shading-rate source.
+
+Both setters remain non-predicatable DIRECT/BUNDLE state operations,
+permitted under the [render-pass recording conditions](output-merger.md#render-pass-operation-surface).
+The [canonical shading-rate state](command-list-state.md#shading-rate)
+defines supported direct-recording defaults of 1x1 base rate, both
+`PASSTHROUGH` combiners and no image. Bundles inherit the state and their
+changes affect the parent. `ClearState` restores these defaults; selecting
+a PSO alone does not replace the command-level rate, pair or image.
+
+Resource execution lifetime, residency and the
+[image access/synchronization requirements](#vrs-image) remain unchanged.
+These `VOID` setters use the
+[recording-error/deferred-Close contract](execution.md#lifecycle-driver-errors),
+not a recoverable creation `HRESULT` or proof of GPU completion. Neither
+the handle form nor some checked runtime paths establish a universal
+validation, clamping or invalid-resource-to-null substitution guarantee.

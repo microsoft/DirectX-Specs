@@ -3022,3 +3022,172 @@ typedef struct D3D12_FEATURE_DATA_BARRIER_LAYOUT
 ```
 
 `D3D12_FEATURE_BARRIER_LAYOUT` takes `CommandListType` and `Layout` as inputs and writes `Supported` for that command-list-type/layout combination. Use `sizeof(D3D12_FEATURE_DATA_BARRIER_LAYOUT)`. There is no node-index input. The caller supplies the requested command-list type and barrier-layout value before the call; a successful `Supported == FALSE` is a capability result, not a size or dispatch error. [Synchronization](synchronization.md#enhanced-barriers) retains the layout meanings, queue restrictions and barrier-operation requirements; this query does not perform a transition or make an otherwise invalid barrier valid.
+
+<a id="driver-node-application-state"></a>
+
+## Driver node mapping and application-specific state
+
+```cpp
+#define D3D12DDI_NODE_MAP_HIDE_NODE 0xffffffff
+
+typedef VOID ( APIENTRY* PFND3D12DDI_QUERY_NODE_MAP )(D3D12DDI_HDEVICE, UINT NumPhysicalAdapters, _Out_writes_( NumPhysicalAdapters) UINT* pMap);
+
+typedef UINT ( APIENTRY* PFND3D12DDI_GETIMPLICITPHYSICALADAPTERMASK )( D3D12DDI_HDEVICE );
+
+typedef enum D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS
+{
+  D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_UNKNOWN       = 1,
+  D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_USED          = 2,
+  D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_IGNORED       = 3,
+  D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_NOT_SPECIFIED = 4,
+} D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS;
+
+typedef UINT ( APIENTRY* PFND3D12DDI_GET_APPLICATION_SPECIFIC_DRIVER_STATE_BLOB_SIZE_0113 )(
+    D3D12DDI_HDEVICE hDrvDevice);
+
+typedef HRESULT ( APIENTRY* PFND3D12DDI_GET_APPLICATION_SPECIFIC_DRIVER_STATE_0113 )(
+    D3D12DDI_HDEVICE hDrvDevice,
+    _Out_writes_bytes_(ApplicationSpecificDriverBlobSizeInBytes) void *pApplicationSpecificDriverBlob,
+    UINT ApplicationSpecificDriverBlobSizeInBytes);
+
+typedef D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS ( APIENTRY* PFND3D12DDI_GET_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS_0113 )(
+    D3D12DDI_HDEVICE hDrvDevice);
+```
+
+`QueryNodeMap` writes `NumPhysicalAdapters` UINT entries. Entry `pMap[i]`
+is the API-exposed node index for physical driver node `i`, or
+`D3D12DDI_NODE_MAP_HIDE_NODE` (`0xffffffff`) when that physical node is hidden.
+Visible API indices are unique and dense from zero; at least one node must
+be exposed. The current mapping contract accepts identity mapping or one
+API-visible node with the other physical nodes hidden. An all-hidden map,
+duplicate/out-of-range visible index or nonidentity multi-visible-node map
+is invalid.
+
+`GetImplicitPhysicalAdapterMask` instead returns a UINT physical-adapter
+bit mask for the driver's implicit multi-adapter participation. These are
+not resource node masks, GPU addresses or interchangeable count queries.
+The driver fills the CPU mapping during the call; mapping neither creates
+devices nor changes resource visibility by itself.
+
+```cpp
+typedef
+enum D3D12_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS
+    {
+        D3D12_APPLICATION_SPECIFIC_DRIVER_BLOB_UNKNOWN	= 1,
+        D3D12_APPLICATION_SPECIFIC_DRIVER_BLOB_USED	= 2,
+        D3D12_APPLICATION_SPECIFIC_DRIVER_BLOB_IGNORED	= 3,
+        D3D12_APPLICATION_SPECIFIC_DRIVER_BLOB_NOT_SPECIFIED	= 4
+    } 	D3D12_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS;
+
+typedef struct D3D12_FEATURE_DATA_APPLICATION_SPECIFIC_DRIVER_STATE
+    {
+    _Out_  BOOL Supported;
+    } 	D3D12_FEATURE_DATA_APPLICATION_SPECIFIC_DRIVER_STATE;
+```
+
+Application-specific driver state captures driver application-detection
+workarounds for replay tools. It is an opaque adapter/driver-specific blob,
+not a pipeline-library entry, shader identifier or general device-state
+serialization.
+
+<a id="id3d12devicetools1-getapplicationspecificdriverstate"></a>
+
+### ID3D12DeviceTools1::GetApplicationSpecificDriverState
+
+#### Declaration
+
+```cpp
+HRESULT GetApplicationSpecificDriverState(ID3DBlob** ppBlob);
+```
+
+#### Behavior
+
+```GetApplicationSpecificDriverState()``` is used to retrieve a blob of bytes that represents the application-specific driver state. Tools like PIX on Windows would be expected to call this API at capture time. The API will return E_FAIL if the current driver doesn't support the corresponding DDI. The API is not restricted to developer mode.
+
+#### Parameters
+
+`ppBlob` is the required CPU output for a reference-counted blob. On a
+supported driver the runtime obtains its byte size, allocates the blob and
+asks the driver to fill it. Zero bytes returns `S_OK` with a null blob.
+Querying state does not execute GPU work.
+
+#### Return values
+
+Returns `E_FAIL` when unsupported, `E_INVALIDARG` for a null output pointer
+on the supported path, or the applicable allocation/driver failure.
+Success transfers the blob reference, or the defined zero-size null result;
+callers release a returned blob through normal COM ownership.
+
+<a id="id3d12devicetools1-getapplicationspecificdriverblobstatus"></a>
+
+### ID3D12DeviceTools1::GetApplicationSpecificDriverBlobStatus
+
+#### Declaration
+
+```cpp
+D3D12_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS GetApplicationSpecificDriverBlobStatus();
+```
+
+#### Behavior
+
+```GetApplicationSpecificDriverBlobStatus()``` is used to inquire whether a driver is using set application specific driver state or not. `D3D12_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS` provides information about whether the device is using application specific driver blob passed in `SetApplicationSpecificDriverState()`. However, it's important to note that this enum does not indicate anything about whether `GetApplicationSpecificDriverState()` can be called or not.
+
+#### Return values
+
+Reports `UNKNOWN`, `USED`, `IGNORED` or `NOT_SPECIFIED` (values 1 through 4).
+Unsupported reporting yields `UNKNOWN`; this is not an HRESULT or GPU
+completion result.
+
+<a id="id3d12tools2-setapplicationspecificdriverstate"></a>
+
+### ID3D12Tools2::SetApplicationSpecificDriverState
+
+#### Declaration
+
+```cpp
+HRESULT SetApplicationSpecificDriverState(IUnknown* pAdapter, ID3DBlob* pBlob);
+```
+
+#### Behavior
+
+```SetApplicationSpecificDriverState()``` must be called before any devices are created in the process. The blob cannot be changed once the device is created. It is, however, legal for the ```pBlob``` parameter to be nullptr: this resets the application-specific driver state to the same state it was in before any call to ```SetApplicationSpecificDriverState()``` was made on ```ID3D12Tools2```.
+
+```pAdapter``` cannot be nullptr. The caller is responsible for selecting the right adapter/driver for the blob. Internally, the runtime maintains a map of adapter LUIDs to blobs of bytes. At device creation time, the runtime can then look up adapter-specific blob in the map and pass it to the driver. This is for multi-GPU scenarios: the caller could, for example, pass in one blob captured from a dGPU and another blob from an iGPU. Without additional information, such as ```pAdapter```, the runtime cannot match the blobs with their adapters.
+
+```SetApplicationSpecificDriverState()``` can only succeed if Windows developer mode is enabled. The API will return a failure HRESULT if Windows developer mode is not enabled.
+
+#### Parameters
+
+`pAdapter` is the required adapter identity; `pBlob` supplies that adapter's
+captured bytes or null to clear its supplied state, as defined above.
+
+#### Return values
+
+Returns an HRESULT indicating success or failure, including failure when
+developer mode is not enabled. Supplying state does not guarantee that the
+driver used it; the blob-status query distinguishes that result.
+
+### Capability and blob representation
+
+`D3D12_FEATURE_APPLICATION_SPECIFIC_DRIVER_STATE` queries the `Supported`
+BOOL in `D3D12_FEATURE_DATA_APPLICATION_SPECIFIC_DRIVER_STATE`. This
+capability and blob status answer different questions.
+
+The outputted blob will be a ```D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER``` header followed by a driver-specific opaque blob of bytes that represents its internal application specific state. Both the header and the opaque blob are generated by the driver.
+
+Please see the [DirectX Raytracing functional](acceleration-structures.md#d3d12_serialized_data_driver_matching_identifier) spec for more information about driver matching identifiers.
+
+The size and layout of the opaque blob is determined by the driver.
+
+This allows an application to call ```ID3D12Device5::CheckDriverMatchingIdentifier()``` to validate that a blob previously retrieved via ```GetApplicationSpecificDriverState()``` is compatible with the current device/driver. This can be used to determine if the driver ignored the set application specific driver state blob due to incompatibility issues.
+
+### Driver state callbacks
+
+The three current core-device DDIs separate byte-size query, blob retrieval
+and status reporting. The size is UINT bytes, not WCHAR count. Retrieval
+receives caller-owned CPU output storage and its size and returns HRESULT;
+the driver fills it during the call and does not return an ID3DBlob interface
+or retain the caller's storage. The runtime constructs the API blob.
+Status returns the driver enum's defined values, not a success/failure flag.
+The existing device-creation path passes supplied application-specific state
+to the driver; retrieval is not a new way to mutate a live device's state.

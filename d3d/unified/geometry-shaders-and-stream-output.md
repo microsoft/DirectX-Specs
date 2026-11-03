@@ -459,3 +459,85 @@ The published command-list function table identifies:
 ```cpp
 PFND3D12DDI_SO_SET_TARGETS_0003                                        pfnSOSetTargets;
 ```
+
+<a id="driver-so-binding"></a>
+
+### Stream-output target binding
+
+These runtime-to-driver entries implement [SOSetTargets](#sosettargets).
+The ordinary form receives `D3D12DDI_HCOMMANDLIST`, identifying driver
+recording state. The API-handle form receives `D3D12DDI_API_HCOMMANDLIST`,
+identifying the application-side header rather than ordinary driver-private
+storage; use the [shared header/conversion contract](execution.md#work-command-handles).
+They are conditional alternative table representations, not universal
+availability or a transfer of COM ownership.
+
+| Current table member | Signature | API contract |
+|---|---|---|
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnSOSetTargets` | `PFND3D12DDI_SO_SET_TARGETS_0003` | [SOSetTargets](#sosettargets) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnSOSetTargets` | `PFND3D12DDI_SO_SET_TARGETS_0114` | [SOSetTargets](#sosettargets) |
+
+```cpp
+typedef struct D3D12DDI_STREAM_OUTPUT_BUFFER_VIEW
+{
+    D3D12DDI_GPU_VIRTUAL_ADDRESS BufferLocation;
+    UINT64 SizeInBytes;
+    D3D12DDI_GPU_VIRTUAL_ADDRESS BufferFilledSizeLocation;
+} D3D12DDI_STREAM_OUTPUT_BUFFER_VIEW;
+
+typedef VOID ( APIENTRY* PFND3D12DDI_SO_SET_TARGETS_0003 )(
+    D3D12DDI_HCOMMANDLIST,
+    _In_ UINT StartSlot,
+    _In_ UINT NumViews,
+    _In_reads_opt_(NumViews) CONST D3D12DDI_STREAM_OUTPUT_BUFFER_VIEW* pViews );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_SO_SET_TARGETS_0114 )(D3D12DDI_API_HCOMMANDLIST, _In_ UINT StartSlot, _In_ UINT NumViews, _In_reads_opt_(NumViews) CONST D3D12DDI_STREAM_OUTPUT_BUFFER_VIEW* pViews );
+```
+
+Both forms receive `StartSlot`, `NumViews`, then `pViews`. The slot is a
+logical stream-output target slot; the count is a number of views, not
+bytes. The [four-slot range contract](#sosettargets) applies: null `pViews`
+clears the selected range, a valid zero count changes no slots, and slots
+outside the range remain unchanged. The driver captures the view values
+during the call; it cannot retain the caller's array as a later source
+of those values.
+
+Each view supplies a data GPU virtual address, a `UINT64` byte extent,
+and a filled-size GPU virtual address. These are not descriptor-heap
+handles or retained resource COM objects. The [nonempty address/alignment/
+allocation requirements](#sosettargets) and
+[zero-size view exceptions](#so-target-view) are unchanged; an empty view's
+unused address fields are not a general null-address rule for nonempty views.
+CPU array capture does not extend the referenced GPU storage's lifetime.
+
+`BufferFilledSizeLocation` is a 64-bit GPU address of the
+[application-managed 32-bit byte-progress value](#filled-size), not a
+64-bit progress quantity. Setting, clearing or rebinding views does not
+initialize that storage or select a hidden per-resource append cursor.
+Data and progress storage retain the owner's initialization, non-overlap,
+resource access and ordering requirements.
+
+The PSO's [stream-output declaration](#so-declarations) still selects streams,
+target slots, strides and the rasterized stream; binding a view changes
+none of those declarations. GPU capture and filled-size updates obey the
+[complete-primitive capacity/overflow rules](#overflow-and-statistics) and
+[bound versus unused slot behavior](#so-slot-behavior). The setter does not
+itself execute a capture or report GPU completion.
+
+The setter remains DIRECT-only and cannot be called from a bundle.
+Bundle draws can still use inherited targets under the
+[canonical input/output binding rules](command-list-state.md#buffer-bindings).
+A new DIRECT recording starts with unbound targets; unbinding or resetting
+recording does not initialize filled-size resource data.
+The [root-signature/PSO stream-output requirements](#so-declarations) and
+[render-pass recording conditions](output-merger.md#render-pass-operation-surface)
+remain applicable.
+
+Both data and filled-size storage retain
+[execution lifetime](execution.md#lifetime), [residency](resources.md#residency)
+and [legacy/enhanced access synchronization](#filled-size) obligations.
+Binding is not a resource transition or synchronization operation.
+These `VOID` setters use the
+[recording-error/deferred-Close contract](execution.md#lifecycle-driver-errors),
+not a recoverable creation `HRESULT`. The handle change is not proof of
+argument validation or clamping.

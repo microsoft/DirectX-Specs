@@ -2113,3 +2113,293 @@ referenced by the command list has been destroyed. This however does not
 guarantee the order of destruction. Drivers must be robust to the case
 where a command list is destroyed after the resources that it references
 have been destroyed.
+
+<a id="driver-runtime-services"></a>
+
+## Driver recording, presentation and background services
+
+```cpp
+typedef VOID (APIENTRY CALLBACK *PFND3D12DDI_SETCOMMANDLISTERROR_CB)( D3D12DDI_HRTCOMMANDLIST, HRESULT );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_SETPROTECTEDRESOURCESESSION_0030 )( D3D12DDI_HCOMMANDLIST, D3D12DDI_HPROTECTEDRESOURCESESSION_0030 );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_BLT ) ( D3D12DDI_HCOMMANDLIST, _In_ CONST D3D12DDIARG_BLT* );
+
+typedef struct D3D12DDIARG_BLT
+{
+    D3D12DDI_HRESOURCE          hDstResource;
+    UINT                        DstSubresource;
+    UINT                        DstLeft;
+    UINT                        DstTop;
+    UINT                        DstRight;
+    UINT                        DstBottom;
+    D3D12DDI_HRESOURCE          hSrcResource;
+    UINT                        SrcSubresource;
+    UINT                        SrcLeft;
+    UINT                        SrcTop;
+    UINT                        SrcRight;
+    UINT                        SrcBottom;
+    DXGI_DDI_ARG_BLT_FLAGS      Flags;
+    DXGI_DDI_MODE_ROTATION      Rotate;
+} D3D12DDIARG_BLT;
+
+typedef UINT ( APIENTRY* PFND3D12DDI_GET_PRESENT_PRIVATE_DRIVER_DATA_SIZE ) ( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_PRESENT_0001* );
+
+typedef struct D3D12DDI_ARG_PRESENTSURFACE
+{
+    D3D12DDI_HRESOURCE hSurface;
+    UINT               SubResourceIndex;
+} D3D12DDI_ARG_PRESENTSURFACE;
+
+typedef struct D3D12DDIARG_PRESENT_0001
+{
+    CONST D3D12DDI_ARG_PRESENTSURFACE*  phSurfacesToPresent;
+    UINT                                SurfacesToPresent;
+    D3D12DDI_HRESOURCE                  hDstResource;
+    UINT                                DstSubResourceIndex;
+    DXGI_DDI_PRESENT_FLAGS              Flags;
+    DXGI_DDI_FLIP_INTERVAL_TYPE         FlipInterval;
+    D3DDDI_VIDEO_PRESENT_SOURCE_ID      VidPnSourceID;
+    CONST RECT*                         pDirtyRects;
+    UINT                                DirtyRects;
+    UINT                                PrivateDriverDataSize;
+    VOID*                               pPrivateDriverData;
+    BOOL                                OptimizeForComposition;
+} D3D12DDIARG_PRESENT_0001;
+
+typedef VOID ( APIENTRY* PFND3D12DDI_PRESENT_0051 ) ( D3D12DDI_HCOMMANDLIST, D3D12DDI_HCOMMANDQUEUE, _In_ CONST D3D12DDIARG_PRESENT_0001*,
+    _Out_ D3D12DDI_PRESENT_0051*, _Out_opt_ D3D12DDI_PRESENT_CONTEXTS_0051*, _Out_opt_ D3D12DDI_PRESENT_HWQUEUES_0051* );
+
+typedef struct D3D12DDI_PRESENT_0051
+{
+    D3DKMT_HANDLE   BroadcastSrcAllocation[D3DDDI_MAX_BROADCAST_CONTEXT+1];
+    D3DKMT_HANDLE   BroadcastDstAllocation[D3DDDI_MAX_BROADCAST_CONTEXT+1];
+    BOOL            AddedGpuWork;
+    UINT            BackBufferMultiplicity;
+
+    BOOL                        SyncIntervalOverrideValid;
+    DXGI_DDI_FLIP_INTERVAL_TYPE SyncIntervalOverride;
+} D3D12DDI_PRESENT_0051;
+
+typedef struct D3D12DDI_PRESENT_CONTEXTS_0051
+{
+    HANDLE          hContext;
+    UINT            BroadcastContextCount;
+    HANDLE          BroadcastContext[D3DDDI_MAX_BROADCAST_CONTEXT];
+} D3D12DDI_PRESENT_CONTEXTS_0051;
+
+typedef struct D3D12DDI_PRESENT_HWQUEUES_0051
+{
+    UINT            BroadcastQueueCount;
+    HANDLE          hHwQueues[D3DDDI_MAX_BROADCAST_CONTEXT+1];
+} D3D12DDI_PRESENT_HWQUEUES_0051;
+
+typedef void (APIENTRY* PFND3D12DDI_QUERY_CLOCK_CALIBRATION_0054)(
+    D3D12DDI_HDEVICE, D3D12DDI_HCOMMANDQUEUE, _Out_ D3D12DDI_GPUCLOCKDATA_0054* pClockData);
+
+typedef struct D3D12DDI_GPUCLOCKDATA_0054
+{
+    ULONGLONG               GpuFrequency;
+    ULONGLONG               GpuClockCounter;
+    ULONGLONG               CpuClockCounter;
+} D3D12DDI_GPUCLOCKDATA_0054;
+
+typedef enum D3D12DDI_BACKGROUND_PROCESSING_MODE_0062
+{
+    D3D12DDI_BACKGROUND_PROCESSING_MODE_0062_ALLOWED,
+    D3D12DDI_BACKGROUND_PROCESSING_MODE_0062_ALLOW_INTRUSIVE_MEASUREMENTS,
+    D3D12DDI_BACKGROUND_PROCESSING_MODE_0062_DISABLE_BACKGROUND_WORK,
+    D3D12DDI_BACKGROUND_PROCESSING_MODE_0062_DISABLE_ALL_PROFILING,
+} D3D12DDI_BACKGROUND_PROCESSING_MODE_0062;
+
+typedef enum D3D12DDI_MEASUREMENTS_ACTION_0062
+{
+    D3D12DDI_MEASUREMENTS_ACTION_0062_KEEP_ALL,
+    D3D12DDI_MEASUREMENTS_ACTION_0062_COMMIT_RESULTS,
+    D3D12DDI_MEASUREMENTS_ACTION_0062_COMMIT_RESULTS_HIGH_PRIORITY,
+    D3D12DDI_MEASUREMENTS_ACTION_0062_DISCARD_PREVIOUS,
+} D3D12DDI_MEASUREMENTS_ACTION_0062;
+
+typedef void (APIENTRY* PFND3D12DDI_UMD_CALLBACK_METHOD)(void* pContext);
+
+typedef HRESULT (APIENTRY CALLBACK *PFND3D12DDI_QUEUEPROCESSINGWORK_CB_0062)(
+    D3D12DDI_HRTDEVICE hRTDevice,
+    _In_ PFND3D12DDI_UMD_CALLBACK_METHOD pfnCallback,       // Called from thread where work is being performed.
+    _In_opt_ PFND3D12DDI_UMD_CALLBACK_METHOD pfnCancel,     // Called if the device is destroyed before pfnCallback has executed.
+    _In_opt_ void* pContext                                 // Passed to pfnCallback or pfnCancel.
+);
+
+typedef void (APIENTRY* PFND3D12DDI_SET_BACKGROUND_PROCESSING_MODE_0063)(
+    D3D12DDI_HDEVICE hRTDevice,
+    D3D12DDI_BACKGROUND_PROCESSING_MODE_0062 Mode,
+    D3D12DDI_MEASUREMENTS_ACTION_0062 MeasurementsAction,
+    _Out_ BOOL* pbFurtherMeasurementsDesired
+);
+```
+
+`SetCommandListErrorCb` is a driver-to-runtime callback on
+`D3D12DDI_HRTCOMMANDLIST`, not a driver command-list handle. The runtime
+validates/translates the supplied failure under the
+[recording driver error contract](#lifecycle-driver-errors) and records
+the command-list error; this callback is not a GPU fence or a per-call
+application return value.
+
+`SetProtectedResourceSession` is an ordinary-handle driver setter in both
+current 3D layouts and selected video tables. Its session handle is a
+translated driver session, with null selecting no session. The
+[canonical protection context](command-list-state.md#protection) owns
+initial/reset state, command-family/capability and bundle/render-pass limits;
+open queries must be ended before a supported session change. A table entry
+does not grant a video family or device protected-content support. Binding
+does not create a session or change its status-fence ownership.
+
+`Blt` records the presentation/interoperation surface transfer described by
+its driver source/destination resources, subresources, rectangles, DXGI blit
+flags and rotation. It is not another spelling of application
+`CopyTextureRegion` and does not infer extra copy/resolve/format permissions.
+
+`GetPresentPrivateDriverDataSize` returns a `UINT` byte requirement for the
+specified present request. The runtime provides that private-data storage
+to `Present`; it remains allocator-backed for the recorded operation rather
+than being a call-borrowed local scratch buffer. A zero requirement supplies
+no private-data storage.
+
+`Present` receives ordinary driver command-list and command-queue handles,
+the surface/dirty-rectangle/flags/interval request and CPU result structures.
+The driver supplies allocation/broadcast and added-GPU-work information,
+back-buffer multiplicity and any valid interval override. Software-scheduled
+presentation writes context results; hardware-scheduled presentation writes
+hardware-queue results. The unselected optional output is null. The callback
+does not transfer COM ownership, create an application swap chain or return
+GPU completion. DXGI presentation and the existing submission/lifetime
+contracts still own visible presentation timing.
+
+The conditional downlevel `QueryClockCalibration` entry writes GPU frequency
+and correlated GPU/CPU counters for the specified driver queue. Counter
+samples are not fence values, and this CPU query does not drain that queue.
+
+```cpp
+typedef
+enum D3D12_BACKGROUND_PROCESSING_MODE
+    {
+        D3D12_BACKGROUND_PROCESSING_MODE_ALLOWED	= 0,
+        D3D12_BACKGROUND_PROCESSING_MODE_ALLOW_INTRUSIVE_MEASUREMENTS	= ( D3D12_BACKGROUND_PROCESSING_MODE_ALLOWED + 1 ) ,
+        D3D12_BACKGROUND_PROCESSING_MODE_DISABLE_BACKGROUND_WORK	= ( D3D12_BACKGROUND_PROCESSING_MODE_ALLOW_INTRUSIVE_MEASUREMENTS + 1 ) ,
+        D3D12_BACKGROUND_PROCESSING_MODE_DISABLE_PROFILING_BY_SYSTEM	= ( D3D12_BACKGROUND_PROCESSING_MODE_DISABLE_BACKGROUND_WORK + 1 )
+    } 	D3D12_BACKGROUND_PROCESSING_MODE;
+
+typedef
+enum D3D12_MEASUREMENTS_ACTION
+    {
+        D3D12_MEASUREMENTS_ACTION_KEEP_ALL	= 0,
+        D3D12_MEASUREMENTS_ACTION_COMMIT_RESULTS	= ( D3D12_MEASUREMENTS_ACTION_KEEP_ALL + 1 ) ,
+        D3D12_MEASUREMENTS_ACTION_COMMIT_RESULTS_HIGH_PRIORITY	= ( D3D12_MEASUREMENTS_ACTION_COMMIT_RESULTS + 1 ) ,
+        D3D12_MEASUREMENTS_ACTION_DISCARD_PREVIOUS	= ( D3D12_MEASUREMENTS_ACTION_COMMIT_RESULTS_HIGH_PRIORITY + 1 )
+    } 	D3D12_MEASUREMENTS_ACTION;
+```
+
+<a id="id3d12device6-setbackgroundprocessingmode"></a>
+
+### ID3D12Device6::SetBackgroundProcessingMode
+
+#### Declaration
+
+```cpp
+HRESULT SetBackgroundProcessingMode(
+    D3D12_BACKGROUND_PROCESSING_MODE Mode,
+    D3D12_MEASUREMENTS_ACTION MeasurementsAction,
+    HANDLE hEventToSignalUponCompletion,
+    BOOL* pbFurtherMeasurementsDesired);
+```
+
+#### Behavior
+
+Controls optional driver optimization/profiling work, not correctness-critical
+processing or GPU submission. The mode/action behavior is defined below.
+
+Developers and profiling tools can adjust this behavior using combinations of the above enums.  The BACKGROUND_PROCESSING_MODE parameter indicates what level of dynamic profiling and shader recompilation is enabled:
+
+**ALLOWED** is the default state, in which drivers may instrument workloads in any manner of their choosing, and may submit CPU tasks (typically PSO recompiles) to the D3D runtime for low priority execution.  The goal of this mode is to enable dynamic optimizations, but without impacting foreground rendering performance.
+
+**ALLOW_INTRUSIVE_MEASUREMENTS** hints that the driver should prioritize richness and completeness of instrumentation over avoiding glitches, because the rendering currently taking place is being done specifically for training purposes and does not need to execute with usual smooth performance.  This kind of heavy-weight profiling will be used by analysis tools such as PIX.  It could also be used by benchmarks to warm the optimization state before taking their actual performance measurements, or directly by games at appropriate times (eg. pre-training the driver by rendering invisible content behind a menu).
+
+**DISABLE_BACKGROUND_WORK** prevents the execution of background processing tasks.  When this flag is first turned on, all submitted tasks will be allowed to run to completion.  Any calls to QueueProcessingWorkCb while already in this state will be canceled before returning; the cancel callback is invoked if supplied.
+
+Of course the UMD may choose to skip task submission entirely while in the disabled state, but if it does submit work, the runtime will cancel rather than just failing the submit operation, in order to avoid the UMD having to bother synchronizing between work submission and mode changes.
+
+If the disable flag is turned on at the same time as specifying D3D12_MEASUREMENTS_ACTION_COMMIT_*, any new tasks that the UMD generates in response to the commit request will be allowed to execute before the disable takes effect.
+
+The disable flag is only valid when developer mode is enabled.
+
+**DISABLE_PROFILING_BY_SYSTEM** is a superset of the DISABLE_BACKGROUND_WORK mode, and requests a more complete disable of PGO.  In addition to suspending dynamic shader recompilation, this indicates that the driver should avoid making any behavioral changes that would perturb performance, such as dynamically tuning cache policies or compute dispatch patterns.  This is for use during profiling sessions, where an A/B comparison must provide stable timing results.
+
+This flag is only valid when developer mode is enabled.
+
+In addition to specifying a BACKGROUND_PROCESSING_MODE, which controls future PGO behavior, SetBackgroundProcessingMode takes a D3D12_MEASUREMENTS_ACTION enum describing what to do with the result of previous PGO measurements.  Options are:
+
+**KEEP_ALL** does not request any specific change of behavior.  Previous results are still valid, and the driver may continue tracking whatever statistics are in the middle of being measured.
+
+**COMMIT_RESULTS** hints that the workload seen so far represents the complete set of what is worth optimizing based on, for instance that a scene flythrough has finished in a benchmarking tool, or playback of the single frame being analyzed has completed in PIX. The UMD should kick off any desired background processing based on what it has seen so far, as no different work will be incoming in the near future.  After the UMD returns from a SetBackgroundProcessingMode call that specifies COMMIT_RESULTS, all currently queued background tasks will be considered part of the commit.  Once that set of tasks finishes executing, the provided hEventToSignalUponCompletion will be signaled. As indicated above, if this is combined with DISABLE_BACKGROUND_WORK, the disable state (i.e. the inability to submit more tasks) will take effect after returning from the SetBackgroundProcessingMode call.
+
+If the UMD has been gathering statistics about eg. commonly used constant values, and is waiting for some threshold amount of data to be recorded before acting on this information, the commit flag should scale up whatever frequency histograms have been recorded so far to give the same result as if the normal act-now threshold had been reached after a longer period of data collection.  This is important to let PIX replay only one single frame capture, but then request a final set of optimized shaders matching that work, without having to waste time repeating a single frame many hundreds of times.
+
+If the COMMIT_RESULTS or COMMIT_RESULTS_HIGH_PRIORITY modes are not used, hEventToSignalUponCompletion must be null.
+
+**COMMIT_RESULTS_HIGH_PRIORITY** is a superset of the COMMIT_RESULTS mode which modifies the thread scheduling behavior.  This indicates that getting background compiles done fast is more important than avoiding glitches, so the D3D runtime will schedule more than one task simultaneously using multiple threads, and execute these at higher than idle priority.  This boost lasts until all tasks generated by the commit have finished executing.
+
+The high priority mode is only valid when developer mode is enabled.
+
+**DISCARD_PREVIOUS** hints to the UMD that the workload has changed in a significant way, so any results of previous measurements are no longer meaningful.
+
+The **FurtherMeasurementsDesired** output value indicates whether the implementation has reached a steady state, or if it would like a chance to examine additional GPU work.  This is useful if, for instance, playback of a single frame in a tool such as PIX identifies opportunities for constant folding.  Once the resulting optimized shaders have been applied, further optimizations might be identified by profiling the workload again with that first round of optimization in place. This value will return false once the PGO implementation has reached a steady state, measuring a workload without identifying any further optimizations that can be made to it.  Analysis tools will typically replay a single frame inside a loop until this returns false, but should break out after some number of attempts in case the implementation never converges on a steady state.
+
+#### Parameters
+
+`Mode` and `MeasurementsAction` are values of their published enumerations.
+`hEventToSignalUponCompletion` can be supplied for a commit action and must
+be null otherwise. The event tracks completion of that commit's background
+tasks, not GPU work. `pbFurtherMeasurementsDesired` is optional and receives
+whether the driver wants further training; this indication is not a promise
+of convergence after a fixed number of workloads.
+
+`OPTIONS6.BackgroundProcessingSupported` reports support. A valid call
+without driver support is a benign no-op: a supplied event is signaled and a
+supplied further-measurements output is `FALSE`, whether or not an event was
+supplied. Changing modes does not synchronize with GPU queues; applications
+requiring an idle transition must establish GPU completion separately.
+
+#### Return values
+
+Returns `S_OK` on success or an `HRESULT` failure. Invalid enum/event/developer-
+mode combinations are not valid requests; runtime bookkeeping allocation
+can fail. A successful CPU return is not background-task or GPU completion.
+
+### Driver background scheduling
+
+The current mode callback receives a driver device handle despite its
+published parameter name `hRTDevice`. Mode/action values are the current
+driver enums. API `DISABLE_PROFILING_BY_SYSTEM` maps to driver
+`DISABLE_ALL_PROFILING` (value 3). The driver writes a required CPU BOOL output; when the API
+caller omits that optional output, the runtime supplies temporary storage.
+Background optimization must not affect functional correctness.
+
+`QueueBackgroundProcessingWorkCb` runs in the opposite direction with a
+runtime device handle, execution callback, optional cancellation callback
+and opaque context. A successful enqueue makes that context available to
+the selected asynchronous action; it is not a callback-completion result.
+The runtime manages workers and serializes submissions, but parallel work
+does not imply completion in submission order or driver choice of worker.
+
+An accepted item is executed or canceled, never both. If a cancellation
+callback was supplied it receives the same opaque context on cancellation;
+absence of a callback does not invent a cancellation notification. In a
+disabled mode, cancellation can occur inline before enqueue returns.
+The driver manages context and referenced-object lifetimes, including a PSO
+destroyed while optimization is pending. Queuing optimization does not keep
+arbitrary application objects alive. Mode changes and commit events do not
+synchronize GPU execution.
+
+
+The runtime is responsible for cleaning up threads during device destruction. The runtime may, or may not, call any existing queued work.  If a queued work item is canceled (i.e. pfnCallback is skipped), its pfnCancel method will be called instead if one was supplied.  Execution and cancellation are mutually exclusive for each successfully queued work item.
+
+A hard guarantee is that the runtime will let the UMD complete any in-progress work items (the runtime won't call TerminateThread on the thread), and will wait until all in-flight work items are completed before calling pfnDestroyDevice.

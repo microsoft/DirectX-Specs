@@ -2540,3 +2540,82 @@ Triggers a debug layer error if the given texture resource layout does not match
 Also tracks the resource as in-use by the command queue until the command list recording has completed execution on the command queue GPU timeline. Attempts to evict or destroy an in-use resource produces a debug layer error.
 
 Buffers have no layout, therefore `AssertTextureLayout` does nothing when `pResource` is a buffer resource.
+
+<a id="driver-current-barrier-roles"></a>
+
+## Current legacy and enhanced barrier roles
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_RESOURCEBARRIER_0022 )(
+    D3D12DDI_HCOMMANDLIST, UINT Count, _In_reads_(Count) CONST D3D12DDIARG_RESOURCE_BARRIER_0022* );
+
+typedef enum D3D12DDI_RESOURCE_BARRIER_TYPE
+{
+    D3D12DDI_RESOURCE_BARRIER_TYPE_TRANSITION,
+    D3D12DDI_RESOURCE_BARRIER_TYPE_ALIASING, // Deprecated by D3D12DDI_RESOURCE_BARRIER_TYPE_0022_RANGED
+    D3D12DDI_RESOURCE_BARRIER_TYPE_UAV,
+    D3D12DDI_RESOURCE_BARRIER_TYPE_0022_RANGED,
+} D3D12DDI_RESOURCE_BARRIER_TYPE;
+
+typedef enum D3D12DDI_RESOURCE_BARRIER_FLAGS
+{
+    D3D12DDI_RESOURCE_BARRIER_FLAG_NONE       = 0x0,
+    D3D12DDI_RESOURCE_BARRIER_FLAG_BEGIN_ONLY = 0x1,
+    D3D12DDI_RESOURCE_BARRIER_FLAG_END_ONLY   = 0x2,
+    D3D12DDI_RESOURCE_BARRIER_FLAG_0022_ATOMIC_COPY = 0x4,
+    D3D12DDI_RESOURCE_BARRIER_FLAG_0022_ALIASING = 0x8,
+} D3D12DDI_RESOURCE_BARRIER_FLAGS;
+
+typedef struct D3D12DDI_RESOURCE_TRANSITION_BARRIER_0003
+{
+    D3D12DDI_HRESOURCE hResource;
+    UINT Subresource;
+    D3D12DDI_RESOURCE_STATES StateBefore;
+    D3D12DDI_RESOURCE_STATES StateAfter;
+} D3D12DDI_RESOURCE_TRANSITION_BARRIER_0003;
+
+typedef struct D3D12DDI_RESOURCE_RANGED_BARRIER_0022
+{
+    D3D12DDI_HRESOURCE hResource;
+    UINT Subresource;
+    D3D12DDI_RANGE Range;
+} D3D12DDI_RESOURCE_RANGED_BARRIER_0022;
+
+typedef struct D3D12DDI_RESOURCE_UAV_BARRIER
+{
+    D3D12DDI_HRESOURCE hResource;
+} D3D12DDI_RESOURCE_UAV_BARRIER;
+
+typedef struct D3D12DDIARG_RESOURCE_BARRIER_0022
+{
+    D3D12DDI_RESOURCE_BARRIER_TYPE    Type;
+    D3D12DDI_RESOURCE_BARRIER_FLAGS   Flags;
+
+    union
+    {
+        D3D12DDI_RESOURCE_TRANSITION_BARRIER_0003 Transition;
+        D3D12DDI_RESOURCE_RANGED_BARRIER_0022     Ranged;
+        D3D12DDI_RESOURCE_UAV_BARRIER             UAV;
+    };
+} D3D12DDIARG_RESOURCE_BARRIER_0022;
+```
+
+Both current 3D command-list representations and the selected decode,
+process and encode tables retain ordinary `D3D12DDI_HCOMMANDLIST` barrier
+callbacks. The API-header command-list layout does not change these entries
+to API handles or application resource pointers.
+
+On an enhanced-capable driver the runtime translates legacy API barriers
+to the [enhanced driver encoding](#enhanced-driver), rather than invoking
+the legacy callback. `NumBarriers` counts flat driver barrier descriptors,
+not the API's barrier groups. The driver consumes/captures the CPU descriptors
+during recording; resources and dependency lifetimes are not shortened.
+Application access/layout/synchronization and command-family restrictions
+remain the complete barrier contracts.
+
+The legacy `_0022` union has transition, ranged and UAV members. Its ranged
+encoding and flags are not the application's two-resource aliasing structure;
+the retained deprecated aliasing enumerator does not select an unprovided
+union member. Internal ranged/atomic-copy dependencies retain the
+[atomic-copy driver contract](resource-operations.md#atomic-copy-driver).
+These driver encodings do not expose an application range-barrier API.

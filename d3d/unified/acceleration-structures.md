@@ -2177,3 +2177,152 @@ typedef VOID ( APIENTRY* PFND3D12DDI_COPY_RAYTRACING_ACCELERATION_STRUCTURE_0054
 `D3D12DDI_DEVICE_FUNCS_CORE_0054` contains `pfnGetRaytracingAccelerationStructurePrebuildInfo` and `pfnCheckDriverMatchingIdentifier`. `D3D12DDI_COMMAND_LIST_FUNCS_3D_0054` contains `pfnBuildRaytracingAccelerationStructure`, `pfnEmitRaytracingAccelerationStructurePostbuildInfo`, and `pfnCopyRaytracingAccelerationStructure`. The callback typedefs retain `_0054` while the opacity-micromap members and structures include `_0110` additions. These declaration versions do not name a new public API interface.
 
 The triangle transform field is named `Transform3x4` in the API and `ColumnMajorTransform3x4` in the published DDI declaration. The application's matrix layout remains the row-major layout specified in [`D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC`](#d3d12_raytracing_geometry_triangles_desc).
+
+<a id="driver-current-as-operations"></a>
+
+### Current construction and reporting contracts
+
+These runtime-to-driver callbacks retain the
+[published declarations and payloads](#data-and-operation-declarations)
+above. All three command callbacks receive ordinary
+`D3D12DDI_HCOMMANDLIST` handles in both current command-list layouts;
+the `_0114` table does not change them to API-header handles.
+The prebuild query receives `D3D12DDI_HDEVICE`, not a command list.
+These driver handles are not application interface pointers, and passing
+them transfers no COM ownership.
+
+| Current table member | Signature | API contract |
+|---|---|---|
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnBuildRaytracingAccelerationStructure` | `PFND3D12DDI_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_0054` | [BuildRaytracingAccelerationStructure](#buildraytracingaccelerationstructure) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnEmitRaytracingAccelerationStructurePostbuildInfo` | `PFND3D12DDI_EMIT_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_0054` | [EmitRaytracingAccelerationStructurePostbuildInfo](#emitraytracingaccelerationstructurepostbuildinfo) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnCopyRaytracingAccelerationStructure` | `PFND3D12DDI_COPY_RAYTRACING_ACCELERATION_STRUCTURE_0054` | [CopyRaytracingAccelerationStructure](#copyraytracingaccelerationstructure) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnBuildRaytracingAccelerationStructure` | `PFND3D12DDI_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_0054` | [BuildRaytracingAccelerationStructure](#buildraytracingaccelerationstructure) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnEmitRaytracingAccelerationStructurePostbuildInfo` | `PFND3D12DDI_EMIT_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_0054` | [EmitRaytracingAccelerationStructurePostbuildInfo](#emitraytracingaccelerationstructurepostbuildinfo) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnCopyRaytracingAccelerationStructure` | `PFND3D12DDI_COPY_RAYTRACING_ACCELERATION_STRUCTURE_0054` | [CopyRaytracingAccelerationStructure](#copyraytracingaccelerationstructure) |
+| `D3D12DDI_DEVICE_FUNCS_CORE_0119::pfnGetRaytracingAccelerationStructurePrebuildInfo` | `PFND3D12DDI_GET_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO_0054` | [GetRaytracingAccelerationStructurePrebuildInfo](#getraytracingaccelerationstructureprebuildinfo) |
+
+The driver consumes the CPU description graph during the callback and
+copies any CPU values it needs afterward. This includes the outer argument,
+postbuild description/source-address arrays, BLAS geometry arrays or arrays
+of pointers and referenced nested CPU descriptions, including OMM metadata.
+The driver cannot retain caller array/description storage merely because
+GPU execution occurs later.
+
+The [shared input type and element layout](#d3d12_build_raytracing_acceleration_structure_inputs)
+select the active interpretation: TLAS instance descriptions and instance
+pointer arrays are in GPU memory, BLAS geometry descriptions are CPU inputs,
+and OMM-array CPU descriptions contain further CPU metadata and GPU ranges.
+Capturing CPU inputs does not snapshot vertex/index/AABB/instance/OMM GPU
+data or shorten its [storage/dependency lifetime](#storage-and-lifetime).
+The triangle transform retains the
+[API row-major layout](#d3d12_raytracing_geometry_triangles_desc);
+the published `ColumnMajorTransform3x4` field name does not authorize
+transposing that input.
+
+`D3D12DDIARG_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_0054` packages
+destination, `Inputs`, source/update address, scratch address and the
+postbuild count/description pointer in one argument. The API's postbuild
+count and pointer are not additional DDI parameters. A zero postbuild
+count requests no attached reports; the API's
+[per-type report uniqueness](#buildraytracingaccelerationstructure) remains
+required.
+
+The [build description and flags](#d3d12_build_raytracing_acceleration_structure_desc)
+retain result/scratch sizes, address alignment, source-null versus update
+meaning, exact in-place update and other overlap restrictions.
+[Update constraints](#acceleration-structure-update-constraints) and
+[OMM applicability](#opacity-micromaps) are not relaxed by the callback version.
+Attached postbuild reporting describes the completed build under the API's
+ordering guarantee; the application does not insert a separate barrier
+between that build and its attached reports. This does not allocate backing
+storage or copy GPU inputs on the CPU.
+
+`PFND3D12DDI_GET_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO_0054`
+reads valid CPU-visible input descriptions and writes the caller's CPU
+`D3D12DDI_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO_0054` before
+returning. It must not dereference GPU input addresses. Their nullness
+may be inspected as specified by the
+[prebuild input contract](#getraytracingaccelerationstructureprebuildinfo);
+referenced GPU data need not yet be initialized or in a build-use state,
+and permitted dummy nonzero addresses are not evidence of valid GPU storage.
+
+The three `UINT64` outputs are byte requirements:
+`ResultDataMaxSizeInBytes`, `ScratchDataSizeInBytes` and
+`UpdateScratchDataSizeInBytes`. Preserve the API's
+[same-configuration/equal-or-smaller-count guarantee](#getraytracingaccelerationstructureprebuildinfo)
+and [update-scratch rules](#d3d12_raytracing_acceleration_structure_prebuild_info),
+not a measurement of existing GPU contents or the actual compacted size.
+The driver must provide the defined outputs for the valid query; it does
+not allocate result/scratch resources or retain caller input/output storage.
+
+This is a device-level CPU query with the API's
+[threading contract](#prebuild-threading), not queued GPU work.
+Its void result supplies neither a per-call `HRESULT` nor a command-list
+`Close` result. Device/core and recording-error paths remain
+[distinct](devices-and-capabilities.md#callback-storage).
+
+`D3D12DDIARG_EMIT_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_0054`
+contains `Desc`, a source count and a CPU pointer to that many GPU addresses,
+not a GPU pointer to an address array. The driver captures the CPU values
+during recording. The listed acceleration structures themselves remain
+GPU inputs under their lifetime/access requirements.
+
+The [emission API](#emitraytracingaccelerationstructurepostbuildinfo) writes
+a contiguous destination array with one typed record per listed source.
+`InfoType` controls the [record layout and natural alignment](#d3d12_raytracing_acceleration_structure_postbuild_info_desc);
+it does not return those records in a CPU output argument.
+Current/compacted/visualization/serialization sizes and applicable object
+kinds retain their individual
+[postbuild contracts](#d3d12_raytracing_acceleration_structure_postbuild_info_type).
+Separate emission retains normal build/read/write dependencies; it does not
+inherit the no-intervening-barrier convenience of attached build reports.
+
+`D3D12DDIARG_COPY_RAYTRACING_ACCELERATION_STRUCTURE_0054` supplies
+destination, source and the selected mode. This is the
+[specialized copy/transform operation](#copyraytracingaccelerationstructure),
+not permission to replace it with an ordinary resource-byte copy.
+The driver preserves the opaque representation's required internal pointer
+relocation and mode-dependent output layout.
+
+The five [copy modes](#d3d12_raytracing_acceleration_structure_copy_mode)
+retain their distinct clone, compaction, visualization, serialization and
+deserialization requirements: source/destination alignment and non-overlap,
+compaction flags, output sizing, external references, fixups and driver-
+matching compatibility are not inferred from a raw pointer or matching
+address. The operation does not recursively copy referenced structures.
+
+The build, emission and copy callbacks implement unpredicated GPU work
+on DIRECT or COMPUTE recordings, not BUNDLE recordings or an open render
+pass. The [named context/predicate/statistics/error rules](#recording-contexts)
+and [capability](#capability) and [storage/access/lifetime requirements](#storage-and-lifetime)
+remain applicable. CPU parameter capture does not retain resource COM
+objects or make scratch, results and referenced structures reusable before
+their GPU uses end.
+
+These `VOID` recording callbacks do not return a recoverable creation
+`HRESULT` or establish GPU completion. Driver-reported recording failures
+follow the [callback/deferred-Close contract](execution.md#lifecycle-driver-errors);
+the separate device sizing query does not acquire that recording protocol.
+Neither descriptor packing nor an absent diagnostic proves valid GPU
+geometry, complete runtime validation or implicit synchronization.
+
+<a id="driver-current-matching-query"></a>
+
+### Current driver matching-identifier query
+
+The current core-device `pfnCheckDriverMatchingIdentifier` retains the
+published `_0054` declaration and the complete
+[CheckDriverMatchingIdentifier contract](#checkdrivermatchingidentifier).
+Its inputs are a serialized-data type and CPU matching-identifier header;
+its result is a matching-status enum, not HRESULT or a GPU command.
+The [application-specific driver-state blob](devices-and-capabilities.md#driver-node-application-state)
+uses its own serialized-data type and the same header protocol. Neither
+matching success nor the shared header makes the two serialized payload
+formats interchangeable or promises compatibility with every future driver.
+
+The driver reports the defined recognition/type/version/device compatibility
+distinctions. A driver supporting the requested acceleration-structure
+serialization type must recognize that type as specified by the API; it
+does not replace an incompatible identifier with a success-shaped default.
+Checking compatibility does not allocate, fix up, deserialize or initialize
+the referenced GPU structures or opaque driver-state payload.

@@ -5104,3 +5104,200 @@ The following GPU write operations are well-defined, such that the CPU and/ or o
 GPUs capable of I/O coherence must use it when write-back is required or chosen for pages that reside in physical system memory.
 
 D3D12 allows metadata on all textures, not just those with `RENDER_TARGET` or `DEPTH_STENCIL` flags. However, any metadata on non-RT/DS textures must not require full subresource copies for initialization. Instead, the metadata must be robust enough to honor the app initializing each texel, discretely, from all possible initial physical memory values.
+
+<a id="driver-allocation-services"></a>
+
+## Driver allocation, offer/reclaim and allocation queries
+
+```cpp
+typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_ALLOCATE_CB_0022)(
+    _In_ D3D12DDI_HRTDEVICE, _Inout_ D3D12DDICB_ALLOCATE_0022* );
+
+typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_DEALLOCATE_CB_0022)(
+    _In_ D3D12DDI_HRTDEVICE, _In_ CONST D3D12DDICB_DEALLOCATE_0022* );
+
+typedef struct D3D12DDICB_ALLOCATE_0022
+{
+    CONST VOID* pPrivateDriverData;
+    UINT PrivateDriverDataSize;
+    HANDLE hResource;
+    D3DKMT_HANDLE hKMResource; // Reserved
+    UINT NumAllocations;
+    D3D12DDI_ALLOCATION_INFO_0022* pAllocationInfo;
+} D3D12DDICB_ALLOCATE_0022;
+
+typedef enum D3D12DDI_ALLOCATION_INFO_FLAGS_0022
+{
+    D3D12DDI_ALLOCATION_INFO_FLAGS_0022_NONE = 0x0,
+    D3D12DDI_ALLOCATION_INFO_FLAGS_0022_PRIMARY = 0x1,
+    D3D12DDI_ALLOCATION_INFO_FLAGS_0022_STEREO = 0x2,
+    D3D12DDI_ALLOCATION_INFO_FLAGS_0022_OVERRIDE_PRIORITY = 0x4,
+    D3D12DDI_ALLOCATION_INFO_FLAGS_0022_SHARED = 0x8, // Added in 0114 but UMDs that report DDI version >= 0106 may use
+
+} D3D12DDI_ALLOCATION_INFO_FLAGS_0022;
+
+typedef struct D3D12DDI_ALLOCATION_INFO_0022
+{
+    D3DKMT_HANDLE hAllocation;
+    CONST VOID* pSystemMem;
+    VOID* pPrivateDriverData;
+    UINT PrivateDriverDataSize;
+    D3DDDI_VIDEO_PRESENT_SOURCE_ID VidPnSourceId;
+    D3D12DDI_ALLOCATION_INFO_FLAGS_0022 Flags;
+    D3DGPU_VIRTUAL_ADDRESS GpuVirtualAddress;
+    UINT Priority;
+    ULONG_PTR Reserved[5];
+} D3D12DDI_ALLOCATION_INFO_0022;
+
+typedef struct D3D12DDICB_DEALLOCATE_0022
+{
+    HANDLE hResource;
+    UINT NumAllocations;
+    CONST D3DKMT_HANDLE* HandleList;
+    D3D12DDI_DEALLOCATE_FLAGS_0022 Flags;
+} D3D12DDICB_DEALLOCATE_0022;
+
+typedef enum D3D12DDI_DEALLOCATE_FLAGS_0022
+{
+    D3D12DDI_DEALLOCATE_FLAGS_0022_NONE = 0x0,
+    D3D12DDI_DEALLOCATE_FLAGS_0022_ASSUME_NOT_IN_USE = 0x1,
+    D3D12DDI_DEALLOCATE_FLAGS_0022_SYNCHRONOUS_DESTROY = 0x2,
+
+} D3D12DDI_DEALLOCATE_FLAGS_0022;
+
+typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_OFFERALLOCATIONS_CB)(
+    _In_ D3D12DDI_HRTDEVICE hRTDevice,
+    _In_ CONST D3D12DDICB_OFFERALLOCATIONS*
+    );
+
+typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_RECLAIMALLOCATIONS2_CB)(
+    _In_    D3D12DDI_HRTDEVICE hRTDevice,
+    _In_    D3D12DDI_HRTPAGINGQUEUE hRTPagingQueue,
+    _Inout_ D3D12DDICB_RECLAIMALLOCATIONS2*
+    );
+
+typedef struct _D3D12DDICB_OFFERALLOCATIONS
+{
+    _In_ UINT                                       NumAllocations;
+    _In_reads_(NumAllocations) CONST D3DKMT_HANDLE* HandleList;            // in:  array of allocation handles.
+    _In_ D3DDDI_OFFER_PRIORITY                      Priority;              // in:  priority with which to offer the allocations
+} D3D12DDICB_OFFERALLOCATIONS;
+
+typedef struct _D3D12DDICB_RECLAIMALLOCATIONS2
+{
+    _In_ UINT                                       NumAllocations;
+    _In_reads_(NumAllocations) CONST D3DKMT_HANDLE* HandleList;
+    _Out_writes_all_opt_(NumAllocations) BOOL*      pDiscarded;            // out: optional array of booleans specifying whether each resource or allocation was discarded.
+    _Out_ UINT64                                    PagingFenceValue;      // out: The paging fence to synchronize against before submitting work to the GPU which
+                                                                           //      references any of the resources or allocations in the provided arrays
+} D3D12DDICB_RECLAIMALLOCATIONS2;
+
+typedef HRESULT ( APIENTRY* PFND3D12DDI_OFFERRESOURCES )(
+     D3D12DDI_HDEVICE, CONST D3D12DDIARG_OFFERRESOURCES* );
+
+typedef HRESULT ( APIENTRY* PFND3D12DDI_RECLAIMRESOURCES_0001 )(
+     D3D12DDI_HDEVICE, D3D12DDIARG_RECLAIMRESOURCES_0001* );
+
+typedef struct D3D12DDIARG_OFFERRESOURCES
+{
+    UINT NumObjects;
+    _Field_size_(NumObjects) CONST D3D12DDI_HANDLE_AND_TYPE* pObjects;
+#if D3D_UMD_INTERFACE_VERSION >= D3D_UMD_INTERFACE_VERSION_WDDM1_3
+    D3DDDI_OFFER_PRIORITY Priority;
+#else
+    UINT Reserved;
+#endif
+} D3D12DDIARG_OFFERRESOURCES;
+
+typedef struct D3D12DDIARG_RECLAIMRESOURCES_0001
+{
+    UINT NumAdapters;
+    _Field_size_(NumAdapters) CONST D3D12DDI_HRTPAGINGQUEUE* pRTPagingQueue;
+    UINT NumObjects;
+    _Field_size_(NumObjects) CONST D3D12DDI_HANDLE_AND_TYPE* pObjects;
+    _Field_size_(NumObjects) BOOL* pDiscarded;
+    _Field_size_(NumAdapters) UINT64* pPagingFenceValue;    // out: Fence to wait on
+    UINT WaitMask;                                          // out: Bit "i" is set if PagingFenceValue[i] is valid.  Valid when ReclaimResources returns E_PENDING.
+} D3D12DDIARG_RECLAIMRESOURCES_0001;
+
+typedef D3D12DDI_GPU_VIRTUAL_ADDRESS ( APIENTRY* PFND3D12DDI_CHECKRESOURCEVIRTUALADDRESS )( D3D12DDI_HDEVICE, D3D12DDI_HRESOURCE  );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_CHECKEXISITINGRESOURCEALLOCATIONINFO_0022 )(
+    D3D12DDI_HDEVICE, D3D12DDI_HRESOURCE, _Out_ D3D12DDI_RESOURCE_ALLOCATION_INFO_0022* );
+
+typedef D3DKMT_HANDLE ( APIENTRY* PFND3D12DDI_CHECKRESOURCEALLOCATIONHANDLE )( D3D12DDI_HDEVICE, D3D10DDI_HRESOURCE );
+
+typedef struct D3D12DDI_RESOURCE_ALLOCATION_INFO_0022
+{
+    UINT64 ResourceDataSize;
+    UINT64 AdditionalDataHeaderSize;
+    UINT64 AdditionalDataSize;
+    UINT32 ResourceDataAlignment;
+    UINT32 AdditionalDataHeaderAlignment;
+    UINT32 AdditionalDataAlignment;
+    D3D12DDI_TEXTURE_LAYOUT Layout;
+    UINT8 MipLevelSwizzleTransition[5];
+    UINT8 PlaneSliceSwizzleTransition[2];
+} D3D12DDI_RESOURCE_ALLOCATION_INFO_0022;
+
+typedef void (APIENTRY* PFND3D12DDI_QUERY_VIDEO_MEMORY_INFO_0054)(
+    D3D12DDI_HDEVICE, UINT NodeIndex, D3D12DDI_MEMORY_SEGMENT_GROUP_0054 MemorySegmentGroup, _Out_ D3D12DDI_QUERY_VIDEO_MEMORY_INFO_0054* pVideoMemoryInfo);
+
+typedef struct D3D12DDI_QUERY_VIDEO_MEMORY_INFO_0054
+{
+    UINT64 Budget;
+    UINT64 CurrentUsage;
+} D3D12DDI_QUERY_VIDEO_MEMORY_INFO_0054;
+
+typedef enum D3D12DDI_MEMORY_SEGMENT_GROUP_0054
+{
+    D3D12DDI_MEMORY_SEGMENT_GROUP_0054_LOCAL,
+    D3D12DDI_MEMORY_SEGMENT_GROUP_0054_NON_LOCAL,
+} D3D12DDI_MEMORY_SEGMENT_GROUP_0054;
+```
+
+Allocation/deallocation and allocation-offer/reclaim callbacks run from the
+driver into the runtime using runtime device/paging-queue handles. They are
+not the opposite-direction resource-object DDIs. The runtime accepts typed
+allocation packets and private driver metadata, invokes the applicable OS
+allocation services and returns `HRESULT`; the driver must check failure.
+Kernel allocation handles, runtime resource tokens, driver object handles
+and GPU virtual addresses remain distinct namespaces.
+
+`AllocateCb` uses `NumAllocations` and the allocation-info array, with
+driver-private byte payloads, optional supplied system memory and per-allocation
+outputs. Reserved fields do not become application inputs. Deallocation
+identifies the runtime resource/allocation handle list and flags, not a COM
+`Release` operation. Packet/private-metadata consumption is separate from the
+lifetime of backing system memory and the resulting allocation objects.
+
+Driver `OfferResources` and `ReclaimResources` operate on tagged driver
+objects. Their allocation callbacks instead use kernel handle lists.
+Offering storage permits its contents to be discarded; reclaim reports
+per-object/per-allocation discard results rather than reconstructing lost
+data. Before subsequent use, discarded contents must be reestablished.
+The reclaim resource packet associates paging queues/fence values with
+adapter entries and reports valid waits through its mask; paging counters
+from different queues are not one globally ordered sequence.
+Existing [residency](#residency-driver-interfaces) ordering/lifetime rules
+remain distinct from whether contents survived an offer.
+
+`CheckResourceVirtualAddress` returns a GPU virtual address for a driver
+resource; it is not a generic validation of an arbitrary application address.
+The buffer path may obtain its base this way, while immutable placed buffers
+can derive it from their heap's implicit buffer and offset.
+`CheckExistingResourceAllocationInfo` writes the existing resource's
+resolved allocation description, sizes/alignments, layout and swizzle
+transitions. It is not the pre-creation query on an application description
+and does not allocate a resource.
+
+`CheckResourceAllocationHandle` returns a kernel allocation handle and
+retains the published `D3D10DDI_HRESOURCE` parameter spelling. That ABI
+spelling does not turn its input into a kernel handle or its result into
+a GPU address. Allocation queries complete their CPU outputs during the call;
+they do not signal GPU completion.
+
+The conditional downlevel `QueryVideoMemoryInfo` entry takes node index and
+local/nonlocal segment group and writes the two `UINT64` byte quantities
+`Budget` and `CurrentUsage`. It is not the larger DXGI result structure and
+does not reserve memory or make resources resident.

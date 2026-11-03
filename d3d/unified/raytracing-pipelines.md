@@ -3569,3 +3569,81 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DISPATCH_RAYS_0054 )(
 ```
 
 `PFND3D12DDI_DISPATCH_RAYS_0054` is the `pfnDispatchRays` member of `D3D12DDI_COMMAND_LIST_FUNCS_3D_0054`. Stack-property callback membership in the device callback tables is listed in [State objects](state-objects.md#callback-table-membership).
+
+<a id="driver-current-ray-dispatch"></a>
+
+#### Current ray-dispatch forms
+
+The ordinary callback above and the API-handle callback below are
+current runtime-to-driver forms of
+[DispatchRays](#id3d12graphicscommandlist4dispatchrays). Both retain
+`D3D12DDIARG_DISPATCH_RAYS_0054`; the `_0114` callback does not introduce
+a new dispatch-description layout.
+
+| Current table member | Signature | API contract |
+|---|---|---|
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnDispatchRays` | `PFND3D12DDI_DISPATCH_RAYS_0054` | [DispatchRays](#id3d12graphicscommandlist4dispatchrays) |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnDispatchRays` | `PFND3D12DDI_DISPATCH_RAYS_0114` | [DispatchRays](#id3d12graphicscommandlist4dispatchrays) |
+
+The ordinary callback receives `D3D12DDI_HCOMMANDLIST`, identifying driver
+storage. The compatible callback receives `D3D12DDI_API_HCOMMANDLIST`,
+identifying the application-side command-list header under the
+[work-command handle contract](execution.md#work-command-handles).
+These representations are not interchangeable, and neither transfers
+COM ownership. Conditional direct dispatch does not promise that the runtime
+has already validated the description or eventual GPU records.
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_DISPATCH_RAYS_0114 )(D3D12DDI_API_HCOMMANDLIST, _In_ CONST D3D12DDIARG_DISPATCH_RAYS_0054* );
+```
+
+The description pointer is borrowed for the callback. The driver consumes
+its values during the call and copies any CPU values it needs after returning.
+The raygeneration, miss, hit-group and callable addresses refer to GPU memory,
+not CPU pointers to shader records or driver handles for shader-table objects.
+Capturing the description does not snapshot those GPU bytes.
+
+The [shader-table initialization](#shader-table-memory-initialization),
+[indexing and out-of-bounds](#out-of-bounds-shader-table-indexing), and
+[shader-table access and synchronization](#shader-table-access) contracts
+govern the records used by execution. Converting addresses and byte quantities
+does not establish valid identifiers, matching local-root contents or in-range
+dynamic lookups; it does not shorten resource/dependency lifetimes.
+
+The shared [driver payload](#driver-dispatch) carries one raygeneration
+`StartAddress`/`SizeInBytes` range and three
+`StartAddress`/`SizeInBytes`/`StrideInBytes` table descriptions.
+Addresses and byte sizes/strides retain their 64-bit representations;
+`Width`, `Height` and `Depth` are `UINT` raygeneration grid dimensions,
+not compute thread-group counts.
+
+The [dispatch and description rules](#id3d12graphicscommandlist4dispatchrays)
+retain the mathematical `Width * Height * Depth <= 2^30` limit and no
+launched threads when any dimension is zero. Table bases have 64-byte
+alignment; table strides are 32-byte multiples in `[0, 4096]`.
+The [single-record, unused-table and NULL-identifier distinctions](#ranges-empty-tables-and-null-identifiers)
+remain: zero stride repeats the same record and does not make a missing,
+uninitialized or out-of-bounds record valid.
+
+This CPU callback correspondence does not change the separate
+[indirect-dispatch ABI and same-table modification restriction](#indirect-dispatch).
+
+The [pipeline selection](command-list-state.md#pipeline-selection) and
+[raytracing binding](binding.md#local-signatures) contracts require the
+selected raytracing pipeline and its compatible compute-root state.
+The driver uses the most recent stack setting at recording, as defined by
+[SetPipelineStackSize](#id3d12stateobjectpropertiessetpipelinestacksize).
+That budget is not a field of the dispatch description. The
+[driver-managed stack reservation and recording-failure contract](#pipeline-stack)
+remains required; capture of a CPU description is not allocation of the
+application's shader tables.
+
+Both callbacks permit DIRECT/COMPUTE recordings and bundles as specified by
+the [complete operation](#dispatchrays-recording-and-validation).
+Open-render-pass restrictions,
+[predication](counters-queries-and-predication.md#predication-operation-matrix),
+query/statistics scopes and resource dependencies remain those operation
+contracts. Predication governs GPU dispatch work, not a promise to skip CPU
+recording checks. These `VOID` callbacks provide no per-call `HRESULT` or
+GPU-completion result; recording failures retain the
+[canonical driver error path](execution.md#lifecycle-driver-errors).

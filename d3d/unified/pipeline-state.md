@@ -1545,6 +1545,74 @@ For drivers, the dynamic depth-bias and strip-cut creation flags are only _hints
 
 Support for dynamic depth bias and index buffer strip cut is implied by, and must be supported on, drivers that report their DDI version to be 0099 or greater.
 
+<a id="driver-pso-selection"></a>
+
+### Current ordinary PSO selection
+
+These runtime-to-driver entries select the ordinary graphics/compute PSO
+described by [SetPipelineState](#id3d12graphicscommandlist-setpipelinestate).
+The command-list argument uses the ordinary driver handle in the first
+table and the [API-header representation](execution.md#work-command-handles)
+in the second. These are conditional current representations, not a
+universal direct-dispatch or performance guarantee.
+
+| Current table member | Signature | Object argument |
+|---|---|---|
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnSetPipelineState` | `PFND3D12DDI_SET_PIPELINE_STATE` | `D3D12DDI_HPIPELINESTATE` |
+| `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnSetPipelineState` | `PFND3D12DDI_SET_PIPELINE_STATE_0114` | `D3D12DDI_API_HPIPELINESTATE` |
+
+```cpp
+D3D10DDI_H( D3D12DDI_API_HPIPELINESTATE )
+
+inline D3D12DDI_HPIPELINESTATE GetDriverPipelineStateHandle(D3D12DDI_API_HPIPELINESTATE ApiHandle)
+{
+    D3D12DDI_RUNTIME_BYPASS_HEADER* pBypassHeader = (D3D12DDI_RUNTIME_BYPASS_HEADER*)ApiHandle.pDrvPrivate;
+    D3D12DDI_HPIPELINESTATE hPipelineState;
+
+    hPipelineState.pDrvPrivate = pBypassHeader->pDriverObject;
+    return hPipelineState;
+}
+```
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_SET_PIPELINE_STATE )(
+    D3D12DDI_HCOMMANDLIST, D3D12DDI_HPIPELINESTATE );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_SET_PIPELINE_STATE_0114 )(D3D12DDI_API_HCOMMANDLIST, D3D12DDI_API_HPIPELINESTATE );
+```
+
+The ordinary object handle identifies the driver PSO created under the
+[object storage/lifetime contract](#driver-object-lifetime). The API object
+handle instead identifies an application-side runtime-bypass header.
+`GetDriverPipelineStateHandle` obtains the ordinary object from
+`pDriverObject`; the header layout is defined with the
+[command-list transport](execution.md#work-command-handles).
+The API handle itself is not ordinary driver-private storage.
+
+The published helper is not null-safe and does not define a null-unset
+operation. The API requires a non-null compatible PSO for the device and
+command-list node. Conversion neither constructs a new PSO nor transfers
+COM ownership; the API's recorded-object lifetime remains required.
+It does not select a global root signature or establish the required root
+arguments, descriptor heaps, residency or resource synchronization.
+
+Both callbacks program the selected PSO's contained state. Selecting the
+same PSO again still restores its described depth-bias and strip-cut values;
+the dynamic creation flags are permission hints, not permission to preserve
+an earlier override. The [canonical dynamic application/driver state](command-list-state.md#dynamic-state)
+and [single pipeline/program selection](command-list-state.md#pipeline-selection)
+remain the owners.
+
+Selection is valid on DIRECT, COMPUTE and BUNDLE recordings, not COPY.
+It does not impose a new compute-only PSO-kind restriction on a COMPUTE
+recording, nor authorize work unsupported by that recording. The API's
+[render-pass recording conditions](output-merger.md#render-pass-operation-surface),
+bundle effects and lifetime requirements remain applicable.
+These `VOID` setters neither return a recoverable creation `HRESULT` nor
+report GPU completion; recording failures use the
+[callback/deferred-Close contract](execution.md#lifecycle-driver-errors).
+Handle conversion is not proof of argument validation.
+
 <a id="driver-object-lifetime"></a>
 
 ### Driver object storage and lifetime

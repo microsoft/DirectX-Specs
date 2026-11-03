@@ -1394,6 +1394,160 @@ Driver-reported recording failures use the shared
 [recording-error/deferred-Close contract](execution.md#lifecycle-driver-errors);
 `VOID` alone does not establish allowed error codes or removal of validation.
 
+<a id="driver-input-forms"></a>
+
+#### Current input-binding representations
+
+The four input-binding entries below use ordinary `D3D12DDI_HCOMMANDLIST`
+handles in `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108`. Their counterparts in
+`D3D12DDI_COMMAND_LIST_FUNCS_3D_0114` instead receive
+`D3D12DDI_API_HCOMMANDLIST`. The latter identifies the application-side
+header, not ordinary driver-private storage; use the
+[published command-list header/conversion contract](execution.md#work-command-handles).
+These are conditional alternative table representations, not a universal
+availability or performance guarantee. Handle adaptation transfers no COM
+ownership and does not change the logical binding operation.
+
+| Member in each table | Ordinary type | API-handle type | Canonical API contract |
+|---|---|---|---|
+| `pfnIaSetTopology` | `PFND3D12DDI_IA_SETTOPOLOGY_0003` | `PFND3D12DDI_IA_SETTOPOLOGY_0114` | [IASetPrimitiveTopology](#iasetprimitivetopology) |
+| `pfnIASetIndexBuffer` | `PFND3D12DDI_IA_SET_INDEX_BUFFER` | `PFND3D12DDI_IA_SET_INDEX_BUFFER_0114` | [IASetIndexBuffer](#iasetindexbuffer) |
+| `pfnIASetVertexBuffers` | `PFND3D12DDI_IA_SET_VERTEX_BUFFERS_0003` | `PFND3D12DDI_IA_SET_VERTEX_BUFFERS_0114` | [IASetVertexBuffers](#iasetvertexbuffers) |
+| `pfnIASetIndexBufferStripCutValue` | `PFND3D12DDI_SET_INDEX_BUFFER_STRIP_CUT_VALUE_0099` | `PFND3D12DDI_SET_INDEX_BUFFER_STRIP_CUT_VALUE_0114` | [IASetIndexBufferStripCutValue](#iasetindexbufferstripcutvalue) |
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_IA_SETTOPOLOGY_0114 )(D3D12DDI_API_HCOMMANDLIST, D3D12DDI_PRIMITIVE_TOPOLOGY );
+typedef VOID ( APIENTRY* PFND3D12DDI_IA_SET_INDEX_BUFFER_0114 )(D3D12DDI_API_HCOMMANDLIST, _In_ CONST D3D12DDI_INDEX_BUFFER_VIEW* pDesc);
+typedef VOID ( APIENTRY* PFND3D12DDI_IA_SET_VERTEX_BUFFERS_0114 )(D3D12DDI_API_HCOMMANDLIST, _In_ UINT StartSlot, _In_ UINT NumViews, _In_reads_opt_(NumViews) CONST D3D12DDI_VERTEX_BUFFER_VIEW * pViews );
+typedef VOID ( APIENTRY* PFND3D12DDI_SET_INDEX_BUFFER_STRIP_CUT_VALUE_0114)(D3D12DDI_API_HCOMMANDLIST, D3D12DDI_INDEX_BUFFER_STRIP_CUT_VALUE IBStripCutValue);
+```
+
+Both topology entries select the detailed primitive topology, not the PSO's
+coarser `PrimitiveTopologyType`. For the values admitted by the
+[API topology enumeration](#topology-enumeration), the corresponding named
+driver values below have the same numeric values. The named conversion
+preserves point/list/strip/adjacency or patch-control-point selection; it
+does not convert a topology into a PSO class or admit arbitrary enum values.
+`UNDEFINED` represents undefined state, not a drawable topology.
+
+```cpp
+typedef enum D3D12DDI_PRIMITIVE_TOPOLOGY
+{
+    D3D12DDI_PRIMITIVE_TOPOLOGY_UNDEFINED = 0,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_POINTLIST = 1,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_LINELIST = 2,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_LINESTRIP = 3,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_TRIANGLELIST = 4,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP = 5,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_LINELIST_ADJ = 10,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ = 11,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_TRIANGLELIST_ADJ = 12,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ = 13,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST = 33,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_2_CONTROL_POINT_PATCHLIST = 34,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST = 35,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST = 36,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_5_CONTROL_POINT_PATCHLIST = 37,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_6_CONTROL_POINT_PATCHLIST = 38,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_7_CONTROL_POINT_PATCHLIST = 39,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_8_CONTROL_POINT_PATCHLIST = 40,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_9_CONTROL_POINT_PATCHLIST = 41,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_10_CONTROL_POINT_PATCHLIST = 42,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_11_CONTROL_POINT_PATCHLIST = 43,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_12_CONTROL_POINT_PATCHLIST = 44,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_13_CONTROL_POINT_PATCHLIST = 45,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_14_CONTROL_POINT_PATCHLIST = 46,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_15_CONTROL_POINT_PATCHLIST = 47,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST = 48,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_17_CONTROL_POINT_PATCHLIST = 49,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_18_CONTROL_POINT_PATCHLIST = 50,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_19_CONTROL_POINT_PATCHLIST = 51,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_20_CONTROL_POINT_PATCHLIST = 52,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_21_CONTROL_POINT_PATCHLIST = 53,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_22_CONTROL_POINT_PATCHLIST = 54,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_23_CONTROL_POINT_PATCHLIST = 55,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_24_CONTROL_POINT_PATCHLIST = 56,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_25_CONTROL_POINT_PATCHLIST = 57,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_26_CONTROL_POINT_PATCHLIST = 58,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_27_CONTROL_POINT_PATCHLIST = 59,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_28_CONTROL_POINT_PATCHLIST = 60,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_29_CONTROL_POINT_PATCHLIST = 61,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_30_CONTROL_POINT_PATCHLIST = 62,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_31_CONTROL_POINT_PATCHLIST = 63,
+    D3D12DDI_PRIMITIVE_TOPOLOGY_32_CONTROL_POINT_PATCHLIST = 64,
+} D3D12DDI_PRIMITIVE_TOPOLOGY;
+```
+
+For either representation, null `pDesc` unbinds the single index buffer.
+For vertex buffers, `StartSlot` and `NumViews` identify the slot range;
+they are not byte offsets/counts. Null `pViews` clears that range, a valid
+zero count changes no slots, and slots outside it are unchanged. The
+[index-view](#iasetindexbuffer) and [vertex-range](#iasetvertexbuffers)
+contracts retain their format, address alignment, byte extent, stride and
+range validity requirements.
+
+The view structures are CPU input records containing GPU virtual addresses,
+not descriptor-heap handles or retained resource COM objects. The driver
+captures their logical values during the call; it cannot retain the caller's
+`pDesc`/`pViews` storage as a later source of those values. This call-borrowed
+storage is distinct from the referenced buffers' execution lifetime.
+Binding neither keeps resource data alive nor establishes residency or
+resource-access synchronization; the [graphics input lifetime/access contract](#direct-draws)
+continues to apply.
+
+`IBStripCutValue` is an enum selector: `DISABLED`, `0xFFFF` and `0xFFFFFFFF`
+have driver enum values 0, 1 and 2, respectively. Passing the literal index
+sentinel `0xffff` or `0xffffffff` is not a substitute for its enum selector.
+The [strip-cut operation](#strip-cuts), device/PSO permission requirements,
+initial/reset values, bundle effects and overwrite on PSO selection remain
+defined by the [dynamic application and driver state](command-list-state.md#dynamic-state).
+Selecting a dynamic value does not modify the PSO's stored description or
+exempt a later PSO selection from restoring its described cut state.
+
+All four operations retain their DIRECT/BUNDLE recording restrictions and
+the [canonical topology](command-list-state.md#base-graphics) and
+[buffer inheritance](command-list-state.md#buffer-bindings) rules.
+The `VOID` result introduces no recoverable creation `HRESULT`; failures
+reported while recording follow the
+[recording-error/deferred-Close contract](execution.md#lifecycle-driver-errors).
+Handle or view adaptation is not proof of argument validation or clamping.
+
+<a id="driver-view-mask-forms"></a>
+
+#### Current view-mask representations
+
+The selected entries use ordinary `D3D12DDI_HCOMMANDLIST` handles in
+`D3D12DDI_COMMAND_LIST_FUNCS_3D_0108` and `D3D12DDI_API_HCOMMANDLIST` in
+`D3D12DDI_COMMAND_LIST_FUNCS_3D_0114`. The latter identifies the application-side
+header, not ordinary driver-private storage; follow the
+[command-list header and conversion contract](execution.md#work-command-handles).
+These are conditional alternative table representations, not universal
+availability or a transfer of COM ownership.
+
+| Member in each table | Ordinary type | API-handle type | API contract |
+|---|---|---|---|
+| `pfnSetViewInstanceMask` | `PFND3D12DDI_SETVIEWINSTANCEMASK_0033` | `PFND3D12DDI_SETVIEWINSTANCEMASK_0114` | [SetViewInstanceMask](#setviewinstancemask) |
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_SETVIEWINSTANCEMASK_0114 )( D3D12DDI_API_HCOMMANDLIST, UINT Mask );
+```
+
+Both forms use the 32-bit `Mask` value: bit `i` from the least-significant
+bit enables view instance `i`. They do not replace the PSO's view-instance
+declaration or enable masking on a PSO that did not opt in. Zero disables
+all views when the mask is honored. The complete
+[SetViewInstanceMask](#setviewinstancemask) support and PSO-flag contract
+remains applicable.
+
+The [canonical view-mask state](command-list-state.md#view-mask) starts at
+zero and is not inherited into a bundle; a bundle's changes do affect the
+parent on return. Do not substitute ordinary input-binding inheritance or
+infer that `ClearState` restores this mask. DIRECT/BUNDLE and
+[render-pass context](command-list-state.md#render-pass) requirements remain.
+These `VOID` recording entries use the
+[shared error/deferred-Close contract](execution.md#lifecycle-driver-errors);
+the handle change neither proves validation nor GPU completion.
+
 <a id="driver-draw"></a>
 
 ### Direct draw DDIs
