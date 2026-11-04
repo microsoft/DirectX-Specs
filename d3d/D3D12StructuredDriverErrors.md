@@ -96,7 +96,7 @@ typedef struct D3D12DDI_EXECUTE_TILE_MAPPINGS_ERROR_DATA_0127
 } D3D12DDI_EXECUTE_TILE_MAPPINGS_ERROR_DATA_0127;
 ```
 
-The driver reports `D3D12DDI_EXECUTE_TILE_MAPPINGS_ERROR_DATA_VERSION_0127` and `sizeof(D3D12DDI_EXECUTE_TILE_MAPPINGS_ERROR_DATA_0127)`. `ErrorCode` is not a `D3D12_MESSAGE_ID`. The runtime maps ETM's domain-local codes 1–7 to the existing `DXGK_GENERAL_ERROR_CODE` values 128–134 so kernel-backed and UMD-only implementations produce the same D3D12 error. `TokenByteOffset` is relative to `ArgumentBufferOffset` and is not a GPU virtual address.
+The driver reports `D3D12DDI_EXECUTE_TILE_MAPPINGS_ERROR_DATA_VERSION_0127` and `sizeof(D3D12DDI_EXECUTE_TILE_MAPPINGS_ERROR_DATA_0127)`. `ErrorCode` is not a `D3D12_MESSAGE_ID`. The runtime maps ETM's domain-local codes 1–7 to the existing `DXGK_GENERAL_ERROR_CODE` values 128–134 so kernel-backed and UMD-only implementations produce the same D3D12 error. `TokenByteOffset` is relative to `ArgumentBufferOffset`.
 
 If ETM later adds error data, it preserves the original structure and defines a new version:
 
