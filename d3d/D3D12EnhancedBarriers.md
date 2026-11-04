@@ -50,10 +50,9 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [Copy Queues](#copy-queues)
   - [Layout Access Compatibility](#layout-access-compatibility)
   - [Access Bits Barrier Sync Compatibility](#access-bits-barrier-sync-compatibility)
-- [Fence Barriers (Preview)](#fence-barriers-preview)
+- [Fence Barriers](#fence-barriers)
   - [Signal Barriers](#signal-barriers)
   - [Wait Barriers](#wait-barriers)
-  - [Enabling and using Fence Barriers preview](#enabling-and-using-fence-barriers-preview)
   - [Fence Creation Flags Supporting Fence Barriers](#fence-creation-flags-supporting-fence-barriers)
   - [Command List Scoped Fences](#command-list-scoped-fences)
   - [Cross Queue Synchronization](#cross-queue-synchronization)
@@ -75,8 +74,14 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [ID3D12VideoDecodeCommandList3 Barrier](#id3d12videodecodecommandlist3-barrier)
   - [ID3D12VideoProcessCommandList3 Barrier](#id3d12videoprocesscommandlist3-barrier)
   - [ID3D12VideoEncodeCommandList3 Barrier](#id3d12videoencodecommandlist3-barrier)
-  - [ID3D12CommandListFenceBarriers WaitBarrier (Preview)](#id3d12commandlistfencebarriers-waitbarrier-preview)
-  - [ID3D12CommandListFenceBarriers SignalBarrier (Preview)](#id3d12commandlistfencebarriers-signalbarrier-preview)
+  - [ID3D12GraphicsCommandList11 WaitBarrier](#id3d12graphicscommandlist11-waitbarrier)
+  - [ID3D12VideoDecodeCommandList4 WaitBarrier](#id3d12videodecodecommandlist4-waitbarrier)
+  - [ID3D12VideoProcessCommandList4 WaitBarrier](#id3d12videoprocesscommandlist4-waitbarrier)
+  - [ID3D12VideoEncodeCommandList5 WaitBarrier](#id3d12videoencodecommandlist5-waitbarrier)
+  - [ID3D12GraphicsCommandList11 SignalBarrier](#id3d12graphicscommandlist11-signalbarrier)
+  - [ID3D12VideoDecodeCommandList4 SignalBarrier](#id3d12videodecodecommandlist4-signalbarrier)
+  - [ID3D12VideoProcessCommandList4 SignalBarrier](#id3d12videoprocesscommandlist4-signalbarrier)
+  - [ID3D12VideoEncodeCommandList5 SignalBarrier](#id3d12videoencodecommandlist5-signalbarrier)
   - [ID3D12Device10 CreateCommittedResource3](#id3d12device10-createcommittedresource3)
   - [ID3D12Device10 CreatePlacedResource2](#id3d12device10-createplacedresource2)
   - [ID3D12Device10 CreateReservedResource2](#id3d12device10-createreservedresource2)
@@ -103,13 +108,16 @@ This document proposes an enhanced D3D12 Barrier API/DDI design that is capable 
   - [PFND3D12DDI\_BARRIER](#pfnd3d12ddi_barrier)
   - [PFND3D12DDI\_WAITBARRIER\_0114](#pfnd3d12ddi_waitbarrier_0114)
   - [PFND3D12DDI\_SIGNALBARRIER\_0114](#pfnd3d12ddi_signalbarrier_0114)
-  - [D3D12DDI\_FENCE\_BARRIERS\_FUNCS\_0114](#d3d12ddi_fence_barriers_funcs_0114)
+  - [D3D12DDI\_COMMAND\_LIST\_FUNCS\_3D\_0124](#d3d12ddi_command_list_funcs_3d_0124)
+  - [D3D12DDI\_COMMAND\_LIST\_FUNCS\_VIDEO\_DECODE\_0117](#d3d12ddi_command_list_funcs_video_decode_0117)
+  - [D3D12DDI\_COMMAND\_LIST\_FUNCS\_VIDEO\_PROCESS\_0117](#d3d12ddi_command_list_funcs_video_process_0117)
+  - [D3D12DDI\_COMMAND\_LIST\_FUNCS\_VIDEO\_ENCODE\_0117](#d3d12ddi_command_list_funcs_video_encode_0117)
   - [D3D12DDIARG\_CREATERESOURCE\_0088](#d3d12ddiarg_createresource_0088)
   - [PFND3D12DDI\_CREATEHEAPANDRESOURCE\_0088](#pfnd3d12ddi_createheapandresource_0088)
   - [PFND3D12DDI\_CALCPRIVATEHEAPANDRESOURCESIZES\_0088](#pfnd3d12ddi_calcprivateheapandresourcesizes_0088)
   - [PFND3D12DDI\_CHECKRESOURCEALLOCATIONINFO\_0088](#pfnd3d12ddi_checkresourceallocationinfo_0088)
   - [D3D12DDI\_D3D12\_OPTIONS\_DATA\_0089](#d3d12ddi_d3d12_options_data_0089)
-  - [D3D12DDI\_FEATURE\_0114\_FENCE\_BARRIERS (temporary)](#d3d12ddi_feature_0114_fence_barriers-temporary)
+  - [D3D12DDICAPS\_FENCE\_BARRIERS\_SUPPORT\_DATA\_0126](#d3d12ddicaps_fence_barriers_support_data_0126)
   - [Updates to D3D12DDI\_FENCE\_TYPE\_0112 enum](#updates-to-d3d12ddi_fence_type_0112-enum)
   - [D3D12DDI\_COMMAND\_LIST\_SCOPED\_FENCE struct](#d3d12ddi_command_list_scoped_fence-struct)
   - [Updates to D3D12DDIARG\_CREATE\_FENCE\_0112 struct](#updates-to-d3d12ddiarg_create_fence_0112-struct)
@@ -1299,9 +1307,11 @@ Some Access types require matching Sync.  For the following access bits, at leas
 
 ------------------------------------------------
 
-## Fence Barriers (Preview)
+## Fence Barriers
 
 Fence barriers allow app developers to perform GPU command execution timeline synchronization between command queues or with the CPU. This improves both GPU/CPU and GPU/GPU concurrency, and gives developers an alternative to split barriers.
+
+Fence Barriers Tier 1 is now a retail feature in the public DirectX-Headers and Agility SDK. Drivers must use the retail [graphics](#d3d12ddi_command_list_funcs_3d_0124), [video decode](#d3d12ddi_command_list_funcs_video_decode_0117), [video process](#d3d12ddi_command_list_funcs_video_process_0117), and [video encode](#d3d12ddi_command_list_funcs_video_encode_0117) DDI tables. The preview `D3D12DDI_FEATURE_0114_FENCE_BARRIERS` extended feature and `D3D12DDI_FENCE_BARRIERS_FUNCS_0114` table are deprecated and must not be used to enable retail fence barrier support in future releases.
 
 There are two fence barriers support tiers:
 
@@ -1315,8 +1325,7 @@ There are two fence barriers support tiers:
     - Must be able to write 64-bit fence values atomically to avoid torn values
 - `D3D12_FENCE_BARRIERS_TIER_2`
   - Supports command list `SignalBarrier` and `WaitBarrier` methods on all fences created with `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS` bit set.
-  - Requires kernel and driver support for both user mode submission queues and native fences
-    - Sometimes referred to as "Hardware Scheduling Stage 3"
+  - Requires _Hardware Scheduling Log_ OS and driver support.
 
 `CheckFeatureSupport` is used to determine fence barriers support tier for a given command list type:
 
@@ -1329,6 +1338,8 @@ There are two fence barriers support tiers:
         fenceBarriersTier = optionsXX.FenceBarriersTier;
     }
 ```
+
+`D3D12_FEATURE_DATA_FENCE_BARRIERS.SupportFlags` containing `D3D12_FENCE_BARRIERS_SUPPORT_FLAG_SHARED_FENCES` indicates that fences created with `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS` may also be created with `D3D12_FENCE_FLAG_SHARED`. See [Fence Creation Flags Supporting Fence Barriers](#fence-creation-flags-supporting-fence-barriers).
 
 ### Signal Barriers
 
@@ -1352,21 +1363,6 @@ A `WaitBarrier` with [external dependencies](#external-dependencies-and-d3d12_ba
 
 Consecutive layout transitioning `WaitBarrier` operations with no intervening `SignalBarrier` on a given texture subresource in a single `ExecuteCommandLists` scope is invalid. Such a scenario would imply concurrent write operations to the same subresource, which is not supported.
 
-### Enabling and using Fence Barriers preview
-
-The Fence Barriers preview requires developer mode. Additionally, developers must use `D3D12EnableExperimentalFeatures` to enable fence barriers preview APIs:
-
-```c++
-D3D12EnableExperimentalFeatures(1, &D3D12FenceBarriersExperiment, nullptr, 0))
-```
-
-The `ID3D12CommandListFenceBarriers` interface must be queried from an existing `ID3D12CommandList` object:
-
-```c++
-CComPtr<ID3D12CommandListFenceBarriers> pFenceBarriersCL;
-pCL->QueryInterface(IID_PPV_ARGS(&pFenceBarriersCL));
-```
-
 ### Fence Creation Flags Supporting Fence Barriers
 
 New fence creation flags are required to fully support fence barriers.
@@ -1386,11 +1382,11 @@ If an app doesn't require queue or CPU sync, then it is recommended not setting 
 
 All fences created with `D3D12_FENCE_FLAG_SHARED` or `D3D12_FENCE_FLAG_SHARED_CROSS_ADAPTER` require Queue and CPU sync. As such, the `D3D12_FENCE_FLAG_SHARED` and `D3D12_FENCE_FLAG_SHARED_CROSS_ADAPTER` bits cannot be used when `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS` is set without also setting `D3D12_FENCE_FLAG_ALLOW_QUEUE_AND_CPU_SYNC`.
 
-`D3D12_FENCE_BARRIERS_TIER_1` drivers create `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS|D3D12_FENCE_FLAG_ALLOW_QUEUE_AND_CPU_SYNC` fences as either `D3D12DDI_FENCE_TYPE_NATIVE` (native fences supported but no user mode submission) or `D3D12DDI_FENCE_TYPE_MONITORED` (native fences not supported).
+`D3D12_FENCE_BARRIERS_TIER_1` drivers create `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS|D3D12_FENCE_FLAG_ALLOW_QUEUE_AND_CPU_SYNC` fences as either `D3D12DDI_FENCE_TYPE_NATIVE` (native fences supported) or `D3D12DDI_FENCE_TYPE_MONITORED` (native fences not supported).
 
 `D3D12_FENCE_BARRIERS_TIER_2` drivers create `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS|D3D12_FENCE_FLAG_ALLOW_QUEUE_AND_CPU_SYNC` fences as `D3D12DDI_FENCE_TYPE_NATIVE`.
 
-All fences created with `D3D12_FENCE_FLAG_SHARED` or `D3D12_FENCE_FLAG_SHARED_CROSS_ADAPTER` implicitly support command list barriers and Queue and CPU sync.
+Command list barriers reach the fence value through its GPU virtual address, which a shared fence only has when the driver creates it as `D3D12DDI_FENCE_TYPE_NATIVE`. `CreateFence` returns `E_INVALIDARG` when `D3D12_FENCE_FLAG_SHARED` is combined with `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS` unless the device reports `D3D12_FENCE_BARRIERS_SUPPORT_FLAG_SHARED_FENCES` when queried via `CheckFeatureSupport`.
 
 ### Command List Scoped Fences
 
@@ -2409,15 +2405,16 @@ void ID3D12VideoEncodeCommandList3::Barrier(
 | `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups` |
 | `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
 
-### ID3D12CommandListFenceBarriers WaitBarrier (Preview)
+### ID3D12GraphicsCommandList11 WaitBarrier
 
 Waits for the full set of fence/value pairs to be satisfied then executes the provided barrier operations.
 
 ``` c++
-void ID3D12CommandListFenceBarriers::WaitBarrier(
+void ID3D12GraphicsCommandList11::WaitBarrier(
     UINT NumBarrierGroups,
     const D3D12_BARRIER_GROUP *pBarrierGroups,
-    UINT NumFences, ID3D12Fence * const *ppFences,
+    UINT NumFences,
+    ID3D12Fence * const *ppFences,
     const UINT64 *pFenceValues);
 ```
 
@@ -2429,14 +2426,53 @@ void ID3D12CommandListFenceBarriers::WaitBarrier(
 | `ppFences`         | Pointer to an array of `ID3D12Fence` pointers of size `NumFences` |
 | `pFenceValues`     | Pointer to an array of fence values of size `NumFences`           |
 
-### ID3D12CommandListFenceBarriers SignalBarrier (Preview)
+### ID3D12VideoDecodeCommandList4 WaitBarrier
+
+Same signature and semantics as [ID3D12GraphicsCommandList11 WaitBarrier](#id3d12graphicscommandlist11-waitbarrier).
+
+``` c++
+void ID3D12VideoDecodeCommandList4::WaitBarrier(
+    UINT NumBarrierGroups,
+    const D3D12_BARRIER_GROUP *pBarrierGroups,
+    UINT NumFences,
+    ID3D12Fence * const *ppFences,
+    const UINT64 *pFenceValues);
+```
+
+### ID3D12VideoProcessCommandList4 WaitBarrier
+
+Same signature and semantics as [ID3D12GraphicsCommandList11 WaitBarrier](#id3d12graphicscommandlist11-waitbarrier).
+
+``` c++
+void ID3D12VideoProcessCommandList4::WaitBarrier(
+    UINT NumBarrierGroups,
+    const D3D12_BARRIER_GROUP *pBarrierGroups,
+    UINT NumFences,
+    ID3D12Fence * const *ppFences,
+    const UINT64 *pFenceValues);
+```
+
+### ID3D12VideoEncodeCommandList5 WaitBarrier
+
+Same signature and semantics as [ID3D12GraphicsCommandList11 WaitBarrier](#id3d12graphicscommandlist11-waitbarrier).
+
+``` c++
+void ID3D12VideoEncodeCommandList5::WaitBarrier(
+    UINT NumBarrierGroups,
+    const D3D12_BARRIER_GROUP *pBarrierGroups,
+    UINT NumFences,
+    ID3D12Fence * const *ppFences,
+    const UINT64 *pFenceValues);
+```
+
+### ID3D12GraphicsCommandList11 SignalBarrier
 
 Executes the provided barriers, signalling a fence after all barrier transactions have fully completed. Any subsequent dependent operations must be preceded by a `WaitBarrier` with matching fence/value pairs.
 
 If a wait barrier on a texture subresource corresponds to a preceding signal barrier, the `LayoutBefore` on the wait barrier must match the `LayoutAfter` from the signal barrier or be set to `D3D12_BARRIER_LAYOUT_UNDEFINED`, which avoids a layout transition. This effectively matches split barrier behavior where a barrier transaction is started by the split-begin barrier, and completed by the split-end barrier.
 
 ``` c++
-void ID3D12CommandListFenceBarriers::SignalBarrier(
+void ID3D12GraphicsCommandList11::SignalBarrier(
     UINT NumBarrierGroups,
     const D3D12_BARRIER_GROUP *pBarrierGroups,
     ID3D12Fence *pFence,
@@ -2449,6 +2485,42 @@ void ID3D12CommandListFenceBarriers::SignalBarrier(
 | `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
 | `pFence`           | Fence to signal upon completion of barriers             |
 | `FenceValue`       | Fence value to signal                                   |
+
+### ID3D12VideoDecodeCommandList4 SignalBarrier
+
+Same signature and semantics as [ID3D12GraphicsCommandList11 SignalBarrier](#id3d12graphicscommandlist11-signalbarrier).
+
+``` c++
+void ID3D12VideoDecodeCommandList4::SignalBarrier(
+    UINT NumBarrierGroups,
+    const D3D12_BARRIER_GROUP *pBarrierGroups,
+    ID3D12Fence *pFence,
+    UINT64 FenceValue);
+```
+
+### ID3D12VideoProcessCommandList4 SignalBarrier
+
+Same signature and semantics as [ID3D12GraphicsCommandList11 SignalBarrier](#id3d12graphicscommandlist11-signalbarrier).
+
+``` c++
+void ID3D12VideoProcessCommandList4::SignalBarrier(
+    UINT NumBarrierGroups,
+    const D3D12_BARRIER_GROUP *pBarrierGroups,
+    ID3D12Fence *pFence,
+    UINT64 FenceValue);
+```
+
+### ID3D12VideoEncodeCommandList5 SignalBarrier
+
+Same signature and semantics as [ID3D12GraphicsCommandList11 SignalBarrier](#id3d12graphicscommandlist11-signalbarrier).
+
+``` c++
+void ID3D12VideoEncodeCommandList5::SignalBarrier(
+    UINT NumBarrierGroups,
+    const D3D12_BARRIER_GROUP *pBarrierGroups,
+    ID3D12Fence *pFence,
+    UINT64 FenceValue);
+```
 
 ### ID3D12Device10 CreateCommittedResource3
 
@@ -2984,7 +3056,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_BARRIER_0094 )(
 ### PFND3D12DDI_WAITBARRIER_0114
 
 ```c++
-typedef VOID ( APIENTRY* PFND3D12DDI_WAITBARRIER_00114 )(
+typedef VOID ( APIENTRY* PFND3D12DDI_WAITBARRIER_0114 )(
     D3D12DDI_HCOMMANDLIST hDrvCommandList,
     UINT32 NumBarriers,
     _In_reads_(NumBarriers) CONST D3D12DDIARG_BARRIER_0094 *pBarriers,
@@ -3004,25 +3076,43 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SIGNALBARRIER_0114 )(
     UINT64 FenceValue );
 ```
 
-### D3D12DDI_FENCE_BARRIERS_FUNCS_0114
+### D3D12DDI_COMMAND_LIST_FUNCS_3D_0124
 
-Until fence barriers are ready for public preview, the fence barrier DDIs are exposed using the `D3D12DDI_FENCE_BARRIERS_FUNCS_0114` extended feature table. This table is identified using `D3D12DDI_TABLE_TYPE::D3D12DDI_TABLE_TYPE_0114_FENCE_BARRIERS`.
+The driver must support Core DDI 126. The latest 3D command list table used by Core DDI 126 appends the following entries:
 
-Once the fence barriers feature is ready to release as a public preview, the `PFND3D12DDI_WAITBARRIER_0114` and `PFND3D12DDI_SIGNALBARRIER_0114` DDIs are likely to move into a `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114` table.
-
-``` c++
-typedef struct D3D12DDI_FENCE_BARRIERS_FUNCS_0114
-{
-    PFND3D12DDI_WAITBARRIER_0114 pfnWaitBarrier;
-    PFND3D12DDI_SIGNALBARRIER_0114 pfnSignalBarrier;
-    PFND3D12DDI_WAITBARRIER_0114 pfnWaitBarrierVideoDecode;
-    PFND3D12DDI_SIGNALBARRIER_0114 pfnSignalBarrierVideoDecode;
-    PFND3D12DDI_WAITBARRIER_0114 pfnWaitBarrierVideoProcess;
-    PFND3D12DDI_SIGNALBARRIER_0114 pfnSignalBarrierVideoProcess;
-    PFND3D12DDI_WAITBARRIER_0114 pfnWaitBarrierVideoEncode;
-    PFND3D12DDI_SIGNALBARRIER_0114 pfnSignalBarrierVideoEncode;
-} D3D12DDI_FENCE_BARRIERS_FUNCS_0114;
+```c++
+PFND3D12DDI_WAITBARRIER_0114    pfnWaitBarrier;
+PFND3D12DDI_SIGNALBARRIER_0114  pfnSignalBarrier;
 ```
+
+### D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_DECODE_0117
+
+The driver must support Video Extended DDI version `D3D12DDI_FEATURE_VERSION_VIDEO_0117_0`. The video decode command list table appends the following entries:
+
+```c++
+PFND3D12DDI_WAITBARRIER_0114    pfnWaitBarrier;
+PFND3D12DDI_SIGNALBARRIER_0114  pfnSignalBarrier;
+```
+
+### D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_PROCESS_0117
+
+The driver must support Video Extended DDI version `D3D12DDI_FEATURE_VERSION_VIDEO_0117_0`. The video process command list table appends the following entries:
+
+```c++
+PFND3D12DDI_WAITBARRIER_0114    pfnWaitBarrier;
+PFND3D12DDI_SIGNALBARRIER_0114  pfnSignalBarrier;
+```
+
+### D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_ENCODE_0117
+
+The driver must support Video Extended DDI version `D3D12DDI_FEATURE_VERSION_VIDEO_0117_0`. The video encode command list table appends the following entries:
+
+```c++
+PFND3D12DDI_WAITBARRIER_0114    pfnWaitBarrier;
+PFND3D12DDI_SIGNALBARRIER_0114  pfnSignalBarrier;
+```
+
+All four command list tables use the final `PFND3D12DDI_WAITBARRIER_0114` and `PFND3D12DDI_SIGNALBARRIER_0114` function signatures documented above.
 
 ### D3D12DDIARG_CREATERESOURCE_0088
 
@@ -3118,29 +3208,26 @@ typedef struct D3D12DDI_D3D12_OPTIONS_DATA_0089
 
 ```
 
-### D3D12DDI_FEATURE_0114_FENCE_BARRIERS (temporary)
+### D3D12DDICAPS_FENCE_BARRIERS_SUPPORT_DATA_0126
 
-For the time being, fence barriers DDIs are exposed as an extended feature.
-
-Feature: `D3D12DDI_FEATURE_0114_FENCE_BARRIERS`
-Version: `D3D12DDI_FEATURE_VERSION_FENCE_BARRIERS_0114_0`
-Table Type: `D3D12DDI_TABLE_TYPE_0114_FENCE_BARRIERS`
+Core DDI 126 adds `D3D12DDICAPS_TYPE_0126_FENCE_BARRIERS_SUPPORT`. The runtime queries this capability for each node and queue type using the following structure:
 
 ``` C++
-typedef struct D3D12DDI_FENCE_BARRIERS_FUNCS_0114
+typedef struct D3D12DDICAPS_FENCE_BARRIERS_SUPPORT_DATA_0126
 {
-    PFND3D12DDI_WAITBARRIER_0114 pfnWaitBarrier;
-    PFND3D12DDI_SIGNALBARRIER_0114 pfnSignalBarrier;
-    PFND3D12DDI_WAITBARRIER_0114 pfnWaitBarrierVideoDecode;
-    PFND3D12DDI_SIGNALBARRIER_0114 pfnSignalBarrierVideoDecode;
-    PFND3D12DDI_WAITBARRIER_0114 pfnWaitBarrierVideoProcess;
-    PFND3D12DDI_SIGNALBARRIER_0114 pfnSignalBarrierVideoProcess;
-    PFND3D12DDI_WAITBARRIER_0114 pfnWaitBarrierVideoEncode;
-    PFND3D12DDI_SIGNALBARRIER_0114 pfnSignalBarrierVideoEncode;
-} D3D12DDI_FENCE_BARRIERS_FUNCS_0114;
+    UINT                            NodeMask;            // in
+    D3D12DDI_COMMAND_QUEUE_FLAGS    QueueType;           // in
+    D3D12DDI_FENCE_BARRIERS_TIER    FenceBarriersTier;   // out
+} D3D12DDICAPS_FENCE_BARRIERS_SUPPORT_DATA_0126;
 ```
 
-These will likely move into D3D12DDI_COMMAND_LIST_FUNCS_3D_0114 (and similar video equivalents) once fence barriers is ready to go into Windows insider previews.
+To enable Fence Barriers Tier 1, the all of the following must be true:
+
+- The driver supports Core DDI 126+ and provides the command list tables and `pfnWaitBarrier` and `pfnSignalBarrier` functions for the 3D type.
+- The driver supports Video Extended DDI 117+ and provides the command list tables and `pfnWaitBarrier` and `pfnSignalBarrier` functions for each video type.
+- The driver reports at least `D3D12DDI_FENCE_BARRIERS_TIER_1` through `D3D12DDICAPS_FENCE_BARRIERS_SUPPORT_DATA_0126` for every supported queue type, including direct, compute, copy, video decode, video process, and video encode queues.
+- The driver supports D3D12DDI_D3D12_OPTIONS_DATA_0089.EnhancedBarriersSupported
+- The device satisfies the Tier 1 requirements described in [Fence Barriers](#fence-barriers), including 64-bit atomic fence value writes.
 
 ### Updates to D3D12DDI_FENCE_TYPE_0112 enum
 
