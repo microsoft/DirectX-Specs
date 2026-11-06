@@ -49,6 +49,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
     * Advanced Shader Delivery
       * [Serialized Root Signatures](d3d/SerializedRootSignatures.md)
       * [Shader Cache Registration API](d3d/ShaderCacheRegistrationAPI.md)
+      * [Explicit PSDBs](d3d/ExplicitPSDBs.md)
       * [Shader Compilers](d3d/ShaderCompilerPlugin.md)
       * [State Object Database](d3d/StateObjectDatabase.md)
       * [Device Cache Statistics](d3d/D3D12DeviceCacheStatistics.md)
