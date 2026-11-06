@@ -128,6 +128,11 @@ information from the D3D11 spec. Contributions welcome if you'd like to help wit
 _This is not yet a complete set of D3D12 specs: we'll be adding more as time permits.
 Please let us know if there are particular areas you'd like to see prioritized._
 
+Work toward a [chapterized unified D3D12 specification](d3d/unified/README.md)
+has begun. Its [contributor workflow and source-coverage tracking](spec-maintenance/d3d12/README.md)
+are maintained separately from the specification. This is currently a foundation
+and mapping effort, not a completed replacement for the specs above.
+
 ## Direct3D 11
 
 [Direct3D 11.3 Functional Specification](d3d/archive/D3D11_3_FunctionalSpec.htm)

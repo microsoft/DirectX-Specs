@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="850" viewBox="0 0 760 850" role="img" aria-labelledby="title desc">
+  <title id="title">DXBC hull shader logical phases and outputs</title>
+  <desc id="desc">State declarations, control-point computation, fork programs and join programs form one hull shader. Control-point outputs go to the domain shader. Patch constants go to the domain shader; tessellation factors also go to the fixed-function tessellator.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#222"/>
+    </marker>
+  </defs>
+  <rect width="760" height="850" fill="white"/>
+  <g font-family="sans-serif" fill="#111">
+    <text x="380" y="26" text-anchor="middle" font-size="20">Input patch control points</text>
+    <path d="M380,35 V64" fill="none" stroke="#222" stroke-width="3" marker-end="url(#arrow)"/>
+    <rect x="35" y="70" width="690" height="628" rx="18" fill="#fafafa" stroke="#222" stroke-width="2"/>
+    <text x="380" y="99" text-anchor="middle" font-size="23" font-weight="bold">Hull shader: DXBC logical phase model</text>
+    <g font-size="16">
+      <rect x="55" y="116" width="650" height="100" rx="12" fill="white" stroke="#222"/>
+      <text x="75" y="141" font-weight="bold">State declarations</text>
+      <text x="75" y="166">Input/output control-point counts; tessellator domain,</text>
+      <text x="75" y="190">partitioning and output primitive; optional MaxTessFactor.</text>
+      <rect x="55" y="232" width="650" height="132" rx="12" fill="white" stroke="#222"/>
+      <text x="75" y="257" font-weight="bold">Control-point phase</text>
+      <text x="75" y="282">One logical invocation per output control point.</text>
+      <text x="75" y="306">Each invocation can read all input control points.</text>
+      <text x="75" y="330">An absent phase has the declared pass-through/zero-output</text>
+      <text x="75" y="352">behavior described in the program-structure rules.</text>
+      <rect x="55" y="380" width="650" height="132" rx="12" fill="white" stroke="#222"/>
+      <text x="75" y="405" font-weight="bold">Fork phase</text>
+      <text x="75" y="430">Independent programs, optionally instanced.</text>
+      <text x="75" y="454">Read input and output control points after control-point work.</text>
+      <text x="75" y="478">Write non-overlapping portions of patch-constant output.</text>
+      <rect x="55" y="528" width="650" height="148" rx="12" fill="white" stroke="#222"/>
+      <text x="75" y="553" font-weight="bold">Join phase</text>
+      <text x="75" y="578">Independent programs, optionally instanced, after fork work.</text>
+      <text x="75" y="602">Read input/output control points and fork patch constants.</text>
+      <text x="75" y="626">Add non-overlapping portions of patch-constant output.</text>
+      <text x="75" y="650">Fork/join programs share the aggregate patch-constant space.</text>
+    </g>
+    <g fill="none" stroke="#222" stroke-width="3" marker-end="url(#arrow)">
+      <path d="M165,700 V752"/>
+      <path d="M490,700 V730 H410 V752"/>
+      <path d="M490,730 H650 V752"/>
+    </g>
+    <g font-size="16" text-anchor="middle">
+      <text x="165" y="779">Output control points</text>
+      <text x="165" y="805">to domain shader</text>
+      <text x="410" y="779">Patch constants</text>
+      <text x="410" y="805">to domain shader</text>
+      <text x="650" y="779">Tessellation factors</text>
+      <text x="650" y="805">to tessellator</text>
+    </g>
+  </g>
+</svg>
