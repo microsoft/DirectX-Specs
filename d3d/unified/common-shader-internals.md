@@ -2287,29 +2287,22 @@ The writing of feedback does not support offsets. That is, all feedback should b
 
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:F-feedback-values:0 -->Meaningful values for sampler feedback are obtained through [transcoding](resource-operations.md#feedback-transcoding). The interpretations depend on whether the map records [minimum mip](../SamplerFeedback.md#minmip-feedback-map) or [mip-region use](../SamplerFeedback.md#mipregionused-feedback-map).<!-- d3d12-review-inline:end:common-shader-internals:F-feedback-values:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:F-feedback-packed:0 -->If the paired texture is a tiled resource with packed mips, feedback writes involving the packed mips don't behave differently from non-packed mips.<!-- d3d12-review-inline:end:common-shader-internals:F-feedback-packed:0 --></ins>
+If the paired texture is a tiled resource with packed mips, feedback writes involving the packed mips don't behave differently from non-packed mips.
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:F-feedback-zero:0 -->In some cases, a filtering mode may involve a computation with multiple texture reads where some of the reads are zero-weight (i.e., are multiplied by zero).<!-- d3d12-review-inline:end:common-shader-internals:F-feedback-zero:0 --></ins>
+In some cases, a filtering mode may involve a computation with multiple texture reads where some of the reads are zero-weight (i.e., are multiplied by zero).
 
 These zero-weight reads may cause feedback to be written to the feedback map, or they may not, depending on the graphics hardware's implementation of the sampler.
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:F-feedback-single:0 -->Sampler feedback can not be used with a paired resource with sample count greater-than-one. This restriction is related to the fact that there isn't a way to call Sample on those resources.<!-- d3d12-review-inline:end:common-shader-internals:F-feedback-single:0 --></ins>
+Sampler feedback can not be used with a paired resource with sample count greater-than-one. This restriction is related to the fact that there isn't a way to call Sample on those resources.
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:F-feedback-conservative:0 -->If anisotropic filtering is used and the sampled texture has mip count 1, feedback writes may include "false positives"- that is, conservative behavior.<!-- d3d12-review-inline:end:common-shader-internals:F-feedback-conservative:0 --></ins>
+If anisotropic filtering is used and the sampled texture has mip count 1, feedback writes may include "false positives"- that is, conservative behavior.
 
 >#### Remark
 > Applications seeking to avoid conservative behavior may choose to circumvent it by allocating the affected anisotropic-filtered textures with mip count greater than one.
 
-<!-- d3d12-review-alert:begin:common-shader-internals:F-feedback-null:0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> Feedback map UAVs may be created against a NULL paired texture. If shader code involves writes to a feedback map, but the feedback's shader bind name either
-> * is not bound to any descriptor, or
-> * is bound to a feedback UAV descriptor, but the descriptor was created using a NULL paired texture
-
-<!-- d3d12-review-alert:end:common-shader-internals:F-feedback-null:0 -->
+Feedback map UAVs may be created against a NULL paired texture. If shader code involves writes to a feedback map, but the feedback's shader bind name either
+* is not bound to any descriptor, or
+* is bound to a feedback UAV descriptor, but the descriptor was created using a NULL paired texture
 
 then the writes have no effect.
 

@@ -140,7 +140,7 @@ When compiling offline, the metadata passed to the store is shared with the comp
 
 <!-- d3d12-review-alert:end:cache-discovery:eligibility:0 -->
 
-<ins><!-- d3d12-review-inline:begin:cache-discovery:target-predicate:0 -->`D3D_SHADER_CACHE_COMPILER_PROPERTIES` are used to determine compatibility with the compiler parameters used to produce a PSDB:<!-- d3d12-review-inline:end:cache-discovery:target-predicate:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-discovery:target-predicate:0 -->`D3D_SHADER_CACHE_COMPILER_PROPERTIES` are<!-- d3d12-review-inline:end:cache-discovery:target-predicate:0 --></ins> used to determine compatibility with the compiler parameters used to produce a PSDB:
 
 ```cpp
 // A PSDB for a title is usable by an adapter if the adapter family matches, the psdb abi version is between
@@ -295,7 +295,7 @@ bool IsPsdbCompatible(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Runtime shader-cache value callbacks are driver-to-runtime, not [offline compiler-plugin cache callbacks](compiler-plugin-foundation.md#compiler-plugin-foundation). The extended feature is `D3D12DDI_FEATURE_0021_SHADERCACHING`; the runtime callback-table type is `D3D12DDI_TABLE_TYPE_0021_SHADERCACHE_CALLBACKS`. The shader-caching feature version is not the PSDB's stored compiler ABI version.
+> Runtime shader-cache callbacks run from driver to runtime. They use `D3D12DDI_FEATURE_0021_SHADERCACHING` and `D3D12DDI_TABLE_TYPE_0021_SHADERCACHE_CALLBACKS`.
 
 <!-- d3d12-review-alert:end:cache-discovery:lookup-ddi-intro:0 -->
 
@@ -307,15 +307,6 @@ bool IsPsdbCompatible(
 > The current interface uses `D3D12DDI_FEATURE_VERSION_SHADERCACHE_0118_0` (3), `D3D12DDI_SHADERCACHE_CALLBACKS_0118` and `D3D12DDI_SHADERCACHE_FUNCS_0118`. The callback table contains get/store/unused-value notification; get and store retain their `_CB_0114` signatures. The driver function table contains the runtime-to-driver `pfnShaderCacheGetCaps`. The optional allocation function remains the nested `pCallbackFunc` argument to get, not a separate current driver-table slot.
 
 <!-- d3d12-review-alert:end:cache-discovery:lookup-ddi-intro:1 -->
-
-<!-- d3d12-review-alert:begin:cache-discovery:lookup-ddi-intro:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The typed get/store members are `pfnShaderCacheGetValueCb` and `pfnShaderCacheStoreValueCb`.
-
-<!-- d3d12-review-alert:end:cache-discovery:lookup-ddi-intro:2 -->
 
 ```cpp
 typedef struct D3D12DDI_HANDLE_AND_TYPE
@@ -502,15 +493,6 @@ typedef struct D3D12DDI_SHADERCACHE_FUNCS_0118
 
 <!-- d3d12-review-alert:end:cache-discovery:RC-role-map:1 -->
 
-<!-- d3d12-review-alert:begin:cache-discovery:RC-role-map:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Get/store and allocation retain the complete [lookup, input/output and result contracts](#runtime-shader-cache-ddi) above. Store requires object code and permits optional compiler metadata. The get allocation callback is driver-supplied and called synchronously by the runtime; its returned storage remains driver-owned, including allocations made before another requested output fails. It is not a runtime-owned value-release API.
-
-<!-- d3d12-review-alert:end:cache-discovery:RC-role-map:2 -->
-
 <a id="runtime-cache-driver-caps"></a>
 
 #### PFND3D12DDI_SHADERCACHE_GETCAPS
@@ -520,7 +502,7 @@ typedef struct D3D12DDI_SHADERCACHE_FUNCS_0118
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime calls `pfnShaderCacheGetCaps` through `D3D12DDI_SHADERCACHE_FUNCS_0118` with the driver device handle and a borrowed `D3D12DDIARG_SHADERCACHE_GETCAPS` header. For `D3D12DDICAPS_TYPE_SHADERCACHE_ABI_SUPPORT`, `pInfo` is null, `pData` addresses writable `D3D12DDI_SHADERCACHE_ABI_SUPPORT_DATA_0118`, and `DataSize` is `sizeof(D3D12DDI_SHADERCACHE_ABI_SUPPORT_DATA_0118)`. This is a fixed output payload, not a null-output size query or an output-array count. The driver must not retain the caller's header or output pointer beyond the call.
+> For `D3D12DDICAPS_TYPE_SHADERCACHE_ABI_SUPPORT`, `pInfo` is null, `pData` addresses `D3D12DDI_SHADERCACHE_ABI_SUPPORT_DATA_0118`, and `DataSize` is its `sizeof`. The header and output storage are borrowed for the call.
 
 <!-- d3d12-review-alert:end:cache-discovery:RC-driver-caps:0 -->
 
@@ -529,7 +511,7 @@ typedef struct D3D12DDI_SHADERCACHE_FUNCS_0118
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> On `S_OK`, the driver supplies the inline 128-element `WCHAR` adapter-family array, inclusive 64-bit minimum/maximum ABI bounds, compiler version and application-profile version. The version union's four `UINT16` parts and `UINT64 Version` are alternative views of one value. The [ABI-support field meanings](devices-and-capabilities.md#d3d12_feature_data_shadercache_abi_support), [driver/compiler reporting consistency](#preference-and-reporting) and [PSDB compatibility predicate](#compatibility) retain their separate contracts; the shader-caching feature version is not a compiler ABI or shader-model number.
+> On success, the driver fills the family, ABI, compiler and profile fields under the [reporting-consistency requirements](#preference-and-reporting).
 
 <!-- d3d12-review-alert:end:cache-discovery:RC-driver-caps:1 -->
 
@@ -538,7 +520,7 @@ typedef struct D3D12DDI_SHADERCACHE_FUNCS_0118
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> This ABI query is mandatory once the current shader-caching interface is selected. The driver must provide its supported data on a successful query. A failed driver query is reported as `DXGI_ERROR_DRIVER_INTERNAL_ERROR`, not a recoverable cache miss, automatic PSDB-disable fallback, or a usable zero/default compatibility range. In particular, driver `E_OUTOFMEMORY` and `DXGI_ERROR_UNSUPPORTED` are not preserved as recoverable results of this mandatory query. Existing device-failure handling is not waived. Absence of the shader-caching interface is a separate capability/availability condition, not the result of a failed selected query.
+> The ABI query is mandatory once the current shader-caching interface is selected. Failure is reported as `DXGI_ERROR_DRIVER_INTERNAL_ERROR`, not a recoverable cache miss or unsupported-feature fallback. Existing device-failure handling still applies.
 
 <!-- d3d12-review-alert:end:cache-discovery:RC-driver-caps:2 -->
 
@@ -560,7 +542,7 @@ typedef struct D3D12DDI_SHADERCACHE_FUNCS_0118
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> An accepted notification returns `S_OK`. This is accounting, not a get/store/delete operation: it does not search for the key, return value bytes, free an allocator-returned buffer, or evict the cache entry. Success does not establish that the key exists, that a compiled value was consumed, or that object creation/GPU execution completed. The notification does not transfer ownership of the key, object or any value allocation. It has no output value and is not an allocation-release pairing for [typed retrieval](#runtime-shader-cache-ddi).
+> An accepted unused-value notification returns `S_OK` and updates accounting only. It does not look up or evict the cache entry.
 
 <!-- d3d12-review-alert:end:cache-discovery:RC-unused-value:1 -->
 
@@ -583,7 +565,7 @@ typedef struct D3D12DDI_SHADERCACHE_FUNCS_0118
 
 Within the supported range of compatible version numbers, a larger ABI version should be preferred, followed by a larger application profile version.
 
-<ins><!-- d3d12-review-inline:begin:cache-discovery:driver-versions:0 -->`D3D_SHADER_CACHE_COMPILER_PROPERTIES` also indicates the version information that the driver's compiler uses if compiling at application runtime.  It compiles at MaximumABISupportVersion with the indicated CompilerVersion and ApplicationProfileVersion.<!-- d3d12-review-inline:end:cache-discovery:driver-versions:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-discovery:driver-versions:0 -->`D3D_SHADER_CACHE_COMPILER_PROPERTIES`<!-- d3d12-review-inline:end:cache-discovery:driver-versions:0 --></ins> also indicates the version information that the <ins><!-- d3d12-review-inline:begin:cache-discovery:driver-versions:0 -->driver's compiler<!-- d3d12-review-inline:end:cache-discovery:driver-versions:0 --></ins> uses if compiling at application runtime.  It compiles at MaximumABISupportVersion with the indicated CompilerVersion and ApplicationProfileVersion.
 
 CompilerVersion is provided for informational purposes.  It indicates the version of the compiler itself, and may not rev when application profiles do.
 

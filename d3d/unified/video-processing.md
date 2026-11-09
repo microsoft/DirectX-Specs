@@ -582,7 +582,7 @@ Returns **S\_OK** if successful; otherwise, returns one of the following values:
 - **E\_OUTOFMEMORY** if the operating system ran out of memory.
 - **E\_INVALIDARG** if the allocator is currently being used with another command list in the "recording" state or if the specified allocator was created with the wrong type.
 
-<ins><!-- d3d12-review-inline:begin:video-process:P-reset-returns:3 -->See [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues) for other possible return values.<!-- d3d12-review-inline:end:video-process:P-reset-returns:3 --></ins>
+See [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues) for other possible return values.
 
 <a id="process-frames"></a>
 
@@ -2012,11 +2012,7 @@ typedef enum D3D12_VIDEO_PROCESS_ALPHA_FILL_MODE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime queries video driver capabilities, sizes/creates the driver
-> processor object and records processing through video command-list callbacks.
-> Private object bytes reported by the sizing callback are CPU driver storage;
-> the processor-size capability query separately reports memory-pool allocation
-> sizes. Neither is the application's output-picture allocation.
+> Private processor sizing reports CPU-object storage. The separate processor-size capability query reports memory-pool requirements.
 
 <!-- d3d12-review-alert:end:video-process:N-ddi-intro:0 -->
 
@@ -2025,14 +2021,7 @@ typedef enum D3D12_VIDEO_PROCESS_ALPHA_FILL_MODE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The layouts and callback typedefs below are selected published WDK contracts.
-> DDI suffixes identify contract versions; they are not new API identities or
-> universal hardware capability guarantees. The current creation description supplies the output and counted input
-> stream descriptions and protected-session association. `FieldType` is
-> supplied in each recorded input argument. The output stream description
-> and recording-output layout retain their `_0032` representations; an older
-> nested type name does not make that current field layout obsolete. No
-> one-to-one driver call is inferred for every runtime wrapper.
+> Current creation supplies counted input-stream descriptions, the output description and protected-session association. Per-frame `FieldType` is supplied in recording arguments. The output stream description and recording-output layout retain `_0032`.
 
 <!-- d3d12-review-alert:end:video-process:N-ddi-intro:1 -->
 
@@ -2041,18 +2030,7 @@ typedef enum D3D12_VIDEO_PROCESS_ALPHA_FILL_MODE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The shared DDI format/sample/size/scale layouts retain their
-> [decode capability-payload owner](video-decode.md#ddi-capability-payloads).
-> The immediately used processing enum declarations below are actual DDI
-> declarations, not application enums used as binary-layout stand-ins.
-> In particular, the DDI stereo enum starts with `MONO = 0`, whereas the
-> application enum has distinct `NONE = 0` and `MONO = 1` values; the published
-> DDI automatic-processing `CUSTOM` bit is `0x100`, not the application's
-> `0x80000000`. The DDI orientation declaration also names the value-5
-> 180-degree/horizontal-flip alias. These are separate representations;
-> matching logical operation names do not authorize a binary cast or establish
-> an undocumented NONE/MONO default. `D3D12DDI_VIDEO_PROCESS_MAX_FILTERS_0020`
-> is 32, matching the published processing filter-array extent.
+> DDI stereo uses `MONO = 0`, whereas the API distinguishes `NONE = 0` and `MONO = 1`. The DDI automatic-processing `CUSTOM` bit is `0x100`, not API `0x80000000`. DDI orientation names the value-5 180-degree/horizontal-flip alias. `D3D12DDI_VIDEO_PROCESS_MAX_FILTERS_0020` is 32.
 
 <!-- d3d12-review-alert:end:video-process:N-ddi-shared:0 -->
 
@@ -2557,7 +2535,9 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYVIDEOPROCESSOR_0021 )( D3D12DDI_HDEV
 
 <a id="process-ddi-associations"></a>
 
-### Callback responsibilities and table associations
+<a id="callback-responsibilities-and-table-associations"></a>
+
+### DDI responsibilities and table associations
 
 #### Driver processor sizing
 
@@ -2579,7 +2559,7 @@ Returns the size of the video processor in bytes.
 
 #### Driver processor creation
 
-The *pfnCreateVideoProcessor* callback function creates a video processor.
+The *pfnCreateVideoProcessor* function creates a video processor.
 
 ##### Parameters
 
@@ -2597,7 +2577,7 @@ The video processor.
 
 #### Driver processor destruction
 
-The *pfnDestroyVideoProcessor* callback function destroys a video processor.
+The *pfnDestroyVideoProcessor* function destroys a video processor.
 
 ##### Parameters
 
@@ -2795,7 +2775,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEOPROCESSOR_0106 )( D3D12DDI_HD
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> | Current table | Member | Callback typedef |
+> | Current table | Member | DDI typedef |
 > |---|---|---|
 > | `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnCalcPrivateVideoProcessorSize` | `PFND3D12DDI_CALCPRIVATEVIDEOPROCESSORSIZE_0106` |
 > | `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnCreateVideoProcessor` | `PFND3D12DDI_CREATEVIDEOPROCESSOR_0106` |
@@ -2819,23 +2799,10 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEOPROCESSOR_0106 )( D3D12DDI_HD
 > `D3D12DDICAPS_TYPE_VIDEO_0032_PROCESSOR_SIZE` uses the processor-size layout
 > appropriate to the selected DDI version, with input creation description and
 > output L0/L1 sizes. The device table's `pfnGetCaps` owns these capability
-> exchanges. The create callback returns `HRESULT`; success is not an NTSTATUS
+> exchanges. The create DDI returns `HRESULT`; success is not an NTSTATUS
 > contract.
 
 <!-- d3d12-review-alert:end:video-process:N-ddi-table:1 -->
-
-<!-- d3d12-review-alert:begin:video-process:N-ddi-table:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> **Hardware qualification:** the driver implements the processing supported for
-> the reported tuple and selected modes. The declarations and capability flags
-> do not alone define universal scaling/filter kernels, custom deinterlacing,
-> automatic-processing choices, numeric tolerances, rounding or colorimetric
-> conformance. Those claims are not inferred from callback availability.
-
-<!-- d3d12-review-alert:end:video-process:N-ddi-table:2 -->
 
 <a id="protected-video-api-contracts"></a>
 

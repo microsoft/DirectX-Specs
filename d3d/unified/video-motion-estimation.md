@@ -1290,14 +1290,7 @@ The pixel height of the texture that the motion estimation operation was perform
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The following driver contract uses published WDK declarations. API pointers
-> are translated to driver handles; API and DDI payloads are not interchangeable.
-> In particular, the API size query uses `NodeIndex` and heap-size fields first;
-> `D3D12DDI_VIDEO_MOTION_ESTIMATOR_SIZE_DATA_0060` uses `NodeMask` and
-> estimator-size fields first. The protected-session creation parameter becomes
-> `hDrvProtectedResourceSession`. `pHintMotionVectorHeap` becomes
-> `hDrvPreviousMotionVectorHeap`. The _0060 support payload and resolve output
-> do not include the earlier _0053 differences-metric members.
+> The API size query uses NodeIndex and heap-size fields first. The DDI uses NodeMask and estimator-size fields first. API `pHintMotionVectorHeap` becomes driver `hDrvPreviousMotionVectorHeap`. The `_0060` support and resolve layouts omit the earlier `_0053` differences-metric fields.
 
 <!-- d3d12-review-alert:end:video-motion:N-driver-entry:0 -->
 
@@ -1326,13 +1319,7 @@ The pixel height of the texture that the motion estimation operation was perform
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The public feature version `D3D12DDI_FEATURE_VERSION_VIDEO_0060_0`
-> is 14; the published header identifies minimum core DDI
-> `D3D12DDI_SUPPORTED_0043`. The video encode queue table uses
-> `D3D12DDI_COMMAND_QUEUE_FUNCS_VIDEO_0020` under table type
-> `D3D12DDI_TABLE_TYPE_0053_COMMAND_QUEUE_VIDEO_ENCODE`.
-> These DDI version facts are not a claim that every optional video operation
-> is supported.
+> Feature `D3D12DDI_FEATURE_VERSION_VIDEO_0060_0` is 14 and requires at least `D3D12DDI_SUPPORTED_0043`. Motion work uses the video encode queue table.
 
 <!-- d3d12-review-alert:end:video-motion:N-driver-entry:2 -->
 
@@ -1390,10 +1377,7 @@ typedef struct D3D12DDI_RESOURCE_COORDINATE_0053
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The shared DDI size-range contract remains under
-> [driver capability payloads](video-decode.md#ddi-capability-payloads):
-> `D3D12DDI_VIDEO_SIZE_RANGE_0032` is the driver type used below, not an alias
-> for the API `D3D12_VIDEO_SIZE_RANGE`.
+> The shared [driver capability definitions](video-decode.md#ddi-capability-payloads) supply `D3D12DDI_VIDEO_SIZE_RANGE_0032`.
 
 <!-- d3d12-review-alert:end:video-motion:N-driver-shared-range:0 -->
 
@@ -1402,11 +1386,7 @@ typedef struct D3D12DDI_RESOURCE_COORDINATE_0053
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The narrow protected-motion capability case is
-> `D3D12DDICAPS_TYPE_VIDEO_0072_MOTION_ESTIMATOR_PROTECTED_RESOURCES` (30).
-> It takes the following driver payload, with node input and support-flag output.
-> `SUPPORTED` enables the protected-object association; this query does not
-> create a protected session.
+> The protected-motion capability case is `D3D12DDICAPS_TYPE_VIDEO_0072_MOTION_ESTIMATOR_PROTECTED_RESOURCES` (30).
 
 <!-- d3d12-review-alert:end:video-motion:N-driver-protected-gate:0 -->
 
@@ -1459,10 +1439,7 @@ typedef struct D3D12DDI_VIDEO_MOTION_ESTIMATOR_PROTECTED_RESOURCES_DATA_0072
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The negotiated video DDI version selects the payload version; sharing a
-> capability case number does not make the older _0053 payload an _0060
-> layout. These cases are capability requests, not encode-list timestamp
-> queries.
+> The negotiated video DDI version selects the payload layout. A shared capability case number does not make `_0053` and `_0060` payloads interchangeable.
 
 <!-- d3d12-review-alert:end:video-motion:N-driver-query-protocol:2 -->
 
@@ -1666,19 +1643,6 @@ TRUE if the motion estimator operates on protected resource input and produces p
 <a id="motion-driver-objects"></a>
 
 ### Driver object lifetime and allocation
-
-<!-- d3d12-review-alert:begin:video-motion:N-object-evidence:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The allocation-at-creation, residency/debug-allocation support and
-> cross-queue exclusion requirements below are published source requirements.
-> The bounded creation/release inspection corroborates the context/heap object
-> split and driver creation/destruction dispatch, not every driver's allocation
-> timing, residency accounting or concurrency behavior.
-
-<!-- d3d12-review-alert:end:video-motion:N-object-evidence:0 -->
 
 The motion estimation operation has a context object to associate the lifetime of internal allocations needed to perform the operation. All allocations <ins><!-- d3d12-review-inline:begin:video-motion:R-252:0 -->associated with this object<!-- d3d12-review-inline:end:video-motion:R-252:0 --></ins> should be allocated when the object is created and deallocated when the object is de-allocated. This should include any buffers used as temporary/scratch storage.
 

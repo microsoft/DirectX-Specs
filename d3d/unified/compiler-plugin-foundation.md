@@ -30,12 +30,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The published ABI is `d3d12compilerddi.h`, supplied in
-> [Microsoft.Windows.WDK.x64 10.0.28000.2526](https://www.nuget.org/packages/Microsoft.Windows.WDK.x64/10.0.28000.2526).
-> It includes `d3d12umddi.h` for shared DDI definitions. Function pointers below
-> retain the actual published `APIENTRY`, `CALLBACK` and `__stdcall` conventions.
-> Negotiated compiler and usermode DDI versions determine the applicable shared
-> description and capability definitions; neither is a physical adapter index.
+> The published ABI is `d3d12compilerddi.h` in [WDK 10.0.28000.2526](https://www.nuget.org/packages/Microsoft.Windows.WDK.x64/10.0.28000.2526). It uses shared `d3d12umddi.h` definitions and the declared calling conventions.
 
 <!-- d3d12-review-alert:end:compiler-plugin-foundation:plugin-scope:1 -->
 
@@ -438,20 +433,7 @@ The size in bytes of the pTable buffer.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12DDI_VERSION_NUMBER`, `D3D12DDI_APPLICATION_DESC`,
-> `D3D12DDIARG_GETCAPS`, `D3D12DDICAPS_TYPE`, `D3D12DDI_FORMAT_SUPPORT`,
-> `DXGI_FORMAT` and the underlying handle macros are shared definitions from
-> `d3d12umddi.h` and its published dependencies, not new compiler-specific API
-> types. The application/version meanings are the
-> [canonical application metadata and encoding](state-object-databases-and-identity.md#application-metadata);
-> the compiler DDI application description carries explicitly supplied offline
-> identity metadata rather than assuming the compiler process is the title.
-> The installed driver's [ABI compatibility payload](devices-and-capabilities.md#d3d12_feature_data_shadercache_abi_support)
-> retains its canonical reporting rules, including compiler/profile matching.
-> The supporting DDI declarations below use the published `PCWSTR` string
-> members. They are distinct from the API-prefixed types; their application
-> metadata meanings and four-part version encoding retain the canonical
-> definitions linked above.
+> Shared application/version metadata is defined under [application metadata](state-object-databases-and-identity.md#application-metadata). The compiler receives the supplied offline identity rather than detecting its host process as the title.
 
 <!-- d3d12-review-alert:end:compiler-plugin-foundation:shared-types:0 -->
 
@@ -515,7 +497,7 @@ typedef struct D3D12DDI_COMPILER_TARGET
 
 <ins><!-- d3d12-review-inline:begin:compiler-plugin-foundation:family-ddi:0 -->`szAdapterFamily` uniquely identifies an adapter family for a hardware vendor.<!-- d3d12-review-inline:end:compiler-plugin-foundation:family-ddi:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-plugin-foundation:family-ddi:1 -->An adapter family is a set of adapters that all share the same compiled output for a given ABI version.<!-- d3d12-review-inline:end:compiler-plugin-foundation:family-ddi:1 --></ins>
+An adapter family is a set of adapters that all share the same compiled output for a given ABI version.
 
 The runtime validates the ABIVersion is one returned from <ins><!-- d3d12-review-inline:begin:compiler-plugin-foundation:target-ddi-remarks:0 -->[PFND3D12DDI_COMPILER_ENUMERATE_ADAPTER_FAMILY_ABI_VERSIONS](#abi-enumeration)<!-- d3d12-review-inline:end:compiler-plugin-foundation:target-ddi-remarks:0 --></ins>.
 
@@ -614,7 +596,7 @@ The handle to the plugin compiler DDI object.
 
 <ins><!-- d3d12-review-inline:begin:compiler-plugin-foundation:getcaps-behavior:5 -->Contains the adapter family and ABI version.  See [D3D12DDI_COMPILER_TARGET](#descriptions).<!-- d3d12-review-inline:end:compiler-plugin-foundation:getcaps-behavior:5 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-plugin-foundation:getcaps-behavior:6 -->*pApplicationDesc*<!-- d3d12-review-inline:end:compiler-plugin-foundation:getcaps-behavior:6 --></ins>
+*pApplicationDesc*
 
 <ins><!-- d3d12-review-inline:begin:compiler-plugin-foundation:getcaps-behavior:7 -->Describes the target application and version.  Not typically used, see Remarks.  See [D3D12DDI_APPLICATION_DESC](#descriptions).<!-- d3d12-review-inline:end:compiler-plugin-foundation:getcaps-behavior:7 --></ins>
 
@@ -642,13 +624,7 @@ The following caps may be queried:
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pCaps` supplies a shared `D3D12DDIARG_GETCAPS`: capability selector `Type`,
-> type-specific `pInfo`, writable `pData` and its byte count `DataSize`.
-> The selected usermode DDI version determines the exact capability payload.
-> The capability list does not authorize passing a structure of a different
-> version or size. `HRESULT` failure is not a zeroed-capability/default-support
-> result. Target/app arguments are inputs; the shared query payload identifies
-> the output storage.
+> `pCaps` supplies `D3D12DDIARG_GETCAPS`. The selected usermode DDI version determines the capability payload layout.
 
 <!-- d3d12-review-alert:end:compiler-plugin-foundation:caps-storage:0 -->
 
@@ -796,11 +772,7 @@ The compiler profile can be versioned <ins><!-- d3d12-review-inline:begin:compil
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The actual published callback names are
-> `PFND3D12DDI_COMPILER_ENUMERATE_ADAPTER_FAMILY_COMPILER_VERSION` and
-> `PFND3D12DDI_COMPILER_ENUMERATE_ADAPTER_FAMILY_ABI_VERSIONS`.
-> Their table members are `pfnGetEnumerateAdapterFamilyCompilerVersion` and
-> `pfnEnumerateAdapterFamilyABIVersions`. Proposal spellings are not aliases.
+> The published names are `PFND3D12DDI_COMPILER_ENUMERATE_ADAPTER_FAMILY_COMPILER_VERSION` and `PFND3D12DDI_COMPILER_ENUMERATE_ADAPTER_FAMILY_ABI_VERSIONS`. Their members are `pfnGetEnumerateAdapterFamilyCompilerVersion` and `pfnEnumerateAdapterFamilyABIVersions`.
 
 <!-- d3d12-review-alert:end:compiler-plugin-foundation:ddi-version-results:0 -->
 
@@ -909,11 +881,7 @@ Returns TRUE if supported, FALSE otherwise.  This is expected to be consistent w
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The following declarations make the cache callback table installed during
-> bootstrap complete, including value-kind enum/tag aliases, value/key types
-> and allocation callback. They do not define the public compile/cache invocation
-> operations. Those operations' cache effects, output production and storage
-> contracts are separate from this opening/negotiation contract.
+> The following types support the installed compiler-cache callback table.
 
 <!-- d3d12-review-alert:end:compiler-plugin-foundation:dependency-boundary:0 -->
 
@@ -1023,19 +991,7 @@ typedef struct D3D12DDI_COMPILER_CACHE_CALLBACKS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The compiler table is retrieved during factory opening. The compiler-table and
-> dependent descriptor declarations below are the published build 2 definitions
-> (`D3D12DDI_COMPILER_SUPPORTED_0002`), including its add-to-state-object argument
-> definitions and aliases. The negotiated compiler DDI version selects the actual
-> definitions used by the runtime and plugin; these build 2 declarations do not
-> assert that every argument definition applies unchanged to build 1.
-> The complete published layout and dependent descriptor aliases are retained so
-> table size and function-pointer types are not inferred from the proposal. Shared state-object,
-> root-signature and pipeline-state types come from the selected version of
-> `d3d12umddi.h`; their actual construction behavior retains the canonical
-> [State objects](state-objects.md), [Binding](binding.md#root-signatures), and
-> [Pipeline state](pipeline-state.md) owners. These declarations do not constitute
-> full placement of the public compiler invocation or cache APIs.
+> The declarations below use compiler DDI build 2. Negotiation selects the actual layout. Shared root-signature, state-object and pipeline types come from the selected usermode DDI version.
 
 <!-- d3d12-review-alert:end:compiler-plugin-foundation:compiler-dependency-boundary:0 -->
 

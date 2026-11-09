@@ -392,7 +392,7 @@ Indicates that recording to the command list has finished.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:video-decode:P-close-returns:1 -->Returns **S\_OK** if successful; otherwise, returns one of the following values:<!-- d3d12-review-inline:end:video-decode:P-close-returns:1 --></ins>
+Returns **S\_OK** if successful; otherwise, returns one of the following values:
 
 - **E\_FAIL** if the command list has already been closed, or an invalid API was called during command list recording.
 - **E\_OUTOFMEMORY** if the operating system ran out of memory during recording.
@@ -402,7 +402,7 @@ See [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/d
 
 #### Remarks
 
-<ins><!-- d3d12-review-inline:begin:video-decode:P-close-remarks:1 -->The runtime will validate that the command list has not previously been closed. If an error was encountered during recording, the error code is returned here. The runtime won't call the close device driver interface (DDI) in this case.<!-- d3d12-review-inline:end:video-decode:P-close-remarks:1 --></ins>
+The runtime will validate that the command list has not previously been closed. If an error was encountered during recording, the error code is returned here. The runtime won't call the close device driver interface (DDI) in this case.
 
 <!-- d3d12-review-alert:begin:video-decode:N-close:0 -->
 
@@ -444,13 +444,13 @@ A pointer to the [ID3D12CommandAllocator](https://learn.microsoft.com/en-us/wind
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:video-decode:P-reset-returns:1 -->Returns **S\_OK** if successful; otherwise, returns one of the following values:<!-- d3d12-review-inline:end:video-decode:P-reset-returns:1 --></ins>
+Returns **S\_OK** if successful; otherwise, returns one of the following values:
 
 - **E\_FAIL** if the command list was not in the "closed" state when the **Reset** call was made, or the per-device limit would have been exceeded.
 - **E\_OUTOFMEMORY** if the operating system ran out of memory.
 - **E\_INVALIDARG** if the allocator is currently being used with another command list in the "recording" state or if the specified allocator was created with the wrong type.
 
-<ins><!-- d3d12-review-inline:begin:video-decode:P-reset-returns:3 -->See [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues) for other possible return values.<!-- d3d12-review-inline:end:video-decode:P-reset-returns:3 --></ins>
+See [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues) for other possible return values.
 
 <!-- d3d12-review-alert:begin:video-decode:N-reset:0 -->
 
@@ -2160,38 +2160,13 @@ These requirements are identical to the tier 1 requirements.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The video DDI has a capability-query callback, separate private CPU-object
-> size/create/destroy callbacks for decoder and decoder heap, and versioned
-> decode-frame recording callbacks. These are driver responsibilities, not
-> additional CPU APIs selected for full declaring placement.
-> The [driver argument layouts](#ddi-argument-layouts) and
-> [capability payloads](#ddi-capability-payloads) define the structures used by
-> the callbacks below.
-> `D3D12DDIARG_VIDEO_GETCAPS_0020` carries `Type`, `pInfo`, `pData` and `DataSize`;
-> the capability type determines the payload. This callback boundary does not
-> require one driver query for each application query: the runtime can validate,
-> cache and translate results.
+> The following DDIs implement decode capability queries, object creation/destruction and frame recording. The runtime can cache and translate capability results.
 
 <!-- d3d12-review-alert:end:video-decode:N-ddi-overview:0 -->
 
-<!-- d3d12-review-alert:begin:video-decode:N-ddi-overview:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Published decoder creation uses `D3D12DDIARG_CREATE_VIDEO_DECODER_0072`
-> (`NodeMask`, `Configuration`, protected-session association). Heap creation uses
-> `D3D12DDIARG_CREATE_VIDEO_DECODER_HEAP_0072` (node/configuration, dimensions,
-> format, frame/bit rates, maximum picture-buffer count and protected-session
-> association). Driver handles are
-> not COM interface pointers. The application's descriptor is not a command
-> to allocate output/reference pictures implicitly.
-
-<!-- d3d12-review-alert:end:video-decode:N-ddi-overview:1 -->
-
 ### Video capability query
 
-The D3D runtime calls a client driver's **PFND3D12DDI\_VIDEO\_GETCAPS** callback function to query for video-related support provided by the driver for a specified type.
+The D3D runtime calls a client driver's **PFND3D12DDI\_VIDEO\_GETCAPS** function to query for video-related support provided by the driver for a specified type.
 
 ```cpp
 typedef HRESULT (APIENTRY *PFND3D12DDI_VIDEO_GETCAPS)(
@@ -2212,7 +2187,7 @@ Pointer to a caller-allocated [**D3D12DDIARG\_VIDEO\_GETCAPS\_0020**](#ddi-capab
 
 #### Return values
 
-If this callback function succeeds, it returns **S\_OK**. Otherwise, it returns an **HRESULT** error code.
+If this function succeeds, it returns **S\_OK**. Otherwise, it returns an **HRESULT** error code.
 
 ### Decoder private CPU-object sizing
 
@@ -2290,7 +2265,9 @@ The arguments used to create a video decoder heap.
 
 The video decoder heap.
 
-### Decode-frame recording callback
+<a id="decode-frame-recording-callback"></a>
+
+### Decode-frame recording DDI
 
 <ins><!-- d3d12-review-inline:begin:video-decode:P-ddi-decode-summary:0 -->**PFND3D12DDI\_VIDEO\_DECODE\_FRAME\_0041\_1** records a decode frame operation to the command list. Inputs, outputs, and parameters for the decode are specified as arguments to this method.<!-- d3d12-review-inline:end:video-decode:P-ddi-decode-summary:0 --></ins>
 
@@ -2316,9 +2293,11 @@ Specifies the input bit stream, parameters, reference frames, and other input pa
 
 None
 
-### Versioned decode-frame recording callback
+<a id="versioned-decode-frame-recording-callback"></a>
 
-<ins><!-- d3d12-review-inline:begin:video-decode:P-ddi-decode1-summary:0 -->The client driver implements this callback to decode a video frame.<!-- d3d12-review-inline:end:video-decode:P-ddi-decode1-summary:0 --></ins>
+### Versioned decode-frame recording DDI
+
+<ins><!-- d3d12-review-inline:begin:video-decode:P-ddi-decode1-summary:0 -->The client driver implements this DDI to decode a video frame.<!-- d3d12-review-inline:end:video-decode:P-ddi-decode1-summary:0 --></ins>
 
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_DECODE_FRAME_0041_1 )(
@@ -2351,67 +2330,16 @@ Specifies the input bit stream, parameters, reference frames, and other input pa
 
 None
 
-<!-- d3d12-review-alert:begin:video-decode:N-ddi-errors:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The decoder and decoder-heap creation callbacks return `HRESULT`.
-> The driver reports creation failure to the runtime. **Creation-result
-> qualification:** an exhaustive per-cause HRESULT mapping is not established
-> here. The shared
-> [object/resource lifetime](video.md#video-recording-lifetime) and ordering
-> requirements apply before destruction or reuse.
-
-<!-- d3d12-review-alert:end:video-decode:N-ddi-errors:0 -->
-
-<!-- d3d12-review-alert:begin:video-decode:N-ddi-errors:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The decode DDI translates bitstream buffer/range, typed frame arguments,
-> reference resource/subresource/heap handles and output/conversion arguments.
-> The `_0041_1` output carries explicit output sizes and histogram destinations.
-> Neither void callback reports GPU decode completion. Hardware executes the
-> recorded codec operation with the supported tuple; status is reported through
-> the [canonical video decode statistics](counters-queries-and-predication.md#video-decode-statistics)
-> contract. The generic API/DDI declarations do not establish codec accuracy,
-> throughput or universal profile support. No hardware conformance experiment
-> is implied by source placement.
-
-<!-- d3d12-review-alert:end:video-decode:N-ddi-errors:1 -->
-
 <a id="ddi-argument-layouts"></a>
 
 ### Driver argument layouts
-
-<!-- d3d12-review-alert:begin:video-decode:N-ddi-layout-roles:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The following are published driver-side layouts, not application COM
-> descriptors. `D3D12DDI_HDEVICE`, `D3D12DDI_HCOMMANDLIST`, `D3D12DDI_HRESOURCE`,
-> `D3D12DDI_HVIDEODECODER_0020` and `D3D12DDI_HVIDEODECODERHEAP_0032` are
-> driver handles. Their fields below identify objects/resources at that boundary;
-> they are not application interface pointers or codec picture-table indices.
-> The [input/output resource roles](video.md#video-resource-contract),
-> [codec payload contract](#codec-input-boundary), and
-> [ordering/lifetime rules](video.md#video-recording-lifetime) still apply.
-
-<!-- d3d12-review-alert:end:video-decode:N-ddi-layout-roles:0 -->
 
 <!-- d3d12-review-alert:begin:video-decode:N-ddi-layout-roles:1 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12DDI_VIDEO_DECODE_CONFIGURATION_0020.BitstreamEncryption` is a GUID, unlike
-> the application configuration's enum. The ordinary unencrypted configuration
-> uses `D3D12DDI_VIDEO_DECODE_BITSTREAM_ENCRYPTION_NONE`.
-> `DecryptionParameters` is an unavoidable input-layout field; on the ordinary
-> unencrypted path its handle, pointers, sizes and counts are zero.
+> `D3D12DDI_VIDEO_DECODE_CONFIGURATION_0020.BitstreamEncryption` uses a GUID rather than the API enum. The unencrypted value is `D3D12DDI_VIDEO_DECODE_BITSTREAM_ENCRYPTION_NONE`. Its decryption handle, pointers, sizes and counts are zero.
 
 <!-- d3d12-review-alert:end:video-decode:N-ddi-layout-roles:1 -->
 
@@ -2561,12 +2489,7 @@ typedef struct D3D12DDI_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS_0041_1
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The current decode callback uses the `_0032` input-stream arguments and
-> `_0041_1` output-stream arguments. The output supplies four histogram
-> destinations and the `_0041` conversion layout with explicit output
-> dimensions. The `_0033` heap-creation description remains part of the
-> heap-size capability payload; current heap-object creation uses `_0072`.
-> These are current nested-layout roles, not separate historical decode calls.
+> Current decoding uses `_0032` input-stream arguments and `_0041_1` output arguments, including four histogram destinations and explicit conversion dimensions. `_0033` remains the heap-size capability description, while current heap creation uses `_0072`.
 
 <!-- d3d12-review-alert:end:video-decode:N-ddi-layout-versioning:0 -->
 
@@ -2597,13 +2520,7 @@ typedef struct D3D12DDIARG_VIDEO_GETCAPS_0020
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `Type` identifies a driver capability request; `pInfo`, `pData` and
-> `DataSize` are interpreted according to that request and its negotiated video
-> DDI contract. The selected decode capability identifiers and related payload
-> layouts are below. Their input/output fields are explicit in the declarations.
-> This is not a universal rule that every capability uses the same pointer,
-> count, buffer-size or enumeration convention, nor a one-to-one mapping from
-> application feature queries to driver calls.
+> `Type` selects the capability payload and its `pInfo`, `pData` and `DataSize` protocol. The following definitions specify each request.
 
 <!-- d3d12-review-alert:end:video-decode:N-ddi-caps-boundary:0 -->
 
@@ -2882,7 +2799,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEODECODER_0072 )( D3D12DDI_HDEV
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> | Current table | Member | Callback typedef |
+> | Current table | Member | DDI typedef |
 > |---|---|---|
 > | `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnGetCaps` | `PFND3D12DDI_VIDEO_GETCAPS` |
 > | `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnCalcPrivateVideoDecoderSize` | `PFND3D12DDI_CALCPRIVATEVIDEODECODERSIZE_0072` |
@@ -2894,18 +2811,6 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEODECODER_0072 )( D3D12DDI_HDEV
 > | `D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_DECODE_0094` | `pfnDecodeFrame` | `PFND3D12DDI_VIDEO_DECODE_FRAME_0041_1` |
 
 <!-- d3d12-review-alert:end:video-decode:N-ddi-table-members:0 -->
-
-<!-- d3d12-review-alert:begin:video-decode:N-ddi-table-boundary:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> These table-member associations identify the callable ABI. They do not
-> make the tables interchangeable or require the runtime to call a particular
-> version for every application method. Decoder destruction retains the
-> published ordering obligations; destruction is not completion synchronization.
-
-<!-- d3d12-review-alert:end:video-decode:N-ddi-table-boundary:0 -->
 
 <a id="protected-video-api-contracts"></a>
 

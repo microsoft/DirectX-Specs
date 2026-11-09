@@ -149,7 +149,7 @@ typedef struct D3D12_META_COMMAND_PARAMETER_DESC
 } D3D12_META_COMMAND_PARAMETER_DESC;
 ```
 
-<ins><!-- d3d12-review-inline:begin:meta-command:P-parameter-desc:0 -->`Name`<!-- d3d12-review-inline:end:meta-command:P-parameter-desc:0 --></ins>
+`Name`
 
 The parameter name.
 
@@ -163,7 +163,7 @@ A [D3D12_META_COMMAND_PARAMETER_FLAGS](#d3d12_meta_command_parameter_flags) spec
 
 `RequiredResourceState`
 
-<ins><!-- d3d12-review-inline:begin:meta-command:P-parameter-desc:7 -->A [D3D12_RESOURCE_STATES](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_resource_states) specifying the expected state of a resource parameter.<!-- d3d12-review-inline:end:meta-command:P-parameter-desc:7 --></ins>
+A [D3D12_RESOURCE_STATES](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_resource_states) specifying the expected state of a resource parameter.
 
 `StructureOffset`
 
@@ -203,13 +203,13 @@ typedef struct D3D12_META_COMMAND_DESC
 } D3D12_META_COMMAND_DESC;
 ```
 
-<ins><!-- d3d12-review-inline:begin:meta-command:P-desc-identity:0 -->`Id`<!-- d3d12-review-inline:end:meta-command:P-desc-identity:0 --></ins>
+`Id`
 
 A [GUID](https://learn.microsoft.com/en-us/windows/win32/api/guiddef/ns-guiddef-guid) uniquely identifying the meta command.
 
 `Name`
 
-<ins><!-- d3d12-review-inline:begin:meta-command:P-desc-identity:3 -->The meta command name.<!-- d3d12-review-inline:end:meta-command:P-desc-identity:3 --></ins>
+The meta command name.
 
 <!-- d3d12-review-alert:begin:meta-command:N-desc-state:0 -->
 
@@ -338,7 +338,7 @@ Queries reflection metadata about available meta commands.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:meta-command:P-enumerate-parameters:0 -->`pNumMetaCommands`<!-- d3d12-review-inline:end:meta-command:P-enumerate-parameters:0 --></ins>
+`pNumMetaCommands`
 
 <ins><!-- d3d12-review-inline:begin:meta-command:P-enumerate-parameters:1 -->A pointer to the array capacity on input and total available count on output. With a null *pDescs*, the input capacity is ignored.<!-- d3d12-review-inline:end:meta-command:P-enumerate-parameters:1 --></ins>
 
@@ -348,7 +348,7 @@ An optional pointer to an array of [D3D12_META_COMMAND_DESC](#d3d12_meta_command
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:meta-command:P-enumerate-return:0 -->If this method succeeds, it returns **S\_OK**. Otherwise, it returns an [HRESULT](https://learn.microsoft.com/en-us/windows/win32/com/structure-of-com-error-codes) error code.<!-- d3d12-review-inline:end:meta-command:P-enumerate-return:0 --></ins>
+If this method succeeds, it returns **S\_OK**. Otherwise, it returns an [HRESULT](https://learn.microsoft.com/en-us/windows/win32/com/structure-of-com-error-codes) error code.
 
 <a id="enumeratemetacommandparameters"></a>
 
@@ -421,7 +421,7 @@ An optional pointer to an array of [D3D12_META_COMMAND_PARAMETER_DESC](#d3d12_me
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:meta-command:P-parameters-return:0 -->If this method succeeds, it returns **S\_OK**. Otherwise, it returns an **HRESULT** error code.<!-- d3d12-review-inline:end:meta-command:P-parameters-return:0 --></ins>
+If this method succeeds, it returns **S\_OK**. Otherwise, it returns an **HRESULT** error code.
 
 <a id="createmetacommand"></a>
 
@@ -472,7 +472,7 @@ A pointer to a memory block that receives a pointer to the meta command. This is
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:meta-command:P-create-return:0 -->If this method succeeds, it returns **S\_OK**. Otherwise, it returns an **HRESULT** error code.<!-- d3d12-review-inline:end:meta-command:P-create-return:0 --></ins>
+If this method succeeds, it returns **S\_OK**. Otherwise, it returns an **HRESULT** error code.
 
 <!-- d3d12-review-alert:begin:meta-command:P-create-return:1 -->
 
@@ -562,7 +562,7 @@ The zero-based index of the parameter within the stage.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:meta-command:P-size-return:0 -->The number of bytes required for the specified runtime parameter resource.<!-- d3d12-review-inline:end:meta-command:P-size-return:0 --></ins>
+The number of bytes required for the specified runtime parameter resource.
 
 <!-- d3d12-review-alert:begin:meta-command:N-size-validity:0 -->
 
@@ -698,7 +698,7 @@ A [SIZE_T](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-dat
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The driver supplies meta-command descriptions, parameter descriptions and implementation-specific resource requirements. The public `0052` callbacks below separate driver-private object allocation from the resource memory addressed by algorithm parameters. `pfnCalcPrivateMetaCommandSize` describes driver-private object storage; `pfnGetMetaCommandRequiredParameterInfo` reports `ResourceSize` for a stage/parameter of an existing instance.
+> Private sizing reports CPU-object storage. GetMetaCommandRequiredParameterInfo separately reports parameter-resource memory requirements.
 
 <!-- d3d12-review-alert:end:meta-command:N-ddi-route:0 -->
 
@@ -707,7 +707,7 @@ A [SIZE_T](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-dat
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The driver parameter descriptor contains `Name`, `Type`, `Flags` and `RequiredResourceState`; it has no `StructureOffset`. The runtime supplies the application-facing layout as described [above](#d3d12_meta_command_parameter_desc). Device enumeration/creation/private-size/destruction/resource-info callbacks are members of `D3D12DDI_DEVICE_FUNCS_CORE_0119`; initialization and execution are members of both current `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108` and `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114` representations. The declarations do not establish a one-to-one API/DDI call count or require a particular hardware algorithm.
+> The driver parameter descriptor omits `StructureOffset`. The runtime derives API offsets from the ordered parameter types under [parameter layout](#d3d12_meta_command_parameter_desc).
 
 <!-- d3d12-review-alert:end:meta-command:N-ddi-route:1 -->
 
@@ -817,7 +817,7 @@ The meta-command initialize call must be executed at least once prior to any exe
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The six device roles below are members of `D3D12DDI_DEVICE_FUNCS_CORE_0119`. The two recording roles are present in each of `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108` and `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114`; those are distinct supported representations, not ten callbacks in one table. All eight published signatures above remain the current `0052` forms.
+> The six device entries are in `D3D12DDI_DEVICE_FUNCS_CORE_0119`. The two recording entries retain their `_0052` signatures in both `_0108` and `_0114` command-list tables.
 
 <!-- d3d12-review-alert:end:meta-command:MC-current-slots:0 -->
 
@@ -848,31 +848,22 @@ The meta-command initialize call must be executed at least once prior to any exe
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime reserves CPU storage at least as large as the private-size query requests. The driver meta-command handle's `pDrvPrivate` identifies that region and is passed by value to creation and subsequent operations. The driver must not replace the supplied handle or free that runtime-owned region. The driver owns the cleanup of any additional allocations it makes.
+> The runtime allocates the reported private bytes and supplies that region through `D3D12DDI_HMETACOMMAND_0052`. The driver initializes it and must not free it. The driver cleans up its own additional allocations.
 
 <!-- d3d12-review-alert:end:meta-command:MC-private-storage:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:MC-private-storage:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Creation of the CPU object does not satisfy the application's parameter-resource binding and lifetime obligations. Parameter-value blocks, referenced GPU resources/descriptors and the driver-private object have the distinct sizes and lifetimes defined [above](#parameter-resources). The algorithm's own persistent and temporary storage requirements remain explicit parameter-resource requirements, not implied contents of the CPU private-storage region.
-
-<!-- d3d12-review-alert:end:meta-command:MC-private-storage:1 -->
 
 <a id="driver-enumerate-meta-commands"></a>
 
 ### PFND3D12DDI_ENUMERATE_META_COMMANDS_0052
 
-<ins><!-- d3d12-review-inline:begin:meta-command:MC-primary-enumerate_meta_commands:0 -->The **PFND3D12DDI_ENUMERATE_META_COMMANDS_0052** callback function enumerates meta-commands.<!-- d3d12-review-inline:end:meta-command:MC-primary-enumerate_meta_commands:0 --></ins>
+The **PFND3D12DDI_ENUMERATE_META_COMMANDS_0052** function enumerates meta-commands.
 
 <!-- d3d12-review-alert:begin:meta-command:MC-contract-enumerate_meta_commands:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime supplies its driver device handle and a valid `pNumMetaCommands`. With null `pDescs`, the driver reports the available description count without writing an array. For full retrieval, the runtime supplies storage and an input capacity sufficient for that count; the driver writes the descriptions and reports the count through `pNumMetaCommands`. An empty result has count zero and writes no descriptors.
+> With null `pDescs`, the driver reports the available count. For retrieval, the runtime supplies enough storage for the complete array and the driver returns the written count.
 
 <!-- d3d12-review-alert:end:meta-command:MC-contract-enumerate_meta_commands:0 -->
 
@@ -881,7 +872,7 @@ The meta-command initialize call must be executed at least once prior to any exe
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Each description supplies the algorithm `Id`, borrowed device-lifetime `Name`, and initialization/execution dirty masks. The [state-mask contract](command-list-state.md#meta-commands) owns their effects; all bits set does not establish a `ClearState` postcondition here. The runtime can cache and filter driver descriptions using the approval rule above, so an application enumeration does not require a fresh driver call or expose every driver-reported entry.
+> Description names remain valid for the device lifetime. The runtime may cache and filter descriptions using the approval rule.
 
 <!-- d3d12-review-alert:end:meta-command:MC-contract-enumerate_meta_commands:1 -->
 
@@ -890,7 +881,7 @@ The meta-command initialize call must be executed at least once prior to any exe
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> This is a driver count-query/full-array protocol. The application [capacity, prefix and `DXGI_ERROR_MORE_DATA` contract](#enumeratemetacommands) is not assigned to this callback. No undersized-driver-array prefix or recoverable `DXGI_ERROR_MORE_DATA` result is specified here; the runtime must supply sufficient capacity and the driver must not overrun it.
+> The DDI requires full-array capacity. It does not expose the API's partial-prefix or `DXGI_ERROR_MORE_DATA` protocol.
 
 <!-- d3d12-review-alert:end:meta-command:MC-contract-enumerate_meta_commands:2 -->
 
@@ -898,14 +889,14 @@ The meta-command initialize call must be executed at least once prior to any exe
 
 ### PFND3D12DDI_ENUMERATE_META_COMMAND_PARAMETERS_0052
 
-<ins><!-- d3d12-review-inline:begin:meta-command:MC-primary-enumerate_meta_command_parameters:0 -->Enumerates meta-command parameters.<!-- d3d12-review-inline:end:meta-command:MC-primary-enumerate_meta_command_parameters:0 --></ins>
+Enumerates meta-command parameters.
 
 <!-- d3d12-review-alert:begin:meta-command:MC-contract-enumerate_meta_command_parameters:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime supplies its driver device handle, the algorithm `CommandId`, a creation/initialization/execution `Stage`, and valid `pParameterCount`. With null `pParameterDescs`, the driver reports the stage's parameter count without writing descriptions. For full retrieval the runtime supplies an array with sufficient input capacity; the driver supplies the ordered complete descriptions and returns their count. A valid stage without parameters has count zero and writes no descriptors.
+> With null `pParameterDescs`, the driver reports the stage's parameter count. For retrieval, the runtime supplies enough storage for the complete ordered array. The driver returns the written count through `pParameterCount`.
 
 <!-- d3d12-review-alert:end:meta-command:MC-contract-enumerate_meta_command_parameters:0 -->
 
@@ -914,40 +905,22 @@ The meta-command initialize call must be executed at least once prior to any exe
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The order defines the stage's parameter ordinals, including the ordinal later used by [required parameter information](#driver-meta-resource-info). Each entry supplies `Name`, `Type`, input/output `Flags` and `RequiredResourceState`. Names retain the borrowed device-lifetime rule. The driver descriptor supplies neither `StructureOffset` nor a total parameter-block-size output; the runtime derives those API values from the ordered types under the [reflected layout contract](#d3d12_meta_command_parameter_desc).
+> The array order defines parameter ordinals. Names remain valid for the device lifetime. The runtime derives offsets and total block size from the ordered types.
 
 <!-- d3d12-review-alert:end:meta-command:MC-contract-enumerate_meta_command_parameters:1 -->
-
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-enumerate_meta_command_parameters:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The application [capacity/prefix/total-size contract](#enumeratemetacommandparameters) is not a driver short-buffer protocol. The runtime must provide sufficient driver-array capacity; the driver must not overrun it. Unsupported algorithms can be rejected as described in [per-call results](#driver-meta-results); no universal invalid-stage or short-array sentinel is introduced.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-enumerate_meta_command_parameters:2 -->
 
 <a id="driver-meta-private-size"></a>
 
 ### PFND3D12DDI_CALC_PRIVATE_META_COMMAND_SIZE_0052
 
-<ins><!-- d3d12-review-inline:begin:meta-command:MC-primary-calc_private_meta_command_size:0 -->**PFND3D12DDI_CALC_PRIVATE_META_COMMAND_SIZE_0052** calculates the private meta-command size.<!-- d3d12-review-inline:end:meta-command:MC-primary-calc_private_meta_command_size:0 --></ins>
-
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-calc_private_meta_command_size:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For the supplied driver device, `CommandId`, translated `NodeMask`, creation-parameter pointer and byte count, return the required CPU driver-private object-storage size in bytes. This is not a GPU parameter-resource allocation, a parameter-value-block size or the later `ResourceSize` result.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-calc_private_meta_command_size:0 -->
+**PFND3D12DDI_CALC_PRIVATE_META_COMMAND_SIZE_0052** calculates the private meta-command size.
 
 <!-- d3d12-review-alert:begin:meta-command:MC-contract-calc_private_meta_command_size:1 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The query and creation use the same creation description. The parameter bytes are borrowed for the query call, not storage transferred to the driver. This `SIZE_T` return is a size, not an HRESULT or an unsupported-algorithm sentinel; recoverable creation rejection belongs to the create callback.
+> Sizing and creation use the same creation parameters. Recoverable rejection is reported by Create, not a size sentinel.
 
 <!-- d3d12-review-alert:end:meta-command:MC-contract-calc_private_meta_command_size:1 -->
 
@@ -955,14 +928,14 @@ The meta-command initialize call must be executed at least once prior to any exe
 
 ### PFND3D12DDI_CREATE_META_COMMAND_0052
 
-<ins><!-- d3d12-review-inline:begin:meta-command:MC-primary-create_meta_command:0 -->Creates a meta-command.<!-- d3d12-review-inline:end:meta-command:MC-primary-create_meta_command:0 --></ins>
+Creates a meta-command.
 
 <!-- d3d12-review-alert:begin:meta-command:MC-contract-create_meta_command:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime supplies the driver device handle, `CommandId`, translated single-node `NodeMask`, creation-parameter pointer and byte count, followed by the driver meta-command handle and a distinct runtime meta-command handle. Node selection is the selected instance's node, not a command-list parameter. The runtime translates the application's [node-selection convention](#createmetacommand) before these driver calls.
+> The runtime resolves the API node convention to the selected single-node DDI mask.
 
 <!-- d3d12-review-alert:end:meta-command:MC-contract-create_meta_command:0 -->
 
@@ -971,7 +944,7 @@ The meta-command initialize call must be executed at least once prior to any exe
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Initialize the caller-reserved storage identified by the by-value `D3D12DDI_HMETACOMMAND_0052`; it is not an output-handle pointer. `D3D12DDI_HRTMETACOMMAND_0052` identifies the runtime object and does not transfer a COM reference or ownership of its memory to the driver. Creation parameters are borrowed through the call; the driver must copy any bytes it needs after return rather than retaining the caller's CPU block.
+> Creation receives separate driver and runtime meta-command handles. The driver copies creation-parameter bytes needed after the call.
 
 <!-- d3d12-review-alert:end:meta-command:MC-contract-create_meta_command:1 -->
 
@@ -980,7 +953,7 @@ The meta-command initialize call must be executed at least once prior to any exe
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Return `S_OK` only for a successfully created driver object. An unsupported creation-parameter combination can return `DXGI_ERROR_UNSUPPORTED`; allocation failure can return `E_OUTOFMEMORY`. The runtime calls destruction only after successful creation, so a failed creator must release its own partially acquired resources without relying on a later destroy call. The [per-call result contract](#driver-meta-results) distinguishes these outcomes from device failure.
+> The driver unwinds failed creation. Destruction is called only after successful creation. Allowed results are defined under [per-call results](#driver-meta-results).
 
 <!-- d3d12-review-alert:end:meta-command:MC-contract-create_meta_command:2 -->
 
@@ -988,47 +961,29 @@ The meta-command initialize call must be executed at least once prior to any exe
 
 ### PFND3D12DDI_DESTROY_META_COMMAND_0052
 
-<ins><!-- d3d12-review-inline:begin:meta-command:MC-primary-destroy_meta_command:0 -->**PFND3D12DDI_DESTROY_META_COMMAND_0052** destroys a meta-command.<!-- d3d12-review-inline:end:meta-command:MC-primary-destroy_meta_command:0 --></ins>
+**PFND3D12DDI_DESTROY_META_COMMAND_0052** destroys a meta-command.
 
 <!-- d3d12-review-alert:begin:meta-command:MC-contract-destroy_meta_command:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime supplies the driver device handle and the driver handle of a successfully created meta command. The driver releases the object's own allocations and internal references. It must not free the caller-reserved CPU private-storage region; the runtime reclaims that storage after destruction.
+> Destroy releases driver-owned allocations without freeing runtime-provided private storage.
 
 <!-- d3d12-review-alert:end:meta-command:MC-contract-destroy_meta_command:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-destroy_meta_command:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Destruction is not an initialization or GPU-completion operation. The application must already satisfy the [recorded-use lifetime contract](#parameter-resources), including recorded uses not yet submitted. This callback returns `VOID`, with no recoverable object-destruction HRESULT.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-destroy_meta_command:1 -->
 
 <a id="driver-meta-resource-info"></a>
 
 ### PFND3D12DDI_GET_META_COMMAND_REQUIRED_PARAMETER_INFO_0052
 
-<ins><!-- d3d12-review-inline:begin:meta-command:MC-primary-get_meta_command_required_parameter_info:0 -->**PFND3D12DDI_GET_META_COMMAND_REQUIRED_PARAMETER_INFO_0052** gets required information for a meta-command.<!-- d3d12-review-inline:end:meta-command:MC-primary-get_meta_command_required_parameter_info:0 --></ins>
-
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-get_meta_command_required_parameter_info:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The runtime supplies the existing instance's driver meta-command handle, `Stage`, zero-based `ParameterIndex` and writable `D3D12DDIARG_META_COMMAND_REQUIRED_PARAMETER_INFO` output. There is no separate device-handle parameter. `Stage` is an enum value passed by value, not a pointer.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-get_meta_command_required_parameter_info:0 -->
+**PFND3D12DDI_GET_META_COMMAND_REQUIRED_PARAMETER_INFO_0052** gets required information for a meta-command.
 
 <!-- d3d12-review-alert:begin:meta-command:MC-contract-get_meta_command_required_parameter_info:1 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For the [valid resource-parameter domain](#getrequiredparameterresourcesize), the driver writes the required byte extent to `ResourceSize`. The ordinal uses the complete enumerated stage order, not a resource-only filtered order. The requirement can depend on the created instance and its creation parameters; it is not the CPU private-object-storage size or a new allocation. This `VOID` callback has no HRESULT or specified invalid-index/invalid-stage sentinel.
+> ParameterIndex uses the complete enumerated stage order, not a resource-only filtered order.
 
 <!-- d3d12-review-alert:end:meta-command:MC-contract-get_meta_command_required_parameter_info:1 -->
 
@@ -1036,49 +991,31 @@ The meta-command initialize call must be executed at least once prior to any exe
 
 ### PFND3D12DDI_INITIALIZE_META_COMMAND_0052
 
-<ins><!-- d3d12-review-inline:begin:meta-command:MC-primary-initialize_meta_command:0 -->**PFND3D12DDI_INITIALIZE_META_COMMAND_0052** initializes a meta-command.<!-- d3d12-review-inline:end:meta-command:MC-primary-initialize_meta_command:0 --></ins>
+**PFND3D12DDI_INITIALIZE_META_COMMAND_0052** initializes a meta-command.
 
 <!-- d3d12-review-alert:begin:meta-command:MC-contract-initialize_meta_command:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime supplies the command-list driver handle, the created meta-command driver handle, initialization-parameter bytes and their byte count. The final pointer/size pair describes initialization parameters, not execution parameters. The bytes use the reflected initialization-stage layout and are borrowed only through this recording call; the driver must copy any CPU data it needs later.
+> The driver copies initialization-parameter bytes needed after the recording call.
 
 <!-- d3d12-review-alert:end:meta-command:MC-contract-initialize_meta_command:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-initialize_meta_command:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The driver records the algorithm's initialization on that list; return is neither synchronous GPU initialization nor completion. The [initialization contract](#initializemetacommand) owns GPU-before-execution ordering, direct/compute admission, render-pass prohibition, unpredicated behavior and `InitializationDirtyState`. Resources/descriptors named by the parameter values retain their separate [GPU-use lifetime](#parameter-resources). The callback returns `VOID`; failures follow [deferred recording errors](execution.md#deferred-recording-errors), not a direct API HRESULT.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-initialize_meta_command:1 -->
 
 <a id="driver-execute-meta-command"></a>
 
 ### PFND3D12DDI_EXECUTE_META_COMMAND_0052
 
-<ins><!-- d3d12-review-inline:begin:meta-command:MC-primary-execute_meta_command:0 -->**PFND3D12DDI_EXECUTE_META_COMMAND_0052** executes a meta-command.<!-- d3d12-review-inline:end:meta-command:MC-primary-execute_meta_command:0 --></ins>
+**PFND3D12DDI_EXECUTE_META_COMMAND_0052** executes a meta-command.
 
 <!-- d3d12-review-alert:begin:meta-command:MC-contract-execute_meta_command:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime supplies the command-list driver handle, the created meta-command driver handle, execution-parameter bytes and their byte count. The block uses the reflected execution-stage layout and is borrowed only through this recording call; the driver must copy any CPU data it needs later. Recording return does not establish execution or GPU completion.
+> The driver copies execution-parameter bytes needed after the recording call.
 
 <!-- d3d12-review-alert:end:meta-command:MC-contract-execute_meta_command:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-execute_meta_command:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The driver records the requested algorithm invocation. The [execution contract](#executemetacommand) owns prior GPU initialization, repeated invocation, direct/compute admission, render-pass prohibition, algorithm-defined predication and `ExecutionDirtyState`. Its resource-synchronization rule distinguishes internal algorithm barriers from the application's external transitions/hazard ordering and treats output/input-output resources, including scratch, as written. The callback returns `VOID`; failures use [deferred recording errors](execution.md#deferred-recording-errors). It supplies no separate CPU completion or recoverable HRESULT.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-execute_meta_command:1 -->
 
 <a id="driver-meta-results"></a>
 
@@ -1089,7 +1026,7 @@ The meta-command initialize call must be executed at least once prior to any exe
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The HRESULT-returning callbacks have call-specific outcomes:
+> The HRESULT-returning DDIs have call-specific outcomes:
 
 <!-- d3d12-review-alert:end:meta-command:MC-call-results:0 -->
 
@@ -1098,7 +1035,7 @@ The meta-command initialize call must be executed at least once prior to any exe
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> | Callback | Successful result | Recoverable failure |
+> | DDI | Successful result | Recoverable failure |
 > | --- | --- | --- |
 > | `pfnEnumerateMetaCommands` | `S_OK` | `E_OUTOFMEMORY` |
 > | `pfnEnumerateMetaCommandParameters` | `S_OK` | `E_OUTOFMEMORY`, `DXGI_ERROR_UNSUPPORTED` |
@@ -1111,7 +1048,7 @@ The meta-command initialize call must be executed at least once prior to any exe
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The two `E_OUTOFMEMORY` permissions for parameter enumeration and creation apply to driver allocation failures, not only allocations in the API frontend. Neither `E_INVALIDARG` nor `DXGI_ERROR_MORE_DATA` is a recoverable driver result for these callbacks. This does not change the separately specified application enumeration contract.
+> `E_OUTOFMEMORY` covers driver allocation failures during parameter enumeration and creation. `E_INVALIDARG` and `DXGI_ERROR_MORE_DATA` are not recoverable driver results here.
 
 <!-- d3d12-review-alert:end:meta-command:MC-call-results:2 -->
 
@@ -1129,6 +1066,6 @@ The meta-command initialize call must be executed at least once prior to any exe
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Private sizing, destruction and required-parameter information have no recoverable HRESULT result; they must complete their valid-input contracts without an operation-level recoverable failure. Initialization/execution instead retain the command-list [recording-error channel](execution.md#deferred-recording-errors), including failure deferred to Close. These channels are not interchangeable with object creation, size-return sentinels or GPU completion.
+> Sizing, destruction and required-parameter information have no operation-level recoverable failure. Initialization/execution use [recording errors](execution.md#deferred-recording-errors).
 
 <!-- d3d12-review-alert:end:meta-command:MC-call-results:4 -->

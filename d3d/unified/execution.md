@@ -717,7 +717,7 @@ void ExecuteBundle(ID3D12GraphicsCommandList* pCommandList);
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:execution:EF-bundle-summary:0 -->Executes a bundle.<!-- d3d12-review-inline:end:execution:EF-bundle-summary:0 --></ins>
+Executes a bundle.
 
 <!-- d3d12-review-alert:begin:execution:EF-bundle-api-contract:0 -->
 
@@ -823,7 +823,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_EXECUTE_BUNDLE )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For DDI versions using the `_0040` reset arguments, the runtime supplies a command-recorder handle associated with the allocator's command pool. Earlier reset arguments supply a command-allocator handle. The initial pipeline-state object is not an argument to either reset structure: the runtime initializes pipeline and other applicable state with state-setting DDIs. This API behavior does not require an application to negotiate a DDI version.
+> The `_0040` reset arguments identify a recorder associated with a command pool. Earlier arguments identify a command allocator. Neither carries the initial PSO, which the runtime supplies with state-setting DDIs.
 
 <!-- d3d12-review-alert:end:execution:A13:0 -->
 
@@ -832,7 +832,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_EXECUTE_BUNDLE )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Closing a list invokes the close-list DDI when no previously recorded error prevents it. Resetting an allocator invokes the corresponding pool/allocator storage-reset DDI; it is not a request to wait for GPU completion. The [driver recording-object model](#object-model) defines allocator/pool/recorder/list associations, recording-generation IDs, private storage and versioned creation/reset/destruction interfaces. Its [failed-recording rules](execution.md#failed-recording) define logical closure, recorder reuse and cleanup without guaranteed Close-DDI delivery. [Runtime UMD initialization](devices-and-capabilities.md#runtime-driver-initialization) owns capability and table negotiation; [command-list state](command-list-state.md) owns pipeline and other initial/reset state.
+> Close invokes the close-list DDI unless a recorded error prevents it. Allocator Reset invokes the pool/allocator storage-reset DDI.
 
 <!-- d3d12-review-alert:end:execution:A13:1 -->
 
@@ -1087,12 +1087,7 @@ list.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For each allocator, pool, recorder or list, the runtime queries the matching
-> private size, allocates the supplied driver-private region, and supplies its
-> driver handle at creation. Size queries return a byte count as `SIZE_T`, not
-> an `HRESULT`, and do not construct the object. Creation arguments used for
-> sizing describe the object to be created; output/private handles are supplied
-> for creation, not returned as newly allocated COM objects by the driver.
+> For each allocator, pool, recorder or list, the runtime queries and allocates private driver storage before creation.
 
 <!-- d3d12-review-alert:end:execution:R012:0 -->
 
@@ -1127,26 +1122,9 @@ list.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The VOID command-list Reset and Close DDIs do not return the application method's `HRESULT`.
-> The [recording-error callback and deferred-error rules](execution.md#lifecycle-driver-errors)
-> govern recording failures and the runtime's suppression of later recording
-> calls. Application allocator Reset's GPU-completion precondition is not
-> implemented by waiting inside the pool/allocator reset DDI.
+> Reset and Close DDIs report recording failures through the [deferred-error callback](#lifecycle-driver-errors). Pool/allocator Reset must not wait for GPU completion.
 
 <!-- d3d12-review-alert:end:execution:R015:0 -->
-
-<!-- d3d12-review-alert:begin:execution:R016:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [CPU threading contract](execution.md#threading) and the pool/recorder
-> concurrency rules above apply together. Interface selection and table/callback
-> lifetimes follow [Runtime UMD initialization](devices-and-capabilities.md#table-selection).
-> The runtime owns the API-to-DDI adaptation; applications do not negotiate
-> these DDI versions.
-
-<!-- d3d12-review-alert:end:execution:R016:0 -->
 
 <a id="recording-descriptions"></a>
 
@@ -1219,12 +1197,7 @@ typedef enum D3D12DDI_COMMAND_LIST_FLAGS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The `_0040` protocol separates pool storage from the recorder. `PoolFlags`
-> has only the `NONE` value in this declaration. The size query reports private
-> pool bytes; Create initializes the supplied pool handle for the driver device.
-> Reset reclaims that pool's recording storage under the
-> [CPU/GPU preconditions](#target-and-reclamation); Destroy releases its
-> driver-owned allocations and ends the pool object.
+> The `_0040` protocol separates pool storage from the recorder. Reset reclaims pool storage under the [CPU/GPU preconditions](#target-and-reclamation).
 
 <!-- d3d12-review-alert:end:execution:R020:0 -->
 
@@ -1254,10 +1227,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_RESET_COMMAND_POOL_0040 ) ( D3D12DDI_HDEVIC
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `QueueFlags` describes the recorder's workload capabilities; `RecorderFlags`
-> has only the `NONE` value in this declaration. The size query reports private
-> recorder bytes; Create initializes the supplied recorder handle. Creation does
-> not begin a command-list recording or supply a pool target.
+> Recorder creation does not begin a recording or select a target pool.
 
 <!-- d3d12-review-alert:end:execution:R022:0 -->
 
@@ -1266,12 +1236,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_RESET_COMMAND_POOL_0040 ) ( D3D12DDI_HDEVIC
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `PFND3D12DDI_COMMAND_RECORDER_SET_COMMAND_POOL_AS_TARGET_0040` takes, in order,
-> the driver device, recorder and pool handles. It establishes the recorder's
-> target under the [idle-target rules](#target-and-reclamation); it does not
-> reset the pool or invalidate its older recordings. Destroy releases the
-> recorder's driver-owned allocations under the associated-list precondition,
-> without reclaiming unrelated, still-valid pool-backed recordings.
+> SetCommandPoolAsTarget changes the recorder's target under the [idle-target rules](#target-and-reclamation). Recorder destruction leaves valid pool-backed recordings intact.
 
 <!-- d3d12-review-alert:end:execution:R023:0 -->
 
@@ -1302,11 +1267,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_COMMAND_RECORDER_SET_COMMAND_POOL_AS_TARGET
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The `_0040` size query reports private list bytes. Create takes the driver
-> device, creation description, supplied driver-private list handle and runtime
-> list handle, in that order. The runtime handle identifies the list when the
-> driver calls its runtime callbacks; it is not the private-storage handle.
-> The creation description contains no pool or recorder handle.
+> Driver command-list creation receives separate driver and runtime list handles. The creation description does not supply a pool or recorder.
 
 <!-- d3d12-review-alert:end:execution:R025:0 -->
 
@@ -1330,11 +1291,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_COMMAND_RECORDER_SET_COMMAND_POOL_AS_TARGET
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Close takes the driver list, finishes its recording and releases recorder use;
-> it neither submits the commands nor proves GPU completion. Destroy takes the
-> driver device and list handles. It releases list-owned auxiliary state and
-> supports [abandonment without Close](#target-and-reclamation). Both functions
-> are shared with the older allocator-based protocol.
+> Close ends recording and releases recorder use. List destruction must support [abandonment without Close](#target-and-reclamation).
 
 <!-- d3d12-review-alert:end:execution:R027:0 -->
 
@@ -1514,7 +1471,7 @@ Applications are encouraged to batch together command list executions to reduce 
 
 <ins><!-- d3d12-review-inline:begin:execution:P17:0 -->Bundles can't be submitted to a command queue directly. If a bundle is passed to this method, the runtime will drop the call. The runtime will also drop the call if the [Close](#close) function has not successfully closed one or more of the command lists.<!-- d3d12-review-inline:end:execution:P17:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:P17:1 -->The runtime will detect if the command allocators associated with the command lists have been reset after [Close](#close) was called. The runtime will drop the call and remove the device in this situation.<!-- d3d12-review-inline:end:execution:P17:1 --></ins>
+The runtime will detect if the command allocators associated with the command lists have been reset after [Close](#close) was called. The runtime will drop the call and remove the device in this situation.
 
 <!-- d3d12-review-alert:begin:execution:SUB-validation:0 -->
 
@@ -1545,13 +1502,13 @@ Applications are encouraged to batch together command list executions to reduce 
 
 <!-- d3d12-review-alert:end:execution:SUB-debug:0 -->
 
-<ins><!-- d3d12-review-inline:begin:execution:P18:0 -->The debug layer issues an error if it detects that any resource referenced by the command lists, including queries, has been destroyed.<!-- d3d12-review-inline:end:execution:P18:0 --></ins>
+The debug layer issues an error if it detects that any resource referenced by the command lists, including queries, has been destroyed.
 
 <a id="execute-command-lists-ddi"></a>
 
 ### PFND3D12DDI_EXECUTECOMMANDLISTS
 
-<ins><!-- d3d12-review-inline:begin:execution:QT-I01:0 -->UMD's `PFND3D12DDI_EXECUTECOMMANDLISTS` function executes an array of command lists submitted by an application.<!-- d3d12-review-inline:end:execution:QT-I01:0 --></ins>
+UMD's <ins><!-- d3d12-review-inline:begin:execution:QT-I01:0 -->`PFND3D12DDI_EXECUTECOMMANDLISTS`<!-- d3d12-review-inline:end:execution:QT-I01:0 --></ins> function executes an array of command lists submitted by an application.
 
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_EXECUTECOMMANDLISTS ) (
@@ -1580,9 +1537,9 @@ Drivers must implement command list execution DDIs in a free threaded
 manner so that multiple queues can accept command lists for execution
 concurrently.
 
-<ins><!-- d3d12-review-inline:begin:execution:QT-I03:0 -->On a kernel-mediated submission path, when the command list execution DDI is called, the driver must immediately
+<ins><!-- d3d12-review-inline:begin:execution:QT-I03:0 -->On a kernel-mediated submission path, when the command list execution DDI<!-- d3d12-review-inline:end:execution:QT-I03:0 --></ins> is called, the driver <ins><!-- d3d12-review-inline:begin:execution:QT-I03:0 -->must immediately<!-- d3d12-review-inline:end:execution:QT-I03:0 --></ins>
 call the command buffer submission callback. Drivers may not defer
-submission of command buffers until a later time.<!-- d3d12-review-inline:end:execution:QT-I03:0 --></ins>
+submission of command buffers until a later time.
 
 <!-- d3d12-review-alert:begin:execution:QT-N04:0 -->
 
@@ -1672,32 +1629,13 @@ Applications can submit command lists to any command queue from multiple threads
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `PFND3D12DDI_EXECUTECOMMANDLISTS` receives the driver's queue handle, a count, and an array of driver command-list handles. The application API submits interface pointers; the driver entry point does not receive that application pointer array. Driver execution must preserve the submission-boundary ordering and completion/flush requirements above.
+> ExecuteCommandLists receives an array of driver command-list handles.
 
 <!-- d3d12-review-alert:end:execution:SUB-driver-contract:0 -->
-
-<!-- d3d12-review-alert:begin:execution:SUB-driver-contract:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Queue `Signal`/`Wait` operations preserve the queue's ordering contract even when runtime, operating-system, and driver synchronization transports differ. Do not infer a universal one-to-one fence-DDI call sequence from the API signatures. [Recorded storage and driver error reporting](#lifecycle-driver) remain applicable.
-
-<!-- d3d12-review-alert:end:execution:SUB-driver-contract:1 -->
 
 <a id="driver-submission-transport"></a>
 
 ### Driver submission transport
-
-<!-- d3d12-review-alert:begin:execution:QT-N01:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The callbacks below are not a requirement that every submission transport use
-> the same kernel call sequence.
-
-<!-- d3d12-review-alert:end:execution:QT-N01:0 -->
 
 <a id="shared-callback-contract"></a>
 
@@ -1819,7 +1757,7 @@ typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_SUBMITCOMMANDTOHWQU
     _In_ HANDLE hDevice, _In_ CONST D3DDDICB_SUBMITCOMMANDTOHWQUEUE*);
 ```
 
-<ins><!-- d3d12-review-inline:begin:execution:QT-I05:0 -->The `pfnRenderCb` function submits the current command buffer for rendering to the display miniport driver.<!-- d3d12-review-inline:end:execution:QT-I05:0 --></ins>
+The <ins><!-- d3d12-review-inline:begin:execution:QT-I05:0 -->`pfnRenderCb`<!-- d3d12-review-inline:end:execution:QT-I05:0 --></ins> function submits the current command buffer for rendering to the display miniport driver.
 
 <ins><!-- d3d12-review-inline:begin:execution:QT-I06:0 -->`pfnSubmitCommandCb`<!-- d3d12-review-inline:end:execution:QT-I06:0 --></ins> is used to submit command buffers on contexts that support graphics processing unit (GPU) virtual addressing. These contexts generate commands directly from user mode, manage their own command buffer pool and don<ins><!-- d3d12-review-inline:begin:execution:QT-I06:0 -->'<!-- d3d12-review-inline:end:execution:QT-I06:0 --></ins>t make use of allocation or patch location list.
 
@@ -1845,11 +1783,7 @@ Although the user mode driver doesn<ins><!-- d3d12-review-inline:begin:execution
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Submission private data is input to the KMD, not a return-data channel.
-> The runtime may augment the submitted written-primary set with tracked
-> application references. A successful callback is not a GPU-completion
-> notification; the callback also does not replace the driver's obligations
-> to preserve queue ordering and report an unresolvable execution failure.
+> Submission private data is input to the KMD. The runtime may augment the submitted written-primary set with tracked application references.
 
 <!-- d3d12-review-alert:end:execution:QT-N14:0 -->
 
@@ -2065,11 +1999,11 @@ HRESULT CreateFence(
 
 <ins><!-- d3d12-review-inline:begin:execution:create-fence-parameters:0 -->**InitialValue**<!-- d3d12-review-inline:end:execution:create-fence-parameters:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:create-fence-parameters:1 -->The initial value for the fence.<!-- d3d12-review-inline:end:execution:create-fence-parameters:1 --></ins>
+The initial value for the fence.
 
 <ins><!-- d3d12-review-inline:begin:execution:create-fence-parameters:2 -->**Flags**<!-- d3d12-review-inline:end:execution:create-fence-parameters:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:create-fence-parameters:3 -->A combination of [D3D12_FENCE_FLAGS](#fence-flags)-typed values that are combined by using a bitwise OR operation. The resulting value specifies options for the fence.<!-- d3d12-review-inline:end:execution:create-fence-parameters:3 --></ins>
+A combination of [D3D12_FENCE_FLAGS](#fence-flags)-typed values that are combined by using a bitwise OR operation. The resulting value specifies options for the fence.
 
 <ins><!-- d3d12-review-inline:begin:execution:create-fence-parameters:4 -->**riid**<!-- d3d12-review-inline:end:execution:create-fence-parameters:4 --></ins>
 
@@ -2077,7 +2011,7 @@ HRESULT CreateFence(
 
 <ins><!-- d3d12-review-inline:begin:execution:create-fence-parameters:6 -->**ppFence**<!-- d3d12-review-inline:end:execution:create-fence-parameters:6 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:create-fence-parameters:7 -->A pointer to a memory block that receives a pointer to the [ID3D12Fence](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12fence) interface that is used to access the fence.<!-- d3d12-review-inline:end:execution:create-fence-parameters:7 --></ins>
+A pointer to a memory block that receives a pointer to the [ID3D12Fence](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12fence) interface that is used to access the fence.
 
 <!-- d3d12-review-alert:begin:execution:F-create-probe:0 -->
 
@@ -2231,17 +2165,6 @@ typedef struct D3D12DDIARG_CREATE_FENCE_0116
 typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEFENCESIZE_0116 )( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATE_FENCE_0116* );
 ```
 
-<!-- d3d12-review-alert:begin:execution:QF-S02:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `PFND3D12DDI_CALCPRIVATEFENCESIZE_0116` returns the required driver-private
-> storage size in bytes as `SIZE_T`. The device handle supplies the driver
-> device context.
-
-<!-- d3d12-review-alert:end:execution:QF-S02:0 -->
-
 <!-- d3d12-review-alert:begin:execution:QF-S03:0 -->
 
 > [!WARNING]
@@ -2301,12 +2224,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYFENCE )( D3D12DDI_HDEVICE, D3D12DDI_
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The device argument identifies the UMD device. `D3D12DDI_HFENCE` identifies
-> the runtime-provided driver-private region, not an OS synchronization object.
-> The size query returns required private bytes, excluding runtime storage;
-> the actual private pointer is aligned to 16 bytes on Win64 and 8 bytes on
-> Win32. The UMD initializes that region and owns its auxiliary allocations,
-> but must not free the runtime-provided region.
+> The runtime supplies private fence storage aligned to 16 bytes on Win64 and 8 bytes on Win32. The driver initializes it and must not free it.
 
 <!-- d3d12-review-alert:end:execution:QF-FN05:0 -->
 
@@ -2379,14 +2297,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYFENCE )( D3D12DDI_HDEVICE, D3D12DDI_
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Creation returns `S_OK` on success or a failing `HRESULT`. On failure the
-> UMD unwinds its partial state and auxiliary allocations; the runtime does
-> not call DestroyFence for that failed UMD creation. Successful creation
-> requires destruction if the driver object is later retired or abandoned,
-> including after a subsequent application-object initialization failure.
-> DestroyFence receives the UMD device and successful driver fence handle,
-> returns no `HRESULT`, and releases UMD state without freeing the supplied
-> private region or independently releasing a runtime-owned OS object.
+> The driver unwinds failed fence creation. Successfully created fence objects receive destruction, including when later runtime initialization fails. DestroyFence releases driver-owned state without freeing runtime-supplied storage or runtime-owned OS objects.
 
 <!-- d3d12-review-alert:end:execution:QF-FN11:0 -->
 
@@ -2442,12 +2353,7 @@ Unlike other fence creation DDI args, the `D3D12DDI_COMMAND_LIST_SCOPED_FENCE` a
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> This value address is not a native OS synchronization-object handle, and its
-> boundary-update contract is not a promise of per-signal CPU observation
-> during GPU command-buffer execution. The
-> [command-list-scoped API restrictions](fence-barriers.md#fence-kinds)
-> and modern [size-query input rules](#fence-private-sizing) still apply:
-> `ppFenceValue` is not a live output slot during sizing.
+> The command-list-scoped fence value address is not a live output during sizing. See [private sizing](#fence-private-sizing).
 
 <!-- d3d12-review-alert:end:execution:QF-FN16:0 -->
 
@@ -2460,10 +2366,7 @@ Unlike other fence creation DDI args, the `D3D12DDI_COMMAND_LIST_SCOPED_FENCE` a
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The UMD calls the runtime's native-fence callbacks to create or open an OS
-> native-fence synchronization object and exchange private driver data with
-> the kernel-mode driver. These are driver-to-runtime calls, not UMD-implemented
-> creation DDIs.
+> The native-fence callbacks create or open OS synchronization objects and exchange private data with the KMD.
 
 <!-- d3d12-review-alert:end:execution:QF-C01:0 -->
 
@@ -2535,10 +2438,7 @@ typedef HRESULT (APIENTRY CALLBACK *PFND3D12DDI_OPENNATIVEFENCE_CB_0116)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A successful runtime-associated callback does not commit the enclosing UMD
-> CreateFence DDI to success. The UMD may still return a failing `HRESULT`.
-> It must unwind its own partial driver state and UMD-owned auxiliary objects.
-> The runtime does not call DestroyFence for a failed UMD CreateFence DDI.
+> A successful runtime callback does not commit CreateFence to success. If CreateFence fails, the driver unwinds its state without relying on DestroyFence.
 
 <!-- d3d12-review-alert:end:execution:QF-C06:0 -->
 
@@ -2547,12 +2447,7 @@ typedef HRESULT (APIENTRY CALLBACK *PFND3D12DDI_OPENNATIVEFENCE_CB_0116)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime remains responsible for releasing the OS synchronization object
-> already adopted through the callback. It must release that object if the
-> attempt is abandoned, and before retrying with another representation.
-> Such a retry must also meet the [private-sizing requirements](#fence-private-sizing);
-> callback success is not permission to leak an earlier OS object, overwrite
-> an outstanding ownership association or use an insufficient private allocation.
+> The runtime releases adopted OS objects when creation is abandoned and before retrying another representation. A retry must meet the [private-sizing requirements](#fence-private-sizing).
 
 <!-- d3d12-review-alert:end:execution:QF-C07:0 -->
 
@@ -2586,15 +2481,15 @@ Use this method to set a fence value <ins><!-- d3d12-review-inline:begin:executi
 
 <ins><!-- d3d12-review-inline:begin:execution:queue-signal-parameters:0 -->**pFence**<!-- d3d12-review-inline:end:execution:queue-signal-parameters:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:queue-signal-parameters:1 -->A pointer to the [ID3D12Fence](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12fence) object.<!-- d3d12-review-inline:end:execution:queue-signal-parameters:1 --></ins>
+A pointer to the [ID3D12Fence](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12fence) object.
 
 <ins><!-- d3d12-review-inline:begin:execution:queue-signal-parameters:2 -->**Value**<!-- d3d12-review-inline:end:execution:queue-signal-parameters:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:queue-signal-parameters:3 -->The value to set the fence to.<!-- d3d12-review-inline:end:execution:queue-signal-parameters:3 --></ins>
+The value to set the fence to.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:execution:queue-signal-returns:0 -->This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues).<!-- d3d12-review-inline:end:execution:queue-signal-returns:0 --></ins>
+This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues).
 
 <!-- d3d12-review-alert:begin:execution:F-queue-signal-result:0 -->
 
@@ -2628,7 +2523,7 @@ If you want to perform a CPU-side wait (where the calling thread blocks until a 
 
 <ins><!-- d3d12-review-inline:begin:execution:queue-wait-parameters:0 -->**pFence**<!-- d3d12-review-inline:end:execution:queue-wait-parameters:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:queue-wait-parameters:1 -->A pointer to the [ID3D12Fence](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12fence) object.<!-- d3d12-review-inline:end:execution:queue-wait-parameters:1 --></ins>
+A pointer to the [ID3D12Fence](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12fence) object.
 
 <ins><!-- d3d12-review-inline:begin:execution:queue-wait-parameters:2 -->**Value**<!-- d3d12-review-inline:end:execution:queue-wait-parameters:2 --></ins>
 
@@ -2645,7 +2540,7 @@ If you want to perform a CPU-side wait (where the calling thread blocks until a 
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:execution:queue-wait-returns:0 -->This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues).<!-- d3d12-review-inline:end:execution:queue-wait-returns:0 --></ins>
+This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues).
 
 <!-- d3d12-review-alert:begin:execution:QF-wait-error-result:0 -->
 
@@ -2827,11 +2722,11 @@ Use this method to set a fence value from the CPU side. Use [ID3D12CommandQueue:
 
 <ins><!-- d3d12-review-inline:begin:execution:fence-signal-parameters:0 -->**Value**<!-- d3d12-review-inline:end:execution:fence-signal-parameters:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:fence-signal-parameters:1 -->The value to set the fence to.<!-- d3d12-review-inline:end:execution:fence-signal-parameters:1 --></ins>
+The value to set the fence to.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:execution:fence-signal-returns:0 -->This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues).<!-- d3d12-review-inline:end:execution:fence-signal-returns:0 --></ins>
+This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues).
 
 <a id="id3d12fencegetcompletedvalue"></a>
 
@@ -2883,11 +2778,11 @@ This method can be safely called from multiple threads at one time.
 
 <ins><!-- d3d12-review-inline:begin:execution:event-parameters:0 -->**Value**<!-- d3d12-review-inline:end:execution:event-parameters:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:event-parameters:1 -->The fence value when the event is to be signaled.<!-- d3d12-review-inline:end:execution:event-parameters:1 --></ins>
+The fence value when the event is to be signaled.
 
 <ins><!-- d3d12-review-inline:begin:execution:event-parameters:2 -->**hEvent**<!-- d3d12-review-inline:end:execution:event-parameters:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:event-parameters:3 -->A handle to the event object.<!-- d3d12-review-inline:end:execution:event-parameters:3 --></ins>
+A handle to the event object.
 
 #### Return values
 
@@ -2934,15 +2829,15 @@ HRESULT SetEventOnMultipleFenceCompletion(
 
 <ins><!-- d3d12-review-inline:begin:execution:multi-event-parameters:4 -->**NumFences**<!-- d3d12-review-inline:end:execution:multi-event-parameters:4 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:multi-event-parameters:5 -->Specifies the number of fences to be included.<!-- d3d12-review-inline:end:execution:multi-event-parameters:5 --></ins>
+Specifies the number of fences to be included.
 
 <ins><!-- d3d12-review-inline:begin:execution:multi-event-parameters:6 -->**Flags**<!-- d3d12-review-inline:end:execution:multi-event-parameters:6 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:multi-event-parameters:7 -->Specifies one of the [D3D12_MULTIPLE_FENCE_WAIT_FLAGS](#multiple-fence-flags) that determines how to proceed.<!-- d3d12-review-inline:end:execution:multi-event-parameters:7 --></ins>
+Specifies one of the [D3D12_MULTIPLE_FENCE_WAIT_FLAGS](#multiple-fence-flags) that determines how to proceed.
 
 <ins><!-- d3d12-review-inline:begin:execution:multi-event-parameters:8 -->**hEvent**<!-- d3d12-review-inline:end:execution:multi-event-parameters:8 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:multi-event-parameters:9 -->A handle to the event object.<!-- d3d12-review-inline:end:execution:multi-event-parameters:9 --></ins>
+A handle to the event object.
 
 <!-- d3d12-review-alert:begin:execution:F-event-pairs:0 -->
 
@@ -3112,18 +3007,6 @@ typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3DDDI_SIGNALSYNCHRONIZATI
 > | `SignalSynchronizationObjectFromGpu2CB` | Uses a counted broadcast-context array and an object-type/flags-selected scalar value, monitored-value array or CPU event. It is not interchangeable with the single-context form's payload. |
 
 <!-- d3d12-review-alert:end:execution:QT-N19:0 -->
-
-<!-- d3d12-review-alert:begin:execution:QT-N20:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> These are synchronization-object operations, not application COM-fence
-> methods. A queued wait may require a later producer. CPU and GPU forms have
-> different placement and notification contracts; one must not be substituted
-> for the other merely because their names contain Signal or Wait.
-
-<!-- d3d12-review-alert:end:execution:QT-N20:0 -->
 
 <a id="hardware-queue-sync"></a>
 
@@ -3459,12 +3342,7 @@ typedef void (APIENTRY* PFND3D12DDI_SET_BACKGROUND_PROCESSING_MODE_0063)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `SetCommandListErrorCb` is a driver-to-runtime callback on
-> `D3D12DDI_HRTCOMMANDLIST`, not a driver command-list handle. The runtime
-> validates/translates the supplied failure under the
-> [recording driver error contract](#lifecycle-driver-errors) and records
-> the command-list error; this callback is not a GPU fence or a per-call
-> application return value.
+> SetCommandListErrorCb uses `D3D12DDI_HRTCOMMANDLIST`. The runtime translates and records the error under the [recording-error contract](#lifecycle-driver-errors).
 
 <!-- d3d12-review-alert:end:execution:CS-recording-error-protection:0 -->
 
@@ -3473,14 +3351,7 @@ typedef void (APIENTRY* PFND3D12DDI_SET_BACKGROUND_PROCESSING_MODE_0063)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `SetProtectedResourceSession` is an ordinary-handle driver setter in both
-> current 3D layouts and selected video tables. Its session handle is a
-> translated driver session, with null selecting no session. The
-> [canonical protection context](command-list-state.md#protection) owns
-> initial/reset state, command-family/capability and bundle/render-pass limits;
-> open queries must be ended before a supported session change. A table entry
-> does not grant a video family or device protected-content support. Binding
-> does not create a session or change its status-fence ownership.
+> SetProtectedResourceSession uses ordinary driver command-list and session handles in both 3D layouts and the selected video tables. A null session handle clears the association.
 
 <!-- d3d12-review-alert:end:execution:CS-recording-error-protection:1 -->
 
@@ -3489,10 +3360,7 @@ typedef void (APIENTRY* PFND3D12DDI_SET_BACKGROUND_PROCESSING_MODE_0063)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `Blt` records the presentation/interoperation surface transfer described by
-> its driver source/destination resources, subresources, rectangles, DXGI blit
-> flags and rotation. It is not another spelling of application
-> `CopyTextureRegion` and does not infer extra copy/resolve/format permissions.
+> Blt records the presentation/interoperation transfer specified by its driver resource, region, DXGI flag and rotation inputs.
 
 <!-- d3d12-review-alert:end:execution:CS-presentation-services:0 -->
 
@@ -3514,15 +3382,7 @@ typedef void (APIENTRY* PFND3D12DDI_SET_BACKGROUND_PROCESSING_MODE_0063)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `Present` receives ordinary driver command-list and command-queue handles,
-> the surface/dirty-rectangle/flags/interval request and CPU result structures.
-> The driver supplies allocation/broadcast and added-GPU-work information,
-> back-buffer multiplicity and any valid interval override. Software-scheduled
-> presentation writes context results; hardware-scheduled presentation writes
-> hardware-queue results. The unselected optional output is null. The callback
-> does not transfer COM ownership, create an application swap chain or return
-> GPU completion. DXGI presentation and the existing submission/lifetime
-> contracts still own visible presentation timing.
+> Present returns allocation/broadcast, added-GPU-work, back-buffer and interval-override information. Software scheduling writes context results. Hardware scheduling writes hardware-queue results. The unselected optional output is null.
 
 <!-- d3d12-review-alert:end:execution:CS-presentation-services:2 -->
 
@@ -3531,9 +3391,7 @@ typedef void (APIENTRY* PFND3D12DDI_SET_BACKGROUND_PROCESSING_MODE_0063)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The conditional downlevel `QueryClockCalibration` entry writes GPU frequency
-> and correlated GPU/CPU counters for the specified driver queue. Counter
-> samples are not fence values, and this CPU query does not drain that queue.
+> The downlevel QueryClockCalibration entry writes GPU frequency and correlated GPU/CPU counters for the specified driver queue.
 
 <!-- d3d12-review-alert:end:execution:CS-presentation-services:3 -->
 
@@ -3668,12 +3526,7 @@ The **FurtherMeasurementsDesired** output value indicates whether the implementa
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The current mode callback receives a driver device handle despite its
-> published parameter name `hRTDevice`. Mode/action values are the current
-> driver enums. API `DISABLE_PROFILING_BY_SYSTEM` maps to driver
-> `DISABLE_ALL_PROFILING` (value 3). The driver writes a required CPU BOOL output; when the API
-> caller omits that optional output, the runtime supplies temporary storage.
-> Background optimization must not affect functional correctness.
+> The mode DDI receives a driver device handle despite the parameter name `hRTDevice`. API DISABLE_PROFILING_BY_SYSTEM maps to driver DISABLE_ALL_PROFILING (3). The driver BOOL output is required, so the runtime supplies temporary storage when the API output is omitted.
 
 <!-- d3d12-review-alert:end:execution:CS-background-driver:1 -->
 

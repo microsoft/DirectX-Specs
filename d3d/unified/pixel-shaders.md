@@ -873,13 +873,13 @@ In *divergent control flow*, inactive lanes may use the same temporary registers
 Therefore, it is not well-defined to read a value from an inactive lane
 corresponding to a temporary value in an active lane.
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:Q-uniform:2 -->For well-defined gradient calculations on temporary values,
+For well-defined gradient calculations on temporary values,
 all lanes in the quad must be active.
 This is a weaker requirement than *uniform control flow* called *quad-uniform control flow*.
 Quad-uniform control flow may still be *divergent* across a wave,
 but it satisfies the requirements for well-defined gradient calculations on each active quad,
 since each gradient operation will only read from other lanes in the same quad.
-`QuadAny` makes it convenient to write code that preserves quad-uniform control flow.<!-- d3d12-review-inline:end:pixel-shaders:Q-uniform:2 --></ins>
+`QuadAny` makes it convenient to write code that preserves quad-uniform control flow.
 
 <!-- d3d12-review-alert:begin:pixel-shaders:N-quad-votes:0 -->
 
@@ -1358,7 +1358,7 @@ Objects, and are only allowed in the Pixel Shader:<!-- d3d12-review-inline:end:p
 - `RasterizerOrderedTexture1DArray`
 - `RasterizerOrderedTexture2D`
 - `RasterizerOrderedTexture2DArray`
-- <ins><!-- d3d12-review-inline:begin:pixel-shaders:R-declarations:1 -->`RasterizerOrderedTexture3D`<!-- d3d12-review-inline:end:pixel-shaders:R-declarations:1 --></ins>
+- `RasterizerOrderedTexture3D`
 
 <!-- d3d12-review-alert:begin:pixel-shaders:N-rov-contract:0 -->
 
@@ -1533,7 +1533,7 @@ Features for each tier are described in greater detail below the table.
 
 ### Command-level contribution
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-rate:0 -->This is the simplest mechanism for setting the shading rate, available on Tier 1 and above.<!-- d3d12-review-inline:end:pixel-shaders:V-rate:0 --></ins>
+This is the simplest mechanism for setting the shading rate, available on Tier 1 and above.
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-rate:1 -->The app can specify a subsampling level in the command buffer. The rate is one enum argument; two optional combiners control the other contributions. The API provides an overall control of the level of quality for rendering— an ability to set the shading rate on a per-draw basis.<!-- d3d12-review-inline:end:pixel-shaders:V-rate:1 --></ins>
 
@@ -1548,7 +1548,7 @@ There is a cap, AdditionalShadingRatesSupported, to indicate whether 2x4, 4x2, a
 
 ### Screen-space image
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-image:0 -->On Tier 2 and higher, pixel shading rate can be specified by a screen-space image.<!-- d3d12-review-inline:end:pixel-shaders:V-image:0 --></ins>
+On Tier 2 and higher, pixel shading rate can be specified by a screen-space image.
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-image:1 -->The screen-space image allows the app to create an “LOD mask” image indicating regions of varying quality, such as areas which will be covered by motion blur, depth-of-field blur, transparent objects, or HUD UI elements. The resolution of the image is in macroblocks, not the resolution of the render target. In other words, the subsampling data is specified at a granularity of 8x8, 16x16 or 32x32 pixel tiles as indicated by the VRS tile size.<!-- d3d12-review-inline:end:pixel-shaders:V-image:1 --></ins>
 
@@ -1652,7 +1652,7 @@ A screen-space image resource does not have any special implications with respec
 
 ### Primitive contribution
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-primitive:0 -->A system value provides the ability to specify a shading rate term as either a per-primitive or per-provoking-vertex attribute. This settable semantic is SV_ShadingRate. SV_ShadingRate exists as part of shader model 6_4.<!-- d3d12-review-inline:end:pixel-shaders:V-primitive:0 --></ins>
+A system value provides the ability to specify a shading rate term as either a per-primitive or per-provoking-vertex attribute. This settable semantic is SV_ShadingRate. SV_ShadingRate exists as part of shader model 6_4.
 
 The SV_ShadingRate attribute is flat-shaded— that is, propagated to all pixels in the current triangle or line primitive. Use of SV_ShadingRate can enable finer-grained control of image quality compared to the other shading rate specifiers.
 
@@ -1673,7 +1673,7 @@ Applications can output SV_ShadingRate in a view-dependent manner. To put it ano
 
 ### Combining contributions
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-combiners:0 -->The various sources of shading rate are applied in sequence using this diagram.<!-- d3d12-review-inline:end:pixel-shaders:V-combiners:0 --></ins>
+The various sources of shading rate are applied in sequence using this diagram.
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-combiners:1 -->![Combiners](../images/VariableRateShading/Combiners.PNG)<!-- d3d12-review-inline:end:pixel-shaders:V-combiners:1 --></ins>
 
@@ -1748,7 +1748,7 @@ On variable rate shading Tier 1 devices, using combiners other than PASSTHROUGH 
 
 ### Reading the effective shading rate
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-query:0 -->It’s useful to know what shading rate was selected by the hardware at any given pixel shader invocation. This could enable a variety of optimizations in the PS code. A PS-only system variable, SV_ShadingRate, provides information about the shading rate.<!-- d3d12-review-inline:end:pixel-shaders:V-query:0 --></ins>
+It’s useful to know what shading rate was selected by the hardware at any given pixel shader invocation. This could enable a variety of optimizations in the PS code. A PS-only system variable, SV_ShadingRate, provides information about the shading rate.
 
 #### Type
 The type of this semantic is uint.
@@ -1773,7 +1773,7 @@ A pixel shader fails compilation if it inputs SV_ShadingRate and also uses sampl
 
 ### Fine depth/stencil resolution and exports
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-depth:0 -->When coarse pixel shading is used, depth and stencil and coverage are always computed and emitted at the full sample resolution.<!-- d3d12-review-inline:end:pixel-shaders:V-depth:0 --></ins>
+When coarse pixel shading is used, depth and stencil and coverage are always computed and emitted at the full sample resolution.
 
 <!-- d3d12-review-context:begin:pixel-shaders:V-depth:1 -->
 
@@ -1792,7 +1792,7 @@ If a pixel shader exports depth or stencil (for example, by writing SV_Depth or 
 
 ### Effective rate, grids and interpolation
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-grid-interpolation:0 -->For all tiers, it is expected that if a shading rate is requested, and it is supported on the device-and-MSAA-level-combination together with the relevant rendering feature areas, then that is the shading rate delivered by the hardware.<!-- d3d12-review-inline:end:pixel-shaders:V-grid-interpolation:0 --></ins>
+For all tiers, it is expected that if a shading rate is requested, and it is supported on the device-and-MSAA-level-combination together with the relevant rendering feature areas, then that is the shading rate delivered by the hardware.
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-grid-interpolation:1 -->A requested shading rate means a shading rate computed as an output of the combiners (see [combiners](#vrs-combiners)).<!-- d3d12-review-inline:end:pixel-shaders:V-grid-interpolation:1 --></ins>
 
@@ -1960,7 +1960,7 @@ For five-bit values:
 |        01110 |0.875     |14 / 16     |
 |        01111 |0.9375    |15 / 16     |
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-grid-interpolation:46 -->For six-bit values:<!-- d3d12-review-inline:end:pixel-shaders:V-grid-interpolation:46 --></ins>
+For six-bit values:
 
 | Binary value | Decimal  | Fractional |
 |-------------:|---------:|-----------:|
@@ -2277,7 +2277,7 @@ void RSSetShadingRateImage(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The public command-list driver table contains `pfnRSSetShadingRate` and `pfnRSSetShadingRateImage`. The callbacks below set rate/combiner state and the image-resource handle respectively; they do not replace driver PSO/shader validation or required resource transitions. Native stage scheduling/ordered access and fine depth/stencil/coverage behavior must honor the contracts above.
+> `pfnRSSetShadingRate` and `pfnRSSetShadingRateImage` implement the corresponding VRS setters.
 
 <!-- d3d12-review-alert:end:pixel-shaders:N-ddi-context:0 -->
 
@@ -2332,15 +2332,6 @@ A handle to the command list.
 
 A handle to the resource that contains the shading rate image.
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-ddi-return:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Both callbacks return no value. Their enum parameters retain the VRS per-axis rate/combiner interpretation. The driver resource handle represents the selected image, not a CPU pointer to texels.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-ddi-return:0 -->
-
 <a id="driver-vrs-state"></a>
 
 #### Current VRS state representations
@@ -2350,10 +2341,7 @@ A handle to the resource that contains the shading rate image.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> These runtime-to-driver callbacks implement the two named VRS state APIs.
-> Only rate selection changes to an API command-list handle in the newer
-> layout. Image binding retains the ordinary driver command-list and resource
-> handle pair in both layouts.
+> Only shading-rate selection participates in [runtime bypass](execution.md#work-command-handles). Image binding retains ordinary driver handles in both tables.
 
 <!-- d3d12-review-alert:end:pixel-shaders:VR-current-roles:0 -->
 
@@ -2370,20 +2358,6 @@ A handle to the resource that contains the shading rate image.
 > | `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnRSSetShadingRateImage` | `PFND3D12DDI_RS_SET_SHADING_RATE_IMAGE_0062` | [RSSetShadingRateImage](#rssetshadingrateimage) |
 
 <!-- d3d12-review-alert:end:pixel-shaders:VR-current-roles:1 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:VR-current-roles:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `D3D12DDI_API_HCOMMANDLIST` identifies the application-side header rather
-> than ordinary driver-private storage; follow the
-> [shared header/conversion contract](execution.md#work-command-handles).
-> The table choice is conditional, not universal direct dispatch or feature
-> availability. It does not make the image callback accept API object pointers.
-> Passing either handle form transfers no COM ownership.
-
-<!-- d3d12-review-alert:end:pixel-shaders:VR-current-roles:2 -->
 
 ```cpp
 typedef enum D3D12DDI_SHADING_RATE_0062
@@ -2423,11 +2397,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_RS_SET_SHADING_RATE_IMAGE_0062 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The driver rate enum has the same numeric encodings and X/Y interpretation
-> as the [API rate enum](#vrs-encodings); the driver combiner enum corresponds
-> to the [API combiner values](#vrs-types). These encodings do not advertise
-> support for every listed rate. The [tier/additional-rate requirements](#vrs-tiering)
-> and [coarse-size/MSAA support table](#vrs-support) remain applicable.
+> The driver rate and combiner enums use the API numeric encodings.
 
 <!-- d3d12-review-alert:end:pixel-shaders:VR-rate-values:0 -->
 
@@ -2436,87 +2406,8 @@ typedef VOID ( APIENTRY* PFND3D12DDI_RS_SET_SHADING_RATE_IMAGE_0062 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For either rate callback, a non-null `Combiners` points to exactly two
-> elements: command/primitive first, then image. The driver captures those
-> values during the call, not by retaining caller array storage.
-> Null sets both combiners to `PASSTHROUGH`, not the previous pair;
-> the driver must not assume a materialized default array is supplied.
-> The [sequential per-axis logarithmic combination](#vrs-combiners) applies,
-> not MIN/MAX/SUM on the packed shading-rate enum.
+> The driver captures both combiner values during the call. A null `Combiners` pointer selects two `PASSTHROUGH` values, so the driver cannot assume a materialized default array.
 
 <!-- d3d12-review-alert:end:pixel-shaders:VR-rate-values:1 -->
 
-<!-- d3d12-review-alert:begin:pixel-shaders:VR-rate-values:2 -->
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `VariableRateShadingSumCombinerSupported` is independent of
-> `AdditionalShadingRatesSupported`. Unsupported SUM retains the owner's
-> undefined-rendering/soft-diagnostic policy, not a new strict retail rejection.
-> The shader/image contribution normalization rules do not legalize arbitrary
-> invalid API enum values. Per-primitive viewport and mesh-source eligibility
-> retain their [separate capabilities](#vrs-tiering); the setters do not replace
-> those shader/PSO or forced-fine requirements.
-
-<!-- d3d12-review-alert:end:pixel-shaders:VR-rate-values:2 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:VR-image-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> In both tables the image callback receives `D3D12DDI_HCOMMANDLIST`, then
-> `D3D12DDI_HRESOURCE`. The runtime supplies ordinary driver handles after
-> object adaptation; the resource handle is not an `ID3D12Resource*`, CPU
-> texel pointer, descriptor-table base or snapshot of the image contents.
-> A null driver resource handle selects a 1x1 image contribution everywhere.
-> Missing/OOB texels likewise contribute 1x1 before combining; none of these
-> cases independently forces the final effective rate to 1x1.
-
-<!-- d3d12-review-alert:end:pixel-shaders:VR-image-values:0 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:VR-image-values:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Image binding requires Tier 2 and preserves the
-> [complete resource/heap/format/dimension/layout/tile contract](#vrs-image).
-> The GPU consumes live image data under the owner's access/lifetime rules.
-> The required source state or enhanced layout/access applies when a draw
-> uses the image, not merely when this setter is recorded. Binding does not
-> perform that transition or grant simultaneous shader access to an image
-> being used as a shading-rate source.
-
-<!-- d3d12-review-alert:end:pixel-shaders:VR-image-values:1 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:VR-state-errors:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Both setters remain non-predicatable DIRECT/BUNDLE state operations,
-> permitted under the [render-pass recording conditions](output-merger.md#render-pass-operation-surface).
-> The [canonical shading-rate state](command-list-state.md#shading-rate)
-> defines supported direct-recording defaults of 1x1 base rate, both
-> `PASSTHROUGH` combiners and no image. Bundles inherit the state and their
-> changes affect the parent. `ClearState` restores these defaults; selecting
-> a PSO alone does not replace the command-level rate, pair or image.
-
-<!-- d3d12-review-alert:end:pixel-shaders:VR-state-errors:0 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:VR-state-errors:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Resource execution lifetime, residency and the
-> [image access/synchronization requirements](#vrs-image) remain unchanged.
-> These `VOID` setters use the
-> [recording-error/deferred-Close contract](execution.md#lifecycle-driver-errors),
-> not a recoverable creation `HRESULT` or proof of GPU completion. Neither
-> the handle form nor some checked runtime paths establish a universal
-> validation, clamping or invalid-resource-to-null substitution guarantee.
-
-<!-- d3d12-review-alert:end:pixel-shaders:VR-state-errors:1 -->

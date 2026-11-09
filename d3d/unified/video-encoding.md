@@ -27,7 +27,7 @@
 > [recording](#encoding-recording), [metadata](#encoding-metadata), and the
 > [declaring API reference](#encoding-api). Detailed controls, codec syntax and released types retain subordinate
 > references, not independent entry points. Published driver layouts and
-> callbacks are integrated with the corresponding contracts below.
+> DDIs are integrated with the corresponding contracts below.
 
 <!-- d3d12-review-alert:end:video-encoding:intro:0 -->
 
@@ -144,11 +144,13 @@
 
 <a id="source-s01-099"></a>
 
-#### Video-device callback tables
+<a id="video-device-callback-tables"></a>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:S01-099:0 -->The [published video-device callback tables](#encoding-ddi-table-associations) contain the encoder/heap creation and destruction slots.<!-- d3d12-review-inline:end:video-encoding:S01-099:0 --></ins>
+#### Video-device DDI tables
 
-The [published callback-table associations](video-encoding.md#encoding-ddi-table-associations) identify the actual video-device and encode-list slots.
+<ins><!-- d3d12-review-inline:begin:video-encoding:S01-099:0 -->The [published video-device DDI tables](#encoding-ddi-table-associations) contain the encoder/heap creation and destruction slots.<!-- d3d12-review-inline:end:video-encoding:S01-099:0 --></ins>
+
+The [published DDI-table associations](video-encoding.md#encoding-ddi-table-associations) identify the actual video-device and encode-list slots.
 ---
 
 <!-- d3d12-review-alert:begin:video-encoding:ddi-query-associations:0 -->
@@ -760,14 +762,16 @@ typedef struct D3D12DDI_FEATURE_DATA_VIDEO_ENCODER_RESOLUTION_SUPPORT_QPMAP_0107
 
 <a id="encoding-ddi-table-associations"></a>
 
-#### Published callback-table associations
+<a id="published-callback-table-associations"></a>
+
+#### Published DDI-table associations
 
 <!-- d3d12-review-alert:begin:video-encoding:ddi-table-associations:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> | Current table | Member | Callback typedef |
+> | Current table | Member | DDI typedef |
 > |---|---|---|
 > | `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnCalcPrivateVideoEncoderSize` | `PFND3D12DDI_CALCPRIVATEVIDEOENCODERSIZE_0082_0` |
 > | `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnCreateVideoEncoder` | `PFND3D12DDI_CREATEVIDEOENCODER_0082_0` |
@@ -834,58 +838,20 @@ typedef struct D3D12DDI_FEATURE_DATA_VIDEO_ENCODER_RESOLUTION_SUPPORT_QPMAP_0107
 
 ### Encoder and heap driver contracts
 
-<!-- d3d12-review-alert:begin:video-encoding:entry:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> API structure shapes are not assumed to be DDI binary layouts.
-
-<!-- d3d12-review-alert:end:video-encoding:entry:0 -->
-
 <!-- d3d12-review-alert:begin:video-encoding:ddi-contract:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The following are actual published WDK declarations, not API-shaped
-> pseudocode. Resource and fence parameters are driver handles; size/offset
-> feedback are arrays of resource handles. Creation has separate private-size,
-> create and destroy callbacks. Encode, output-metadata resolution and input-map
-> resolution are different recording callbacks. Numeric suffixes are part of
-> the DDI identity, not an API interface version. The [callback-table associations](#encoding-ddi-table-associations)
-> identify the published slots; they do not imply a one-to-one mapping
-> from an API interface revision to one driver table.
+> The [DDI table associations](#encoding-ddi-table-associations) identify the creation, destruction and recording entries below.
 
 <!-- d3d12-review-alert:end:video-encoding:ddi-contract:0 -->
-
-<!-- d3d12-review-alert:begin:video-encoding:ddi-contract:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The common [DDI capability-payload protocol](video-decode.md#ddi-capability-payloads)
-> owns capability-query framing, not encoding object lifetime.
-> [Core object/resource lifetime](execution.md#lifetime) and
-> [residency](resources.md#residency) apply together with this family's
-> [immutable objects](video-encoding.md#encoding-objects),
-> [recording/ordering/lifetime contract](video-encoding.md#encoding-recording)
-> and [private-size/create/destroy callbacks](#source-s01-091).
-> The callback descriptions and [published slots](#encoding-ddi-table-associations)
-> state this family's allocation responsibilities; motion-estimator or
-> decoder-specific allocation/cross-queue rules are not inherited here.
-> The selected native observation
-> corroborates creation copies, exact-count reflection and wrapper dispatch only.
-> It does not establish each driver's codec implementation, error timing,
-> precision, performance, or device-specific support.
-
-<!-- d3d12-review-alert:end:video-encoding:ddi-contract:1 -->
 
 <a id="source-s01-091"></a>
 
 #### PFND3D12DDI_CALCPRIVATEVIDEOENCODERSIZE_0082_0
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:S01-091:0 -->Published callback: [`PFND3D12DDI_CALCPRIVATEVIDEOENCODERSIZE_0082_0`](video-encoding.md#pfnd3d12ddi-calcprivatevideoencodersize-0082-0).<!-- d3d12-review-inline:end:video-encoding:S01-091:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding:S01-091:0 -->Published DDI: [`PFND3D12DDI_CALCPRIVATEVIDEOENCODERSIZE_0082_0`](video-encoding.md#pfnd3d12ddi-calcprivatevideoencodersize-0082-0).<!-- d3d12-review-inline:end:video-encoding:S01-091:0 --></ins>
 
 This method is used to calculate the required driver object size. The D3D runtime allocates the memory for storing the driver's object representing the video encoder.
 
@@ -903,7 +869,7 @@ Encoder creation parameters.
 
 #### PFND3D12DDI_CREATEVIDEOENCODER_0082_0
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:S01-092:0 -->Published callback: [`PFND3D12DDI_CREATEVIDEOENCODER_0082_0`](video-encoding.md#pfnd3d12ddi-createvideoencoder-0082-0).<!-- d3d12-review-inline:end:video-encoding:S01-092:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding:S01-092:0 -->Published DDI: [`PFND3D12DDI_CREATEVIDEOENCODER_0082_0`](video-encoding.md#pfnd3d12ddi-createvideoencoder-0082-0).<!-- d3d12-review-inline:end:video-encoding:S01-092:0 --></ins>
 
 Creates a video encoder object.
 
@@ -925,7 +891,7 @@ Encoder creation parameters.
 
 #### PFND3D12DDI_DESTROYVIDEOENCODER_0080
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:S01-093:0 -->Published callback: [`PFND3D12DDI_DESTROYVIDEOENCODER_0080`](video-encoding.md#pfnd3d12ddi-destroyvideoencoder-0080).<!-- d3d12-review-inline:end:video-encoding:S01-093:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding:S01-093:0 -->Published DDI: [`PFND3D12DDI_DESTROYVIDEOENCODER_0080`](video-encoding.md#pfnd3d12ddi-destroyvideoencoder-0080).<!-- d3d12-review-inline:end:video-encoding:S01-093:0 --></ins>
 
 **Parameters**
 
@@ -941,7 +907,7 @@ Handle to the hDrvVideoEncoder.
 
 #### PFND3D12DDI_CALCPRIVATEVIDEOENCODERHEAPSIZE_0110_0
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:S01-095:0 -->Published callback: [`PFND3D12DDI_CALCPRIVATEVIDEOENCODERHEAPSIZE_0110_0`](video-encoding.md#pfnd3d12ddi-calcprivatevideoencoderheapsize-0080-2).<!-- d3d12-review-inline:end:video-encoding:S01-095:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding:S01-095:0 -->Published DDI: [`PFND3D12DDI_CALCPRIVATEVIDEOENCODERHEAPSIZE_0110_0`](video-encoding.md#pfnd3d12ddi-calcprivatevideoencoderheapsize-0080-2).<!-- d3d12-review-inline:end:video-encoding:S01-095:0 --></ins>
 
 This method is used to calculate the required driver object size. The D3D runtime allocates the memory for storing the driver's object representing the video encoder heap.
 
@@ -959,7 +925,7 @@ Encoder heap creation parameters.
 
 #### PFND3D12DDI_CREATEVIDEOENCODERHEAP_0110_0
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:S01-096:0 -->Published callback: [`PFND3D12DDI_CREATEVIDEOENCODERHEAP_0110_0`](video-encoding.md#pfnd3d12ddi-createvideoencoderheap-0080-2).<!-- d3d12-review-inline:end:video-encoding:S01-096:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding:S01-096:0 -->Published DDI: [`PFND3D12DDI_CREATEVIDEOENCODERHEAP_0110_0`](video-encoding.md#pfnd3d12ddi-createvideoencoderheap-0080-2).<!-- d3d12-review-inline:end:video-encoding:S01-096:0 --></ins>
 
 Creates a video encoder heap object.
 
@@ -981,7 +947,7 @@ Handle for the D3D12 device.
 
 #### PFND3D12DDI_DESTROYVIDEOENCODERHEAP_0080
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:S01-097:0 -->Published callback: [`PFND3D12DDI_DESTROYVIDEOENCODERHEAP_0080`](video-encoding.md#pfnd3d12ddi-destroyvideoencoderheap-0080).<!-- d3d12-review-inline:end:video-encoding:S01-097:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding:S01-097:0 -->Published DDI: [`PFND3D12DDI_DESTROYVIDEOENCODERHEAP_0080`](video-encoding.md#pfnd3d12ddi-destroyvideoencoderheap-0080).<!-- d3d12-review-inline:end:video-encoding:S01-097:0 --></ins>
 
 **Parameters**
 
@@ -1262,7 +1228,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYVIDEOENCODER_0080 )(
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:S01-145:0 -->Released declaration: [`D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_INPUT_STREAM_ARGUMENTS_0082_0`](video-encoding.md#d3d12ddi-video-encoder-encodeframe-input-stream-arguments-0082-0).<!-- d3d12-review-inline:end:video-encoding:S01-145:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:S01-145:1 -->Parameters for the input of the encoding operation.<!-- d3d12-review-inline:end:video-encoding:S01-145:1 --></ins>
+Parameters for the input of the encoding operation.
 
 <a id="source-s01-150"></a>
 
@@ -4003,7 +3969,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_RESOLVE_INPUT_PARAM_LAYOUT_0103_0 )(
 > formulas, examples and figures. The [codec reference](video-encoding-codecs.md)
 > retains the additional AV1 metadata and header responsibilities.
 > The [driver metadata contracts](#encoding-driver-metadata) contain actual published
-> versioned DDI payloads and callback types; API layouts are not assumed to be
+> versioned DDI payloads and DDI types; API layouts are not assumed to be
 > DDI layouts.
 
 <!-- d3d12-review-alert:end:video-encoding:metadata:4 -->
@@ -4018,11 +3984,13 @@ typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_RESOLVE_INPUT_PARAM_LAYOUT_0103_0 )(
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:S01-149:0 -->Released declaration: [`D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0080_2`](video-encoding.md#d3d12ddi-video-encoder-encodeframe-output-stream-arguments-0080-2).<!-- d3d12-review-inline:end:video-encoding:S01-149:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:S01-149:1 -->Parameters for the output of the encoding operation.<!-- d3d12-review-inline:end:video-encoding:S01-149:1 --></ins>
+Parameters for the output of the encoding operation.
 
 <a id="source-s01-151"></a>
 
-#### Metadata-resolution callback
+<a id="metadata-resolution-callback"></a>
+
+#### Metadata-resolution DDI
 
 <!-- d3d12-review-alert:begin:video-encoding:ddi-metadata-versioning:0 -->
 
@@ -4034,7 +4002,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_RESOLVE_INPUT_PARAM_LAYOUT_0103_0 )(
 > [`D3D12DDI_VIDEO_ENCODER_OUTPUT_METADATA_0083_0`](#d3d12ddi-video-encoder-output-metadata-0083-0),
 > its statistics and the 64-bit subregion records. This is a selected-layout
 > correspondence, not a record-selection rule for every historically negotiated
-> DDI. The `_0082_0` callback suffix alone establishes neither selection of the
+> DDI. The `_0082_0` DDI suffix alone establishes neither selection of the
 > older `_0082_0` record nor universal selection of `_0083_0` on historical paths.
 > Older record references retained in the original published header comments
 > do not settle that version question. Historical selection remains qualified
@@ -4050,13 +4018,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_RESOLVE_INPUT_PARAM_LAYOUT_0103_0 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> API object/resource interfaces are translated to driver handles. In particular,
-> `pInputFrame` becomes `hDrvInputTexture2D`, reconstructed/reference textures
-> become resource handles, and subregion resources/fences become arrays of
-> resource/fence handles. Byte offsets are retained as explicit offset fields.
-> The API version-1 HEVC union selects HEVC2; its published DDI counterpart is
-> the `_0108_0` picture-control union. These named translations are not permission
-> to reinterpret an entire API argument structure as a DDI structure.
+> The API version-1 HEVC union selects HEVC2. Its DDI counterpart is the `_0108_0` picture-control union.
 
 <!-- d3d12-review-alert:end:video-encoding:ddi-metadata-versioning:1 -->
 
@@ -5400,7 +5362,7 @@ void ResolveInputParamLayout(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Both callbacks capture needed CPU descriptions during recording, without
+> Both DDIs capture needed CPU descriptions during recording, without
 > snapshotting the referenced GPU data. They retain the full
 > [recording/resource lifetime](#encoding-recording), control and synchronization
 > contracts and return no value; neither reports GPU completion or inserts

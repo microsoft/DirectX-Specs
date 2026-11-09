@@ -37,10 +37,10 @@
 
 ## Rays
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-rays:0 -->A ray is: an origin, direction and parametric interval (TMin, TMax) in
+A ray is: an origin, direction and parametric interval (TMin, TMax) in
 which intersections may occur at T locations along the interval. To be
 concrete, positions along the ray are: origin + T*direction (the
-direction does not get normalized).<!-- d3d12-review-inline:end:ray-traversal:R-rays:0 --></ins>
+direction does not get normalized).
 
 There is some nuance to the exact bounds used, (TMin..TMax) vs \[TMin...TMax\]
 for intersections to count, depending on the geometry type, defined in [ray extents](#ray-extents).
@@ -51,19 +51,19 @@ ray interacts with geometry in a scene and also visible to the caller of
 
 ![ray](../images/raytracing/ray.png)
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-rays:4 -->The TMin value tracked by the system never changes over the lifetime of
+The TMin value tracked by the system never changes over the lifetime of
 a ray. On the other hand, as intersections are discovered (in arbitrary
 spatial order), the system reduces TMax to reflect the closest
 intersection so far. When all intersections are complete, TMax
 represents the closest intersection, the relevance of which appears
-later.<!-- d3d12-review-inline:end:ray-traversal:R-rays:4 --></ins>
+later.
 
 <a id="ray-description-structure"></a>
 
 ### Ray description structure
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:T-RayDesc:0 -->The RayDesc structure is passed to [TraceRay()](raytracing-pipelines.md#traceray) or [RayQuery::TraceRayInline()](#rayquery-tracerayinline) to define the
-origin, direction, and extents of the ray.<!-- d3d12-review-inline:end:ray-traversal:T-RayDesc:0 --></ins>
+The RayDesc structure is passed to [TraceRay()](raytracing-pipelines.md#traceray) or [RayQuery::TraceRayInline()](#rayquery-tracerayinline) to define the
+origin, direction, and extents of the ray.
 
 ```hlsl
 struct RayDesc
@@ -92,10 +92,10 @@ struct RayDesc
 
 ## Triangle and procedural intersections
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-triangle-overview:0 -->Geometry in a bottom-level acceleration structure
+<ins><!-- d3d12-review-inline:begin:ray-traversal:R-triangle-overview:0 -->Geometry<!-- d3d12-review-inline:end:ray-traversal:R-triangle-overview:0 --></ins> in a bottom-level acceleration structure
 can be represented as triangle meshes which use built-in ray-triangle
 intersection support that passes triangle barycentrics describing the
-intersection to subsequent shaders.<!-- d3d12-review-inline:end:ray-traversal:R-triangle-overview:0 --></ins>
+intersection to subsequent shaders.
 
 An alternative representation for geometry in a bottom-level
 acceleration structure is an axis aligned bounding box which contains a
@@ -105,10 +105,10 @@ the bounding box. The shader defines the attributes describing
 intersections to pass on to subsequent shaders, including the current T
 value.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-procedural-overview:1 -->Using intersection shaders instead of the built-in ray-triangle
-intersection is less efficient but offers far more flexibility.<!-- d3d12-review-inline:end:ray-traversal:R-procedural-overview:1 --></ins>
+Using intersection shaders instead of the <ins><!-- d3d12-review-inline:begin:ray-traversal:R-procedural-overview:1 -->built-in ray-triangle<!-- d3d12-review-inline:end:ray-traversal:R-procedural-overview:1 --></ins>
+intersection is less efficient but offers far more flexibility.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-procedural-overview:2 -->HLSL details are [here](raytracing-pipelines.md#intersection-shader).<!-- d3d12-review-inline:end:ray-traversal:R-procedural-overview:2 --></ins>
+HLSL details are [here](raytracing-pipelines.md#intersection-shader).
 
 <!-- d3d12-review-alert:begin:ray-traversal:N-procedural-inline:0 -->
 
@@ -123,7 +123,7 @@ intersection is less efficient but offers far more flexibility.<!-- d3d12-review
 
 ## Fixed function ray-triangle intersection specification
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-triangle-math:0 -->For manifold geometry:<!-- d3d12-review-inline:end:ray-traversal:R-triangle-math:0 --></ins>
+For manifold geometry:
 
 - A single ray striking an edge in a scene must report an intersection
 with only one of the incident triangles. A ray striking a vertex must
@@ -166,10 +166,10 @@ acceleration structure implementation while maintaining watertightness:
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<https://www.intel.com/content/dam/develop/external/us/en/documents/rptraversal.pdf>
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-triangle-math:12 -->It is expected that implementations of watertight ray triangle
+It is expected that implementations of watertight ray triangle
 intersections are possible without having to resort to costly paths such
-as double precision fallbacks. This includes following a form
-of top-left rule discussed below to remove double hits on edges.<!-- d3d12-review-inline:end:ray-traversal:R-triangle-math:12 --></ins>
+as double precision fallbacks. <ins><!-- d3d12-review-inline:begin:ray-traversal:R-triangle-math:12 -->This includes following a form<!-- d3d12-review-inline:end:ray-traversal:R-triangle-math:12 --></ins>
+of top-left rule discussed below to remove double hits on edges.
 
 #### Top-left rule
 
@@ -275,18 +275,18 @@ and exclusive respectively.
 
 ![classifyingEdges](../images/raytracing/classifyingEdges.png)
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-triangle-math:33 -->As a series of rays strike an edge, the left direction can change 90°.
+As a series of rays strike an edge, the left direction can change 90°.
 Because of the change in left direction, the inclusive/exclusive
 classification of an edge can change along the length of the edge.
 Classification may also change if the intersection plane changes (also a
-function of ray direction) along the length of an edge.<!-- d3d12-review-inline:end:ray-traversal:R-triangle-math:33 --></ins>
+function of ray direction) along the length of an edge.
 
 <a id="ray-extents"></a>
 
 ## Ray extents
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-extents:0 -->Ray-triangle intersection can only occur if the intersection t-value
-satisfies TMin \< t \< TMax.<!-- d3d12-review-inline:end:ray-traversal:R-extents:0 --></ins>
+Ray-triangle intersection can only occur if the intersection t-value
+satisfies TMin \< t \< TMax.
 
 Ray-procedural-primitive intersection can only occur if the intersection t-value
 satisfies TMin \<= t \<= TMax.
@@ -304,7 +304,7 @@ No part of ray origin, direction, T range can be NaN.
 
 <ins><!-- d3d12-review-inline:begin:ray-traversal:R-extents:5 -->The runtime does not enforce these limits.<!-- d3d12-review-inline:end:ray-traversal:R-extents:5 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-extents:6 -->Violating these rules produces undefined behavior.<!-- d3d12-review-inline:end:ray-traversal:R-extents:6 --></ins>
+Violating these rules produces undefined behavior.
 
 <a id="traversal-order-hit-selection-and-repeated-intersections"></a>
 
@@ -339,11 +339,6 @@ InstanceInclusionMask which gets ANDed with the InstanceMask from any
 geometry instance that is a candidate for intersection. If the result of
 the AND is zero, the intersection is ignored.<!-- d3d12-review-inline:end:ray-traversal:R-mask:0 --></ins>
 
-<!-- d3d12-review-context:begin:ray-traversal:R-mask:1 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
-
 > This feature allows apps to represent different subsets of geometry within a single acceleration structure as opposed to having to build separate acceleration structures for each subset. The app can choose how to trade traversal performance versus overhead for maintaining multiple acceleration structures.
 >
 > An example would be culling objects that an app doesn't want to contribute to a shadow determination but otherwise remain visible.
@@ -354,14 +349,12 @@ the AND is zero, the intersection is ignored.<!-- d3d12-review-inline:end:ray-tr
 >
 >The bits in the ray's InstanceInclusionMask define which groups to include during traversal.
 
-<!-- d3d12-review-context:end:ray-traversal:R-mask:1 -->
-
 <a id="flags-per-ray"></a>
 
 ## Flags per ray
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-flags-example:0 -->[TraceRay()](raytracing-pipelines.md#traceray) supports a selection of [ray flags](#ray-flags) to override transparency, culling, and early-out
-behavior.<!-- d3d12-review-inline:end:ray-traversal:R-flags-example:0 --></ins>
+[TraceRay()](raytracing-pipelines.md#traceray) supports a selection of [ray flags](#ray-flags) to override transparency, culling, and early-out
+behavior.
 
 <!-- d3d12-review-context:begin:ray-traversal:R-flags-example:1 -->
 
@@ -384,9 +377,9 @@ behavior.<!-- d3d12-review-inline:end:ray-traversal:R-flags-example:0 --></ins>
 
 ## Ray flags
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:T-RayFlags:0 -->Ray flags are passed to [TraceRay()](raytracing-pipelines.md#traceray) or [RayQuery::TraceRayInline()](#rayquery-tracerayinline) to override
+Ray flags are passed to [TraceRay()](raytracing-pipelines.md#traceray) or [RayQuery::TraceRayInline()](#rayquery-tracerayinline) to override
 transparency, culling, and early-out behavior. For an example, see
-[here](#flags-per-ray).<!-- d3d12-review-inline:end:ray-traversal:T-RayFlags:0 --></ins>
+[here](#flags-per-ray).
 
 Ray flags are also a template parameter to [RayQuery](#rayquery) objects to enable static specialization - runtime behavior of [RayQuery::TraceRayInline()](#rayquery-tracerayinline) takes on the OR of dynamic and static/template ray flags.
 
@@ -429,8 +422,8 @@ enum RAY_FLAG : uint
 > | `RAY_FLAG_CULL_FRONT_FACING_TRIANGLES` | <p>Enables culling of front facing triangles. See [D3D12_RAYTRACING_INSTANCE_FLAGS](acceleration-structures.md#d3d12_raytracing_instance_flags) for selecting which triangles are back facing, per-instance.</p><p>On instances that specify [D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE](acceleration-structures.md#d3d12_raytracing_instance_flags), this flag has no effect.</p><p> On [procedural primitive geometry](acceleration-structures.md#d3d12_raytracing_geometry_type), this flag has no effect.</p><p>This flag is mutually exclusive to `RAY_FLAG_CULL_BACK_FACING_TRIANGLES`.</p> |
 > | `RAY_FLAG_CULL_OPAQUE` | <p>Culls all primitives that are considered opaque based on their [geometry](acceleration-structures.md#d3d12_raytracing_geometry_flags) and [instance](acceleration-structures.md#d3d12_raytracing_instance_flags) flags.</p><p>This flag is mutually exclusive to `RAY_FLAG_FORCE_OPAQUE`, `RAY_FLAG_FORCE_NON_OPAQUE`, and `RAY_FLAG_CULL_NON_OPAQUE`.</p> |
 > | `RAY_FLAG_CULL_NON_OPAQUE` | <p>Culls all primitives that are considered non-opaque based on their [geometry](acceleration-structures.md#d3d12_raytracing_geometry_flags) and [instance](acceleration-structures.md#d3d12_raytracing_instance_flags) flags.</p><p>This flag is mutually exclusive to `RAY_FLAG_FORCE_OPAQUE`, `RAY_FLAG_FORCE_NON_OPAQUE`, and `RAY_FLAG_CULL_OPAQUE`.</p> |
-> | `RAY_FLAG_SKIP_TRIANGLES` | <p>Culls all triangles.</p><p>This flag is mutually exclusive to `RAY_FLAG_CULL_FRONT_FACING_TRIANGLES`, `RAY_FLAG_CULL_BACK_FACING_TRIANGLES` and `RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES`.</p><p>If instances specify [D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE](acceleration-structures.md#d3d12_raytracing_instance_flags) it has no effect, as that flag is meant for disabling front or back culling only.  In other words `RAY_FLAG_SKIP_TRIANGLES` cannot be overruled.</p><p>This flag is only supported as of [Tier 1.1](../Raytracing.md#d3d12_raytracing_tier) implementations.</p> |
-> | `RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES` | <p>Culls all procedural primitives.</p><p>This flag is mutually exclusive to `RAY_FLAG_SKIP_TRIANGLES`.</p><p>This flag is only supported as of [Tier 1.1](../Raytracing.md#d3d12_raytracing_tier) implementations.</p> |
+> | `RAY_FLAG_SKIP_TRIANGLES` | <p>Culls all triangles.</p><p>This flag is mutually exclusive to `RAY_FLAG_CULL_FRONT_FACING_TRIANGLES`, `RAY_FLAG_CULL_BACK_FACING_TRIANGLES` and `RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES`.</p><p>If instances specify [D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE](acceleration-structures.md#d3d12_raytracing_instance_flags) it has no effect, as that flag is meant for disabling front or back culling only.  In other words `RAY_FLAG_SKIP_TRIANGLES` cannot be overruled.</p><p>This flag is only supported as of [Tier 1.1](devices-and-capabilities.md#raytracing-tiers) implementations.</p> |
+> | `RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES` | <p>Culls all procedural primitives.</p><p>This flag is mutually exclusive to `RAY_FLAG_SKIP_TRIANGLES`.</p><p>This flag is only supported as of [Tier 1.1](devices-and-capabilities.md#raytracing-tiers) implementations.</p> |
 > | `RAY_FLAG_FORCE_OMM_2_STATE` | <p>Treat unknown opaque and unknown transparent as opaque and transparent, respectively during traversal. If an instance is flagged with [D3D12_RAYTRACING_INSTANCE_FLAG_DISABLE_OMMS](acceleration-structures.md#d3d12_raytracing_instance_flags) that takes precedence over this flag.</p><p>Applications must not set this flag without OMM capability; this is the [provisional conservative condition](#omm-force-two-state-provisional-condition). This flag is also documented in a separate [HLSL Opacity Micromaps](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0024-opacity-micromaps.md) spec.</p> |
 
 <!-- d3d12-review-alert:end:ray-traversal:T-RayFlags:5 -->
@@ -534,7 +527,7 @@ enum RAY_FLAG : uint
 
 ### Opacity micromaps and TraceRay
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-omm-pipeline:0 -->The pipeline flag, [D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS](state-objects.md#d3d12_raytracing_pipeline_flags), lets the driver know that the opacity micromap feature is going to be used.<!-- d3d12-review-inline:end:ray-traversal:R-omm-pipeline:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:ray-traversal:R-omm-pipeline:0 -->The pipeline flag,<!-- d3d12-review-inline:end:ray-traversal:R-omm-pipeline:0 --></ins> [D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS](state-objects.md#d3d12_raytracing_pipeline_flags), <ins><!-- d3d12-review-inline:begin:ray-traversal:R-omm-pipeline:0 -->lets<!-- d3d12-review-inline:end:ray-traversal:R-omm-pipeline:0 --></ins> the driver know that the opacity micromap feature is going to be used.
 
 - If OMMs are known not to be used, it is more efficient to not specify the [D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS](state-objects.md#d3d12_raytracing_pipeline_flags) flag.
 - If the flag is omitted and an OMM is encountered during ray traversal, behavior is undefined.
@@ -561,20 +554,13 @@ Ray flags and instance flags may still alter the state of opaque or unknown hits
 It is still possible to turn off OMMs and revert to the geometry-specified behavior for individual instances using the [D3D12_RAYTRACING_INSTANCE_FLAG_DISABLE_OMMS](acceleration-structures.md#d3d12_raytracing_instance_flags) instance flag.
 This flag is only valid if the referenced BLAS was originally built with the [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DISABLE_OMMS](acceleration-structures.md#d3d12_raytracing_acceleration_structure_build_flags) build flag.
 
-<!-- d3d12-review-context:begin:ray-traversal:R-omm-pipeline:10 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
-
 > Disabling OMMs on a per-instance basis is useful to implement certain level-of-detail schemes.
-
-<!-- d3d12-review-context:end:ray-traversal:R-omm-pipeline:10 -->
 
 <a id="opacity-micromaps-and-tracerayinline"></a>
 
 ### Opacity micromaps and TraceRayInline
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-omm-inline:0 -->For inline raytracing via [RayQuery](#rayquery) objects, the `RayQuery` object takes an additional template parameter (as of Shader Model 6.9) allowing each instance of the object to indicate that the opacity micromap feature is going to be used.<!-- d3d12-review-inline:end:ray-traversal:R-omm-inline:0 --></ins>
+For inline raytracing via [RayQuery](#rayquery) objects, the `RayQuery` object takes an additional template parameter (as of Shader Model 6.9) allowing each instance of the object to indicate that the opacity micromap feature is going to be used.
 
 ```hlsl
 RayQuery<RAY_FLAGS,RAYQUERY_FLAGS>
@@ -584,7 +570,7 @@ RayQuery<RAY_FLAGS,RAYQUERY_FLAGS>
 - If OMMs are known not to be used, it is more efficient to not specify the `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` flag.
 - If the flag is omitted and an OMM is encountered during ray traversal, behavior is undefined.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-omm-inline:4 -->Opacity micromaps classify micro-triangles as opaque, transparent or unknown. When a ray intersects a triangle with a linked OMM, the intersection point within the barycentric space of the triangle is used to look up the opacity at that location.<!-- d3d12-review-inline:end:ray-traversal:R-omm-inline:4 --></ins>
+Opacity micromaps classify micro-triangles as opaque, transparent or unknown. When a ray intersects a triangle <ins><!-- d3d12-review-inline:begin:ray-traversal:R-omm-inline:4 -->with a linked OMM<!-- d3d12-review-inline:end:ray-traversal:R-omm-inline:4 --></ins>, the intersection point within the barycentric space of the triangle is used to look up the opacity at that location.
 
 <ins><!-- d3d12-review-inline:begin:ray-traversal:R-omm-inline:5 -->The following lists the base classification and default outcomes before the ray and instance flag overrides described below:<!-- d3d12-review-inline:end:ray-traversal:R-omm-inline:5 --></ins>
 
@@ -594,33 +580,26 @@ RayQuery<RAY_FLAGS,RAYQUERY_FLAGS>
 
 The geometry opaque/non-opaque flag state is ignored for triangles which have linked OMMs, as OMMs give much more fine-grained control and are intended to replace the geometry-wide state where possible.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-omm-inline:8 -->Ray flags and instance flags may still alter the state of opaque or unknown hits, but note that any such flags are only applied *after* the OMM hit classification has occurred. This means that once the OMM has been evaluated, there is no way to turn a transparent micro-triangle miss into a hit even by using force-opaque ray or instance flags.<!-- d3d12-review-inline:end:ray-traversal:R-omm-inline:8 --></ins>
+Ray flags and instance flags <ins><!-- d3d12-review-inline:begin:ray-traversal:R-omm-inline:8 -->may still alter the state of opaque or unknown hits<!-- d3d12-review-inline:end:ray-traversal:R-omm-inline:8 --></ins>, but note that any such flags are only applied *after* the OMM hit classification has occurred. This means that once the OMM has been evaluated, there is no way to turn a transparent micro-triangle miss into a hit even by using force-opaque ray or instance flags.
 
 It is still possible to turn off OMMs and revert to the geometry-specified behavior for individual instances using the [D3D12_RAYTRACING_INSTANCE_FLAG_DISABLE_OMMS](acceleration-structures.md#d3d12_raytracing_instance_flags) instance flag.
 This flag is only valid if the referenced BLAS was originally built with the [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DISABLE_OMMS](acceleration-structures.md#d3d12_raytracing_acceleration_structure_build_flags) build flag.
 
-<!-- d3d12-review-context:begin:ray-traversal:R-omm-inline:10 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
-
 > Disabling OMMs on a per-instance basis is useful to implement certain level-of-detail schemes.
-
-<!-- d3d12-review-context:end:ray-traversal:R-omm-inline:10 -->
 
 <a id="inline-raytracing"></a>
 
 ## Inline raytracing
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-inline-overview:0 -->[TraceRayInline()](#rayquery-tracerayinline) is an alternative to [TraceRay()](raytracing-pipelines.md#traceray) that doesn't use any separate shaders - all shading is handled by the caller.  Both styles of raytracing use the same acceleration structures.<!-- d3d12-review-inline:end:ray-traversal:R-inline-overview:0 --></ins>
+[TraceRayInline()](#rayquery-tracerayinline) is an alternative to [TraceRay()](raytracing-pipelines.md#traceray) that doesn't use any separate shaders - all shading is handled by the caller.  Both styles of raytracing use the same acceleration structures.
 
 `TraceRayInline()`, as a member of the [RayQuery](#rayquery) object, actually does very little itself - it initializes raytracing parameters. This sets up the shader to call other methods of the [RayQuery](#rayquery) object to work through the actual raytracing process.
 
 Shaders can instantiate `RayQuery` objects as local variables, each of which acts as a state machine for ray query.  The shader interacts with the `RayQuery` object's methods to advance the query through an acceleration structure and query traversal information.  Accesses to the acceleration structure (e.g. box and triangle intersection) are abstracted and thus left to the hardware.  Surrounding these fixed-function acceleration structure accesses, all necessary app shader code, for handling both enumerated candidate hits and the final result of a query (e.g. hit vs miss) can be contained in the individual shader driving the RayQuery.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-inline-overview:3 -->`RayQuery` objects can be used in any shader stage, including compute shaders, pixel shaders etc.  These can even be used in any raytracing shaders: any hit, closest hit etc., combining both raytracing styles.<!-- d3d12-review-inline:end:ray-traversal:R-inline-overview:3 --></ins>
+`RayQuery` objects can be used in any shader stage, including compute shaders, pixel shaders etc.  <ins><!-- d3d12-review-inline:begin:ray-traversal:R-inline-overview:3 -->These can even be used in<!-- d3d12-review-inline:end:ray-traversal:R-inline-overview:3 --></ins> any raytracing shaders: any hit, closest hit etc., combining both raytracing styles.
 
-Inline raytracing is supported by [Tier 1.1](../Raytracing.md#d3d12_raytracing_tier) raytracing implementations.
+Inline raytracing is supported by [Tier 1.1](devices-and-capabilities.md#raytracing-tiers) raytracing implementations.
 
 Pseudocode examples are [here](#tracerayinline-examples).
 
@@ -641,16 +620,16 @@ Pseudocode examples are [here](#tracerayinline-examples).
 
 ### TraceRayInline control flow
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-inline-flow:0 -->The image below depicts what happens when a shader uses a [RayQuery](#rayquery) object to call [RayQuery::TraceRayInline()](#rayquery-tracerayinline) and related methods for performing inline raytracing.  It offers similar functionality to the full dynamic-shader-based [TraceRay() control flow](raytracing-pipelines.md#traceray-control-flow), except refactored to make more sense when driven from a single shader.  The orange boxes represent fixed function operations while the blue boxes represent cases where control has returned to the originating shader to drive what happens next, if anything.  In each of these states of shader control, the shader can choose to further interact with the `RayQuery` object via a subset of [RayQuery intrinsics](#rayquery-intrinsics) currently valid based on the current state.<!-- d3d12-review-inline:end:ray-traversal:R-inline-flow:0 --></ins>
+The image below depicts what happens when a shader uses a [RayQuery](#rayquery) object to call [RayQuery::TraceRayInline()](#rayquery-tracerayinline) and related methods for performing inline raytracing.  It offers similar functionality to the full dynamic-shader-based [TraceRay() control flow](raytracing-pipelines.md#traceray-control-flow), except refactored to make more sense when driven from a single shader.  The orange boxes represent fixed function operations while the blue boxes represent cases where control has returned to the originating shader to drive what happens next, if anything.  In each of these states of shader control, the shader can choose to further interact with the `RayQuery` object via a subset of [RayQuery intrinsics](#rayquery-intrinsics) currently valid based on the current state.
 
 ![traceRayInlineControlFlow](../images/raytracing/traceRayInlineControlFlow.png)
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-inline-flow:2 -->\[1\] [RayQuery::Proceed()](#rayquery-proceed) searches the acceleration structure to enumerate
+\[1\] [RayQuery::Proceed()](#rayquery-proceed) searches the acceleration structure to enumerate
 primitives that may intersect the ray, conservatively: If a primitive is
 intersected by the ray and is within the current [ray extents](#ray-extents)
 interval, it is guaranteed to be enumerated eventually. If a primitive
 is not intersected by the ray or is outside the current [ray extents](#ray-extents), it may or may not be enumerated. Note that TMax is updated
-when a hit is committed (available to the shader through [RayQuery::CommittedRayT()](#rayquery-committedrayt)).  [RayQuery::Proceed()](#rayquery-proceed) represents where the bulk of system acceleration structure traversal is implemented (including code inlining where applicable).  [RayQuery::Abort()](#rayquery-abort) is an optional shortcut for the shader to be able to cause traversal to appear to be complete, via [RayQuery::Proceed()](#rayquery-proceed) returning `FALSE`.  So it is just a convenient way to exit the shader's traversal loop.  A shader can instead choose to break out of its traversal logic manually as well with normal shader code branching (invisible to the system).  This works since, as discussed in \[7\], the shader can call [RayQuery::CommittedStatus()](#rayquery-committedstatus) and related methods for retrieving committed hit information at any time after a [RayQuery::TraceRayInline](#rayquery-tracerayinline) call.<!-- d3d12-review-inline:end:ray-traversal:R-inline-flow:2 --></ins>
+when a hit is committed <ins><!-- d3d12-review-inline:begin:ray-traversal:R-inline-flow:2 -->(available to the shader through [RayQuery::CommittedRayT()](#rayquery-committedrayt))<!-- d3d12-review-inline:end:ray-traversal:R-inline-flow:2 --></ins>.  [RayQuery::Proceed()](#rayquery-proceed) represents where the bulk of system acceleration structure traversal is implemented (including code inlining where applicable).  [RayQuery::Abort()](#rayquery-abort) is an optional shortcut for the shader to be able to cause traversal to appear to be complete, via [RayQuery::Proceed()](#rayquery-proceed) returning `FALSE`.  So it is just a convenient way to exit the shader's traversal loop.  A shader can instead choose to break out of its traversal logic manually as well with normal shader code branching (invisible to the system).  This works since, <ins><!-- d3d12-review-inline:begin:ray-traversal:R-inline-flow:2 -->as discussed in \[7\]<!-- d3d12-review-inline:end:ray-traversal:R-inline-flow:2 --></ins>, the shader can call [RayQuery::CommittedStatus()](#rayquery-committedstatus) and related methods for retrieving committed hit information at any time after a [RayQuery::TraceRayInline](#rayquery-tracerayinline) call.
 
 <ins><!-- d3d12-review-inline:begin:ray-traversal:R-inline-flow:3 -->\[2\] Consider the case where the geometry is not triangle based.  Instead of fixed function triangle intersection [RayQuery::Proceed()](#rayquery-proceed) returns control to the shader.  It is the responsibility of the shader to evaluate all procedural intersections for this acceleration structure node, including resolving transparency for them if necessary without the system seeing what's happening.  The net result in terms of traversal is to call [RayQuery::CommitProceduralPrimitiveHit()](#rayquery-commitproceduralprimitivehit) zero or more times for hits the shader determines are closest so far.<!-- d3d12-review-inline:end:ray-traversal:R-inline-flow:3 --></ins>
 
@@ -659,12 +638,12 @@ flags of the intersection as well as the selection of [ray flags](#ray-flags) (t
 
 \[4\] While in `CANDIDATE_PROCEDURAL_PRIMITIVE` state it is ok to call [RayQuery::CommitProceduralPrimitiveHit()](#rayquery-commitproceduralprimitivehit) zero or more times for a given candidate, as long as each time called, the shader has manually ensured that the latest hit being committed is within the current [ray extents](#ray-extents).  The system does not do this work for procedural primitives.  So new committed hits will update TMax multiple times as they are encountered.  For simplicity, the flow diagram doesn't visually depict the situation of multiple commits per candidate.  Alternatively the shader could enumerate all procedural hits for the current candidate and just call `CommitProceduralPrimitiveHit()` once for the closest hit found that the shader has calculated will be the new TMax.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-inline-flow:6 -->\[5\] While in `CANDIDATE_NON_OPAQUE_TRIANGLE` state, the system has already determined that the candidate would be the closest hit so far in the [ray extents](#ray-extents) (e.g. would be new TMax if committed).  It is ok for the shader to call [RayQuery::CommitNonOpaqueTriangleHit()](#rayquery-commitnonopaquetrianglehit) zero or more times for a given candidate.  If called more than once, subsequent calls simply have no effect as the hit has already been committed.  For simplicity, the flow diagram doesn't visually depict the situation of multiple commits per candidate.<!-- d3d12-review-inline:end:ray-traversal:R-inline-flow:6 --></ins>
+\[5\] While in `CANDIDATE_NON_OPAQUE_TRIANGLE` state, the system has already determined that the candidate would be the closest hit so far in the [ray extents](#ray-extents) (e.g. would be new TMax if committed).  It is ok for the shader to call [RayQuery::CommitNonOpaqueTriangleHit()](#rayquery-commitnonopaquetrianglehit) zero or more times for a given candidate.  If called more than once, subsequent calls <ins><!-- d3d12-review-inline:begin:ray-traversal:R-inline-flow:6 -->simply have no effect<!-- d3d12-review-inline:end:ray-traversal:R-inline-flow:6 --></ins> as the hit has already been committed.  For simplicity, the flow diagram doesn't visually depict the situation of multiple commits per candidate.
 
 \[6\] The search for hits is ended at this point if the
 `RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH` [ray flag](#ray-flags) is set.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-inline-flow:8 -->\[7\] The shader can call [RayQuery::CommittedStatus()](#rayquery-committedstatus) from anywhere - a careful look at the flow diagram will reveal this.  It doesn't have to be after traversal has completed.  The status (including values returned from methods that report committed values) simply reflect the current state of the query.  What is not depicted in the diagram is that if [RayQuery::CommittedStatus()](#rayquery-committedstatus) is called before traversal has completed, the shader can still continue with the ray query.  One scenario where it can be interesting to call [RayQuery::CommittedStatus()](#rayquery-committedstatus) before [RayQuery::Proceed()](#rayquery-proceed) has returned false is if the shader has chosen to manually break out of its traversal loop without calling [RayQuery::Abort()](#rayquery-abort) discussed in \[1\].<!-- d3d12-review-inline:end:ray-traversal:R-inline-flow:8 --></ins>
+\[7\] The shader can call [RayQuery::CommittedStatus()](#rayquery-committedstatus) from anywhere - a careful look at the flow diagram will reveal this.  It doesn't have to be after traversal has completed.  The status (including values returned from methods that report <ins><!-- d3d12-review-inline:begin:ray-traversal:R-inline-flow:8 -->committed values<!-- d3d12-review-inline:end:ray-traversal:R-inline-flow:8 --></ins>) simply reflect the current state of the query.  What is not depicted in the diagram is that if [RayQuery::CommittedStatus()](#rayquery-committedstatus) is called before traversal has completed, the shader can still continue with the ray query.  One scenario where it can be interesting to call [RayQuery::CommittedStatus()](#rayquery-committedstatus) before [RayQuery::Proceed()](#rayquery-proceed) has returned false is if the shader has chosen to manually break out of its traversal loop without calling [RayQuery::Abort()](#rayquery-abort) discussed in \[1\].
 
 \[8\] The endpoint of the graph is trivially reachable anytime the shader has control simply by not calling methods that advance `RayQuery` state.  The shader can arbitrarily choose to stop using the `RayQuery` object, or do final shading based on whatever the current state of the `RayQuery` object is.  The shader can even reset the query regardless of its current state at any time by calling [RayQuery::TraceRayInline()](#rayquery-tracerayinline) again to initialize a new trace.
 
@@ -672,9 +651,9 @@ flags of the intersection as well as the selection of [ray flags](#ray-flags) (t
 
 ### Specialized TraceRayInline control flow
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-inline-specialized:0 -->The image below depicts how a particular choice of template flags used with the initial declaration of `RayQuery` can prune down the full flow graph (depicted above).  There is no shader participation needed in the search for intersections here.  Further, the search is configured to end upon the first hit.  Simplifications like this can free the system to generate more performant inline raytracing code.<!-- d3d12-review-inline:end:ray-traversal:R-inline-specialized:0 --></ins>
+The image below depicts how a particular choice of template flags used with the initial declaration of `RayQuery` can prune down the full flow graph (depicted above).  There is no shader participation needed in the search for intersections here.  Further, the search is configured to end upon the first hit.  Simplifications like this can free the system to generate more performant inline raytracing code.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-inline-specialized:1 -->![traceRayInlineControlFlow2](../images/raytracing/traceRayInlineControlFlow2.png)<!-- d3d12-review-inline:end:ray-traversal:R-inline-specialized:1 --></ins>
+![traceRayInlineControlFlow2](../images/raytracing/traceRayInlineControlFlow2.png)
 
 <a id="rayquery"></a>
 
@@ -692,7 +671,7 @@ Pseudocode examples are [here](#tracerayinline-examples).
 
 The size of `RayQuery` is implementation specific and opaque.  Shaders can have any number of live `RayQuery` objects during shader execution, but at the cost of an unknown (and relatively high) amount of hardware register storage, which can limit how many shaders can run in parallel. This unknown size is in contrast to traditional shader variables (e.g. `float4 foo`), whose register cost is obvious by the data type of the variable (e.g. 16 bytes for a `float4`).
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:T-RayQuery:5 -->If a variable of type `RayQuery` is assigned to another (which must have been declared with a  matching template specification), a reference to the original is passed (rather than a clone), so they are both now operating on the same shared state machine.  If a variable of type `RayQuery` is passed into a function as a parameter, it is passed by reference.  If a variable of type `RayQuery` is overwritten by another (such as by assignment), the overwritten object disappears.<!-- d3d12-review-inline:end:ray-traversal:T-RayQuery:5 --></ins>
+If a variable of type `RayQuery` is assigned to another (which must have been declared with a  matching template specification), a reference to the original is passed (rather than a clone), so they are both now operating on the same shared state machine.  If a variable of type `RayQuery` is passed into a function as a parameter, it is passed by reference.  If a variable of type `RayQuery` is overwritten by another (such as by assignment), the overwritten object disappears.
 
 <a id="rayquery-availability"></a>
 
@@ -1052,7 +1031,7 @@ See [Inline raytracing](#inline-raytracing) for an overview and the [TraceRayInl
 
 <!-- d3d12-review-alert:end:ray-traversal:B-TraceRayInline:2 -->
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-TraceRayInline:3 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-TraceRayInline:3 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-proceed"></a>
 
@@ -1066,7 +1045,7 @@ bool RayQuery::Proceed();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-Proceed:0 -->This is the main worker function for an inline raytrace. While [RayQuery::TraceRayInline()](#rayquery-tracerayinline) initializes the parameters for a raytrace, `RayQuery::Proceed()` is the function that causes the system to search the acceleration structure for hit candidates.<!-- d3d12-review-inline:end:ray-traversal:B-Proceed:0 --></ins>
+This is the main worker function for an inline raytrace. While [RayQuery::TraceRayInline()](#rayquery-tracerayinline) initializes the parameters for a raytrace, `RayQuery::Proceed()` is the function that causes the system to search the acceleration structure for hit candidates.
 
 If candidates are found, they are either automatically processed in the case of opaque triangles, or the function returns to the shader (see `TRUE` below) for assistance in deciding what to do next - in particular when non-opaque triangles or procedural primitives are encountered.
 
@@ -1083,7 +1062,7 @@ If candidates are found, they are either automatically processed in the case of 
 
 <!-- d3d12-review-context:end:ray-traversal:B-Proceed:2 -->
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-Proceed:3 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-Proceed:3 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-abort"></a>
 
@@ -1097,7 +1076,7 @@ void RayQuery::Abort();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-Abort:0 -->Force a ray query into the finished state.  In particular, calls to [RayQuery::Proceed()](#rayquery-proceed) will return `FALSE`.<!-- d3d12-review-inline:end:ray-traversal:B-Abort:0 --></ins>
+Force a ray query into the finished state.  In particular, calls to [RayQuery::Proceed()](#rayquery-proceed) will return `FALSE`.
 
 `RayQuery::Abort()` can be called any time after [RayQuery::TraceRayInline()](#rayquery-tracerayinline) has been called.
 
@@ -1133,7 +1112,7 @@ CANDIDATE_TYPE RayQuery::CandidateType();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateType:0 -->When [RayQuery::Proceed()](#rayquery-proceed) has returned `TRUE` and there is a candidate hit for the shader to evaluate, `RayQuery::CandidateType()` reveals what type of candidate it is.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateType:0 --></ins>
+When [RayQuery::Proceed()](#rayquery-proceed) has returned `TRUE` and there is a candidate hit for the shader to evaluate, `RayQuery::CandidateType()` reveals what type of candidate it is.
 
 <!-- d3d12-review-alert:begin:ray-traversal:B-CandidateType:1 -->
 
@@ -1146,7 +1125,7 @@ CANDIDATE_TYPE RayQuery::CandidateType();
 
 <!-- d3d12-review-alert:end:ray-traversal:B-CandidateType:1 -->
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateType:2 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateType:2 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-candidateproceduralprimitivenonopaque"></a>
 
@@ -1160,7 +1139,7 @@ bool RayQuery::CandidateProceduralPrimitiveNonOpaque();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateProceduralPrimitiveNonOpaque:0 -->When [RayQuery::CandidateType()](#rayquery-candidatetype) has returned `CANDIDATE_PROCEDURAL_PRIMITIVE`, this indicates whether the acceleration structure combined with ray flags consider this procedural primitive candidate to be non-opaque.  The only action the system might have taken with this information is to cull opaque or non-opaque primitives if the shader requested it via [RAY_FLAGS](#ray-flags).  If a candidate has been produced however, culling obviously did not apply. At this point it is completely up to the shader if it wants to act any further on this opaque/non-opaque information.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateProceduralPrimitiveNonOpaque:0 --></ins>
+When [RayQuery::CandidateType()](#rayquery-candidatetype) has returned `CANDIDATE_PROCEDURAL_PRIMITIVE`, this indicates whether the acceleration structure combined with ray flags consider this procedural primitive candidate to be non-opaque.  The only action the system might have taken with this information is to cull opaque or non-opaque primitives if the shader requested it via [RAY_FLAGS](#ray-flags).  If a candidate has been produced however, culling obviously did not apply. At this point it is completely up to the shader if it wants to act any further on this opaque/non-opaque information.
 
 <ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateProceduralPrimitiveNonOpaque:1 -->The shader could choose to not even bother calling this method and make its own opacity determination for the procedural hits it finds, ignoring whatever the acceleration structure / ray flags may have decided.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateProceduralPrimitiveNonOpaque:1 --></ins>
 
@@ -1176,13 +1155,13 @@ void RayQuery::CommitNonOpaqueTriangleHit();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommitNonOpaqueTriangleHit:0 -->When [RayQuery::CandidateType()](#rayquery-candidatetype) has returned `CANDIDATE_NON_OPAQUE_TRIANGLE` and the shader determines this hit location is actually opaque, it needs to call `RayQuery::CommitNonOpaqueTriangleHit()`.  `RayQuery::CommitNonOpaqueTriangleHit()` can be called multiple times per non opaque triangle candidate - after the first call, subsequent calls simply have no effect for the current candidate.<!-- d3d12-review-inline:end:ray-traversal:B-CommitNonOpaqueTriangleHit:0 --></ins>
+When [RayQuery::CandidateType()](#rayquery-candidatetype) has returned `CANDIDATE_NON_OPAQUE_TRIANGLE` and the shader determines this hit location is actually opaque, it needs to call `RayQuery::CommitNonOpaqueTriangleHit()`.  `RayQuery::CommitNonOpaqueTriangleHit()` can be called multiple times per non opaque triangle candidate - after the first call, subsequent calls simply have no effect for the current candidate.
 
 <ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommitNonOpaqueTriangleHit:1 -->The system will have already determined this candidate hit T would be \> the ray's TMin and \< TMax ([RayQuery::CommittedRayT()](#rayquery-committedrayt)), so the shader need not manually verify these conditions.<!-- d3d12-review-inline:end:ray-traversal:B-CommitNonOpaqueTriangleHit:1 --></ins>
 
 Once committed, the system remembers hit properties like barycentrics, front/back facing of the hit, acceleration structure node information like PrimitiveIndex.  As long as this remains the closest hit, [RayQuery::CommittedTriangleBarycentrics()](#rayquery-committedtrianglebarycentrics) etc. will return the properties for this hit.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommitNonOpaqueTriangleHit:3 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CommitNonOpaqueTriangleHit:3 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-commitproceduralprimitivehit"></a>
 
@@ -1227,7 +1206,7 @@ COMMITTED_STATUS RayQuery::CommittedStatus();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedStatus:0 -->Status of the closest hit that has been committed so far (if any).  This can be called any time after [RayQuery::TraceRayInline()](#rayquery-tracerayinline) has been called.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedStatus:0 --></ins>
+Status of the closest hit that has been committed so far (if any).  This can be called any time after [RayQuery::TraceRayInline()](#rayquery-tracerayinline) has been called.
 
 [RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
@@ -1254,7 +1233,7 @@ uint RayQuery::RayFlags();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-RayFlags:0 -->This is a uint containing the current [ray flags](#ray-flags) (template flags ORd with dynamic flags).<!-- d3d12-review-inline:end:ray-traversal:B-RayFlags:0 --></ins>
+This is a uint containing the current [ray flags](#ray-flags) (template flags ORd with dynamic flags).
 
 <ins><!-- d3d12-review-inline:begin:ray-traversal:B-RayFlags:1 -->This can be useful if, for instance, during handling of a procedural primitive candidate an app
 wants to look at the current ray's culling flags and apply corresponding
@@ -1262,7 +1241,7 @@ culling in its custom intersection code.<!-- d3d12-review-inline:end:ray-travers
 
 > It is arguable that this method appears redundant given the shader could just remember what flags it originally passed into [RayQuery::TraceRayInline()](#rayquery-tracerayinline).  The rationale is that since the system needs to keep this information anyway, no need for the app to waste a live register storing it, so in effect it can eliminate redundancy.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-RayFlags:3 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-RayFlags:3 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-worldrayorigin"></a>
 
@@ -1276,7 +1255,7 @@ float3 RayQuery::WorldRayOrigin();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-WorldRayOrigin:0 -->The world-space origin for the current ray.<!-- d3d12-review-inline:end:ray-traversal:B-WorldRayOrigin:0 --></ins>
+The world-space origin for the current ray.
 
 <!-- d3d12-review-context:begin:ray-traversal:B-WorldRayOrigin:1 -->
 
@@ -1287,7 +1266,7 @@ float3 RayQuery::WorldRayOrigin();
 
 <!-- d3d12-review-context:end:ray-traversal:B-WorldRayOrigin:1 -->
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-WorldRayOrigin:2 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-WorldRayOrigin:2 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-worldraydirection"></a>
 
@@ -1301,7 +1280,7 @@ float3 RayQuery::WorldRayDirection();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-WorldRayDirection:0 -->The world-space direction for the current ray.<!-- d3d12-review-inline:end:ray-traversal:B-WorldRayDirection:0 --></ins>
+The world-space direction for the current ray.
 
 <!-- d3d12-review-context:begin:ray-traversal:B-WorldRayDirection:1 -->
 
@@ -1312,7 +1291,7 @@ float3 RayQuery::WorldRayDirection();
 
 <!-- d3d12-review-context:end:ray-traversal:B-WorldRayDirection:1 -->
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-WorldRayDirection:2 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-WorldRayDirection:2 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-raytmin"></a>
 
@@ -1326,7 +1305,7 @@ float RayQuery::RayTMin();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-RayTMin:0 -->This is a float representing the parametric starting point for the ray.<!-- d3d12-review-inline:end:ray-traversal:B-RayTMin:0 --></ins>
+This is a float representing the parametric starting point for the ray.
 
 <ins><!-- d3d12-review-inline:begin:ray-traversal:B-RayTMin:1 -->RayTMin defines the starting point of the ray according to the following
 formula: `Origin + (Direction * RayTMin)`. `Origin` and `Direction` may be in
@@ -1345,7 +1324,7 @@ for the duration of that call.
 
 <!-- d3d12-review-context:end:ray-traversal:B-RayTMin:3 -->
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-RayTMin:4 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-RayTMin:4 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-candidatetrianglerayt"></a>
 
@@ -1359,14 +1338,14 @@ float RayQuery::CandidateTriangleRayT();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateTriangleRayT:0 -->This is a float representing the parametric distance at which a candidate triangle for hit consideration lies.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateTriangleRayT:0 --></ins>
+This is a float representing the parametric distance at which a candidate triangle for hit consideration lies.
 
 `CandidateTriangleRayT()` defines the candidate point for non-opaque triangles along the ray according to the
 following formula: `Origin + (Direction * CandidateTriangleRayT)`. `Origin` and
 `Direction` may be in either world or object space, which results in
 either a world or an object space ending point.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateTriangleRayT:2 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateTriangleRayT:2 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-committedrayt"></a>
 
@@ -1380,7 +1359,7 @@ float RayQuery::CommittedRayT();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedRayT:0 -->This is a float representing the parametric distance at which the closest committed hit so far lies.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedRayT:0 --></ins>
+This is a float representing the parametric distance at which the closest committed hit so far lies.
 
 `CommittedRayT()` defines the current TMax point along the ray according to the
 following formula: `Origin + (Direction * CommittedRayT)`. `Origin` and
@@ -1390,7 +1369,7 @@ either a world or an object space ending point.
 <ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedRayT:2 -->`CommittedRayT()` is initialized by the [RayQuery::TraceRayInline()](#rayquery-tracerayinline) call to
 `RayDesc::TMax`, and updated during the trace query as new intersections are committed.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedRayT:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedRayT:3 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedRayT:3 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-candidateinstanceindex"></a>
 
@@ -1404,10 +1383,10 @@ uint RayQuery::CandidateInstanceIndex();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateInstanceIndex:0 -->The autogenerated index of the current instance in the top-level
-structure for the current hit candidate.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateInstanceIndex:0 --></ins>
+The autogenerated index of the current instance in the top-level
+structure for the current hit candidate.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateInstanceIndex:1 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateInstanceIndex:1 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-candidateinstanceid"></a>
 
@@ -1421,10 +1400,10 @@ uint RayQuery::CandidateInstanceID();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateInstanceID:0 -->The user-provided `InstanceID` on the bottom-level acceleration structure
-instance within the top-level structure for the current hit candidate.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateInstanceID:0 --></ins>
+The user-provided `InstanceID` on the bottom-level acceleration structure
+instance within the top-level structure for the current hit candidate.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateInstanceID:1 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateInstanceID:1 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-candidateinstancecontributiontohitgroupindex"></a>
 
@@ -1438,8 +1417,8 @@ uint RayQuery::CandidateInstanceContributionToHitGroupIndex();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateInstanceContributionToHitGroupIndex:0 -->The user-provided `InstanceContributionToHitGroupIndex` on the bottom-level acceleration structure
-instance within the top-level structure for the current hit candidate.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateInstanceContributionToHitGroupIndex:0 --></ins>
+The user-provided `InstanceContributionToHitGroupIndex` on the bottom-level acceleration structure
+instance within the top-level structure for the current hit candidate.
 
 With inline raytracing, this value has no functional effect, even though the name describes
 contributing to hit group indexing.  The name refers to the behavior with dynamic-shader-based raytracing.
@@ -1458,7 +1437,7 @@ in an acceleration structure.
 
 <!-- d3d12-review-context:end:ray-traversal:B-CandidateInstanceContributionToHitGroupIndex:2 -->
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateInstanceContributionToHitGroupIndex:3 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateInstanceContributionToHitGroupIndex:3 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-candidategeometryindex"></a>
 
@@ -1472,9 +1451,9 @@ uint RayQuery::CandidateGeometryIndex();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateGeometryIndex:0 -->The autogenerated index of the current geometry in the bottom-level acceleration structure for the current hit candidate.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateGeometryIndex:0 --></ins>
+The autogenerated index of the current geometry in the bottom-level acceleration structure for the current hit candidate.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateGeometryIndex:1 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateGeometryIndex:1 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-candidateprimitiveindex"></a>
 
@@ -1488,8 +1467,8 @@ uint RayQuery::CandidatePrimitiveIndex();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidatePrimitiveIndex:0 -->The autogenerated index of the primitive within the geometry inside the
-bottom-level acceleration structure instance for the current hit candidate.<!-- d3d12-review-inline:end:ray-traversal:B-CandidatePrimitiveIndex:0 --></ins>
+The autogenerated index of the primitive within the geometry inside the
+bottom-level acceleration structure instance for the current hit candidate.
 
 <ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidatePrimitiveIndex:1 -->For triangle geometry (`D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES` or `D3D12_RAYTRACING_GEOMETRY_TYPE_OMM_TRIANGLES`), this is the triangle
 index within the geometry object.<!-- d3d12-review-inline:end:ray-traversal:B-CandidatePrimitiveIndex:1 --></ins>
@@ -1497,7 +1476,7 @@ index within the geometry object.<!-- d3d12-review-inline:end:ray-traversal:B-Ca
 For `D3D12_RAYTRACING_GEOMETRY_TYPE_PROCEDURAL_PRIMITIVE_AABBS`,
 this is the index into the AABB array defining the geometry object.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidatePrimitiveIndex:3 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CandidatePrimitiveIndex:3 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-candidateobjectrayorigin"></a>
 
@@ -1511,10 +1490,10 @@ float3 RayQuery::CandidateObjectRayOrigin();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateObjectRayOrigin:0 -->Object-space origin for the current ray. Object-space refers to the
-space of the current bottom-level acceleration structure for the current hit candidate.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateObjectRayOrigin:0 --></ins>
+Object-space origin for the current ray. Object-space refers to the
+space of the current bottom-level acceleration structure for the current hit candidate.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateObjectRayOrigin:1 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateObjectRayOrigin:1 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-candidateobjectraydirection"></a>
 
@@ -1528,10 +1507,10 @@ float3 RayQuery::CandidateObjectRayDirection();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateObjectRayDirection:0 -->Object-space direction for the current ray. Object-space refers to the
-space of the current bottom-level acceleration structure for the current hit candidate.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateObjectRayDirection:0 --></ins>
+Object-space direction for the current ray. Object-space refers to the
+space of the current bottom-level acceleration structure for the current hit candidate.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateObjectRayDirection:1 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateObjectRayDirection:1 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-candidateobjecttoworld3x4"></a>
 
@@ -1545,13 +1524,13 @@ float3x4 RayQuery::CandidateObjectToWorld3x4();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateObjectToWorld3x4:0 -->Matrix for transforming from object-space to world-space. Object-space
-refers to the space of the current bottom-level acceleration structure for the current hit candidate.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateObjectToWorld3x4:0 --></ins>
+Matrix for transforming from object-space to world-space. Object-space
+refers to the space of the current bottom-level acceleration structure for the current hit candidate.
 
 The only difference between this and `CandidateObjectToWorld4x3()` is the matrix is
 transposed -- use whichever is convenient.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateObjectToWorld3x4:2 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateObjectToWorld3x4:2 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-candidateobjecttoworld4x3"></a>
 
@@ -1565,13 +1544,13 @@ float4x3 RayQuery::CandidateObjectToWorld4x3();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateObjectToWorld4x3:0 -->Matrix for transforming from object-space to world-space. Object-space
-refers to the space of the current bottom-level acceleration structure for the current hit candidate.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateObjectToWorld4x3:0 --></ins>
+Matrix for transforming from object-space to world-space. Object-space
+refers to the space of the current bottom-level acceleration structure for the current hit candidate.
 
 The only difference between this and `CandidateObjectToWorld3x4()` is the matrix is
 transposed -- use whichever is convenient.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateObjectToWorld4x3:2 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateObjectToWorld4x3:2 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-candidateworldtoobject3x4"></a>
 
@@ -1591,7 +1570,7 @@ refers to the space of the current bottom-level acceleration structure for the c
 The only difference between this and `CandidateWorldToObject4x3()` is the matrix is
 transposed -- use whichever is convenient.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateWorldToObject3x4:2 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateWorldToObject3x4:2 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-candidateworldtoobject4x3"></a>
 
@@ -1605,13 +1584,13 @@ float4x3 RayQuery::CandidateWorldToObject4x3();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateWorldToObject4x3:0 -->Matrix for transforming from world-space to object-space. Object-space
-refers to the space of the current bottom-level acceleration structure for the current hit candidate.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateWorldToObject4x3:0 --></ins>
+Matrix for transforming from world-space to object-space. Object-space
+refers to the space of the current bottom-level acceleration structure for the current hit candidate.
 
 The only difference between this and `CandidateWorldToObject3x4()` is the matrix is
 transposed -- use whichever is convenient.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateWorldToObject4x3:2 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateWorldToObject4x3:2 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-committedinstanceindex"></a>
 
@@ -1625,10 +1604,10 @@ uint RayQuery::CommittedInstanceIndex();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedInstanceIndex:0 -->The autogenerated index of the instance in the top-level
-structure for the closest hit committed so far.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedInstanceIndex:0 --></ins>
+The autogenerated index of the instance in the top-level
+structure for the closest hit committed so far.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedInstanceIndex:1 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedInstanceIndex:1 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-committedinstanceid"></a>
 
@@ -1642,10 +1621,10 @@ uint RayQuery::CommittedInstanceID();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedInstanceID:0 -->The user-provided `InstanceID` on the bottom-level acceleration structure
-instance within the top-level structure for the closest hit committed so far.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedInstanceID:0 --></ins>
+The user-provided `InstanceID` on the bottom-level acceleration structure
+instance within the top-level structure for the closest hit committed so far.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedInstanceID:1 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedInstanceID:1 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-committedinstancecontributiontohitgroupindex"></a>
 
@@ -1659,8 +1638,8 @@ uint RayQuery::CommittedInstanceContributionToHitGroupIndex();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedInstanceContributionToHitGroupIndex:0 -->The user-provided `InstanceContributionToHitGroupIndex` on the bottom-level acceleration structure
-instance within the top-level structure for the closest hit committed so far.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedInstanceContributionToHitGroupIndex:0 --></ins>
+The user-provided `InstanceContributionToHitGroupIndex` on the bottom-level acceleration structure
+instance within the top-level structure for the closest hit committed so far.
 
 With inline raytracing, this value has no functional effect, even though the name describes
 contributing to hit group indexing.  The name refers to the behavior with dynamic-shader-based raytracing.
@@ -1679,7 +1658,7 @@ in an acceleration structure.
 
 <!-- d3d12-review-context:end:ray-traversal:B-CommittedInstanceContributionToHitGroupIndex:2 -->
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedInstanceContributionToHitGroupIndex:3 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedInstanceContributionToHitGroupIndex:3 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-committedgeometryindex"></a>
 
@@ -1693,9 +1672,9 @@ uint RayQuery::CommittedGeometryIndex();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedGeometryIndex:0 -->The autogenerated index of the geometry in the bottom-level acceleration structure for the closest hit committed so far.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedGeometryIndex:0 --></ins>
+The autogenerated index of the geometry in the bottom-level acceleration structure for the closest hit committed so far.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedGeometryIndex:1 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedGeometryIndex:1 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-committedprimitiveindex"></a>
 
@@ -1709,8 +1688,8 @@ uint RayQuery::CommittedPrimitiveIndex();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedPrimitiveIndex:0 -->The autogenerated index of the primitive within the geometry inside the
-bottom-level acceleration structure instance for the closest hit committed so far.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedPrimitiveIndex:0 --></ins>
+The autogenerated index of the primitive within the geometry inside the
+bottom-level acceleration structure instance for the closest hit committed so far.
 
 <ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedPrimitiveIndex:1 -->For triangle geometry (`D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES` or `D3D12_RAYTRACING_GEOMETRY_TYPE_OMM_TRIANGLES`), this is the triangle
 index within the geometry object.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedPrimitiveIndex:1 --></ins>
@@ -1718,7 +1697,7 @@ index within the geometry object.<!-- d3d12-review-inline:end:ray-traversal:B-Co
 For `D3D12_RAYTRACING_GEOMETRY_TYPE_PROCEDURAL_PRIMITIVE_AABBS`,
 this is the index into the AABB array defining the geometry object.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedPrimitiveIndex:3 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedPrimitiveIndex:3 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-committedobjectrayorigin"></a>
 
@@ -1732,10 +1711,10 @@ float3 RayQuery::CommittedObjectRayOrigin();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedObjectRayOrigin:0 -->Object-space origin for the ray. Object-space refers to the
-space of the bottom-level acceleration structure for the closest hit committed so far.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedObjectRayOrigin:0 --></ins>
+Object-space origin for the ray. Object-space refers to the
+space of the bottom-level acceleration structure for the closest hit committed so far.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedObjectRayOrigin:1 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedObjectRayOrigin:1 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-committedobjectraydirection"></a>
 
@@ -1749,10 +1728,10 @@ float3 RayQuery::CommittedObjectRayDirection();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedObjectRayDirection:0 -->Object-space direction for the ray. Object-space refers to the
-space of the bottom-level acceleration structure for the closest hit committed so far.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedObjectRayDirection:0 --></ins>
+Object-space direction for the ray. Object-space refers to the
+space of the bottom-level acceleration structure for the closest hit committed so far.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedObjectRayDirection:1 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedObjectRayDirection:1 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-committedobjecttoworld3x4"></a>
 
@@ -1766,13 +1745,13 @@ float3x4 RayQuery::CommittedObjectToWorld3x4();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedObjectToWorld3x4:0 -->Matrix for transforming from object-space to world-space. Object-space
-refers to the space of the bottom-level acceleration structure for the closest hit committed so far.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedObjectToWorld3x4:0 --></ins>
+Matrix for transforming from object-space to world-space. Object-space
+refers to the space of the bottom-level acceleration structure for the closest hit committed so far.
 
 The only difference between this and `CommittedObjectToWorld4x3()` is the matrix is
 transposed -- use whichever is convenient.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedObjectToWorld3x4:2 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedObjectToWorld3x4:2 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-committedobjecttoworld4x3"></a>
 
@@ -1786,13 +1765,13 @@ float4x3 RayQuery::CommittedObjectToWorld4x3();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedObjectToWorld4x3:0 -->Matrix for transforming from object-space to world-space. Object-space
-refers to the space of the bottom-level acceleration structure for the closest hit committed so far.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedObjectToWorld4x3:0 --></ins>
+Matrix for transforming from object-space to world-space. Object-space
+refers to the space of the bottom-level acceleration structure for the closest hit committed so far.
 
 The only difference between this and `CommittedObjectToWorld3x4()` is the matrix is
 transposed -- use whichever is convenient.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedObjectToWorld4x3:2 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedObjectToWorld4x3:2 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-committedworldtoobject3x4"></a>
 
@@ -1806,13 +1785,13 @@ float3x4 RayQuery::CommittedWorldToObject3x4();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedWorldToObject3x4:0 -->Matrix for transforming from world-space to object-space. Object-space
-refers to the space of the bottom-level acceleration structure for the closest hit committed so far.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedWorldToObject3x4:0 --></ins>
+Matrix for transforming from world-space to object-space. Object-space
+refers to the space of the bottom-level acceleration structure for the closest hit committed so far.
 
 The only difference between this and `CommittedWorldToObject4x3()` is the matrix is
 transposed -- use whichever is convenient.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedWorldToObject3x4:2 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedWorldToObject3x4:2 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-committedworldtoobject4x3"></a>
 
@@ -1826,13 +1805,13 @@ float4x3 RayQuery::CommittedWorldToObject4x3();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedWorldToObject4x3:0 -->Matrix for transforming from world-space to object-space. Object-space
-refers to the space of the bottom-level acceleration structure for the closest hit committed so far.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedWorldToObject4x3:0 --></ins>
+Matrix for transforming from world-space to object-space. Object-space
+refers to the space of the bottom-level acceleration structure for the closest hit committed so far.
 
 The only difference between this and `CommittedWorldToObject3x4()` is the matrix is
 transposed -- use whichever is convenient.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CommittedWorldToObject4x3:2 -->[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.<!-- d3d12-review-inline:end:ray-traversal:B-CommittedWorldToObject4x3:2 --></ins>
+[RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
 <a id="rayquery-candidatetrianglebarycentrics"></a>
 
@@ -1846,7 +1825,7 @@ float2 RayQuery::CandidateTriangleBarycentrics();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:B-CandidateTriangleBarycentrics:0 -->Applicable for the current hit candidate, if [RayQuery::CandidateType()](#rayquery-candidatetype) returns `CANDIDATE_NON_OPAQUE_TRIANGLE`.  Returns hit location barycentric coordinates.<!-- d3d12-review-inline:end:ray-traversal:B-CandidateTriangleBarycentrics:0 --></ins>
+Applicable for the current hit candidate, if [RayQuery::CandidateType()](#rayquery-candidatetype) returns `CANDIDATE_NON_OPAQUE_TRIANGLE`.  Returns hit location barycentric coordinates.
 
 [RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to call.
 
@@ -1946,7 +1925,7 @@ bool RayQuery::CommittedTriangleFrontFace();
 
 ## TraceRayInline examples
 
-- <ins><!-- d3d12-review-inline:begin:ray-traversal:R-query-examples:0 -->[Example 1](#tracerayinline-example-1): Trivially get a simple hit/miss from tracing a ray.<!-- d3d12-review-inline:end:ray-traversal:R-query-examples:0 --></ins>
+- [Example 1](#tracerayinline-example-1): Trivially get a simple hit/miss from tracing a ray.
 - [Example 2](#tracerayinline-example-2): More general case, handling all the possible states.
 - [Example 3](#tracerayinline-example-3): Expensive scenario with simultaneous traces.
 
@@ -2017,7 +1996,7 @@ float4 MyPixelShader(float2 uv : TEXCOORD) : SV_Target0
 
 More general case, handling all the possible states.
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-query-examples:9 -->This diagram illustrates the full control flow to support this type of scenario: [TraceRayInline control flow](#tracerayinline-control-flow).<!-- d3d12-review-inline:end:ray-traversal:R-query-examples:9 --></ins>
+<ins><!-- d3d12-review-inline:begin:ray-traversal:R-query-examples:9 -->This diagram illustrates<!-- d3d12-review-inline:end:ray-traversal:R-query-examples:9 --></ins> the full control flow to support this type of scenario: [TraceRayInline control flow](#tracerayinline-control-flow).
 
 ```hlsl
 RaytracingAccelerationStructure myAccelerationStructure : register(t3);
@@ -2202,7 +2181,7 @@ float4 MyPixelShader(float2 uv : TEXCOORD) : SV_Target0
 
 ## Stored hit, miss and no-operation results
 
-<ins><!-- d3d12-review-inline:begin:ray-traversal:R-HitObject-concepts:0 -->This is part of the [Shader Execution Reordering](raytracing-pipelines.md#shader-execution-reordering) feature.<!-- d3d12-review-inline:end:ray-traversal:R-HitObject-concepts:0 --></ins>
+This is part of the [Shader Execution Reordering](raytracing-pipelines.md#shader-execution-reordering) feature.
 
 ```hlsl
 namespace dx {

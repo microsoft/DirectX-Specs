@@ -233,11 +233,11 @@ To provide well-defined barrier ordering, sequential, adjacent barriers on the s
 
 ##### D3D12_BARRIER_SYNC_ALL
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_ALL:0 -->A `SyncBefore` value of `D3D12_BARRIER_SYNC_ALL` indicates ALL PRECEDING work must complete before executing the barrier.  A `SyncAfter` value of `D3D12_BARRIER_SYNC_ALL` indicates ALL SUBSEQUENT work must wait for the barrier to complete.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_ALL:0 --></ins>
+A `SyncBefore` value of `D3D12_BARRIER_SYNC_ALL` indicates ALL PRECEDING work must complete before executing the barrier.  A `SyncAfter` value of `D3D12_BARRIER_SYNC_ALL` indicates ALL SUBSEQUENT work must wait for the barrier to complete.
 
 ##### D3D12_BARRIER_SYNC_DRAW
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_DRAW:0 -->Synchronize against the following GPU workloads:<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_DRAW:0 --></ins>
+Synchronize against the following GPU workloads:
 
 - `DrawInstanced`
 - `DrawIndexedInstanced`
@@ -246,33 +246,33 @@ To provide well-defined barrier ordering, sequential, adjacent barriers on the s
 - `SetGraphicsRootUnorderedAccessView`
 - `SetGraphicsRootConstantBufferView`
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_DRAW:2 -->The `SetGraphicsRoot*` synchronization is required to support `D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE` descriptors.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_DRAW:2 --></ins>
+The `SetGraphicsRoot*` synchronization is required to support <ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_DRAW:2 -->`D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE`<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_DRAW:2 --></ins> descriptors.
 
 This is an aggregate scope for all Draw pipeline stages. A `SyncBefore` value of `D3D12_BARRIER_SYNC_DRAW` indicates ALL PRECEDING Draw work must complete before executing the barrier.  A `SyncAfter` value of `D3D12_BARRIER_SYNC_DRAW` indicates ALL SUBSEQUENT Draw work must wait for the barrier to complete.
 
 ##### D3D12_BARRIER_SYNC_INDEX_INPUT
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_INDEX_INPUT:0 -->This scope synchronizes processing index buffer input.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_INDEX_INPUT:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_INDEX_INPUT:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_INDEX_INPUT:0 --></ins> processing index buffer input.
 
 ##### D3D12_BARRIER_SYNC_VERTEX_SHADING
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_VERTEX_SHADING:0 -->This scope synchronizes all vertex shading stages, including vertex, domain, hull, tessellation, geometry, amplification and mesh shading.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_VERTEX_SHADING:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_VERTEX_SHADING:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_VERTEX_SHADING:0 --></ins> all vertex shading stages, including vertex, domain, hull, tessellation, geometry, amplification and mesh shading.
 
 ##### D3D12_BARRIER_SYNC_PIXEL_SHADING
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_PIXEL_SHADING:0 -->This scope synchronizes pixel shader execution.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_PIXEL_SHADING:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_PIXEL_SHADING:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_PIXEL_SHADING:0 --></ins> pixel shader execution.
 
 ##### D3D12_BARRIER_SYNC_DEPTH_STENCIL
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_DEPTH_STENCIL:0 -->This scope synchronizes depth/stencil read/write operations. This includes DSV accesses during `Draw*` and `ClearDepthStencilView`.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_DEPTH_STENCIL:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_DEPTH_STENCIL:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_DEPTH_STENCIL:0 --></ins> depth/stencil read/write operations. This includes DSV accesses during `Draw*` and <ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_DEPTH_STENCIL:0 -->`ClearDepthStencilView`<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_DEPTH_STENCIL:0 --></ins>.
 
 ##### D3D12_BARRIER_SYNC_RENDER_TARGET
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_RENDER_TARGET:0 -->This scope synchronizes render target read/write operations. This includes RTV writes during `Draw*` and `ClearRenderTargetView`.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_RENDER_TARGET:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_RENDER_TARGET:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_RENDER_TARGET:0 --></ins> render target read/write operations. <ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_RENDER_TARGET:0 -->This includes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_RENDER_TARGET:0 --></ins> RTV writes during `Draw*` and `ClearRenderTargetView`.
 
 ##### D3D12_BARRIER_SYNC_COMPUTE_SHADING
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_COMPUTE_SHADING:0 -->This scope synchronizes the following GPU workloads:<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_COMPUTE_SHADING:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_COMPUTE_SHADING:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_COMPUTE_SHADING:0 --></ins> the following GPU workloads:
 
 - `Dispatch`
 - `SetComputeRootDescriptorTable`
@@ -280,27 +280,27 @@ This is an aggregate scope for all Draw pipeline stages. A `SyncBefore` value of
 - `SetComputeRootUnorderedAccessView`
 - `SetComputeRootConstantBufferView`
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_COMPUTE_SHADING:2 -->The `SetComputeRoot*` synchronization is required to support `D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE` descriptors.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_COMPUTE_SHADING:2 --></ins>
+The `SetComputeRoot*` synchronization is required to support <ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_COMPUTE_SHADING:2 -->`D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE`<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_COMPUTE_SHADING:2 --></ins> descriptors.
 
 ##### D3D12_BARRIER_SYNC_RAYTRACING
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_RAYTRACING:0 -->This scope synchronizes raytracing execution.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_RAYTRACING:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_RAYTRACING:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_RAYTRACING:0 --></ins> raytracing execution.
 
 ##### D3D12_BARRIER_SYNC_COPY
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_COPY:0 -->This scope synchronizes Copy commands.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_COPY:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_COPY:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_COPY:0 --></ins> Copy commands.
 
 ##### D3D12_BARRIER_SYNC_RESOLVE
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_RESOLVE:0 -->This scope synchronizes Resolve commands.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_RESOLVE:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_RESOLVE:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_RESOLVE:0 --></ins> Resolve commands.
 
 ##### D3D12_BARRIER_SYNC_EXECUTE_INDIRECT
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_EXECUTE_INDIRECT:0 -->This scope synchronizes ExecuteIndirect execution.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_EXECUTE_INDIRECT:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_EXECUTE_INDIRECT:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_EXECUTE_INDIRECT:0 --></ins> ExecuteIndirect execution.
 
 ##### D3D12_BARRIER_SYNC_ALL_SHADING
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_ALL_SHADING:0 -->This scope synchronizes ALL shader execution.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_ALL_SHADING:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_ALL_SHADING:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_ALL_SHADING:0 --></ins> ALL shader execution.
 
 ##### D3D12_BARRIER_SYNC_NON_PIXEL_SHADING
 
@@ -308,27 +308,27 @@ This is an aggregate scope for all Draw pipeline stages. A `SyncBefore` value of
 
 ##### D3D12_BARRIER_SYNC_VIDEO_DECODE
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_VIDEO_DECODE:0 -->This scope synchronizes Video Decode execution.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_VIDEO_DECODE:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_VIDEO_DECODE:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_VIDEO_DECODE:0 --></ins> Video Decode execution.
 
 ##### D3D12_BARRIER_SYNC_VIDEO_PROCESS
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_VIDEO_PROCESS:0 -->This scope synchronizes Video Process execution.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_VIDEO_PROCESS:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_VIDEO_PROCESS:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_VIDEO_PROCESS:0 --></ins> Video Process execution.
 
 ##### D3D12_BARRIER_SYNC_VIDEO_ENCODE
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_VIDEO_ENCODE:0 -->This scope synchronizes Video Encode execution.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_VIDEO_ENCODE:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_VIDEO_ENCODE:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_VIDEO_ENCODE:0 --></ins> Video Encode execution.
 
 ##### D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE:0 -->This scope synchronizes `ID3D12GraphicsCommandList4::BuildRaytracingAccelerationStructure` work.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE:0 --></ins> <ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE:0 -->`ID3D12GraphicsCommandList4::BuildRaytracingAccelerationStructure`<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE:0 --></ins> work.
 
 ##### D3D12_BARRIER_SYNC_COPY_RAYTRACING_ACCELERATION_STRUCTURE
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_COPY_RAYTRACING_ACCELERATION_STRUCTURE:0 -->This scope synchronizes `ID3D12GraphicsCommandList4::CopyRaytracingAccelerationStructure` work.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_COPY_RAYTRACING_ACCELERATION_STRUCTURE:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_COPY_RAYTRACING_ACCELERATION_STRUCTURE:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_COPY_RAYTRACING_ACCELERATION_STRUCTURE:0 --></ins> `ID3D12GraphicsCommandList4::CopyRaytracingAccelerationStructure` work.
 
 ##### D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW:0 -->This scope synchronizes `ID3D12GraphicsCommandList::ClearUnorderedAccessViewUint` and `ID3D12GraphicsCommandList::ClearUnorderedAccessViewFloat`.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW:0 -->This scope synchronizes<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW:0 --></ins> `ID3D12GraphicsCommandList::ClearUnorderedAccessViewUint` and `ID3D12GraphicsCommandList::ClearUnorderedAccessViewFloat`.
 
 ##### D3D12_BARRIER_SYNC_PREDICATION
 
@@ -485,43 +485,43 @@ Barriers used for aliased resource transitions can set `AccessBefore` or `Access
 
 ##### D3D12_BARRIER_ACCESS_VERTEX_BUFFER
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VERTEX_BUFFER:0 -->Indicates a buffer resource is accessible as a vertex buffer in the current execution queue. Vertex buffer accesses occur only in `D3D12_BARRIER_SYNC_VERTEX_SHADING` scope.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VERTEX_BUFFER:0 --></ins>
+Indicates a buffer resource is accessible as a vertex buffer in the current execution queue. Vertex buffer accesses occur only in `D3D12_BARRIER_SYNC_VERTEX_SHADING` scope.
 
 ##### D3D12_BARRIER_ACCESS_CONSTANT_BUFFER
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_CONSTANT_BUFFER:0 -->Indicates a buffer resource is accessible as a constant buffer in the current execution queue.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_CONSTANT_BUFFER:0 --></ins>
+Indicates a buffer resource is accessible as a constant buffer in the current execution queue.
 
 ##### D3D12_BARRIER_ACCESS_INDEX_BUFFER
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_INDEX_BUFFER:0 -->Indicates a buffer resource is accessible as an index buffer in the current execution queue. Index buffer accesses occur only in `D3D12_BARRIER_SYNC_INDEX_INPUT` scope.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_INDEX_BUFFER:0 --></ins>
+Indicates a buffer resource is accessible as an index buffer in the current execution queue. Index buffer accesses occur only in `D3D12_BARRIER_SYNC_INDEX_INPUT` scope.
 
 ##### D3D12_BARRIER_ACCESS_RENDER_TARGET
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_RENDER_TARGET:0 -->Indicates a resource is accessible as a render target.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_RENDER_TARGET:0 --></ins>
+Indicates a resource is accessible as a render target.
 
 ##### D3D12_BARRIER_ACCESS_UNORDERED_ACCESS
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_UNORDERED_ACCESS:0 -->Indicates a resource is accessible as an unordered access resource.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_UNORDERED_ACCESS:0 --></ins>
+Indicates a resource is accessible as an unordered access resource.
 
 ##### D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE:0 -->Indicates a resource is accessible as a writable depth/stencil resource.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE:0 --></ins>
+Indicates a resource is accessible as a writable depth/stencil resource.
 
 ##### D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ:0 -->Indicates a resource is accessible as a read-only depth/stencil resource.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ:0 --></ins>
+Indicates a resource is accessible as a read-only depth/stencil resource.
 
 ##### D3D12_BARRIER_ACCESS_SHADER_RESOURCE
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_SHADER_RESOURCE:0 -->Indicates a resource is accessible as a shader resource.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_SHADER_RESOURCE:0 --></ins>
+Indicates a resource is accessible as a shader resource.
 
 ##### D3D12_BARRIER_ACCESS_STREAM_OUTPUT
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_STREAM_OUTPUT:0 -->Indicates a buffer is accessible as a stream output target.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_STREAM_OUTPUT:0 --></ins>
+Indicates a buffer is accessible as a stream output target.
 
 ##### D3D12_BARRIER_ACCESS_INDIRECT_ARGUMENT
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_INDIRECT_ARGUMENT:0 -->Indicates a buffer is accessible as an indirect argument buffer.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_INDIRECT_ARGUMENT:0 --></ins>
+Indicates a buffer is accessible as an indirect argument buffer.
 
 <!-- d3d12-review-alert:begin:synchronization:N-indirect-canonical-owner:0 -->
 
@@ -534,59 +534,59 @@ Barriers used for aliased resource transitions can set `AccessBefore` or `Access
 
 ##### D3D12_BARRIER_ACCESS_PREDICATION
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_PREDICATION:0 -->Indicates a buffer is accessible as a predication buffer.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_PREDICATION:0 --></ins>
+Indicates a buffer is accessible as a predication buffer.
 
 ##### D3D12_BARRIER_ACCESS_COPY_DEST
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_COPY_DEST:0 -->Indicates a resource is accessible as a copy destination.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_COPY_DEST:0 --></ins>
+Indicates a resource is accessible as a copy destination.
 
 ##### D3D12_BARRIER_ACCESS_COPY_SOURCE
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_COPY_SOURCE:0 -->Indicates a resource is accessible as a copy source.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_COPY_SOURCE:0 --></ins>
+Indicates a resource is accessible as a copy source.
 
 ##### D3D12_BARRIER_ACCESS_RESOLVE_DEST
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_RESOLVE_DEST:0 -->Indicates a resource is accessible as a resolve destination.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_RESOLVE_DEST:0 --></ins>
+Indicates a resource is accessible as a resolve destination.
 
 ##### D3D12_BARRIER_ACCESS_RESOLVE_SOURCE
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_RESOLVE_SOURCE:0 -->Indicates a resource is accessible as a resolve source.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_RESOLVE_SOURCE:0 --></ins>
+Indicates a resource is accessible as a resolve source.
 
 ##### D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ:0 -->Indicates a resource is accessible for read as a raytracing acceleration structure.  The resource must be an acceleration-structure buffer as defined by the [creation contract](resources.md#versioned-creation).<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ:0 --></ins>
+Indicates a resource is accessible for read as a raytracing acceleration structure.  <ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ:0 -->The resource must be an acceleration-structure buffer as defined by the [creation contract](resources.md#versioned-creation).<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ:0 --></ins>
 
 ##### D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE:0 -->Indicates a resource is accessible for write as a raytracing acceleration structure.  The resource must be an acceleration-structure buffer as defined by the [creation contract](resources.md#versioned-creation).<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE:0 --></ins>
+Indicates a resource is accessible for write as a raytracing acceleration structure.  <ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE:0 -->The resource must be an acceleration-structure buffer as defined by the [creation contract](resources.md#versioned-creation).<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE:0 --></ins>
 
 ##### D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE:0 -->Indicates a resource is accessible as a shading rate source.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE:0 --></ins>
+Indicates a resource is accessible as a shading rate source.
 
 ##### D3D12_BARRIER_ACCESS_VIDEO_DECODE_READ
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VIDEO_DECODE_READ:0 -->Indicates a resource is accessible for read-only access in a video decode queue.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VIDEO_DECODE_READ:0 --></ins>
+Indicates a resource is accessible for read-only access in a video decode queue.
 
 ##### D3D12_BARRIER_ACCESS_VIDEO_DECODE_WRITE
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VIDEO_DECODE_WRITE:0 -->Indicates a resource is accessible for write access in a video decode queue.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VIDEO_DECODE_WRITE:0 --></ins>
+Indicates a resource is accessible for write access in a video decode queue.
 
 ##### D3D12_BARRIER_ACCESS_VIDEO_PROCESS_READ
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VIDEO_PROCESS_READ:0 -->Indicates a resource is accessible for read-only access in a video process queue.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VIDEO_PROCESS_READ:0 --></ins>
+Indicates a resource is accessible for read-only access in a video process queue.
 
 ##### D3D12_BARRIER_ACCESS_VIDEO_PROCESS_WRITE
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VIDEO_PROCESS_WRITE:0 -->Indicates a resource is accessible for write access in a video process queue.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VIDEO_PROCESS_WRITE:0 --></ins>
+Indicates a resource is accessible for <ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VIDEO_PROCESS_WRITE:0 -->write access<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VIDEO_PROCESS_WRITE:0 --></ins> in a video process queue.
 
 ##### D3D12_BARRIER_ACCESS_VIDEO_ENCODE_READ
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VIDEO_ENCODE_READ:0 -->Indicates a resource is accessible for read-only access in a video encode queue.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VIDEO_ENCODE_READ:0 --></ins>
+Indicates a resource is accessible for read-only access in a video encode queue.
 
 ##### D3D12_BARRIER_ACCESS_VIDEO_ENCODE_WRITE
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VIDEO_ENCODE_WRITE:0 -->Indicates a resource is accessible for write access in a video encode queue.<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VIDEO_ENCODE_WRITE:0 --></ins>
+Indicates a resource is accessible for <ins><!-- d3d12-review-inline:begin:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VIDEO_ENCODE_WRITE:0 -->write access<!-- d3d12-review-inline:end:synchronization:S-purpose-D3D12_BARRIER_ACCESS_VIDEO_ENCODE_WRITE:0 --></ins> in a video encode queue.
 
 <!-- d3d12-review-alert:begin:synchronization:N-as-state-operation-owners:0 -->
 
@@ -1100,7 +1100,7 @@ Split barriers across `ExecuteCommandLists` boundaries are allowed.  In this cas
 
 <ins><!-- d3d12-review-inline:begin:synchronization:S-aliasing:0 -->Enhanced Barrier APIs do not explicitly provide native Aliasing Barrier transitions at the API-level.  Instead, enhanced Barrier APIs support the necessary synchronization, layout transitions and memory access needed for safe reuse of aliased memory.<!-- d3d12-review-inline:end:synchronization:S-aliasing:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:synchronization:S-aliasing:1 -->For each "before resource":<!-- d3d12-review-inline:end:synchronization:S-aliasing:1 --></ins>
+For each "before resource":
 
 - If needed: Wait for all accesses to complete.
   - Not needed if the access occurred in a different `ExecuteCommandLists` scope.
@@ -1767,17 +1767,10 @@ Adds a collection of barriers into a graphics command list recording.
 
 ##### Parameters
 
-<!-- d3d12-review-alert:begin:synchronization:API-ID3D12GraphicsCommandList7-parameters:0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> | Parameter          |                                                         |
-> |--------------------|---------------------------------------------------------|
-> | `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups` |
-> | `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
-
-<!-- d3d12-review-alert:end:synchronization:API-ID3D12GraphicsCommandList7-parameters:0 -->
+| Parameter          |                                                         |
+|--------------------|---------------------------------------------------------|
+| `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups` |
+| `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
 
 ##### Requirements and results
 
@@ -1808,17 +1801,10 @@ Adds a collection of barriers into a video decode command list recording.
 
 ##### Parameters
 
-<!-- d3d12-review-alert:begin:synchronization:API-ID3D12VideoDecodeCommandList3-parameters:0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> | Parameter          |                                                         |
-> |--------------------|---------------------------------------------------------|
-> | `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups` |
-> | `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
-
-<!-- d3d12-review-alert:end:synchronization:API-ID3D12VideoDecodeCommandList3-parameters:0 -->
+| Parameter          |                                                         |
+|--------------------|---------------------------------------------------------|
+| `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups` |
+| `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
 
 ##### Requirements and results
 
@@ -1849,17 +1835,10 @@ Adds a collection of barriers into a video process command list recording.
 
 ##### Parameters
 
-<!-- d3d12-review-alert:begin:synchronization:API-ID3D12VideoProcessCommandList3-parameters:0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> | Parameter          |                                                         |
-> |--------------------|---------------------------------------------------------|
-> | `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups` |
-> | `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
-
-<!-- d3d12-review-alert:end:synchronization:API-ID3D12VideoProcessCommandList3-parameters:0 -->
+| Parameter          |                                                         |
+|--------------------|---------------------------------------------------------|
+| `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups` |
+| `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
 
 ##### Requirements and results
 
@@ -1890,17 +1869,10 @@ Adds a collection of barriers into a video encode command list recording.
 
 ##### Parameters
 
-<!-- d3d12-review-alert:begin:synchronization:API-ID3D12VideoEncodeCommandList3-parameters:0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> | Parameter          |                                                         |
-> |--------------------|---------------------------------------------------------|
-> | `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups` |
-> | `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
-
-<!-- d3d12-review-alert:end:synchronization:API-ID3D12VideoEncodeCommandList3-parameters:0 -->
+| Parameter          |                                                         |
+|--------------------|---------------------------------------------------------|
+| `NumBarrierGroups` | Number of barrier groups pointed to by `pBarrierGroups` |
+| `pBarrierGroups`   | Pointer to an array of `D3D12_BARRIER_GROUP` objects    |
 
 ##### Requirements and results
 
@@ -2422,11 +2394,11 @@ Notifies the driver that it needs to synchronize multiple accesses to resources.
 
 <ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12GraphicsCommandList-parameters:0 -->**NumBarriers**<!-- d3d12-review-inline:end:synchronization:API-ID3D12GraphicsCommandList-parameters:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12GraphicsCommandList-parameters:1 -->The number of submitted barrier descriptions.<!-- d3d12-review-inline:end:synchronization:API-ID3D12GraphicsCommandList-parameters:1 --></ins>
+The number of submitted barrier descriptions.
 
 <ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12GraphicsCommandList-parameters:2 -->**pBarriers**<!-- d3d12-review-inline:end:synchronization:API-ID3D12GraphicsCommandList-parameters:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12GraphicsCommandList-parameters:3 -->Pointer to an array of barrier descriptions.<!-- d3d12-review-inline:end:synchronization:API-ID3D12GraphicsCommandList-parameters:3 --></ins>
+Pointer to an array of barrier descriptions.
 
 ##### Requirements and results
 
@@ -2459,11 +2431,11 @@ Notifies the driver that it needs to synchronize multiple accesses to resources.
 
 <ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoDecodeCommandList-parameters:0 -->**NumBarriers**<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoDecodeCommandList-parameters:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoDecodeCommandList-parameters:1 -->The number of submitted barrier descriptions.<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoDecodeCommandList-parameters:1 --></ins>
+The number of submitted barrier descriptions.
 
 <ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoDecodeCommandList-parameters:2 -->**pBarriers**<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoDecodeCommandList-parameters:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoDecodeCommandList-parameters:3 -->Pointer to an array of barrier descriptions.<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoDecodeCommandList-parameters:3 --></ins>
+Pointer to an array of barrier descriptions.
 
 ##### Requirements and results
 
@@ -2496,11 +2468,11 @@ Notifies the driver that it needs to synchronize multiple accesses to resources.
 
 <ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoProcessCommandList-parameters:0 -->**NumBarriers**<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoProcessCommandList-parameters:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoProcessCommandList-parameters:1 -->The number of submitted barrier descriptions.<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoProcessCommandList-parameters:1 --></ins>
+The number of submitted barrier descriptions.
 
 <ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoProcessCommandList-parameters:2 -->**pBarriers**<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoProcessCommandList-parameters:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoProcessCommandList-parameters:3 -->Pointer to an array of barrier descriptions.<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoProcessCommandList-parameters:3 --></ins>
+Pointer to an array of barrier descriptions.
 
 ##### Requirements and results
 
@@ -2533,11 +2505,11 @@ Notifies the driver that it needs to synchronize multiple accesses to resources.
 
 <ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoEncodeCommandList-parameters:0 -->**NumBarriers**<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoEncodeCommandList-parameters:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoEncodeCommandList-parameters:1 -->The number of submitted barrier descriptions.<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoEncodeCommandList-parameters:1 --></ins>
+The number of submitted barrier descriptions.
 
 <ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoEncodeCommandList-parameters:2 -->**pBarriers**<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoEncodeCommandList-parameters:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoEncodeCommandList-parameters:3 -->Pointer to an array of barrier descriptions.<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoEncodeCommandList-parameters:3 --></ins>
+Pointer to an array of barrier descriptions.
 
 ##### Requirements and results
 
@@ -2769,7 +2741,7 @@ This promotion can occur during a state transformation `ResourceBarrier`, where 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Drivers without enhanced-barrier support retain the [legacy `PFND3D12DDI_RESOURCEBARRIER_0022` callback](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/nc-d3d12umddi-pfnd3d12ddi_resourcebarrier_0022). On enhanced-capable drivers, runtime translation uses the enhanced barrier interface. Application legacy support is not deprecated by replacing a driver's barrier encoding.
+> Drivers without enhanced-barrier support retain the [legacy `PFND3D12DDI_RESOURCEBARRIER_0022` DDI](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/nc-d3d12umddi-pfnd3d12ddi_resourcebarrier_0022). On enhanced-capable drivers, runtime translation uses the enhanced barrier interface. Application legacy support is not deprecated by replacing a driver's barrier encoding.
 
 <!-- d3d12-review-alert:end:synchronization:D-legacy-path:0 -->
 
@@ -2789,7 +2761,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_BARRIER_0094 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [published `PFND3D12DDI_BARRIER_0094`](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/nc-d3d12umddi-pfnd3d12ddi_barrier_0094) receives driver command-list and resource handles, not application interface pointers. The [payload](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ns-d3d12umddi-d3d12ddiarg_barrier_0094) distinguishes global, texture, buffer and internal ranged barriers. Ranged driver payloads do not expose arbitrary buffer subregion support in the application `Barrier` API.
+> The barrier DDI uses driver resource handles and also accepts internal ranged barriers. These ranged payloads are not an application buffer-subregion barrier API.
 
 <!-- d3d12-review-alert:end:synchronization:D-driver-role:0 -->
 
@@ -2870,10 +2842,7 @@ typedef struct D3D12DDI_BUFFER_BARRIER_0088 {
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [atomic buffer-copy contract](resource-operations.md#atomic-copy-driver)
-> uses these current ranged acquire/release payloads internally around its
-> primary-element copy. Its dependency resources are ordering inputs, not
-> additional copy source/destination pairs or an application range-barrier API.
+> [Atomic buffer copies](resource-operations.md#atomic-copy-driver) use the internal ranged acquire/release payloads around the primary-element copy.
 
 <!-- d3d12-review-alert:end:synchronization:AC-ranged-owner:0 -->
 
@@ -2927,7 +2896,7 @@ typedef struct D3D12DDIARG_BARRIER_0094 {
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The global descriptor carries synchronization and access masks; the texture descriptor also carries driver layouts, a driver resource handle, a subresource range and texture flags. The buffer descriptor carries a driver resource handle but no application Offset/Size fields. `D3D12DDIARG_BARRIER_0094::Type` selects its union member. The ranged descriptor's `Subresource` is a scalar `UINT` index, not a `D3D12DDI_BARRIER_SUBRESOURCE_RANGE_0088` structure.
+> Driver buffer barriers have no API `Offset` or `Size` fields. The internal ranged descriptor instead has a scalar `Subresource` index.
 
 <!-- d3d12-review-alert:end:synchronization:D-payload-fields:0 -->
 
@@ -3096,7 +3065,7 @@ typedef struct D3D12DDIARG_RESOURCE_BARRIER_0022
 >
 > Both current 3D command-list representations and the selected decode,
 > process and encode tables retain ordinary `D3D12DDI_HCOMMANDLIST` barrier
-> callbacks. The API-header command-list layout does not change these entries
+> DDIs. The API-header command-list layout does not change these entries
 > to API handles or application resource pointers.
 
 <!-- d3d12-review-alert:end:synchronization:CS-barrier-roles:0 -->
@@ -3108,7 +3077,7 @@ typedef struct D3D12DDIARG_RESOURCE_BARRIER_0022
 >
 > On an enhanced-capable driver the runtime translates legacy API barriers
 > to the [enhanced driver encoding](#enhanced-driver), rather than invoking
-> the legacy callback. `NumBarriers` counts flat driver barrier descriptors,
+> the legacy DDI. `NumBarriers` counts flat driver barrier descriptors,
 > not the API's barrier groups. The driver consumes/captures the CPU descriptors
 > during recording; resources and dependency lifetimes are not shortened.
 > Application access/layout/synchronization and command-family restrictions

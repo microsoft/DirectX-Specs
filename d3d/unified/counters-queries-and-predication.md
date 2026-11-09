@@ -377,8 +377,8 @@ typedef struct D3D12_QUERY_DATA_PIPELINE_STATISTICS
 
 ### Mesh and amplification statistics
 
-<ins><!-- d3d12-review-inline:begin:queries:M-statistics-intro:0 -->In order to track the number of invocations of Mesh Shaders and Amplification shaders in a given program, as well as the number of primitives output by a mesh shader,
-applications can use the Pipeline Statistics feature.<!-- d3d12-review-inline:end:queries:M-statistics-intro:0 --></ins>
+In order to track the number of invocations of Mesh Shaders and Amplification shaders in a given program, as well as the number of primitives output by a mesh shader,
+applications can use the Pipeline Statistics feature.
 
 ```cpp
 typedef struct D3D12_QUERY_DATA_PIPELINE_STATISTICS1
@@ -443,7 +443,7 @@ typedef enum D3D12_TRI_STATE {
 } D3D12_TRI_STATE;
 ```
 
-<ins><!-- d3d12-review-inline:begin:queries:M-culled-statistics:0 -->Culled primitives might or might not be included in MSPrimitives, depending on the GPU implementation.<!-- d3d12-review-inline:end:queries:M-culled-statistics:0 --></ins>
+Culled primitives might or might not be included in MSPrimitives, depending on the GPU implementation.
 
 <ins><!-- d3d12-review-inline:begin:queries:M-culled-statistics:1 -->Applications can find out whether the GPU implementation includes culled primitives in the MSPrimitives count, using a queryable capability called MSPrimitivesPipelineStatisticIncludesCulledPrimitives.<!-- d3d12-review-inline:end:queries:M-culled-statistics:1 --></ins>
 
@@ -453,19 +453,12 @@ If the capability value is FALSE, then culled primitives are not included in the
 
 If the capability value is UNKNOWN, then the culled primitives might or might not be included in the count.
 
-<!-- d3d12-review-context:begin:queries:M-culled-statistics:5 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
-
 > ### Remark
 >
 > At the DDI level, drivers do not return UNKNOWN. At the application level, a capability value of UNKNOWN
 > may be returned if the capability can not be queried from the driver. This could be relevant when, for example,
 > using a driver which supports the mesh shader feature but has not been updated to support the 0086 DDI
 > version.
-
-<!-- d3d12-review-context:end:queries:M-culled-statistics:5 -->
 
 <a id="stream-output-statistics"></a>
 
@@ -481,7 +474,7 @@ typedef struct D3D12_QUERY_DATA_SO_STATISTICS
 } D3D12_QUERY_DATA_SO_STATISTICS;
 ```
 
-<ins><!-- d3d12-review-inline:begin:queries:G-so-statistics-members:0 -->`NumPrimitivesWritten`<!-- d3d12-review-inline:end:queries:G-so-statistics-members:0 --></ins>
+`NumPrimitivesWritten`
 
 The number of primitives (that is, points, lines, and triangles) that were actually written to the stream output resource.
 
@@ -1402,7 +1395,7 @@ It is the **application's responsibility** to ensure that all GPU work which wri
 
 Note that this differs from the GPU-timeline `ID3D12GraphicsCommandList::ResolveQueryData`. On the GPU timeline, a resolve recorded after the corresponding `EndQuery` is implicitly ordered after it within the same command queue — no application synchronization or resource barrier is required between the query and the resolve (for example, `BeginQuery` → `EndQuery` → `ResolveQueryData` recorded in order is well-defined as-is). The CPU-timeline resolve performed by this method is **not** implicitly ordered against the GPU work that writes the queries; the application must perform the explicit CPU/GPU synchronization described above (for example, waiting on a fence) before calling it.
 
-<ins><!-- d3d12-review-inline:begin:queries:CPU-fallback:0 -->For drivers or hardware that do not support native CPU-based query resolution, the D3D12 runtime provides transparent fallback behavior to ensure the feature works universally across all D3D12-capable hardware.<!-- d3d12-review-inline:end:queries:CPU-fallback:0 --></ins>
+For drivers or hardware that do not support native CPU-based query resolution, the D3D12 runtime provides transparent fallback behavior to ensure the feature works universally across all D3D12-capable hardware.
 
 <ins><!-- d3d12-review-inline:begin:queries:CPU-fallback:1 -->**Fallback mechanism**<!-- d3d12-review-inline:end:queries:CPU-fallback:1 --></ins>
 
@@ -1952,15 +1945,6 @@ None
 
 ## Driver and hardware responsibilities
 
-<!-- d3d12-review-alert:begin:queries:N-driver:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The driver provides opaque query storage, typed query production/resolution and buffer-sampled predication under the negotiated DDI. Query heap creation, Begin/End, GPU resolution, CPU resolution and predicate selection are distinct contracts; a query object is not directly bound as a predicate. Drivers must implement the result layouts and operation policies specified above. Validation diagnostics are not a guarantee that every invalid query or lifetime/order error is detected.
-
-<!-- d3d12-review-alert:end:queries:N-driver:0 -->
-
 <a id="ddi-query-lifetime"></a>
 
 ### Query-heap types and lifetime
@@ -2017,14 +2001,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_QUERY_HEAP ) ( D3D12DDI_HDEVICE, D3
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The sizing DDI returns required driver-private object bytes as `SIZE_T`,
-> not an `HRESULT`, resolved-record size or total resource video-memory
-> allocation. The Create DDI returns an `HRESULT` and receives the
-> runtime-supplied private region through
-> `D3D12DDI_HQUERYHEAP`. The UMD initializes its opaque query state and owns
-> any additional backing/auxiliary allocations it requires; it does not own
-> the supplied private region. No particular opaque backing layout or
-> allocation mechanism is imposed.
+> The runtime allocates the private bytes reported by the sizing DDI and passes that storage through `D3D12DDI_HQUERYHEAP` to Create. The driver owns any additional allocations it makes, but must not free the runtime-supplied private region.
 
 <!-- d3d12-review-alert:end:queries:QD-lifecycle-roles:0 -->
 
@@ -2033,12 +2010,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_QUERY_HEAP ) ( D3D12DDI_HDEVICE, D3
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> On failed driver Create, the UMD unwinds partial state and additional
-> allocations; the runtime does not call DestroyQueryHeap for that failed
-> creation. After driver Create succeeds, later abandonment or API
-> initialization failure requires destruction of that driver object.
-> DestroyQueryHeap releases UMD-owned state/backing without freeing the
-> runtime-supplied private region.
+> A failed Create must unwind partial driver state and allocations. The runtime calls DestroyQueryHeap only after successful driver creation, including when later API initialization fails. Destroy releases driver-owned state without freeing the runtime-supplied private region.
 
 <!-- d3d12-review-alert:end:queries:QD-lifecycle-roles:1 -->
 
@@ -2047,15 +2019,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_QUERY_HEAP ) ( D3D12DDI_HDEVICE, D3
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The logical creation request follows [CreateQueryHeap](#createqueryheap).
-> The ordinary payload carries driver `Type`, query-element `Count` and
-> selected `NodeMask`, not CPU-result flags. Its heap/query enums identify
-> the logical kinds in the [issuance table](#query-support), after runtime
-> representation conversion. They do not waive capability, node, count or
-> command-list support requirements. The separate
-> [CPU flag/path selection](#cpu-query-flags) and
-> [native-or-fallback CPU resolution contract](#ddi-cpu-resolution) remain
-> distinct from these ordinary storage DDIs.
+> Query-heap creation receives the driver `Type`, element `Count` and resolved `NodeMask`. CPU-resolution path selection is specified separately under [CPU query flags](#cpu-query-flags).
 
 <!-- d3d12-review-alert:end:queries:QD-lifecycle-roles:2 -->
 
@@ -2122,26 +2086,9 @@ The type of query. Resolve is used by applications to transform a query result p
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pfnBeginQuery` and `pfnEndQuery` are distinct table slots sharing this
-> function-pointer type. The selected slot identifies the phase; there is no
-> extra Begin/End boolean parameter. After the ordinary driver command-list
-> and query-heap handles, the third argument is the query type and the fourth
-> is the index of one element, not a count or destination byte offset.
+> `pfnBeginQuery` and `pfnEndQuery` share `PFND3D12DDI_BEGIN_END_QUERY_0003`. The selected slot identifies the phase.
 
 <!-- d3d12-review-alert:end:queries:QD-begin-end-roles:0 -->
-
-<!-- d3d12-review-alert:begin:queries:QD-begin-end-roles:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [query lifecycle](#query-lifecycle) defines matching intervals and
-> reuse/completion rules. Timestamp and video-decode-statistics queries are
-> End-only. Shared graphics/video declarations and slots do not introduce a
-> supported video interval-query type; the
-> [issuance support table](#query-support) controls valid combinations.
-
-<!-- d3d12-review-alert:end:queries:QD-begin-end-roles:1 -->
 
 <a id="ddi-resolve-query"></a>
 
@@ -2202,13 +2149,7 @@ The destination offset.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The destination is a driver resource handle, not a CPU output pointer,
-> descriptor-heap handle or query-heap byte address. `StartElement` and
-> `ElementCount` select consecutive query elements; `DestinationOffset` is
-> the byte offset in that buffer. The UMD resolves opaque query storage into
-> the [typed public result records](#result-layout), preserving field order,
-> width, record size and consecutive-record placement. Opaque heap storage
-> need not share that layout.
+> The driver converts opaque query storage into the [API result layout](#result-layout) in the supplied destination resource. The opaque heap's internal representation need not match that layout.
 
 <!-- d3d12-review-alert:end:queries:QD-resolve-roles:0 -->
 
@@ -2217,15 +2158,7 @@ The destination offset.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Issuance and [application GPU-resolution support](#gpu-resolve-support)
-> are separate. The CPU_RESOLVE restriction applies to application command-list
-> ResolveQueryData calls; it does not prohibit the runtime's internal
-> ordinary-DDI resolution into fallback buffers under the
-> [CPU-resolution fallback contract](#cpu-resolution).
-> The [lifecycle/access contract](#query-lifecycle) governs producer completion,
-> reuse, resource access and lifetime; CPU consumption still requires GPU
-> completion. Recording this `VOID` DDI does not provide a CPU readiness or
-> completion result, and it is not the separate CPU-timeline resolve method.
+> The `CPU_RESOLVE` restriction on application GPU-resolution calls does not prohibit the runtime's internal use of this DDI for [CPU-resolution fallback](#cpu-resolution).
 
 <!-- d3d12-review-alert:end:queries:QD-resolve-roles:1 -->
 
@@ -2263,32 +2196,12 @@ A predication operation. For more information, see the [D3D12DDI_PREDICATION_OP]
 
 #### Driver behavior
 
-<!-- d3d12-review-alert:begin:queries:QD-predicate-roles:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The resource handle identifies the driver buffer supplying the predicate;
-> the third argument is an eight-byte-aligned byte offset and the fourth is
-> the driver comparison operation. The selected source is a 64-bit value,
-> not a 32-bit command count, a query index or an opaque query-heap record.
-> All 64 bits participate.
-
-<!-- d3d12-review-alert:end:queries:QD-predicate-roles:0 -->
-
 <!-- d3d12-review-alert:begin:queries:QD-predicate-roles:1 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The enum names select the condition for skipping eligible work, not the
-> condition for executing it: the [predicate truth table](#predication)
-> defines both comparisons. The GPU captures the selected value when the
-> SetPredication command executes, not during CPU recording and not anew for
-> each later operation. A null driver resource handle disables predication;
-> the offset is zero and the operation is EQUAL_ZERO in that form.
-> The exact [state/access rules](#predicate-state) and
-> [operation matrix](#predication-operation-matrix) remain canonical.
+> The driver comparison enum names specify when to skip work. Use the [predicate truth table](#predication) when translating the API operation.
 
 <!-- d3d12-review-alert:end:queries:QD-predicate-roles:1 -->
 
@@ -2315,30 +2228,9 @@ A predication operation. For more information, see the [D3D12DDI_PREDICATION_OP]
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> These recording DDIs receive ordinary driver command-list, heap and
-> resource handles after runtime object resolution, not application interface
-> pointers. Shared signatures do not make unsupported heap/query/list
-> combinations valid or imply byte-identical API and driver objects.
-> Query production/resolution and predicate selection obey their linked API
-> recording, render-pass, initialization and lifetime rules.
+> The DDIs implement the query and predication operations identified in the table above.
 
 <!-- d3d12-review-alert:end:queries:QD-recording-boundaries:0 -->
-
-<!-- d3d12-review-alert:begin:queries:QD-recording-boundaries:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Driver-reported recording failures follow the shared
-> [callback/deferred-Close contract](execution.md#lifecycle-driver-errors);
-> `VOID` alone proves neither allowed errors nor removal of validation.
-> Query and resolve operations follow the
-> [predication operation policy](#predication-operation-matrix), rather than
-> being implicitly skipped with predicated draws. CPU-resolution flags,
-> completion and fallback behavior remain defined by the
-> [CPU-resolution owner](#cpu-resolution).
-
-<!-- d3d12-review-alert:end:queries:QD-recording-boundaries:1 -->
 
 <a id="ddi-cpu-resolution"></a>
 
@@ -2349,6 +2241,6 @@ A predication operation. For more information, see the [D3D12DDI_PREDICATION_OP]
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The CPU-resolution driver path resolves completed opaque query records into the API-defined CPU output layout. Native support and runtime fallback must preserve the CPU method's nonblocking/completion and result-format contract. This is distinct from the command-list GPU-resolution DDI above.
+> The CPU-resolution path and its runtime fallback are specified under [CPU query resolution](#cpu-resolution).
 
 <!-- d3d12-review-alert:end:queries:N-cpu-ddi:0 -->

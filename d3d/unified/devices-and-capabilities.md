@@ -124,7 +124,7 @@ HRESULT GetDevice( REFIID riid, void** ppvDevice );
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:OF-get-device-behavior:0 -->Gets a pointer to the device that created this interface.<!-- d3d12-review-inline:end:devices-capabilities:OF-get-device-behavior:0 --></ins>
+Gets a pointer to the device that created this interface.
 
 <!-- d3d12-review-alert:begin:devices-capabilities:OF-get-device-identity:0 -->
 
@@ -215,7 +215,7 @@ HRESULT GetPrivateData( REFGUID guid, UINT* pDataSize, void* pData );
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:PD-GetPrivateData-behavior:0 -->Gets application-defined data from a device object.<!-- d3d12-review-inline:end:devices-capabilities:PD-GetPrivateData-behavior:0 --></ins>
+Gets application-defined data from a device object.
 
 #### Parameters
 
@@ -334,7 +334,7 @@ HRESULT SetPrivateDataInterface( REFGUID guid, const IUnknown* pData );
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:PD-SetPrivateDataInterface-behavior:0 -->Associates an [IUnknown](https://learn.microsoft.com/en-us/windows/win32/api/unknwn/nn-unknwn-iunknown)-derived interface with the device object, and associates that interface with an application-defined **GUID**.<!-- d3d12-review-inline:end:devices-capabilities:PD-SetPrivateDataInterface-behavior:0 --></ins>
+Associates an [IUnknown](https://learn.microsoft.com/en-us/windows/win32/api/unknwn/nn-unknwn-iunknown)-derived interface with the device object, and associates that interface with an application-defined **GUID**.
 
 #### Parameters
 
@@ -379,7 +379,7 @@ A pointer to the [IUnknown](https://learn.microsoft.com/en-us/windows/win32/api/
 
 ### Destruction notifications
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-interface:0 -->**ID3DDestructionNotifier** is an interface that you can use to register for callbacks when a Direct3D nano-COM object is destroyed.<!-- d3d12-review-inline:end:devices-capabilities:DN-interface:0 --></ins>
+**ID3DDestructionNotifier** is an interface that you can use to register for callbacks when a Direct3D nano-COM object is destroyed.
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-interface:1 -->To acquire an instance of this interface, call [QueryInterface](https://learn.microsoft.com/en-us/windows/win32/api/unknwn/nf-unknwn-iunknown-queryinterface(refiid_void)) on a Direct3D object with the **IID** of **ID3DDestructionNotifier**.<!-- d3d12-review-inline:end:devices-capabilities:DN-interface:1 --></ins>
 
@@ -474,7 +474,7 @@ A user-defined callback to be invoked when the object is destroyed.
 
 ##### `pData`
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-RegisterDestructionCallback-pData:0 -->Type: **void\***<!-- d3d12-review-inline:end:devices-capabilities:DN-RegisterDestructionCallback-pData:0 --></ins>
+Type: **void\***
 
 The data to pass to *callbackFn* when invoked
 
@@ -616,7 +616,7 @@ LPVOID GetBufferPointer();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:OF-blob-pointer-behavior:0 -->Gets a pointer to the data.<!-- d3d12-review-inline:end:devices-capabilities:OF-blob-pointer-behavior:0 --></ins>
+Gets a pointer to the data.
 
 #### Return values
 
@@ -645,7 +645,7 @@ SIZE_T GetBufferSize();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:OF-blob-size-behavior:0 -->Gets the size.<!-- d3d12-review-inline:end:devices-capabilities:OF-blob-size-behavior:0 --></ins>
+Gets the size.
 
 #### Return values
 
@@ -1042,7 +1042,7 @@ You can retrieve the version of a particular `D3D12Core.dll` from the exported s
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The user-mode display driver (UMD) interface is distinct from the application's COM interfaces. The runtime opens a driver adapter object, selects a mutually supported DDI version, provides private-device storage and creates the driver device. Driver function tables and runtime callback tables carry calls in opposite directions.
+> The runtime opens a UMD adapter, negotiates a DDI version, and creates the driver device in runtime-provided private storage. For API-associated DDIs, the corresponding API sections define the operation semantics. DDI sections describe the interface and additional driver requirements or differences. Driver-only interfaces and runtime callbacks have their own contracts.
 
 <!-- d3d12-review-alert:end:devices-capabilities:B001:0 -->
 
@@ -1062,7 +1062,7 @@ The Direct3D runtime can open multiple graphics adapter objects from a single gr
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Driver handles identify driver objects or their supplied private storage. Runtime handles identify objects used when calling back into the runtime. These handle domains are not interchangeable. [Application device creation](devices-and-capabilities.md#ordinary-device-creation), [CPU threading and lifetime](execution.md#threading) and [device-removal reporting](diagnostics.md#device-removal-status) retain their separate contracts.
+> Driver handles identify driver objects or their supplied private storage. Runtime handles identify objects used for callbacks into the runtime.
 
 <!-- d3d12-review-alert:end:devices-capabilities:B004:0 -->
 
@@ -1119,10 +1119,7 @@ typedef struct D3D12DDIARG_OPENADAPTER
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Adapter opening does not receive a selected device DDI version. Version
-> selection is a separate operation. The adapter function table below
-> supplies the current callbacks; its function types do not by themselves
-> establish the extent of the subsequently supplied device-creation data.
+> OpenAdapter12 precedes selection of the device DDI version.
 
 <!-- d3d12-review-alert:end:devices-capabilities:B009:0 -->
 
@@ -1173,7 +1170,7 @@ typedef HRESULT (APIENTRY *PFND3D12DDI_CLOSEADAPTER)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Closes the opened driver adapter object and releases its driver-owned resources. The device associated with that adapter is no longer in use when the adapter is closed. The return value reports completion or failure of closing the adapter; it is not a request to create or renegotiate a device.
+> CloseAdapter releases the driver adapter and its allocations after its device is no longer in use.
 
 <!-- d3d12-review-alert:end:devices-capabilities:B014:0 -->
 
@@ -1224,7 +1221,7 @@ typedef HRESULT (APIENTRY *PFND3D12DDI_GETSUPPORTEDVERSIONS)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The function returns an `HRESULT`. This is a full-list query/retrieval protocol, not a specified capacity-clamped prefix or `DXGI_ERROR_MORE_DATA` convention. No generic failure-count or untouched-array guarantee is implied.
+> Version retrieval uses the full-list protocol and returns HRESULT.
 
 <!-- d3d12-review-alert:end:devices-capabilities:B019:0 -->
 
@@ -1272,7 +1269,7 @@ The CalcPrivateDeviceSize function determines the size of a memory region that t
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The return value is a byte size, not an `HRESULT`. The query describes the selected DDI interface/version and creation-mode flags. The flags identify requests to disable implicit multi-GPU operation or create a debuggable driver device; they are DDI creation flags, not the application device-factory flag enumeration.
+> The size query describes the selected DDI version and creation flags. Its flags request disabling implicit multi-GPU operation or creating a debuggable driver device.
 
 <!-- d3d12-review-alert:end:devices-capabilities:B023:0 -->
 
@@ -1290,7 +1287,7 @@ The CalcPrivateDeviceSize function determines the size of a memory region that t
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The private-device pointer is aligned to `MEMORY_ALLOCATION_ALIGNMENT`: 16 bytes on 64-bit Windows and 8 bytes on 32-bit Windows. This is not a 64-byte alignment guarantee.
+> Private-device storage is aligned to `MEMORY_ALLOCATION_ALIGNMENT`, which is 16 bytes on Win64 and 8 bytes on Win32.
 
 <!-- d3d12-review-alert:end:devices-capabilities:B025:0 -->
 
@@ -1335,7 +1332,7 @@ typedef struct D3D12DDIARG_CREATEDEVICE_0109
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `hRTDevice` is the runtime handle used for callbacks. `hDrvDevice` identifies the supplied driver-private device storage, not a new allocation whose ownership transfers from the driver. `Interface`, `Version` and `Flags` specify the device being created.
+> `hRTDevice` identifies the runtime device for callbacks. `hDrvDevice` identifies the supplied driver-private storage.
 
 <!-- d3d12-review-alert:end:devices-capabilities:B027:0 -->
 
@@ -1347,15 +1344,6 @@ typedef struct D3D12DDIARG_CREATEDEVICE_0109
 > `pKTCallbacks` supplies runtime callbacks that access kernel services. The `p12UMCallbacks` union supplies the applicable versioned core user-mode callback table. The union members are alternative views of one callback-table pointer, not independently supplied tables; the driver uses the layout applicable to the negotiated interface.
 
 <!-- d3d12-review-alert:end:devices-capabilities:B028:0 -->
-
-<!-- d3d12-review-alert:begin:devices-capabilities:B029:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Creation supplies the adapter's selected core-version context for subsequent table population. It does not change the opened adapter table into a new negotiated table shape.
-
-<!-- d3d12-review-alert:end:devices-capabilities:B029:0 -->
 
 <a id="creation-tail"></a>
 
@@ -1439,7 +1427,7 @@ typedef VOID (APIENTRY *PFND3D12DDI_DESTROYDEVICE)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `DestroyDevice` is an adapter-table entry, so cleanup does not depend on successfully obtaining the device function tables. It has no return value.
+> DestroyDevice is an adapter-table entry, so cleanup does not require successful device-table initialization.
 
 <!-- d3d12-review-alert:end:devices-capabilities:B039:0 -->
 
@@ -1750,7 +1738,7 @@ typedef HRESULT (APIENTRY *PFND3D12DDI_GET_SUPPORTED_EXTENDED_FEATURES_0096)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The function returns an `HRESULT`. These calls do not establish a capacity-clamped prefix, oversized-capacity normalization or `DXGI_ERROR_MORE_DATA` protocol. A failure does not imply that the output array was left untouched.
+> Feature retrieval requires storage for the complete reported list and returns HRESULT.
 
 <!-- d3d12-review-alert:end:devices-capabilities:B068:0 -->
 
@@ -1789,7 +1777,7 @@ typedef HRESULT (APIENTRY *PFND3D12DDI_GET_SUPPORTED_EXTENDED_FEATURE_VERSIONS_0
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The function returns an `HRESULT`; no generic short-buffer status, partial-prefix contract or failure-output guarantee is specified here.
+> Feature-version retrieval returns HRESULT.
 
 <!-- d3d12-review-alert:end:devices-capabilities:B072:0 -->
 
@@ -1857,7 +1845,7 @@ typedef HRESULT (APIENTRY *PFND3D12DDI_SET_EXTENDED_FEATURE_CALLBACKS_0021)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Unlike the caller-owned output buffer of `FillDDITable`, this is runtime-provided callback storage whose [lifetime](#callback-storage) permits the driver to retain the supplied read-only pointer.
+> The driver may retain the runtime callback-table pointer for its [specified lifetime](#callback-storage). FillDDITable's output buffer is instead borrowed for the call.
 
 <!-- d3d12-review-alert:end:devices-capabilities:B079:0 -->
 
@@ -1884,7 +1872,7 @@ typedef HRESULT (APIENTRY *PFND3D12DDI_SET_EXTENDED_FEATURE_CALLBACKS_0021)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime owns this storage. The driver may retain the supplied read-only table pointer for the stated lifetime; it does not free or modify the table. The guarantee concerns table storage and does not extend the validity of destroyed object handles or waive a callback's individual preconditions.
+> The runtime owns callback-table storage. The driver may retain its read-only pointer for the stated lifetime and must not free or modify it.
 
 <!-- d3d12-review-alert:end:devices-capabilities:B081:0 -->
 
@@ -2694,6 +2682,51 @@ Returns **S\_OK** if successful. Returns **E\_INVALIDARG** if an unsupported dat
 
 <!-- d3d12-review-alert:end:devices-capabilities:query-valid-storage:0 -->
 
+<a id="raytracing-tiers"></a>
+
+### Raytracing support tiers
+
+<!-- d3d12-review-alert:begin:devices-capabilities:CAP-raytracing-tier-scope:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `D3D12_FEATURE_DATA_D3D12_OPTIONS5::RaytracingTier` reports the overall raytracing tier through [`ID3D12Device::CheckFeatureSupport`](#id3d12device-checkfeaturesupport). The tier's workload contracts are defined in [Acceleration structures](acceleration-structures.md#availability), [Ray traversal](ray-traversal.md#inline-raytracing), [Raytracing shader pipelines](raytracing-pipelines.md#availability-and-driver-responsibilities), and [raytracing state-object availability](state-objects.md#availability).
+
+<!-- d3d12-review-alert:end:devices-capabilities:CAP-raytracing-tier-scope:0 -->
+
+<a id="d3d12_raytracing_tier"></a>
+
+#### D3D12_RAYTRACING_TIER
+
+```cpp
+typedef enum D3D12_RAYTRACING_TIER
+{
+    D3D12_RAYTRACING_TIER_NOT_SUPPORTED = 0,
+    D3D12_RAYTRACING_TIER_1_0 = 10,
+    D3D12_RAYTRACING_TIER_1_1 = 11,
+    D3D12_RAYTRACING_TIER_1_2 = 12,
+} D3D12_RAYTRACING_TIER;
+```
+
+Level of raytracing support on the device. Queried via
+[CheckFeatureSupport()](#id3d12device-checkfeaturesupport).
+
+<!-- d3d12-review-alert:begin:devices-capabilities:CAP-raytracing-tier-definitions:2 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> Value                               | Definition
+> -----                               | ----------
+> `D3D12_RAYTRACING_TIER_NOT_SUPPORTED` | No support for raytracing on the device. Attempts to create any raytracing related object will fail and using raytracing related APIs on command lists results in undefined behavior.
+> `D3D12_RAYTRACING_TIER_1_0` | The device supports the full raytracing functionality described in the unified raytracing chapters, except features added in higher tiers listed below.
+> `D3D12_RAYTRACING_TIER_1_1` | Adds: <li>Support for indirect DispatchRays() calls (ray generation shader invocation) via [ExecuteIndirect()](indirect-execution.md#executeindirect).</li><li>Support for [incremental additions to existing state objects](state-objects.md#addtostateobject) via [AddToStateObject()](state-objects.md#addtostateobject).</li><li>Support for [inline raytracing](ray-traversal.md#inline-raytracing) via [RayQuery](ray-traversal.md#rayquery) objects declarable in any shader stage.</li><li>[GeometryIndex()](raytracing-pipelines.md#geometryindex) intrinsic added to relevant raytracing shaders, for applications that wish to distinguish geometries manually in shaders in addition to or instead of by burning shader table slots.</li><li>Additional [ray flags](ray-traversal.md#ray-flags), `RAY_FLAG_SKIP_TRIANGLES` and `RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES`.</li><li>New version of raytracing pipeline config subobject, [D3D12_RAYTRACING_PIPELINE_CONFIG1](state-objects.md#d3d12_raytracing_pipeline_config1), adding a flags field, [D3D12_RAYTRACING_PIPELINE_FLAGS](state-objects.md#d3d12_raytracing_pipeline_flags). The equivalent subobject in HLSL is [RaytracingPipelineConfig1](state-objects.md#dxil-raytracing-pipeline-config1).  The available flags, `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_TRIANGLES` and `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_PROCEDURAL_PRIMITIVES` (minus `D3D12_` when defined in HLSL) behave like OR'ing the equivalent RAY_FLAGS above into any [TraceRay()](raytracing-pipelines.md#traceray) call in a raytracing pipeline, except that these do not show up in a [RayFlags()](raytracing-pipelines.md#rayflags) call from a shader. Implementations may be able to make pipeline optimizations knowing that one of the primitive types can be skipped.</li><li>Additional vertex formats supported for acceleration structure build input as part of [D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC](acceleration-structures.md#d3d12_raytracing_geometry_triangles_desc).</li>
+> `D3D12_RAYTRACING_TIER_1_2` |Adds:<li>[Opacity Micromaps](acceleration-structures.md#opacity-micromaps)</li><li>[Shader Execution Reordering](raytracing-pipelines.md#shader-execution-reordering)</li><li>The parts of these features involving shader code, which would be all of Shader Execution Reordering, as well as a small portion of Opacity Micromaps, exist in Shader Model 6.9.  All the non-HLSL parts of Opacity Micromaps are available in release (non-preview).</li><li>All devices that support raytracing at all (`D3D12_RAYTRACING_TIER_1_0`+) and support Shader Model 6.9 must support [Shader Execution Reordering](raytracing-pipelines.md#shader-execution-reordering).  `D3D12_RAYTRACING_TIER_1_2` simply means the device supports all of the features listed here.</li>
+
+<!-- d3d12-review-alert:end:devices-capabilities:CAP-raytracing-tier-definitions:2 -->
+
+
 <a id="feature-level-requests"></a>
 
 ### Feature-level requests
@@ -3029,10 +3062,10 @@ If a device is feature level 12_2, it has
 > | :--- | --- | --- |
 > |Required driver model                                                    | WDDM 2.0	                  | |
 > |Shader Model	                                                          | 6.5                           |[Link](https://microsoft.github.io/DirectX-Specs/d3d/HLSL_ShaderModel6_5.html)
-> |Raytracing tier	                                                      | Tier 1.1                      |[Link](acceleration-structures.md#d3d12_raytracing_tier)
+> |Raytracing tier	                                                      | Tier 1.1                      |[Link](#raytracing-tiers)
 > |Variable shading rate                                                    | Tier 2                        |[Link](pixel-shaders.md#vrs)
 > |Mesh shader tier	                                                      | Tier 1                        |[Link](amplification-and-mesh-shaders.md#availability)
-> |Sampler feedback	                                                      | Tier 0.9                      |[Link](https://microsoft.github.io/DirectX-Specs/d3d/SamplerFeedback.html)
+> |Sampler feedback	                                                      | Tier 0.9                      |[Link](common-shader-internals.md#sampler-feedback)
 > |Resource Binding Tier	                                                  | Tier 3                        |[Link](binding.md#binding-capabilities)
 > |Tiled Resources	                                                      | Tier 3 | |
 > |Conservative Rasterization                                               | Tier 3                        |[Link](rasterization.md#conservative-overview)
@@ -4299,11 +4332,7 @@ typedef D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS ( APIENTRY* PFND3D12DDI
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `GetImplicitPhysicalAdapterMask` instead returns a UINT physical-adapter
-> bit mask for the driver's implicit multi-adapter participation. These are
-> not resource node masks, GPU addresses or interchangeable count queries.
-> The driver fills the CPU mapping during the call; mapping neither creates
-> devices nor changes resource visibility by itself.
+> GetImplicitPhysicalAdapterMask returns a bit mask of physical adapters participating in the driver's implicit multi-adapter operation.
 
 <!-- d3d12-review-alert:end:devices-capabilities:CS-node-mapping:1 -->
 
@@ -4328,10 +4357,7 @@ typedef struct D3D12_FEATURE_DATA_APPLICATION_SPECIFIC_DRIVER_STATE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Application-specific driver state captures driver application-detection
-> workarounds for replay tools. It is an opaque adapter/driver-specific blob,
-> not a pipeline-library entry, shader identifier or general device-state
-> serialization.
+> Application-specific driver state captures driver application-detection workarounds in an opaque adapter/driver-specific blob for replay tools.
 
 <!-- d3d12-review-alert:end:devices-capabilities:CS-application-state-intro:0 -->
 
@@ -4426,7 +4452,9 @@ The size and layout of the opaque blob is determined by the driver.
 
 This allows an application to call ```ID3D12Device5::CheckDriverMatchingIdentifier()``` to validate that a blob previously retrieved via ```GetApplicationSpecificDriverState()``` is compatible with the current device/driver. This can be used to determine if the driver ignored the set application specific driver state blob due to incompatibility issues.
 
-### Driver state callbacks
+<a id="driver-state-callbacks"></a>
+
+### Driver state DDIs
 
 The three current core-device DDIs separate byte-size query, blob retrieval
 and status reporting. The size is UINT bytes, not WCHAR count. Retrieval

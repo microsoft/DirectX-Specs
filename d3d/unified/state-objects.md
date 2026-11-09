@@ -1001,9 +1001,9 @@ typedef enum D3D12_HIT_GROUP_TYPE
 } D3D12_HIT_GROUP_TYPE;
 ```
 
-<ins><!-- d3d12-review-inline:begin:state-objects:T-hit_group_type:1 -->Specify the type of hit group. For triangles, the hit group can't
+Specify the type of hit group. For triangles, the hit group can't
 contain an intersection shader. For procedural primitives, the hit group
-must contain an intersection shader.<!-- d3d12-review-inline:end:state-objects:T-hit_group_type:1 --></ins>
+must contain an intersection shader.
 
 <a id="d3d12_raytracing_shader_config"></a>
 
@@ -1149,8 +1149,8 @@ const UINT D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES = 32;
 
 ### Hit group
 
-<ins><!-- d3d12-review-inline:begin:state-objects:DXIL-hit-group:0 -->A `TriangleHitGroup` is a hit group with zero or one anyhit shaders and
-zero or one closesthit shaders listed in this order by name (string).<!-- d3d12-review-inline:end:state-objects:DXIL-hit-group:0 --></ins>
+A `TriangleHitGroup` is a hit group with zero or one anyhit shaders and
+zero or one closesthit shaders listed in this order by name (string).
 
 Use an empty string to omit a shader type.
 
@@ -1164,9 +1164,9 @@ TriangleHitGroup my_group_name =
 };
 ```
 
-<ins><!-- d3d12-review-inline:begin:state-objects:DXIL-hit-group:4 -->A `ProceduralPrimitiveHitGroup` is a hit group with zero or one
+A `ProceduralPrimitiveHitGroup` is a hit group with zero or one
 anyhit, zero or one closesthit and one intersection shader,
-listed in this order by name (string).<!-- d3d12-review-inline:end:state-objects:DXIL-hit-group:4 --></ins>
+listed in this order by name (string).
 
 Use an empty string to omit a shader type.
 
@@ -1303,9 +1303,9 @@ In the absence of these attributes for explicitly indicating node IDs, node ID d
 
 <ins><!-- d3d12-review-inline:begin:state-objects:C-node-id:4 -->If a [node output declaration](work-graphs.md#node-output-declaration) doesn't specify a `[NodeID()]` attribute the node ID defaults to `{localVariableName for the output node, 0}`.<!-- d3d12-review-inline:end:state-objects:C-node-id:4 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:state-objects:C-node-id:5 -->Given a variable declared in a shader that represents an array of output nodes, say `myOutputArray` having a  Node ID `{name,arrayIndex}`, the `arrayIndex` part of the ID serves as the *base* for array indexing.  So the shader body can index the node array via `myOutputArray[i]`, which resolves to Node ID `{name,arrayIndex+i}`.<!-- d3d12-review-inline:end:state-objects:C-node-id:5 --></ins>
+Given a variable declared in a shader that represents an array of output nodes, say `myOutputArray` having a  Node ID `{name,arrayIndex}`, the `arrayIndex` part of the ID serves as the *base* for array indexing.  So the shader body can index the node array via `myOutputArray[i]`, which resolves to Node ID `{name,arrayIndex+i}`.
 
-<ins><!-- d3d12-review-inline:begin:state-objects:C-node-id:6 -->Some APIs refer to NodeIDs as well (such as methods for overriding the IDs specified in shaders): see [D3D12_NODE_ID](#d3d12_node_id).<!-- d3d12-review-inline:end:state-objects:C-node-id:6 --></ins>
+Some APIs refer to NodeIDs as well (such as methods for overriding the IDs specified in shaders): see [D3D12_NODE_ID](#d3d12_node_id).
 
 Various constraints on the construction of node arrays are described in [Node array constraints](work-graphs.md#node-array-constraints).
 
@@ -1379,13 +1379,13 @@ typedef struct D3D12_WORK_GRAPH_DESC
 
 The `D3D12_WORK_GRAPH_FLAG_INCLUDE_ALL_AVAILABLE_NODES` flag does similar graph auto-population, taking each node shader exported from DXIL libraries in the order they were exported, adding them to the graph and recursively adding their children (if not already in the graph).  Nodes added because of this flag that end up with no other node writing to them are taken to be graph entrypoints.
 
-<ins><!-- d3d12-review-inline:begin:state-objects:T-work_graph_desc:5 -->Nodes listed in `pExplicitlyDefinedNodes` allow for optionally overriding various parameters of nodes from what the original shader code specified, so it is more flexible but not as simple as using `pEntrypoints` above, or the `D3D12_WORK_GRAPH_FLAG_INCLUDE_ALL_AVAILABLE_NODES` flag.  If any of the nodes specified in `pExplicitlyDefinedNodes` do happen to be identified as entrypoints in the shader code or the API node overrides, additional referenced nodes are auto-populated into the graph the same as above.<!-- d3d12-review-inline:end:state-objects:T-work_graph_desc:5 --></ins>
+Nodes listed in `pExplicitlyDefinedNodes` allow for optionally overriding various parameters of nodes from what the original shader code specified, so it is more flexible but not as simple as using `pEntrypoints` above, or the `D3D12_WORK_GRAPH_FLAG_INCLUDE_ALL_AVAILABLE_NODES` flag.  If any of the nodes specified in `pExplicitlyDefinedNodes` do happen to be identified as entrypoints in the shader code or the API node overrides, additional referenced nodes are auto-populated into the graph the same as above.
 
 One characteristic of nodes defined in `pExplicitlyDefinedNodes` is that these take precedence (override) over any node shaders in the state object that might have the same ID.  This is relevant when the runtime is looking for nodes to add to the graph as it auto-populates from entrypoints and is looking for a node with a particular ID.
 
 Nodes can optionally be renamed from what their node ID is in HLSL when specified via `pExplicitlyDefinedNodes`.  This can be done multiple times on a given HLSL node ID if desired.  As mentioned above, if the runtime is auto-populating a graph definition from an entrypoint and it encounters an explicitly defined node via rename with the same node ID as one node defined in HLSL, the explicitly defined node gets used.
 
-<ins><!-- d3d12-review-inline:begin:state-objects:T-work_graph_desc:8 -->If the auto-population process encounters a node that is already in the graph, that's fine - there's simply no new node to add in that case.<!-- d3d12-review-inline:end:state-objects:T-work_graph_desc:8 --></ins>
+If the auto-population process encounters a node that is already in the graph, that's fine - there's simply no new node to add in that case.
 
 <ins><!-- d3d12-review-inline:begin:state-objects:T-work_graph_desc:9 -->If a node is explicitly defined in the graph, not marked as an entrypoint, and isn't output to by any other node in the graph it is treated as an error.  Such a node needs to either be explicitly marked as an entrypoint (either in HLSL, via override, or putting in the `pEntrypoints` list), or not included in the graph at all.<!-- d3d12-review-inline:end:state-objects:T-work_graph_desc:9 --></ins>
 
@@ -2034,7 +2034,7 @@ HRESULT AddToStateObject(
 
 <ins><!-- d3d12-review-inline:begin:state-objects:B-AddToStateObject:0 -->The following rules apply to raytracing pipeline additions. [Executable work-graph and generic-program additions](#executable-additions) are specified separately below.<!-- d3d12-review-inline:end:state-objects:B-AddToStateObject:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:state-objects:B-AddToStateObject:1 -->Incrementally add to an existing state object.  This incurs lower CPU overhead than creating a state object from scratch that is a superset of an existing one (e.g. adding a few more shaders).  The reasons for lower overhead are:<!-- d3d12-review-inline:end:state-objects:B-AddToStateObject:1 --></ins>
+Incrementally add to an existing state object.  This incurs lower CPU overhead than creating a state object from scratch that is a superset of an existing one (e.g. adding a few more shaders).  The reasons for lower overhead are:
 
 - <ins><!-- d3d12-review-inline:begin:state-objects:B-AddToStateObject:2 -->The D3D runtime doesn't have to re-validate the correctness of the existing state object.  It only needs to check that what is being added is valid and doesn't conflict with what is already in the state object.<!-- d3d12-review-inline:end:state-objects:B-AddToStateObject:2 --></ins>
 
@@ -2248,7 +2248,7 @@ UINT GetNumWorkGraphs();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:state-objects:B-GetNumWorkGraphs:0 -->Returns the number of work graphs in the state object.<!-- d3d12-review-inline:end:state-objects:B-GetNumWorkGraphs:0 --></ins>
+Returns the number of work graphs in the state object.
 
 > It isn't strictly necessary to use this method, as an app might know from when it created the state object how many work graphs were specified.  Even so, this method could help verify that assumptions are correct.
 
@@ -2264,7 +2264,7 @@ LPCWSTR GetProgramName(UINT WorkGraphIndex);
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:state-objects:B-GetProgramName:0 -->Returns the program name for the work graph at index `WorkGraphIndex`, in the range `[0... NumWorkGraphs-1]`.  This is the name that was defined in the work graph definition, e.g. in [D3D12_WORK_GRAPH_DESC](#d3d12_work_graph_desc).<!-- d3d12-review-inline:end:state-objects:B-GetProgramName:0 --></ins>
+Returns the program name for the work graph at index `WorkGraphIndex`, in the range `[0... NumWorkGraphs-1]`.  This is the name that was defined in the work graph definition, e.g. in [D3D12_WORK_GRAPH_DESC](#d3d12_work_graph_desc).
 
 Returns `nullptr` if `WorkGraphIndex` is invalid.
 
@@ -2286,7 +2286,7 @@ UINT GetWorkGraphIndex(LPCWSTR pProgramName);
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:state-objects:B-GetWorkGraphIndex:0 -->Returns the index (`[0... NumWorkGraphs-1]`) for the specified work graph name.  This is the name that was defined in the work graph definition, e.g. in [D3D12_WORK_GRAPH_DESC](#d3d12_work_graph_desc).<!-- d3d12-review-inline:end:state-objects:B-GetWorkGraphIndex:0 --></ins>
+Returns the index (`[0... NumWorkGraphs-1]`) for the specified work graph name.  This is the name that was defined in the work graph definition, e.g. in [D3D12_WORK_GRAPH_DESC](#d3d12_work_graph_desc).
 
 Returns `-1` if `pProgramName` doesn't correspond to a work graph in the state object.
 
@@ -2337,7 +2337,7 @@ void GetWorkGraphMemoryRequirements(
 
 See [Discovering backing memory size requirements](#discovering-backing-memory-size-requirements).
 
-<ins><!-- d3d12-review-inline:begin:state-objects:B-GetWorkGraphMemoryRequirements:1 -->Fills out `pWorkGraphMemoryRequirements` (see [D3D12_WORK_GRAPH_MEMORY_REQUIREMENTS](#d3d12_work_graph_memory_requirements)) based on the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).<!-- d3d12-review-inline:end:state-objects:B-GetWorkGraphMemoryRequirements:1 --></ins>
+Fills out `pWorkGraphMemoryRequirements` (see [D3D12_WORK_GRAPH_MEMORY_REQUIREMENTS](#d3d12_work_graph_memory_requirements)) based on the work graph at index `WorkGraphIndex` (`[0... NumWorkGraphs-1]`).
 
 Zeroes are valid return values if the system doesn't need any backing memory for the graph.  The application can pass `null` for the backing memory in [SetProgram()](#setprogram) in this case.
 
@@ -2401,8 +2401,8 @@ void SetPipelineState1(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:state-objects:B-SetPipelineState1:0 -->Set a state object on the command list. Can be called from graphics or
-compute command lists and bundles.<!-- d3d12-review-inline:end:state-objects:B-SetPipelineState1:0 --></ins>
+Set a state object on the command list. Can be called from graphics or
+compute command lists and bundles.
 
 <ins><!-- d3d12-review-inline:begin:state-objects:B-SetPipelineState1:1 -->This is an alternative to `SetPipelineState(ID3D12PipelineState*)`
 which is only defined for graphics and compute shaders. The distinction between the calls is
@@ -2473,18 +2473,11 @@ void SetProgram(const D3D12_SET_PROGRAM_DESC* pDesc);
 
 Method for setting a [program](#program) on a command list.
 
-<ins><!-- d3d12-review-inline:begin:state-objects:B-SetProgram:1 -->Work graphs can only be set within command lists of type `DIRECT` or `COMPUTE`.  `BUNDLE` is not supported given that bundles are meant to be reused across command lists, and the [backing memory](#backing-memory) for work graphs can't be used for parallel graph invocations.<!-- d3d12-review-inline:end:state-objects:B-SetProgram:1 --></ins>
+Work graphs can only be set within command lists of type `DIRECT` or `COMPUTE`.  `BUNDLE` is not supported given that bundles are meant to be reused across command lists, and the [backing memory](#backing-memory) for work graphs can't be used for parallel graph invocations.
 
-<!-- d3d12-review-alert:begin:state-objects:B-SetProgram:2 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> Parameter                           | Definition
-> ---------                           | ----------
-> `pDesc` | See [D3D12_SET_PROGRAM_DESC](#d3d12_set_program_desc).
-
-<!-- d3d12-review-alert:end:state-objects:B-SetProgram:2 -->
+Parameter                           | Definition
+---------                           | ----------
+`pDesc` | See [D3D12_SET_PROGRAM_DESC](#d3d12_set_program_desc).
 
 <ins><!-- d3d12-review-inline:begin:state-objects:N-record-copy:0 -->For `SetProgram`,<!-- d3d12-review-inline:end:state-objects:N-record-copy:0 --></ins> at command list recording the runtime makes a
 deep copy of the parameters (not including data in GPU memory pointed to
@@ -2653,7 +2646,7 @@ Member                           | Definition
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Raytracing pipeline state objects require device raytracing support. `D3D12_RAYTRACING_TIER_NOT_SUPPORTED` does not support creating raytracing-related objects; attempting to use raytracing command-list APIs has undefined behavior. Every `AddToStateObject` call requires raytracing tier 1.1, including generic-program and work-graph additions, in addition to the selected workload's own capabilities. `D3D12_RAYTRACING_PIPELINE_CONFIG1` also requires raytracing tier 1.1. Opacity-micromap pipeline support is part of the [opacity-micromap capability contract](../Raytracing.md#d3d12_raytracing_tier).
+> Raytracing pipeline state objects require device raytracing support. `D3D12_RAYTRACING_TIER_NOT_SUPPORTED` does not support creating raytracing-related objects; attempting to use raytracing command-list APIs has undefined behavior. Every `AddToStateObject` call requires raytracing tier 1.1, including generic-program and work-graph additions, in addition to the selected workload's own capabilities. `D3D12_RAYTRACING_PIPELINE_CONFIG1` also requires raytracing tier 1.1. Opacity-micromap pipeline support is part of the [opacity-micromap capability contract](devices-and-capabilities.md#raytracing-tiers).
 
 <!-- d3d12-review-alert:end:state-objects:N-availability:0 -->
 
@@ -2890,7 +2883,7 @@ However, in the runtime `C` does not hold a reference on the DDI object/handle f
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime resolves DXIL subobjects and API associations before driver creation. Drivers consume resolved export summaries, retain access to runtime-owned description storage for its specified lifetime, and may still reject incompatible code discovered during actual linking. Creation, addition, property lookup and selection use distinct driver callbacks rather than an inferred one-to-one mapping of every API subobject to a DDI subobject.
+> The runtime resolves DXIL subobjects and API associations before driver creation. The driver consumes resolved export summaries and performs the linking validation assigned to it below.
 
 <!-- d3d12-review-alert:end:state-objects:N-ddi-boundary:0 -->
 
@@ -3263,17 +3256,10 @@ typedef struct D3D12DDI_NODE_ID_0108
 } D3D12DDI_NODE_ID_0108;
 ```
 
-<!-- d3d12-review-alert:begin:state-objects:D-prose-D3D12DDI_NODE_ID_0108:0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> Member                           | Definition
-> ---------                        | ----------
-> `Name`    | String part of Node ID
-> `ArrayIndex` | Array index part of Node ID (defaults to 0 if not specified in HLSL)
-
-<!-- d3d12-review-alert:end:state-objects:D-prose-D3D12DDI_NODE_ID_0108:0 -->
+Member                           | Definition
+---------                        | ----------
+`Name`    | String part of Node ID
+`ArrayIndex` | Array index part of Node ID (defaults to 0 if not specified in HLSL)
 
 At the API see [D3D12_NODE_ID](#d3d12_node_id).
 
@@ -3417,17 +3403,10 @@ typedef struct D3D12DDI_NODE_LIST_ENTRY_0108
 } D3D12DDI_NODE_LIST_ENTRY_0108;
 ```
 
-<!-- d3d12-review-alert:begin:state-objects:D-prose-D3D12DDI_NODE_LIST_ENTRY_0108:0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> Member                           | Definition
-> ---------                        | ----------
-> `pNode` | Pointer to [D3D12DDI_NODE_0108](#d3d12ddi_node_0108).
-> `pNext` | Next node in list.
-
-<!-- d3d12-review-alert:end:state-objects:D-prose-D3D12DDI_NODE_LIST_ENTRY_0108:0 -->
+Member                           | Definition
+---------                        | ----------
+`pNode` | Pointer to [D3D12DDI_NODE_0108](#d3d12ddi_node_0108).
+`pNext` | Next node in list.
 
 <a id="d3d12ddi_node_output_0108"></a>
 
@@ -3499,7 +3478,7 @@ typedef struct D3D12DDI_BROADCASTING_LAUNCH_NODE_PROPERTIES_0108
 } D3D12DDI_BROADCASTING_LAUNCH_NODE_PROPERTIES_0108;
 ```
 
-<ins><!-- d3d12-review-inline:begin:state-objects:D-prose-D3D12DDI_BROADCASTING_LAUNCH_NODE_PROPERTIES_0108:0 -->Any properties listed here take precedence over (override) what may have been declared in the shader for the node.  The driver must always use the properties listed here as the final property selections.  If a driver happens to care about whether something was overridden, it can compare any setting here against what the shader declared.<!-- d3d12-review-inline:end:state-objects:D-prose-D3D12DDI_BROADCASTING_LAUNCH_NODE_PROPERTIES_0108:0 --></ins>
+Any properties listed here take precedence over (override) what may have been declared in the shader for the node.  The driver must always use the properties listed here as the final property selections.  If a driver happens to care about whether something was overridden, it can compare any setting here against what the shader declared.
 
 <!-- d3d12-review-alert:begin:state-objects:D-prose-D3D12DDI_BROADCASTING_LAUNCH_NODE_PROPERTIES_0108:1 -->
 
@@ -3553,7 +3532,7 @@ typedef struct D3D12DDI_COALESCING_LAUNCH_NODE_PROPERTIES_0108
 } D3D12DDI_COALESCING_LAUNCH_NODE_PROPERTIES_0108;
 ```
 
-<ins><!-- d3d12-review-inline:begin:state-objects:D-prose-D3D12DDI_COALESCING_LAUNCH_NODE_PROPERTIES_0108:0 -->Any properties listed here take precedence over (override) what may have been declared in the shader for the node.  The driver must always use the properties listed here as the final property selections.  If a driver happens to care about whether something was overridden, it can compare any setting here against what the shader declared.<!-- d3d12-review-inline:end:state-objects:D-prose-D3D12DDI_COALESCING_LAUNCH_NODE_PROPERTIES_0108:0 --></ins>
+Any properties listed here take precedence over (override) what may have been declared in the shader for the node.  The driver must always use the properties listed here as the final property selections.  If a driver happens to care about whether something was overridden, it can compare any setting here against what the shader declared.
 
 <!-- d3d12-review-alert:begin:state-objects:D-prose-D3D12DDI_COALESCING_LAUNCH_NODE_PROPERTIES_0108:1 -->
 
@@ -3604,7 +3583,7 @@ typedef struct D3D12DDI_THREAD_LAUNCH_NODE_PROPERTIES_0108
 } D3D12DDI_THREAD_LAUNCH_NODE_PROPERTIES_0108;
 ```
 
-<ins><!-- d3d12-review-inline:begin:state-objects:D-prose-D3D12DDI_THREAD_LAUNCH_NODE_PROPERTIES_0108:0 -->Any properties listed here take precedence over (override) what may have been declared in the shader for the node.  The driver must always use the properties listed here as the final property selections.  If a driver happens to care about whether something was overridden, it can compare any setting here against what the shader declared.<!-- d3d12-review-inline:end:state-objects:D-prose-D3D12DDI_THREAD_LAUNCH_NODE_PROPERTIES_0108:0 --></ins>
+Any properties listed here take precedence over (override) what may have been declared in the shader for the node.  The driver must always use the properties listed here as the final property selections.  If a driver happens to care about whether something was overridden, it can compare any setting here against what the shader declared.
 
 <!-- d3d12-review-alert:begin:state-objects:D-prose-D3D12DDI_THREAD_LAUNCH_NODE_PROPERTIES_0108:1 -->
 
@@ -3644,7 +3623,7 @@ typedef enum D3D12DDI_NODE_PROPERTIES_TYPE_0108
 } D3D12DDI_NODE_PROPERTIES_TYPE_0108;
 ```
 
-<ins><!-- d3d12-review-inline:begin:state-objects:D-prose-D3D12DDI_NODE_PROPERTIES_TYPE_0108:0 -->Referenced by [D3D12DDI_SHADER_NODE_0108](#d3d12ddi_shader_node_0108).<!-- d3d12-review-inline:end:state-objects:D-prose-D3D12DDI_NODE_PROPERTIES_TYPE_0108:0 --></ins>
+Referenced by [D3D12DDI_SHADER_NODE_0108](#d3d12ddi_shader_node_0108).
 
 <a id="d3d12ddi_shader_node_0108"></a>
 
@@ -3664,20 +3643,13 @@ typedef struct D3D12DDI_SHADER_NODE_0108
 } D3D12DDI_SHADER_NODE_0108;
 ```
 
-<!-- d3d12-review-alert:begin:state-objects:D-prose-D3D12DDI_SHADER_NODE_0108:0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> Member                           | Definition
-> ---------                        | ----------
-> `Shader` | Name of the shader for the node, after any renaming that may have been done when exporting shaders into a state object.
-> `PropertiesType` |  A selection of which entry in the union describes properties of the node.  Which of these entries is used is a result of the properties of the shader and cannot be changed.
-> `pBroadcastingLaunchNodeProperties` | See [D3D12DDI_BROADCASTING_LAUNCH_NODE_PROPERTIES_0108](#d3d12ddi_broadcasting_launch_node_properties_0108).
-> `pCoalescingLaunchNodeProperties` | See [D3D12DDI_COALESCING_LAUNCH_NODE_PROPERTIES_0108](#d3d12ddi_coalescing_launch_node_properties_0108).
-> `pThreadLaunchNodeProperties` | See [D3D12DDI_THREAD_LAUNCH_NODE_PROPERTIES_0108](#d3d12ddi_thread_launch_node_properties_0108).
-
-<!-- d3d12-review-alert:end:state-objects:D-prose-D3D12DDI_SHADER_NODE_0108:0 -->
+Member                           | Definition
+---------                        | ----------
+`Shader` | Name of the shader for the node, after any renaming that may have been done when exporting shaders into a state object.
+`PropertiesType` |  A selection of which entry in the union describes properties of the node.  Which of these entries is used is a result of the properties of the shader and cannot be changed.
+`pBroadcastingLaunchNodeProperties` | See [D3D12DDI_BROADCASTING_LAUNCH_NODE_PROPERTIES_0108](#d3d12ddi_broadcasting_launch_node_properties_0108).
+`pCoalescingLaunchNodeProperties` | See [D3D12DDI_COALESCING_LAUNCH_NODE_PROPERTIES_0108](#d3d12ddi_coalescing_launch_node_properties_0108).
+`pThreadLaunchNodeProperties` | See [D3D12DDI_THREAD_LAUNCH_NODE_PROPERTIES_0108](#d3d12ddi_thread_launch_node_properties_0108).
 
 Referenced by [D3D12DDI_NODE_0108](#d3d12ddi_node_0108).
 
@@ -3692,7 +3664,7 @@ typedef enum D3D12DDI_NODE_TYPE_0108
 } D3D12DDI_NODE_TYPE_0108;
 ```
 
-<ins><!-- d3d12-review-inline:begin:state-objects:D-prose-D3D12DDI_NODE_TYPE_0108:0 -->Node type.<!-- d3d12-review-inline:end:state-objects:D-prose-D3D12DDI_NODE_TYPE_0108:0 --></ins>
+Node type.
 
 Referenced by [D3D12DDI_NODE_0108](#d3d12ddi_node_0108).
 
@@ -3803,16 +3775,9 @@ typedef struct D3D12DDI_PROGRAM_IDENTIFIER_0108
 } D3D12DDI_PROGRAM_IDENTIFIER_0108;
 ```
 
-<!-- d3d12-review-alert:begin:state-objects:D-prose-D3D12DDI_PROGRAM_IDENTIFIER_0108:0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> Member                              | Definition
-> ---------                           | ----------
-> `OpaqueData`                        | Device specific program identifier, global in process.
-
-<!-- d3d12-review-alert:end:state-objects:D-prose-D3D12DDI_PROGRAM_IDENTIFIER_0108:0 -->
+Member                              | Definition
+---------                           | ----------
+`OpaqueData`                        | Device specific program identifier, global in process.
 
 <ins><!-- d3d12-review-inline:begin:state-objects:D-prose-D3D12DDI_PROGRAM_IDENTIFIER_0108:1 -->Referenced in methods such as [PFND3D12DDI_GET_PROGRAM_IDENTIFIER_0108](#pfnd3d12ddi_get_program_identifier_0108) and [PFND3D12DDI_SET_PROGRAM_0108](#pfnd3d12ddi_set_program_0108).<!-- d3d12-review-inline:end:state-objects:D-prose-D3D12DDI_PROGRAM_IDENTIFIER_0108:1 --></ins>
 
@@ -3847,7 +3812,7 @@ typedef enum D3D12DDI_SET_WORK_GRAPH_FLAGS_0108
 } D3D12DDI_SET_WORK_GRAPH_FLAGS_0108;
 ```
 
-<ins><!-- d3d12-review-inline:begin:state-objects:D-prose-D3D12DDI_SET_WORK_GRAPH_FLAGS_0108:0 -->Referenced by [D3D12DDI_SET_WORK_GRAPH_DESC_0108](#d3d12ddi_set_work_graph_desc_0108).<!-- d3d12-review-inline:end:state-objects:D-prose-D3D12DDI_SET_WORK_GRAPH_FLAGS_0108:0 --></ins>
+Referenced by [D3D12DDI_SET_WORK_GRAPH_DESC_0108](#d3d12ddi_set_work_graph_desc_0108).
 
 At API see [D3D12_SET_WORK_GRAPH_FLAGS](#d3d12_set_work_graph_flags).
 
@@ -3865,19 +3830,12 @@ typedef struct D3D12DDI_SET_WORK_GRAPH_DESC_0108
 } D3D12DDI_SET_WORK_GRAPH_DESC_0108;
 ```
 
-<!-- d3d12-review-alert:begin:state-objects:D-prose-D3D12DDI_SET_WORK_GRAPH_DESC_0108:0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> Member                              | Definition
-> ---------                           | ----------
-> `ProgramIdentifier`       | See [D3D12DDI_PROGRAM_IDENTIFIER_0108](#d3d12ddi_program_identifier_0108).
-> `Flags` | See [D3D12DDI_SET_WORK_GRAPH_FLAGS_0108](#d3d12ddi_set_work_graph_flags_0108).
-> `BackingMemory` | See [Backing memory](#backing-memory).  The address must be `8` byte aligned.
-> `NodeLocalRootArgumentsTable` | Location of local root arguments table.  See the members of [D3D12DDI_SHADER_NODE_0108](#d3d12ddi_shader_node_0108) in a work graph definition at the DDI indicating what the local root argument table index for a given node in a work graph is (if any).
-
-<!-- d3d12-review-alert:end:state-objects:D-prose-D3D12DDI_SET_WORK_GRAPH_DESC_0108:0 -->
+Member                              | Definition
+---------                           | ----------
+`ProgramIdentifier`       | See [D3D12DDI_PROGRAM_IDENTIFIER_0108](#d3d12ddi_program_identifier_0108).
+`Flags` | See [D3D12DDI_SET_WORK_GRAPH_FLAGS_0108](#d3d12ddi_set_work_graph_flags_0108).
+`BackingMemory` | See [Backing memory](#backing-memory).  The address must be `8` byte aligned.
+`NodeLocalRootArgumentsTable` | Location of local root arguments table.  See the members of [D3D12DDI_SHADER_NODE_0108](#d3d12ddi_shader_node_0108) in a work graph definition at the DDI indicating what the local root argument table index for a given node in a work graph is (if any).
 
 At API see [D3D12_SET_WORK_GRAPH_DESC](#d3d12_set_work_graph_desc).
 
@@ -3904,7 +3862,7 @@ typedef enum D3D12DDI_PROGRAM_TYPE_0108
 } D3D12DDI_PROGRAM_TYPE_0108;
 ```
 
-<ins><!-- d3d12-review-inline:begin:state-objects:D-prose-D3D12DDI_PROGRAM_TYPE_0108:0 -->Referenced by [D3D12DDI_SET_PROGRAM_DESC_0108](#d3d12ddi_set_program_desc_0108).<!-- d3d12-review-inline:end:state-objects:D-prose-D3D12DDI_PROGRAM_TYPE_0108:0 --></ins>
+Referenced by [D3D12DDI_SET_PROGRAM_DESC_0108](#d3d12ddi_set_program_desc_0108).
 
 At API see [D3D12_PROGRAM_TYPE](#d3d12_program_type).
 
@@ -3964,17 +3922,10 @@ typedef struct D3D12DDI_GENERIC_PROGRAM_DESC_0108
 typedef D3D12DDI_PROGRAM_IDENTIFIER_0108 ( APIENTRY* PFND3D12DDI_GET_PROGRAM_IDENTIFIER_0108 )( D3D12DDI_HSTATEOBJECT_0054, LPCWSTR pProgramName );
 ```
 
-<!-- d3d12-review-alert:begin:state-objects:D-prose-PFND3D12DDI_GET_PROGRAM_IDENTIFIER_0108:0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> Parameter                           | Definition
-> ---------                           | ----------
-> `hStateObject` | State object DDI handle
-> `pProgramName` | Name of program, such as work graph, for which to retrieve program identifier.
-
-<!-- d3d12-review-alert:end:state-objects:D-prose-PFND3D12DDI_GET_PROGRAM_IDENTIFIER_0108:0 -->
+Parameter                           | Definition
+---------                           | ----------
+`hStateObject` | State object DDI handle
+`pProgramName` | Name of program, such as work graph, for which to retrieve program identifier.
 
 Returns [D3D12DDI_PROGRAM_IDENTIFIER_0108](#d3d12ddi_program_identifier_0108).  Used in [PFND3D12DDI_SET_PROGRAM_0108](#pfnd3d12ddi_set_program_0108)
 
@@ -3987,18 +3938,11 @@ typedef void ( APIENTRY* PFND3D12DDI_GET_WORK_GRAPH_MEMORY_REQUIREMENTS_0108 )( 
                                                                              D3D12DDI_WORK_GRAPH_MEMORY_REQUIREMENTS_0108* pRequirements );
 ```
 
-<!-- d3d12-review-alert:begin:state-objects:D-prose-PFND3D12DDI_GET_WORK_GRAPH_MEMORY_REQUIREMENTS_0108:0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> Parameter                           | Definition
-> ---------                           | ----------
-> `hStateObject` | State object DDI handle
-> `pProgramName` | Name of work graph for which to retrieve memory requirements.
-> `pRequirements` | Memory requirements filled in by driver.  See [D3D12DDI_WORK_GRAPH_MEMORY_REQUIREMENTS_0108](#d3d12ddi_work_graph_memory_requirements_0108).
-
-<!-- d3d12-review-alert:end:state-objects:D-prose-PFND3D12DDI_GET_WORK_GRAPH_MEMORY_REQUIREMENTS_0108:0 -->
+Parameter                           | Definition
+---------                           | ----------
+`hStateObject` | State object DDI handle
+`pProgramName` | Name of work graph for which to retrieve memory requirements.
+`pRequirements` | Memory requirements filled in by driver.  See [D3D12DDI_WORK_GRAPH_MEMORY_REQUIREMENTS_0108](#d3d12ddi_work_graph_memory_requirements_0108).
 
 At API see [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements).
 
@@ -4010,17 +3954,10 @@ At API see [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements).
 typedef void ( APIENTRY* PFND3D12DDI_SET_PROGRAM_0108 )( D3D12DDI_HCOMMANDLIST, const D3D12DDI_SET_PROGRAM_DESC_0108* pDesc );
 ```
 
-<!-- d3d12-review-alert:begin:state-objects:D-prose-PFND3D12DDI_SET_PROGRAM_0108:0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> Parameter                           | Definition
-> ---------                           | ----------
-> `hCommandList` | Command list DDI handle
-> `pDesc` | Program to set on command list.  See [D3D12DDI_SET_PROGRAM_DESC_0108](#d3d12ddi_set_program_desc_0108).
-
-<!-- d3d12-review-alert:end:state-objects:D-prose-PFND3D12DDI_SET_PROGRAM_0108:0 -->
+Parameter                           | Definition
+---------                           | ----------
+`hCommandList` | Command list DDI handle
+`pDesc` | Program to set on command list.  See [D3D12DDI_SET_PROGRAM_DESC_0108](#d3d12ddi_set_program_desc_0108).
 
 At API see [SetProgram](#setprogram).
 
@@ -4033,10 +3970,7 @@ At API see [SetProgram](#setprogram).
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The following callbacks retain their distinct API operations. The
-> `_0114` forms use the [API command-list header](execution.md#work-command-handles)
-> rather than ordinary driver recording storage. They are conditional current
-> representations, not a guarantee of direct dispatch on every device.
+> The `_0114` selection DDIs participate in [runtime bypass](execution.md#work-command-handles).
 
 <!-- d3d12-review-alert:end:state-objects:PS-state-roles:0 -->
 
@@ -4078,45 +4012,16 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_PROGRAM_0114 )(D3D12DDI_API_HCOMMANDLIS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The ordinary raytracing selector receives `D3D12DDI_HSTATEOBJECT_0054`;
-> its counterpart receives `D3D12DDI_API_HSTATEOBJECT`.
-> `GetDriverStateObjectHandle` obtains the ordinary driver object from
-> the API header's `pDriverObject`. It is not a null-safe root-signature
-> conversion or a new null-unset operation.
+> `GetDriverStateObjectHandle` converts the API state-object header to the ordinary driver object. The helper requires a non-null handle.
 
 <!-- d3d12-review-alert:end:state-objects:PS-ray-object-values:0 -->
-
-<!-- d3d12-review-alert:begin:state-objects:PS-ray-object-values:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The selected object must satisfy [SetPipelineState1](#setpipelinestate1):
-> an executable raytracing pipeline state object, not a collection or an
-> ordinary PSO, with the required device/node compatibility and support.
-> Passing either handle transfers no COM ownership and does not replace the
-> API's object lifetime or the existing [driver lifetime contract](#driver-lifetime).
-> The handle does not stand for a program identifier or select a global root
-> signature.
-
-<!-- d3d12-review-alert:end:state-objects:PS-ray-object-values:1 -->
 
 <!-- d3d12-review-alert:begin:state-objects:PS-program-values:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Both program callbacks receive `D3D12DDI_SET_PROGRAM_DESC_0108`; changing
-> the command-list handle does not create a different program-description
-> revision. Its [type tag](#d3d12ddi_program_type_0108) selects
-> `GenericPipeline` (1) or `WorkGraph` (5) in the
-> [typed driver description](#d3d12ddi_set_program_desc_0108).
-> Use the corresponding active member, not the other union storage.
-> The [opaque four-word program identifier](#d3d12ddi_program_identifier_0108)
-> is not an API object handle, shader identifier or GPU address and must not
-> be decoded with an object-header helper. Its
-> [validity and underlying state-object lifetime](#getprogramidentifier)
-> remain required.
+> Both program-selection forms use `D3D12DDI_SET_PROGRAM_DESC_0108`. The program identifier is passed as an opaque four-word value, not an object-header handle.
 
 <!-- d3d12-review-alert:end:state-objects:PS-program-values:0 -->
 
@@ -4125,64 +4030,22 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_PROGRAM_0114 )(D3D12DDI_API_HCOMMANDLIS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The driver captures the CPU description's selected values during the call;
-> it cannot retain the caller's `pDesc` as a later source of those values.
-> This implements the [API CPU-copy guarantee](#setprogram), not a copy of
-> GPU memory referenced by the description. Generic selection uses its
-> [identifier payload](#d3d12ddi_set_generic_pipeline_desc_0108).
-> Work-graph selection retains the [flags and GPU ranges](#d3d12ddi_set_work_graph_desc_0108),
-> including byte sizes/strides, [shared driver range types](raytracing-pipelines.md#driver-dispatch)
-> and the API's [backing/local-root alignment, extent and access requirements](#d3d12_set_work_graph_desc).
-> Those GPU allocations retain their independent execution lifetime,
-> residency and synchronization requirements.
+> The driver copies the selected CPU description values during SetProgram. Referenced backing-memory and local-root storage remain GPU inputs.
 
 <!-- d3d12-review-alert:end:state-objects:PS-program-values:1 -->
 
-<!-- d3d12-review-alert:begin:state-objects:PS-selection-state-errors:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [single logical selection](command-list-state.md#pipeline-selection)
-> governs all three selection APIs; these callbacks do not establish additive
-> ordinary, raytracing and work-graph pipelines. Generic programs select their
-> associated shaders/fixed-function state without selecting a global root
-> signature. The complete [SetPipelineState1](#setpipelinestate1) and
-> [SetProgram](#setprogram) contracts retain their distinct capabilities,
-> bundle rules and [render-pass admission](output-merger.md#render-pass-operation-surface).
-> In particular, raytracing object selection is forbidden in an open pass;
-> generic selection retains its supported DIRECT/COMPUTE/BUNDLE contexts,
-> whereas work-graph selection is not supported in bundles.
-
-<!-- d3d12-review-alert:end:state-objects:PS-selection-state-errors:0 -->
-
-<!-- d3d12-review-alert:begin:state-objects:PS-selection-state-errors:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [work-graph initialization flag](#d3d12_set_work_graph_flags) is GPU work
-> with its stated ordering requirements, not a harmless state-only reset.
-> An initialization request cannot be omitted merely because the same program
-> was already selected; command-list Reset does not itself initialize backing
-> memory. Selection and optional initialization retain their
-> [unpredicated contract](counters-queries-and-predication.md#predication-operation-matrix).
-> These `VOID` callbacks use the
-> [recording-error/deferred-Close contract](execution.md#lifecycle-driver-errors),
-> not a per-selection creation `HRESULT` or proof of GPU completion.
-
-<!-- d3d12-review-alert:end:state-objects:PS-selection-state-errors:1 -->
-
 <a id="ddi-tables"></a>
 
-### Callback table membership
+<a id="callback-table-membership"></a>
+
+### DDI table membership
 
 <!-- d3d12-review-alert:begin:state-objects:N-ddi-membership:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> | Published table | Member | Callback type |
+> | Published table | Member | DDI type |
 > |---|---|---|
 > | `D3D12DDI_DEVICE_FUNCS_CORE_0054` | `pfnCalcPrivateStateObjectSize` | `PFND3D12DDI_CALC_PRIVATE_STATE_OBJECT_SIZE_0054` |
 > | `D3D12DDI_DEVICE_FUNCS_CORE_0054` | `pfnCreateStateObject` | `PFND3D12DDI_CREATE_STATE_OBJECT_0054` |
@@ -4213,7 +4076,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_PROGRAM_0114 )(D3D12DDI_API_HCOMMANDLIS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Work-graph creation descriptors contain runtime-resolved node and entrypoint lists, not API autopopulation requests. `D3D12DDI_WORK_GRAPH_DESC_0108::Version` identifies the graph version for additions. The [driver node-construction structures](#d3d12ddi_node_0108) define the node launch/input/output metadata consumed by those lists. The driver program-identifier and backing-memory queries take a program name; the runtime-facing API uses the object's work-graph index for metadata queries. The program-selection callback consumes the opaque identifier and supplied backing-memory/local-root ranges.
+> Work-graph creation receives runtime-resolved node and entrypoint lists. `D3D12DDI_WORK_GRAPH_DESC_0108::Version` identifies the graph version for additions. Driver program-identifier and memory-requirement queries select a program by name, while the API metadata queries use a work-graph index.
 
 <!-- d3d12-review-alert:end:state-objects:N-ddi-graph-linkage:0 -->
 
@@ -4226,14 +4089,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_PROGRAM_0114 )(D3D12DDI_API_HCOMMANDLIS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The current core-device table retains the state-object size/create/destroy
-> and incremental-addition callbacks declared above. Sizing returns the required
-> driver-private CPU-object byte count; it is not GPU backing-memory sizing.
-> Creation and addition construct a new driver object in runtime-provided
-> storage and return `HRESULT`. The driver owns cleanup of unsuccessful
-> construction; a successfully created object receives destruction even if
-> later runtime initialization abandons it. Destruction releases driver-owned
-> state, not the runtime's private-storage allocation.
+> Creation and addition construct driver objects in runtime-supplied private storage. The driver unwinds failed construction. Successfully created objects receive destruction, including when later runtime initialization fails. Destroy releases driver-owned state without freeing runtime-supplied storage.
 
 <!-- d3d12-review-alert:end:state-objects:CS-state-lifecycle:0 -->
 
@@ -4242,13 +4098,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_PROGRAM_0114 )(D3D12DDI_API_HCOMMANDLIS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The outer creation/addition argument is call-borrowed. In contrast, the
-> [resolved subobject graph](#driver-contracts), including runtime-owned shader
-> data, remains valid for the state object's lifetime. This is not a requirement
-> to copy that persistent graph at each callback. The runtime has already
-> materialized shader-defined subobjects and resolved export associations;
-> the driver still performs the [link validation](#export-summaries) assigned
-> to it.
+> The outer creation/addition argument is borrowed for the call. The [resolved subobject graph](#driver-contracts), including runtime-owned shader data, remains valid for the state object's lifetime.
 
 <!-- d3d12-review-alert:end:state-objects:CS-state-lifecycle:1 -->
 
@@ -4257,11 +4107,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_PROGRAM_0114 )(D3D12DDI_API_HCOMMANDLIS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Addition retains the [parent-description versus parent-object distinction](#driver-lifetime):
-> child use preserves the required creation descriptions, but does not keep
-> the parent's driver handle alive. The driver tracks any internal parent
-> data needed by a surviving child. API addition/configuration/stack-inheritance
-> rules remain those of [incremental addition](#addtostateobject).
+> A child retains the required parent creation descriptions, but not the parent's driver handle. The driver preserves any internal parent data needed by a surviving child. See [driver lifetime](#driver-lifetime).
 
 <!-- d3d12-review-alert:end:state-objects:CS-state-lifecycle:2 -->
 
@@ -4270,16 +4116,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_PROGRAM_0114 )(D3D12DDI_API_HCOMMANDLIS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The shader-identifier and stack-property callbacks receive the ordinary
-> driver state-object handle, not a COM pointer or API object header.
-> [GetShaderIdentifier](#getshaderidentifier) returns borrowed identifier bytes,
-> not a GPU address; identifier validity and unavailable-export behavior remain
-> the complete API contract. Shader/pipeline stack sizes are `UINT` at the
-> DDI and `UINT64` at the API. The invalid shader-stack result is the 32-bit
-> value `0xffffffff`, widened without losing that sentinel. Values at or above
-> `0xffffffff` are rejected by the runtime before the stack setter is narrowed.
-> The [stack property and recording-time](raytracing-pipelines.md#id3d12stateobjectpropertiessetpipelinestacksize)
-> rules are not a new dispatch-description field.
+> Stack-size DDIs use `UINT`, while the API uses `UINT64`. The invalid shader-stack result `0xffffffff` is widened while preserving the sentinel. Before calling the stack setter, the runtime rejects values at or above `0xffffffff`.
 
 <!-- d3d12-review-alert:end:state-objects:CS-state-properties:0 -->
 
@@ -4288,16 +4125,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_PROGRAM_0114 )(D3D12DDI_API_HCOMMANDLIS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [GetProgramIdentifier](#getprogramidentifier) returns the four-`UINT64`
-> opaque program identifier by value. It is not a shader-identifier pointer;
-> zero/unusable identifiers and state-object lifetime retain the API rules.
-> [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements) takes a
-> program name at the DDI, after the runtime resolves its API work-graph index.
-> The driver writes minimum/maximum byte sizes and size granularity to CPU
-> output storage during the call. A valid zero minimum is not an allocation
-> failure; querying sizes does not allocate/initialize backing memory or
-> complete GPU work. Selection, initialization and progress guarantees remain
-> with the [backing-memory contract](#backing-memory).
+> `GetWorkGraphMemoryRequirements` receives a program name after the runtime resolves the API work-graph index. The driver writes minimum/maximum byte sizes and size granularity into the supplied CPU output.
 
 <!-- d3d12-review-alert:end:state-objects:CS-state-properties:1 -->
 

@@ -1214,23 +1214,23 @@ blue checkered area is the outer uncertainty region:
 
 ### Multisampling interaction
 
-<ins><!-- d3d12-review-inline:begin:rasterization:C-multisampling-interaction:0 -->Regardless of the number of samples in RenderTarget/DepthStencil
+Regardless of the number of samples in RenderTarget/DepthStencil
 surfaces (or whether ForcedSampleCount is being used or not), all
 samples are covered for pixels rasterized by Conservative Rasterization.
 Individual sample locations are not tested for whether they fall in the
-primitive or not.<!-- d3d12-review-inline:end:rasterization:C-multisampling-interaction:0 --></ins>
+primitive or not.
 
 <a id="conservative-samplemask-interaction"></a>
 
 ### SampleMask interaction
 
-<ins><!-- d3d12-review-inline:begin:rasterization:C-samplemask-interaction:0 -->The SampleMask Rasterizer State applies the same way as when
+The SampleMask Rasterizer State applies the same way as when
 Conservative Rasterization is not enabled for InputCoverage, but does
 not affect InnerCoverage (i.e. it is not AND'ed into an input declared
 with InnerCoverage). This is because InnerCoverage is unrelated to
 whether MSAA samples are masked out: 0 InnerCoverage only means that the
 pixel is not guaranteed to be fully covered, not that no samples will be
-updated.<!-- d3d12-review-inline:end:rasterization:C-samplemask-interaction:0 --></ins>
+updated.
 
 <a id="conservative-depthstencil-test-interaction"></a>
 
@@ -1246,7 +1246,7 @@ RenderTarget with sample count \> 1 ([centroid locations](../archive/D3D11_3_Fun
 case of Conservative Rasterization, it is the depth value going into the
 fixed function depth test that can be extrapolated.<!-- d3d12-review-inline:end:rasterization:C-depthstencil-test-interaction:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:C-depthstencil-test-interaction:1 -->Use of early depth culling behavior in combination with conservative rasterization is undefined.
+Use of early depth culling behavior in combination with conservative rasterization is undefined.
 This includes early depth culling where depth extrapolation occurs. This
 is because some Early Depth culling hardware cannot properly support
 extrapolated depth values. However, Early Depth culling behavior in the
@@ -1255,24 +1255,24 @@ can support extrapolated depth values. This issue can be worked around
 by clamping the Pixel Shader input depth to the min and max depth values
 of the primitive being rasterized and writing that value to oDepth.
 Implementations are required to disable Early Depth culling in this
-case, due to the oDepth write.<!-- d3d12-review-inline:end:rasterization:C-depthstencil-test-interaction:1 --></ins>
+case, due to the oDepth write.
 
 <a id="conservative-helper-pixel-interaction"></a>
 
 ### Helper Pixel interaction
 
-<ins><!-- d3d12-review-inline:begin:rasterization:C-helper-pixel-interaction:0 -->Helper Pixel rules apply the same way as when Conservative Rasterization
+Helper Pixel rules apply the same way as when Conservative Rasterization
 is not enabled. As part of this, all pixels including Helper Pixels must
 report InputCoverage accurately as specified in the InputCoverage
-interaction section. So fully noncovered pixels report 0 coverage.<!-- d3d12-review-inline:end:rasterization:C-helper-pixel-interaction:0 --></ins>
+interaction section. So fully noncovered pixels report 0 coverage.
 
 <a id="conservative-output-coverage-interaction"></a>
 
 ### Output Coverage interaction
 
-<ins><!-- d3d12-review-inline:begin:rasterization:C-output-coverage-interaction:0 -->Output Coverage (oMask) behaves for a conservatively rasterized pixel as
+Output Coverage (oMask) behaves for a conservatively rasterized pixel as
 it does when Conservative Rasterization is not enabled with all samples
-covered.<!-- d3d12-review-inline:end:rasterization:C-output-coverage-interaction:0 --></ins>
+covered.
 
 <a id="conservative-inputcoverage-interaction"></a>
 
@@ -1372,9 +1372,9 @@ This input is only valid in Conservative Rasterization mode. That is to
 say, when Conservative Rasterization is not enabled, InnerCoverage
 produces an undefined value.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:C-innercoverage:12 -->Pixel Shader invocations caused by the need for Helper Pixels, but
+Pixel Shader invocations caused by the need for Helper Pixels, but
 otherwise not covered by the primitive, must have the InnerCoverage
-register set to 0.<!-- d3d12-review-inline:end:rasterization:C-innercoverage:12 --></ins>
+register set to 0.
 
 <a id="conservative-attribute-interpolation-interaction"></a>
 
@@ -1391,15 +1391,15 @@ identical to the corresponding non-centroid interpolation mode; the
 notion of centroid is meaningless in this scenario -- where sample
 coverage is only either full or 0.<!-- d3d12-review-inline:end:rasterization:C-attribute-interpolation-interaction:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:C-attribute-interpolation-interaction:1 -->Conservative Rasterization allows for degenerate triangles to produce
+Conservative Rasterization allows for degenerate triangles to produce
 Pixel Shader invocations, therefore, degenerate triangles must use the
-values assigned to Vertex 0 for all interpolated values.<!-- d3d12-review-inline:end:rasterization:C-attribute-interpolation-interaction:1 --></ins>
+values assigned to Vertex 0 for all interpolated values.
 
 <a id="conservative-clipping-interaction"></a>
 
 ### Clipping interaction
 
-<ins><!-- d3d12-review-inline:begin:rasterization:C-clipping-interaction:0 -->When Conservative Rasterization mode is enabled and depth clip is
+When Conservative Rasterization mode is enabled and depth clip is
 disabled (i.e. DepthClipEnable Rasterizer State set to FALSE), there may
 be variances in attribute interpolation for segments of a primitive that
 fall outside the 0 \<= z \<= w range, depending on implementation:
@@ -1410,7 +1410,7 @@ the depth value behavior is the same regardless of Conservative
 Rasterization mode, i.e. primitives that fall outside of the depth range
 must still be given the value of the nearest limit of the viewport depth
 range. Attribute interpolation behavior inside the 0 \<= z \<= w range
-must remain unchanged.<!-- d3d12-review-inline:end:rasterization:C-clipping-interaction:0 --></ins>
+must remain unchanged.
 
 <a id="conservative-clip-distance-interaction"></a>
 
@@ -1420,21 +1420,21 @@ Clip Distance is valid when Conservative Rasterization mode is enabled,
 and behaves for a conservatively rasterized pixel as it does when
 Conservative Rasterization is not enabled with all samples covered.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:C-clip-distance-interaction:1 -->Note that Conservative Rasterization can cause extrapolation of the W
+Note that Conservative Rasterization can cause extrapolation of the W
 vertex coordinate, which may cause W \<= 0. This could cause per-pixel
 Clip Distance implementations to operate on a Clip Distance that has
 been Perspective Divided by an invalid W value. Clip Distance
 implementations must guard against invoking rasterization for pixels
 where vertex coordinate W \<= 0 (e.g. due to extrapolation when in
-Conservative Rasterization mode).<!-- d3d12-review-inline:end:rasterization:C-clip-distance-interaction:1 --></ins>
+Conservative Rasterization mode).
 
 <a id="conservative-target-independent-rasterization-interaction"></a>
 
 ### Target Independent Rasterization interaction
 
-<ins><!-- d3d12-review-inline:begin:rasterization:C-target-independent-rasterization-interaction:0 -->Conservative Rasterization mode is compatible with TIR. TIR rules and
+Conservative Rasterization mode is compatible with TIR. TIR rules and
 restrictions apply, behaving for a conservatively rasterized pixel as if
-all samples are covered.<!-- d3d12-review-inline:end:rasterization:C-target-independent-rasterization-interaction:0 --></ins>
+all samples are covered.
 
 <a id="conservative-ia-primitive-topology-interaction"></a>
 
@@ -1534,9 +1534,9 @@ simplifies the distinction between Standard and Conservative
 Rasterization: standard always has degenerate culling, conservative does
 not.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:C-degenerate-triangle-culling:2 -->Note that degenerate triangles must be back-facing, so if a specific
+Note that degenerate triangles must be back-facing, so if a specific
 behavior is required by an application, it can use back-face culling or
-the IsFrontFace System Generated Value.<!-- d3d12-review-inline:end:rasterization:C-degenerate-triangle-culling:2 --></ins>
+the IsFrontFace System Generated Value.
 
 <a id="conservative-smaller-outer-uncertainty-region"></a>
 
@@ -1553,9 +1553,9 @@ by the conversion of floating point vertex coordinates to fixed point
 vertex coordinates in the Rasterizer. Note that this requirement
 prevents sliver triangles from extending further than necessary.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:C-smaller-outer-uncertainty-region:1 -->The previously included outer uncertainty region diagram illustrates
+The previously included outer uncertainty region diagram illustrates
 this smaller valid outer uncertainty region when the swept square
-measures 1/128 of a pixel in width and height.<!-- d3d12-review-inline:end:rasterization:C-smaller-outer-uncertainty-region:1 --></ins>
+measures 1/128 of a pixel in width and height.
 
 <a id="conservative-tier-3"></a>
 
@@ -1668,7 +1668,7 @@ integer position (-8,4) means (-0.5,0.25) in floating point.
 
 ### Clear RenderTarget
 
-<ins><!-- d3d12-review-inline:begin:rasterization:S-clear-rendertarget:0 -->Sample positions are ignored when clearing an RT.<!-- d3d12-review-inline:end:rasterization:S-clear-rendertarget:0 --></ins>
+Sample positions are ignored when clearing an RT.
 
 <a id="sample-clear-depthstencil"></a>
 
@@ -1680,19 +1680,19 @@ rendering to the cleared portion of the surface, and the contents of any
 uncleared region become undefined if they contain content that was
 produced with a different sample pattern.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:S-clear-depthstencil:1 -->Sample positions set at time of clearing of the *stencil* portion of a
-depth/stencil are ignored.<!-- d3d12-review-inline:end:rasterization:S-clear-depthstencil:1 --></ins>
+Sample positions set at time of clearing of the *stencil* portion of a
+depth/stencil are ignored.
 
 <a id="sample-draw-using-rendertarget"></a>
 
 ### Draw using RenderTarget
 
-<ins><!-- d3d12-review-inline:begin:rasterization:S-draw-using-rendertarget:0 -->Sample positions can be changed between rendering to an RT via separate
+Sample positions can be changed between rendering to an RT via separate
 draws, whether for separate areas of the RT or even rendering to the
 same pixels. At any given draw, the current sample locations dictate the
 semantics, and whatever colors happen to be in the RT get used as the
 colors for the current sample locations (even if the colors got there
-from being rendered with different sample locations).<!-- d3d12-review-inline:end:rasterization:S-draw-using-rendertarget:0 --></ins>
+from being rendered with different sample locations).
 
 <a id="sample-draw-using-depthstencil"></a>
 
@@ -1706,21 +1706,21 @@ To use a different sample position state, the region to be rendered in
 the surface must be Cleared first. The state of pixels outside the clear
 region is unaffected.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:S-draw-using-depthstencil:2 -->*Implementations may store plane equations for depth as an optimization,
+*Implementations may store plane equations for depth as an optimization,
 evaluating the plane equations to produce specific depth values when the
 application issues a read. Only the rasterizer and Output Merger's
 depth/stencil portion are required to be able to correctly sample at
 programmed sample locations when reading/writing Depth. Any other read
 or write of a depth buffer that has been rendered with programmed sample
 positions may ignore the programmed locations and instead sample at the
-standard/default sample positions.*<!-- d3d12-review-inline:end:rasterization:S-draw-using-depthstencil:2 --></ins>
+standard/default sample positions.*
 
 <a id="sample-resolve-rendertarget"></a>
 
 ### Resolve RenderTarget
 
-<ins><!-- d3d12-review-inline:begin:rasterization:S-resolve-rendertarget:0 -->Sample positions are ignored when using the Resolve*() APIs on
-RenderTargets. These APIs simply operate on stored color values.<!-- d3d12-review-inline:end:rasterization:S-resolve-rendertarget:0 --></ins>
+Sample positions are ignored when using the Resolve*() APIs on
+RenderTargets. These APIs simply operate on stored color values.
 
 <a id="sample-resolve-depthstencil"></a>
 
@@ -1730,22 +1730,22 @@ Currently set sample positions at calls to Resolve*() on the depth
 portion of depth/stencil surfaces must match the sample positions used
 when previously writing to the area being resolved.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:S-resolve-depthstencil:1 -->Currently set sample positions at calls to Resolve*() on the stencil
+Currently set sample positions at calls to Resolve*() on the stencil
 portion of depth/stencil surfaces are ignored. Just like RenderTarget
-resolves, stencil resolves just operate on the stored values.<!-- d3d12-review-inline:end:rasterization:S-resolve-depthstencil:1 --></ins>
+resolves, stencil resolves just operate on the stored values.
 
 <a id="sample-copy-rendertarget"></a>
 
 ### Copy RenderTarget
 
-<ins><!-- d3d12-review-inline:begin:rasterization:S-copy-rendertarget:0 -->Sample positions are ignored when using RenderTarget data as input to
-Copy*() APIs, regardless of full or partial copy.<!-- d3d12-review-inline:end:rasterization:S-copy-rendertarget:0 --></ins>
+Sample positions are ignored when using RenderTarget data as input to
+Copy*() APIs, regardless of full or partial copy.
 
 <a id="sample-copy-depthstencil-full-subresource"></a>
 
 ### Copy DepthStencil (Full Subresource)
 
-<ins><!-- d3d12-review-inline:begin:rasterization:S-copy-depthstencil-full-subresource:0 -->Full subresource DepthStencil copies via Copy*() APIs require sample
+Full subresource DepthStencil copies via Copy*() APIs require sample
 positions to be set, matching content in the source. Not all
 implementations need this, but the API simply requires this uniformly.
 On some hardware the implementation details in the source surface (such
@@ -1753,7 +1753,7 @@ as stored plane equations for depth values) transfer to the destination.
 So if the destination content is subsequently drawn to, the sample
 positions originally used to generate the source content need to be used
 with the destination surface. The API requires this on all hardware for
-consistency even if it may only apply to some.<!-- d3d12-review-inline:end:rasterization:S-copy-depthstencil-full-subresource:0 --></ins>
+consistency even if it may only apply to some.
 
 <a id="sample-copy-depthstencil-partial-subresource"></a>
 
@@ -1767,22 +1767,22 @@ contents of the uncovered portion within those subresources becomes
 undefined unless all of it was generated using the same sample positions
 as the copy source.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:S-copy-depthstencil-partial-subresource:1 -->Partial subresource copies via Copy* APIs of the *stencil* portion of
+Partial subresource copies via Copy* APIs of the *stencil* portion of
 DepthStencil ignore the currently set sample positions and it doesn't
 matter what sample positions were used to generate content for any other
 areas of the destination buffer not covered by the copy -- those
-contents remain valid.<!-- d3d12-review-inline:end:rasterization:S-copy-depthstencil-partial-subresource:1 --></ins>
+contents remain valid.
 
 <a id="sample-shader-samplepos"></a>
 
 ### Shader SamplePos
 
-<ins><!-- d3d12-review-inline:begin:rasterization:S-shader-samplepos:0 -->The HLSL SamplePos intrinsic is not aware of programmable sample
+The HLSL SamplePos intrinsic is not aware of programmable sample
 positions and results returned to shaders calling this on a surface
 rendered with programmable positions is undefined. Applications must
 pass coordinates into their shader manually if needed. Similarly
 evaluating attributes by sample index is undefined with programmable
-sample positions.<!-- d3d12-review-inline:end:rasterization:S-shader-samplepos:0 --></ins>
+sample positions.
 
 <a id="sample-transitioning-out-of-depth_read-or-depth_write-state"></a>
 
@@ -1796,7 +1796,7 @@ command list. Furthermore, any subsequent transitions of the surface,
 with the same depth data remaining in it, must continue to be done with
 the same sample positions set on the command list.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:S-transitioning-out-of-depth_read-or-depth_write-state:1 -->If an application wants to minimize the decompressed area (knowing only
+If an application wants to minimize the decompressed area (knowing only
 a portion needs to be used) and/or preserve compression,
 ResolveSubresourceRegion() can be called in DECOMPRESS mode with a rect
 specified. This will decompress just the relevant area to a separate
@@ -1804,7 +1804,7 @@ resource, leaving the source intact *on some implementations*, though on
 others implementations even the source area gets decompressed. The
 separate explicitly decompressed resource (which may be a smaller size)
 can then be transitioned to the desired state (such as
-SHADER_RESOURCE).<!-- d3d12-review-inline:end:rasterization:S-transitioning-out-of-depth_read-or-depth_write-state:1 --></ins>
+SHADER_RESOURCE).
 
 <a id="sample-transitioning-out-of-render_target-state"></a>
 
@@ -1816,7 +1816,7 @@ need to perform a decompress on the surface. This decompression is
 agnostic to sample patterns, so the currently set sample positions don't
 matter.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:S-transitioning-out-of-render_target-state:1 -->If an application wants to minimize the decompressed area (knowing only
+If an application wants to minimize the decompressed area (knowing only
 a portion needs to be used) and/or preserve compression,
 ResolveSubresourceRegion() can be called in DECOMPRESS mode with a rect
 specified. This will decompress just the relevant area to a separate
@@ -1824,7 +1824,7 @@ resource leaving the source intact *on some implementations*, though on
 others implementations even the source area gets decompressed. The
 separate explicitly decompressed resource (which may be a smaller size)
 can then be transitioned to the desired state (such as
-SHADER_RESOURCE).<!-- d3d12-review-inline:end:rasterization:S-transitioning-out-of-render_target-state:1 --></ins>
+SHADER_RESOURCE).
 
 <!-- d3d12-review-alert:begin:rasterization:N-enhanced-patterns:0 -->
 
@@ -2192,32 +2192,14 @@ typedef VOID(APIENTRY* PFND3D12DDI_SET_DEPTH_BIAS_STATE_0099)(
     D3D12DDI_HCOMMANDLIST, FLOAT DepthBias, FLOAT DepthBiasClamp, FLOAT SlopeScaledDepthBias);
 ```
 
-<!-- d3d12-review-alert:begin:rasterization:N-driver:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Driver compilation and fixed-function execution must preserve the selected clipping/transform, snapping/culling, line/fill, multisample, conservative and sample-pattern contracts. State-capability reporting and shader/PSO compatibility do not waive rasterizer behavior requirements.
-
-<!-- d3d12-review-alert:end:rasterization:N-driver:0 -->
-
 <!-- d3d12-review-alert:begin:rasterization:N-driver:1 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The published [dynamic driver state](../VulkanOn12.md#dynamic-pipeline-state-depth-bias-ib-strip-cut) retains its distinction between API permission flags and driver hints: setting a PSO still programs its described values. The [pipeline driver owner](pipeline-state.md#driver) supplies the selected aggregate/creation contract.
+> Driver PSO selection restores the PSO's depth-bias and strip-cut values even when dynamic state is enabled. See [dynamic pipeline state](command-list-state.md#dynamic-state).
 
 <!-- d3d12-review-alert:end:rasterization:N-driver:1 -->
-
-<!-- d3d12-review-alert:begin:rasterization:N-driver:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Required ranges, tier/shape rules and resource/pattern compatibility are validity requirements, not guarantees that retail recording filters every malformed argument before the driver sees it. Diagnostic coverage and valid device execution are distinct.
-
-<!-- d3d12-review-alert:end:rasterization:N-driver:2 -->
 
 <a id="driver-state"></a>
 
@@ -2277,45 +2259,9 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SETSAMPLEPOSITIONS_0027 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The driver viewport fields have the logical meanings in
-> [D3D12_VIEWPORT](#d3d12-viewport); `D3D12DDI_RECT` has the signed pixel edges
-> of [D3D12_RECT](#d3d12-rect). `Count` replaces the complete corresponding
-> set, including disabling entries omitted by the new count.
-> The driver records the supplied array values during the call rather than
-> retaining the caller's array pointer.
+> The driver captures viewport and scissor array values during the call.
 
 <!-- d3d12-review-alert:end:rasterization:GS-R-roles:0 -->
-
-<!-- d3d12-review-alert:begin:rasterization:GS-R-roles:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `D3D12DDI_SAMPLE_POSITION` contains the signed X/Y fields of
-> [D3D12_SAMPLE_POSITION](#d3d12-sample-position). Their
-> [coordinate units and range](#sample-position-coordinates) and
-> [pixel/sample ordering](#programmable-samples) govern the driver values.
-> `NumSamplesPerPixel * NumPixels` gives the custom-pattern element count.
-> The zero/zero/null reset, tier-dependent pattern shape, centroid ordering
-> and depth-content/operation compatibility remain the
-> [programmable-sample contract](#setsamplepositions).
-
-<!-- d3d12-review-alert:end:rasterization:GS-R-roles:1 -->
-
-<!-- d3d12-review-alert:begin:rasterization:GS-R-roles:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The ordinary command-list handle identifies driver recording state, not an
-> API interface. Array capture does not redefine initial/reset state or bundle
-> inheritance. Each linked API's list/render-pass context and the
-> [canonical state contributions](command-list-state.md#base-graphics) apply.
-> Reported recording failures follow the
-> [recording-error/deferred-Close contract](execution.md#lifecycle-driver-errors),
-> not a recoverable HRESULT from these `VOID` setters.
-
-<!-- d3d12-review-alert:end:rasterization:GS-R-roles:2 -->
 
 <a id="driver-raster-state-forms"></a>
 
@@ -2326,13 +2272,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SETSAMPLEPOSITIONS_0027 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The selected entries use ordinary `D3D12DDI_HCOMMANDLIST` handles in
-> `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108` and `D3D12DDI_API_HCOMMANDLIST` in
-> `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114`. The latter identifies the application-side
-> header, not ordinary driver-private storage; follow the
-> [command-list header and conversion contract](execution.md#work-command-handles).
-> These are conditional alternative table representations, not universal
-> availability or a transfer of COM ownership.
+> The `_0114` rasterizer setters participate in [runtime bypass](execution.md#work-command-handles).
 
 <!-- d3d12-review-alert:end:rasterization:FC-raster-roles:0 -->
 
@@ -2357,34 +2297,12 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SETSAMPLEPOSITIONS_0114 )(D3D12DDI_API_HCOM
 typedef VOID ( APIENTRY* PFND3D12DDI_SET_DEPTH_BIAS_STATE_0114)(D3D12DDI_API_HCOMMANDLIST, FLOAT, FLOAT, FLOAT);
 ```
 
-<!-- d3d12-review-alert:begin:rasterization:FC-array-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For both viewport and scissor forms, `Count` replaces the complete set;
-> zero disables all entries, rather than leaving the previous set unchanged.
-> The [viewport](#rssetviewports) and [scissor](#rssetscissorrects) APIs retain
-> their count limit of 16, field/range requirements and atomic replacement
-> semantics. The records contain viewport floats or signed rectangle edges,
-> not GPU addresses or descriptor handles. The driver captures their input
-> values during the call, not by retaining the caller's array storage.
-
-<!-- d3d12-review-alert:end:rasterization:FC-array-values:0 -->
-
 <!-- d3d12-review-alert:begin:rasterization:FC-array-values:1 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Both sample-position forms receive `NumSamplesPerPixel`, then `NumPixels`,
-> then the ordered position array. The product is an element count, not a byte
-> count. The [signed coordinate fields and 1/16-pixel units](#sample-position-coordinates),
-> [tier/pattern shape and pixel/sample order](#programmable-samples) and
-> [explicit zero/zero/null reset](#setsamplepositions) remain unchanged.
-> Capture the custom positions during the call; no caller-array lifetime is
-> extended to GPU execution. Restoring defaults removes the override; it does
-> not program a table of all-zero positions or bypass feature availability.
+> The driver captures custom sample positions during the call.
 
 <!-- d3d12-review-alert:end:rasterization:FC-array-values:1 -->
 
@@ -2393,42 +2311,8 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_DEPTH_BIAS_STATE_0114)(D3D12DDI_API_HCO
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The three ordered depth-bias arguments are floating-point `DepthBias`,
-> `DepthBiasClamp` and `SlopeScaledDepthBias`; the API-handle form does not
-> convert constant bias back to the older integer PSO field. Their meanings
-> remain the [depth-bias equation](#depth-bias) and
-> [RSSetDepthBias](#rssetdepthbias) contract. Device support and the dynamic
-> PSO permission flag remain required. Dynamic selection does not modify
-> the PSO description, and selecting a PSO again restores its described bias
-> even when that PSO has the dynamic flag.
+> Dynamic depth-bias DDIs receive floating-point `DepthBias`, `DepthBiasClamp` and `SlopeScaledDepthBias`, including in the API-handle form.
 
 <!-- d3d12-review-alert:end:rasterization:FC-bias-values:0 -->
 
-<!-- d3d12-review-alert:begin:rasterization:FC-raster-state:0 -->
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Viewports and scissors remain DIRECT-only setters; bundles inherit them and
-> cannot set them. Sample positions and dynamic bias retain their DIRECT/BUNDLE
-> contexts and their distinct
-> [sample-pattern](command-list-state.md#sample-positions) and
-> [PSO-derived](command-list-state.md#dynamic-state) initial/bundle rules.
-> The linked [API entries](#rasterizer-apis) and
-> [render-pass context](command-list-state.md#render-pass) remain applicable.
-> Sample-position admission inside a pass does not relax depth-content,
-> copy/clear/resolve or layout-transition pattern requirements.
-
-<!-- d3d12-review-alert:end:rasterization:FC-raster-state:0 -->
-
-<!-- d3d12-review-alert:begin:rasterization:FC-raster-state:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Handle/array adaptation neither establishes residency/synchronization nor
-> proves validation or clamping. These `VOID` setters use the
-> [recording-error/deferred-Close contract](execution.md#lifecycle-driver-errors),
-> not a recoverable creation `HRESULT`.
-
-<!-- d3d12-review-alert:end:rasterization:FC-raster-state:1 -->

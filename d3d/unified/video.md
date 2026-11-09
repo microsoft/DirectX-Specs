@@ -96,7 +96,7 @@
 > count. It is not an application `ID3D12Heap` or the decoded-picture allocation.
 > The [heap-size query](video-decode.md#d3d12-feature-data-video-decoder-heap-size)
 > reports allocation sizes in memory pools L0 and L1; it is distinct from the
-> driver-private CPU-object sizing callbacks.
+> driver-private CPU-object sizing DDIs.
 
 <!-- d3d12-review-alert:end:video-foundation:N-frame-route:0 -->
 
@@ -359,15 +359,7 @@ When the application uses multiple queues with a single decoder object, the appl
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The selected video device table retains a separate `pfnGetCaps`, not the
-> adapter/core-device capability callback. Its typed payload protocol and
-> conditional table-population obligations are defined by
-> [decode discovery](video-decode.md#ddi-capability-payloads),
-> [processing discovery](video-processing.md#process-discovery),
-> [motion/command-family reporting](video-motion-estimation.md#motion-driver-capabilities),
-> [extension reflection](video-extension-commands.md#extension-ddi-behavior)
-> and [encoding](video-encoding.md#encoding-driver-capabilities).
-> A table member does not make an optional operation available.
+> Video uses its own `pfnGetCaps`. Its typed protocols are defined by [decode](video-decode.md#ddi-capability-payloads), [processing](video-processing.md#process-discovery), [motion estimation](video-motion-estimation.md#motion-driver-capabilities), [extension commands](video-extension-commands.md#extension-ddi-behavior) and [encoding](video-encoding.md#encoding-driver-capabilities).
 
 <!-- d3d12-review-alert:end:video-foundation:CS-video-shared:0 -->
 
@@ -376,15 +368,7 @@ When the application uses multiple queues with a single decoder object, the appl
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Private size callbacks report driver CPU-object bytes. The runtime allocates
-> that storage; create callbacks construct the selected decoder/decoder heap,
-> processor, motion estimator/vector heap, extension command or encoder/encoder
-> heap there. These are not implicit application picture allocations or the
-> separate L0/L1 residency-size reports. Creation returns `HRESULT`; failed
-> construction is cleaned up by the driver. Successful objects receive the
-> matching destroy callback, which releases driver-owned state without freeing
-> the runtime-provided private region. Per-operation creation-result and
-> hardware qualifications remain with each owner.
+> The runtime allocates the reported private CPU-object storage. The driver unwinds failed creation and destroys successfully created objects without freeing runtime-provided storage. Picture allocations and L0/L1 memory requirements are separate.
 
 <!-- d3d12-review-alert:end:video-foundation:CS-video-shared:1 -->
 
@@ -393,15 +377,7 @@ When the application uses multiple queues with a single decoder object, the appl
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Recording callbacks use ordinary driver command-list/object/resource handles
-> and translated CPU metadata, not interchangeable application structures.
-> Capture of CPU parameters is not capture of referenced GPU pictures,
-> bitstreams, LUTs, vector data or encoded metadata. Their
-> [resource and recording lifetimes](#video-recording-lifetime) remain required.
-> Decode/process/motion/encode void results do not report GPU completion.
-> The [extension initialization/execution HRESULT protocol](video-extension-commands.md#extension-ddi-behavior)
-> is a separate recording-error channel; CPU device execution retains its
-> [synchronous output contract](video-extension-commands.md#extension-ddi-cpu-callback).
+> Recording uses driver handles and translated CPU metadata. Extension-command initialization/execution has a distinct [HRESULT error protocol](video-extension-commands.md#extension-ddi-behavior). Device CPU execution uses its [synchronous output contract](video-extension-commands.md#extension-ddi-cpu-callback).
 
 <!-- d3d12-review-alert:end:video-foundation:CS-video-shared:2 -->
 

@@ -354,7 +354,7 @@ HRESULT CreateVideoExtensionCommand(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:2 -->Creates a video extension command.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:2 --></ins>
+Creates a video extension command.
 
 #### Parameters
 
@@ -404,9 +404,9 @@ HRESULT ExecuteExtensionCommand(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:2 -->Executes a video extension command.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:2 --></ins>
+Executes a video extension command.
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:3 -->Video extension commands executed through this method must complete before this method returns. For efficiency, extension implementations should schedule work in command lists instead of using this method, whenever possible. Each video command list type provides an **ExecuteExtensionCommand** for scheduled work. These include:<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:3 --></ins>
+Video extension commands executed through this method must complete before this method returns. For efficiency, extension implementations should schedule work in command lists instead of using this method, whenever possible. Each video command list type provides an **ExecuteExtensionCommand** for scheduled work. These include:
 
 - <ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:4 -->[ID3D12VideoDecodeCommandList2::ExecuteExtensionCommand](#videodecodecommandlist2-executeextensioncommand)<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:4 --></ins>
 - <ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:4 -->[ID3D12VideoEncodeCommandList1::ExecuteExtensionCommand](#videoencodecommandlist1-executeextensioncommand)<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:4 --></ins>
@@ -436,7 +436,7 @@ The size of the *pExecutionParameters* parameter structure, in bytes.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:17 -->This method returns HRESULT.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:17 --></ins>
+This method returns HRESULT.
 
 <a id="videoextensioncommand-getdesc"></a>
 
@@ -583,7 +583,7 @@ The size of the *pInitializationParameters* parameter structure, in bytes.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDecodeCommandList2-InitializeExtensionCommand:12 -->None<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDecodeCommandList2-InitializeExtensionCommand:12 --></ins>
+None
 
 <a id="videodecodecommandlist2-executeextensioncommand"></a>
 
@@ -601,7 +601,7 @@ void ExecuteExtensionCommand(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDecodeCommandList2-ExecuteExtensionCommand:2 -->Records a command to execute a video extension command into a decode command list.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDecodeCommandList2-ExecuteExtensionCommand:2 --></ins>
+Records a command to execute a video extension command into a decode command list.
 
 <ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDecodeCommandList2-ExecuteExtensionCommand:3 -->Errors executing the extension command are reported via debug layers and the return value of the command list's [Close](video-decode.md#decode-close) method.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDecodeCommandList2-ExecuteExtensionCommand:3 --></ins>
 
@@ -621,7 +621,7 @@ The size of the *pExecutionParameters* parameter structure, in bytes.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDecodeCommandList2-ExecuteExtensionCommand:12 -->None<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDecodeCommandList2-ExecuteExtensionCommand:12 --></ins>
+None
 
 <a id="videoprocesscommandlist2-initializeextensioncommand"></a>
 
@@ -659,7 +659,7 @@ The size of the *pInitializationParameters* parameter structure, in bytes.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoProcessCommandList2-InitializeExtensionCommand:12 -->None<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoProcessCommandList2-InitializeExtensionCommand:12 --></ins>
+None
 
 <a id="videoprocesscommandlist2-executeextensioncommand"></a>
 
@@ -677,7 +677,7 @@ void ExecuteExtensionCommand(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoProcessCommandList2-ExecuteExtensionCommand:2 -->Records a command to execute a video extension command into a video process command list.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoProcessCommandList2-ExecuteExtensionCommand:2 --></ins>
+Records a command to execute a video extension command into a video process command list.
 
 <ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoProcessCommandList2-ExecuteExtensionCommand:3 -->Errors executing the extension command are reported via debug layers and the return value of the command list's [Close](video-processing.md#process-close) method.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoProcessCommandList2-ExecuteExtensionCommand:3 --></ins>
 
@@ -697,7 +697,7 @@ The size of the *pExecutionParameters* parameter structure, in bytes.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoProcessCommandList2-ExecuteExtensionCommand:12 -->None<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoProcessCommandList2-ExecuteExtensionCommand:12 --></ins>
+None
 
 <a id="videoencodecommandlist1-initializeextensioncommand"></a>
 
@@ -735,7 +735,7 @@ The size of the *pInitializationParameters* parameter structure, in bytes.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoEncodeCommandList1-InitializeExtensionCommand:12 -->None<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoEncodeCommandList1-InitializeExtensionCommand:12 --></ins>
+None
 
 <a id="videoencodecommandlist1-executeextensioncommand"></a>
 
@@ -753,7 +753,7 @@ void ExecuteExtensionCommand(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoEncodeCommandList1-ExecuteExtensionCommand:2 -->Records a command to execute a video extension command into an encode command list.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoEncodeCommandList1-ExecuteExtensionCommand:2 --></ins>
+Records a command to execute a video extension command into an encode command list.
 
 <ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoEncodeCommandList1-ExecuteExtensionCommand:3 -->Errors executing the extension command are reported via debug layers and the return value of the command list's [Close](video-motion-estimation.md#encode-close) method.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoEncodeCommandList1-ExecuteExtensionCommand:3 --></ins>
 
@@ -773,7 +773,7 @@ The size of the *pExecutionParameters* parameter structure, in bytes.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoEncodeCommandList1-ExecuteExtensionCommand:12 -->None<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoEncodeCommandList1-ExecuteExtensionCommand:12 --></ins>
+None
 
 <a id="extension-types"></a>
 
@@ -808,7 +808,7 @@ The supported number of video extension commands.
 
 ### D3D12_VIDEO_EXTENSION_COMMAND_INFO
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_INFO:0 -->Describes a video extension command.<!-- d3d12-review-inline:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_INFO:0 --></ins>
+Describes a video extension command.
 
 #### Declaration
 
@@ -907,7 +907,7 @@ Receives the parameter packing for the parameter stage.
 
 ### D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_INFO
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_INFO:0 -->Describes a video extension command parameter.<!-- d3d12-review-inline:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_INFO:0 --></ins>
+Describes a video extension command parameter.
 
 #### Declaration
 
@@ -1066,7 +1066,7 @@ The size of the *pCreationParameters* parameter structure, in bytes.
 
 ### D3D12_VIDEO_EXTENSION_COMMAND_DESC
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_DESC:0 -->Describes a video extension command.<!-- d3d12-review-inline:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_DESC:0 --></ins>
+Describes a video extension command.
 
 #### Declaration
 
@@ -1095,7 +1095,7 @@ The unique identifier for the video extension command.
 
 ### D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE:0 -->Specifies the parameter stages for video extension commands.<!-- d3d12-review-inline:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE:0 --></ins>
+Specifies the parameter stages for video extension commands.
 
 #### Declaration
 
@@ -1138,7 +1138,7 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE {
 
 ### D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE:0 -->Specifies the types of parameters for video extension commands.<!-- d3d12-review-inline:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE:0 --></ins>
+Specifies the types of parameters for video extension commands.
 
 #### Declaration
 
@@ -1189,7 +1189,7 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE {
 
 ### D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS:0 -->Specifies the usage of the associated video extension command parameter.<!-- d3d12-review-inline:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS:0 --></ins>
+Specifies the usage of the associated video extension command parameter.
 
 #### Declaration
 
@@ -1229,12 +1229,7 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS {
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The driver boundary uses `D3D12DDI_HVIDEOEXTENSIONCOMMAND_0063`, not an API
-> COM pointer. Video capability cases 22–27 select count, command enumeration,
-> parameter count, parameter enumeration, caps and size payloads.
-> The original published declarations below retain distinct API/DDI field
-> names and callback return types. The GPU callbacks return HRESULT even
-> though their public recording methods return void.
+> The GPU extension DDIs return HRESULT even though their API recording methods return void.
 
 <!-- d3d12-review-alert:end:video-extension:N-ddi:0 -->
 
@@ -1243,11 +1238,7 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS {
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Video feature version `_0063_0` (15) supplies object creation/destruction,
-> discovery and GPU initialization/execution; `_0076_0` (17) adds device CPU
-> execution and its input/output parameter stages. The published minimum
-> user-mode DDI version for both is `D3D12DDI_SUPPORTED_0043`.
-> These DDI negotiation values do not promise extension support on every adapter.
+> Video feature `_0063_0` (15) supplies discovery, object lifecycle and GPU initialization/execution. `_0076_0` (17) adds device CPU execution. Both require at least `D3D12DDI_SUPPORTED_0043`.
 
 <!-- d3d12-review-alert:end:video-extension:N-ddi:1 -->
 
@@ -1276,12 +1267,7 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS {
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The private-size callback reports runtime-allocated driver-object storage;
-> the residency-size query reports memory-pool requirements. They are not the
-> same size protocol. Drivers must support make-resident/evict for extension
-> command handles. The creation callback says significant internal resource
-> allocations **should** be made at creation, not that every later allocation
-> is forbidden.
+> Drivers must support MakeResident/Evict for extension command handles. Significant internal allocations should be made at creation, but later allocations are not forbidden.
 
 <!-- d3d12-review-alert:end:video-extension:N-ddi:3 -->
 
@@ -1294,13 +1280,7 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS {
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The common [driver-capability protocol](video-decode.md#ddi-capability-payloads)
-> owns `D3D12DDIARG_VIDEO_GETCAPS_0020` and the interpretation of `Type`,
-> `pInfo`, `pData` and `DataSize`. The extension contributions use these six
-> fixed payloads. For each row, `pData` identifies the listed payload and
-> `DataSize` is `sizeof` that payload, not the nested array or blob size.
-> Input pointers identify caller/runtime-provided storage; output directions
-> refer to the contents filled in that storage.
+> For the six extension queries, `pData` points to the listed payload and `DataSize` is its `sizeof`, not a nested array or blob size.
 
 <!-- d3d12-review-alert:end:video-extension:N-ddi-capabilities:0 -->
 
@@ -1325,11 +1305,7 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS {
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The API `SUPPORT` query maps to the DDI `CAPS` case, not a DDI case named
-> `SUPPORT`. Counts and nested byte sizes retain the exact enumeration and
-> stage-specific rules above. The selected extension declarations do not
-> establish a common `pInfo` value for all six requests; no universal
-> null-`pInfo` convention or extra extension input through `pInfo` is asserted.
+> API SUPPORT maps to the DDI CAPS case. These requests do not share a universal null-`pInfo` convention.
 
 <!-- d3d12-review-alert:end:video-extension:N-ddi-capabilities:2 -->
 
@@ -1513,7 +1489,9 @@ typedef VOID(APIENTRY* PFND3D12DDI_DESTROYVIDEOEXTENSIONCOMMAND_0063) (
 
 <a id="extension-ddi-gpu-callbacks"></a>
 
-#### GPU recording callbacks
+<a id="gpu-recording-callbacks"></a>
+
+#### GPU recording DDIs
 
 ```cpp
 typedef HRESULT(APIENTRY* PFND3D12DDI_INITIALIZE_VIDEO_EXTENSION_COMMAND_0063)(
@@ -1531,7 +1509,9 @@ typedef HRESULT(APIENTRY* PFND3D12DDI_EXECUTE_VIDEO_EXTENSION_COMMAND_0063)(
 
 <a id="extension-ddi-cpu-callback"></a>
 
-#### CPU execution callback
+<a id="cpu-execution-callback"></a>
+
+#### CPU execution DDI
 
 ```cpp
 // D3D12 Extended Feature Video
@@ -1551,14 +1531,16 @@ typedef HRESULT(APIENTRY* PFND3D12DDI_EXECUTEDEVICEVIDEOEXTENSIONCOMMAND_0076)(
 
 <a id="extension-ddi-associations"></a>
 
-### Extension callback associations
+<a id="extension-callback-associations"></a>
+
+### Extension DDI associations
 
 <!-- d3d12-review-alert:begin:video-extension:D229-current-extension-members:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> | Current table | Extension member | Callback typedef |
+> | Current table | Extension member | DDI typedef |
 > |---|---|---|
 > | `D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_DECODE_0094` | `pfnInitializeVideoExtensionCommand` | `PFND3D12DDI_INITIALIZE_VIDEO_EXTENSION_COMMAND_0063` |
 > | `D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_DECODE_0094` | `pfnExecuteVideoExtensionCommand` | `PFND3D12DDI_EXECUTE_VIDEO_EXTENSION_COMMAND_0063` |
@@ -1579,7 +1561,7 @@ typedef HRESULT(APIENTRY* PFND3D12DDI_EXECUTEDEVICEVIDEOEXTENSIONCOMMAND_0076)(
 
 #### D3D12DDI_VIDEO_EXTENSION_COMMAND_COUNT_DATA_0063
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_count_data_0063:0 -->Retrieves the number of supported video extension commands.<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_count_data_0063:0 --></ins>
+Retrieves the number of supported video extension commands.
 
 ##### Members
 
@@ -1593,7 +1575,7 @@ The number of video extension commands supported.
 
 #### D3D12DDI_VIDEO_EXTENSION_COMMAND_INFO_0063
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_info_0063:0 -->Describes an extension.<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_info_0063:0 --></ins>
+Describes an extension.
 
 ##### Members
 
@@ -1633,7 +1615,7 @@ An array allocated by the runtime for the driver to fill with command info. **Co
 
 #### D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_COUNT_DATA_0063
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameter_count_data_0063:0 -->Retrieves the number of parameters for a parameter stage.<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameter_count_data_0063:0 --></ins>
+Retrieves the number of parameters for a parameter stage.
 
 ##### Members
 
@@ -1673,7 +1655,7 @@ Indicates struct member packing.
 
 #### D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETERS_DATA_0063
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameters_data_0063:0 -->Retrieves the array of parameter info for a parameter stage.<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameters_data_0063:0 --></ins>
+Retrieves the array of parameter info for a parameter stage.
 
 ##### Members
 
@@ -1725,7 +1707,7 @@ The byte size of the output data allocation.
 
 #### D3D12DDI_VIDEO_EXTENSION_COMMAND_SIZE_DATA_0063
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_size_data_0063:0 -->Queries the residency size information for a video extension command.<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_size_data_0063:0 --></ins>
+Queries the residency size information for a video extension command.
 
 ##### Members
 
@@ -1759,7 +1741,7 @@ The unique identifier for the video extension command.
 
 #### D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_0063
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_stage_0063:0 -->**D3D12DDI\_VIDEO\_EXTENSION\_COMMAND\_PARAMETER\_STAGE\_0063** specifies the parameter stages for video extension commands.<!-- d3d12-review-inline:end:video-extension:D-ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_stage_0063:0 --></ins>
+**D3D12DDI\_VIDEO\_EXTENSION\_COMMAND\_PARAMETER\_STAGE\_0063** specifies the parameter stages for video extension commands.
 
 ##### Constants
 
@@ -1786,7 +1768,7 @@ Video Extensions support different parameterization at creation, initialization,
 
 #### D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE_0063
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_type_0063:0 -->Parameter types are used to enumerate the members of each parameter stage parameter structure. The types supported are fixed, and additional parameter types require changes in order to be supported.<!-- d3d12-review-inline:end:video-extension:D-ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_type_0063:0 --></ins>
+Parameter types are used to enumerate the members of each parameter stage parameter structure. The types supported are fixed, and additional parameter types require changes in order to be supported.
 
 ##### Constants
 
@@ -1831,7 +1813,7 @@ When the **D3D12DDI\_VIDEO\_EXTENSION\_COMMAND\_PARAMETER\_TYPE\_0063\_RESOURCE*
 
 #### D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS_0063
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_flags_0063:0 -->Video Extensions must specify a command parameter flag.<!-- d3d12-review-inline:end:video-extension:D-ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_flags_0063:0 --></ins>
+Video Extensions must specify a command parameter flag.
 
 ##### Constants
 
@@ -1869,7 +1851,7 @@ Returns SIZE\_T.
 
 #### PFND3D12DDI_CREATEVIDEOEXTENSIONCOMMAND_0063
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_createvideoextensioncommand_0063:0 -->Creates a video extension command. All significant internal resource allocations used by the extension command should be created during video extension creation.<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_createvideoextensioncommand_0063:0 --></ins>
+Creates a video extension command. All significant internal resource allocations used by the extension command should be created during video extension creation.
 
 ##### Parameters
 
@@ -1891,7 +1873,7 @@ Returns HRESULT.
 
 #### PFND3D12DDI_DESTROYVIDEOEXTENSIONCOMMAND_0063
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_destroyvideoextensioncommand_0063:0 -->Destroys the video extension command.<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_destroyvideoextensioncommand_0063:0 --></ins>
+Destroys the video extension command.
 
 ##### Parameters
 
@@ -1909,7 +1891,7 @@ None
 
 #### PFND3D12DDI_INITIALIZE_VIDEO_EXTENSION_COMMAND_0063
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_initialize_video_extension_command_0063:0 -->Records a command to initialize or re-initialize a Video Extension Command into a command list.<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_initialize_video_extension_command_0063:0 --></ins>
+Records a command to initialize or re-initialize a Video Extension Command into a command list.
 
 ##### Parameters
 
@@ -1941,7 +1923,7 @@ The following error codes are allowed:
 
 #### PFND3D12DDI_EXECUTE_VIDEO_EXTENSION_COMMAND_0063
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:0 -->Records a command to execute a video extension command into a command list.<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:0 --></ins>
+Records a command to execute a video extension command into a command list.
 
 ##### Parameters
 
@@ -1980,7 +1962,7 @@ The following error codes are allowed:
 
 #### D3D12DDIARG_CREATE_VIDEO_EXTENSION_COMMAND_0063
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddiarg_create_video_extension_command_0063:0 -->Contains arguments used to create a video extension command.<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddiarg_create_video_extension_command_0063:0 --></ins>
+Contains arguments used to create a video extension command.
 
 ##### Members
 
@@ -2006,21 +1988,16 @@ The size of the creation parameters structure in bytes.
 
 <a id="extension-qualifications"></a>
 
-### Qualifications and validation limits
+<a id="qualifications-and-validation-limits"></a>
+
+### API/DDI description corrections
 
 <!-- d3d12-review-alert:begin:video-extension:N-qualifications:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **CPU documentation correction:** device execution consumes
-> `DEVICE_EXECUTE_INPUT` and produces `DEVICE_EXECUTE_OUTPUT`, not the GPU
-> `EXECUTION` stage named by its short API parameter description.
-> `OutputDataSizeInBytes` is an input size of the output allocation, not an
-> output count or the input blob size. The released signature, stage owners,
-> original CPU DDI typedef and inspected input/output translation settle these
-> directions. CPU completion-before-return is the published rule, not evidence
-> of a particular hardware scheduling algorithm.
+> Device CPU execution consumes DEVICE_EXECUTE_INPUT and produces DEVICE_EXECUTE_OUTPUT. `OutputDataSizeInBytes` is the input capacity of the output allocation. CPU execution completes before returning.
 
 <!-- d3d12-review-alert:end:video-extension:N-qualifications:0 -->
 
@@ -2029,34 +2006,6 @@ The size of the creation parameters structure in bytes.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **Residency-size qualification:** the API size payload describes creation
-> parameters and L0 system/L1 discrete video memory. Its DDI prose incorrectly
-> names INITIALIZATION and reverses the pool descriptions. The original DDI
-> layout names creation parameters; the API meanings are retained here.
-> The inspected size-query implementation does not forward the creation blob
-> or size to the driver. Therefore creation-dependent size accuracy is not
-> corroborated by that implementation. A zero or apparently plausible result
-> does not independently validate the command's allocation requirements.
+> The residency-size query takes creation parameters and reports L0 system memory and L1 discrete video memory. The published DDI prose that names initialization parameters and reverses the pools is incorrect.
 
 <!-- d3d12-review-alert:end:video-extension:N-qualifications:1 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-qualifications:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> **Validation qualification:** command enumeration rejects a count different
-> from the node's cached count; parameter enumeration checks its reported
-> count on the nonempty path. Metadata checks reject invalid packing,
-> null parameter names, invalid types/flags and forbidden resource stages.
-> The global command-GUID support helper has a success-shaped fallback when
-> no node matches, so it does not establish that arbitrary GUIDs are valid.
-> The packing helper can return false for an undersized blob, while inspected
-> call sites do not consistently consume that result. No complete bounds
-> validation or particular HRESULT is promised for malformed blobs by this
-> source inspection. Nor is the zero-parameter early return a generic null
-> buffer convention. Per-extension nullability, exact structure size,
-> value constraints, resource aliasing, initialization sequencing, concurrency
-> and CPU resource access require the command's own applicable contract.
-
-<!-- d3d12-review-alert:end:video-extension:N-qualifications:2 -->

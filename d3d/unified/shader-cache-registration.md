@@ -616,8 +616,8 @@ HRESULT HandleDriverUpdate( ID3DShaderCacheInstaller* pInstaller);
 
 Callback handler called after a graphics driver update has occurred.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-source-remarks:0 -->This is a callback function that will be called by the system when a graphics driver update occurs. See
-`ID3DShaderCacheInstaller::RegisterDriverUpdateListener` for more information.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-source-remarks:0 --></ins>
+This is a callback function that will be called by the system when a graphics driver update occurs. See
+`ID3DShaderCacheInstaller::RegisterDriverUpdateListener` for more information.
 
 <!-- d3d12-review-alert:begin:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-behavior:0 -->
 
@@ -1135,7 +1135,7 @@ HRESULT RegisterServiceDriverUpdateTrigger(SC_HANDLE hServiceHandle);
 
 Registers a service driver update trigger.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerservicedriverupdatetrigger-source-remarks:0 -->This function registers a Windows service trigger that will automatically start a service when a driver is installed or updated. This service trigger should be used to review registered applications to determine if the PSDBs associated with the device have been invalidated.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerservicedriverupdatetrigger-source-remarks:0 --></ins>
+This function registers a Windows service trigger that will automatically start a service when a driver is installed or updated. This service trigger should be used to review registered applications to determine if the PSDBs associated with the device have been invalidated.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerservicedriverupdatetrigger-source-remarks:1 -->`ChangeServiceConfig2W` and related Win32 APIs can be used to modify the supplied service's `SERVICE_CONFIG_TRIGGER_INFO` if required.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerservicedriverupdatetrigger-source-remarks:1 --></ins>
 

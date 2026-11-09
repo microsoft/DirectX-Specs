@@ -56,7 +56,7 @@ Each compiler exposes API to compile a PSO or SO that take arguments that are si
 
 <!-- d3d12-review-alert:end:compiler-output:collection-output-overview:0 -->
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:storage-concepts:0 -->The Precompiled Shader Database(PSDB) is implemented as Sqlite3 databases for storage.  The compiler runtime API wraps the database as an ID3D12CompilerCacheSession.<!-- d3d12-review-inline:end:compiler-output:storage-concepts:0 --></ins>
+The Precompiled Shader Database(PSDB) is implemented as Sqlite3 databases for storage.  The compiler runtime API wraps the database as an ID3D12CompilerCacheSession.
 
 The PSDB Stores:
 
@@ -264,7 +264,7 @@ typedef struct D3D12_COMPILER_CACHE_VALUE_KEY
 } D3D12_COMPILER_CACHE_VALUE_KEY;
 ```
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:type-prose-d3d12_compiler_cache_value_key:0 -->**Members**<!-- d3d12-review-inline:end:compiler-output:type-prose-d3d12_compiler_cache_value_key:0 --></ins>
+**Members**
 
 *pKey*
 
@@ -387,7 +387,7 @@ typedef struct D3D12_COMPILER_CACHE_TYPED_CONST_VALUE
 } D3D12_COMPILER_CACHE_TYPED_CONST_VALUE;
 ```
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:type-prose-d3d12_compiler_cache_typed_const_value:0 -->**Members**<!-- d3d12-review-inline:end:compiler-output:type-prose-d3d12_compiler_cache_typed_const_value:0 --></ins>
+**Members**
 
 *Type*
 
@@ -577,7 +577,7 @@ HRESULT CreateCompilerCacheSession(
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilerfactory-createcompilercachesession-source:0 -->Database Files:<!-- d3d12-review-inline:end:compiler-output:id3d12compilerfactory-createcompilercachesession-source:0 --></ins>
+Database Files:
 
 - If a specified file does not exist, it is created.  If it exists, it is opened for modification.
 - <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilerfactory-createcompilercachesession-source:1 -->Value types may be stored in separate databases.  For example, PDBs may be stored in a separate database file than object code.<!-- d3d12-review-inline:end:compiler-output:id3d12compilerfactory-createcompilercachesession-source:1 --></ins>
@@ -772,7 +772,7 @@ HRESULT CreateCompiler(
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilerfactory-createcompiler-source:0 -->Create an instance of a compiler.<!-- d3d12-review-inline:end:compiler-output:id3d12compilerfactory-createcompiler-source:0 --></ins>
+Create an instance of a compiler.
 
 Use [D3D12_APPLICATION_DESC](state-object-databases-and-identity.md#d3d12_application_desc) to query the profile version from the compiler plugin with [ID3D12CompilerFactory::GetApplicationProfileVersion](offline-compilation.md#id3d12compilerfactory-getapplicationprofileversion).  Compilers may revise this number to indicate application specific changes to compiler output.
 
@@ -1021,7 +1021,7 @@ HRESULT CompilePipelineState(
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compilepipelinestate-source:0 -->Compile a graphics or compute pipeline state.<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compilepipelinestate-source:0 --></ins>
+Compile a graphics or compute pipeline state.
 
 Compiled output is stored via [ID3D12CompilerCacheSession::StoreValue](#id3d12compilercachesession-storevalue).
 
@@ -1069,7 +1069,7 @@ The version number of the cached group.
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compilepipelinestate-parameter-source:4 -->`[in] pDesc`<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compilepipelinestate-parameter-source:4 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compilepipelinestate-parameter-source:5 -->The pipeline state desc describing the PSO.  See [D3D12_PIPELINE_STATE_STREAM_DESC](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_pipeline_state_stream_desc).<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compilepipelinestate-parameter-source:5 --></ins>
+The pipeline state desc describing the PSO.  See [D3D12_PIPELINE_STATE_STREAM_DESC](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_pipeline_state_stream_desc).
 
 ### Return values
 
@@ -1118,7 +1118,7 @@ HRESULT CompileStateObject(
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compilestateobject-source:0 -->Compiled output is stored via [ID3D12CompilerCacheSession::StoreValue](#id3d12compilercachesession-storevalue).<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compilestateobject-source:0 --></ins>
+Compiled output is stored via [ID3D12CompilerCacheSession::StoreValue](#id3d12compilercachesession-storevalue).
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compilestateobject-source:1 -->Compiler may sub-divide<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compilestateobject-source:1 --></ins> objects in an IHV dependent way to support deduplication.  Therefore, multiple values may be stored per compile. <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compilestateobject-source:1 -->The compiler may also check<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compilestateobject-source:1 --></ins> for previously compiled duplicates.
 
@@ -1261,7 +1261,7 @@ HRESULT CompileAddToStateObject(
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compileaddtostateobject-source:0 -->Compiled output is stored via [ID3D12CompilerCacheSession::StoreValue](#id3d12compilercachesession-storevalue).<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compileaddtostateobject-source:0 --></ins>
+Compiled output is stored via [ID3D12CompilerCacheSession::StoreValue](#id3d12compilercachesession-storevalue).
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compileaddtostateobject-source:1 -->Compiler may sub-divide<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compileaddtostateobject-source:1 --></ins> objects in an IHV dependent way to support deduplication.  Therefore, multiple values may be stored per compile. <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compileaddtostateobject-source:1 -->The compiler may also check<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compileaddtostateobject-source:1 --></ins> for previously compiled duplicates.
 
@@ -1576,7 +1576,7 @@ HRESULT FindGroup(
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findgroup-source:0 -->Check if a group with pGroupKey is in the database.  Optionally retrieve the version number of the group.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findgroup-source:0 --></ins>
+Check if a group with pGroupKey is in the database.  Optionally retrieve the version number of the group.
 
 Returns S_OK when the group exists and DXGI_ERROR_NOT_FOUND if it does not.
 
@@ -1636,7 +1636,7 @@ HRESULT FindGroupValueKeys(
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findgroupvaluekeys-source:0 -->Looks up a group entry in the cache whose key exactly matches the provided key and version and provides the list of value keys in the group to a callback.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findgroupvaluekeys-source:0 --></ins>
+Looks up a group entry in the cache whose key exactly matches the provided key and version and provides the list of value keys in the group to a callback.
 
 DXGI_ERROR_NOT_FOUND is returned if <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findgroupvaluekeys-source:1 -->a group with pGroupKey<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findgroupvaluekeys-source:1 --></ins> and the appropriate version is not found.
 
@@ -1682,7 +1682,7 @@ A D3D12CompilerCacheSessionGroupValueKeysFunc that is called once for each value
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findgroupvaluekeys-parameter-source:6 -->`[in, out, optional] pContext`<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findgroupvaluekeys-parameter-source:6 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findgroupvaluekeys-parameter-source:7 -->An application specified context pointer that is passed to the callback.  Use this to pass parameters to the callback function that receives the value keys.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findgroupvaluekeys-parameter-source:7 --></ins>
+An application specified context pointer that is passed to the callback.  Use this to pass parameters to the callback function that receives the value keys.
 
 ### Return values
 
@@ -1716,7 +1716,7 @@ HRESULT FindGroupValues(
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findgroupvalues-source:0 -->Looks up a group entry in the cache whose key exactly matches the provided key and version and provides the list of values in the group to a callback.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findgroupvalues-source:0 --></ins>
+Looks up a group entry in the cache whose key exactly matches the provided key and version and provides the list of values in the group to a callback.
 
 DXGI_ERROR_NOT_FOUND is returned if <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findgroupvalues-source:1 -->a group with pGroupKey<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findgroupvalues-source:1 --></ins> and the appropriate version is not found.
 
@@ -1798,7 +1798,7 @@ Specify which values are retrieved from the cache session and passed to the D3D1
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findgroupvalues-parameter-source:8 -->`[in, out, optional] pContext`<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findgroupvalues-parameter-source:8 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findgroupvalues-parameter-source:9 -->An application specified context pointer that is passed to the callback.  Use this to pass parameters to the callback function that receives the values.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findgroupvalues-parameter-source:9 --></ins>
+An application specified context pointer that is passed to the callback.  Use this to pass parameters to the callback function that receives the values.
 
 ### Return values
 
@@ -1834,7 +1834,7 @@ HRESULT FindValue(
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findvalue-source:0 -->Find a previously stored value in the cache.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findvalue-source:0 --></ins>
+Find a previously stored value in the cache.
 
 Each D3D12_COMPILER_CACHE_TYPED_VALUE has a D3D12_COMPILER_CACHE_VALUE.  On input, each D3D12_COMPILER_CACHE_VALUE ValueSize member specifies the size in bytes of the buffer pointed to by pValue. Use zero when querying size or using the allocation callback. On output, the ValueSize member is assigned the size of the value.
 
@@ -1962,7 +1962,7 @@ An optional callback function for allocating value buffers.  <ins><!-- d3d12-rev
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findvalue-parameter-source:8 -->`[in, out, optional] pContext`<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findvalue-parameter-source:8 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findvalue-parameter-source:9 -->An application specified context pointer that is passed to the callback.  Use this to pass parameters to the allocation callback function.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findvalue-parameter-source:9 --></ins>
+An application specified context pointer that is passed to the callback.  Use this to pass parameters to the allocation callback function.
 
 ### Return values
 
@@ -1990,7 +1990,7 @@ const D3D12_APPLICATION_DESC* GetApplicationDesc();
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-getapplicationdesc-source:0 -->Gets the application desc for this cache session.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-getapplicationdesc-source:0 --></ins>
+Gets the application desc for this cache session.
 
 This information is stored in the database.
 
@@ -2025,9 +2025,9 @@ D3D12_COMPILER_TARGET GetCompilerTarget();
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-getcompilertarget-source:0 -->Gets the Compiler Target used with this cache session.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-getcompilertarget-source:0 --></ins>
+Gets the Compiler Target used with this cache session.
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-getcompilertarget-source:1 -->This information is stored in the database.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-getcompilertarget-source:1 --></ins>
+This information is stored in the database.
 
 ### Parameters
 
@@ -2058,7 +2058,7 @@ D3D12_COMPILER_VALUE_TYPE_FLAGS GetValueTypes();
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-getvaluetypes-source:0 -->Reflects the value types used to create the cache session.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-getvaluetypes-source:0 --></ins>
+Reflects the value types used to create the cache session.
 
 ### Parameters
 
@@ -2093,7 +2093,7 @@ HRESULT StoreValue(
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-storevalue-source:0 -->Add a key/value pair to the compiler cache.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-storevalue-source:0 --></ins>
+Add a key/value pair to the compiler cache.
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-storevalue-source:1 -->At least one value must be stored in the store operation, so the function returns E_INVALIDARG if pTypedValues is nullptr or NumTypedValues is zero. Each value must have a non-zero size.  Only one value per type may be stored at a time.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-storevalue-source:1 --></ins>
 
@@ -2139,7 +2139,7 @@ An array of typed values to store.  The array size is specified by NumTypedValue
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-storevalue-parameter-source:4 -->`[in] NumTypedValues`<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-storevalue-parameter-source:4 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-storevalue-parameter-source:5 -->The number of values in the pTypedValues array.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-storevalue-parameter-source:5 --></ins>
+The number of values in the pTypedValues array.
 
 ### Return values
 
@@ -2172,7 +2172,7 @@ HRESULT StoreGroupValueKeys(
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-storegroupvaluekeys-source:0 -->Stores a group of value keys in the cache.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-storegroupvaluekeys-source:0 --></ins>
+Stores a group of value keys in the cache.
 
 This method does not check if the value keys in the group are present in the database.
 
@@ -2224,7 +2224,7 @@ The version number of the cached group.
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-storegroupvaluekeys-parameter-source:6 -->`[in] NumValueKeys`<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-storegroupvaluekeys-parameter-source:6 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-storegroupvaluekeys-parameter-source:7 -->The number of value keys in the group.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-storegroupvaluekeys-parameter-source:7 --></ins>
+The number of value keys in the group.
 
 ### Return values
 
@@ -2249,13 +2249,7 @@ The version number of the cached group.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [published compiler table](compiler-plugin-foundation.md#compiler-table-dependencies),
-> [cache callback table](compiler-plugin-foundation.md#callback-dependencies), and
-> [handles](compiler-plugin-foundation.md#handles-and-versions) are defined once
-> in the plugin foundation. The behavior below uses those declarations and their
-> dependent types. The negotiated version selects the applicable ABI; the
-> published build-2 add-operation uses `D3D12DDIARG_ADD_TO_STATE_OBJECT_0072`,
-> not an extra standalone parent-handle parameter.
+> The [compiler table](compiler-plugin-foundation.md#compiler-table-dependencies) and [cache callbacks](compiler-plugin-foundation.md#callback-dependencies) are declared in the plugin foundation. Build 2 additions use `D3D12DDIARG_ADD_TO_STATE_OBJECT_0072`, without an extra parent-handle parameter.
 
 <!-- d3d12-review-alert:end:compiler-output:ddi-ownership:0 -->
 
@@ -2264,39 +2258,16 @@ The version number of the cached group.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime's `D3D12DDI_HRTCOMPILERCACHESESSION` identifies one compile call.
-> It is valid only during that call and must not be retained for later callbacks.
-> The plugin compiler object (`D3D12DDI_HCOMPILER`) is distinct from that
-> call-scoped handle. `D3D12DDI_HCOMPILERSTATEOBJECT` retains plugin compilation
-> state between creation and later additions; it is not a GPU execution handle.
+> `D3D12DDI_HRTCOMPILERCACHESESSION` is valid only during one compile call. `D3D12DDI_HCOMPILERSTATEOBJECT` instead retains plugin state for later additions.
 
 <!-- d3d12-review-alert:end:compiler-output:ddi-cache-session-handle:0 -->
-
-<!-- d3d12-review-alert:begin:compiler-output:ddi-cache-session-handle:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The runtime installs the
-> [cache callback table](compiler-plugin-foundation.md#callback-dependencies)
-> before creating compiler objects, through
-> [`PFND3D12DDI_COMPILER_SET_CALLBACK_DDI_TABLE`](compiler-plugin-foundation.md#set-callback-table).
-> The published table, callbacks and enum tags/typedef aliases define the
-> ABI. The `APIENTRY`, `CALLBACK` and `__stdcall` conventions are part of the
-> function-pointer types.
-
-<!-- d3d12-review-alert:end:compiler-output:ddi-cache-session-handle:1 -->
 
 <!-- d3d12-review-alert:begin:compiler-output:ddi-cache-session-handle:2 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The DDI value types select object code, metadata, Debug PDB and performance
-> data with the same semantic categories as the
-> [API output types](#d3d12_compiler_value_type). Keys and buffers have the
-> published DDI widths; API values have the widths in the fixed API declarations.
-> Code must not infer binary layout compatibility from the semantic mapping.
+> DDI value kinds have the [API output meanings](#d3d12_compiler_value_type), with the declared DDI field widths.
 
 <!-- d3d12-review-alert:end:compiler-output:ddi-cache-session-handle:2 -->
 
@@ -2393,7 +2364,7 @@ Example uses:
 
 <!-- d3d12-review-alert:end:compiler-output:ddi-type-link-d3d12ddi_compiler_cache_value_key:0 -->
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-type-prose-d3d12ddi_compiler_cache_value_key:0 -->**Members**<!-- d3d12-review-inline:end:compiler-output:ddi-type-prose-d3d12ddi_compiler_cache_value_key:0 --></ins>
+**Members**
 
 *pKey*
 
@@ -2507,7 +2478,7 @@ See also [D3D12DDI_COMPILER_CACHE_TYPED_CONST_VALUE](compiler-plugin-foundation.
 
 <!-- d3d12-review-alert:end:compiler-output:ddi-type-link-d3d12ddi_compiler_cache_typed_const_value:0 -->
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-type-prose-d3d12ddi_compiler_cache_typed_const_value:0 -->**Members**<!-- d3d12-review-inline:end:compiler-output:ddi-type-prose-d3d12ddi_compiler_cache_typed_const_value:0 --></ins>
+**Members**
 
 *Type*
 
@@ -2534,7 +2505,7 @@ Used in DDI where the compiler may not modify the value buffer, such as [PFND3D1
 
 <!-- d3d12-review-alert:end:compiler-output:ddi-type-link-d3d12ddi_compiler_cache_callbacks:0 -->
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-type-prose-d3d12ddi_compiler_cache_callbacks:0 -->**Members**<!-- d3d12-review-inline:end:compiler-output:ddi-type-prose-d3d12ddi_compiler_cache_callbacks:0 --></ins>
+**Members**
 
 *pfnCompilerCacheFindValue*
 
@@ -2546,7 +2517,7 @@ See [PFND3D12DDI_COMPILER_CACHE_STORE_VALUE_CB](#pfnd3d12ddi_compiler_cache_stor
 
 *pfnCompilerCacheSetObjectValueKeys*
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-type-prose-d3d12ddi_compiler_cache_callbacks:6 -->See [PFND3D12DDI_COMPILER_CACHE_SET_OBJECT_VALUE_KEYS_CB](#pfnd3d12ddi_compiler_cache_set_object_value_keys_cb).<!-- d3d12-review-inline:end:compiler-output:ddi-type-prose-d3d12ddi_compiler_cache_callbacks:6 --></ins>
+See [PFND3D12DDI_COMPILER_CACHE_SET_OBJECT_VALUE_KEYS_CB](#pfnd3d12ddi_compiler_cache_set_object_value_keys_cb).
 
 <a id="d3d12ddi_hrtcompilercachesession"></a>
 
@@ -2591,7 +2562,7 @@ A handle type representing the <ins><!-- d3d12-review-inline:begin:compiler-outp
 
 <!-- d3d12-review-alert:end:compiler-output:declaration-link-pfnd3d12ddi_compiler_calc_private_compiler_size:0 -->
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-pfnd3d12ddi_compiler_calc_private_compiler_size:0 -->Determine the size of the driver compiler object.<!-- d3d12-review-inline:end:compiler-output:ddi-pfnd3d12ddi_compiler_calc_private_compiler_size:0 --></ins>
+Determine the size of the driver compiler object.
 
 **Parameters**
 
@@ -2620,7 +2591,7 @@ Describes the target application and version.  See [D3D12DDI_APPLICATION_DESC](c
 
 <!-- d3d12-review-alert:end:compiler-output:declaration-link-pfnd3d12ddi_compiler_create_compiler:0 -->
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-pfnd3d12ddi_compiler_create_compiler:0 -->Create the driver compiler object.<!-- d3d12-review-inline:end:compiler-output:ddi-pfnd3d12ddi_compiler_create_compiler:0 --></ins>
+Create the driver compiler object.
 
 **Parameters**
 
@@ -2634,7 +2605,7 @@ Describes the target application and version.  See [D3D12DDI_APPLICATION_DESC](c
 
 *hCompiler*
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-pfnd3d12ddi_compiler_create_compiler:7 -->Handle for plugin compiler object.  Memory is allocated by the caller, and plugin places compiler object.<!-- d3d12-review-inline:end:compiler-output:ddi-pfnd3d12ddi_compiler_create_compiler:7 --></ins>
+Handle for plugin compiler object.  Memory is allocated by the caller, and plugin places compiler object.
 
 <!-- d3d12-review-alert:begin:compiler-output:ddi-create-runtime-handle:0 -->
 
@@ -2684,7 +2655,7 @@ Handle for plugin compiler object.
 
 <!-- d3d12-review-alert:end:compiler-output:declaration-link-pfnd3d12ddi_compiler_compile_pipeline_state:0 -->
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-pfnd3d12ddi_compiler_compile_pipeline_state:0 -->Compile a graphics or compute pipeline state.<!-- d3d12-review-inline:end:compiler-output:ddi-pfnd3d12ddi_compiler_compile_pipeline_state:0 --></ins>
+Compile a graphics or compute pipeline state.
 
 **Parameters**
 
@@ -2752,7 +2723,7 @@ Creation arguments for the state object.
 
 <!-- d3d12-review-alert:end:compiler-output:declaration-link-pfnd3d12ddi_compiler_compile_create_state_object:0 -->
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-pfnd3d12ddi_compiler_compile_create_state_object:0 -->**Parameters**<!-- d3d12-review-inline:end:compiler-output:ddi-pfnd3d12ddi_compiler_compile_create_state_object:0 --></ins>
+**Parameters**
 
 *hCompiler*
 
@@ -2837,7 +2808,7 @@ Creation arguments for the add operation.
 
 <!-- d3d12-review-alert:end:compiler-output:declaration-link-pfnd3d12ddi_compiler_compile_add_to_state_object:0 -->
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-pfnd3d12ddi_compiler_compile_add_to_state_object:0 -->**Parameters**<!-- d3d12-review-inline:end:compiler-output:ddi-pfnd3d12ddi_compiler_compile_add_to_state_object:0 --></ins>
+**Parameters**
 
 *hCompiler*
 
@@ -2896,7 +2867,7 @@ Handle for plugin compiler object.
 
 *hStateObject*
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-pfnd3d12ddi_compiler_destroy_state_object:5 -->The state object to destroy.<!-- d3d12-review-inline:end:compiler-output:ddi-pfnd3d12ddi_compiler_destroy_state_object:5 --></ins>
+The state object to destroy.
 
 <a id="pfnd3d12ddi_compiler_cache_find_value_cb"></a>
 
@@ -2911,7 +2882,7 @@ Handle for plugin compiler object.
 
 <!-- d3d12-review-alert:end:compiler-output:declaration-link-pfnd3d12ddi_compiler_cache_find_value_cb:0 -->
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-pfnd3d12ddi_compiler_cache_find_value_cb:0 -->Find a previously stored value in the cache.<!-- d3d12-review-inline:end:compiler-output:ddi-pfnd3d12ddi_compiler_cache_find_value_cb:0 --></ins>
+Find a previously stored value in the cache.
 
 **Parameters**
 
@@ -2956,14 +2927,7 @@ Each D3D12DDI_COMPILER_CACHE_TYPED_VALUE has a D3D12DDI_COMPILER_CACHE_VALUE.  O
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The typed-size, short-buffer, missing-type, allocator and partial-output rules
-> are the corresponding
-> [`FindValue` contract](#id3d12compilercachesession-findvalue), applied through the
-> published DDI structures and calling conventions. A zero-sized lookup with
-> no allocator is a per-type size probe, not a complete-group check.
-> `PFND3D12DDI_COMPILER_ALLOCATION` must return suitably aligned storage or null
-> and must not let exceptions escape; successful allocations remain the plugin
-> caller's responsibility, including after a later lookup failure.
+> The callback uses the [FindValue result and buffer protocol](#id3d12compilercachesession-findvalue). Its allocator must return suitably aligned storage or null and must not let exceptions escape. The plugin frees successful allocations, including those made before a later lookup failure.
 
 <!-- d3d12-review-alert:end:compiler-output:ddi-find-results:0 -->
 
@@ -2980,7 +2944,7 @@ Each D3D12DDI_COMPILER_CACHE_TYPED_VALUE has a D3D12DDI_COMPILER_CACHE_VALUE.  O
 
 <!-- d3d12-review-alert:end:compiler-output:declaration-link-pfnd3d12ddi_compiler_cache_store_value_cb:0 -->
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-pfnd3d12ddi_compiler_cache_store_value_cb:0 -->Add a key/value pair to the compiler cache.<!-- d3d12-review-inline:end:compiler-output:ddi-pfnd3d12ddi_compiler_cache_store_value_cb:0 --></ins>
+Add a key/value pair to the compiler cache.
 
 **Parameters**
 
@@ -2988,7 +2952,7 @@ Each D3D12DDI_COMPILER_CACHE_TYPED_VALUE has a D3D12DDI_COMPILER_CACHE_VALUE.  O
 
 The compiler cache session  callback handle received during a compilation operation.
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-pfnd3d12ddi_compiler_cache_store_value_cb:4 -->*pValueKey*<!-- d3d12-review-inline:end:compiler-output:ddi-pfnd3d12ddi_compiler_cache_store_value_cb:4 --></ins>
+*pValueKey*
 
 The unique identifier for the value.  See [D3D12DDI_COMPILER_CACHE_VALUE_KEY](compiler-plugin-foundation.md#callback-dependencies).
 
@@ -3013,13 +2977,7 @@ The number of values in the pValues array.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Value types requested by the compile mask must be made available through the
-> cache callbacks before successful completion. Types can be stored in separate
-> calls; deduplication can reuse a previously stored value. The callback reports
-> storage conflicts and failures through its `HRESULT`. A successful store
-> copies the supplied data; it does not take ownership of the plugin's buffer.
-> The plugin must handle a failed store rather than treating it as evidence that
-> all requested output was persisted. Earlier stores need not be undone.
+> Before successful compilation, requested value kinds must be available through the cache callbacks. The plugin may store types separately or reuse stored values. It handles store failures and need not undo earlier successful stores.
 
 <!-- d3d12-review-alert:end:compiler-output:ddi-store-results:0 -->
 
@@ -3061,11 +3019,7 @@ The unique identifiers for the values.  See [D3D12DDI_COMPILER_CACHE_VALUE_KEY](
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pValueKeys` supplies vendor-generated keys for the object compiled by this
-> call. The callback associates the list with the API application group key and
-> `GroupVersion`. Registration does not validate that every requested typed value
-> exists. The cache-session handle is valid only during the active compile call;
-> the plugin must not retain it for later callbacks.
+> The callback associates vendor-generated `pValueKeys` with the API application key and GroupVersion. Registration does not verify that all requested value kinds exist.
 
 <!-- d3d12-review-alert:end:compiler-output:ddi-group-completion:0 -->
 
@@ -3074,11 +3028,7 @@ The unique identifiers for the values.  See [D3D12DDI_COMPILER_CACHE_VALUE_KEY](
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> An already-existing group result is accepted by the compiler runtime for this
-> callback; other group-store failures are returned to the plugin. A callback
-> invocation alone does not prove that a new mapping or every typed value was
-> stored. Synchronous successful completion is not a transaction or universal
-> error-propagation guarantee.
+> The host accepts an already-existing-group result from this callback and returns other group-store failures to the plugin.
 
 <!-- d3d12-review-alert:end:compiler-output:ddi-group-completion:1 -->
 

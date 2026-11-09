@@ -555,7 +555,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22
 
 <!-- d3d12-review-alert:end:compute:N-capability-selector:0 -->
 
-- <ins><!-- d3d12-review-inline:begin:compute:D-capability-members:0 -->**Max1DDispatchSize** - The maximum number of thread groups that can be dispatched in the X dimension for Compute Shaders when Y = 1 and Z = 1. Must be at least 65,535 (the value of `D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION`). This limit also applies to grids launched in Work Graphs, however Work Graphs are additionally constrained by the maximum total number of thread groups as defined by `D3D12_WORK_GRAPHS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID` (16,777,215). This means that while `Max1DDispatchSize` may be larger than 16,777,215, Work Graph dispatches cannot exceed this total thread group limit.<!-- d3d12-review-inline:end:compute:D-capability-members:0 --></ins>
+- **Max1DDispatchSize** - The maximum number of thread groups that can be dispatched in the X dimension for Compute Shaders when Y = 1 and Z = 1. Must be at least 65,535 (the value of `D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION`). This limit also applies to grids launched in Work Graphs, however Work Graphs are additionally constrained by the maximum total number of thread groups as defined by `D3D12_WORK_GRAPHS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID` (16,777,215). This means that while `Max1DDispatchSize` may be larger than 16,777,215, Work Graph dispatches cannot exceed this total thread group limit.
 
 - **Max1DDispatchMeshSize** - The maximum number of thread groups that can be dispatched in the X dimension for Mesh Shaders (via `DispatchMesh`) when Y = 1 and Z = 1. Must be at least 65,535 (the value of `D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION`). This value must not exceed 4,194,303 (the value of `D3D12_MS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID`), which is the maximum total number of thread groups allowed for Mesh Shader dispatches.
 
@@ -729,7 +729,7 @@ Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows
 
 ### Return values
 
-<ins><!-- d3d12-review-inline:begin:compute:R-Dispatch:0 -->None<!-- d3d12-review-inline:end:compute:R-Dispatch:0 --></ins>
+None
 
 ### Recording and execution constraints
 
@@ -769,11 +769,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DISPATCH )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `PFND3D12DDI_DISPATCH` implements the logical
-> [Dispatch](#dispatch) operation. After the ordinary driver command-list
-> handle, the three `UINT` arguments are `ThreadGroupCountX`,
-> `ThreadGroupCountY` and `ThreadGroupCountZ`, in that order. They count
-> groups, not threads; the shader supplies the per-group dimensions.
+> `PFND3D12DDI_DISPATCH` implements [Dispatch](#dispatch). Its three `UINT` arguments are `ThreadGroupCountX`, `ThreadGroupCountY` and `ThreadGroupCountZ` in that order.
 
 <!-- d3d12-review-alert:end:compute:WE-dispatch-roles:0 -->
 
@@ -782,14 +778,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DISPATCH )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime forwards these dimensions unchanged. Their validity and
-> expanded-grid capabilities remain the
-> [shared dimension/validation contract](#dispatch-validation); driver
-> invocation does not imply that invalid dimensions were filtered or clamped.
-> The API's recording-context, zero-work, pipeline/root/resource and
-> predication rules apply. Returning from this recording DDI does not guarantee
-> GPU completion; reported recording failures follow the shared
-> [callback/deferred-Close contract](execution.md#lifecycle-driver-errors).
+> The runtime forwards the dimensions unchanged. The driver must not assume they have been validated or clamped. See [dispatch validation](#dispatch-validation).
 
 <!-- d3d12-review-alert:end:compute:WE-dispatch-roles:1 -->
 
@@ -802,15 +791,8 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DISPATCH_0114 )(D3D12DDI_API_HCOMMANDLIST, 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The `_0114` entry is the API-handle form of the [ordinary dispatch contract](#driver-dispatch). Its first argument uses the [published API command-list handle representation](execution.md#work-command-handles); the next three `UINT`s remain `ThreadGroupCountX`, `ThreadGroupCountY` and `ThreadGroupCountZ`, not per-group thread dimensions.
+> The `_0114` entry participates in [runtime bypass](execution.md#work-command-handles). Its arguments otherwise match the [ordinary dispatch DDI](#driver-dispatch).
 
 <!-- d3d12-review-alert:end:compute:EF-api-dispatch-contract:0 -->
 
-<!-- d3d12-review-alert:begin:compute:EF-api-dispatch-contract:1 -->
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The same [grid/capability and validation rules](#dispatch-validation), recording contexts, zero-work, pipeline/root/resource and predication requirements apply to both representations. API-handle dispatch does not imply argument clamping, extra CPU validation, submission or GPU completion. Its `VOID` result retains the same [recording-error channel](execution.md#lifecycle-driver-errors).
-
-<!-- d3d12-review-alert:end:compute:EF-api-dispatch-contract:1 -->

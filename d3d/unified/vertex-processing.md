@@ -89,7 +89,7 @@ typedef struct D3D12_VERTEX_BUFFER_VIEW
 } D3D12_VERTEX_BUFFER_VIEW;
 ```
 
-<ins><!-- d3d12-review-inline:begin:geometry:M-D3D12_VERTEX_BUFFER_VIEW:0 -->`BufferLocation`<!-- d3d12-review-inline:end:geometry:M-D3D12_VERTEX_BUFFER_VIEW:0 --></ins>
+`BufferLocation`
 
 Specifies a D3D12\_GPU\_VIRTUAL\_ADDRESS that identifies the address of the buffer.
 
@@ -114,7 +114,7 @@ typedef struct D3D12_INDEX_BUFFER_VIEW
 } D3D12_INDEX_BUFFER_VIEW;
 ```
 
-<ins><!-- d3d12-review-inline:begin:geometry:M-D3D12_INDEX_BUFFER_VIEW:0 -->`BufferLocation`<!-- d3d12-review-inline:end:geometry:M-D3D12_INDEX_BUFFER_VIEW:0 --></ins>
+`BufferLocation`
 
 The GPU virtual address of the index buffer. D3D12\_GPU\_VIRTUAL\_ADDRESS is a typedef'd synonym of UINT64.
 
@@ -213,13 +213,13 @@ Bind information about the primitive type, and data order that describes input d
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:geometry:P-IASetPrimitiveTopology:0 -->`[in] PrimitiveTopology`<!-- d3d12-review-inline:end:geometry:P-IASetPrimitiveTopology:0 --></ins>
+`[in] PrimitiveTopology`
 
 The type of primitive and ordering of the primitive data (see [D3D_PRIMITIVE_TOPOLOGY](https://learn.microsoft.com/en-us/windows/desktop/api/d3dcommon/ne-d3dcommon-d3d_primitive_topology)).
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:geometry:Q-IASetPrimitiveTopology:0 -->None<!-- d3d12-review-inline:end:geometry:Q-IASetPrimitiveTopology:0 --></ins>
+None
 
 #### Binding constraints
 
@@ -252,13 +252,13 @@ void IASetVertexBuffers(
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:geometry:P-IASetVertexBuffers:0 -->`[in] StartSlot`<!-- d3d12-review-inline:end:geometry:P-IASetVertexBuffers:0 --></ins>
+`[in] StartSlot`
 
 Index into the device's zero-based array to begin setting vertex buffers.
 
 `[in] NumViews`
 
-<ins><!-- d3d12-review-inline:begin:geometry:P-IASetVertexBuffers:3 -->The number of views in the *pViews* array.<!-- d3d12-review-inline:end:geometry:P-IASetVertexBuffers:3 --></ins>
+The number of views in the *pViews* array.
 
 `[in, optional] pViews`
 
@@ -266,7 +266,7 @@ Specifies the vertex buffer views in an array of [D3D12_VERTEX_BUFFER_VIEW](http
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:geometry:Q-IASetVertexBuffers:0 -->None<!-- d3d12-review-inline:end:geometry:Q-IASetVertexBuffers:0 --></ins>
+None
 
 #### Binding constraints
 
@@ -299,13 +299,13 @@ Only one index buffer can be bound to the graphics pipeline at any one time.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:geometry:P-IASetIndexBuffer:0 -->`[in, optional] pView`<!-- d3d12-review-inline:end:geometry:P-IASetIndexBuffer:0 --></ins>
+`[in, optional] pView`
 
 The view specifies the index buffer's address, size, and [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format), as a pointer to a [D3D12_INDEX_BUFFER_VIEW](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_index_buffer_view) structure.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:geometry:Q-IASetIndexBuffer:0 -->None<!-- d3d12-review-inline:end:geometry:Q-IASetIndexBuffer:0 --></ins>
+None
 
 #### Binding constraints
 
@@ -422,7 +422,7 @@ Draws non-indexed, instanced primitives.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:geometry:Q-DrawInstanced:0 -->None<!-- d3d12-review-inline:end:geometry:Q-DrawInstanced:0 --></ins>
+None
 
 #### Execution constraints
 
@@ -474,7 +474,7 @@ Draws indexed, instanced primitives.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:geometry:Q-DrawIndexedInstanced:0 -->None<!-- d3d12-review-inline:end:geometry:Q-DrawIndexedInstanced:0 --></ins>
+None
 
 #### Execution constraints
 
@@ -1215,6 +1215,8 @@ DrawIndexedInstanced(17, 3, 3, 2, 6);
 
 <!-- d3d12-review-alert:end:geometry:STAGES-program-selection:0 -->
 
+<ins><!-- d3d12-review-inline:begin:geometry:STAGES-9.1:0 -->The DXBC Vertex Shader instruction set is listed in the [instruction reference](../archive/D3D11_3_FunctionalSpec.htm#VSInstructionSet).<!-- d3d12-review-inline:end:geometry:STAGES-9.1:0 --></ins>
+
 <a id="vertex-invocation"></a>
 
 ### Vertex Shader Invocation
@@ -1400,11 +1402,11 @@ implementations an obvious solution to how to handle the dynamic
 indexing -> just replicate the entire array knowing it will certainly
 fit within interstage storage limits.
 
-<ins><!-- d3d12-review-inline:begin:geometry:STAGES-view-validation:6 -->At PSO creation, the runtime uses (1) (2) and (3) to generate an updated
+At PSO creation, the runtime uses (1) (2) and (3) to generate an updated
 version of the view ID dependency bits (1) taking account all the
 shaders in the PSO. This is what is validated against storage limits.
 Drivers must do the same if they need to determine unambiguously what
-might depend on ViewID.<!-- d3d12-review-inline:end:geometry:STAGES-view-validation:6 --></ins>
+might depend on ViewID.
 
 <a id="geometry-view-flexibility"></a>
 
@@ -1592,7 +1594,7 @@ an application knows will not be covered.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime resolves API input-layout semantics against the vertex shader's signature when constructing pipeline state. The address-generation model above describes the driver/hardware interpretation, not a second application layout API. Drivers implement bound view extents, strides, input-element formats/classification, detailed topology, instancing and selected cut state consistently with the draw parameters. Command-list state and resource access remain subject to the negotiated DDI and the canonical lifetime/synchronization rules.
+> The runtime resolves input-layout semantics against the vertex shader's signature before driver pipeline-state creation.
 
 <!-- d3d12-review-alert:end:geometry:N-driver:0 -->
 
@@ -1683,44 +1685,9 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SETVIEWINSTANCEMASK_0033 )( D3D12DDI_HCOMMA
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> These runtime-to-driver DDIs receive `D3D12DDI_HCOMMANDLIST`, not an
-> application command-list interface pointer. The driver consumes the logical
-> view values during the call; it cannot depend on the caller's view structures
-> remaining valid afterward. Buffer views carry GPU virtual addresses rather
-> than descriptor-heap handles or retained resource COM objects. Resource
-> [execution lifetime](execution.md#lifetime), residency and access requirements
-> are not changed by binding a view.
+> The driver consumes input-buffer view structures during the call and copies any values it needs afterward.
 
 <!-- d3d12-review-alert:end:geometry:GS-I-roles:0 -->
-
-<!-- d3d12-review-alert:begin:geometry:GS-I-roles:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pDesc` is optional: null unbinds the index buffer. A null vertex-view array
-> clears the selected slot range; a zero view count changes no slots. The
-> corresponding API entries define valid formats, alignment, byte/stride bounds
-> and slots outside the updated range. Runtime argument conversion preserves
-> those logical contracts, not identity between API and driver enum types.
-> Dynamic strip-cut changes and PSO reselection follow the
-> [canonical dynamic-state rules](command-list-state.md#dynamic-state).
-
-<!-- d3d12-review-alert:end:geometry:GS-I-roles:1 -->
-
-<!-- d3d12-review-alert:begin:geometry:GS-I-roles:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Call-time capture is distinct from initial state and bundle inheritance.
-> The [canonical graphics-state rules](command-list-state.md#base-graphics)
-> and each linked API's recording-context requirements remain applicable.
-> Driver-reported recording failures use the shared
-> [recording-error/deferred-Close contract](execution.md#lifecycle-driver-errors);
-> `VOID` alone does not establish allowed error codes or removal of validation.
-
-<!-- d3d12-review-alert:end:geometry:GS-I-roles:2 -->
 
 <a id="driver-input-forms"></a>
 
@@ -1731,15 +1698,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SETVIEWINSTANCEMASK_0033 )( D3D12DDI_HCOMMA
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The four input-binding entries below use ordinary `D3D12DDI_HCOMMANDLIST`
-> handles in `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108`. Their counterparts in
-> `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114` instead receive
-> `D3D12DDI_API_HCOMMANDLIST`. The latter identifies the application-side
-> header, not ordinary driver-private storage; use the
-> [published command-list header/conversion contract](execution.md#work-command-handles).
-> These are conditional alternative table representations, not a universal
-> availability or performance guarantee. Handle adaptation transfers no COM
-> ownership and does not change the logical binding operation.
+> The `_0114` input-binding entries participate in [runtime bypass](execution.md#work-command-handles). Their ordinary counterparts use `D3D12DDI_HCOMMANDLIST`.
 
 <!-- d3d12-review-alert:end:geometry:IF-representations:0 -->
 
@@ -1769,13 +1728,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_INDEX_BUFFER_STRIP_CUT_VALUE_0114)(D3D1
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Both topology entries select the detailed primitive topology, not the PSO's
-> coarser `PrimitiveTopologyType`. For the values admitted by the
-> [API topology enumeration](#topology-enumeration), the corresponding named
-> driver values below have the same numeric values. The named conversion
-> preserves point/list/strip/adjacency or patch-control-point selection; it
-> does not convert a topology into a PSO class or admit arbitrary enum values.
-> `UNDEFINED` represents undefined state, not a drawable topology.
+> For the values admitted by the [API topology enumeration](#topology-enumeration), corresponding named `D3D12DDI_PRIMITIVE_TOPOLOGY` values have the same numeric values.
 
 <!-- d3d12-review-alert:end:geometry:IF-topology-contract:0 -->
 
@@ -1827,67 +1780,14 @@ typedef enum D3D12DDI_PRIMITIVE_TOPOLOGY
 } D3D12DDI_PRIMITIVE_TOPOLOGY;
 ```
 
-<!-- d3d12-review-alert:begin:geometry:IF-view-contracts:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For either representation, null `pDesc` unbinds the single index buffer.
-> For vertex buffers, `StartSlot` and `NumViews` identify the slot range;
-> they are not byte offsets/counts. Null `pViews` clears that range, a valid
-> zero count changes no slots, and slots outside it are unchanged. The
-> [index-view](#iasetindexbuffer) and [vertex-range](#iasetvertexbuffers)
-> contracts retain their format, address alignment, byte extent, stride and
-> range validity requirements.
-
-<!-- d3d12-review-alert:end:geometry:IF-view-contracts:0 -->
-
-<!-- d3d12-review-alert:begin:geometry:IF-view-contracts:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The view structures are CPU input records containing GPU virtual addresses,
-> not descriptor-heap handles or retained resource COM objects. The driver
-> captures their logical values during the call; it cannot retain the caller's
-> `pDesc`/`pViews` storage as a later source of those values. This call-borrowed
-> storage is distinct from the referenced buffers' execution lifetime.
-> Binding neither keeps resource data alive nor establishes residency or
-> resource-access synchronization; the [graphics input lifetime/access contract](#direct-draws)
-> continues to apply.
-
-<!-- d3d12-review-alert:end:geometry:IF-view-contracts:1 -->
-
 <!-- d3d12-review-alert:begin:geometry:IF-strip-state-errors:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `IBStripCutValue` is an enum selector: `DISABLED`, `0xFFFF` and `0xFFFFFFFF`
-> have driver enum values 0, 1 and 2, respectively. Passing the literal index
-> sentinel `0xffff` or `0xffffffff` is not a substitute for its enum selector.
-> The [strip-cut operation](#strip-cuts), device/PSO permission requirements,
-> initial/reset values, bundle effects and overwrite on PSO selection remain
-> defined by the [dynamic application and driver state](command-list-state.md#dynamic-state).
-> Selecting a dynamic value does not modify the PSO's stored description or
-> exempt a later PSO selection from restoring its described cut state.
+> `IBStripCutValue` uses enum values 0, 1 and 2 for `DISABLED`, `0xFFFF` and `0xFFFFFFFF`. Pass the enum selector, not the literal index sentinel.
 
 <!-- d3d12-review-alert:end:geometry:IF-strip-state-errors:0 -->
-
-<!-- d3d12-review-alert:begin:geometry:IF-strip-state-errors:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> All four operations retain their DIRECT/BUNDLE recording restrictions and
-> the [canonical topology](command-list-state.md#base-graphics) and
-> [buffer inheritance](command-list-state.md#buffer-bindings) rules.
-> The `VOID` result introduces no recoverable creation `HRESULT`; failures
-> reported while recording follow the
-> [recording-error/deferred-Close contract](execution.md#lifecycle-driver-errors).
-> Handle or view adaptation is not proof of argument validation or clamping.
-
-<!-- d3d12-review-alert:end:geometry:IF-strip-state-errors:1 -->
 
 <a id="driver-view-mask-forms"></a>
 
@@ -1898,13 +1798,7 @@ typedef enum D3D12DDI_PRIMITIVE_TOPOLOGY
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The selected entries use ordinary `D3D12DDI_HCOMMANDLIST` handles in
-> `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108` and `D3D12DDI_API_HCOMMANDLIST` in
-> `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114`. The latter identifies the application-side
-> header, not ordinary driver-private storage; follow the
-> [command-list header and conversion contract](execution.md#work-command-handles).
-> These are conditional alternative table representations, not universal
-> availability or a transfer of COM ownership.
+> The `_0114` form of [SetViewInstanceMask](#setviewinstancemask) participates in [runtime bypass](execution.md#work-command-handles).
 
 <!-- d3d12-review-alert:end:geometry:FC-view-roles:0 -->
 
@@ -1922,36 +1816,6 @@ typedef enum D3D12DDI_PRIMITIVE_TOPOLOGY
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_SETVIEWINSTANCEMASK_0114 )( D3D12DDI_API_HCOMMANDLIST, UINT Mask );
 ```
-
-<!-- d3d12-review-alert:begin:geometry:FC-view-state:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Both forms use the 32-bit `Mask` value: bit `i` from the least-significant
-> bit enables view instance `i`. They do not replace the PSO's view-instance
-> declaration or enable masking on a PSO that did not opt in. Zero disables
-> all views when the mask is honored. The complete
-> [SetViewInstanceMask](#setviewinstancemask) support and PSO-flag contract
-> remains applicable.
-
-<!-- d3d12-review-alert:end:geometry:FC-view-state:0 -->
-
-<!-- d3d12-review-alert:begin:geometry:FC-view-state:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [canonical view-mask state](command-list-state.md#view-mask) starts at
-> zero and is not inherited into a bundle; a bundle's changes do affect the
-> parent on return. Do not substitute ordinary input-binding inheritance or
-> infer that `ClearState` restores this mask. DIRECT/BUNDLE and
-> [render-pass context](command-list-state.md#render-pass) requirements remain.
-> These `VOID` recording entries use the
-> [shared error/deferred-Close contract](execution.md#lifecycle-driver-errors);
-> the handle change neither proves validation nor GPU completion.
-
-<!-- d3d12-review-alert:end:geometry:FC-view-state:1 -->
 
 <a id="driver-draw"></a>
 
@@ -1977,36 +1841,6 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DRAWINDEXEDINSTANCED )(
 
 <!-- d3d12-review-alert:end:geometry:WE-draw-associations:0 -->
 
-<!-- d3d12-review-alert:begin:geometry:WE-draw-roles:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The first parameter identifies the ordinary driver command list, not an
-> application interface pointer. The remaining fields retain the named API's
-> logical meanings and order; `BaseVertexLocation` remains signed. The UMD
-> records work using the current graphics state and the
-> [address-generation rules](#address-generation), not a new vertex/index
-> buffer description supplied with the draw.
-
-<!-- d3d12-review-alert:end:geometry:WE-draw-roles:0 -->
-
-<!-- d3d12-review-alert:begin:geometry:WE-draw-roles:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The linked API contracts define zero-work, valid recording contexts and
-> pipeline/root/resource requirements. Eligible GPU work follows
-> [predication's operation matrix](counters-queries-and-predication.md#predication-operation-matrix);
-> predication does not suppress required CPU recording/validation behavior.
-> Driver-reported recording failures follow the shared
-> [callback/deferred-Close contract](execution.md#lifecycle-driver-errors).
-> These `VOID` calls neither report GPU completion nor promise one physical
-> hardware command for each API invocation.
-
-<!-- d3d12-review-alert:end:geometry:WE-draw-roles:1 -->
-
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_DRAWINSTANCED_0114 )(D3D12DDI_API_HCOMMANDLIST, UINT, UINT, UINT, UINT );
 typedef VOID ( APIENTRY* PFND3D12DDI_DRAWINDEXEDINSTANCED_0114 )(D3D12DDI_API_HCOMMANDLIST, UINT, UINT, UINT, INT, UINT );
@@ -2017,15 +1851,8 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DRAWINDEXEDINSTANCED_0114 )(D3D12DDI_API_HC
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The `_0114` entries are the API-handle forms of the [two ordinary draw contracts](#driver-draw). Their first argument uses the [published API command-list handle representation](execution.md#work-command-handles); their remaining arguments are unchanged: non-indexed counts/starts in API order, and indexed counts/start index, signed `BaseVertexLocation`, then start instance.
+> The `_0114` draw entries participate in [runtime bypass](execution.md#work-command-handles). Their remaining parameters match the [ordinary draw DDIs](#driver-draw), including the signed `BaseVertexLocation`.
 
 <!-- d3d12-review-alert:end:geometry:EF-api-draw-contract:0 -->
 
-<!-- d3d12-review-alert:begin:geometry:EF-api-draw-contract:1 -->
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Both current representations record the same logical draw using the existing pipeline, addressing, zero-work, context, predicate, lifetime and [recording-error](execution.md#lifecycle-driver-errors) contracts. The handle change is not a new vertex/index description or a guarantee of prior validation, execution or GPU completion.
-
-<!-- d3d12-review-alert:end:geometry:EF-api-draw-contract:1 -->

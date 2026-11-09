@@ -96,6 +96,16 @@ v0.38 9/8/2026
     - [Multi-level alternative 2: mid-level acceleration structure](#multi-level-alternative-2-mid-level-acceleration-structure)
   - [Indirect builds for older acceleration structure operations](#indirect-builds-for-older-acceleration-structure-operations)
 - [Change Log](#change-log)
+- [Integration with the unified D3D12 specification](#integration-with-the-unified-d3d12-specification)
+  - [Retail admission and application order](#retail-admission-and-application-order)
+  - [Destination map](#destination-map)
+  - [Devices and capabilities changes](#devices-and-capabilities-changes)
+  - [Acceleration structures changes](#acceleration-structures-changes)
+  - [State objects and pipeline state changes](#state-objects-and-pipeline-state-changes)
+  - [Ray traversal and inline raytracing changes](#ray-traversal-and-inline-raytracing-changes)
+  - [Raytracing shader pipelines and HitObject changes](#raytracing-shader-pipelines-and-hitobject-changes)
+  - [Shared contracts and integration checks](#shared-contracts-and-integration-checks)
+  - [Source discrepancies to resolve](#source-discrepancies-to-resolve)
 
 ---
 
@@ -2360,3 +2370,471 @@ v0.35|8/26/2026|<li>Clarified `VertexCount` in [D3D12_RTAS_OPERATION_BUILD_CLAS_
 v0.36|9/1/2026|<li>In [Clustered geometry](#clustered-geometry), noted that shaders compiled before Shader Model 6.9 cannot specify [RAYQUERY_FLAG_ALLOW_CLUSTERED_GEOMETRY](raytracing.md#rayquery-flags), since the template parameter carrying it was added in Shader Model 6.9, and pointed at the pipeline creation opt-in those shaders use instead.  See [RayQuery flags on pre Shader Model 6.9 shaders](raytracing.md#rayquery-flags-on-pre-shader-model-69-shaders).</li><li>Renamed `VertexCount`, `MaxVertexCountPerCluster`, and `MaxTotalVertexCount` in the Raytracing2 cluster APIs to `UniqueVertexIndexCount`, `MaxUniqueVertexIndexCountPerCluster`, and `MaxSumOfUniqueVertexIndexCounts`, respectively, to distinguish their unique-index semantics from DXR1 vertex-buffer counts. This is a source-only naming change; field sizes, ordering, and behavior are unchanged.</li>
 v0.37|9/2/2026|<li>Defined cluster triangle participation and index-based relevant positions for direct builds and Cluster Template instantiation.  Template hints do not affect functional behavior, and non-participating triangles retain their `PrimitiveIndex()` values.</li><li>Applied relevance to per-position [COMPRESSED1](#compressed1-position-encoding) and `InstantiationBoundingBoxLimit` requirements, required finite uncompressed conversion results, and made source-compatible `COMPRESSED1` conversion deterministic.</li><li>Defined visualization equivalence for CLAS and Cluster Template instantiations, including duplicate-free any-hit and `RayQuery` behavior, and corrected `GET_SIZES` subset matching.</li><li>For tools visualization of CLAS, changed the fixed returned index format from `D3D12_INDEX_FORMAT_UINT32` to `D3D12_INDEX_FORMAT_UINT8`; implementations pack or remap returned vertices and indices as needed. Cluster Template visualization continues to return `D3D12_INDEX_FORMAT_UINT32` indices because template topology refers to vertex data supplied later during instantiation.</li>
 v0.38|9/8/2026|<li>In [D3D12_RTAS_TOOLS_VISUALIZATION_BUILD_INPUTS_HEADER](#d3d12_rtas_tools_visualization_build_inputs_header), clarified tools-visualization pointer semantics: decoded input data and address arrays reside in the result buffer, while CLAS-address entries, instance BLAS references, and built Opacity Micromap array references remain external object references. Referenced objects are visualized separately.</li>
+
+---
+
+# Integration with the unified D3D12 specification
+
+> [!NOTE]
+> **Draft integration recipe.** This section describes the changes to existing
+> unified-specification contracts needed when these features are admitted to the
+> retail baseline. It is not a statement that they have shipped, and does not
+> change the current unified specification.
+
+The [unified raytracing chapters](unified/acceleration-structures.md) describe
+the current retail baseline. This proposal supplies both new feature definitions
+and deltas to that baseline. Moving its new CLAS, Cluster Template, Cluster BLAS
+(CBLAS), PTLAS and indirect-operation sections into the unified specification is
+necessary but insufficient: existing descriptions, API applicability tables,
+serialization rules and shader interfaces must change as well.
+
+The recipe below identifies those edits by their current conceptual owners.
+Links identify insertion or amendment sites, not exact text to overwrite.
+Preserve subsequent editorial corrections and apply the final shipping contract;
+do not restore an older chapter or blindly undo all edits made while excluding
+development features.
+
+## Retail admission and application order
+
+Establish the retail runtime/SDK, public API and DDI declarations, shader-model
+requirements and capability reporting for each contribution before applying it.
+Resolve placeholder option-structure and DDI version numbers, declaring
+interfaces and numeric values against that release. A declaration's presence
+in a proposal or preview header alone is not retail admission.
+
+First establish the capability definitions and canonical homes for the new
+feature sections, APIs, types and shader operations. Then apply the amendments
+below together with their precise cross-references. Retarget this proposal's
+references to the original `Raytracing.md` to their unified owners as the
+corresponding material is integrated.
+
+Keep related but independently available contributions separate. In particular,
+triangle-position fetching and the pre-SM6.9 OMM opt-in may already have their
+own admitted definitions by this time; extend those definitions rather than
+duplicating them or making their availability depend on clustered geometry.
+Do not include [potential future features](#potential-future-features), such as
+multi-level instancing or indirect builds of traditional acceleration structures,
+merely because they share this proposal.
+
+## Destination map
+
+| Existing owner | Amendments in addition to the new feature sections |
+|---|---|
+| [Devices and capabilities](unified/devices-and-capabilities.md#raytracing-tiers) | Tier 2.0, independent cluster/PTLAS support, template-format preference, shader-model dependencies and API/DDI capability mapping. |
+| [Acceleration structures](unified/acceleration-structures.md) | Object classification, construction and lifetime qualifications, old API applicability, postbuild information, serialization, visualization, OMM linkage, alignments and data-access opt-in. The new construction and indirect-operation definitions also belong with this owner. |
+| [State objects](unified/state-objects.md#d3d12_raytracing_pipeline_flags) | Dynamic-traversal pipeline flags, pre-SM6.9 state-object opt-in, shader-export associations and additions. |
+| [Pipeline state](unified/pipeline-state.md) | The distinct pre-SM6.9 opt-in for pipelines created outside state objects. |
+| [Ray traversal and inline raytracing](unified/ray-traversal.md) | Cluster opt-in behavior, RayQuery flags, candidate/committed state tables, index interpretation and PTLAS applicability. |
+| [Raytracing shader pipelines](unified/raytracing-pipelines.md) | Geometry/primitive indices, shader-table indexing explanations, system-value tables, ClusterID, triangle-position access and HitObject integration. |
+| [Synchronization](unified/synchronization.md), [binding](unified/binding.md) and [command policy](unified/counters-queries-and-predication.md#predication-operation-matrix) | Extend shared references and operation classifications where necessary; do not introduce a parallel synchronization or binding model. |
+
+## Devices and capabilities changes
+
+Amend the canonical [raytracing tier declaration and table](unified/devices-and-capabilities.md#d3d12_raytracing_tier),
+not just the acceleration-structure chapter's forward to them:
+
+- Add `D3D12_RAYTRACING_TIER_2_0` and its complete requirements. The proposed
+  value is `20`; earlier tier values remain unchanged. The proposed requirements
+  include the preceding tiers, clustered geometry, PTLAS, indirect acceleration
+  structure operations, Shader Model 6.10 and its required triangle-position
+  fetching support.
+- Add the final option query containing `ClustersAndPTLASSupported` and
+  `TemplateInstancePrefersCOMPRESSED1`. Preserve the independent-capability path:
+  a device supporting at least Tier 1.1 may expose clusters/PTLAS and SM6.10
+  without meeting Tier 2.0, for example because it lacks Tier 1.2 OMM support.
+  SM6.10 triangle-position fetching alone does not imply cluster/PTLAS support.
+- Integrate the API/DDI mapping described in the original
+  [options proposal](Raytracing.md#d3d12_feature_d3d12_options_nnn).
+  The combined API support bit is true only when both DDI `ClustersSupported`
+  and `PTLASSupported` are true. The format preference is reported from the DDI
+  only in that case, and must otherwise be false at both interfaces.
+- Define `TemplateInstancePrefersCOMPRESSED1` as a performance preference for
+  `VertexInstantiationFormat`, meaningful only with cluster/PTLAS support, not
+  a restriction on valid formats. `VertexSourceFormat` remains independently
+  selected and converted according to
+  [template instance format conversion](#template-instance-format-conversion-semantics).
+
+Update the availability forwards in each raytracing chapter. Qualify any
+older-tier description of "the full raytracing functionality" so that it does
+not accidentally require these separately gated additions. Keep overall tier,
+individual capability and shader-model availability distinct.
+
+## Acceleration structures changes
+
+### Object model, input types and lifetime
+
+In [Geometry and acceleration structures](unified/acceleration-structures.md#geometry-and-acceleration-structures),
+introduce the alternatives to the traditional TLAS/BLAS construction path and
+link their canonical definitions. Qualify the traditional two-level construction
+description without implying support for arbitrary multi-level instancing.
+A Cluster BLAS can be referenced where an ordinary BLAS is accepted, subject to
+its explicit operation exceptions; PTLAS preserves the shader-facing TLAS
+behavior described in [Partitioned TLAS](#partitioned-top-level-acceleration-structures).
+
+Extend [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE](unified/acceleration-structures.md#d3d12_raytracing_acceleration_structure_type)
+and its member table with the final declarations of:
+
+| Proposed member suffix | Proposed value | Meaning in the existing type reference |
+|---|---|---|
+| `CLUSTER_LEVEL` | `0x3` | CLAS tools-visualization discriminator. |
+| `CLUSTER_TEMPLATE` | `0x4` | Cluster Template tools-visualization discriminator. |
+| `CLUSTERED_BOTTOM_LEVEL` | `0x5` | Cluster BLAS tools-visualization discriminator. |
+| `PARTITIONED_TOP_LEVEL` | `0x6` | PTLAS tools-visualization discriminator. |
+
+These members do **not** make the corresponding objects valid inputs to
+`D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS`. Keep its supported
+`Type` values explicit. Add the precise alternative-construction forward at
+[BuildRaytracingAccelerationStructure](unified/acceleration-structures.md#buildraytracingaccelerationstructure)
+and the alternative instance-input forward at
+[D3D12_RAYTRACING_INSTANCE_DESC](unified/acceleration-structures.md#d3d12_raytracing_instance_desc),
+pointing to the indirect operations and PTLAS instance-write arguments. Name
+the latter's explicit AABBs, partition assignment and partial-update path
+without treating it as another layout of the traditional packed descriptor.
+
+Amend [Storage and lifetime](unified/acceleration-structures.md#storage-and-lifetime)
+to include the retained Cluster-BLAS-to-CLAS references: moving, invalidating
+or modifying a referenced CLAS invalidates the dependent Cluster BLAS as
+specified in [Cluster level acceleration structure](#cluster-level-acceleration-structure).
+Do not describe all GPU build inputs as disposable after construction; distinguish
+transient input buffers from referenced built objects and OMM arrays.
+
+Extend the applicable alignment descriptions, including the existing copy
+parameters and constants reference: CLAS uses
+`D3D12_RAYTRACING_CLAS_BYTE_ALIGNMENT` (128), Cluster Templates use
+`D3D12_RAYTRACING_CLUSTER_TEMPLATE_BYTE_ALIGNMENT` (32), and Cluster BLAS and
+PTLAS retain the 256-byte acceleration-structure alignment. Keep template-bounds
+alignment distinct from object alignment. Do not retain an unqualified
+"256 bytes except OMM arrays" rule for the newly supported object kinds.
+
+### Existing API applicability and sizing
+
+Amend both the method descriptions and their enum/member tables. Use this
+applicability matrix for **all four** new kinds: CLAS, Cluster Templates,
+Cluster BLAS and PTLAS.
+
+| Existing operation | Applicability to the new object kinds |
+|---|---|
+| `BuildRaytracingAccelerationStructure` and its prebuild-input path | Not the construction path. Use `GetRTASOperationPrebuildInfo` and `ExecuteIndirectRTASOperations` with the appropriate operation descriptions. |
+| `EmitRaytracingAccelerationStructurePostbuildInfo`, `SERIALIZATION` | Supported. |
+| `EmitRaytracingAccelerationStructurePostbuildInfo`, `TOOLS_VISUALIZATION` | Supported. |
+| `EmitRaytracingAccelerationStructurePostbuildInfo`, `COMPACTED_SIZE` or `CURRENT_SIZE` | Not supported; do not broaden these rows merely because they say "acceleration structure." |
+| `CopyRaytracingAccelerationStructure`, `SERIALIZE`, `DESERIALIZE` or `VISUALIZATION_DECODE_FOR_TOOLS` | Supported. |
+| `CopyRaytracingAccelerationStructure`, `CLONE` or `COMPACT` | Not supported. |
+
+In particular, update the existing
+[postbuild-info type table](unified/acceleration-structures.md#d3d12_raytracing_acceleration_structure_postbuild_info_type)
+by adding the four object kinds to the `SERIALIZATION` and `TOOLS_VISUALIZATION`
+rows only. Amend the surrounding
+[Emit](unified/acceleration-structures.md#emitraytracingaccelerationstructurepostbuildinfo)
+and [Copy](unified/acceleration-structures.md#copyraytracingaccelerationstructure)
+contracts and the
+[copy-mode table](unified/acceleration-structures.md#d3d12_raytracing_acceleration_structure_copy_mode)
+consistently. Do not introduce new postbuild-info or copy-mode values for these
+extensions.
+
+Link the cluster-object move and existing-object size-query alternatives to
+[MOVE_CLUSTER_OBJECTS](#d3d12_rtas_move_operation_type) and
+[GET_SIZES](#d3d12_rtas_operation_mode), rather than making legacy clone,
+compaction or current-size operations apply. The move-operation type covers
+CLAS, Cluster Templates and Cluster BLAS, **not PTLAS**. PTLAS construction and
+allocation sizing use its own indirect operation and prebuild description; the
+old broad `GET_SIZES` sentence needs the reconciliation identified below.
+Keep implicit-batch allocation bounds, explicit per-result sizing and move
+sizes distinct from the ordinary prebuild and compaction rules.
+
+### Serialization, pointer patching and compatibility
+
+Extend
+[D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](unified/acceleration-structures.md#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc)
+and the corresponding
+[HEADER1](unified/acceleration-structures.md#d3d12_serialized_raytracing_acceleration_structure_header1)
+and postamble descriptions. Ordinary TLAS retains its flat BLAS-pointer list;
+the typed-block description must also cover CLAS, Cluster Templates,
+Cluster BLAS and PTLAS, not just ordinary BLAS. Extend the descriptions of the
+existing count union rather than renaming its ABI fields.
+
+Add the final declarations and descriptions of
+`D3D12_RAYTRACING_SERIALIZED_BLOCK_TYPE_BOTTOM_LEVEL_ACCELERATION_STRUCTURE`
+and `D3D12_RAYTRACING_SERIALIZED_BLOCK_TYPE_CLUSTER_LEVEL_ACCELERATION_STRUCTURE`
+to the [serialized block-type reference](unified/acceleration-structures.md#d3d12_raytracing_serialized_block_type).
+Explain the relevant typed references: PTLAS to BLAS, Cluster BLAS to CLAS,
+and CLAS or Cluster Templates to OMM arrays. Preserve the existing treatment
+of null list entries.
+
+Apply the current relocation-only pointer-patching rule to those relationships.
+Patching a serialized address does not authorize replacing the referenced object
+with different contents, an independently rebuilt equivalent object, or a fresh
+template instantiation. It must identify the corresponding original object or
+an allowed copy, including one restored by deserialization. Preserve the
+existing freedom in deserialization order, with the required referenced objects
+ready before use.
+
+Add the specific Cluster BLAS source-liveness exception in **all** relevant
+places: the `SourceAccelerationStructureData` parameter, the `SERIALIZE` and
+`VISUALIZATION_DECODE_FOR_TOOLS` rows, and the corresponding serialization and
+visualization postbuild queries. Those operations may read referenced CLAS,
+which must remain valid for the duration on the GPU timeline. Do not leave the
+base statement that only the directly addressed source is involved unqualified.
+This exception does not impose a new deserialization order.
+
+Extend the object coverage in
+[CheckDriverMatchingIdentifier](unified/acceleration-structures.md#checkdrivermatchingidentifier),
+[D3D12_SERIALIZED_DATA_TYPE](unified/acceleration-structures.md#d3d12_serialized_data_type)
+and
+[D3D12_DRIVER_MATCHING_IDENTIFIER_STATUS](unified/acceleration-structures.md#d3d12_driver_matching_identifier_status).
+Keep the existing compatibility query and result semantics; broadening the
+covered objects does not require inventing separate serialized-data enum values
+or replacing compatibility with an exact driver-version match.
+
+### Tools visualization
+
+Extend
+[D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_TOOLS_VISUALIZATION_HEADER](unified/acceleration-structures.md#d3d12_build_raytracing_acceleration_structure_tools_visualization_header),
+its `Type`/`NumDescs` layout explanation, the visualization copy-mode row and
+[Visualization detail](unified/acceleration-structures.md#visualization-detail)
+with a precise forward to
+[D3D12_RTAS_TOOLS_VISUALIZATION_BUILD_INPUTS_HEADER](#d3d12_rtas_tools_visualization_build_inputs_header).
+Do not imply that the old instance/geometry/OMM payload alternatives are
+exhaustive.
+
+Qualify traditional-BLAS geometry-order and original-input descriptions where
+the new forms differ. Carry the proposed operation-input header, alignment,
+operation selection and rebuild-equivalence contract with its new canonical
+definition, and explicitly connect the old copy contract to it. In particular:
+
+- Decoded input data and address arrays reside in the result buffer, but their
+  references to built CLAS, BLAS and OMM objects remain external references.
+  Visualization does not recursively copy those objects or replace their
+  addresses with addresses of decoded visualization data.
+- CLAS visualization uses `FLOAT32_3` positions and `UINT8` indices; Cluster
+  Template visualization uses `UINT32` indices. Apply the current proposal,
+  not the older change-log entry that assigned `UINT32` to CLAS as well.
+- Preserve the current rules for non-participating triangles, stable
+  `PrimitiveIndex()` values, finite returned positions and duplicate-free
+  behavior. Do not broaden traditional-BLAS normalization allowances into
+  exceptions to these cluster-specific requirements.
+- PTLAS visualization describes its current content for rebuilding into an
+  empty PTLAS, not necessarily its original update history or original count
+  of instance-write arguments.
+
+### Opacity micromaps and triangle-data access
+
+Extend the existing
+[OMM special-index enum and table](unified/acceleration-structures.md#d3d12_raytracing_opacity_micromap_special_index)
+with `D3D12_RAYTRACING_OPACITY_MICROMAP_SPECIAL_INDEX_CLUSTER_SKIP_OMM`
+(proposed value `-5`). Its scope is cluster or Cluster Template builds through
+`OpacityMicromapIndexBuffer`, reverting that triangle to geometry-supplied
+opacity. It is not a new special index for ordinary BLAS builds.
+
+Link that per-triangle selection to the existing OMM and instance-flag
+descriptions, distinguishing it from instance-level `DISABLE_OMMS`.
+For Cluster BLAS, instance-level disabling requires `ALLOW_DISABLE_OMMS` on
+every OMM-bearing CLAS, as defined in the
+[per-CLAS flags](#d3d12_rtas_cluster_operation_clas_flags).
+Preserve the ordinary-BLAS build-flag requirement in its existing scope and
+integrate the corresponding PTLAS instance-flag rules. Do not require
+`ALLOW_DISABLE_OMMS` merely to use `CLUSTER_SKIP_OMM`.
+
+When triangle-position fetching is admitted, extend the existing
+[build-flag reference](unified/acceleration-structures.md#d3d12_raytracing_acceleration_structure_build_flags)
+with the ordinary-BLAS `ALLOW_DATA_ACCESS` definition if it is not already
+present. Link the three shader accessors to that opt-in and to the distinct
+cluster rules in
+[D3D12_RTAS_OPERATION_FLAGS](#d3d12_rtas_operation_flags):
+the operation must enable data access, a CLAS must not disallow it, templates
+carry the choice into instantiations, and every CLAS referenced by one Cluster
+BLAS must agree on whether access is allowed. `ALLOW_DATA_ACCESS` is not set on
+the Cluster BLAS build itself. Keep this storage/access permission distinct
+from the shader traversal opt-in.
+
+Amend the paired driver build-flag declaration in the acceleration-structure
+owner as well. The excluded published DDI member is
+`D3D12DDI_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS_0110`
+(`0x100`). Its header presence did not independently admit the feature; restore
+its driver contract with the corresponding API/shader contribution, using the
+final released DDI definition and availability.
+
+## State objects and pipeline state changes
+
+Amend the canonical
+[D3D12_RAYTRACING_PIPELINE_FLAGS](unified/state-objects.md#d3d12_raytracing_pipeline_flags)
+declaration and behavior table, including its HLSL `RaytracingPipelineConfig1`
+counterpart, with `D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY`
+(proposed value `0x800`). It enables dynamic-shader traversal of clustered
+geometry; encountering clustered geometry without it is undefined. Retain the
+performance advice not to enable it unnecessarily, and link its distinct
+RayQuery equivalent rather than describing it as a universal pipeline opt-in.
+
+Integrate the cluster portion of
+[RayQuery flags on pre Shader Model 6.9 shaders](Raytracing.md#rayquery-flags-on-pre-shader-model-69-shaders)
+at both creation owners:
+
+| Creation path | Existing owner and proposed flag |
+|---|---|
+| `CreateGraphicsPipelineState`, `CreateComputePipelineState`, `CreatePipelineState` | [Pipeline state](unified/pipeline-state.md): `D3D12_PIPELINE_STATE_FLAG_RAYQUERY_ALLOW_CLUSTERED_GEOMETRY_ON_PRE_SM69_SHADERS` in `D3D12_PIPELINE_STATE_FLAGS`. |
+| State objects, including raytracing pipelines | [D3D12_STATE_OBJECT_FLAGS](unified/state-objects.md#d3d12_state_object_flags): `D3D12_STATE_OBJECT_FLAG_RAYQUERY_ALLOW_CLUSTERED_GEOMETRY_ON_PRE_SM69_SHADERS`, carried by `D3D12_STATE_OBJECT_CONFIG` and its shader-export associations. |
+
+Preserve the distinction between those enums: the ordinary pipeline-state
+value is not legal inside a state object or a generic program's `FLAGS`
+subobject. Keep the existing association and collection rules and the
+per-description scope of [AddToStateObject](unified/state-objects.md#addtostateobject):
+an addition's flags govern its added shaders, not previously compiled shaders,
+and need not match those of the existing state object.
+
+The proposed compatibility contract applies to pre-6.9 RayQuery shaders
+(SM6.5 through SM6.8); it does not add cluster-reporting intrinsics to them.
+SM6.9-and-later RayQuery objects retain their own template flags, without
+augmentation or override by these creation flags. Preserve the no-effect cases,
+device/older-driver compatibility behavior and the distinction between API-
+supplied and DXIL-library-supplied flags from the referenced proposal; reconcile
+these against the final retail runtime/compiler before integration. Do not
+copy the OMM counterpart into a second definition if it has already shipped.
+
+## Ray traversal and inline raytracing changes
+
+Amend the existing
+[pipeline traversal flag table](unified/ray-traversal.md#pipeline-flag-traversal-behavior)
+alongside the declaration in State objects, and amend both the enum and table
+under [RayQuery flags](unified/ray-traversal.md#rayquery-flags) with
+`RAYQUERY_FLAG_ALLOW_CLUSTERED_GEOMETRY` (proposed value `0x02`). Specify its
+undefined behavior when an object without the opt-in encounters clustered
+geometry, and precisely link the dynamic-traversal and pre-SM6.9 alternatives.
+Do not renumber the existing flags.
+
+Merge the [new RayQuery methods](#rayquery) into the existing
+[RayQuery state/availability tables](unified/ray-traversal.md#rayquery-intrinsics),
+not only into a new list of methods. Add `CandidateClusterId()` for triangle
+candidates and `CommittedClusterId()` for committed triangle hits in each
+applicable table. Retain the existing committed-status qualification when a
+candidate is being processed. Non-clustered hits return `CLUSTER_ID_INVALID`,
+including on implementations without cluster support.
+
+When triangle-position fetching is available, restore the candidate and
+committed triangle-position rows in the same tables, including the committed
+table that applies after `Proceed()` returns false. Integrate their individual
+contracts and forward to the canonical `BuiltInTrianglePositions` type and
+data-access permission. A method name in an overview is not a substitute for
+its valid-query-state rules.
+
+Update the existing candidate/committed geometry-index and primitive-index
+descriptions, and their shared forwards, so they use the cluster interpretations
+below rather than claiming that every geometry index is an autogenerated
+geometry-description ordinal or that every primitive index is local to such
+a geometry grouping.
+
+## Raytracing shader pipelines and HitObject changes
+
+Amend [GeometryIndex](unified/raytracing-pipelines.md#geometryindex),
+[PrimitiveIndex](unified/raytracing-pipelines.md#primitiveindex) and the existing
+[hit-group indexing explanation](unified/raytracing-pipelines.md#hit-group-table-indexing)
+using [The role of geometry index in a cluster](#the-role-of-geometry-index-in-a-cluster):
+
+- In a Cluster BLAS, the geometry index is supplied per triangle, not inferred
+  from the order of ordinary `D3D12_RAYTRACING_GEOMETRY_DESC` inputs. Use it in
+  the existing hit-group indexing calculation; adding cluster support does
+  not by itself change that formula.
+- The primitive index is local to the hit CLAS, in the range 0-255, not globally
+  unique within the Cluster BLAS. `ClusterID()` identifies the CLAS. A
+  non-participating triangle still consumes its primitive index, including
+  after template instantiation.
+- Preserve the ordinary-BLAS interpretation. Also apply the corresponding
+  interpretation to RayQuery and HitObject index accessors, rather than leaving
+  contradictory descriptions in those references.
+
+Add [ClusterID](#clusterid) and `CLUSTER_ID_INVALID` to the canonical
+[system-value reference and shader-stage table](unified/raytracing-pipelines.md#ray-system-values).
+Its shader-stage availability is any-hit and closest-hit, and a non-clustered
+hit returns the invalid sentinel, including on a device without cluster support.
+Integrate [HitObject::GetClusterId](#hitobjectgetclusterid) into the existing
+[HitObject reference](unified/raytracing-pipelines.md#hitobject); retain its
+invalid-sentinel behavior for a non-clustered hit or an object not encoding a hit.
+Update references from `FromRayQuery` and the existing geometry/primitive
+accessors as appropriate without changing unrelated SER or payload contracts.
+
+When its independent SM6.10 contribution is admitted, add the
+[TriangleObjectPositions and BuiltInTrianglePositions definitions](Raytracing.md#triangleobjectpositions)
+to their canonical shader-facing owner and system-value/stage tables.
+Link both RayQuery position accessors to the same shared type and data-access
+rules. Preserve the triangle-hit and shader-stage restrictions; do not suggest
+that a traversal opt-in alone permits fetching vertex positions. The complete
+shader-language/DXIL definitions belong in the supporting shader references,
+but their names, availability and API/hardware interactions must remain visible
+in the main chapters.
+
+Qualify the existing `TraceRay`, `HitObject::TraceRay` and
+`RayQuery::TraceRayInline` acceleration-structure parameter descriptions to
+include PTLAS wherever they currently say TLAS. PTLAS does not require new
+tracing entry points or changes to shader-table selection merely because it
+has a different construction path.
+
+## Shared contracts and integration checks
+
+Integrate the [resource-state requirements](#resource-state-for-read-only-arguments)
+with the existing acceleration-structure storage and synchronization rules.
+Classify read-only indirect data separately from UAV outputs/scratch and from
+acceleration-structure objects. The proposed enhanced-barrier accesses are
+acceleration-structure read/write for objects, with build synchronization for
+generating operations and copy synchronization for moves; tracing retains its
+raytracing synchronization scope. Preserve the legacy AS-state/UAV-barrier
+path. Resolve accesses for every argument/result role, including templates,
+rather than applying a generic indirect-draw classification.
+
+Amend the existing [barrier access](unified/synchronization.md#barrier-access),
+[barrier synchronization](unified/synchronization.md#barrier-sync) and
+[legacy-state](unified/synchronization.md#legacy-states) descriptions wherever
+their enumerations of affected operations would otherwise exclude these APIs.
+Do not imply dependencies between descriptors within a single
+`ExecuteIndirectRTASOperations` call: this proposal permits arbitrary execution
+order, and its suggested ordering flag is only future consideration.
+
+Check the existing acceleration-structure binding descriptions for assumptions
+that exclude PTLAS or Cluster BLAS. Extend the applicable object descriptions
+and forwards rather than inventing a new SRV or root-binding kind.
+For the newly admitted recording method, explicitly settle and document command
+list types, bundle/render-pass restrictions, predication, statistics, errors,
+CPU/GPU input lifetime and driver responsibilities. Add it to the canonical
+command policies, with final API/DDI signatures and interface/version
+associations. Do not infer its predication behavior or restrictions solely
+from its name or from another `ExecuteIndirect` method.
+
+Before declaring integration complete, check the following against the final
+retail declarations and the integrated new feature sections:
+
+- Every added enum member has its declaration, value and applicable behavior;
+  paired API and behavioral tables agree.
+- Ordinary and clustered objects have explicit construction, size-query, copy,
+  serialization and visualization applicability, including the negative cases.
+- Referenced-object lifetime, pointer relocation and non-recursive
+  visualization are consistent across method, parameter and format references.
+- Dynamic traversal, inline traversal and pre-SM6.9 opt-ins are distinct and
+  linked, and all shader getters appear in the existing stage/state tables.
+- New definitions have canonical owners; inbound and outbound links no longer
+  depend on reconstructing the old monolithic `Raytracing.md`.
+- Separate future proposals and independently gated features have not been
+  admitted by association, and human-edited baseline wording has not been
+  overwritten by historical copies.
+
+## Source discrepancies to resolve
+
+The following are reconciliation work, not permission to copy inconsistent
+older wording into the unified specification:
+
+- The original
+  [postbuild-info description](Raytracing.md#d3d12_raytracing_acceleration_structure_postbuild_info_type)
+  directs all four new object kinds to `D3D12_RTAS_OPERATION_MODE_GET_SIZES`.
+  However, [D3D12_RTAS_PARTITIONED_TLAS_INPUTS_DESC](#d3d12_rtas_partitioned_tlas_inputs_desc)
+  has no `Mode`, and PTLAS is not among the users of
+  [D3D12_RTAS_OPERATION_MODE](#d3d12_rtas_operation_mode).
+  Integrate a precise PTLAS sizing route from the final contract rather than
+  promising a nonexistent PTLAS mode.
+- The inherited
+  [TriangleObjectPositions](Raytracing.md#triangleobjectpositions) prose
+  discusses a `VertexIndex` argument absent from its shown prototype, while
+  [CommittedTriangleObjectPositions](Raytracing.md#rayquery-committedtriangleobjectpositions)
+  shows a `float3` return but its return-value row and the availability tables
+  name `BuiltInTrianglePositions`. Reconcile the final signatures and semantics
+  with the shipping shader specification instead of reproducing these sketches.
+- Resolve `OPTIONS_NNN`, DDI `0XXX` and all shipping interface/version
+  placeholders. Reassess old "not shipped yet" labels contribution by
+  contribution; neither those labels nor an earlier preview timetable establish
+  the retail status at integration time.

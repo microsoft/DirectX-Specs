@@ -847,18 +847,18 @@ must fit in the static sampler limit for D3D12's resource binding model.<!-- d3d
 
 ### Raytracing shader visibility
 
-<ins><!-- d3d12-review-inline:begin:binding:RP-raytracing-shader-visibility:0 -->Root signatures used with raytracing share command list state with
+Root signatures used with raytracing share command list state with
 compute, as described in [Local root signatures vs root signatures](binding.md#local-signatures). As such,
 the only root parameter shader visibility that applies is
 `D3D12_SHADER_VISIBILITY_ALL`, meaning the root arguments set as part
-of compute command list state are also visible to raytracing.<!-- d3d12-review-inline:end:binding:RP-raytracing-shader-visibility:0 --></ins>
+of compute command list state are also visible to raytracing.
 
 Local root signatures can also only use `D3D12_SHADER_VISIBILITY_ALL`.
 
-<ins><!-- d3d12-review-inline:begin:binding:RP-raytracing-shader-visibility:2 -->In other words, for both root signatures and local root signatures,
+In other words, for both root signatures and local root signatures,
 there's nothing interesting to narrow down with shader visibility flags
 -- local root arguments are simply always visible to all raytracing
-shaders (and compute for root signatures).<!-- d3d12-review-inline:end:binding:RP-raytracing-shader-visibility:2 --></ins>
+shaders (and compute for root signatures).
 
 <!-- d3d12-review-alert:begin:binding:N-ray-record-serialization:0 -->
 
@@ -1102,10 +1102,10 @@ skip slots it can set OffsetInDescriptorsFromTableStart to whatever
 offset is desired. Defining overlapping ranges of different RangeType is
 invalid.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-ranges:3 -->The set of shader registers specified by the combination of RangeType,
+The set of shader registers specified by the combination of RangeType,
 NumDescriptors, BaseShaderRegister, and RegisterSpace cannot
 conflict/overlap across any declarations in a root signature that have
-common `D3D12_SHADER_VISIBILITY` (visibility defined a bit later).<!-- d3d12-review-inline:end:binding:B-ranges:3 --></ins>
+common `D3D12_SHADER_VISIBILITY` (visibility defined a bit later).
 
 <!-- d3d12-review-alert:begin:binding:N-unbounded:0 -->
 
@@ -1426,11 +1426,11 @@ bundle execution.
 
 <!-- d3d12-review-alert:end:binding:N-static-sync:0 -->
 
-<ins><!-- d3d12-review-inline:begin:binding:B-root-flags:0 -->These flags have the same semantics as descriptor range flags described
+These flags have the same semantics as descriptor range flags described
 earlier, except that for root descriptors only `DATA_*` flags apply. By
 definition, root descriptors are static, as they are directly set into
 command lists / bundles, so there is no root descriptor equivalent to
-the flag `D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE`.<!-- d3d12-review-inline:end:binding:B-root-flags:0 --></ins>
+the flag `D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE`.
 
 <a id="root-descriptor-defaults"></a>
 
@@ -1797,7 +1797,7 @@ typedef struct D3D12_STATIC_SAMPLER_DESC1
 
 <!-- d3d12-review-alert:end:binding:N-tiled-reduction-encoding:0 -->
 
-<ins><!-- d3d12-review-inline:begin:binding:P-sampler-fields:0 -->`Filter`<!-- d3d12-review-inline:end:binding:P-sampler-fields:0 --></ins>
+`Filter`
 
 <ins><!-- d3d12-review-inline:begin:binding:P-sampler-fields:1 -->A [`D3D12_FILTER`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_filter)-typed value that specifies the filtering method to use when sampling a texture.<!-- d3d12-review-inline:end:binding:P-sampler-fields:1 --></ins>
 
@@ -2287,9 +2287,9 @@ CopyDescriptorsSimple().
 Copies with source and destination overlapping are invalid and will
 produce undefined results in overlapping regions.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-copy:6 -->For these descriptor copy methods, source descriptors must come from a
+For these descriptor copy methods, source descriptors must come from a
 non-shader visible descriptor heap. The destination descriptors can be
-in any descriptor heap (shader visible or not).<!-- d3d12-review-inline:end:binding:B-copy:6 --></ins>
+in any descriptor heap (shader visible or not).
 
 <!-- d3d12-review-alert:begin:binding:N-copy-counts:0 -->
 
@@ -2344,11 +2344,11 @@ The number of destination descriptor ranges to copy to.
 
 `[in, optional] pDestDescriptorRangeSizes`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-copydescriptors:7 -->An array of destination descriptor range sizes to copy to.<!-- d3d12-review-inline:end:binding:Q-id3d12device-copydescriptors:7 --></ins>
+An array of destination descriptor range sizes to copy to.
 
 `[in] NumSrcDescriptorRanges`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-copydescriptors:9 -->The number of source descriptor ranges to copy from.<!-- d3d12-review-inline:end:binding:Q-id3d12device-copydescriptors:9 --></ins>
+The number of source descriptor ranges to copy from.
 
 `[in] pSrcDescriptorRangeStarts`
 
@@ -2360,7 +2360,7 @@ All elements in the *pSrcDescriptorRangeStarts* parameter must be in a non shade
 
 `[in, optional] pSrcDescriptorRangeSizes`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-copydescriptors:15 -->An array of source descriptor range sizes to copy from.<!-- d3d12-review-inline:end:binding:Q-id3d12device-copydescriptors:15 --></ins>
+An array of source descriptor range sizes to copy from.
 
 `[in] DescriptorHeapsType`
 
@@ -2691,7 +2691,7 @@ For single GPU operation, set this to zero. If there are multiple GPU nodes, set
 
 `[in] pBlobWithRootSignature`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-createrootsignature:4 -->A pointer to the source data for the serialized signature.<!-- d3d12-review-inline:end:binding:Q-id3d12device-createrootsignature:4 --></ins>
+A pointer to the source data for the serialized signature.
 
 `[in] blobLengthInBytes`
 
@@ -3713,8 +3713,8 @@ execute).
 
 ## Driver interfaces and responsibilities
 
-<ins><!-- d3d12-review-inline:begin:binding:D-capability:0 -->The runtime enforces that applications don't exceed the capabilities of
-the resource binding tier reported by the driver.<!-- d3d12-review-inline:end:binding:D-capability:0 --></ins>
+The runtime enforces that applications don't exceed the capabilities of
+the resource binding tier reported by the driver.
 
 <a id="driver-heaps"></a>
 
@@ -3852,12 +3852,7 @@ GetCPUDescriptorHandleForHeapStart must return 0 for the handle. Shader-visible 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The size query returns required driver-private object bytes as `SIZE_T`,
-> not an `HRESULT` and not the descriptor-handle increment. Creation receives
-> the driver device, the heap description and the runtime-supplied
-> `D3D12DDI_HDESCRIPTORHEAP` private region. The UMD owns its auxiliary backing
-> allocations, not the supplied region. The reported private size need not be
-> an equation of descriptor count times descriptor byte stride.
+> The runtime supplies the private storage reported by the size query through `D3D12DDI_HDESCRIPTORHEAP`. The driver owns any additional backing allocations, not that private region. Private object size need not equal descriptor count times descriptor stride.
 
 <!-- d3d12-review-alert:end:binding:DV-H01:0 -->
 
@@ -3866,45 +3861,16 @@ GetCPUDescriptorHandleForHeapStart must return 0 for the handle. Shader-visible 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The UMD initializes its heap state and required backing during creation,
-> returning an `HRESULT`. On failure it unwinds its partial state and auxiliary
-> allocations; the runtime does not call DestroyDescriptorHeap for failed UMD
-> creation. After successful creation, later abandonment or API initialization
-> failure requires destruction of that driver object. DestroyDescriptorHeap
-> releases UMD-owned state/backing without freeing the supplied private region.
-> Individual descriptors still have no independent destruction operation.
+> On failed creation, the driver unwinds its partial state and additional allocations. DestroyDescriptorHeap is called only after successful creation, including when later runtime initialization fails. It releases driver-owned backing without freeing runtime-supplied private storage.
 
 <!-- d3d12-review-alert:end:binding:DV-H02:0 -->
-
-<!-- d3d12-review-alert:begin:binding:DV-H03:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The logical request follows
-> [CreateDescriptorHeap](#id3d12device-createdescriptorheap), after the runtime
-> translates node/visibility information into the driver description. A
-> successful driver creation is not itself a GPU-completion event or permission
-> to release backing still required by application work.
-
-<!-- d3d12-review-alert:end:binding:DV-H03:0 -->
 
 <!-- d3d12-review-alert:begin:binding:DV-H04:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The descriptor-size query supplies the byte stride for the requested driver
-> heap type; it does not return the size of the handle structure. Its API
-> association is [GetDescriptorHandleIncrementSize](#id3d12device-getdescriptorhandleincrementsize),
-> subject to the handle processing described above. The heap-start queries take
-> the driver device and successfully created driver heap handle. Their API
-> associations are the
-> [CPU](#id3d12descriptorheap-getcpudescriptorhandleforheapstart) and
-> [GPU](#id3d12descriptorheap-getgpudescriptorhandleforheapstart) heap-start methods.
-> They return locations, not separately owned allocations. The runtime may cache
-> or translate these handles; a query does not make an otherwise non-bindable
-> heap shader-visible.
+> The runtime may cache or translate the driver heap-start handles before exposing them through the corresponding API queries.
 
 <!-- d3d12-review-alert:end:binding:DV-H04:0 -->
 
@@ -3930,14 +3896,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_DESCRIPTOR_HEAPS_0003 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The logical binding contract is
-> [SetDescriptorHeaps](#id3d12graphicscommandlist-setdescriptorheaps).
-> The runtime resolves the API heap objects to `D3D12DDI_HDESCRIPTORHEAP`
-> entries before this call; the driver selects those heaps for the supplied
-> driver command list. This does not create descriptors or transfer heap
-> ownership. Heap replacement, root-table invalidation and bundle matching
-> follow the [canonical binding-change rules](command-list-state.md#binding-changes)
-> and [bundle binding rules](command-list-state.md#bundle-bindings).
+> `SetDescriptorHeaps` receives driver descriptor-heap handles after the runtime resolves the API objects.
 
 <!-- d3d12-review-alert:end:binding:RB-H01:0 -->
 
@@ -3986,10 +3945,7 @@ typedef VOID(APIENTRY* PFND3D12DDI_CREATE_SAMPLER_0096)(D3D12DDI_HDEVICE, _In_ C
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For a null CBV API description, the runtime supplies a logical zero
-> `BufferLocation`/`SizeInBytes` description to the driver. `Padding` carries
-> no additional CBV semantic input. API null/default rules must not be inferred
-> from whether a driver payload pointer is null.
+> For a null CBV API description, the runtime supplies zero `BufferLocation` and `SizeInBytes` values to the driver. `Padding` has no semantic input.
 
 <!-- d3d12-review-alert:end:binding:DV-C03:0 -->
 
@@ -3998,13 +3954,7 @@ typedef VOID(APIENTRY* PFND3D12DDI_CREATE_SAMPLER_0096)(D3D12DDI_HDEVICE, _In_ C
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The sampler payload uses driver representations, not a promise of bit-identical
-> API/DDI enums or structures. CreateSampler supplies the ordinary no-extra-flags meaning through the
-> extended driver representation; CreateSampler2 additionally selects typed
-> border color and flags. Integer-border and non-normalized-coordinate requirements
-> remain defined by the corresponding API/feature contracts. Descriptor generation
-> writes the specified heap location; it does not return a newly allocated sampler
-> object or a per-descriptor ownership token.
+> CreateSampler uses the extended driver representation with no additional flags. CreateSampler2 also supplies typed border color and flags.
 
 <!-- d3d12-review-alert:end:binding:DV-C04:0 -->
 
@@ -4013,10 +3963,7 @@ typedef VOID(APIENTRY* PFND3D12DDI_CREATE_SAMPLER_0096)(D3D12DDI_HDEVICE, _In_ C
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> These descriptor-generation DDIs return `VOID`, not a recoverable creation
-> `HRESULT`. Unresolvable driver failures use `PFND3D12DDI_SETERROR_CB`,
-> not the command-list recording-error channel. This is distinct from the
-> `HRESULT` returned when creating the descriptor-heap object itself.
+> Descriptor-generation failures use `PFND3D12DDI_SETERROR_CB`, not the command-list recording-error channel.
 
 <!-- d3d12-review-alert:end:binding:DV-C05:0 -->
 
@@ -4029,8 +3976,8 @@ the handle values may be minimally processed to avoid applications
 inadvertently dereferencing handles directly (or making it appear that
 it is safe).
 
-<ins><!-- d3d12-review-inline:begin:binding:D-copy:1 -->Copies with source and destination overlapping are invalid and will
-produce undefined results in overlapping regions.<!-- d3d12-review-inline:end:binding:D-copy:1 --></ins>
+Copies with source and destination overlapping are invalid and will
+produce undefined results in overlapping regions.
 
 ```cpp
 typedef VOID (APIENTRY* PFND3D12DDI_COPY_DESCRIPTORS_0003)(
@@ -4060,12 +4007,7 @@ typedef VOID (APIENTRY* PFND3D12DDI_COPY_DESCRIPTORS_SIMPLE_0003)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The corresponding [CopyDescriptors](#id3d12device-copydescriptors) and
-> [CopyDescriptorsSimple](#id3d12device-copydescriptorssimple) contracts define
-> source/destination eligibility, range traversal, equal copied totals,
-> optional range-size arrays and the contiguous simple form. The UMD receives
-> the driver device, the matching heap type and driver CPU descriptor handles;
-> these logical copy rules are reused rather than defined by hardware byte layout.
+> The descriptor-copy DDIs implement [CopyDescriptors](#id3d12device-copydescriptors) and [CopyDescriptorsSimple](#id3d12device-copydescriptorssimple).
 
 <!-- d3d12-review-alert:end:binding:DV-P01:0 -->
 
@@ -4074,11 +4016,7 @@ typedef VOID (APIENTRY* PFND3D12DDI_COPY_DESCRIPTORS_SIMPLE_0003)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime may adapt handles and route shadowed descriptors before invoking
-> the driver. A DDI call is not a guarantee of byte-identical API handles or
-> a universal one-to-one API/DDI call sequence. Both copy DDIs return `VOID`;
-> they neither construct heap objects nor transfer ownership of referenced
-> resources to the copied descriptors.
+> The runtime may translate handles and route shadowed descriptors before invoking the driver.
 
 <!-- d3d12-review-alert:end:binding:DV-P02:0 -->
 
@@ -4241,31 +4179,12 @@ typedef struct D3D12DDI_ROOT_PARAMETER_0013
 
 ```
 
-<!-- d3d12-review-alert:begin:binding:RB-T02:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `NumParameters` and `NumStaticSamplers` bound the corresponding arrays.
-> `ParameterType` selects the `DescriptorTable`, `Constants` or `Descriptor`
-> union member, with the logical parameter kind and
-> [shader visibility](#shader-visibility) defined by the
-> [root-signature descriptions](#signature-descriptions).
-
-<!-- d3d12-review-alert:end:binding:RB-T02:0 -->
-
 <!-- d3d12-review-alert:begin:binding:RB-T02:1 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A descriptor table supplies `NumDescriptorRanges` driver range records.
-> Their type, count, shader register, register space and table-relative
-> offset have the logical meanings in [descriptor ranges](#descriptor-ranges);
-> `D3D12DDI_DESCRIPTOR_RANGE_OFFSET_APPEND` supplies the append-offset sentinel.
-> Root constants supply the register/space and number of 32-bit values.
-> Root descriptors supply their register/space and normalized data flags.
-> The range and descriptor records carry the explicit descriptor/data promises.
+> `D3D12DDI_DESCRIPTOR_RANGE_OFFSET_APPEND` represents the API append-offset sentinel. The driver description carries normalized descriptor/data flags.
 
 <!-- d3d12-review-alert:end:binding:RB-T02:1 -->
 
@@ -4274,13 +4193,7 @@ typedef struct D3D12DDI_ROOT_PARAMETER_0013
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `Version` identifies the normalized description revision. Version 1.2 retains the version-1.1 root
-> parameter representation and changes the static-sampler representation
-> as shown below. Static sampler filtering, addressing, comparison, LOD and
-> border-color meanings remain defined by [sampler fields](#sampler-fields);
-> the [version/flag requirements](#signature-descriptions) and
-> [coordinate-mode requirements](#non-normalized-samplers) still apply.
-> These driver structures are not the serialized blob format.
+> DDI root-signature version 1.2 uses the version-1.1 parameter representation with the new static-sampler representation shown below.
 
 <!-- d3d12-review-alert:end:binding:RB-T02:2 -->
 
@@ -4356,13 +4269,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_ROOT_SIGNATURE ) ( D3D12DDI_HDEVICE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The size query returns the required driver-private root-object storage in
-> bytes as `SIZE_T`. It is not the serialized root-signature blob size or an
-> `HRESULT`. The runtime supplies that private region through
-> `D3D12DDI_HROOTSIGNATURE` to the matching Create DDI. The UMD initializes
-> its driver object there and owns any additional allocations it makes; it
-> does not own the supplied region. These signatures have no separate
-> runtime root-signature handle parameter.
+> The runtime supplies the private storage reported by the size query through `D3D12DDI_HROOTSIGNATURE`. These DDIs do not receive a separate runtime root-signature handle.
 
 <!-- d3d12-review-alert:end:binding:RB-L02:0 -->
 
@@ -4371,13 +4278,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_ROOT_SIGNATURE ) ( D3D12DDI_HDEVICE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Creation returns an `HRESULT`. If it fails, the UMD must unwind its
-> partially initialized state and additional allocations; the runtime does
-> not call DestroyRootSignature for failed driver creation. After successful
-> driver creation, later abandonment or API initialization failure requires
-> destruction of that driver object. DestroyRootSignature receives the driver
-> device and the successfully created root handle, releases UMD-owned state,
-> and does not free the runtime-supplied private region.
+> On failed creation, the driver unwinds its partial state and additional allocations. DestroyRootSignature is called only after successful creation and releases driver-owned state without freeing runtime-supplied private storage.
 
 <!-- d3d12-review-alert:end:binding:RB-L03:0 -->
 
@@ -4386,13 +4287,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_ROOT_SIGNATURE ) ( D3D12DDI_HDEVICE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The logical request is
-> [CreateRootSignature](#id3d12device-createrootsignature), after runtime
-> deserialization, validation, version conversion and explicit-default
-> normalization. The driver receives a normalized description,
-> not the application's serialized blob. `NodeMask` identifies the selected
-> DDI-visible nodes. The `_0100` sizing/creation pair uses the corresponding
-> declared static-sampler representation shown above.
+> Before driver creation, the runtime deserializes and validates the root signature, converts its version and normalizes explicit defaults. The driver receives this normalized description rather than the serialized blob. The `_0100` pair uses the static-sampler representation shown above.
 
 <!-- d3d12-review-alert:end:binding:RB-L05:0 -->
 
@@ -4405,25 +4300,9 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_ROOT_SIGNATURE ) ( D3D12DDI_HDEVICE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> These runtime-to-driver entry points implement the following logical
-> API contracts after handle adaptation. `D3D12DDI_HCOMMANDLIST` identifies
-> the driver recording object, not an API interface pointer. Root-signature
-> selection uses the created `D3D12DDI_HROOTSIGNATURE`; a null driver root
-> handle represents the API's unset operation. Graphics and compute slots
-> have separate bind sets even when they share a function-pointer type.
+> Graphics and compute slots select separate bind sets even where they share a function-pointer type.
 
 <!-- d3d12-review-alert:end:binding:RB-B01:0 -->
-
-<!-- d3d12-review-alert:begin:binding:RB-B01:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> In the pass-through descriptions below, "directly" describes logical
-> parameter values after the handle adaptation above, not byte-identical
-> API/DDI objects or handle representations.
-
-<!-- d3d12-review-alert:end:binding:RB-B01:1 -->
 
 <!-- d3d12-review-alert:begin:binding:RB-B02:0 -->
 
@@ -4509,30 +4388,9 @@ PFND3D12DDI_SET_ROOT_BUFFER_VIEW pfnSetGraphicsRootUnorderedAccessView;
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The named API entries define parameter indices and types, DWORD offsets,
-> partial constant updates, address restrictions and applicable command-list
-> types. The group-constant DDI must capture the source values during the
-> call; it cannot depend on the caller's `pSrcData` remaining valid afterward.
-> Descriptor-table bases use driver GPU descriptor handles, whereas root
-> buffer views use GPU virtual addresses; neither is a CPU descriptor handle.
-> Handle adaptation does not change the logical table/constant/address contract.
+> The group-constant DDI copies `pSrcData` values during the call. Descriptor-table bases use driver GPU descriptor handles.
 
 <!-- d3d12-review-alert:end:binding:RB-B03:0 -->
-
-<!-- d3d12-review-alert:begin:binding:RB-B03:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Root-signature changes, redundant selection of the same signature,
-> heap-change invalidation and bundle inheritance follow
-> [canonical resource-binding state](command-list-state.md#resource-binding).
-> These `VOID` recording DDIs do not return a recoverable creation `HRESULT`.
-> Errors reported by the driver while recording follow the shared
-> [recording-error callback and deferred-Close contract](execution.md#lifecycle-driver-errors);
-> the result type alone does not establish error policy or remove API validation.
-
-<!-- d3d12-review-alert:end:binding:RB-B03:1 -->
 
 <a id="driver-root-binding-forms"></a>
 
@@ -4543,14 +4401,7 @@ PFND3D12DDI_SET_ROOT_BUFFER_VIEW pfnSetGraphicsRootUnorderedAccessView;
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The root-binding entries in `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108`
-> use the ordinary driver handles shown above. The corresponding entries in
-> `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114` use the API-handle signatures below.
-> These are distinct current command-list representations, not simultaneous
-> sets of callbacks on one command list. Selection follows the
-> [current command-list transport contract](execution.md#work-command-handles).
-> The representation changes object-handle interpretation, not the logical
-> root-argument operation.
+> The `_0114` root-binding entries participate in [runtime bypass](execution.md#work-command-handles).
 
 <!-- d3d12-review-alert:end:binding:RF-representations:0 -->
 
@@ -4559,8 +4410,7 @@ PFND3D12DDI_SET_ROOT_BUFFER_VIEW pfnSetGraphicsRootUnorderedAccessView;
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The member names below occur in both tables; each graphics/compute cell selects the named
-> API operation, including its graphics/compute bind set and root parameter kind.
+> The same member names select the graphics and compute operations in both tables.
 
 <!-- d3d12-review-alert:end:binding:RF-role-map:0 -->
 
@@ -4586,30 +4436,9 @@ PFND3D12DDI_SET_ROOT_BUFFER_VIEW pfnSetGraphicsRootUnorderedAccessView;
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The API-handle callbacks receive `D3D12DDI_API_HCOMMANDLIST`, interpreted
-> using the [command-list header and conversion helper](execution.md#work-command-handles),
-> not as `D3D12DDI_HCOMMANDLIST` private storage. Signature selection also
-> receives `D3D12DDI_API_HROOTSIGNATURE`. For a non-null root handle,
-> `pDrvPrivate` identifies the same kind of public runtime-bypass header;
-> `pDriverObject` identifies the ordinary driver root-signature object.
-> The published root helper below performs that conversion. A null API root
-> handle converts to a null driver root handle and unsets the named root
-> signature. This does not make a null command-list handle valid.
+> `D3D12DDI_API_HROOTSIGNATURE` uses the runtime-bypass header. The helper below converts its `pDriverObject` to the ordinary driver root-signature handle and maps a null API root handle to a null driver handle.
 
 <!-- d3d12-review-alert:end:binding:RF-root-handles:0 -->
-
-<!-- d3d12-review-alert:begin:binding:RF-root-handles:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Passing either object handle transfers no COM ownership. The root signature
-> must remain compatible with the command list's device and selected nodes;
-> changing representation does not move it to a different device/node domain.
-> The existing [root-object lifetime contract](#driver-root-lifecycle) remains
-> in force.
-
-<!-- d3d12-review-alert:end:binding:RF-root-handles:1 -->
 
 ```cpp
 D3D10DDI_H( D3D12DDI_API_HROOTSIGNATURE )
@@ -4631,67 +4460,6 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_ROOT_32BIT_CONSTANT_0114 )(D3D12DDI_API
 typedef VOID ( APIENTRY* PFND3D12DDI_SET_ROOT_32BIT_CONSTANTS_0114 )(D3D12DDI_API_HCOMMANDLIST, UINT RootParameterIndex, UINT Num32BitValuesToSet, CONST void* pSrcData, UINT DestOffsetIn32BitValues );
 typedef VOID ( APIENTRY* PFND3D12DDI_SET_ROOT_BUFFER_VIEW_0114 )(D3D12DDI_API_HCOMMANDLIST, UINT RootParameterIndex, _In_ D3D12DDI_GPU_VIRTUAL_ADDRESS BufferLocation);
 ```
-
-<!-- d3d12-review-alert:begin:binding:RF-value-contracts:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For both representations, `RootParameterIndex` is the logical zero-based
-> root-parameter index, not a shader register or register space. The
-> [shared setter contract](#root-setter-parameters) determines the required
-> parameter kind. Single constants preserve the 32 bits of `SrcData`;
-> `Num32BitValuesToSet` and `DestOffsetIn32BitValues` are counts/offsets of
-> 32-bit values, not bytes. Partial updates preserve the other constants.
-> The group setter captures the source values during the call: `pSrcData`
-> is borrowed only for that call, not retained as a root-description array.
-
-<!-- d3d12-review-alert:end:binding:RF-value-contracts:0 -->
-
-<!-- d3d12-review-alert:begin:binding:RF-value-contracts:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `BaseDescriptor` is a driver GPU descriptor handle for the table in the
-> matching currently selected shader-visible heap, not a CPU descriptor handle
-> or a resource GPU virtual address. Recording a table base does not establish
-> an unconditional snapshot of all table contents or extend their lifetime:
-> [table initialization](#table-initialization),
-> [descriptor lifetime](#table-indexing) and
-> [static/volatile promises](#static-promises) still govern accesses.
-
-<!-- d3d12-review-alert:end:binding:RF-value-contracts:1 -->
-
-<!-- d3d12-review-alert:begin:binding:RF-value-contracts:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The six buffer-view slots in each representation receive `BufferLocation`, a GPU virtual
-> address, with the CBV/SRV/UAV kind selected by the member and root parameter.
-> The [root-descriptor resource, bounds and alignment requirements](#root-descriptors)
-> remain unchanged; the DDI adds no buffer-size field. A zero GPU address or
-> zero table base is not the null-root-signature unset operation. In particular,
-> the [null acceleration-structure SRV exception](#acceleration-structure-srvs)
-> does not make zero an ordinary null root CBV/buffer SRV/UAV.
-
-<!-- d3d12-review-alert:end:binding:RF-value-contracts:2 -->
-
-<!-- d3d12-review-alert:begin:binding:RF-state-errors:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Both representations follow the same [signature-change, redundant-selection,
-> heap-change and bundle rules](command-list-state.md#resource-binding).
-> Graphics and compute arguments remain independent. Handle adaptation neither
-> establishes residency/synchronization nor relaxes resource or descriptor
-> lifetimes. These `VOID` setters use the existing
-> [recording-error and deferred-Close contract](execution.md#lifecycle-driver-errors);
-> they do not introduce a recoverable creation `HRESULT`.
-
-<!-- d3d12-review-alert:end:binding:RF-state-errors:0 -->
 
 <a id="driver-clearing"></a>
 

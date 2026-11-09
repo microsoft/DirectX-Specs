@@ -1223,7 +1223,7 @@ HRESULT CreateReservedResource1(
 
 Creates a resource (optionally for a protected session) that is reserved, and not yet mapped to any pages in a heap. Also see [ID3D12Device::CreateReservedResource](resources.md#create-reserved-resource).
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource1-summary:1 -->Only tiles from heaps created with the same protected resource session can be mapped into a protected reserved resource.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource1-summary:1 --></ins>
+Only tiles from heaps created with the same protected resource session can be mapped into a protected reserved resource.
 
 #### Parameters
 
@@ -1312,7 +1312,7 @@ HRESULT CreateReservedResource2(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource2-summary:0 -->Creates a resource that is reserved, and not yet mapped to any pages in a heap.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource2-summary:0 --></ins>
+Creates a resource that is reserved, and not yet mapped to any pages in a heap.
 
 #### Parameters
 
@@ -1902,7 +1902,7 @@ The destination and the source regions must each entirely fit in their resource 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The published driver interface uses `PFND3D12DDI_UPDATETILEMAPPINGS` and `PFND3D12DDI_COPYTILEMAPPINGS` on a command queue. `PFND3D12DDI_GETMIPPACKING` reports the implementation-specific packed mip count and packed-tile count; it is not a one-to-one `GetResourceTiling` DDI. The runtime combines those values with the defined standard tile shapes and subresource traversal.
+> `GetMipPacking` reports the packed-mip count and packed-tile count. The runtime combines them with standard tile shapes and subresource traversal to answer GetResourceTiling.
 
 <!-- d3d12-review-alert:end:resources:TILED-ddi-introduction:0 -->
 
@@ -1911,7 +1911,7 @@ The destination and the source regions must each entirely fit in their resource 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Reserved creation uses the common heap/resource creation DDIs without creating physical heap storage. The versioned creation arguments carry resource layout, initial barrier layout, castable formats and protected-session information as applicable. The existing [allocation driver contract](#allocation-driver) owns allocation size/alignment and resource lifetime.
+> Reserved creation uses the common heap/resource DDIs without allocating physical heap storage.
 
 <!-- d3d12-review-alert:end:resources:TILED-ddi-introduction:1 -->
 
@@ -1920,18 +1920,9 @@ The destination and the source regions must each entirely fit in their resource 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For the mapping DDI, a missing API coordinate is resolved to the origin before the driver call. A null DDI region-size array represents single-tile regions; the API's both-arrays-null whole-resource default instead supplies an explicit region size. The runtime resolves a single null range count to the total selected resource tile count. For multiple ranges, a null DDI range-count array means one tile per range. These CPU defaults do not turn out-of-bounds resource regions into valid mappings.
+> For UpdateTileMappings, the runtime resolves a missing API coordinate to the origin and the both-arrays-null whole-resource default to an explicit region size. A null DDI region-size array means single-tile regions. For one heap range, the runtime resolves a null API range count to the total selected resource tile count. For multiple ranges, a null DDI range-count array means one tile per range.
 
 <!-- d3d12-review-alert:end:resources:TILED-ddi-introduction:2 -->
-
-<!-- d3d12-review-alert:begin:resources:TILED-ddi-introduction:3 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The driver reports `TiledResourcesTier` in the versioned D3D12-options capability structure. `PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS` receives the tiled-resource quality-level flag and reports the number of supported quality levels for that format/sample count. These capability fields do not remove the tier-dependent standard/packed-mip restrictions.
-
-<!-- d3d12-review-alert:end:resources:TILED-ddi-introduction:3 -->
 
 <a id="tile-driver-roles"></a>
 
@@ -1955,78 +1946,16 @@ The destination and the source regions must each entirely fit in their resource 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> These are current unversioned signatures. A table slot is not independent
-> application permission: mapping operations use DIRECT, COMPUTE or COPY
-> queues under the [queue applicability and ordering contract](#update-tile-mappings).
-> The published video queue table also contains mapping slots, but video
-> queue API calls do not thereby acquire support.
+> The video queue table contains mapping slots, but this does not add application tile-mapping support on video queues.
 
 <!-- d3d12-review-alert:end:resources:TD-associations:1 -->
-
-<!-- d3d12-review-alert:begin:resources:TD-update:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Update receives the driver command queue and reserved-resource handles,
-> counted resource-region coordinates/sizes, an optional driver heap handle,
-> and counted heap ranges/flags/offsets/tile counts. The heap supplies physical
-> backing; it is not a buffer resource, COM pointer or GPU VA. Heap range
-> offsets and region coordinates count tiles, not bytes or texels.
-
-<!-- d3d12-review-alert:end:resources:TD-update:0 -->
-
-<!-- d3d12-review-alert:begin:resources:TD-update:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [driver coordinate/region types](#tiled-driver-types) preserve the API's
-> logical traversal and packed-mip rules. The preceding runtime-normalization
-> contract distinguishes an explicit whole-resource region from null DDI
-> region sizes and distinguishes one default range count from per-range defaults.
-> Do not treat every API null array as an identical null driver argument.
-
-<!-- d3d12-review-alert:end:resources:TD-update:1 -->
-
-<!-- d3d12-review-alert:begin:resources:TD-update:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The range modes retain [NONE, NULL, SKIP and REUSE_SINGLE_TILE](#d3d12-tile-range-flags)
-> semantics. A null heap is not backing for newly mapped non-null tiles.
-> Only the existing supported [mapping flags](#d3d12-tile-mapping-flags) apply;
-> the declared NO_HAZARD value grants no hazard relaxation.
-
-<!-- d3d12-review-alert:end:resources:TD-update:2 -->
-
-<!-- d3d12-review-alert:begin:resources:TD-copy:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Copy receives the driver queue, destination resource/coordinate, source
-> resource/coordinate, one region size and mapping flags, in that order.
-> The region describes both sides. It copies mapping associations, including
-> NULL mappings, not tile contents or a resource allocation. Same-resource
-> overlap must have the [temporary-source snapshot result](#copy-tile-mappings);
-> source-first destructive updates are not an equivalent implementation.
-
-<!-- d3d12-review-alert:end:resources:TD-copy:0 -->
 
 <!-- d3d12-review-alert:begin:resources:TD-lifetime-errors:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> CPU coordinate, region and range arrays are borrowed for the DDI call.
-> The driver must capture any information required by later queue processing
-> before returning, rather than retaining caller array/output-slot pointers.
-> Driver queue/resource/heap objects and backing storage retain their distinct
-> [execution lifetime](execution.md#lifetime), [residency](#resident-objects),
-> mapping and aliasing/initialization requirements. Mapping tiles to heap
-> backing does not transfer its COM ownership or establish residency.
+> The driver captures the CPU coordinate, region and range arrays needed for later queue processing before returning.
 
 <!-- d3d12-review-alert:end:resources:TD-lifetime-errors:0 -->
 
@@ -2035,10 +1964,7 @@ The destination and the source regions must each entirely fit in their resource 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Both mapping calls return VOID, not a per-call HRESULT or GPU-completion
-> token. The mapping error/rollback contract below uses SetErrorCb; a VOID
-> signature does not remove that contract or make invalid inputs valid.
-> CPU serialization of queue calls is not cross-queue GPU synchronization.
+> Mapping errors and rollback use SetErrorCb as specified below.
 
 <!-- d3d12-review-alert:end:resources:TD-lifetime-errors:1 -->
 
@@ -2047,11 +1973,7 @@ The destination and the source regions must each entirely fit in their resource 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> GetMipPacking receives the UMD device and existing driver resource handle;
-> the two output slots receive packed-mip count and tiles needed for those
-> packed mips. These are counts, not byte pitches, allocation size, current
-> tile mappings or an allocated output array. For arrays they have the
-> per-slice interpretation required by the packed-mip contract below.
+> For arrays, packed-mip and packed-tile counts have the per-slice interpretation defined below.
 
 <!-- d3d12-review-alert:end:resources:TD-mip-query:0 -->
 
@@ -2060,17 +1982,11 @@ The destination and the source regions must each entirely fit in their resource 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime may cache these counts and combine them with the resource's
-> dimensions, format, sample count, mip/array shape and standard tile shapes
-> to construct the public total, packed-mip information and subresource tiling.
-> Consequently GetResourceTiling need not issue this DDI on every API call.
-> The query writes its borrowed output slots during the call, creates no
-> resource or heap, and returns no HRESULT. The two mapping operations'
-> specific allowed-error policy is not inferred to apply to every VOID query.
+> The runtime can cache GetMipPacking results and combine them with standard tiling information. GetResourceTiling need not issue this DDI on every call.
 
 <!-- d3d12-review-alert:end:resources:TD-mip-query:1 -->
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.5.4:0 -->The mapping-update and mapping-copy driver callbacks use the following error reporting:<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.5.4:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.5.4:0 -->The mapping-update and mapping-copy driver DDIs use the following error reporting:<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.5.4:0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.5.4:1 -->Errors are reported via the call back `pfnSetErrorCb`.  Valid errors are out of memory and device removed.  On out of memory
 (possible if memory allocation for page table storage fails), tile mappings are left in their original state before the call.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.5.4:1 --></ins>
@@ -2239,10 +2155,7 @@ typedef enum D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAGS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Tiled-resource creation uses the common [heap/resource creation payload](#heap-resource-driver-types)
-> and [lifecycle](#heap-resource-lifecycle-ddis) and [allocation query](#resource-query-ddis).
-> Tiled-resource tiers and mapping operations do not define a separate resource
-> object representation or relax those creation and lifetime requirements.
+> Tiled-resource creation uses the common [creation payload](#heap-resource-driver-types), [lifecycle](#heap-resource-lifecycle-ddis) and [allocation query](#resource-query-ddis).
 
 <!-- d3d12-review-alert:end:resources:RL-tiled-creation-forward:0 -->
 
@@ -2401,15 +2314,15 @@ Refer to the <ins><!-- d3d12-review-inline:begin:resources:P-mips:0 -->`D3D12_FO
 
 *Format* must be a valid format supported at the feature level of the device.
 
-<ins><!-- d3d12-review-inline:begin:resources:P-format-samples:1 -->A *SampleDesc.Count* greater than 1 and/ or non-zero *Quality* are only supported for TEXTURE2D and when either `D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET` or `D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL` are set.
-For these multisampled resources, the following are unsupported:<!-- d3d12-review-inline:end:resources:P-format-samples:1 --></ins>
+A *SampleDesc.Count* greater than 1 and/ or non-zero *Quality* are only supported for TEXTURE2D and when either <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:1 -->`D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET`<!-- d3d12-review-inline:end:resources:P-format-samples:1 --></ins> or <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:1 -->`D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL`<!-- d3d12-review-inline:end:resources:P-format-samples:1 --></ins> are set.
+<ins><!-- d3d12-review-inline:begin:resources:P-format-samples:1 -->For these multisampled resources, the following are unsupported:<!-- d3d12-review-inline:end:resources:P-format-samples:1 --></ins>
 
 - <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:2 -->`D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE`,<!-- d3d12-review-inline:end:resources:P-format-samples:2 --></ins>
 - <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:2 -->`D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS` without [writable-MSAA texture support](#writable-msaa),<!-- d3d12-review-inline:end:resources:P-format-samples:2 --></ins>
 - <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:2 -->`D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS`,<!-- d3d12-review-inline:end:resources:P-format-samples:2 --></ins>
 - <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:2 -->`D3D12_HEAP_FLAG_ALLOW_DISPLAY`<!-- d3d12-review-inline:end:resources:P-format-samples:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:P-format-samples:3 -->See [`D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_feature_data_multisample_quality_levels) for determining valid *Count* and *Quality* values.<!-- d3d12-review-inline:end:resources:P-format-samples:3 --></ins>
+See [`D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_feature_data_multisample_quality_levels) for determining valid *Count* and *Quality* values.
 
 <a id="extended-description"></a>
 
@@ -3449,17 +3362,17 @@ Makes objects resident for the device.
 
 ##### `NumObjects`
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-resident-parameters:1 -->The number of objects in the *ppObjects* array to make resident for the device.<!-- d3d12-review-inline:end:resources:RH-API-resident-parameters:1 --></ins>
+The number of objects in the *ppObjects* array to make resident for the device.
 
 ##### `ppObjects`
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-resident-parameters:3 -->A pointer to a memory block that contains an array of [ID3D12Pageable](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12pageable) interface pointers for the objects.<!-- d3d12-review-inline:end:resources:RH-API-resident-parameters:3 --></ins>
+A pointer to a memory block that contains an array of [ID3D12Pageable](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12pageable) interface pointers for the objects.
 
 <ins><!-- d3d12-review-inline:begin:resources:RH-API-resident-parameters:4 -->Eligible objects are defined in [Residency ownership](#resident-objects).<!-- d3d12-review-inline:end:resources:RH-API-resident-parameters:4 --></ins>
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-resident-returns:0 -->This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).<!-- d3d12-review-inline:end:resources:RH-API-resident-returns:0 --></ins>
+This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).
 
 #### Allocation and paging
 
@@ -3487,17 +3400,17 @@ Enables the page-out of data, which precludes GPU access of that data.
 
 ##### `NumObjects`
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-evict-parameters:1 -->The number of objects in the *ppObjects* array to evict from the device.<!-- d3d12-review-inline:end:resources:RH-API-evict-parameters:1 --></ins>
+The number of objects in the *ppObjects* array to evict from the device.
 
 ##### `ppObjects`
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-evict-parameters:3 -->A pointer to a memory block that contains an array of [ID3D12Pageable](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12pageable) interface pointers for the objects.<!-- d3d12-review-inline:end:resources:RH-API-evict-parameters:3 --></ins>
+A pointer to a memory block that contains an array of [ID3D12Pageable](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12pageable) interface pointers for the objects.
 
 <ins><!-- d3d12-review-inline:begin:resources:RH-API-evict-parameters:4 -->Eligible objects are defined in [Residency ownership](#resident-objects).<!-- d3d12-review-inline:end:resources:RH-API-evict-parameters:4 --></ins>
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-evict-returns:0 -->This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).<!-- d3d12-review-inline:end:resources:RH-API-evict-returns:0 --></ins>
+This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).
 
 #### Backing-storage ownership
 
@@ -3526,29 +3439,29 @@ Asynchronously makes objects resident for the device.
 
 ##### `Flags`
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-enqueue-parameters:1 -->Controls whether the objects should be made resident if the application is over its memory budget.<!-- d3d12-review-inline:end:resources:RH-API-enqueue-parameters:1 --></ins>
+Controls whether the objects should be made resident if the application is over its memory budget.
 
 ##### `NumObjects`
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-enqueue-parameters:3 -->The number of objects in the *ppObjects* array to make resident for the device.<!-- d3d12-review-inline:end:resources:RH-API-enqueue-parameters:3 --></ins>
+The number of objects in the *ppObjects* array to make resident for the device.
 
 ##### `ppObjects`
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-enqueue-parameters:5 -->A pointer to a memory block; contains an array of [ID3D12Pageable](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12pageable) interface pointers for the objects.<!-- d3d12-review-inline:end:resources:RH-API-enqueue-parameters:5 --></ins>
+A pointer to a memory block; contains an array of [ID3D12Pageable](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12pageable) interface pointers for the objects.
 
 <ins><!-- d3d12-review-inline:begin:resources:RH-API-enqueue-parameters:6 -->Eligible objects are defined in [Residency ownership](#resident-objects).<!-- d3d12-review-inline:end:resources:RH-API-enqueue-parameters:6 --></ins>
 
 ##### `pFenceToSignal`
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-enqueue-parameters:8 -->A pointer to the fence used to signal when the work is done.<!-- d3d12-review-inline:end:resources:RH-API-enqueue-parameters:8 --></ins>
+A pointer to the fence used to signal when the work is done.
 
 ##### `FenceValueToSignal`
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-enqueue-parameters:10 -->An unsigned 64-bit value signaled to the fence when the work is done.<!-- d3d12-review-inline:end:resources:RH-API-enqueue-parameters:10 --></ins>
+An unsigned 64-bit value signaled to the fence when the work is done.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-enqueue-returns:0 -->This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).<!-- d3d12-review-inline:end:resources:RH-API-enqueue-returns:0 --></ins>
+This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).
 
 #### Completion and ordering
 
@@ -3610,7 +3523,7 @@ typedef enum D3D12_RESIDENCY_PRIORITY
 } D3D12_RESIDENCY_PRIORITY;
 ```
 
-<ins><!-- d3d12-review-inline:begin:resources:RM-priority-buckets:0 -->Specifies broad residency priority buckets useful for quickly establishing an application priority scheme.<!-- d3d12-review-inline:end:resources:RM-priority-buckets:0 --></ins>
+Specifies broad residency priority buckets useful for quickly establishing an application priority scheme.
 
 Applications can assign priority values other than the five values present in this enumeration.
 
@@ -3637,7 +3550,7 @@ HRESULT SetResidencyPriority(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:resources:RM-priority-behavior:0 -->This method sets residency priorities of a specified list of objects.<!-- d3d12-review-inline:end:resources:RM-priority-behavior:0 --></ins>
+This method sets residency priorities of a specified list of objects.
 
 <!-- d3d12-review-alert:begin:resources:RM-priority-eligibility:0 -->
 
@@ -3786,7 +3699,7 @@ Gets a CPU pointer to the specified subresource in the resource, but may not dis
 
 ##### `Subresource`
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-map-parameters:1 -->Specifies the index number of the subresource.<!-- d3d12-review-inline:end:resources:RH-API-map-parameters:1 --></ins>
+Specifies the index number of the subresource.
 
 ##### `pReadRange`
 
@@ -3796,13 +3709,13 @@ This indicates the region the CPU might read, and the coordinates are subresourc
 
 ##### `ppData`
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-map-parameters:6 -->A pointer to a memory block that receives a pointer to the resource data.<!-- d3d12-review-inline:end:resources:RH-API-map-parameters:6 --></ins>
+A pointer to a memory block that receives a pointer to the resource data.
 
 A null pointer is valid and is useful to cache a CPU virtual address range for methods like [WriteToSubresource](#resource-write-to-subresource). When *ppData* is not NULL, the pointer returned is never offset by any values in *pReadRange*.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-map-returns:0 -->This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).<!-- d3d12-review-inline:end:resources:RH-API-map-returns:0 --></ins>
+This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).
 
 #### Nested mapping and address lifetime
 
@@ -3846,7 +3759,7 @@ void Unmap(
 
 ##### `Subresource`
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-unmap-parameters:1 -->Specifies the index of the subresource.<!-- d3d12-review-inline:end:resources:RH-API-unmap-parameters:1 --></ins>
+Specifies the index of the subresource.
 
 ##### `pWrittenRange`
 
@@ -3872,31 +3785,12 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_MAPHEAP )( D3D12DDI_HDEVICE, D3D12DDI_HH
 typedef VOID ( APIENTRY* PFND3D12DDI_UNMAPHEAP )( D3D12DDI_HDEVICE, D3D12DDI_HHEAP );
 ```
 
-<!-- d3d12-review-alert:begin:resources:RM-map-roles:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> MapHeap receives the UMD device and existing driver heap handle and
-> returns a CPU-accessible heap-base pointer through the output slot.
-> It returns `S_OK` on success or an `HRESULT` failure; failed output is
-> not a usable mapping. UnmapHeap receives that device and heap and returns
-> no value. The output slot is call-borrowed; it is not storage the UMD
-> may retain as a later notification destination.
-
-<!-- d3d12-review-alert:end:resources:RM-map-roles:0 -->
-
 <!-- d3d12-review-alert:begin:resources:RM-map-roles:1 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime caches the successful heap pointer and serializes/ref-counts
-> mapping references. Nested resource Maps need not produce repeated driver
-> MapHeap calls; the final heap mapping reference causes UnmapHeap. Resource
-> offsets/subresources and public pointer disclosure follow
-> [Map](#resource-map), [Unmap](#resource-unmap) and the
-> [opaque-layout rules](#cpu-access), not extra MapHeap parameters.
+> The runtime caches the successful heap mapping and serializes/ref-counts mapping references. Nested resource Maps need not produce repeated MapHeap calls. The final reference causes UnmapHeap.
 
 <!-- d3d12-review-alert:end:resources:RM-map-roles:1 -->
 
@@ -3905,10 +3799,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_UNMAPHEAP )( D3D12DDI_HDEVICE, D3D12DDI_HHE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The DDI receives no application read/write range, subresource index or
-> discard/DO_NOT_WAIT mode. Cache maintenance, CPU accessibility and
-> conflicting CPU/GPU synchronization retain their canonical requirements.
-> Neither mapping nor unmapping frees backing storage or acquires residency.
+> MapHeap receives no application read/write range, subresource index or discard/DO_NOT_WAIT mode.
 
 <!-- d3d12-review-alert:end:resources:RM-map-roles:2 -->
 
@@ -3945,11 +3836,11 @@ Gets the size and alignment of memory required for a collection of resources on 
 
 ##### `visibleMask`
 
-<ins><!-- d3d12-review-inline:begin:resources:A-allocation-parameters:1 -->For single-GPU operation, set this to zero. If there are multiple GPU nodes, then set bits to identify the nodes (the device's physical adapters). Each bit in the mask corresponds to a single node. Also see [Multi-adapter systems](https://learn.microsoft.com/en-us/windows/win32/direct3d12/multi-engine).<!-- d3d12-review-inline:end:resources:A-allocation-parameters:1 --></ins>
+For single-GPU operation, set this to zero. If there are multiple GPU nodes, then set bits to identify the nodes (the device's physical adapters). Each bit in the mask corresponds to a single node. Also see [Multi-adapter systems](https://learn.microsoft.com/en-us/windows/win32/direct3d12/multi-engine).
 
 ##### `numResourceDescs`
 
-<ins><!-- d3d12-review-inline:begin:resources:A-allocation-parameters:3 -->The number of resource descriptors in the *pResourceDescs* array.<!-- d3d12-review-inline:end:resources:A-allocation-parameters:3 --></ins>
+The number of resource descriptors in the *pResourceDescs* array.
 
 ##### `pResourceDescs`
 
@@ -4386,7 +4277,7 @@ D3D12_HEAP_PROPERTIES GetCustomHeapProperties(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:resources:RQ-I02:0 -->Divulges the equivalent custom heap properties that are used for non-custom heap types, based on the adapter's architectural properties.<!-- d3d12-review-inline:end:resources:RQ-I02:0 --></ins>
+Divulges the equivalent custom heap properties that are used for non-custom heap types, based on the adapter's architectural properties.
 
 #### Parameters
 
@@ -4464,7 +4355,7 @@ D3D12_HEAP_DESC GetDesc();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:resources:RQ-I03:0 -->Gets the heap description.<!-- d3d12-review-inline:end:resources:RQ-I03:0 --></ins>
+Gets the heap description.
 
 #### Return values
 
@@ -4544,7 +4435,7 @@ HRESULT GetHeapProperties(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:resources:RQ-I04:0 -->Retrieves the properties of the resource heap, for placed and committed resources.<!-- d3d12-review-inline:end:resources:RQ-I04:0 --></ins>
+Retrieves the properties of the resource heap, for placed and committed resources.
 
 #### Parameters
 
@@ -4662,7 +4553,7 @@ HRESULT WriteToSubresource(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:resources:RQ-I05:0 -->Uses the CPU to copy data into a subresource, enabling the CPU to modify the contents of most textures with undefined layouts.<!-- d3d12-review-inline:end:resources:RQ-I05:0 --></ins>
+Uses the CPU to copy data into a subresource, enabling the CPU to modify the contents of most textures with undefined layouts.
 
 #### Parameters
 
@@ -4709,7 +4600,7 @@ HRESULT ReadFromSubresource(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:resources:RQ-I06:0 -->Uses the CPU to copy data from a subresource, enabling the CPU to read the contents of most textures with undefined layouts.<!-- d3d12-review-inline:end:resources:RQ-I06:0 --></ins>
+Uses the CPU to copy data from a subresource, enabling the CPU to read the contents of most textures with undefined layouts.
 
 #### Parameters
 
@@ -4748,13 +4639,7 @@ HRESULT ReadFromSubresource(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The application aggregate query is not a signature mirror of this DDI.
-> The runtime validates and normalizes descriptions, selects the node scope,
-> queries per-resource driver information and combines it into the application
-> size/alignment/offset results. The
-> [allocation/layout driver contract](#allocation-driver) remains canonical.
-> Copyable footprints and stored-description/property reflection do not invoke
-> this DDI merely because they also return sizes or descriptions.
+> The runtime queries per-resource driver information and combines it into the API's aggregate size, alignment and placement-offset results.
 
 <!-- d3d12-review-alert:end:resources:RQ-N052:0 -->
 
@@ -4774,13 +4659,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKRESOURCEALLOCATIONINFO_0111)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The first parameter is the UMD device handle. The input describes one
-> resource, with optimization flags, an alignment restriction and DDI-visible
-> node scope. The output describes resource data, optional additional-data
-> regions, their sizes/alignments, the resolved layout and swizzle transitions.
-> It is not the application's aggregate `D3D12_RESOURCE_ALLOCATION_INFO`.
-> The runtime also uses this layout query while preparing resource creation;
-> the query itself constructs no driver object.
+> This query also prepares resource creation. Its output describes resource storage and optional additional-data regions, including resolved layout and swizzle transitions.
 
 <!-- d3d12-review-alert:end:resources:RQ-N054:0 -->
 
@@ -4789,11 +4668,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKRESOURCEALLOCATIONINFO_0111)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The baseline entry receives `D3D12DDIARG_CREATERESOURCE_0111`, a 32-bit
-> alignment restriction and `D3D12DDI_RESOURCE_ALLOCATION_INFO_0022` output.
-> The [creation payload](#heap-resource-driver-types) is shared with resource
-> creation; this query returns layout information, not private CPU-object
-> storage sizes. It returns no `HRESULT`.
+> The query shares `D3D12DDIARG_CREATERESOURCE_0111` with creation and receives a 32-bit alignment restriction.
 
 <!-- d3d12-review-alert:end:resources:RQ-N055:0 -->
 
@@ -5061,13 +4936,13 @@ Creates a heap that can be used with placed resources and reserved resources.
 
 #### `riid`
 
-<ins><!-- d3d12-review-inline:begin:resources:API-heap-parameters:3 -->A reference to the globally unique identifier (**GUID**) of the heap interface to return in *ppvHeap*.<!-- d3d12-review-inline:end:resources:API-heap-parameters:3 --></ins>
+A reference to the globally unique identifier (**GUID**) of the heap interface to return in *ppvHeap*.
 
 <ins><!-- d3d12-review-inline:begin:resources:API-heap-parameters:4 -->While *riid* is most commonly the **GUID** of [ID3D12Heap](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12heap), it may be the **GUID** of any interface. If the heap object doesn't support the interface for this **GUID**, then creation fails with `E_NOINTERFACE`.<!-- d3d12-review-inline:end:resources:API-heap-parameters:4 --></ins>
 
 #### `ppvHeap`
 
-<ins><!-- d3d12-review-inline:begin:resources:API-heap-parameters:6 -->An optional pointer to a memory block that receives the requested interface pointer to the created heap object.<!-- d3d12-review-inline:end:resources:API-heap-parameters:6 --></ins>
+An optional pointer to a memory block that receives the requested interface pointer to the created heap object.
 
 <ins><!-- d3d12-review-inline:begin:resources:API-heap-parameters:7 -->*ppvHeap* can be `nullptr`, for parameter validation. When *ppvHeap* is `nullptr`, no object is created, and `S_FALSE` is returned when the parameters are valid.<!-- d3d12-review-inline:end:resources:API-heap-parameters:7 --></ins>
 
@@ -5147,13 +5022,13 @@ When you use [`D3D12_RESOURCE_DIMENSION_BUFFER`](resources.md#resource-dimension
 
 #### `riidResource`
 
-<ins><!-- d3d12-review-inline:begin:resources:API-committed-parameters:15 -->A reference to the globally unique identifier (**GUID**) of the resource interface to return in *ppvResource*.<!-- d3d12-review-inline:end:resources:API-committed-parameters:15 --></ins>
+A reference to the globally unique identifier (**GUID**) of the resource interface to return in *ppvResource*.
 
 <ins><!-- d3d12-review-inline:begin:resources:API-committed-parameters:16 -->While *riidResource* is most commonly the **GUID** of [ID3D12Resource](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource), it may be the **GUID** of any interface. If the resource object doesn't support the interface for this **GUID**, then creation fails with `E_NOINTERFACE`.<!-- d3d12-review-inline:end:resources:API-committed-parameters:16 --></ins>
 
 #### `ppvResource`
 
-<ins><!-- d3d12-review-inline:begin:resources:API-committed-parameters:18 -->An optional pointer to a memory block that receives the requested interface pointer to the created resource object.<!-- d3d12-review-inline:end:resources:API-committed-parameters:18 --></ins>
+An optional pointer to a memory block that receives the requested interface pointer to the created resource object.
 
 <ins><!-- d3d12-review-inline:begin:resources:API-committed-parameters:19 -->*ppvResource* can be `nullptr`, for parameter validation. When *ppvResource* is `nullptr`, no object is created, and `S_FALSE` is returned when the parameters are valid.<!-- d3d12-review-inline:end:resources:API-committed-parameters:19 --></ins>
 
@@ -5209,11 +5084,11 @@ HRESULT CreatePlacedResource(
 
 #### `pHeap`
 
-<ins><!-- d3d12-review-inline:begin:resources:API-placed-parameters:1 -->A pointer to the **ID3D12Heap** interface that represents the heap in which the resource is placed.<!-- d3d12-review-inline:end:resources:API-placed-parameters:1 --></ins>
+A pointer to the **ID3D12Heap** interface that represents the heap in which the resource is placed.
 
 #### `HeapOffset`
 
-<ins><!-- d3d12-review-inline:begin:resources:API-placed-parameters:3 -->The offset, in bytes, to the resource. The *HeapOffset* must be a multiple of the resource's alignment, and *HeapOffset* plus the resource size must be smaller than or equal to the heap size. [**GetResourceAllocationInfo**](resources.md#allocation-info) must be used to understand the sizes of texture resources.<!-- d3d12-review-inline:end:resources:API-placed-parameters:3 --></ins>
+The offset, in bytes, to the resource. The *HeapOffset* must be a multiple of the resource's alignment, and *HeapOffset* plus the resource size must be smaller than or equal to the heap size. [**GetResourceAllocationInfo**](resources.md#allocation-info) must be used to understand the sizes of texture resources.
 
 #### `pDesc`
 
@@ -5237,7 +5112,7 @@ Clear operations can be called with other values, but those operations will not 
 
 #### `riid`
 
-<ins><!-- d3d12-review-inline:begin:resources:API-placed-parameters:15 -->The globally unique identifier (**GUID**) for the resource interface. This is an input parameter.<!-- d3d12-review-inline:end:resources:API-placed-parameters:15 --></ins>
+The globally unique identifier (**GUID**) for the resource interface. This is an input parameter.
 
 <ins><!-- d3d12-review-inline:begin:resources:API-placed-parameters:16 -->The **REFIID**, or **GUID**, of the interface to the resource can be obtained by using the `__uuidof` macro. For example, `__uuidof(ID3D12Resource)` gets the **GUID** of the interface to a resource. Although **riid** is, most commonly, the GUID for [**ID3D12Resource**](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource), it may be any **GUID** for any interface. If the resource object doesn't support the interface for this **GUID**, then creation fails with `E_NOINTERFACE`.<!-- d3d12-review-inline:end:resources:API-placed-parameters:16 --></ins>
 
@@ -5656,7 +5531,7 @@ HRESULT OpenExistingHeapFromAddress( const void* pAddress, REFIID riid, void** p
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:resources:HI-OpenExistingHeapFromAddress-behavior:0 -->Creates a special-purpose diagnostic heap in system memory from an address. The created heap can persist even in the event of a GPU-fault or device-removed scenario.<!-- d3d12-review-inline:end:resources:HI-OpenExistingHeapFromAddress-behavior:0 --></ins>
+Creates a special-purpose diagnostic heap in system memory from an address. The created heap can persist even in the event of a GPU-fault or device-removed scenario.
 
 <!-- d3d12-review-alert:begin:resources:HI-OpenExistingHeapFromAddress-shared:0 -->
 
@@ -5706,7 +5581,7 @@ HRESULT OpenExistingHeapFromFileMapping( HANDLE hFileMapping, REFIID riid, void*
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:resources:HI-OpenExistingHeapFromFileMapping-behavior:0 -->Creates a special-purpose diagnostic heap in system memory from a file mapping object. The created heap can persist even in the event of a GPU-fault or device-removed scenario.<!-- d3d12-review-inline:end:resources:HI-OpenExistingHeapFromFileMapping-behavior:0 --></ins>
+Creates a special-purpose diagnostic heap in system memory from a file mapping object. The created heap can persist even in the event of a GPU-fault or device-removed scenario.
 
 <!-- d3d12-review-alert:begin:resources:HI-OpenExistingHeapFromFileMapping-shared:0 -->
 
@@ -5837,13 +5712,7 @@ This method returns the GPU virtual address. <ins><!-- d3d12-review-inline:begin
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [heap/resource creation DDI](#create-heap-resource-ddi) accepts an optional
-> `D3D12DDIARG_CREATEHEAP_0001` and an optional
-> `D3D12DDIARG_CREATERESOURCE_0111`. This supports heap-only, resource-only
-> and combined creation. Its handles distinguish the driver heap, the runtime
-> resource used for callbacks, the protected session, and the driver resource.
-> The combined surface does not imply that every application call maps to one
-> identical driver-call sequence.
+> Heap/resource creation accepts either or both descriptions. Its separate handles identify the driver heap, runtime resource, protected session and driver resource.
 
 <!-- d3d12-review-alert:end:resources:RH-ddi-creation-surface:0 -->
 
@@ -5893,11 +5762,7 @@ The resource and heap creation & destruction methods are able to be called by mu
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> These are semantic associations, not a one-to-one call-count promise. The
-> runtime may use an internal resource to represent heap VA storage; an API
-> heap-only result does not imply that every driver call has a null resource
-> description. API validation-only outputs and public COM interfaces are not
-> driver-private object handles.
+> The runtime may use an internal resource to represent heap VA storage. An API heap-only result therefore need not correspond to a driver call with a null resource description.
 
 <!-- d3d12-review-alert:end:resources:RL-associations:2 -->
 
@@ -5930,27 +5795,12 @@ typedef D3D12DDI_HEAP_AND_RESOURCE_SIZES ( APIENTRY* PFND3D12DDI_CALCPRIVATEOPEN
 );
 ```
 
-<!-- d3d12-review-alert:begin:resources:RL-sizing:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The create-size query receives the UMD device, optional heap/resource
-> descriptions, and protected-session handle for the proposed creation.
-> The open-size query instead receives the required open description and
-> protected-session handle for the existing backing.
-
-<!-- d3d12-review-alert:end:resources:RL-sizing:0 -->
-
 <!-- d3d12-review-alert:begin:resources:RL-sizing:1 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12DDI_HEAP_AND_RESOURCE_SIZES.Heap` and `.Resource` are the separate
-> byte sizes of the driver's private CPU heap and resource object regions.
-> They are not GPU backing sizes, alignments or residency budgets. The queries
-> construct neither object and return the structure directly, not an `HRESULT`.
+> `D3D12DDI_HEAP_AND_RESOURCE_SIZES` reports separate private CPU-object sizes for the heap and resource.
 
 <!-- d3d12-review-alert:end:resources:RL-sizing:1 -->
 
@@ -5959,11 +5809,7 @@ typedef D3D12DDI_HEAP_AND_RESOURCE_SIZES ( APIENTRY* PFND3D12DDI_CALCPRIVATEOPEN
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime allocates these regions and supplies their driver handles to
-> the corresponding create/open operation. The driver initializes the supplied
-> regions and owns any auxiliary allocations it makes; it must not free the
-> runtime-owned regions in Destroy. Sizing and creation/open must agree on the
-> description and protection context used for those regions.
+> The runtime allocates these private regions. The driver initializes them and must not free them during destruction. Size queries and creation/opening must use matching descriptions and protection contexts.
 
 <!-- d3d12-review-alert:end:resources:RL-sizing:2 -->
 
@@ -5989,12 +5835,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEHEAPANDRESOURCE_0111)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The arguments, in order, identify the UMD device, optional heap description,
-> supplied driver heap handle, runtime resource handle, optional resource
-> description, optional optimized clear value, protected-session handle and
-> supplied driver resource handle. The runtime resource handle is passed back
-> to runtime allocation callbacks; it is not the driver's resource handle.
-> A zero protected-session handle denotes unprotected creation.
+> The runtime resource handle is used for runtime allocation callbacks. A zero protected-session handle selects unprotected creation.
 
 <!-- d3d12-review-alert:end:resources:RL-create:0 -->
 
@@ -6003,12 +5844,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEHEAPANDRESOURCE_0111)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The optional descriptions select heap-only, resource-only or combined
-> construction. Resource-only creation can reserve a new GPU VA range or
-> reuse a buffer resource's VA placement; combined construction creates
-> backing and a resource together. The public [storage models](#storage-models)
-> and [creation requirements](#creation-contracts) remain authoritative for
-> which application operation is legal.
+> Resource-only creation can reserve a new GPU VA range or reuse a buffer's VA placement. Combined creation creates backing and the resource together.
 
 <!-- d3d12-review-alert:end:resources:RL-create:1 -->
 
@@ -6017,11 +5853,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEHEAPANDRESOURCE_0111)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The driver consumes descriptions, nested layout/format arrays and optional
-> clear values during the call, retaining its own copies of any data needed
-> later. The supplied resource/heap handles instead designate the continuing
-> driver objects. Clear values are optimization metadata, not an executed
-> clear or a replacement for [initialization](synchronization.md#enhanced-aliasing).
+> The driver consumes descriptions, nested layout/format arrays and optional clear values during the call, copying data it needs later.
 
 <!-- d3d12-review-alert:end:resources:RL-create:2 -->
 
@@ -6030,12 +5862,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEHEAPANDRESOURCE_0111)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Creation returns `S_OK` on success or an `HRESULT` failure. On failure the
-> driver must release partial initialization and its auxiliary allocations;
-> it must not depend on a later Destroy for that failed object. A successfully
-> created object that is subsequently abandoned must be destroyed before its
-> runtime-owned private storage is released. These are object-construction
-> results, not per-command recording errors or GPU completion.
+> On failed creation, the driver releases partial state and additional allocations. A successfully created object receives destruction before its runtime-owned private storage is released, including when later runtime initialization fails.
 
 <!-- d3d12-review-alert:end:resources:RL-create:3 -->
 
@@ -6066,29 +5893,12 @@ typedef struct D3D12DDIARG_OPENHEAP_0003
 } D3D12DDIARG_OPENHEAP_0003;
 ```
 
-<!-- d3d12-review-alert:begin:resources:RL-open:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The arguments identify the UMD device, required open description, supplied
-> local driver heap handle, runtime resource handle, protected-session handle,
-> and supplied local driver resource handle. The runtime handle and protected
-> session have the same distinct roles as in creation.
-
-<!-- d3d12-review-alert:end:resources:RL-open:0 -->
-
 <!-- d3d12-review-alert:begin:resources:RL-open:1 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `NumAllocations` counts the `pOpenAllocationInfo` kernel-open allocation
-> records. `hKMResource` identifies the kernel resource; `pPrivateDriverData`
-> and `PrivateDriverDataSize` describe its opaque driver-private metadata.
-> These are not application resource-description bytes or COM interfaces.
-> `InitialResourceState` supplies the initial driver resource state for the
-> open path; it is not the texture storage-layout selector.
+> The open description supplies kernel allocation records and driver-private metadata. `InitialResourceState` supplies the initial driver state.
 
 <!-- d3d12-review-alert:end:resources:RL-open:1 -->
 
@@ -6097,11 +5907,7 @@ typedef struct D3D12DDIARG_OPENHEAP_0003
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The input description, allocation array and private-data bytes are borrowed
-> for the call. The driver must capture any metadata needed by its new local
-> object rather than retain these caller pointers. Open establishes a local
-> driver representation of existing backing, not a new independent allocation
-> or a transfer of the exporting object's private storage or GPU VA.
+> The driver copies the open metadata it needs for the local object. Open reconstructs a local driver representation of existing backing.
 
 <!-- d3d12-review-alert:end:resources:RL-open:2 -->
 
@@ -6110,12 +5916,7 @@ typedef struct D3D12DDIARG_OPENHEAP_0003
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Open returns `S_OK` on success or an `HRESULT` failure, with the same
-> failed-initialization and successful-object cleanup obligations as creation.
-> The [shared-handle](sharing-and-interoperability.md#id3d12device-opensharedhandle),
-> cross-device synchronization and [protected-creation](#protected-creation)
-> requirements remain applicable. Opening does not make the backing immediately
-> safe for unsynchronized GPU use.
+> Open has the same failed-construction and successful-object cleanup obligations as creation.
 
 <!-- d3d12-review-alert:end:resources:RL-open:3 -->
 
@@ -6136,12 +5937,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYHEAPANDRESOURCE )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The device and supplied heap/resource handles identify the local driver
-> objects to destroy. Either heap or resource can be absent; both can be
-> supplied for combined destruction. A null handle is not an object to release.
-> The driver releases the indicated objects' own auxiliary state without
-> freeing the runtime-owned private regions or independently destroying an
-> unrelated object that still owns references.
+> Destroy can receive either or both heap/resource handles. It releases driver-owned state without freeing runtime-supplied private regions.
 
 <!-- d3d12-review-alert:end:resources:RL-destroy:0 -->
 
@@ -6150,12 +5946,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYHEAPANDRESOURCE )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Destruction returns no value and does not discharge the application's
-> GPU-completion obligations; it is not a synchronization operation. The [execution lifetime](execution.md#lifetime),
-> [resource/heap ownership](#resource-heap-ownership) and
-> [resident-object destruction](#resident-destruction-driver) contracts still
-> apply. Destroying a locally opened representation is not permission to
-> invalidate backing still owned by another device or process.
+> Destroying a locally opened representation must not invalidate backing still owned by another device or process.
 
 <!-- d3d12-review-alert:end:resources:RL-destroy:1 -->
 
@@ -6325,12 +6116,7 @@ typedef struct D3D12DDIARG_CREATERESOURCE_0111
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The heap description gives backing byte size/alignment, DDI memory pool
-> and CPU-page property, DDI heap flags, and creation/visibility node masks.
-> It is the runtime's effective request, not a byte copy of the public
-> `D3D12_HEAP_DESC`; [heap-property selection](#heap-properties) and the [pool/page
-> requirements](#heap-resource-driver) apply. Heap-category flags describe admitted resource
-> classes rather than the API's inverted DENY flag encoding.
+> Driver heap-category flags describe admitted resource classes, unlike the API's inverted DENY encoding.
 
 <!-- d3d12-review-alert:end:resources:RL-payload-roles:0 -->
 
@@ -6339,14 +6125,7 @@ typedef struct D3D12DDIARG_CREATERESOURCE_0111
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The resource description supplies resource type, logical dimensions,
-> mip/array shape, format/sample description, texture storage layout,
-> driver resource flags and initial barrier layout. Buffer width is bytes;
-> texture dimensions are logical texels, not allocation byte counts.
-> Driver flags are not numerically interchangeable with API resource flags;
-> in particular SHADER_RESOURCE expresses permitted shader-resource use rather
-> than the public DENY_SHADER_RESOURCE bit. Declared unused values confer no
-> new operation or capability.
+> Driver resource flags are not numerically interchangeable with API flags. In particular, SHADER_RESOURCE grants shader-resource use rather than expressing API DENY_SHADER_RESOURCE.
 
 <!-- d3d12-review-alert:end:resources:RL-payload-roles:1 -->
 
@@ -6355,12 +6134,7 @@ typedef struct D3D12DDIARG_CREATERESOURCE_0111
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `ReuseBufferGPUVA` uses the
-> [resource-handle/byte-offset placement](resource-operations.md#driver-copy-types)
-> under the [reservation/capture rules](#heap-resource-va-reuse), rather
-> than identifying a driver heap or CPU pointer. Its object/backing lifetime and placement requirements remain
-> the [placed-resource contract](#create-placed-resource). This does not imply
-> new tile mappings or an implicit aliasing dependency.
+> `ReuseBufferGPUVA` uses a driver resource handle and byte offset under the [VA reuse contract](#heap-resource-va-reuse).
 
 <!-- d3d12-review-alert:end:resources:RL-payload-roles:2 -->
 
@@ -6369,13 +6143,7 @@ typedef struct D3D12DDIARG_CREATERESOURCE_0111
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> When storage `Layout` is ROW_MAJOR and `pRowMajorLayout` is non-null, it
-> supplies byte row/slice pitches. With GUID storage layout, `LayoutGuid`
-> selects the resource layout. This storage layout is distinct from
-> `InitialBarrierLayout`, which describes initial enhanced-barrier access
-> tracking. Ordinary application creation does not acquire a fixed-address
-> allocation guarantee merely because the DDI payload contains
-> `CreateAtVirtualAddress`.
+> ROW_MAJOR storage can supply explicit row/slice pitches through `pRowMajorLayout`. GUID storage uses `LayoutGuid`. Neither selects `InitialBarrierLayout`. Ordinary API creation does not request the fixed-address `CreateAtVirtualAddress` behavior.
 
 <!-- d3d12-review-alert:end:resources:RL-payload-roles:3 -->
 
@@ -6384,14 +6152,7 @@ typedef struct D3D12DDIARG_CREATERESOURCE_0111
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `SamplerFeedbackMipRegion` retains the
-> [sampler-feedback description](#extended-description).
-> `NumCastableFormats` counts `pCastableFormats`; the
-> [format-list contract](formats.md#cast-lists) remains required.
-> `D3D12DDI_CLEAR_VALUES.Format` selects the color or depth/stencil optimized
-> clear interpretation under [optimized clear values](#optimized-clear-value).
-> The [allocation query](#resource-query-ddis) resolves the storage description
-> before creation; private CPU size queries do not replace that layout query.
+> The [allocation query](#resource-query-ddis) resolves the storage description before creation. Private CPU-object size queries do not replace it.
 
 <!-- d3d12-review-alert:end:resources:RL-payload-roles:4 -->
 
@@ -6559,12 +6320,7 @@ typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_EVICT_CB)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pObjects` is a counted array of driver-private handles plus
-> `D3D12DDI_HANDLETYPE` discriminators, not an array of COM interfaces.
-> The discriminator must match the supplied object. A declared handle-type
-> value does not grant application residency eligibility. The runtime can
-> translate committed resources to their owning heap and batch/omit work;
-> there is no universal one-API-object/one-driver-handle/call correspondence.
+> `pObjects` pairs driver-private handles with `D3D12DDI_HANDLETYPE` discriminators. The runtime may replace committed resources with their owning heap and batch residency work.
 
 <!-- d3d12-review-alert:end:resources:RM-residency-roles:0 -->
 
@@ -6588,11 +6344,7 @@ typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_EVICT_CB)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The UMD translates its objects into kernel allocation lists, preserving
-> the applicable kernel flag semantics. These are not bitwise casts of
-> the API residency/budget flags. The argument blocks and counted arrays
-> are borrowed during the call; no continuing caller-array lifetime is
-> required by the returned residency reference.
+> The driver translates its objects into kernel allocation lists and converts the residency flags to their kernel meanings.
 
 <!-- d3d12-review-alert:end:resources:RM-residency-roles:2 -->
 
@@ -6618,24 +6370,9 @@ typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_EVICT_CB)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime combines pending dependencies for each queue across batches.
-> Synchronous [MakeResident](#make-resident) waits for them;
-> [EnqueueMakeResident](#enqueue-make-resident) orders them before the
-> application completion-fence signal. The API fence is not the driver's
-> paging-fence array, and successful async API return is not completion.
+> The runtime combines pending dependencies per paging queue. MakeResident waits for them. EnqueueMakeResident orders them before the application completion-fence signal.
 
 <!-- d3d12-review-alert:end:resources:RM-pending:1 -->
-
-<!-- d3d12-review-alert:begin:resources:RM-pending:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Evict returns `S_OK` on success or an `HRESULT` failure. It releases
-> residency references and enables page-out; it does not destroy objects,
-> invalidate GPU VA or authorize GPU access after residency is released.
-
-<!-- d3d12-review-alert:end:resources:RM-pending:2 -->
 
 <ins><!-- d3d12-review-inline:begin:resources:RM-pending-batch-maximum:0 -->The `MakeResident` DDI call will specify an array of handles that must be translated to an array of `D3DKMT_HANDLE`s. Because the driver may group multiple allocations in a resource, it is possible that multiple calls to `MakeResidentCb` may be required to satisfy the request. It is imperative that drivers that need to do this are able to return the proper fence value to user mode. If VidMm detects that an array of allocations is already made resident, it may return `STATUS_PENDING` while also providing a fence value that is older than the current batch. The runtime translates the kernel status into the callback's `HRESULT`; pending is reported as `E_PENDING`. The driver must detect this condition, and return not the "newest" fence, but instead must use the "max" fence across callbacks for the same paging queue that return `E_PENDING` (using the applicable paging-counter width and wraparound ordering).<!-- d3d12-review-inline:end:resources:RM-pending-batch-maximum:0 --></ins>
 
@@ -6863,13 +6600,7 @@ typedef enum D3D12DDI_MEMORY_SEGMENT_GROUP_0054
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Allocation/deallocation and allocation-offer/reclaim callbacks run from the
-> driver into the runtime using runtime device/paging-queue handles. They are
-> not the opposite-direction resource-object DDIs. The runtime accepts typed
-> allocation packets and private driver metadata, invokes the applicable OS
-> allocation services and returns `HRESULT`; the driver must check failure.
-> Kernel allocation handles, runtime resource tokens, driver object handles
-> and GPU virtual addresses remain distinct namespaces.
+> Allocation, deallocation and allocation-offer/reclaim callbacks run from driver to runtime. They use runtime device/paging-queue handles and kernel allocation packets.
 
 <!-- d3d12-review-alert:end:resources:CS-allocation-boundary:0 -->
 
@@ -6910,14 +6641,7 @@ typedef enum D3D12DDI_MEMORY_SEGMENT_GROUP_0054
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `CheckResourceVirtualAddress` returns a GPU virtual address for a driver
-> resource; it is not a generic validation of an arbitrary application address.
-> The buffer path may obtain its base this way, while immutable placed buffers
-> can derive it from their heap's implicit buffer and offset.
-> `CheckExistingResourceAllocationInfo` writes the existing resource's
-> resolved allocation description, sizes/alignments, layout and swizzle
-> transitions. It is not the pre-creation query on an application description
-> and does not allocate a resource.
+> CheckResourceVirtualAddress returns a driver resource's GPU address. CheckExistingResourceAllocationInfo reports the existing allocation's resolved sizes, alignments, layout and swizzle transitions.
 
 <!-- d3d12-review-alert:end:resources:CS-allocation-queries:0 -->
 
@@ -6926,11 +6650,7 @@ typedef enum D3D12DDI_MEMORY_SEGMENT_GROUP_0054
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `CheckResourceAllocationHandle` returns a kernel allocation handle and
-> retains the published `D3D10DDI_HRESOURCE` parameter spelling. That ABI
-> spelling does not turn its input into a kernel handle or its result into
-> a GPU address. Allocation queries complete their CPU outputs during the call;
-> they do not signal GPU completion.
+> CheckResourceAllocationHandle returns a kernel allocation handle and retains the published `D3D10DDI_HRESOURCE` parameter type.
 
 <!-- d3d12-review-alert:end:resources:CS-allocation-queries:1 -->
 
@@ -6939,10 +6659,7 @@ typedef enum D3D12DDI_MEMORY_SEGMENT_GROUP_0054
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The conditional downlevel `QueryVideoMemoryInfo` entry takes node index and
-> local/nonlocal segment group and writes the two `UINT64` byte quantities
-> `Budget` and `CurrentUsage`. It is not the larger DXGI result structure and
-> does not reserve memory or make resources resident.
+> The downlevel QueryVideoMemoryInfo output consists of `Budget` and `CurrentUsage` byte counts, rather than the larger DXGI result structure.
 
 <!-- d3d12-review-alert:end:resources:CS-allocation-queries:2 -->
 
@@ -7763,13 +7480,7 @@ typedef HRESULT(APIENTRY CALLBACK* PFND3D12DDI_CREATE_PROTECTED_SESSION_CB_0030)
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The adapter capability exchanges report node-specific session support,
-> type count and the type GUID array through their exact payloads below.
-> If protected resource sessions are supported, the list includes
-> `D3D12DDI_PROTECTED_RESOURCES_SESSION_HARDWARE_PROTECTED`. The support bit
-> requires the protected storage/CPU-read/flow guarantees for graphics, compute
-> and copy; optional video operations retain their own additional reporting.
-> These are not video GetCaps payloads or command-list query results.
+> The adapter queries report node-specific session support, type count and type GUIDs. Protected-resource support includes `D3D12DDI_PROTECTED_RESOURCES_SESSION_HARDWARE_PROTECTED` and requires the storage/CPU-read/flow guarantees for graphics, compute and copy. Video support is reported separately.
 
 <!-- d3d12-review-alert:end:resources:AB-protected-driver-roles:1 -->
 
@@ -7778,11 +7489,7 @@ typedef HRESULT(APIENTRY CALLBACK* PFND3D12DDI_CREATE_PROTECTED_SESSION_CB_0030)
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Private sizing reports driver CPU-object bytes. The runtime allocates that
-> storage and the driver constructs the session there. The creation payload
-> contains the translated driver NodeMask and ProtectionType; API descriptor
-> flags do not become an extra driver field. API zero-node conventions are
-> resolved before this driver mask is supplied.
+> The runtime allocates the private storage reported by the size query. It translates API node conventions into the DDI NodeMask and supplies ProtectionType.
 
 <!-- d3d12-review-alert:end:resources:AB-protected-driver-lifetime:0 -->
 
@@ -7791,14 +7498,7 @@ typedef HRESULT(APIENTRY CALLBACK* PFND3D12DDI_CREATE_PROTECTED_SESSION_CB_0030)
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Creation receives both a driver session handle and a distinct runtime
-> protected-session handle. During creation the driver calls
-> `CreateProtectedSessionCB` with the runtime device/session handles and its
-> private byte payload to create the associated graphics-kernel session.
-> The callback is not a second UMD session constructor and its table is not
-> the general core-layer callback table. Check and propagate its HRESULT;
-> session creation/opening success is `S_OK`, not an NTSTATUS protocol merely
-> because a short reference labels it STATUS_SUCCESS.
+> During creation, the driver calls `CreateProtectedSessionCB` with the runtime device/session handles and its private bytes to create the graphics-kernel session. It must propagate failure. Successful session creation/opening returns `S_OK`.
 
 <!-- d3d12-review-alert:end:resources:AB-protected-driver-lifetime:1 -->
 
@@ -7807,13 +7507,7 @@ typedef HRESULT(APIENTRY CALLBACK* PFND3D12DDI_CREATE_PROTECTED_SESSION_CB_0030)
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The outer CPU argument/private-data packet is borrowed for the call; the
-> driver captures CPU data it needs later. Successful construction receives
-> the matching destroy operation, including when later runtime initialization
-> abandons the API object. Failed driver construction must clean its partial
-> driver-owned state; it is not the successful-object destruction path.
-> Destruction frees driver-owned state, not the runtime's private
-> object-storage allocation.
+> The driver copies call-borrowed metadata needed afterward. It unwinds failed construction. Successfully constructed objects receive destruction, which releases driver-owned state without freeing runtime-provided private storage.
 
 <!-- d3d12-review-alert:end:resources:AB-protected-driver-lifetime:2 -->
 
@@ -7822,11 +7516,6 @@ typedef HRESULT(APIENTRY CALLBACK* PFND3D12DDI_CREATE_PROTECTED_SESSION_CB_0030)
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Opened-size/open use the shared session's kernel-provided private bytes.
-> They reconstruct the driver object for that existing session rather than
-> create a new protection domain. Status-fence/kernel-session lifetime and
-> the application's COM/shared-handle/GPU-use lifetimes remain distinct.
-> The session descriptor/query/selection APIs do not negotiate a license or
-> turn these packets into a general protected-bitstream-decryption protocol.
+> Opening uses the shared session's kernel-provided private bytes to reconstruct a local driver object for that session.
 
 <!-- d3d12-review-alert:end:resources:AB-protected-driver-lifetime:3 -->

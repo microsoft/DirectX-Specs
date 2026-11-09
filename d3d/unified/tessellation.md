@@ -73,6 +73,8 @@
 
 ## Hull shader
 
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-10.1:0 -->The DXBC Hull Shader instruction set is listed in the [instruction reference](../archive/D3D11_3_FunctionalSpec.htm#HSInstructionSet).<!-- d3d12-review-inline:end:tessellation:STAGES-10.1:0 --></ins>
+
 <a id="hull-invocation"></a>
 
 ### Hull Shader Invocation
@@ -1109,6 +1111,8 @@ Suppose a single patch is drawn 64 meters wide.
 
 ## Domain shader
 
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-12.1:0 -->The DXBC Domain Shader instruction set is listed in the [instruction reference](../archive/D3D11_3_FunctionalSpec.htm#DSInstructionSet).<!-- d3d12-review-inline:end:tessellation:STAGES-12.1:0 --></ins>
+
 <a id="domain-inputs"></a>
 
 ### Domain-shader inputs
@@ -1177,6 +1181,6 @@ Suppose a single patch is drawn 64 meters wide.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The published [pipeline-state driver aggregate](pipeline-state.md#driver) carries vertex, hull and domain shader handles. The selected programs supply control-point interfaces, tessellator domain, partitioning and output-primitive state; these are not additional mutable command-list shader bindings. Driver compilation and execution must preserve the stage data dependencies, storage limits, final factor interpretation and tessellator precision defined above. Declared-MaxTessFactor enforcement remains distinct from the tessellator's fixed range clamping.
+> The [pipeline-state driver aggregate](pipeline-state.md#driver) selects the vertex, hull and domain shaders. They are not independently bound on the command list.
 
 <!-- d3d12-review-alert:end:tessellation:STAGES-driver-contract:0 -->

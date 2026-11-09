@@ -932,7 +932,7 @@ void SetMarker( UINT Metadata, const void* pData, UINT Size);
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoDecodeCommandList-SetMarker-behavior:0 -->For internal use only. Not intended to be called directly.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoDecodeCommandList-SetMarker-behavior:0 --></ins>
+For internal use only. Not intended to be called directly.
 
 <!-- d3d12-review-alert:begin:diagnostics:LA-ID3D12VideoDecodeCommandList-SetMarker-shared:0 -->
 
@@ -981,7 +981,7 @@ void BeginEvent( UINT Metadata, const void* pData, UINT Size);
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoDecodeCommandList-BeginEvent-behavior:0 -->For internal use only. Not intended to be called directly.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoDecodeCommandList-BeginEvent-behavior:0 --></ins>
+For internal use only. Not intended to be called directly.
 
 <!-- d3d12-review-alert:begin:diagnostics:LA-ID3D12VideoDecodeCommandList-BeginEvent-shared:0 -->
 
@@ -1030,7 +1030,7 @@ void EndEvent();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoDecodeCommandList-EndEvent-behavior:0 -->For internal use only. Not intended to be called directly.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoDecodeCommandList-EndEvent-behavior:0 --></ins>
+For internal use only. Not intended to be called directly.
 
 <!-- d3d12-review-alert:begin:diagnostics:LA-ID3D12VideoDecodeCommandList-EndEvent-shared:0 -->
 
@@ -1066,7 +1066,7 @@ void SetMarker( UINT Metadata, const void* pData, UINT Size);
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoProcessCommandList-SetMarker-behavior:0 -->For internal use only. Not intended to be called directly.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoProcessCommandList-SetMarker-behavior:0 --></ins>
+For internal use only. Not intended to be called directly.
 
 <!-- d3d12-review-alert:begin:diagnostics:LA-ID3D12VideoProcessCommandList-SetMarker-shared:0 -->
 
@@ -1115,7 +1115,7 @@ void BeginEvent( UINT Metadata, const void* pData, UINT Size);
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoProcessCommandList-BeginEvent-behavior:0 -->For internal use only. Not intended to be called directly.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoProcessCommandList-BeginEvent-behavior:0 --></ins>
+For internal use only. Not intended to be called directly.
 
 <!-- d3d12-review-alert:begin:diagnostics:LA-ID3D12VideoProcessCommandList-BeginEvent-shared:0 -->
 
@@ -1164,7 +1164,7 @@ void EndEvent();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoProcessCommandList-EndEvent-behavior:0 -->For internal use only. Not intended to be called directly.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoProcessCommandList-EndEvent-behavior:0 --></ins>
+For internal use only. Not intended to be called directly.
 
 <!-- d3d12-review-alert:begin:diagnostics:LA-ID3D12VideoProcessCommandList-EndEvent-shared:0 -->
 
@@ -1200,7 +1200,7 @@ void SetMarker( UINT Metadata, const void* pData, UINT Size);
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoEncodeCommandList-SetMarker-behavior:0 -->For internal use only. Not intended to be called directly.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoEncodeCommandList-SetMarker-behavior:0 --></ins>
+For internal use only. Not intended to be called directly.
 
 <!-- d3d12-review-alert:begin:diagnostics:LA-ID3D12VideoEncodeCommandList-SetMarker-shared:0 -->
 
@@ -1249,7 +1249,7 @@ void BeginEvent( UINT Metadata, const void* pData, UINT Size);
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoEncodeCommandList-BeginEvent-behavior:0 -->For internal use only. Not intended to be called directly.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoEncodeCommandList-BeginEvent-behavior:0 --></ins>
+For internal use only. Not intended to be called directly.
 
 <!-- d3d12-review-alert:begin:diagnostics:LA-ID3D12VideoEncodeCommandList-BeginEvent-shared:0 -->
 
@@ -1298,7 +1298,7 @@ void EndEvent();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoEncodeCommandList-EndEvent-behavior:0 -->For internal use only. Not intended to be called directly.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoEncodeCommandList-EndEvent-behavior:0 --></ins>
+For internal use only. Not intended to be called directly.
 
 <!-- d3d12-review-alert:begin:diagnostics:LA-ID3D12VideoEncodeCommandList-EndEvent-shared:0 -->
 
@@ -2534,18 +2534,11 @@ typedef struct D3D12_DEVICE_REMOVED_EXTENDED_DATA2
 } D3D12_DEVICE_REMOVED_EXTENDED_DATA2;
 ```
 
-<!-- d3d12-review-alert:begin:diagnostics:dred-primary-types:59 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> | Members               | Description                                                                   |
-> |-----------------------|-------------------------------------------------------------------------------|
-> | DeviceRemovedReason   | The device removed reason matching the return value of GetDeviceRemovedReason |
-> | AutoBreadcrumbsOutput | D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 data                                       |
-> | PageFaultOutput       | D3D12_DRED_PAGE_FAULT_OUTPUT1 data                                             |
-
-<!-- d3d12-review-alert:end:diagnostics:dred-primary-types:59 -->
+| Members               | Description                                                                   |
+|-----------------------|-------------------------------------------------------------------------------|
+| DeviceRemovedReason   | The device removed reason matching the return value of GetDeviceRemovedReason |
+| AutoBreadcrumbsOutput | D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 data                                       |
+| PageFaultOutput       | D3D12_DRED_PAGE_FAULT_OUTPUT1 data                                             |
 
 #### D3D12_DRED_FLAGS
 
@@ -5807,13 +5800,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_RETRIEVE_SHADER_COMMENT_0003 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The driver `SetMarker` entry receives an ordinary driver command-list handle
-> and one `UINT64` runtime marker sequence number. It is not the application's
-> `Metadata`, byte pointer and byte count tuple, nor a graphics binding setter.
-> The same scalar ABI is retained in both current 3D layouts and the selected
-> video tables. Marker recording does not establish a resource barrier or
-> completion fence; application annotation/event-region rules retain their
-> own command-family contracts.
+> SetMarker receives a `UINT64` runtime marker sequence number, not the application's metadata/pointer/byte-count tuple. Its ordinary-handle signature is retained in both 3D layouts and the selected video tables.
 
 <!-- d3d12-review-alert:end:diagnostics:CS-diagnostic-services:0 -->
 
@@ -5822,15 +5809,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_RETRIEVE_SHADER_COMMENT_0003 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `GetDebugAllocationInfo` takes a tagged driver object, not a kernel object
-> handle. It reports per-physical-adapter GPU address ranges and kernel
-> allocation handle/offset/size records through two independent count/array
-> pairs. Null arrays support size queries; supplied arrays have the input
-> capacities specified by their counts. The driver reports current counts
-> even if they have changed since an earlier query, but does not write beyond
-> the supplied capacities. These snapshots are not immutable allocation lists,
-> residency operations or GPU synchronization. KMT allocation information is
-> not thread information.
+> GetDebugAllocationInfo reports per-physical-adapter GPU ranges and kernel allocation records through independent count/array pairs. Null arrays query sizes. The driver reports current counts even if they changed since an earlier query and must not exceed supplied capacities.
 
 <!-- d3d12-review-alert:end:diagnostics:CS-diagnostic-services:1 -->
 
@@ -5839,12 +5818,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_RETRIEVE_SHADER_COMMENT_0003 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `RetrieveShaderComment` queries a driver PSO's optional wide-character
-> comment. Its in/out `SIZE_T` counts `WCHAR` elements including the terminator,
-> not bytes. The runtime's `WKPDID_CommentStringW` private-data path translates
-> the byte count to/from characters. Failure remains `HRESULT`; an unavailable
-> comment is not an empty success-shaped payload. Returned comment text is
-> diagnostic data, not a shader identifier, executable bytecode or cache key.
+> RetrieveShaderComment counts `WCHAR` elements including the terminator. The runtime converts the byte count used by `WKPDID_CommentStringW`.
 
 <!-- d3d12-review-alert:end:diagnostics:CS-diagnostic-services:2 -->
 

@@ -944,7 +944,7 @@ typedef struct D3D12_SHADER_RESOURCE_VIEW_DESC
 
 ### Buffer SRV fields
 
-<ins><!-- d3d12-review-inline:begin:formats:V-buffer-srv:0 -->`FirstElement`<!-- d3d12-review-inline:end:formats:V-buffer-srv:0 --></ins>
+`FirstElement`
 
 The index of the first element to be accessed by the view.
 
@@ -982,7 +982,7 @@ The size of each element in the buffer structure (in bytes) when the buffer repr
 
 <!-- d3d12-review-alert:end:formats:N-common-texture-behavior:0 -->
 
-<ins><!-- d3d12-review-inline:begin:formats:V-texture-srv:0 -->`MostDetailedMip`<!-- d3d12-review-inline:end:formats:V-texture-srv:0 --></ins>
+`MostDetailedMip`
 
 Index of the most detailed mipmap level to use; this number is between 0 and **MipLevels** -1 (where **MipLevels** is from the original Texture2D for which [ID3D12Device::CreateShaderResourceView](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nf-d3d12-id3d12device-createshaderresourceview) creates a view).
 
@@ -1006,7 +1006,7 @@ The index (plane slice number) of the plane to use in an array of textures.
 
 `ResourceMinLODClamp`
 
-<ins><!-- d3d12-review-inline:begin:formats:V-texture-srv:12 -->Specifies the minimum mipmap level that you can access. Specifying 0.0f means that you can access all of the mipmap levels. Specifying 3.0f means that you can access mipmap levels from 3.0f to *MipCount - 1*.<!-- d3d12-review-inline:end:formats:V-texture-srv:12 --></ins>
+Specifies the minimum mipmap level that you can access. Specifying 0.0f means that you can access all of the mipmap levels. Specifying 3.0f means that you can access mipmap levels from 3.0f to *MipCount - 1*.
 
 <ins><!-- d3d12-review-inline:begin:formats:L-lod-space:0 -->The SRV's `ResourceMinLODClamp` considers the most detailed mipmap on the resource as LOD 0, so specifying a MinLOD clamp of 1 causes miplevel 0 on the resource to be ignored.
 On the other hand, the Sampler’s MinLOD clamp defines most detailed mipmap in the current Shader Resource View as LOD 0.
@@ -1214,7 +1214,7 @@ typedef struct D3D12_UNORDERED_ACCESS_VIEW_DESC
 
 ### Buffer UAV fields and counters
 
-<ins><!-- d3d12-review-inline:begin:formats:V-buffer-uav:0 -->`FirstElement`<!-- d3d12-review-inline:end:formats:V-buffer-uav:0 --></ins>
+`FirstElement`
 
 The zero-based index of the first element to be accessed.
 
@@ -1258,7 +1258,7 @@ The counter offset, in bytes.
 
 #### Array and plane fields
 
-<ins><!-- d3d12-review-inline:begin:formats:V-texture-uav:0 -->`MipSlice`<!-- d3d12-review-inline:end:formats:V-texture-uav:0 --></ins>
+`MipSlice`
 
 The mipmap slice index.
 
@@ -1276,7 +1276,7 @@ The index (plane slice number) of the plane to use in an array of textures.
 
 #### Volume depth-slice fields
 
-<ins><!-- d3d12-review-inline:begin:formats:V-volume-uav:0 -->`MipSlice`<!-- d3d12-review-inline:end:formats:V-volume-uav:0 --></ins>
+`MipSlice`
 
 The mipmap slice index.
 
@@ -1425,7 +1425,7 @@ typedef struct D3D12_RENDER_TARGET_VIEW_DESC
 
 #### Buffer RTV fields
 
-<ins><!-- d3d12-review-inline:begin:formats:V-buffer-rtv:0 -->`FirstElement`<!-- d3d12-review-inline:end:formats:V-buffer-rtv:0 --></ins>
+`FirstElement`
 
 Number of elements between the beginning of the buffer and the first element to access.
 
@@ -1444,7 +1444,7 @@ The total number of elements in the view.
 
 #### Array and plane RTV fields
 
-<ins><!-- d3d12-review-inline:begin:formats:V-texture-rtv:0 -->`MipSlice`<!-- d3d12-review-inline:end:formats:V-texture-rtv:0 --></ins>
+`MipSlice`
 
 <ins><!-- d3d12-review-inline:begin:formats:V-texture-rtv:1 -->The index of the mipmap level to use.<!-- d3d12-review-inline:end:formats:V-texture-rtv:1 --></ins>
 
@@ -1462,7 +1462,7 @@ The index (plane slice number) of the plane to use in an array of textures.
 
 #### Volume depth-slice RTV fields
 
-<ins><!-- d3d12-review-inline:begin:formats:V-volume-rtv:0 -->`MipSlice`<!-- d3d12-review-inline:end:formats:V-volume-rtv:0 --></ins>
+`MipSlice`
 
 <ins><!-- d3d12-review-inline:begin:formats:V-volume-rtv:1 -->The index of the mipmap level to use.<!-- d3d12-review-inline:end:formats:V-volume-rtv:1 --></ins>
 
@@ -1601,7 +1601,7 @@ typedef struct D3D12_DEPTH_STENCIL_VIEW_DESC
 } D3D12_DEPTH_STENCIL_VIEW_DESC;
 ```
 
-<ins><!-- d3d12-review-inline:begin:formats:V-texture-dsv:0 -->`MipSlice`<!-- d3d12-review-inline:end:formats:V-texture-dsv:0 --></ins>
+`MipSlice`
 
 The index of the first mipmap level to use.
 
@@ -1812,7 +1812,7 @@ typedef struct D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS
 
 ### D3D12_FEATURE_DATA_FORMAT_SUPPORT
 
-<ins><!-- d3d12-review-inline:begin:formats:S-D3D12_FEATURE_DATA_FORMAT_SUPPORT:0 -->`Format`<!-- d3d12-review-inline:end:formats:S-D3D12_FEATURE_DATA_FORMAT_SUPPORT:0 --></ins>
+`Format`
 
 A [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format)-typed value for the format to return info about.
 
@@ -1828,7 +1828,7 @@ A [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat
 
 ### D3D12_FEATURE_DATA_FORMAT_INFO
 
-<ins><!-- d3d12-review-inline:begin:formats:S-D3D12_FEATURE_DATA_FORMAT_INFO:0 -->`Format`<!-- d3d12-review-inline:end:formats:S-D3D12_FEATURE_DATA_FORMAT_INFO:0 --></ins>
+`Format`
 
 A [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format)-typed value for the format to return info about.
 
@@ -1840,7 +1840,7 @@ A [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat
 
 ### D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS
 
-<ins><!-- d3d12-review-inline:begin:formats:S-D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS:0 -->`Format`<!-- d3d12-review-inline:end:formats:S-D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS:0 --></ins>
+`Format`
 
 A [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format)-typed value for the format to return info about.
 
@@ -2032,7 +2032,7 @@ A pointer to the [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desk
 
 `[in] DestDescriptor`
 
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createshaderresourceview:8 -->Describes the CPU descriptor handle that represents the shader-resource view. This handle can be created in a shader-visible or non-shader-visible descriptor heap.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createshaderresourceview:8 --></ins>
+Describes the CPU descriptor handle that represents the shader-resource view. This handle can be created in a shader-visible or non-shader-visible descriptor heap.
 
 #### Return values
 
@@ -2068,7 +2068,7 @@ At least one of *pResource* or *pDesc* must be provided.
 
 `pCounterResource`
 
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createunorderedaccessview:6 -->The [ID3D12Resource](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource) for the counter (if any) associated with the UAV.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createunorderedaccessview:6 --></ins>
+The [ID3D12Resource](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource) for the counter (if any) associated with the UAV.
 
 <ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createunorderedaccessview:7 -->If *pCounterResource* is not specified, then the **CounterOffsetInBytes** member of the [`D3D12_BUFFER_UAV`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_buffer_uav) structure must be 0.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createunorderedaccessview:7 --></ins>
 
@@ -2129,7 +2129,7 @@ A pointer to the [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desk
 
 `[in] DestDescriptor`
 
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createrendertargetview:8 -->Describes the CPU descriptor handle that represents the destination where the newly-created render target view will reside.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createrendertargetview:8 --></ins>
+Describes the CPU descriptor handle that represents the destination where the newly-created render target view will reside.
 
 #### Return values
 
@@ -2211,17 +2211,17 @@ For purposes of sampler feedback, creates a descriptor suitable for binding.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:formats:Q-feedback:0 -->`pTargetedResource`<!-- d3d12-review-inline:end:formats:Q-feedback:0 --></ins>
+`pTargetedResource`
 
 The targeted resource, such as a texture, to create a descriptor for.
 
 `pFeedbackResource`
 
-<ins><!-- d3d12-review-inline:begin:formats:Q-feedback:3 -->The feedback resource, such as a texture, to create a descriptor for.<!-- d3d12-review-inline:end:formats:Q-feedback:3 --></ins>
+The feedback resource, such as a texture, to create a descriptor for.
 
 `DestDescriptor`
 
-<ins><!-- d3d12-review-inline:begin:formats:Q-feedback:5 -->The CPU descriptor handle.<!-- d3d12-review-inline:end:formats:Q-feedback:5 --></ins>
+The CPU descriptor handle.
 
 #### Return values
 
@@ -2243,7 +2243,7 @@ The targeted resource, such as a texture, to create a descriptor for.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The driver creates hardware-specific descriptors from resource/view descriptions. Descriptor generation has [no descriptor-owned allocation or destruction](binding.md#driver-descriptors). API view fields are not interchangeable with hardware descriptor bytes; all descriptor access remains through the defined CPU/GPU handles. API descriptions are translated into the driver representation appropriate to the negotiated DDI version, not by assuming identical API/DDI enums or unions.
+> The runtime translates API view descriptions into the negotiated driver representation. The driver writes hardware-specific descriptors into the supplied CPU descriptor handles. Descriptor creation does not allocate separately owned objects. See [descriptor ownership](binding.md#driver-descriptors).
 
 <!-- d3d12-review-alert:end:formats:N-driver:0 -->
 
@@ -2295,24 +2295,12 @@ typedef VOID (APIENTRY* PFND3D12DDI_CREATE_DEPTH_STENCIL_VIEW)(
 
 <!-- d3d12-review-alert:end:formats:N-driver-translation:0 -->
 
-<!-- d3d12-review-alert:begin:formats:N-driver-translation:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The DDIs above receive a device handle, a pointer to the corresponding versioned view description, and a CPU destination handle; they return `VOID`.
-
-<!-- d3d12-review-alert:end:formats:N-driver-translation:1 -->
-
 <!-- d3d12-review-alert:begin:formats:DV-V01:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The logical API contracts are associated precisely as follows, after the
-> runtime's resource/default/range/handle adaptation above. The driver encodes
-> the selected logical view in the supplied destination; the association is
-> not a claim of identical API/DDI signatures or raw hardware descriptor bytes.
+> The following table associates descriptor-creation DDIs with their API operations.
 
 <!-- d3d12-review-alert:end:formats:DV-V01:0 -->
 
@@ -2337,7 +2325,7 @@ Driver support for format list casting is reported via `RelaxedFormatCastingSupp
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime resolves omitted default view descriptions into the appropriate resource-derived view information before driver descriptor creation. The resource dimensions and sample configuration determine the driver-facing view kind; depth/stencil plane selection and API component mapping retain their specified logical meanings. Driver support reporting must distinguish the applicable view, load/store/atomic and multisample operations rather than claim support from the format name alone.
+> Before calling the driver, the runtime resolves omitted view descriptions from the resource and selects the driver-facing view kind.
 
 <!-- d3d12-review-alert:end:formats:N-driver-defaults:0 -->
 
@@ -2354,31 +2342,15 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CREATE_SAMPLER_FEEDBACK_UNORDERED_ACCESS_VI
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The driver receives the resolved targeted-resource and feedback-resource
-> handles, plus the destination driver CPU descriptor handle. It encodes the
-> paired association under the
-> [CreateSamplerFeedbackUnorderedAccessView](#create-sampler-feedback-uav)
-> contract, including permitted null associations, rather than treating the
-> feedback resource alone as an ordinary UAV description.
+> Sampler-feedback descriptor creation receives separate driver handles for the targeted and feedback resources.
 
 <!-- d3d12-review-alert:end:formats:DV-F02:0 -->
 
-<!-- d3d12-review-alert:begin:formats:DV-F03:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Sampler-feedback support uses the negotiated capability and the `_0075`
-> descriptor-creation form. This entry returns `VOID`, not a recoverable
-> creation `HRESULT`. Its descriptor generation follows the shared
-> [no individual descriptor allocation/destruction](binding.md#driver-descriptors)
-> and ordinary runtime descriptor-error responsibilities.
-
-<!-- d3d12-review-alert:end:formats:DV-F03:0 -->
-
 <a id="driver-format-queries"></a>
 
-### Current driver format-query callbacks
+<a id="current-driver-format-query-callbacks"></a>
+
+### Current driver format-query DDIs
 
 ```cpp
 #define D3D12DDI_FORMAT_SUPPORT_SHADER_SAMPLE            0x00000001 // format can be sampled with any filter in shaders
@@ -2425,7 +2397,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12DDI_DEVICE_FUNCS_CORE_0119::pfnCheckFormatSupport` and `pfnCheckMultisampleQualityLevels` use these unversioned signatures. Their first argument is the ordinary driver device handle, not an adapter, command list or compiler handle.
+> `pfnCheckFormatSupport` and `pfnCheckMultisampleQualityLevels` are members of `D3D12DDI_DEVICE_FUNCS_CORE_0119`.
 
 <!-- d3d12-review-alert:end:formats:FQ-query-roles:0 -->
 
@@ -2434,7 +2406,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Both callbacks synchronously write a caller-supplied `UINT` output. That pointer is writable call-duration storage, not a capacity, a returned allocation or memory the driver may retain after return. The driver writes the complete result; it must not treat a zero-initialized temporary as a substitute for producing its output.
+> Both queries write their results into caller-provided CPU storage before returning.
 
 <!-- d3d12-review-alert:end:formats:FQ-query-roles:1 -->
 
@@ -2443,7 +2415,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> These are `VOID` device queries, not HRESULT-returning application methods or command-list recording operations. Unsupported optional support or zero quality levels are data results, not recoverable driver HRESULTs. The valid-input queries provide no per-query recoverable failure channel; device failure remains separate. They do not use deferred command-list Close, allocate a resource, perform a transition or establish GPU completion. API validation can prevent dispatch, and initialization/other runtime work can query the same callback, so there is no one-to-one API/DDI call count.
+> API validation or runtime initialization can answer or issue queries without a one-to-one API/DDI call mapping.
 
 <!-- d3d12-review-alert:end:formats:FQ-query-roles:2 -->
 
@@ -2451,14 +2423,14 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
 
 #### PFND3D12DDI_CHECKFORMATSUPPORT
 
-<ins><!-- d3d12-review-inline:begin:formats:FQ-format-primary:0 -->Implemented by the client driver to check the format support.<!-- d3d12-review-inline:end:formats:FQ-format-primary:0 --></ins>
+Implemented by the client driver to check the format support.
 
 <!-- d3d12-review-alert:begin:formats:FQ-format-reporting:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `PFND3D12DDI_CHECKFORMATSUPPORT` receives the driver device, a `DXGI_FORMAT` and a writable optional-format-support mask. The published `D3D12DDI_FORMAT_SUPPORT_*` values describe features that are optional for applicable formats. A zero driver mask means no such optional bits were reported; it does not mean every required resource/view/operation capability for the format is absent.
+> `D3D12DDI_FORMAT_SUPPORT_*` reports optional format capabilities. A zero mask does not remove capabilities required for the format.
 
 <!-- d3d12-review-alert:end:formats:FQ-format-reporting:0 -->
 
@@ -2467,7 +2439,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime starts the application `Support1`/`Support2` result from the format's required capabilities and then incorporates eligible optional reports. A driver bit cannot legalize an operation the format does not permit. The driver mask is not either API enum and must not be copied directly into an application support word. For example, driver `SHADER_SAMPLE` is `0x1`, while API `D3D12_FORMAT_SUPPORT1_SHADER_SAMPLE` is `0x200`; those are not interchangeable meanings for bit zero.
+> The runtime combines required format capabilities with eligible optional driver reports. The driver mask is not an API support word. For example, driver `SHADER_SAMPLE` is `0x1`, while API `D3D12_FORMAT_SUPPORT1_SHADER_SAMPLE` is `0x200`.
 
 <!-- d3d12-review-alert:end:formats:FQ-format-reporting:1 -->
 
@@ -2476,18 +2448,9 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The special `D3D12DDI_FORMAT_SUPPORT_NOT_SUPPORTED` result is the published whole-format rejection for `DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM`, and is returned alone, not OR'd with capability bits. It is not a generic replacement for zero optional support or a way to waive required-format capabilities. The [API query result contract](#check-feature-support) separately governs nonexistent/unavailable formats, initialized output masks and failure when no support is computed.
+> `D3D12DDI_FORMAT_SUPPORT_NOT_SUPPORTED` rejects `DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM` as a whole. It must be returned alone and is not valid for other formats.
 
 <!-- d3d12-review-alert:end:formats:FQ-format-reporting:2 -->
-
-<!-- d3d12-review-alert:begin:formats:FQ-format-reporting:3 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Resource dimensions, ordinary shader loads/comparison/monochrome operations, mip support, depth/stencil, within-layout casting, baseline atomics, resolve and other required uses are supplied by their applicable format requirements rather than independent flags in this optional mask. Existing [typed-UAV groups](#typed-uav-loads), [shared-exponent support](#shared-exponent-support), [view/casting restrictions](#interpretation) and operation-specific capability requirements remain in force; this query does not create an unrestricted per-format permission matrix.
-
-<!-- d3d12-review-alert:end:formats:FQ-format-reporting:3 -->
 
 <a id="driver-format-mask"></a>
 
@@ -2537,7 +2500,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Typed-UAV load reporting is not enabled by `UAV_READS` alone: the applicable additional/minimum typed-load format capability and typed-UAV store eligibility must also be satisfied. The [load-format groups](#typed-uav-loads) remain canonical. Individual atomic-operation flags and operand-width capabilities are not additional fields in this driver mask; their requirements, including [typed-resource 64-bit capability reporting](amplification-and-mesh-shaders.md#d3d12_feature_data_d3d12_options9), remain separate.
+> Mapping `UAV_READS` also requires the applicable [typed-UAV load-format group](#typed-uav-loads) and typed-UAV store eligibility.
 
 <!-- d3d12-review-alert:end:formats:FQ-driver-bit-mapping:2 -->
 
@@ -2546,7 +2509,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Logic-op and tiled API support are derived from their format/device requirements. Sampler-feedback support follows the [feedback capability and paired-view contract](#create-sampler-feedback-uav), not a new optional-driver-mask bit. Video flags retain their separate interface/format conditions.
+> Logic-op, tiled and sampler-feedback support are derived from their format/device requirements, not additional optional driver-mask bits.
 
 <!-- d3d12-review-alert:end:formats:FQ-driver-bit-mapping:3 -->
 
@@ -2555,7 +2518,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The separate display-bit reporting contract is available from driver DDI revision `_0107`. For these current drivers, optional scanout requires the driver's `DISPLAY` bit; render-target support alone must not cause API `Support1.DISPLAY` to be reported. Displayable support is a distinct API use of the bit with its own format eligibility. This is format-support reporting, not a guarantee of every presentation path or color-space combination.
+> From DDI revision `_0107`, optional scanout requires the driver's `DISPLAY` bit. Render-target support alone does not produce API `Support1.DISPLAY`. Displayable-format reporting retains its separate eligibility rules.
 
 <!-- d3d12-review-alert:end:formats:FQ-driver-bit-mapping:4 -->
 
@@ -2564,7 +2527,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For `DXGI_FORMAT_R9G9B9E5_SHAREDEXP`, the optional render-target/UAV support group is not reported for driver DDI revisions below `_0107`, regardless of optional flags returned by such a driver. The format's preexisting shader-resource uses are unaffected. For eligible drivers, the [R9G9B9E5 group](#shared-exponent-support) retains its all-or-nothing rule, including the derived resolve capability when the group is supported. For `NV12`, shader-load reporting follows shader-sample support because this DDI has no independent shader-load flag. Neither derived rule makes unrelated load, sampling, view or resource operations legal.
+> Below DDI revision `_0107`, optional render-target/UAV support for `DXGI_FORMAT_R9G9B9E5_SHAREDEXP` is not reported regardless of the driver bits. Its shader-resource support is unchanged. For eligible drivers, the [shared-exponent group](#shared-exponent-support) retains its all-or-nothing and derived-resolve rules. `NV12` shader-load reporting follows shader-sample support because this DDI has no independent shader-load flag.
 
 <!-- d3d12-review-alert:end:formats:FQ-driver-bit-mapping:5 -->
 
@@ -2572,14 +2535,14 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
 
 #### PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS
 
-<ins><!-- d3d12-review-inline:begin:formats:FQ-quality-primary:0 -->Implemented by the client driver to check multi-sample quality levels.<!-- d3d12-review-inline:end:formats:FQ-quality-primary:0 --></ins>
+Implemented by the client driver to check multi-sample quality levels.
 
 <!-- d3d12-review-alert:begin:formats:FQ-quality-reporting:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS` receives the driver device, `Format`, `SampleCount`, `D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAGS` and writable `pNumQualityLevels`. Driver `NONE` is zero and `TILED_RESOURCE` is `0x1`; the latter asks about the tiled-resource configuration, not an additional quality index. The output is a count: nonzero `N` supplies ordinary quality indices `0` through `N - 1`; zero reports no quality levels for that configuration.
+> `D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAG_TILED_RESOURCE` requests the tiled-resource configuration.
 
 <!-- d3d12-review-alert:end:formats:FQ-quality-reporting:0 -->
 
@@ -2588,7 +2551,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Format support for multisampled use and the separate quality result must both satisfy the [API query contract](#d3d12-feature-data-multisample-quality-levels). The frontend can answer sample count 1 locally, without this DDI. Counts zero or greater than the API maximum 32 fail the API support calculation; unsupported otherwise-valid configurations can instead produce successful API queries with zero quality levels. Driver invocation is not itself proof that all resource/view/sample-pattern requirements are met.
+> The runtime can answer sample count 1 without invoking the DDI. Counts zero or greater than 32 fail the API support calculation.
 
 <!-- d3d12-review-alert:end:formats:FQ-quality-reporting:1 -->
 
@@ -2597,15 +2560,8 @@ typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For the tiled flag, format/tiled-resource capability can force the exposed count to zero even after the driver returned a positive count. The runtime caps an exposed driver count at `0x80000000`, reserving the upper half of the `UINT` quality-value range for separately defined standard/custom sample-pattern values. That cap does not declare every numeric index a valid pattern independently of the reported count, nor replace [multisample/sample-position requirements](rasterization.md#programmable-samples).
+> Format/tiled-resource capability can reduce the exposed quality count to zero after a positive driver result. The runtime caps the exposed count at `0x80000000`, reserving the upper half of the `UINT` quality-value range for standard/custom sample-pattern values.
 
 <!-- d3d12-review-alert:end:formats:FQ-quality-reporting:2 -->
 
-<!-- d3d12-review-alert:begin:formats:FQ-quality-reporting:3 -->
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The DDI's zero count is ordinary query data, not a recoverable HRESULT. The API's exact-payload-size, failure-versus-zero-support and flag/resource requirements remain at the [feature-query validation owner](#check-feature-support). A result is not resource creation, residency or GPU completion.
-
-<!-- d3d12-review-alert:end:formats:FQ-quality-reporting:3 -->

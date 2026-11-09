@@ -206,7 +206,7 @@ typedef struct D3D12_INDIRECT_ARGUMENT_DESC
 
 A single [D3D12_INDIRECT_ARGUMENT_TYPE](#indirect-argument-type) enumeration constant.
 
-<ins><!-- d3d12-review-inline:begin:indirect-execution:P-argument-members:3 -->`VertexBuffer.Slot`<!-- d3d12-review-inline:end:indirect-execution:P-argument-members:3 --></ins>
+`VertexBuffer.Slot`
 
 Specifies the slot containing the vertex buffer address.
 
@@ -222,11 +222,11 @@ The offset, in 32-bit values, to set the first constant of the group. Supports m
 
 The number of 32-bit constants that are set at the given root index. Supports multi-value constants at a given root index.
 
-<ins><!-- d3d12-review-inline:begin:indirect-execution:P-argument-members:11 -->`ConstantBufferView.RootParameterIndex`<!-- d3d12-review-inline:end:indirect-execution:P-argument-members:11 --></ins>
+`ConstantBufferView.RootParameterIndex`
 
 Specifies the root index of the CBV.
 
-<ins><!-- d3d12-review-inline:begin:indirect-execution:P-argument-members:13 -->`ShaderResourceView.RootParameterIndex`<!-- d3d12-review-inline:end:indirect-execution:P-argument-members:13 --></ins>
+`ShaderResourceView.RootParameterIndex`
 
 Specifies the root index of the SRV.
 
@@ -234,7 +234,7 @@ Specifies the root index of the SRV.
 
 Specifies the root index of the UAV.
 
-<ins><!-- d3d12-review-inline:begin:indirect-execution:P-argument-members:17 -->`IncrementingConstant.RootParameterIndex`<!-- d3d12-review-inline:end:indirect-execution:P-argument-members:17 --></ins>
+`IncrementingConstant.RootParameterIndex`
 
 <ins><!-- d3d12-review-inline:begin:indirect-execution:P-argument-members:18 -->Specifies the root-constant parameter index.<!-- d3d12-review-inline:end:indirect-execution:P-argument-members:18 --></ins>
 
@@ -1095,7 +1095,7 @@ The layout of a single structure within the indirect argument buffer is:
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime validates and translates the public description and calls the driver's command-signature creation DDIs. The public DDI uses `D3D12DDIARG_CREATE_COMMAND_SIGNATURE_0001` with `ByteStride`, `NumArgumentDescs`, `pArgumentDescs`, `hRootSignature` and `NodeMask`. Its descriptor array uses `D3D12DDI_INDIRECT_ARGUMENT_DESC`, whose union includes the tier-1.1 incrementing-constant target. `D3D12DDI_INDIRECT_ARGUMENT_TYPE` includes draw, compute, ray and mesh work along with the state-changing arguments.
+> The runtime translates the API command signature into `D3D12DDIARG_CREATE_COMMAND_SIGNATURE_0001`. The DDI descriptor uses a driver root-signature handle and resolved node mask.
 
 <!-- d3d12-review-alert:end:indirect-execution:N-ddi-intro:0 -->
 
@@ -1104,7 +1104,7 @@ The layout of a single structure within the indirect argument buffer is:
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The size and creation DDI names retain their `_0001` suffix; execution uses `PFND3D12DDI_EXECUTE_INDIRECT`. These DDI suffixes are independent of command-list table revisions. For example, `D3D12DDI_COMMAND_LIST_FUNCS_3D_0033` contains `pfnExecuteIndirect` of that unversioned execution-DDI type, not a DDI renamed to `_0033`. The ray, mesh and incrementing-constant argument additions do not require newly named creation or execution DDIs.
+> The `_0001` command-signature creation DDIs and unversioned `PFND3D12DDI_EXECUTE_INDIRECT` are also used for ray, mesh and incrementing-constant arguments.
 
 <!-- d3d12-review-alert:end:indirect-execution:N-ddi-intro:1 -->
 
@@ -1216,7 +1216,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_EXECUTE_INDIRECT )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The size DDI returns the driver's private command-signature storage size; creation returns an `HRESULT`; destruction releases the driver object. `PFND3D12DDI_EXECUTE_INDIRECT` receives the command list and signature handles, maximum count, and argument/count buffer placements. Each placement's `BaseAddress.UMD` carries the resource handle and byte offset; a null count-resource handle denotes the no-count-buffer form. The driver/hardware must interpret the selected argument format and offsets and enforce the unsigned minimum of API maximum and GPU count. The [canonical state-reset contract](command-list-state.md#indirect) assigns the post-call resetting DDI calls to the runtime.
+> After ExecuteIndirect, the runtime issues the [state-resetting DDIs](command-list-state.md#indirect).
 
 <!-- d3d12-review-alert:end:indirect-execution:N-ddi-execution:0 -->
 
@@ -1225,7 +1225,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_EXECUTE_INDIRECT )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Mesh work's [DispatchMesh DDI and stage responsibilities](amplification-and-mesh-shaders.md#mesh-driver), and ray work's [raytracing driver contract](raytracing-pipelines.md#driver-dispatch), remain distinct from signature creation and indirect interpretation. Tier-1.1's system-generated constant consumes no argument bytes; an implementation must supply its zero-based sequence and reset the affected state.
+> The incrementing-constant argument consumes no GPU argument bytes. The driver supplies its zero-based sequence.
 
 <!-- d3d12-review-alert:end:indirect-execution:N-ddi-execution:1 -->
 
@@ -1238,12 +1238,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_EXECUTE_INDIRECT )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The sizing DDI reports required driver-private object bytes as `SIZE_T`,
-> not the size of the GPU argument buffer and not an `HRESULT`. The runtime
-> supplies that private region through `D3D12DDI_HCOMMANDSIGNATURE` to the
-> Create DDI. The UMD initializes its state there and owns its additional
-> allocations, not the supplied region. A sizing call does not construct
-> the object.
+> The runtime supplies the private storage reported by the sizing DDI through `D3D12DDI_HCOMMANDSIGNATURE`. The driver initializes that storage and must not free it.
 
 <!-- d3d12-review-alert:end:indirect-execution:WE-signature-lifetime:0 -->
 
@@ -1252,14 +1247,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_EXECUTE_INDIRECT )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Failed driver creation must unwind partial driver state and allocations;
-> the runtime does not call DestroyCommandSignature for a failed Create.
-> After successful driver creation, later abandonment requires destruction of
-> that driver object. DestroyCommandSignature releases UMD-owned state
-> without freeing the runtime-supplied private region. The runtime keeps an
-> associated root-signature object alive for this driver object's lifetime;
-> destroying the command signature does not transfer root-signature destruction
-> to the UMD.
+> On failed creation, the driver unwinds its partial state and additional allocations. DestroyCommandSignature is called only after successful creation and releases driver-owned allocations without freeing runtime-supplied private storage. The runtime keeps the associated root signature alive for the command signature's lifetime.
 
 <!-- d3d12-review-alert:end:indirect-execution:WE-signature-lifetime:1 -->
 
@@ -1268,62 +1256,18 @@ typedef VOID ( APIENTRY* PFND3D12DDI_EXECUTE_INDIRECT )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The lifecycle's logical API association is
-> [CreateCommandSignature](#createcommandsignature). The creation arguments
-> and their `pArgumentDescs` array are borrowed for the call. The UMD must
-> capture the signature information it needs afterward into its own state,
-> rather than retain those input pointers. This array is the signature's
-> ordered metadata, not GPU argument records consumed by ExecuteIndirect.
+> The driver copies any command-signature creation metadata needed after the call. It must not retain `pArgumentDescs`.
 
 <!-- d3d12-review-alert:end:indirect-execution:WE-signature-inputs:0 -->
-
-<!-- d3d12-review-alert:begin:indirect-execution:WE-signature-inputs:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `NumArgumentDescs` counts descriptions in one signature.
-> `ByteStride` is the byte step between complete command records, including
-> record padding, not the size of each individual argument. The
-> [record-layout contract](#argument-records) defines the consumed bytes.
-> `hRootSignature` is the associated driver root handle, or null when no root
-> arguments are changed, under the API's if-and-only-if association rule.
-> `NodeMask` carries the selected creation nodes after runtime processing;
-> it is not a GPU record count or per-dispatch dimension.
-
-<!-- d3d12-review-alert:end:indirect-execution:WE-signature-inputs:1 -->
 
 <!-- d3d12-review-alert:begin:indirect-execution:WE-indirect-roles:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `PFND3D12DDI_EXECUTE_INDIRECT` implements the
-> [ExecuteIndirect API contract](#executeindirect) after resolving the API
-> signature and resources to driver handles. Argument/count placements are
-> passed by value; their `BaseAddress.UMD` members identify driver resources
-> and resource-relative byte offsets, not API interfaces, CPU record pointers
-> or bare GPU virtual addresses. The absent count buffer has a null resource
-> handle and zero offset.
+> `PFND3D12DDI_EXECUTE_INDIRECT` receives argument/count buffer placements by value. `BaseAddress.UMD` contains a driver resource handle and resource-relative byte offset. The no-count-buffer form has a null resource handle and zero offset.
 
 <!-- d3d12-review-alert:end:indirect-execution:WE-indirect-roles:0 -->
-
-<!-- d3d12-review-alert:begin:indirect-execution:WE-indirect-roles:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The argument/count contents remain GPU execution inputs; recording the DDI
-> is not a CPU readback or proof of their validity. The API's
-> [byte extents](#execute-validation), [typed-work contexts](#recording-contexts),
-> GPU count limit, resource lifetime and access requirements remain applicable.
-> Signature metadata capture does not snapshot GPU argument/count bytes.
-> The [runtime's post-call state resets](command-list-state.md#indirect) still
-> apply for zero or predicated-off generated work. Reported recording failures
-> use the [shared callback/deferred-Close contract](execution.md#lifecycle-driver-errors);
-> returning from this `VOID` DDI does not report GPU completion.
-
-<!-- d3d12-review-alert:end:indirect-execution:WE-indirect-roles:1 -->
 
 Both of the following implementations are acceptable:
 

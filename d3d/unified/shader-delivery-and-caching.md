@@ -1395,7 +1395,7 @@ After this method returns, points to the cached blob representing the pipeline s
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:Q-id3d12pipelinestate-getcachedblob:4 -->This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).<!-- d3d12-review-inline:end:shader-cache:Q-id3d12pipelinestate-getcachedblob:4 --></ins>
+This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).
 
 #### Ownership and legacy behavior
 
@@ -1434,11 +1434,7 @@ After this method returns, points to the cached blob representing the pipeline s
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Application-session storage and implicit driver compilation caches are distinct:
-> there is no one-to-one mapping from every session method to a driver callback.
-> The runtime owns application-facing parameter validation, namespace/session
-> management and dispatch of supported control requests. Driver-managed cache
-> control remains a hint.
+> Application cache sessions are runtime-managed. Driver-managed cache control is a separate hint interface.
 
 <!-- d3d12-review-alert:end:shader-cache:ddi-contract:0 -->
 
@@ -1447,12 +1443,7 @@ After this method returns, points to the cached blob representing the pipeline s
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The published driver capability payload
-> `D3D12DDI_D3D12_OPTIONS_DATA_0080::DriverManagedShaderCachePresent` reports a
-> driver-managed cache. Its control callback is
-> `PFND3D12DDI_IMPLICITSHADERCACHECONTROL_0080`, with a `void` return type.
-> `D3D12DDI_DEVICE_FUNCS_CORE_0119::pfnImplicitShaderCacheControl` carries that
-> callback. The `DISABLE`, `ENABLE` and `CLEAR` bits are 1, 2 and 4.
+> `D3D12DDI_D3D12_OPTIONS_DATA_0080::DriverManagedShaderCachePresent` reports the driver-managed cache. Its control entry is `D3D12DDI_DEVICE_FUNCS_CORE_0119::pfnImplicitShaderCacheControl`.
 
 <!-- d3d12-review-alert:end:shader-cache:ddi-contract:1 -->
 
@@ -1461,19 +1452,15 @@ After this method returns, points to the cached blob representing the pipeline s
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Pipeline libraries use the published `_0010` private-size, create, destroy,
-> add-pipeline-state, serialized-size and serialize callback family. The driver
-> library input is an opaque byte extent and the serialized output is opaque.
-> The application-facing runtime can include its own metadata around driver bytes;
-> these are not interchangeable public serialization formats. Pipeline creation's
-> shader, root-signature and fixed-function driver contracts remain at
-> [Pipeline state](pipeline-state.md#driver).
+> The driver pipeline-library byte stream is distinct from the runtime-wrapped API serialization format.
 
 <!-- d3d12-review-alert:end:shader-cache:ddi-contract:2 -->
 
 <a id="cache-ddi-declarations"></a>
 
-### Published cache-control and pipeline-library callback declarations
+<a id="published-cache-control-and-pipeline-library-callback-declarations"></a>
+
+### Published cache-control and pipeline-library DDI declarations
 
 ```cpp
 typedef enum D3D12DDI_IMPLICIT_SHADER_CACHE_CONTROL_FLAGS_0080
@@ -1516,7 +1503,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_SERIALIZE_LIBRARY_0010 )(
 
 ### PFND3D12DDI_IMPLICITSHADERCACHECONTROL_0080
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:RC-control-description:0 -->The **pfnImplicitShaderCacheControl** callback function can optionally perform an application-requested action on the driver-managed shader cache.<!-- d3d12-review-inline:end:shader-cache:RC-control-description:0 --></ins>
+The **pfnImplicitShaderCacheControl** function can optionally perform an application-requested action on the driver-managed shader cache.
 
 If the driver reports true for `DriverManagedShaderCachePresent`, then the driver should also provide a non-null <ins><!-- d3d12-review-inline:begin:shader-cache:RC-control-presence:0 -->function for `D3D12DDI_DEVICE_FUNCS_CORE_0119::pfnImplicitShaderCacheControl`.<!-- d3d12-review-inline:end:shader-cache:RC-control-presence:0 --></ins>
 
@@ -1527,7 +1514,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime supplies the driver device handle and `D3D12DDI_IMPLICIT_SHADER_CACHE_CONTROL_FLAGS_0080`. The bits `DISABLE`, `ENABLE` and `CLEAR` are 1, 2 and 4 and may combine a clear with an enable or disable. The [application validation and permissions](#id3d12device9-shadercachecontrol) reject simultaneous enable/disable, zero or unknown flags before normal dispatch. Enable/disable remain developer-mode operations; clear-only control is permitted without developer mode when `SHADER_CONTROL_CLEAR` is supported.
+> The driver control bits DISABLE, ENABLE and CLEAR are 1, 2 and 4.
 
 <!-- d3d12-review-alert:end:shader-cache:RC-implicit-control:0 -->
 
@@ -1536,7 +1523,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `DriverManagedShaderCachePresent` identifies the driver-managed cache. The runtime forwards an applicable request to `D3D12DDI_DEVICE_FUNCS_CORE_0119::pfnImplicitShaderCacheControl`; device initialization can also convey an already configured disabled state. This is not a one-to-one call for every named cache kind or every rejected application request. The callback concerns the driver's implicit cache, not registration of a PSDB or the typed runtime get/store callbacks.
+> Device initialization can convey an already configured disabled cache state.
 
 <!-- d3d12-review-alert:end:shader-cache:RC-implicit-control:1 -->
 
@@ -1545,7 +1532,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The callback returns `void`, with no recoverable control-result HRESULT or completion output. The driver treats the request as a hint; return does not certify deletion of every entry or an atomic transaction across all selected cache kinds. The [control scope/failure-ordering contract](#cache-control-scope) owns runtime sessions and earlier side effects. Driver failure reporting must not be used to manufacture a recoverable HRESULT for this callback.
+> The driver treats implicit cache control as a hint.
 
 <!-- d3d12-review-alert:end:shader-cache:RC-implicit-control:2 -->
 
@@ -1558,11 +1545,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The current _0010 callbacks below remain the library ABI in the selected
-> core-device table. They construct and operate on a driver-private library,
-> not an application cache session, offline compiler cache or new COM object.
-> The [API library support/threading/lifetime rules](#pipeline-libraries)
-> remain canonical.
+> The `_0010` entries below remain the current pipeline-library DDIs.
 
 <!-- d3d12-review-alert:end:shader-cache:PL-storage:0 -->
 
@@ -1571,15 +1554,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The private-size query returns `SIZE_T` bytes for the driver's CPU object,
-> not serialized data or video memory. The runtime reserves at least those
-> bytes and passes `D3D12DDI_HPIPELINELIBRARY` by value, identifying the
-> private region. The driver initializes that region and destroys its placed
-> object when requested; it does not free runtime-owned storage. The creator
-> has an `HRESULT` result, not an output-handle pointer or runtime-library-handle
-> argument. Unsuccessful initialization does not establish a matching successful
-> object; clean up failed partial driver initialization without relying on a
-> subsequent destroy call.
+> The runtime supplies the private storage reported by the size query. The driver initializes that region and must not free it. Failed creation must unwind partial initialization without relying on a Destroy call.
 
 <!-- d3d12-review-alert:end:shader-cache:PL-storage:1 -->
 
@@ -1588,12 +1563,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12DDIARG_CREATE_PIPELINE_LIBRARY_0010` supplies `InitialDataSize` bytes
-> through `pInitialData`. Both the private-size query and create callback must
-> receive the same driver-private initial byte extent, not the whole
-> runtime-wrapped API serialization blob. Fresh driver-library creation uses
-> zero size and a null pointer. A zero driver-byte count is not by itself a
-> statement that the whole API blob has no metadata.
+> The size query and Create receive the same driver-private initial bytes, not the runtime-wrapped API blob. Fresh driver-library creation uses a zero byte count and null pointer.
 
 <!-- d3d12-review-alert:end:shader-cache:PL-initial-data:0 -->
 
@@ -1602,15 +1572,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The argument header is borrowed for the call. After successful creation,
-> the driver may retain the supplied immutable initial byte view for the
-> library's lifetime. Destruction ends the library's use of that view.
-> A size query without successful creation establishes no retained
-> library-input lifetime. The driver does not own/free
-> the backing storage; the [API retained-input obligation](#id3d12device1-createpipelinelibrary)
-> keeps the complete backing allocation alive. A driver may instead copy or
-> materialize its own data. This library-specific storage guarantee must not
-> be replaced by the ordinary PSO creation-only input lifetime.
+> After successful creation, the driver may retain the immutable initial bytes for the library's lifetime. The create header itself is borrowed for the call. The backing storage remains caller-owned and is covered by the [API retained-input lifetime](#id3d12device1-createpipelinelibrary).
 
 <!-- d3d12-review-alert:end:shader-cache:PL-initial-data:1 -->
 
@@ -1619,10 +1581,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Runtime wrapper bytes and driver bytes are opaque and distinct. No private
-> header, offsets or vendor serialization format is defined here. A size
-> query does not certify that the driver's initial-data format is supported;
-> actual creation can reject incompatible initial data.
+> Creation, not the private-size query, validates the driver's serialized format.
 
 <!-- d3d12-review-alert:end:shader-cache:PL-initial-data:2 -->
 
@@ -1635,11 +1594,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `StorePipeline` performs the runtime's name/entry validation and supplies
-> the driver add callback with `hDevice`, `hLibrary`, `hPipelineState` and the
-> runtime-assigned `UINT` `PipelineIndex`. No name string is passed in that DDI.
-> An invalid or duplicate-name call can fail before the driver add operation;
-> there is no unconditional one-API/one-DDI call-count guarantee.
+> The runtime maps StorePipeline's name to a library-local `UINT PipelineIndex`. The add DDI receives that index and no name string.
 
 <!-- d3d12-review-alert:end:shader-cache:PL-indices:0 -->
 
@@ -1648,13 +1603,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `PipelineIndex` identifies an association within the supplied library, not
-> a pointer, API name, physical node or globally unique object. Multiple
-> indices may describe the same PSO information. On successful add the driver
-> makes that PSO's cache information available through the association. The
-> runtime's names/complete-description checks remain separate. Failure does
-> not establish a successful stored entry; the [failed-store mapping rule](#id3d12pipelinelibrary-storepipeline)
-> applies without turning private cache side effects into a transaction.
+> Multiple indices may refer to the same PSO information. Successful add makes the PSO's cache information available through that index. Failed stores follow the [API mapping rule](#id3d12pipelinelibrary-storepipeline).
 
 <!-- d3d12-review-alert:end:shader-cache:PL-indices:1 -->
 
@@ -1663,29 +1612,9 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Subsequent component/PSO creation carries `hLibrary` and `PipelineIndex` in
-> [D3D12DDI_LIBRARY_REFERENCE_0010](pipeline-state.md#driver). The association
-> must retain its meaning across driver serialization/recreation so the
-> runtime's restored entry indices resolve the corresponding driver data.
-> A reference is an optimization input, not a replacement for the complete
-> current [PSO creation arguments](pipeline-state.md#driver-pso-creation).
-> There is no separate pipeline-library load callback in this six-entry family.
-> Loads can reuse a retained PSO or create one using the library reference.
+> Later component/PSO creation carries the association in `D3D12DDI_LIBRARY_REFERENCE_0010`. It must survive driver serialization/recreation. There is no separate library-load DDI. Loads may reuse a retained PSO or create one with the library reference and complete creation description.
 
 <!-- d3d12-review-alert:end:shader-cache:PL-indices:2 -->
-
-<!-- d3d12-review-alert:begin:shader-cache:PL-indices:3 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The runtime retains stored PSO information/references under the API lifetime
-> contract; add does not transfer ownership of the PSO's private allocation to
-> the driver library. A surviving PSO does not by itself extend the validity
-> of a destroyed library handle or its reclaimed initial bytes. The respective
-> object destruction/storage contracts still govern driver references.
-
-<!-- d3d12-review-alert:end:shader-cache:PL-indices:3 -->
 
 <a id="pipeline-library-driver-serialization"></a>
 
@@ -1696,11 +1625,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `CalcPrivatePipelineLibrarySize` describes the CPU private object allocation.
-> `CalcSerializedLibrarySize` describes the driver's current serialized byte
-> requirement. The API `GetSerializedSize` can include additional runtime
-> metadata; its total is not the driver's byte count and none of these sizes
-> is a shader-code size or a GPU completion value.
+> CalcSerializedLibrarySize reports driver bytes. API GetSerializedSize also includes runtime metadata.
 
 <!-- d3d12-review-alert:end:shader-cache:PL-serialization:0 -->
 
@@ -1709,15 +1634,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime supplies `SerializeLibrary` with `hDevice`, `hLibrary` and writable
-> `pBlob` storage for the driver bytes. This callback has no capacity argument
-> or replacement-size output. Its writable extent is the serialized-size
-> requirement for the same library contents; it is not permission to write
-> runtime wrapper bytes or an arbitrary larger API buffer. Maintain compatible
-> contents across sizing/serialization and use the [API synchronization and
-> snapshot contract](#id3d12pipelinelibrary-getserializedsize). Zero driver
-> bytes do not imply zero API serialization metadata or a universal minimum
-> blob size.
+> SerializeLibrary receives no capacity argument. The runtime supplies storage of the size reported for the same library contents. The driver writes only its private byte stream.
 
 <!-- d3d12-review-alert:end:shader-cache:PL-serialization:1 -->
 
@@ -1726,12 +1643,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The destination is borrowed only for the call and remains caller-owned.
-> A null output is not a new size-query idiom. Successful return completes
-> the driver-byte write; it does not persist data to disk, transfer an
-> allocation or certify future compatibility. Failed serialization is not a
-> valid saved library and does not guarantee zeroed or transactionally restored
-> output bytes. Later recreation has its separate retained-input lifetime.
+> The output buffer is borrowed for the call. A failed serialization does not guarantee that the buffer is unchanged or zeroed.
 
 <!-- d3d12-review-alert:end:shader-cache:PL-serialization:2 -->
 
@@ -1744,11 +1656,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The two size queries return `SIZE_T` byte counts, destroy returns `VOID`,
-> and create/add/serialize return `HRESULT`. The size/destroy entries have no
-> recoverable `HRESULT` error channel or defined zero/max-value error code.
-> Storage ownership follows the [current creation storage model](pipeline-state.md#driver-object-lifetime),
-> but the accepted library results remain specific to these calls.
+> Size queries and destruction have no recoverable result channel. Creation, add and serialization use the call-specific results below.
 
 <!-- d3d12-review-alert:end:shader-cache:PL-errors:0 -->
 
@@ -1757,13 +1665,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `CreatePipelineLibrary` returns `S_OK` on success or may return `E_OUTOFMEMORY`.
-> `E_INVALIDARG` is permitted to reject initial library data on load; the runtime
-> translates that rejection to `D3D12_ERROR_DRIVER_VERSION_MISMATCH`. It is not
-> a valid recoverable result for fresh creation with no initial data; the
-> runtime treats that case as an invalid driver result. Runtime validation
-> of the whole API blob has its own `E_INVALIDARG`/compatibility outcomes and
-> can stop before any actual driver-library creation.
+> CreatePipelineLibrary may return `E_OUTOFMEMORY`. For loading initial data, driver `E_INVALIDARG` maps to API `D3D12_ERROR_DRIVER_VERSION_MISMATCH`. `E_INVALIDARG` is not a valid recoverable result for fresh driver-library creation.
 
 <!-- d3d12-review-alert:end:shader-cache:PL-errors:1 -->
 
@@ -1772,15 +1674,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `AddPipelineStateToLibrary` and `SerializeLibrary` permit recoverable
-> `E_OUTOFMEMORY`, not arbitrary `E_INVALIDARG` passthrough. In particular an
-> undersized API `Serialize` buffer is rejected by the runtime before this
-> capacity-less driver writer, not a new driver buffer-size result. The
-> [current device-removal/error normalization](pipeline-state.md#driver-creation-errors)
-> remains: unexpected driver results invalidate the device, device/application
-> failure reports retain their mappings, and removal can supersede an
-> otherwise returned result. These are not command-list errors deferred to
-> Close or the native queue's different allocation-failure model.
+> AddPipelineStateToLibrary and SerializeLibrary permit recoverable `E_OUTOFMEMORY`, not `E_INVALIDARG`. Undersized API serialization buffers are rejected before the driver call. Other failures follow [device-error normalization](pipeline-state.md#driver-creation-errors).
 
 <!-- d3d12-review-alert:end:shader-cache:PL-errors:2 -->
 
@@ -1813,24 +1707,13 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **Declaration:** [PFND3D12DDI_CALC_PRIVATE_PIPELINE_LIBRARY_SIZE_0010](#cache-ddi-declarations), in the exact published callback family above.
+> **Declaration:** [PFND3D12DDI_CALC_PRIVATE_PIPELINE_LIBRARY_SIZE_0010](#cache-ddi-declarations).
 
 <!-- d3d12-review-alert:end:shader-cache:PL-declaration-PFND3D12DDI_CALC_PRIVATE_PIPELINE_LIBRARY_SIZE_0010:0 -->
 
 ##### Behavior
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:PL-primary-PFND3D12DDI_CALC_PRIVATE_PIPELINE_LIBRARY_SIZE_0010:0 -->Calculates the pipeline library size.<!-- d3d12-review-inline:end:shader-cache:PL-primary-PFND3D12DDI_CALC_PRIVATE_PIPELINE_LIBRARY_SIZE_0010:0 --></ins>
-
-<!-- d3d12-review-alert:begin:shader-cache:PL-behavior-PFND3D12DDI_CALC_PRIVATE_PIPELINE_LIBRARY_SIZE_0010:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The inputs are the driver device and current library-create description.
-> Return the CPU private byte requirement under the [storage/initial-data contract](#pipeline-library-driver).
-> The query does not create a library or validate its serialized format.
-
-<!-- d3d12-review-alert:end:shader-cache:PL-behavior-PFND3D12DDI_CALC_PRIVATE_PIPELINE_LIBRARY_SIZE_0010:0 -->
+Calculates the pipeline library size.
 
 <a id="ddi-pfnd3d12ddi-create-pipeline-library-0010"></a>
 
@@ -1841,26 +1724,13 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **Declaration:** [PFND3D12DDI_CREATE_PIPELINE_LIBRARY_0010](#cache-ddi-declarations), in the exact published callback family above.
+> **Declaration:** [PFND3D12DDI_CREATE_PIPELINE_LIBRARY_0010](#cache-ddi-declarations).
 
 <!-- d3d12-review-alert:end:shader-cache:PL-declaration-PFND3D12DDI_CREATE_PIPELINE_LIBRARY_0010:0 -->
 
 ##### Behavior
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:PL-primary-PFND3D12DDI_CREATE_PIPELINE_LIBRARY_0010:0 -->Create a pipeline library.<!-- d3d12-review-inline:end:shader-cache:PL-primary-PFND3D12DDI_CREATE_PIPELINE_LIBRARY_0010:0 --></ins>
-
-<!-- d3d12-review-alert:begin:shader-cache:PL-behavior-PFND3D12DDI_CREATE_PIPELINE_LIBRARY_0010:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The inputs are the driver device, borrowed create-description header and
-> by-value driver library handle to caller-reserved private storage. Initial
-> bytes have the [retained driver-input lifetime](#pipeline-library-driver).
-> The [load rejection/fresh-create error distinction](#pipeline-library-driver-errors)
-> applies; successful creation is paired with the destroy callback.
-
-<!-- d3d12-review-alert:end:shader-cache:PL-behavior-PFND3D12DDI_CREATE_PIPELINE_LIBRARY_0010:0 -->
+Create a pipeline library.
 
 <a id="ddi-pfnd3d12ddi-destroy-pipeline-library-0010"></a>
 
@@ -1871,25 +1741,13 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **Declaration:** [PFND3D12DDI_DESTROY_PIPELINE_LIBRARY_0010](#cache-ddi-declarations), in the exact published callback family above.
+> **Declaration:** [PFND3D12DDI_DESTROY_PIPELINE_LIBRARY_0010](#cache-ddi-declarations).
 
 <!-- d3d12-review-alert:end:shader-cache:PL-declaration-PFND3D12DDI_DESTROY_PIPELINE_LIBRARY_0010:0 -->
 
 ##### Behavior
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:PL-primary-PFND3D12DDI_DESTROY_PIPELINE_LIBRARY_0010:0 -->Destroys the pipeline library.<!-- d3d12-review-inline:end:shader-cache:PL-primary-PFND3D12DDI_DESTROY_PIPELINE_LIBRARY_0010:0 --></ins>
-
-<!-- d3d12-review-alert:begin:shader-cache:PL-behavior-PFND3D12DDI_DESTROY_PIPELINE_LIBRARY_0010:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The arguments identify the driver device and successfully created driver
-> library. Destroy the placed object and stop using its borrowed initial
-> bytes before the runtime reclaims library/private backing storage. The
-> call does not free caller allocations or signal GPU completion.
-
-<!-- d3d12-review-alert:end:shader-cache:PL-behavior-PFND3D12DDI_DESTROY_PIPELINE_LIBRARY_0010:0 -->
+Destroys the pipeline library.
 
 <a id="ddi-pfnd3d12ddi-add-pipeline-state-to-library-0010"></a>
 
@@ -1900,25 +1758,13 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **Declaration:** [PFND3D12DDI_ADD_PIPELINE_STATE_TO_LIBRARY_0010](#cache-ddi-declarations), in the exact published callback family above.
+> **Declaration:** [PFND3D12DDI_ADD_PIPELINE_STATE_TO_LIBRARY_0010](#cache-ddi-declarations).
 
 <!-- d3d12-review-alert:end:shader-cache:PL-declaration-PFND3D12DDI_ADD_PIPELINE_STATE_TO_LIBRARY_0010:0 -->
 
 ##### Behavior
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:PL-primary-PFND3D12DDI_ADD_PIPELINE_STATE_TO_LIBRARY_0010:0 -->Adds the input pipeline state to the corresponding library.<!-- d3d12-review-inline:end:shader-cache:PL-primary-PFND3D12DDI_ADD_PIPELINE_STATE_TO_LIBRARY_0010:0 --></ins>
-
-<!-- d3d12-review-alert:begin:shader-cache:PL-behavior-PFND3D12DDI_ADD_PIPELINE_STATE_TO_LIBRARY_0010:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The arguments identify the device, library, existing driver PSO and
-> library-local `PipelineIndex`. The [name/index/reference contract](#pipeline-library-driver-indices)
-> and [failure mapping](#pipeline-library-driver-errors) apply. Successful
-> association is not ownership transfer of a PSO or a new API name.
-
-<!-- d3d12-review-alert:end:shader-cache:PL-behavior-PFND3D12DDI_ADD_PIPELINE_STATE_TO_LIBRARY_0010:0 -->
+Adds the input pipeline state to the corresponding library.
 
 <a id="ddi-pfnd3d12ddi-calc-serialized-library-size-0010"></a>
 
@@ -1929,25 +1775,13 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **Declaration:** [PFND3D12DDI_CALC_SERIALIZED_LIBRARY_SIZE_0010](#cache-ddi-declarations), in the exact published callback family above.
+> **Declaration:** [PFND3D12DDI_CALC_SERIALIZED_LIBRARY_SIZE_0010](#cache-ddi-declarations).
 
 <!-- d3d12-review-alert:end:shader-cache:PL-declaration-PFND3D12DDI_CALC_SERIALIZED_LIBRARY_SIZE_0010:0 -->
 
 ##### Behavior
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:PL-primary-PFND3D12DDI_CALC_SERIALIZED_LIBRARY_SIZE_0010:0 -->Calculates serialized library size.<!-- d3d12-review-inline:end:shader-cache:PL-primary-PFND3D12DDI_CALC_SERIALIZED_LIBRARY_SIZE_0010:0 --></ins>
-
-<!-- d3d12-review-alert:begin:shader-cache:PL-behavior-PFND3D12DDI_CALC_SERIALIZED_LIBRARY_SIZE_0010:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The device/library handles select the current driver-library contents.
-> Return their serialized driver-byte requirement, not the API wrapper's
-> total or CPU private-object size. The [same-contents size/output contract](#pipeline-library-driver-serialization)
-> applies.
-
-<!-- d3d12-review-alert:end:shader-cache:PL-behavior-PFND3D12DDI_CALC_SERIALIZED_LIBRARY_SIZE_0010:0 -->
+Calculates serialized library size.
 
 <a id="ddi-pfnd3d12ddi-serialize-library-0010"></a>
 
@@ -1958,22 +1792,12 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **Declaration:** [PFND3D12DDI_SERIALIZE_LIBRARY_0010](#cache-ddi-declarations), in the exact published callback family above.
+> **Declaration:** [PFND3D12DDI_SERIALIZE_LIBRARY_0010](#cache-ddi-declarations).
 
 <!-- d3d12-review-alert:end:shader-cache:PL-declaration-PFND3D12DDI_SERIALIZE_LIBRARY_0010:0 -->
 
 ##### Behavior
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:PL-primary-PFND3D12DDI_SERIALIZE_LIBRARY_0010:0 -->Implemented by the client driver to serialize the library.<!-- d3d12-review-inline:end:shader-cache:PL-primary-PFND3D12DDI_SERIALIZE_LIBRARY_0010:0 --></ins>
+Implemented by the client driver to serialize the library.
 
-<!-- d3d12-review-alert:begin:shader-cache:PL-behavior-PFND3D12DDI_SERIALIZE_LIBRARY_0010:0 -->
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The device/library handles select the contents and `pBlob` supplies their
-> writable driver-byte output. No size argument is passed. The [exact writable
-> extent and borrowed-output contract](#pipeline-library-driver-serialization)
-> and [per-call result policy](#pipeline-library-driver-errors) apply.
-
-<!-- d3d12-review-alert:end:shader-cache:PL-behavior-PFND3D12DDI_SERIALIZE_LIBRARY_0010:0 -->

@@ -221,7 +221,7 @@ HRESULT CreateCommandQueue(
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-019:0 -->Creates a command queue.<!-- d3d12-review-inline:end:command-queues:QA-019:0 --></ins>
+Creates a command queue.
 
 <!-- d3d12-review-alert:begin:command-queues:QA-020:0 -->
 
@@ -319,7 +319,7 @@ HRESULT CreateCommandQueue1(
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-032:0 -->Creates a command queue with a creator ID.<!-- d3d12-review-inline:end:command-queues:QA-032:0 --></ins>
+Creates a command queue with a creator ID.
 
 <!-- d3d12-review-alert:begin:command-queues:QA-033:0 -->
 
@@ -411,7 +411,7 @@ D3D12_COMMAND_QUEUE_DESC GetDesc();
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-044:0 -->Gets the description of the command queue.<!-- d3d12-review-inline:end:command-queues:QA-044:0 --></ins>
+Gets the description of the command queue.
 
 ### Return values
 
@@ -451,12 +451,7 @@ D3D12_COMMAND_QUEUE_DESC GetDesc();
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The queue and scheduling-group DDIs below are implemented by the UMD and
-> called by the runtime. They are distinct from the driver-callable creation
-> callbacks later in this reference. The [application queue contracts](command-queues.md)
-> define creation requests and grouping policy.
-> [Synchronization-only queues](execution.md#synchronization-only-queues)
-> have no UMD command-queue object and do not use this object-creation sequence.
+> The runtime calls the queue and scheduling-group DDIs below. The driver uses the later runtime callbacks to create associated contexts and hardware queues. [Synchronization-only queues](execution.md#synchronization-only-queues) have no UMD queue object.
 
 <!-- d3d12-review-alert:end:command-queues:QF-LN01:0 -->
 
@@ -465,14 +460,7 @@ D3D12_COMMAND_QUEUE_DESC GetDesc();
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The private-size DDIs return the required UMD storage size in bytes as
-> `SIZE_T`, excluding the runtime's own object storage. The runtime supplies the
-> driver-private region when calling the corresponding creation DDI.
-> `D3D12DDI_HCOMMANDQUEUE::pDrvPrivate` and
-> `D3D12DDI_HSCHEDULINGGROUP_0050::pDrvPrivate` address those regions.
-> Their actual addresses are aligned to 16 bytes on Win64 and 8 bytes on Win32.
-> The UMD initializes its state there and must not free the runtime-provided
-> region. UMD-owned auxiliary allocations remain the UMD's responsibility.
+> The runtime allocates the private bytes reported by the size DDIs, aligned to 16 bytes on Win64 and 8 bytes on Win32. The driver initializes that storage and must not free it.
 
 <!-- d3d12-review-alert:end:command-queues:QF-LN02:0 -->
 
@@ -570,10 +558,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATECOMMANDQUEUE_0050 )( D3D12DDI_HDEV
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The first parameter identifies the UMD device. The description identifies the
-> queue whose storage is being sized or initialized. The runtime selects the
-> matching description/function-pointer form from the negotiated device table;
-> the suffixes do not mean that all forms are called for one queue.
+> The runtime selects the matching size/create description and function type from the negotiated device table.
 
 <!-- d3d12-review-alert:end:command-queues:QF-LN09:0 -->
 
@@ -610,7 +595,7 @@ If <ins><!-- d3d12-review-inline:begin:command-queues:QF-LI02:0 -->a queue-creat
 
 #### PFND3D12DDI_DESTROYCOMMANDQUEUE
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-LI03:0 -->Destroys a command queue.<!-- d3d12-review-inline:end:command-queues:QF-LI03:0 --></ins>
+Destroys a command queue.
 
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYCOMMANDQUEUE )( D3D12DDI_HDEVICE, D3D12DDI_HCOMMANDQUEUE );
@@ -621,12 +606,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYCOMMANDQUEUE )( D3D12DDI_HDEVICE, D3
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime supplies the UMD device and the successfully created UMD queue
-> handle. The UMD releases its queue state and auxiliary allocations without
-> freeing the runtime-provided private region. The runtime calls this DDI
-> before tearing down the queue's managed contexts and group association.
-> Destroying one queue does not authorize destroying a scheduling group still
-> used by other queues. This DDI returns no `HRESULT`.
+> DestroyCommandQueue releases driver-owned queue state before the runtime tears down its managed contexts and group association. It must not free runtime-provided private storage or destroy a group still used by other queues.
 
 <!-- d3d12-review-alert:end:command-queues:QF-LN14:0 -->
 
@@ -649,15 +629,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATESCHEDULINGGROUP_0050 )( D3D12DDI_H
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The sizing DDI receives the UMD device and the group's DDI-visible `NodeMask`,
-> and returns the group's required private bytes. Creation receives the same
-> description, a driver-private group handle as its third argument and the
-> runtime group handle as its fourth argument. The UMD initializes the supplied
-> private region and uses the runtime handle for
-> [scheduling-group context callbacks](#context-creation-callbacks).
-> Creation returns `S_OK` on success or a failing `HRESULT`.
-> The [private-storage and failure rules](#queue-group-private-storage) apply
-> to both queue and scheduling-group creation.
+> Scheduling-group creation receives driver and runtime group handles. The driver uses the runtime handle for [group-associated context creation](#context-creation-callbacks).
 
 <!-- d3d12-review-alert:end:command-queues:QF-LN16:0 -->
 
@@ -685,7 +657,7 @@ The scheduling group should contain all contexts which target shared hardware or
 
 #### PFND3D12DDI_DESTROYSCHEDULINGGROUP_0050
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-LI06:0 -->Destroys a hardware scheduling group.<!-- d3d12-review-inline:end:command-queues:QF-LI06:0 --></ins>
+Destroys a hardware scheduling group.
 
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYSCHEDULINGGROUP_0050 )( D3D12DDI_HDEVICE, D3D12DDI_HSCHEDULINGGROUP_0050 );
@@ -696,12 +668,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYSCHEDULINGGROUP_0050 )( D3D12DDI_HDE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime supplies the UMD device and successfully created driver group
-> handle. The group is not retired while member queues still require it.
-> The UMD releases its group state and auxiliary allocations; the runtime
-> manages the private region and associated contexts. The runtime calls this
-> DDI before reclaiming those context objects. It returns no `HRESULT` and is
-> not called for a failed UMD CreateSchedulingGroup DDI.
+> DestroySchedulingGroup is called after successful creation and after member queues no longer need the group. The driver releases group state before the runtime reclaims associated contexts and private storage.
 
 <!-- d3d12-review-alert:end:command-queues:QF-LN19:0 -->
 

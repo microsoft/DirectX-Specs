@@ -632,7 +632,7 @@ Opens a handle for <ins><!-- d3d12-review-inline:begin:sharing-interop:API-OpenS
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:API-OpenSharedHandle-parameters:1 -->Type: `HANDLE`<!-- d3d12-review-inline:end:sharing-interop:API-OpenSharedHandle-parameters:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-OpenSharedHandle-parameters:2 -->A compatible NT handle, such as one output by the call to [ID3D12Device::CreateSharedHandle](#id3d12device-createsharedhandle).<!-- d3d12-review-inline:end:sharing-interop:API-OpenSharedHandle-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:API-OpenSharedHandle-parameters:2 -->A compatible NT handle, such as one output by the call to<!-- d3d12-review-inline:end:sharing-interop:API-OpenSharedHandle-parameters:2 --></ins> [ID3D12Device::CreateSharedHandle](#id3d12device-createsharedhandle).
 
 #### riid (input)
 
@@ -1425,7 +1425,7 @@ The necessary requirements to support <ins><!-- d3d12-review-inline:begin:sharin
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Cross-DDI compatibility requires the resource properties and allocation/private-data representation to be compatible with the opening runtime and driver. It does not mean that D3D12 object pointers, page tables, or driver-private bytes are application-portable. Shared-heap offsets and resource placement information remain an application protocol.
+> Cross-DDI opening requires compatible resource properties and allocation/private-data representations.
 
 <!-- d3d12-review-alert:end:sharing-interop:SH-driver-boundary:0 -->
 
@@ -1434,7 +1434,7 @@ The necessary requirements to support <ins><!-- d3d12-review-inline:begin:sharin
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The published heap/resource open DDI carries allocation information, a kernel resource handle, driver-private data and its byte size, and the initial resource state. The runtime supplies the handles and private-data inputs; the driver uses its applicable private representation when opening the allocation. The published declarations below establish this heap/resource ABI, not a one-to-one mapping from each sharing API to a driver call. Fence creation/opening has its separate [execution driver contract](execution.md#driver-responsibilities).
+> Heap/resource opening receives kernel allocation information and driver-private metadata. Fence opening is specified in the [execution driver contract](execution.md#driver-responsibilities).
 
 <!-- d3d12-review-alert:end:sharing-interop:SH-driver-boundary:1 -->
 
@@ -1443,7 +1443,7 @@ The necessary requirements to support <ins><!-- d3d12-review-inline:begin:sharin
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The full [heap/resource creation and allocation driver contract](resources.md#heap-resource-driver), [allocation reflection](resources.md#allocation-reflection-driver), [residency and destruction](resources.md#residency-driver), and [hardware memory-access requirements](resources.md#hardware-memory-access) remain at their resource owner. The [cross-adapter coherence requirements](#cross-adapter-heaps) require the driver to make shared GPU writes coherent with other adapters rather than relying on private cache behavior.
+> The driver must make shared writes coherent with other adapters under the [cross-adapter coherence requirements](#cross-adapter-heaps).
 
 <!-- d3d12-review-alert:end:sharing-interop:SH-driver-boundary:2 -->
 
@@ -1456,12 +1456,7 @@ The necessary requirements to support <ins><!-- d3d12-review-inline:begin:sharin
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Heap/resource opening uses the [current open description and lifecycle](resources.md#open-heap-resource-ddi)
-> and [private-size contract](resources.md#heap-resource-private-sizing).
-> The runtime's open-allocation records and driver-private metadata are not
-> application resource descriptions or transferable COM objects. The
-> protected-session, local-object ownership and synchronization requirements
-> remain defined by those contracts and this chapter's shared-handle rules.
+> Heap/resource opening uses the [common open lifecycle](resources.md#open-heap-resource-ddi) and [private-storage sizing](resources.md#heap-resource-private-sizing).
 
 <!-- d3d12-review-alert:end:sharing-interop:SH-open-ddi-payload:0 -->
 

@@ -1488,7 +1488,7 @@ void AtomicCopyBufferUINT( ID3D12Resource* pDstBuffer, UINT64 DstOffset, ID3D12R
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT-behavior:0 -->Atomically copies a primary data element of type UINT from one resource to another, along with optional dependent resources.<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT-behavior:0 --></ins>
+Atomically copies a primary data element of type UINT from one resource to another, along with optional dependent resources.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT-behavior:1 -->These 'dependent resources' are so-named because they depend upon the primary data element to locate them, typically the key element is an address, index, or other handle that refers to one or more of the dependent resources indirectly.<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT-behavior:1 --></ins>
 
@@ -1540,7 +1540,7 @@ An array of subresource ranges that specify the dependent elements of the data p
 
 #### Context
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT-remarks:0 -->This method is typically used to update resources for which normal rendering pipeline latency can be detrimental to user experience. For example, an application can compute a view matrix from the latest user input (such as from the sensors of a head-mounted display), and use this function to update and activate this matrix in command lists already dispatched to the GPU to reduce perceived latency between input and rendering.<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT-remarks:0 --></ins>
+This method is typically used to update resources for which normal rendering pipeline latency can be detrimental to user experience. For example, an application can compute a view matrix from the latest user input (such as from the sensors of a head-mounted display), and use this function to update and activate this matrix in command lists already dispatched to the GPU to reduce perceived latency between input and rendering.
 
 <a id="id3d12graphicscommandlist1-atomiccopybufferuint64"></a>
 
@@ -1554,7 +1554,7 @@ void AtomicCopyBufferUINT64( ID3D12Resource* pDstBuffer, UINT64 DstOffset, ID3D1
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT64-behavior:0 -->Atomically copies a primary data element of type UINT64 from one resource to another, along with optional dependent resources.<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT64-behavior:0 --></ins>
+Atomically copies a primary data element of type UINT64 from one resource to another, along with optional dependent resources.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT64-behavior:1 -->These 'dependent resources' are so-named because they depend upon the primary data element to locate them, typically the key element is an address, index, or other handle that refers to one or more of the dependent resources indirectly.<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT64-behavior:1 --></ins>
 
@@ -1606,7 +1606,7 @@ An array of subresource ranges that specify the dependent elements of the data p
 
 #### Context
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT64-remarks:0 -->This method is typically used to update resources for which normal rendering pipeline latency can be detrimental to user experience. For example, an application can compute a view matrix from the latest user input (such as from the sensors of a head-mounted display), and use this function to update and activate this matrix in command lists already dispatched to the GPU to reduce perceived latency between input and rendering.<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT64-remarks:0 --></ins>
+This method is typically used to update resources for which normal rendering pipeline latency can be detrimental to user experience. For example, an application can compute a view matrix from the latest user input (such as from the sensors of a head-mounted display), and use this function to update and activate this matrix in command lists already dispatched to the GPU to reduce perceived latency between input and rendering.
 
 <a id="atomic-copy-validation"></a>
 
@@ -1649,12 +1649,7 @@ An array of subresource ranges that specify the dependent elements of the data p
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The current command-list `pfnAtomicCopyBufferRegion` slot uses
-> [PFND3D12DDI_COPYBUFFERREGION_0003](#driver-api-associations), the same
-> signature as ordinary buffer copy but not the same operation contract.
-> The runtime supplies driver resource-plus-byte-offset placements and
-> `SrcBytes` = 4 or 8. The dependency arrays are not additional arguments
-> of that copy signature and are not resource-copy payloads.
+> `pfnAtomicCopyBufferRegion` shares `PFND3D12DDI_COPYBUFFERREGION_0003` with ordinary buffer copy. The runtime passes resource-relative placements and `SrcBytes` of 4 or 8. Dependency information is supplied through barriers, not additional copy arguments.
 
 <!-- d3d12-review-alert:end:resource-operations:AC-driver:0 -->
 
@@ -1680,9 +1675,7 @@ An array of subresource ranges that specify the dependent elements of the data p
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Legacy-barrier operation remains supported without requiring the
-> `EnhancedBarriersSupported` capability. Both transports implement the same
-> API contract, without a one-to-one API/DDI call-count guarantee.
+> The atomic-copy path also supports legacy barriers.
 
 <!-- d3d12-review-alert:end:resource-operations:AC-driver:2 -->
 
@@ -1841,7 +1834,7 @@ void WriteBufferImmediate(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ROF-ID3D12GraphicsCommandList2-behavior:0 -->Writes a number of 32-bit immediate values to the specified buffer locations directly from the command stream.<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12GraphicsCommandList2-behavior:0 --></ins>
+Writes a number of 32-bit immediate values to the specified buffer locations directly from the command stream.
 
 <!-- d3d12-review-alert:begin:resource-operations:ROF-ID3D12GraphicsCommandList2-shared:0 -->
 
@@ -1893,7 +1886,7 @@ void WriteBufferImmediate(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ROF-ID3D12VideoDecodeCommandList-behavior:0 -->Writes a number of 32-bit immediate values to the specified buffer locations directly from the command stream.<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12VideoDecodeCommandList-behavior:0 --></ins>
+Writes a number of 32-bit immediate values to the specified buffer locations directly from the command stream.
 
 <!-- d3d12-review-alert:begin:resource-operations:ROF-ID3D12VideoDecodeCommandList-shared:0 -->
 
@@ -1945,7 +1938,7 @@ void WriteBufferImmediate(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ROF-ID3D12VideoProcessCommandList-behavior:0 -->Writes a number of 32-bit immediate values to the specified buffer locations directly from the command stream.<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12VideoProcessCommandList-behavior:0 --></ins>
+Writes a number of 32-bit immediate values to the specified buffer locations directly from the command stream.
 
 <!-- d3d12-review-alert:begin:resource-operations:ROF-ID3D12VideoProcessCommandList-shared:0 -->
 
@@ -1997,7 +1990,7 @@ void WriteBufferImmediate(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ROF-ID3D12VideoEncodeCommandList-behavior:0 -->Writes a number of 32-bit immediate values to the specified buffer locations directly from the command stream.<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12VideoEncodeCommandList-behavior:0 --></ins>
+Writes a number of 32-bit immediate values to the specified buffer locations directly from the command stream.
 
 <!-- d3d12-review-alert:begin:resource-operations:ROF-ID3D12VideoEncodeCommandList-shared:0 -->
 
@@ -2943,13 +2936,13 @@ Destination resource. <ins><!-- d3d12-review-inline:begin:resource-operations:Re
 
 Type: **UINT**
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:6 -->A zero-based index that identifies the destination subresource. Use [D3D12CalcSubresource](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12calcsubresource) to calculate the subresource index if the parent resource is complex.<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:6 --></ins>
+A zero-based index that identifies the destination subresource. Use [D3D12CalcSubresource](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12calcsubresource) to calculate the subresource index if the parent resource is complex.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:7 -->`DstX`<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:7 --></ins>
 
 Type: **UINT**
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:9 -->The X coordinate of the left-most edge of the destination region. The width of the destination region is the same as the width of the source rect.<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:9 --></ins>
+The X coordinate of the left-most edge of the destination region. The width of the destination region is the same as the width of the source rect.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:10 -->`DstY`<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:10 --></ins>
 
@@ -3549,7 +3542,7 @@ void DiscardResource(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ROF-ID3D12VideoProcessCommandList-discard-behavior:0 -->Indicates that the current contents of a resource can be discarded.  The current contents of the resource are no longer valid allowing optimizations for subsequent operations such as [ResourceBarrier](synchronization.md#process-resource-barrier).<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12VideoProcessCommandList-discard-behavior:0 --></ins>
+Indicates that the current contents of a resource can be discarded.  The current contents of the resource are no longer valid allowing optimizations for subsequent operations such as [ResourceBarrier](synchronization.md#process-resource-barrier).
 
 <!-- d3d12-review-alert:begin:resource-operations:ROF-ID3D12VideoProcessCommandList-discard-rules:0 -->
 
@@ -3726,30 +3719,12 @@ resource later requires less look-ahead for the driver to know what it can do.<!
 
 ## Driver and hardware contract
 
-<!-- d3d12-review-alert:begin:resource-operations:ddi-intro:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The DDIs below are versioned independently of the command-list function-table version. For example, `D3D12DDI_COMMAND_LIST_FUNCS_3D_0033` contains `_0003` copy/clear/discard DDIs, unnumbered resource-copy/tile/whole-resolve DDIs, and `_0027` regional resolve.
-
-<!-- d3d12-review-alert:end:resource-operations:ddi-intro:0 -->
-
-<!-- d3d12-review-alert:begin:resource-operations:ddi-intro:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The runtime translates application objects/descriptors to driver command-list, resource and descriptor handles. Buffer copies use placements containing resource plus byte offset. Texture copies additionally describe the selected physical subresource or pitched buffer layout. A view clear carries explicit driver descriptors, values and rectangles; UAV clears retain GPU handle, CPU handle and resource together. Discard carries its rectangle/subresource range. Resolve carries explicit source/destination resources, subresources, format and, for regional resolve, destination coordinates, source rectangle and mode.
-
-<!-- d3d12-review-alert:end:resource-operations:ddi-intro:1 -->
-
 <!-- d3d12-review-alert:begin:resource-operations:ddi-intro:2 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The declarations establish spelling and parameter layout. Their behavior remains the API, feature and hardware requirements above; checked-layer diagnostics neither define driver validation responsibilities nor supply per-call retail return values.
+> The DDIs implement the API operations identified in the association table below.
 
 <!-- d3d12-review-alert:end:resource-operations:ddi-intro:2 -->
 
@@ -3856,7 +3831,7 @@ typedef enum D3D12DDI_TILE_COPY_FLAGS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12DDIARG_HRESOURCE_PLACEMENT.hResource` identifies the backing driver resource and `Offset` is the byte offset. `D3D12DDIARG_BUFFER_PLACEMENT.BaseAddress.UMD` selects that placement. `D3D12DDIARG_PLACED_RESOURCE.Layout` selects the representation addressed by `pLayout` and cannot be `D3D12DDI_RL_UNDEFINED`.
+> `D3D12DDIARG_PLACED_RESOURCE.Layout` selects the representation addressed by `pLayout` and must not be `D3D12DDI_RL_UNDEFINED`.
 
 <!-- d3d12-review-alert:end:resource-operations:ddi-layout-members:0 -->
 
@@ -3865,18 +3840,9 @@ typedef enum D3D12DDI_TILE_COPY_FLAGS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For `D3D12DDI_RL_SELECT_SUBRESOURCE`, `BaseAddress.UMD.hResource` identifies the texture and `BaseAddress.UMD.Offset` selects its subresource. For `D3D12DDI_RL_PLACED_PHYSICAL_SUBRESOURCE_PITCHED`, `pLayout` points to the physical description with format, block dimensions, byte row pitch and byte slice pitch; placement supplies the byte offset into the buffer. The virtual pitched variant additionally supplies logical dimensions alongside physical block dimensions. These are transfer descriptions, not an assertion that texture allocation storage is publicly row-major. The driver discard structure retains the [public buffer/2D, byte-width and strict multi-mip rectangular-discard requirements](#d3d12-discard-region); driver tile structures retain the corresponding public region/type member meanings.
+> For SELECT_SUBRESOURCE, placement `Offset` is a subresource index. For pitched-buffer layouts it is a byte offset. The physical pitched description supplies block dimensions and row/slice pitches. The virtual pitched form also supplies logical dimensions.
 
 <!-- d3d12-review-alert:end:resource-operations:ddi-layout-members:1 -->
-
-<!-- d3d12-review-alert:begin:resource-operations:ddi-layout-members:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> BC physical dimensions count complete compression blocks. A logical width of 6 therefore occupies two blocks and has a padded transfer boundary of 8 texels. Drivers must preserve the [padded whole-block source/destination transfer contract](#bc-copy-edges); crossing the logical edge within that padded extent is not by itself an out-of-bounds copy. The actual backing-buffer byte bounds and row/slice pitches still apply. The driver `NO_HAZARD` enum value remains declared but is deprecated under the [same CopyTiles flag contract](#tile-copy-combinations).
-
-<!-- d3d12-review-alert:end:resource-operations:ddi-layout-members:2 -->
 
 <a id="driver-callbacks"></a>
 
@@ -4033,11 +3999,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_WRITEBUFFERIMMEDIATE_0032 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The parameter records have the API's logical address/value meanings:
-> API `Dest` corresponds to driver `Dst`, and both carry the GPU address,
-> not a CPU pointer or resource handle. `Value` remains the immediate 32-bit
-> value. Driver mode values correspond to DEFAULT, MARKER_IN and MARKER_OUT
-> without changing their local timing/visibility qualifications.
+> The API `Dest` field is named `Dst` in the driver write record.
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-write-driver-roles:0 -->
 
@@ -4046,13 +4008,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_WRITEBUFFERIMMEDIATE_0032 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The UMD consumes the Count parameter/mode entries during the recording call
-> and cannot depend on the caller's arrays remaining valid afterward.
-> A null mode array supplies DEFAULT for every entry. The negotiated table
-> and reported [list-type support](#writebufferimmediate-contract) select
-> applicability; the shared graphics/video typedef does not require every
-> video queue to expose this API. A `VOID` return is not GPU completion,
-> CPU visibility of marker data or a recoverable per-write HRESULT.
+> The driver consumes the parameter and mode arrays during recording. A null mode array selects DEFAULT for every entry.
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-write-driver-roles:1 -->
 
@@ -4087,11 +4043,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_WRITEBUFFERIMMEDIATE_0032 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> These runtime-to-driver operations receive driver command-list/resource/
-> descriptor representations, not COM interface pointers. The runtime can
-> normalize layouts, values and handles, elide empty work, or use an older
-> fallback; the association table does not promise one API/DDI/hardware call
-> per operation.
+> The runtime may normalize inputs, omit empty work or use fallback DDIs.
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-driver-roles:0 -->
 
@@ -4100,14 +4052,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_WRITEBUFFERIMMEDIATE_0032 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Buffer-copy placements carry resource handles and byte offsets. Texture
-> locations instead use the selected [placement/layout representation](#driver-copy-types);
-> SELECT_SUBRESOURCE's offset selects the subresource, while pitched-buffer
-> placements carry byte offsets and layout data. CPU layout, box, rectangle
-> and value arrays are call-borrowed; the driver must capture what recording
-> needs, not retain those pointers until GPU execution. Resource and descriptor
-> contents retain their distinct [execution](execution.md#lifetime) and
-> [CPU-descriptor](binding.md#descriptor-population) lifetimes.
+> CPU layouts, boxes, rectangles and value arrays are borrowed for the DDI call. The driver copies the recording inputs it needs afterward.
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-driver-roles:1 -->
 
@@ -4116,63 +4061,18 @@ typedef VOID ( APIENTRY* PFND3D12DDI_WRITEBUFFERIMMEDIATE_0032 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> RTV/DSV values arrive after the runtime normalization described by the
-> [RTV](#clearrendertargetview) and [DSV](#cleardepthstencilview) entries;
-> direct passthrough does not promise identical incoming bits for every API
-> value. Subsequent format conversion follows the separate
-> [clear-conversion contract](#clear-conversion). UAV clear retains all
-> three inputs: driver GPU handle in the current heap, driver CPU descriptor
-> handle and driver resource, with the selected UINT or FLOAT values.
-> No clear returns a new view/resource or owns the referenced COM object.
+> RTV and DSV clear values reach the ordinary DDIs after runtime [RTV](#clearrendertargetview) and [DSV](#cleardepthstencilview) normalization. UAV clear receives both driver descriptor handles and the driver resource handle.
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-driver-roles:2 -->
-
-<!-- d3d12-review-alert:begin:resource-operations:ROF-driver-roles:3 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Whole-resource and resolve calls preserve destination-before-source roles.
-> Whole resolve has the API's ordinary resolve interpretation; regional resolve
-> also carries coordinates, optional rectangle, format and mode. GPU input
-> validity, sample/format rules and [predication](counters-queries-and-predication.md#predication-operation-matrix)
-> remain the precise API/hardware contracts, not checks proved by a DDI call.
-> Shared discard preserves its selected range and hint semantics on graphics/
-> video paths; the driver does not infer a generic discard resource state.
-
-<!-- d3d12-review-alert:end:resource-operations:ROF-driver-roles:3 -->
-
-<!-- d3d12-review-alert:begin:resource-operations:ROF-driver-roles:4 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> All selected recording DDIs return VOID. Reported recording failures use
-> the [shared callback/deferred-Close contract](execution.md#lifecycle-driver-errors);
-> signature/result type alone neither defines allowed failures nor removes API
-> validation. No call supplies implicit resource transitions, residency or GPU
-> completion. Existing [render-pass context](output-merger.md#render-pass-operation-surface),
-> protection and per-operation access rules remain in force.
-
-<!-- d3d12-review-alert:end:resource-operations:ROF-driver-roles:4 -->
 
 <!-- d3d12-review-alert:begin:resource-operations:hardware-responsibilities:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Copy commands run on the GPU. Resource copies must not impose significant CPU work proportional to the data size. Drivers/hardware swizzle or deswizzle pitched buffer transfers and tile transfers as required, preserve bitwise reinterpretation rather than numerically converting copied data, and implement the clear conversion, region, sample and precision requirements above.
+> Resource copies must not impose significant CPU work proportional to the data size.
 
 <!-- d3d12-review-alert:end:resource-operations:hardware-responsibilities:0 -->
-
-<!-- d3d12-review-alert:begin:resource-operations:hardware-responsibilities:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [physical-memory write guarantees](resources.md#hardware-memory-access) apply to copy/resolve destination texels and to descriptor-selected clears. Resource layout, tile residency/mapping, format support and aliasing requirements remain independent; a successful recording validation does not prove that an application supplied valid mappings, synchronization or descriptor lifetime.
-
-<!-- d3d12-review-alert:end:resource-operations:hardware-responsibilities:1 -->
 
 <!-- d3d12-review-alert:begin:resource-operations:hardware-responsibilities:2 -->
 

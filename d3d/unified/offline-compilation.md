@@ -652,7 +652,7 @@ HRESULT EnumerateAdapterFamilyABIVersions(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-summary:0 -->Retrieve the list of ABI versions supported for an adapter family.<!-- d3d12-review-inline:end:compiler-foundation:abi-summary:0 --></ins>
+Retrieve the list of ABI versions supported for an adapter family.
 
 #### Parameters
 
@@ -755,7 +755,7 @@ HRESULT EnumerateAdapterFamilyCompilerVersion(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-summary:0 -->Describes the version of a compiler for an adapter family.<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-summary:0 --></ins>
+Describes the version of a compiler for an adapter family.
 
 #### Parameters
 

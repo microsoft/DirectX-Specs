@@ -50,6 +50,8 @@
 
 <!-- d3d12-review-alert:end:gs-so:N-representation:0 -->
 
+<ins><!-- d3d12-review-inline:begin:gs-so:O-instructions:0 -->The DXBC Geometry Shader instruction set is listed in the [instruction reference](../archive/D3D11_3_FunctionalSpec.htm#GSInstructionSet).<!-- d3d12-review-inline:end:gs-so:O-instructions:0 --></ins>
+
 <a id="gs-invocation"></a>
 
 ### Invocation and primitive inputs
@@ -339,7 +341,7 @@ typedef struct D3D12_SO_DECLARATION_ENTRY
 } D3D12_SO_DECLARATION_ENTRY;
 ```
 
-<ins><!-- d3d12-review-inline:begin:gs-so:P-D3D12_SO_DECLARATION_ENTRY:0 -->`Stream`<!-- d3d12-review-inline:end:gs-so:P-D3D12_SO_DECLARATION_ENTRY:0 --></ins>
+`Stream`
 
 Zero-based, stream number.
 
@@ -380,7 +382,7 @@ typedef struct D3D12_STREAM_OUTPUT_DESC
 } D3D12_STREAM_OUTPUT_DESC;
 ```
 
-<ins><!-- d3d12-review-inline:begin:gs-so:P-D3D12_STREAM_OUTPUT_DESC:0 -->`pSODeclaration`<!-- d3d12-review-inline:end:gs-so:P-D3D12_STREAM_OUTPUT_DESC:0 --></ins>
+`pSODeclaration`
 
 <ins><!-- d3d12-review-inline:begin:gs-so:P-D3D12_STREAM_OUTPUT_DESC:1 -->An array of [`D3D12_SO_DECLARATION_ENTRY`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_so_declaration_entry) structures. Can't be **NULL** if **NumEntries** &gt; 0.<!-- d3d12-review-inline:end:gs-so:P-D3D12_STREAM_OUTPUT_DESC:1 --></ins>
 
@@ -440,7 +442,7 @@ typedef struct D3D12_STREAM_OUTPUT_BUFFER_VIEW
 } D3D12_STREAM_OUTPUT_BUFFER_VIEW;
 ```
 
-<ins><!-- d3d12-review-inline:begin:gs-so:P-view:0 -->`BufferLocation`<!-- d3d12-review-inline:end:gs-so:P-view:0 --></ins>
+`BufferLocation`
 
 A D3D12\_GPU\_VIRTUAL\_ADDRESS (a UINT64) that points to the stream output buffer. If **SizeInBytes** is 0, this member isn't used and can be any value.
 
@@ -472,13 +474,13 @@ Sets the stream output buffer views.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:gs-so:P-SOSetTargets:0 -->`[in] StartSlot`<!-- d3d12-review-inline:end:gs-so:P-SOSetTargets:0 --></ins>
+`[in] StartSlot`
 
 Index into the device's zero-based array to begin setting stream output buffers.
 
 `[in] NumViews`
 
-<ins><!-- d3d12-review-inline:begin:gs-so:P-SOSetTargets:3 -->The number of entries in the *pViews* array.<!-- d3d12-review-inline:end:gs-so:P-SOSetTargets:3 --></ins>
+The number of entries in the *pViews* array.
 
 `[in, optional] pViews`
 
@@ -486,7 +488,7 @@ Specifies an array of [D3D12_STREAM_OUTPUT_BUFFER_VIEW](https://learn.microsoft.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:gs-so:Q-SOSetTargets:0 -->None<!-- d3d12-review-inline:end:gs-so:Q-SOSetTargets:0 --></ins>
+None
 
 #### Recording constraints
 
@@ -638,7 +640,7 @@ Vertices can be emitted to either stream in any order.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime resolves semantic stream-output selections against the last active shader's output signature during PSO creation. The driver implements the selected GS input/output/instance state, ordered primitive streams and stream-output mapping, view extents and filled-size updates under the negotiated DDI. These responsibilities do not replace resource lifetime, access-state or synchronization obligations, and invalid programs are not legalized by missing retail diagnostics.
+> The runtime resolves semantic stream-output selections against the last active shader's output signature before driver PSO creation.
 
 <!-- d3d12-review-alert:end:gs-so:N-driver:0 -->
 
@@ -657,13 +659,7 @@ PFND3D12DDI_SO_SET_TARGETS_0003                                        pfnSOSetT
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> These runtime-to-driver entries implement [SOSetTargets](#sosettargets).
-> The ordinary form receives `D3D12DDI_HCOMMANDLIST`, identifying driver
-> recording state. The API-handle form receives `D3D12DDI_API_HCOMMANDLIST`,
-> identifying the application-side header rather than ordinary driver-private
-> storage; use the [shared header/conversion contract](execution.md#work-command-handles).
-> They are conditional alternative table representations, not universal
-> availability or a transfer of COM ownership.
+> The `_0114` form of [SOSetTargets](#sosettargets) participates in [runtime bypass](execution.md#work-command-handles).
 
 <!-- d3d12-review-alert:end:gs-so:SF-current-roles:0 -->
 
@@ -701,87 +697,8 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SO_SET_TARGETS_0114 )(D3D12DDI_API_HCOMMAND
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Both forms receive `StartSlot`, `NumViews`, then `pViews`. The slot is a
-> logical stream-output target slot; the count is a number of views, not
-> bytes. The [four-slot range contract](#sosettargets) applies: null `pViews`
-> clears the selected range, a valid zero count changes no slots, and slots
-> outside the range remain unchanged. The driver captures the view values
-> during the call; it cannot retain the caller's array as a later source
-> of those values.
+> The driver consumes `pViews` during the call and copies any values it needs afterward.
 
 <!-- d3d12-review-alert:end:gs-so:SF-view-values:0 -->
 
-<!-- d3d12-review-alert:begin:gs-so:SF-view-values:1 -->
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Each view supplies a data GPU virtual address, a `UINT64` byte extent,
-> and a filled-size GPU virtual address. These are not descriptor-heap
-> handles or retained resource COM objects. The [nonempty address/alignment/
-> allocation requirements](#sosettargets) and
-> [zero-size view exceptions](#so-target-view) are unchanged; an empty view's
-> unused address fields are not a general null-address rule for nonempty views.
-> CPU array capture does not extend the referenced GPU storage's lifetime.
-
-<!-- d3d12-review-alert:end:gs-so:SF-view-values:1 -->
-
-<!-- d3d12-review-alert:begin:gs-so:SF-progress-state:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `BufferFilledSizeLocation` is a 64-bit GPU address of the
-> [application-managed 32-bit byte-progress value](#filled-size), not a
-> 64-bit progress quantity. Setting, clearing or rebinding views does not
-> initialize that storage or select a hidden per-resource append cursor.
-> Data and progress storage retain the owner's initialization, non-overlap,
-> resource access and ordering requirements.
-
-<!-- d3d12-review-alert:end:gs-so:SF-progress-state:0 -->
-
-<!-- d3d12-review-alert:begin:gs-so:SF-progress-state:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The PSO's [stream-output declaration](#so-declarations) still selects streams,
-> target slots, strides and the rasterized stream; binding a view changes
-> none of those declarations. GPU capture and filled-size updates obey the
-> [complete-primitive capacity/overflow rules](#overflow-and-statistics) and
-> [bound versus unused slot behavior](#so-slot-behavior). The setter does not
-> itself execute a capture or report GPU completion.
-
-<!-- d3d12-review-alert:end:gs-so:SF-progress-state:1 -->
-
-<!-- d3d12-review-alert:begin:gs-so:SF-context-errors:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The setter remains DIRECT-only and cannot be called from a bundle.
-> Bundle draws can still use inherited targets under the
-> [canonical input/output binding rules](command-list-state.md#buffer-bindings).
-> A new DIRECT recording starts with unbound targets; unbinding or resetting
-> recording does not initialize filled-size resource data.
-> The [root-signature/PSO stream-output requirements](#so-declarations) and
-> [render-pass recording conditions](output-merger.md#render-pass-operation-surface)
-> remain applicable.
-
-<!-- d3d12-review-alert:end:gs-so:SF-context-errors:0 -->
-
-<!-- d3d12-review-alert:begin:gs-so:SF-context-errors:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Both data and filled-size storage retain
-> [execution lifetime](execution.md#lifetime), [residency](resources.md#residency)
-> and [legacy/enhanced access synchronization](#filled-size) obligations.
-> Binding is not a resource transition or synchronization operation.
-> These `VOID` setters use the
-> [recording-error/deferred-Close contract](execution.md#lifecycle-driver-errors),
-> not a recoverable creation `HRESULT`. The handle change is not proof of
-> argument validation or clamping.
-
-<!-- d3d12-review-alert:end:gs-so:SF-context-errors:1 -->
