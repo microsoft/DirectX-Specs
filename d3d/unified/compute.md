@@ -582,8 +582,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22
 > | Operation/grid | Ordinary per-axis bound | Expanded one-dimensional bound | Independent total-group bound |
 > |---|---|---|---|
 > | Direct or indirect compute dispatch | Each axis at most 65,535 | X at most `Max1DDispatchSize`, with Y=Z=1 | No mesh/work-graph total is imposed by this compute-grid rule |
-> | API or indirect mesh dispatch, including the API-launched AS grid | Each axis at most 65,535 | X at most `Max1DDispatchMeshSize`, with Y=Z=1 | `X*Y*Z < 2^22` (at most 4,194,303) |
-> | AS-child grid produced by HLSL DispatchMesh | Each axis at most 65,535 | X at most `Max1DDispatchMeshSize`, with Y=Z=1 | `X*Y*Z < 2^22` |
+> | API, indirect, or AS-intrinsic mesh dispatch | Each axis at most 65,535 | X at most `Max1DDispatchMeshSize`, with Y=Z=1 | `X*Y*Z < 2^22` (at most 4,194,303) |
 > | Work-graph execution grid | Each axis at most 65,535 | X at most `Max1DDispatchSize`, with Y=Z=1 | `X*Y*Z < 2^24` (at most 16,777,215) |
 
 <!-- d3d12-review-alert:end:compute:N-dimension-table:0 -->
@@ -794,5 +793,4 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DISPATCH_0114 )(D3D12DDI_API_HCOMMANDLIST, 
 > The `_0114` entry participates in [runtime bypass](execution.md#work-command-handles). Its arguments otherwise match the [ordinary dispatch DDI](#driver-dispatch).
 
 <!-- d3d12-review-alert:end:compute:EF-api-dispatch-contract:0 -->
-
 

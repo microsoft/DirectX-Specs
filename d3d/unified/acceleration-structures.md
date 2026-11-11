@@ -2,29 +2,9 @@
 
 # Acceleration structures
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 An acceleration structure (AS) represents geometry and instances for raytracing. Applications own the backing storage. The driver constructs and processes the opaque representation. This chapter defines how they are intended to be created, modified, and used.
 
-<!-- d3d12-review-alert:begin:acceleration-structures:N-peers:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Allocation, residency, and GPU virtual addresses are defined in [Resources](resources.md). Acceleration-structure SRV and root-descriptor binding is defined in [Acceleration-structure SRVs](binding.md#acceleration-structure-srvs). Dependencies and enhanced/legacy barrier interoperability are defined in [Synchronization](synchronization.md). The workload consumers are specified in [TraceRay](raytracing-pipelines.md#traceray) and [RayQuery::TraceRayInline](ray-traversal.md#rayquery-tracerayinline); shader-table indexing is specified in [Addressing calculations within shader tables](raytracing-pipelines.md#addressing-calculations-within-shader-tables).
-
-<!-- d3d12-review-alert:end:acceleration-structures:N-peers:0 -->
+Allocation, residency, and GPU virtual addresses are defined in [Resources](resources.md). Acceleration-structure SRV and root-descriptor binding is defined in [Acceleration-structure SRVs](binding.md#acceleration-structure-srvs). Dependencies and enhanced/legacy barrier interoperability are defined in [Synchronization](synchronization.md). The workload consumers are specified in [TraceRay](raytracing-pipelines.md#traceray) and [RayQuery::TraceRayInline](ray-traversal.md#rayquery-tracerayinline). Shader table indexing is specified in [Addressing calculations within shader tables](raytracing-pipelines.md#addressing-calculations-within-shader-tables).
 
 <a id="geometry-and-acceleration-structures"></a>
 
@@ -615,9 +595,6 @@ correct, however.
 <a id="geometry-limits"></a>
 
 ### Geometry limits
-
-The runtime does not enforce these limits. Exceeding
-them produces undefined behavior.
 
 Maximum number of geometries in a bottom level acceleration structure:
 2^24
