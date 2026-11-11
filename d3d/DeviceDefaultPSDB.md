@@ -3,7 +3,7 @@
 - [D3D12: Device-Wide Default Explicit PSDB](#d3d12-device-wide-default-explicit-psdb)
   - [Introduction](#introduction)
   - [API](#api)
-    - [Interface: ID3D12Device18](#interface-id3d12device18)
+    - [Interface: ID3D12Device17](#interface-id3d12device17)
       - [Method: SetDefaultPrecompiledShaderCacheSession](#method-setdefaultprecompiledshadercachesession)
   - [PSDB Selection](#psdb-selection)
     - [Pipeline State Creation](#pipeline-state-creation)
@@ -38,13 +38,14 @@ an object again when an existing compiled object can be reused.
 
 ## API
 
-### Interface: ID3D12Device18
+### Interface: ID3D12Device17
 
-Adds a method for setting the device-wide default explicit PSDB.
+Adds a method for setting the device-wide default explicit PSDB at the end of ID3D12Device17.
+Existing methods are omitted from the declaration below.
 
 ```idl
-interface ID3D12Device18
-    : ID3D12Device17
+interface ID3D12Device17
+    : ID3D12Device16
 {
     HRESULT SetDefaultPrecompiledShaderCacheSession(
         [annotation("_In_opt_")] ID3D12ShaderCacheSession1* pSession,
@@ -92,7 +93,7 @@ the previous device-wide default and its flags remain unchanged.
 
 The device initially has no explicit default.
 
-The application should query ID3D12Device18 and check D3D12_FEATURE_EXPLICIT_PSDBS before setting a non-null default.
+The application should query ID3D12Device17 and check D3D12_FEATURE_EXPLICIT_PSDBS before setting a non-null default.
 The existing explicit PSDB support and application identity requirements apply. This feature does not introduce
 a separate driver capability requirement.
 
@@ -227,7 +228,7 @@ no PSDB subobject.
 
 ```c++
 HRESULT CreateWithDeviceDefaults(
-    ID3D12Device18* pDevice,
+    ID3D12Device17* pDevice,
     ID3D12ShaderCacheSession1* pSessionA,
     ID3D12ShaderCacheSession1* pSessionB,
     const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc)
