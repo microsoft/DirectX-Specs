@@ -20,8 +20,8 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Offline driver/pipeline compilation produces vendor-dependent pipeline-state
-> and state-object output from creation descriptions and shader bytecode. It is
+> Offline driver/pipeline compilation produces vendor-dependent pipeline state
+> and state object output from creation descriptions and shader bytecode. It is
 > distinct from HLSL frontend compilation.
 
 <!-- d3d12-review-alert:end:compiler-foundation:scope:0 -->
@@ -41,7 +41,7 @@
 
 <a id="compiler-runtime-design"></a>
 
-## Compiler-runtime design
+## Compiler runtime design
 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:design-foundation:0 -->GPU hardware vendors expose compilers in an [IHV Compiler Plugin](compiler-plugin-foundation.md) dll via a [Plugin DDI](compiler-plugin-foundation.md#compiler-plugin-foundation).<!-- d3d12-review-inline:end:compiler-foundation:design-foundation:0 --></ins>
 
@@ -69,7 +69,7 @@ The Microsoft API is nano-COM and exposes compiling and caching functionality to
 > **Authored synthesis - human review pending.**
 >
 > `D3D12CompilerCreateFactory` is an export of `D3D12StateObjectCompiler.dll`.
-> It creates an `ID3D12CompilerFactory` for the compiler-plugin DLL named by the
+> It creates an `ID3D12CompilerFactory` for the compiler plugin DLL named by the
 > caller. That COM factory is not an `ID3D12DeviceFactory`, a physical adapter,
 > or an HLSL frontend compiler. Factory creation loads executable plugin code;
 > the DLL path is not a data-only input or an authenticity credential.
@@ -86,7 +86,7 @@ The Microsoft API is nano-COM and exposes compiling and caching functionality to
 > references that the caller releases. Each factory child retains its factory;
 > releasing the caller's original factory reference does not invalidate a living
 > child. The plugin module remains loaded while the factory that owns its DDI
-> object is alive. The compiler-runtime module must remain available while its
+> object is alive. The compiler runtime module must remain available while its
 > objects or returned blob implementations are in use.
 
 <!-- d3d12-review-alert:end:compiler-foundation:factory-identity:1 -->
@@ -97,10 +97,10 @@ The Microsoft API is nano-COM and exposes compiling and caching functionality to
 > **Authored synthesis - human review pending.**
 >
 > Factory/target discovery does not establish the presence of a matching physical
-> adapter or device support for a pipeline. Compiler-host capabilities describe
+> adapter or device support for a pipeline. Compiler host capabilities describe
 > the selected target; actual runtime construction retains the capability rules
-> of [pipeline-state creation](pipeline-state.md) and
-> [state-object creation](state-objects.md#createstateobject).
+> of [pipeline state creation](pipeline-state.md) and
+> [state object creation](state-objects.md#createstateobject).
 
 <!-- d3d12-review-alert:end:compiler-foundation:factory-identity:2 -->
 
@@ -149,7 +149,7 @@ IHVs define Adapter Families with a string identifier to indicate a grouping of 
 
 <a id="adapter-family-compiler-version"></a>
 
-### Adapter-family compiler version
+### Adapter family compiler version
 
 A plugin reports a single compiler version per adapter family that revises with plugin changes that impact that adapter family, such as bug fixes, code generation changes, etc.  The version is a 64 bit encoding of four 16bit values to define a four part version as Major.Minor.Build.Revision.  <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version:0 -->Application specific<!-- d3d12-review-inline:end:compiler-foundation:compiler-version:0 --></ins> profile settings or application targeted changes should rev the [Application Profile Version](#application-profile-version) instead.
 
@@ -159,7 +159,7 @@ Major/Minor version change for "must" recompile such as security or major fixes.
 
 <a id="adapter-family-abi-version"></a>
 
-### Adapter-family ABI version
+### Adapter family ABI version
 
 Adapter families have an ABI version that can rev when there are breaking changes.  IHVs assign each adapter to a family and report which family an adapter belongs to with a supported ABI range from the Usermode DDI.  IHVs also enumerate which ABI Versions are supported by an adapter family.
 
@@ -167,7 +167,7 @@ This scheme also allows for deprecating support for some of the adapters in an a
 
 <a id="application-profile-version"></a>
 
-### Application-profile version
+### Application profile version
 
 Drivers often have application specific profiles for optimization or targeted bug fixes.  If settings for a specific app or a few apps are changed, that can be communicated without versioning the compiler and impacting the cache for all applications.
 
@@ -184,7 +184,7 @@ The State Object Compiler queries certain caps to facilitate processing API stat
 >
 > Package version, plugin DDI version, associated usermode DDI version, adapter
 > family compiler version, compiler target ABI version, application version and
-> application-profile version are distinct domains. Equality or numerical ordering
+> application profile version are distinct domains. Equality or numerical ordering
 > between different domains has no compatibility meaning.
 
 <!-- d3d12-review-alert:end:compiler-foundation:distinct-domains:0 -->
@@ -196,7 +196,7 @@ The State Object Compiler queries certain caps to facilitate processing API stat
 >
 > The canonical [D3D12_VERSION_NUMBER encoding](state-object-databases-and-identity.md#d3d12_version_number)
 > defines compiler/profile/application four-part numbers. It also defines the
-> little-endian `VersionParts` overlay. An adapter-family ABI is instead a `UINT64`
+> little-endian `VersionParts` overlay. An adapter family ABI is instead a `UINT64`
 > counter, not a packed application or compiler version.
 
 <!-- d3d12-review-alert:end:compiler-foundation:distinct-domains:1 -->
@@ -208,7 +208,7 @@ The State Object Compiler queries certain caps to facilitate processing API stat
 >
 > The plugin's enumerated set of target ABIs can be sparse.
 > The device's [SHADERCACHE_ABI_SUPPORT query](devices-and-capabilities.md#d3d12_feature_data_shadercache_abi_support)
-> reports an inclusive minimum/maximum range for the installed driver; it does
+> reports an inclusive minimum/maximum range for the installed driver. It does
 > not turn a compiler's enumerated set into an inclusive range. A family index
 > identifies an entry within this factory's plugin enumeration, not a DXGI adapter
 > ordinal or a persistent cross-plugin identifier.
@@ -235,10 +235,10 @@ typedef struct D3D12_ADAPTER_FAMILY
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The structure contains only the inline adapter-family name.
-> There is no `CompilerVersion` member. The compiler-version query below returns
+> The structure contains only the inline adapter family name.
+> There is no `CompilerVersion` member. The compiler version query below returns
 > that version separately. `szAdapterFamily` has capacity for 128 `WCHAR` elements,
-> including string termination; it is not a pointer to separately allocated
+> including string termination. It is not a pointer to separately allocated
 > storage and has no input length parameter.
 
 <!-- d3d12-review-alert:end:compiler-foundation:family-type:1 -->
@@ -281,7 +281,7 @@ An ABIVersion of zero targets the latest ABIVersion available.
 > For `GetApplicationProfileVersion`, zero requests the greatest supported ABI
 > value for that adapter family, resolved from the enumerated set. The runtime
 > does not pass zero to the plugin as an actual target ABI. A nonzero ABI must be
-> a member of that set; it is not rounded or replaced with a nearby version.
+> a member of that set. It is not rounded or replaced with a nearby version.
 > The caller's descriptor is an input and is not rewritten.
 
 <!-- d3d12-review-alert:end:compiler-foundation:target-resolution:0 -->
@@ -298,8 +298,8 @@ An ABIVersion of zero targets the latest ABIVersion available.
 > executable filename and title, application version, optional null-terminated
 > engine name (`nullptr` when not applicable), and engine version when an engine
 > name is supplied. The process hosting the offline compiler does not supply an
-> implicit executable-name fallback. These inputs and all referenced strings must
-> remain readable during the call; this query does not transfer their ownership.
+> implicit executable name fallback. These inputs and all referenced strings must
+> remain readable during the call. This query does not transfer their ownership.
 
 <!-- d3d12-review-alert:end:compiler-foundation:target-resolution:1 -->
 
@@ -308,7 +308,7 @@ An ABIVersion of zero targets the latest ABIVersion available.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [Registration target discovery](shader-cache-registration.md#target-discovery) supplies adapter-side ABI intervals and compiler/profile information for installation planning. Its application-dependent preference rules and device/adapter explorer context are defined there; the compiler factory's family indices, supported ABI enumeration and explicit target selection below remain distinct.
+> [Registration target discovery](shader-cache-registration.md#target-discovery) supplies adapter-side ABI intervals and compiler/profile information for installation planning. Its application-dependent preference rules and device/adapter explorer context are defined there. The compiler factory's family indices, supported ABI enumeration and explicit target selection below remain distinct.
 
 <!-- d3d12-review-alert:end:compiler-foundation:D138-discovered-target-context:0 -->
 
@@ -317,13 +317,13 @@ An ABIVersion of zero targets the latest ABIVersion available.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [Runtime PSDB compatibility](runtime-cache-discovery.md#compatibility) applies the driver's inclusive ABI interval and high-32-bit application-profile comparison to stored content. This is distinct from enumerating compiler-supported ABIs or resolving an explicit zero-ABI compiler target.
+> [Runtime PSDB compatibility](runtime-cache-discovery.md#compatibility) applies the driver's inclusive ABI interval and high-32-bit application profile comparison to stored content. This is distinct from enumerating compiler-supported ABIs or resolving an explicit zero-ABI compiler target.
 
 <!-- d3d12-review-alert:end:compiler-foundation:D144-runtime-version-roles:0 -->
 
 <a id="exports"></a>
 
-## Factory export and root-signature helper
+## Factory export and root signature helper
 
 <a id="d3d12compilercreatefactory"></a>
 
@@ -364,7 +364,7 @@ The globally unique identifier (GUID) for the compiler factory interface.
 > `pPluginCompilerDllPath` must identify the plugin DLL with a readable,
 > null-terminated wide string. Loading the module, locating its
 > `D3D12OpenCompilerDDI` export, opening it and negotiating a common plugin DDI
-> version occur as part of factory creation. Loader and plugin-open/negotiation
+> version occur as part of factory creation. Loader and plugin open/negotiation
 > failures can therefore fail the factory export before an interface is returned.
 > No matching adapter installation is required.
 
@@ -375,8 +375,8 @@ The globally unique identifier (GUID) for the compiler factory interface.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `ppFactory` is not a successful null-output availability probe. A caller
-> requesting a factory must supply writable interface-pointer storage. A failure
+> `ppFactory` is not a successful null output availability probe. A caller
+> requesting a factory must supply writable interface pointer storage. A failure
 > before the interface query does not guarantee that this storage has been
 > cleared; no returned interface may be consumed after failure.
 
@@ -409,8 +409,8 @@ Expected return codes (not exhaustive):
 > If there is no common plugin DDI version, factory creation returns
 > `DXGI_ERROR_UNSUPPORTED`.
 > Windows module-loading and missing-export failures return the corresponding
-> failure `HRESULT`; the file-not-found row is not an exhaustive loader-error
-> contract. Plugin opening, version negotiation and table-registration failures
+> failure `HRESULT`. The file-not-found row is not an exhaustive loader error
+> contract. Plugin opening, version negotiation and table registration failures
 > are propagated. If the final interface query is reached, a null `ppFactory`
 > returns `E_POINTER`; earlier loading/negotiation can fail first.
 > `S_OK` means that the requested interface was returned, not that a physical
@@ -438,12 +438,12 @@ HRESULT D3D12CompilerSerializeVersionedRootSignature(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Serializes a versioned root-signature description into an `ID3DBlob` for
-> compiler-host inputs. This is the compiler-runtime export
+> Serializes a versioned root signature description into an `ID3DBlob` for
+> compiler host inputs. This is the compiler runtime export
 > `D3D12CompilerSerializeVersionedRootSignature`, not an alias or renamed
 > declaration of the ordinary runtime's
 > [D3D12SerializeVersionedRootSignature](binding.md#d3d12serializeversionedrootsignature).
-> Root-signature structures, contents and root binding retain their
+> Root signature structures, contents and root binding retain their
 > [canonical contract](binding.md#root-signatures).
 
 <!-- d3d12-review-alert:end:compiler-foundation:serializer:0 -->
@@ -455,11 +455,11 @@ HRESULT D3D12CompilerSerializeVersionedRootSignature(
 >
 > Serialization does not create an `ID3D12RootSignature`, require an IHV compiler
 > plugin or establish that a particular device supports the serialized contents.
-> The compiler-host serializer accepts the reserved-register-space forms used
-> by tools; that acceptance does not grant ordinary device creation permission.
-> Local root signatures, mesh-related flags, descriptor-heap 64-bit atomics,
-> static-sampler flags and non-normalized sampling are validated in the
-> compiler-host context rather than against an instantiated physical device.
+> The compiler host serializer accepts the reserved register space forms used
+> by tools. That acceptance does not grant ordinary device creation permission.
+> Local root signatures, mesh-related flags, descriptor heap 64-bit atomics,
+> static sampler flags and non-normalized sampling are validated in the
+> compiler host context rather than against an instantiated physical device.
 
 <!-- d3d12-review-alert:end:compiler-foundation:serializer:1 -->
 
@@ -503,7 +503,7 @@ HRESULT D3D12CompilerSerializeVersionedRootSignature(
 > On success the caller owns the reference and releases it when no longer
 > needed. Blob data is accessed with `GetBufferPointer` and `GetBufferSize`;
 > the size is in bytes and the storage is valid while the blob remains alive.
-> Passing `nullptr` is invalid; it is not a size query.
+> Passing `nullptr` is invalid. It is not a size query.
 
 <!-- d3d12-review-alert:end:compiler-foundation:serializer-params:3 -->
 
@@ -521,7 +521,7 @@ HRESULT D3D12CompilerSerializeVersionedRootSignature(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Optional writable storage for an error-message blob. When supplied for a valid
+> Optional writable storage for an error message blob. When supplied for a valid
 > serialization call, it receives an owned blob containing diagnostics or
 > `nullptr` if there are none. Release any returned error blob even when
 > serialization fails. `nullptr` suppresses this returned diagnostic object;
@@ -537,8 +537,8 @@ HRESULT D3D12CompilerSerializeVersionedRootSignature(
 > **Authored synthesis - human review pending.**
 >
 > `S_OK` returns the serialized blob. A null description or null `ppBlob` returns
-> `E_INVALIDARG`. Invalid descriptions, including unsupported root-signature
-> versions, fail; the compiler-host wrapper maps the serializer's `E_FAIL`
+> `E_INVALIDARG`. Invalid descriptions, including unsupported root signature
+> versions, fail. The compiler host wrapper maps the serializer's `E_FAIL`
 > validation result to `E_INVALIDARG`. Allocation failures can return
 > `E_OUTOFMEMORY`.
 
@@ -552,8 +552,8 @@ HRESULT D3D12CompilerSerializeVersionedRootSignature(
 > After valid required pointers have been checked, `*ppBlob` and, when supplied,
 > `*ppErrorBlob` are initialized to `nullptr` before validation. Invalid required
 > pointers do not establish initialized outputs. A diagnostic blob is not
-> guaranteed for every failure. Output-blob size is not available through a
-> null-output probe.
+> guaranteed for every failure. Output blob size is not available through a
+> null output probe.
 
 <!-- d3d12-review-alert:end:compiler-foundation:serializer-results:1 -->
 
@@ -681,7 +681,7 @@ ABI version is used to check for precompiled cache updates and understand cache 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pNumABIVersions` is required; a null pointer returns `E_INVALIDARG`.
+> `pNumABIVersions` is required. A null pointer returns `E_INVALIDARG`.
 > For a size query, pass `*pNumABIVersions == 0` and
 > `pABIVersions == nullptr`. For a valid family the query returns `S_OK` and the
 > required element count. A valid family must provide at least one ABI.
@@ -697,7 +697,7 @@ ABI version is used to check for precompiled cache updates and understand cache 
 > elements, not bytes. With sufficient capacity, the plugin copies the complete
 > list, updates the count to the number of supported versions and returns `S_OK`.
 > With insufficient capacity, it copies as many elements as fit, reports the full
-> required count and returns `DXGI_ERROR_MORE_DATA`; the returned count is then
+> required count and returns `DXGI_ERROR_MORE_DATA`. The returned count is then
 > greater than the number of valid copied elements. A nonnull zero-capacity buffer
 > does not request a successful size-only query. A null array with nonzero input
 > capacity is invalid.
@@ -710,7 +710,7 @@ ABI version is used to check for precompiled cache updates and understand cache 
 > **Authored synthesis - human review pending.**
 >
 > Zero and `UINT64_MAX` are reserved and must not be enumerated. The initial
-> ABI is 1; a breaking ABI change increments the counter. The set need not include
+> ABI is 1. A breaking ABI change increments the counter. The set need not include
 > all values between the smallest and largest returned ABI.
 
 <!-- d3d12-review-alert:end:compiler-foundation:abi-results:2 -->
@@ -722,7 +722,7 @@ ABI version is used to check for precompiled cache updates and understand cache 
 >
 > ABI versions must be returned in descending order, newest first. The latest
 > supported ABI is at `pABIVersions[0]`. A one-element array query retrieves that
-> latest ABI; when more than one ABI is supported, it returns
+> latest ABI. When more than one ABI is supported, it returns
 > `DXGI_ERROR_MORE_DATA` and the full count while providing that first element.
 
 <!-- d3d12-review-alert:end:compiler-foundation:abi-results:3 -->
@@ -780,8 +780,8 @@ Version Hints: Major/Minor version change for "must" recompile such as security 
 >
 > `pCompilerVersion` is required writable storage; null returns `E_INVALIDARG`.
 > Success returns the plugin's single compiler version for the family. An
-> unavailable family is reported as `DXGI_ERROR_NOT_FOUND`; other plugin failures
-> remain failures. This method is not an array enumeration or null-output probe.
+> unavailable family is reported as `DXGI_ERROR_NOT_FOUND`. Other plugin failures
+> remain failures. This method is not an array enumeration or null output probe.
 
 <!-- d3d12-review-alert:end:compiler-foundation:compiler-version-results:0 -->
 
@@ -846,11 +846,11 @@ The compiler application profile can be versioned <ins><!-- d3d12-review-inline:
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> All three pointers are required; a null pointer returns `E_INVALIDARG`.
+> All three pointers are required. A null pointer returns `E_INVALIDARG`.
 > Once the required pointers are valid, the output version is initialized to zero.
 > The runtime validates the family and target ABI before asking the plugin for
 > the profile version. Zero ABI uses the greatest supported member as described
-> under [target resolution](#d3d12_compiler_target); an unsupported nonzero ABI
+> under [target resolution](#d3d12_compiler_target). An unsupported nonzero ABI
 > returns `E_INVALIDARG` rather than falling back. Family discovery failures
 > propagate.
 
@@ -864,7 +864,7 @@ The compiler application profile can be versioned <ins><!-- d3d12-review-inline:
 > Success returns `S_OK` and the applicable profile version. When no application
 > or engine profile applies, the version is zero. A profile revision can change
 > compiler output for this application without revising every application's
-> compiler version. The runtime does not prescribe a vendor's profile-matching
+> compiler version. The runtime does not prescribe a vendor's profile matching
 > algorithm or an application-versus-engine fallback precedence.
 
 <!-- d3d12-review-alert:end:compiler-foundation:profile-results:1 -->
@@ -876,14 +876,14 @@ The compiler application profile can be versioned <ins><!-- d3d12-review-inline:
 >
 > Failures after pointer validation leave the initialized zero output, but a
 > zero version alone does not indicate success:
-> the caller must check the `HRESULT`. Null-pointer failure does not establish
-> initialized output. There is no null-output profile-presence probe.
+> the caller must check the `HRESULT`. Null pointer failure does not establish
+> initialized output. There is no null output profile presence probe.
 
 <!-- d3d12-review-alert:end:compiler-foundation:profile-results:2 -->
 
 <a id="factory-child"></a>
 
-## Factory-child ownership
+## Factory child ownership
 
 <a id="id3d12compilerfactorychild-getfactory"></a>
 
@@ -926,7 +926,7 @@ HRESULT GetFactory(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The requested compiler-factory interface identifier, normally
+> The requested compiler factory interface identifier, normally
 > `IID_ID3D12CompilerFactory`.
 
 <!-- d3d12-review-alert:end:compiler-foundation:get-factory-params:1 -->

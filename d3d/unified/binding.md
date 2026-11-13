@@ -1,39 +1,8 @@
 # Resource binding and root signatures
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
-<!-- d3d12-review-alert:begin:binding:N-intro:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Descriptors identify resource views and samplers. Descriptor heaps store opaque descriptors; root signatures define how shaders obtain descriptors and constants from root arguments. Binding does not establish residency, extend resource lifetime, or synchronize resource access.
-
-<!-- d3d12-review-alert:end:binding:N-intro:0 -->
-
 <a id="foundations"></a>
 
 ## Binding foundations
-
-<!-- d3d12-review-alert:begin:binding:N-owners:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Resource backing, [residency](resources.md#residency) and [CPU mapping](resources.md#cpu-access) are independent of binding. [Submission and completion](execution.md#submission) determine when recorded references have finished. [Synchronization and barriers](synchronization.md#foundations) define execution dependencies, memory visibility, and layouts; binding a resource is not a barrier.
-
-<!-- d3d12-review-alert:end:binding:N-owners:0 -->
 
 Descriptors are the primary unit of binding in D3D12.
 
@@ -44,8 +13,11 @@ visible to the application depending on the circumstance.
 There are many different types of descriptors. Shader Resource Views
 (SRVs), Unordered Access Views (UAVs) and Samplers are a few examples.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-descriptors:3 -->The size of a descriptor varies by hardware/driver and by object type.
-There is no guaranteed upper bound.<!-- d3d12-review-inline:end:binding:B-descriptors:3 --></ins>
+The size of a descriptor varies by hardware/driver and by object type.
+There is no guaranteed upper bound.
+
+> ![NOTE]
+> In practice, descriptors that reside in GPU-visible memory have historically been <= 64 bytes, though this is not a hard requirement.
 
 Applications can ask the system to translate API level definitions of
 state into hardware descriptors. An SRV, for instance, selects which
@@ -64,11 +36,11 @@ to make sure that it does not use an SRV descriptor when the underlying
 D3D resource it depends on has been destroyed or is otherwise
 inaccessible (such as being declared as nonresident).
 
-<ins><!-- d3d12-review-inline:begin:binding:B-descriptors:6 -->One way to use descriptors is to place them in *descriptor heap(s)*,
+One way to use descriptors is to place them in *descriptor heap(s)*,
 which are backing memory for descriptors. In this case descriptor
 *tables* must be defined -- these identify a range in a descriptor heap
 to the pipeline so it knows where to look to find which descriptors to
-use at Draw/Dispatch time. Descriptor tables and heaps are defined below.<!-- d3d12-review-inline:end:binding:B-descriptors:6 --></ins>
+use at Draw/Dispatch time. Descriptor tables and heaps are defined below.
 
 The set of descriptor tables being used at a given time, among other
 things, are defined as part of the *root arguments*. The layout of the
@@ -91,16 +63,21 @@ descriptors (which take more space but remove an indirection) vs inline
 constants (which have no indirection) they want in the root signature.
 Details are provided later.
 
+Unless otherwise specified, "root signature" means a global root signature,
+whose arguments are set on the command list. [Raytracing pipelines](raytracing-pipelines.md)
+and [work graphs](work-graphs.md) can use local root signatures.
+See [Local and global root signatures](#local-signatures).
+
 <a id="descriptor-tables"></a>
 
 ### Descriptor tables
 
-<ins><!-- d3d12-review-inline:begin:binding:B-tables:0 -->A descriptor table is logically an array of descriptors. Each descriptor
+A descriptor table is logically an array of descriptors. Each descriptor
 table stores descriptors of one or more types - SRVs, UAVs, CBVs and
 Samplers. The graphics and compute pipelines gain access to resources by
-referencing into descriptor tables by index.<!-- d3d12-review-inline:end:binding:B-tables:0 --></ins>
+referencing into descriptor tables by index.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-tables:1 -->A descriptor table is actually just a subrange of a descriptor heap.
+A descriptor table is actually just a subrange of a descriptor heap.
 Descriptor heaps are described in detail later, but basically they
 represent the underlying memory allocation for a collection of
 descriptors. Since memory allocation is a property of creating a
@@ -109,7 +86,7 @@ be as cheap as identifying a region in the heap to the hardware.
 Descriptor tables don't need to be created or destroyed at the API or
 DDI -- they are merely identified to drivers as an offset and size out
 of a heap whenever referenced (the size is not strictly necessary but
-useful for validation at least).<!-- d3d12-review-inline:end:binding:B-tables:1 --></ins>
+useful for validation at least).
 
 The main reason there are two concepts - descriptor *tables* carved out
 of descriptor *heaps* - rather than forcing graphics pipeline to always
@@ -120,6 +97,11 @@ to understand where to find resources in a large heap space. It is
 certainly possible for an app to define very large descriptor tables
 when its shaders want the freedom to select from a vast set of available
 textures on the fly (perhaps driven by material data).
+
+Descriptor heaps are bound to command lists before descriptor tables are set.
+Each table refers to a range in the currently bound heap of the matching type.
+See [Binding changes](command-list-state.md#binding-changes) for how changing
+heaps affects table bindings.
 
 Descriptor tables also allow representing the fact that depending on the
 hardware certain object types may only have a limited number visible to
@@ -134,32 +116,32 @@ heaps - in detail.
 
 ### Descriptor heaps
 
-<ins><!-- d3d12-review-inline:begin:binding:B-heaps:0 -->A descriptor heap from the API point of view is a contiguous allocation of descriptor storage for one descriptor heap type. Descriptor heaps
+A descriptor heap from the API point of view is a contiguous allocation of descriptor storage for one descriptor heap type. Descriptor heaps
 contain many object types that are not part of a Pipeline State, such as
-SRVs, UAVs, Constant Buffer Views (CBVs), Samplers.<!-- d3d12-review-inline:end:binding:B-heaps:0 --></ins>
+SRVs, UAVs, Constant Buffer Views (CBVs), Samplers.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-heaps:1 -->The primary point of a descriptor heap is to encompass the bulk of
+The primary point of a descriptor heap is to encompass the bulk of
 memory allocation required for storing the descriptor specifications of
-object types that shaders reference for as large of a window of
+object types that shaders reference, for as large of a window of
 rendering as possible (ideally an entire frame of rendering or more). If
 an application is switching which textures the pipeline sees rapidly
 from the API, there has to be space in the descriptor heap to define
 descriptor tables on the fly for every set of state needed. The
 application can choose to reuse definitions if it wishes to keep track,
 or just burn through the heap space blindly as it is switching various
-object types.<!-- d3d12-review-inline:end:binding:B-heaps:1 --></ins>
+object types.
 
 Descriptor heaps also allow individual components in componentized
 software to manage descriptor storage separately from each other.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-heaps:3 -->Applications can request whether a descriptor heap is shader visible or
+Applications can request whether a descriptor heap is shader visible or
 not -- reasons explored later. Applications can create as many
 descriptor heaps as desired with whatever properties are desired.
 Descriptor heaps that are referenced during rendering by the GPU (shader
 visible) have limits on the size of the heap depending on hardware
 capability. Applications always have the option to create descriptor
 heaps that are purely for staging purposes (non shader visible) whose sizes are not constrained by shader-visible heap limits, copying to descriptor heaps that are used for
-rendering as necessary.<!-- d3d12-review-inline:end:binding:B-heaps:3 --></ins>
+rendering as necessary.
 
 Levels of functionality in the hardware with respect to heap
 configuration is grouped into Tiers of increasing generality, described
@@ -168,14 +150,14 @@ later.
 Descriptor heaps that can be referenced by shaders through descriptor
 tables come in a couple flavors:
 
-<ins><!-- d3d12-review-inline:begin:binding:B-shader-heaps:1 -->One heap type, `D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV` can hold Shader
+One heap type, `D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV` can hold Shader
 Resource Views, Unordered Access Views and Constant Buffer Views all
 intermixed. So any given location in the heap can be any one of the
-listed types of descriptors.<!-- d3d12-review-inline:end:binding:B-shader-heaps:1 --></ins>
+listed types of descriptors.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-shader-heaps:2 -->Another heap type, `D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER` only stores
+Another heap type, `D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER` only stores
 samplers, reflecting the fact that for the majority of hardware samplers
-are managed separately from SRVs, UAVs, CBVs.<!-- d3d12-review-inline:end:binding:B-shader-heaps:2 --></ins>
+are managed separately from SRVs, UAVs, CBVs.
 
 Descriptor heaps of these types may be requested to be shader visible or
 not when the heap is created. The latter style -- non shader visible -
@@ -205,7 +187,7 @@ The mechanism and semantics for identifying descriptor heaps to shaders
 during command list / bundle recording are described in the API
 reference.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-cpu-heaps:0 -->The only purpose of descriptor heaps for descriptor types that are not
+The only purpose of descriptor heaps for descriptor types that are not
 shader accessible, such as RTVs, is to identify descriptors that the
 driver needs to copy/interpret during command list recording (e.g.
 OMSetRenderTargets()) to define what the GPU will later reference during
@@ -217,12 +199,12 @@ call, like OMSetRenderTargets() on the command list, returns back to the
 app, the source (non shader visible) descriptor heap location is free to
 be immediately changed by the application in preparation for the next
 call. In other words the driver doesn't hold a reference to application
-provided memory.<!-- d3d12-review-inline:end:binding:B-cpu-heaps:0 --></ins>
+provided memory.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-cpu-heaps:1 -->Non shader visible descriptor heaps are not constrained by shader-visible heap size limits. It is
+Non shader visible descriptor heaps are not constrained by shader-visible heap size limits. It is
 perfectly reasonable for an application to create non shader visible
 descriptor heaps of any size, tiny or huge, whatever is convenient for
-how an application might wish to stage descriptors.<!-- d3d12-review-inline:end:binding:B-cpu-heaps:1 --></ins>
+how an application might wish to stage descriptors.
 
 An application might even choose to use non shader visible descriptor
 heaps to store descriptors that can be used in shaders --
@@ -243,49 +225,40 @@ arguments can be described using only a GPU virtual address pointer to
 Buffer style memory without needing any additional data tied to the
 descriptor.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-transparent:1 -->These descriptors get bound to the pipeline similarly to RTVs and DSVs
+These descriptors get bound to the pipeline similarly to RTVs and DSVs
 described previously -- the descriptor contents recorded into /
 interpreted by the command list directly, rather than being pointed to
 via descriptor tables. As soon as a bind call, like IASetVertexBuffers()
 on the command list, returns back to the app, the source descriptor
 memory is free to be immediately changed by the application in
 preparation for the next call. In other words the driver doesn't hold a
-reference to application provided memory.<!-- d3d12-review-inline:end:binding:B-transparent:1 --></ins>
+reference to application provided memory.
 
 The only difference between transparent descriptors described here
 (VBV/IBV/SOV and root descriptors) and RTV/DSV descriptors described
 above is RTV/DSV descriptors are more complex so their hardware
 translation is stored in an opaque descriptor.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-transparent:3 -->Another use for transparent descriptors is that since the definition is
+Another use for transparent descriptors is that since the definition is
 visible to applications, they can generate these descriptors
 procedurally, even on the GPU. In particular, a buffer of multiple sets
 of {descriptor changes + draw/dispatch parameters} can be produced and
 fed to ExecuteIndirect() to issue multiple draw/dispatch operations at
-once. `ExecuteIndirect` state effects are defined in [indirect execution](command-list-state.md#indirect).<!-- d3d12-review-inline:end:binding:B-transparent:3 --></ins>
+once. `ExecuteIndirect` state effects are defined in [indirect execution](command-list-state.md#indirect).
 
 <a id="descriptor-population"></a>
 
 ### Descriptor population and CPU access
 
-<!-- d3d12-review-alert:begin:binding:N-resource-operations-clear-descriptors:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Descriptor-addressed clears have their [full operation contracts](resource-operations.md#clear-commands). [UAV clears](resource-operations.md#uav-clear-values) require matching CPU/GPU views and a resource argument, with the specified heap visibility; descriptor lifetime/population remains defined here.
-
-<!-- d3d12-review-alert:end:binding:N-resource-operations-clear-descriptors:0 -->
-
 Now back to discussing opaque descriptors that live in descriptor heaps:
 fully general SRV / UAV / CBV and Samplers.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-population:1 -->When an application has created a descriptor heap it can use methods on
+When an application has created a descriptor heap it can use methods on
 the device to either generate descriptors directly into the heap or copy
 descriptors from one place to another. The initial contents of
 descriptor heap memory is undefined, so asking the GPU or driver to
 reference such uninitialized memory for rendering produces undefined
-results including device reset.<!-- d3d12-review-inline:end:binding:B-population:1 --></ins>
+results including device reset.
 
 All descriptor heaps are CPU visible, however the style of access
 available to the CPU depends on whether the heap is shader visible or
@@ -309,52 +282,63 @@ application in an immediate, free threaded manner.
 
 ### Null descriptors
 
-When creating descriptors at the API, applications pass NULL for the
-resource pointer in the descriptor definition in order to achieve the
-effect of an "unbound" resource. The rest of the descriptor must be
-populated as much as possible, such as in the case of SRVs
-distinguishing which type of view it is -> Texture2D, Texture1D etc.
-Numerical parameters in the view descriptor such as number of mipmaps
-must all be set to values that could have been valid for a resource.
+#### Creation and access compatibility
 
-<ins><!-- d3d12-review-inline:begin:binding:B-null:1 -->In many cases there is a defined behavior for accessing an unbound
-resource, such as SRVs which return default values (including zero reads and discarded writes for applicable accesses). Those will be honored when accessing a NULL descriptor as
-long as the type of shader access is compatible with the descriptor
-type. E.g. if a shader expects a Texture2D SRV and accesses a NULL SRV
-defined as a Texture1D, behavior is undefined and could result in device
-reset.<!-- d3d12-review-inline:end:binding:B-null:1 --></ins>
+To create a null SRV or UAV descriptor, applications pass NULL for the resource pointer and provide a valid view description. The description must specify the view type, such as Texture2D or Texture1D. Numerical parameters, such as the number of mipmaps, must have values that could have been valid for a resource. [Acceleration structure SRVs](#acceleration-structure-srv) use a GPU address in the description rather than a resource pointer and have their own [null-address rule](#acceleration-structure-srvs).
 
-<ins><!-- d3d12-review-inline:begin:binding:B-null:2 -->Except for [acceleration-structure SRVs](#acceleration-structure-srvs), descriptors placed directly in the root arguments behave differently. If the pointer value for one of these descriptors is
+A null description passed to `CreateConstantBufferView` creates a null CBV. This differs from passing a null description with a non-null resource to an [SRV or UAV creation method](#descriptor-creation), which requests a default view of that resource.
+
+#### Shader access results
+
+The shader access must be compatible with the null descriptor's type. The [array/non-array texture compatibility rules](#texture-view-dimension-compatibility) also apply to null SRVs and UAVs. For example, accessing a null Texture1D SRV as a Texture2D is undefined and could result in device reset. An uninitialized descriptor or an [out-of-bounds descriptor-table index](#table-indexing) is not a null descriptor.
+
+The following table defines compatible accesses through null descriptors. TODO entries identify gaps in this manuscript, not undefined API behavior.
+
+| Access | Result |
+|---|---|
+| Constant-buffer load through a null CBV | Zero |
+| Load through a null SRV or UAV | Zero in all returned components, including components absent from the view format. [Missing component defaults](formats.md#missing-components) are not substituted |
+| Non-comparison texture sampling or gathering through a null SRV | Zero in all returned components, including components absent from the view format. [Missing component defaults](formats.md#missing-components) are not substituted |
+| Comparison texture sampling or gathering through a null SRV | Zero, rather than the result of comparing the reference value against a zero texel |
+| Store through a null UAV | The write is discarded |
+| Atomic operation through a null UAV | Writes are discarded, **TODO: return value contract not yet established** |
+| UAV counter operation | A null UAV cannot have an associated counter resource, so operations requiring a counter cannot use a null UAV. See the [UAV creation contract](#id3d12device-createunorderedaccessview). |
+| Texture dimension and mip-count queries through a null SRV or UAV | Zero for width, height, depth or array size, and mip count. Result conversions still apply: DXBC `resinfo_rcpFloat` produces infinity for dimensions whose reciprocal is requested. |
+| Buffer dimension or structure-stride query through a null SRV or UAV | Zero for all returned fields |
+| Multisample count or sample-position query through a null SRV | Zero |
+| LOD query through a null SRV | Zero |
+
+#### Root descriptor addresses
+
+Except for acceleration structure SRVs (see below), [descriptors placed directly in the root arguments](#root-descriptors) behave differently. If the pointer value for one of these descriptors is
 0 and the GPU dereferences it, behavior is undefined (including device
-reset).<!-- d3d12-review-inline:end:binding:B-null:2 --></ins>
+reset).
 
-<ins><!-- d3d12-review-inline:begin:binding:B-null:3 -->For Vertex Buffer Views, Index Buffer Views, Stream Output Views and the
-creation of non-root Constant Buffer Views in a descriptor heap, the
-view desc can be passed as NULL at the API to result in the unbound
-behavior. For Vertex Buffers this can be handy for instance when
-unbinding all VBs since NULL can be passed for the view array to
-IASetVertexBuffers(). Alternatively the view size for individual
-VBV/IBV/SOV/CBV descriptors can be set to 0 to achieve the same behavior
--- in this case the buffer address passed in is ignored and can be NULL
-without risk of crashing.<!-- d3d12-review-inline:end:binding:B-null:3 --></ins>
+<a id="acceleration-structure-srvs"></a>
+
+For acceleration structure SRVs, a root SRV address of `0` or a descriptor heap SRV whose `Location` is `0` represents a NULL acceleration structure and forces a miss. The resource parameter is always NULL when creating these SRVs and does not determine whether the acceleration structure is NULL. An unset root argument is uninitialized state, not a GPUVA of `0`.
+
+A NULL acceleration structure binding (i.e. a NULL TLAS pointer) is distinct from an instance whose `AccelerationStructure` pointer is NULL (a null BLAS pointer), which is an inactive instance discarded at build time. See [Inactive primitives and instances](acceleration-structures.md#inactive-primitives-and-instances).
+
+#### Vertex, index and stream output views
+
+Vertex Buffer Views, Index Buffer Views and Stream Output Views are supplied directly to command-list methods rather than stored in descriptor heaps. A null view pointer clears the corresponding binding or binding range. For example, passing NULL for the view array to `IASetVertexBuffers` clears the specified vertex buffer slots.
+
+| Access with no buffer view bound | Result |
+|---|---|
+| Input assembler vertex or index fetch | Zero for all expected components, without [missing component defaults](formats.md#missing-components). |
+| Stream output to a slot selected by the stream output declaration | The slot is treated as a full buffer. Writes stop for the entire stream, including its other buffer slots, while shader execution and the stream's storage-needed count continue. Other streams are unaffected. |
+
+Setting the view size to zero in an individual VBV, IBV, SOV or descriptor-heap CBV has the same access behavior as its null form. The buffer address is ignored and can be NULL. Stream output capacity and statistics follow the [overflow rules](geometry-shaders-and-stream-output.md#overflow-and-statistics).
 
 <a id="root-signatures"></a>
 
 ## Root arguments and signatures
 
-<!-- d3d12-review-alert:begin:binding:D121-root-signature-storage:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Recorded database inputs use the [serialized root-signature descriptors and reconstruction rules](state-object-databases-and-identity.md#storage-only-forms). Storing a description does not persist a live `ID3D12RootSignature` pointer. The serialization, creation and binding semantics defined here remain applicable when restoring those inputs.
-
-<!-- d3d12-review-alert:end:binding:D121-root-signature-storage:0 -->
-
-<ins><!-- d3d12-review-inline:begin:binding:B-arguments:0 -->The *root arguments* are an application defined data structure used by
+The *root arguments* are an application defined data structure used by
 shaders to locate the resources they need access. These arguments
 exist as a binding space on a command list for the collection of
-resources the application needs to make available to shaders.<!-- d3d12-review-inline:end:binding:B-arguments:0 --></ins>
+resources the application needs to make available to shaders.
 
 The root arguments can include descriptor tables (pointer into
 descriptor heap), where the layout of the descriptor table has been
@@ -369,13 +353,13 @@ descriptors directly inside it (such as a CBV that is changing per
 draw), also saving the application from having to put those descriptors
 in a descriptor heap.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-arguments:4 -->The layout of the root arguments is quite flexible, with some
+The layout of the root arguments is quite flexible, with some
 constraints imposed on less capable hardware. Regardless of the level of
 hardware, applications should try to make the root arguments as small as
 needed for maximum efficiency -- how small exactly works best might
 depend on the hardware (more specifics detailed later). Applications can
 trade off placing more descriptor tables in the root arguments but less
-room for root constants, or vice versa.<!-- d3d12-review-inline:end:binding:B-arguments:4 --></ins>
+room for root constants, or vice versa.
 
 The contents of the root arguments (the descriptor tables, root
 constants and root descriptors) that the application has bound
@@ -383,7 +367,7 @@ automatically get versioned by the hardware whenever any part of the
 contents change between draw/dispatch calls. So each draw/dispatch gets
 a unique full set of root argument state when any argument has changed.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-arguments:6 -->One implication of this is that if the root arguments are large and an
+One implication of this is that if the root arguments are large and an
 application is only changing a small amount of it, each change can cost
 the size of the full root signature in memory overhead (depending on the
 implementation). Some hardware has a small amount of dedicated buffering
@@ -391,7 +375,7 @@ for root argument versioning though, so any versioning within that size
 is the same cost. In general, applications should likely use the root
 arguments as sparingly as possible, relying on application controlled
 memory such as heaps and descriptor heaps pointing into them to
-represent bulk data.<!-- d3d12-review-inline:end:binding:B-arguments:6 --></ins>
+represent bulk data.
 
 Furthermore, applications should generally sort the layout of the root
 arguments in decreasing order of change frequency. This way if some
@@ -413,37 +397,23 @@ and root descriptors. Each entry has a cost towards a maximum limit, so
 the application can trade off the balance between how many of each type
 of entry the root signature will contain.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-signature:1 -->The root signature is an object that can be created by manual
-specification at the API. All shaders in a pipeline state must be compatible with its selected root signature. The [pipeline-compatibility contract](#pipeline-compatibility) defines explicit selection and embedded-signature discovery; not every selected stage must embed a signature.<!-- d3d12-review-inline:end:binding:B-signature:1 --></ins>
+The root signature is an object that can be created by manual
+specification at the API. All shaders in a pipeline state must be compatible with its selected root signature. The [pipeline-compatibility contract](#pipeline-compatibility) defines how a root signature is selected and validated against multiple possibilities, including explicit API parameters and embedded root signatures.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-signature:2 -->One property of the root signature is that shaders don't have to know
+One property of the root signature is that shaders don't have to know
 about it when authored, although root signatures can also be authored
-directly in shaders if desired. Existing shader assets do not require
-any changes to be compatible with root signatures. Shader Model 5.1 supports dynamic indexing of descriptors from within shaders.<!-- d3d12-review-inline:end:binding:B-signature:2 --></ins>
+directly in shaders if desired. Shader assets authored for D3D10 or D3D11 do not require
+any changes to be compatible with root signatures.
 
 <a id="recording-state"></a>
 
 ### Recording and bundle state
 
-<!-- d3d12-review-alert:begin:binding:N-state:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The canonical [initial binding state](command-list-state.md#initial-bindings), [binding-change invalidation](command-list-state.md#binding-changes), and [bundle binding rules](command-list-state.md#bundle-bindings) apply to the signatures and arguments defined here. Pipeline-state selection does not select a root signature. Root arguments are independently maintained for graphics and compute; table bindings refer to the currently selected heap of the appropriate type.
-
-<!-- d3d12-review-alert:end:binding:N-state:0 -->
+See [initial binding state](command-list-state.md#initial-bindings), [binding-change invalidation](command-list-state.md#binding-changes), and [bundle binding rules](command-list-state.md#bundle-bindings) for how bindings are set and inherited on command lists. Note that setting a pipeline state on a command list does not automatically apply that root signature. Root arguments are independently maintained for graphics and compute.
 
 <a id="table-indexing"></a>
 
 ### Table indexing and descriptor lifetime
-
-<!-- d3d12-review-alert:begin:binding:N-common-resource-operation-boundary:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Descriptor/range selection here feeds the [shared resource-operation model](common-shader-internals.md#resource-access). Coordinate interpretation, access families and derivative/quad requirements are distinct from descriptor lifetime and indexing policy.
 
 <!-- d3d12-review-alert:end:binding:N-common-resource-operation-boundary:0 -->
 
@@ -480,16 +450,16 @@ the CPU the portions of descriptor heaps that the GPU might reference
 until the application knows the GPU has finished executing the
 references.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-table-lifetime:1 -->Completion is established by the [submission and fence contracts](execution.md#submission).<!-- d3d12-review-inline:end:binding:B-table-lifetime:1 --></ins>
+Completion is established by the [submission and fence contracts](execution.md#submission).
 
 If an application knows that only a subset of the region a descriptor
 table points to will be accessed (say due to flow control in the
 shader), the other unreferenced descriptors are still free to be
 changed.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-table-lifetime:3 -->If an application needs to switch between different descriptor
+If an application needs to switch between different descriptor
 references between rendering calls, there are a few approaches the
-application can choose from.<!-- d3d12-review-inline:end:binding:B-table-lifetime:3 --></ins>
+application can choose from.
 
 (1) Descriptor Table Versioning: Create (or reuse) a separate descriptor
     table for every unique collection of descriptors that is to be
@@ -539,14 +509,7 @@ arguments, such as user constants, can also relieve some pressure from
 having to burn too many (or any) new descriptors for every rendering call
 that needs different data.
 
-<!-- d3d12-review-alert:begin:binding:N-lifetime-qualifier:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The preceding update freedom is subject to the stricter [static-descriptor and static-data promises](#static-promises) of root-signature versions 1.1 and 1.2. An unreferenced descriptor is not exempt from a static promise that covers it.
-
-<!-- d3d12-review-alert:end:binding:N-lifetime-qualifier:0 -->
+The preceding update freedom is subject to the stricter [static-descriptor and static-data promises](#static-promises) of root-signature versions 1.1 and 1.2. An unreferenced descriptor still has to adhere to any static promises that were made about it.
 
 Out of bounds indexing of any descriptor table from the shader results
 in a largely undefined memory access, including the possibility of
@@ -583,11 +546,11 @@ struct DrawConstants
 ConstantBuffer<DrawConstants> myDrawConstants : register(b1, space0);
 ```
 
-<ins><!-- d3d12-review-inline:begin:binding:B-root-constants:4 -->Arrays in cbuffers, such as having entry "float myArray[2];" that
+Arrays in cbuffers, such as having entry "float myArray[2];" that
 get mapped onto root constants can only be accessed using static/literal
 indices into the array so the driver compiler can directly map each access
 to a root constant, given the underlying root constant storage
-may not be contiguous and linearly indexable.<!-- d3d12-review-inline:end:binding:B-root-constants:4 --></ins>
+may not be contiguous and linearly indexable.
 
 A cbuffer that is mapped to root constants cannot itself be an array. So
 it is invalid to map "cbuffer myCBArray[2]" into root constants.
@@ -612,10 +575,10 @@ For rendering that uses extremely few resources, descriptor table / heap
 use may not be needed at all if all the needed descriptors can be placed
 directly in the root arguments.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-root-descriptors:3 -->The buffer descriptors supported in the root arguments are CBVs
+The buffer descriptors supported in the root arguments are CBVs
 and SRV/UAVs of Buffer resources, where the SRV/UAV is either a raw or
-structured buffer. [Acceleration-structure SRVs](#acceleration-structure-srvs) are also supported. UAVs in the root cannot have counters associated with
-them.<!-- d3d12-review-inline:end:binding:B-root-descriptors:3 --></ins>
+structured buffer. [Acceleration-structure SRVs](#acceleration-structure-srv) are also supported. They use the acceleration structure's GPUVA directly, with no additional root-descriptor type indication. UAVs in the root cannot have counters associated with
+them.
 
 Unlike full descriptors in descriptor heaps, root descriptors are each
 defined via single 64-bit value - a GPU virtual address of the data.
@@ -662,93 +625,39 @@ supported in the root arguments. The application can define separate
 individual constant buffers each as a separate parameter in the root
 signature if desired.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-root-descriptors:9 -->Note that within mySceneData above there is an array bar[2]. Dynamic
+Note that within mySceneData above there is an array bar[2]. Dynamic
 indexing within the constant buffer is valid -- a descriptor in the root
 arguments behaves just like the same descriptor would behave if accessed
 through a descriptor heap. This is in contrast with inlining constants
 directly in the root arguments, which also appears like a constant
 buffer except with the constraint that dynamic indexing within the
-inlined constants is not permitted, so indexing bar requires a static/literal index there.<!-- d3d12-review-inline:end:binding:B-root-descriptors:9 --></ins>
+inlined constants is not permitted, so indexing bar requires a static/literal index there.
 
-<!-- d3d12-review-alert:begin:binding:N-root-alignment:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Root CBV addresses must satisfy `D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT` (256 bytes). Root buffer SRV/UAV addresses must be at least 4-byte aligned and also satisfy the requirements of the accesses performed. Acceleration-structure SRVs retain their [acceleration-structure address requirements](../Raytracing.md#additional-srv-type); the ordinary buffer-alignment check is not their complete contract.
-
-<!-- d3d12-review-alert:end:binding:N-root-alignment:0 -->
-
-<a id="acceleration-structure-srvs"></a>
-
-### Acceleration-structure SRVs
-
-<ins><!-- d3d12-review-inline:begin:binding:B-rtas:0 -->Acceleration structures are declared in HLSL via the
-[RaytracingAccelerationStructure](../Raytracing.md#raytracingaccelerationstructure)
-resource type, which can then be passed into [TraceRay()](raytracing-pipelines.md#traceray) and [RayQuery::TraceRayInline()](ray-traversal.md#rayquery-tracerayinline).
-From the API, these are bound either:<!-- d3d12-review-inline:end:binding:B-rtas:0 --></ins>
-
-- <ins><!-- d3d12-review-inline:begin:binding:B-rtas:1 -->via a descriptor heap based SRV with dimension<!-- d3d12-review-inline:end:binding:B-rtas:1 --></ins>
-  `D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE` (whose
-  description contains a GPU virtual address)
-
-- as a root descriptor SRV, in which case no special indication is
-  needed to distinguish it from other root descriptor SRVs, since all
-  are described as simply a GPUVA
-
-<ins><!-- d3d12-review-inline:begin:binding:B-rtas:2 -->When creating descriptor heap based acceleration structure SRVs, the
-resource parameter must be NULL, as the memory location comes as a GPUVA
-from the view description
-(`D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV`). E.g.
-CreateShaderResourceView(NULL,pViewDesc).<!-- d3d12-review-inline:end:binding:B-rtas:2 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:binding:B-rtas:3 -->A NULL acceleration structure, meaning one bound to a shader as described here and used
-with any shader-visible trace entry point ([TraceRay()](raytracing-pipelines.md#traceray),
-[RayQuery::TraceRayInline()](ray-traversal.md#rayquery-tracerayinline) or [HitObject::TraceRay()](raytracing-pipelines.md#hitobject-traceray)),
-is a GPUVA of `0`.  This is distinct from an instance whose `AccelerationStructure` pointer is NULL,
-which is an inactive instance discarded at build time, see
-[Inactive primitives and instances](acceleration-structures.md#inactive-primitives-and-instances).<!-- d3d12-review-inline:end:binding:B-rtas:3 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:binding:B-rtas:4 -->For a root descriptor SRV this is an exception to the rule in
-[null descriptors](#null-descriptors), which states
-that if the pointer value of a root descriptor is `0` and the GPU dereferences it, behavior is
-undefined including device reset.  For acceleration structure SRVs a GPUVA of `0` is well defined
-and forces a miss instead.
-Since both of the bindings above reduce to a GPUVA, this applies equally to a root descriptor SRV
-and to a descriptor heap based SRV whose `Location` is `0`.  Because the resource parameter is
-always NULL when creating these SRVs, a null descriptor is not a separate case.  Leaving a root
-argument unset is not the same thing, since that is uninitialized state rather than a GPUVA of `0`.<!-- d3d12-review-inline:end:binding:B-rtas:4 --></ins>
-
-```cpp
-typedef struct D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV
-{
-    D3D12_GPU_VIRTUAL_ADDRESS Location;
-} D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV;
-```
+Root CBV addresses must satisfy `D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT` (256 bytes). Root buffer SRV/UAV addresses must be at least 4-byte aligned and also satisfy the requirements of the accesses performed. Acceleration structure SRVs retain their [acceleration structure address requirements](../Raytracing.md#additional-srv-type).
 
 <a id="root-limits"></a>
 
-### Root-argument limits
+### Root argument limits
 
-<ins><!-- d3d12-review-inline:begin:binding:B-root-limits:0 -->The maximum size of the root arguments for a global root signature is 64 DWORDs. This maximum is
+The maximum size of the root arguments for a global root signature is 64 DWORDs. This maximum is
 chosen to prevent abuse of the root arguments as a way of storing bulk
 data. Each parameter in the root signature has a cost towards this 64
 DWORD limit. These costs may not exactly match what any given hardware
 has to do, but no matter what the tight limit minimizes the hardware
 expense for supporting the root arguments. Descriptor tables cost 1
-DWORD each.<!-- d3d12-review-inline:end:binding:B-root-limits:0 --></ins>
+DWORD each.
 
 Root constants cost 1 DWORD * NumConstants, by definition since they
 are collections of 32-bit values.
 
 Raw/Structured Buffer SRVs/UAVs and CBVs cost 2 DWORDs.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-instrumentation:0 -->During debugging or other system instrumentation scenarios, the OS has
+During debugging or other system instrumentation scenarios, the OS has
 the option to add root arguments (of any type) past the API limit
 imposed on the application, up to 128 DWORDs total (app + debug). These
 extra arguments are used, for instance, in combination with patching
 shaders for debug shader validation that can support applications that
-happen to use all of their available root signature capacity.<!-- d3d12-review-inline:end:binding:B-instrumentation:0 --></ins>
+happen to use all of their available root signature capacity.
 
 Drivers don't see the distinction between which arguments came from the
 app vs which were injected by the system, by design. All a driver has to
@@ -763,7 +672,7 @@ hardware. Since root UAVs/SRVs are more constrained than full UAVs/SRVs,
 hardware Tier based limits on resource bindings are not affected by the
 system adding these descriptors to a root signature.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-instrumentation:3 -->If there are to be extra root arguments showing up in root signatures
+If there are to be extra root arguments showing up in root signatures
 there needs to be a way to guarantee that they can be consumed by
 instrumented shader code without conflicting with whatever bindings the
 original application / shader happened to choose. To enable this, an
@@ -772,7 +681,7 @@ definition and HLSL binding definition, such as register(t0,space#).
 Some of the register space values (which appear as the # in the example
 here) are reserved, from the high end of the number range, 0xfffffff0 to
 0xffffffff. See [register spaces](#register-spaces) --
-some of the range is for driver use and some for the OS.<!-- d3d12-review-inline:end:binding:B-instrumentation:3 --></ins>
+some of the range is for driver use and some for the OS.
 
 This register space reservation leaves room for drivers and/or the OS to
 do instrumentation on shaders (such as during debugging) easily by
@@ -786,101 +695,101 @@ added root signature entries described above.
 
 ### Local and global root signatures
 
-For raytracing shaders, bindings can be defined by one or both of the
-following root signatures:
+For [raytracing shaders](raytracing-pipelines.md) and [work graphs](work-graphs.md),
+bindings can be defined by one or both of the following root signatures:
 
-- <ins><!-- d3d12-review-inline:begin:binding:B-local:1 -->A *local* root signature, whose arguments come from [shader tables](raytracing-pipelines.md#shader-tables), enabling each shader to have unique arguments.<!-- d3d12-review-inline:end:binding:B-local:1 --></ins>
+- A *local* root signature, whose arguments come from [shader tables](raytracing-pipelines.md#shader-tables) for raytracing shaders or the [node-local root arguments table](state-objects.md#d3d12_set_work_graph_desc) for work graphs, enabling each shader or node to have unique arguments.
 
 - A *global* root signature whose arguments are shared across all
-  raytracing shaders and compute PSOs on CommandLists, set via
-  SetComputeRootSignature().
+  raytracing shaders, work graphs and compute PSOs on CommandLists, set via
+  `SetComputeRootSignature()`.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-local:2 -->Each raytracing shader used together can use different local root
+Raytracing shaders used together, or nodes within a work graph, can use different local root
 signatures but must use the same global root signature. The "global"
 root signature is identical to the root signature used for compute state on
-command lists.<!-- d3d12-review-inline:end:binding:B-local:2 --></ins>
+command lists.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-local:3 -->Different sets of shaders collected together in a [State object](state-objects.md#object-model),
+Different sets of shaders collected together in a [State object](state-objects.md#object-model),
 may have different global root signatures, as long as during a [DispatchRays()](raytracing-pipelines.md#id3d12graphicscommandlist4dispatchrays)
 call any shaders that get
 invoked use the same global root signature that is set on the CommandList
-as described above.<!-- d3d12-review-inline:end:binding:B-local:3 --></ins>
+as described above. The same requirement applies to nodes invoked by a
+[DispatchGraph()](work-graphs.md#dispatchgraph) call.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-local:4 -->Unlike global root signatures, local root signatures have a larger limit
-on the number of entries they can hold, bounded by the maximum supported
-shader record stride of 4096 bytes, minus 32 bytes for shader identifier
-size = 4064 bytes max local root signature footprint. See [shader records](raytracing-pipelines.md#shader-record).<!-- d3d12-review-inline:end:binding:B-local:4 --></ins>
+Local root signatures are not subject to the global root signature's 64-DWORD limit.
+
+For raytracing, the maximum local root argument footprint is 4064 bytes:
+the maximum shader record stride of 4096 bytes minus the 32-byte shader
+identifier. For work graphs, the maximum local root argument footprint is
+4096 bytes. Both use the [local root argument layout](#local-root-argument-layout)
+defined below. Table stride and base alignment requirements are defined
+with [raytracing shader tables](raytracing-pipelines.md#shader-tables) and
+[work-graph node-local argument tables](state-objects.md#d3d12_set_work_graph_desc).
 
 The shader "register" bindings (e.g. t0, u0 etc.) specified by a local
 root signature can't overlap with those in a global root signature for a
 given shader.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-local:6 -->Note about static samplers: Local root signatures can define static
+Note about static samplers: Local root signatures can define static
 samplers (just like global root signatures can), except that each local
-root signature used in a [Raytracing pipeline state object](state-objects.md#raytracing-pipeline-state-object)
+root signature used in a raytracing pipeline or work-graph [state object](state-objects.md#object-model)
 must define any static samplers it uses identically as other local root
 signatures that define the same ones. So if any local root signature makes
 a definition for, say, sampler s0, all local root signatures that define
 s0 must use the same definition. Further, the total number of unique
 static samplers across local root signature and global root signature
-must fit in the static sampler limit for D3D12's resource binding model.<!-- d3d12-review-inline:end:binding:B-local:6 --></ins>
+must fit in the static sampler limit for D3D12's resource binding model.
 
-<!-- d3d12-review-alert:begin:binding:N-work-graph:0 -->
+[State object associations](state-objects.md#subobject-association-behavior) determine which root signature subobjects apply to each export. [Node-local table selection](state-objects.md#d3d12_set_work_graph_desc) defines the work graph selection interface.
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Work graphs use global and node-local root arguments. [State objects](state-objects.md#d3d12_set_work_graph_desc) defines the node-local argument-table binding and layout; [Work-graph execution](work-graphs.md#dispatchgraph) defines dispatch. Shared descriptor heaps and root-signature requirements are not independent copies of this binding model.
+<a id="local-root-argument-layout"></a>
 
-<!-- d3d12-review-alert:end:binding:N-work-graph:0 -->
+#### Local root argument layout
 
-<!-- d3d12-review-alert:begin:binding:N-state-object-association-owner:0 -->
+Raytracing shader records and work graph node-local argument tables use the same local root argument layout. Arguments are packed in the order declared in the local root signature, with padding as needed to align each argument:
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> [State-object associations](state-objects.md#subobject-association-behavior) determine which root-signature subobjects apply to each export, including defaults, direct-DXIL overrides and collection constraints. [Node-local table selection](state-objects.md#d3d12_set_work_graph_desc) defines the work-graph construction/selection interface; root representation remains defined here.
+| Argument | Size | Alignment |
+|---|---|---|
+| Root constants | 4 bytes per DWORD | 4 bytes |
+| Root descriptor | 8 bytes | 8 bytes |
+| Descriptor table GPU handle | 8 bytes | 8 bytes |
 
-<!-- d3d12-review-alert:end:binding:N-state-object-association-owner:0 -->
+The footprint includes this padding.
+
+> In the global root signature cost function, a descriptor table is
+> considered to be one DWORD (4 bytes), despite the API handle type being
+> an 8 byte value. For hardware that is constrained in their root argument
+> space, they are able to compress this value by diffing it against the
+> currently-bound root descriptor table to produce a 32-bit offset. Note
+> that for a local root signature, the full 64-bit value should be placed
+> in the shader table, which makes the local root signature size calculation
+> different than the global root signature cost function.
 
 <a id="raytracing-shader-visibility"></a>
+<a id="raytracing-and-work-graph-shader-visibility"></a>
 
-### Raytracing shader visibility
+### Raytracing and work graph shader visibility
 
-Root signatures used with raytracing share command list state with
-compute, as described in [Local root signatures vs root signatures](binding.md#local-signatures). As such,
+Root signatures used with raytracing and work graphs share command list state with
+compute, as described in [Local and global root signatures](#local-signatures). As such,
 the only root parameter shader visibility that applies is
 `D3D12_SHADER_VISIBILITY_ALL`, meaning the root arguments set as part
-of compute command list state are also visible to raytracing.
+of compute command list state are also visible to raytracing shaders and work graph node shaders.
 
 Local root signatures can also only use `D3D12_SHADER_VISIBILITY_ALL`.
 
 In other words, for both root signatures and local root signatures,
 there's nothing interesting to narrow down with shader visibility flags
--- local root arguments are simply always visible to all raytracing
-shaders (and compute for root signatures).
-
-<!-- d3d12-review-alert:begin:binding:N-ray-record-serialization:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The serialized layout of local-root arguments inside a shader record is defined with [shader-table memory initialization](raytracing-pipelines.md#shader-table-memory-initialization). The global root-cost accounting here is distinct from that record's full 64-bit descriptor/handle representation.
-
-<!-- d3d12-review-alert:end:binding:N-ray-record-serialization:0 -->
+-- local root arguments are visible to the associated raytracing shader or
+work graph node, without filtering by shader visibility flags.
 
 <a id="signature-descriptions"></a>
 
-## Root-signature descriptions
+## Root signature descriptions
 
-<!-- d3d12-review-alert:begin:binding:N-descriptions:0 -->
+`D3D12_VERSIONED_ROOT_SIGNATURE_DESC.Version` selects `Desc_1_0`, `Desc_1_1`, or `Desc_1_2`. Version 1.1 adds descriptor/data promise flags. Version 1.2 retains them and uses `D3D12_STATIC_SAMPLER_DESC1` for sampler flags. Array counts select the corresponding parameter, descriptor range, and static sampler arrays.
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `D3D12_VERSIONED_ROOT_SIGNATURE_DESC.Version` selects `Desc_1_0`, `Desc_1_1`, or `Desc_1_2`. Version 1.0 has no descriptor/data promise flags. Version 1.1 adds those flags; version 1.2 retains them and uses `D3D12_STATIC_SAMPLER_DESC1` for sampler flags. Array counts select the corresponding parameter, descriptor-range, and static-sampler arrays.
-
-<!-- d3d12-review-alert:end:binding:N-descriptions:0 -->
+<a id="d3d-root-signature-version"></a>
 
 ```cpp
 typedef enum D3D_ROOT_SIGNATURE_VERSION
@@ -891,6 +800,15 @@ typedef enum D3D_ROOT_SIGNATURE_VERSION
     D3D_ROOT_SIGNATURE_VERSION_1_2 = 0x3,
 } D3D_ROOT_SIGNATURE_VERSION;
 ```
+
+```cpp
+typedef struct D3D12_FEATURE_DATA_ROOT_SIGNATURE
+{
+    D3D_ROOT_SIGNATURE_VERSION HighestVersion;
+} D3D12_FEATURE_DATA_ROOT_SIGNATURE;
+```
+
+`D3D12_FEATURE_ROOT_SIGNATURE` uses `D3D12_FEATURE_DATA_ROOT_SIGNATURE.HighestVersion`: its input is the highest version understood by the caller and its output is the highest supported version not exceeding that input.
 
 ```cpp
 typedef enum D3D12_DESCRIPTOR_RANGE_TYPE
@@ -1039,6 +957,8 @@ typedef struct D3D12_ROOT_PARAMETER1
 } D3D12_ROOT_PARAMETER1;
 ```
 
+<a id="d3d12-root-signature-desc"></a>
+
 ```cpp
 typedef struct D3D12_ROOT_SIGNATURE_DESC
 {
@@ -1072,6 +992,8 @@ typedef struct D3D12_ROOT_SIGNATURE_DESC2
 } D3D12_ROOT_SIGNATURE_DESC2;
 ```
 
+<a id="d3d12-versioned-root-signature-desc"></a>
+
 ```cpp
 typedef struct D3D12_VERSIONED_ROOT_SIGNATURE_DESC
 {
@@ -1089,40 +1011,35 @@ typedef struct D3D12_VERSIONED_ROOT_SIGNATURE_DESC
 
 ### Descriptor ranges
 
-<ins><!-- d3d12-review-inline:begin:binding:B-ranges:0 -->`D3D12_DESCRIPTOR_RANGE` defines a range of descriptors of a given type (e.g. SRVs) within a
-descriptor table.<!-- d3d12-review-inline:end:binding:B-ranges:0 --></ins>
+`D3D12_DESCRIPTOR_RANGE` defines a range of descriptors of a given type (e.g. SRVs) within a
+descriptor table.
 
-`#define D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND -1`
+```c++
+#define D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND -1
+```
 
 `D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND` can typically be used for the
-OffsetInDescriptorsFromTableStart below. This means append the
+`OffsetInDescriptorsFromTableStart` below. This means append the
 descriptor range being defined after the previous one in the descriptor
 table. If the application wants to alias descriptors or for some reason
-skip slots it can set OffsetInDescriptorsFromTableStart to whatever
-offset is desired. Defining overlapping ranges of different RangeType is
+skip slots it can set `OffsetInDescriptorsFromTableStart` to whatever
+offset is desired. Defining overlapping ranges of different `RangeType` is
 invalid.
 
-The set of shader registers specified by the combination of RangeType,
+The set of shader registers specified by the combination of `RangeType`,
 NumDescriptors, BaseShaderRegister, and RegisterSpace cannot
 conflict/overlap across any declarations in a root signature that have
 common `D3D12_SHADER_VISIBILITY` (visibility defined a bit later).
 
-<!-- d3d12-review-alert:begin:binding:N-unbounded:0 -->
+`NumDescriptors == UINT_MAX` declares an unbounded range. Such a range must be last in the table or followed by a range with an explicit `OffsetInDescriptorsFromTableStart` rather than `D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND`.
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `NumDescriptors == UINT_MAX` declares an unbounded range. Such a range must be last in the table or followed by a range with an explicit `OffsetInDescriptorsFromTableStart` rather than `D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND`. An unbounded declaration does not allocate descriptors or permit references outside the bound heap.
-
-<!-- d3d12-review-alert:end:binding:N-unbounded:0 -->
-
-<ins><!-- d3d12-review-inline:begin:binding:B-root-table:0 -->`D3D12_ROOT_DESCRIPTOR_TABLE` declares the layout of a descriptor table as a collection of descriptor
-ranges that appear one after the other in a descriptor heap.<!-- d3d12-review-inline:end:binding:B-root-table:0 --></ins>
+`D3D12_ROOT_DESCRIPTOR_TABLE` declares the layout of a descriptor table as a collection of descriptor
+ranges, each located at an offset relative to the table’s base descriptor.
 
 Samplers are not allowed in the same descriptor table as CBV/UAV/SRVs.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-root-table:2 -->`D3D12_ROOT_DESCRIPTOR_TABLE` is a member of `D3D12_ROOT_PARAMETER`, and is used when its
-ParameterType is set to `D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE`.<!-- d3d12-review-inline:end:binding:B-root-table:2 --></ins>
+`D3D12_ROOT_DESCRIPTOR_TABLE` is a member of `D3D12_ROOT_PARAMETER`, and is used when its
+ParameterType is set to `D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE`.
 
 <a id="register-spaces"></a>
 
@@ -1150,23 +1067,23 @@ dimension in the namespace. The register space field is nothing more
 than that -- a way to help uniquely identify a bindpoint without
 appearing to overlap with others.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-registers:3 -->Another use of register space is that the system reserves register space
+Another use of register space is that the system reserves register space
 values 0xfffffff0... 0xffffffff for internal use, such as for
 instrumenting shaders during debug scenarios. This way the system can
 add bindings to a shader in these reserved spaces without conflicting
 with whatever register bindings the original shader used. The
 reservation is split between driver and OS: register Space
 0xfffffff0..0xfffffff7 are reserved for driver use and
-0xfffffff8..0xffffffff are reserved for OS use.<!-- d3d12-review-inline:end:binding:B-registers:3 --></ins>
+0xfffffff8..0xffffffff are reserved for OS use.
 
 <a id="shader-visibility"></a>
 
 ### Shader visibility and access flags
 
-<ins><!-- d3d12-review-inline:begin:binding:B-visibility:0 -->`D3D12_SHADER_VISIBILITY` identifies which shaders see the contents of a given root signature slot. Compute
+`D3D12_SHADER_VISIBILITY` identifies which shaders see the contents of a given root signature slot. Compute
 always uses _ALL (since there is only one active stage). Graphics can
 choose, but if it uses _ALL, all shader stages see whatever is bound at
-the root signature slot.<!-- d3d12-review-inline:end:binding:B-visibility:0 --></ins>
+the root signature slot.
 
 One use of shader visibility is to help with shaders that are authored
 expecting different bindings per shader stage using an overlapping
@@ -1184,46 +1101,45 @@ and the PS may also declare:
 Texture2D bar : register(t0);
 ```
 
-<ins><!-- d3d12-review-inline:begin:binding:B-visibility:6 -->If the application makes a root signature binding to t0 `VISIBILITY_ALL`,
+If the application makes a root signature binding to t0 `VISIBILITY_ALL`,
 both shaders see the same texture. If the application actually wants
 each shader to see different textures, it can define 2 root signature
 slots with `VISIBILITY_VERTEX` and _PIXEL. No matter what the visibility
 is on a root signature slot, it always has the same cost (cost only
 depending on what the parameter type is) towards one fixed maximum root
-signature size.<!-- d3d12-review-inline:end:binding:B-visibility:6 --></ins>
+signature size.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-visibility:7 -->On lower resource-binding tiers, `SHADER_VISIBILITY` is also taken into account
+On lower resource binding tiers, `SHADER_VISIBILITY` is also taken into account
 when validating the sizes of descriptor tables in a root signature,
 since some hardware can only support a maximum amount of bindings
 per-stage. These restrictions are only imposed when running on low tier
-hardware and do not limit more modern hardware at all.<!-- d3d12-review-inline:end:binding:B-visibility:7 --></ins>
+hardware and do not limit more modern hardware at all.
 
 If a root signature has multiple descriptor tables defined that overlap
 each other in namespace (the register bindings to the shader) and any
 one of them specifies _ALL for visibility, the layout is invalid
 (creation will fail).
 
-<!-- d3d12-review-alert:begin:binding:N-flags:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The `DENY_*_SHADER_ROOT_ACCESS` flags prevent the named stage from accessing root arguments; they must not conflict with a parameter explicitly visible to that stage. `ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT` permits input-layout use; `ALLOW_STREAM_OUTPUT` permits stream output. Amplification and mesh shader visibility and deny flags extend the same stage-specific model. `LOCAL_ROOT_SIGNATURE` identifies a local signature and cannot be combined with other root-signature flags. Direct heap indexing flags are defined [below](#direct-indexing).
-
-<!-- d3d12-review-alert:end:binding:N-flags:0 -->
+| Flag | Meaning |
+|---|---|
+| `DENY_*_SHADER_ROOT_ACCESS` | Prevents the named stage from accessing root arguments. Must not conflict with a parameter explicitly visible to that stage. |
+| `ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT` | Required for root signatures used in graphics pipelines that include an input layout. |
+| `ALLOW_STREAM_OUTPUT` | Required for root signatures used in graphics pipelines that include stream output. |
+| `LOCAL_ROOT_SIGNATURE` | Identifies a local signature. Cannot be combined with other root signature flags. |
+| `CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED`, `SAMPLER_HEAP_DIRECTLY_INDEXED` | Defined under [Direct heap indexing](#direct-indexing). |
 
 <a id="static-promises"></a>
 
 ## Descriptor and data promises
 
-<ins><!-- d3d12-review-inline:begin:binding:B-promise-intro:0 -->The purpose of Root Signature version 1.1 is to enable applications to
+The purpose of Root Signature version 1.1 is to enable applications to
 indicate to drivers when descriptors in a descriptor heap won't change
 or the data descriptors point to won't change. This allows the option
 for drivers to make optimizations that might be possible knowing that
 something (like a descriptor or the memory it points to) is static for
 some period of time. The specific optimizations drivers might do are
 hardware vendor specific, and importantly they do not change behavior
-other than possibly improving performance.<!-- d3d12-review-inline:end:binding:B-promise-intro:0 --></ins>
+other than possibly improving performance.
 
 ```cpp
 typedef enum D3D12_DESCRIPTOR_RANGE_FLAGS
@@ -1247,6 +1163,25 @@ typedef enum D3D12_ROOT_DESCRIPTOR_FLAGS
 } D3D12_ROOT_DESCRIPTOR_FLAGS;
 ```
 
+<a id="table-initialization"></a>
+<a id="descriptor-table-initialization"></a>
+
+### Descriptor initialization and population
+
+The descriptor mode and resource binding tier together determine which entries must be initialized and when:
+
+| Descriptor mode | Binding tier and descriptor types | Entries that must be initialized | Deadline |
+|---|---|---|---|
+| Static | All tiers and descriptor types | Every descriptor in the static range, even if shaders will not reference it | Before the descriptor table is set during command list or bundle recording |
+| Volatile | Tier 1: CBV, SRV, UAV and sampler. Tier 2: CBV and UAV | Every descriptor of these types declared in the table, even if shaders will not reference it | Before the command list executes |
+| Volatile | Tier 2: SRV and sampler. Tier 3: all descriptor types | Descriptors that shaders will actually reference | Before the shader accesses them |
+
+The higher-tier allowance to leave unused entries uninitialized does not apply to static descriptor ranges. A required entry can contain a compatible [null descriptor](#null-descriptors).
+
+The descriptor mode also determines when entries may be modified, as specified below. The `DATA_*` flags instead constrain the resource data pointed to by descriptors.
+
+### Descriptor range flags
+
 On each range of descriptors comprising a descriptor table declaration,
 the following flags can be specified:
 
@@ -1261,21 +1196,21 @@ it refers to before submitting the command list for execution is valid.
 This is the only behavior that Root Signature version 1.0 supported (it
 didn't have a way to choose).
 
+Volatile descriptors follow the tier-dependent [initialization and population requirements](#table-initialization). Volatility does not permit shaders to access uninitialized descriptors.
+
 **Absence of DESCRIPTORS_VOLATILE:**
 
-Descriptors are **static.** There is no flag for this mode. Static
-descriptors mean the descriptors in a descriptor heap pointed to by a
-root descriptor table have been initialized by the time the descriptor
-table is set on a command list / bundle (during recording), and the
-descriptors cannot be changed until the command list / bundle has
+Descriptors are **static.** There is no flag for this mode.
+The [initialization and population requirements](#table-initialization) require the static ranges to be initialized when the table is set during recording, regardless of binding tier.
+The descriptors cannot be changed until the command list / bundle has
 finished executing for the last time. For Root Signature version 1.1,
 static descriptors are the default assumption, given the application has
 to go out of its way to specify the `DESCRIPTORS_VOLATILE` flag when
 needed.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-range-flags:5 -->The canonical [static-descriptor bundle requirements](command-list-state.md#static-descriptors) apply.<!-- d3d12-review-inline:end:binding:B-range-flags:5 --></ins>
+See [static descriptor bundle requirements](command-list-state.md#static-descriptors) for rules about using static descriptors in bundles.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-range-flags:6 -->When descriptors are static there is another change in behavior vs
+When descriptors are static there is another change in behavior vs
 `DESCRIPTORS_VOLATILE`: Out of bounds accesses to any Buffer views (as
 opposed to Texture1D/2D/3D/Cube views) are invalid and produce undefined
 results, including possible device reset, rather than returning default
@@ -1285,18 +1220,18 @@ checking is to allow drivers to choose to promote static descriptor
 accesses to root descriptor accesses if they deem that more efficient.
 Root descriptors don't support any out of bounds checking. If
 applications depend on safe out of bounds memory access behavior when
-accessing descriptors, they need to use `DESCRIPTORS_VOLATILE` or `DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS`.<!-- d3d12-review-inline:end:binding:B-range-flags:6 --></ins>
+accessing descriptors, they need to use `DESCRIPTORS_VOLATILE` or `DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS`.
 
 **DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS:**
 
-<ins><!-- d3d12-review-inline:begin:binding:B-range-flags:8 -->This flag indicates that descriptors should
+This flag indicates that descriptors should
 have all of the above static properties **except** that out-of-bounds Buffer view reads return zero and out-of-bounds writes are discarded.
 This still enables several optimizations, but does require the driver to
-maintain the size information of the buffer views.<!-- d3d12-review-inline:end:binding:B-range-flags:8 --></ins>
+maintain the size information of the buffer views.
 
 **DATA_VOLATILE**:
 
-<ins><!-- d3d12-review-inline:begin:binding:B-range-flags:10 -->(This applies to both descriptor range flags and root descriptor flags.)<!-- d3d12-review-inline:end:binding:B-range-flags:10 --></ins>
+(This applies to both descriptor range flags and root descriptor flags.)
 
 The data pointed to by descriptors can be changed by the CPU any time
 except while the command list / bundles that bind the descriptor table
@@ -1306,7 +1241,7 @@ to choose).
 
 **DATA_STATIC_WHILE_SET_AT_EXECUTE:**
 
-<ins><!-- d3d12-review-inline:begin:binding:B-range-flags:13 -->(This applies to both descriptor range flags and root descriptor flags.)<!-- d3d12-review-inline:end:binding:B-range-flags:13 --></ins>
+(This applies to both descriptor range flags and root descriptor flags.)
 
 The data pointed to by descriptors cannot change starting from when the
 underlying root descriptor or descriptor table is set on a command list
@@ -1341,7 +1276,7 @@ applies uniquely to each execution of the bundle.
 
 **DATA_STATIC:**
 
-<ins><!-- d3d12-review-inline:begin:binding:B-range-flags:20 -->(This applies to both descriptor range flags and root descriptor flags.)<!-- d3d12-review-inline:end:binding:B-range-flags:20 --></ins>
+(This applies to both descriptor range flags and root descriptor flags.)
 
 The data pointed to by descriptors has been initialized by the time a
 root descriptor or descriptor table referencing the memory has been set
@@ -1349,31 +1284,24 @@ on a command list / bundle (during recording), and the data cannot be
 changed until the command list / bundle has finished executing for the
 last time.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-range-flags:22 -->The canonical [static-data bundle requirements](command-list-state.md#static-data) apply.<!-- d3d12-review-inline:end:binding:B-range-flags:22 --></ins>
+The [static data bundle requirements](command-list-state.md#static-data) apply.
 
 **Remarks:**
-
-The absence of the `DESCRIPTORS_VOLATILE` flag indicates that descriptors
-are **static**. This means the descriptors in a descriptor heap pointed
-to by a root descriptor table have been initialized by the time the
-descriptor table is set on a command list / bundle (during recording),
-and the descriptors cannot be changed until the command list / bundle
-has finished executing for the last time.
 
 At most one of the `DATA_*` flags can be specified at a time. The
 exception is Sampler descriptor ranges which don't support `DATA_*`
 flags at all since samplers do not point to data.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-range-flags:26 -->For static SRV and CBV descriptor ranges, the absence of any `DATA_*` flags
+For static SRV and CBV descriptor ranges, the absence of any `DATA_*` flags
 means a default of `DATA_STATIC_WHILE_SET_AT_EXECUTE` behavior is
 assumed. The reason this default is chosen rather than `DATA_STATIC` is
 that `DATA_STATIC_WHILE_SET_AT_EXECUTE` is much more likely to be a
 safe default for the vast majority of cases (where a developer may not
 have put thought into setting the root signature flags), while still
 yielding some optimization opportunity better than defaulting to
-`DATA_VOLATILE`.<!-- d3d12-review-inline:end:binding:B-range-flags:26 --></ins>
+`DATA_VOLATILE`.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-range-flags:27 -->With `DESCRIPTORS_VOLATILE` and no explicit `DATA_*` flag, CBV, SRV, and UAV ranges default to `DATA_VOLATILE`.<!-- d3d12-review-inline:end:binding:B-range-flags:27 --></ins>
+With `DESCRIPTORS_VOLATILE` and no explicit `DATA_*` flag, CBV, SRV, and UAV ranges default to `DATA_VOLATILE`.
 
 The absence of DATA* flags for UAV descriptor ranges means a default of
 `DATA_VOLATILE` behavior is assumed, given typically UAVs are written to.
@@ -1391,40 +1319,21 @@ bundle execution.
 
 <a id="descriptor-range-defaults"></a>
 
-<!-- d3d12-review-alert:begin:binding:B-range-flags:31 -->
+**Valid Descriptor Range Flags Settings**    | **Remarks**
+---|---
+| none                              | Descriptors static (default).<br><br>Default assumptions for data:<br><br>**For SRV/CBV**: `DATA_STATIC_WHILE_SET_AT_EXECUTE`<br><br>**For UAV**: `DATA_VOLATILE`<br><br>The goal is these defaults for SRV/CBV will safely fit the usage patterns for the majority of root signatures where applications have not thought about the flag settings at all, giving drivers ample optimization opportunity for free that wasn't captured by root signature version 1.0.
+`DATA_STATIC`                      | Descriptors static (default) + data static
+`DATA_VOLATILE`                    | Descriptors static (default) + data volatile
+`DATA_STATIC_WHILE_SET_AT_EXECUTE` | Descriptors static (default) + data static while set at execute
+`DESCRIPTORS_VOLATILE`             | Descriptors volatile + Default assumptions for data:<br><br>**For SRV/CBV/UAV**: `DATA_VOLATILE`
+`DESCRIPTORS_VOLATILE \| DATA_VOLATILE` | Both descriptors and data volatile, equivalent to Root Signature 1.0
+`DESCRIPTORS_VOLATILE \| DATA_STATIC_WHILE_SET_AT_EXECUTE`         | Descriptors volatile, but note that still does not allow them to change during command list execution unless rebound. So it is valid to combine the additional declaration that data is static while set via root descriptor table during execution -- the underlying descriptors are effectively static for longer than the data is being promised to be static. |
 
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> **Valid Descriptor Range Flags Settings**    | **Remarks**
-> ---|---
-> | none                              | <p>Descriptors static (default).</p><p>Default assumptions for data:</p><p>**For SRV/CBV**: `DATA_STATIC_WHILE_SET_AT_EXECUTE`</p><p>**For UAV**: `DATA_VOLATILE`</p><p>The goal is these defaults for SRV/CBV will safely fit the usage patterns for the majority of root signatures where applications have not thought about the flag settings at all, giving drivers ample optimization opportunity for free that wasn't captured by root signature version 1.0.</p>
-> `DATA_STATIC`                      | Descriptors static (default) + data static
-> `DATA_VOLATILE`                    | Descriptors static (default) + data volatile
-> `DATA_STATIC_WHILE_SET_AT_EXECUTE` | Descriptors static (default) + data static while set at execute
-> `DESCRIPTORS_VOLATILE`             | <p>Descriptors volatile + Default assumptions for data:</p><p>**For SRV/CBV/UAV**: `DATA_VOLATILE`</p>
-> `DESCRIPTORS_VOLATILE \| DATA_VOLATILE` | Both descriptors and data volatile, equivalent to Root Signature 1.0
-> `DESCRIPTORS_VOLATILE \| DATA_STATIC_WHILE_SET_AT_EXECUTE`         | Descriptors volatile,but note that still does not allow them to change during command list execution. So it is valid to combine the additional declaration that data is static while set via root descriptor table during execution -- the underlying descriptors are effectively static for longer than the data is being promised to be static.
+`DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS` cannot be combined with `DESCRIPTORS_VOLATILE` and is not valid for sampler ranges. Each descriptor range must contain at least one descriptor, and range offsets/register arithmetic must not overflow.
 
-<!-- d3d12-review-alert:end:binding:B-range-flags:31 -->
+`DATA_STATIC_WHILE_SET_AT_EXECUTE` requires data to be finalized before the relevant root binding executes, not merely before a later draw/dispatch. The [root binding synchronization requirement](synchronization.md#barrier-sync) defines the required barrier placement and synchronization scopes for both descriptor tables and root descriptors.
 
-<!-- d3d12-review-alert:begin:binding:N-keeping-bounds:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS` cannot be combined with `DESCRIPTORS_VOLATILE` and is not valid for sampler ranges. Each descriptor range must contain at least one descriptor, and range offsets/register arithmetic must not overflow. Static descriptor initialization applies when the table is recorded, independently of the lower-tier execution-time population rule.
-
-<!-- d3d12-review-alert:end:binding:N-keeping-bounds:0 -->
-
-<!-- d3d12-review-alert:begin:binding:N-static-sync:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `DATA_STATIC_WHILE_SET_AT_EXECUTE` requires data to be finalized before the relevant root binding executes, not merely before a later draw/dispatch. The [root-binding synchronization requirement](synchronization.md#barrier-sync) defines the required barrier placement and synchronization scopes for both descriptor tables and root descriptors.
-
-<!-- d3d12-review-alert:end:binding:N-static-sync:0 -->
+### Root descriptor flags
 
 These flags have the same semantics as descriptor range flags described
 earlier, except that for root descriptors only `DATA_*` flags apply. By
@@ -1436,7 +1345,7 @@ the flag `D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE`.
 
 **Valid Root Descriptor Flags Settings**     | **Remarks**
 ---|---
-| none                              | <p>Default assumptions for data:</p><p>**For SRV/CBV**: `DATA_STATIC_WHILE_SET_AT_EXECUTE`</p><p>**For UAV**: `DATA_VOLATILE`</p><p>The goal is these defaults for SRV/CBV will safely fit the usage patterns for the majority of root signatures where applications have not thought about the flag settings at all, giving drivers ample optimization opportunity for free that wasn't captured by root signature version 1.0.</p>
+| none                              | Default assumptions for data:<br><br>**For SRV/CBV**: `DATA_STATIC_WHILE_SET_AT_EXECUTE`<br><br>**For UAV**: `DATA_VOLATILE`<br><br>The goal is these defaults for SRV/CBV will safely fit the usage patterns for the majority of root signatures where applications have not thought about the flag settings at all, giving drivers ample optimization opportunity for free that wasn't captured by root signature version 1.0.
 `DATA_STATIC`  | \-
 `DATA_VOLATILE`  | Equivalent to Root Signature 1.0
 `DATA_STATIC_WHILE_SET_AT_EXECUTE` | \-
@@ -1464,20 +1373,20 @@ data must be rebound again -- even though this may appear to be a
 redundant state setting, it informs the driver that something promised
 to be static has changed -- drivers do not track data flow.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-promise-violations:2 -->The debug layer has options for validating that applications honor
+The debug layer has options for validating that applications honor
 their promises, including the default promises that come with using Root
-Signature version 1.1 without setting any flags.<!-- d3d12-review-inline:end:binding:B-promise-violations:2 --></ins>
+Signature version 1.1 without setting any flags.
 
 <a id="direct-indexing"></a>
 
 ## Direct heap indexing
 
-<ins><!-- d3d12-review-inline:begin:binding:B-direct-flags:0 -->Global root-signature flags indicate when heap addresses must be made available to shaders for direct heap indexing.<!-- d3d12-review-inline:end:binding:B-direct-flags:0 --></ins>
+Global root signature flags indicate when heap addresses must be made available to shaders for direct heap indexing.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-direct-flags:1 -->The two global root signature flags are only allowed on a device supporting this feature.
+The two global root signature flags are only allowed on a device supporting this feature.
 Support requires Resource Binding Tier 3 and Shader Model 6.6 or higher.
 These new flags are not allowed on local root signatures
-(`D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE`).<!-- d3d12-review-inline:end:binding:B-direct-flags:1 --></ins>
+(`D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE`).
 
 The `CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED` flag must be set
 to allow shaders using `ResourceDescriptorHeap`
@@ -1497,14 +1406,7 @@ when a root signature is attached to the pipeline
 for every shader that wasn't already validated
 with a matching root signature.
 
-<!-- d3d12-review-alert:begin:binding:N-direct-order:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [direct heap binding order](command-list-state.md#direct-heaps) applies to `SetDescriptorHeaps` and the corresponding graphics/compute root-signature setter. Direct indexing uses the selected shader-visible resource or sampler heap; it does not select a separate heap.
-
-<!-- d3d12-review-alert:end:binding:N-direct-order:0 -->
+The [direct heap binding order](command-list-state.md#direct-heaps) applies to `SetDescriptorHeaps` and the corresponding graphics/compute root signature setter. Direct indexing uses the selected shader-visible resource or sampler heap. It does not select a separate heap.
 
 In Shader Model 6.6,
 the descriptor and data for a resource or sampler
@@ -1513,42 +1415,35 @@ must both be considered **volatile** -
 equivalent to `DESCRIPTORS_VOLATILE | DATA_VOLATILE`
 in the root signature descriptor range flags.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-direct-no-races:0 -->`DESCRIPTORS_VOLATILE`
+`DESCRIPTORS_VOLATILE`
 does not mean that the descriptor can be changed
 during execution (draw/dispatch).
 In addition, the volatility of read-only SRVs and CBVs with `DATA_VOLATILE` is also limited,
-since modification and subsequent use require the applicable [synchronization](synchronization.md#foundations).<!-- d3d12-review-inline:end:binding:B-direct-no-races:0 --></ins>
+since modification and subsequent use require the applicable [synchronization](synchronization.md#foundations).
 
 <a id="samplers"></a>
 
 ## Static and dynamic samplers
 
-<!-- d3d12-review-alert:begin:binding:N-common-sampler-behavior:0 -->
+See [common sampler/filtering model](common-shader-internals.md#sampler-model) for more details about what the sampler fields actually do.
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [common sampler/filtering model](common-shader-internals.md#sampler-model) defines how these fields select texels, mip levels and filter results. Its [non-normalized coordinate rules](common-shader-internals.md#non-normalized-coordinates) and [point-mip anisotropic behavior](common-shader-internals.md#anisotropic-point-mip) supply the corresponding execution contracts. Sampler descriptions, root-signature representation and creation remain defined here.
-
-<!-- d3d12-review-alert:end:binding:N-common-sampler-behavior:0 -->
-
-<ins><!-- d3d12-review-inline:begin:binding:B-static-samplers:0 -->Many applications only need a fixed set of samplers, and these are often
+Many applications only need a fixed set of samplers, and these are often
 common across many pipeline states.  Another view of this is that it
 would be convenient in many cases for HLSL authors to be able to
-define samplers directly in shader code, near the use of them.<!-- d3d12-review-inline:end:binding:B-static-samplers:0 --></ins>
+define samplers directly in shader code, near the use of them.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-static-samplers:1 -->One issue is that some hardware is not set up to take advantage of
+One issue is that some hardware is not set up to take advantage of
 knowing the set of samplers to be used in shaders and instead needs to
 manage the sampler externally in a descriptor heap.  Other hardware, by
 contrast, does benefit from knowing what samplers will be used in a
-shader at compile time.<!-- d3d12-review-inline:end:binding:B-static-samplers:1 --></ins>
+shader at compile time.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-static-samplers:2 -->To enable all these types of hardware to operate efficiently while
+To enable all these types of hardware to operate efficiently while
 providing applications additional convenience for shader authors, a set
 of static samplers can be defined in the root signature.  These are
 independent of the root parameters in the root signature.  Root
 parameters define a binding space where arguments can be provided at
-runtime, whereas static samplers are by definition unchanging.<!-- d3d12-review-inline:end:binding:B-static-samplers:2 --></ins>
+runtime, whereas static samplers are by definition unchanging.
 
 Since root signatures can be authored directly in HLSL, samplers can be
 authored in HLSL too - as static samplers in a root signature.
@@ -1557,7 +1452,7 @@ The presence of the root signature in pipeline state creation means that
 hardware that prefers to compile static sampler state directly into the
 shader can do so.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-static-samplers:5 -->The presence of static samplers in the root signature also works for
+The presence of static samplers in the root signature also works for
 hardware that needs to manage samplers outside the shader.  Recall that
 root signatures are objects that applications must create at the D3D API
 for use in command lists, and any pipeline states that are used must
@@ -1565,24 +1460,24 @@ match the currently set root signature.  Drivers can take advantage of
 this to place static samplers in a reserved area in all sampler heaps
 the application has created (as well as a hidden one in case the
 application does not use a sampler heap on a given command list at
-all).<!-- d3d12-review-inline:end:binding:B-static-samplers:5 --></ins>
+all).
 
-<ins><!-- d3d12-review-inline:begin:binding:B-static-samplers:6 -->To maintain the currently live set of static samplers, drivers that need
+To maintain the currently live set of static samplers, drivers that need
 to can use a critical section on root signature creation / destruction
 and on sampler descriptor heap creation destruction.  These operations
 should be quite rare during execution, so the impact of any shadowing of
-static samplers on high performance rendering should not be noticeable.<!-- d3d12-review-inline:end:binding:B-static-samplers:6 --></ins>
+static samplers on high performance rendering should not be noticeable.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-static-samplers:7 -->To help limit the maximum amount of memory involved to shadow static
+To help limit the maximum amount of memory involved to shadow static
 samplers (also to fit within some hardware constraints) the total number
 of unique static samplers that can be declared across all root
 signatures live on a D3D device at a time is limited to 2032. This is
 slightly less than a power of 2 (2048) to leave some room for drivers
 that need to allocate some samplers internally.  This is separate from
 the samplers that an application can manage manually in a sampler
-descriptor heap, whose capacity is [capability-dependent](#binding-capabilities).<!-- d3d12-review-inline:end:binding:B-static-samplers:7 --></ins>
+descriptor heap, whose capacity is [capability-dependent](#binding-capabilities).
 
-<ins><!-- d3d12-review-inline:begin:binding:B-static-samplers:8 -->Arrays of static samplers are not permitted.
+Arrays of static samplers are not permitted.
 This way drivers can manage the maximum limit of 2032 static
 samplers as a heap of individually allocated samplers, such as in a
 hidden portion of any application created sampler descriptor heap,
@@ -1590,31 +1485,21 @@ without any consequence from heap fragmentation as samplers may come and
 go.   If an application has samplers A and B in one root signature, and
 samplers A and C in a second root signature, the total cost against the
 2032 limit is 3, not 4, since A appears twice.  If the second root
-signature is freed, only A and B are left allocated, leaving 2030 free.<!-- d3d12-review-inline:end:binding:B-static-samplers:8 --></ins>
+signature is freed, only A and B are left allocated, leaving 2030 free.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-static-samplers:9 -->The static samplers defined in a root signature are independent of
+The static samplers defined in a root signature are independent of
 samplers an application chooses to put in a descriptor heap -- both
 mechanisms can be used at the same time.  A root signature simply must
 not declare that a sampler in a shader comes from both a static sampler
 and from a sampler descriptor table.  That will fail compilation since
-it doesn't make sense.<!-- d3d12-review-inline:end:binding:B-static-samplers:9 --></ins>
+it doesn't make sense.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-static-samplers:10 -->Even with the convenience of static samplers, there are reasons for an
+Even with the convenience of static samplers, there are reasons for an
 app to manage samplers in a sampler descriptor heap (via descriptor
 tables) instead of or in addition to static samplers: the selection of
 samplers is truly dynamic and unknown at shader compile, the application
 wants to use dynamic indexing of samplers, or the type of sampler needed
-is not supported in a static sampler.  Restrictions on static samplers
-are detailed below.<!-- d3d12-review-inline:end:binding:B-static-samplers:10 --></ins>
-
-<!-- d3d12-review-alert:begin:binding:N-border-limits:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Static sampler border colors select transparent black, opaque black, or opaque white in floating-point form, or opaque black/white in unsigned-integer form. Integer border colors require the applicable SM6.7 support. They are selected by `D3D12_STATIC_BORDER_COLOR`; they do not require a sampler flags member in root-signature versions 1.0/1.1.
-
-<!-- d3d12-review-alert:end:binding:N-border-limits:0 -->
+is not supported in a static sampler. See [static sampler border color restrictions](#static-sampler-border-colors).
 
 ```cpp
 typedef enum D3D12_FILTER
@@ -1708,6 +1593,8 @@ typedef enum D3D12_SAMPLER_FLAGS
 } D3D12_SAMPLER_FLAGS;
 ```
 
+<a id="d3d12-sampler-desc"></a>
+
 ```cpp
 typedef struct D3D12_SAMPLER_DESC
 {
@@ -1788,60 +1675,83 @@ typedef struct D3D12_STATIC_SAMPLER_DESC1
 
 ### Sampler fields
 
-<!-- d3d12-review-alert:begin:binding:N-tiled-reduction-encoding:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> In `D3D12_FILTER`, bits `[8:7]` encode the reduction type: `0` is standard filtering, `1` is comparison, `2` is minimum and `3` is maximum. These are the final sampler reduction modes; [minimum/maximum filtering behavior](common-shader-internals.md#minmax-filtering) remains defined with texture filtering.
-
-<!-- d3d12-review-alert:end:binding:N-tiled-reduction-encoding:0 -->
 
 `Filter`
 
-<ins><!-- d3d12-review-inline:begin:binding:P-sampler-fields:1 -->A [`D3D12_FILTER`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_filter)-typed value that specifies the filtering method to use when sampling a texture.<!-- d3d12-review-inline:end:binding:P-sampler-fields:1 --></ins>
+A [`D3D12_FILTER`](common-shader-internals.md#sampler-model)-typed value that specifies the filtering method to use when sampling a texture.
+
+<a id="filter-encoding"></a>
+
+`D3D12_FILTER` values use the following bit fields:
+
+| Bits | Field | Encoding |
+|---|---|---|
+| `[1:0]` | Mip filtering | `0` = point, `1` = linear. `2` and `3` are unused |
+| `[3:2]` | Magnification filtering | `0` = point, `1` = linear. `2` and `3` are unused |
+| `[5:4]` | Minification filtering | `0` = point, `1` = linear. `2` and `3` are unused |
+| `[6]` | Anisotropic filtering bit | `1` = anisotropic, `0` = isotropic. Must use linear min/mag filtering. |
+| `[8:7]` | Reduction type | `0` = standard filtering, `1` = comparison, `2` = minimum, `3` = maximum |
+| `[31]` | Legacy monochrome filtering bit | Not supported in D3D12 |
+
+The header's `D3D12_ENCODE_BASIC_FILTER(min, mag, mip, reduction)` constructs a basic filter as:
+
+```cpp
+((min & 0x3) << 4) |
+((mag & 0x3) << 2) |
+((mip & 0x3) << 0) |
+((reduction & 0x3) << 7)
+```
+
+The `min`, `mag` and `mip` arguments use `D3D12_FILTER_TYPE_POINT` (`0`) or `D3D12_FILTER_TYPE_LINEAR` (`1`). The `reduction` argument uses `D3D12_FILTER_REDUCTION_TYPE`, with the values shown above. `D3D12_ENCODE_ANISOTROPIC_FILTER(reduction)` and `D3D12_ENCODE_MIN_MAG_ANISOTROPIC_MIP_POINT_FILTER(reduction)` combine `0x40` with linear minification and magnification, and specified mip filtering, giving `0x55` or `0x54` respectively before the reduction bits are included.
+
+<a id="anisotropic-point-mip"></a>
+<a id="anisotropic-filtering-with-point-mip-selection"></a>
+
+`D3D12_FEATURE_DATA_D3D12_OPTIONS19.AnisoFilterWithPointMipSupported` enables `D3D12_FILTER_MIN_MAG_ANISOTROPIC_MIP_POINT`, `D3D12_FILTER_COMPARISON_MIN_MAG_ANISOTROPIC_MIP_POINT`, `D3D12_FILTER_MINIMUM_MIN_MAG_ANISOTROPIC_MIP_POINT`, and `D3D12_FILTER_MAXIMUM_MIN_MAG_ANISOTROPIC_MIP_POINT`. These use [point mip selection with anisotropic minification/magnification filtering](common-shader-internals.md#anisotropic-point-mip).
 
 `AddressU`
 
-<ins><!-- d3d12-review-inline:begin:binding:P-sampler-fields:3 -->A [`D3D12_TEXTURE_ADDRESS_MODE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_texture_address_mode)-typed value that specifies the method to use for resolving a u texture coordinate that is outside the 0 to 1 range.<!-- d3d12-review-inline:end:binding:P-sampler-fields:3 --></ins>
+A [`D3D12_TEXTURE_ADDRESS_MODE`](common-shader-internals.md#archive-7-18-9)-typed value that specifies the method to use for resolving a u texture coordinate that is outside the 0 to 1 range.
 
 `AddressV`
 
-<ins><!-- d3d12-review-inline:begin:binding:P-sampler-fields:5 -->A [`D3D12_TEXTURE_ADDRESS_MODE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_texture_address_mode)-typed value that specifies the method to use for resolving a v texture coordinate that is outside the 0 to 1 range.<!-- d3d12-review-inline:end:binding:P-sampler-fields:5 --></ins>
+A [`D3D12_TEXTURE_ADDRESS_MODE`](common-shader-internals.md#archive-7-18-9)-typed value that specifies the method to use for resolving a v texture coordinate that is outside the 0 to 1 range.
 
 `AddressW`
 
-<ins><!-- d3d12-review-inline:begin:binding:P-sampler-fields:7 -->A [`D3D12_TEXTURE_ADDRESS_MODE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_texture_address_mode)-typed value that specifies the method to use for resolving a w texture coordinate that is outside the 0 to 1 range.<!-- d3d12-review-inline:end:binding:P-sampler-fields:7 --></ins>
+A [`D3D12_TEXTURE_ADDRESS_MODE`](common-shader-internals.md#archive-7-18-9)-typed value that specifies the method to use for resolving a w texture coordinate that is outside the 0 to 1 range.
 
-`MipLODBias`
+[`MipLODBias`](common-shader-internals.md#sampler-lod-bias-and-clamping)
 
 Offset from the calculated mipmap level. For example, if the runtime calculates that a texture should be sampled at mipmap level 3 and **MipLODBias** is 2, the texture will be sampled at mipmap level 5.
 
-`MaxAnisotropy`
+[`MaxAnisotropy`](common-shader-internals.md#anisotropic-lod-calculation)
 
-<ins><!-- d3d12-review-inline:begin:binding:P-sampler-fields:11 -->Clamping value used for anisotropic filtering. Valid values are between 1 and 16.<!-- d3d12-review-inline:end:binding:P-sampler-fields:11 --></ins>
+Clamping value used for anisotropic filtering. Valid values are between 1 and 16.
 
 `ComparisonFunc`
 
-<ins><!-- d3d12-review-inline:begin:binding:P-sampler-fields:13 -->A [`D3D12_COMPARISON_FUNC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_comparison_func)-typed value that specifies a function that compares sampled data against existing sampled data.<!-- d3d12-review-inline:end:binding:P-sampler-fields:13 --></ins>
+A [`D3D12_COMPARISON_FUNC`](common-shader-internals.md#comparison-sampling)-typed value that specifies a function that compares sampled data against existing sampled data.
 
-`BorderColor[4]`
+[`BorderColor[4]`](common-shader-internals.md#archive-7-18-9-1)
 
-<ins><!-- d3d12-review-inline:begin:binding:P-sampler-fields:15 -->RGBA border color to use if [`D3D12_TEXTURE_ADDRESS_MODE_BORDER`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_texture_address_mode) is specified for **AddressU**, **AddressV**, or **AddressW**. Range must be between 0.0 and 1.0 inclusive.<!-- d3d12-review-inline:end:binding:P-sampler-fields:15 --></ins>
+RGBA border color to use if [`D3D12_TEXTURE_ADDRESS_MODE_BORDER`](common-shader-internals.md#archive-7-18-9) is specified for **AddressU**, **AddressV**, or **AddressW**. Range must be between 0.0 and 1.0 inclusive.
 
-`MinLOD`
+[`MinLOD`](common-shader-internals.md#sampler-lod-bias-and-clamping)
 
 Lower end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed.
 
-`MaxLOD`
+[`MaxLOD`](common-shader-internals.md#sampler-lod-bias-and-clamping)
 
 Upper end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed. This value must be greater than or equal to **MinLOD**. To have no upper limit on LOD, set this member to a large value.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-integer-filter:0 -->Values from unsigned integer formats can
+---
+
+Values from unsigned integer formats can
  be used by texture retrieval intrinsics
  with certain restrictions on filtering.
 Integer samples may not use any `LINEAR` or `ANISOTROPIC` filtering modes.
-These `D3D12_FILTER` options are allowed:<!-- d3d12-review-inline:end:binding:B-integer-filter:0 --></ins>
+These `D3D12_FILTER` options are allowed:
 
 - `D3D12_FILTER_MIN_MAG_MIP_POINT`
 - `D3D12_FILTER_MINIMUM_MIN_MAG_MIP_POINT`
@@ -1870,64 +1780,50 @@ to return a border color, the border value returned to the shader in the G
 channel (unless otherwise redirected via an SRV swizzle) may be the value
 specified in the sampler's border color in *either* the R or G channel.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-integer-border:3 -->For opaque borders, static samplers used with unsigned integer formats must use
- either `D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK_UINT` for black borders
- or `D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE_UINT` for white borders.<!-- d3d12-review-inline:end:binding:B-integer-border:3 --></ins>
+<a id="static-sampler-border-colors"></a>
 
-<ins><!-- d3d12-review-inline:begin:binding:B-integer-border:4 -->Support for non-normalized coordinate samplers added
-`D3D12_STATIC_SAMPLER_DESC1` with a `D3D12_SAMPLER_FLAGS` member. In
+Static sampler border colors select transparent black, opaque black, or opaque white in floating-point form, or opaque black/white in unsigned-integer form. Integer border colors require the applicable SM6.7 support. They are selected by `D3D12_STATIC_BORDER_COLOR`. They do not require a sampler flags member in root signature versions 1.0/1.1.
+
+For opaque borders, static samplers used with unsigned integer formats must use
+ either `D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK_UINT` for black borders
+ or `D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE_UINT` for white borders.
+
+`D3D12_STATIC_SAMPLER_DESC1` has a `Flags`
+member of type `D3D12_SAMPLER_FLAGS`. In
 the context of static samplers, `D3D12_SAMPLER_FLAG_UINT_BORDER_COLOR`
 is shadowed by the static border color, and not applicable. However, root
-signature creation fails if this flag is used with `D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK` or `D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE`. `D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK` is also allowed: all four zero components have the same representation. With a uint border color the flag is redundant, but not an error.<!-- d3d12-review-inline:end:binding:B-integer-border:4 --></ins>
+signature creation fails if this flag is used with `D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK` or `D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE`. `D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK` is also allowed: all four zero components have the same representation. With a uint border color the flag is redundant, but not an error.
 
 <a id="non-normalized-samplers"></a>
 
-### Non-normalized-coordinate samplers and version 1.2
+### Non-normalized coordinate samplers and version 1.2
 
 Samplers with `D3D12_SAMPLER_FLAG_NON_NORMALIZED_COORDINATES` set must sample from the target texture at the coordinates specified, unscaled by the texture's dimensions.
 
-<!-- d3d12-review-alert:begin:binding:B-unnormalized:1 -->
+When non-normalized coordinates are used, the following restrictions apply:
+* The SRV being sampled must be `D3D12_SRV_DIMENSION_TEXTURE1D` or `D3D12_SRV_DIMENSION_TEXTURE2D`
+* The SRV's mip count must be 1.
+* The sampling coordinate valid range is `x:[0, width)` and `y:[0, height)`
+* The `Offset` parameter in `Sample*` functions must not be used
+* The `D3D12_FILTER` must be one of
+  * `D3D12_FILTER_MIN_MAG_MIP_POINT`
+  * `D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT`
+  * `D3D12_FILTER_MINIMUM_MIN_MAG_MIP_POINT`
+  * `D3D12_FILTER_MINIMUM_MIN_MAG_LINEAR_MIP_POINT`
+  * `D3D12_FILTER_MAXIMUM_MIN_MAG_MIP_POINT`
+  * `D3D12_FILTER_MAXIMUM_MIN_MAG_LINEAR_MIP_POINT`
 
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> When non-normalized coordinates are used, the following restrictions apply:
-> * The SRV being sampled must be `D3D12_SRV_DIMENSION_TEXTURE1D` or `D3D12_SRV_DIMENSION_TEXTURE2D`
-> * The SRV's mip-count must be 1.
-> * The sampling coordinate valid range is `x:[0, width)` and `y:[0, height)`
-> * The `Offset` parameter in `Sample*` functions must not be used
-> * The `D3D12_FILTER` must be one of
->   * `D3D12_FILTER_MIN_MAG_MIP_POINT`
->   * `D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT`
->   * `D3D12_FILTER_MINIMUM_MIN_MAG_MIP_POINT`
->   * `D3D12_FILTER_MINIMUM_MIN_MAG_LINEAR_MIP_POINT`
->   * `D3D12_FILTER_MAXIMUM_MIN_MAG_MIP_POINT`
->   * `D3D12_FILTER_MAXIMUM_MIN_MAG_LINEAR_MIP_POINT`
->
->   Where the `min` and `mag` filters are equal, `mip` is `POINT`, and comparison and anisotropy are disabled.
-> * `MinLOD`, `MaxLOD`, and `MipLODBias` must be 0
-> * `AddressU` and `AddressV` must be `D3D12_TEXTURE_ADDRESS_MODE_CLAMP` or `D3D12_TEXTURE_ADDRESS_MODE_BORDER`
+  Where the `min` and `mag` filters are equal, `mip` is `POINT`, and comparison and anisotropy are disabled.
+* `MinLOD`, `MaxLOD`, and `MipLODBias` must be 0
+* `AddressU` and `AddressV` must be `D3D12_TEXTURE_ADDRESS_MODE_CLAMP` or `D3D12_TEXTURE_ADDRESS_MODE_BORDER`
 
-<!-- d3d12-review-alert:end:binding:B-unnormalized:1 -->
+The result of sampling outside of the valid range is generally undefined in terms of what value may be returned.
 
-The result of sampling outside of the valid range is generally undefined in terms of what value may be returned, but additionally undefined in terms of what state the device is left in if `AddressU` or `AddressV` are not appropriately set.
+[`CreateSampler2`](#id3d12device11-createsampler2) validates support for non-normalized coordinate sampling and the `Filter`, `MinLOD`, `MaxLOD`, `MipLODBias`, `AddressU` and `AddressV` restrictions above. Violating any of these requirements causes device removal. The same requirements are checked for static samplers, with failure reported by root signature creation.
 
 Support for non-normalized texture sampling is implied by, and must be supported on, drivers that report their DDI version to be 0100 or greater.
 
-<!-- d3d12-review-alert:begin:binding:N-unnormalized-cap:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `D3D12_FEATURE_DATA_D3D12_OPTIONS17.NonNormalizedCoordinateSamplersSupported` reports non-normalized-coordinate sampler support. Root-signature version 1.2 representation support and this sampling capability are distinct.
-
-<!-- d3d12-review-alert:end:binding:N-unnormalized-cap:0 -->
-
-<a id="anisotropic-point-mip"></a>
-
-### Anisotropic filtering with point mip selection
-
-<ins><!-- d3d12-review-inline:begin:binding:B-aniso-point:0 -->`D3D12_FEATURE_DATA_D3D12_OPTIONS19.AnisoFilterWithPointMipSupported` enables `D3D12_FILTER_MIN_MAG_ANISOTROPIC_MIP_POINT`, `D3D12_FILTER_COMPARISON_MIN_MAG_ANISOTROPIC_MIP_POINT`, `D3D12_FILTER_MINIMUM_MIN_MAG_ANISOTROPIC_MIP_POINT`, and `D3D12_FILTER_MAXIMUM_MIN_MAG_ANISOTROPIC_MIP_POINT`. These use point mip selection with anisotropic minification/magnification filtering.<!-- d3d12-review-inline:end:binding:B-aniso-point:0 --></ins>
+`D3D12_FEATURE_DATA_D3D12_OPTIONS17.NonNormalizedCoordinateSamplersSupported` reports non-normalized coordinate sampler support.
 
 <a id="binding-capabilities"></a>
 
@@ -1937,77 +1833,33 @@ The table below shows a progression of increasing flexibility in the
 amount of resources available to the pipeline based on level of
 hardware.
 
+`D3D12_FEATURE_DATA_D3D12_OPTIONS.ResourceBindingTier`, queried with `D3D12_FEATURE_D3D12_OPTIONS`, indicates which binding tier the driver supports, described below.
+
 **Bold** entries highlight improvements over the previous tier.
 
-<!-- d3d12-review-alert:begin:binding:B-tier-table:2 -->
+|   | Tier 1 | Tier 2 | Tier 3
+|---|:---:|:---:|:---:|
+| Max CBVs in all descriptor tables per shader stage | 14              | 14              | **full heap**
+| Max SRVs in all descriptor tables per shader stage | 128             | **full heap**   | full heap
+| Max UAVs in all descriptor tables across all stages | 8 (64 for FL 11.1+)    | **64**          | **full heap**
+| Max Samplers in all descriptor tables per shader stage | 16              | **full heap**   | full heap
 
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> |   | Tier 1 | Tier 2 | Tier 3
-> |---|:---:|:---:|:---:|
-> | Max CBVs in all descriptor tables per shader stage | 14              | 14              | **full heap**
-> | Max SRVs in all descriptor tables per shader stage | 128             | **full heap**   | full heap
-> | Max UAVs in all descriptor tables across all stages | 8 (64 for FL 11.1+)    | **64**          | **full heap**
-> | Max Samplers in all descriptor tables per shader stage | 16              | **full heap**   | full heap
+The finite lower-tier binding limits count the combined visible bindings. Root CBV/SRV/UAV descriptors consume their corresponding binding counts. Each root constant parameter consumes one CBV binding. Static samplers consume sampler bindings. Shader visibility determines which stages a binding counts against. These binding counts are separate from root argument DWORD cost and descriptor heap capacity.
 
-<!-- d3d12-review-alert:end:binding:B-tier-table:2 -->
+`D3D12_FEATURE_DATA_D3D12_OPTIONS19` reports these limits:
+| Option | Description |
+|--|--|
+| `MaxSamplerDescriptorHeapSize` | For drivers implementing DDI 0102 or newer, this will come from the driver, and must be at least 4000. For earlier drivers, D3D will set this to 2048. Attempting to create a shader-visible sampler descriptor heap with more than this many descriptors will fail. |
+| `MaxSamplerDescriptorHeapSizeWithStaticSamplers` | For drivers implementing DDI 0102 or newer, this will come from the driver, and must be at least 2048. For earlier drivers, D3D will set this to 2048. Attempting to draw/dispatch (compute, mesh, rays) with a root signature bound that includes static samplers, and with a sampler descriptor heap bound with more than this many descriptors, is undefined behavior and will produce a debug layer error. |
+| `MaxViewDescriptorHeapSize` | For drivers implementing DDI 0102 or newer, this will come from the driver, and must be at least 1,000,000. For earlier drivers, D3D will set this to 1,000,000. Attempting to create a shader-visible view descriptor heap with more than this many descriptors will fail for DDI 0102 or newer drivers. For earlier drivers reporting `D3D12_RESOURCE_BINDING_TIER_3`, requests for heaps larger than 1,000,000 will still be sent to the driver, with the expectation that they may fail. |
 
-<ins><!-- d3d12-review-inline:begin:binding:B-tier-table:3 -->Shader-visible heap capacities and the older Tier-3 creation path are defined below.<!-- d3d12-review-inline:end:binding:B-tier-table:3 --></ins>
-
-<!-- d3d12-review-alert:begin:binding:N-tier-accounting:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The finite lower-tier binding limits count the combined visible bindings, not an additional allowance for each storage mechanism. Root CBV/SRV/UAV descriptors consume their corresponding binding counts; each root-constant parameter consumes one CBV binding; static samplers consume sampler bindings. Shader visibility determines the applicable stage counts. These binding counts are separate from root-argument DWORD cost and descriptor-heap capacity.
-
-<!-- d3d12-review-alert:end:binding:N-tier-accounting:0 -->
-
-<!-- d3d12-review-alert:begin:binding:N-cap-members:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `D3D12_FEATURE_D3D12_OPTIONS` returns `D3D12_FEATURE_DATA_D3D12_OPTIONS.ResourceBindingTier`. `D3D12_FEATURE_ROOT_SIGNATURE` uses `D3D12_FEATURE_DATA_ROOT_SIGNATURE.HighestVersion`: its input is the highest version understood by the caller and its output is the highest supported version not exceeding that input. Direct heap indexing additionally requires Resource Binding Tier 3 and Shader Model 6.6 or higher.
-
-<!-- d3d12-review-alert:end:binding:N-cap-members:0 -->
-
-```cpp
-typedef struct D3D12_FEATURE_DATA_ROOT_SIGNATURE
-{
-    D3D_ROOT_SIGNATURE_VERSION HighestVersion;
-} D3D12_FEATURE_DATA_ROOT_SIGNATURE;
-```
-
-<!-- d3d12-review-alert:begin:binding:B-heap-caps:0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> `D3D12_FEATURE_DATA_D3D12_OPTIONS19` reports these limits:
-> | Option | Description |
-> |--|--|
-> | `MaxSamplerDescriptorHeapSize` | For drivers implementing DDI 0102 or newer, this will come from the driver, and must be at least 4000. For earlier drivers, D3D will set this to 2048. Attempting to create a shader-visible sampler descriptor heap with more than this many descriptors will fail. |
-> | `MaxSamplerDescriptorHeapSizeWithStaticSamplers` | For drivers implementing DDI 0102 or newer, this will come from the driver, and must be at least 2048. For earlier drivers, D3D will set this to 2048. Attempting to draw/dispatch (compute, mesh, rays) with a root signature bound that includes static samplers, and with a sampler descriptor heap bound with more than this many descriptors, is undefined behavior and will produce a debug layer error. |
-> | `MaxViewDescriptorHeapSize` | For drivers implementing DDI 0102 or newer, this will come from the driver, and must be at least 1,000,000. For earlier drivers, D3D will set this to 1,000,000. Attempting to create a shader-visible view descriptor heap with more than this many descriptors will fail for DDI 0102 or newer drivers. For earlier drivers reporting `D3D12_RESOURCE_BINDING_TIER_3`, requests for heaps larger than 1,000,000 will still be sent to the driver, with the expectation that they may fail. |
-
-<!-- d3d12-review-alert:end:binding:B-heap-caps:0 -->
-
-<!-- d3d12-review-alert:begin:binding:N-static-limit:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The device-wide limit is 2032 unique static samplers across live root signatures. Static samplers do not consume root-argument DWORDs. The shader-visible sampler heap limit is capability-dependent; 2048 is the older baseline, not a universal maximum. The limit with static samplers bound may differ from the limit without them.
-
-<!-- d3d12-review-alert:end:binding:N-static-limit:0 -->
-
-This is a required feature for drivers with DDI version 0102 or newer. The driver must set the new caps to appropriate values, and handle shader-visible descriptor heap creation up to the new limits.
+The device-wide limit is 2032 unique static samplers across live root signatures.
 
 <a id="heap-apis"></a>
 
 ## Descriptor heap and copy APIs
+
+<a id="d3d12-descriptor-heap-type"></a>
 
 ```cpp
 typedef enum D3D12_DESCRIPTOR_HEAP_TYPE
@@ -2028,6 +1880,10 @@ typedef enum D3D12_DESCRIPTOR_HEAP_FLAGS
 } D3D12_DESCRIPTOR_HEAP_FLAGS;
 ```
 
+<a id="descriptor-heap-description"></a>
+
+<a id="d3d12-descriptor-heap-desc"></a>
+
 ```cpp
 typedef struct D3D12_DESCRIPTOR_HEAP_DESC
 {
@@ -2037,6 +1893,50 @@ typedef struct D3D12_DESCRIPTOR_HEAP_DESC
     UINT NodeMask;
 } D3D12_DESCRIPTOR_HEAP_DESC;
 ```
+
+All descriptor heaps support CPU descriptor writes.
+
+`Type`
+
+Selects the descriptor heap type.
+
+`NumDescriptors`
+
+The heap's capacity in descriptors. The count must satisfy the applicable [heap limits](#binding-capabilities).
+
+`Flags`
+
+For `CBV_SRV_UAV` descriptor heaps and SAMPLER descriptor heaps
+`D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE` can optionally be set.
+
+The flag `D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE` indicates that the
+heap is intended to be bound on a command list for reference by shaders.
+This flag doesn't apply to other descriptor heap types since shaders
+don't directly reference the other types. Use of this flag means that
+the CPU can only write to the descriptor heap (attempting to read
+produces undefined behavior).
+
+With the shader visible flag set, the memory pool used for the heap is
+whatever the driver decides is the best for shader access -- most likely
+system memory for integrated/shared memory GPUs and video memory for
+discrete memory GPUs. Future hardware may have other memory pools that
+could get used if they would be better for shader access, but they would
+have to be CPU visible as well. CPU page properties may set to
+`WRITE_COMBINE` if the implementation needs it, so therefore reading from
+a shader visible descriptor heap (such as using it as the source for a
+copy call) on the CPU is not allowed.
+
+Without the shader visible flag, CPU page properties on a descriptor
+heap are always set to `WRITE_BACK`.
+
+<a id="heap-node-selection"></a>
+<a id="descriptor-heap-node-selection"></a>
+
+`NodeMask`
+
+Selects the descriptor heap's creation node. For single-adapter operation, set this to zero. If there are multiple adapter nodes, select exactly one node bit. See [Adapter identity and linked nodes](devices-and-capabilities.md#identity) for node numbering and mask interpretation.
+
+<a id="d3d12-cpu-descriptor-handle"></a>
 
 ```cpp
 typedef struct D3D12_CPU_DESCRIPTOR_HANDLE
@@ -2052,80 +1952,30 @@ typedef struct D3D12_GPU_DESCRIPTOR_HANDLE
 } D3D12_GPU_DESCRIPTOR_HANDLE;
 ```
 
-<ins><!-- d3d12-review-inline:begin:binding:B-heap-properties:0 -->Configuring a descriptor heap involves selecting a descriptor heap type,
-how many descriptors it contains and Flags that indicate whether it is
-shader visible; all public descriptor heaps support CPU descriptor access.<!-- d3d12-review-inline:end:binding:B-heap-properties:0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:binding:B-heap-properties:1 -->For `CBV_SRV_UAV` descriptor heaps and SAMPLER descriptor heaps
-`D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE` can optionally be set.<!-- d3d12-review-inline:end:binding:B-heap-properties:1 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:binding:B-heap-properties:2 -->The flag `D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE` indicates that the
-heap is intended to be bound on a command list for reference by shaders.
-This flag doesn't apply to other descriptor heap types since shaders
-don't directly reference the other types. Use of this flag means that
-the CPU can only write to the descriptor heap (attempting to read
-produces undefined behavior).<!-- d3d12-review-inline:end:binding:B-heap-properties:2 --></ins>
-
-With the shader visible flag set, the memory pool used for the heap is
-whatever the driver decides is the best for shader access -- most likely
-system memory for integrated/shared memory GPUs and video memory for
-discrete memory GPUs. Future hardware may have other memory pools that
-could get used if they would be better for shader access, but they would
-have to be CPU visible as well. CPU page properties may set to
-`WRITE_COMBINE` if the implementation needs it, so therefore reading from
-a shader visible descriptor heap (such as using it as the source for a
-copy call) on the CPU is not allowed.
-
-Without the shader visible flag, CPU page properties on a descriptor
-heap are always set to `WRITE_BACK`.
-
-<ins><!-- d3d12-review-inline:begin:binding:B-handles:0 -->`D3D12_*_DESCRIPTOR_HANDLE`, defined above, identifies a specific
+`D3D12_*_DESCRIPTOR_HANDLE`, defined above, identifies a specific
 descriptor in a descriptor heap. It is a bit like a pointer but the
 application must not dereference it manually otherwise behavior is
 undefined. Use of the handles must go through the API. A handle itself
 can be copied freely or passed into APIs that operate on/use
 descriptors. There is no ref counting, so the application must ensure it
 does not use a handle after the underlying descriptor heap has been
-deleted.<!-- d3d12-review-inline:end:binding:B-handles:0 --></ins>
+deleted.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-handles:1 -->Applications can find out increment size of the descriptors for a given
-descriptor heap type so that they can generate handles to any location
-in a descriptor heap manually starting from the handle to the base.
-Applications must never hardcode descriptor handle increment sizes --
-always query them for a given device instance, otherwise behavior is
-undefined. Applications must also not use the increment sizes and
-handles to do their own examination or manipulation of descriptor heap
-data, as the results from doing so are undefined, and in fact the handles
-may not actually be pointers but proxies for pointers to avoid
-accidental dereferencing.<!-- d3d12-review-inline:end:binding:B-handles:1 --></ins>
+Applications query the descriptor handle increment for a given device instance and descriptor heap type using `GetDescriptorHandleIncrementSize()`. The heap start handle comes from `GetCPUDescriptorHandleForHeapStart()` or `GetGPUDescriptorHandleForHeapStart()`. To obtain a descriptor's handle, add the increment size multiplied by its zero-based index to the heap start handle. Applications must never hardcode descriptor handle increment sizes, otherwise behavior is undefined.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-heap-getters:0 -->Descriptor heaps inherit from ID3D12Pageable. This imposes
-on applications responsibility for residency management on descriptor
-heaps just like resource heaps. The residency management methods only
-apply to shader visible heaps, since the non shader visible heaps are
-not visible to the GPU directly.<!-- d3d12-review-inline:end:binding:B-heap-getters:0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:binding:B-heap-getters:1 -->GetDescriptorHandleIncrementSize() allows applications to manually
-offset handles into a heap (producing handles into anywhere in a
-descriptor heap). The heap start location's handle comes from
-GetCPUDescriptorHandleForHeapStart()/GetGPUDescriptorHandleForHeapStart(). Offsetting is
-done by adding to the descriptor heap start the increment size * number
-of descriptors to offset. Note the increment size cannot be thought of
-as a byte size since applications must not dereference handles as if
-they are memory -- the memory pointed to has a nonstandardized layout
-and can vary even for a given device.<!-- d3d12-review-inline:end:binding:B-heap-getters:1 --></ins>
+The increment describes handle arithmetic, not the descriptor memory layout. Applications must not use increment sizes and handles to examine or manipulate descriptor heap data, otherwise behavior is undefined. Handles may be proxies rather than pointers. Descriptor memory layout is not standardized and can vary even for a given device.
 
 GetCPUDescriptorHandleForHeapStart() returns a CPU handle for CPU manipulation of
 a descriptor heap.
 
-<ins><!-- d3d12-review-inline:begin:binding:B-heap-getters:3 -->GetGPUDescriptorHandleForHeapStart() returns a GPU handle for shader visible
-descriptor heaps. The heap must be shader visible; the debug layer reports an error otherwise.<!-- d3d12-review-inline:end:binding:B-heap-getters:3 --></ins>
+GetGPUDescriptorHandleForHeapStart() returns a GPU handle for shader visible
+descriptor heaps. The heap must be shader visible. The debug layer reports an error otherwise.
 
-<a id="heap-node-selection"></a>
-
-### Descriptor-heap node selection
-
-For single-adapter operation, set this to zero. If there are multiple adapter nodes, set a bit to identify the node (one of the device's physical adapters) to which the descriptor heap applies. Each bit in the mask corresponds to a single node. Only one bit must be set. See [Multi-adapter systems](https://learn.microsoft.com/en-us/windows/win32/direct3d12/multi-engine).
+Descriptor heaps inherit from ID3D12Pageable. This imposes
+on applications responsibility for residency management on descriptor
+heaps just like resource heaps. The residency management methods only
+apply to shader visible heaps, since the non shader visible heaps are
+not visible to the GPU directly.
 
 <a id="id3d12device-createdescriptorheap"></a>
 
@@ -2144,32 +1994,23 @@ HRESULT CreateDescriptorHeap(
 
 Creates a descriptor heap object.
 
-<!-- d3d12-review-alert:begin:binding:N-id3d12device-createdescriptorheap:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pDescriptorHeapDesc.Type` selects the heap type; `NumDescriptors` is its capacity, `Flags` selects shader visibility, and `NodeMask` selects the creation node as defined above. Only CBV/SRV/UAV and sampler heaps can be shader-visible. The count must satisfy the applicable [heap limits](#binding-capabilities).
-
-<!-- d3d12-review-alert:end:binding:N-id3d12device-createdescriptorheap:0 -->
-
 #### Parameters
 
 `[in] pDescriptorHeapDesc`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-createdescriptorheap:2 -->A pointer to a [`D3D12_DESCRIPTOR_HEAP_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_descriptor_heap_desc) structure that describes the heap.<!-- d3d12-review-inline:end:binding:Q-id3d12device-createdescriptorheap:2 --></ins>
+A pointer to a [`D3D12_DESCRIPTOR_HEAP_DESC`](#descriptor-heap-description) structure that describes the heap.
 
 `riid`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-createdescriptorheap:4 -->The globally unique identifier (**GUID**) for the descriptor heap interface. An input parameter.<!-- d3d12-review-inline:end:binding:Q-id3d12device-createdescriptorheap:4 --></ins>
+The globally unique identifier (**GUID**) for the descriptor heap interface. An input parameter.
 
 `[out] ppvHeap`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-createdescriptorheap:6 -->A pointer to a memory block that receives a pointer to the descriptor heap. *ppvHeap* can be NULL. When *ppvHeap* is NULL, no object will be created and S\_FALSE will be returned when *pDescriptorHeapDesc* is valid.<!-- d3d12-review-inline:end:binding:Q-id3d12device-createdescriptorheap:6 --></ins>
+A pointer to a memory block that receives a pointer to the descriptor heap. *ppvHeap* can be NULL. When *ppvHeap* is NULL, no object will be created and S\_FALSE will be returned when *pDescriptorHeapDesc* is valid.
 
 #### Return values
 
-This method returns **E\_OUTOFMEMORY** if there is insufficient memory to create the descriptor heap object. See [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues) for other possible return values.
+This method returns **E\_OUTOFMEMORY** if there is insufficient memory to create the descriptor heap object. See [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes) for other possible return values.
 
 <a id="id3d12device-getdescriptorhandleincrementsize"></a>
 
@@ -2190,7 +2031,7 @@ Gets the size of the handle increment for the given type of descriptor heap. Thi
 
 `[in] DescriptorHeapType`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-getdescriptorhandleincrementsize:2 -->The [`D3D12_DESCRIPTOR_HEAP_TYPE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_descriptor_heap_type)-typed value that specifies the type of descriptor heap to get the size of the handle increment for.<!-- d3d12-review-inline:end:binding:Q-id3d12device-getdescriptorhandleincrementsize:2 --></ins>
+The [`D3D12_DESCRIPTOR_HEAP_TYPE`](#d3d12-descriptor-heap-type)-typed value that specifies the type of descriptor heap to get the size of the handle increment for.
 
 #### Return values
 
@@ -2212,7 +2053,7 @@ Gets the descriptor heap description.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12descriptorheap-getdesc:1 -->The description of the descriptor heap, as a [`D3D12_DESCRIPTOR_HEAP_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_descriptor_heap_desc) structure.<!-- d3d12-review-inline:end:binding:Q-id3d12descriptorheap-getdesc:1 --></ins>
+The description of the descriptor heap, as a [`D3D12_DESCRIPTOR_HEAP_DESC`](#d3d12-descriptor-heap-desc) structure.
 
 <a id="id3d12descriptorheap-getcpudescriptorhandleforheapstart"></a>
 
@@ -2248,7 +2089,7 @@ Gets the GPU descriptor handle that represents the start of the heap.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12descriptorheap-getgpudescriptorhandleforheapstart:1 -->Returns the GPU descriptor handle that represents the start of the heap. The heap must be shader-visible; the debug layer reports an error otherwise.<!-- d3d12-review-inline:end:binding:Q-id3d12descriptorheap-getgpudescriptorhandleforheapstart:1 --></ins>
+Returns the GPU descriptor handle that represents the start of the heap. The heap must be shader-visible. The debug layer reports an error otherwise.
 
 <a id="copy-behavior"></a>
 
@@ -2291,14 +2132,7 @@ For these descriptor copy methods, source descriptors must come from a
 non-shader visible descriptor heap. The destination descriptors can be
 in any descriptor heap (shader visible or not).
 
-<!-- d3d12-review-alert:begin:binding:N-copy-counts:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> If either range-size array is null, every range in that array has size one. The source and destination totals must match. Source reads must not race with descriptor writes; destination writes must not conflict with other CPU/GPU accesses.
-
-<!-- d3d12-review-alert:end:binding:N-copy-counts:0 -->
+If either range size array is null, every range in that array has size one. The source and destination totals must match. Source reads must not race with descriptor writes. Destination writes must not conflict with other CPU/GPU accesses.
 
 <a id="id3d12device-copydescriptors"></a>
 
@@ -2321,14 +2155,7 @@ void CopyDescriptors(
 
 Copies descriptors from a source to a destination.
 
-<!-- d3d12-review-alert:begin:binding:N-id3d12device-copydescriptors:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [shared copy rules](#copy-behavior) apply. This is an immediate CPU operation, not a queued GPU resource copy.
-
-<!-- d3d12-review-alert:end:binding:N-id3d12device-copydescriptors:0 -->
+The [shared copy rules](#copy-behavior) apply. This is an immediate CPU operation, not a queued GPU resource copy.
 
 #### Parameters
 
@@ -2338,9 +2165,9 @@ The number of destination descriptor ranges to copy to.
 
 `[in] pDestDescriptorRangeStarts`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-copydescriptors:4 -->An array of **[`D3D12_CPU_DESCRIPTOR_HANDLE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_cpu_descriptor_handle)** objects to copy to.<!-- d3d12-review-inline:end:binding:Q-id3d12device-copydescriptors:4 --></ins>
+An array of **[`D3D12_CPU_DESCRIPTOR_HANDLE`](#d3d12-cpu-descriptor-handle)** objects to copy to.
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-copydescriptors:5 -->All the destination and source descriptors must be in heaps of the same [`D3D12_DESCRIPTOR_HEAP_TYPE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_descriptor_heap_type).<!-- d3d12-review-inline:end:binding:Q-id3d12device-copydescriptors:5 --></ins>
+All the destination and source descriptors must be in heaps of the same [`D3D12_DESCRIPTOR_HEAP_TYPE`](#d3d12-descriptor-heap-type).
 
 `[in, optional] pDestDescriptorRangeSizes`
 
@@ -2352,7 +2179,7 @@ The number of source descriptor ranges to copy from.
 
 `[in] pSrcDescriptorRangeStarts`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-copydescriptors:11 -->An array of **[`D3D12_CPU_DESCRIPTOR_HANDLE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_cpu_descriptor_handle)** objects to copy from.<!-- d3d12-review-inline:end:binding:Q-id3d12device-copydescriptors:11 --></ins>
+An array of **[`D3D12_CPU_DESCRIPTOR_HANDLE`](#d3d12-cpu-descriptor-handle)** objects to copy from.
 
 Important
 
@@ -2364,7 +2191,7 @@ An array of source descriptor range sizes to copy from.
 
 `[in] DescriptorHeapsType`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-copydescriptors:17 -->The [`D3D12_DESCRIPTOR_HEAP_TYPE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_descriptor_heap_type)-typed value that specifies the type of descriptor heap to copy with. This is required as different descriptor types may have different sizes.<!-- d3d12-review-inline:end:binding:Q-id3d12device-copydescriptors:17 --></ins>
+The [`D3D12_DESCRIPTOR_HEAP_TYPE`](#d3d12-descriptor-heap-type)-typed value that specifies the type of descriptor heap to copy with. This is required as different descriptor types may have different sizes.
 
 Both the source and destination descriptor heaps must have the same type, else the debug layer will emit an error.
 
@@ -2390,14 +2217,7 @@ void CopyDescriptorsSimple(
 
 Copies descriptors from a source to a destination.
 
-<!-- d3d12-review-alert:begin:binding:N-id3d12device-copydescriptorssimple:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [shared copy rules](#copy-behavior) apply. This is an immediate CPU operation, not a queued GPU resource copy.
-
-<!-- d3d12-review-alert:end:binding:N-id3d12device-copydescriptorssimple:0 -->
+The [shared copy rules](#copy-behavior) apply. This is an immediate CPU operation, not a queued GPU resource copy.
 
 #### Parameters
 
@@ -2407,13 +2227,13 @@ The number of descriptors to copy.
 
 `[in] DestDescriptorRangeStart`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-copydescriptorssimple:4 -->A **[`D3D12_CPU_DESCRIPTOR_HANDLE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_cpu_descriptor_handle)** that describes the destination descriptors to start to copy to.<!-- d3d12-review-inline:end:binding:Q-id3d12device-copydescriptorssimple:4 --></ins>
+A **[`D3D12_CPU_DESCRIPTOR_HANDLE`](#d3d12-cpu-descriptor-handle)** that describes the destination descriptors to start to copy to.
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-copydescriptorssimple:5 -->The destination and source descriptors must be in heaps of the same [`D3D12_DESCRIPTOR_HEAP_TYPE`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_descriptor_heap_type).<!-- d3d12-review-inline:end:binding:Q-id3d12device-copydescriptorssimple:5 --></ins>
+The destination and source descriptors must be in heaps of the same [`D3D12_DESCRIPTOR_HEAP_TYPE`](#d3d12-descriptor-heap-type).
 
 `[in] SrcDescriptorRangeStart`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-copydescriptorssimple:7 -->A **[`D3D12_CPU_DESCRIPTOR_HANDLE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_cpu_descriptor_handle)** that describes the source descriptors to start to copy from.<!-- d3d12-review-inline:end:binding:Q-id3d12device-copydescriptorssimple:7 --></ins>
+A **[`D3D12_CPU_DESCRIPTOR_HANDLE`](#d3d12-cpu-descriptor-handle)** that describes the source descriptors to start to copy from.
 
 Important
 
@@ -2421,7 +2241,7 @@ The *SrcDescriptorRangeStart* parameter must be in a non shader-visible descript
 
 `[in] DescriptorHeapsType`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-copydescriptorssimple:11 -->The [`D3D12_DESCRIPTOR_HEAP_TYPE`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_descriptor_heap_type)-typed value that specifies the type of descriptor heap to copy with. This is required as different descriptor types may have different sizes.<!-- d3d12-review-inline:end:binding:Q-id3d12device-copydescriptorssimple:11 --></ins>
+The [`D3D12_DESCRIPTOR_HEAP_TYPE`](#d3d12-descriptor-heap-type)-typed value that specifies the type of descriptor heap to copy with. This is required as different descriptor types may have different sizes.
 
 Both the source and destination descriptor heaps must have the same type, else the debug layer will emit an error.
 
@@ -2435,14 +2255,48 @@ None
 
 All methods for creating descriptors are free threaded.
 
-<!-- d3d12-review-alert:begin:binding:N-destinations:0 -->
+`DestDescriptor` identifies the destination descriptor slot, not necessarily the first slot of a heap. SRV/UAV/CBV creation requires a CBV/SRV/UAV heap, sampler creation a sampler heap, RTV creation an RTV heap, and DSV creation a DSV heap. Destination storage must already exist and remain free of conflicting CPU/GPU accesses. Creating a descriptor does not retain the referenced resource or make it resident.
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `DestDescriptor` identifies the destination descriptor slot, not necessarily the first slot of a heap. SRV/UAV/CBV creation requires a CBV/SRV/UAV heap, sampler creation a sampler heap, RTV creation an RTV heap, and DSV creation a DSV heap. Destination storage must already exist and remain free of conflicting CPU/GPU accesses. Creating a descriptor does not retain the referenced resource or make it resident.
+In order to indirectly bind a Resource to certain stages of the graphics
+pipeline, Resource Views must be used. In addition, since some Resources
+may be created with typeless formats, the View provides the final
+opportunity to fully qualify the Resource component's types. The Resource
+Views also allow the Resource to be decomposed into smaller compatible
+subgroupings of the Mip Slices, Array Slices, and Subresources. This means
+that the effective dimensions and array sizes of the Views will, naturally,
+always be less than or equal to the original Resource. Each stage
+of the pipeline requires a unique type of View, and each type of View
+may have its own custom set of state parameters that are needed to
+complete the process of binding a particular Resource to the graphics
+pipeline stage. Resource creation flags impose the applicable view restrictions independently of descriptor binding. Views are represented by descriptors. The [binding contract](#foundations) provides more details about how views/descriptors are accessed by the hardware.
 
-<!-- d3d12-review-alert:end:binding:N-destinations:0 -->
+A resource view is distinct from the underlying resource from which the view was
+created, so where views are used, the view properties (number of mipmaps, number
+of array elements, type, etc.) are always used in place of the properties of the
+original resource.  Thus, for example, a render target array index of zero always
+indicates the first array element in the view, even if the first array element in
+the view is not the first array element in the underlying resource.  Out of range
+behaviors are also always with respect to the view properties where views are used.
+
+These methods create descriptors immediately on the CPU at `DestDescriptor`. Creating a view does not allocate backing storage for its resource or synchronize its accesses. Null resource descriptors and null description defaults are both possible in most cases but have different semantics. [Null binding](#null-descriptors) and the parameter rules below provide more details.
+
+The SRV/UAV/RTV/DSV creators don't have an `HRESULT` return, so any validation failures result in device removal, in addition to any debug layer errors that are produced. Device removal status is exposed by `ID3D12Device::GetDeviceRemovedReason`.
+
+<a id="view-descriptions"></a>
+
+`ViewDimension` selects the matching description union member. Texture dimensions must match the resource's kind and sample configuration. Cube views use appropriate groups of faces in 2D arrays. SRVs can select a mip range, while RTVs, DSVs and UAVs select a single mip, while multisampled views do not select a mip level.
+
+Mip and array starts must lie within the resource's corresponding extent. Counts must be nonzero and fit the remaining extent.
+
+For SRV/UAV/RTV/DSV creation, a null `pDesc` requests a default view inferred from the supplied resource, where supported.
+
+When a default description can be inferred from a texture resource, SRV defaults expose its mip chain and applicable array, with identity mapping and zero minimum LOD clamp. Array resources do not implicitly become cube SRVs. RTV/UAV/DSV defaults select mip zero and the applicable array, or all W slices of that mip for 3D RTV/UAVs. Applicable 2D defaults select plane zero, and default DSV flags are NONE. These defaults do not make otherwise unsupported formats or resource kinds valid.
+
+SRV creation requires that the resource not include `D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE`. RTV, DSV and UAV creation require `D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET`, `D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL` and `D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS`, respectively. The [resource flag constraints](resources.md#resource-flags) indicate when these flags can be set.
+
+<a id="d3d12-constant-buffer-view-desc"></a>
+
+### D3D12_CONSTANT_BUFFER_VIEW_DESC
 
 ```cpp
 typedef struct D3D12_CONSTANT_BUFFER_VIEW_DESC
@@ -2452,36 +2306,7 @@ typedef struct D3D12_CONSTANT_BUFFER_VIEW_DESC
 } D3D12_CONSTANT_BUFFER_VIEW_DESC;
 ```
 
-<!-- d3d12-review-alert:begin:binding:N-cbv-bounds:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For a non-null `D3D12_CONSTANT_BUFFER_VIEW_DESC`, `BufferLocation` and `SizeInBytes` must each be a multiple of `D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT` (256). `SizeInBytes` must not exceed 65536 bytes. This explicit ordinary-view size is distinct from a root CBV, which supplies only an address and retains the [root-CBV access bound](#root-descriptors). A null description creates the unbound descriptor described under [null descriptors](#null-descriptors).
-
-<!-- d3d12-review-alert:end:binding:N-cbv-bounds:0 -->
-
-<!-- d3d12-review-alert:begin:binding:N-view-owners:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> View descriptions select the compatible resource interpretation, subresources and buffer ranges. [Formats and views](formats.md#view-descriptions) defines their fields, casting, plane selection and format-specific restrictions. [Resource creation](resources.md#creation-contracts) constrains available views.
-
-<!-- d3d12-review-alert:end:binding:N-view-owners:0 -->
-
-<a id="sampler-feedback-descriptors"></a>
-
-### Sampler-feedback descriptor binding
-
-<!-- d3d12-review-alert:begin:binding:N-feedback-binding:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `ID3D12Device8::CreateSamplerFeedbackUnorderedAccessView` creates a sampler-feedback UAV from paired target and feedback resources at a CBV/SRV/UAV descriptor-heap slot. The shared heap, handle, resource-lifetime and volatility requirements apply. Its [paired-view creation contract](formats.md#create-sampler-feedback-uav) is defined in Formats and views.
-
-<!-- d3d12-review-alert:end:binding:N-feedback-binding:0 -->
+For a non-null `D3D12_CONSTANT_BUFFER_VIEW_DESC`, `BufferLocation` and `SizeInBytes` must each be a multiple of `D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT` (256). `SizeInBytes` must not exceed `D3D12_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * 16` bytes (4096 16-byte elements, or 65536 bytes). This size limit is distinct from a root CBV, which supplies only an address and retains the [root CBV access bound](#root-descriptors). A null description creates the unbound descriptor described under [null descriptors](#null-descriptors).
 
 <a id="id3d12device-createconstantbufferview"></a>
 
@@ -2503,67 +2328,1102 @@ Creates a constant-buffer view for accessing resource data.
 
 `[in, optional] pDesc`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-createconstantbufferview:2 -->A pointer to a [`D3D12_CONSTANT_BUFFER_VIEW_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_constant_buffer_view_desc) structure that describes the constant-buffer view.<!-- d3d12-review-inline:end:binding:Q-id3d12device-createconstantbufferview:2 --></ins>
+A pointer to a [`D3D12_CONSTANT_BUFFER_VIEW_DESC`](#d3d12-constant-buffer-view-desc) structure that describes the constant-buffer view.
 
 `[in] DestDescriptor`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-createconstantbufferview:4 -->Describes the CPU descriptor handle that represents the descriptor slot that holds the constant-buffer view.<!-- d3d12-review-inline:end:binding:Q-id3d12device-createconstantbufferview:4 --></ins>
+Describes the CPU descriptor handle that represents the descriptor slot that holds the constant-buffer view.
 
 #### Return values
 
 None
 
+<a id="srv-types"></a>
+
+### Shader resource view types
+
+#### D3D12_SRV_DIMENSION
+
+<a id="d3d12-srv-dimension"></a>
+
+```cpp
+typedef enum D3D12_SRV_DIMENSION {
+    D3D12_SRV_DIMENSION_UNKNOWN = 0,
+    D3D12_SRV_DIMENSION_BUFFER = 1,
+    D3D12_SRV_DIMENSION_TEXTURE1D = 2,
+    D3D12_SRV_DIMENSION_TEXTURE1DARRAY = 3,
+    D3D12_SRV_DIMENSION_TEXTURE2D = 4,
+    D3D12_SRV_DIMENSION_TEXTURE2DARRAY = 5,
+    D3D12_SRV_DIMENSION_TEXTURE2DMS = 6,
+    D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY = 7,
+    D3D12_SRV_DIMENSION_TEXTURE3D = 8,
+    D3D12_SRV_DIMENSION_TEXTURECUBE = 9,
+    D3D12_SRV_DIMENSION_TEXTURECUBEARRAY = 10,
+    D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE = 11,
+} D3D12_SRV_DIMENSION;
+```
+
+#### D3D12_BUFFER_SRV_FLAGS
+
+<a id="d3d12-buffer-srv-flags"></a>
+
+```cpp
+typedef enum D3D12_BUFFER_SRV_FLAGS
+{
+    D3D12_BUFFER_SRV_FLAG_NONE = 0,
+    D3D12_BUFFER_SRV_FLAG_RAW  = 0x00000001,
+} D3D12_BUFFER_SRV_FLAGS;
+```
+
+#### D3D12_BUFFER_SRV
+
+```cpp
+typedef struct D3D12_BUFFER_SRV
+{
+    UINT64 FirstElement;
+    UINT NumElements;
+    UINT StructureByteStride;
+    D3D12_BUFFER_SRV_FLAGS Flags;
+} D3D12_BUFFER_SRV;
+```
+
+#### D3D12_TEX1D_SRV
+
+<a id="d3d12-tex1d-srv"></a>
+
+```cpp
+typedef struct D3D12_TEX1D_SRV
+{
+    UINT MostDetailedMip;
+    UINT MipLevels;
+    FLOAT ResourceMinLODClamp;
+} D3D12_TEX1D_SRV;
+```
+
+#### D3D12_TEX1D_ARRAY_SRV
+
+```cpp
+typedef struct D3D12_TEX1D_ARRAY_SRV
+{
+    UINT MostDetailedMip;
+    UINT MipLevels;
+    UINT FirstArraySlice;
+    UINT ArraySize;
+    FLOAT ResourceMinLODClamp;
+} D3D12_TEX1D_ARRAY_SRV;
+```
+
+#### D3D12_TEX2D_SRV
+
+```cpp
+typedef struct D3D12_TEX2D_SRV
+{
+    UINT MostDetailedMip;
+    UINT MipLevels;
+    UINT PlaneSlice;
+    FLOAT ResourceMinLODClamp;
+} D3D12_TEX2D_SRV;
+```
+
+#### D3D12_TEX2D_ARRAY_SRV
+
+```cpp
+typedef struct D3D12_TEX2D_ARRAY_SRV
+{
+    UINT MostDetailedMip;
+    UINT MipLevels;
+    UINT FirstArraySlice;
+    UINT ArraySize;
+    UINT PlaneSlice;
+    FLOAT ResourceMinLODClamp;
+} D3D12_TEX2D_ARRAY_SRV;
+```
+
+#### D3D12_TEX2DMS_SRV
+
+```cpp
+typedef struct D3D12_TEX2DMS_SRV
+{
+    UINT UnusedField_NothingToDefine;
+} D3D12_TEX2DMS_SRV;
+```
+
+#### D3D12_TEX2DMS_ARRAY_SRV
+
+```cpp
+typedef struct D3D12_TEX2DMS_ARRAY_SRV
+{
+    UINT FirstArraySlice;
+    UINT ArraySize;
+} D3D12_TEX2DMS_ARRAY_SRV;
+```
+
+#### D3D12_TEX3D_SRV
+
+```cpp
+typedef struct D3D12_TEX3D_SRV
+{
+    UINT MostDetailedMip;
+    UINT MipLevels;
+    FLOAT ResourceMinLODClamp;
+} D3D12_TEX3D_SRV;
+```
+
+#### D3D12_TEXCUBE_SRV
+
+```cpp
+typedef struct D3D12_TEXCUBE_SRV
+{
+    UINT MostDetailedMip;
+    UINT MipLevels;
+    FLOAT ResourceMinLODClamp;
+} D3D12_TEXCUBE_SRV;
+```
+
+#### D3D12_TEXCUBE_ARRAY_SRV
+
+```cpp
+typedef struct D3D12_TEXCUBE_ARRAY_SRV
+{
+    UINT MostDetailedMip;
+    UINT MipLevels;
+    UINT First2DArrayFace;
+    UINT NumCubes;
+    FLOAT ResourceMinLODClamp;
+} D3D12_TEXCUBE_ARRAY_SRV;
+```
+
+<a id="acceleration-structure-srv"></a>
+
+#### D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV
+
+```cpp
+typedef struct D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV
+{
+    D3D12_GPU_VIRTUAL_ADDRESS Location;
+} D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV;
+```
+
+#### D3D12_SHADER_RESOURCE_VIEW_DESC
+
+<a id="d3d12-shader-resource-view-desc"></a>
+
+```cpp
+typedef struct D3D12_SHADER_RESOURCE_VIEW_DESC
+{
+    DXGI_FORMAT Format;
+    D3D12_SRV_DIMENSION ViewDimension;
+    UINT Shader4ComponentMapping;
+    union
+    {
+        D3D12_BUFFER_SRV Buffer;
+        D3D12_TEX1D_SRV Texture1D;
+        D3D12_TEX1D_ARRAY_SRV Texture1DArray;
+        D3D12_TEX2D_SRV Texture2D;
+        D3D12_TEX2D_ARRAY_SRV Texture2DArray;
+        D3D12_TEX2DMS_SRV Texture2DMS;
+        D3D12_TEX2DMS_ARRAY_SRV Texture2DMSArray;
+        D3D12_TEX3D_SRV Texture3D;
+        D3D12_TEXCUBE_SRV TextureCube;
+        D3D12_TEXCUBE_ARRAY_SRV TextureCubeArray;
+        D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV RaytracingAccelerationStructure;
+    };
+} D3D12_SHADER_RESOURCE_VIEW_DESC;
+```
+
+`Format`
+
+The view's [format interpretation](formats.md#interpretation), subject to [casting compatibility](formats.md#casting).
+
+<a id="buffer-view-kinds"></a>
+
+### Buffer view kinds
+
+Buffer SRV and UAV descriptors select one of the following interpretations. These interpretations are view properties rather than buffer creation bind flags. Read-only HLSL forms use SRVs. Read/write and append/consume forms use UAVs. In the flags column, `NONE` and `RAW` refer to the corresponding [`D3D12_BUFFER_SRV_FLAGS`](#d3d12-buffer-srv-flags) or [`D3D12_BUFFER_UAV_FLAGS`](#d3d12-buffer-uav-flags) values.
+
+| Kind | View format | `StructureByteStride` | Flags | Common HLSL declarations | Semantics |
+|---|---|---|---|---|---|
+| Typed buffer | Supported [typed buffer format](formats.md#support) | 0 | `NONE` | `Buffer<T>`, `RWBuffer<T>` | `FirstElement` and `NumElements` count elements of the view format. The format determines each element's byte size and component interpretation. Shader coordinates select elements relative to the view. Typed loads and stores apply the format's conversions between stored components and shader values. |
+| Structured buffer | `DXGI_FORMAT_UNKNOWN` | Nonzero structure stride | `NONE` | `StructuredBuffer<T>`, `RWStructuredBuffer<T>`, `AppendStructuredBuffer<T>`, `ConsumeStructuredBuffer<T>` | `FirstElement` and `NumElements` count structures, each occupying `StructureByteStride` bytes. Shader accesses select a structure and address members within that fixed stride. The shader structure layout must agree with the view's stride. The view does not specify a typed format for the members. Append/consume forms use a [separately associated UAV counter](#id3d12device-createunorderedaccessview). |
+| Raw / byte-address buffer | `DXGI_FORMAT_R32_TYPELESS` | 0 | `RAW` | `ByteAddressBuffer`, `RWByteAddressBuffer` | `FirstElement` and `NumElements` count 32-bit elements, selecting a byte range starting at `4 * FirstElement` with length `4 * NumElements`. Shader raw loads and stores use byte offsets relative to that view, rather than format-element or structure indices. The view does not impose a typed numeric interpretation or perform typed-format conversion. Access widths and alignment depend on the shader operation. |
+
+Rasterizer-ordered buffer declarations use the same view kinds, with the additional [rasterizer ordered view contract](pixel-shaders.md#rovs).
+
+Buffer SRVs and UAVs require a nonzero element count and a nonoverflowing byte range within the buffer. Raw view starting addresses must satisfy `D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT` (16 bytes).
+
+<a id="buffer-srv"></a>
+
+### Buffer SRV fields
+
+`FirstElement`
+
+The index of the first element to be accessed by the view.
+
+`NumElements`
+
+The number of elements exposed by the view.
+
+`StructureByteStride`
+
+The size of each element in the buffer structure (in bytes) when the buffer represents a structured buffer. The size must match the struct size declared in shaders that access the view.
+
+`Flags`
+
+A [`D3D12_BUFFER_SRV_FLAGS`](#d3d12-buffer-srv-flags)-typed value that identifies view options for the buffer. Currently, the only option is to identify a raw view of the buffer. See [buffer view kinds](#buffer-view-kinds) for the RAW interpretation.
+
+<a id="texture-srv"></a>
+
+### Texture SRV fields
+
+`MostDetailedMip`
+
+Index of the most detailed mipmap level to use; this number is between 0 and **MipLevels** -1 (where **MipLevels** is from the original Texture2D for which [ID3D12Device::CreateShaderResourceView](#id3d12device-createshaderresourceview) creates a view).
+
+`MipLevels`
+
+The maximum number of mipmap levels for the view of the texture. See the remarks in [`D3D12_TEX1D_SRV`](#d3d12-tex1d-srv).
+
+Set to `UINT_MAX` (-1) to indicate all the mipmap levels from `MostDetailedMip` down to the resource's least detailed mip.
+
+`FirstArraySlice`
+
+The index of the first texture to use in an array of textures.
+
+`ArraySize`
+
+Number of textures in the array.
+
+`UINT_MAX` selects all remaining array slices from `FirstArraySlice`.
+
+`NumCubes`
+
+The number of cubes, each comprising six consecutive 2D array faces. `First2DArrayFace` identifies the first face in the view. `UINT_MAX` selects all remaining cubes from that face.
+
+`PlaneSlice`
+
+The index (plane slice number) of the plane to use in an array of textures.
+
+[`ResourceMinLODClamp`](common-shader-internals.md#resource-lod-clamp)
+
+Specifies the minimum mipmap level that you can access. Specifying 0.0f means that you can access all of the mipmap levels. Specifying 3.0f means that you can access mipmap levels from 3.0f to *MipCount - 1*.
+
+The SRV's `ResourceMinLODClamp` considers the most detailed mipmap on the resource as LOD 0, so specifying a MinLOD clamp of 1 causes miplevel 0 on the resource to be ignored.
+On the other hand, the [Sampler’s MinLOD clamp](common-shader-internals.md#sampler-lod-bias-and-clamping) defines most detailed mipmap in the current Shader Resource View as LOD 0.
+So on a Shader Resource View that, for example, limits a mipmap chain to exclude the most detailed 3 mips from a resource, setting the Sampler MinLOD to 1
+causes miplevel [3] (the fourth mip) in the resource to be ignored.
+
+<a id="component-mapping"></a>
+
+### Component mapping
+
+`Shader4ComponentMapping` allows the SRV to
+choose how memory gets routed to the 4 return components in a shader
+after a memory fetch. The options for each shader component [0..3]
+(RGBA) are: component 0..3 from the SRV fetch result or force 0 or force 1. The value of forcing 1 is either 0x1 or 1.0f depending on the format
+type for that component in the source format.
+
+The default 1:1 mapping can be indicated by specifying
+`D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING`, otherwise an arbitrary
+mapping can be specified using the macro
+`D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING`. The encoding macros are shown below.
+
+#### D3D12_SHADER_COMPONENT_MAPPING
+
+```cpp
+typedef enum D3D12_SHADER_COMPONENT_MAPPING
+{
+    D3D12_SHADER_COMPONENT_MAPPING_FROM_MEMORY_COMPONENT_0 = 0,
+    D3D12_SHADER_COMPONENT_MAPPING_FROM_MEMORY_COMPONENT_1 = 1,
+    D3D12_SHADER_COMPONENT_MAPPING_FROM_MEMORY_COMPONENT_2 = 2,
+    D3D12_SHADER_COMPONENT_MAPPING_FROM_MEMORY_COMPONENT_3 = 3,
+    D3D12_SHADER_COMPONENT_MAPPING_FORCE_VALUE_0 = 4,
+    D3D12_SHADER_COMPONENT_MAPPING_FORCE_VALUE_1 = 5,
+} D3D12_SHADER_COMPONENT_MAPPING;
+```
+
+Each of the four three-bit selectors must use a declared `D3D12_SHADER_COMPONENT_MAPPING` value. The always-set bit is required, and bits outside the selectors and that marker must be zero.
+
+```cpp
+#define D3D12_SHADER_COMPONENT_MAPPING_MASK 0x7
+#define D3D12_SHADER_COMPONENT_MAPPING_SHIFT 3
+#define D3D12_SHADER_COMPONENT_MAPPING_ALWAYS_SET_BIT_AVOIDING_ZEROMEM_MISTAKES (1<<(D3D12_SHADER_COMPONENT_MAPPING_SHIFT*4))
+#define D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING(Src0,Src1,Src2,Src3) ((((Src0)&D3D12_SHADER_COMPONENT_MAPPING_MASK)| \
+                                                                (((Src1)&D3D12_SHADER_COMPONENT_MAPPING_MASK)<<D3D12_SHADER_COMPONENT_MAPPING_SHIFT)| \
+                                                                (((Src2)&D3D12_SHADER_COMPONENT_MAPPING_MASK)<<(D3D12_SHADER_COMPONENT_MAPPING_SHIFT*2))| \
+                                                                (((Src3)&D3D12_SHADER_COMPONENT_MAPPING_MASK)<<(D3D12_SHADER_COMPONENT_MAPPING_SHIFT*3))| \
+                                                                D3D12_SHADER_COMPONENT_MAPPING_ALWAYS_SET_BIT_AVOIDING_ZEROMEM_MISTAKES))
+#define D3D12_DECODE_SHADER_4_COMPONENT_MAPPING(ComponentToExtract,Mapping) ((D3D12_SHADER_COMPONENT_MAPPING)(Mapping >> (D3D12_SHADER_COMPONENT_MAPPING_SHIFT*ComponentToExtract) & D3D12_SHADER_COMPONENT_MAPPING_MASK))
+#define D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING(0,1,2,3)
+```
+
+Raw and structured buffer SRVs must use `D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING`. No ordering is defined between SRV component mapping and [border color selection](common-shader-internals.md#border-color-component-mapping-order). For [comparison sampling](common-shader-internals.md#comparison-component-mapping), the component mapping applies post-comparison intermediate `(result, 0.0f, 0.0f, 1.0f)`, rather than using the mapping to select which source component is compared. For [gather](common-shader-internals.md#gather-component-mapping), SRV component mapping applies independently to each texel tap, not to the packed vector of gathered values.
+
 <a id="id3d12device-createshaderresourceview"></a>
 
-### Shader-resource view creation
+### ID3D12Device::CreateShaderResourceView
 
-<!-- d3d12-review-alert:begin:binding:N-formats-CreateShaderResourceView:0 -->
+#### Declaration
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The declaration, parameters, format interpretation and view-validity contract for [`ID3D12Device::CreateShaderResourceView`](formats.md#id3d12device-createshaderresourceview) are defined in Formats and views. The shared descriptor storage and lifetime requirements above apply.
+```cpp
+void CreateShaderResourceView(
+    ID3D12Resource* pResource,
+    const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc,
+    D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor);
+```
 
-<!-- d3d12-review-alert:end:binding:N-formats-CreateShaderResourceView:0 -->
+#### Behavior
+
+Creates a shader-resource view for accessing data in a resource.
+
+#### Parameters
+
+`[in, optional] pResource`
+
+A pointer to the [ID3D12Resource](resources.md#resource-storage) object that represents the shader resource.
+
+At least one of *pResource* or *pDesc* must be provided. Except for acceleration structure SRVs, a null *pResource* initializes a null descriptor with a valid *pDesc* defining its type; see [null descriptors](#null-descriptors) and [acceleration structure SRVs](#acceleration-structure-srv).
+
+For `D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE`, *pResource* must be NULL. The GPU virtual address is supplied in `pDesc->RaytracingAccelerationStructure.Location`.
+
+`[in, optional] pDesc`
+
+A pointer to a [`D3D12_SHADER_RESOURCE_VIEW_DESC`](#d3d12-shader-resource-view-desc) structure that describes the shader-resource view.
+
+A null *pDesc* is used to initialize a default descriptor, if possible. This behavior inherits the resource format and dimension (if not typeless) and for textures SRVs target a full texture, all mips and all array slices. Buffer SRVs require an explicit description; their resource description does not supply a typed view format or structure stride. Not all texture resources support null description initialization.
+
+`[in] DestDescriptor`
+
+Describes the CPU descriptor handle that represents the shader-resource view. This handle can be created in a shader-visible or non-shader-visible descriptor heap.
+
+#### Return values
+
+None
+
+<a id="uav-types"></a>
+
+### Unordered access view types
+
+#### D3D12_UAV_DIMENSION
+
+```cpp
+typedef enum D3D12_UAV_DIMENSION
+{
+    D3D12_UAV_DIMENSION_UNKNOWN = 0,
+    D3D12_UAV_DIMENSION_BUFFER = 1,
+    D3D12_UAV_DIMENSION_TEXTURE1D = 2,
+    D3D12_UAV_DIMENSION_TEXTURE1DARRAY = 3,
+    D3D12_UAV_DIMENSION_TEXTURE2D = 4,
+    D3D12_UAV_DIMENSION_TEXTURE2DARRAY = 5,
+    D3D12_UAV_DIMENSION_TEXTURE2DMS = 6,
+    D3D12_UAV_DIMENSION_TEXTURE2DMSARRAY = 7,
+    D3D12_UAV_DIMENSION_TEXTURE3D = 8,
+} D3D12_UAV_DIMENSION;
+```
+
+#### D3D12_BUFFER_UAV_FLAGS
+
+<a id="d3d12-buffer-uav-flags"></a>
+
+```cpp
+typedef enum D3D12_BUFFER_UAV_FLAGS
+{
+    D3D12_BUFFER_UAV_FLAG_NONE =   0,
+    D3D12_BUFFER_UAV_FLAG_RAW  =   0x00000001,
+} D3D12_BUFFER_UAV_FLAGS;
+```
+
+#### D3D12_BUFFER_UAV
+
+<a id="d3d12-buffer-uav"></a>
+
+```cpp
+typedef struct D3D12_BUFFER_UAV
+{
+    UINT64 FirstElement;
+    UINT NumElements;
+    UINT StructureByteStride;
+    UINT64 CounterOffsetInBytes;
+    D3D12_BUFFER_UAV_FLAGS Flags;
+} D3D12_BUFFER_UAV;
+```
+
+#### D3D12_TEX1D_UAV
+
+```cpp
+typedef struct D3D12_TEX1D_UAV
+{
+    UINT MipSlice;
+} D3D12_TEX1D_UAV;
+```
+
+#### D3D12_TEX1D_ARRAY_UAV
+
+```cpp
+typedef struct D3D12_TEX1D_ARRAY_UAV
+{
+    UINT MipSlice;
+    UINT FirstArraySlice;
+    UINT ArraySize;
+} D3D12_TEX1D_ARRAY_UAV;
+```
+
+#### D3D12_TEX2D_UAV
+
+```cpp
+typedef struct D3D12_TEX2D_UAV
+{
+    UINT MipSlice;
+    UINT PlaneSlice;
+} D3D12_TEX2D_UAV;
+```
+
+#### D3D12_TEX2D_ARRAY_UAV
+
+```cpp
+typedef struct D3D12_TEX2D_ARRAY_UAV
+{
+    UINT MipSlice;
+    UINT FirstArraySlice;
+    UINT ArraySize;
+    UINT PlaneSlice;
+} D3D12_TEX2D_ARRAY_UAV;
+```
+
+#### D3D12_TEX2DMS_UAV
+
+```cpp
+typedef struct D3D12_TEX2DMS_UAV
+{
+    UINT UnusedField_NothingToDefine;
+} D3D12_TEX2DMS_UAV;
+```
+
+#### D3D12_TEX2DMS_ARRAY_UAV
+
+```cpp
+typedef struct D3D12_TEX2DMS_ARRAY_UAV
+{
+    UINT FirstArraySlice;
+    UINT ArraySize;
+} D3D12_TEX2DMS_ARRAY_UAV;
+```
+
+#### D3D12_TEX3D_UAV
+
+```cpp
+typedef struct D3D12_TEX3D_UAV
+{
+    UINT MipSlice;
+    UINT FirstWSlice;
+    UINT WSize;
+} D3D12_TEX3D_UAV;
+```
+
+#### D3D12_UNORDERED_ACCESS_VIEW_DESC
+
+<a id="d3d12-unordered-access-view-desc"></a>
+
+```cpp
+typedef struct D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+    DXGI_FORMAT Format;
+    D3D12_UAV_DIMENSION ViewDimension;
+    union
+    {
+        D3D12_BUFFER_UAV Buffer;
+        D3D12_TEX1D_UAV Texture1D;
+        D3D12_TEX1D_ARRAY_UAV Texture1DArray;
+        D3D12_TEX2D_UAV Texture2D;
+        D3D12_TEX2D_ARRAY_UAV Texture2DArray;
+        D3D12_TEX2DMS_UAV Texture2DMS;
+        D3D12_TEX2DMS_ARRAY_UAV Texture2DMSArray;
+        D3D12_TEX3D_UAV Texture3D;
+    };
+} D3D12_UNORDERED_ACCESS_VIEW_DESC;
+```
+
+`Format`
+
+The view's [format interpretation](formats.md#interpretation), subject to [casting compatibility](formats.md#casting).
+
+<a id="buffer-uav"></a>
+
+### Buffer UAV fields and counters
+
+`FirstElement`
+
+The zero-based index of the first element to be accessed.
+
+`NumElements`
+
+The number of elements exposed by the view. For structured buffers, this is the number of structures in the buffer.
+
+`StructureByteStride`
+
+The size of each element in the buffer structure (in bytes) when the buffer represents a structured buffer.
+
+<a id="uav-counter-offset"></a>
+
+`CounterOffsetInBytes`
+
+The counter offset, in bytes.
+
+A counter is associated by the `pCounterResource` creation parameter, not an APPEND/COUNTER bit in `D3D12_BUFFER_UAV_FLAGS`. `CounterOffsetInBytes` identifies its offset within the counter resource.
+
+When a counter resource is supplied, `CounterOffsetInBytes` must satisfy `D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT` (4096 bytes) and leave four bytes available in its backing buffer. Both data and counter buffers require UAV permission. With no counter resource, `CounterOffsetInBytes` is zero.
+
+`Flags`
+
+A [`D3D12_BUFFER_UAV_FLAGS`](#d3d12-buffer-uav-flags)-typed value that specifies the view options for the resource. See [buffer view kinds](#buffer-view-kinds) for the RAW interpretation.
+
+<a id="texture-uav"></a>
+
+### Texture UAV fields
+
+#### Array and plane fields
+
+`MipSlice`
+
+The mipmap slice index.
+
+`FirstArraySlice`
+
+The zero-based index of the first array slice to be accessed.
+
+`ArraySize`
+
+The number of slices in the array.
+
+`UINT_MAX` selects all remaining array slices from `FirstArraySlice`.
+
+`PlaneSlice`
+
+The index (plane slice number) of the plane to use in an array of textures.
+
+#### Volume depth slice fields
+
+`MipSlice`
+
+The mipmap slice index.
+
+`FirstWSlice`
+
+The zero-based index of the first depth slice to be accessed.
+
+This index must be less than the depth of the mip selected by `MipSlice`, as defined by the [resource mip dimensions](resources.md#subresources).
+
+`WSize`
+
+The number of depth slices.
+
+The count must be nonzero and fit the depth remaining from `FirstWSlice` in the selected mip. `UINT_MAX` (-1) selects all remaining depth slices from `FirstWSlice`.
+
+<a id="texture-view-dimension-compatibility"></a>
+
+### Shader and texture view dimension compatibility
+
+The following array and non-array texture dimensions are compatible in either direction between a shader declaration and its view:
+
+| Non-array dimension | Array dimension | View types |
+|---|---|---|
+| Texture1D | Texture1DArray | SRV, UAV |
+| Texture2D | Texture2DArray | SRV, UAV |
+| Texture2DMS | Texture2DMSArray | SRV, UAV |
+| TextureCube | TextureCubeArray | SRV |
+
+For example, `RWTexture2D` and `RWTexture2DArray` shader objects can access either a Texture2D or Texture2DArray UAV.
+
+A non-array shader declaration accesses the first array element exposed by an array view. For example, a `Texture1D` shader object used with a Texture1DArray SRV accesses array index zero within the view, corresponding to the view's `FirstArraySlice` in the resource. Conversely, an array shader declaration used with a non-array view sees an array of one element at index zero. For cube textures, an array element is one cube.
+
+These rules concern the shader declaration and the descriptor, not which views can be created for a resource. The [view-description and format requirements](#view-descriptions), including the texture's multisample configuration and applicable UAV capabilities, remain applicable.
 
 <a id="id3d12device-createunorderedaccessview"></a>
 
-### Unordered-access view creation
+### ID3D12Device::CreateUnorderedAccessView
 
-<!-- d3d12-review-alert:begin:binding:N-formats-CreateUnorderedAccessView:0 -->
+#### Declaration
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
+```cpp
+void CreateUnorderedAccessView(
+    ID3D12Resource* pResource,
+    ID3D12Resource* pCounterResource,
+    const D3D12_UNORDERED_ACCESS_VIEW_DESC* pDesc,
+    D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor);
+```
+
+#### Behavior
+
+Creates an unordered access view.
+
+#### Parameters
+
+`pResource`
+
+A pointer to the [ID3D12Resource](resources.md#resource-storage) object that represents the unordered access.
+
+At least one of *pResource* or *pDesc* must be provided.
+
+A null *pResource* is used to initialize a [null descriptor](#null-descriptors), which guarantees defined null binding behavior (reading 0s, writes are discarded), but must have a valid *pDesc* in order to determine the descriptor type.
+
+`pCounterResource`
+
+The buffer resource supplying the counter, if any. When supplied, the UAV must be a [structured buffer view](#buffer-view-kinds) and cannot be a [null descriptor](#null-descriptors). The counter offset and resource requirements are defined under [`CounterOffsetInBytes`](#uav-counter-offset).
+
+`pDesc`
+
+A pointer to a [`D3D12_UNORDERED_ACCESS_VIEW_DESC`](#d3d12-unordered-access-view-desc) structure that describes the unordered-access view.
+
+A null *pDesc* is used to initialize a default descriptor, if possible. This behavior inherits the resource format and dimension (if not typeless) and for textures UAVs target the first mip and all array slices. Buffer UAVs require an explicit description; their resource description does not supply a typed view format or structure stride. Not all texture resources support null description initialization.
+
+`[in] DestDescriptor`
+
+Describes the CPU descriptor handle that represents the descriptor slot that holds the unordered-access view.
+
+#### Return values
+
+None
+
+<a id="sampler-feedback-descriptors"></a>
+
+<a id="create-sampler-feedback-uav"></a>
+
+### ID3D12Device8::CreateSamplerFeedbackUnorderedAccessView
+
+#### Declaration
+
+```cpp
+void CreateSamplerFeedbackUnorderedAccessView(
+        ID3D12Resource* pTargetedResource,
+        ID3D12Resource* pFeedbackResource,
+        D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor);
+```
+
+#### Behavior
+
+For purposes of sampler feedback, creates a descriptor suitable for binding.
+
+> #### Terminology: Paired
+> For a feedback map to be called "paired" to a sampled resource, it means that the feedback map contains sampler feedback for that resource.
 >
-> The declaration, parameters, format interpretation and view-validity contract for [`ID3D12Device::CreateUnorderedAccessView`](formats.md#id3d12device-createunorderedaccessview) are defined in Formats and views. The shared descriptor storage and lifetime requirements above apply.
+> When a feedback map is bound to a resource, the feedback map can not be used for writing feedback for other resources and the resource cannot be used with other feedback maps.
+>
+> Outside of bindings, however, a resource may be used for writing feedback to different feedback maps and a single feedback map may be repurposed to contain feedback for different resources. That is to say, outside of bindings the pairing need not be exclusive.
 
-<!-- d3d12-review-alert:end:binding:N-formats-CreateUnorderedAccessView:0 -->
+At least one of `pTargetedResource` and `pFeedbackResource` must be non-null. When both are present, their logical width, height, mip count and array size must match the feedback pairing requirements. The feedback resource uses one of the opaque sampler feedback formats, see [feedback resource creation](resources.md#extended-description). `D3D12_FEATURE_DATA_D3D12_OPTIONS7.SamplerFeedbackTier` must report sampler feedback support, as defined by the [feature capability](common-shader-internals.md#feedback-capability-tiers). A permitted null resource parameter is not an uninitialized descriptor binding.
+
+Feedback map UAVs may be created against a NULL paired texture. Writes through a feedback UAV descriptor created with a NULL paired texture have no effect.
+
+#### Parameters
+
+`pTargetedResource`
+
+The targeted resource, such as a texture, to create a descriptor for.
+
+`pFeedbackResource`
+
+The feedback resource, such as a texture, to create a descriptor for.
+
+`DestDescriptor`
+
+The CPU descriptor handle.
+
+#### Return values
+
+This method does not return a value.
+
+<a id="rtv-types"></a>
+
+### Render target view types and fields
+
+#### D3D12_RTV_DIMENSION
+
+```cpp
+typedef enum D3D12_RTV_DIMENSION
+{
+    D3D12_RTV_DIMENSION_UNKNOWN = 0,
+    D3D12_RTV_DIMENSION_BUFFER = 1,
+    D3D12_RTV_DIMENSION_TEXTURE1D = 2,
+    D3D12_RTV_DIMENSION_TEXTURE1DARRAY = 3,
+    D3D12_RTV_DIMENSION_TEXTURE2D = 4,
+    D3D12_RTV_DIMENSION_TEXTURE2DARRAY = 5,
+    D3D12_RTV_DIMENSION_TEXTURE2DMS = 6,
+    D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY = 7,
+    D3D12_RTV_DIMENSION_TEXTURE3D = 8,
+} D3D12_RTV_DIMENSION;
+```
+
+#### D3D12_BUFFER_RTV
+
+```cpp
+typedef struct D3D12_BUFFER_RTV
+{
+    UINT64 FirstElement;
+    UINT NumElements;
+} D3D12_BUFFER_RTV;
+```
+
+#### D3D12_TEX1D_RTV
+
+```cpp
+typedef struct D3D12_TEX1D_RTV
+{
+    UINT MipSlice;
+} D3D12_TEX1D_RTV;
+```
+
+#### D3D12_TEX1D_ARRAY_RTV
+
+```cpp
+typedef struct D3D12_TEX1D_ARRAY_RTV
+{
+    UINT MipSlice;
+    UINT FirstArraySlice;
+    UINT ArraySize;
+} D3D12_TEX1D_ARRAY_RTV;
+```
+
+#### D3D12_TEX2D_RTV
+
+```cpp
+typedef struct D3D12_TEX2D_RTV
+{
+    UINT MipSlice;
+    UINT PlaneSlice;
+} D3D12_TEX2D_RTV;
+```
+
+#### D3D12_TEX2D_ARRAY_RTV
+
+```cpp
+typedef struct D3D12_TEX2D_ARRAY_RTV
+{
+    UINT MipSlice;
+    UINT FirstArraySlice;
+    UINT ArraySize;
+    UINT PlaneSlice;
+} D3D12_TEX2D_ARRAY_RTV;
+```
+
+#### D3D12_TEX2DMS_RTV
+
+```cpp
+typedef struct D3D12_TEX2DMS_RTV
+{
+    UINT UnusedField_NothingToDefine;
+} D3D12_TEX2DMS_RTV;
+```
+
+#### D3D12_TEX2DMS_ARRAY_RTV
+
+```cpp
+typedef struct D3D12_TEX2DMS_ARRAY_RTV
+{
+    UINT FirstArraySlice;
+    UINT ArraySize;
+} D3D12_TEX2DMS_ARRAY_RTV;
+```
+
+#### D3D12_TEX3D_RTV
+
+```cpp
+typedef struct D3D12_TEX3D_RTV
+{
+    UINT MipSlice;
+    UINT FirstWSlice;
+    UINT WSize;
+} D3D12_TEX3D_RTV;
+```
+
+#### D3D12_RENDER_TARGET_VIEW_DESC
+
+<a id="d3d12-render-target-view-desc"></a>
+
+```cpp
+typedef struct D3D12_RENDER_TARGET_VIEW_DESC
+{
+    DXGI_FORMAT Format;
+    D3D12_RTV_DIMENSION ViewDimension;
+    union
+    {
+        D3D12_BUFFER_RTV Buffer;
+        D3D12_TEX1D_RTV Texture1D;
+        D3D12_TEX1D_ARRAY_RTV Texture1DArray;
+        D3D12_TEX2D_RTV Texture2D;
+        D3D12_TEX2D_ARRAY_RTV Texture2DArray;
+        D3D12_TEX2DMS_RTV Texture2DMS;
+        D3D12_TEX2DMS_ARRAY_RTV Texture2DMSArray;
+        D3D12_TEX3D_RTV Texture3D;
+    };
+} D3D12_RENDER_TARGET_VIEW_DESC;
+```
+
+`Format`
+
+The view's [format interpretation](formats.md#interpretation), subject to [casting compatibility](formats.md#casting).
+
+#### Buffer RTV fields
+
+`FirstElement`
+
+Number of elements between the beginning of the buffer and the first element to access.
+
+`NumElements`
+
+The total number of elements in the view.
+
+A buffer RTV's `NumElements` must not exceed `D3D12_REQ_TEXTURE1D_U_DIMENSION` (16384), even when the backing buffer is larger. `FirstElement` and `NumElements` still define a valid typed element range within that buffer.
+
+#### Array and plane RTV fields
+
+`MipSlice`
+
+The index of the mipmap level to use.
+
+`FirstArraySlice`
+
+The index of the first texture to use in an array of textures.
+
+`ArraySize`
+
+Number of textures in the array to use in the render target view, starting from **FirstArraySlice**.
+
+`UINT_MAX` selects all remaining array slices from `FirstArraySlice`.
+
+`PlaneSlice`
+
+The index (plane slice number) of the plane to use in an array of textures.
+
+#### Volume depth slice RTV fields
+
+`MipSlice`
+
+The index of the mipmap level to use.
+
+`FirstWSlice`
+
+First depth level to use.
+
+This is a depth slice index in the mip selected by `MipSlice`. It must be less than that mip's depth, as defined by the [resource mip dimensions](resources.md#subresources).
+
+`WSize`
+
+Number of depth levels to use in the render-target view, starting from **FirstWSlice**.
+
+The count must be nonzero and fit the depth remaining from `FirstWSlice` in the selected mip. `UINT_MAX` (-1) selects all remaining depth slices from `FirstWSlice`.
 
 <a id="id3d12device-createrendertargetview"></a>
 
-### Render-target view creation
+### ID3D12Device::CreateRenderTargetView
 
-<!-- d3d12-review-alert:begin:binding:N-formats-CreateRenderTargetView:0 -->
+#### Declaration
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The declaration, parameters, format interpretation and view-validity contract for [`ID3D12Device::CreateRenderTargetView`](formats.md#id3d12device-createrendertargetview) are defined in Formats and views. The shared descriptor storage and lifetime requirements above apply.
+```cpp
+void CreateRenderTargetView(
+    ID3D12Resource* pResource,
+    const D3D12_RENDER_TARGET_VIEW_DESC* pDesc,
+    D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor);
+```
 
-<!-- d3d12-review-alert:end:binding:N-formats-CreateRenderTargetView:0 -->
+#### Behavior
+
+Creates a render-target view for accessing resource data.
+
+#### Parameters
+
+`[in, optional] pResource`
+
+A pointer to the [ID3D12Resource](resources.md#resource-storage) object that represents the render target.
+
+At least one of *pResource* or *pDesc* must be provided. A null *pResource* is used to initialize a [null descriptor](#null-descriptors), which guarantees defined null binding behavior (reading 0s, writes are discarded), but must have a valid *pDesc* in order to determine the descriptor type.
+
+`[in, optional] pDesc`
+
+A pointer to a [`D3D12_RENDER_TARGET_VIEW_DESC`](#d3d12-render-target-view-desc) structure that describes the render-target view.
+
+A null *pDesc* is used to initialize a default descriptor, if possible. This behavior inherits the resource format and dimension (if not typeless) and RTVs target the first mip and all array slices. Not all resources support null description initialization.
+
+`[in] DestDescriptor`
+
+Describes the CPU descriptor handle that represents the destination where the newly-created render target view will reside.
+
+#### Return values
+
+None
+
+<a id="dsv-types"></a>
+
+### Depth-stencil view types and fields
+
+
+#### D3D12_DSV_DIMENSION
+
+```cpp
+typedef enum D3D12_DSV_DIMENSION
+{
+    D3D12_DSV_DIMENSION_UNKNOWN = 0,
+    D3D12_DSV_DIMENSION_TEXTURE1D = 1,
+    D3D12_DSV_DIMENSION_TEXTURE1DARRAY = 2,
+    D3D12_DSV_DIMENSION_TEXTURE2D = 3,
+    D3D12_DSV_DIMENSION_TEXTURE2DARRAY = 4,
+    D3D12_DSV_DIMENSION_TEXTURE2DMS = 5,
+    D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY = 6,
+} D3D12_DSV_DIMENSION;
+```
+
+#### D3D12_DSV_FLAGS
+
+<a id="d3d12-dsv-flags"></a>
+
+```cpp
+typedef enum D3D12_DSV_FLAGS
+{
+    D3D12_DSV_FLAG_NONE              = 0x0,
+    D3D12_DSV_FLAG_READ_ONLY_DEPTH   = 0x1,
+    D3D12_DSV_FLAG_READ_ONLY_STENCIL = 0x2,
+} D3D12_DSV_FLAGS;
+```
+
+Depth/stencil view flags participate in the [output merger read-only write controls](output-merger.md#read-only-depth-stencil). [Render pass read-only binding](output-merger.md#read-only-depth-stencil-pass) has additional flag/access conditions.
+
+`D3D12_DSV_FLAG_READ_ONLY_DEPTH` and `D3D12_DSV_FLAG_READ_ONLY_STENCIL` independently prohibit writes to their components. They do not select a different physical plane or change resource access/layout requirements. A read-only DSV can coexist with compatible SRV access to the read-only aspect when [synchronization requirements](synchronization.md#foundations) are satisfied. There is still only one output merger DSV binding.
+
+#### D3D12_TEX1D_DSV
+
+```cpp
+typedef struct D3D12_TEX1D_DSV
+{
+    UINT MipSlice;
+} D3D12_TEX1D_DSV;
+```
+
+#### D3D12_TEX1D_ARRAY_DSV
+
+```cpp
+typedef struct D3D12_TEX1D_ARRAY_DSV
+{
+    UINT MipSlice;
+    UINT FirstArraySlice;
+    UINT ArraySize;
+} D3D12_TEX1D_ARRAY_DSV;
+```
+
+#### D3D12_TEX2D_DSV
+
+```cpp
+typedef struct D3D12_TEX2D_DSV
+{
+    UINT MipSlice;
+} D3D12_TEX2D_DSV;
+```
+
+#### D3D12_TEX2D_ARRAY_DSV
+
+```cpp
+typedef struct D3D12_TEX2D_ARRAY_DSV
+{
+    UINT MipSlice;
+    UINT FirstArraySlice;
+    UINT ArraySize;
+} D3D12_TEX2D_ARRAY_DSV;
+```
+
+#### D3D12_TEX2DMS_DSV
+
+```cpp
+typedef struct D3D12_TEX2DMS_DSV
+{
+    UINT UnusedField_NothingToDefine;
+} D3D12_TEX2DMS_DSV;
+```
+
+#### D3D12_TEX2DMS_ARRAY_DSV
+
+```cpp
+typedef struct D3D12_TEX2DMS_ARRAY_DSV
+{
+    UINT FirstArraySlice;
+    UINT ArraySize;
+} D3D12_TEX2DMS_ARRAY_DSV;
+```
+
+#### D3D12_DEPTH_STENCIL_VIEW_DESC
+
+<a id="d3d12-depth-stencil-view-desc"></a>
+
+```cpp
+typedef struct D3D12_DEPTH_STENCIL_VIEW_DESC
+{
+    DXGI_FORMAT Format;
+    D3D12_DSV_DIMENSION ViewDimension;
+    D3D12_DSV_FLAGS Flags;
+    union
+    {
+        D3D12_TEX1D_DSV Texture1D;
+        D3D12_TEX1D_ARRAY_DSV Texture1DArray;
+        D3D12_TEX2D_DSV Texture2D;
+        D3D12_TEX2D_ARRAY_DSV Texture2DArray;
+        D3D12_TEX2DMS_DSV Texture2DMS;
+        D3D12_TEX2DMS_ARRAY_DSV Texture2DMSArray;
+    };
+} D3D12_DEPTH_STENCIL_VIEW_DESC;
+```
+
+`Format`
+
+The view's [format interpretation](formats.md#interpretation), subject to [casting compatibility](formats.md#casting).
+
+`MipSlice`
+
+The index of the first mipmap level to use.
+
+`FirstArraySlice`
+
+The index of the first texture to use in an array of textures.
+
+`ArraySize`
+
+Number of textures to use.
+
+`UINT_MAX` selects all remaining array slices from `FirstArraySlice`.
 
 <a id="id3d12device-createdepthstencilview"></a>
 
-### Depth-stencil view creation
+### ID3D12Device::CreateDepthStencilView
 
-<!-- d3d12-review-alert:begin:binding:N-formats-CreateDepthStencilView:0 -->
+#### Declaration
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The declaration, parameters, format interpretation and view-validity contract for [`ID3D12Device::CreateDepthStencilView`](formats.md#id3d12device-createdepthstencilview) are defined in Formats and views. The shared descriptor storage and lifetime requirements above apply.
+```cpp
+void CreateDepthStencilView(
+    ID3D12Resource* pResource,
+    const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc,
+    D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor);
+```
 
-<!-- d3d12-review-alert:end:binding:N-formats-CreateDepthStencilView:0 -->
+#### Behavior
+
+Creates a depth-stencil view for accessing resource data.
+
+#### Parameters
+
+`[in, optional] pResource`
+
+A pointer to the [ID3D12Resource](resources.md#resource-storage) object that represents the depth stencil.
+
+At least one of *pResource* or *pDesc* must be provided. A null *pResource* is used to initialize a [null descriptor](#null-descriptors), which guarantees defined null binding behavior (reading 0s, writes are discarded), but must have a valid *pDesc* in order to determine the descriptor type.
+
+`[in, optional] pDesc`
+
+A pointer to a [`D3D12_DEPTH_STENCIL_VIEW_DESC`](#d3d12-depth-stencil-view-desc) structure that describes the depth-stencil view.
+
+A null *pDesc* is used to initialize a default descriptor, if possible. This behavior inherits the resource format and dimension (if not typeless) and DSVs target the first mip and all array slices. Not all resources support null description initialization.
+
+`[in] DestDescriptor`
+
+Describes the CPU descriptor handle that represents the descriptor slot that holds the depth-stencil view.
+
+#### Return values
+
+None
 
 <a id="id3d12device-createsampler"></a>
 
@@ -2585,11 +3445,11 @@ Create a sampler object that encapsulates sampling information for a texture.
 
 `[in] pDesc`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-createsampler:2 -->A pointer to a [`D3D12_SAMPLER_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_sampler_desc) structure that describes the sampler.<!-- d3d12-review-inline:end:binding:Q-id3d12device-createsampler:2 --></ins>
+A pointer to a [`D3D12_SAMPLER_DESC`](#d3d12-sampler-desc) structure that describes the sampler.
 
 `[in] DestDescriptor`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12device-createsampler:4 -->Describes the CPU descriptor handle that represents the descriptor slot that holds the sampler.<!-- d3d12-review-inline:end:binding:Q-id3d12device-createsampler:4 --></ins>
+Describes the CPU descriptor handle that represents the descriptor slot that holds the sampler.
 
 #### Return values
 
@@ -2609,51 +3469,30 @@ void CreateSampler2(
 
 #### Behavior
 
-<!-- d3d12-review-alert:begin:binding:N-id3d12device11-createsampler2:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Creates a sampler at `DestDescriptor` from `pDesc`, using `D3D12_SAMPLER_DESC2` to select floating-point or integer border colors and sampler flags. [Sampler requirements](#samplers) apply.
-
-<!-- d3d12-review-alert:end:binding:N-id3d12device11-createsampler2:0 -->
+Creates a sampler at `DestDescriptor` from `pDesc`, using `D3D12_SAMPLER_DESC2` to select floating-point or integer border colors and sampler flags. [Sampler requirements](#samplers) apply.
 
 #### Parameters
 
-<!-- d3d12-review-alert:begin:binding:N-parameters-id3d12device11-createsampler2:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pDesc` points to the sampler description; its fields and flags follow the [sampler contract](#samplers). `DestDescriptor` selects a slot in a sampler heap as defined by the [shared destination requirements](#descriptor-creation).
-
-<!-- d3d12-review-alert:end:binding:N-parameters-id3d12device11-createsampler2:0 -->
+`pDesc` points to the sampler description. Its fields and flags follow the [sampler contract](#samplers). `DestDescriptor` selects a slot in a sampler heap as defined by the [shared destination requirements](#descriptor-creation).
 
 #### Return values
 
-<!-- d3d12-review-alert:begin:binding:N-return-id3d12device11-createsampler2:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This method does not return a value.
-
-<!-- d3d12-review-alert:end:binding:N-return-id3d12device11-createsampler2:0 -->
+This method does not return a value.
 
 <a id="root-apis"></a>
 
-## Root-signature creation and serialization APIs
+## Root signature creation and serialization APIs
 
 <ins><!-- d3d12-review-inline:begin:binding:B-create-signature:0 -->Root signatures are a complex data structure containing nested
 structures. These can be defined programmatically using the [description structures](#signature-descriptions). Alternatively they can be authored in HLSL --
 giving the advantage that the compiler will validate early that the
-layout is compatible with the shader. (see the [root-signature language](../ResourceBinding.md#hlsl-root-signature-language)).<!-- d3d12-review-inline:end:binding:B-create-signature:0 --></ins>
+layout is compatible with the shader. (see the [root signature language](../ResourceBinding.md#hlsl-root-signature-language)).<!-- d3d12-review-inline:end:binding:B-create-signature:0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:binding:B-create-signature:1 -->The API for creating a root signature takes in a serialized (self
 contained, pointer free) version of the layout description. `D3D12SerializeVersionedRootSignature` generates this serialized version
 from the C++ data structure, but another way to obtain a serialized root
 signature definition is to retrieve it from a shader that has been
-compiled with a root signature. The [root-signature language](../ResourceBinding.md#hlsl-root-signature-language) also supports pre-authoring root signatures.<!-- d3d12-review-inline:end:binding:B-create-signature:1 --></ins>
+compiled with a root signature. The [root signature language](../ResourceBinding.md#hlsl-root-signature-language) also supports pre-authoring root signatures.<!-- d3d12-review-inline:end:binding:B-create-signature:1 --></ins>
 
 <a id="id3d12device-createrootsignature"></a>
 
@@ -2679,7 +3518,7 @@ Creates a root signature layout.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The serialized blob contains the versioned root-signature definition. Shader blobs containing an embedded root signature are also accepted. The resulting object is an `ID3D12RootSignature`; [pipeline compatibility](#pipeline-compatibility) remains a separate requirement.
+> The serialized blob contains the versioned root signature definition. Shader blobs containing an embedded root signature are also accepted. The resulting object is an `ID3D12RootSignature`. [Pipeline compatibility](#pipeline-compatibility) remains a separate requirement.
 
 <!-- d3d12-review-alert:end:binding:N-id3d12device-createrootsignature:0 -->
 
@@ -2687,7 +3526,7 @@ Creates a root signature layout.
 
 `[in] nodeMask`
 
-For single GPU operation, set this to zero. If there are multiple GPU nodes, set bits to identify the nodes (the device's physical adapters) to which the root signature is to apply. Each bit in the mask corresponds to a single node. Refer to [Multi-adapter systems](https://learn.microsoft.com/en-us/windows/win32/direct3d12/multi-engine).
+For single GPU operation, set this to zero. If there are multiple GPU nodes, set bits to identify the nodes (the device's physical adapters) to which the root signature is to apply. Each bit in the mask corresponds to a single node. Refer to [Adapter identity and linked nodes](devices-and-capabilities.md#identity).
 
 `[in] pBlobWithRootSignature`
 
@@ -2707,7 +3546,7 @@ A pointer to a memory block that receives a pointer to the root signature.
 
 #### Return values
 
-Returns **S\_OK** if successful; otherwise, returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues).
+Returns **S\_OK** if successful; otherwise, returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
 This method returns **E\_INVALIDARG** if the blob that *pBlobWithRootSignature* points to is invalid.
 
@@ -2727,17 +3566,17 @@ HRESULT WINAPI D3D12SerializeRootSignature(
 
 #### Behavior
 
-Serializes a root signature version 1.0 that can be passed to [ID3D12Device::CreateRootSignature](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nf-d3d12-id3d12device-createrootsignature).
+Serializes a root signature version 1.0 that can be passed to [ID3D12Device::CreateRootSignature](#id3d12device-createrootsignature).
 
 #### Parameters
 
 `[in] pRootSignature`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-d3d12serializerootsignature:2 -->The description of the root signature, as a pointer to a [`D3D12_ROOT_SIGNATURE_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_root_signature_desc) structure.<!-- d3d12-review-inline:end:binding:Q-d3d12serializerootsignature:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:binding:Q-d3d12serializerootsignature:2 -->The description of the root signature, as a pointer to a [`D3D12_ROOT_SIGNATURE_DESC`](#d3d12-root-signature-desc) structure.<!-- d3d12-review-inline:end:binding:Q-d3d12serializerootsignature:2 --></ins>
 
 `[in] Version`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-d3d12serializerootsignature:4 -->A [`D3D_ROOT_SIGNATURE_VERSION`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d_root_signature_version)-typed value that specifies the version of root signature.<!-- d3d12-review-inline:end:binding:Q-d3d12serializerootsignature:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:binding:Q-d3d12serializerootsignature:4 -->A [`D3D_ROOT_SIGNATURE_VERSION`](#d3d-root-signature-version)-typed value that specifies the version of root signature.<!-- d3d12-review-inline:end:binding:Q-d3d12serializerootsignature:4 --></ins>
 
 `[out] ppBlob`
 
@@ -2749,7 +3588,7 @@ A pointer to a memory block that receives a pointer to the [ID3DBlob](devices-an
 
 #### Return values
 
-Returns **S\_OK** if successful; otherwise, returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).
+Returns **S\_OK** if successful; otherwise, returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
 <a id="d3d12serializeversionedrootsignature"></a>
 
@@ -2766,14 +3605,14 @@ HRESULT WINAPI D3D12SerializeVersionedRootSignature(
 
 #### Behavior
 
-Serializes a root signature of any version that can be passed to [ID3D12Device::CreateRootSignature](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nf-d3d12-id3d12device-createrootsignature).
+Serializes a root signature of any version that can be passed to [ID3D12Device::CreateRootSignature](#id3d12device-createrootsignature).
 
 <!-- d3d12-review-alert:begin:binding:D126-compiler-root-serialization-forward:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The separate compiler-host export [D3D12CompilerSerializeVersionedRootSignature](offline-compilation.md#d3d12compilerserializeversionedrootsignature) defines offline serialization and its compiler-host validation context. It is not an alias of this runtime export; serialization alone does not establish device creation support.
+> The separate compiler host export [D3D12CompilerSerializeVersionedRootSignature](offline-compilation.md#d3d12compilerserializeversionedrootsignature) defines offline serialization and its compiler host validation context. It is not an alias of this runtime export. Serialization alone does not establish device creation support.
 
 <!-- d3d12-review-alert:end:binding:D126-compiler-root-serialization-forward:0 -->
 
@@ -2782,7 +3621,7 @@ Serializes a root signature of any version that can be passed to [ID3D12Device::
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [Offline compilation inputs](compiler-invocation-and-cache-output.md#input-ownership) define how serialized roots and shader-embedded roots are consumed without live device root-signature objects. Root contents, shader compatibility and ordinary device root creation remain subject to this chapter.
+> [Offline compilation inputs](compiler-invocation-and-cache-output.md#input-ownership) define how serialized roots and shader-embedded roots are consumed without live device root signature objects. Root contents, shader compatibility and ordinary device root creation remain subject to this chapter.
 
 <!-- d3d12-review-alert:end:binding:D131-compiler-root-inputs:0 -->
 
@@ -2790,7 +3629,7 @@ Serializes a root signature of any version that can be passed to [ID3D12Device::
 
 `[in] pRootSignature`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-d3d12serializeversionedrootsignature:2 -->Specifies a [`D3D12_VERSIONED_ROOT_SIGNATURE_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_versioned_root_signature_desc) that contains a description of any version of a root signature.<!-- d3d12-review-inline:end:binding:Q-d3d12serializeversionedrootsignature:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:binding:Q-d3d12serializeversionedrootsignature:2 -->Specifies a [`D3D12_VERSIONED_ROOT_SIGNATURE_DESC`](#d3d12-versioned-root-signature-desc) that contains a description of any version of a root signature.<!-- d3d12-review-inline:end:binding:Q-d3d12serializeversionedrootsignature:2 --></ins>
 
 `[out] ppBlob`
 
@@ -2802,7 +3641,7 @@ A pointer to a memory block that receives a pointer to the [ID3DBlob](devices-an
 
 #### Return values
 
-Returns **S\_OK** if successful; otherwise, returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).
+Returns **S\_OK** if successful; otherwise, returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
 <a id="d3d12createrootsignaturedeserializer"></a>
 
@@ -2820,7 +3659,7 @@ HRESULT WINAPI D3D12CreateRootSignatureDeserializer(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:binding:P-d3d12createrootsignaturedeserializer:0 -->Deserializes a root signature so you can determine the layout definition ([`D3D12_ROOT_SIGNATURE_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_root_signature_desc)).<!-- d3d12-review-inline:end:binding:P-d3d12createrootsignaturedeserializer:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:binding:P-d3d12createrootsignaturedeserializer:0 -->Deserializes a root signature so you can determine the layout definition ([`D3D12_ROOT_SIGNATURE_DESC`](#d3d12-root-signature-desc)).<!-- d3d12-review-inline:end:binding:P-d3d12createrootsignaturedeserializer:0 --></ins>
 
 #### Parameters
 
@@ -2842,7 +3681,7 @@ A pointer to a memory block that receives a pointer to the root signature deseri
 
 #### Return values
 
-Returns **S\_OK** if successful; otherwise, returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).
+Returns **S\_OK** if successful; otherwise, returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
 <a id="d3d12createversionedrootsignaturedeserializer"></a>
 
@@ -2860,7 +3699,7 @@ HRESULT WINAPI D3D12CreateVersionedRootSignatureDeserializer(
 
 #### Behavior
 
-Generates an interface that can return the deserialized data structure, via [GetUnconvertedRootSignatureDesc](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nf-d3d12-id3d12versionedrootsignaturedeserializer-getunconvertedrootsignaturedesc).
+Generates an interface that can return the deserialized data structure, via [GetUnconvertedRootSignatureDesc](#id3d12versionedrootsignaturedeserializer-getunconvertedrootsignaturedesc).
 
 #### Parameters
 
@@ -2882,14 +3721,14 @@ A pointer to a memory block that receives a pointer to the root signature deseri
 
 #### Return values
 
-Returns **S\_OK** if successful; otherwise, returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).
+Returns **S\_OK** if successful; otherwise, returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
 <!-- d3d12-review-alert:begin:binding:N-serialized-version:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12SerializeRootSignature` accepts version 1.0 descriptions and requires `Version` to select 1.0. The versioned serializer uses the description's `Version` discriminant. Serialization validates and encodes a description; it does not create a device root-signature object or establish device support.
+> `D3D12SerializeRootSignature` accepts version 1.0 descriptions and requires `Version` to select 1.0. The versioned serializer uses the description's `Version` discriminant. Serialization validates and encodes a description. It does not create a device root signature object or establish device support.
 
 <!-- d3d12-review-alert:end:binding:N-serialized-version:0 -->
 
@@ -2909,7 +3748,7 @@ Gets the layout of the root signature.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12rootsignaturedeserializer-getrootsignaturedesc:1 -->This method returns a deserialized root signature in a [`D3D12_ROOT_SIGNATURE_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_root_signature_desc) structure that describes the layout of the root signature.<!-- d3d12-review-inline:end:binding:Q-id3d12rootsignaturedeserializer-getrootsignaturedesc:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12rootsignaturedeserializer-getrootsignaturedesc:1 -->This method returns a deserialized root signature in a [`D3D12_ROOT_SIGNATURE_DESC`](#d3d12-root-signature-desc) structure that describes the layout of the root signature.<!-- d3d12-review-inline:end:binding:Q-id3d12rootsignaturedeserializer-getrootsignaturedesc:1 --></ins>
 
 <a id="id3d12versionedrootsignaturedeserializer-getrootsignaturedescatversion"></a>
 
@@ -2931,11 +3770,11 @@ Converts root signature description structures to a requested version.
 
 `convertToVersion`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12versionedrootsignaturedeserializer-getrootsignaturedescatversion:2 -->Specifies the required [`D3D_ROOT_SIGNATURE_VERSION`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d_root_signature_version).<!-- d3d12-review-inline:end:binding:Q-id3d12versionedrootsignaturedeserializer-getrootsignaturedescatversion:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12versionedrootsignaturedeserializer-getrootsignaturedescatversion:2 -->Specifies the required [`D3D_ROOT_SIGNATURE_VERSION`](#d3d-root-signature-version).<!-- d3d12-review-inline:end:binding:Q-id3d12versionedrootsignaturedeserializer-getrootsignaturedescatversion:2 --></ins>
 
 `[out] ppDesc`
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12versionedrootsignaturedeserializer-getrootsignaturedescatversion:4 -->Contains the deserialized root signature in a [`D3D12_VERSIONED_ROOT_SIGNATURE_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_versioned_root_signature_desc) structure.<!-- d3d12-review-inline:end:binding:Q-id3d12versionedrootsignaturedeserializer-getrootsignaturedescatversion:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12versionedrootsignaturedeserializer-getrootsignaturedescatversion:4 -->Contains the deserialized root signature in a [`D3D12_VERSIONED_ROOT_SIGNATURE_DESC`](#d3d12-versioned-root-signature-desc) structure.<!-- d3d12-review-inline:end:binding:Q-id3d12versionedrootsignaturedeserializer-getrootsignaturedescatversion:4 --></ins>
 
 #### Return values
 
@@ -2957,14 +3796,14 @@ Gets the layout of the root signature, without converting between root signature
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12versionedrootsignaturedeserializer-getunconvertedrootsignaturedesc:1 -->This method returns a deserialized root signature in a [`D3D12_VERSIONED_ROOT_SIGNATURE_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_versioned_root_signature_desc) structure that describes the layout of the root signature.<!-- d3d12-review-inline:end:binding:Q-id3d12versionedrootsignaturedeserializer-getunconvertedrootsignaturedesc:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:binding:Q-id3d12versionedrootsignaturedeserializer-getunconvertedrootsignaturedesc:1 -->This method returns a deserialized root signature in a [`D3D12_VERSIONED_ROOT_SIGNATURE_DESC`](#d3d12-versioned-root-signature-desc) structure that describes the layout of the root signature.<!-- d3d12-review-inline:end:binding:Q-id3d12versionedrootsignaturedeserializer-getunconvertedrootsignaturedesc:1 --></ins>
 
 <!-- d3d12-review-alert:begin:binding:N-conversion:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Returned description memory is owned by the deserializer. Conversions retain both the original description and converted versions until that object is destroyed. Version 1.0 to 1.1 conversion adds flags matching 1.0 volatility semantics; 1.1 to 1.0 drops descriptor-range and root-descriptor flags. This does not authorize an application to violate either version's requirements. Version 1.2 sampler flags cannot be assumed representable by earlier sampler descriptions.
+> Returned description memory is owned by the deserializer. Conversions retain both the original description and converted versions until that object is destroyed. Version 1.0 to 1.1 conversion adds flags matching 1.0 volatility semantics; 1.1 to 1.0 drops descriptor range and root descriptor flags. This does not authorize an application to violate either version's requirements. Version 1.2 sampler flags cannot be assumed representable by earlier sampler descriptions.
 
 <!-- d3d12-review-alert:end:binding:N-conversion:0 -->
 
@@ -2972,19 +3811,19 @@ Gets the layout of the root signature, without converting between root signature
 
 ### Pipeline compatibility
 
-<ins><!-- d3d12-review-inline:begin:binding:B-pipeline:0 -->Pipeline-state creation takes an optional
+<ins><!-- d3d12-review-inline:begin:binding:B-pipeline:0 -->Pipeline state creation takes an optional
 ID3D12RootSignature* as an input parameter.<!-- d3d12-review-inline:end:binding:B-pipeline:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:binding:B-pipeline:1 -->If a root signature is passed into pipeline-state creation, this root
+<ins><!-- d3d12-review-inline:begin:binding:B-pipeline:1 -->If a root signature is passed into pipeline state creation, this root
 signature is validated against all the shaders in the pipeline state for
 compatibility and given to the driver to use with all the shaders. If
 any of the shaders has a different root signature in it, it gets
 replaced by the root signature passed in at the API.<!-- d3d12-review-inline:end:binding:B-pipeline:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:binding:B-pipeline:2 -->If no explicit root signature is passed to pipeline-state creation, at least one selected shader must supply an embedded root signature. Embedded root signatures that are supplied must match; selected stages without an embedded signature are checked for compatibility with the discovered signature.<!-- d3d12-review-inline:end:binding:B-pipeline:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:binding:B-pipeline:2 -->If no explicit root signature is passed to pipeline state creation, at least one selected shader must supply an embedded root signature. Embedded root signatures that are supplied must match; selected stages without an embedded signature are checked for compatibility with the discovered signature.<!-- d3d12-review-inline:end:binding:B-pipeline:2 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:binding:B-pipeline:3 -->Setting a pipeline state on a command list or bundle does not change the
-root signature. That is accomplished by the [root-signature setters](#binding-apis). By the time
+root signature. That is accomplished by the [root signature setters](#binding-apis). By the time
 Draw*()/Dispatch*() is invoked, the application must ensure that the
 current pipeline state matches the current root signature, otherwise
 behavior is undefined.<!-- d3d12-review-inline:end:binding:B-pipeline:3 --></ins>
@@ -2994,13 +3833,13 @@ behavior is undefined.<!-- d3d12-review-inline:end:binding:B-pipeline:3 --></ins
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Indirect root-argument changes use [command-signature parameter validation](indirect-execution.md#signature-validation). At execution, the selected root signature must [match the signature-associated root signature](indirect-execution.md#execute-debug); that requirement is distinct from pipeline/root compatibility.
+> Indirect root argument changes use [command signature parameter validation](indirect-execution.md#signature-validation). At execution, the selected root signature must [match the signature-associated root signature](indirect-execution.md#execute-debug). That requirement is distinct from pipeline/root compatibility.
 
 <!-- d3d12-review-alert:end:binding:N-indirect-canonical-owner:0 -->
 
 <a id="binding-apis"></a>
 
-## Command-list binding APIs
+## Command list binding APIs
 
 <a id="root-setter-parameters"></a>
 
@@ -3011,7 +3850,7 @@ behavior is undefined.<!-- d3d12-review-inline:end:binding:B-pipeline:3 --></ins
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `SetDescriptorHeaps` and the root setters return `void`. Graphics setters apply to DIRECT/BUNDLE recordings; compute setters apply to DIRECT/BUNDLE/COMPUTE recordings. `RootParameterIndex` is the zero-based parameter index in the corresponding current root signature and must select the appropriate table/constants/CBV/SRV/UAV parameter type. All accesses must satisfy the signature's visibility, capability, bounds, and lifetime requirements. Initial validity, invalidation, and bundle inheritance are defined in [recording state](#recording-state).
+> `SetDescriptorHeaps` and the root setters return `void`. Graphics setters apply to DIRECT/BUNDLE recordings. Compute setters apply to DIRECT/BUNDLE/COMPUTE recordings. `RootParameterIndex` is the zero-based parameter index in the corresponding current root signature and must select the appropriate table/constants/CBV/SRV/UAV parameter type. All accesses must satisfy the signature's visibility, capability, bounds, and lifetime requirements. Initial validity, invalidation, and bundle inheritance are defined in [recording state](#recording-state).
 
 <!-- d3d12-review-alert:end:binding:N-setter-rules:0 -->
 
@@ -3034,7 +3873,7 @@ void SetDescriptorHeaps(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Replaces the complete current shader-visible heap set with `NumDescriptorHeaps` entries from `ppDescriptorHeaps`. Zero unsets all heaps; at most one CBV/SRV/UAV heap and one sampler heap may be selected. The [canonical heap-change and bundle rules](command-list-state.md#binding-changes) and [direct-indexing order](command-list-state.md#direct-heaps) apply.
+> Replaces the complete current shader-visible heap set with `NumDescriptorHeaps` entries from `ppDescriptorHeaps`. Zero unsets all heaps; at most one CBV/SRV/UAV heap and one sampler heap may be selected. The [canonical heap change and bundle rules](command-list-state.md#binding-changes) and [direct-indexing order](command-list-state.md#direct-heaps) apply.
 
 <!-- d3d12-review-alert:end:binding:N-id3d12graphicscommandlist-setdescriptorheaps:0 -->
 
@@ -3078,7 +3917,7 @@ void SetGraphicsRootSignature(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Sets `pRootSignature` as the graphics root signature. Changing it invalidates prior arguments; redundantly setting the same signature preserves them. A null pointer unsets that root signature. Compatibility is required when work executes; see [pipeline compatibility](#pipeline-compatibility) and [canonical binding changes](command-list-state.md#binding-changes).
+> Sets `pRootSignature` as the graphics root signature. Changing it invalidates prior arguments. Redundantly setting the same signature preserves them. A null pointer unsets that root signature. Compatibility is required when work executes. See [pipeline compatibility](#pipeline-compatibility) and [canonical binding changes](command-list-state.md#binding-changes).
 
 <!-- d3d12-review-alert:end:binding:N-id3d12graphicscommandlist-setgraphicsrootsignature:0 -->
 
@@ -3089,7 +3928,7 @@ void SetGraphicsRootSignature(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pRootSignature` is the root signature to select for the named graphics/compute bind set, or null to unset it. The [shared recording-state rules](#recording-state) define invalidation and inheritance.
+> `pRootSignature` is the root signature to select for the named graphics/compute bind set, or null to unset it. The [shared recording state rules](#recording-state) define invalidation and inheritance.
 
 <!-- d3d12-review-alert:end:binding:N-parameters-id3d12graphicscommandlist-setgraphicsrootsignature:0 -->
 
@@ -3123,7 +3962,7 @@ void SetGraphicsRootDescriptorTable(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Sets the descriptor-table parameter at `RootParameterIndex` to `BaseDescriptor`, a GPU handle in the currently selected shader-visible heap of the matching type. The table's ranges, offsets, [initialization requirements](#table-initialization), and [static promises](#static-promises) apply.
+> Sets the descriptor table parameter at `RootParameterIndex` to `BaseDescriptor`, a GPU handle in the currently selected shader-visible heap of the matching type. The table's ranges, offsets, [initialization requirements](#table-initialization), and [static promises](#static-promises) apply.
 
 <!-- d3d12-review-alert:end:binding:N-id3d12graphicscommandlist-setgraphicsrootdescriptortable:0 -->
 
@@ -3134,7 +3973,7 @@ void SetGraphicsRootDescriptorTable(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `BaseDescriptor` identifies the beginning of the table relative to which its declared descriptor-range offsets are applied. It must belong to the matching current shader-visible heap.
+> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `BaseDescriptor` identifies the beginning of the table relative to which its declared descriptor range offsets are applied. It must belong to the matching current shader-visible heap.
 
 <!-- d3d12-review-alert:end:binding:N-parameters-id3d12graphicscommandlist-setgraphicsrootdescriptortable:0 -->
 
@@ -3169,7 +4008,7 @@ void SetGraphicsRoot32BitConstant(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Writes the 32-bit `SrcData` value to `DestOffsetIn32BitValues` within the root-constant parameter at `RootParameterIndex`. Other constants remain unchanged. The destination must fit the parameter's declared `Num32BitValues`.
+> Writes the 32-bit `SrcData` value to `DestOffsetIn32BitValues` within the root constant parameter at `RootParameterIndex`. Other constants remain unchanged. The destination must fit the parameter's declared `Num32BitValues`.
 
 <!-- d3d12-review-alert:end:binding:N-id3d12graphicscommandlist-setgraphicsroot32bitconstant:0 -->
 
@@ -3180,7 +4019,7 @@ void SetGraphicsRoot32BitConstant(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `SrcData` supplies one 32-bit value; `DestOffsetIn32BitValues` is its destination DWORD offset within that parameter.
+> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `SrcData` supplies one 32-bit value. `DestOffsetIn32BitValues` is its destination DWORD offset within that parameter.
 
 <!-- d3d12-review-alert:end:binding:N-parameters-id3d12graphicscommandlist-setgraphicsroot32bitconstant:0 -->
 
@@ -3216,7 +4055,7 @@ void SetGraphicsRoot32BitConstants(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Copies `Num32BitValuesToSet` 32-bit values from `pSrcData` into the root-constant parameter at `RootParameterIndex`, starting at `DestOffsetIn32BitValues`. The destination span must fit `Num32BitValues`; other constants remain unchanged. The source values are captured during recording.
+> Copies `Num32BitValuesToSet` 32-bit values from `pSrcData` into the root constant parameter at `RootParameterIndex`, starting at `DestOffsetIn32BitValues`. The destination span must fit `Num32BitValues`. Other constants remain unchanged. The source values are captured during recording.
 
 <!-- d3d12-review-alert:end:binding:N-id3d12graphicscommandlist-setgraphicsroot32bitconstants:0 -->
 
@@ -3227,7 +4066,7 @@ void SetGraphicsRoot32BitConstants(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `pSrcData` supplies `Num32BitValuesToSet` 32-bit values; `DestOffsetIn32BitValues` gives their starting DWORD offset within that parameter.
+> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `pSrcData` supplies `Num32BitValuesToSet` 32-bit values. `DestOffsetIn32BitValues` gives their starting DWORD offset within that parameter.
 
 <!-- d3d12-review-alert:end:binding:N-parameters-id3d12graphicscommandlist-setgraphicsroot32bitconstants:0 -->
 
@@ -3261,7 +4100,7 @@ void SetGraphicsRootConstantBufferView(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Sets `BufferLocation` as the GPU virtual address for the CBV root-descriptor parameter at `RootParameterIndex`. This is not a descriptor-heap handle. [Root-descriptor](#root-descriptors) resource-kind, bounds, alignment and null-address restrictions apply.
+> Sets `BufferLocation` as the GPU virtual address for the CBV root descriptor parameter at `RootParameterIndex`. This is not a descriptor heap handle. [Root descriptor](#root-descriptors) resource kind, bounds, alignment and null address restrictions apply.
 
 <!-- d3d12-review-alert:end:binding:N-id3d12graphicscommandlist-setgraphicsrootconstantbufferview:0 -->
 
@@ -3272,7 +4111,7 @@ void SetGraphicsRootConstantBufferView(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `BufferLocation` supplies the resource data's GPU virtual address, subject to the [root-descriptor address requirements](#root-descriptors).
+> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `BufferLocation` supplies the resource data's GPU virtual address, subject to the [root descriptor address requirements](#root-descriptors).
 
 <!-- d3d12-review-alert:end:binding:N-parameters-id3d12graphicscommandlist-setgraphicsrootconstantbufferview:0 -->
 
@@ -3306,7 +4145,7 @@ void SetGraphicsRootShaderResourceView(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Sets `BufferLocation` as the GPU virtual address for the SRV root-descriptor parameter at `RootParameterIndex`. This is not a descriptor-heap handle. [Root-descriptor](#root-descriptors) resource-kind, bounds, alignment and null-address restrictions apply. SRVs also have the [acceleration-structure case](#acceleration-structure-srvs).
+> Sets `BufferLocation` as the GPU virtual address for the SRV root descriptor parameter at `RootParameterIndex`. This is not a descriptor heap handle. [Root descriptor](#root-descriptors) resource kind, bounds, alignment and null address restrictions apply. SRVs also have the [acceleration structure case](#acceleration-structure-srvs).
 
 <!-- d3d12-review-alert:end:binding:N-id3d12graphicscommandlist-setgraphicsrootshaderresourceview:0 -->
 
@@ -3317,7 +4156,7 @@ void SetGraphicsRootShaderResourceView(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `BufferLocation` supplies the resource data's GPU virtual address, subject to the [root-descriptor address requirements](#root-descriptors).
+> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `BufferLocation` supplies the resource data's GPU virtual address, subject to the [root descriptor address requirements](#root-descriptors).
 
 <!-- d3d12-review-alert:end:binding:N-parameters-id3d12graphicscommandlist-setgraphicsrootshaderresourceview:0 -->
 
@@ -3351,7 +4190,7 @@ void SetGraphicsRootUnorderedAccessView(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Sets `BufferLocation` as the GPU virtual address for the UAV root-descriptor parameter at `RootParameterIndex`. This is not a descriptor-heap handle. [Root-descriptor](#root-descriptors) resource-kind, bounds, alignment and null-address restrictions apply.
+> Sets `BufferLocation` as the GPU virtual address for the UAV root descriptor parameter at `RootParameterIndex`. This is not a descriptor heap handle. [Root descriptor](#root-descriptors) resource kind, bounds, alignment and null address restrictions apply.
 
 <!-- d3d12-review-alert:end:binding:N-id3d12graphicscommandlist-setgraphicsrootunorderedaccessview:0 -->
 
@@ -3362,7 +4201,7 @@ void SetGraphicsRootUnorderedAccessView(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `BufferLocation` supplies the resource data's GPU virtual address, subject to the [root-descriptor address requirements](#root-descriptors).
+> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `BufferLocation` supplies the resource data's GPU virtual address, subject to the [root descriptor address requirements](#root-descriptors).
 
 <!-- d3d12-review-alert:end:binding:N-parameters-id3d12graphicscommandlist-setgraphicsrootunorderedaccessview:0 -->
 
@@ -3395,7 +4234,7 @@ void SetComputeRootSignature(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Sets `pRootSignature` as the compute root signature. Changing it invalidates prior arguments; redundantly setting the same signature preserves them. A null pointer unsets that root signature. Compatibility is required when work executes; see [pipeline compatibility](#pipeline-compatibility) and [canonical binding changes](command-list-state.md#binding-changes).
+> Sets `pRootSignature` as the compute root signature. Changing it invalidates prior arguments. Redundantly setting the same signature preserves them. A null pointer unsets that root signature. Compatibility is required when work executes. See [pipeline compatibility](#pipeline-compatibility) and [canonical binding changes](command-list-state.md#binding-changes).
 
 <!-- d3d12-review-alert:end:binding:N-id3d12graphicscommandlist-setcomputerootsignature:0 -->
 
@@ -3406,7 +4245,7 @@ void SetComputeRootSignature(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pRootSignature` is the root signature to select for the named graphics/compute bind set, or null to unset it. The [shared recording-state rules](#recording-state) define invalidation and inheritance.
+> `pRootSignature` is the root signature to select for the named graphics/compute bind set, or null to unset it. The [shared recording state rules](#recording-state) define invalidation and inheritance.
 
 <!-- d3d12-review-alert:end:binding:N-parameters-id3d12graphicscommandlist-setcomputerootsignature:0 -->
 
@@ -3440,7 +4279,7 @@ void SetComputeRootDescriptorTable(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Sets the descriptor-table parameter at `RootParameterIndex` to `BaseDescriptor`, a GPU handle in the currently selected shader-visible heap of the matching type. The table's ranges, offsets, [initialization requirements](#table-initialization), and [static promises](#static-promises) apply.
+> Sets the descriptor table parameter at `RootParameterIndex` to `BaseDescriptor`, a GPU handle in the currently selected shader-visible heap of the matching type. The table's ranges, offsets, [initialization requirements](#table-initialization), and [static promises](#static-promises) apply.
 
 <!-- d3d12-review-alert:end:binding:N-id3d12graphicscommandlist-setcomputerootdescriptortable:0 -->
 
@@ -3451,7 +4290,7 @@ void SetComputeRootDescriptorTable(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `BaseDescriptor` identifies the beginning of the table relative to which its declared descriptor-range offsets are applied. It must belong to the matching current shader-visible heap.
+> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `BaseDescriptor` identifies the beginning of the table relative to which its declared descriptor range offsets are applied. It must belong to the matching current shader-visible heap.
 
 <!-- d3d12-review-alert:end:binding:N-parameters-id3d12graphicscommandlist-setcomputerootdescriptortable:0 -->
 
@@ -3486,7 +4325,7 @@ void SetComputeRoot32BitConstant(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Writes the 32-bit `SrcData` value to `DestOffsetIn32BitValues` within the root-constant parameter at `RootParameterIndex`. Other constants remain unchanged. The destination must fit the parameter's declared `Num32BitValues`.
+> Writes the 32-bit `SrcData` value to `DestOffsetIn32BitValues` within the root constant parameter at `RootParameterIndex`. Other constants remain unchanged. The destination must fit the parameter's declared `Num32BitValues`.
 
 <!-- d3d12-review-alert:end:binding:N-id3d12graphicscommandlist-setcomputeroot32bitconstant:0 -->
 
@@ -3497,7 +4336,7 @@ void SetComputeRoot32BitConstant(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `SrcData` supplies one 32-bit value; `DestOffsetIn32BitValues` is its destination DWORD offset within that parameter.
+> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `SrcData` supplies one 32-bit value. `DestOffsetIn32BitValues` is its destination DWORD offset within that parameter.
 
 <!-- d3d12-review-alert:end:binding:N-parameters-id3d12graphicscommandlist-setcomputeroot32bitconstant:0 -->
 
@@ -3533,7 +4372,7 @@ void SetComputeRoot32BitConstants(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Copies `Num32BitValuesToSet` 32-bit values from `pSrcData` into the root-constant parameter at `RootParameterIndex`, starting at `DestOffsetIn32BitValues`. The destination span must fit `Num32BitValues`; other constants remain unchanged. The source values are captured during recording.
+> Copies `Num32BitValuesToSet` 32-bit values from `pSrcData` into the root constant parameter at `RootParameterIndex`, starting at `DestOffsetIn32BitValues`. The destination span must fit `Num32BitValues`. Other constants remain unchanged. The source values are captured during recording.
 
 <!-- d3d12-review-alert:end:binding:N-id3d12graphicscommandlist-setcomputeroot32bitconstants:0 -->
 
@@ -3544,7 +4383,7 @@ void SetComputeRoot32BitConstants(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `pSrcData` supplies `Num32BitValuesToSet` 32-bit values; `DestOffsetIn32BitValues` gives their starting DWORD offset within that parameter.
+> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `pSrcData` supplies `Num32BitValuesToSet` 32-bit values. `DestOffsetIn32BitValues` gives their starting DWORD offset within that parameter.
 
 <!-- d3d12-review-alert:end:binding:N-parameters-id3d12graphicscommandlist-setcomputeroot32bitconstants:0 -->
 
@@ -3578,7 +4417,7 @@ void SetComputeRootConstantBufferView(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Sets `BufferLocation` as the GPU virtual address for the CBV root-descriptor parameter at `RootParameterIndex`. This is not a descriptor-heap handle. [Root-descriptor](#root-descriptors) resource-kind, bounds, alignment and null-address restrictions apply.
+> Sets `BufferLocation` as the GPU virtual address for the CBV root descriptor parameter at `RootParameterIndex`. This is not a descriptor heap handle. [Root descriptor](#root-descriptors) resource kind, bounds, alignment and null address restrictions apply.
 
 <!-- d3d12-review-alert:end:binding:N-id3d12graphicscommandlist-setcomputerootconstantbufferview:0 -->
 
@@ -3589,7 +4428,7 @@ void SetComputeRootConstantBufferView(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `BufferLocation` supplies the resource data's GPU virtual address, subject to the [root-descriptor address requirements](#root-descriptors).
+> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `BufferLocation` supplies the resource data's GPU virtual address, subject to the [root descriptor address requirements](#root-descriptors).
 
 <!-- d3d12-review-alert:end:binding:N-parameters-id3d12graphicscommandlist-setcomputerootconstantbufferview:0 -->
 
@@ -3623,7 +4462,7 @@ void SetComputeRootShaderResourceView(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Sets `BufferLocation` as the GPU virtual address for the SRV root-descriptor parameter at `RootParameterIndex`. This is not a descriptor-heap handle. [Root-descriptor](#root-descriptors) resource-kind, bounds, alignment and null-address restrictions apply. SRVs also have the [acceleration-structure case](#acceleration-structure-srvs).
+> Sets `BufferLocation` as the GPU virtual address for the SRV root descriptor parameter at `RootParameterIndex`. This is not a descriptor heap handle. [Root descriptor](#root-descriptors) resource kind, bounds, alignment and null address restrictions apply. SRVs also have the [acceleration structure case](#acceleration-structure-srvs).
 
 <!-- d3d12-review-alert:end:binding:N-id3d12graphicscommandlist-setcomputerootshaderresourceview:0 -->
 
@@ -3634,7 +4473,7 @@ void SetComputeRootShaderResourceView(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `BufferLocation` supplies the resource data's GPU virtual address, subject to the [root-descriptor address requirements](#root-descriptors).
+> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `BufferLocation` supplies the resource data's GPU virtual address, subject to the [root descriptor address requirements](#root-descriptors).
 
 <!-- d3d12-review-alert:end:binding:N-parameters-id3d12graphicscommandlist-setcomputerootshaderresourceview:0 -->
 
@@ -3668,7 +4507,7 @@ void SetComputeRootUnorderedAccessView(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Sets `BufferLocation` as the GPU virtual address for the UAV root-descriptor parameter at `RootParameterIndex`. This is not a descriptor-heap handle. [Root-descriptor](#root-descriptors) resource-kind, bounds, alignment and null-address restrictions apply.
+> Sets `BufferLocation` as the GPU virtual address for the UAV root descriptor parameter at `RootParameterIndex`. This is not a descriptor heap handle. [Root descriptor](#root-descriptors) resource kind, bounds, alignment and null address restrictions apply.
 
 <!-- d3d12-review-alert:end:binding:N-id3d12graphicscommandlist-setcomputerootunorderedaccessview:0 -->
 
@@ -3679,7 +4518,7 @@ void SetComputeRootUnorderedAccessView(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `BufferLocation` supplies the resource data's GPU virtual address, subject to the [root-descriptor address requirements](#root-descriptors).
+> `RootParameterIndex` follows the [shared setter parameter contract](#root-setter-parameters). `BufferLocation` supplies the resource data's GPU virtual address, subject to the [root descriptor address requirements](#root-descriptors).
 
 <!-- d3d12-review-alert:end:binding:N-parameters-id3d12graphicscommandlist-setcomputerootunorderedaccessview:0 -->
 
@@ -3693,21 +4532,6 @@ void SetComputeRootUnorderedAccessView(
 > This method does not return a value.
 
 <!-- d3d12-review-alert:end:binding:N-return-id3d12graphicscommandlist-setcomputerootunorderedaccessview:0 -->
-
-<a id="table-initialization"></a>
-
-### Descriptor-table initialization
-
-For Tier 1 hardware CBV, UAV, SRV and Samplers and Tier 2 hardware CBV
-and UAV descriptors, the application must put the full number of
-descriptors defined in the root signature for the corresponding
-descriptor table being set into the pointed to location in the
-descriptor heap by the time the command list executes. This is even if
-the shaders executing may not reference all of the descriptors. In all
-other cases, the application is only responsible for initializing the
-descriptor heap with valid descriptors in areas that will actually be
-referenced during shader execution (by the time shaders actually
-execute).
 
 <a id="driver"></a>
 
@@ -3843,7 +4667,7 @@ GetCPUDescriptorHandleForHeapStart must return 0 for the handle. Shader-visible 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> API and DDI visibility flags are not numerically interchangeable. The runtime supplies DDI CPU visibility independently of the application's shader-visible choice; all public API descriptor heaps support CPU descriptor access.
+> API and DDI visibility flags are not numerically interchangeable. The runtime supplies DDI CPU visibility independently of the application's shader-visible choice. All public API descriptor heaps support CPU descriptor access.
 
 <!-- d3d12-review-alert:end:binding:N-ddi-visibility:0 -->
 
@@ -3870,7 +4694,7 @@ GetCPUDescriptorHandleForHeapStart must return 0 for the handle. Shader-visible 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime may cache or translate the driver heap-start handles before exposing them through the corresponding API queries.
+> The runtime may cache or translate the driver heap start handles before exposing them through the corresponding API queries.
 
 <!-- d3d12-review-alert:end:binding:DV-H04:0 -->
 
@@ -3896,7 +4720,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_DESCRIPTOR_HEAPS_0003 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `SetDescriptorHeaps` receives driver descriptor-heap handles after the runtime resolves the API objects.
+> `SetDescriptorHeaps` receives driver descriptor heap handles after the runtime resolves the API objects.
 
 <!-- d3d12-review-alert:end:binding:RB-H01:0 -->
 
@@ -3905,6 +4729,116 @@ All methods for generating descriptors are free threaded.
 Note that there is no "destroy" for a descriptor -- any external
 allocations a descriptor may refer to in the driver/hardware (such as a
 texture) already have a separate object owning its lifetime.
+
+<a id="driver-views"></a>
+
+### View creation
+
+<!-- d3d12-review-alert:begin:formats:N-driver:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The runtime translates API view descriptions into the negotiated driver representation. The driver writes hardware-specific descriptors into the supplied CPU descriptor handles. Descriptor creation does not allocate separately owned objects. See [descriptor ownership](#driver-descriptors).
+
+<!-- d3d12-review-alert:end:formats:N-driver:0 -->
+
+```cpp
+typedef VOID (APIENTRY* PFND3D12DDI_CREATE_SHADER_RESOURCE_VIEW_0002)(
+    D3D12DDI_HDEVICE unnamedParam1,
+    const D3D12DDIARG_CREATE_SHADER_RESOURCE_VIEW_0002 *unnamedParam2,
+    D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor
+);
+```
+
+```cpp
+typedef VOID (APIENTRY* PFND3D12DDI_CREATE_UNORDERED_ACCESS_VIEW_0002)(
+    D3D12DDI_HDEVICE unnamedParam1,
+    const D3D12DDIARG_CREATE_UNORDERED_ACCESS_VIEW_0002 *unnamedParam2,
+    D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor
+);
+```
+
+```cpp
+typedef VOID (APIENTRY* PFND3D12DDI_CREATE_RENDER_TARGET_VIEW_0002)(
+    D3D12DDI_HDEVICE unnamedParam1,
+    const D3D12DDIARG_CREATE_RENDER_TARGET_VIEW_0002 *unnamedParam2,
+    D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor
+);
+```
+
+```cpp
+typedef VOID (APIENTRY* PFND3D12DDI_CREATE_DEPTH_STENCIL_VIEW)(
+    D3D12DDI_HDEVICE unnamedParam1,
+    const D3D12DDIARG_CREATE_DEPTH_STENCIL_VIEW *unnamedParam2,
+    D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor
+);
+```
+
+<!-- d3d12-review-alert:begin:formats:N-driver-translation:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | API information | Driver-facing responsibility |
+> |---|---|
+> | Resource and view format | Resolve the driver resource handle and the permitted format interpretation. Descriptor storage remains driver-specific |
+> | Default descriptions and remaining-range sentinels | Expand into the appropriate selected mip/array/depth extent before descriptor creation |
+> | API dimension and resource sample configuration | Select the corresponding driver view representation; API array/MS/cube variants are not an interchangeable numeric DDI enum |
+> | `Shader4ComponentMapping` and `ResourceMinLODClamp` | Preserve the specified component and mip coordinate interpretation |
+> | UAV counter resource and byte offset | Carry the counter association separately from the data buffer and apply the validated storage offset |
+> | Depth/stencil plane selection | Preserve logical aspect selection without exposing a physical texture layout |
+
+<!-- d3d12-review-alert:end:formats:N-driver-translation:0 -->
+
+<!-- d3d12-review-alert:begin:formats:DV-V01:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The following table associates descriptor creation DDIs with their API operations.
+
+<!-- d3d12-review-alert:end:formats:DV-V01:0 -->
+
+<!-- d3d12-review-alert:begin:formats:DV-V02:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Driver entry | Canonical API contract |
+> |---|---|
+> | `PFND3D12DDI_CREATE_SHADER_RESOURCE_VIEW_0002` | [CreateShaderResourceView](#id3d12device-createshaderresourceview) |
+> | `PFND3D12DDI_CREATE_UNORDERED_ACCESS_VIEW_0002` | [CreateUnorderedAccessView](#id3d12device-createunorderedaccessview) |
+> | `PFND3D12DDI_CREATE_RENDER_TARGET_VIEW_0002` | [CreateRenderTargetView](#id3d12device-createrendertargetview) |
+> | `PFND3D12DDI_CREATE_DEPTH_STENCIL_VIEW` | [CreateDepthStencilView](#id3d12device-createdepthstencilview) |
+
+<!-- d3d12-review-alert:end:formats:DV-V02:0 -->
+
+<!-- d3d12-review-alert:begin:formats:N-driver-defaults:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Before calling the driver, the runtime resolves omitted view descriptions from the resource and selects the driver-facing view kind.
+
+<!-- d3d12-review-alert:end:formats:N-driver-defaults:0 -->
+
+<a id="driver-sampler-feedback-view"></a>
+
+#### Paired sampler feedback descriptor
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_CREATE_SAMPLER_FEEDBACK_UNORDERED_ACCESS_VIEW_0075 ) ( _In_ D3D12DDI_HDEVICE hDrvDevice, _In_ D3D12DDI_HRESOURCE hDrvTargetedResource, _In_ D3D12DDI_HRESOURCE hDrvFeedbackResource, _In_ D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor );
+```
+
+<!-- d3d12-review-alert:begin:formats:DV-F02:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Sampler feedback descriptor creation receives separate driver handles for the targeted and feedback resources.
+
+<!-- d3d12-review-alert:end:formats:DV-F02:0 -->
 
 <a id="driver-cbv-samplers"></a>
 
@@ -3935,8 +4869,8 @@ typedef VOID(APIENTRY* PFND3D12DDI_CREATE_SAMPLER_0096)(D3D12DDI_HDEVICE, _In_ C
 >
 > | Driver entry | Logical API contract and adaptation |
 > |---|---|
-> | `PFND3D12DDI_CREATE_CONSTANT_BUFFER_VIEW` | [CreateConstantBufferView](#id3d12device-createconstantbufferview): encode the validated buffer address/byte-size interpretation at the supplied driver CPU descriptor handle |
-> | `PFND3D12DDI_CREATE_SAMPLER_0096` | [CreateSampler](#id3d12device-createsampler) and [CreateSampler2](#id3d12device11-createsampler2): the outer argument points to the extended driver description; its flags select unsigned versus floating-point border color and the applicable coordinate mode |
+> | `PFND3D12DDI_CREATE_CONSTANT_BUFFER_VIEW` | [CreateConstantBufferView](#id3d12device-createconstantbufferview): encode the validated buffer address/byte size interpretation at the supplied driver CPU descriptor handle |
+> | `PFND3D12DDI_CREATE_SAMPLER_0096` | [CreateSampler](#id3d12device-createsampler) and [CreateSampler2](#id3d12device11-createsampler2): the outer argument points to the extended driver description. Its flags select unsigned versus floating-point border color and the applicable coordinate mode |
 
 <!-- d3d12-review-alert:end:binding:DV-C02:0 -->
 
@@ -3963,7 +4897,7 @@ typedef VOID(APIENTRY* PFND3D12DDI_CREATE_SAMPLER_0096)(D3D12DDI_HDEVICE, _In_ C
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Descriptor-generation failures use `PFND3D12DDI_SETERROR_CB`, not the command-list recording-error channel.
+> Descriptor generation failures use `PFND3D12DDI_SETERROR_CB`, not the command list recording error channel.
 
 <!-- d3d12-review-alert:end:binding:DV-C05:0 -->
 
@@ -4007,7 +4941,7 @@ typedef VOID (APIENTRY* PFND3D12DDI_COPY_DESCRIPTORS_SIMPLE_0003)(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The descriptor-copy DDIs implement [CopyDescriptors](#id3d12device-copydescriptors) and [CopyDescriptorsSimple](#id3d12device-copydescriptorssimple).
+> The descriptor copy DDIs implement [CopyDescriptors](#id3d12device-copydescriptors) and [CopyDescriptorsSimple](#id3d12device-copydescriptorssimple).
 
 <!-- d3d12-review-alert:end:binding:DV-P01:0 -->
 
@@ -4022,7 +4956,7 @@ typedef VOID (APIENTRY* PFND3D12DDI_COPY_DESCRIPTORS_SIMPLE_0003)(
 
 <a id="driver-signatures"></a>
 
-### Root-signature versions and promises
+### Root signature versions and promises
 
 <ins><!-- d3d12-review-inline:begin:binding:D-root-range-flags:0 -->The runtime will fill in defaults for these flags if the application
 specified none. The defaults are documented with the [API version of
@@ -4060,14 +4994,14 @@ DEFINE_ENUM_FLAG_OPERATORS( D3D12DDI_ROOT_DESCRIPTOR_FLAGS );
 
 <a id="driver-root-descriptions"></a>
 
-#### Driver root-description types
+#### Driver root description types
 
 <!-- d3d12-review-alert:begin:binding:RB-T01:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The driver root-description representations are:
+> The driver root description representations are:
 
 <!-- d3d12-review-alert:end:binding:RB-T01:0 -->
 
@@ -4193,7 +5127,7 @@ typedef struct D3D12DDI_ROOT_PARAMETER_0013
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> DDI root-signature version 1.2 uses the version-1.1 parameter representation with the new static-sampler representation shown below.
+> DDI root signature version 1.2 uses the version-1.1 parameter representation with the new static sampler representation shown below.
 
 <!-- d3d12-review-alert:end:binding:RB-T02:2 -->
 
@@ -4221,7 +5155,7 @@ typedef struct D3D12DDI_STATIC_SAMPLER_0100
 } D3D12DDI_STATIC_SAMPLER_0100;
 ```
 
-<ins><!-- d3d12-review-inline:begin:binding:D-root-12:2 -->The version-1.2 root-signature description uses `D3D12DDI_STATIC_SAMPLER_0100`.<!-- d3d12-review-inline:end:binding:D-root-12:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:binding:D-root-12:2 -->The version-1.2 root signature description uses `D3D12DDI_STATIC_SAMPLER_0100`.<!-- d3d12-review-inline:end:binding:D-root-12:2 --></ins>
 
 ```c++
 typedef struct D3D12DDI_ROOT_SIGNATURE_0100
@@ -4258,7 +5192,7 @@ typedef HRESULT(APIENTRY* PFND3D12DDI_CREATE_ROOT_SIGNATURE_0100) (D3D12DDI_HDEV
 
 <a id="driver-root-lifecycle"></a>
 
-#### Root-object lifecycle and ownership
+#### Root object lifecycle and ownership
 
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_ROOT_SIGNATURE ) ( D3D12DDI_HDEVICE, D3D12DDI_HROOTSIGNATURE );
@@ -4269,7 +5203,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_ROOT_SIGNATURE ) ( D3D12DDI_HDEVICE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime supplies the private storage reported by the size query through `D3D12DDI_HROOTSIGNATURE`. These DDIs do not receive a separate runtime root-signature handle.
+> The runtime supplies the private storage reported by the size query through `D3D12DDI_HROOTSIGNATURE`. These DDIs do not receive a separate runtime root signature handle.
 
 <!-- d3d12-review-alert:end:binding:RB-L02:0 -->
 
@@ -4287,7 +5221,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_ROOT_SIGNATURE ) ( D3D12DDI_HDEVICE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Before driver creation, the runtime deserializes and validates the root signature, converts its version and normalizes explicit defaults. The driver receives this normalized description rather than the serialized blob. The `_0100` pair uses the static-sampler representation shown above.
+> Before driver creation, the runtime deserializes and validates the root signature, converts its version and normalizes explicit defaults. The driver receives this normalized description rather than the serialized blob. The `_0100` pair uses the static sampler representation shown above.
 
 <!-- d3d12-review-alert:end:binding:RB-L05:0 -->
 
@@ -4300,7 +5234,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_ROOT_SIGNATURE ) ( D3D12DDI_HDEVICE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Graphics and compute slots select separate bind sets even where they share a function-pointer type.
+> Graphics and compute slots select separate bind sets even where they share a function pointer type.
 
 <!-- d3d12-review-alert:end:binding:RB-B01:0 -->
 
@@ -4388,7 +5322,7 @@ PFND3D12DDI_SET_ROOT_BUFFER_VIEW pfnSetGraphicsRootUnorderedAccessView;
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The group-constant DDI copies `pSrcData` values during the call. Descriptor-table bases use driver GPU descriptor handles.
+> The group constant DDI copies `pSrcData` values during the call. Descriptor table bases use driver GPU descriptor handles.
 
 <!-- d3d12-review-alert:end:binding:RB-B03:0 -->
 
@@ -4401,7 +5335,7 @@ PFND3D12DDI_SET_ROOT_BUFFER_VIEW pfnSetGraphicsRootUnorderedAccessView;
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The `_0114` root-binding entries participate in [runtime bypass](execution.md#work-command-handles).
+> The `_0114` root binding entries participate in [runtime bypass](execution.md#work-command-handles).
 
 <!-- d3d12-review-alert:end:binding:RF-representations:0 -->
 
@@ -4419,7 +5353,7 @@ PFND3D12DDI_SET_ROOT_BUFFER_VIEW pfnSetGraphicsRootUnorderedAccessView;
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> | Ordinary type / API-handle type | Graphics member / API contract | Compute member / API contract |
+> | Ordinary type / API handle type | Graphics member / API contract | Compute member / API contract |
 > |---|---|---|
 > | `PFND3D12DDI_SET_ROOT_SIGNATURE` / `PFND3D12DDI_SET_ROOT_SIGNATURE_0114` | `pfnSetGraphicsRootSignature` / [SetGraphicsRootSignature](#id3d12graphicscommandlist-setgraphicsrootsignature) | `pfnSetComputeRootSignature` / [SetComputeRootSignature](#id3d12graphicscommandlist-setcomputerootsignature) |
 > | `PFND3D12DDI_SET_ROOT_DESCRIPTOR_TABLE` / `PFND3D12DDI_SET_ROOT_DESCRIPTOR_TABLE_0114` | `pfnSetGraphicsRootDescriptorTable` / [SetGraphicsRootDescriptorTable](#id3d12graphicscommandlist-setgraphicsrootdescriptortable) | `pfnSetComputeRootDescriptorTable` / [SetComputeRootDescriptorTable](#id3d12graphicscommandlist-setcomputerootdescriptortable) |
@@ -4436,7 +5370,7 @@ PFND3D12DDI_SET_ROOT_BUFFER_VIEW pfnSetGraphicsRootUnorderedAccessView;
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12DDI_API_HROOTSIGNATURE` uses the runtime-bypass header. The helper below converts its `pDriverObject` to the ordinary driver root-signature handle and maps a null API root handle to a null driver handle.
+> `D3D12DDI_API_HROOTSIGNATURE` uses the runtime bypass header. The helper below converts its `pDriverObject` to the ordinary driver root signature handle and maps a null API root handle to a null driver handle.
 
 <!-- d3d12-review-alert:end:binding:RF-root-handles:0 -->
 
@@ -4484,7 +5418,7 @@ signature.<!-- d3d12-review-inline:end:binding:D-clear:1 --></ins>
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Driver zero-initialization prevents cross-recording leakage; it does not establish valid application bindings. The [canonical initial-state rules](command-list-state.md#initial-bindings) still require the applicable root signature and arguments. Bundles instead follow the [bundle binding inheritance rules](command-list-state.md#bundle-bindings).
+> Driver zero-initialization prevents cross-recording leakage. It does not establish valid application bindings. The [canonical initial state rules](command-list-state.md#initial-bindings) still require the applicable root signature and arguments. Bundles instead follow the [bundle binding inheritance rules](command-list-state.md#bundle-bindings).
 
 <!-- d3d12-review-alert:end:binding:N-clear-not-valid:0 -->
 
@@ -4509,7 +5443,7 @@ SIZE_T GetSerializedSize();
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Returns the required byte size for the object's serialized DXBC container, including the root-signature chunk and container overhead. It is not a shader-bytecode or driver-private-object size.
+> Returns the required byte size for the object's serialized DXBC container, including the root signature chunk and container overhead. It is not a shader bytecode or driver-private object size.
 
 <!-- d3d12-review-alert:end:binding:AB-id3d12rootsignature1-getserializedsize-contract:0 -->
 
@@ -4520,7 +5454,7 @@ SIZE_T GetSerializedSize();
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Returns SIZE_T bytes; the immutable object's serialized representation can be retrieved through GetSerializedData.
+> Returns SIZE_T bytes. The immutable object's serialized representation can be retrieved through GetSerializedData.
 
 <!-- d3d12-review-alert:end:binding:AB-id3d12rootsignature1-getserializedsize-contract:2 -->
 
@@ -4543,7 +5477,7 @@ HRESULT GetSerializedData(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Copies a serialized root-signature DXBC container into CPU storage. This need not reproduce the original application's container bytes identically; it represents the root signature object. The caller's storage is not retained and no GPU work is submitted.
+> Copies a serialized root signature DXBC container into CPU storage. This need not reproduce the original application's container bytes identically. It represents the root signature object. The caller's storage is not retained and no GPU work is submitted.
 
 <!-- d3d12-review-alert:end:binding:AB-id3d12rootsignature1-getserializeddata-contract:0 -->
 
@@ -4554,7 +5488,7 @@ HRESULT GetSerializedData(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pData` is the required output buffer; `Size` is its capacity in bytes, obtained from GetSerializedSize.
+> `pData` is the required output buffer. `Size` is its capacity in bytes, obtained from GetSerializedSize.
 
 <!-- d3d12-review-alert:end:binding:AB-id3d12rootsignature1-getserializeddata-contract:2 -->
 

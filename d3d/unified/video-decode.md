@@ -34,9 +34,9 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [command-list annotation reference](diagnostics.md#command-list-annotations)
+> The [command list annotation reference](diagnostics.md#command-list-annotations)
 > defines the three internal BeginEvent/EndEvent/SetMarker support methods
-> on `ID3D12VideoDecodeCommandList`. Their recording and allocator-data lifetime
+> on `ID3D12VideoDecodeCommandList`. Their recording and allocator data lifetime
 > follows [common annotation state](command-list-state.md#annotations), not
 > a new video processing mode or GPU synchronization operation.
 
@@ -94,7 +94,7 @@ Returns **S\_OK** if successful; otherwise, returns **E\_INVALIDARG** if an unsu
 > enumeration convention. For PROFILES and FORMATS, the supplied count must
 > match the corresponding count query, and the caller allocates the result array.
 > The inspected ordinary query path returns `E_INVALIDARG` for mismatched
-> profile/format counts; it does not fill a successful truncated prefix.
+> profile/format counts. It does not fill a successful truncated prefix.
 
 <!-- d3d12-review-alert:end:video-decode:N-cfs-protocol:0 -->
 
@@ -117,7 +117,7 @@ Returns **S\_OK** if successful; otherwise, returns **E\_INVALIDARG** if an unsu
 > `S_OK` means the query completed, not that every requested operation is
 > supported. For DECODE_SUPPORT and DECODE_CONVERSION_SUPPORT the returned
 > support flag makes that distinction. Profiles, formats, conversion support and
-> histograms are not universal feature-level guarantees.
+> histograms are not universal feature level guarantees.
 
 <!-- d3d12-review-alert:end:video-decode:N-cfs-protocol:2 -->
 
@@ -145,7 +145,7 @@ Returns **S\_OK** if successful; otherwise, returns **E\_INVALIDARG** if an unsu
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Processing-specific query payloads and input/result rules for this same video-device method are defined in [Video processing capabilities](video-processing.md#process-discovery).
+> Processing-specific query payloads and input/result rules for this same video device method are defined in [Video processing capabilities](video-processing.md#process-discovery).
 
 <!-- d3d12-review-alert:end:video-decode:D158-processing-query-forward:0 -->
 
@@ -154,7 +154,7 @@ Returns **S\_OK** if successful; otherwise, returns **E\_INVALIDARG** if an unsu
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The same video-device method also owns the fixed [command-family and motion-estimation capability cases](video-motion-estimation.md#motion-capabilities); their input/output payloads do not introduce another query API identity.
+> The same video device method also owns the fixed [command family and motion estimation capability cases](video-motion-estimation.md#motion-capabilities). Their input/output payloads do not introduce another query API identity.
 
 <!-- d3d12-review-alert:end:video-decode:D160-motion-query-forward:0 -->
 
@@ -163,7 +163,7 @@ Returns **S\_OK** if successful; otherwise, returns **E\_INVALIDARG** if an unsu
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The same video-device method also owns [extension-command discovery, parameter-stage reflection, support and size queries](video-extension-commands.md#extension-discovery). Their exact counts, byte directions and packing are not Meta-command enumeration or initialization policies.
+> The same video device method also owns [extension command discovery, parameter stage reflection, support and size queries](video-extension-commands.md#extension-discovery). Their exact counts, byte directions and packing are not Meta command enumeration or initialization policies.
 
 <!-- d3d12-review-alert:end:video-decode:D161-extension-query-forward:0 -->
 
@@ -172,7 +172,7 @@ Returns **S\_OK** if successful; otherwise, returns **E\_INVALIDARG** if an unsu
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Encoding contributes the [fixed query selectors and payloads](video-encoding-controls.md#encoding-query-selectors) and [combined tuple/count/size/version rules](video-encoding.md#encoding-capabilities), including encoder resource/heap sizes, per-resolution support, optional-statistics requirements, GPU map-layout allocation and lower-resolution frame analysis. These remain contributions to this declaring method, not additional API identities.
+> Encoding contributes the [fixed query selectors and payloads](video-encoding-controls.md#encoding-query-selectors) and [combined tuple/count/size/version rules](video-encoding.md#encoding-capabilities), including encoder resource/heap sizes, per-resolution support, optional-statistics requirements, GPU map layout allocation and lower-resolution frame analysis. These remain contributions to this declaring method, not additional API identities.
 
 <!-- d3d12-review-alert:end:video-decode:D162-encoding-query-forward:0 -->
 
@@ -210,7 +210,7 @@ The globally unique identifier (GUID) for the decode video state interface.
 
 `ppVideoDecoder`
 
-A pointer to a memory block that receives a pointer to the [ID3D12VideoDecoder](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videodecoder) interface.
+A pointer to a memory block that receives a pointer to the [ID3D12VideoDecoder](#decode-objects) interface.
 
 #### Return values
 
@@ -227,7 +227,7 @@ Decoding a new stream requires instantiating a new decoder object.
 >
 > The configuration and selected node must be valid for the video device.
 > The ordinary path uses `D3D12_BITSTREAM_ENCRYPTION_TYPE_NONE`.
-> `riid` identifies the requested decoder interface; `ppVideoDecoder` receives
+> `riid` identifies the requested decoder interface. `ppVideoDecoder` receives
 > that interface, not decoded picture storage.
 
 <!-- d3d12-review-alert:end:video-decode:N-create-decoder:0 -->
@@ -240,8 +240,8 @@ Decoding a new stream requires instantiating a new decoder object.
 > **Scoped runtime validation:** invalid node selection, an unsupported decode
 > profile/encryption choice, or an invalid coded-interlace value are rejected
 > with `E_INVALIDARG` by the inspected runtime path. Creation can propagate
-> allocation, interface-selection or device-removal failure; the short public
-> method page does not specify an exhaustive creation-error table. These
+> allocation, interface selection or device removal failure. The short public
+> method page does not specify an exhaustive creation error table. These
 > observations do not establish which profiles a hardware device implements.
 
 <!-- d3d12-review-alert:end:video-decode:N-create-decoder:1 -->
@@ -276,7 +276,7 @@ The globally unique identifier (GUID) for the decode video state interface.
 
 `ppVideoDecoderHeap`
 
-A pointer to a memory block that receives a pointer to the [ID3D12VideoDecoderHeap](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videodecoderheap) interface.
+A pointer to a memory block that receives a pointer to the [ID3D12VideoDecoderHeap](#decode-objects) interface.
 
 #### Return values
 
@@ -287,7 +287,7 @@ This method returns an HRESULT.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The heap's decode-support tuple must be supported. `riid` selects the heap
+> The heap's decode support tuple must be supported. `riid` selects the heap
 > interface and `ppVideoDecoderHeap` receives it. Heap allocation does not
 > allocate the application's reference/output pictures.
 
@@ -300,8 +300,8 @@ This method returns an HRESULT.
 >
 > **Scoped runtime validation:** the inspected creation path rejects a failed
 > DECODE_SUPPORT query or a tuple without the SUPPORTED flag with `E_INVALIDARG`,
-> and validates the descriptor's node mask. Allocation, interface-selection and
-> device-removal failures can propagate. This is not an exhaustive HRESULT
+> and validates the descriptor's node mask. Allocation, interface selection and
+> device removal failures can propagate. This is not an exhaustive HRESULT
 > catalog or a guarantee that a successful capability query reserves memory.
 
 <!-- d3d12-review-alert:end:video-decode:N-create-heap:1 -->
@@ -318,7 +318,7 @@ D3D12_VIDEO_DECODER_DESC GetDesc();
 
 #### Behavior
 
-Gets the [D3D12_VIDEO_DECODER_DESC](#d3d12-video-decoder-desc) structure that was passed into [ID3D12VideoDevice::CreateVideoDecoder](#create-video-decoder) when the [ID3D12VideoDecoder](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videodecoder) was created.
+Gets the [D3D12_VIDEO_DECODER_DESC](#d3d12-video-decoder-desc) structure that was passed into [ID3D12VideoDevice::CreateVideoDecoder](#create-video-decoder) when the [ID3D12VideoDecoder](#decode-objects) was created.
 
 #### Return values
 
@@ -336,7 +336,7 @@ D3D12_VIDEO_DECODER_HEAP_DESC GetDesc();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:video-decode:P-heap-desc-summary:0 -->Gets the [D3D12_VIDEO_DECODER_HEAP_DESC](#d3d12-video-decoder-heap-desc) structure that was passed into [ID3D12VideoDevice::CreateVideoDecoderHeap](#create-video-decoder-heap) when the [ID3D12VideoDecoderHeap](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videodecoderheap) was created.<!-- d3d12-review-inline:end:video-decode:P-heap-desc-summary:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-decode:P-heap-desc-summary:0 -->Gets the [D3D12_VIDEO_DECODER_HEAP_DESC](#d3d12-video-decoder-heap-desc) structure that was passed into [ID3D12VideoDevice::CreateVideoDecoderHeap](#create-video-decoder-heap) when the [ID3D12VideoDecoderHeap](#decode-objects) was created.<!-- d3d12-review-inline:end:video-decode:P-heap-desc-summary:0 --></ins>
 
 #### Return values
 
@@ -344,7 +344,7 @@ This method returns a **D3D12\_VIDEO\_DECODER\_HEAP\_DESC** structure.
 
 <a id="decode-list-lifecycle"></a>
 
-## Decode command-list lifecycle
+## Decode command list lifecycle
 
 <a id="decode-clear-state"></a>
 
@@ -370,9 +370,9 @@ None
 > **Authored synthesis - human review pending.**
 >
 > ClearState disables predication on the existing recording. It is not Reset
-> and does not reclaim command-allocator storage or erase earlier recorded
+> and does not reclaim command allocator storage or erase earlier recorded
 > decode work. The ordinary video contribution does not imply graphics root,
-> descriptor-heap or PSO initialization.
+> descriptor heap or PSO initialization.
 
 <!-- d3d12-review-alert:end:video-decode:N-clear:0 -->
 
@@ -398,7 +398,7 @@ Returns **S\_OK** if successful; otherwise, returns one of the following values:
 - **E\_OUTOFMEMORY** if the operating system ran out of memory during recording.
 - **E\_INVALIDARG** if an invalid argument was passed to the command list API during recording.
 
-See [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues) for other possible return values.
+See [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes) for other possible return values.
 
 #### Remarks
 
@@ -409,10 +409,10 @@ The runtime will validate that the command list has not previously been closed. 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Close ends recording, not GPU execution. It is a lifecycle/query-resolution
-> wrapper: pending query-resolution work can be emitted while closing. The
+> Close ends recording, not GPU execution. It is a lifecycle/query resolution
+> wrapper: pending query resolution work can be emitted while closing. The
 > wrapper classification does not assign a new predicate policy to the
-> generated work or turn a successful Close into a decode-status query.
+> generated work or turn a successful Close into a decode status query.
 > The [query protocol](counters-queries-and-predication.md#videodecode-resolvequerydata)
 > and [completion rules](execution.md#completion-lifetime) remain canonical.
 
@@ -440,7 +440,7 @@ Resets a command list back to its initial state as if a new command list was jus
 
 Type: **ID3D12CommandAllocator\***
 
-A pointer to the [ID3D12CommandAllocator](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12commandallocator) object that the device creates command lists from.
+A pointer to the [ID3D12CommandAllocator](execution.md#command-storage) object that the device creates command lists from.
 
 #### Return values
 
@@ -450,17 +450,17 @@ Returns **S\_OK** if successful; otherwise, returns one of the following values:
 - **E\_OUTOFMEMORY** if the operating system ran out of memory.
 - **E\_INVALIDARG** if the allocator is currently being used with another command list in the "recording" state or if the specified allocator was created with the wrong type.
 
-See [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues) for other possible return values.
+See [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes) for other possible return values.
 
 <!-- d3d12-review-alert:begin:video-decode:N-reset:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The allocator has video-decode type and is available for recording with
+> The allocator has video decode type and is available for recording with
 > this list. Successful Reset puts the list into recording state and disables
 > predication. Reset does not wait for GPU completion and is distinct from
-> [`ID3D12CommandAllocator::Reset`](execution.md#allocator-reset); the allocator's
+> [`ID3D12CommandAllocator::Reset`](execution.md#allocator-reset). The allocator's
 > recorded storage remains subject to its reuse/completion requirements.
 > There is no initial graphics PSO parameter.
 
@@ -492,7 +492,7 @@ Records a decode frame operation to the command list. Inputs, outputs, and param
 
 `pDecoder`
 
-A pointer to an [ID3D12VideoDecoder](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videodecoder) interface representing a decoder instance.
+A pointer to an [ID3D12VideoDecoder](#decode-objects) interface representing a decoder instance.
 
 `pOutputArguments`
 
@@ -532,7 +532,7 @@ Records a decode frame operation to the command list. Inputs, outputs, and param
 
 `pDecoder`
 
-A pointer to an [ID3D12VideoDecoder](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videodecoder) interface representing a decoder instance.
+A pointer to an [ID3D12VideoDecoder](#decode-objects) interface representing a decoder instance.
 
 `pOutputArguments`
 
@@ -551,9 +551,9 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Both methods record a frame; neither returns an HRESULT or the hardware
+> Both methods record a frame. Neither returns an HRESULT or the hardware
 > decode result. The public Close contract reports deferred recording errors.
-> The runtime checks frame-argument types/picture-parameter sizes, decoder/heap
+> The runtime checks frame argument types/picture parameter sizes, decoder/heap
 > configuration compatibility, bitstream resource/range, reference resources
 > and output/conversion/histogram arguments on the inspected ordinary path.
 > This is not a promise to detect every malformed codec bitstream or every
@@ -567,10 +567,10 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **Reference-array qualification:** the public reference type allows
+> **Reference array qualification:** the public reference type allows
 > `pSubresources == nullptr` to mean all-zero subresources. The inspected
 > ordinary validation path dereferences this pointer for non-null references.
-> The documented meaning is retained below, but null-pointer safety is not
+> The documented meaning is retained below, but null pointer safety is not
 > established by this draft. This qualification does not replace the documented
 > default with a mandatory-array ABI.
 
@@ -581,7 +581,7 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **Legacy-conversion qualification:** the base conversion page says texture
+> **Legacy conversion qualification:** the base conversion page says texture
 > sizes determine scaling. The inspected base DecodeFrame translation supplies
 > native heap dimensions to the version-1 conversion path instead. The draft
 > does not guarantee legacy downscaling from different-sized resources alone.
@@ -633,7 +633,7 @@ typedef struct D3D12_FEATURE_DATA_VIDEO_DECODE_PROFILES
 } D3D12_FEATURE_DATA_VIDEO_DECODE_PROFILES;
 ```
 
-Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_DECODE_PROFILES](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video). Retrieves the list of supported profiles.
+Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_DECODE_PROFILES](#d3d12-feature-data-video-decode-profiles). Retrieves the list of supported profiles.
 
 #### Members
 
@@ -643,7 +643,7 @@ Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](#video-check
 
 `ProfileCount`
 
-The number of profiles to retrieve. This number must match the value returned from a call [ID3D12VideoDevice::CheckFeatureSupport](#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_DECODE_PROFILE_COUNT](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video).
+The number of profiles to retrieve. This number must match the value returned from a call [ID3D12VideoDevice::CheckFeatureSupport](#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_DECODE_PROFILE_COUNT](#d3d12-feature-data-video-decode-profile-count).
 
 `pProfiles`
 
@@ -689,7 +689,7 @@ typedef struct D3D12_FEATURE_DATA_VIDEO_DECODE_FORMATS
 } D3D12_FEATURE_DATA_VIDEO_DECODE_FORMATS;
 ```
 
-Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](#video-check-feature-support) when the feature specified is <ins><!-- d3d12-review-inline:begin:video-decode:P-feature_data_video_decode_formats-summary:0 -->[D3D12_FEATURE_VIDEO_DECODE_FORMATS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video)<!-- d3d12-review-inline:end:video-decode:P-feature_data_video_decode_formats-summary:0 --></ins>. Retrieves the list of supported formats.
+Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](#video-check-feature-support) when the feature specified is <ins><!-- d3d12-review-inline:begin:video-decode:P-feature_data_video_decode_formats-summary:0 -->[D3D12_FEATURE_VIDEO_DECODE_FORMATS](#d3d12-feature-data-video-decode-formats)<!-- d3d12-review-inline:end:video-decode:P-feature_data_video_decode_formats-summary:0 --></ins>. Retrieves the list of supported formats.
 
 #### Members
 
@@ -703,11 +703,11 @@ A [D3D12_VIDEO_DECODE_CONFIGURATION](#d3d12-video-decode-configuration) structur
 
 `FormatCount`
 
-The number of formats to retrieve. This number must match the value returned from a call [ID3D12VideoDevice::CheckFeatureSupport](#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_DECODE_FORMAT_COUNT](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video).
+The number of formats to retrieve. This number must match the value returned from a call [ID3D12VideoDevice::CheckFeatureSupport](#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_DECODE_FORMAT_COUNT](#d3d12-feature-data-video-decode-format-count).
 
 `pOutputFormats`
 
-A list of [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format) <ins><!-- d3d12-review-inline:begin:video-decode:P-feature_data_video_decode_formats-members:8 -->values representing the supported formats.<!-- d3d12-review-inline:end:video-decode:P-feature_data_video_decode_formats-members:8 --></ins>
+A list of [DXGI_FORMAT](formats.md#dxgi-format) <ins><!-- d3d12-review-inline:begin:video-decode:P-feature_data_video_decode_formats-members:8 -->values representing the supported formats.<!-- d3d12-review-inline:end:video-decode:P-feature_data_video_decode_formats-members:8 --></ins>
 
 <a id="d3d12-feature-data-video-decode-support"></a>
 
@@ -731,7 +731,7 @@ typedef struct D3D12_FEATURE_DATA_VIDEO_DECODE_SUPPORT
 } D3D12_FEATURE_DATA_VIDEO_DECODE_SUPPORT;
 ```
 
-Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_DECODE_SUPPORT](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video). Retrieves support information for video decoding.
+Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_DECODE_SUPPORT](#d3d12-feature-data-video-decode-support). Retrieves support information for video decoding.
 
 #### Members
 
@@ -753,7 +753,7 @@ The decode height of the source stream
 
 `DecodeFormat`
 
-The [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format) to use as the decode format. This format is the output format if no decoder conversion is specified.
+The [DXGI_FORMAT](formats.md#dxgi-format) to use as the decode format. This format is the output format if no decoder conversion is specified.
 
 `FrameRate`
 
@@ -795,7 +795,7 @@ typedef struct D3D12_FEATURE_DATA_VIDEO_DECODE_CONVERSION_SUPPORT
 } D3D12_FEATURE_DATA_VIDEO_DECODE_CONVERSION_SUPPORT;
 ```
 
-<ins><!-- d3d12-review-inline:begin:video-decode:P-feature_data_video_decode_conversion_support-summary:0 -->Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_DECODE_CONVERSION_SUPPORT](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video). Check if a colorspace conversion, format conversion, and scale are supported.<!-- d3d12-review-inline:end:video-decode:P-feature_data_video_decode_conversion_support-summary:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-decode:P-feature_data_video_decode_conversion_support-summary:0 -->Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_DECODE_CONVERSION_SUPPORT](#d3d12-feature-data-video-decode-conversion-support). Check if a colorspace conversion, format conversion, and scale are supported.<!-- d3d12-review-inline:end:video-decode:P-feature_data_video_decode_conversion_support-summary:0 --></ins>
 
 #### Members
 
@@ -856,15 +856,15 @@ Describes the allocation size of a video decoder heap.
 
 `VideoDecoderHeapDesc`
 
-A [D3D12_VIDEO_DECODER_HEAP_DESC](#d3d12-video-decoder-heap-desc) describing a [ID3D12VideoDecoderHeap](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videodecoderheap).
+A [D3D12_VIDEO_DECODER_HEAP_DESC](#d3d12-video-decoder-heap-desc) describing a [ID3D12VideoDecoderHeap](#decode-objects).
 
 `MemoryPoolL0Size`
 
-The allocation size of the video decoder heap in the L0 memory pool. L0 is the physical system memory pool. When the adapter is discrete/NUMA, this pool has greater bandwidth for the CPU and less bandwidth for the GPU. When the adapter is UMA, this pool is the only one which is valid. For more information, see [Residency](https://learn.microsoft.com/en-us/windows/win32/direct3d12/residency).
+The allocation size of the video decoder heap in the L0 memory pool. L0 is the physical system memory pool. When the adapter is discrete/NUMA, this pool has greater bandwidth for the CPU and less bandwidth for the GPU. When the adapter is UMA, this pool is the only one which is valid. For more information, see [Residency](resources.md#residency).
 
 `MemoryPoolL1Size`
 
-The allocation size of the video decoder heap in the L1 memory pool. L1 is typically known as the physical video memory pool. L1 is only available when the adapter is discrete/NUMA, and has greater bandwidth for the GPU and cannot even be accessed by the CPU. When the adapter is UMA, this pool is not available. For more information, see [Residency](https://learn.microsoft.com/en-us/windows/win32/direct3d12/residency).
+The allocation size of the video decoder heap in the L1 memory pool. L1 is typically known as the physical video memory pool. L1 is only available when the adapter is discrete/NUMA, and has greater bandwidth for the GPU and cannot even be accessed by the CPU. When the adapter is UMA, this pool is not available. For more information, see [Residency](resources.md#residency).
 
 <a id="d3d12-feature-data-video-architecture"></a>
 
@@ -887,7 +887,7 @@ typedef struct D3D12_FEATURE_DATA_VIDEO_ARCHITECTURE
 > `IOCoherent` is the output video I/O-coherence indicator. **Qualification:**
 > the selected public declaration supplies this field but no complete
 > decode-specific heap/cacheability truth table. This draft does not infer a
-> new memory-consistency rule or universal CPU-cacheable allocation permission
+> new memory consistency rule or universal CPU-cacheable allocation permission
 > from it. [CPU/GPU access and heap properties](resources.md#cpu-access) and
 > [explicit completion](execution.md#completion-lifetime) retain their owners.
 
@@ -913,7 +913,7 @@ typedef struct D3D12_FEATURE_DATA_VIDEO_DECODE_HISTOGRAM
 } D3D12_FEATURE_DATA_VIDEO_DECODE_HISTOGRAM;
 ```
 
-Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_DECODE_HISTOGRAM](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video). Retrieves the histogram capabilities for the specified decoder configuration.
+Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_DECODE_HISTOGRAM](#d3d12-feature-data-video-decode-histogram). Retrieves the histogram capabilities for the specified decoder configuration.
 
 #### Members
 
@@ -923,7 +923,7 @@ Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](#video-check
 
 `DecodeProfile`
 
-A GUID representing the decode profile for which histogram capabilities will be queried. Get a list of available profile GUIDs by calling [ID3D12VideoDevice::CheckFeatureSupport](#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_DECODE_PROFILES](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video).
+A GUID representing the decode profile for which histogram capabilities will be queried. Get a list of available profile GUIDs by calling [ID3D12VideoDevice::CheckFeatureSupport](#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_DECODE_PROFILES](#d3d12-feature-data-video-decode-profiles).
 
 `Width`
 
@@ -935,7 +935,7 @@ The decode height of the source stream.
 
 `DecodeFormat`
 
-The [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format) representing the decode format.
+The [DXGI_FORMAT](formats.md#dxgi-format) representing the decode format.
 
 `Components`
 
@@ -955,7 +955,7 @@ The bit depth of the bin counter. The counter is always stored in a 32-bit value
 > **Authored synthesis - human review pending.**
 >
 > `Components` is an output support mask. Y/R share component index 0,
-> U/G index 1, V/B index 2, and A index 3; it is not a seven-element histogram.
+> U/G index 1, V/B index 2, and A index 3. It is not a seven-element histogram.
 > An enabled destination holds `BinCount` 32-bit counters, so its required byte
 > range is `Offset + 4 * BinCount` within its buffer, without integer overflow.
 > The reported counter depth controls saturation and zeroed upper storage bits,
@@ -968,11 +968,11 @@ The bit depth of the bin counter. The counter is always stored in a 32-bit value
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **Histogram/allocation qualification:** the public histogram-buffer page's
-> heap/resource-flag lists are not used here as a blanket allocation whitelist.
+> **Histogram/allocation qualification:** the public histogram buffer page's
+> heap/resource flag lists are not used here as a blanket allocation whitelist.
 > They include combinations whose legality also depends on the ordinary
 > buffer/resource contract. Allocate under the canonical
-> [resource and heap requirements](resources.md#resource-contracts); this draft
+> [resource and heap requirements](resources.md#resource-contracts). This draft
 > does not override them. The generic decode reference also does not specify
 > an unverified codec-specific histogram stage relative to conversion.
 
@@ -988,9 +988,9 @@ The bit depth of the bin counter. The counter is always stored in a 32-bit value
 > **Authored synthesis - human review pending.**
 >
 > The declarations use `D3D12_VIDEO_DECODE_MAX_ARGUMENTS` for the ten
-> frame-argument slots and `D3D12_VIDEO_DECODE_MAX_HISTOGRAM_COMPONENTS` for the
+> frame argument slots and `D3D12_VIDEO_DECODE_MAX_HISTOGRAM_COMPONENTS` for the
 > four per-component histogram slots. Their capacities are also shown in the
-> owning public member descriptions; neither expands codec support.
+> owning public member descriptions. Neither expands codec support.
 
 <!-- d3d12-review-alert:end:video-decode:N-array-extents:0 -->
 
@@ -1039,7 +1039,7 @@ typedef struct D3D12_VIDEO_DECODER_DESC
 } D3D12_VIDEO_DECODER_DESC;
 ```
 
-Describes a [ID3D12VideoDecoder](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videodecoder). Pass this structure into [ID3D12VideoDevice::CreateVideoDecoder](#create-video-decoder) to create an instance of **ID3D12VideoDecoder**.
+Describes a [ID3D12VideoDecoder](#decode-objects). Pass this structure into [ID3D12VideoDevice::CreateVideoDecoder](#create-video-decoder) to create an instance of **ID3D12VideoDecoder**.
 
 #### Members
 
@@ -1071,7 +1071,7 @@ typedef struct D3D12_VIDEO_DECODER_HEAP_DESC
 } D3D12_VIDEO_DECODER_HEAP_DESC;
 ```
 
-Describes a [ID3D12VideoDecoderHeap](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videodecoderheap). Pass this structure into [ID3D12VideoDevice::CreateVideoDecoderHeap](#create-video-decoder-heap) to create an instance of **ID3D12VideoDecoderHeap**.
+Describes a [ID3D12VideoDecoderHeap](#decode-objects). Pass this structure into [ID3D12VideoDevice::CreateVideoDecoderHeap](#create-video-decoder-heap) to create an instance of **ID3D12VideoDecoderHeap**.
 
 #### Members
 
@@ -1093,7 +1093,7 @@ The decode height of the bitstream to be decoded.
 
 `Format`
 
-<ins><!-- d3d12-review-inline:begin:video-decode:P-video_decoder_heap_desc-members:10 -->A value from [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format) specifying the native decoded-picture format.<!-- d3d12-review-inline:end:video-decode:P-video_decoder_heap_desc-members:10 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-decode:P-video_decoder_heap_desc-members:10 -->A value from [DXGI_FORMAT](formats.md#dxgi-format) specifying the native decoded picture format.<!-- d3d12-review-inline:end:video-decode:P-video_decoder_heap_desc-members:10 --></ins>
 
 `FrameRate`
 
@@ -1133,7 +1133,7 @@ Defines the combination of a pixel format and color space for a resource content
 
 `Format`
 
-A value from the [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format) enumeration, specifying the DXGI format of the data.
+A value from the [DXGI_FORMAT](formats.md#dxgi-format) enumeration, specifying the DXGI format of the data.
 
 `ColorSpace`
 
@@ -1288,7 +1288,7 @@ Represents a compressed bitstream from which video is decoded.
 
 `pBuffer`
 
-A pointer to an [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) representing the source buffer containing the compressed bitstream to decode.
+A pointer to an [ID3D12Resource](resources.md#resource-storage) representing the source buffer containing the compressed bitstream to decode.
 
 `Offset`
 
@@ -1336,7 +1336,7 @@ The video device driver uses the "PicEntry" indices defined in the DXVA spec for
 
 `ppHeaps`
 
-An array of [ID3D12VideoDecoderHeap](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videodecoderheap) objects. This field is used with formats that support non-key frame resolution changes, allowing the caller to pass in the previous resolution's heap, relative to the reference it's being used for, in addition to the current resolution heap.
+An array of [ID3D12VideoDecoderHeap](#decode-objects) objects. This field is used with formats that support non-key frame resolution changes, allowing the caller to pass in the previous resolution's heap, relative to the reference it's being used for, in addition to the current resolution heap.
 
 #### Remarks
 
@@ -1350,7 +1350,7 @@ Reference textures may have limitations such as a requirement to allocate refere
 > If `ppHeaps` is null, the input's current decoder heap is the default for
 > the references, as declared in the released interface. **Qualification:**
 > the documented null `pSubresources` default above conflicts with the inspected
-> ordinary validation path; see the [reference-array qualification](#decode-frame1).
+> ordinary validation path. See the [reference array qualification](#decode-frame1).
 > Mixed previous-resolution heaps are not a codec-independent permission;
 > the applicable configuration flag and codec contract still govern them.
 
@@ -1395,7 +1395,7 @@ A [D3D12_VIDEO_DECODE_COMPRESSED_BITSTREAM](#d3d12-video-decode-compressed-bitst
 
 `pHeap`
 
-An [ID3D12VideoDecoderHeap](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videodecoderheap) representing a pointer to the heap for the current decode resolution.
+An [ID3D12VideoDecoderHeap](#decode-objects) representing a pointer to the heap for the current decode resolution.
 
 <a id="d3d12-video-decode-conversion-arguments"></a>
 
@@ -1424,7 +1424,7 @@ A boolean value indicating whether decode conversion should be used.
 
 `pReferenceTexture2D`
 
-A pointer to an [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) containing the native decoding output. When downsampling is enabled, the output at native decode resolution, color space, and format may be required for future decode submissions (as reference frames, for instance).
+A pointer to an [ID3D12Resource](resources.md#resource-storage) containing the native decoding output. When downsampling is enabled, the output at native decode resolution, color space, and format may be required for future decode submissions (as reference frames, for instance).
 
 `ReferenceSubresource`
 
@@ -1442,7 +1442,7 @@ A value from the [DXGI_COLOR_SPACE_TYPE](https://learn.microsoft.com/en-us/windo
 
 Scaling is specified by the difference between the native decode texture size and the output texture size.
 
-Use [D3D12_FEATURE_VIDEO_DECODE_CONVERSION_SUPPORT](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video) to determine if a conversion combination is supported.
+Use [D3D12_FEATURE_VIDEO_DECODE_CONVERSION_SUPPORT](#d3d12-feature-data-video-decode-conversion-support) to determine if a conversion combination is supported.
 
 The source and destination resolution and format are communicated by the resource properties of decode textures and the output buffer specified in <ins><!-- d3d12-review-inline:begin:video-decode:P-video_decode_conversion_arguments-remarks:3 -->[ID3D12VideoDecodeCommandList::DecodeFrame](#decode-frame)<!-- d3d12-review-inline:end:video-decode:P-video_decode_conversion_arguments-remarks:3 --></ins>.
 
@@ -1451,9 +1451,9 @@ The source and destination resolution and format are communicated by the resourc
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **Qualification:** the preceding resource-size description is a public
+> **Qualification:** the preceding resource size description is a public
 > source assertion, not an independently established legacy downscale guarantee.
-> See the [legacy-conversion qualification](#decode-frame1); the version-1
+> See the [legacy conversion qualification](#decode-frame1). The version-1
 > conversion type has explicit dimensions.
 
 <!-- d3d12-review-alert:end:video-decode:N-base-conversion-adjacent:0 -->
@@ -1479,7 +1479,7 @@ Specifies the parameters for the output stream for a video decode operation. [D3
 
 `pOutputTexture2D`
 
-An [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) representing the output texture. If decode conversion is enabled, this texture will contain the post-conversion output. If decode conversion is not enabled, this texture will contain the decode output.
+An [ID3D12Resource](resources.md#resource-storage) representing the output texture. If decode conversion is enabled, this texture will contain the post-conversion output. If decode conversion is not enabled, this texture will contain the decode output.
 
 `OutputSubresource`
 
@@ -1518,7 +1518,7 @@ A boolean value indicating whether decode conversion should be used.
 
 `pReferenceTexture2D`
 
-A pointer to an [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) containing the native decoding output. When downsampling is enabled, the output at native decode resolution, color space, and format may be required for future decode submissions (as reference frames, for instance).
+A pointer to an [ID3D12Resource](resources.md#resource-storage) containing the native decoding output. When downsampling is enabled, the output at native decode resolution, color space, and format may be required for future decode submissions (as reference frames, for instance).
 
 `ReferenceSubresource`
 
@@ -1564,7 +1564,7 @@ The offset location in *pBuffer* to write the component histogram. Must be 256-b
 
 `pBuffer`
 
-<ins><!-- d3d12-review-inline:begin:video-decode:P-video_decode_output_histogram-members:4 -->An [ID3D12Resource](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource)<!-- d3d12-review-inline:end:video-decode:P-video_decode_output_histogram-members:4 --></ins> representing the target buffer for hardware to write the components histogram. Set to a nullptr when the component histogram is disabled.
+<ins><!-- d3d12-review-inline:begin:video-decode:P-video_decode_output_histogram-members:4 -->An [ID3D12Resource](resources.md#resource-storage)<!-- d3d12-review-inline:end:video-decode:P-video_decode_output_histogram-members:4 --></ins> representing the target buffer for hardware to write the components histogram. Set to a nullptr when the component histogram is disabled.
 
 #### Remarks
 
@@ -1592,7 +1592,7 @@ Specifies the parameters for the output stream for a video decode operation. [D3
 
 `pOutputTexture2D`
 
-An [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) representing the output texture. If decode conversion is enabled, this texture will contain the post-conversion output. If decode conversion is not enabled, this texture will contain the decode output.
+An [ID3D12Resource](resources.md#resource-storage) representing the output texture. If decode conversion is enabled, this texture will contain the post-conversion output. If decode conversion is not enabled, this texture will contain the decode output.
 
 `OutputSubresource`
 
@@ -1612,10 +1612,10 @@ An array of [D3D12_VIDEO_DECODE_OUTPUT_HISTOGRAM](#d3d12-video-decode-output-his
 > **Authored synthesis - human review pending.**
 >
 > **Scoped ordinary validation:** the inspected runtime rejects reserved
-> compressed-bitstream, reference, output and histogram resources. The bitstream
+> compressed bitstream, reference, output and histogram resources. The bitstream
 > is a nonempty buffer range: `Offset + Size` must fit in the buffer without
 > overflow, and Offset is 128-byte aligned on this path. Reference/output
-> pictures are Texture2D resources with one mip; their selected subresource
+> pictures are Texture2D resources with one mip. Their selected subresource
 > identifies plane 0 for the chosen array slice. The current heap configuration
 > matches the decoder; reference formats match the applicable heap. The native
 > decode picture's format matches the heap's Format. An enabled conversion has
@@ -1641,7 +1641,7 @@ An array of [D3D12_VIDEO_DECODE_OUTPUT_HISTOGRAM](#d3d12-video-decode-output-his
 >
 > **Qualification:** these scoped validation facts are not a complete codec
 > validity definition or a conformance claim for every runtime/driver.
-> Mixed-resolution reference-heap applicability, null/default arrays and some
+> Mixed-resolution reference heap applicability, null/default arrays and some
 > size/error paths have unresolved evidence limits. The type definitions retain
 > the public meanings without promising that every malformed description is
 > rejected or every documented default works on the inspected path.
@@ -1766,7 +1766,7 @@ The driver supports post processing. If this flag is set, the host decoder can s
 
 ##### D3D12_VIDEO_DECODE_CONFIGURATION_FLAG_REFERENCE_ONLY_ALLOCATIONS_REQUIRED
 
-Reference resources must be allocated with the [D3D12_RESOURCE_FLAG_VIDEO_DECODE_REFERENCE_ONLY](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_resource_flags) resource flag. <ins><!-- d3d12-review-inline:begin:video-decode:P-video_decode_configuration_flags-members:8 -->Reference textures<!-- d3d12-review-inline:end:video-decode:P-video_decode_configuration_flags-members:8 --></ins> must be separate from output textures, similar to performing a format conversion or downscale. This flag must not be set for [D3D12_VIDEO_DECODE_TIER_3](#d3d12-video-decode-tier) or greater.
+Reference resources must be allocated with the [D3D12_RESOURCE_FLAG_VIDEO_DECODE_REFERENCE_ONLY](resources.md#d3d12-resource-flags) resource flag. <ins><!-- d3d12-review-inline:begin:video-decode:P-video_decode_configuration_flags-members:8 -->Reference textures<!-- d3d12-review-inline:end:video-decode:P-video_decode_configuration_flags-members:8 --></ins> must be separate from output textures, similar to performing a format conversion or downscale. This flag must not be set for [D3D12_VIDEO_DECODE_TIER_3](#d3d12-video-decode-tier) or greater.
 
 ##### D3D12_VIDEO_DECODE_CONFIGURATION_FLAG_ALLOW_RESOLUTION_CHANGE_ON_NON_KEY_FRAME
 
@@ -1779,7 +1779,7 @@ Reference resources must be allocated with the [D3D12_RESOURCE_FLAG_VIDEO_DECODE
 >
 > **Configuration qualification:** the public POST_PROCESSING_SUPPORTED
 > description refers to conversion, whose actual combination still requires the
-> conversion-support query. It does not establish that codec picture-parameter
+> conversion support query. It does not establish that codec picture parameter
 > post-processing switches are accepted. The inspected frame validation rejects
 > such switches on its ordinary path.
 
@@ -1790,10 +1790,10 @@ Reference resources must be allocated with the [D3D12_RESOURCE_FLAG_VIDEO_DECODE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The public height-alignment text above requires a multiple-of-32 decoded
+> The public height alignment text above requires a multiple-of-32 decoded
 > surface height. The inspected validation instead compares native reference
 > height against the stream height rounded up to 32. This draft retains the
-> source requirement but does not infer a complete conversion-output height
+> source requirement but does not infer a complete conversion output height
 > rule or a promise to reject every non-multiple allocation.
 
 <!-- d3d12-review-alert:end:video-decode:N-postprocess-height-qualification:1 -->
@@ -2050,20 +2050,20 @@ Video decoding is not supported.
 
 #### D3D12_VIDEO_DECODE_TIER_1
 
-In tier 1, the hardware decoder requires that the application allocate reference textures as a texture array. This is to accommodate hardware requirements that the textures be "close" in address space because the hardware doesn't support a full size pointer for each individual picture buffer. Instead it has one pointer and a more limited bit offset. For more information on texture arrays, see [Introduction To Textures in Direct3D 11](https://learn.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-textures-intro).
+In tier 1, the hardware decoder requires that the application allocate reference textures as a texture array. This is to accommodate hardware requirements that the textures be "close" in address space because the hardware doesn't support a full size pointer for each individual picture buffer. Instead it has one pointer and a more limited bit offset. For more information on texture arrays, see [Introduction To Textures in Direct3D 11](resources.md#resource-dimensions).
 
-<ins><!-- d3d12-review-inline:begin:video-decode:P-tier-1:1 -->If the decoder hardware requires a unique memory layout that is not supported for operations on other engines or different video operations, the decoder may set the [D3D12_VIDEO_DECODE_CONFIGURATION_FLAG_REFERENCE_ONLY_ALLOCATIONS_REQUIRED](#d3d12-video-decode-configuration-flags) configuration flag in the [D3D12_FEATURE_DATA_VIDEO_DECODE_SUPPORT](#d3d12-feature-data-video-decode-support) structure when queried for profile support. This flag indicates that the application must allocate references with the [D3D12_RESOURCE_FLAG_VIDEO_DECODE_REFERENCE_ONLY](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_resource_flags) flag. The application should use the [D3D12_VIDEO_DECODE_CONVERSION_ARGUMENTS](#d3d12-video-decode-conversion-arguments) structure to set a reference-only output if the output is needed as a future reference frame. The output frame passed to [ID3D12VideoDecodeCommandList::DecodeFrame](#decode-frame) is a D3D12 resource that can be consumed by other portions of the pipeline and must not have the D3D12\_RESOURCE\_FLAG\_VIDEO\_DECODE\_REFERENCE\_ONLY flag.<!-- d3d12-review-inline:end:video-decode:P-tier-1:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-decode:P-tier-1:1 -->If the decoder hardware requires a unique memory layout that is not supported for operations on other engines or different video operations, the decoder may set the [D3D12_VIDEO_DECODE_CONFIGURATION_FLAG_REFERENCE_ONLY_ALLOCATIONS_REQUIRED](#d3d12-video-decode-configuration-flags) configuration flag in the [D3D12_FEATURE_DATA_VIDEO_DECODE_SUPPORT](#d3d12-feature-data-video-decode-support) structure when queried for profile support. This flag indicates that the application must allocate references with the [D3D12_RESOURCE_FLAG_VIDEO_DECODE_REFERENCE_ONLY](resources.md#d3d12-resource-flags) flag. The application should use the [D3D12_VIDEO_DECODE_CONVERSION_ARGUMENTS](#d3d12-video-decode-conversion-arguments) structure to set a reference-only output if the output is needed as a future reference frame. The output frame passed to [ID3D12VideoDecodeCommandList::DecodeFrame](#decode-frame) is a D3D12 resource that can be consumed by other portions of the pipeline and must not have the D3D12\_RESOURCE\_FLAG\_VIDEO\_DECODE\_REFERENCE\_ONLY flag.<!-- d3d12-review-inline:end:video-decode:P-tier-1:1 --></ins>
 
 ##### Tier 1 requirements for compressed input buffers
 
 -  <ins><!-- d3d12-review-inline:begin:video-decode:P-tier-1:3 -->All slices for a given frame must be placed in order and must be contiguous, i.e. there must be no gaps between slices. Slice control buffers must specify offset and size parameters that meet this requirement.<!-- d3d12-review-inline:end:video-decode:P-tier-1:3 --></ins>
 - The first slice must begin on a 128 Byte boundary. The offset set in the [D3D12_VIDEO_DECODE_COMPRESSED_BITSTREAM](#d3d12-video-decode-compressed-bitstream) structure must be a multiple of 128 Bytes.
-- Decoding is supported from buffers allocated with [D3D12_MEMORY_POOL_L0](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_memory_pool). This is always system memory, but still a D3D12 buffer.
+- Decoding is supported from buffers allocated with [D3D12_MEMORY_POOL_L0](resources.md#d3d12-memory-pool). This is always system memory, but still a D3D12 buffer.
 - Decoding is supported from buffers allocated with D3D12\_MEMORY\_POOL\_L1, the default pool, including those allocated with D3D12\_CPU\_PAGE\_PROPERTY\_NOT\_AVAILABLE.
 
 #### D3D12_VIDEO_DECODE_TIER_2
 
-<ins><!-- d3d12-review-inline:begin:video-decode:P-tier-2:0 -->In decode tier 2, textures can be referenced as a texture array or as an array of separate texture 2D resources (each resource having array size of 1). This is more flexible for the caller and is important in scenarios where the resolution changes frequently such as in streaming video, because a texture array can only be allocated and deallocated as a single unit, but separate texture 2D resources can be allocated and deallocated individually. If decode hardware requires a unique tiling format that is not supported for operations on other engines or different video operations, the decoder may set the [D3D12_VIDEO_DECODE_CONFIGURATION_FLAG_REFERENCE_ONLY_ALLOCATIONS_REQUIRED](#d3d12-video-decode-configuration-flags) configuration flag in the [D3D12_FEATURE_DATA_VIDEO_DECODE_SUPPORT](#d3d12-feature-data-video-decode-support) structure when queried for profile support. This flag indicates that the application must allocate references with the [D3D12_RESOURCE_FLAG_VIDEO_DECODE_REFERENCE_ONLY](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_resource_flags) flag. The application should use the [D3D12_VIDEO_DECODE_CONVERSION_ARGUMENTS](#d3d12-video-decode-conversion-arguments) structure to set a reference only output if the output is needed as a future reference frame. The output frame passed to [ID3D12VideoDecodeCommandList::DecodeFrame](#decode-frame) is a D3D12 resource that can be consumed by other portions of the pipeline and must not have the D3D12\_RESOURCE\_FLAG\_VIDEO\_DECODE\_REFERENCE\_ONLY flag.<!-- d3d12-review-inline:end:video-decode:P-tier-2:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-decode:P-tier-2:0 -->In decode tier 2, textures can be referenced as a texture array or as an array of separate texture 2D resources (each resource having array size of 1). This is more flexible for the caller and is important in scenarios where the resolution changes frequently such as in streaming video, because a texture array can only be allocated and deallocated as a single unit, but separate texture 2D resources can be allocated and deallocated individually. If decode hardware requires a unique tiling format that is not supported for operations on other engines or different video operations, the decoder may set the [D3D12_VIDEO_DECODE_CONFIGURATION_FLAG_REFERENCE_ONLY_ALLOCATIONS_REQUIRED](#d3d12-video-decode-configuration-flags) configuration flag in the [D3D12_FEATURE_DATA_VIDEO_DECODE_SUPPORT](#d3d12-feature-data-video-decode-support) structure when queried for profile support. This flag indicates that the application must allocate references with the [D3D12_RESOURCE_FLAG_VIDEO_DECODE_REFERENCE_ONLY](resources.md#d3d12-resource-flags) flag. The application should use the [D3D12_VIDEO_DECODE_CONVERSION_ARGUMENTS](#d3d12-video-decode-conversion-arguments) structure to set a reference only output if the output is needed as a future reference frame. The output frame passed to [ID3D12VideoDecodeCommandList::DecodeFrame](#decode-frame) is a D3D12 resource that can be consumed by other portions of the pipeline and must not have the D3D12\_RESOURCE\_FLAG\_VIDEO\_DECODE\_REFERENCE\_ONLY flag.<!-- d3d12-review-inline:end:video-decode:P-tier-2:0 --></ins>
 
 ##### Tier 2 requirements for compressed input buffers
 
@@ -2071,7 +2071,7 @@ These requirements are identical to the tier 1 requirements.
 
 - All slices for a given frame must be placed in order and must be contiguous, i.e. there must be no gaps between slices. Slice control buffers must specify offset and size parameters that meet this requirement.
 - The first slice must begin on a 128 Byte boundary. The offset set in the [D3D12_VIDEO_DECODE_COMPRESSED_BITSTREAM](#d3d12-video-decode-compressed-bitstream) structure must be a multiple of 128 Bytes.
-- Decoding is supported from buffers allocated with [D3D12_MEMORY_POOL_L0](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_memory_pool). This is always system memory, but still a D3D12 buffer.
+- Decoding is supported from buffers allocated with [D3D12_MEMORY_POOL_L0](resources.md#d3d12-memory-pool). This is always system memory, but still a D3D12 buffer.
 - <ins><!-- d3d12-review-inline:begin:video-decode:P-tier-2:3 -->Decoding is supported from buffers allocated with D3D12\_MEMORY\_POOL\_L1, the default pool, including those allocated with D3D12\_CPU\_PAGE\_PROPERTY\_NOT\_AVAILABLE.<!-- d3d12-review-inline:end:video-decode:P-tier-2:3 --></ins>
 
 <!-- d3d12-review-alert:begin:video-decode:N-tier-qualification:0 -->
@@ -2092,7 +2092,7 @@ These requirements are identical to the tier 1 requirements.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A frame-argument enum member does not establish that every decode profile
+> A frame argument enum member does not establish that every decode profile
 > accepts that argument type. The codec's DXVA contract determines the applicable
 > buffers.
 
@@ -2108,7 +2108,7 @@ These requirements are identical to the tier 1 requirements.
 > **Authored synthesis - human review pending.**
 >
 > `D3D12_VIDEO_DECODE_FRAME_ARGUMENT.Type` identifies picture parameters,
-> inverse-quantization matrices, slice controls or Huffman tables. `Size` is
+> inverse quantization matrices, slice controls or Huffman tables. `Size` is
 > the byte size of the corresponding typed payload and `pData` points to those
 > bytes. These are not shader constants or a portable untyped parameter grammar.
 > `NumFrameArguments <= 10` is the generic descriptor capacity, not a guarantee
@@ -2124,7 +2124,7 @@ These requirements are identical to the tier 1 requirements.
 > The codec/profile's DXVA specification supplies the buffer layouts and meanings.
 > For example, the public
 > [`DXVA_PicEntry_HEVC`](https://learn.microsoft.com/en-us/windows/win32/medfound/dxva-picentry-hevc)
-> defines `Index7Bits`; the D3D12 reference-frame contract uses that codec index
+> defines `Index7Bits`. The D3D12 reference frame contract uses that codec index
 > to dereference the supplied reference/subresource arrays. It is not a GPU
 > address or a D3D12 resource identifier. Published
 > [DXVA declarations](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/dxva/)
@@ -2141,13 +2141,13 @@ These requirements are identical to the tier 1 requirements.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **Codec-layout qualification:** this selected generic baseline does not
-> reproduce or certify every codec's picture-parameter, matrix, slice/tile-control
+> **Codec layout qualification:** this selected generic baseline does not
+> reproduce or certify every codec's picture parameter, matrix, slice/tile control
 > or Huffman layout, profile mapping, bitstream grammar and invalid-bitstream
 > recovery rules. A profile GUID or a released C declaration alone does not
 > establish those behavioral contracts. Codec-specific layout/version matching
-> remains an explicit external boundary; this draft does not substitute invented
-> buffers or a universal supported-profile list.
+> remains an explicit external boundary. This draft does not substitute invented
+> buffers or a universal supported profile list.
 
 <!-- d3d12-review-alert:end:video-decode:N-codec-boundary:2 -->
 
@@ -2189,7 +2189,7 @@ Pointer to a caller-allocated [**D3D12DDIARG\_VIDEO\_GETCAPS\_0020**](#ddi-capab
 
 If this function succeeds, it returns **S\_OK**. Otherwise, it returns an **HRESULT** error code.
 
-### Decoder private CPU-object sizing
+### Decoder private CPU object sizing
 
 <ins><!-- d3d12-review-inline:begin:video-decode:P-ddi-size-decoder-summary:0 -->`PFND3D12DDI_CALCPRIVATEVIDEODECODERSIZE_0072` calculates the size of a video decoder. The D3D runtime allocates memory for storing the driver's CPU object representing the video decoder.<!-- d3d12-review-inline:end:video-decode:P-ddi-size-decoder-summary:0 --></ins>
 
@@ -2211,7 +2211,7 @@ Returns the size of the video decoder in bytes.
 
 The runtime allocates memory for storing the driver CPU object that represents the video decoder. This method is used to calculate the driver object size.
 
-### Decoder-heap private CPU-object sizing
+### Decoder heap private CPU object sizing
 
 <ins><!-- d3d12-review-inline:begin:video-decode:P-ddi-size-heap-summary:0 -->`PFND3D12DDI_CALCPRIVATEVIDEODECODERHEAPSIZE_0072` calculates the size of a video decoder heap. The D3D runtime allocates memory for storing the driver's CPU object representing the video decoder heap.<!-- d3d12-review-inline:end:video-decode:P-ddi-size-heap-summary:0 --></ins>
 
@@ -2247,7 +2247,7 @@ The arguments used to create a video decoder.
 
 The video decoder.
 
-### Decoder-heap creation
+### Decoder heap creation
 
 <ins><!-- d3d12-review-inline:begin:video-decode:P-ddi-create-heap-summary:0 -->`PFND3D12DDI_CREATEVIDEODECODERHEAP_0072` creates a video decoder heap.<!-- d3d12-review-inline:end:video-decode:P-ddi-create-heap-summary:0 --></ins>
 
@@ -2267,7 +2267,7 @@ The video decoder heap.
 
 <a id="decode-frame-recording-callback"></a>
 
-### Decode-frame recording DDI
+### Decode frame recording DDI
 
 <ins><!-- d3d12-review-inline:begin:video-decode:P-ddi-decode-summary:0 -->**PFND3D12DDI\_VIDEO\_DECODE\_FRAME\_0041\_1** records a decode frame operation to the command list. Inputs, outputs, and parameters for the decode are specified as arguments to this method.<!-- d3d12-review-inline:end:video-decode:P-ddi-decode-summary:0 --></ins>
 
@@ -2279,7 +2279,7 @@ A handle to the driver's data for the command list. The driver uses this region 
 
 `hDrvDecoder`
 
-The video decoder that contains internal state for this decode session. Examples include motion vectors, internal temporary allocations, etc. See [Creating a Video Decoder](https://learn.microsoft.com/en-us/windows-hardware/drivers/display/creating-a-video-decode-device).
+The video decoder that contains internal state for this decode session. Examples include motion vectors, internal temporary allocations, etc. See [Creating a Video Decoder](#decode-driver).
 
 `pOutputStreamParameters`
 
@@ -2295,7 +2295,7 @@ None
 
 <a id="versioned-decode-frame-recording-callback"></a>
 
-### Versioned decode-frame recording DDI
+### Versioned decode frame recording DDI
 
 <ins><!-- d3d12-review-inline:begin:video-decode:P-ddi-decode1-summary:0 -->The client driver implements this DDI to decode a video frame.<!-- d3d12-review-inline:end:video-decode:P-ddi-decode1-summary:0 --></ins>
 
@@ -2316,7 +2316,7 @@ A handle to the driver's data for the command list. The driver uses this region 
 
 `hDrvDecoder`
 
-The video decoder that contains internal state for this decode session. Examples include motion vectors, internal temporary allocations, etc. See [Creating a Video Decoder](https://learn.microsoft.com/en-us/windows-hardware/drivers/display/creating-a-video-decode-device).
+The video decoder that contains internal state for this decode session. Examples include motion vectors, internal temporary allocations, etc. See [Creating a Video Decoder](#decode-driver).
 
 `pOutputStreamParameters`
 
@@ -2489,7 +2489,7 @@ typedef struct D3D12DDI_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS_0041_1
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Current decoding uses `_0032` input-stream arguments and `_0041_1` output arguments, including four histogram destinations and explicit conversion dimensions. `_0033` remains the heap-size capability description, while current heap creation uses `_0072`.
+> Current decoding uses `_0032` input stream arguments and `_0041_1` output arguments, including four histogram destinations and explicit conversion dimensions. `_0033` remains the heap size capability description, while current heap creation uses `_0072`.
 
 <!-- d3d12-review-alert:end:video-decode:N-ddi-layout-versioning:0 -->
 
@@ -2814,7 +2814,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEODECODER_0072 )( D3D12DDI_HDEV
 
 <a id="protected-video-api-contracts"></a>
 
-## Protected-session video API contracts
+## Protected session video API contracts
 
 <a id="api-id3d12videodecoder1-getprotectedresourcesession"></a>
 
@@ -2830,7 +2830,7 @@ HRESULT GetProtectedResourceSession(
 
 #### Behavior
 
-Gets the [ID3D12ProtectedResourceSession](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12protectedresourcesession.md) that was passed into [ID3D12VideoDevice2::CreateVideoDecoder1](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nf-d3d12video-id3d12videodevice2-createvideodecoder1.md) when the [ID3D12VideoDecoder1](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videodecoder1.md) was created.
+Gets the [ID3D12ProtectedResourceSession](resources.md#protected-resource-sessions) that was passed into [ID3D12VideoDevice2::CreateVideoDecoder1](#api-id3d12videodevice2-createvideodecoder1) when the [ID3D12VideoDecoder1](#protected-video-api-contracts) was created.
 
 <!-- d3d12-review-alert:begin:video-decode:AB-id3d12videodecoder1-getprotectedresourcesession-contract:0 -->
 
@@ -2838,7 +2838,7 @@ Gets the [ID3D12ProtectedResourceSession](https://learn.microsoft.com/en-us/wind
 > **Authored synthesis - human review pending.**
 >
 > Retrieves the session associated with this object's creation, not the current
-> command-list session. Association does not change when a command list selects
+> command list session. Association does not change when a command list selects
 > a different protection context.
 
 <!-- d3d12-review-alert:end:video-decode:AB-id3d12videodecoder1-getprotectedresourcesession-contract:0 -->
@@ -2863,7 +2863,7 @@ Gets the [ID3D12ProtectedResourceSession](https://learn.microsoft.com/en-us/wind
 > **Authored synthesis - human review pending.**
 >
 > Returns the interface query's HRESULT. With no associated session it returns
-> `DXGI_ERROR_NOT_FOUND` and a null output; an unsupported requested interface
+> `DXGI_ERROR_NOT_FOUND` and a null output. An unsupported requested interface
 > returns `E_NOINTERFACE`. Retrieval does not create or signal a session.
 
 <!-- d3d12-review-alert:end:video-decode:AB-id3d12videodecoder1-getprotectedresourcesession-contract:4 -->
@@ -2882,7 +2882,7 @@ HRESULT GetProtectedResourceSession(
 
 #### Behavior
 
-Gets the [ID3D12ProtectedResourceSession](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12protectedresourcesession.md) that was passed into [ID3D12VideoDevice2::CreateVideoDecoderHeap1](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nf-d3d12video-id3d12videodevice2-createvideodecoderheap1.md) when the [ID3D12VideoDecoderHeap1](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videodecoderheap1.md) was created.
+Gets the [ID3D12ProtectedResourceSession](resources.md#protected-resource-sessions) that was passed into [ID3D12VideoDevice2::CreateVideoDecoderHeap1](#api-id3d12videodevice2-createvideodecoderheap1) when the [ID3D12VideoDecoderHeap1](#protected-video-api-contracts) was created.
 
 <!-- d3d12-review-alert:begin:video-decode:AB-id3d12videodecoderheap1-getprotectedresourcesession-contract:0 -->
 
@@ -2890,7 +2890,7 @@ Gets the [ID3D12ProtectedResourceSession](https://learn.microsoft.com/en-us/wind
 > **Authored synthesis - human review pending.**
 >
 > Retrieves the session associated with this object's creation, not the current
-> command-list session. Association does not change when a command list selects
+> command list session. Association does not change when a command list selects
 > a different protection context.
 
 <!-- d3d12-review-alert:end:video-decode:AB-id3d12videodecoderheap1-getprotectedresourcesession-contract:0 -->
@@ -2915,7 +2915,7 @@ Gets the [ID3D12ProtectedResourceSession](https://learn.microsoft.com/en-us/wind
 > **Authored synthesis - human review pending.**
 >
 > Returns the interface query's HRESULT. With no associated session it returns
-> `DXGI_ERROR_NOT_FOUND` and a null output; an unsupported requested interface
+> `DXGI_ERROR_NOT_FOUND` and a null output. An unsupported requested interface
 > returns `E_NOINTERFACE`. Retrieval does not create or signal a session.
 
 <!-- d3d12-review-alert:end:video-decode:AB-id3d12videodecoderheap1-getprotectedresourcesession-contract:4 -->
@@ -2944,9 +2944,9 @@ Creates a video decoder instance that contains the resolution-independent driver
 > **Authored synthesis - human review pending.**
 >
 > Retains the corresponding [decoder/heap creation contract](#create-video-decoder)
-> and adds the explicit protected-session association. Null selects an
+> and adds the explicit protected session association. Null selects an
 > unprotected object; non-null requires the supported protected-video tuple
-> and compatible device/node/type. Decoder and decoder-heap lifetimes/roles
+> and compatible device/node/type. Decoder and decoder heap lifetimes/roles
 > remain distinct; no output/reference picture allocation is implied.
 
 <!-- d3d12-review-alert:end:video-decode:AB-id3d12videodevice2-createvideodecoder1-contract:0 -->
@@ -2969,7 +2969,7 @@ Creates a video decoder instance that contains the resolution-independent driver
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Returns the creation/interface HRESULT. Existing video creation-result, optional capability and hardware qualifications remain; success does not report frame execution.
+> Returns the creation/interface HRESULT. Existing video creation result, optional capability and hardware qualifications remain. Success does not report frame execution.
 
 <!-- d3d12-review-alert:end:video-decode:AB-id3d12videodevice2-createvideodecoder1-contract:4 -->
 
@@ -2997,9 +2997,9 @@ Allocates a video decoder heap that contains the resolution-dependent driver res
 > **Authored synthesis - human review pending.**
 >
 > Retains the corresponding [decoder/heap creation contract](#create-video-decoder-heap)
-> and adds the explicit protected-session association. Null selects an
+> and adds the explicit protected session association. Null selects an
 > unprotected object; non-null requires the supported protected-video tuple
-> and compatible device/node/type. Decoder and decoder-heap lifetimes/roles
+> and compatible device/node/type. Decoder and decoder heap lifetimes/roles
 > remain distinct; no output/reference picture allocation is implied.
 
 <!-- d3d12-review-alert:end:video-decode:AB-id3d12videodevice2-createvideodecoderheap1-contract:0 -->
@@ -3022,7 +3022,7 @@ Allocates a video decoder heap that contains the resolution-dependent driver res
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Returns the creation/interface HRESULT. Existing video creation-result, optional capability and hardware qualifications remain; success does not report frame execution.
+> Returns the creation/interface HRESULT. Existing video creation result, optional capability and hardware qualifications remain. Success does not report frame execution.
 
 <!-- d3d12-review-alert:end:video-decode:AB-id3d12videodevice2-createvideodecoderheap1-contract:4 -->
 
@@ -3047,10 +3047,10 @@ Specifies whether or not protected resources can be accessed by subsequent comma
 > **Authored synthesis - human review pending.**
 >
 > Selects only the supported command list's protection context. Ordinary
-> bindings are preserved (D272); this is not ClearState. Null disables protected
+> bindings are preserved (D272). This is not ClearState. Null disables protected
 > access. [Session/device/node/type and operation support](video.md#protected-video-support),
 > the [canonical selection and open-query rules](command-list-state.md#protection)
-> and [protected-operation predication](counters-queries-and-predication.md#predication-operation-matrix)
+> and [protected operation predication](counters-queries-and-predication.md#predication-operation-matrix)
 > remain required.
 
 <!-- d3d12-review-alert:end:video-decode:AB-id3d12videodecodecommandlist2-setprotectedresourcesession-contract:0 -->

@@ -23,9 +23,9 @@
 > This subordinate reference describes the selected ordinary processing contracts
 > introduced by the [Video processing model](video.md#video-processing-model).
 > A processor fixes the input and output
-> stream descriptions; each processing call supplies the current surfaces,
+> stream descriptions. Each processing call supplies the current surfaces,
 > reference surfaces and operation arguments. Capability results apply to the
-> queried format, color-space, size, field, stereo and rate combination, not to
+> queried format, color space, size, field, stereo and rate combination, not to
 > arbitrary combinations of individually reported features.
 
 <!-- d3d12-review-alert:end:video-process:N-entry:0 -->
@@ -46,9 +46,9 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [command-list annotation reference](diagnostics.md#command-list-annotations)
+> The [command list annotation reference](diagnostics.md#command-list-annotations)
 > defines the three internal BeginEvent/EndEvent/SetMarker support methods
-> on `ID3D12VideoProcessCommandList`. Their recording and allocator-data lifetime
+> on `ID3D12VideoProcessCommandList`. Their recording and allocator data lifetime
 > follows [common annotation state](command-list-state.md#annotations), not
 > a new video processing mode or GPU synchronization operation.
 
@@ -99,7 +99,7 @@
 > Processing uses a command list and allocator of type
 > `D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS`, submitted to a queue of that type.
 > Recording and submission must use compatible device/node associations for
-> the processor, list, allocator, queue and picture-resource objects.
+> the processor, list, allocator, queue and picture resource objects.
 > The [creation rules](execution.md#creation) require matching allocator/list
 > types, and [submission validation](execution.md#validation) requires matching
 > queue/list types and compatible node masks.
@@ -115,15 +115,15 @@
 > [completion and lifetime](execution.md#completion-lifetime), and the
 > [video resource contract](video.md#video-resource-contract) own lifetime,
 > completion and residency. The processor is an
-> `ID3D12Pageable` object, not image storage or a graphics pipeline-state object.
+> `ID3D12Pageable` object, not image storage or a graphics pipeline state object.
 > The application must keep its processor, current/reference inputs and output
 > resources alive for every recorded use that will execute,
 > including uses in unsubmitted recordings, and until the corresponding GPU
 > uses finish. Residency for GPU use follows the video resource contract.
 > Discarding an unsubmitted recording is distinct from completing
-> an executed one. Resetting the command-list object does not complete old GPU
+> an executed one. Resetting the command list object does not complete old GPU
 > uses or reclaim the old recording's allocator storage. CPU argument structures and arrays
-> are recording inputs, not GPU buffers; the nested-pointer qualification below
+> are recording inputs, not GPU buffers. The nested-pointer qualification below
 > does not extend CPU storage into a new GPU memory model.
 
 <!-- d3d12-review-alert:end:video-process:N-route:3 -->
@@ -139,7 +139,7 @@
 > are defined by [video process barriers](synchronization.md#process-enhanced-barrier),
 > and [legacy process barriers](synchronization.md#process-resource-barrier)
 > retain their full declaring owner. There is no implicit transition, fence wait,
-> graphics binding or application picture-resource allocation in `ProcessFrames`/`ProcessFrames1`.
+> graphics binding or application picture resource allocation in `ProcessFrames`/`ProcessFrames1`.
 > Ordering with decode, graphics, compute or another queue follows the shared
 > submission and synchronization contracts.
 
@@ -154,7 +154,7 @@
 > and [its operation matrix](counters-queries-and-predication.md#predication-operation-matrix)
 > own conditional processing. [Process queries](counters-queries-and-predication.md#videoprocess-beginquery)
 > and [resolution](counters-queries-and-predication.md#videoprocess-resolvequerydata)
-> retain their declarations and query lifecycle; they are not processor
+> retain their declarations and query lifecycle. They are not processor
 > capability queries.
 
 <!-- d3d12-review-alert:end:video-process:N-route:5 -->
@@ -164,7 +164,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Encoding's lower-resolution frame-analysis route contributes the [reference-only DPB scaling contract](video-encoding-controls.md#source-s08-032): the DPB_ENCODER_RESOURCES scale capability, one reference-only input, matched dimension/mip/format/reference-only flags, full-surface requirements, disabled transforms and processor-description restrictions. Its rectangle qualification remains explicit. Ordinary readable reconstructed textures retain the ordinary processing path; the scale flag's [shared declaration](video-decode.md#d3d12-video-scale-support-flags) remains canonical.
+> Encoding's lower-resolution frame analysis route contributes the [reference-only DPB scaling contract](video-encoding-controls.md#source-s08-032): the DPB_ENCODER_RESOURCES scale capability, one reference-only input, matched dimension/mip/format/reference-only flags, full-surface requirements, disabled transforms and processor description restrictions. Its rectangle qualification remains explicit. Ordinary readable reconstructed textures retain the ordinary processing path. The scale flag's [shared declaration](video-decode.md#d3d12-video-scale-support-flags) remains canonical.
 
 <!-- d3d12-review-alert:end:video-process:D162-reference-only-dpb-processing-forward:0 -->
 
@@ -182,7 +182,7 @@
 > owns the common protocol and return values. For each processing case below,
 > `FeatureSupportDataSize` must equal `sizeof` the named payload. Initialize its
 > input fields before the call; inspect output fields only on success.
-> `NodeIndex` is a zero-based node index, whereas the processor-size query and
+> `NodeIndex` is a zero-based node index, whereas the processor size query and
 > creation take a `NodeMask`. A successful query does not itself mean that the
 > requested processing operation is supported.
 
@@ -198,7 +198,7 @@
 > not a caller-allocated pointer. PROCESS_REFERENCE_INFO returns scalar counts;
 > PROCESS_MAX_INPUT_STREAMS returns a scalar limit. PROCESSOR_SIZE takes an
 > input array of exactly `NumInputStreamDescs` descriptions and reports
-> allocation sizes; it does not allocate or return stream descriptions.
+> allocation sizes. It does not allocate or return stream descriptions.
 
 <!-- d3d12-review-alert:end:video-process:N-query-protocol:1 -->
 
@@ -224,14 +224,14 @@
 > PROCESS_SUPPORT describes the actual input sample (including width, height,
 > DXGI format and color space), input field/stereo mode and input rate, together
 > with output format/color space, stereo mode and output rate. The
-> `SUPPORTED` bit establishes support for that conversion tuple; the remaining
+> `SUPPORTED` bit establishes support for that conversion tuple. The remaining
 > outputs describe scaling and supported processing options for that tuple.
 > `ScaleSupport.OutputSizeRange` and its flags constrain output sizes; supported
 > filter bits and `FilterRangeSupport` constrain enabled filters and their levels.
 > PROCESS_MAX_INPUT_STREAMS is the node's simultaneous enabled-stream limit,
 > not a guarantee that every tuple or multi-stream feature combination works.
 > PROCESS_REFERENCE_INFO describes the selected deinterlace, filters, features,
-> rates and automatic-processing choice; its counts determine the processor's
+> rates and automatic-processing choice. Its counts determine the processor's
 > past/future reference requirements.
 
 <!-- d3d12-review-alert:end:video-process:N-query-tuple:0 -->
@@ -300,7 +300,7 @@ The globally unique identifier (GUID) for the video processor interface.
 
 `ppVideoProcessor`
 
-<ins><!-- d3d12-review-inline:begin:video-process:P-create-processor-parameters:11 -->A pointer to a memory block that receives a pointer to the [ID3D12VideoProcessor](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videoprocessor) interface.<!-- d3d12-review-inline:end:video-process:P-create-processor-parameters:11 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-process:P-create-processor-parameters:11 -->A pointer to a memory block that receives a pointer to the [ID3D12VideoProcessor](#process-objects) interface.<!-- d3d12-review-inline:end:video-process:P-create-processor-parameters:11 --></ins>
 
 #### Return values
 
@@ -318,9 +318,9 @@ To change the parameters set during creation, you must recreate the video proces
 > The application must provide at least one input stream description and no more
 > simultaneously enabled streams than the node's reported limit. The creation
 > descriptions fix formats/color spaces, rates, size ranges, stereo, deinterlace,
-> filter, orientation, blending, luma-key and automatic-processing choices.
+> filter, orientation, blending, luma key and automatic-processing choices.
 > The input/reference and output resources are supplied later, not allocated
-> by this call. The runtime copies the creation descriptions; their caller-owned
+> by this call. The runtime copies the creation descriptions. Their caller-owned
 > storage is not retained as mutable processor state.
 
 <!-- d3d12-review-alert:end:video-process:N-creation-validation:0 -->
@@ -332,9 +332,9 @@ To change the parameters set during creation, you must recreate the video proces
 >
 > On successful creation, `ppVideoProcessor` receives a caller-owned COM interface
 > reference. The caller releases that reference under the normal
-> [reference-counting and recorded-use lifetime rules](execution.md#lifetime).
+> [reference counting and recorded use lifetime rules](execution.md#lifetime).
 > The application must preserve the processor and referenced resources for
-> unsubmitted recordings that will execute and for outstanding GPU uses; this
+> unsubmitted recordings that will execute and for outstanding GPU uses. This
 > does not assume that recording automatically takes a COM reference on its behalf.
 
 <!-- d3d12-review-alert:end:video-process:N-creation-validation:1 -->
@@ -348,7 +348,7 @@ To change the parameters set during creation, you must recreate the video proces
 > invalid size ranges, a failed/unsupported conversion query, unsupported
 > requested options or mismatched required reference counts are rejected with
 > `E_INVALIDARG` on the inspected ordinary creation path. Interface selection,
-> allocation and device-removal failures can propagate; the short public method
+> allocation and device removal failures can propagate. The short public method
 > page does not supply an exhaustive HRESULT catalog.
 
 <!-- d3d12-review-alert:end:video-process:N-creation-validation:2 -->
@@ -477,9 +477,9 @@ This method returns [D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC](#d3d12-video-proces
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `ID3D12VideoProcessCommandList` records video process work; its version-1
+> `ID3D12VideoProcessCommandList` records video process work. Its version-1
 > interface adds `ProcessFrames1`. `Reset` selects a compatible process allocator
-> and opens a new recording; `ClearState` changes state within the recording, without reclaiming
+> and opens a new recording. `ClearState` changes state within the recording, without reclaiming
 > allocator storage or submitting work. Neither method takes a graphics PSO.
 > Both reset predication to disabled (null buffer, zero offset,
 > `D3D12_PREDICATION_OP_EQUAL_ZERO`).
@@ -495,7 +495,7 @@ This method returns [D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC](#d3d12-video-proces
 > [allocator storage](execution.md#command-storage) and
 > [threading rules](execution.md#threading) remain applicable.
 > Closing is not GPU completion. The runtime close wrapper can perform queued
-> query-resolution work before reaching the close DDI; it is not merely a
+> query resolution work before reaching the close DDI. It is not merely a
 > direct driver call.
 
 <!-- d3d12-review-alert:end:video-process:N-recording:1 -->
@@ -534,7 +534,7 @@ Indicates that recording to the command list has finished.
 
 #### Return values
 
-Type: **[HRESULT](https://learn.microsoft.com/en-us/windows/win32/com/structure-of-com-error-codes)**
+Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 Returns **S\_OK** if successful; otherwise, returns one of the following values:
 
@@ -542,7 +542,7 @@ Returns **S\_OK** if successful; otherwise, returns one of the following values:
 - **E\_OUTOFMEMORY** if the operating system ran out of memory during recording.
 - **E\_INVALIDARG** if an invalid argument was passed to the command list API during recording.
 
-See [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues) for other possible return values.
+See [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes) for other possible return values.
 
 #### Remarks
 
@@ -570,11 +570,11 @@ Resets a command list back to its initial state as if a new command list was jus
 
 Type: **ID3D12CommandAllocator\***
 
-A pointer to the [ID3D12CommandAllocator](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12commandallocator) object that the device creates command lists from.
+A pointer to the [ID3D12CommandAllocator](execution.md#command-storage) object that the device creates command lists from.
 
 #### Return values
 
-Type: **[HRESULT](https://learn.microsoft.com/en-us/windows/win32/com/structure-of-com-error-codes)**
+Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 Returns **S\_OK** if successful; otherwise, returns one of the following values:
 
@@ -582,7 +582,7 @@ Returns **S\_OK** if successful; otherwise, returns one of the following values:
 - **E\_OUTOFMEMORY** if the operating system ran out of memory.
 - **E\_INVALIDARG** if the allocator is currently being used with another command list in the "recording" state or if the specified allocator was created with the wrong type.
 
-See [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12-graphics-reference-returnvalues) for other possible return values.
+See [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes) for other possible return values.
 
 <a id="process-frames"></a>
 
@@ -609,7 +609,7 @@ Records a video processing operation to the command list, operating on one or mo
 > **Authored synthesis - human review pending.**
 >
 > The [shared processing argument rules](#process-argument-rules) specify
-> stream correspondence, resource roles, field-type versioning and validation
+> stream correspondence, resource roles, field type versioning and validation
 > for both processing calls.
 
 <!-- d3d12-review-alert:end:video-process:N-process-forward:0 -->
@@ -618,7 +618,7 @@ Records a video processing operation to the command list, operating on one or mo
 
 `pVideoProcessor`
 
-A pointer to an [ID3D12VideoProcessor](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videoprocessor) interface representing a video processor instance.
+A pointer to an [ID3D12VideoProcessor](#process-objects) interface representing a video processor instance.
 
 `pOutputArguments`
 
@@ -659,7 +659,7 @@ Records a video processing operation to the command list, operating on one or mo
 
 `pVideoProcessor`
 
-A pointer to an [ID3D12VideoProcessor](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videoprocessor) interface representing a video processor instance.
+A pointer to an [ID3D12VideoProcessor](#process-objects) interface representing a video processor instance.
 
 `pOutputArguments`
 
@@ -691,7 +691,7 @@ None
 > `pInputArguments[i]` corresponds to creation description `i`.
 > `pOutputArguments` describes the output views and target rectangle.
 > The current inputs and temporal references are Texture2D surfaces with
-> subresources, not descriptor-table bindings; their formats must match the
+> subresources, not descriptor table bindings. Their formats must match the
 > corresponding processor descriptions.
 
 <!-- d3d12-review-alert:end:video-process:N-call-contract:0 -->
@@ -705,7 +705,7 @@ None
 > `ProcessFrames1` uses the `FieldType` in each
 > `D3D12_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS1` for that call. This permits mixed
 > progressive/interlaced content without recreating the processor merely to
-> change field type; it does not remove capability requirements for the actual
+> change field type. It does not remove capability requirements for the actual
 > field type and processing tuple.
 
 <!-- d3d12-review-alert:end:video-process:N-call-contract:1 -->
@@ -715,15 +715,15 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **Scoped validation:** the inspected path checks stream-count equality,
+> **Scoped validation:** the inspected path checks stream count equality,
 > current/reference/output Texture2D dimensions and formats, subresource bounds,
 > single mip level and plane-zero selection of planar pictures. It rejects
 > reserved pictures and applies the shared video architecture/heap restrictions.
 > The path checks nonnegative, non-inverted rectangles, configured source and
 > nonempty destination size ranges, enabled orientation/blending, and known
 > input flags. These observations are not an exhaustive error table or a
-> hardware-layout guarantee; a missing retail check is not permission.
-> The void recording methods report recording failure through command-list
+> hardware layout guarantee. A missing retail check is not permission.
+> The void recording methods report recording failure through command list
 > error handling and `Close`, not a per-frame HRESULT.
 
 <!-- d3d12-review-alert:end:video-process:N-call-contract:2 -->
@@ -733,7 +733,7 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **Nested CPU-pointer qualification:** the retained public reference-set contract
+> **Nested CPU pointer qualification:** the retained public reference-set contract
 > allows null subresource arrays to mean subresource zero. The inspected
 > validation path directly indexes these arrays, while recording forwards some
 > subresource pointers to the driver. This draft retains the published default
@@ -751,7 +751,7 @@ None
 
 ### D3D12_FEATURE_DATA_VIDEO_PROCESS_SUPPORT
 
-Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_PROCESS_SUPPORT](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video).
+Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_PROCESS_SUPPORT](#d3d12-feature-data-video-process-support).
 
 ```cpp
 typedef struct D3D12_FEATURE_DATA_VIDEO_PROCESS_SUPPORT
@@ -840,7 +840,7 @@ An array of [D3D12_VIDEO_PROCESS_FILTER_RANGE](#d3d12-video-process-filter-range
 
 ### D3D12_FEATURE_DATA_VIDEO_PROCESS_MAX_INPUT_STREAMS
 
-Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_PROCESS_MAX_INPUT_STREAMS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video). Retrieves the maximum number of enabled input streams supported by the video processor.
+Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_PROCESS_MAX_INPUT_STREAMS](#d3d12-feature-data-video-process-max-input-streams). Retrieves the maximum number of enabled input streams supported by the video processor.
 
 ```cpp
 typedef struct D3D12_FEATURE_DATA_VIDEO_PROCESS_MAX_INPUT_STREAMS
@@ -864,7 +864,7 @@ The maximum number of streams that can be enabled for the video processor at the
 
 ### D3D12_FEATURE_DATA_VIDEO_PROCESS_REFERENCE_INFO
 
-Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_PROCESS_REFERENCE_INFO](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video). Retrieves the number of past and future reference frames required for the specified deinterlace mode, filter, rate conversion, or auto processing features.
+Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_PROCESS_REFERENCE_INFO](#d3d12-feature-data-video-process-reference-info). Retrieves the number of past and future reference frames required for the specified deinterlace mode, filter, rate conversion, or auto processing features.
 
 ```cpp
 typedef struct D3D12_FEATURE_DATA_VIDEO_PROCESS_REFERENCE_INFO
@@ -957,11 +957,11 @@ The number of input streams provided in the *pInputStreamDescs* parameter.
 
 `MemoryPoolL0Size`
 
-The allocation size of the video processor in the L0 memory pool. L0 is the physical system memory pool. When the adapter is discrete/NUMA, this pool has greater bandwidth for the CPU and less bandwidth for the GPU. When the adapter is UMA, this pool is the only one which is valid. For more information, see [Residency](https://learn.microsoft.com/en-us/windows/win32/direct3d12/residency).
+The allocation size of the video processor in the L0 memory pool. L0 is the physical system memory pool. When the adapter is discrete/NUMA, this pool has greater bandwidth for the CPU and less bandwidth for the GPU. When the adapter is UMA, this pool is the only one which is valid. For more information, see [Residency](resources.md#residency).
 
 `MemoryPoolL1Size`
 
-The allocation size of the video processor in the L1 memory pool. L1 is typically known as the physical video memory pool. L1 is only available when the adapter is discrete/NUMA, and has greater bandwidth for the GPU and cannot even be accessed by the CPU. When the adapter is UMA, this pool is not available. For more information, see [Residency](https://learn.microsoft.com/en-us/windows/win32/direct3d12/residency).
+The allocation size of the video processor in the L1 memory pool. L1 is typically known as the physical video memory pool. L1 is only available when the adapter is discrete/NUMA, and has greater bandwidth for the GPU and cannot even be accessed by the CPU. When the adapter is UMA, this pool is not available. For more information, see [Residency](resources.md#residency).
 
 <a id="process-stream-types"></a>
 
@@ -1012,7 +1012,7 @@ typedef struct D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC
 
 `Format`
 
-A value from the [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format) enumeration specifying the format of the input stream. In the case of stereo, this format is the format of both inputs.
+A value from the [DXGI_FORMAT](formats.md#dxgi-format) enumeration specifying the format of the input stream. In the case of stereo, this format is the format of both inputs.
 
 `ColorSpace`
 
@@ -1101,7 +1101,7 @@ typedef struct D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC
 
 `Format`
 
-A <ins><!-- d3d12-review-inline:begin:video-process:P-d3d12_video_process_output_stream_desc-members:1 -->[DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format) enumeration specifying the format of the output resources.<!-- d3d12-review-inline:end:video-process:P-d3d12_video_process_output_stream_desc-members:1 --></ins>
+A <ins><!-- d3d12-review-inline:begin:video-process:P-d3d12_video_process_output_stream_desc-members:1 -->[DXGI_FORMAT](formats.md#dxgi-format) enumeration specifying the format of the output resources.<!-- d3d12-review-inline:end:video-process:P-d3d12_video_process_output_stream_desc-members:1 --></ins>
 
 `ColorSpace`
 
@@ -1160,7 +1160,7 @@ The number of past reference frames provided in *ppPastFrames*.
 
 `ppPastFrames`
 
-A pointer to an array of [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) surfaces. The number of elements in the array is *NumPastFrames*.
+A pointer to an array of [ID3D12Resource](resources.md#resource-storage) surfaces. The number of elements in the array is *NumPastFrames*.
 
 `pPastSubresources`
 
@@ -1172,7 +1172,7 @@ An array of subresource indices for the list of *ppPastFrames* textures. NULL in
 
 `ppFutureFrames`
 
-A pointer to an array of [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) surfaces. The number of elements in the array is *NumFutureFrames*.
+A pointer to an array of [ID3D12Resource](resources.md#resource-storage) surfaces. The number of elements in the array is *NumFutureFrames*.
 
 `pFutureSubresources`
 
@@ -1197,7 +1197,7 @@ typedef struct D3D12_VIDEO_PROCESS_INPUT_STREAM
 
 `pTexture2D`
 
-An [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) representing the current input field or frame.
+An [ID3D12Resource](resources.md#resource-storage) representing the current input field or frame.
 
 `Subresource`
 
@@ -1205,7 +1205,7 @@ The subresource index to use of the *pTexture2D* argument.
 
 `ReferenceSet`
 
-A [D3D12_VIDEO_PROCESS_REFERENCE_SET](#d3d12-video-process-reference-set) containing the set of references for video processing. Some video processing algorithms require forward or backward frame references. For more information, see [D3D12_FEATURE_VIDEO_PROCESS_REFERENCE_INFO](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video).
+A [D3D12_VIDEO_PROCESS_REFERENCE_SET](#d3d12-video-process-reference-set) containing the set of references for video processing. Some video processing algorithms require forward or backward frame references. For more information, see [D3D12_FEATURE_VIDEO_PROCESS_REFERENCE_INFO](#d3d12-feature-data-video-process-reference-info).
 
 <a id="d3d12-video-process-transform"></a>
 
@@ -1247,10 +1247,10 @@ For stereo formats, the orientation is applied before the stereo format is appli
 >
 > **Coordinate qualification:** the published transform contract states that
 > source and destination rectangles use post-orientation coordinates and that
-> orientation precedes stereo-format application. This draft retains those
+> orientation precedes stereo format application. This draft retains those
 > statements without inventing chroma-edge alignment, clipping, interpolation,
 > sample positions or a vendor-independent coordinate/precision algorithm.
-> The per-stream destination rectangle places that stream; the output target
+> The per-stream destination rectangle places that stream. The output target
 > rectangle bounds the drawn/background-filled region. They are distinct roles,
 > not interchangeable descriptions of one rectangle.
 
@@ -1398,7 +1398,7 @@ typedef struct D3D12_VIDEO_PROCESS_OUTPUT_STREAM
 
 `pTexture2D`
 
-A pointer to a [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) representing the output surfaces for the video process command.
+A pointer to a [ID3D12Resource](resources.md#resource-storage) representing the output surfaces for the video process command.
 
 `Subresource`
 
@@ -1472,8 +1472,8 @@ where:
 > **Authored synthesis - human review pending.**
 >
 > **Numeric qualification:** the published expression describes color blending;
-> it is not a complete precision, rounding, saturation or color-space conversion
-> specification. The palette-entry term does not establish support for any
+> it is not a complete precision, rounding, saturation or color space conversion
+> specification. The palette entry term does not establish support for any
 > palettized resource format. No universal linear-light conversion sequence,
 > interpolation kernel or implementation-specific automatic-processing algorithm
 > is inferred here.
@@ -1718,10 +1718,10 @@ typedef enum D3D12_VIDEO_PROCESS_FEATURE_FLAGS
 >
 > **Aspect-ratio qualification:** the published 1:1 restriction above is retained.
 > The inspected creation validation compares the source and destination rational
-> fields for equality when PIXEL_ASPECT_RATIO is unavailable; that does not
+> fields for equality when PIXEL_ASPECT_RATIO is unavailable. That does not
 > establish that arbitrary equal non-unit ratios are universally legal. The exact
 > meaning of 1:1 and rational equivalence remains qualified rather than replaced
-> with an implementation-derived policy. Feature flags describe support; they
+> with an implementation-derived policy. Feature flags describe support. They
 > do not make every enabled option or combination universally available.
 
 <!-- d3d12-review-alert:end:video-process:N-feature-qualification:0 -->
@@ -1753,7 +1753,7 @@ typedef enum D3D12_VIDEO_PROCESS_DEINTERLACE_FLAGS
 > |---|---|
 > | `D3D12_VIDEO_PROCESS_DEINTERLACE_FLAG_NONE` | No deinterlacing capabilities are available. |
 > | `D3D12_VIDEO_PROCESS_DEINTERLACE_FLAG_BOB` | The video processor can perform bob deinterlacing. In bob deinterlacing, missing field lines are interpolated from the lines above and below. Bob deinterlacing does not require reference frames. |
-> | `D3D12_VIDEO_PROCESS_DEINTERLACE_FLAG_CUSTOM` | The video processor can perform a custom high-quality deinterlacing, which requires the number of reference frames indicated in *PastFrames* and *FutureFrames* output fields of the [D3D12_FEATURE_DATA_VIDEO_PROCESS_REFERENCE_INFO](#d3d12-feature-data-video-process-reference-info) populated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_PROCESS_REFERENCE_INFO](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video). If the video processor doesn’t have the necessary number of reference frames, it falls back to bob deinterlacing. |
+> | `D3D12_VIDEO_PROCESS_DEINTERLACE_FLAG_CUSTOM` | The video processor can perform a custom high-quality deinterlacing, which requires the number of reference frames indicated in *PastFrames* and *FutureFrames* output fields of the [D3D12_FEATURE_DATA_VIDEO_PROCESS_REFERENCE_INFO](#d3d12-feature-data-video-process-reference-info) populated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_PROCESS_REFERENCE_INFO](#d3d12-feature-data-video-process-reference-info). If the video processor doesn’t have the necessary number of reference frames, it falls back to bob deinterlacing. |
 
 <!-- d3d12-review-alert:end:video-process:P-d3d12_video_process_deinterlace_flags-constants:0 -->
 
@@ -1766,7 +1766,7 @@ typedef enum D3D12_VIDEO_PROCESS_DEINTERLACE_FLAGS
 > bob fallback when the necessary references are unavailable. Processor creation
 > still declares the queried required counts. The selected public material does
 > not completely define short/null per-call reference arrays, temporal array
-> ordering, stream-start/end padding or the boundary between fallback and invalid
+> ordering, stream start/end padding or the boundary between fallback and invalid
 > usage. This draft does not turn the fallback sentence into permission to pass
 > arbitrary missing or malformed references.
 
@@ -1781,8 +1781,8 @@ typedef enum D3D12_VIDEO_PROCESS_DEINTERLACE_FLAGS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The filter enumeration supplies zero-based indices for the filter-level and
-> filter-range arrays. The corresponding filter flag is `1 << filter_index`.
+> The filter enumeration supplies zero-based indices for the filter level and
+> filter range arrays. The corresponding filter flag is `1 << filter_index`.
 
 <!-- d3d12-review-alert:end:video-process:N-filter-index:0 -->
 
@@ -2012,7 +2012,7 @@ typedef enum D3D12_VIDEO_PROCESS_ALPHA_FILL_MODE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Private processor sizing reports CPU-object storage. The separate processor-size capability query reports memory-pool requirements.
+> Private processor sizing reports CPU object storage. The separate processor size capability query reports memory pool requirements.
 
 <!-- d3d12-review-alert:end:video-process:N-ddi-intro:0 -->
 
@@ -2021,7 +2021,7 @@ typedef enum D3D12_VIDEO_PROCESS_ALPHA_FILL_MODE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Current creation supplies counted input-stream descriptions, the output description and protected-session association. Per-frame `FieldType` is supplied in recording arguments. The output stream description and recording-output layout retain `_0032`.
+> Current creation supplies counted input stream descriptions, the output description and protected session association. Per-frame `FieldType` is supplied in recording arguments. The output stream description and recording output layout retain `_0032`.
 
 <!-- d3d12-review-alert:end:video-process:N-ddi-intro:1 -->
 
@@ -2621,7 +2621,7 @@ The video processor instance to use for this video process call. The video proce
 
 `pOutputParameters`
 
-<ins><!-- d3d12-review-inline:begin:video-process:P-ddi-process-Parameters:5 -->The output arguments for the video process. The available parameters are in the [D3D12DDIARG_VIDEO_PROCESS_OUTPUT_STREAM_ARGUMENTS_0032](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ns-d3d12umddi-d3d12ddiarg_video_process_output_stream_arguments_0032) structure.<!-- d3d12-review-inline:end:video-process:P-ddi-process-Parameters:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-process:P-ddi-process-Parameters:5 -->The output arguments for the video process. The available parameters are in the [D3D12DDIARG_VIDEO_PROCESS_OUTPUT_STREAM_ARGUMENTS_0032](#d3d12ddiarg-video-process-output-stream-arguments-0032) structure.<!-- d3d12-review-inline:end:video-process:P-ddi-process-Parameters:5 --></ins>
 
 `pInputStreamParameters`
 
@@ -2795,18 +2795,18 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEOPROCESSOR_0106 )( D3D12DDI_HD
 > `D3D12DDI_VIDEO_PROCESS_REFERENCE_INFO_DATA_0020`.
 > `D3D12DDICAPS_TYPE_VIDEO_0020_PROCESS_MAX_INPUT_STREAMS` uses
 > `D3D12DDI_VIDEO_PROCESS_MAX_INPUT_STREAMS_DATA_0020`, with input node index
-> and output simultaneous-stream limit.
-> `D3D12DDICAPS_TYPE_VIDEO_0032_PROCESSOR_SIZE` uses the processor-size layout
+> and output simultaneous stream limit.
+> `D3D12DDICAPS_TYPE_VIDEO_0032_PROCESSOR_SIZE` uses the processor size layout
 > appropriate to the selected DDI version, with input creation description and
 > output L0/L1 sizes. The device table's `pfnGetCaps` owns these capability
-> exchanges. The create DDI returns `HRESULT`; success is not an NTSTATUS
+> exchanges. The create DDI returns `HRESULT`. Success is not an NTSTATUS
 > contract.
 
 <!-- d3d12-review-alert:end:video-process:N-ddi-table:1 -->
 
 <a id="protected-video-api-contracts"></a>
 
-## Protected-session video API contracts
+## Protected session video API contracts
 
 <a id="api-id3d12videoprocessor1-getprotectedresourcesession"></a>
 
@@ -2822,7 +2822,7 @@ HRESULT GetProtectedResourceSession(
 
 #### Behavior
 
-Gets the [ID3D12ProtectedResourceSession](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12protectedresourcesession.md) that was passed into [ID3D12VideoDevice2::CreateVideoProcessor1](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nf-d3d12video-id3d12videodevice2-createvideoprocessor1.md) when the [ID3D12VideoProcessor1](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videoprocessor1.md) was created.
+Gets the [ID3D12ProtectedResourceSession](resources.md#protected-resource-sessions) that was passed into [ID3D12VideoDevice2::CreateVideoProcessor1](#api-id3d12videodevice2-createvideoprocessor1) when the [ID3D12VideoProcessor1](#protected-video-api-contracts) was created.
 
 <!-- d3d12-review-alert:begin:video-process:AB-id3d12videoprocessor1-getprotectedresourcesession-contract:0 -->
 
@@ -2830,7 +2830,7 @@ Gets the [ID3D12ProtectedResourceSession](https://learn.microsoft.com/en-us/wind
 > **Authored synthesis - human review pending.**
 >
 > Retrieves the session associated with this object's creation, not the current
-> command-list session. Association does not change when a command list selects
+> command list session. Association does not change when a command list selects
 > a different protection context.
 
 <!-- d3d12-review-alert:end:video-process:AB-id3d12videoprocessor1-getprotectedresourcesession-contract:0 -->
@@ -2855,7 +2855,7 @@ Gets the [ID3D12ProtectedResourceSession](https://learn.microsoft.com/en-us/wind
 > **Authored synthesis - human review pending.**
 >
 > Returns the interface query's HRESULT. With no associated session it returns
-> `DXGI_ERROR_NOT_FOUND` and a null output; an unsupported requested interface
+> `DXGI_ERROR_NOT_FOUND` and a null output. An unsupported requested interface
 > returns `E_NOINTERFACE`. Retrieval does not create or signal a session.
 
 <!-- d3d12-review-alert:end:video-process:AB-id3d12videoprocessor1-getprotectedresourcesession-contract:4 -->
@@ -2886,11 +2886,11 @@ Creates a video processor instance with support for protected resources.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Retains the [processor's immutable stream-description contract](#create-video-processor)
-> and adds the protected-session association. Null creates an unprotected
-> processor; a non-null session requires compatible device/node/type and
+> Retains the [processor's immutable stream description contract](#create-video-processor)
+> and adds the protected session association. Null creates an unprotected
+> processor. A non-null session requires compatible device/node/type and
 > protected processing support. Recreate the processor to change its immutable
-> creation descriptions; the association is not a per-frame setter.
+> creation descriptions. The association is not a per-frame setter.
 
 <!-- d3d12-review-alert:end:video-process:AB-id3d12videodevice2-createvideoprocessor1-contract:0 -->
 
@@ -2937,10 +2937,10 @@ Specifies whether or not protected resources can be accessed by subsequent comma
 > **Authored synthesis - human review pending.**
 >
 > Selects only the supported command list's protection context. Ordinary
-> bindings are preserved (D272); this is not ClearState. Null disables protected
+> bindings are preserved (D272). This is not ClearState. Null disables protected
 > access. [Session/device/node/type and operation support](video.md#protected-video-support),
 > the [canonical selection and open-query rules](command-list-state.md#protection)
-> and [protected-operation predication](counters-queries-and-predication.md#predication-operation-matrix)
+> and [protected operation predication](counters-queries-and-predication.md#predication-operation-matrix)
 > remain required.
 
 <!-- d3d12-review-alert:end:video-process:AB-id3d12videoprocesscommandlist2-setprotectedresourcesession-contract:0 -->

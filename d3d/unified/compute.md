@@ -24,7 +24,7 @@
 > are defined with [pipeline component creation](pipeline-state.md#driver-shader-objects)
 > and its [exact slot associations](pipeline-state.md#driver-object-slots).
 > They do not add application shader/state object APIs or replace this stage's
-> execution, linkage, capability or resource-lifetime rules.
+> execution, linkage, capability or resource lifetime rules.
 
 <!-- d3d12-review-alert:end:compute:PC-stage-creation-owner:0 -->
 
@@ -41,7 +41,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Compute execution selects a [compute pipeline state](pipeline-state.md#compute-description), not the fixed-function graphics pipeline. The shader reads constants, shader resources and samplers and reads or writes resources through unordered-access views (UAVs), using [compute root arguments and descriptors](binding.md#recording-state). Resources can be shared with graphics work under their [access, layout and synchronization contracts](synchronization.md#barrier-access); sharing a resource does not itself order the accesses. Rasterization, depth/stencil testing, blending and render-target output are not compute-stage operations.
+> Compute execution selects a [compute pipeline state](pipeline-state.md#compute-description), not the fixed-function graphics pipeline. The shader reads constants, shader resources and samplers and reads or writes resources through unordered access views (UAVs), using [compute root arguments and descriptors](binding.md#recording-state). Resources can be shared with graphics work under their [access, layout and synchronization contracts](synchronization.md#barrier-access); sharing a resource does not itself order the accesses. Rasterization, depth/stencil testing, blending and render target output are not compute stage operations.
 
 <!-- d3d12-review-alert:end:compute:N-stage-state:0 -->
 
@@ -50,7 +50,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The ordinary compute stage uses applicable DXBC Shader Model 5.0/5.1 or DXIL Shader Model 6.x programs. Existing Shader Model 5.0 assets can use D3D12 root signatures; Shader Model 5.1 adds register spaces, resource ranges and descriptor indexing. This does not imply support for downlevel `cs_4_x` profiles. The logical thread/group model is common to the supported representations; the [representation-specific contracts](#shader-representations) below distinguish register-based DXBC from typed DXIL. Compute pipeline creation owns shader/root-signature compatibility and driver compilation; dispatch launches the selected program.
+> The ordinary compute stage uses applicable DXBC Shader Model 5.0/5.1 or DXIL Shader Model 6.x programs. Existing Shader Model 5.0 assets can use D3D12 root signatures. Shader Model 5.1 adds register spaces, resource ranges and descriptor indexing. This does not imply support for downlevel `cs_4_x` profiles. The logical thread/group model is common to the supported representations. The [representation-specific contracts](#shader-representations) below distinguish register-based DXBC from typed DXIL. Compute pipeline creation owns shader/root signature compatibility and driver compilation; dispatch launches the selected program.
 
 <!-- d3d12-review-alert:end:compute:N-stage-state:1 -->
 
@@ -63,7 +63,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A dispatch launches a three-dimensional grid of thread groups. Each group executes the same compute entry point and has its own thread-group shared memory (TGSM). A shader's `[numthreads(X,Y,Z)]` declaration fixes the three-dimensional arrangement of threads within every group; the Dispatch arguments specify groups, not threads.
+> A dispatch launches a three-dimensional grid of thread groups. Each group executes the same compute entry point and has its own thread group shared memory (TGSM). A shader's `[numthreads(X,Y,Z)]` declaration fixes the three-dimensional arrangement of threads within every group. The Dispatch arguments specify groups, not threads.
 
 <!-- d3d12-review-alert:end:compute:N-group-model:0 -->
 
@@ -72,7 +72,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Groups can execute in any order. Threads within a group cooperate through TGSM, UAVs, atomics and explicit synchronization. A thread group is not a wave: it can contain multiple waves, whose relative execution order is not specified. The [wave model](#waves) defines the narrower operations exposed by DXIL shaders; it does not introduce a group-wide or grid-wide execution rendezvous.
+> Groups can execute in any order. Threads within a group cooperate through TGSM, UAVs, atomics and explicit synchronization. A thread group is not a wave: it can contain multiple waves, whose relative execution order is not specified. The [wave model](#waves) defines the narrower operations exposed by DXIL shaders. It does not introduce a group-wide or grid-wide execution rendezvous.
 
 <!-- d3d12-review-alert:end:compute:N-group-model:1 -->
 
@@ -81,7 +81,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `X`, `Y` and `Z` are positive compile-time integers. X and Y are each at most 1,024, Z is at most 64, and `X*Y*Z` is at most 1,024. The product limit applies together with the per-axis limits; `[numthreads(1024,1024,1)]` is not valid.
+> `X`, `Y` and `Z` are positive compile-time integers. X and Y are each at most 1,024, Z is at most 64, and `X*Y*Z` is at most 1,024. The product limit applies together with the per-axis limits. `[numthreads(1024,1024,1)]` is not valid.
 
 <!-- d3d12-review-alert:end:compute:N-numthreads:0 -->
 
@@ -90,7 +90,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For example, `[numthreads(10,8,3)]` declares 240 threads per group. `Dispatch(5,3,2)` launches 30 groups and therefore 7,200 shader invocations. For group `(2,1,0)`, local thread `(7,5,0)` has dispatch-thread coordinates `(27,13,0)` and flattened group index 57.
+> For example, `[numthreads(10,8,3)]` declares 240 threads per group. `Dispatch(5,3,2)` launches 30 groups and therefore 7,200 shader invocations. For group `(2,1,0)`, local thread `(7,5,0)` has dispatch thread coordinates `(27,13,0)` and flattened group index 57.
 
 <!-- d3d12-review-alert:end:compute:N-numthreads:1 -->
 
@@ -108,7 +108,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The figure's ThreadGroupID, ThreadIDInGroup and ThreadID correspond to `SV_GroupID`, `SV_GroupThreadID` and `SV_DispatchThreadID`. Its implementation-specific subgroups must not be assumed to have a particular size or mapping; the [wave and quad rules](#waves) define what a program may observe.
+> The figure's ThreadGroupID, ThreadIDInGroup and ThreadID correspond to `SV_GroupID`, `SV_GroupThreadID` and `SV_DispatchThreadID`. Its implementation-specific subgroups must not be assumed to have a particular size or mapping. The [wave and quad rules](#waves) define what a program may observe.
 
 <!-- d3d12-review-alert:end:compute:N-dispatch-figure:1 -->
 
@@ -121,7 +121,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> These values are generated by compute execution, not fetched from an input-assembler signature. Components are 32-bit unsigned integers. Let `groupSize = (X,Y,Z)` from `numthreads` and `localID = SV_GroupThreadID`.
+> These values are generated by compute execution, not fetched from an input assembler signature. Components are 32-bit unsigned integers. Let `groupSize = (X,Y,Z)` from `numthreads` and `localID = SV_GroupThreadID`.
 
 <!-- d3d12-review-alert:end:compute:N-identifiers:0 -->
 
@@ -144,7 +144,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The flattened local index is in `[0, X*Y*Z-1]`; X changes fastest, then Y, then Z. It is not a flattened index of the whole dispatch and is not in general a wave-lane index.
+> The flattened local index is in `[0, X*Y*Z-1]`; X changes fastest, then Y, then Z. It is not a flattened index of the whole dispatch and is not in general a wave lane index.
 
 <!-- d3d12-review-alert:end:compute:N-identifiers:2 -->
 
@@ -153,7 +153,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 
-> **Unresolved expanded-grid case:** The dispatch-thread formula above defines representable coordinates. Expanded one-dimensional grids can make a mathematical component exceed `UINT32_MAX`; the selected public sources do not specify the resulting `SV_DispatchThreadID` value. No modulo-wrapping guarantee or additional group-count limit is established here.
+> **Unresolved expanded-grid case:** The dispatch thread formula above defines representable coordinates. Expanded one-dimensional grids can make a mathematical component exceed `UINT32_MAX`. The selected public sources do not specify the resulting `SV_DispatchThreadID` value. No modulo-wrapping guarantee or additional group count limit is established here.
 
 <!-- d3d12-review-context:end:compute:N-id-overflow:0 -->
 
@@ -165,7 +165,7 @@
 
 ### DXBC logical interface
 
-<ins><!-- d3d12-review-inline:begin:compute:N-dxbc-table:0 -->DXBC declares its thread-group dimensions with `dcl_thread_group`. A compute program has generated ID inputs and resource accesses, not vertex-style incoming records or a graphics-stage output signature. `r#` and indexable `x#` storage is private to each thread; `g#` denotes shared storage for its group.<!-- d3d12-review-inline:end:compute:N-dxbc-table:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compute:N-dxbc-table:0 -->DXBC declares its thread group dimensions with `dcl_thread_group`. A compute program has generated ID inputs and resource accesses, not vertex-style incoming records or a graphics stage output signature. `r#` and indexable `x#` storage is private to each thread; `g#` denotes shared storage for its group.<!-- d3d12-review-inline:end:compute:N-dxbc-table:0 --></ins>
 
 <!-- d3d12-review-alert:begin:compute:N-dxbc-table:1 -->
 
@@ -177,8 +177,8 @@
 > | 32-bit temporaries `r#` | 4,096 total with `x#` | Read/write | 4 | No | None | Required |
 > | 32-bit indexable temporary arrays `x#[n]` | 4,096 total with `r#` | Read/write | 4 | Yes | None | Required |
 > | 32-bit TGSM `g#[n]` | 8,192 scalar DWORDs across declarations | Read/write | 1; raw/structured declaration layouts | Yes | None | Required |
-> | Input resources `t#` | Shader profile and binding tiers | Read | Resource-defined | SM5.1 resource-range indexing | None | Required |
-> | Samplers `s#` | Shader profile and binding tiers | Read | 1 | SM5.1 resource-range indexing | None | Required |
+> | Input resources `t#` | Shader profile and binding tiers | Read | Resource-defined | SM5.1 resource range indexing | None | Required |
+> | Samplers `s#` | Shader profile and binding tiers | Read | 1 | SM5.1 resource range indexing | None | Required |
 > | Constant buffers `cb#` | Shader profile and binding tiers | Read | 4 | Contents; SM5.1 resource ranges | None | Required |
 > | Immediate constant buffer `icb[index]` | 1 | Read | 4 | Contents | None | Required |
 > | `vThreadID.xyz` | 1 | Read | 3 | No | Generated | Required when used |
@@ -186,11 +186,11 @@
 > | `vThreadIDInGroup.xyz` | 1 | Read | 3 | No | Generated | Required when used |
 > | `vThreadIDInGroupFlattened` | 1 | Read | 1 | No | Generated | Required when used |
 > | Null destination | Not applicable | Discard result | Not applicable | Not applicable | Not applicable | No |
-> | UAVs `u#` | Shader profile and binding tiers | Read/write | Resource-defined | SM5.1 resource-range indexing | None | Required |
+> | UAVs `u#` | Shader profile and binding tiers | Read/write | Resource-defined | SM5.1 resource range indexing | None | Required |
 
 <!-- d3d12-review-alert:end:compute:N-dxbc-table:1 -->
 
-<ins><!-- d3d12-review-inline:begin:compute:N-dxbc-table:2 -->The resource rows are logical shader declarations, subject to the shader profile and current [binding-tier limits](binding.md#binding-capabilities). SM5.0 register bindings are mapped through the root signature; SM5.1 additionally supports [register spaces](binding.md#register-spaces), ranges and descriptor indexing. Its range-indexing model is not imposed on SM5.0 assets.<!-- d3d12-review-inline:end:compute:N-dxbc-table:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:compute:N-dxbc-table:2 -->The resource rows are logical shader declarations, subject to the shader profile and current [binding tier limits](binding.md#binding-capabilities). SM5.0 register bindings are mapped through the root signature; SM5.1 additionally supports [register spaces](binding.md#register-spaces), ranges and descriptor indexing. Its range-indexing model is not imposed on SM5.0 assets.<!-- d3d12-review-inline:end:compute:N-dxbc-table:2 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compute:C-register-spill:0 -->In practice, hardware implementations may spill temp register storage to slower memory behind the scenes if the combination of number of temps per thread and number of threads in the group goes too high. Functionally, however, it will always appear to the DXBC shader as if storage for 4096 temp registers is available per Compute Shader thread independent of how many threads are in a group.<!-- d3d12-review-inline:end:compute:C-register-spill:0 --></ins>
 
@@ -203,7 +203,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A final DXIL compute shader has a compute entry point identified by `dx.entryPoints` and the `cs` shader-model declaration. The entry-point properties include the three `numthreads` dimensions (`kDxilNumThreadsTag`, tag 4), applicable shader requirement flags and any requested [wave-size property](#wave-size). Driver compilation uses these properties as well as the instructions and resource metadata; the group size is not supplied by a Dispatch call.
+> A final DXIL compute shader has a compute entry point identified by `dx.entryPoints` and the `cs` shader model declaration. The entry point properties include the three `numthreads` dimensions (`kDxilNumThreadsTag`, tag 4), applicable shader requirement flags and any requested [wave size property](#wave-size). Driver compilation uses these properties as well as the instructions and resource metadata. The group size is not supplied by a Dispatch call.
 
 <!-- d3d12-review-alert:end:compute:N-dxil-model:0 -->
 
@@ -212,7 +212,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Compute system values are obtained through `ThreadId`, `GroupId`, `ThreadIdInGroup` and `FlattenedThreadIdInGroup`. They are not packed into a graphics input signature. Ordinary compute has no graphics output signature: results are stored to resources. DXIL expresses private values through typed single-static-assignment (SSA) values and private allocations rather than a fixed bank of DXBC `r#` registers; the DXBC register-count table is not a DXIL private-allocation limit.
+> Compute system values are obtained through `ThreadId`, `GroupId`, `ThreadIdInGroup` and `FlattenedThreadIdInGroup`. They are not packed into a graphics input signature. Ordinary compute has no graphics output signature: results are stored to resources. DXIL expresses private values through typed single-static-assignment (SSA) values and private allocations rather than a fixed bank of DXBC `r#` registers. The DXBC register count table is not a DXIL private allocation limit.
 
 <!-- d3d12-review-alert:end:compute:N-dxil-model:1 -->
 
@@ -221,20 +221,20 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> TGSM is represented by typed global variables in address space 3 and accessed through the corresponding loads, stores and atomic operations. Resource operations use handles and their typed/raw/structured access instructions. The operation families relevant to compute include resource loads/stores and counters, integer/bitwise atomics, shader barriers, generated IDs, and, when available, wave, quad and derivative operations. The [memory model](memory-model.md#memory-consistency) and [shader-barrier rules](memory-model.md#shader-barriers) define shared cooperation semantics; the complete per-intrinsic operation/encoding reference belongs to the DXIL appendix.
+> TGSM is represented by typed global variables in address space 3 and accessed through the corresponding loads, stores and atomic operations. Resource operations use handles and their typed/raw/structured access instructions. The operation families relevant to compute include resource loads/stores and counters, integer/bitwise atomics, shader barriers, generated IDs, and, when available, wave, quad and derivative operations. The [memory model](memory-model.md#memory-consistency) and [shader barrier rules](memory-model.md#shader-barriers) define shared cooperation semantics. The complete per-intrinsic operation/encoding reference belongs to the DXIL appendix.
 
 <!-- d3d12-review-alert:end:compute:N-dxil-model:2 -->
 
 <a id="thread-group-shared-memory"></a>
 
-## Thread-group shared memory
+## Thread group shared memory
 
 <!-- d3d12-review-alert:begin:compute:N-tgsm-storage:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Each compute group has at most 32 KiB (32,768 bytes) of TGSM. Any thread in the group can read or write any declared shared location; another group has separate shared storage even when it executes the same program. HLSL declares this storage with `groupshared`. The aggregate allocation, including type layout/alignment, must fit the per-group limit; this is not a per-variable allowance.
+> Each compute group has at most 32 KiB (32,768 bytes) of TGSM. Any thread in the group can read or write any declared shared location. Another group has separate shared storage even when it executes the same program. HLSL declares this storage with `groupshared`. The aggregate allocation, including type layout/alignment, must fit the per-group limit. This is not a per-variable allowance.
 
 <!-- d3d12-review-alert:end:compute:N-tgsm-storage:0 -->
 
@@ -243,7 +243,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> DXBC exposes up to 8,192 32-bit scalar locations across all `g#` declarations. `dcl_tgsm_raw` declares a byte-count multiple of four; `dcl_tgsm_structured` declares `structByteStride * structCount` bytes, with a four-byte-multiple stride. DXIL's typed shared globals are allocated according to their types, not by counting each typed element as one DWORD.
+> DXBC exposes up to 8,192 32-bit scalar locations across all `g#` declarations. `dcl_tgsm_raw` declares a byte count multiple of four; `dcl_tgsm_structured` declares `structByteStride * structCount` bytes, with a four-byte-multiple stride. DXIL's typed shared globals are allocated according to their types, not by counting each typed element as one DWORD.
 
 <!-- d3d12-review-alert:end:compute:N-tgsm-storage:1 -->
 
@@ -252,7 +252,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Native 16-bit types, enabled for Shader Model 6.2 and later on a device reporting `D3D12_FEATURE_DATA_D3D12_OPTIONS4::Native16BitShaderOpsSupported`, permit actual 16-bit storage. Minimum-precision spelling alone is not a promise of two-byte allocation. Native 16-bit storage does not increase the 32-KiB budget. Shader Model 6.9 makes native 16-bit shader operations required; layout and allocation remain part of the shared-storage accounting.
+> Native 16-bit types, enabled for Shader Model 6.2 and later on a device reporting `D3D12_FEATURE_DATA_D3D12_OPTIONS4::Native16BitShaderOpsSupported`, permit actual 16-bit storage. Minimum-precision spelling alone is not a promise of two-byte allocation. Native 16-bit storage does not increase the 32-KiB budget. Shader Model 6.9 makes native 16-bit shader operations required; layout and allocation remain part of the shared storage accounting.
 
 <!-- d3d12-review-alert:end:compute:N-tgsm-storage:2 -->
 
@@ -265,7 +265,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Shared storage follows the dedicated memory model's [initialization](memory-model.md#shared-memory-initialization), [access bounds](memory-model.md#shared-memory-bounds) and [DXBC access-alignment](memory-model.md#shared-memory-alignment) rules. [Memory consistency and atomics](memory-model.md#memory-consistency), [UAV coherency](memory-model.md#uav-coherency), [atomic capabilities](memory-model.md#atomic-capabilities), [shader barriers](memory-model.md#shader-barriers) and [inter-group communication](memory-model.md#inter-group-ordering) are defined there rather than by this stage chapter.
+> Shared storage follows the dedicated memory model's [initialization](memory-model.md#shared-memory-initialization), [access bounds](memory-model.md#shared-memory-bounds) and [DXBC access alignment](memory-model.md#shared-memory-alignment) rules. [Memory consistency and atomics](memory-model.md#memory-consistency), [UAV coherency](memory-model.md#uav-coherency), [atomic capabilities](memory-model.md#atomic-capabilities), [shader barriers](memory-model.md#shader-barriers) and [inter-group communication](memory-model.md#inter-group-ordering) are defined there rather than by this stage chapter.
 
 <!-- d3d12-review-alert:end:compute:N-compute-memory-owner:0 -->
 
@@ -278,7 +278,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [shared wave/lane definitions and wave-operation capabilities](common-shader-internals.md#waves) apply. A compute group can contain multiple waves; their relative execution order is not specified. Do not assume a particular group-to-wave partition or equality of `SV_GroupIndex` and wave-lane index except where the [compute quad contract](#compute-quads) supplies a mapping. Group cooperation across waves still requires the [memory/execution synchronization](memory-model.md#shader-barriers). Compute does not generate rasterization helper pixels.
+> The [shared wave/lane definitions and wave operation capabilities](common-shader-internals.md#waves) apply. A compute group can contain multiple waves. Their relative execution order is not specified. Do not assume a particular group-to-wave partition or equality of `SV_GroupIndex` and wave lane index except where the [compute quad contract](#compute-quads) supplies a mapping. Group cooperation across waves still requires the [memory/execution synchronization](memory-model.md#shader-barriers). Compute does not generate rasterization helper pixels.
 
 <!-- d3d12-review-alert:end:compute:N-compute-wave-owner:0 -->
 
@@ -290,16 +290,16 @@ The allowed wave sizes that an HLSL shader may specify are
 the powers of 2 between 4 and 128, inclusive.
 In other words, the set: `[4, 8, 16, 32, 64, 128]`.
 
-<ins><!-- d3d12-review-inline:begin:compute:W-device-obligation:0 -->A device that reports Shader Model 6.6 and `WaveOps` support must support shader-selected wave size. All powers of two in its reported wave-size interval must be selectable, with wave operations supported at every such size. Sizes incompatible with compute wave intrinsics and shader selection must not be included in that interval.<!-- d3d12-review-inline:end:compute:W-device-obligation:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compute:W-device-obligation:0 -->A device that reports Shader Model 6.6 and `WaveOps` support must support shader-selected wave size. All powers of two in its reported wave size interval must be selectable, with wave operations supported at every such size. Sizes incompatible with compute wave intrinsics and shader selection must not be included in that interval.<!-- d3d12-review-inline:end:compute:W-device-obligation:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compute:W-device-obligation:1 -->SM6.6 imposes no additional wave-size-selection requirement on a device that does not report `WaveOps`. Conversely, a shader's WaveSize property is communicated through its minimum/maximum lane requirements even if it uses no wave intrinsics; the property alone does not set a WaveOps requirement.<!-- d3d12-review-inline:end:compute:W-device-obligation:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:compute:W-device-obligation:1 -->SM6.6 imposes no additional wave size selection requirement on a device that does not report `WaveOps`. Conversely, a shader's WaveSize property is communicated through its minimum/maximum lane requirements even if it uses no wave intrinsics; the property alone does not set a WaveOps requirement.<!-- d3d12-review-inline:end:compute:W-device-obligation:1 --></ins>
 
 <!-- d3d12-review-alert:begin:compute:N-fixed-wave:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Shader Model 6.6 introduces `[WaveSize(numLanes)]` on compute entry points. The argument is a compile-time integer from the allowed set. When shader-selected wave size is supported, the shader must execute at the requested size, and pipeline creation fails if that size is unsupported. This attribute does not require `numthreads` to equal one wave; the group may contain multiple waves or a partially filled wave. A wave-size request is separate from use of wave-operation instructions.
+> Shader Model 6.6 introduces `[WaveSize(numLanes)]` on compute entry points. The argument is a compile-time integer from the allowed set. When shader-selected wave size is supported, the shader must execute at the requested size, and pipeline creation fails if that size is unsupported. This attribute does not require `numthreads` to equal one wave. The group may contain multiple waves or a partially filled wave. A wave size request is separate from use of wave operation instructions.
 
 <!-- d3d12-review-alert:end:compute:N-fixed-wave:0 -->
 
@@ -317,7 +317,7 @@ In other words, the set: `[4, 8, 16, 32, 64, 128]`.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> SM6.8 requires support for the ranged metadata's restrictions. The device and shader ranges must overlap. The driver selects a supported size within the requested range; if the preferred size is supported by the device, it must be used. An unsupported preference does not reject the shader when some other size in the allowed range is available.
+> SM6.8 requires support for the ranged metadata's restrictions. The device and shader ranges must overlap. The driver selects a supported size within the requested range. If the preferred size is supported by the device, it must be used. An unsupported preference does not reject the shader when some other size in the allowed range is available.
 
 <!-- d3d12-review-alert:end:compute:N-fixed-wave:2 -->
 
@@ -326,7 +326,7 @@ In other words, the set: `[4, 8, 16, 32, 64, 128]`.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> DXIL before SM6.8 uses `kDxilWaveSizeTag` (11) for a fixed-size request. SM6.8 and later use `kDxilRangedWaveSizeTag` (23), with three integers `(minimum,maximum,preferred)`: absent optional values are zero, and `(size,0,0)` encodes the single-size form. The old tag is invalid for SM6.8 and later; the ranged tag is invalid for earlier shader models.
+> DXIL before SM6.8 uses `kDxilWaveSizeTag` (11) for a fixed-size request. SM6.8 and later use `kDxilRangedWaveSizeTag` (23), with three integers `(minimum,maximum,preferred)`: absent optional values are zero, and `(size,0,0)` encodes the single-size form. The old tag is invalid for SM6.8 and later. The ranged tag is invalid for earlier shader models.
 
 <!-- d3d12-review-alert:end:compute:N-fixed-wave:3 -->
 
@@ -348,7 +348,7 @@ In other words, the set: `[4, 8, 16, 32, 64, 128]`.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Shader Model 6.6 supports derivatives and derivative-dependent sampling in compute. This includes `ddx`, `ddy`, their fine/coarse variants, implicit-derivative `Sample`, `SampleBias`, `SampleCmp` and `CalculateLevelOfDetail`, under their operation-specific type/format rules. Explicit-LOD/gradient sampling and nonfiltered loads retain their own availability and do not acquire an implicit-quad requirement merely because they access a texture. Buffers are not filterable textures.
+> Shader Model 6.6 supports derivatives and derivative-dependent sampling in compute. This includes `ddx`, `ddy`, their fine/coarse variants, implicit-derivative `Sample`, `SampleBias`, `SampleCmp` and `CalculateLevelOfDetail`, under their operation-specific type/format rules. Explicit LOD/gradient sampling and nonfiltered loads retain their own availability and do not acquire an implicit-quad requirement merely because they access a texture. Buffers are not filterable textures.
 
 <!-- d3d12-review-alert:end:compute:N-derivative-availability:0 -->
 
@@ -357,7 +357,7 @@ In other words, the set: `[4, 8, 16, 32, 64, 128]`.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The derivative quad layout requires either X divisible by four with Y=Z=1, or X and Y both divisible by two. Other `numthreads` shapes cannot use derivatives. AS/MS use the same layout but have their own [optional derivative capability](amplification-and-mesh-shaders.md#derivatives); that optional AS/MS bit is not a compute derivative capability bit.
+> The derivative quad layout requires either X divisible by four with Y=Z=1, or X and Y both divisible by two. Other `numthreads` shapes cannot use derivatives. AS/MS use the same layout but have their own [optional derivative capability](amplification-and-mesh-shaders.md#derivatives). That optional AS/MS bit is not a compute derivative capability bit.
 
 <!-- d3d12-review-alert:end:compute:N-derivative-availability:1 -->
 
@@ -467,7 +467,7 @@ represents the corresponding (GroupThreadID.x, GroupThreadID.y) values:<!-- d3d1
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `QuadReadLaneAt` and the across-X/Y/diagonal operations are available in compute from SM6.0 with wave-operation support; for SM6.0-6.5 their thread-to-quad mapping is implementation-dependent. SM6.6 supplies the layouts above. SM6.7 adds `QuadAny` and `QuadAll`, which test all four lanes of a quad and require quad-uniform flow control. Quad-uniform control may differ between quads of the same wave.
+> `QuadReadLaneAt` and the across-X/Y/diagonal operations are available in compute from SM6.0 with wave operation support; for SM6.0-6.5 their thread-to-quad mapping is implementation-dependent. SM6.6 supplies the layouts above. SM6.7 adds `QuadAny` and `QuadAll`, which test all four lanes of a quad and require quad-uniform flow control. Quad-uniform control may differ between quads of the same wave.
 
 <!-- d3d12-review-alert:end:compute:N-quad-uniformity:0 -->
 
@@ -482,14 +482,14 @@ represents the corresponding (GroupThreadID.x, GroupThreadID.y) values:<!-- d3d1
 
 <a id="device-memory"></a>
 
-## Device-memory operations and stage integration
+## Device memory operations and stage integration
 
 <!-- d3d12-review-alert:begin:compute:N-device-operations:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Compute can load shader resources and read/write supported UAV buffers/textures, including raw and structured buffers, indexed/scattered stores and applicable atomic operations. Resource descriptors, null descriptors and register-range indexing follow [resource binding](binding.md#descriptor-tables); view interpretation and typed-UAV format support follow [Formats and views](formats.md#typed-uav-loads). Binding a descriptor does not automatically unbind conflicting SRV/UAV descriptors; valid resource usage and synchronization remain explicit application responsibilities.
+> Compute can load shader resources and read/write supported UAV buffers/textures, including raw and structured buffers, indexed/scattered stores and applicable atomic operations. Resource descriptors, null descriptors and register range indexing follow [resource binding](binding.md#descriptor-tables); view interpretation and typed UAV format support follow [Formats](formats.md#typed-uav-loads). Binding a descriptor does not automatically unbind conflicting SRV/UAV descriptors; valid resource usage and synchronization remain explicit application responsibilities.
 
 <!-- d3d12-review-alert:end:compute:N-device-operations:0 -->
 
@@ -498,7 +498,7 @@ represents the corresponding (GroupThreadID.x, GroupThreadID.y) values:<!-- d3d1
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Indirect dispatch, root/descriptor state and resource dependencies are recorded through the D3D12 command-list contracts below. Compute invocation statistics belong to [pipeline statistics](counters-queries-and-predication.md#pipeline-statistics), and predication eligibility belongs to the [operation matrix](counters-queries-and-predication.md#predication-operation-matrix), not a separate compute-only predicate list.
+> Indirect dispatch, root/descriptor state and resource dependencies are recorded through the D3D12 command list contracts below. Compute invocation statistics belong to [pipeline statistics](counters-queries-and-predication.md#pipeline-statistics), and predication eligibility belongs to the [operation matrix](counters-queries-and-predication.md#predication-operation-matrix), not a separate compute-only predicate list.
 
 <!-- d3d12-review-alert:end:compute:N-device-operations:1 -->
 
@@ -551,7 +551,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `CheckFeatureSupport` with `D3D12_FEATURE_D3D12_OPTIONS22` (enum value 65) returns this structure. `Max1DDispatchSize` and `Max1DDispatchMeshSize` are independent compute and mesh group-count limits. The other members retain their [SER support](../Raytracing.md#ser-device-support) and [byte-offset view support](../D3D12RevisedCreateViews.md#feature-check-d3d12_feature_data_d3d12_options22createbyteoffsetviewssupported) contracts.
+> `CheckFeatureSupport` with `D3D12_FEATURE_D3D12_OPTIONS22` (enum value 65) returns this structure. `Max1DDispatchSize` and `Max1DDispatchMeshSize` are independent compute and mesh group count limits. The other members retain their [SER support](../Raytracing.md#ser-device-support) and [byte offset view support](../D3D12RevisedCreateViews.md#feature-check-d3d12_feature_data_d3d12_options22createbyteoffsetviewssupported) contracts.
 
 <!-- d3d12-review-alert:end:compute:N-capability-selector:0 -->
 
@@ -566,7 +566,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> These fields report grid dimensions, not optional shader-stage support. A mesh dispatch still requires the [mesh-shader capability and pipeline](amplification-and-mesh-shaders.md#availability). The reported mesh field is constrained to the interval 65,535 through 4,194,303; that reporting requirement is separate from the total-group check on every mesh grid.
+> These fields report grid dimensions, not optional shader stage support. A mesh dispatch still requires the [mesh shader capability and pipeline](amplification-and-mesh-shaders.md#availability). The reported mesh field is constrained to the interval 65,535 through 4,194,303. That reporting requirement is separate from the total group check on every mesh grid.
 
 <!-- d3d12-review-alert:end:compute:N-mesh-support:0 -->
 
@@ -579,11 +579,11 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> | Operation/grid | Ordinary per-axis bound | Expanded one-dimensional bound | Independent total-group bound |
+> | Operation/grid | Ordinary per-axis bound | Expanded one-dimensional bound | Independent total group bound |
 > |---|---|---|---|
-> | Direct or indirect compute dispatch | Each axis at most 65,535 | X at most `Max1DDispatchSize`, with Y=Z=1 | No mesh/work-graph total is imposed by this compute-grid rule |
+> | Direct or indirect compute dispatch | Each axis at most 65,535 | X at most `Max1DDispatchSize`, with Y=Z=1 | No mesh/work graph total is imposed by this compute grid rule |
 > | API, indirect, or AS-intrinsic mesh dispatch | Each axis at most 65,535 | X at most `Max1DDispatchMeshSize`, with Y=Z=1 | `X*Y*Z < 2^22` (at most 4,194,303) |
-> | Work-graph execution grid | Each axis at most 65,535 | X at most `Max1DDispatchSize`, with Y=Z=1 | `X*Y*Z < 2^24` (at most 16,777,215) |
+> | Work graph execution grid | Each axis at most 65,535 | X at most `Max1DDispatchSize`, with Y=Z=1 | `X*Y*Z < 2^24` (at most 16,777,215) |
 
 <!-- d3d12-review-alert:end:compute:N-dimension-table:0 -->
 
@@ -592,7 +592,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The expanded case enlarges X only; it does not enlarge Y or Z. When X exceeds 65,535, both Y and Z must be exactly one. Zero-work API dispatches do not waive dimension, program, resource or recording constraints. All applicable row constraints must hold together; a reported 1D limit does not remove a separate total-grid limit.
+> The expanded case enlarges X only. It does not enlarge Y or Z. When X exceeds 65,535, both Y and Z must be exactly one. Zero-work API dispatches do not waive dimension, program, resource or recording constraints. All applicable row constraints must hold together. A reported 1D limit does not remove a separate total grid limit.
 
 <!-- d3d12-review-alert:end:compute:N-dimension-table:1 -->
 
@@ -601,20 +601,20 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> With AS active, API DispatchMesh dimensions launch the parent AS groups; without AS, they launch MS groups directly. The AS DispatchMesh intrinsic launches a separate child MS grid. Both are subject to the mesh row above; child legality is not established by CPU validation of its parent's arguments. The AS payload, per-group thread, output-storage and invocation contracts remain those of [amplification and mesh processing](amplification-and-mesh-shaders.md#payload-and-amplification).
+> With AS active, API DispatchMesh dimensions launch the parent AS groups. Without AS, they launch MS groups directly. The AS DispatchMesh intrinsic launches a separate child MS grid. Both are subject to the mesh row above; child legality is not established by CPU validation of its parent's arguments. The AS payload, per-group thread, output storage and invocation contracts remain those of [amplification and mesh processing](amplification-and-mesh-shaders.md#payload-and-amplification).
 
 <!-- d3d12-review-alert:end:compute:N-mesh-grid-scope:0 -->
 
 <a id="work-graph-grids"></a>
 
-### Work-graph grid configuration
+### Work graph grid configuration
 
 <!-- d3d12-review-alert:begin:compute:N-graph-scope:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The work-graph row applies to grids sourced from CPU-input records, GPU-input records and shader-produced records. Dynamic grids must also fit the node's configured maximum grid. The [fixed/dynamic shader grid declarations](work-graphs.md#shader-function-attributes) and [state-object grid overrides](state-objects.md#d3d12_broadcasting_launch_overrides) remain separate program-configuration contracts; the independent 24-bit total remains even when the device's compute 1D capability is larger.
+> The work graph row applies to grids sourced from CPU input records, GPU input records and shader-produced records. Dynamic grids must also fit the node's configured maximum grid. The [fixed/dynamic shader grid declarations](work-graphs.md#shader-function-attributes) and [state object grid overrides](state-objects.md#d3d12_broadcasting_launch_overrides) remain separate program configuration contracts. The independent 24-bit total remains even when the device's compute 1D capability is larger.
 
 <!-- d3d12-review-alert:end:compute:N-graph-scope:0 -->
 
@@ -623,7 +623,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Directly authored `NodeDispatchGrid` and `NodeMaxDispatchGrid` attributes in the fixed shader-compiler contract require positive per-axis values at most 65,535 and a total at most 16,777,215. That compile-time attribute constraint is not interchangeable with the expanded execution-grid capability. State-object dispatch-grid or maximum-grid overrides can supply expanded one-dimensional X values, subject to the configured-grid and total constraints above. CPU-input record validation does not imply that GPU-input or shader-produced record dimensions are CPU-validated.
+> Directly authored `NodeDispatchGrid` and `NodeMaxDispatchGrid` attributes in the fixed shader compiler contract require positive per-axis values at most 65,535 and a total at most 16,777,215. That compile-time attribute constraint is not interchangeable with the expanded execution grid capability. State object dispatch grid or maximum grid overrides can supply expanded one-dimensional X values, subject to the configured-grid and total constraints above. CPU input record validation does not imply that GPU input or shader-produced record dimensions are CPU-validated.
 
 <!-- d3d12-review-alert:end:compute:N-graph-compiler:0 -->
 
@@ -660,14 +660,14 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22
 
 <!-- d3d12-review-alert:end:compute:D-validation:1 -->
 
-<ins><!-- d3d12-review-inline:begin:compute:D-runtime-enforcement:0 -->The ordinary runtime recording path does not drop, clamp, or otherwise modify an oversized dispatch. When recorded-argument validation diagnoses oversized dimensions, it reports an **error**, but the dispatch is still passed to the driver unchanged — issuing a debug-layer error does not, by itself, alter runtime behaviour. This is intentional: dropping the dispatch would be a compatibility risk for existing applications.<!-- d3d12-review-inline:end:compute:D-runtime-enforcement:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compute:D-runtime-enforcement:0 -->The ordinary runtime recording path does not drop, clamp, or otherwise modify an oversized dispatch. When recorded argument validation diagnoses oversized dimensions, it reports an **error**, but the dispatch is still passed to the driver unchanged — issuing a debug-layer error does not, by itself, alter runtime behaviour. This is intentional: dropping the dispatch would be a compatibility risk for existing applications.<!-- d3d12-review-inline:end:compute:D-runtime-enforcement:0 --></ins>
 
 <!-- d3d12-review-alert:begin:compute:N-validation-boundary:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Argument forwarding is not a guarantee that invalid work executes, produces a specified result or continues under every diagnostic-control configuration. Configured diagnostics may interrupt execution. A driver cannot infer that dimensions were checked or sanitized merely because it received a dispatch. In particular, Y=Z=1 is a precondition of a valid expanded 1D grid, not a promise that retail runtime validation filtered all malformed calls. CPU validation of direct or CPU-record arguments must not be described as inspection of GPU-resident indirect, GPU-input or shader-produced dimensions. Work-graph actual records must fit their configured maxima and total-grid constraints even when a CPU record check does not independently diagnose every violation; successful validation is not a waiver of those requirements.
+> Argument forwarding is not a guarantee that invalid work executes, produces a specified result or continues under every diagnostic control configuration. Configured diagnostics may interrupt execution. A driver cannot infer that dimensions were checked or sanitized merely because it received a dispatch. In particular, Y=Z=1 is a precondition of a valid expanded 1D grid, not a promise that retail runtime validation filtered all malformed calls. CPU validation of direct or CPU record arguments must not be described as inspection of GPU-resident indirect, GPU input or shader-produced dimensions. Work graph actual records must fit their configured maxima and total grid constraints even when a CPU record check does not independently diagnose every violation; successful validation is not a waiver of those requirements.
 
 <!-- d3d12-review-alert:end:compute:N-validation-boundary:0 -->
 
@@ -737,7 +737,7 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Dispatch records work on DIRECT and COMPUTE command lists and BUNDLE recordings, not COPY lists. Dispatch must execute outside an active render pass, including when a Dispatch-containing bundle executes under its parent's [render-pass context](command-list-state.md#render-pass). The compute pipeline and [root-signature/argument compatibility](binding.md#pipeline-compatibility), descriptor/resource [lifetime](execution.md#lifetime), [residency](resources.md#residency) and [compute synchronization](synchronization.md#barrier-sync) must be satisfied. Bundles follow the canonical [pipeline selection](command-list-state.md#pipeline-selection) and [resource-binding inheritance](command-list-state.md#resource-binding) rules; they do not inherit an arbitrary parent PSO. A zero count on any axis launches no groups but does not bypass those constraints. [Predication](counters-queries-and-predication.md#predication-operation-matrix) applies to eligible execution, not to whether CPU-side recording and validation occur.
+> Dispatch records work on DIRECT and COMPUTE command lists and BUNDLE recordings, not COPY lists. Dispatch must execute outside an active render pass, including when a Dispatch-containing bundle executes under its parent's [render pass context](command-list-state.md#render-pass). The compute pipeline and [root signature/argument compatibility](binding.md#pipeline-compatibility), descriptor/resource [lifetime](execution.md#lifetime), [residency](resources.md#residency) and [compute synchronization](synchronization.md#barrier-sync) must be satisfied. Bundles follow the canonical [pipeline selection](command-list-state.md#pipeline-selection) and [resource binding inheritance](command-list-state.md#resource-binding) rules. They do not inherit an arbitrary parent PSO. A zero count on any axis launches no groups but does not bypass those constraints. [Predication](counters-queries-and-predication.md#predication-operation-matrix) applies to eligible execution, not to whether CPU-side recording and validation occur.
 
 <!-- d3d12-review-alert:end:compute:N-dispatch-contract:0 -->
 
@@ -750,7 +750,7 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH` consumes `D3D12_DISPATCH_ARGUMENTS`; `DISPATCH_MESH` consumes the mesh dispatch record. Their grids use the corresponding [shared dimensions](#shared-grid-limits), not a separate legacy maximum. The [indirect execution contract](indirect-execution.md#executeindirect) owns signature, count/argument-buffer, root-state and post-call state behavior. Validation of a CPU API call does not imply that every GPU-resident argument record is checked before execution.
+> `D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH` consumes `D3D12_DISPATCH_ARGUMENTS`; `DISPATCH_MESH` consumes the mesh dispatch record. Their grids use the corresponding [shared dimensions](#shared-grid-limits), not a separate legacy maximum. The [indirect execution contract](indirect-execution.md#executeindirect) owns signature, count/argument buffer, root state and post-call state behavior. Validation of a CPU API call does not imply that every GPU-resident argument record is checked before execution.
 
 <!-- d3d12-review-alert:end:compute:N-indirect:0 -->
 

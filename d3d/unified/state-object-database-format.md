@@ -1,6 +1,6 @@
 <a id="state-object-database-format"></a>
 
-# State-object database published format
+# State object database published format
 
 <!-- d3d12-review-legend:begin -->
 
@@ -21,7 +21,7 @@
 > **Authored synthesis - human review pending.**
 >
 > This is the published SQLite format associated with the
-> [state-object database input contract](state-object-databases-and-identity.md).
+> [state object database input contract](state-object-databases-and-identity.md).
 > The format below has `user_version` 2 and application ID `0x0D3D50DB`.
 > These are format identifiers, not application versions or per-object versions.
 > This definition does not assert that every writer emits this version forever.
@@ -97,8 +97,8 @@ CREATE TABLE app_id (id INTEGER NOT NULL PRIMARY KEY , exe TEXT NOT NULL ,app_na
 > **Authored synthesis - human review pending.**
 >
 > `groups` maps an application-selected object key to an object version and the
-> pipeline-state (`PSOKey`) or state-object (`SOKey`) record. The `Key` primary key
-> is shared across those object kinds; it is not a composite of key and version.
+> pipeline state (`PSOKey`) or state object (`SOKey`) record. The `Key` primary key
+> is shared across those object kinds. It is not a composite of key and version.
 > The API's single stored version is represented by the group's `Version`, not
 > by `PRAGMA user_version`.
 
@@ -111,7 +111,7 @@ CREATE TABLE app_id (id INTEGER NOT NULL PRIMARY KEY , exe TEXT NOT NULL ,app_na
 >
 > `pipeline_states` contains PSO state and references bytecode, serialized root
 > signatures and shared state descriptions. `state_objects` contains type,
-> node-mask, flags and the `AddToStateObjectParent` relationship. The `so_to_*`
+> node mask, flags and the `AddToStateObjectParent` relationship. The `so_to_*`
 > association tables carry root signatures, DXIL libraries, existing collections,
 > hit groups, configurations, export associations, generic programs and work
 > graphs. Export selection and association records are part of the stored graph,
@@ -125,11 +125,11 @@ CREATE TABLE app_id (id INTEGER NOT NULL PRIMARY KEY , exe TEXT NOT NULL ,app_na
 > **Authored synthesis - human review pending.**
 >
 > The remaining description tables and their association tables retain shared
-> component storage, including input elements, stream-output declarations,
-> render-target/depth-stencil/blend/rasterizer/view-instancing data and work-graph
+> component storage, including input elements, stream output declarations,
+> render target/depth-stencil/blend/rasterizer/view instancing data and work graph
 > nodes/overrides. `shader_bytecode.Bytecode` and `root_signatures.value` are
 > opaque blobs in this contract. Table and column presence alone does not extend
-> the creation capabilities defined by the pipeline, state-object or work-graph
+> the creation capabilities defined by the pipeline, state object or work graph
 > chapters.
 
 <!-- d3d12-review-alert:end:sodb-input-format:schema-mapping:2 -->
@@ -140,7 +140,7 @@ CREATE TABLE app_id (id INTEGER NOT NULL PRIMARY KEY , exe TEXT NOT NULL ,app_na
 > **Authored synthesis - human review pending.**
 >
 > Application metadata is the `app_id` record used by `SetApplicationDesc` and
-> `GetApplicationDesc`; the API uses the single application row at `id = 0`.
+> `GetApplicationDesc`. The API uses the single application row at `id = 0`.
 > `exe`, `app_name`, `engine_name`, `app_version` and `engine_version` correspond
 > to `D3D12_APPLICATION_DESC`. There is no application-GUID field in this
 > published schema. SQL `NOT NULL` does not mean that a string is nonempty, and

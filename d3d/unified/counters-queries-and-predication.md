@@ -20,7 +20,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Queries measure GPU work and expose typed results through query heaps. Predication consumes an application-selected 64-bit buffer value to condition eligible GPU operations; it is not a query-object binding. Application-managed SO/UAV counters, query results and predicate values have different storage, widths and lifetime contracts.
+> Queries measure GPU work and expose typed results through query heaps. Predication consumes an application-selected 64-bit buffer value to condition eligible GPU operations. It is not a query object binding. Application-managed SO/UAV counters, query results and predicate values have different storage, widths and lifetime contracts.
 
 <!-- d3d12-review-alert:end:queries:N-overview:0 -->
 
@@ -33,7 +33,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Ordinary [counter backing-byte copy/clear interactions](resource-operations.md#counter-interactions) do not implicitly operate on a separately associated counter resource. Query/counter/predicate distinctions and each operation's policy remain canonical in this chapter.
+> Ordinary [counter backing byte copy/clear interactions](resource-operations.md#counter-interactions) do not implicitly operate on a separately associated counter resource. Query/counter/predicate distinctions and each operation's policy remain canonical in this chapter.
 
 <!-- d3d12-review-alert:end:queries:N-resource-operations-counter-consumer:0 -->
 
@@ -53,7 +53,7 @@ one that contains data accessible via the UAV.<!-- d3d12-review-inline:end:queri
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [SO filled-size storage and append](geometry-shaders-and-stream-output.md#filled-size) define capture progress; [counter-bearing UAV creation](formats.md#buffer-uav) defines UAV counter association and access. Neither query-heap creation nor command-list reset initializes those application buffers. A 32-bit counter is not automatically a valid zero-extended 64-bit predicate: the predicate consumes all eight selected bytes.
+> [SO filled size storage and append](geometry-shaders-and-stream-output.md#filled-size) define capture progress. [Counter-bearing UAV creation](binding.md#buffer-uav) defines UAV counter association and access. Neither query heap creation nor command list reset initializes those application buffers. A 32-bit counter is not automatically a valid zero-extended 64-bit predicate: the predicate consumes all eight selected bytes.
 
 <!-- d3d12-review-alert:end:queries:N-counter-owners:0 -->
 
@@ -97,7 +97,7 @@ typedef struct D3D12_QUERY_HEAP_DESC
 
 `Type`
 
-Specifies one member of [D3D12_QUERY_HEAP_TYPE](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_query_heap_type).
+Specifies one member of [D3D12_QUERY_HEAP_TYPE](#d3d12_query_heap_type).
 
 `Count`
 
@@ -105,7 +105,7 @@ Specifies the number of queries the heap should contain.
 
 `NodeMask`
 
-For single GPU operation, set this to zero. If there are multiple GPU nodes, set a bit to identify the node (the device's physical adapter) to which the query heap applies. Each bit in the mask corresponds to a single node. Only 1 bit must be set. Refer to [Multi-adapter systems](https://learn.microsoft.com/en-us/windows/win32/direct3d12/multi-engine).
+For single GPU operation, set this to zero. If there are multiple GPU nodes, set a bit to identify the node (the device's physical adapter) to which the query heap applies. Each bit in the mask corresponds to a single node. Only 1 bit must be set. Refer to [Multi-adapter systems](devices-and-capabilities.md#identity).
 
 <a id="d3d12_query_type"></a>
 
@@ -145,7 +145,7 @@ typedef enum D3D12_QUERY_HEAP_FLAGS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The query type/node selection must be valid and `Count` must be positive. `ID3D12QueryHeap` is opaque pageable storage, not a resource exposing application-readable raw query bytes. Creating a heap does not perform its queries. A query element must have been produced before it is resolved. The [CPU-resolve flag](#cpu-resolution) chooses the CPU result-retrieval path; an ordinary heap uses command-list resolution.
+> The query type/node selection must be valid and `Count` must be positive. `ID3D12QueryHeap` is opaque pageable storage, not a resource exposing application-readable raw query bytes. Creating a heap does not perform its queries. A query element must have been produced before it is resolved. The [CPU-resolve flag](#cpu-resolution) chooses the CPU result retrieval path. An ordinary heap uses command list resolution.
 
 <!-- d3d12-review-alert:end:queries:N-heap-model:0 -->
 
@@ -158,7 +158,7 @@ typedef enum D3D12_QUERY_HEAP_FLAGS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> | Query | Heap | Issuing command-list types | Completion |
+> | Query | Heap | Issuing command list types | Completion |
 > |---|---|---|---|
 > | `OCCLUSION`, `BINARY_OCCLUSION` | `OCCLUSION` | DIRECT | Begin/End interval |
 > | `TIMESTAMP` | `TIMESTAMP` | DIRECT, COMPUTE, VIDEO_DECODE, VIDEO_PROCESS, VIDEO_ENCODE | End only |
@@ -175,7 +175,7 @@ typedef enum D3D12_QUERY_HEAP_FLAGS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> No query type is supported in BUNDLE recordings. Timestamp and video-decode statistics are both End-only. Video BeginQuery declarations do not introduce a supported interval-query type.
+> No query type is supported in BUNDLE recordings. Timestamp and video decode statistics are both End-only. Video BeginQuery declarations do not introduce a supported interval query type.
 
 <!-- d3d12-review-alert:end:queries:N-support-table:1 -->
 
@@ -233,7 +233,7 @@ typedef enum D3D12_QUERY_HEAP_FLAGS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Issuance and resolution support are separate checks; a declaration alone does not authorize other query families on a list. A CPU-resolve heap cannot use this GPU operation.
+> Issuance and resolution support are separate checks. A declaration alone does not authorize other query families on a list. A CPU-resolve heap cannot use this GPU operation.
 
 <!-- d3d12-review-alert:end:queries:N-resolve-support:1 -->
 
@@ -249,7 +249,7 @@ separately.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> An interval query begins and ends at the same heap/index with the same query type. Its result is the measured interval, not a pair of already-resolved cumulative samples for the application to subtract. An active element cannot be begun again; different elements may be active concurrently without a global LIFO nesting requirement. Intervals do not span command-list boundaries or Reset, and outstanding intervals must end before Close or a protected-session change. End-only queries do not use BeginQuery.
+> An interval query begins and ends at the same heap/index with the same query type. Its result is the measured interval, not a pair of already-resolved cumulative samples for the application to subtract. An active element cannot be begun again; different elements may be active concurrently without a global LIFO nesting requirement. Intervals do not span command list boundaries or Reset, and outstanding intervals must end before Close or a protected session change. End-only queries do not use BeginQuery.
 
 <!-- d3d12-review-alert:end:queries:N-lifecycle:0 -->
 
@@ -258,7 +258,7 @@ separately.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The corresponding EndQuery must execute before a GPU resolve consumes that element. Resolving an incomplete or never-performed element is undefined and may hang or remove the device. An application must order reuse and resolution so it consumes the intended result rather than a later overwrite. Cross-queue dependencies and CPU consumption require the normal [fence/completion contract](execution.md#fence-operations); heap and result-buffer [lifetime](execution.md#lifetime) and [residency](resources.md#residency) remain application obligations.
+> The corresponding EndQuery must execute before a GPU resolve consumes that element. Resolving an incomplete or never-performed element is undefined and may hang or remove the device. An application must order reuse and resolution so it consumes the intended result rather than a later overwrite. Cross-queue dependencies and CPU consumption require the normal [fence/completion contract](execution.md#fence-operations); heap and result buffer [lifetime](execution.md#lifetime) and [residency](resources.md#residency) remain application obligations.
 
 <!-- d3d12-review-alert:end:queries:N-lifecycle:1 -->
 
@@ -267,7 +267,7 @@ separately.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> With legacy resource states, GPU query-result destinations require `D3D12_RESOURCE_STATE_COPY_DEST`; predicate reads require `D3D12_RESOURCE_STATE_PREDICATION`, an alias of `D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT`. Enhanced barriers use the corresponding [COPY_DEST and PREDICATION access scopes](synchronization.md#barrier-access) and [synchronization scopes](synchronization.md#barrier-sync). Normal heap restrictions still apply; an UPLOAD heap is not a valid GPU resolve destination. Opaque query production followed by resolution on the same queue is ordered by the query commands themselves; no application resource barrier on the opaque query heap is required.
+> With legacy resource states, GPU query result destinations require `D3D12_RESOURCE_STATE_COPY_DEST`; predicate reads require `D3D12_RESOURCE_STATE_PREDICATION`, an alias of `D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT`. Enhanced barriers use the corresponding [COPY_DEST and PREDICATION access scopes](synchronization.md#barrier-access) and [synchronization scopes](synchronization.md#barrier-sync). Normal heap restrictions still apply. An UPLOAD heap is not a valid GPU resolve destination. Opaque query production followed by resolution on the same queue is ordered by the query commands themselves; no application resource barrier on the opaque query heap is required.
 
 <!-- d3d12-review-alert:end:queries:N-query-access:0 -->
 
@@ -280,7 +280,7 @@ separately.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [depth-bounds algorithm and early/late side-effect interface](output-merger.md#depth-bounds) are defined by Output merger and PS; the query-result/counting definitions here remain canonical. [Render-pass recording/access behavior](output-merger.md#render-pass-recording) does not redefine the predication operation matrix.
+> The [depth bounds algorithm and early/late side effect interface](output-merger.md#depth-bounds) are defined by Output merger and PS. The query result/counting definitions here remain canonical. [Render pass recording/access behavior](output-merger.md#render-pass-recording) does not redefine the predication operation matrix.
 
 <!-- d3d12-review-alert:end:queries:N-om-depth-bounds-owner:0 -->
 
@@ -295,7 +295,7 @@ separately.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The returned occlusion value is the Begin/End interval result. Binary occlusion returns zero if no sample passed and one if any sample passed; its upper 63 bits are zero. It does not encode a query-readiness status or a 32-bit D3D11 predicate object.
+> The returned occlusion value is the Begin/End interval result. Binary occlusion returns zero if no sample passed and one if any sample passed. Its upper 63 bits are zero. It does not encode a query readiness status or a 32-bit D3D11 predicate object.
 
 <!-- d3d12-review-alert:end:queries:N-occlusion-interval:0 -->
 
@@ -347,16 +347,16 @@ typedef struct D3D12_QUERY_DATA_PIPELINE_STATISTICS
 
 <ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:10 -->CSInvocations: For example, if a Compute Shader is declared with a thread group size of (3,4,5), a Dispatch(2,1,1) call would increment the CSInvocations value by 3*4*5*2*1*1=120.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:10 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:11 -->CSInvocations must honor Compute Shader invocations from Dispatch and from compute-dispatch actions executed by ExecuteIndirect.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:11 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:11 -->CSInvocations must honor Compute Shader invocations from Dispatch and from compute dispatch actions executed by ExecuteIndirect.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:11 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:12 -->Since the Compute Shader honors predicated rendering, if a Dispatch call or an ExecuteIndirect compute-dispatch action is predicated off, then CSInvocations will not increment, given the Compute Shader will not be invoked.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:12 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:12 -->Since the Compute Shader honors predicated rendering, if a Dispatch call or an ExecuteIndirect compute dispatch action is predicated off, then CSInvocations will not increment, given the Compute Shader will not be invoked.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:12 --></ins>
 
 <!-- d3d12-review-alert:begin:queries:N-pipeline-field-units:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `IAVertices` and `IAPrimitives` measure input-assembly events; `VSInvocations`, `GSInvocations`, `PSInvocations` and `CSInvocations` count their respective shader executions. `GSPrimitives` counts GS-generated primitives; `CInvocations` and `CPrimitives` count clipper input/output events. `HSInvocations` counts patches that invoke HS, not output control points; `DSInvocations` counts evaluated domain locations and may include permitted repeated evaluations. `CSInvocations` counts individual threads, not groups.
+> `IAVertices` and `IAPrimitives` measure input assembly events; `VSInvocations`, `GSInvocations`, `PSInvocations` and `CSInvocations` count their respective shader executions. `GSPrimitives` counts GS-generated primitives; `CInvocations` and `CPrimitives` count clipper input/output events. `HSInvocations` counts patches that invoke HS, not output control points; `DSInvocations` counts evaluated domain locations and may include permitted repeated evaluations. `CSInvocations` counts individual threads, not groups.
 
 <!-- d3d12-review-alert:end:queries:N-pipeline-field-units:0 -->
 
@@ -365,7 +365,7 @@ typedef struct D3D12_QUERY_DATA_PIPELINE_STATISTICS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Pixel-shader invocation counts are not counts of visible depth samples or unique output pixels. Helper invocations, early depth/stencil, per-sample shading and coarse shading affect that relationship; a historical per-pixel test inequality is not a universal modern pipeline contract.
+> Pixel shader invocation counts are not counts of visible depth samples or unique output pixels. Helper invocations, early depth/stencil, per-sample shading and coarse shading affect that relationship. A historical per-pixel test inequality is not a universal modern pipeline contract.
 
 <!-- d3d12-review-alert:end:queries:N-pipeline-field-units:1 -->
 
@@ -405,7 +405,7 @@ typedef struct D3D12_QUERY_DATA_PIPELINE_STATISTICS1
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1` and `D3D12_QUERY_TYPE_PIPELINE_STATISTICS1` select this result. `ASInvocations` and `MSInvocations` count individual shader-thread invocations, not thread groups; `MSPrimitives` counts mesh output primitives with the view/culling qualifications below. Query begin/end and result resolution retain the [query contract](#query-lifecycle). `OPTIONS9.MeshShaderPipelineStatsSupported` advertises support; creating this statistics heap requires that capability. An unsupported heap is not a valid way to obtain zero-valued AS/MS fields. The older fields retain their existing meanings. Driver reporting uses the corresponding `D3D12DDI_QUERY_DATA_PIPELINE_STATISTICS1`, query-heap and query-type contracts.
+> `D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1` and `D3D12_QUERY_TYPE_PIPELINE_STATISTICS1` select this result. `ASInvocations` and `MSInvocations` count individual shader thread invocations, not thread groups; `MSPrimitives` counts mesh output primitives with the view/culling qualifications below. Query begin/end and result resolution retain the [query contract](#query-lifecycle). `OPTIONS9.MeshShaderPipelineStatsSupported` advertises support; creating this statistics heap requires that capability. An unsupported heap is not a valid way to obtain zero-valued AS/MS fields. The older fields retain their existing meanings. Driver reporting uses the corresponding `D3D12DDI_QUERY_DATA_PIPELINE_STATISTICS1`, query heap and query type contracts.
 
 <!-- d3d12-review-alert:end:queries:M-statistics-contract:0 -->
 
@@ -462,7 +462,7 @@ If the capability value is UNKNOWN, then the culled primitives might or might no
 
 <a id="stream-output-statistics"></a>
 
-## Stream-output statistics
+## Stream output statistics
 
 <ins><!-- d3d12-review-inline:begin:queries:A-so-statistics:0 -->`D3D12_QUERY_DATA_SO_STATISTICS` contains statistics for monitoring the amount of data streamed out to the given Stream at the [Stream Output](geometry-shaders-and-stream-output.md#stream-output) stage of the Pipeline. Only complete primitives (e.g. points, lines or triangles) are Streamed Out, as counted by these stats. Should the primitive type change (e.g. lines to triangles), the counting is not adjusted in any way; the count is always total primitives, regardless of type.<!-- d3d12-review-inline:end:queries:A-so-statistics:0 --></ins>
 
@@ -487,7 +487,7 @@ If the stream output resource is large enough, then *PrimitivesStorageNeeded* re
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12_QUERY_TYPE_SO_STATISTICS_STREAM0` through `D3D12_QUERY_TYPE_SO_STATISTICS_STREAM3` select per-stream statistics from a `D3D12_QUERY_HEAP_TYPE_SO_STATISTICS` heap. These primitive counts are distinct from the filled-size byte value and GS emission limits. `BeginQuery` and `EndQuery` define the measured interval; `ResolveQueryData` makes its result available. Unequal written and storage-needed results indicate insufficient capture storage. Predicate and [indirect execution](indirect-execution.md#argument-initialization) use their own buffer/operation contracts.
+> `D3D12_QUERY_TYPE_SO_STATISTICS_STREAM0` through `D3D12_QUERY_TYPE_SO_STATISTICS_STREAM3` select per-stream statistics from a `D3D12_QUERY_HEAP_TYPE_SO_STATISTICS` heap. These primitive counts are distinct from the filled size byte value and GS emission limits. `BeginQuery` and `EndQuery` define the measured interval; `ResolveQueryData` makes its result available. Unequal written and storage-needed results indicate insufficient capture storage. Predicate and [indirect execution](indirect-execution.md#argument-initialization) use their own buffer/operation contracts.
 
 <!-- d3d12-review-alert:end:queries:G-so-statistics-contract:0 -->
 
@@ -496,13 +496,13 @@ If the stream output resource is large enough, then *PrimitivesStorageNeeded* re
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> These counters measure complete primitives per stream, not filled-size bytes. Stream overflow, whole-primitive write suppression and independence between streams are defined by [SO capture behavior](geometry-shaders-and-stream-output.md#overflow-and-statistics). A comparison of the two interval results can detect insufficient storage; there is no separate D3D12 SO-overflow predicate query object.
+> These counters measure complete primitives per stream, not filled size bytes. Stream overflow, whole-primitive write suppression and independence between streams are defined by [SO capture behavior](geometry-shaders-and-stream-output.md#overflow-and-statistics). A comparison of the two interval results can detect insufficient storage. There is no separate D3D12 SO overflow predicate query object.
 
 <!-- d3d12-review-alert:end:queries:N-so-owner:0 -->
 
 <a id="video-decode-statistics"></a>
 
-## Video-decode statistics
+## Video decode statistics
 
 ```cpp
 typedef struct D3D12_QUERY_DATA_VIDEO_DECODE_STATISTICS
@@ -513,6 +513,8 @@ typedef struct D3D12_QUERY_DATA_VIDEO_DECODE_STATISTICS
     UINT BitRate;
 } D3D12_QUERY_DATA_VIDEO_DECODE_STATISTICS;
 ```
+
+<a id="d3d12-video-decode-status"></a>
 
 ```cpp
 typedef enum D3D12_VIDEO_DECODE_STATUS
@@ -527,7 +529,7 @@ typedef enum D3D12_VIDEO_DECODE_STATUS
 
 `Status`
 
-A member of the [D3D12_VIDEO_DECODE_STATUS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_video_decode_status) enumeration indicating the video decoding status.
+A member of the [D3D12_VIDEO_DECODE_STATUS](#d3d12-video-decode-status) enumeration indicating the video decoding status.
 
 `NumMacroblocksAffected`
 
@@ -539,11 +541,11 @@ The decode frame rate.
 
 `BitRate`
 
-When the **Status** returned is [D3D12_VIDEO_DECODE_STATUS_RATE_EXCEEDED](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_video_decode_status), this field reports the bitrate that would succeed. This value may be used to recreate the decoder and try again. A value of zero here is valid to indicate that the worst case bit rate should be assumed.
+When the **Status** returned is [D3D12_VIDEO_DECODE_STATUS_RATE_EXCEEDED](#d3d12-video-decode-status), this field reports the bitrate that would succeed. This value may be used to recreate the decoder and try again. A value of zero here is valid to indicate that the worst case bit rate should be assumed.
 
 For all other **Status** values, **BitRate** is set to zero.
 
-<ins><!-- d3d12-review-inline:begin:queries:P-video-statistics-use:0 -->Use this query type to determine if a video was successfully decoded. If decoding fails due to insufficient BitRate or FrameRate parameters set during creation of the decode heap, then the status field of the query is set to [D3D12_VIDEO_DECODE_STATUS_RATE_EXCEEDED](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_video_decode_status) and the query also contains new BitRate and FrameRate values that would succeed. This query type can only be performed on video decode command lists [(D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE)](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_command_list_type). This query type does not use [ID3D12VideoDecodeCommandList::BeginQuery](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nf-d3d12video-id3d12videodecodecommandlist-beginquery), only [ID3D12VideoDecodeCommandList::EndQuery](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nf-d3d12video-id3d12videodecodecommandlist-endquery). Statistics are recorded only for the most recent [ID3D12VideoDecodeCommandList::DecodeFrame](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nf-d3d12video-id3d12videodecodecommandlist-decodeframe) call in the same command list. Decode status structures are defined by the codec specification.<!-- d3d12-review-inline:end:queries:P-video-statistics-use:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:P-video-statistics-use:0 -->Use this query type to determine if a video was successfully decoded. If decoding fails due to insufficient BitRate or FrameRate parameters set during creation of the decode heap, then the status field of the query is set to [D3D12_VIDEO_DECODE_STATUS_RATE_EXCEEDED](#d3d12-video-decode-status) and the query also contains new BitRate and FrameRate values that would succeed. This query type can only be performed on video decode command lists [(D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE)](execution.md#command-list-types). This query type does not use [ID3D12VideoDecodeCommandList::BeginQuery](#videodecode-beginquery), only [ID3D12VideoDecodeCommandList::EndQuery](#videodecode-endquery). Statistics are recorded only for the most recent [ID3D12VideoDecodeCommandList::DecodeFrame](video-decode.md#decode-frame) call in the same command list. Decode status structures are defined by the codec specification.<!-- d3d12-review-inline:end:queries:P-video-statistics-use:0 --></ins>
 
 <a id="query-apis"></a>
 
@@ -571,9 +573,9 @@ Creates a query heap. A query heap contains an array of queries.
 
 `[in] pDesc`
 
-Type: **const [D3D12_QUERY_HEAP_DESC](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_query_heap_desc)\***
+Type: **const [D3D12_QUERY_HEAP_DESC](#d3d12_query_heap_desc)\***
 
-Specifies the query heap in a [D3D12_QUERY_HEAP_DESC](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_query_heap_desc) structure.
+Specifies the query heap in a [D3D12_QUERY_HEAP_DESC](#d3d12_query_heap_desc) structure.
 
 `riid`
 
@@ -589,9 +591,9 @@ Specifies a pointer to the heap, that will be returned on successful completion 
 
 #### Return values
 
-Type: **[HRESULT](https://learn.microsoft.com/en-us/windows/win32/com/structure-of-com-error-codes)**
+Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
-This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).
+This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
 #### Constraints
 
@@ -626,15 +628,15 @@ Starts a query running.
 
 `[in] pQueryHeap`
 
-Type: **[ID3D12QueryHeap](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12queryheap)\***
+Type: **[ID3D12QueryHeap](#query-heaps)\***
 
-Specifies the [ID3D12QueryHeap](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12queryheap) containing the query.
+Specifies the [ID3D12QueryHeap](#query-heaps) containing the query.
 
 `[in] Type`
 
-Type: **[D3D12_QUERY_TYPE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_query_type)**
+Type: **[D3D12_QUERY_TYPE](#d3d12_query_type)**
 
-Specifies one member of [D3D12_QUERY_TYPE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_query_type).
+Specifies one member of [D3D12_QUERY_TYPE](#d3d12_query_type).
 
 `[in] Index`
 
@@ -679,15 +681,15 @@ void EndQuery(
 
 `[in] pQueryHeap`
 
-Type: **[ID3D12QueryHeap](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12queryheap)\***
+Type: **[ID3D12QueryHeap](#query-heaps)\***
 
-Specifies the [ID3D12QueryHeap](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12queryheap) containing the query.
+Specifies the [ID3D12QueryHeap](#query-heaps) containing the query.
 
 `[in] Type`
 
-Type: **[D3D12_QUERY_TYPE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_query_type)**
+Type: **[D3D12_QUERY_TYPE](#d3d12_query_type)**
 
-Specifies one member of [D3D12_QUERY_TYPE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_query_type).
+Specifies one member of [D3D12_QUERY_TYPE](#d3d12_query_type).
 
 `[in] Index`
 
@@ -735,15 +737,15 @@ Extracts data from a query.
 
 `[in] pQueryHeap`
 
-Type: **[ID3D12QueryHeap](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12queryheap)\***
+Type: **[ID3D12QueryHeap](#query-heaps)\***
 
-Specifies the [ID3D12QueryHeap](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12queryheap) containing the queries to resolve.
+Specifies the [ID3D12QueryHeap](#query-heaps) containing the queries to resolve.
 
 `[in] Type`
 
-Type: **[D3D12_QUERY_TYPE](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_query_type)**
+Type: **[D3D12_QUERY_TYPE](#d3d12_query_type)**
 
-Specifies the type of query, one member of [D3D12_QUERY_TYPE](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_query_type).
+Specifies the type of query, one member of [D3D12_QUERY_TYPE](#d3d12_query_type).
 
 `[in] StartIndex`
 
@@ -759,9 +761,9 @@ Specifies the number of queries to resolve.
 
 `[in] pDestinationBuffer`
 
-Type: **[ID3D12Resource](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource)\***
+Type: **[ID3D12Resource](resources.md#resource-storage)\***
 
-Specifies an [ID3D12Resource](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource) destination buffer, which must be in the state [D3D12_RESOURCE_STATE_COPY_DEST](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_states).
+Specifies an [ID3D12Resource](resources.md#resource-storage) destination buffer, which must be in the state [D3D12_RESOURCE_STATE_COPY_DEST](synchronization.md#d3d12-resource-states).
 
 `[in] AlignedDestinationBufferOffset`
 
@@ -806,11 +808,11 @@ void BeginQuery(
 
 `pQueryHeap`
 
-A pointer to an [ID3D12QueryHeap](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12queryheap) specifying the storage for this query.
+A pointer to an [ID3D12QueryHeap](#query-heaps) specifying the storage for this query.
 
 `Type`
 
-A member of the [D3D12_QUERY_TYPE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_query_type) enumeration specifying the type of the query.
+A member of the [D3D12_QUERY_TYPE](#d3d12_query_type) enumeration specifying the type of the query.
 
 `Index`
 
@@ -827,7 +829,7 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply. No currently supported video query type uses BeginQuery; this declaration does not permit beginning a timestamp or decode-statistics query.
+> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply. No currently supported video query type uses BeginQuery. This declaration does not permit beginning a timestamp or decode statistics query.
 
 <!-- d3d12-review-alert:end:queries:C-ID3D12VideoDecodeCommandList%3A%3ABeginQuery:0 -->
 
@@ -853,11 +855,11 @@ void EndQuery(
 
 `pQueryHeap`
 
-A pointer to an [ID3D12QueryHeap](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12queryheap) specifying the storage for this query.
+A pointer to an [ID3D12QueryHeap](#query-heaps) specifying the storage for this query.
 
 `Type`
 
-A member of the [D3D12_QUERY_TYPE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_query_type) enumeration specifying the type of the query.
+A member of the [D3D12_QUERY_TYPE](#d3d12_query_type) enumeration specifying the type of the query.
 
 `Index`
 
@@ -903,11 +905,11 @@ Extracts data from a query.
 
 `pQueryHeap`
 
-A pointer to an [ID3D12QueryHeap](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12queryheap) specifying the storage containing the queries to resolve.
+A pointer to an [ID3D12QueryHeap](#query-heaps) specifying the storage containing the queries to resolve.
 
 `Type`
 
-A member of the [D3D12_QUERY_TYPE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_query_type) enumeration specifying the type of the query.
+A member of the [D3D12_QUERY_TYPE](#d3d12_query_type) enumeration specifying the type of the query.
 
 `StartIndex`
 
@@ -919,7 +921,7 @@ The number of queries to resolve.
 
 `pDestinationBuffer`
 
-A pointer to an [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) representing the destination buffer. The resource must be in the state [D3D12_RESOURCE_STATE_COPY_DEST](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_resource_states).
+A pointer to an [ID3D12Resource](resources.md#resource-storage) representing the destination buffer. The resource must be in the state [D3D12_RESOURCE_STATE_COPY_DEST](synchronization.md#d3d12-resource-states).
 
 `AlignedDestinationBufferOffset`
 
@@ -962,11 +964,11 @@ void BeginQuery(
 
 `pQueryHeap`
 
-A pointer to an [ID3D12QueryHeap](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12queryheap) specifying the storage for this query.
+A pointer to an [ID3D12QueryHeap](#query-heaps) specifying the storage for this query.
 
 `Type`
 
-A member of the [D3D12_QUERY_TYPE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_query_type) enumeration specifying the type of the query.
+A member of the [D3D12_QUERY_TYPE](#d3d12_query_type) enumeration specifying the type of the query.
 
 `Index`
 
@@ -983,7 +985,7 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply. No currently supported video query type uses BeginQuery; this declaration does not permit beginning a timestamp or decode-statistics query.
+> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply. No currently supported video query type uses BeginQuery. This declaration does not permit beginning a timestamp or decode statistics query.
 
 <!-- d3d12-review-alert:end:queries:C-ID3D12VideoProcessCommandList%3A%3ABeginQuery:0 -->
 
@@ -1009,11 +1011,11 @@ void EndQuery(
 
 `pQueryHeap`
 
-A pointer to an [ID3D12QueryHeap](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12queryheap) specifying the storage for this query.
+A pointer to an [ID3D12QueryHeap](#query-heaps) specifying the storage for this query.
 
 `Type`
 
-A member of the [D3D12_QUERY_TYPE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_query_type) enumeration specifying the type of the query.
+A member of the [D3D12_QUERY_TYPE](#d3d12_query_type) enumeration specifying the type of the query.
 
 `Index`
 
@@ -1059,11 +1061,11 @@ Extracts data from a query.
 
 `pQueryHeap`
 
-A pointer to an [ID3D12QueryHeap](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12queryheap) specifying the storage containing the queries to resolve.
+A pointer to an [ID3D12QueryHeap](#query-heaps) specifying the storage containing the queries to resolve.
 
 `Type`
 
-A member of the [D3D12_QUERY_TYPE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_query_type) enumeration specifying the type of the query.
+A member of the [D3D12_QUERY_TYPE](#d3d12_query_type) enumeration specifying the type of the query.
 
 `StartIndex`
 
@@ -1075,7 +1077,7 @@ The number of queries to resolve.
 
 `pDestinationBuffer`
 
-A pointer to an [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) representing the destination buffer. The resource must be in the state [D3D12_RESOURCE_STATE_COPY_DEST](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_resource_states).
+A pointer to an [ID3D12Resource](resources.md#resource-storage) representing the destination buffer. The resource must be in the state [D3D12_RESOURCE_STATE_COPY_DEST](synchronization.md#d3d12-resource-states).
 
 `AlignedDestinationBufferOffset`
 
@@ -1118,11 +1120,11 @@ void BeginQuery(
 
 `pQueryHeap`
 
-A pointer to an [ID3D12QueryHeap](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12queryheap) specifying the storage for this query.
+A pointer to an [ID3D12QueryHeap](#query-heaps) specifying the storage for this query.
 
 `Type`
 
-A member of the [D3D12_QUERY_TYPE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_query_type) enumeration specifying the type of the query.
+A member of the [D3D12_QUERY_TYPE](#d3d12_query_type) enumeration specifying the type of the query.
 
 `Index`
 
@@ -1139,7 +1141,7 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply. No currently supported video query type uses BeginQuery; this declaration does not permit beginning a timestamp or decode-statistics query.
+> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply. No currently supported video query type uses BeginQuery. This declaration does not permit beginning a timestamp or decode statistics query.
 
 <!-- d3d12-review-alert:end:queries:C-ID3D12VideoEncodeCommandList%3A%3ABeginQuery:0 -->
 
@@ -1165,11 +1167,11 @@ void EndQuery(
 
 `pQueryHeap`
 
-A pointer to an [ID3D12QueryHeap](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12queryheap) specifying the storage for this query.
+A pointer to an [ID3D12QueryHeap](#query-heaps) specifying the storage for this query.
 
 `Type`
 
-A member of the [D3D12_QUERY_TYPE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_query_type) enumeration specifying the type of the query.
+A member of the [D3D12_QUERY_TYPE](#d3d12_query_type) enumeration specifying the type of the query.
 
 `Index`
 
@@ -1215,11 +1217,11 @@ Extracts data from a query.
 
 `pQueryHeap`
 
-A pointer to an [ID3D12QueryHeap](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12queryheap) specifying the storage containing the queries to resolve.
+A pointer to an [ID3D12QueryHeap](#query-heaps) specifying the storage containing the queries to resolve.
 
 `Type`
 
-A member of the [D3D12_QUERY_TYPE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_query_type) enumeration specifying the type of the query.
+A member of the [D3D12_QUERY_TYPE](#d3d12_query_type) enumeration specifying the type of the query.
 
 `StartIndex`
 
@@ -1231,7 +1233,7 @@ The number of queries to resolve.
 
 `pDestinationBuffer`
 
-A pointer to an [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) representing the destination buffer. The resource must be in the state [D3D12_RESOURCE_STATE_COPY_DEST](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_resource_states).
+A pointer to an [ID3D12Resource](resources.md#resource-storage) representing the destination buffer. The resource must be in the state [D3D12_RESOURCE_STATE_COPY_DEST](synchronization.md#d3d12-resource-states).
 
 `AlignedDestinationBufferOffset`
 
@@ -1254,7 +1256,7 @@ None
 
 <a id="cpu-resolution"></a>
 
-## CPU-timeline query resolution
+## CPU timeline query resolution
 
 <a id="cpu-query-flags"></a>
 
@@ -1262,7 +1264,7 @@ None
 
 **Members:**
 
-- <ins><!-- d3d12-review-inline:begin:queries:CPU-flag-contract:1 -->**D3D12_QUERY_HEAP_FLAG_NONE** - No special flags. The query heap can only be resolved using the [appropriate command-list GPU `ResolveQueryData` method](#gpu-resolve-support).<!-- d3d12-review-inline:end:queries:CPU-flag-contract:1 --></ins>
+- <ins><!-- d3d12-review-inline:begin:queries:CPU-flag-contract:1 -->**D3D12_QUERY_HEAP_FLAG_NONE** - No special flags. The query heap can only be resolved using the [appropriate command list GPU `ResolveQueryData` method](#gpu-resolve-support).<!-- d3d12-review-inline:end:queries:CPU-flag-contract:1 --></ins>
 
 - <ins><!-- d3d12-review-inline:begin:queries:CPU-flag-contract:1 -->**D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE** - Enables CPU-based query resolution for this query heap. When this flag is set, applications can use the `ID3D12Device15::ResolveQueryData()` method to resolve query data directly on the CPU timeline after GPU execution completes.<!-- d3d12-review-inline:end:queries:CPU-flag-contract:1 --></ins>
 
@@ -1291,7 +1293,7 @@ HRESULT CreateQueryHeap1(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Creates a query heap with explicit CPU/GPU result-retrieval selection.
+> Creates a query heap with explicit CPU/GPU result retrieval selection.
 
 <!-- d3d12-review-alert:end:queries:B-ID3D12Device15%3A%3ACreateQueryHeap1:0 -->
 
@@ -1302,7 +1304,7 @@ HRESULT CreateQueryHeap1(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pDesc` supplies [Type, Count and NodeMask](#query-heaps). `Flags` is `D3D12_QUERY_HEAP_FLAG_NONE` for ordinary GPU resolution or `D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE` for CPU resolution. `riid` identifies the requested heap interface; `ppvHeap` receives the created object. As with CreateQueryHeap, a null `ppvHeap` requests validation without returning an object.
+> `pDesc` supplies [Type, Count and NodeMask](#query-heaps). `Flags` is `D3D12_QUERY_HEAP_FLAG_NONE` for ordinary GPU resolution or `D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE` for CPU resolution. `riid` identifies the requested heap interface. `ppvHeap` receives the created object. As with CreateQueryHeap, a null `ppvHeap` requests validation without returning an object.
 
 <!-- d3d12-review-alert:end:queries:P-ID3D12Device15%3A%3ACreateQueryHeap1:0 -->
 
@@ -1313,7 +1315,7 @@ HRESULT CreateQueryHeap1(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Successful object creation returns `S_OK`; successful null-output validation returns `S_FALSE`. Invalid parameters return `E_INVALIDARG`, with allocation and device errors reported by the standard HRESULT contract.
+> Successful object creation returns `S_OK`; successful null output validation returns `S_FALSE`. Invalid parameters return `E_INVALIDARG`, with allocation and device errors reported by the standard HRESULT contract.
 
 <!-- d3d12-review-alert:end:queries:R-ID3D12Device15%3A%3ACreateQueryHeap1:0 -->
 
@@ -1324,7 +1326,7 @@ HRESULT CreateQueryHeap1(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> With flags NONE, the heap is equivalent to the ordinary creation path. CPU-resolve heaps cannot be passed to command-list ResolveQueryData, and ordinary heaps cannot be passed to the CPU method.
+> With flags NONE, the heap is equivalent to the ordinary creation path. CPU-resolve heaps cannot be passed to command list ResolveQueryData, and ordinary heaps cannot be passed to the CPU method.
 
 <!-- d3d12-review-alert:end:queries:C-ID3D12Device15%3A%3ACreateQueryHeap1:0 -->
 
@@ -1361,7 +1363,7 @@ HRESULT ResolveQueryData(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pQueryHeap` identifies a heap created with CPU_RESOLVE. `Type` selects compatible result records. `StartIndex` and nonzero `NumQueries` select the consecutive query range; the range must fit and the output must be non-null and correctly sized. `pResolvedQueryData` receives the [typed records](#result-layout).
+> `pQueryHeap` identifies a heap created with CPU_RESOLVE. `Type` selects compatible result records. `StartIndex` and nonzero `NumQueries` select the consecutive query range. The range must fit and the output must be non-null and correctly sized. `pResolvedQueryData` receives the [typed records](#result-layout).
 
 <!-- d3d12-review-alert:end:queries:P-ID3D12Device15%3A%3AResolveQueryData:0 -->
 
@@ -1383,7 +1385,7 @@ HRESULT ResolveQueryData(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The application must establish completion of every GPU producer of the selected results before calling; the method does not wait for the GPU or establish implicit synchronization.
+> The application must establish completion of every GPU producer of the selected results before calling. The method does not wait for the GPU or establish implicit synchronization.
 
 <!-- d3d12-review-alert:end:queries:C-ID3D12Device15%3A%3AResolveQueryData:0 -->
 
@@ -1437,9 +1439,9 @@ The GPU timestamp counter frequency (in ticks/second).
 
 #### Return values
 
-Type: **[HRESULT](https://learn.microsoft.com/en-us/windows/win32/com/structure-of-com-error-codes)**
+Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
-This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).
+This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
 #### Constraints
 
@@ -1485,9 +1487,9 @@ The value of the CPU timestamp counter.
 
 #### Return values
 
-Type: **[HRESULT](https://learn.microsoft.com/en-us/windows/win32/com/structure-of-com-error-codes)**
+Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
-This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).
+This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
 #### Constraints
 
@@ -1502,13 +1504,13 @@ This method returns one of the [Direct3D 12 Return Codes](https://learn.microsof
 
 A timestamp is sampled by the GPU at the moment that the GPU is finished with all of the preceding workload. It's the same behavior adopted by Direct3D 11 (see [D3D11_QUERY_TIMESTAMP](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#20.4.3%20D3D11_QUERY_TIMESTAMP) in the Direct3D 11.3 Functional Specification on GitHub). That means that timestamp queries are a bottom-of-pipe (BOP) operation in Direct3D 12.
 
-[**GetClockCalibration**](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nf-d3d12-id3d12commandqueue-getclockcalibration) samples the GPU timestamp counter for a given command queue and samples the CPU counter via `QueryPerformanceCounter` at nearly the same time. Again this API fails (returning E\_FAIL) if the specified command queue does not support timestamps (see the table in the [Queries](https://learn.microsoft.com/en-us/windows/win32/direct3d12/queries) topic).
+[**GetClockCalibration**](#getclockcalibration) samples the GPU timestamp counter for a given command queue and samples the CPU counter via `QueryPerformanceCounter` at nearly the same time. Again this API fails (returning E\_FAIL) if the specified command queue does not support timestamps (see the table in the [Queries](#query-heaps) topic).
 
 Note that GPU and CPU timestamp counters are not necessarily directly related to the clock speed of these processors, but instead work from timestamp ticks.
 
-<ins><!-- d3d12-review-inline:begin:queries:P-timestamp-calibration:3 -->**Idle-clock qualification.**<!-- d3d12-review-inline:end:queries:P-timestamp-calibration:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:P-timestamp-calibration:3 -->**Idle clock qualification.**<!-- d3d12-review-inline:end:queries:P-timestamp-calibration:3 --></ins>
 
-GPU timestamp clocks can stop ticking on some hardware when the GPU is idle, so the correlation can drift. To prevent this, call [**ID3D12Device::SetStablePowerState**](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nf-d3d12-id3d12device-setstablepowerstate) during development (requires Developer Mode enabled).
+GPU timestamp clocks can stop ticking on some hardware when the GPU is idle, so the correlation can drift. To prevent this, call [**ID3D12Device::SetStablePowerState**](#setstablepowerstate) during development (requires Developer Mode enabled).
 
 Timestamp frequencies do not change, even if other clock frequencies
 on the GPU change.
@@ -1518,7 +1520,7 @@ on the GPU change.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A timestamp is a 64-bit tick value with unspecified origin. Differences quantify elapsed GPU-clock ticks within the supported comparison domain; divide by the corresponding queue frequency for seconds, using floating-point arithmetic when fractional time is needed. CPU calibration values are QueryPerformanceCounter ticks and use that counter's frequency, not the GPU queue frequency. A timestamp is not a fence signal and does not by itself establish CPU visibility or resource synchronization.
+> A timestamp is a 64-bit tick value with unspecified origin. Differences quantify elapsed GPU clock ticks within the supported comparison domain; divide by the corresponding queue frequency for seconds, using floating-point arithmetic when fractional time is needed. CPU calibration values are QueryPerformanceCounter ticks and use that counter's frequency, not the GPU queue frequency. A timestamp is not a fence signal and does not by itself establish CPU visibility or resource synchronization.
 
 <!-- d3d12-review-alert:end:queries:N-timestamp-units:0 -->
 
@@ -1527,7 +1529,7 @@ on the GPU change.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Two timestamp queries issued in the same command list are reliably comparable. Comparisons across command lists must account for GPU idle intervals and clock-domain/calibration behavior; stable power is a development-time aid for stable correlation. Do not compare raw ticks from different queue clock domains as if they necessarily had a common origin and frequency.
+> Two timestamp queries issued in the same command list are reliably comparable. Comparisons across command lists must account for GPU idle intervals and clock domain/calibration behavior; stable power is a development-time aid for stable correlation. Do not compare raw ticks from different queue clock domains as if they necessarily had a common origin and frequency.
 
 <!-- d3d12-review-alert:end:queries:N-timestamp-comparison:0 -->
 
@@ -1555,9 +1557,9 @@ Specifies a BOOL that turns the stable power state on or off.
 
 #### Return values
 
-Type: **[HRESULT](https://learn.microsoft.com/en-us/windows/win32/com/structure-of-com-error-codes)**
+Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
-This method returns one of the [Direct3D 12 Return Codes](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12-graphics-reference-returnvalues).
+This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
 #### Constraints
 
@@ -1582,6 +1584,8 @@ This method is only useful during the development of applications. It enables de
 
 Predication is decoupled from queries. Predication can be set based on
 the value of 64-bits within a buffer.
+
+<a id="d3d12-predication-op"></a>
 
 ```cpp
 typedef enum D3D12_PREDICATION_OP
@@ -1623,7 +1627,7 @@ typedef enum D3D12_PREDICATION_OP
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Predication is supported by DIRECT, COMPUTE and the video command-list types, not COPY or BUNDLE setters. Direct/compute/video recordings begin with predication disabled; Reset/ClearState restore disabled state. Bundles inherit the direct-list predicate but cannot set it; executing the bundle is not itself skipped, and its state changes still occur. [Canonical graphics initial/reset/bundle state](command-list-state.md#queries) remains the owner of graphics recording boundaries; the video predicate defaults are specified here.
+> Predication is supported by DIRECT, COMPUTE and the video command list types, not COPY or BUNDLE setters. Direct/compute/video recordings begin with predication disabled; Reset/ClearState restore disabled state. Bundles inherit the direct list predicate but cannot set it; executing the bundle is not itself skipped, and its state changes still occur. [Canonical graphics initial/reset/bundle state](command-list-state.md#queries) remains the owner of graphics recording boundaries. The video predicate defaults are specified here.
 
 <!-- d3d12-review-alert:end:queries:N-predicate-state:0 -->
 
@@ -1632,7 +1636,7 @@ typedef enum D3D12_PREDICATION_OP
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> When `pBuffer` is null, `AlignedBufferOffset` must be zero and `Operation` must be `D3D12_PREDICATION_OP_EQUAL_ZERO`. A non-null predicate source is an unprotected buffer with an eight-byte-aligned, in-bounds eight-byte range. All 64 bits participate. Its production and subsequent sampling require the normal [resource-access and synchronization contract](synchronization.md#barrier-access), with lifetime and residency preserved through execution. Predication does not legalize invalid commands or skip CPU-side recording/state validation. [Protected-resource operations](../ProtectedResources.md#predication-not-supported) have their additional restriction.
+> When `pBuffer` is null, `AlignedBufferOffset` must be zero and `Operation` must be `D3D12_PREDICATION_OP_EQUAL_ZERO`. A non-null predicate source is an unprotected buffer with an eight-byte-aligned, in-bounds eight-byte range. All 64 bits participate. Its production and subsequent sampling require the normal [resource access and synchronization contract](synchronization.md#barrier-access), with lifetime and residency preserved through execution. Predication does not legalize invalid commands or skip CPU-side recording/state validation. [Protected resource operations](../ProtectedResources.md#predication-not-supported) have their additional restriction.
 
 <!-- d3d12-review-alert:end:queries:N-predicate-state:1 -->
 
@@ -1658,9 +1662,9 @@ Sets a rendering predicate.
 
 `[in, optional] pBuffer`
 
-Type: **[ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource)\***
+Type: **[ID3D12Resource](resources.md#resource-storage)\***
 
-<ins><!-- d3d12-review-inline:begin:queries:P-ID3D12GraphicsCommandList%3A%3ASetPredication:2 -->The buffer, as an [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource), which must be in the [**D3D12\_RESOURCE\_STATE\_PREDICATION**](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_states) or [**D3D12\_RESOURCE\_STATE\_INDIRECT\_ARGUMENT**](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_states) state (both values are identical, and provided as aliases for clarity), or **NULL** to disable predication.<!-- d3d12-review-inline:end:queries:P-ID3D12GraphicsCommandList%3A%3ASetPredication:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:P-ID3D12GraphicsCommandList%3A%3ASetPredication:2 -->The buffer, as an [ID3D12Resource](resources.md#resource-storage), which must be in the [**D3D12\_RESOURCE\_STATE\_PREDICATION**](synchronization.md#d3d12-resource-states) or [**D3D12\_RESOURCE\_STATE\_INDIRECT\_ARGUMENT**](synchronization.md#d3d12-resource-states) state (both values are identical, and provided as aliases for clarity), or **NULL** to disable predication.<!-- d3d12-review-inline:end:queries:P-ID3D12GraphicsCommandList%3A%3ASetPredication:2 --></ins>
 
 `[in] AlignedBufferOffset`
 
@@ -1670,9 +1674,9 @@ The aligned buffer offset, as a UINT64.
 
 `[in] Operation`
 
-Type: **[D3D12_PREDICATION_OP](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_predication_op)**
+Type: **[D3D12_PREDICATION_OP](#d3d12-predication-op)**
 
-Specifies a [D3D12_PREDICATION_OP](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_predication_op), such as D3D12\_PREDICATION\_OP\_EQUAL\_ZERO or D3D12\_PREDICATION\_OP\_NOT\_EQUAL\_ZERO.
+Specifies a [D3D12_PREDICATION_OP](#d3d12-predication-op), such as D3D12\_PREDICATION\_OP\_EQUAL\_ZERO or D3D12\_PREDICATION\_OP\_NOT\_EQUAL\_ZERO.
 
 #### Return values
 
@@ -1711,7 +1715,7 @@ Specifies that subsequent commands should not be performed if the predicate valu
 
 `pBuffer`
 
-A pointer to an [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) representing the buffer from which to read the 64-bit predication value.
+A pointer to an [ID3D12Resource](resources.md#resource-storage) representing the buffer from which to read the 64-bit predication value.
 
 `AlignedBufferOffset`
 
@@ -1719,7 +1723,7 @@ The UINT64-aligned buffer offset.
 
 `Operation`
 
-A member of the [D3D12_PREDICATION_OP](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_predication_op) enumeration specifying the predicate operation.
+A member of the [D3D12_PREDICATION_OP](#d3d12-predication-op) enumeration specifying the predicate operation.
 
 #### Return values
 
@@ -1758,7 +1762,7 @@ Specifies that subsequent commands should not be performed if the predicate valu
 
 `pBuffer`
 
-A pointer to an [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) representing the buffer from which to read the 64-bit predication value.
+A pointer to an [ID3D12Resource](resources.md#resource-storage) representing the buffer from which to read the 64-bit predication value.
 
 `AlignedBufferOffset`
 
@@ -1766,7 +1770,7 @@ The UINT64-aligned buffer offset.
 
 `Operation`
 
-A member of the [D3D12_PREDICATION_OP](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_predication_op) enumeration specifying the predicate operation.
+A member of the [D3D12_PREDICATION_OP](#d3d12-predication-op) enumeration specifying the predicate operation.
 
 #### Return values
 
@@ -1805,7 +1809,7 @@ Specifies that subsequent commands should not be performed if the predicate valu
 
 `pBuffer`
 
-A pointer to an [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) representing the buffer from which to read the 64-bit predication value.
+A pointer to an [ID3D12Resource](resources.md#resource-storage) representing the buffer from which to read the 64-bit predication value.
 
 `AlignedBufferOffset`
 
@@ -1813,7 +1817,7 @@ The UINT64-aligned buffer offset.
 
 `Operation`
 
-A member of the [D3D12_PREDICATION_OP](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_predication_op) enumeration specifying the predicate operation.
+A member of the [D3D12_PREDICATION_OP](#d3d12-predication-op) enumeration specifying the predicate operation.
 
 #### Return values
 
@@ -1844,17 +1848,17 @@ None
 > | `ID3D12CommandListFenceBarriers::SignalBarrier` | unpredicated | On the independently supported list types. |
 > | `ID3D12CommandListFenceBarriers::WaitBarrier` | unpredicated | On the independently supported list types. |
 > | `ID3D12GraphicsCommandList10::DispatchGraph` | predicated | DIRECT/COMPUTE; not BUNDLE. |
-> | [`ID3D12GraphicsCommandList10::SetProgram`](state-objects.md#setprogram) | unpredicated | Program selection and optional work-graph backing-memory initialization. |
-> | `ID3D12GraphicsCommandList1::AtomicCopyBufferUINT` | predicated | Predication applies on DIRECT/COMPUTE; COPY does not support predicate selection. |
-> | `ID3D12GraphicsCommandList1::AtomicCopyBufferUINT64` | predicated | Predication applies on DIRECT/COMPUTE; COPY does not support predicate selection. |
+> | [`ID3D12GraphicsCommandList10::SetProgram`](state-objects.md#setprogram) | unpredicated | Program selection and optional work graph backing memory initialization. |
+> | `ID3D12GraphicsCommandList1::AtomicCopyBufferUINT` | predicated | Predication applies on DIRECT/COMPUTE. COPY does not support predicate selection. |
+> | `ID3D12GraphicsCommandList1::AtomicCopyBufferUINT64` | predicated | Predication applies on DIRECT/COMPUTE. COPY does not support predicate selection. |
 > | `ID3D12GraphicsCommandList1::ResolveSubresourceRegion` | predicated | DIRECT. |
-> | `ID3D12GraphicsCommandList2::WriteBufferImmediate` | predicated | On permitted list types; COPY has no supported predicate selection. |
-> | `ID3D12GraphicsCommandList4::BeginRenderPass` | wrapper | DIRECT. Translated beginning-access CLEAR work honors the predicate; binding/barrier/boundary effects remain independent. |
-> | [`ID3D12GraphicsCommandList4::BuildRaytracingAccelerationStructure`](acceleration-structures.md#buildraytracingaccelerationstructure) | unpredicated | DIRECT/COMPUTE; not BUNDLE; normal acceleration-structure validity rules apply. |
-> | [`ID3D12GraphicsCommandList4::CopyRaytracingAccelerationStructure`](acceleration-structures.md#copyraytracingaccelerationstructure) | unpredicated | DIRECT/COMPUTE; not BUNDLE; normal acceleration-structure validity rules apply. |
-> | [`ID3D12GraphicsCommandList4::DispatchRays`](raytracing-pipelines.md#id3d12graphicscommandlist4dispatchrays) | predicated | DIRECT/COMPUTE; BUNDLE only when that operation independently permits it. |
-> | [`ID3D12GraphicsCommandList4::EmitRaytracingAccelerationStructurePostbuildInfo`](acceleration-structures.md#emitraytracingaccelerationstructurepostbuildinfo) | unpredicated | DIRECT/COMPUTE; not BUNDLE; normal acceleration-structure validity rules apply. |
-> | `ID3D12GraphicsCommandList4::EndRenderPass` | wrapper | DIRECT. Translated ending-access RESOLVE work honors the predicate; boundary/synchronization effects remain independent. |
+> | `ID3D12GraphicsCommandList2::WriteBufferImmediate` | predicated | On permitted list types. COPY has no supported predicate selection. |
+> | `ID3D12GraphicsCommandList4::BeginRenderPass` | wrapper | DIRECT. Translated beginning access CLEAR work honors the predicate; binding/barrier/boundary effects remain independent. |
+> | [`ID3D12GraphicsCommandList4::BuildRaytracingAccelerationStructure`](acceleration-structures.md#buildraytracingaccelerationstructure) | unpredicated | DIRECT/COMPUTE; not BUNDLE; normal acceleration structure validity rules apply. |
+> | [`ID3D12GraphicsCommandList4::CopyRaytracingAccelerationStructure`](acceleration-structures.md#copyraytracingaccelerationstructure) | unpredicated | DIRECT/COMPUTE; not BUNDLE; normal acceleration structure validity rules apply. |
+> | [`ID3D12GraphicsCommandList4::DispatchRays`](raytracing-pipelines.md#id3d12graphicscommandlist4dispatchrays) | predicated | DIRECT/COMPUTE. BUNDLE only when that operation independently permits it. |
+> | [`ID3D12GraphicsCommandList4::EmitRaytracingAccelerationStructurePostbuildInfo`](acceleration-structures.md#emitraytracingaccelerationstructurepostbuildinfo) | unpredicated | DIRECT/COMPUTE; not BUNDLE; normal acceleration structure validity rules apply. |
+> | `ID3D12GraphicsCommandList4::EndRenderPass` | wrapper | DIRECT. Translated ending access RESOLVE work honors the predicate; boundary/synchronization effects remain independent. |
 > | [`ID3D12GraphicsCommandList4::ExecuteMetaCommand`](meta-commands.md#executemetacommand) | conditional | DIRECT/COMPUTE; not BUNDLE. Execution predicate behavior is defined by the selected algorithm; state-damage flags do not specify it. |
 > | [`ID3D12GraphicsCommandList4::InitializeMetaCommand`](meta-commands.md#initializemetacommand) | unpredicated | DIRECT/COMPUTE; not BUNDLE. Initialization ignores predication; operation/resource legality remains separate. |
 > | `ID3D12GraphicsCommandList6::DispatchMesh` | predicated | DIRECT; permitted BUNDLE operations use the inherited predicate. |
@@ -1864,13 +1868,13 @@ None
 > | `ID3D12GraphicsCommandList::ClearRenderTargetView` | predicated | DIRECT. |
 > | `ID3D12GraphicsCommandList::ClearUnorderedAccessViewFloat` | predicated | DIRECT or COMPUTE; not BUNDLE. |
 > | `ID3D12GraphicsCommandList::ClearUnorderedAccessViewUint` | predicated | DIRECT or COMPUTE; not BUNDLE. |
-> | `ID3D12GraphicsCommandList::Close` | wrapper | recording; CPU-query fallback flush when applicable. |
-> | `ID3D12GraphicsCommandList::CopyBufferRegion` | predicated | Predication applies on DIRECT/COMPUTE; COPY does not support predicate selection. |
-> | `ID3D12GraphicsCommandList::CopyResource` | predicated | Predication applies on DIRECT/COMPUTE; COPY does not support predicate selection. |
-> | `ID3D12GraphicsCommandList::CopyTextureRegion` | predicated | Predication applies on DIRECT/COMPUTE; COPY does not support predicate selection. |
-> | `ID3D12GraphicsCommandList::CopyTiles` | predicated | Permitted copy-operation contexts; predicate state availability separate. |
+> | `ID3D12GraphicsCommandList::Close` | wrapper | recording; CPU query fallback flush when applicable. |
+> | `ID3D12GraphicsCommandList::CopyBufferRegion` | predicated | Predication applies on DIRECT/COMPUTE. COPY does not support predicate selection. |
+> | `ID3D12GraphicsCommandList::CopyResource` | predicated | Predication applies on DIRECT/COMPUTE. COPY does not support predicate selection. |
+> | `ID3D12GraphicsCommandList::CopyTextureRegion` | predicated | Predication applies on DIRECT/COMPUTE. COPY does not support predicate selection. |
+> | `ID3D12GraphicsCommandList::CopyTiles` | predicated | Permitted copy operation contexts; predicate state availability separate. |
 > | `ID3D12GraphicsCommandList::DiscardResource` | unpredicated | Discard is a hint; no conditional preservation of resource contents is guaranteed. An implementation may ignore the hint. |
-> | `ID3D12GraphicsCommandList::Dispatch` | predicated | DIRECT/COMPUTE; BUNDLE only when that operation independently permits it. |
+> | `ID3D12GraphicsCommandList::Dispatch` | predicated | DIRECT/COMPUTE. BUNDLE only when that operation independently permits it. |
 > | `ID3D12GraphicsCommandList::DrawIndexedInstanced` | predicated | DIRECT; permitted BUNDLE operations use the inherited predicate. |
 > | `ID3D12GraphicsCommandList::DrawInstanced` | predicated | DIRECT; permitted BUNDLE operations use the inherited predicate. |
 > | `ID3D12GraphicsCommandList::EndQuery` | unpredicated | Only the query/list/heap combinations in the support tables. |
@@ -1882,44 +1886,44 @@ None
 > | [`ID3D12VideoDecodeCommandList1::DecodeFrame1`](video-decode.md#decode-frame1) | predicated | VIDEO_DECODE; versioned shared decode operation. |
 > | [`ID3D12VideoDecodeCommandList2::ExecuteExtensionCommand`](video-extension-commands.md#videodecodecommandlist2-executeextensioncommand) | conditional | VIDEO_DECODE. Predicate behavior is defined by the extension; no API-wide guarantee. |
 > | [`ID3D12VideoDecodeCommandList2::InitializeExtensionCommand`](video-extension-commands.md#videodecodecommandlist2-initializeextensioncommand) | conditional | VIDEO_DECODE. Predicate behavior is defined by the extension; no API-wide guarantee. |
-> | `ID3D12VideoDecodeCommandList3::Barrier` | unpredicated | video-decode. |
-> | `ID3D12VideoDecodeCommandList::BeginQuery` | unsupported | VIDEO_DECODE supports only end-only timestamp/decode-statistics query types. |
-> | `ID3D12VideoDecodeCommandList::Close` | wrapper | recording; CPU-query fallback flush when applicable. |
+> | `ID3D12VideoDecodeCommandList3::Barrier` | unpredicated | video decode. |
+> | `ID3D12VideoDecodeCommandList::BeginQuery` | unsupported | VIDEO_DECODE supports only end-only timestamp/decode statistics query types. |
+> | `ID3D12VideoDecodeCommandList::Close` | wrapper | recording; CPU query fallback flush when applicable. |
 > | [`ID3D12VideoDecodeCommandList::DecodeFrame`](video-decode.md#decode-frame) | predicated | VIDEO_DECODE. |
 > | `ID3D12VideoDecodeCommandList::DiscardResource` | unpredicated | Discard is a hint; no conditional preservation of resource contents is guaranteed. An implementation may ignore the hint. |
-> | `ID3D12VideoDecodeCommandList::EndQuery` | unpredicated | VIDEO_DECODE timestamp or decode-statistics. |
+> | `ID3D12VideoDecodeCommandList::EndQuery` | unpredicated | VIDEO_DECODE timestamp or decode statistics. |
 > | `ID3D12VideoDecodeCommandList::ResolveQueryData` | unpredicated | Only the query/list/heap combinations in the GPU resolution support table. |
-> | `ID3D12VideoDecodeCommandList::ResourceBarrier` | unpredicated | video-decode. |
-> | `ID3D12VideoDecodeCommandList::WriteBufferImmediate` | predicated | On permitted list types; COPY has no supported predicate selection. |
+> | `ID3D12VideoDecodeCommandList::ResourceBarrier` | unpredicated | video decode. |
+> | `ID3D12VideoDecodeCommandList::WriteBufferImmediate` | predicated | On permitted list types. COPY has no supported predicate selection. |
 > | [`ID3D12VideoEncodeCommandList1::ExecuteExtensionCommand`](video-extension-commands.md#videoencodecommandlist1-executeextensioncommand) | conditional | VIDEO_ENCODE. Predicate behavior is defined by the extension; no API-wide guarantee. |
 > | [`ID3D12VideoEncodeCommandList1::InitializeExtensionCommand`](video-extension-commands.md#videoencodecommandlist1-initializeextensioncommand) | conditional | VIDEO_ENCODE. Predicate behavior is defined by the extension; no API-wide guarantee. |
 > | [`ID3D12VideoEncodeCommandList2::EncodeFrame`](video-encoding.md#id3d12videoencodecommandlist2--encodeframe) | predicated | VIDEO_ENCODE; codec/support requirements separate. |
 > | [`ID3D12VideoEncodeCommandList2::ResolveEncoderOutputMetadata`](video-encoding.md#id3d12videoencodecommandlist2--resolveencoderoutputmetadata) | predicated | VIDEO_ENCODE; metadata resolution operation. |
-> | `ID3D12VideoEncodeCommandList3::Barrier` | unpredicated | video-encode. |
+> | `ID3D12VideoEncodeCommandList3::Barrier` | unpredicated | video encode. |
 > | [`ID3D12VideoEncodeCommandList4::EncodeFrame1`](video-encoding.md#id3d12videoencodecommandlist4--encodeframe1) | predicated | VIDEO_ENCODE; supported codec/argument/conversion paths only. |
 > | [`ID3D12VideoEncodeCommandList4::ResolveEncoderOutputMetadata1`](video-encoding.md#id3d12videoencodecommandlist4--resolveencoderoutputmetadata1) | predicated | VIDEO_ENCODE; supported codec/argument/conversion paths only. |
 > | [`ID3D12VideoEncodeCommandList4::ResolveInputParamLayout`](video-encoding.md#id3d12videoencodecommandlist4--resolveinputparamlayout) | predicated | VIDEO_ENCODE; supported codec/argument/conversion paths only. |
 > | `ID3D12VideoEncodeCommandList::BeginQuery` | unsupported | VIDEO_ENCODE supports timestamp only. |
-> | `ID3D12VideoEncodeCommandList::Close` | wrapper | recording; CPU-query fallback flush when applicable. |
+> | `ID3D12VideoEncodeCommandList::Close` | wrapper | recording; CPU query fallback flush when applicable. |
 > | `ID3D12VideoEncodeCommandList::DiscardResource` | unpredicated | Discard is a hint; no conditional preservation of resource contents is guaranteed. An implementation may ignore the hint. |
 > | `ID3D12VideoEncodeCommandList::EndQuery` | unpredicated | VIDEO_ENCODE timestamp. |
-> | [`ID3D12VideoEncodeCommandList::EstimateMotion`](video-motion-estimation.md#motion-estimate) | predicated | VIDEO_ENCODE; motion-estimation support. |
-> | [`ID3D12VideoEncodeCommandList::ResolveMotionVectorHeap`](video-motion-estimation.md#motion-resolve) | predicated | VIDEO_ENCODE; motion-estimation support. |
+> | [`ID3D12VideoEncodeCommandList::EstimateMotion`](video-motion-estimation.md#motion-estimate) | predicated | VIDEO_ENCODE; motion estimation support. |
+> | [`ID3D12VideoEncodeCommandList::ResolveMotionVectorHeap`](video-motion-estimation.md#motion-resolve) | predicated | VIDEO_ENCODE; motion estimation support. |
 > | `ID3D12VideoEncodeCommandList::ResolveQueryData` | unpredicated | Only the query/list/heap combinations in the GPU resolution support table. |
-> | `ID3D12VideoEncodeCommandList::ResourceBarrier` | unpredicated | video-encode. |
-> | `ID3D12VideoEncodeCommandList::WriteBufferImmediate` | predicated | On permitted list types; COPY has no supported predicate selection. |
+> | `ID3D12VideoEncodeCommandList::ResourceBarrier` | unpredicated | video encode. |
+> | `ID3D12VideoEncodeCommandList::WriteBufferImmediate` | predicated | On permitted list types. COPY has no supported predicate selection. |
 > | [`ID3D12VideoProcessCommandList1::ProcessFrames1`](video-processing.md#process-frames1) | predicated | VIDEO_PROCESS; versioned shared process operation. |
 > | [`ID3D12VideoProcessCommandList2::ExecuteExtensionCommand`](video-extension-commands.md#videoprocesscommandlist2-executeextensioncommand) | conditional | VIDEO_PROCESS. Predicate behavior is defined by the extension; no API-wide guarantee. |
 > | [`ID3D12VideoProcessCommandList2::InitializeExtensionCommand`](video-extension-commands.md#videoprocesscommandlist2-initializeextensioncommand) | conditional | VIDEO_PROCESS. Predicate behavior is defined by the extension; no API-wide guarantee. |
-> | `ID3D12VideoProcessCommandList3::Barrier` | unpredicated | video-process. |
+> | `ID3D12VideoProcessCommandList3::Barrier` | unpredicated | video process. |
 > | `ID3D12VideoProcessCommandList::BeginQuery` | unsupported | VIDEO_PROCESS supports timestamp only. |
-> | `ID3D12VideoProcessCommandList::Close` | wrapper | recording; CPU-query fallback flush when applicable. |
+> | `ID3D12VideoProcessCommandList::Close` | wrapper | recording; CPU query fallback flush when applicable. |
 > | `ID3D12VideoProcessCommandList::DiscardResource` | unpredicated | Discard is a hint; no conditional preservation of resource contents is guaranteed. An implementation may ignore the hint. |
 > | `ID3D12VideoProcessCommandList::EndQuery` | unpredicated | VIDEO_PROCESS timestamp. |
 > | [`ID3D12VideoProcessCommandList::ProcessFrames`](video-processing.md#process-frames) | predicated | VIDEO_PROCESS. |
 > | `ID3D12VideoProcessCommandList::ResolveQueryData` | unpredicated | Only the query/list/heap combinations in the GPU resolution support table. |
-> | `ID3D12VideoProcessCommandList::ResourceBarrier` | unpredicated | video-process. |
-> | `ID3D12VideoProcessCommandList::WriteBufferImmediate` | predicated | On permitted list types; COPY has no supported predicate selection. |
+> | `ID3D12VideoProcessCommandList::ResourceBarrier` | unpredicated | video process. |
+> | `ID3D12VideoProcessCommandList::WriteBufferImmediate` | predicated | On permitted list types. COPY has no supported predicate selection. |
 
 <!-- d3d12-review-alert:end:queries:N-operation-matrix:0 -->
 
@@ -1937,7 +1941,7 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For render passes translated into ordinary clear/resolve operations, beginning-access CLEAR and ending-access RESOLVE honor the predicate through those operations. Bindings, barriers and pass boundaries are not themselves skipped. Resuming does not repeat the beginning clear; suspending does not perform ending resolves. Native-pass execution retains the [render-pass access contract](output-merger.md#render-pass-access); the CLEAR/RESOLVE rule does not assign a blanket conditional behavior to every implicit load, store or discard. Each work operation retains its independent command-type, capability, access and validity restrictions.
+> For render passes translated into ordinary clear/resolve operations, beginning access CLEAR and ending access RESOLVE honor the predicate through those operations. Bindings, barriers and pass boundaries are not themselves skipped. Resuming does not repeat the beginning clear; suspending does not perform ending resolves. Native pass execution retains the [render pass access contract](output-merger.md#render-pass-access). The CLEAR/RESOLVE rule does not assign a blanket conditional behavior to every implicit load, store or discard. Each work operation retains its independent command type, capability, access and validity restrictions.
 
 <!-- d3d12-review-alert:end:queries:N-operation-boundaries:1 -->
 
@@ -1947,7 +1951,9 @@ None
 
 <a id="ddi-query-lifetime"></a>
 
-### Query-heap types and lifetime
+### Query heap types and lifetime
+
+<a id="d3d12ddi-predication-op"></a>
 
 ```cpp
 typedef enum D3D12DDI_QUERY_HEAP_TYPE
@@ -2019,7 +2025,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_QUERY_HEAP ) ( D3D12DDI_HDEVICE, D3
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Query-heap creation receives the driver `Type`, element `Count` and resolved `NodeMask`. CPU-resolution path selection is specified separately under [CPU query flags](#cpu-query-flags).
+> Query heap creation receives the driver `Type`, element `Count` and resolved `NodeMask`. CPU resolution path selection is specified separately under [CPU query flags](#cpu-query-flags).
 
 <!-- d3d12-review-alert:end:queries:QD-lifecycle-roles:2 -->
 
@@ -2158,7 +2164,7 @@ The destination offset.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The `CPU_RESOLVE` restriction on application GPU-resolution calls does not prohibit the runtime's internal use of this DDI for [CPU-resolution fallback](#cpu-resolution).
+> The `CPU_RESOLVE` restriction on application GPU resolution calls does not prohibit the runtime's internal use of this DDI for [CPU resolution fallback](#cpu-resolution).
 
 <!-- d3d12-review-alert:end:queries:QD-resolve-roles:1 -->
 
@@ -2192,7 +2198,7 @@ The handle of a resource.
 
 *PredicationOp*
 
-A predication operation. For more information, see the [D3D12DDI_PREDICATION_OP](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ne-d3d12umddi-d3d12ddi_predication_op) enumeration.
+A predication operation. For more information, see the [D3D12DDI_PREDICATION_OP](#d3d12ddi-predication-op) enumeration.
 
 #### Driver behavior
 
@@ -2234,13 +2240,13 @@ A predication operation. For more information, see the [D3D12DDI_PREDICATION_OP]
 
 <a id="ddi-cpu-resolution"></a>
 
-### CPU-timeline driver resolution
+### CPU timeline driver resolution
 
 <!-- d3d12-review-alert:begin:queries:N-cpu-ddi:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The CPU-resolution path and its runtime fallback are specified under [CPU query resolution](#cpu-resolution).
+> The CPU resolution path and its runtime fallback are specified under [CPU query resolution](#cpu-resolution).
 
 <!-- d3d12-review-alert:end:queries:N-cpu-ddi:0 -->

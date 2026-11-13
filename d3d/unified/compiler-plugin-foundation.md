@@ -84,11 +84,11 @@ D3D10DDI_HRT(D3D12DDI_HRTCOMPILERCACHESESSION)
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The compiler-interface major value comes from the shared `D3D12DDI_MAJOR_VERSION`;
+> The compiler interface major value comes from the shared `D3D12DDI_MAJOR_VERSION`;
 > the published compiler minor is zero. `D3D12DDI_COMPILER_SUPPORTED_0001`
 > and `_0002` are packed 64-bit plugin DDI values. Their build fields are 1 and 2,
 > respectively, and their revision fields are zero. These are plugin DDI
-> identifiers, not compiler package, adapter-family ABI or application versions.
+> identifiers, not compiler package, adapter family ABI or application versions.
 
 <!-- d3d12-review-alert:end:compiler-plugin-foundation:handle-dependencies:1 -->
 
@@ -183,7 +183,7 @@ Opens the compiler DDI and retrieves the initial DDI table for version negotiati
 > `pOpenDDIArg` is required in/out storage. The runtime supplies
 > `hRTCompilerDDI` and writable `pDDIFuncs` storage. On success the plugin supplies
 > its allocated `hCompilerDDI` object and fills the initial negotiation table.
-> The plugin handle is owned by the plugin; the runtime returns it to
+> The plugin handle is owned by the plugin. The runtime returns it to
 > `pfnDestroyCompilerDDI` when finished. Destroying it invalidates retrieved
 > function tables and ends use of all dependent plugin objects.
 
@@ -265,7 +265,7 @@ When a new PluginDDIVersion is introduced, it is assigned a UsermodeDDIVersion a
 >
 > `hCompilerDDI` is the live plugin object for all negotiation calls.
 > `puEntries` counts `UINT64` version elements, not bytes. The size-only request
-> uses zero count with a null array; the subsequent array request supplies
+> uses zero count with a null array. The subsequent array request supplies
 > writable storage for the reported count. The selected version must be one
 > supported by both sides. The associated usermode DDI value is the design-time
 > pair of that plugin version, not an independently selectable fallback.
@@ -277,9 +277,9 @@ When a new PluginDDIVersion is introduced, it is assigned a UsermodeDDIVersion a
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> An empty intersection causes compiler-factory creation to fail with
+> An empty intersection causes compiler factory creation to fail with
 > `DXGI_ERROR_UNSUPPORTED`. The runtime selects the greatest exact
-> intersection member; it does not negotiate an unreported compatible version.
+> intersection member. It does not negotiate an unreported compatible version.
 > Failures from plugin opening and version retrieval/selection fail factory
 > creation.
 
@@ -314,7 +314,7 @@ When a new PluginDDIVersion is introduced, it is assigned a UsermodeDDIVersion a
 >
 > The second column is the version passed to `pfnSetSelectedVersion` together
 > with the selected first-column value. It is not the installed display driver's
-> version and is not selected from the plugin's adapter-family ABI list.
+> version and is not selected from the plugin's adapter family ABI list.
 
 <!-- d3d12-review-alert:end:compiler-plugin-foundation:published-pairs:2 -->
 
@@ -395,7 +395,7 @@ The size in bytes of the pTable buffer.
 > `pfnFillDDITable` writes the selected table to runtime-provided writable storage;
 > `pfnSetCallbackDDITable` reads a runtime-provided callback table.
 > `D3D12DDI_COMPILER_TABLE_TYPE_CAPABILITIES` selects the complete capabilities
-> table below; `D3D12DDI_COMPILER_TABLE_TYPE_COMPILER` selects the dependent compiler
+> table below. `D3D12DDI_COMPILER_TABLE_TYPE_COMPILER` selects the dependent compiler
 > function table declared in the ABI dependency section.
 
 <!-- d3d12-review-alert:end:compiler-plugin-foundation:table-rules:0 -->
@@ -407,7 +407,7 @@ The size in bytes of the pTable buffer.
 >
 > The cache callback table is installed before compiler objects are created.
 > The factory retrieves both capability and compiler tables during creation and
-> installs the cache callbacks; failure in any of those steps prevents successful
+> installs the cache callbacks. Failure in any of those steps prevents successful
 > factory creation. Selecting a DDI version precedes table retrieval. The selected
 > version determines the table layout.
 
@@ -420,7 +420,7 @@ The size in bytes of the pTable buffer.
 >
 > The compiler plugin must synchronize its internal state as necessary.
 > Concurrent compiler API calls do not require external application
-> synchronization; see [Threading and call lifetime](offline-compilation.md#threading).
+> synchronization. See [Threading and call lifetime](offline-compilation.md#threading).
 
 <!-- d3d12-review-alert:end:compiler-plugin-foundation:plugin-synchronization:0 -->
 
@@ -480,7 +480,7 @@ typedef struct D3D12DDIARG_GETCAPS
 
 <a id="ddi-target-descriptions"></a>
 
-### Compiler adapter-family and target descriptions
+### Compiler adapter family and target descriptions
 
 ```cpp
 typedef struct D3D12DDI_COMPILER_ADAPTER_FAMILY
@@ -630,7 +630,7 @@ The following caps may be queried:
 
 <a id="family-enumeration"></a>
 
-### Adapter-family enumeration
+### Adapter family enumeration
 
 Retrieve a list of all adapter families supported by the plugin.
 
@@ -667,7 +667,7 @@ for (UINT AdapterFamilyIndex = 0; ; ++AdapterFamilyIndex)
 
 <a id="abi-enumeration"></a>
 
-### Adapter-family ABI enumeration
+### Adapter family ABI enumeration
 
 Retrieve the list of ABI versions supported for an adapter family.
 
@@ -783,11 +783,11 @@ The compiler profile can be versioned <ins><!-- d3d12-review-inline:begin:compil
 >
 > All capabilities calls take the live `hCompilerDDI`. Version and profile
 > results use caller-provided output structures. Family-version absence returns
-> `DXGI_ERROR_NOT_FOUND`; a profile query with no applicable application or engine
-> profile succeeds with version zero. The profile query's API-level target
+> `DXGI_ERROR_NOT_FOUND`. A profile query with no applicable application or engine
+> profile succeeds with version zero. The profile query's API level target
 > validation is specified [with the API](offline-compilation.md#id3d12compilerfactory-getapplicationprofileversion),
-> not delegated to an implicit physical-adapter lookup. Failed compiler-version
-> output must not be consumed as a result; failure does not guarantee a zero
+> not delegated to an implicit physical adapter lookup. Failed compiler version
+> output must not be consumed as a result. Failure does not guarantee a zero
 > version.
 
 <!-- d3d12-review-alert:end:compiler-plugin-foundation:ddi-version-results:1 -->
@@ -814,7 +814,7 @@ Contains the adapter family and ABI version.  See <ins><!-- d3d12-review-inline:
 
 *Format*
 
-A [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format) value for the format to return info about.
+A [DXGI_FORMAT](formats.md#dxgi-format) value for the format to return info about.
 
 *pFormatSupport*
 
@@ -842,7 +842,7 @@ Contains the adapter family and ABI version.  See <ins><!-- d3d12-review-inline:
 
 *Format*
 
-A [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format) value for the format to check.
+A [DXGI_FORMAT](formats.md#dxgi-format) value for the format to check.
 
 *SampleCount*
 
@@ -861,11 +861,11 @@ Returns TRUE if supported, FALSE otherwise.  This is expected to be consistent w
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The format-support call returns `HRESULT` and writes a
+> The format support call returns `HRESULT` and writes a
 > `D3D12DDI_FORMAT_SUPPORT` bitfield through `pFormatSupport`. The multisample
 > call instead returns `BOOL` for the supplied format, sample count and particular
-> quality level; it does not return an `HRESULT` or enumerate a quality-level
-> count. These are target-specific compiler-host checks, not a hardware-presence
+> quality level. It does not return an `HRESULT` or enumerate a quality level
+> count. These are target-specific compiler host checks, not a hardware presence
 > test. They retain the corresponding format/multisample meanings in
 > [format query cases](formats.md#format-query-cases) and
 > [multisampling](rasterization.md#multisampling).
@@ -874,14 +874,14 @@ Returns TRUE if supported, FALSE otherwise.  This is expected to be consistent w
 
 <a id="callback-dependencies"></a>
 
-## Callback-table ABI dependencies
+## Callback table ABI dependencies
 
 <!-- d3d12-review-alert:begin:compiler-plugin-foundation:dependency-boundary:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The following types support the installed compiler-cache callback table.
+> The following types support the installed compiler cache callback table.
 
 <!-- d3d12-review-alert:end:compiler-plugin-foundation:dependency-boundary:0 -->
 
@@ -890,7 +890,7 @@ Returns TRUE if supported, FALSE otherwise.  This is expected to be consistent w
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The invoked behavior of [value lookup](compiler-invocation-and-cache-output.md#pfnd3d12ddi_compiler_cache_find_value_cb), [value storage](compiler-invocation-and-cache-output.md#pfnd3d12ddi_compiler_cache_store_value_cb) and [object-value-key registration](compiler-invocation-and-cache-output.md#pfnd3d12ddi_compiler_cache_set_object_value_keys_cb) is defined with compiler invocation. The complete ABI declarations remain here.
+> The invoked behavior of [value lookup](compiler-invocation-and-cache-output.md#pfnd3d12ddi_compiler_cache_find_value_cb), [value storage](compiler-invocation-and-cache-output.md#pfnd3d12ddi_compiler_cache_store_value_cb) and [object value key registration](compiler-invocation-and-cache-output.md#pfnd3d12ddi_compiler_cache_set_object_value_keys_cb) is defined with compiler invocation. The complete ABI declarations remain here.
 
 <!-- d3d12-review-alert:end:compiler-plugin-foundation:D131-cache-callback-behavior:0 -->
 
@@ -984,14 +984,14 @@ typedef struct D3D12DDI_COMPILER_CACHE_CALLBACKS
 
 <a id="compiler-table-dependencies"></a>
 
-## Compiler-table ABI dependencies
+## Compiler table ABI dependencies
 
 <!-- d3d12-review-alert:begin:compiler-plugin-foundation:compiler-dependency-boundary:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The declarations below use compiler DDI build 2. Negotiation selects the actual layout. Shared root-signature, state-object and pipeline types come from the selected usermode DDI version.
+> The declarations below use compiler DDI build 2. Negotiation selects the actual layout. Shared root signature, state object and pipeline types come from the selected usermode DDI version.
 
 <!-- d3d12-review-alert:end:compiler-plugin-foundation:compiler-dependency-boundary:0 -->
 
@@ -1000,7 +1000,7 @@ typedef struct D3D12DDI_COMPILER_CACHE_CALLBACKS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [Compiler creation](compiler-invocation-and-cache-output.md#pfnd3d12ddi_compiler_create_compiler), [pipeline compilation](compiler-invocation-and-cache-output.md#pfnd3d12ddi_compiler_compile_pipeline_state), [state-object compilation](compiler-invocation-and-cache-output.md#pfnd3d12ddi_compiler_compile_create_state_object) and [incremental additions](compiler-invocation-and-cache-output.md#pfnd3d12ddi_compiler_compile_add_to_state_object) define the invoked behavior, output completion and dependency lifetimes for these declarations.
+> [Compiler creation](compiler-invocation-and-cache-output.md#pfnd3d12ddi_compiler_create_compiler), [pipeline compilation](compiler-invocation-and-cache-output.md#pfnd3d12ddi_compiler_compile_pipeline_state), [state object compilation](compiler-invocation-and-cache-output.md#pfnd3d12ddi_compiler_compile_create_state_object) and [incremental additions](compiler-invocation-and-cache-output.md#pfnd3d12ddi_compiler_compile_add_to_state_object) define the invoked behavior, output completion and dependency lifetimes for these declarations.
 
 <!-- d3d12-review-alert:end:compiler-plugin-foundation:D131-compile-behavior:0 -->
 

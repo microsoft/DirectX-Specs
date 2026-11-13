@@ -31,9 +31,9 @@
 > **Authored synthesis - human review pending.**
 >
 > A compiler cache session maps application group keys to vendor-generated value
-> keys and stores the typed results of offline pipeline-state and state-object
+> keys and stores the typed results of offline pipeline state and state object
 > compilation. A compiler state object retains compilation state for collections
-> and subsequent additions; it is not an `ID3D12StateObject` created by a device
+> and subsequent additions. It is not an `ID3D12StateObject` created by a device
 > and cannot be submitted for GPU execution.
 
 <!-- d3d12-review-alert:end:compiler-output:scope:1 -->
@@ -50,8 +50,8 @@ Each compiler exposes API to compile a PSO or SO that take arguments that are si
 > **Authored synthesis - human review pending.**
 >
 > A collection compilation that produces no compiled output may omit the
-> output-key callback and have no output group. This exception is specific to
-> [`CompileStateObject`](#id3d12compiler-compilestateobject); it does not apply
+> output key callback and have no output group. This exception is specific to
+> [`CompileStateObject`](#id3d12compiler-compilestateobject). It does not apply
 > to PSO/executable compilation or additions.
 
 <!-- d3d12-review-alert:end:compiler-output:collection-output-overview:0 -->
@@ -73,11 +73,11 @@ Stored values in cache sessions may be directly compared with previous compiler 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Application group keys and group versions identify source-object revisions.
-> Vendor-generated value keys identify reusable compiled parts; a group can
+> Application group keys and group versions identify source object revisions.
+> Vendor-generated value keys identify reusable compiled parts. A group can
 > reference several keys, and a value can belong to several groups. The
 > `GroupVersion` argument is not a member of
-> `D3D12_COMPILER_CACHE_GROUP_KEY`. A change to a source-object definition
+> `D3D12_COMPILER_CACHE_GROUP_KEY`. A change to a source object definition
 > requires the corresponding group version to be revised.
 
 <!-- d3d12-review-alert:end:compiler-output:version-domains:0 -->
@@ -87,12 +87,12 @@ Stored values in cache sessions may be directly compared with previous compiler 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The target's adapter-family index is local to its factory; the stored identity
+> The target's adapter family index is local to its factory. The stored identity
 > uses the family identifier, ABI and compiler version. The
-> [compiler, ABI and application-profile version domains](offline-compilation.md#version-domains)
+> [compiler, ABI and application profile version domains](offline-compilation.md#version-domains)
 > are distinct from application and engine versions in the
 > [application descriptor](state-object-databases-and-identity.md#d3d12_application_desc),
-> group versions, value-type flags and database-format versions.
+> group versions, value type flags and database format versions.
 
 <!-- d3d12-review-alert:end:compiler-output:version-domains:1 -->
 
@@ -424,9 +424,9 @@ D3D12_STATE_SUBOBJECT_TYPE_COMPILER_EXISTING_COLLECTION = 33, // D3D12_COMPILER_
 > **Authored synthesis - human review pending.**
 >
 > Use `D3D12_STATE_SUBOBJECT_TYPE_COMPILER_EXISTING_COLLECTION` with this
-> descriptor. `pExistingCollection` is a live compiler state-object collection,
+> descriptor. `pExistingCollection` is a live compiler state object collection,
 > not an `ID3D12StateObject` from a device or a database key.
-> `NumExports` counts `D3D12_EXPORT_DESC` entries; when zero, all collection
+> `NumExports` counts `D3D12_EXPORT_DESC` entries. When zero, all collection
 > exports are surfaced. Otherwise `pExports` points to that many readable export
 > descriptors, with the export selection/renaming semantics of
 > [existing collections](state-objects.md#d3d12_existing_collection_desc).
@@ -518,7 +518,7 @@ typedef void(__stdcall* D3D12CompilerCacheSessionGroupValuesFunc) (
 
 *ValueKeyIndex*
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:callback-prose-d3d12compilercachesessiongroupvaluesfunc:3 -->An index grouping the typed values for one value key within the filtered backing-database query.  For example, if both OBJECT_CODE and METADATA are requested and stored for a value key in the same backing database, this function is called twice with ValueKeyIndex 0 before incrementing for the next set of values.<!-- d3d12-review-inline:end:compiler-output:callback-prose-d3d12compilercachesessiongroupvaluesfunc:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:callback-prose-d3d12compilercachesessiongroupvaluesfunc:3 -->An index grouping the typed values for one value key within the filtered backing database query.  For example, if both OBJECT_CODE and METADATA are requested and stored for a value key in the same backing database, this function is called twice with ValueKeyIndex 0 before incrementing for the next set of values.<!-- d3d12-review-inline:end:compiler-output:callback-prose-d3d12compilercachesessiongroupvaluesfunc:3 --></ins>
 
 *pTypedValue*
 
@@ -539,9 +539,9 @@ This function must not throw uncaught exceptions.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pTypedValue` and its value buffer passed to a group-value callback are borrowed
-> for that callback invocation. Copy any data needed afterward; do not free the
-> borrowed storage. The application owns `pContext`; the lookup passes it through.
+> `pTypedValue` and its value buffer passed to a group value callback are borrowed
+> for that callback invocation. Copy any data needed afterward. Do not free the
+> borrowed storage. The application owns `pContext`. The lookup passes it through.
 > The callbacks execute as part of the lookup before that lookup returns.
 
 <!-- d3d12-review-alert:end:compiler-output:callback-borrowing:0 -->
@@ -591,8 +591,8 @@ Database Files:
 > select at least one of the four declared value types and no undeclared bits.
 > The masks must be pairwise disjoint: each type is assigned to exactly one
 > database entry. `GetValueTypes` returns their union. Object code and metadata
-> must either both be in this union or both be absent; they may be assigned to
-> different entries. Debug PDB and performance-data storage can be selected
+> must either both be in this union or both be absent. They may be assigned to
+> different entries. Debug PDB and performance data storage can be selected
 > independently.
 
 <!-- d3d12-review-alert:end:compiler-output:session-routing-and-files:0 -->
@@ -606,7 +606,7 @@ Database Files:
 > the containing directory must exist. A null path selects a session-local
 > in-memory database. It is not the filename `:memory:`; SQLite URI filenames
 > and that special filename are not accepted by this API. The path descriptor
-> contains no filename-extension inference and no access-mode flag.
+> contains no filename-extension inference and no access mode flag.
 > Existing files are opened for modification and missing files are created;
 > this is not a read-only open API. Read-only files or inaccessible paths can
 > fail to open. SODB's
@@ -621,7 +621,7 @@ Database Files:
 > **Authored synthesis - human review pending.**
 >
 > Disjoint masks route types; distinct path strings can still identify the
-> same physical file. Group writes are made to every database entry. Physical-file
+> same physical file. Group writes are made to every database entry. Physical file
 > deduplication and an all-files transaction are not guaranteed, so aliased
 > entries must not be treated as independent storage.
 
@@ -634,7 +634,7 @@ Database Files:
 >
 > `pTarget` and `pApplicationDesc` are optional only when the database metadata
 > supplies the corresponding identity. If no opened database supplies an
-> identity, that descriptor must be provided; otherwise creation returns
+> identity, that descriptor must be provided. Otherwise creation returns
 > `E_INVALIDARG`. New databases receive the resolved identities. Missing metadata
 > in one file may be filled from consistent metadata in another file or from the
 > supplied descriptors.
@@ -648,7 +648,7 @@ Database Files:
 >
 > All existing compiler identities must agree on family identifier, ABI and
 > compiler version. All application identities must agree on executable
-> filename, application name/version, engine name/version and application-profile
+> filename, application name/version, engine name/version and application profile
 > version. Supplied descriptors must agree with stored identities. Null
 > application string members compare as empty strings; application string
 > comparisons are case-sensitive. Inconsistent identities
@@ -664,9 +664,9 @@ Database Files:
 >
 > The factory resolves a stored family identifier to its own local family index.
 > An explicit target's ABI zero resolves to the newest supported ABI under
-> [target resolution](offline-compilation.md#d3d12_compiler_target); an explicit
+> [target resolution](offline-compilation.md#d3d12_compiler_target). An explicit
 > nonzero ABI must be supported. The resolved family, ABI and compiler version
-> must match stored metadata. The application-profile version must match the
+> must match stored metadata. The application profile version must match the
 > version reported by this compiler for the resolved target and application.
 > An unsupported stored family can fail lookup with `DXGI_ERROR_NOT_FOUND`;
 > identity/version mismatches return `E_INVALIDARG`.
@@ -680,7 +680,7 @@ Database Files:
 >
 > Path strings and application strings are consumed or copied during creation;
 > the caller retains their ownership. `ppCompilerCacheSession` is required
-> writable interface-pointer storage, not a null-output availability probe.
+> writable interface pointer storage, not a null output availability probe.
 > On success it receives an owned reference selected by `riid`. Failures before
 > the interface query do not promise to clear an existing output value. Opening
 > and initializing earlier files may already have happened when a later file or
@@ -696,7 +696,7 @@ Database Files:
 > When `pApplicationDesc` is explicitly supplied, `pExeFilename` and `pName`
 > are required non-null, null-terminated strings identifying the target
 > application's executable filename and title. `Version` supplies its application
-> version. `pEngineName` is optional; if supplied it must be null-terminated and
+> version. `pEngineName` is optional. If supplied it must be null-terminated and
 > `EngineVersion` must be provided. These are the
 > [application metadata requirements](state-object-databases-and-identity.md#d3d12_application_desc),
 > not a fallback to the compiler-hosting process's identity.
@@ -739,7 +739,7 @@ The globally unique identifier (GUID) for the compiler cache session interface. 
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilerfactory-createcompilercachesession-parameter-source:10 -->`[out] ppCompilerCacheSession`<!-- d3d12-review-inline:end:compiler-output:id3d12compilerfactory-createcompilercachesession-parameter-source:10 --></ins>
 
-On return, <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilerfactory-createcompilercachesession-parameter-source:11 -->a pointer to the compiler cache-session interface specified by riid.<!-- d3d12-review-inline:end:compiler-output:id3d12compilerfactory-createcompilercachesession-parameter-source:11 --></ins>
+On return, <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilerfactory-createcompilercachesession-parameter-source:11 -->a pointer to the compiler cache session interface specified by riid.<!-- d3d12-review-inline:end:compiler-output:id3d12compilerfactory-createcompilercachesession-parameter-source:11 --></ins>
 
 ### Return values
 
@@ -748,10 +748,10 @@ On return, <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilerfac
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `S_OK` returns the requested cache-session interface. Invalid routing masks, a missing path array, zero path count, and the
-> documented missing or mismatched identities return `E_INVALIDARG`; an unsupported requested interface
-> returns `E_NOINTERFACE`. Allocation, file-open/database and plugin query
-> failures propagate as failing `HRESULT`s. There is no universal filesystem-error
+> `S_OK` returns the requested cache session interface. Invalid routing masks, a missing path array, zero path count, and the
+> documented missing or mismatched identities return `E_INVALIDARG`. An unsupported requested interface
+> returns `E_NOINTERFACE`. Allocation, file open/database and plugin query
+> failures propagate as failing `HRESULT`s. There is no universal filesystem error
 > mapping or all-files rollback guarantee.
 
 <!-- d3d12-review-alert:end:compiler-output:id3d12compilerfactory-createcompilercachesession-returns:0 -->
@@ -796,8 +796,8 @@ Use [D3D12_APPLICATION_DESC](state-object-databases-and-identity.md#d3d12_applic
 >
 > The cache session need not have been created by this factory, but its target
 > index and metadata must be meaningful to this factory. No cross-factory index
-> translation is performed; see [input ownership](#input-ownership).
-> `ppCompiler` is not a null-output validation probe. Failure before the final
+> translation is performed. See [input ownership](#input-ownership).
+> `ppCompiler` is not a null output validation probe. Failure before the final
 > interface query need not initialize it. Plugin creation and allocation failures
 > fail this call.
 
@@ -826,7 +826,7 @@ The globally unique identifier (GUID) for the compiler interface. See [ID3D12Com
 >
 > `S_OK` returns the requested compiler interface; null required arguments
 > return `E_INVALIDARG`, and an unsupported interface returns `E_NOINTERFACE`.
-> Allocation and plugin compiler-creation failures propagate. A returned
+> Allocation and plugin compiler creation failures propagate. A returned
 > compiler does not certify that every later description is compilable.
 
 <!-- d3d12-review-alert:end:compiler-output:id3d12compilerfactory-createcompiler-returns:0 -->
@@ -841,7 +841,7 @@ The globally unique identifier (GUID) for the compiler interface. See [ID3D12Com
 > **Authored synthesis - human review pending.**
 >
 > `ID3D12Compiler` and `ID3D12CompilerCacheSession` derive from
-> `ID3D12CompilerFactoryChild`; their inherited
+> `ID3D12CompilerFactoryChild`. Their inherited
 > [`GetFactory`](offline-compilation.md#id3d12compilerfactorychild-getfactory)
 > contract is not a new operation on either interface. `ID3D12CompilerStateObject`
 > derives from `IUnknown` and exposes
@@ -858,7 +858,7 @@ The globally unique identifier (GUID) for the compiler interface. See [ID3D12Com
 > applications do not need to add external synchronization. Caller-owned
 > descriptions, arrays, keys, strings, callback functions and context storage must
 > remain valid while the receiving call uses them. That synchronization contract
-> does not remove the object-reference or structural-dependency requirements
+> does not remove the object reference or structural dependency requirements
 > below.
 
 <!-- d3d12-review-alert:end:compiler-output:synchronization-and-lifetime:1 -->
@@ -873,9 +873,9 @@ The globally unique identifier (GUID) for the compiler interface. See [ID3D12Com
 > For explicit roots, use
 > `D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SERIALIZED_ROOT_SIGNATURE` carrying
 > [`D3D12_SERIALIZED_ROOT_SIGNATURE_DESC`](state-object-databases-and-identity.md#d3d12_serialized_root_signature_desc),
-> not a device root-signature pointer. Roots embedded in shaders can be resolved
-> and validated by the compiler. Legacy cached PSO blobs and pipeline-library
-> inputs are not compiler-host inputs.
+> not a device root signature pointer. Roots embedded in shaders can be resolved
+> and validated by the compiler. Legacy cached PSO blobs and pipeline library
+> inputs are not compiler host inputs.
 
 <!-- d3d12-review-alert:end:compiler-output:compilation-inputs:0 -->
 
@@ -884,20 +884,20 @@ The globally unique identifier (GUID) for the compiler interface. See [ID3D12Com
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> State-object descriptions use
+> State object descriptions use
 > [`D3D12_STATE_OBJECT_DESC`](state-objects.md#d3d12_state_object_desc).
 > Explicit roots use
 > [`D3D12_GLOBAL_SERIALIZED_ROOT_SIGNATURE`](state-object-databases-and-identity.md#d3d12_global_serialized_root_signature)
 > or
 > [`D3D12_LOCAL_SERIALIZED_ROOT_SIGNATURE`](state-object-databases-and-identity.md#d3d12_local_serialized_root_signature)
-> with their corresponding serialized-root subobject tags. An existing
+> with their corresponding serialized root subobject tags. An existing
 > compiler collection uses
 > [`D3D12_COMPILER_EXISTING_COLLECTION_DESC`](#d3d12_compiler_existing_collection_desc)
 > and `D3D12_STATE_SUBOBJECT_TYPE_COMPILER_EXISTING_COLLECTION`.
 > The database's
 > [`D3D12_EXISTING_COLLECTION_BY_KEY_DESC`](state-object-databases-and-identity.md#d3d12_existing_collection_by_key_desc)
 > is a storage reference, not a directly accepted compile input. Reconstruct the
-> dependency as a live compiler collection; a parent key from an SODB similarly
+> dependency as a live compiler collection. A parent key from an SODB similarly
 > identifies a dependency to supply as a live parent to the addition call.
 
 <!-- d3d12-review-alert:end:compiler-output:compilation-inputs:1 -->
@@ -909,12 +909,12 @@ The globally unique identifier (GUID) for the compiler interface. See [ID3D12Com
 >
 > The compiler runtime validates descriptions and translates them to DDI
 > representations using shared runtime validation. Pipeline stream parsing,
-> stage composition, input/stream-output layouts, render-target and
+> stage composition, input/stream output layouts, render target and
 > depth/stencil formats, samples, rasterization and linkage retain the
 > [pipeline construction rules](pipeline-state.md#id3d12device2-createpipelinestate).
 > Root contents and shader compatibility retain
 > [Binding](binding.md#root-signatures).
-> State-object type/payload, exports, associations, defaults, collection linking
+> State object type/payload, exports, associations, defaults, collection linking
 > and construction retain
 > [State objects](state-objects.md#createstateobject),
 > [association requirements](state-objects.md#subobject-association-requirements)
@@ -932,7 +932,7 @@ The globally unique identifier (GUID) for the compiler interface. See [ID3D12Com
 > Capability checks are made against the compiler's target using the
 > [negotiated plugin capabilities](compiler-plugin-foundation.md#get-caps),
 > including applicable feature level, shader model, shader features, formats,
-> multisampling, raytracing/state-object or work-graph requirements. Serializing
+> multisampling, raytracing/state object or work graph requirements. Serializing
 > or storing a description does not establish that the target can compile it.
 > Invalid descriptions and unsupported target capabilities are distinct from
 > an IHV compiler failure.
@@ -970,7 +970,7 @@ The globally unique identifier (GUID) for the compiler interface. See [ID3D12Com
 > A cache session need not come from the compiler's factory. Its target,
 > application descriptor and selected value types must be meaningful to the
 > receiving factory. The target's family index is interpreted in that factory's
-> enumeration; the compiler does not remap an index from another factory.
+> enumeration. The compiler does not remap an index from another factory.
 > The compiler retains its cache session, and a compiler state object retains
 > the compiler that created it.
 
@@ -999,8 +999,8 @@ The globally unique identifier (GUID) for the compiler interface. See [ID3D12Com
 > Releasing the last parent reference destroys the parent's plugin handle;
 > the plugin must retain whatever dependency state it needs for the child.
 > This is the description/handle distinction in
-> [state-object driver lifetime](state-objects.md#driver-lifetime), not the
-> collection-retention rule above. Original caller-owned description allocations
+> [state object driver lifetime](state-objects.md#driver-lifetime), not the
+> collection retention rule above. Original caller-owned description allocations
 > can be released after successful compilation.
 
 <!-- d3d12-review-alert:end:compiler-output:factory-and-parent-consistency:3 -->
@@ -1036,8 +1036,8 @@ The Group Key and Group Version are used to store a group that associates all th
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The cache session's `GetValueTypes()` mask selects the output types; there is
-> no value-type-flags argument on this API. The group key is required; the
+> The cache session's `GetValueTypes()` mask selects the output types. There is
+> no value type flags argument on this API. The group key is required. The
 > description and all required referenced data must be valid.
 > Compilation completes synchronously, including the plugin's cache callbacks.
 > This is not an asynchronous job handle and does not create a GPU-executable
@@ -1052,7 +1052,7 @@ The Group Key and Group Version are used to store a group that associates all th
 > **Authored synthesis - human review pending.**
 >
 > A null `pGroupKey` returns `E_INVALIDARG`. The
-> [compilation input and target-validation contract](#input-ownership)
+> [compilation input and target validation contract](#input-ownership)
 > defines the required description forms and shared construction rules.
 
 <!-- d3d12-review-alert:end:compiler-output:compilepipelinestate-validation-input:0 -->
@@ -1069,7 +1069,7 @@ The version number of the cached group.
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compilepipelinestate-parameter-source:4 -->`[in] pDesc`<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compilepipelinestate-parameter-source:4 --></ins>
 
-The pipeline state desc describing the PSO.  See [D3D12_PIPELINE_STATE_STREAM_DESC](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_pipeline_state_stream_desc).
+The pipeline state desc describing the PSO.  See [D3D12_PIPELINE_STATE_STREAM_DESC](pipeline-state.md#d3d12-pipeline-state-stream-desc).
 
 ### Return values
 
@@ -1089,12 +1089,12 @@ The pipeline state desc describing the PSO.  See [D3D12_PIPELINE_STATE_STREAM_DE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Plugin compile failures preserve `E_OUTOFMEMORY`; other failing plugin compile
+> Plugin compile failures preserve `E_OUTOFMEMORY`. Other failing plugin compile
 > results are translated to `DXGI_ERROR_DRIVER_INTERNAL_ERROR`. This is distinct
 > from the cache callbacks' own results, which are returned to the plugin.
-> The plugin must handle or propagate callback failures; a callback result is
+> The plugin must handle or propagate callback failures. A callback result is
 > not necessarily the public compile call's final `HRESULT`. Missing required
-> group-key registration also fails compilation with
+> group key registration also fails compilation with
 > `DXGI_ERROR_DRIVER_INTERNAL_ERROR`.
 > Stored values can survive a failing compile.
 
@@ -1133,8 +1133,8 @@ This method creates an object that implements [ID3D12CompilerStateObject](#id3d1
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The cache session's `GetValueTypes()` mask selects the output types; there is
-> no value-type-flags argument on this API. The group key is required; the
+> The cache session's `GetValueTypes()` mask selects the output types. There is
+> no value type flags argument on this API. The group key is required. The
 > description and all required referenced data must be valid.
 > Compilation completes synchronously, including the plugin's cache callbacks.
 > This is not an asynchronous job handle and does not create a GPU-executable
@@ -1150,11 +1150,11 @@ This method creates an object that implements [ID3D12CompilerStateObject](#id3d1
 >
 > `riid` selects `ID3D12CompilerStateObject` or a supported base interface.
 > The output pointer is required writable storage, not a validation-only probe.
-> The returned interface is an owned reference; release it when finished.
+> The returned interface is an owned reference. Release it when finished.
 > An error before the final interface query need not clear the caller's output.
 > The handle retains the compiler and internal construction data needed by
-> dependent compilations. State-object compilation and addition require the
-> negotiated build-2 compiler DDI support; otherwise they return `E_NOTIMPL`.
+> dependent compilations. State object compilation and addition require the
+> negotiated build-2 compiler DDI support. Otherwise they return `E_NOTIMPL`.
 
 <!-- d3d12-review-alert:end:compiler-output:compilestateobject-completion:1 -->
 
@@ -1165,7 +1165,7 @@ This method creates an object that implements [ID3D12CompilerStateObject](#id3d1
 >
 > A collection that produces no compiled output can return its compiler state
 > object without registering output keys or creating a group. The input group
-> key remains required. This exception does not apply to executable state-object
+> key remains required. This exception does not apply to executable state object
 > compilation or incremental additions.
 
 <!-- d3d12-review-alert:end:compiler-output:compilestateobject-completion:2 -->
@@ -1176,7 +1176,7 @@ This method creates an object that implements [ID3D12CompilerStateObject](#id3d1
 > **Authored synthesis - human review pending.**
 >
 > A null `pGroupKey`, `pDesc` or `ppCompilerStateObject` returns `E_INVALIDARG`. The
-> [compilation input and target-validation contract](#input-ownership)
+> [compilation input and target validation contract](#input-ownership)
 > defines the required description forms and shared construction rules.
 
 <!-- d3d12-review-alert:end:compiler-output:compilestateobject-validation-input:0 -->
@@ -1193,7 +1193,7 @@ The version number of the cached group.
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compilestateobject-parameter-source:4 -->`[in] pDesc`<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compilestateobject-parameter-source:4 --></ins>
 
-Creation arguments for the state object.  See [D3D12_STATE_OBJECT_DESC](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_state_object_desc).
+Creation arguments for the state object.  See [D3D12_STATE_OBJECT_DESC](state-objects.md#d3d12_state_object_desc).
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compilestateobject-parameter-source:6 -->`[in] riid`<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compilestateobject-parameter-source:6 --></ins>
 
@@ -1221,7 +1221,7 @@ The globally unique identifier (GUID) for the new state object interface. See [I
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> An unsupported requested interface returns `E_NOINTERFACE`; the output pointer
+> An unsupported requested interface returns `E_NOINTERFACE`. The output pointer
 > is required. That interface failure can occur after compilation and storage.
 
 <!-- d3d12-review-alert:end:compiler-output:id3d12compiler-compilestateobject-returns:1 -->
@@ -1231,12 +1231,12 @@ The globally unique identifier (GUID) for the new state object interface. See [I
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Plugin compile failures preserve `E_OUTOFMEMORY`; other failing plugin compile
+> Plugin compile failures preserve `E_OUTOFMEMORY`. Other failing plugin compile
 > results are translated to `DXGI_ERROR_DRIVER_INTERNAL_ERROR`. This is distinct
 > from the cache callbacks' own results, which are returned to the plugin.
-> The plugin must handle or propagate callback failures; a callback result is
+> The plugin must handle or propagate callback failures. A callback result is
 > not necessarily the public compile call's final `HRESULT`. Missing required
-> group-key registration also fails compilation with
+> group key registration also fails compilation with
 > `DXGI_ERROR_DRIVER_INTERNAL_ERROR`. A collection with no compiled output may omit registration and have no group.
 > Stored values can survive a failing compile.
 
@@ -1276,8 +1276,8 @@ This method creates an object that implements [ID3D12CompilerStateObject](#id3d1
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The cache session's `GetValueTypes()` mask selects the output types; there is
-> no value-type-flags argument on this API. The group key is required; the
+> The cache session's `GetValueTypes()` mask selects the output types. There is
+> no value type flags argument on this API. The group key is required. The
 > description and all required referenced data must be valid.
 > Compilation completes synchronously, including the plugin's cache callbacks.
 > This is not an asynchronous job handle and does not create a GPU-executable
@@ -1293,11 +1293,11 @@ This method creates an object that implements [ID3D12CompilerStateObject](#id3d1
 >
 > `riid` selects `ID3D12CompilerStateObject` or a supported base interface.
 > The output pointer is required writable storage, not a validation-only probe.
-> The returned interface is an owned reference; release it when finished.
+> The returned interface is an owned reference. Release it when finished.
 > An error before the final interface query need not clear the caller's output.
 > The handle retains the compiler and internal construction data needed by
-> dependent compilations. State-object compilation and addition require the
-> negotiated build-2 compiler DDI support; otherwise they return `E_NOTIMPL`.
+> dependent compilations. State object compilation and addition require the
+> negotiated build-2 compiler DDI support. Otherwise they return `E_NOTIMPL`.
 
 <!-- d3d12-review-alert:end:compiler-output:compileaddtostateobject-completion:1 -->
 
@@ -1307,7 +1307,7 @@ This method creates an object that implements [ID3D12CompilerStateObject](#id3d1
 > **Authored synthesis - human review pending.**
 >
 > A null `pGroupKey`, `pAddition`, `pCompilerStateObjectToGrowFrom` or `ppNewCompilerStateObject` returns `E_INVALIDARG`. The
-> [compilation input and target-validation contract](#input-ownership)
+> [compilation input and target validation contract](#input-ownership)
 > defines the required description forms and shared construction rules.
 
 <!-- d3d12-review-alert:end:compiler-output:compileaddtostateobject-validation-input:0 -->
@@ -1321,9 +1321,9 @@ This method creates an object that implements [ID3D12CompilerStateObject](#id3d1
 > compiler. The result is a new compiler state object, not a replacement of the
 > parent. Its description storage retains the parent description data. It does
 > not retain the parent's API reference or guarantee the parent's plugin handle
-> remains alive; the plugin retains the dependency state it needs.
+> remains alive. The plugin retains the dependency state it needs.
 > The application need not hold an addition-parent reference until the child is
-> destroyed. Collections remain subject to their distinct application-retention
+> destroyed. Collections remain subject to their distinct application retention
 > rule.
 
 <!-- d3d12-review-alert:end:compiler-output:addition-parent:0 -->
@@ -1356,7 +1356,7 @@ The version number of the cached group.
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compileaddtostateobject-parameter-source:4 -->`[in] pAddition`<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compileaddtostateobject-parameter-source:4 --></ins>
 
-Addition arguments to add to pCompilerStateObjectToGrowFrom and create a new state object. See [D3D12_STATE_OBJECT_DESC](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_state_object_desc).
+Addition arguments to add to pCompilerStateObjectToGrowFrom and create a new state object. See [D3D12_STATE_OBJECT_DESC](state-objects.md#d3d12_state_object_desc).
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compileaddtostateobject-parameter-source:6 -->`[in] pCompilerStateObjectToGrowFrom`<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compileaddtostateobject-parameter-source:6 --></ins>
 
@@ -1388,7 +1388,7 @@ The globally unique identifier (GUID) for the new state object interface. See [I
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> An unsupported requested interface returns `E_NOINTERFACE`; the output pointer
+> An unsupported requested interface returns `E_NOINTERFACE`. The output pointer
 > is required. That interface failure can occur after compilation and storage.
 
 <!-- d3d12-review-alert:end:compiler-output:id3d12compiler-compileaddtostateobject-returns:1 -->
@@ -1398,12 +1398,12 @@ The globally unique identifier (GUID) for the new state object interface. See [I
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Plugin compile failures preserve `E_OUTOFMEMORY`; other failing plugin compile
+> Plugin compile failures preserve `E_OUTOFMEMORY`. Other failing plugin compile
 > results are translated to `DXGI_ERROR_DRIVER_INTERNAL_ERROR`. This is distinct
 > from the cache callbacks' own results, which are returned to the plugin.
-> The plugin must handle or propagate callback failures; a callback result is
+> The plugin must handle or propagate callback failures. A callback result is
 > not necessarily the public compile call's final `HRESULT`. Missing required
-> group-key registration also fails compilation with
+> group key registration also fails compilation with
 > `DXGI_ERROR_DRIVER_INTERNAL_ERROR`.
 > Stored values can survive a failing compile.
 
@@ -1614,7 +1614,7 @@ Specify a non-null pointer to receive the version number of the group.  <ins><!-
 > **Authored synthesis - human review pending.**
 >
 > `S_OK` means the group entry exists. `DXGI_ERROR_NOT_FOUND` means it was not
-> found. Database failures can also be returned; a failure does not initialize
+> found. Database failures can also be returned. A failure does not initialize
 > `pGroupVersion` to zero.
 
 <!-- d3d12-review-alert:end:compiler-output:id3d12compilercachesession-findgroup-returns:0 -->
@@ -1649,7 +1649,7 @@ Use a nullptr callback to determine if the group is present in the cache without
 >
 > `CallbackFunc` may be null to probe the group without retrieving its keys.
 > The optional expected version is checked in either mode. A missing group or
-> version mismatch returns `DXGI_ERROR_NOT_FOUND`; the probe does not certify
+> version mismatch returns `DXGI_ERROR_NOT_FOUND`. The probe does not certify
 > that the referenced values exist.
 
 <!-- d3d12-review-alert:end:compiler-output:group-key-probe-frontier:0 -->
@@ -1661,7 +1661,7 @@ Use a nullptr callback to determine if the group is present in the cache without
 >
 > With a callback, each key is borrowed only until that invocation returns.
 > No stable enumeration order across separate calls is specified.
-> `pExpectedGroupVersion` may be null to omit the version test; otherwise it
+> `pExpectedGroupVersion` may be null to omit the version test. Otherwise it
 > supplies the expected `UINT` version, not a field embedded in `pGroupKey`.
 
 <!-- d3d12-review-alert:end:compiler-output:group-key-probe-frontier:1 -->
@@ -1691,7 +1691,7 @@ An application specified context pointer that is passed to the callback.  Use th
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `S_OK` reports a matching group/key enumeration or null-callback probe;
+> `S_OK` reports a matching group/key enumeration or null callback probe;
 > `DXGI_ERROR_NOT_FOUND` reports a missing group or version mismatch.
 > Database failures can propagate. A successful key probe does not prove
 > referenced values exist.
@@ -1729,10 +1729,10 @@ DXGI_ERROR_NOT_FOUND is returned if <ins><!-- d3d12-review-inline:begin:compiler
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `ValueTypeFlags` must be nonzero, contain only declared value-type bits, and
+> `ValueTypeFlags` must be nonzero, contain only declared value type bits, and
 > select only types assigned to this session. Invalid masks return
 > `E_INVALIDARG`. `CallbackFunc` may be null to probe without retrieving value
-> buffers; the same group/version and selected-row tests apply.
+> buffers. The same group/version and selected-row tests apply.
 
 <!-- d3d12-review-alert:end:compiler-output:group-values-frontier:0 -->
 
@@ -1760,7 +1760,7 @@ DXGI_ERROR_NOT_FOUND is returned if <ins><!-- d3d12-review-inline:begin:compiler
 > expected version does not match. The overall call fails if any queried backing
 > database fails. Other backing queries can already have delivered callbacks.
 > Success in one database does not override a failure in another, and no generic
-> error-priority or rollback guarantee is established.
+> error priority or rollback guarantee is established.
 
 <!-- d3d12-review-alert:end:compiler-output:group-values-frontier:2 -->
 
@@ -1771,7 +1771,7 @@ DXGI_ERROR_NOT_FOUND is returned if <ins><!-- d3d12-review-inline:begin:compiler
 >
 > `ValueKeyIndex` is a dense rank over the value keys represented by the filtered
 > selected rows of that backing query, starting at zero. A key with no selected
-> rows is absent from that rank; changing the type filter or stored rows can
+> rows is absent from that rank. Changing the type filter or stored rows can
 > renumber later keys. The index groups typed values within that enumeration.
 > It does not identify a key across queries, databases or a separate
 > `FindGroupValueKeys` enumeration.
@@ -1809,10 +1809,10 @@ An application specified context pointer that is passed to the callback.  Use th
 >
 > Each queried backing database returns `S_OK` if it has matching selected rows,
 > or `DXGI_ERROR_NOT_FOUND` if it has none. The overall call succeeds only if
-> all queried databases succeed; a failing query does not undo callbacks from
+> all queried databases succeed. A failing query does not undo callbacks from
 > other databases. Invalid masks return `E_INVALIDARG`. Other database failures
 > can propagate. `S_OK` is sparse-enumeration success, not complete-group
-> certification; a null callback is a legal probe with the same result rules.
+> certification. A null callback is a legal probe with the same result rules.
 
 <!-- d3d12-review-alert:end:compiler-output:id3d12compilercachesession-findgroupvalues-returns:0 -->
 
@@ -1844,7 +1844,7 @@ Each D3D12_COMPILER_CACHE_TYPED_VALUE has a D3D12_COMPILER_CACHE_VALUE.  On inpu
 - <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findvalue-source:3 -->If the ValueSize member is zero and pCallbackFunc is non-nullptr, pCallbackFunc is called to allocate a buffer and the value is copied into it.  The allocated buffer pointer returned by pCallbackFunc is assigned to the pValue member on return. If pCallbackFunc returns nullptr, the call fails and returns E_OUTOFMEMORY.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findvalue-source:3 --></ins>
 - The ValueSize member is assigned the value's actual size before returning.
 
-To determine if a particular value type is stored without retrieving the value, use a size check for the value. To perform a size check, use a nullptr pValue with a zero ValueSize for the types to query and a nullptr pCallbackFunc.  <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findvalue-source:4 -->Within one backing-database query, S_OK indicates that at least one requested value type is cached. DXGI_ERROR_NOT_FOUND indicates that none of that query's requested types is cached. The overall call fails if any queried backing database fails; successful output from another database can still be returned.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findvalue-source:4 --></ins>  ValueSize is non-zero for a cached value type.
+To determine if a particular value type is stored without retrieving the value, use a size check for the value. To perform a size check, use a nullptr pValue with a zero ValueSize for the types to query and a nullptr pCallbackFunc.  <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findvalue-source:4 -->Within one backing database query, S_OK indicates that at least one requested value type is cached. DXGI_ERROR_NOT_FOUND indicates that none of that query's requested types is cached. The overall call fails if any queried backing database fails; successful output from another database can still be returned.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findvalue-source:4 --></ins>  ValueSize is non-zero for a cached value type.
 
 Example using D3D12CompilerCacheSessionAllocationFunc to retrieve values:
 
@@ -1880,7 +1880,7 @@ free(values[1].Value.pValue);
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pValueKey` and the typed-value array must be valid for the call;
+> `pValueKey` and the typed value array must be valid for the call;
 > `NumTypedValues` counts entries, not bytes. Each requested type must be a
 > declared type assigned to a database in this session and may occur only once.
 > Invalid, duplicate or unmapped types return `E_INVALIDARG`. Public API value
@@ -1897,7 +1897,7 @@ free(values[1].Value.pValue);
 > A nonzero input capacity requires a non-null writable `pValue`. Zero capacity
 > with no allocator requests only the size. Zero capacity with an allocator
 > requests allocation even when the input `pValue` is null. The allocator receives
-> the actual byte count and the caller's `pContext`; the returned pointer and
+> the actual byte count and the caller's `pContext`. The returned pointer and
 > actual size are assigned to that typed value.
 
 <!-- d3d12-review-alert:end:compiler-output:typed-value-results:1 -->
@@ -1908,10 +1908,10 @@ free(values[1].Value.pValue);
 > **Authored synthesis - human review pending.**
 >
 > Results are per requested type. A missing type receives size zero. Within one
-> backing-database query, finding at least one requested type gives `S_OK` if no
+> backing database query, finding at least one requested type gives `S_OK` if no
 > capacity, allocation or storage error occurs, even if another requested type
 > is absent. Finding none of that query's requested types gives
-> `DXGI_ERROR_NOT_FOUND`; this does not imply that the key has no other types.
+> `DXGI_ERROR_NOT_FOUND`. This does not imply that the key has no other types.
 
 <!-- d3d12-review-alert:end:compiler-output:typed-value-results:2 -->
 
@@ -1924,7 +1924,7 @@ free(values[1].Value.pValue);
 > fails if any queried database fails, including a database with none of its
 > requested types. Other databases can still supply sizes, copied bytes or
 > allocations. An overall failure does not discard those outputs. There is no
-> global any-type-anywhere success rule, generic error-priority rule or atomic
+> global any-type-anywhere success rule, generic error priority rule or atomic
 > all-types output guarantee.
 
 <!-- d3d12-review-alert:end:compiler-output:typed-value-results:3 -->
@@ -2009,7 +2009,7 @@ The returned value (and contained strings) have the same lifetime as the ID3D12C
 >
 > Returns a borrowed, read-only pointer to the resolved application descriptor.
 > The descriptor and its strings remain valid for the cache session's lifetime.
-> This method has no `HRESULT` or allocation-transfer result.
+> This method has no `HRESULT` or allocation transfer result.
 
 <!-- d3d12-review-alert:end:compiler-output:id3d12compilercachesession-getapplicationdesc-returns:0 -->
 
@@ -2071,7 +2071,7 @@ Reflects the value types used to create the cache session.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Returns the union of value-type masks assigned to the session's database
+> Returns the union of value type masks assigned to the session's database
 > paths. It does not enumerate which individual values have already been stored
 > and has no `HRESULT` result.
 
@@ -2104,12 +2104,12 @@ Add a key/value pair to the compiler cache.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pValueKey` identifies a byte sequence; `KeySize` is its byte count, not a
-> string-character count. The same key can have different typed values.
+> `pValueKey` identifies a byte sequence. `KeySize` is its byte count, not a
+> string character count. The same key can have different typed values.
 > `NumTypedValues` is an entry count. Each entry must select a declared, mapped
 > type without duplicates and supply a non-null readable buffer of nonzero byte
 > size. Invalid typed entries return `E_INVALIDARG`. A null `pTypedValues` or zero
-> `NumTypedValues` must return `E_INVALIDARG`; neither is a legal empty store.
+> `NumTypedValues` must return `E_INVALIDARG`. Neither is a legal empty store.
 > The buffers remain caller-owned and are borrowed during the call.
 
 <!-- d3d12-review-alert:end:compiler-output:storevalue-routing-failure:0 -->
@@ -2121,7 +2121,7 @@ Add a key/value pair to the compiler cache.
 >
 > An existing key with a previously absent type can receive that type. An
 > already stored `(key, type)` conflicts with a repeated store even when its
-> bytes match; this is not an overwrite or success-by-equality operation.
+> bytes match. This is not an overwrite or success-by-equality operation.
 > Typed entries are routed to their assigned databases. Failure or duplication
 > in one database does not roll back stores completed in another.
 
@@ -2185,12 +2185,12 @@ Only one group with this key may be stored.  You cannot store multiple versions 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pGroupKey` is required and supplies the application's group-key bytes.
+> `pGroupKey` is required and supplies the application's group key bytes.
 > `GroupVersion` is a separate `UINT`. `pValueKeys` supplies `NumValueKeys`
-> entries, each with its own key byte count; a valid group store requires a
+> entries, each with its own key byte count. A valid group store requires a
 > nonempty key list. The buffers remain caller-owned and readable for the call.
 > The same group key cannot be inserted again with a new version or a different
-> list; a duplicate returns `DXGI_ERROR_ALREADY_EXISTS`. This call does not
+> list. A duplicate returns `DXGI_ERROR_ALREADY_EXISTS`. This call does not
 > replace existing mappings.
 
 <!-- d3d12-review-alert:end:compiler-output:storegroup-mapping:0 -->
@@ -2249,7 +2249,7 @@ The number of value keys in the group.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [compiler table](compiler-plugin-foundation.md#compiler-table-dependencies) and [cache callbacks](compiler-plugin-foundation.md#callback-dependencies) are declared in the plugin foundation. Build 2 additions use `D3D12DDIARG_ADD_TO_STATE_OBJECT_0072`, without an extra parent-handle parameter.
+> The [compiler table](compiler-plugin-foundation.md#compiler-table-dependencies) and [cache callbacks](compiler-plugin-foundation.md#callback-dependencies) are declared in the plugin foundation. Build 2 additions use `D3D12DDIARG_ADD_TO_STATE_OBJECT_0072`, without an extra parent handle parameter.
 
 <!-- d3d12-review-alert:end:compiler-output:ddi-ownership:0 -->
 
@@ -2617,7 +2617,7 @@ Handle for plugin compiler object.  Memory is allocated by the caller, and plugi
 > `hCompilerDDI` in the published ABI. The runtime allocates private object
 > storage using the reported byte size; destruction ends the placed plugin
 > object before that storage is reclaimed. The DDI create operation returns
-> an `HRESULT`; a failed plugin creation fails compiler creation.
+> an `HRESULT`. A failed plugin creation fails compiler creation.
 
 <!-- d3d12-review-alert:end:compiler-output:ddi-create-runtime-handle:0 -->
 
@@ -2763,7 +2763,7 @@ Compiler is expected to sub-divide objects in an IHV dependent way to support de
 > **Authored synthesis - human review pending.**
 >
 > A no-output collection may consequently have no output group. The exception
-> does not apply to pipeline-state compilation, executable state-object
+> does not apply to pipeline state compilation, executable state object
 > compilation or additions.
 
 <!-- d3d12-review-alert:end:compiler-output:ddi-collection-frontier:0 -->
@@ -2920,7 +2920,7 @@ Each D3D12DDI_COMPILER_CACHE_TYPED_VALUE has a D3D12DDI_COMPILER_CACHE_VALUE.  O
 - <ins><!-- d3d12-review-inline:begin:compiler-output:ddi-pfnd3d12ddi_compiler_cache_find_value_cb:17 -->If the ValueSize member is zero and pCallbackFunc is non-nullptr, pCallbackFunc is called to allocate a buffer and the value is copied into it.  The allocated buffer pointer returned by pCallbackFunc is assigned to the pValue member on return. If pCallbackFunc returns nullptr, the call fails and returns E_OUTOFMEMORY.<!-- d3d12-review-inline:end:compiler-output:ddi-pfnd3d12ddi_compiler_cache_find_value_cb:17 --></ins>
 - The ValueSize member is assigned the value's actual size before returning.
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-pfnd3d12ddi_compiler_cache_find_value_cb:18 -->To determine if a particular value type is stored without retrieving the value, use a size check for the value. To perform a size check, use a nullptr pValue with a zero ValueSize for the types to query and a nullptr pCallbackFunc.  Within one backing-database query, S_OK indicates that at least one requested value type is cached. DXGI_ERROR_NOT_FOUND indicates that none of that query's requested types is cached. The overall call fails if any queried backing database fails; successful output from another database can still be returned.  ValueSize is non-zero for a cached value type.<!-- d3d12-review-inline:end:compiler-output:ddi-pfnd3d12ddi_compiler_cache_find_value_cb:18 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-pfnd3d12ddi_compiler_cache_find_value_cb:18 -->To determine if a particular value type is stored without retrieving the value, use a size check for the value. To perform a size check, use a nullptr pValue with a zero ValueSize for the types to query and a nullptr pCallbackFunc.  Within one backing database query, S_OK indicates that at least one requested value type is cached. DXGI_ERROR_NOT_FOUND indicates that none of that query's requested types is cached. The overall call fails if any queried backing database fails; successful output from another database can still be returned.  ValueSize is non-zero for a cached value type.<!-- d3d12-review-inline:end:compiler-output:ddi-pfnd3d12ddi_compiler_cache_find_value_cb:18 --></ins>
 
 <!-- d3d12-review-alert:begin:compiler-output:ddi-find-results:0 -->
 
@@ -3028,7 +3028,7 @@ The unique identifiers for the values.  See [D3D12DDI_COMPILER_CACHE_VALUE_KEY](
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The host accepts an already-existing-group result from this callback and returns other group-store failures to the plugin.
+> The host accepts an already-existing-group result from this callback and returns other group store failures to the plugin.
 
 <!-- d3d12-review-alert:end:compiler-output:ddi-group-completion:1 -->
 

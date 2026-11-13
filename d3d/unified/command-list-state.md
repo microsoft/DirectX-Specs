@@ -1,4 +1,4 @@
-# Command-list state initialization
+# Command list state initialization
 
 <!-- d3d12-review-legend:begin -->
 
@@ -18,7 +18,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> This chapter defines initial/reset state and bundle entry/exit state for `DIRECT`, `COMPUTE`, `COPY`, and `BUNDLE` recordings through `ID3D12GraphicsCommandList10` and its base graphics command-list interfaces. The state-family index identifies each definition.
+> This chapter defines initial/reset state and bundle entry/exit state for `DIRECT`, `COMPUTE`, `COPY`, and `BUNDLE` recordings through `ID3D12GraphicsCommandList10` and its base graphics command list interfaces. The state family index identifies each definition.
 
 <!-- d3d12-review-alert:end:state:N01:0 -->
 
@@ -31,7 +31,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The initial values in this reference apply when `CreateCommandList` or a successful `Reset` begins a recording. `CreateCommandList1` creates an initially closed object; its first recording begins with `Reset`. A new direct/compute recording does not inherit the previous recording's bindings. A bundle instead combines its explicitly recorded state with the permitted incoming state of the direct list that executes it.
+> The initial values in this reference apply when `CreateCommandList` or a successful `Reset` begins a recording. `CreateCommandList1` creates an initially closed object. Its first recording begins with `Reset`. A new direct/compute recording does not inherit the previous recording's bindings. A bundle instead combines its explicitly recorded state with the permitted incoming state of the direct list that executes it.
 
 <!-- d3d12-review-alert:end:state:N02:0 -->
 
@@ -40,7 +40,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> These are command-list binding and recording-context rules, not resource-data initialization. They do not clear descriptor heap contents, buffers, textures, counter/query data, acceleration structures, or work-graph backing memory. Resetting a list object does not reclaim allocator storage or establish GPU completion; see [recorded commands and allocator storage](execution.md#command-storage).
+> These are command list binding and recording context rules, not resource data initialization. They do not clear descriptor heap contents, buffers, textures, counter/query data, acceleration structures, or work graph backing memory. Resetting a list object does not reclaim allocator storage or establish GPU completion. See [recorded commands and allocator storage](execution.md#command-storage).
 
 <!-- d3d12-review-alert:end:state:N02:1 -->
 
@@ -49,7 +49,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The base VIDEO_ENCODE [ClearState, Close and Reset](video-motion-estimation.md#motion-recording) contracts are defined separately from the graphics/compute state families below. Encode ClearState/Reset disable predication and, on protection-capable nodes, clear the protected-session binding; they do not erase motion-vector heap contents or complete earlier GPU work.
+> The base VIDEO_ENCODE [ClearState, Close and Reset](video-motion-estimation.md#motion-recording) contracts are defined separately from the graphics/compute state families below. Encode ClearState/Reset disable predication and, on protection-capable nodes, clear the protected session binding. They do not erase motion vector heap contents or complete earlier GPU work.
 
 <!-- d3d12-review-alert:end:state:D160-video-encode-state-forward:0 -->
 
@@ -58,13 +58,13 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The six Video [extension initialization/execution methods](video-extension-commands.md#extension-recording) retain extension-defined predication and state/sequencing contracts. They do not inherit Meta-command's initialization policy or establish a generic dirty-state mask or automatic ClearState rule.
+> The six Video [extension initialization/execution methods](video-extension-commands.md#extension-recording) retain extension-defined predication and state/sequencing contracts. They do not inherit Meta command's initialization policy or establish a generic dirty state mask or automatic ClearState rule.
 
 <!-- d3d12-review-alert:end:state:D161-video-extension-state-forward:0 -->
 
 <a id="state-index"></a>
 
-## State-family index
+## State family index
 
 <!-- d3d12-review-alert:begin:state:N03:0 -->
 
@@ -73,22 +73,22 @@
 >
 > | State family | Canonical definition |
 > |---|---|
-> | PSO, raytracing pipeline, generic program, work-graph selection | [Pipeline state and program selection](#pipeline-selection) |
+> | PSO, raytracing pipeline, generic program, work graph selection | [Pipeline state and program selection](#pipeline-selection) |
 > | Root signatures, arguments, descriptor heaps and tables | [Resource binding](#resource-binding) |
-> | Vertex/index buffers and stream-output bindings | [Input and output bindings](#buffer-bindings) |
-> | RTV/DSV bindings and render-pass outputs | [Output bindings](#output-bindings), [render-pass context](#render-pass) |
+> | Vertex/index buffers and stream output bindings | [Input and output bindings](#buffer-bindings) |
+> | RTV/DSV bindings and render pass outputs | [Output bindings](#output-bindings), [render pass context](#render-pass) |
 > | Primitive topology, viewport/scissor, blend factor and stencil references | [Base graphics state](#base-graphics) |
 > | Independent front/back stencil references | [Stencil references](#stencil-references) |
-> | Depth bounds | [Depth-bounds range](#depth-bounds) |
+> | Depth bounds | [Depth bounds range](#depth-bounds) |
 > | Programmable sample positions | [Sample positions](#sample-positions) |
-> | View-instance mask | [View-instance mask](#view-mask) |
-> | VRS rate, combiners and image | [Variable-rate shading](#shading-rate) |
-> | Dynamic depth bias and index-buffer strip cut | [Dynamic PSO-derived state](#dynamic-state) |
+> | View instance mask | [View instance mask](#view-mask) |
+> | VRS rate, combiners and image | [Variable rate shading](#shading-rate) |
+> | Dynamic depth bias and index buffer strip cut | [Dynamic PSO-derived state](#dynamic-state) |
 > | Predication and active queries | [Predication/query context](#queries) |
-> | Protected-resource session selection | [Protection context](#protection) |
-> | Render-pass recording context | [Render passes](#render-pass) |
+> | Protected resource session selection | [Protection context](#protection) |
+> | Render pass recording context | [Render passes](#render-pass) |
 > | Marker/event context | [Annotations](#annotations) |
-> | Indirect and meta-command state effects | [Indirect execution](#indirect), [meta commands](#meta-commands) |
+> | Indirect and meta command state effects | [Indirect execution](#indirect), [meta commands](#meta-commands) |
 
 <!-- d3d12-review-alert:end:state:N03:0 -->
 
@@ -101,7 +101,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> An available command-list interface does not by itself advertise optional hardware support. [Devices and capabilities](devices-and-capabilities.md#feature-discovery) defines the shared interface, feature-level and capability-query distinctions. The relevant `CheckFeatureSupport` members are listed below; members named OPTIONSn belong to `D3D12_FEATURE_DATA_D3D12_OPTIONSn`. A supported tier/TRUE result and the applicable PSO flags describe availability of the optional functionality. This table is not an extra validation rule for no-op calls or a substitute for each method's usage constraints. Listing an initial value does not advertise support.
+> An available command list interface does not by itself advertise optional hardware support. [Devices and capabilities](devices-and-capabilities.md#feature-discovery) defines the shared interface, feature level and capability query distinctions. The relevant `CheckFeatureSupport` members are listed below; members named OPTIONSn belong to `D3D12_FEATURE_DATA_D3D12_OPTIONSn`. A supported tier/TRUE result and the applicable PSO flags describe availability of the optional functionality. This table is not an extra validation rule for no-op calls or a substitute for each method's usage constraints. Listing an initial value does not advertise support.
 
 <!-- d3d12-review-alert:end:state:N26:0 -->
 
@@ -116,14 +116,14 @@
 > | Programmable sample positions | `OPTIONS2.ProgrammableSamplePositionsTier` |
 > | View instancing/masking | `OPTIONS3.ViewInstancingTier` |
 > | Raytracing pipeline selection | `OPTIONS5.RaytracingTier` |
-> | Variable-rate shading | `OPTIONS6.VariableShadingRateTier`; image binding requires Tier 2 |
+> | Variable rate shading | `OPTIONS6.VariableShadingRateTier`; image binding requires Tier 2 |
 > | Independent front/back stencil references | `OPTIONS14.IndependentFrontAndBackStencilRefMaskSupported` |
 > | Dynamic strip cut | `OPTIONS15.DynamicIndexBufferStripCutSupported` and the dynamic PSO flag |
 > | Dynamic depth bias | `OPTIONS16.DynamicDepthBiasSupported` and the dynamic PSO flag |
 > | Work graphs | `OPTIONS21.WorkGraphsTier` appropriate to the program |
-> | Generic programs | `D3D12_FEATURE_DATA_SHADER_MODEL.HighestShaderModel` at SM 6.8 or higher; see [generic-program availability](state-objects.md#generic-programs) |
+> | Generic programs | `D3D12_FEATURE_DATA_SHADER_MODEL.HighestShaderModel` at SM 6.8 or higher. See [generic program availability](state-objects.md#generic-programs) |
 > | Directly indexed descriptor heaps | `D3D12_FEATURE_DATA_D3D12_OPTIONS.ResourceBindingTier` at Tier 3 and `D3D12_FEATURE_DATA_SHADER_MODEL.HighestShaderModel` at SM 6.6 or higher |
-> | Protected-resource session | `D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_SUPPORT.Support` for the relevant `NodeIndex` |
+> | Protected resource session | `D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_SUPPORT.Support` for the relevant `NodeIndex` |
 
 <!-- d3d12-review-alert:end:state:N26:1 -->
 
@@ -132,7 +132,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Meta-command availability is established by enumerating/creating a supported meta command, not by assuming a vendor-specific identifier exists on all devices.
+> Meta command availability is established by enumerating/creating a supported meta command, not by assuming a vendor-specific identifier exists on all devices.
 
 <!-- d3d12-review-alert:end:state:N26:2 -->
 
@@ -147,7 +147,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> On a direct, compute, or bundle command list that uses graphics or compute pipeline state, `pInitialState` in `CreateCommandList` or `Reset` supplies the initial pipeline state object (PSO). If it is `NULL`, the runtime selects its default graphics state for direct lists and bundles, or its default compute state for compute lists. This default does not supply an application shader program; the application must establish the pipeline state required by a draw or dispatch. Copy command lists have no pipeline state and do not use `pInitialState`. Ordinary graphics/compute PSO descriptions and creation are defined in [Pipeline state and shader linkage](pipeline-state.md#ordinary-pipeline-state).
+> On a direct, compute, or bundle command list that uses graphics or compute pipeline state, `pInitialState` in `CreateCommandList` or `Reset` supplies the initial pipeline state object (PSO). If it is `NULL`, the runtime selects its default graphics state for direct lists and bundles, or its default compute state for compute lists. This default does not supply an application shader program. The application must establish the pipeline state required by a draw or dispatch. Copy command lists have no pipeline state and do not use `pInitialState`. Ordinary graphics/compute PSO descriptions and creation are defined in [Pipeline state and shader linkage](pipeline-state.md#ordinary-pipeline-state).
 
 <!-- d3d12-review-alert:end:state:N04:0 -->
 
@@ -165,7 +165,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> PSO-contained fields have the values of the selected object; `Reset` changes the selection, not the PSO's description.
+> PSO-contained fields have the values of the selected object. `Reset` changes the selection, not the PSO's description.
 
 <!-- d3d12-review-alert:end:state:N05:1 -->
 
@@ -178,7 +178,7 @@
 
 <!-- d3d12-review-alert:end:state:N05:2 -->
 
-<ins><!-- d3d12-review-inline:begin:state:P-bundle-pipeline-invariant:0 -->All pipeline state objects referenced by a bundle must have the same number of render targets, corresponding render-target formats, depth-stencil format, and sample count/quality descriptions.<!-- d3d12-review-inline:end:state:P-bundle-pipeline-invariant:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state:P-bundle-pipeline-invariant:0 -->All pipeline state objects referenced by a bundle must have the same number of render targets, corresponding render target formats, depth-stencil format, and sample count/quality descriptions.<!-- d3d12-review-inline:end:state:P-bundle-pipeline-invariant:0 --></ins>
 
 <a id="set-pipeline-state1"></a>
 
@@ -202,20 +202,20 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [SetProgram](state-objects.md#setprogram) defines program selection, typed descriptions and work-graph list restrictions. The selected program participates in the single logical pipeline selection defined above.
+> [SetProgram](state-objects.md#setprogram) defines program selection, typed descriptions and work graph list restrictions. The selected program participates in the single logical pipeline selection defined above.
 
 <!-- d3d12-review-alert:end:state:N-S02-operation-owner:0 -->
 
 <a id="work-graph-memory"></a>
 
-### Work-graph backing memory
+### Work graph backing memory
 
 <!-- d3d12-review-alert:begin:state:N06:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Rebinding a work graph after list `Reset` is not itself a request to reinitialize its backing allocation. `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` concerns the allocation's contents and previous use, not whether the command-list object has been reset. The [initialization flag's requirements](state-objects.md#d3d12_set_work_graph_flags) include synchronization with previous uses of that memory. `DispatchGraph`, like work-graph program selection, is not supported in bundles.
+> Rebinding a work graph after list `Reset` is not itself a request to reinitialize its backing allocation. `D3D12_SET_WORK_GRAPH_FLAG_INITIALIZE` concerns the allocation's contents and previous use, not whether the command list object has been reset. The [initialization flag's requirements](state-objects.md#d3d12_set_work_graph_flags) include synchronization with previous uses of that memory. `DispatchGraph`, like work graph program selection, is not supported in bundles.
 
 <!-- d3d12-review-alert:end:state:N06:0 -->
 
@@ -232,7 +232,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Direct and compute recordings begin with no shader-visible descriptor heaps selected and no established root arguments. Undefined initial root/table state is not a promise of zero constants, null root descriptors, or valid null tables. Establish the signature and arguments required by the work. Root-signature definitions and descriptor/data lifetime promises are specified in [Resource binding and root signatures](binding.md#root-signatures).
+> Direct and compute recordings begin with no shader-visible descriptor heaps selected and no established root arguments. Undefined initial root/table state is not a promise of zero constants, null root descriptors, or valid null tables. Establish the signature and arguments required by the work. Root signature definitions and descriptor/data lifetime promises are specified in [Resource binding and root signatures](binding.md#root-signatures).
 
 <!-- d3d12-review-alert:end:state:N07:0 -->
 
@@ -295,13 +295,13 @@ table settings.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Bundle inheritance does not waive [static-descriptor](#static-descriptors) or [static-data](#static-data) binding requirements, or the [directly indexed heap ordering constraint](#direct-heaps).
+> Bundle inheritance does not waive [static descriptor](#static-descriptors) or [static data](#static-data) binding requirements, or the [directly indexed heap ordering constraint](#direct-heaps).
 
 <!-- d3d12-review-alert:end:state:N27:0 -->
 
 <a id="static-descriptors"></a>
 
-#### Static-descriptor bundle bindings
+#### Static descriptor bundle bindings
 
 For bundles using descriptor tables with static descriptors, the
 descriptors have to be ready starting at the time the bundle is recorded
@@ -314,7 +314,7 @@ and returned back to the command list.
 
 <a id="static-data"></a>
 
-#### Static-data bundle bindings (`DATA_STATIC`)
+#### Static data bundle bindings (`DATA_STATIC`)
 
 <!-- d3d12-review-alert:begin:state:N28:0 -->
 
@@ -360,7 +360,7 @@ with different heap pointers before a Draw or Dispatch.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A direct recording starts with no vertex buffers, index buffer, or stream-output targets bound. Compute and copy lists do not acquire graphics input/output bindings by Reset. A bundle inherits the parent's applicable bindings. It may change vertex/index buffer bindings, and those changes affect the parent; it cannot call `SOSetTargets`.
+> A direct recording starts with no vertex buffers, index buffer, or stream output targets bound. Compute and copy lists do not acquire graphics input/output bindings by Reset. A bundle inherits the parent's applicable bindings. It may change vertex/index buffer bindings, and those changes affect the parent. It cannot call `SOSetTargets`.
 
 <!-- d3d12-review-alert:end:state:N08:0 -->
 
@@ -369,7 +369,7 @@ with different heap pointers before a Draw or Dispatch.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The stream-output filled-size counter and UAV counters are resource data, not binding defaults. Unbinding or resetting a list does not initialize them.
+> The stream output filled size counter and UAV counters are resource data, not binding defaults. Unbinding or resetting a list does not initialize them.
 
 <!-- d3d12-review-alert:end:state:N08:1 -->
 
@@ -382,7 +382,7 @@ with different heap pointers before a Draw or Dispatch.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The full [OMSetRenderTargets contract](output-merger.md#omsetrendertargets) defines attachment binding; the [blend-factor](output-merger.md#omsetblendfactor), [common stencil-reference](output-merger.md#omsetstencilref), [independent stencil-reference](output-merger.md#omsetfrontandbackstencilref) and [depth-bounds](output-merger.md#omsetdepthbounds) entries define their dynamic calls. The initial/reset/bundle rules in this chapter remain canonical.
+> The full [OMSetRenderTargets contract](output-merger.md#omsetrendertargets) defines attachment binding. The [blend factor](output-merger.md#omsetblendfactor), [common stencil reference](output-merger.md#omsetstencilref), [independent stencil reference](output-merger.md#omsetfrontandbackstencilref) and [depth bounds](output-merger.md#omsetdepthbounds) entries define their dynamic calls. The initial/reset/bundle rules in this chapter remain canonical.
 
 <!-- d3d12-review-alert:end:state:N-om-api-owner:0 -->
 
@@ -393,7 +393,7 @@ with different heap pointers before a Draw or Dispatch.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A direct recording starts with no render targets or depth/stencil view bound. Bundles inherit the parent output bindings and cannot call `OMSetRenderTargets`. Render-pass entry/exit has its own explicit rules in [Render passes](#render-pass); it must not be treated as restoring the pre-pass outputs.
+> A direct recording starts with no render targets or depth/stencil view bound. Bundles inherit the parent output bindings and cannot call `OMSetRenderTargets`. Render pass entry/exit has its own explicit rules in [Render passes](#render-pass). It must not be treated as restoring the pre-pass outputs.
 
 <!-- d3d12-review-alert:end:state:N09:0 -->
 
@@ -406,7 +406,7 @@ with different heap pointers before a Draw or Dispatch.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The base graphics defaults below apply to direct recordings. Graphics-only state is not an initialization obligation for compute or copy work. Bundles inherit viewports/scissors and cannot set them; they inherit blend factor and stencil references and may change them.
+> The base graphics defaults below apply to direct recordings. Graphics-only state is not an initialization obligation for compute or copy work. Bundles inherit viewports/scissors and cannot set them. They inherit blend factor and stencil references and may change them.
 
 <!-- d3d12-review-alert:end:state:N10:0 -->
 
@@ -445,7 +445,7 @@ initial pipeline state). Bundles also do not inherit primitive topology.<!-- d3d
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Both front-face and back-face stencil reference values start at zero on a direct recording. `OMSetStencilRef` selects one reference for both faces; `OMSetFrontAndBackStencilRef` can select them independently when `D3D12_FEATURE_DATA_D3D12_OPTIONS14::IndependentFrontAndBackStencilRefMaskSupported` is supported. A bundle inherits the references and its updates persist to the parent.
+> Both front face and back face stencil reference values start at zero on a direct recording. `OMSetStencilRef` selects one reference for both faces. `OMSetFrontAndBackStencilRef` can select them independently when `D3D12_FEATURE_DATA_D3D12_OPTIONS14::IndependentFrontAndBackStencilRefMaskSupported` is supported. A bundle inherits the references and its updates persist to the parent.
 
 <!-- d3d12-review-alert:end:state:N11:0 -->
 
@@ -454,17 +454,17 @@ initial pipeline state). Bundles also do not inherit primitive topology.<!-- d3d
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Stencil read/write masks remain PSO state; this independent-reference feature does not make those masks command-list bindings.
+> Stencil read/write masks remain PSO state. This independent-reference feature does not make those masks command list bindings.
 
 <!-- d3d12-review-alert:end:state:N11:1 -->
 
 <a id="depth-bounds"></a>
 
-## Depth-bounds range
+## Depth bounds range
 
 **Related APIs:** `ID3D12GraphicsCommandList1::OMSetDepthBounds`.
 
-<ins><!-- d3d12-review-inline:begin:state:S21:0 -->Depth-bounds testing (DBT) is exposed as a PSO enable/disable toggle in order to
+<ins><!-- d3d12-review-inline:begin:state:S21:0 -->Depth bounds testing (DBT) is exposed as a PSO enable/disable toggle in order to
 support hardware that sets depth buffer read state in the PSO, and a
 Command List method in order to support dynamically changing the Depth
 Bounds.<!-- d3d12-review-inline:end:state:S21:0 --></ins>
@@ -482,7 +482,7 @@ the executing Command List after the Bundle is executed.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> When depth-bounds testing is supported, `ClearState` on a direct list restores the range to minimum 0 and maximum 1.
+> When depth bounds testing is supported, `ClearState` on a direct list restores the range to minimum 0 and maximum 1.
 
 <!-- d3d12-review-alert:end:state:N12:0 -->
 
@@ -506,7 +506,7 @@ matching `ForcedSampleCount` value in the `RASTERIZER_DESC`.
 
 <ins><!-- d3d12-review-inline:begin:state:S07:2 -->`SetSamplePositions` also impacts Resolve*() and Clear*() APIs called on
 depth surfaces (does not impact stencil), as well as certain resource
-state transition calls -- see [sample-position operational semantics](rasterization.md#programmable-samples).<!-- d3d12-review-inline:end:state:S07:2 --></ins>
+state transition calls -- see [sample position operational semantics](rasterization.md#programmable-samples).<!-- d3d12-review-inline:end:state:S07:2 --></ins>
 
 Calling `SetSamplePositions(0,0,NULL)` reverts state back to the default.
 
@@ -525,7 +525,7 @@ Calling `SetSamplePositions(0,0,NULL)` reverts state back to the default.
 
 <a id="view-mask"></a>
 
-## View-instance mask
+## View instance mask
 
 **Related APIs:** `ID3D12GraphicsCommandList1::SetViewInstanceMask`.
 
@@ -558,24 +558,24 @@ inheritance semantics are similar to PSOs.
 
 <a id="shading-rate"></a>
 
-## Variable-rate shading (VRS)
+## Variable rate shading (VRS)
 
 **Related APIs:** `ID3D12GraphicsCommandList5::RSSetShadingRate`, `ID3D12GraphicsCommandList5::RSSetShadingRateImage`.
 
-<ins><!-- d3d12-review-inline:begin:state:S09:0 -->All shading rate sources, namely the command-list-specified rate, the screen space image-specified rate, and the per-primitive attribute, have a default of `D3D12_SHADING_RATE_1X1`. The default combiners are {`PASSTHROUGH`, `PASSTHROUGH`}.<!-- d3d12-review-inline:end:state:S09:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state:S09:0 -->All shading rate sources, namely the rate specified on the command list, the screen space image-specified rate, and the per-primitive attribute, have a default of `D3D12_SHADING_RATE_1X1`. The default combiners are {`PASSTHROUGH`, `PASSTHROUGH`}.<!-- d3d12-review-inline:end:state:S09:0 --></ins>
 
 If no screen space image is specified, a shading rate of 1X1 is inferred from that source.
 
 If no per-primitive attribute is specified, a shading rate of 1X1 is inferred from that source.
 
-<ins><!-- d3d12-review-inline:begin:state:S09:3 -->`ID3D12GraphicsCommandList::ClearState` resets the command-list-specified rate to default, and the selection of screen-space image to the default of “no screen space image”.<!-- d3d12-review-inline:end:state:S09:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:state:S09:3 -->`ID3D12GraphicsCommandList::ClearState` resets the rate specified on the command list to default, and the selection of screen-space image to the default of “no screen space image”.<!-- d3d12-review-inline:end:state:S09:3 --></ins>
 
 <!-- d3d12-review-alert:begin:state:N15:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> These defaults apply at the start of a supported direct recording. Shading-rate image binding requires Tier 2 support. Bundles inherit these states; their permitted VRS setter calls affect the parent afterward.
+> These defaults apply at the start of a supported direct recording. Shading rate image binding requires Tier 2 support. Bundles inherit these states. Their permitted VRS setter calls affect the parent afterward.
 
 <!-- d3d12-review-alert:end:state:N15:0 -->
 
@@ -584,7 +584,7 @@ If no per-primitive attribute is specified, a shading rate of 1X1 is inferred fr
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `ClearState` also restores both combiners to `PASSTHROUGH`. Changing pipeline state alone does not select a new shading-rate image or replace these command-list settings.
+> `ClearState` also restores both combiners to `PASSTHROUGH`. Changing pipeline state alone does not select a new shading rate image or replace these command list settings.
 
 <!-- d3d12-review-alert:end:state:N15:1 -->
 
@@ -603,7 +603,7 @@ If no per-primitive attribute is specified, a shading rate of 1X1 is inferred fr
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The initial depth-bias tuple and index-buffer strip-cut value come from the selected initial PSO, not from values left by the prior recording. A bundle's initial PSO likewise supplies these values, so they are not arbitrary incoming values from the parent.
+> The initial depth bias tuple and index buffer strip-cut value come from the selected initial PSO, not from values left by the prior recording. A bundle's initial PSO likewise supplies these values, so they are not arbitrary incoming values from the parent.
 
 <!-- d3d12-review-alert:end:state:N16:0 -->
 
@@ -639,7 +639,7 @@ For drivers, these flags are only _hints_ about whether or not state is allowed 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The complete [query lifecycle and type support](counters-queries-and-predication.md#query-lifecycle) and [predicate comparison/operation matrix](counters-queries-and-predication.md#predication) are defined by the general chapter. This section retains graphics recording-context defaults and bundle boundaries.
+> The complete [query lifecycle and type support](counters-queries-and-predication.md#query-lifecycle) and [predicate comparison/operation matrix](counters-queries-and-predication.md#predication) are defined by the general chapter. This section retains graphics recording context defaults and bundle boundaries.
 
 <!-- d3d12-review-alert:end:state:QF-query-contract:0 -->
 
@@ -650,7 +650,7 @@ For drivers, these flags are only _hints_ about whether or not state is allowed 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Predication is disabled at the start of a direct or compute recording. A bundle inherits the effective predicate and cannot call `SetPredication`. No queries are active in a new recording. Query Begin/End operations cannot span a `Reset`; queries begun in a recording must be ended before `Close`, and query Begin/End cannot be recorded in a bundle. Outstanding queries must also be ended before changing the protected-resource session.
+> Predication is disabled at the start of a direct or compute recording. A bundle inherits the effective predicate and cannot call `SetPredication`. No queries are active in a new recording. Query Begin/End operations cannot span a `Reset`; queries begun in a recording must be ended before `Close`, and query Begin/End cannot be recorded in a bundle. Outstanding queries must also be ended before changing the protected resource session.
 
 <!-- d3d12-review-alert:end:state:N17:0 -->
 
@@ -659,7 +659,7 @@ For drivers, these flags are only _hints_ about whether or not state is allowed 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Query heap results and stream-output/UAV counter values are not cleared by these CPU-side recording operations. A new recording context is not a reset of their GPU-visible contents.
+> Query heap results and stream output/UAV counter values are not cleared by these CPU-side recording operations. A new recording context is not a reset of their GPU-visible contents.
 
 <!-- d3d12-review-alert:end:state:N17:1 -->
 
@@ -681,7 +681,7 @@ can be accessed.<!-- d3d12-review-inline:end:state:S12:0 --></ins>
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Creation/Reset and `ClearState` select no protected-resource session on command list/device combinations supporting this state. An explicit session selection is required before protected accesses. Session selection is available on supported direct/compute/copy lists, not as a bundle-side setter; a bundle executes within its parent's protection context. Session selection cannot be changed inside an active render pass. For session validity and its read-only status counter, see [protected-session status fences](execution.md#status-fences).
+> Creation/Reset and `ClearState` select no protected resource session on command list/device combinations supporting this state. An explicit session selection is required before protected accesses. Session selection is available on supported direct/compute/copy lists, not as a bundle-side setter. A bundle executes within its parent's protection context. Session selection cannot be changed inside an active render pass. For session validity and its read-only status counter, see [protected session status fences](execution.md#status-fences).
 
 <!-- d3d12-review-alert:end:state:N18:0 -->
 
@@ -690,9 +690,9 @@ can be accessed.<!-- d3d12-review-inline:end:state:S12:0 --></ins>
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Selecting or unsetting a protected-resource session changes only the
+> Selecting or unsetting a protected resource session changes only the
 > protection context. It preserves ordinary pipeline/root/descriptor/output
-> bindings and predication; it does not invalidate them or restore ClearState
+> bindings and predication. It does not invalidate them or restore ClearState
 > defaults. Protected operations still require predication to be disabled and
 > all other operation-specific validity conditions to hold.
 
@@ -802,7 +802,7 @@ lists only if all of the following are true:
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Command-signature construction, argument/count buffers and execution are defined in [Indirect execution](indirect-execution.md#executeindirect). The [incrementing-constant argument](indirect-execution.md#incrementing-constant) sets one root constant and therefore resets that value to zero after the call. The affected-binding resets above also occur when no records execute or generated work is predicated off; unaffected bindings remain unchanged.
+> Command signature construction, argument/count buffers and execution are defined in [Indirect execution](indirect-execution.md#executeindirect). The [incrementing-constant argument](indirect-execution.md#incrementing-constant) sets one root constant and therefore resets that value to zero after the call. The affected-binding resets above also occur when no records execute or generated work is predicated off; unaffected bindings remain unchanged.
 
 <!-- d3d12-review-alert:end:state:N-indirect-canonical-owner:0 -->
 
@@ -817,7 +817,7 @@ lists only if all of the following are true:
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [InitializeMetaCommand](meta-commands.md#initializemetacommand) defines GPU initialization ordering and the selected algorithm's resource requirements; [ExecuteMetaCommand](meta-commands.md#executemetacommand) defines invocation. Their declared state effects remain defined below.
+> [InitializeMetaCommand](meta-commands.md#initializemetacommand) defines GPU initialization ordering and the selected algorithm's resource requirements. [ExecuteMetaCommand](meta-commands.md#executemetacommand) defines invocation. Their declared state effects remain defined below.
 
 <!-- d3d12-review-alert:end:state:D151-meta-initialization-forward:0 -->
 
@@ -826,7 +826,7 @@ lists only if all of the following are true:
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The dirty-state fields are in [`D3D12_META_COMMAND_DESC`](meta-commands.md#d3d12_meta_command_desc) and have type [`D3D12_GRAPHICS_STATES`](meta-commands.md#d3d12_graphics_states), whose flag meanings identify the affected state families. Meta-command initialization/execution is therefore a state-affecting recorded operation even though its name is not a state setter. Reestablish the state required by later work when the declared dirty-state mask affects it. The meta command's GPU initialization and persistent resources are not automatically reinitialized by command-list Reset.
+> The dirty state fields are in [`D3D12_META_COMMAND_DESC`](meta-commands.md#d3d12_meta_command_desc) and have type [`D3D12_GRAPHICS_STATES`](meta-commands.md#d3d12_graphics_states), whose flag meanings identify the affected state families. Meta command initialization/execution is therefore a state-affecting recorded operation even though its name is not a state setter. Reestablish the state required by later work when the declared dirty state mask affects it. The meta command's GPU initialization and persistent resources are not automatically reinitialized by command list Reset.
 
 <!-- d3d12-review-alert:end:state:N22:0 -->
 
@@ -835,7 +835,7 @@ lists only if all of the following are true:
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 
-> **Draft qualification:** Whether an all-bits dirty-state mask implies the postconditions of `ClearState` remains unresolved. This draft does not assert that equivalence or assign Reset/default values from it. The affected-state restoration requirement above remains operative. The [scoped review](../../spec-maintenance/d3d12/meta-command-review.md) records the withheld claim and its evidence limits.
+> **Draft qualification:** Whether an all-bits dirty state mask implies the postconditions of `ClearState` remains unresolved. This draft does not assert that equivalence or assign Reset/default values from it. The affected-state restoration requirement above remains operative. The [scoped review](../../spec-maintenance/d3d12/meta-command-review.md) records the withheld claim and its evidence limits.
 
 <!-- d3d12-review-context:end:state:D151-all-mask-qualification:0 -->
 
@@ -873,7 +873,7 @@ The D3D12 runtime manages marker data by maintaining an internal copy whose life
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `ClearState` is valid on direct/compute lists, not copy lists or bundles, and not inside an active render pass. It records state-setting operations in the current list; it does not erase recorded commands, reopen a closed list, repair a persistent recording error, end outstanding queries, or reclaim storage.
+> `ClearState` is valid on direct/compute lists, not copy lists or bundles, and not inside an active render pass. It records state setting operations in the current list. It does not erase recorded commands, reopen a closed list, repair a persistent recording error, end outstanding queries, or reclaim storage.
 
 <!-- d3d12-review-alert:end:state:N24:0 -->
 
@@ -882,7 +882,7 @@ The D3D12 runtime manages marker data by maintaining an internal copy whose life
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> It installs the supplied/default PSO and restores the core direct/compute bindings and predication. On a direct list it restores the base graphics defaults, depth-bounds range when supported, and the VRS defaults/combiners/image when supported. Protection-session selection is cleared where supported. PSO-derived dynamic bias/strip cut follows the selected PSO.
+> It installs the supplied/default PSO and restores the core direct/compute bindings and predication. On a direct list it restores the base graphics defaults, depth bounds range when supported, and the VRS defaults/combiners/image when supported. Protection session selection is cleared where supported. PSO-derived dynamic bias/strip cut follows the selected PSO.
 
 <!-- d3d12-review-alert:end:state:N24:1 -->
 
@@ -891,7 +891,7 @@ The D3D12 runtime manages marker data by maintaining an internal copy whose life
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Custom sample-position and view-mask restoration must not be inferred from the generic phrase 'clear state': explicitly use `SetSamplePositions(0, 0, NULL)` or `SetViewInstanceMask(0)` when those respective defaults are required.
+> Custom sample position and view mask restoration must not be inferred from the generic phrase 'clear state': explicitly use `SetSamplePositions(0, 0, NULL)` or `SetViewInstanceMask(0)` when those respective defaults are required.
 
 <!-- d3d12-review-alert:end:state:N24:2 -->
 
@@ -904,6 +904,6 @@ The D3D12 runtime manages marker data by maintaining an internal copy whose life
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Draw/dispatch, copies, clears of resource contents, resolves, raytracing builds, resource barriers, and immediate buffer writes are recorded work, not new initial binding values. Their resource effects and synchronization are not undone by `Reset`. `SignalBarrier` and `WaitBarrier` operate on independent fence data and synchronization; see [fence-barrier commands](fence-barriers.md#commands).
+> Draw/dispatch, copies, clears of resource contents, resolves, raytracing builds, resource barriers, and immediate buffer writes are recorded work, not new initial binding values. Their resource effects and synchronization are not undone by `Reset`. `SignalBarrier` and `WaitBarrier` operate on independent fence data and synchronization. See [fence barrier commands](fence-barriers.md#commands).
 
 <!-- d3d12-review-alert:end:state:N25:0 -->

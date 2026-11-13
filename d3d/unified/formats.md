@@ -1,4 +1,4 @@
-# Formats and views
+# Formats
 
 <!-- d3d12-review-legend:begin -->
 
@@ -31,7 +31,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [shared numeric representations and conversion algorithms](numeric-and-data-rules.md#numeric-3-2) define SNORM/UNORM/sRGB, floating-point and integer-width conversions, with the [round-trip guarantee and its exceptions](numeric-and-data-rules.md#numeric-19-1-2). The [RGB9E5](numeric-and-data-rules.md#numeric-19-3-2) and [R11G11B10](numeric-and-data-rules.md#numeric-19-3-3) numeric layouts/conversions remain distinct from this chapter's format-use capabilities, casting and component-default rules.
+> The [shared numeric representations and conversion algorithms](numeric-and-data-rules.md#numeric-3-2) define SNORM/UNORM/sRGB, floating-point and integer width conversions, with the [round-trip guarantee and its exceptions](numeric-and-data-rules.md#numeric-19-1-2). The [RGB9E5](numeric-and-data-rules.md#numeric-19-3-2) and [R11G11B10](numeric-and-data-rules.md#numeric-19-3-3) numeric layouts/conversions remain distinct from this chapter's format use capabilities, casting and component default rules.
 
 <!-- d3d12-review-alert:end:formats:N-numeric-conversion-owner:0 -->
 
@@ -46,7 +46,7 @@ interpretation of the data, including `DXGI_FORMAT_R8G8B8A8_UNORM`, `DXGI_FORMAT
 <ins><!-- d3d12-review-inline:begin:formats:L-format-baseline:2 -->When a resource with a partially typeless format is bound to a Shader for output or input, it must be fully qualified as one of the subformats which
 in ordinary within-family casting has the same bit counts for each component but now defines a specific type for each component.<!-- d3d12-review-inline:end:formats:L-format-baseline:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:formats:L-typeless:0 -->A texture resource may be created with a typeless format. Its format supplies component bit widths without component types, and its description supplies dimensions in format elements. This is unlike a structured-buffer view, which specifies a
+<ins><!-- d3d12-review-inline:begin:formats:L-typeless:0 -->A texture resource may be created with a typeless format. Its format supplies component bit widths without component types, and its description supplies dimensions in format elements. This is unlike a structured buffer view, which specifies a
 structure size/stride without defining the structure's members. Before the Resource is bound to the
 pipeline, Resource Views must be created which will fully qualify the
 component's types. These Resource Views also allow the Resource to be
@@ -59,7 +59,7 @@ to fully qualify the format of the Resource, for example
 regroup only the two least detailed mip levels or select only a
 particular mip level. This allows the original Resource to be
 manipulated as if it were a Resource made up of only a few Subresources
-within the original Resource. View descriptions are defined below.<!-- d3d12-review-inline:end:formats:L-typeless:0 --></ins>
+within the original Resource. View descriptions are defined in [Resource binding and root signatures](binding.md#view-descriptions).<!-- d3d12-review-inline:end:formats:L-typeless:0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:formats:L-typeless:1 -->The benefit of typeless resources is that memory may be used
 as weakly typed storage, enabling limited reuse or reinterpretation of the memory,
@@ -73,33 +73,12 @@ with respect to each other.<!-- d3d12-review-inline:end:formats:L-typeless:1 -->
 used as R32G32B32A32_FLOAT and R32G32B32A32_UINT at different locations in the
 pipeline simultaneously.<!-- d3d12-review-inline:end:formats:L-typeless:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:formats:L-views:0 -->In order to indirectly bind a Resource to certain stages of the graphics
-pipeline, Resource Views must be used. In addition, since some Resources
-may be created with typeless formats, the View provides the final
-opportunity to fully qualify the Resource component's types. The Resource
-Views also allow the Resource to be decomposed into smaller compatible
-subgroupings of the Mip Slices, Array Slices, and Subresources. This means
-that the effective dimensions and array sizes of the Views will, naturally,
-always be less than or equal to the original Resource. Each stage
-of the pipeline requires a unique type of View, and each type of View
-may have its own custom set of state parameters that are needed to
-complete the process of binding a particular Resource to the graphics
-pipeline stage. Resource creation flags impose the applicable view restrictions independently of descriptor binding. Views are represented by descriptors; the [binding contract](binding.md#foundations) defines their selection and lifetime.<!-- d3d12-review-inline:end:formats:L-views:0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:formats:L-views:1 -->A resource view is distinct from the underlying resource from which the view was
-created, so where views are used, the view properties (number of mipmaps, number
-of array elements, type, etc.) are always used in place of the properties of the
-original resource.  Thus, for example, a render target array index of zero always
-indicates the first array element in the view, even if the first array element in
-the view is not the first array element in the underlying resource.  Out of range
-behaviors are also always with respect to the view properties where views are used.<!-- d3d12-review-inline:end:formats:L-views:1 --></ins>
-
 <!-- d3d12-review-alert:begin:formats:N-family:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A format family fixes a compatible storage layout; typed members qualify the interpretation of accessible components. A name containing TYPELESS only for padding does not make the view's accessed components untyped: for example, `DXGI_FORMAT_R24_UNORM_X8_TYPELESS` is a depth-plane SRV format. Buffer resources use `DXGI_FORMAT_UNKNOWN`; typed, raw, and structured buffer views supply their respective interpretations.
+> A format family fixes a compatible storage layout; typed members qualify the interpretation of accessible components. A name containing TYPELESS only for padding does not make the view's accessed components untyped: for example, `DXGI_FORMAT_R24_UNORM_X8_TYPELESS` is a depth plane SRV format. Buffer resources use `DXGI_FORMAT_UNKNOWN`; typed, raw, and structured buffer views supply their respective interpretations.
 
 <!-- d3d12-review-alert:end:formats:N-family:0 -->
 
@@ -108,7 +87,7 @@ behaviors are also always with respect to the view properties where views are us
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The ordinary component-layout restrictions above do not replace the separately defined [R32_UINT UAV casting exception](#r32-uav-casting) or [explicit castable-format lists](#cast-lists).
+> The ordinary component layout restrictions above do not replace the separately defined [R32_UINT UAV casting exception](#r32-uav-casting) or [explicit castable format lists](#cast-lists).
 
 <!-- d3d12-review-alert:end:formats:N-cast-forward:0 -->
 
@@ -126,6 +105,8 @@ behaviors are also always with respect to the view properties where views are us
 <!-- d3d12-review-alert:end:formats:N-dxgi:0 -->
 
 #### DXGI_FORMAT
+
+<a id="dxgi-format"></a>
 
 ```cpp
 typedef enum DXGI_FORMAT
@@ -331,7 +312,7 @@ A: bits 30-31
 ```
 
 <ins><!-- d3d12-review-inline:begin:formats:L-components:9 -->Certain formats do not comply with these rules, because they are considered
-custom formats. An example of such formats is the block compression formats.
+custom formats. An example of such formats is the [block compression formats](#block-compressed-formats).
 Such custom formats have memory layout definitions of their own, separate
 from the general rules. R1 formats also have their own separate definition.<!-- d3d12-review-inline:end:formats:L-components:9 --></ins>
 
@@ -386,6 +367,1250 @@ then 0x1 is used.<!-- d3d12-review-inline:end:formats:L-missing:0 --></ins>
 <ins><!-- d3d12-review-inline:begin:formats:L-missing:1 -->For example, when the format `DXGI_FORMAT_R24_UNORM_X8_TYPELESS` is read into a Shader, the values
 for G and B are 0, and A is 1.0f.  For `DXGI_FORMAT_R16G16_UINT`, the B gets 0 and A gets 0x00000001.  `DXGI_FORMAT_R16_SINT` provides 0 for G and B, and 0x00000001 for A.<!-- d3d12-review-inline:end:formats:L-missing:1 --></ins>
 
+<a id="block-compressed-formats"></a>
+
+## Block-compressed formats
+
+<a id="bc-overview"></a>
+
+### Overview
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-1:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> This section describes various block-based compression formats. A surface is divided into 4x4 texel blocks,
+> and each 16-texel block is encoded in a particular manner as an atomic unit. Each distinct encoding method
+> is given a unique format name (identified by a four-character code and matching DXGI\_FORMAT\_BC\* name).
+>
+> Block Compressed formats can be used for Texture2D (including arrays), Texture3D or TextureCube (including arrays), including mipmap
+> surfaces in these Resources.
+>
+> <a id="bc-dimensions"></a>
+>
+> `D3D12_FEATURE_D3D12_OPTIONS8`, queried through [`CheckFeatureSupport`](devices-and-capabilities.md#id3d12device-checkfeaturesupport), reports the texture dimension alignment capability.
+>
+> ```cpp
+> typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS8 {
+>   BOOL UnalignedBlockTexturesSupported;
+> } D3D12_FEATURE_DATA_D3D12_OPTIONS8;
+> ```
+>
+> `UnalignedBlockTexturesSupported`
+>
+> Type: \_Out\_ **[BOOL](https://learn.microsoft.com/en-us/windows/desktop/winprog/windows-data-types)**
+>
+> Indicates whether or not unaligned block-compressed textures are supported.
+>
+> If `false`, then Direct3D 12 requires that the dimensions of the top-level mip of a block-compressed texture are aligned to multiples of 4 (such alignment requirements do not apply to less-detailed mips). If `true`, then no such alignment requirement applies to any mip level of a block-compressed texture.
+>
+> BC format surfaces are stored as full blocks, each block representing 4x4 pixels. The sizes for the lower level maps are computed as they are for all mipmapped surfaces, and thus may not be a multiple of 4, for example a top level map of 20 results in a second level map size of 10. For these cases, there is a differing 'physical' size and a 'virtual' size. The virtual size is that computed for each mip level without adjustment, which is 10 for the example. The physical size is the virtual size rounded up to the next multiple of 4, which is 12 for the example, and describes the texels covered by the stored blocks. The sampling hardware will apply texture address processing based on the virtual size (using, for example, border color if specified for accesses beyond 10), and thus for the example case will not access the 11th and 12th row of the resource. So for mipmap chains when an axis becomes < 4 in size, only texels 'a','b','e','f' (see diagram below) are used for a 2x2 map, and texel 'a' is used for 1x1. Note that this is similar to, but distinct from, the surface pitch, which can encompass additional padding beyond the physical surface size.
+>
+> The [BC copy bounds and alignment requirements](resource-operations.md#bc-copy-edges) define the transfer geometry for these formats.
+>
+> Decompression always occurs before filtering.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-1:0 -->
+
+<a id="bc-error-tolerance"></a>
+
+### Error tolerance
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-2:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> Valid implementations of BC formats other than BC6H and BC7 may optionally promote or do round-to-nearest division, so long as they meet the following equation for all channels of all texels:
+>
+> ```text
+> | generated - reference | < absolute_error + 0.03
+>                             *MAX( | endpoint_0 - endpoint_1 |,
+>                                   | endpoint_0_promoted - endpoint_1_promoted | )
+> ```
+>
+> absolute\_error is defined in the description of each format.
+>
+> endpoint\_0, endpoint\_1, and their promoted counterparts have been
+> converted to float from either UNORM or SNORM as specified in the [Integer Conversion](numeric-and-data-rules.md#numeric-3-2-3) rules.
+> Values that the reference decodes to 0.0, 1.0 or -1.0 must always be exact.
+>
+> For BC6H and BC7, decompression hardware is required to be bit accurate;
+> the hardware must give results that are identical to the decoder described in this specification.
+>
+> Right shifts of signed values in the decoder pseudocode are arithmetic right shifts.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-2:0 -->
+
+<a id="bc-unorm-promotion"></a>
+
+### Promotion to wider UNORM values
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-3:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> Promotion is defined to utilize MSB extension to define the new LSBs as follows.
+>
+> ```cpp
+> int UNORMPromote(int input, int baseBitCount, int targetBitCount)
+> {
+>     int numBits = targetBitCount-baseBitCount;
+>     input <<= numBits;
+>     int outval = input;
+>     do {
+>         input >>= baseBitCount;
+>         outval |= input;
+>         numBits -= baseBitCount;
+>     } while(numBits > 0);
+>     return outval;
+> }
+> ```
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-3:0 -->
+
+<a id="bc-snorm-promotion"></a>
+
+### Promotion to wider SNORM values
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-4:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> ```cpp
+> int SNORMPromote(int input, int baseBitCount, int targetBitCount)
+> {
+>     input = max(input, -((1 << (baseBitCount-1)) - 1));
+>     if (input<0)
+>         return -UNORMPromote(-input, baseBitCount-1, targetBitCount-1);
+>     return UNORMPromote(input, baseBitCount-1, targetBitCount-1);
+> }
+> ```
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-4:0 -->
+
+<a id="bc-memory-layout"></a>
+
+### Memory layout
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-5:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> The following diagram depicts the overall layout of data in a Block Compressed surface. After that,
+> the per-block memory encoding for each BC\* format is individually illustrated.
+>
+> ![Block-compressed surface memory layout](../archive/images/d3d11/D3D11_3_BC.png)
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-5:0 -->
+
+<a id="bc1"></a>
+
+### BC1 (UNORM and sRGB)
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-6:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> BC1U/BC1G (DXGI\_FORMAT\_BC1\_UNORM[\_SRGB]) is known in older APIs as D3DFMT\_DXT1.
+>
+> ![BC1 block layout](../archive/images/d3d11/D3D11_3_BC1.png)
+>
+> ```cpp
+> color_0_p = promoteToUNORM8(color_0)
+> color_1_p = promoteToUNORM8(color_1)
+> if (color_0 > color_1) // unsigned compare
+> {
+>     // Four-color block:
+>     color_2 = (2 * color_0_p + color_1_p) / 3;
+>     color_3 = (color_0_p + 2 * color_1_p) / 3;
+>     alpha_3 = 1.0f
+> } else {
+>     // Three-color block:
+>     color_2 = (color_0_p + color_1_p) / 2;
+>     color_3 = (0.0f,0.0f,0.0f); alpha_3 = 0.0f
+> }
+> // color_*: Actually 3 independent calculations for R,G,B.
+>
+> // The following 2-bit codes select
+> // a UNORM8 color for each texel:
+> // (MSB)00(LSB) = color_0_p, alpha=1.0f
+> //      01      = color_1_p, alpha=1.0f
+> //      10      = color_2,   alpha=1.0f
+> //      11      = color_3,   alpha=alpha_3
+> ```
+>
+> - Filtering must occur with at least UNORM8 precision.
+> - Values specified as 0.0f or 1.0f must be exact.
+> - **absolute\_error = 1.0 / 255.0**
+>
+> **BC1G / DXGI\_FORMAT\_BC1\_UNORM\_SRGB:**
+>
+> Same as BC1U, but colors are in sRGB space, linearized pre-filter on read. sRGB conversion should occur the same as with uncompressed UNORM8 formats.
+> If an implementation provides more precise palette entries than it can linearize, it may have up to 1 UNORM8 ULP error in conversion on input to linearization.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-6:0 -->
+
+<a id="bc2"></a>
+
+### BC2 (UNORM and sRGB)
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-7:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> BC2U/BC2G (DXGI\_FORMAT\_BC2\_UNORM[\_SRGB]) is known in older APIs as both D3DFMT\_DXT2 and D3DFMT\_DXT3, where DXT2 is the same as DXT3 except whether or not the color data is assumed to be pre-multiplied by alpha. This pre-multiplied alpha distinction is meaningless to the graphics system, as the hardware doesn't care about pre-multiplied alpha. It is up to application to change Shader code if appropriate for handling the distinction. Separate format names are not used in Direct3D 12 to distinguish pre-multiplied alpha from non-pre-multiplied alpha. If applications want to keep track of whether a format contains pre-multiplied alpha, that can be done by other means (such as storing private data for resources), which would work equally well for all formats, and not just the Block Compression formats. Note that in contrast to the pre-multiplied alpha property, the distinction of whether the resource contains SRGB data or not is indeed important for hardware, so separate formats are used for linear vs SRGB data where appropriate.
+>
+> ![BC2 block layout](../archive/images/d3d11/D3D11_3_BC2.png)
+>
+> ```cpp
+> // Four-color block: derive the other two colors
+> color_0_p = promoteToUNORM8(color_0)
+> color_1_p = promoteToUNORM8(color_1)
+> color_2 = (2 * color_0_p + color_1_p) / 3;
+> color_3 = (color_0_p + 2 * color_1_p) / 3;
+> // color_*: Actually 3 independent calculations for R,G,B.
+>
+> // The following 2-bit codes select
+> // a UNORM8 color for each texel:
+> // (MSB)00(LSB) = color_0_p,
+> //      01      = color_1_p,
+> //      10      = color_2,
+> //      11      = color_3
+>
+> // Derive alpha value for texel t:
+> alpha = alpha[t]/15.0f
+> ```
+>
+> - Implementations must follow the same precision rules as BC1 for color palette entries.
+> - Alpha values must be filtered with at least UNORM8 precision.
+> - **absolute\_error = 1.0/255.0**
+>
+> **BC2G / DXGI\_FORMAT\_BC2\_UNORM\_SRGB:**
+>
+> - Color is decoded prior to gamma conversion the same as BC2U.
+> - Gamma conversion then occurs the same way as BC1G.
+> - Alpha decodes the same as BC2U.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-7:0 -->
+
+<a id="bc3"></a>
+
+### BC3 (UNORM and sRGB)
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-8:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> BC3U/BC3G (DXGI\_FORMAT\_BC3\_UNORM[\_SRGB]) is known in older APIs as both D3DFMT\_DXT4 and D3DFMT\_DXT5, where DXT4 is the same as DXT5 except whether or not the color data is assumed to be pre-multiplied by alpha. This pre-multiplied alpha distinction is meaningless to the graphics system, as the hardware doesn't care about pre-multiplied alpha. It is up to the application to change Shader code if appropriate for handling the distinction. Separate format names are not used in Direct3D 12 to distinguish pre-multiplied alpha from non-pre-multiplied alpha. If applications want to keep track of whether a format contains pre-multiplied alpha, that can be done by other means (such as storing private data for resources), which would work equally well for all formats, and not just the Block Compression formats. Note that in contrast to the pre-multiplied alpha property, the distinction of whether the resource contains SRGB data or not is indeed important for hardware, so separate format names distinguish linear vs SRGB data where appropriate.
+>
+> ![BC3 block layout](../archive/images/d3d11/D3D11_3_BC3.png)
+>
+> ```cpp
+> // Four-color block: derive the other two colors
+> color_0_p = promoteToUNORM8(color_0)
+> color_1_p = promoteToUNORM8(color_1)
+> color_2 = (2 * color_0_p + color_1_p) / 3;
+> color_3 = (color_0_p + 2 * color_1_p) / 3;
+> // color_*: Actually 3 independent calculations for R,G,B.
+>
+> // The following 2-bit codes select
+> // a UNORM8 color for each texel:
+> // (MSB)00(LSB) = color_0_p,
+> //      01      = color_1_p,
+> //      10      = color_2,
+> //      11      = color_3
+> ```
+>
+> - Implementations must follow the same guidelines as BC1 for color palette entries.
+> - Alpha values decode as with BC4U
+> - Filtering must occur with at least UNORM8 precision.
+> - **absolute\_error = 1.0/255.0**
+>
+> **BC3G / DXGI\_FORMAT\_BC3\_UNORM\_SRGB:**
+>
+> - Color is decoded prior to gamma conversion the same as BC3U.
+> - Gamma conversion then occurs the same way as BC1G.
+> - Alpha decodes the same as BC3U.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-8:0 -->
+
+<a id="bc4-unorm"></a>
+
+### BC4 UNORM
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-9:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> This general purpose format compresses single-component UNORM data.
+>
+> ![BC4U block layout](../archive/images/d3d11/D3D11_3_BC4U.png)
+>
+> ```cpp
+> redf_0 = UNORM8ToFloat(red_0)
+> redf_1 = UNORM8ToFloat(red_1)
+> if (red_0 > red_1) // unsigned compare
+> {
+>     // 8-red block
+>     // Bit code 000 = redf_0, 001 = redf_1, others are interpolated.
+>     redf_2 = (6 * redf_0 + 1 * redf_1) / 7.0f;   // bit code 010
+>     redf_3 = (5 * redf_0 + 2 * redf_1) / 7.0f;   // bit code 011
+>     redf_4 = (4 * redf_0 + 3 * redf_1) / 7.0f;   // bit code 100
+>     redf_5 = (3 * redf_0 + 4 * redf_1) / 7.0f;   // bit code 101
+>     redf_6 = (2 * redf_0 + 5 * redf_1) / 7.0f;   // bit code 110
+>     redf_7 = (1 * redf_0 + 6 * redf_1) / 7.0f;   // bit code 111
+> } else {
+>     // 6-red block.
+>     // Bit code 000 = redf_0, 001 = redf_1, others are interpolated.
+>     redf_2 = (4 * redf_0 + 1 * redf_1) / 5.0f; // bit code 010
+>     redf_3 = (3 * redf_0 + 2 * redf_1) / 5.0f; // bit code 011
+>     redf_4 = (2 * redf_0 + 3 * redf_1) / 5.0f; // bit code 100
+>     redf_5 = (1 * redf_0 + 4 * redf_1) / 5.0f; // bit code 101
+>     redf_6 = 0.0f;                             // bit code 110
+>     redf_7 = 1.0f;                             // bit code 111
+> }
+> ```
+>
+> - Filtering must occur with at least UNORM16 precision.
+> - red\_0, red\_1, 0.0f and 1.0f must be exact.
+> - **absolute\_error = 1.0/65535.0**
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-9:0 -->
+
+<a id="bc4-snorm"></a>
+
+### BC4 SNORM
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-10:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> This general purpose format compresses single-component SNORM data.
+>
+> ![BC4S block layout](../archive/images/d3d11/D3D11_3_BC4S.png)
+>
+> ```cpp
+> redf_0 = SNORM8ToFloat(red_0)
+> redf_1 = SNORM8ToFloat(red_1)
+> if (red_0 > red_1) // signed compare.
+> {
+>     // 8-red block
+>     // Bit code 000 = redf_0, 001 = redf_1, others are interpolated.
+>     redf_2 = (6 * redf_0 + 1 * redf_1) / 7.0f;   // bit code 010
+>     redf_3 = (5 * redf_0 + 2 * redf_1) / 7.0f;   // bit code 011
+>     redf_4 = (4 * redf_0 + 3 * redf_1) / 7.0f;   // bit code 100
+>     redf_5 = (3 * redf_0 + 4 * redf_1) / 7.0f;   // bit code 101
+>     redf_6 = (2 * redf_0 + 5 * redf_1) / 7.0f;   // bit code 110
+>     redf_7 = (1 * redf_0 + 6 * redf_1) / 7.0f;   // bit code 111
+> } else {
+>     // 6-red block.
+>     // Bit code 000 = redf_0, 001 = redf_1, others are interpolated.
+>     redf_2 = (4 * redf_0 + 1 * redf_1) / 5.0f; // bit code 010
+>     redf_3 = (3 * redf_0 + 2 * redf_1) / 5.0f; // bit code 011
+>     redf_4 = (2 * redf_0 + 3 * redf_1) / 5.0f; // bit code 100
+>     redf_5 = (1 * redf_0 + 4 * redf_1) / 5.0f; // bit code 101
+>     redf_6 = -1.0f;                            // bit code 110
+>     redf_7 = 1.0f;                             // bit code 111
+> }
+> ```
+>
+> - Filtering must occur with at least SNORM16 precision.
+> - red\_0, red\_1, -1.0f and 1.0f must be exact.
+> - **absolute\_error = 1.0/32767.0**
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-10:0 -->
+
+<a id="bc5-unorm"></a>
+
+### BC5 UNORM
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-11:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> This general purpose format compresses dual-component UNORM data.
+>
+> ![BC5U block layout](../archive/images/d3d11/D3D11_3_BC5U.png)
+>
+> **absolute\_error = 1.0/65535.0**
+>
+> The R and G channels are decoded independently using the [BC4 UNORM rules](#bc4-unorm). The resulting B and A components are 0.0f and 1.0f, respectively.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-11:0 -->
+
+<a id="bc5-snorm"></a>
+
+### BC5 SNORM
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-12:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> ![BC5S block layout](../archive/images/d3d11/D3D11_3_BC5S.png)
+>
+> **absolute\_error = 1.0/32767.0**
+>
+> The R and G channels are decoded independently using the [BC4 SNORM rules](#bc4-snorm). The resulting B and A components are 0.0f and 1.0f, respectively.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-12:0 -->
+
+<a id="bc6h"></a>
+
+### BC6H
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-13:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> The following DXGI\_FORMATs are in this category: DXGI\_FORMAT\_BC6H\_TYPELESS, DXGI\_FORMAT\_BC6H\_UF16, and DXGI\_FORMAT\_BC6H\_SF16.
+>
+> The BC6H format can be used for Texture2D (including arrays), Texture3D or TextureCube (incl. arrays). All of these uses include mipmap surfaces in these resources.
+>
+> BC6H uses a fixed block size of 16 bytes and a fixed tile size of 4x4 pixels. Just as with previous BC formats, images larger than BC6H's tile size are compressed using multiple blocks. The same addressing identity also applies to three-dimensional images as well as mip-maps, cubemaps, and texture arrays.
+>
+> BC6H compresses three-channel images that have high dynamic range greater than 8 bits per channel. The supported per-channel formats are:
+>
+> - Unsigned 16 bit floating point (DXGI\_FORMAT\_BC6H\_UF16)
+> - Signed 16 bit floating point (DXGI\_FORMAT\_BC6H\_SF16)
+>
+> All image tiles must be of the same format.
+>
+> Note that the 16 bit floating point format is often referred to as "half" format, containing 1 sign bit, 5 exponent bits, and 10 mantissa bits.
+>
+> BC6H supports floating point denorms. NaN is not represented. Signed BC6H can produce infinity, as determined by the bit-accurate decoder below. Encoders can clamp infinite input values to the corresponding maximum finite value and map NaN to zero before compression.
+>
+> BC6H does not store any alpha data.
+>
+> The BC6H decoder decompresses to the specified format prior to filtering.
+>
+> BC6H decompression hardware is required to be bit accurate; the hardware must give results that are identical to the decoder described in this specification.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-13:0 -->
+
+<a id="bc6h-implementation"></a>
+
+#### BC6H implementation
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-13-1:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> A BC6H block consists of mode bits, compressed endpoints, sometimes a partition index, and compressed indices.
+>
+> BC6H uses 14 different modes.
+>
+> BC6H stores endpoint colors as a red, green, and blue (RGB) triplet, defining a palette of colors on an approximate line between two endpoints.
+> Depending upon the mode, a tile is divided into one or two regions, each having its own pair of endpoints. BC6H stores one palette index per pixel.
+>
+> In the two region case (hereafter referred to as TWO), there are 32 possible partitions. (The one region case will hereafter be referred to as ONE.)
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-13-1:0 -->
+
+<a id="bc6h-decoding"></a>
+
+#### BC6H decoding
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-13-2:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> For valid block modes, the pseudocode below outlines the steps to decompress the pixel at *(x,y)* given the 16-byte BC6H block.
+>
+> ```cpp
+> decompress(x, y, block)
+> {
+>     mode = extract_mode(block);
+>     endpoints;
+>     index;
+>
+>     if(mode.type == ONE)
+>     {
+>         endpoints = extract_compressed_endpoints(mode, block);
+>         index = extract_index_ONE(x, y, block);
+>     }
+>     else //mode.type == TWO
+>     {
+>         partition = extract_partition(block);
+>         region = get_region(partition, x, y);
+>         endpoints = extract_compressed_endpoints(mode, region, block);
+>         index = extract_index_TWO(x, y, partition, block);
+>     }
+>
+>     sign_extend(mode, endpoints);
+>     if(mode.transformed)
+>         transform_inverse(mode, endpoints);
+>     unquantize(endpoints);
+>     color = interpolate(index, endpoints);
+>     finish_unquantize(color);
+> }
+> ```
+>
+> The [sign extension](#bc6h-sign-extension) and [inverse endpoint transform](#bc6h-inverse-transform) algorithms are defined below.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-13-2:0 -->
+
+<a id="bc6h-memory-encoding"></a>
+
+#### BC6H block memory encoding
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-13-3:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> ![BC6H](../archive/images/d3d11/D3D11_3_BC6H.png)
+>
+> The diagram above shows the 14 possible formats for BC6H blocks. The formats can be uniquely identified by the Mode bits. The first ten modes are used by TWO, and the mode field can be either 2 or 5 bits long. These blocks also have fields for the compressed endpoints (75 bits for a 2-bit mode field or 72 bits for a 5-bit mode field), partition (5 bits), and indices (46 bits). As an example, the code "11.555 11.444 11.444" indicates both the precision of the red, green, and blue endpoints stored (11), as well as the number of bits used to store the delta values for the transformed endpoints (5, 4, and 4 bits for red, green, and blue, respectively, for 3 delta values.) The "6666" mode handles the case when the endpoints cannot be transformed; only the quantized endpoints are stored.
+>
+> The last four modes are used by ONE, and the mode field is 5 bits. These blocks have fields for the endpoints (60 bits) and indices (63 bits). For ONE,
+> the example endpoint code "11.9 11.9 11.9" indicates
+> both the precision of the red,
+> green, and blue endpoints stored (11), as well as the number of bits used to store the delta values for the transformed endpoints (9 bits for red, green,
+> and blue, respectively, for 1 delta value.)
+> The "10.10" mode handles the case when the endpoints cannot be transformed; only the quantized endpoints are stored.
+>
+> Modes 10011, 10111, 11011, and 11111 are reserved and should not be used by the encoder. If hardware is given these modes, the resulting decompressed block must contain zeroes
+> in all channels except the alpha channel. For BC6H, the alpha channel should always return 1.0 regardless of the mode.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-13-3:0 -->
+
+<a id="bc6h-partitions"></a>
+
+#### BC6H partition sets
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-13-4:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> There are 32 partition sets for TWO, which are defined by Table 1 below. Each 4x4 block represents a single shape. Note that this table is equivalent to the first 32 entries of BC7's 2
+> subset partition table.
+>
+> ![BC6H shapes](../archive/images/d3d11/D3D11_3_BC6H_shapes.png)
+>
+> **Table 1: Partition Sets for TWO**
+>
+> In the table of partitions above, the bolded and underlined entry is the location of the fix-up index for subset 1 which is specified with one less bit.
+> The fix-up index for subset 0 is always index 0 (i.e. the partitioning is arranged so that index 0 is always in subset 0). Partition order goes from top-left to bottom right,
+> walking left-to-right, then top-to-bottom.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-13-4:0 -->
+
+<a id="bc6h-endpoint-encoding"></a>
+
+#### BC6H compressed endpoint format
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-13-5:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> ![BC6H bit fields packed compressed endpoints](../archive/images/d3d11/D3D11_3_BC6H_bit_fields_packed_compressed_endpts.png)
+>
+> **Table 2: Compressed Endpoint Formats**
+>
+> Table 2 above shows the bit fields for the packed compressed endpoints as a function of the endpoint format. This takes up 82 bits for TWO and 65 bits for ONE.
+> As an example, the first 5 bits of the header for the last encoding above (i.e. the right-most column) are bits m[4:0], the next 10 bits of the header are the bits rw[9:0],
+> and so forth.
+>
+> The field names are defined by the following table
+>
+> ```text
+> FIELD   VARIABLE    FIELD   VARIABLE        FIELD    VARIABLE        FIELD    VARIABLE
+> m       mode        rw        endpt[0].A[0]   gw          endpt[0].A[1]        bw          endpt[0].A[2]
+> d       shape index rx        endpt[0].B[0]   gx          endpt[0].B[1]        bx          endpt[0].B[2]
+>                     ry        endpt[1].A[0]   gy          endpt[1].A[1]        by            endpt[1].A[2]
+>                     rz        endpt[1].B[0]   gz          endpt[1].B[1]        bz            endpt[1].B[2]
+> ```
+>
+> Endpt[i] refers to the 0th or 1st pair of endpoints. A is one endpoint of 3 channels A[0]..A[2], and similarly B is the other endpoint of 3 channels.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-13-5:0 -->
+
+<a id="bc6h-sign-extension"></a>
+
+#### BC6H endpoint sign extension
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-13-6:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> For TWO, there are four endpoint values to possibly sign-extend. *endpts[0].A* is signed only if the format is a signed format. The other endpoints are signed only if the endpoint
+> was transformed, or the format is a signed format.
+>
+> ```cpp
+> static void sign_extend(Pattern &p, IntEndpts endpts[NREGIONS_TWO])
+> {
+>     for (int i=0; i<NCHANNELS; ++i)
+>     {
+>     if (BC6H::FORMAT == SIGNED_F16)
+>         endpts[0].A[i] = SIGN_EXTEND(endpts[0].A[i], p.chan[i].prec);
+>     if (p.transformed || BC6H::FORMAT == SIGNED_F16)
+>     {
+>         endpts[0].B[i] = SIGN_EXTEND(endpts[0].B[i], p.chan[i].delta[0]);
+>         endpts[1].A[i] = SIGN_EXTEND(endpts[1].A[i], p.chan[i].delta[1]);
+>         endpts[1].B[i] = SIGN_EXTEND(endpts[1].B[i], p.chan[i].delta[2]);
+>     }
+>     }
+> }
+> ```
+>
+> The code for ONE is similar and just removes *endpts[1]*.
+>
+> ```cpp
+> static void sign_extend(Pattern &p, IntEndpts endpts[NREGIONS_ONE])
+> {
+>     for (int i=0; i<NCHANNELS; ++i)
+>     {
+>     if (BC6H::FORMAT == SIGNED_F16)
+>         endpts[0].A[i] = SIGN_EXTEND(endpts[0].A[i], p.chan[i].prec);
+>     if (p.transformed || BC6H::FORMAT == SIGNED_F16)
+>         endpts[0].B[i] = SIGN_EXTEND(endpts[0].B[i], p.chan[i].delta[0]);
+>     }
+> }
+> ```
+>
+> There is also sign extending for signed formats in the transform\_inverse step shown below.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-13-6:0 -->
+
+<a id="bc6h-inverse-transform"></a>
+
+#### BC6H inverse endpoint transform
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-13-7:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> For TWO, the transform applies the inverse of the difference encoding, adding the base value at *endpt[0].A* to the other three entries, for a total of 9 adds. In the diagram below, the
+> base value is represented as *A0* and has the highest precision. *A1, B0, and B1* are all deltas off of the anchor value, and these deltas are represented with
+> lower precision. (A0 corresponds to endpt[0].A, B0 to endpt[0].B, and similarly for A1 and B1.)
+>
+> ![BC6H transform inverse two](../archive/images/d3d11/D3D11_3_BC6H_transform_inverse_two.png)
+>
+> The ONE case is similar, except there is only 1 delta offset, and thus a total of only 3 adds.
+>
+> The decompressor should ensure that the results of the inverse transform will not overflow the precision of *endpt[0].A*. In the case of overflow, the values resulting from the inverse transform should wrap
+> within the same number of bits. If the precision of A0 is 'p' bits, the transform is:
+>
+> ```cpp
+>     B0 = (B0+A0) & ((1 << p) - 1)
+> ```
+>
+> and similarly for the other cases.
+>
+> For signed formats the results of the delta arithmetic must be sign extended as well. If the sign extend operation is thought of as extending both signs: 1 (negative) and
+> 0 (positive), then the sign extending of 0 takes care of the clamp above. Or equivalently after the clamp above, only 1 (negative) needs to be extended.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-13-7:0 -->
+
+<a id="bc6h-palette-interpolation"></a>
+
+#### BC6H unquantized palette generation
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-13-8:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> Given the uncompressed endpoints, the next steps are to perform an initial unquantization step, interpolate, and then do a final unquantize. Separating the unquantize step into two substeps reduces the number of multiplications required compared to doing a full unquantize before interpolating.
+>
+> The code below illustrates the unquantizing process to retrieve estimates of the original 16 bit value,
+> and then using the specified weights to derive the remaining palette entries. The same operation is performed on each channel.
+>
+> Unquantized values range from -32768 to 65535 and require 17 signed bits. The reference interpolation expressions are evaluated without intermediate overflow.
+>
+> After interpolation, the values are passed to the finish\_unquantize function, which applies the final scaling.
+>
+> All hardware decompressors are required to return bit accurate results with this function.
+>
+> ```cpp
+> int aWeight3[] = {0, 9, 18, 27, 37, 46, 55, 64};
+> int aWeight4[] = {0, 4, 9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64};
+>
+> // c1, c2: endpoints of a component
+> void generate_palette_unquantized(UINT8 uNumIndices, int c1, int c2, int prec, UINT16 palette[NINDICES])
+> {
+>     int* aWeights;
+>     if(uNumIndices == 8)
+>         aWeights = aWeight3;
+>     else  // uNumIndices == 16
+>         aWeights = aWeight4;
+>
+>     int a = unquantize(c1, prec);
+>     int b = unquantize(c2, prec);
+>
+>     // interpolate
+>     for(int i = 0; i < uNumIndices; ++i)
+>         palette[i] = finish_unquantize((a * (64 - aWeights[i]) + b * aWeights[i] + 32) >> 6);
+> }
+> ```
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-13-8:0 -->
+
+<a id="bc6h-unquantize"></a>
+
+#### BC6H initial unquantization
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-13-9:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> The following describes how unquantize works. For UF16, 'comp' is unquantized into 0x0000 ~ 0xFFFF range to maximize the usage of bits.
+>
+> ```cpp
+> int unquantize(int comp, int uBitsPerComp)
+> {
+>     int unq, s = 0;
+>     switch(BC6H::FORMAT)
+>     {
+>     case UNSIGNED_F16:
+>         if(uBitsPerComp >= 15)
+>             unq = comp;
+>         else if(comp == 0)
+>             unq = 0;
+>         else if(comp == ((1 << uBitsPerComp) - 1))
+>             unq = 0xFFFF;
+>         else
+>             unq = ((comp << 16) + 0x8000) >> uBitsPerComp;
+>         break;
+>
+>     case SIGNED_F16:
+>         if(uBitsPerComp >= 16)
+>             unq = comp;
+>         else
+>         {
+>             if(comp < 0)
+>             {
+>                 s = 1;
+>                 comp = -comp;
+>             }
+>
+>             if(comp == 0)
+>                 unq = 0;
+>             else if(comp >= ((1 << (uBitsPerComp - 1)) - 1))
+>                 unq = 0x7FFF;
+>             else
+>                 unq = ((comp << 15) + 0x4000) >> (uBitsPerComp-1);
+>
+>             if(s)
+>                 unq = -unq;
+>         }
+>         break;
+>     }
+>     return unq;
+> }
+> ```
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-13-9:0 -->
+
+<a id="bc6h-finish-unquantize"></a>
+
+#### BC6H final unquantization
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-13-10:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> finish\_unquantize is called after palette interpolation. The unquantize function postpones scaling by 31/32 for signed values and 31/64 for unsigned values until after palette interpolation, reducing the number of multiplications. finish\_unquantize applies the final scaling and returns an unsigned short value that is reinterpreted as half.
+>
+> ```cpp
+> unsigned short finish_unquantize(int comp)
+> {
+>     if(BC6H::FORMAT == UNSIGNED_F16)
+>     {
+>         comp = (comp * 31) >> 6;                                         // scale the magnitude by 31/64
+>         return (unsigned short) comp;
+>     }
+>     else // (BC6H::FORMAT == SIGNED_F16)
+>     {
+>         comp = (comp < 0) ? -(((-comp) * 31) >> 5) : (comp * 31) >> 5;   // scale the magnitude by 31/32
+>         int s = 0;
+>         if(comp < 0)
+>         {
+>             s = 0x8000;
+>             comp = -comp;
+>         }
+>         return (unsigned short) (s | comp);
+>     }
+> }
+> ```
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-13-10:0 -->
+
+<a id="bc7"></a>
+
+### BC7 (UNORM and sRGB)
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-14:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> The following DXGI\_FORMATs are in this category: DXGI\_FORMAT\_BC7\_TYPELESS, DXGI\_FORMAT\_BC7\_UNORM, and DXGI\_FORMAT\_BC7\_UNORM\_SRGB
+>
+> The BC7 format can be used for Texture2D (including arrays), Texture3D or TextureCube (incl. arrays). All of these uses include mipmap surfaces in these resources.
+>
+> BC7 uses a fixed block size of 16 bytes and a fixed tile size of 4x4 pixels. As with other BC formats, images larger than BC7's tile size are compressed using multiple blocks.
+> The same addressing identity also applies to three-dimensional images as well as mip-maps, cubemaps, and texture arrays.
+>
+> BC7 compresses both three-channel and four-channel fixed-point data images. Typically source data will be 8-bits per component fixed point,
+> although the format is capable of encoding source data with higher bits per component. All image tiles must be of the same format.
+>
+> The BC7 decoder decompresses to the specified format prior to filtering.
+>
+> BC7 decompression hardware is required to be bit accurate; the hardware must give results that are identical to the decoder described in this specification.
+>
+> For `DXGI_FORMAT_BC7_UNORM_SRGB`, RGB values are linearized before filtering by the [sRGB conversion rules](numeric-and-data-rules.md#numeric-3-2-3-7). Alpha remains linear.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-14:0 -->
+
+<a id="bc7-implementation"></a>
+
+#### BC7 implementation
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-14-1:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> A BC7 block can take one of 8 modes, and the block mode is always stored in the LSBs of the 128-bit block. The block mode is encoded by zero or more "0"'s followed by a "1".
+> This mode string starts from the block LSB.
+>
+> A BC7 block may contain multiple endpoint pairs. For the purposes of this document, the set of indices that correspond to an endpoint pair may be referred to as a subset.
+>
+> In some block modes the endpoint representation is encoded in a form that for the purposes of this document will be called RGBP – in these cases the P bit represents a shared LSB for the components
+> of the endpoint.
+> For example, if the endpoint representation for the format was RGBP 5.5.5.1 then the endpoint would be interpreted as an RGB 6.6.6 value, with the LSB of each component being taken from the state of
+> the P bit. If the representation was RGBAP 5.5.5.5.1 then the endpoint would be interpreted as an RGBA 6.6.6.6 value.
+> Depending on the block mode the shared LSB may either be specified for both endpoints of a subset individually (2 P-bits per subset), or shared between the endpoints of the subset (1 P-bit per subset)
+>
+> BC7 uses 8 different modes.
+>
+> BC7 defines a palette of colors on an approximate line between two endpoints. The mode specifies the number of interpolating endpoint pairs per block. BC7 stores palette indices per pixel, with separate color and alpha indices in modes 4 and 5.
+>
+> In BC7, alpha can be encoded in several different ways:
+>
+> - **Block types without explicit alpha encoding:** In these blocks the endpoints have an R.G.B-only representation and alpha is decoded as 1.0 for all texels. The block contains mode bits, partition bits, compressed endpoints, sometimes a P-bit, and compressed indices.
+> - **Block types with combined color and alpha:** In these blocks the endpoint color values are specified in an R.G.B.A format, and alpha values are interpolated along with the color values. The block contains mode bits, sometimes partition bits, compressed endpoints, and compressed indices.
+> - **Block types with separated color and alpha:** The block contains mode bits, rotation bits, sometimes an index selector bit, compressed endpoints, and compressed indices. In these blocks the alpha values and color values are specified separately, each with their own sets of indices.
+>   These blocks effectively have a vector channel (R.G.B) and a scalar channel (A) separately encoded.
+>   In these blocks a separate 2-bit field is also encoded that allows specification on a per-block basis of the channel that is encoded separately as a scalar,
+>   so the block can have 4 different representations – RGB|A, AGB|R, RAB|G, RGA|B. The channel order is swizzled back to RGBA after decoding, so the internal block format is transparent to the developer.
+>   Blocks with separate color and alpha also have two sets of index data – one for the vector channel and one for the scalar channel. In the case of Mode 4, these indices are of differing widths
+>   (3 or 2 bits). Mode 4 contains a one-bit selector which chooses whether the vector or scalar data uses the 3-bit indices.
+>
+> For each subset of indices that corresponds to a pair of endpoints, the encoder fixes the state of one bit of the compressed index data for that subset. This is done
+> by choosing an endpoint order that allows the index for the designated fixup index to have 0 as its MSB, which can therefore be discarded saving one bit per subset.
+> The indices with the "fix-up" bit are noted in the partition tables for [2 subsets](#bc7-partitions-two)
+> and [3 subsets](#bc7-partitions-three) below. For block modes with only a single subset, the fix-up index is always index 0.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-14-1:0 -->
+
+<a id="bc7-decoding"></a>
+
+#### BC7 decoding
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-14-2:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> For valid block modes, the pseudocode below outlines the steps to decompress the pixel at *(x,y)* given the 16-byte BC7 block.
+>
+> ```cpp
+> decompress(x, y, block)
+> {
+>     mode = extract_mode(block);
+>
+>     //decode partition data from explicit partition bits
+>     subset_index = 0;
+>     num_subsets = 1;
+>
+>     if (mode.type == 0 OR == 1 OR == 2 OR == 3 OR == 7)
+>     {
+>         num_subsets = get_num_subsets(mode.type);
+>         partition_set_id = extract_partition_set_id(mode, block);
+>         subset_index = get_partition_index(num_subsets, partition_set_id, x, y);
+>     }
+>
+>     //extract raw, compressed endpoint bits
+>     UINT8 endpoint_array[2 * num_subsets][4] = extract_endpoints(mode, block);
+>
+>     //decode endpoint color and alpha for each subset
+>     fully_decode_endpoints(endpoint_array, mode, block);
+>
+>     //endpoints are now complete.
+>     UINT8 endpoint_start[4] = endpoint_array[2 * subset_index];
+>     UINT8 endpoint_end[4]   = endpoint_array[2 * subset_index + 1];
+>
+>     //Determine the palette index for this pixel
+>     alpha_index     = get_alpha_index(block, mode, x, y);
+>     alpha_bitcount  = get_alpha_bitcount(block, mode);
+>     color_index     = get_color_index(block, mode, x, y);
+>     color_bitcount  = get_color_bitcount(block, mode);
+>
+>     //determine output
+>     UINT8 output[4];
+>     output.rgb = interpolate(endpoint_start.rgb, endpoint_end.rgb, color_index, color_bitcount);
+>     output.a   = interpolate(endpoint_start.a,   endpoint_end.a,   alpha_index, alpha_bitcount);
+>
+>     if (mode.type == 4 OR == 5)
+>     {
+>         //Decode the 2 color rotation bits as follows:
+>         // 00 - Block format is Scalar(A) Vector(RGB) - no swapping
+>         // 01 - Block format is Scalar(R) Vector(AGB) - swap A and R
+>         // 10 - Block format is Scalar(G) Vector(RAB) - swap A and G
+>         // 11 - Block format is Scalar(B) Vector(RGA) - swap A and B
+>         rotation = extract_rot_bits(mode, block);
+>         output = swap_channels(output, rotation);
+>     }
+>
+> }
+> ```
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-14-2:0 -->
+
+<a id="bc7-decoding-helpers"></a>
+
+#### BC7 endpoint and index decoding
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-14-3:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> The pseudocode below outlines the steps to fully decode endpoint color and alpha for each subset given the 16-byte BC7 block.
+>
+> ```cpp
+> fully_decode_endpoints(endpoint_array, mode, block)
+> {
+>     //first handle modes that have P-bits
+>     if (mode.type == 0 OR == 1 OR == 3 OR == 6 OR == 7)
+>     {
+>         for each endpoint i
+>         {
+>             //component-wise left-shift
+>             endpoint_array[i].rgba = endpoint_array[i].rgba << 1;
+>         }
+>
+>         //if P-bit is shared
+>         if (mode.type == 1)
+>         {
+>             pbit_zero = extract_pbit_zero(mode, block);
+>             pbit_one = extract_pbit_one(mode, block);
+>
+>             //rgb component-wise insert pbits
+>             endpoint_array[0].rgb |= pbit_zero;
+>             endpoint_array[1].rgb |= pbit_zero;
+>             endpoint_array[2].rgb |= pbit_one;
+>             endpoint_array[3].rgb |= pbit_one;
+>         }
+>         else //unique P-bit per endpoint
+>         {
+>             pbit_array = extract_pbit_array(mode, block);
+>             for each endpoint i
+>             {
+>                 endpoint_array[i].rgba |= pbit_array[i];
+>             }
+>         }
+>     }
+>
+>     for each endpoint i
+>     {
+>         // Color_component_precision & alpha_component_precision includes pbit
+>         // left shift endpoint components so that their MSB lies in bit 7
+>         endpoint_array[i].rgb = endpoint_array[i].rgb << (8 - color_component_precision(mode));
+>         endpoint_array[i].a = endpoint_array[i].a << (8 - alpha_component_precision(mode));
+>
+>         // Replicate each component's MSB into the LSBs revealed by the left-shift operation above
+>         endpoint_array[i].rgb = endpoint_array[i].rgb | (endpoint_array[i].rgb >> color_component_precision(mode));
+>         endpoint_array[i].a = endpoint_array[i].a | (endpoint_array[i].a >> alpha_component_precision(mode));
+>     }
+>
+>     //If this mode does not explicitly define the alpha component
+>     //set alpha equal to 1.0
+>     if (mode.type == 0 OR == 1 OR == 2 OR == 3)
+>     {
+>         for each endpoint i
+>         {
+>             endpoint_array[i].a = 255; //i.e. alpha = 1.0f
+>         }
+>     }
+> }
+> ```
+>
+> In order to generate each interpolated component for each subset the following algorithm is used:
+> Let "c" be the component being generated, "e0" be that component of endpoint 0 of the subset, "e1" be that component of endpoint 1 of the subset.
+>
+> ```cpp
+> UINT16 aWeight2[] = {0, 21, 43, 64};
+> UINT16 aWeight3[] = {0, 9, 18, 27, 37, 46, 55, 64};
+> UINT16 aWeight4[] = {0, 4, 9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64};
+>
+> UINT8 interpolate(UINT8 e0, UINT8 e1, UINT8 index, UINT8 indexprecision)
+> {
+>     if(indexprecision == 2)
+>         return (UINT8) (((64 - aWeight2[index])*UINT16(e0) + aWeight2[index]*UINT16(e1) + 32) >> 6);
+>     else if(indexprecision == 3)
+>         return (UINT8) (((64 - aWeight3[index])*UINT16(e0) + aWeight3[index]*UINT16(e1) + 32) >> 6);
+>     else // indexprecision == 4
+>         return (UINT8) (((64 - aWeight4[index])*UINT16(e0) + aWeight4[index]*UINT16(e1) + 32) >> 6);
+> }
+> ```
+>
+> The following pseudocode illustrates how to extract indices and bitcounts for color and alpha components.
+> Blocks with separate color and alpha also have two sets of index data – one for the vector channel and one for the scalar channel.
+> For Mode 4, these indices are of differing widths (3 or 2 bits) and there is a one-bit selector which chooses whether
+> the vector or scalar data uses the 3-bit indices. (Extracting the alpha bitcount is similar to extracting color bitcount
+> but with inverse behavior based on the idxMode bit.)
+>
+> ```cpp
+> bitcount get_color_bitcount(block, mode)
+> {
+>     if (mode.type == 0 OR == 1)
+>         return 3;
+>
+>     if (mode.type == 2 OR == 3 OR == 5 OR == 7)
+>         return 2;
+>
+>     if (mode.type == 6)
+>         return 4;
+>
+>     //Only remaining case is Mode 4 with 1-bit index selector
+>     idxMode = extract_idxMode(block);
+>     if (idxMode == 0)
+>         return 2;
+>     else
+>         return 3;
+> }
+> ```
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-14-3:0 -->
+
+<a id="bc7-memory-encoding"></a>
+
+#### BC7 block memory encoding
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-14-4:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> Below is a list of the 8 block modes and bit allocations for the 8 possible BC7 blocks. The colors for each subset within a block are represented using two explicit endpoint colors and a set of interpolated colors between them. Depending on the block's index precision, each subset may have 4, 8 or 16 possible colors.
+>
+> Mode 8 (LSB 0x00) is reserved and should not be used by the encoder. If this mode is given to the hardware, an all 0 block will be returned.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-14-4:0 -->
+
+<a id="bc7-mode-0"></a>
+
+##### BC7 mode 0
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-14-4-1:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> - Color Only
+> - 3 Subsets
+> - R.G.B.P 4.4.4.1 endpoints (unique P-bit per endpoint)
+> - 3-bit indices
+> - 16 partitions
+>
+> ![BC7 mode 0](../archive/images/d3d11/D3D11_3_BC7_mode0.png)
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-14-4-1:0 -->
+
+<a id="bc7-mode-1"></a>
+
+##### BC7 mode 1
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-14-4-2:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> - Color Only
+> - 2 Subsets
+> - R.G.B.P 6.6.6.1 endpoints (shared P-bit per subset)
+> - 3-bit indices
+> - 64 partitions
+>
+> ![BC7 mode 1](../archive/images/d3d11/D3D11_3_BC7_mode1.png)
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-14-4-2:0 -->
+
+<a id="bc7-mode-2"></a>
+
+##### BC7 mode 2
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-14-4-3:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> - Color Only
+> - 3 Subsets
+> - R.G.B 5.5.5 endpoints
+> - 2-bit indices
+> - 64 partitions
+>
+> ![BC7 mode 2](../archive/images/d3d11/D3D11_3_BC7_mode2.png)
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-14-4-3:0 -->
+
+<a id="bc7-mode-3"></a>
+
+##### BC7 mode 3
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-14-4-4:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> - Color Only
+> - 2 Subsets
+> - R.G.B.P. 7.7.7.1 Endpoints (unique P-bit per endpoint)
+> - 2-bit indices
+> - 64 partitions
+>
+> ![BC7 mode 3](../archive/images/d3d11/D3D11_3_BC7_mode3.png)
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-14-4-4:0 -->
+
+<a id="bc7-mode-4"></a>
+
+##### BC7 mode 4
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-14-4-5:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> - Color with Separate Alpha
+> - One Subset
+> - R.G.B 5.5.5 Color endpoints
+> - 6-bit Alpha endpoints
+> - 16x2-bit indices
+> - 16x3-bit indices
+> - 2-bit component rotation
+> - 1-bit index selector
+>
+> ![BC7 mode 4](../archive/images/d3d11/D3D11_3_BC7_mode4.png)
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-14-4-5:0 -->
+
+<a id="bc7-mode-5"></a>
+
+##### BC7 mode 5
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-14-4-6:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> - Color with Separate Alpha
+> - One Subset
+> - R.G.B 7.7.7 Color endpoints
+> - 8-bit Alpha endpoints
+> - 16x2-bit color indices
+> - 16x2-bit alpha indices
+> - 2-bit component rotation
+>
+> ![BC7 mode 5](../archive/images/d3d11/D3D11_3_BC7_mode5.png)
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-14-4-6:0 -->
+
+<a id="bc7-mode-6"></a>
+
+##### BC7 mode 6
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-14-4-7:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> - Combined Color and Alpha
+> - One Subset
+> - R.G.B.A.P 7.7.7.7.1 endpoints (unique P bit per endpoint)
+> - 16x4-bit indices
+>
+> ![BC7 mode 6](../archive/images/d3d11/D3D11_3_BC7_mode6.png)
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-14-4-7:0 -->
+
+<a id="bc7-mode-7"></a>
+
+##### BC7 mode 7
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-14-4-8:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> - Combined Color and Alpha
+> - 2 Subsets
+> - R.G.B.A.P. 5.5.5.5.1 Endpoints (unique P-bit per endpoint)
+> - 2-bit indices
+> - 64 partitions
+>
+> ![BC7 mode 7](../archive/images/d3d11/D3D11_3_BC7_mode7.png)
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-14-4-8:0 -->
+
+<a id="bc7-partitions-two"></a>
+
+#### BC7 partition sets for two subsets
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-14-5:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> ![BC7 2Subsets](../archive/images/d3d11/D3D11_3_BC7_2Subsets.png)
+>
+> In the table of partitions above, the bolded, underlined entry is the location of the fix-up index for subset 1 which is specified with one less bit.
+> The fix-up index for subset 0 is always index 0 (the partitioning is arranged so that index 0 is always in subset 0).
+> Partition order goes from top-left to bottom right, walking left-to-right, then top-to-bottom.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-14-5:0 -->
+
+<a id="bc7-partitions-three"></a>
+
+#### BC7 partition sets for three subsets
+
+<!-- d3d12-review-alert:begin:formats:N-bc-19-5-14-6:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> ![BC7 3Subsets](../archive/images/d3d11/D3D11_3_BC7_3Subsets.png)
+>
+> For this table of partitions, underneath the entry in each subset, printed in bold and underlined, is the location of the fix-up index which is specified with one less bit.
+> Index 0 always contains the fixed index bit for subset 0. Partition order goes from top-left to bottom right, walking left-to-right, then top-to-bottom.
+
+<!-- d3d12-review-alert:end:formats:N-bc-19-5-14-6:0 -->
+
 <a id="casting"></a>
 
 ## Format casting
@@ -427,7 +1652,7 @@ the view format.<!-- d3d12-review-inline:end:formats:C-clear:0 --></ins>
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For ordinary format-family casting without the fully typed casting capability, a fully typed resource retains its own view format; a typeless resource can use compatible typed members of its family. [R32_UINT UAV casting](#r32-uav-casting) and [explicit castable-format lists](#cast-lists) are distinct paths. Casting is reinterpretation of stored bits, not numerical conversion. A view format must also support the requested view use, resource flags, dimension and sample configuration.
+> For ordinary format family casting without the fully typed casting capability, a fully typed resource retains its own view format. A typeless resource can use compatible typed members of its family. [R32_UINT UAV casting](#r32-uav-casting) and [explicit castable format lists](#cast-lists) are distinct paths. Casting is reinterpretation of stored bits, not numerical conversion. A view format must also support the requested view use, resource flags, dimension and sample configuration.
 
 <!-- d3d12-review-alert:end:formats:N-legacy-cast:0 -->
 
@@ -446,7 +1671,7 @@ the view format.<!-- d3d12-review-inline:end:formats:C-clear:0 --></ins>
 
 <a id="cast-lists"></a>
 
-### Explicit castable-format lists
+### Explicit castable format lists
 
 <!-- d3d12-review-alert:begin:formats:N-resource-operations-format-consumer:0 -->
 
@@ -462,7 +1687,7 @@ the view format.<!-- d3d12-review-inline:end:formats:C-clear:0 --></ins>
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The permitted integer aliases are used by [raw gather](common-shader-internals.md#raw-gather) for bitwise element retrieval. That shader operation does not replace the resource/view cast-list creation and compatibility requirements here.
+> The permitted integer aliases are used by [raw gather](common-shader-internals.md#raw-gather) for bitwise element retrieval. That shader operation does not replace the resource/view cast list creation and compatibility requirements here.
 
 <!-- d3d12-review-alert:end:formats:N-common-raw-gather-behavior:0 -->
 
@@ -474,20 +1699,20 @@ The list
 * MAY NOT contain planar formats.
 * If the resource's format is non-compressed, then the list may ONLY contain non-compressed formats.
 
-<ins><!-- d3d12-review-inline:begin:formats:C-list:2 -->If the resource's format is compressed, a view casting to an uncompressed format selects one mip. Ordinary array views select one array slice: `MipLevels` and `ArraySize` are 1 where those members exist. Writable and non-array views have their implicit one-mip/non-array extents. Cube-array SRVs use `MipLevels == 1` and `NumCubes == 1`; cube SRVs select one cube with `MipLevels == 1`. This does not require a nonexistent `ArraySize` member on cube or non-array descriptions.<!-- d3d12-review-inline:end:formats:C-list:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:formats:C-list:2 -->If the resource's format is compressed, a view casting to an uncompressed format selects one mip. Ordinary array views select one array slice: `MipLevels` and `ArraySize` are 1 where those members exist. Writable and non-array views have their implicit one-mip/non-array extents. Cube array SRVs use `MipLevels == 1` and `NumCubes == 1`; cube SRVs select one cube with `MipLevels == 1`. This does not require a nonexistent `ArraySize` member on cube or non-array descriptions.<!-- d3d12-review-inline:end:formats:C-list:2 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:formats:C-list:3 -->Apart from the resource's own format, formats outside a nonempty explicit cast list MAY NOT be used as view target formats.<!-- d3d12-review-inline:end:formats:C-list:3 --></ins>
 
 Formats "casted" in this way are _reinterpreted_ as the target format for consumption in shaders.
 
-<ins><!-- d3d12-review-inline:begin:formats:C-list:5 -->The [resource-creation contract](resources.md#initial-layout-and-format-lists) defines `NumCastableFormats`, `pCastableFormats`, and their creation-method applicability.<!-- d3d12-review-inline:end:formats:C-list:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:formats:C-list:5 -->The [resource creation contract](resources.md#initial-layout-and-format-lists) defines `NumCastableFormats`, `pCastableFormats`, and their creation-method applicability.<!-- d3d12-review-inline:end:formats:C-list:5 --></ins>
 
 <!-- d3d12-review-alert:begin:formats:N-list-cap:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A zero-count, null castable-format list retains ordinary format-casting rules. The resource's own format need not be repeated in a nonempty list. Explicit format-list casting requires `D3D12_FEATURE_DATA_D3D12_OPTIONS12.RelaxedFormatCastingSupported`; this is distinct from OPTIONS3's fully typed family casting capability.
+> A zero-count, null castable format list retains ordinary format-casting rules. The resource's own format need not be repeated in a nonempty list. Explicit format list casting requires `D3D12_FEATURE_DATA_D3D12_OPTIONS12.RelaxedFormatCastingSupported`. This is distinct from OPTIONS3's fully typed family casting capability.
 
 <!-- d3d12-review-alert:end:formats:N-list-cap:0 -->
 
@@ -566,15 +1791,6 @@ to specify the list of acceptable casts.<!-- d3d12-review-inline:end:formats:C-i
 
 <!-- d3d12-review-alert:end:formats:P-dsv-table:0 -->
 
-<!-- d3d12-review-alert:begin:formats:N-dsv-readonly:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `D3D12_DSV_FLAG_READ_ONLY_DEPTH` and `D3D12_DSV_FLAG_READ_ONLY_STENCIL` independently prohibit writes to their components. They do not select a different physical plane or change resource access/layout requirements. A read-only DSV can coexist with compatible SRV access to the read-only aspect when [synchronization requirements](synchronization.md#foundations) are satisfied; there is still only one output-merger DSV binding.
-
-<!-- d3d12-review-alert:end:formats:N-dsv-readonly:0 -->
-
 <a id="plane-buffer-layouts"></a>
 
 ### Buffer staging representations
@@ -650,10 +1866,10 @@ texture data when copying to or from the stencil plane of a `DXGI_FORMAT_R32G8X2
 
 <a id="video-views"></a>
 
-### Video-format views
+### Video format views
 
 <ins><!-- d3d12-review-inline:begin:formats:P-video:0 -->For the two-plane NV12/P010/P016 cases, the luma (Y) plane and chroma (UV) plane are selected separately. Developers do this by calling **CreateShaderResourceView** twice for the same texture and passing in 1-channel and 2-channel formats. Passing in a 1-channel format compatible with the Y plane maps only the Y plane. Passing in a 2-channel format compatible with the UV planes (together) maps only the U and V planes as a single resource view.
-YUV 4:2:0 formats are listed in [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format).<!-- d3d12-review-inline:end:formats:P-video:0 --></ins>
+YUV 4:2:0 formats are listed in [DXGI_FORMAT](#dxgi-format).<!-- d3d12-review-inline:end:formats:P-video:0 --></ins>
 
 <!-- d3d12-review-alert:begin:formats:N-video-planes:0 -->
 
@@ -669,7 +1885,7 @@ YUV 4:2:0 formats are listed in [DXGI_FORMAT](https://learn.microsoft.com/en-us/
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The format entries below define compatible interpretations and possible view kinds, not an unconditional guarantee that every view/use is supported. Resource flags and the relevant format-support bits still apply. Packed video formats have their own mappings; a logical plane does not reveal physical texture layout.
+> The format entries below define compatible interpretations and possible view kinds, not an unconditional guarantee that every view/use is supported. Resource flags and the relevant format support bits still apply. Packed video formats have their own mappings. A logical plane does not reveal physical texture layout.
 
 <!-- d3d12-review-alert:end:formats:N-video-planes:1 -->
 
@@ -717,911 +1933,6 @@ YUV 4:2:0 formats are listed in [DXGI_FORMAT](https://learn.microsoft.com/en-us/
 
 <ins><!-- d3d12-review-inline:begin:formats:P-video-NV11:0 -->Most common planar YUV 4:1:1 video resource format. Valid luminance data view formats for this video resource format are DXGI\_FORMAT\_R8\_UNORM and DXGI\_FORMAT\_R8\_UINT. Valid chrominance data view formats (width is 1/4 of the luminance view and height is unchanged) for this video resource format are DXGI\_FORMAT\_R8G8\_UNORM and DXGI\_FORMAT\_R8G8\_UINT. Supported view types are SRV, RTV, and UAV. For luminance data view, the mapping to the view channel is Y->R8. For chrominance data view, the mapping to the view channel is U->R8 and V->G8. Width must be a multiple of 4.<!-- d3d12-review-inline:end:formats:P-video-NV11:0 --></ins>
 
-<a id="view-descriptions"></a>
-
-## View descriptions
-
-<!-- d3d12-review-alert:begin:formats:N-unions:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `ViewDimension` selects the matching description union member. Texture dimensions must match the resource's kind and sample configuration; cube views use appropriate groups of faces in 2D arrays. SRVs can select a mip range; RTVs, DSVs and UAVs select a single mip, while multisampled views do not select a mip level. View ranges are relative to the selected resource subresources and must remain within their bounds.
-
-<!-- d3d12-review-alert:end:formats:N-unions:0 -->
-
-<!-- d3d12-review-alert:begin:formats:N-ranges-defaults:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Mip and array starts must lie within the resource's corresponding extent. Counts must be nonzero and fit the remaining extent. `UINT_MAX` in the supported `MipLevels`, `ArraySize`, `NumCubes` or `WSize` count field denotes the remaining range from its start, not a sentinel for mip/slice indices or buffer element counts. Cube-array counts consume six faces per cube. A 3D writable view's depth extent at mip `m` is `max(1, Depth >> m)`.
-
-<!-- d3d12-review-alert:end:formats:N-ranges-defaults:0 -->
-
-<!-- d3d12-review-alert:begin:formats:N-ranges-defaults:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> When a null description can be inferred from a texture resource, SRV defaults expose its mip chain and applicable array, with identity mapping and zero minimum-LOD clamp; array resources do not implicitly become cube SRVs. RTV/UAV/DSV defaults select mip zero and the applicable array, or all W slices of that mip for 3D RTV/UAVs. Applicable 2D defaults select plane zero, and default DSV flags are NONE. These defaults do not make otherwise unsupported formats or resource kinds valid.
-
-<!-- d3d12-review-alert:end:formats:N-ranges-defaults:1 -->
-
-<!-- d3d12-review-alert:begin:formats:N-resource-flags:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> SRV creation requires that the resource not deny shader-resource access. RTV, DSV and UAV creation require `D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET`, `D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL` and `D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS`, respectively. The [resource-flag constraints](resources.md#resource-flags) remain applicable. These are resource creation permissions, not descriptor heap types or guarantees of per-format support.
-
-<!-- d3d12-review-alert:end:formats:N-resource-flags:0 -->
-
-<a id="srv-types"></a>
-
-### Shader-resource view types
-
-#### D3D12_SRV_DIMENSION
-
-```cpp
-typedef enum D3D12_SRV_DIMENSION {
-    D3D12_SRV_DIMENSION_UNKNOWN = 0,
-    D3D12_SRV_DIMENSION_BUFFER = 1,
-    D3D12_SRV_DIMENSION_TEXTURE1D = 2,
-    D3D12_SRV_DIMENSION_TEXTURE1DARRAY = 3,
-    D3D12_SRV_DIMENSION_TEXTURE2D = 4,
-    D3D12_SRV_DIMENSION_TEXTURE2DARRAY = 5,
-    D3D12_SRV_DIMENSION_TEXTURE2DMS = 6,
-    D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY = 7,
-    D3D12_SRV_DIMENSION_TEXTURE3D = 8,
-    D3D12_SRV_DIMENSION_TEXTURECUBE = 9,
-    D3D12_SRV_DIMENSION_TEXTURECUBEARRAY = 10,
-    D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE = 11,
-} D3D12_SRV_DIMENSION;
-```
-
-#### D3D12_BUFFER_SRV_FLAGS
-
-```cpp
-typedef enum D3D12_BUFFER_SRV_FLAGS
-{
-    D3D12_BUFFER_SRV_FLAG_NONE = 0,
-    D3D12_BUFFER_SRV_FLAG_RAW  = 0x00000001,
-} D3D12_BUFFER_SRV_FLAGS;
-```
-
-#### D3D12_BUFFER_SRV
-
-```cpp
-typedef struct D3D12_BUFFER_SRV
-{
-    UINT64 FirstElement;
-    UINT NumElements;
-    UINT StructureByteStride;
-    D3D12_BUFFER_SRV_FLAGS Flags;
-} D3D12_BUFFER_SRV;
-```
-
-#### D3D12_TEX1D_SRV
-
-```cpp
-typedef struct D3D12_TEX1D_SRV
-{
-    UINT MostDetailedMip;
-    UINT MipLevels;
-    FLOAT ResourceMinLODClamp;
-} D3D12_TEX1D_SRV;
-```
-
-#### D3D12_TEX1D_ARRAY_SRV
-
-```cpp
-typedef struct D3D12_TEX1D_ARRAY_SRV
-{
-    UINT MostDetailedMip;
-    UINT MipLevels;
-    UINT FirstArraySlice;
-    UINT ArraySize;
-    FLOAT ResourceMinLODClamp;
-} D3D12_TEX1D_ARRAY_SRV;
-```
-
-#### D3D12_TEX2D_SRV
-
-```cpp
-typedef struct D3D12_TEX2D_SRV
-{
-    UINT MostDetailedMip;
-    UINT MipLevels;
-    UINT PlaneSlice;
-    FLOAT ResourceMinLODClamp;
-} D3D12_TEX2D_SRV;
-```
-
-#### D3D12_TEX2D_ARRAY_SRV
-
-```cpp
-typedef struct D3D12_TEX2D_ARRAY_SRV
-{
-    UINT MostDetailedMip;
-    UINT MipLevels;
-    UINT FirstArraySlice;
-    UINT ArraySize;
-    UINT PlaneSlice;
-    FLOAT ResourceMinLODClamp;
-} D3D12_TEX2D_ARRAY_SRV;
-```
-
-#### D3D12_TEX2DMS_SRV
-
-```cpp
-typedef struct D3D12_TEX2DMS_SRV
-{
-    UINT UnusedField_NothingToDefine;
-} D3D12_TEX2DMS_SRV;
-```
-
-#### D3D12_TEX2DMS_ARRAY_SRV
-
-```cpp
-typedef struct D3D12_TEX2DMS_ARRAY_SRV
-{
-    UINT FirstArraySlice;
-    UINT ArraySize;
-} D3D12_TEX2DMS_ARRAY_SRV;
-```
-
-#### D3D12_TEX3D_SRV
-
-```cpp
-typedef struct D3D12_TEX3D_SRV
-{
-    UINT MostDetailedMip;
-    UINT MipLevels;
-    FLOAT ResourceMinLODClamp;
-} D3D12_TEX3D_SRV;
-```
-
-#### D3D12_TEXCUBE_SRV
-
-```cpp
-typedef struct D3D12_TEXCUBE_SRV
-{
-    UINT MostDetailedMip;
-    UINT MipLevels;
-    FLOAT ResourceMinLODClamp;
-} D3D12_TEXCUBE_SRV;
-```
-
-#### D3D12_TEXCUBE_ARRAY_SRV
-
-```cpp
-typedef struct D3D12_TEXCUBE_ARRAY_SRV
-{
-    UINT MostDetailedMip;
-    UINT MipLevels;
-    UINT First2DArrayFace;
-    UINT NumCubes;
-    FLOAT ResourceMinLODClamp;
-} D3D12_TEXCUBE_ARRAY_SRV;
-```
-
-#### D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV
-
-```cpp
-typedef struct D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV
-{
-    D3D12_GPU_VIRTUAL_ADDRESS Location;
-} D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV;
-```
-
-#### D3D12_SHADER_RESOURCE_VIEW_DESC
-
-```cpp
-typedef struct D3D12_SHADER_RESOURCE_VIEW_DESC
-{
-    DXGI_FORMAT Format;
-    D3D12_SRV_DIMENSION ViewDimension;
-    UINT Shader4ComponentMapping;
-    union
-    {
-        D3D12_BUFFER_SRV Buffer;
-        D3D12_TEX1D_SRV Texture1D;
-        D3D12_TEX1D_ARRAY_SRV Texture1DArray;
-        D3D12_TEX2D_SRV Texture2D;
-        D3D12_TEX2D_ARRAY_SRV Texture2DArray;
-        D3D12_TEX2DMS_SRV Texture2DMS;
-        D3D12_TEX2DMS_ARRAY_SRV Texture2DMSArray;
-        D3D12_TEX3D_SRV Texture3D;
-        D3D12_TEXCUBE_SRV TextureCube;
-        D3D12_TEXCUBE_ARRAY_SRV TextureCubeArray;
-        D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV RaytracingAccelerationStructure;
-    };
-} D3D12_SHADER_RESOURCE_VIEW_DESC;
-```
-
-<a id="buffer-srv"></a>
-
-### Buffer SRV fields
-
-`FirstElement`
-
-The index of the first element to be accessed by the view.
-
-`NumElements`
-
-<ins><!-- d3d12-review-inline:begin:formats:V-buffer-srv:3 -->The number of elements exposed by the view.<!-- d3d12-review-inline:end:formats:V-buffer-srv:3 --></ins>
-
-`StructureByteStride`
-
-The size of each element in the buffer structure (in bytes) when the buffer represents a structured buffer. The size must match the struct size declared in shaders that access the view.
-
-`Flags`
-
-<ins><!-- d3d12-review-inline:begin:formats:V-buffer-srv:7 -->A [`D3D12_BUFFER_SRV_FLAGS`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_buffer_srv_flags)-typed value that identifies view options for the buffer. Currently, the only option is to identify a raw view of the buffer. For more info about raw viewing of buffers, see [Raw Views of Buffers](https://learn.microsoft.com/en-us/windows/desktop/direct3d11/overviews-direct3d-11-resources-intro).<!-- d3d12-review-inline:end:formats:V-buffer-srv:7 --></ins>
-
-<!-- d3d12-review-alert:begin:formats:N-buffer-kinds:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For typed buffer views, `FirstElement` and `NumElements` count format elements and `StructureByteStride` is zero. Structured views use a nonzero stride and `DXGI_FORMAT_UNKNOWN`; their shader structure layout must match that stride. Raw views use the RAW flag, `DXGI_FORMAT_R32_TYPELESS`, zero structure stride, and 32-bit elements. These interpretations are view properties rather than buffer-creation bind flags. The complete selected byte range must fit the buffer.
-
-<!-- d3d12-review-alert:end:formats:N-buffer-kinds:0 -->
-
-<a id="texture-srv"></a>
-
-### Texture SRV fields
-
-<!-- d3d12-review-alert:begin:formats:N-common-texture-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The shader uses these view fields through the [common texture-access model](common-shader-internals.md#texture-loads). [Resource-relative LOD clamps](common-shader-internals.md#resource-lod-clamp) define fractional and empty-set behavior; the view description here remains the owner of field representation and validation.
-
-<!-- d3d12-review-alert:end:formats:N-common-texture-behavior:0 -->
-
-`MostDetailedMip`
-
-Index of the most detailed mipmap level to use; this number is between 0 and **MipLevels** -1 (where **MipLevels** is from the original Texture2D for which [ID3D12Device::CreateShaderResourceView](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nf-d3d12-id3d12device-createshaderresourceview) creates a view).
-
-`MipLevels`
-
-<ins><!-- d3d12-review-inline:begin:formats:V-texture-srv:3 -->The maximum number of mipmap levels for the view of the texture. See the remarks in [`D3D12_TEX1D_SRV`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_tex1d_srv).<!-- d3d12-review-inline:end:formats:V-texture-srv:3 --></ins>
-
-Set to -1 to indicate all the mipmap levels from **MostDetailedMip** on down to least detailed.
-
-`FirstArraySlice`
-
-The index of the first texture to use in an array of textures.
-
-`ArraySize`
-
-Number of textures in the array.
-
-`PlaneSlice`
-
-The index (plane slice number) of the plane to use in an array of textures.
-
-`ResourceMinLODClamp`
-
-Specifies the minimum mipmap level that you can access. Specifying 0.0f means that you can access all of the mipmap levels. Specifying 3.0f means that you can access mipmap levels from 3.0f to *MipCount - 1*.
-
-<ins><!-- d3d12-review-inline:begin:formats:L-lod-space:0 -->The SRV's `ResourceMinLODClamp` considers the most detailed mipmap on the resource as LOD 0, so specifying a MinLOD clamp of 1 causes miplevel 0 on the resource to be ignored.
-On the other hand, the Sampler’s MinLOD clamp defines most detailed mipmap in the current Shader Resource View as LOD 0.
-So on a Shader Resource View that, for example, limits a mipmap chain to exclude the most detailed 3 mips from a resource, setting the Sampler MinLOD to 1
-causes miplevel [3] (the fourth mip) in the resource to be ignored.<!-- d3d12-review-inline:end:formats:L-lod-space:0 --></ins>
-
-<!-- d3d12-review-alert:begin:formats:N-srv-shapes:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The corresponding 1D, 2D, 3D and cube SRV descriptions use the same mip-window and minimum-LOD-clamp fields. Array forms add `FirstArraySlice`/`ArraySize`; cube-array views instead use `First2DArrayFace` and `NumCubes`, counting groups of six 2D faces. Multisampled array SRVs select only `FirstArraySlice` and `ArraySize`. The non-array multisample member's `UnusedField_NothingToDefine` carries no view-selection data.
-
-<!-- d3d12-review-alert:end:formats:N-srv-shapes:0 -->
-
-<a id="component-mapping"></a>
-
-### Component mapping
-
-<ins><!-- d3d12-review-inline:begin:formats:V-mapping:0 -->`Shader4ComponentMapping` allows the SRV to
-choose how memory gets routed to the 4 return components in a shader
-after a memory fetch. The options for each shader component [0..3]
-(RGBA) are: component 0..3 from the SRV fetch result or force 0 or force 1. The value of forcing 1 is either 0x1 or 1.0f depending on the format
-type for that component in the source format.<!-- d3d12-review-inline:end:formats:V-mapping:0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:formats:V-mapping:1 -->The default 1:1 mapping can be indicated by specifying
-`D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING`, otherwise an arbitrary
-mapping can be specified using the macro
-`D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING`. The encoding macros are shown below.<!-- d3d12-review-inline:end:formats:V-mapping:1 --></ins>
-
-#### D3D12_SHADER_COMPONENT_MAPPING
-
-```cpp
-typedef enum D3D12_SHADER_COMPONENT_MAPPING
-{
-    D3D12_SHADER_COMPONENT_MAPPING_FROM_MEMORY_COMPONENT_0 = 0,
-    D3D12_SHADER_COMPONENT_MAPPING_FROM_MEMORY_COMPONENT_1 = 1,
-    D3D12_SHADER_COMPONENT_MAPPING_FROM_MEMORY_COMPONENT_2 = 2,
-    D3D12_SHADER_COMPONENT_MAPPING_FROM_MEMORY_COMPONENT_3 = 3,
-    D3D12_SHADER_COMPONENT_MAPPING_FORCE_VALUE_0 = 4,
-    D3D12_SHADER_COMPONENT_MAPPING_FORCE_VALUE_1 = 5,
-} D3D12_SHADER_COMPONENT_MAPPING;
-```
-
-```cpp
-#define D3D12_SHADER_COMPONENT_MAPPING_MASK 0x7
-#define D3D12_SHADER_COMPONENT_MAPPING_SHIFT 3
-#define D3D12_SHADER_COMPONENT_MAPPING_ALWAYS_SET_BIT_AVOIDING_ZEROMEM_MISTAKES (1<<(D3D12_SHADER_COMPONENT_MAPPING_SHIFT*4))
-#define D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING(Src0,Src1,Src2,Src3) ((((Src0)&D3D12_SHADER_COMPONENT_MAPPING_MASK)| \
-                                                                (((Src1)&D3D12_SHADER_COMPONENT_MAPPING_MASK)<<D3D12_SHADER_COMPONENT_MAPPING_SHIFT)| \
-                                                                (((Src2)&D3D12_SHADER_COMPONENT_MAPPING_MASK)<<(D3D12_SHADER_COMPONENT_MAPPING_SHIFT*2))| \
-                                                                (((Src3)&D3D12_SHADER_COMPONENT_MAPPING_MASK)<<(D3D12_SHADER_COMPONENT_MAPPING_SHIFT*3))| \
-                                                                D3D12_SHADER_COMPONENT_MAPPING_ALWAYS_SET_BIT_AVOIDING_ZEROMEM_MISTAKES))
-#define D3D12_DECODE_SHADER_4_COMPONENT_MAPPING(ComponentToExtract,Mapping) ((D3D12_SHADER_COMPONENT_MAPPING)(Mapping >> (D3D12_SHADER_COMPONENT_MAPPING_SHIFT*ComponentToExtract) & D3D12_SHADER_COMPONENT_MAPPING_MASK))
-#define D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING(0,1,2,3)
-```
-
-<!-- d3d12-review-alert:begin:formats:N-mapping-order:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The four mapping selectors choose fetched components or force zero/one; selector values must be from zero through five and the reserved always-set bit is required. Bits outside the four three-bit selectors and required marker must be zero. `D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING` encodes the identity mapping rather than zero; raw and structured buffer SRVs require that default mapping. Missing-format-component defaults are distinct from explicitly forcing a component. [Acceleration-structure SRVs](binding.md#acceleration-structure-srvs) use their GPU-address binding contract rather than ordinary texture component interpretation.
-
-<!-- d3d12-review-alert:end:formats:N-mapping-order:0 -->
-
-<a id="uav-types"></a>
-
-### Unordered-access view types
-
-#### D3D12_UAV_DIMENSION
-
-```cpp
-typedef enum D3D12_UAV_DIMENSION
-{
-    D3D12_UAV_DIMENSION_UNKNOWN = 0,
-    D3D12_UAV_DIMENSION_BUFFER = 1,
-    D3D12_UAV_DIMENSION_TEXTURE1D = 2,
-    D3D12_UAV_DIMENSION_TEXTURE1DARRAY = 3,
-    D3D12_UAV_DIMENSION_TEXTURE2D = 4,
-    D3D12_UAV_DIMENSION_TEXTURE2DARRAY = 5,
-    D3D12_UAV_DIMENSION_TEXTURE2DMS = 6,
-    D3D12_UAV_DIMENSION_TEXTURE2DMSARRAY = 7,
-    D3D12_UAV_DIMENSION_TEXTURE3D = 8,
-} D3D12_UAV_DIMENSION;
-```
-
-#### D3D12_BUFFER_UAV_FLAGS
-
-```cpp
-typedef enum D3D12_BUFFER_UAV_FLAGS
-{
-    D3D12_BUFFER_UAV_FLAG_NONE =   0,
-    D3D12_BUFFER_UAV_FLAG_RAW  =   0x00000001,
-} D3D12_BUFFER_UAV_FLAGS;
-```
-
-#### D3D12_BUFFER_UAV
-
-```cpp
-typedef struct D3D12_BUFFER_UAV
-{
-    UINT64 FirstElement;
-    UINT NumElements;
-    UINT StructureByteStride;
-    UINT64 CounterOffsetInBytes;
-    D3D12_BUFFER_UAV_FLAGS Flags;
-} D3D12_BUFFER_UAV;
-```
-
-#### D3D12_TEX1D_UAV
-
-```cpp
-typedef struct D3D12_TEX1D_UAV
-{
-    UINT MipSlice;
-} D3D12_TEX1D_UAV;
-```
-
-#### D3D12_TEX1D_ARRAY_UAV
-
-```cpp
-typedef struct D3D12_TEX1D_ARRAY_UAV
-{
-    UINT MipSlice;
-    UINT FirstArraySlice;
-    UINT ArraySize;
-} D3D12_TEX1D_ARRAY_UAV;
-```
-
-#### D3D12_TEX2D_UAV
-
-```cpp
-typedef struct D3D12_TEX2D_UAV
-{
-    UINT MipSlice;
-    UINT PlaneSlice;
-} D3D12_TEX2D_UAV;
-```
-
-#### D3D12_TEX2D_ARRAY_UAV
-
-```cpp
-typedef struct D3D12_TEX2D_ARRAY_UAV
-{
-    UINT MipSlice;
-    UINT FirstArraySlice;
-    UINT ArraySize;
-    UINT PlaneSlice;
-} D3D12_TEX2D_ARRAY_UAV;
-```
-
-#### D3D12_TEX2DMS_UAV
-
-```cpp
-typedef struct D3D12_TEX2DMS_UAV
-{
-    UINT UnusedField_NothingToDefine;
-} D3D12_TEX2DMS_UAV;
-```
-
-#### D3D12_TEX2DMS_ARRAY_UAV
-
-```cpp
-typedef struct D3D12_TEX2DMS_ARRAY_UAV
-{
-    UINT FirstArraySlice;
-    UINT ArraySize;
-} D3D12_TEX2DMS_ARRAY_UAV;
-```
-
-#### D3D12_TEX3D_UAV
-
-```cpp
-typedef struct D3D12_TEX3D_UAV
-{
-    UINT MipSlice;
-    UINT FirstWSlice;
-    UINT WSize;
-} D3D12_TEX3D_UAV;
-```
-
-#### D3D12_UNORDERED_ACCESS_VIEW_DESC
-
-```cpp
-typedef struct D3D12_UNORDERED_ACCESS_VIEW_DESC
-{
-    DXGI_FORMAT Format;
-    D3D12_UAV_DIMENSION ViewDimension;
-    union
-    {
-        D3D12_BUFFER_UAV Buffer;
-        D3D12_TEX1D_UAV Texture1D;
-        D3D12_TEX1D_ARRAY_UAV Texture1DArray;
-        D3D12_TEX2D_UAV Texture2D;
-        D3D12_TEX2D_ARRAY_UAV Texture2DArray;
-        D3D12_TEX2DMS_UAV Texture2DMS;
-        D3D12_TEX2DMS_ARRAY_UAV Texture2DMSArray;
-        D3D12_TEX3D_UAV Texture3D;
-    };
-} D3D12_UNORDERED_ACCESS_VIEW_DESC;
-```
-
-<a id="buffer-uav"></a>
-
-### Buffer UAV fields and counters
-
-`FirstElement`
-
-The zero-based index of the first element to be accessed.
-
-`NumElements`
-
-<ins><!-- d3d12-review-inline:begin:formats:V-buffer-uav:3 -->The number of elements exposed by the view. For structured buffers, this is the number of structures in the buffer.<!-- d3d12-review-inline:end:formats:V-buffer-uav:3 --></ins>
-
-`StructureByteStride`
-
-The size of each element in the buffer structure (in bytes) when the buffer represents a structured buffer.
-
-`CounterOffsetInBytes`
-
-The counter offset, in bytes.
-
-`Flags`
-
-<ins><!-- d3d12-review-inline:begin:formats:V-buffer-uav:9 -->A [`D3D12_BUFFER_UAV_FLAGS`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_buffer_uav_flags)-typed value that specifies the view options for the resource.<!-- d3d12-review-inline:end:formats:V-buffer-uav:9 --></ins>
-
-<!-- d3d12-review-alert:begin:formats:N-counters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> A counter is associated by the `pCounterResource` creation parameter, not an APPEND/COUNTER bit in `D3D12_BUFFER_UAV_FLAGS`. `CounterOffsetInBytes` identifies its storage; the [creation contract](#id3d12device-createunorderedaccessview) defines the structured-view, resource, placement and bounds restrictions. Counter storage and counter values do not follow automatically from binding a UAV; [command-list state](command-list-state.md#buffer-bindings) remains independent.
-
-<!-- d3d12-review-alert:end:formats:N-counters:0 -->
-
-<!-- d3d12-review-alert:begin:formats:N-buffer-validity:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Buffer views require a nonzero element count and a nonoverflowing byte range within the buffer. Raw-view starting addresses must satisfy `D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT` (16 bytes); element indexing is still in 32-bit units. A UAV counter offset must satisfy `D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT` (4096 bytes) and leave four bytes available in its backing buffer. Both data and counter buffers require UAV permission. With no counter resource, `CounterOffsetInBytes` is zero.
-
-<!-- d3d12-review-alert:end:formats:N-buffer-validity:0 -->
-
-<a id="texture-uav"></a>
-
-### Texture UAV fields
-
-#### Array and plane fields
-
-`MipSlice`
-
-The mipmap slice index.
-
-`FirstArraySlice`
-
-The zero-based index of the first array slice to be accessed.
-
-`ArraySize`
-
-The number of slices in the array.
-
-`PlaneSlice`
-
-The index (plane slice number) of the plane to use in an array of textures.
-
-#### Volume depth-slice fields
-
-`MipSlice`
-
-The mipmap slice index.
-
-`FirstWSlice`
-
-The zero-based index of the first depth slice to be accessed.
-
-`WSize`
-
-The number of depth slices.
-
-Set to -1 to indicate all the depth slices from **FirstWSlice** to the last slice.
-
-<!-- d3d12-review-alert:begin:formats:N-uav-shapes:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Non-array 1D/2D UAVs select `MipSlice`; 2D forms additionally select `PlaneSlice`. Array forms select a range with `FirstArraySlice` and `ArraySize`. Multisampled UAVs use their MS or MSArray members and require `D3D12_FEATURE_DATA_D3D12_OPTIONS14.WriteableMSAATexturesSupported`; their backing resource also follows the [writable-MSAA creation requirements](resources.md#writable-msaa). A 3D UAV selects depth slices at its selected mip, not array subresources.
-
-<!-- d3d12-review-alert:end:formats:N-uav-shapes:0 -->
-
-<a id="rtv-types"></a>
-
-### Render-target view types and fields
-
-#### D3D12_RTV_DIMENSION
-
-```cpp
-typedef enum D3D12_RTV_DIMENSION
-{
-    D3D12_RTV_DIMENSION_UNKNOWN = 0,
-    D3D12_RTV_DIMENSION_BUFFER = 1,
-    D3D12_RTV_DIMENSION_TEXTURE1D = 2,
-    D3D12_RTV_DIMENSION_TEXTURE1DARRAY = 3,
-    D3D12_RTV_DIMENSION_TEXTURE2D = 4,
-    D3D12_RTV_DIMENSION_TEXTURE2DARRAY = 5,
-    D3D12_RTV_DIMENSION_TEXTURE2DMS = 6,
-    D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY = 7,
-    D3D12_RTV_DIMENSION_TEXTURE3D = 8,
-} D3D12_RTV_DIMENSION;
-```
-
-#### D3D12_BUFFER_RTV
-
-```cpp
-typedef struct D3D12_BUFFER_RTV
-{
-    UINT64 FirstElement;
-    UINT NumElements;
-} D3D12_BUFFER_RTV;
-```
-
-#### D3D12_TEX1D_RTV
-
-```cpp
-typedef struct D3D12_TEX1D_RTV
-{
-    UINT MipSlice;
-} D3D12_TEX1D_RTV;
-```
-
-#### D3D12_TEX1D_ARRAY_RTV
-
-```cpp
-typedef struct D3D12_TEX1D_ARRAY_RTV
-{
-    UINT MipSlice;
-    UINT FirstArraySlice;
-    UINT ArraySize;
-} D3D12_TEX1D_ARRAY_RTV;
-```
-
-#### D3D12_TEX2D_RTV
-
-```cpp
-typedef struct D3D12_TEX2D_RTV
-{
-    UINT MipSlice;
-    UINT PlaneSlice;
-} D3D12_TEX2D_RTV;
-```
-
-#### D3D12_TEX2D_ARRAY_RTV
-
-```cpp
-typedef struct D3D12_TEX2D_ARRAY_RTV
-{
-    UINT MipSlice;
-    UINT FirstArraySlice;
-    UINT ArraySize;
-    UINT PlaneSlice;
-} D3D12_TEX2D_ARRAY_RTV;
-```
-
-#### D3D12_TEX2DMS_RTV
-
-```cpp
-typedef struct D3D12_TEX2DMS_RTV
-{
-    UINT UnusedField_NothingToDefine;
-} D3D12_TEX2DMS_RTV;
-```
-
-#### D3D12_TEX2DMS_ARRAY_RTV
-
-```cpp
-typedef struct D3D12_TEX2DMS_ARRAY_RTV
-{
-    UINT FirstArraySlice;
-    UINT ArraySize;
-} D3D12_TEX2DMS_ARRAY_RTV;
-```
-
-#### D3D12_TEX3D_RTV
-
-```cpp
-typedef struct D3D12_TEX3D_RTV
-{
-    UINT MipSlice;
-    UINT FirstWSlice;
-    UINT WSize;
-} D3D12_TEX3D_RTV;
-```
-
-#### D3D12_RENDER_TARGET_VIEW_DESC
-
-```cpp
-typedef struct D3D12_RENDER_TARGET_VIEW_DESC
-{
-    DXGI_FORMAT Format;
-    D3D12_RTV_DIMENSION ViewDimension;
-    union
-    {
-        D3D12_BUFFER_RTV Buffer;
-        D3D12_TEX1D_RTV Texture1D;
-        D3D12_TEX1D_ARRAY_RTV Texture1DArray;
-        D3D12_TEX2D_RTV Texture2D;
-        D3D12_TEX2D_ARRAY_RTV Texture2DArray;
-        D3D12_TEX2DMS_RTV Texture2DMS;
-        D3D12_TEX2DMS_ARRAY_RTV Texture2DMSArray;
-        D3D12_TEX3D_RTV Texture3D;
-    };
-} D3D12_RENDER_TARGET_VIEW_DESC;
-```
-
-#### Buffer RTV fields
-
-`FirstElement`
-
-Number of elements between the beginning of the buffer and the first element to access.
-
-`NumElements`
-
-The total number of elements in the view.
-
-<!-- d3d12-review-alert:begin:formats:N-buffer-rtv-limit:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> A buffer RTV's `NumElements` must not exceed `D3D12_REQ_TEXTURE1D_U_DIMENSION` (16384), even when the backing buffer is larger. `FirstElement` and `NumElements` still define a valid typed-element range within that buffer.
-
-<!-- d3d12-review-alert:end:formats:N-buffer-rtv-limit:0 -->
-
-#### Array and plane RTV fields
-
-`MipSlice`
-
-<ins><!-- d3d12-review-inline:begin:formats:V-texture-rtv:1 -->The index of the mipmap level to use.<!-- d3d12-review-inline:end:formats:V-texture-rtv:1 --></ins>
-
-`FirstArraySlice`
-
-The index of the first texture to use in an array of textures.
-
-`ArraySize`
-
-Number of textures in the array to use in the render target view, starting from **FirstArraySlice**.
-
-`PlaneSlice`
-
-The index (plane slice number) of the plane to use in an array of textures.
-
-#### Volume depth-slice RTV fields
-
-`MipSlice`
-
-<ins><!-- d3d12-review-inline:begin:formats:V-volume-rtv:1 -->The index of the mipmap level to use.<!-- d3d12-review-inline:end:formats:V-volume-rtv:1 --></ins>
-
-`FirstWSlice`
-
-First depth level to use.
-
-`WSize`
-
-Number of depth levels to use in the render-target view, starting from **FirstWSlice**. A value of -1 indicates all of the slices along the w axis, starting from **FirstWSlice**.
-
-<!-- d3d12-review-alert:begin:formats:N-rtv-shapes:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The remaining RTV variants use the corresponding declared mip and array selectors. Multisampled RTVs select the MS/MSArray member without a mip selector. Buffer RTV elements use the selected typed format; there is no raw or structured RTV flag. 3D RTV `FirstWSlice`/`WSize` refer to depth slices of the selected mip.
-
-<!-- d3d12-review-alert:end:formats:N-rtv-shapes:0 -->
-
-<a id="dsv-types"></a>
-
-### Depth-stencil view types and fields
-
-<!-- d3d12-review-alert:begin:formats:N-om-read-only-view-consumer:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Depth/stencil view flags participate in the [output-merger read-only write controls](output-merger.md#read-only-depth-stencil). [Render-pass read-only binding](output-merger.md#read-only-depth-stencil-pass) has additional flag/access conditions; descriptor creation here does not erase the resource's access/layout requirements.
-
-<!-- d3d12-review-alert:end:formats:N-om-read-only-view-consumer:0 -->
-
-#### D3D12_DSV_DIMENSION
-
-```cpp
-typedef enum D3D12_DSV_DIMENSION
-{
-    D3D12_DSV_DIMENSION_UNKNOWN = 0,
-    D3D12_DSV_DIMENSION_TEXTURE1D = 1,
-    D3D12_DSV_DIMENSION_TEXTURE1DARRAY = 2,
-    D3D12_DSV_DIMENSION_TEXTURE2D = 3,
-    D3D12_DSV_DIMENSION_TEXTURE2DARRAY = 4,
-    D3D12_DSV_DIMENSION_TEXTURE2DMS = 5,
-    D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY = 6,
-} D3D12_DSV_DIMENSION;
-```
-
-#### D3D12_DSV_FLAGS
-
-```cpp
-typedef enum D3D12_DSV_FLAGS
-{
-    D3D12_DSV_FLAG_NONE              = 0x0,
-    D3D12_DSV_FLAG_READ_ONLY_DEPTH   = 0x1,
-    D3D12_DSV_FLAG_READ_ONLY_STENCIL = 0x2,
-} D3D12_DSV_FLAGS;
-```
-
-#### D3D12_TEX1D_DSV
-
-```cpp
-typedef struct D3D12_TEX1D_DSV
-{
-    UINT MipSlice;
-} D3D12_TEX1D_DSV;
-```
-
-#### D3D12_TEX1D_ARRAY_DSV
-
-```cpp
-typedef struct D3D12_TEX1D_ARRAY_DSV
-{
-    UINT MipSlice;
-    UINT FirstArraySlice;
-    UINT ArraySize;
-} D3D12_TEX1D_ARRAY_DSV;
-```
-
-#### D3D12_TEX2D_DSV
-
-```cpp
-typedef struct D3D12_TEX2D_DSV
-{
-    UINT MipSlice;
-} D3D12_TEX2D_DSV;
-```
-
-#### D3D12_TEX2D_ARRAY_DSV
-
-```cpp
-typedef struct D3D12_TEX2D_ARRAY_DSV
-{
-    UINT MipSlice;
-    UINT FirstArraySlice;
-    UINT ArraySize;
-} D3D12_TEX2D_ARRAY_DSV;
-```
-
-#### D3D12_TEX2DMS_DSV
-
-```cpp
-typedef struct D3D12_TEX2DMS_DSV
-{
-    UINT UnusedField_NothingToDefine;
-} D3D12_TEX2DMS_DSV;
-```
-
-#### D3D12_TEX2DMS_ARRAY_DSV
-
-```cpp
-typedef struct D3D12_TEX2DMS_ARRAY_DSV
-{
-    UINT FirstArraySlice;
-    UINT ArraySize;
-} D3D12_TEX2DMS_ARRAY_DSV;
-```
-
-#### D3D12_DEPTH_STENCIL_VIEW_DESC
-
-```cpp
-typedef struct D3D12_DEPTH_STENCIL_VIEW_DESC
-{
-    DXGI_FORMAT Format;
-    D3D12_DSV_DIMENSION ViewDimension;
-    D3D12_DSV_FLAGS Flags;
-    union
-    {
-        D3D12_TEX1D_DSV Texture1D;
-        D3D12_TEX1D_ARRAY_DSV Texture1DArray;
-        D3D12_TEX2D_DSV Texture2D;
-        D3D12_TEX2D_ARRAY_DSV Texture2DArray;
-        D3D12_TEX2DMS_DSV Texture2DMS;
-        D3D12_TEX2DMS_ARRAY_DSV Texture2DMSArray;
-    };
-} D3D12_DEPTH_STENCIL_VIEW_DESC;
-```
-
-`MipSlice`
-
-The index of the first mipmap level to use.
-
-`FirstArraySlice`
-
-The index of the first texture to use in an array of textures.
-
-`ArraySize`
-
-Number of textures to use.
-
-<!-- d3d12-review-alert:begin:formats:N-dsv-shapes:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> DSVs select 1D/2D, array, or multisampled variants; they do not expose buffer, 3D, or cube-specific dimensions. A cube resource's faces can be viewed through a compatible 2D-array description. `Flags` combines the [aspect read-only flags](#depth-stencil-views). DSVs do not have a `PlaneSlice` member.
-
-<!-- d3d12-review-alert:end:formats:N-dsv-shapes:0 -->
-
 <a id="support"></a>
 
 ## Format support and capability queries
@@ -1631,13 +1942,13 @@ Number of textures to use.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [feature-discovery contract](devices-and-capabilities.md#feature-discovery) defines `ID3D12Device::CheckFeatureSupport`. The format-specific payloads below expose independent capabilities; a plane count or a successful query does not by itself permit every view or operation. Resource flags, casting, view shape and stage/operation conditions still apply.
+> The [feature discovery contract](devices-and-capabilities.md#feature-discovery) defines `ID3D12Device::CheckFeatureSupport`. The format-specific payloads below expose independent capabilities. A plane count or a successful query does not by itself permit every view or operation. Resource flags, casting, view shape and stage/operation conditions still apply.
 
 <!-- d3d12-review-alert:end:formats:N-support:0 -->
 
 <a id="check-feature-support"></a>
 
-### Feature-query dispatch and selected diagnostics
+### Feature query dispatch and selected diagnostics
 
 <a id="id3d12devicecheckfeaturesupport"></a>
 
@@ -1646,7 +1957,7 @@ Number of textures to use.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The complete `ID3D12Device::CheckFeatureSupport` declaration, dispatch, payload-size and negotiation contract is defined in [Devices and capabilities](devices-and-capabilities.md#id3d12device-checkfeaturesupport). The format/MSAA-specific query cases and diagnostics remain defined here.
+> The complete `ID3D12Device::CheckFeatureSupport` declaration, dispatch, payload size and negotiation contract is defined in [Devices and capabilities](devices-and-capabilities.md#id3d12device-checkfeaturesupport). The format/MSAA-specific query cases and diagnostics remain defined here.
 
 <!-- d3d12-review-alert:end:formats:N-device-query-owner:1 -->
 
@@ -1657,7 +1968,7 @@ Number of textures to use.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For the format-specific cases below, a payload-size mismatch returns `E_INVALIDARG`. `D3D12_FEATURE_FORMAT_INFO` rejects nonexistent API format values with `E_INVALIDARG`. `D3D12_FEATURE_FORMAT_SUPPORT` initializes its output masks to NONE and returns `E_FAIL` when format support cannot be computed or no support is reported.
+> For the format-specific cases below, a payload size mismatch returns `E_INVALIDARG`. `D3D12_FEATURE_FORMAT_INFO` rejects nonexistent API format values with `E_INVALIDARG`. `D3D12_FEATURE_FORMAT_SUPPORT` initializes its output masks to NONE and returns `E_FAIL` when format support cannot be computed or no support is reported.
 
 <!-- d3d12-review-alert:end:formats:N-query-errors:0 -->
 
@@ -1666,7 +1977,7 @@ Number of textures to use.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS` returns `E_FAIL` if its support calculation fails, including `SampleCount == 0` or counts exceeding the supported API maximum of 32. Unsupported configurations and tiled-resource restrictions can instead produce a successful query with `NumQualityLevels == 0`; that differs from an invalid-count failure. No unsupported configuration is made legal by a successful query returning zero.
+> `D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS` returns `E_FAIL` if its support calculation fails, including `SampleCount == 0` or counts exceeding the supported API maximum of 32. Unsupported configurations and tiled resource restrictions can instead produce a successful query with `NumQualityLevels == 0`. That differs from an invalid-count failure. No unsupported configuration is made legal by a successful query returning zero.
 
 <!-- d3d12-review-alert:end:formats:N-query-errors:1 -->
 
@@ -1701,11 +2012,13 @@ Number of textures to use.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [current driver queries](#driver-format-queries) provide optional-format flags and multisample quality data. Their [driver-mask/API-mask relationship](#driver-format-mask) is not raw bitwise identity.
+> The [current driver queries](#driver-format-queries) provide optional-format flags and multisample quality data. Their [driver mask/API mask relationship](#driver-format-mask) is not raw bitwise identity.
 
 <!-- d3d12-review-alert:end:formats:FQ-api-driver-forward:0 -->
 
 #### D3D12_FORMAT_SUPPORT1
+
+<a id="d3d12-format-support1"></a>
 
 ```cpp
 typedef enum D3D12_FORMAT_SUPPORT1
@@ -1744,6 +2057,8 @@ typedef enum D3D12_FORMAT_SUPPORT1
 ```
 
 #### D3D12_FORMAT_SUPPORT2
+
+<a id="d3d12-format-support2"></a>
 
 ```cpp
 typedef enum D3D12_FORMAT_SUPPORT2
@@ -1788,6 +2103,8 @@ typedef struct D3D12_FEATURE_DATA_FORMAT_INFO
 
 #### D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS
 
+<a id="d3d12-multisample-quality-level-flags"></a>
+
 ```cpp
 typedef enum D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS
 {
@@ -1814,15 +2131,15 @@ typedef struct D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS
 
 `Format`
 
-A [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format)-typed value for the format to return info about.
+A [DXGI_FORMAT](#dxgi-format)-typed value for the format to return info about.
 
 `Support1`
 
-<ins><!-- d3d12-review-inline:begin:formats:S-D3D12_FEATURE_DATA_FORMAT_SUPPORT:3 -->A combination of [`D3D12_FORMAT_SUPPORT1`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_format_support1)-typed values that are combined by using a bitwise OR operation. The resulting value specifies which resources are supported.<!-- d3d12-review-inline:end:formats:S-D3D12_FEATURE_DATA_FORMAT_SUPPORT:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:formats:S-D3D12_FEATURE_DATA_FORMAT_SUPPORT:3 -->A combination of [`D3D12_FORMAT_SUPPORT1`](#d3d12-format-support1)-typed values that are combined by using a bitwise OR operation. The resulting value specifies which resources are supported.<!-- d3d12-review-inline:end:formats:S-D3D12_FEATURE_DATA_FORMAT_SUPPORT:3 --></ins>
 
 `Support2`
 
-<ins><!-- d3d12-review-inline:begin:formats:S-D3D12_FEATURE_DATA_FORMAT_SUPPORT:5 -->A combination of [`D3D12_FORMAT_SUPPORT2`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_format_support2)-typed values that are combined by using a bitwise OR operation. The resulting value specifies which unordered resource options are supported.<!-- d3d12-review-inline:end:formats:S-D3D12_FEATURE_DATA_FORMAT_SUPPORT:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:formats:S-D3D12_FEATURE_DATA_FORMAT_SUPPORT:5 -->A combination of [`D3D12_FORMAT_SUPPORT2`](#d3d12-format-support2)-typed values that are combined by using a bitwise OR operation. The resulting value specifies which unordered resource options are supported.<!-- d3d12-review-inline:end:formats:S-D3D12_FEATURE_DATA_FORMAT_SUPPORT:5 --></ins>
 
 <a id="d3d12-feature-data-format-info"></a>
 
@@ -1830,7 +2147,7 @@ A [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat
 
 `Format`
 
-A [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format)-typed value for the format to return info about.
+A [DXGI_FORMAT](#dxgi-format)-typed value for the format to return info about.
 
 `PlaneCount`
 
@@ -1842,7 +2159,7 @@ A [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat
 
 `Format`
 
-A [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format)-typed value for the format to return info about.
+A [DXGI_FORMAT](#dxgi-format)-typed value for the format to return info about.
 
 `SampleCount`
 
@@ -1850,7 +2167,7 @@ The number of multi-samples per pixel to return info about.
 
 `Flags`
 
-<ins><!-- d3d12-review-inline:begin:formats:S-D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS:5 -->Flags to control quality levels, as a bitwise-OR'd combination of [`D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_multisample_quality_level_flags) enumeration constants. The resulting value specifies options for determining quality levels.<!-- d3d12-review-inline:end:formats:S-D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:formats:S-D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS:5 -->Flags to control quality levels, as a bitwise-OR'd combination of [`D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS`](#d3d12-multisample-quality-level-flags) enumeration constants. The resulting value specifies options for determining quality levels.<!-- d3d12-review-inline:end:formats:S-D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS:5 --></ins>
 
 `NumQualityLevels`
 
@@ -1861,7 +2178,7 @@ The number of quality levels.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12_FEATURE_FORMAT_SUPPORT` returns `Support1` and `Support2` for `Format`. The relevant combinations include resource dimension and view-kind support, shader load/sample support, depth/stencil or render-target/blend support, multisample support, and typed-UAV load/store/atomic capabilities. These bits are not interchangeable. In particular, UAV view creation, typed load, typed store and each atomic capability are separately represented.
+> `D3D12_FEATURE_FORMAT_SUPPORT` returns `Support1` and `Support2` for `Format`. The relevant combinations include resource dimension and view kind support, shader load/sample support, depth/stencil or render target/blend support, multisample support, and typed UAV load/store/atomic capabilities. These bits are not interchangeable. In particular, UAV view creation, typed load, typed store and each atomic capability are separately represented.
 
 <!-- d3d12-review-alert:end:formats:N-support-bits:0 -->
 
@@ -1926,7 +2243,7 @@ The number of quality levels.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12_FEATURE_DATA_D3D12_OPTIONS.TypedUAVLoadAdditionalFormats` identifies support for the additional all-or-nothing set. Individually optional formats require their `D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD` result. Additional typed-load support also requires typed-store support; the reverse implication does not hold, and atomic support remains separately specified. Typed-view access uses the bound format's interpretation, not a reinterpretation inferred from the shader's integer or floating-point spelling.
+> `D3D12_FEATURE_DATA_D3D12_OPTIONS.TypedUAVLoadAdditionalFormats` identifies support for the additional all-or-nothing set. Individually optional formats require their `D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD` result. Additional typed load support also requires typed store support. The reverse implication does not hold, and atomic support remains separately specified. Typed view access uses the bound format's interpretation, not a reinterpretation inferred from the shader's integer or floating-point spelling.
 
 <!-- d3d12-review-alert:end:formats:N-typed-cap:0 -->
 
@@ -1942,9 +2259,9 @@ load) via the usual mechanism -- CheckFeatureSupport() with
 
 ### R9G9B9E5 optional view support
 
-<ins><!-- d3d12-review-inline:begin:formats:S-999:0 -->`DXGI_FORMAT_R9G9B9E5_SHAREDEXP` render-target/UAV support is optional. Applications can use [CheckFeatureSupport](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-checkfeaturesupport) with `D3D12_FEATURE_FORMAT_SUPPORT` to check the support for a format.<!-- d3d12-review-inline:end:formats:S-999:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:formats:S-999:0 -->`DXGI_FORMAT_R9G9B9E5_SHAREDEXP` render target/UAV support is optional. Applications can use [CheckFeatureSupport](devices-and-capabilities.md#id3d12device-checkfeaturesupport) with `D3D12_FEATURE_FORMAT_SUPPORT` to check the support for a format.<!-- d3d12-review-inline:end:formats:S-999:0 --></ins>
 
-Relevant bits (from [here](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_format_support1)):
+Relevant bits (from [here](#d3d12-format-support1)):
 
 <!-- d3d12-review-alert:begin:formats:S-999:2 -->
 
@@ -1973,384 +2290,21 @@ As each support group is **all-or-nothing**, applications need only check one of
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Render-target use of `DXGI_FORMAT_R9G9B9E5_SHAREDEXP` also has the [RenderTargetWriteMask requirement](../D3D12R9G9B9E5Format.md#interaction-with-rendertargetwritemask); format support alone does not remove that pipeline-state constraint.
+> Render target use of `DXGI_FORMAT_R9G9B9E5_SHAREDEXP` also has the [RenderTargetWriteMask requirement](../D3D12R9G9B9E5Format.md#interaction-with-rendertargetwritemask); format support alone does not remove that pipeline state constraint.
 
 <!-- d3d12-review-alert:end:formats:N-999-write-mask:0 -->
-
-<a id="creation"></a>
-
-## View creation APIs
-
-<!-- d3d12-review-alert:begin:formats:N-create-shared:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> These methods create descriptors immediately on the CPU at `DestDescriptor`. The [heap type, handle, lifetime and CPU/GPU conflict requirements](binding.md#descriptor-creation) apply. Creating a view does not allocate backing storage for its resource, make it resident, or synchronize its accesses. Null-resource descriptors and null-description defaults are distinct; [null binding](binding.md#null-descriptors) and the parameter rules below define them.
-
-<!-- d3d12-review-alert:end:formats:N-create-shared:0 -->
-
-<!-- d3d12-review-alert:begin:formats:N-view-errors:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The ordinary SRV/UAV/RTV/DSV creators return `void`, not a status code. The runtime validates the view before driver descriptor creation; a failed creation uses device error handling rather than returning a valid substitute descriptor. Device-removal status is exposed by `ID3D12Device::GetDeviceRemovedReason`. Debug diagnostics are distinct from the runtime's validation and failure handling.
-
-<!-- d3d12-review-alert:end:formats:N-view-errors:0 -->
-
-<a id="id3d12device-createshaderresourceview"></a>
-
-### ID3D12Device::CreateShaderResourceView
-
-#### Declaration
-
-```cpp
-void CreateShaderResourceView(
-    ID3D12Resource* pResource,
-    const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc,
-    D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor);
-```
-
-#### Behavior
-
-Creates a shader-resource view for accessing data in a resource.
-
-#### Parameters
-
-`[in, optional] pResource`
-
-A pointer to the [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) object that represents the shader resource.
-
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createshaderresourceview:3 -->At least one of *pResource* or *pDesc* must be provided. Except for acceleration-structure SRVs, a null *pResource* initializes a null descriptor with a valid *pDesc* defining its type; see [null descriptors](binding.md#null-descriptors) and [acceleration-structure SRVs](binding.md#acceleration-structure-srvs).<!-- d3d12-review-inline:end:formats:Q-id3d12device-createshaderresourceview:3 --></ins>
-
-`[in, optional] pDesc`
-
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createshaderresourceview:5 -->A pointer to a [`D3D12_SHADER_RESOURCE_VIEW_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_shader_resource_view_desc) structure that describes the shader-resource view.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createshaderresourceview:5 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createshaderresourceview:6 -->A null *pDesc* is used to initialize a default descriptor, if possible. This behavior inherits the resource format and dimension (if not typeless) and for textures SRVs target a full texture, all mips and all array slices. Buffer SRVs require an explicit description; their resource description does not supply a typed view format or structure stride. Not all texture resources support null-description initialization.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createshaderresourceview:6 --></ins>
-
-`[in] DestDescriptor`
-
-Describes the CPU descriptor handle that represents the shader-resource view. This handle can be created in a shader-visible or non-shader-visible descriptor heap.
-
-#### Return values
-
-None
-
-<a id="id3d12device-createunorderedaccessview"></a>
-
-### ID3D12Device::CreateUnorderedAccessView
-
-#### Declaration
-
-```cpp
-void CreateUnorderedAccessView(
-    ID3D12Resource* pResource,
-    ID3D12Resource* pCounterResource,
-    const D3D12_UNORDERED_ACCESS_VIEW_DESC* pDesc,
-    D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor);
-```
-
-#### Behavior
-
-<ins><!-- d3d12-review-inline:begin:formats:P-id3d12device-createunorderedaccessview:0 -->Creates an unordered-access view.<!-- d3d12-review-inline:end:formats:P-id3d12device-createunorderedaccessview:0 --></ins>
-
-#### Parameters
-
-`pResource`
-
-A pointer to the [ID3D12Resource](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource) object that represents the unordered access.
-
-At least one of *pResource* or *pDesc* must be provided.
-
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createunorderedaccessview:4 -->A null *pResource* is used to initialize a null descriptor, which guarantees defined null binding behavior (reading 0s, writes are discarded), but must have a valid *pDesc* in order to determine the descriptor type.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createunorderedaccessview:4 --></ins>
-
-`pCounterResource`
-
-The [ID3D12Resource](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource) for the counter (if any) associated with the UAV.
-
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createunorderedaccessview:7 -->If *pCounterResource* is not specified, then the **CounterOffsetInBytes** member of the [`D3D12_BUFFER_UAV`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_buffer_uav) structure must be 0.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createunorderedaccessview:7 --></ins>
-
-If *pCounterResource* is specified, then there is a counter associated with the UAV, and the runtime performs validation of the following requirements:
-
-- <ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createunorderedaccessview:9 -->The **StructureByteStride** member of the [`D3D12_BUFFER_UAV`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_buffer_uav) structure must be greater than 0.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createunorderedaccessview:9 --></ins>
-- The format must be DXGI\_FORMAT\_UNKNOWN.
-- <ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createunorderedaccessview:9 -->The D3D12\_BUFFER\_UAV\_FLAG\_RAW flag (a [`D3D12_BUFFER_UAV_FLAGS`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_buffer_uav_flags) enumeration constant) must not be set.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createunorderedaccessview:9 --></ins>
-- Both of the resources (*pResource* and *pCounterResource*) must be buffers.
-- <ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createunorderedaccessview:9 -->The **CounterOffsetInBytes** member of the [`D3D12_BUFFER_UAV`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_buffer_uav) structure must be a multiple of `D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT` (4096), and must be within the range of the counter resource.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createunorderedaccessview:9 --></ins>
-- *pResource* cannot be NULL
-- *pDesc* cannot be NULL.
-
-`pDesc`
-
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createunorderedaccessview:11 -->A pointer to a [`D3D12_UNORDERED_ACCESS_VIEW_DESC`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_unordered_access_view_desc) structure that describes the unordered-access view.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createunorderedaccessview:11 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createunorderedaccessview:12 -->A null *pDesc* is used to initialize a default descriptor, if possible. This behavior inherits the resource format and dimension (if not typeless) and for textures UAVs target the first mip and all array slices. Buffer UAVs require an explicit description; their resource description does not supply a typed view format or structure stride. Not all texture resources support null-description initialization.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createunorderedaccessview:12 --></ins>
-
-`[in] DestDescriptor`
-
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createunorderedaccessview:14 -->Describes the CPU descriptor handle that represents the descriptor slot that holds the unordered-access view.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createunorderedaccessview:14 --></ins>
-
-#### Return values
-
-None
-
-<a id="id3d12device-createrendertargetview"></a>
-
-### ID3D12Device::CreateRenderTargetView
-
-#### Declaration
-
-```cpp
-void CreateRenderTargetView(
-    ID3D12Resource* pResource,
-    const D3D12_RENDER_TARGET_VIEW_DESC* pDesc,
-    D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor);
-```
-
-#### Behavior
-
-Creates a render-target view for accessing resource data.
-
-#### Parameters
-
-`[in, optional] pResource`
-
-A pointer to the [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) object that represents the render target.
-
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createrendertargetview:3 -->At least one of *pResource* or *pDesc* must be provided. A null *pResource* is used to initialize a null descriptor, which guarantees defined null binding behavior (reading 0s, writes are discarded), but must have a valid *pDesc* in order to determine the descriptor type.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createrendertargetview:3 --></ins>
-
-`[in, optional] pDesc`
-
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createrendertargetview:5 -->A pointer to a [`D3D12_RENDER_TARGET_VIEW_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_render_target_view_desc) structure that describes the render-target view.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createrendertargetview:5 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createrendertargetview:6 -->A null *pDesc* is used to initialize a default descriptor, if possible. This behavior inherits the resource format and dimension (if not typeless) and RTVs target the first mip and all array slices. Not all resources support null descriptor initialization.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createrendertargetview:6 --></ins>
-
-`[in] DestDescriptor`
-
-Describes the CPU descriptor handle that represents the destination where the newly-created render target view will reside.
-
-#### Return values
-
-None
-
-<a id="id3d12device-createdepthstencilview"></a>
-
-### ID3D12Device::CreateDepthStencilView
-
-#### Declaration
-
-```cpp
-void CreateDepthStencilView(
-    ID3D12Resource* pResource,
-    const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc,
-    D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor);
-```
-
-#### Behavior
-
-Creates a depth-stencil view for accessing resource data.
-
-#### Parameters
-
-`[in, optional] pResource`
-
-A pointer to the [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) object that represents the depth stencil.
-
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createdepthstencilview:3 -->At least one of *pResource* or *pDesc* must be provided. A null *pResource* is used to initialize a null descriptor, which guarantees defined null binding behavior (reading 0s, writes are discarded), but must have a valid *pDesc* in order to determine the descriptor type.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createdepthstencilview:3 --></ins>
-
-`[in, optional] pDesc`
-
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createdepthstencilview:5 -->A pointer to a [`D3D12_DEPTH_STENCIL_VIEW_DESC`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_depth_stencil_view_desc) structure that describes the depth-stencil view.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createdepthstencilview:5 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createdepthstencilview:6 -->A null *pDesc* is used to initialize a default descriptor, if possible. This behavior inherits the resource format and dimension (if not typeless) and DSVs target the first mip and all array slices. Not all resources support null descriptor initialization.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createdepthstencilview:6 --></ins>
-
-`[in] DestDescriptor`
-
-<ins><!-- d3d12-review-inline:begin:formats:Q-id3d12device-createdepthstencilview:8 -->Describes the CPU descriptor handle that represents the descriptor slot that holds the depth-stencil view.<!-- d3d12-review-inline:end:formats:Q-id3d12device-createdepthstencilview:8 --></ins>
-
-#### Return values
-
-None
-
-<a id="create-sampler-feedback-uav"></a>
-
-### ID3D12Device8::CreateSamplerFeedbackUnorderedAccessView
-
-#### Declaration
-
-```cpp
-void CreateSamplerFeedbackUnorderedAccessView(
-        ID3D12Resource* pTargetedResource,
-        ID3D12Resource* pFeedbackResource,
-        D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor);
-```
-
-#### Behavior
-
-For purposes of sampler feedback, creates a descriptor suitable for binding.
-
-> #### Terminology: Paired
-> For a feedback map to be called "paired" to a sampled resource, it means that the feedback map contains sampler feedback for that resource.
->
-> When a feedback map is bound to a resource, the feedback map can not be used for writing feedback for other resources and the resource cannot be used with other feedback maps.
->
-> Outside of bindings, however, a resource may be used for writing feedback to different feedback maps and a single feedback map may be repurposed to contain feedback for different resources. That is to say, outside of bindings the pairing need not be exclusive.
-
-<!-- d3d12-review-alert:begin:formats:N-feedback-validity:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> At least one of `pTargetedResource` and `pFeedbackResource` must be non-null. When both are present, their logical width, height, mip count and array size must match the feedback pairing requirements. The feedback resource uses one of the opaque sampler-feedback formats; [feedback resource creation](resources.md#extended-description) still applies. `D3D12_FEATURE_DATA_D3D12_OPTIONS7.SamplerFeedbackTier` must report sampler-feedback support, as defined by the [feature capability](common-shader-internals.md#feedback-capability-tiers). A permitted null resource parameter is not an uninitialized descriptor binding.
-
-<!-- d3d12-review-alert:end:formats:N-feedback-validity:0 -->
-
-<ins><!-- d3d12-review-inline:begin:formats:V-feedback-null:0 -->Feedback map UAVs may be created against a NULL paired texture. Writes through a feedback UAV descriptor created with a NULL paired texture have no effect.<!-- d3d12-review-inline:end:formats:V-feedback-null:0 --></ins>
-
-#### Parameters
-
-`pTargetedResource`
-
-The targeted resource, such as a texture, to create a descriptor for.
-
-`pFeedbackResource`
-
-The feedback resource, such as a texture, to create a descriptor for.
-
-`DestDescriptor`
-
-The CPU descriptor handle.
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:formats:N-feedback-return:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This method does not return a value.
-
-<!-- d3d12-review-alert:end:formats:N-feedback-return:0 -->
 
 <a id="driver"></a>
 
 ## Driver contracts
 
-<!-- d3d12-review-alert:begin:formats:N-driver:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The runtime translates API view descriptions into the negotiated driver representation. The driver writes hardware-specific descriptors into the supplied CPU descriptor handles. Descriptor creation does not allocate separately owned objects. See [descriptor ownership](binding.md#driver-descriptors).
-
-<!-- d3d12-review-alert:end:formats:N-driver:0 -->
-
-```cpp
-typedef VOID (APIENTRY* PFND3D12DDI_CREATE_SHADER_RESOURCE_VIEW_0002)(
-    D3D12DDI_HDEVICE unnamedParam1,
-    const D3D12DDIARG_CREATE_SHADER_RESOURCE_VIEW_0002 *unnamedParam2,
-    D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor
-);
-```
-
-```cpp
-typedef VOID (APIENTRY* PFND3D12DDI_CREATE_UNORDERED_ACCESS_VIEW_0002)(
-    D3D12DDI_HDEVICE unnamedParam1,
-    const D3D12DDIARG_CREATE_UNORDERED_ACCESS_VIEW_0002 *unnamedParam2,
-    D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor
-);
-```
-
-```cpp
-typedef VOID (APIENTRY* PFND3D12DDI_CREATE_RENDER_TARGET_VIEW_0002)(
-    D3D12DDI_HDEVICE unnamedParam1,
-    const D3D12DDIARG_CREATE_RENDER_TARGET_VIEW_0002 *unnamedParam2,
-    D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor
-);
-```
-
-```cpp
-typedef VOID (APIENTRY* PFND3D12DDI_CREATE_DEPTH_STENCIL_VIEW)(
-    D3D12DDI_HDEVICE unnamedParam1,
-    const D3D12DDIARG_CREATE_DEPTH_STENCIL_VIEW *unnamedParam2,
-    D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor
-);
-```
-
-<!-- d3d12-review-alert:begin:formats:N-driver-translation:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> | API information | Driver-facing responsibility |
-> |---|---|
-> | Resource and view format | Resolve the driver resource handle and the permitted format interpretation; descriptor storage remains driver-specific |
-> | Default descriptions and remaining-range sentinels | Expand into the appropriate selected mip/array/depth extent before descriptor creation |
-> | API dimension and resource sample configuration | Select the corresponding driver view representation; API array/MS/cube variants are not an interchangeable numeric DDI enum |
-> | `Shader4ComponentMapping` and `ResourceMinLODClamp` | Preserve the specified component and mip-coordinate interpretation |
-> | UAV counter resource and byte offset | Carry the counter association separately from the data buffer and apply the validated storage offset |
-> | Depth/stencil plane selection | Preserve logical aspect selection without exposing a physical texture layout |
-
-<!-- d3d12-review-alert:end:formats:N-driver-translation:0 -->
-
-<!-- d3d12-review-alert:begin:formats:DV-V01:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The following table associates descriptor-creation DDIs with their API operations.
-
-<!-- d3d12-review-alert:end:formats:DV-V01:0 -->
-
-<!-- d3d12-review-alert:begin:formats:DV-V02:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> | Driver entry | Canonical API contract |
-> |---|---|
-> | `PFND3D12DDI_CREATE_SHADER_RESOURCE_VIEW_0002` | [CreateShaderResourceView](#id3d12device-createshaderresourceview) |
-> | `PFND3D12DDI_CREATE_UNORDERED_ACCESS_VIEW_0002` | [CreateUnorderedAccessView](#id3d12device-createunorderedaccessview) |
-> | `PFND3D12DDI_CREATE_RENDER_TARGET_VIEW_0002` | [CreateRenderTargetView](#id3d12device-createrendertargetview) |
-> | `PFND3D12DDI_CREATE_DEPTH_STENCIL_VIEW` | [CreateDepthStencilView](#id3d12device-createdepthstencilview) |
-
-<!-- d3d12-review-alert:end:formats:DV-V02:0 -->
-
 Driver support for format list casting is reported via `RelaxedFormatCastingSupported` in `D3D12DDI_OPTIONS_DATA_0090` when `GetCaps` is called with `D3D12DDICAPS_TYPE_OPTIONS_0090`; available starting with DDI version `e_DDI_12_8_0090`.
-
-<!-- d3d12-review-alert:begin:formats:N-driver-defaults:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Before calling the driver, the runtime resolves omitted view descriptions from the resource and selects the driver-facing view kind.
-
-<!-- d3d12-review-alert:end:formats:N-driver-defaults:0 -->
-
-<a id="driver-sampler-feedback-view"></a>
-
-### Paired sampler-feedback descriptor
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_CREATE_SAMPLER_FEEDBACK_UNORDERED_ACCESS_VIEW_0075 ) ( _In_ D3D12DDI_HDEVICE hDrvDevice, _In_ D3D12DDI_HRESOURCE hDrvTargetedResource, _In_ D3D12DDI_HRESOURCE hDrvFeedbackResource, _In_ D3D12DDI_CPU_DESCRIPTOR_HANDLE DestDescriptor );
-```
-
-<!-- d3d12-review-alert:begin:formats:DV-F02:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Sampler-feedback descriptor creation receives separate driver handles for the targeted and feedback resources.
-
-<!-- d3d12-review-alert:end:formats:DV-F02:0 -->
 
 <a id="driver-format-queries"></a>
 
 <a id="current-driver-format-query-callbacks"></a>
 
-### Current driver format-query DDIs
+### Current driver format query DDIs
 
 ```cpp
 #define D3D12DDI_FORMAT_SUPPORT_SHADER_SAMPLE            0x00000001 // format can be sampled with any filter in shaders
@@ -2473,23 +2427,23 @@ Implemented by the client driver to check the format support.
 > | Driver bit suffix | API reporting relationship / meaning |
 > | --- | --- |
 > | `SHADER_SAMPLE` | Optional shader sampling -> `Support1.SHADER_SAMPLE`. |
-> | `RENDERTARGET` | Optional render-target use -> `Support1.RENDER_TARGET`; it does not by itself establish optional scanout support under the current separate-display-bit rule. |
-> | `BLENDABLE` | Optional blending -> `Support1.BLENDABLE`, only when render-target use is supported. |
-> | `MULTISAMPLE_RENDERTARGET` | Optional multisampled render-target use -> `Support1.MULTISAMPLE_RENDERTARGET`; sample-count quality is queried separately. |
+> | `RENDERTARGET` | Optional render target use -> `Support1.RENDER_TARGET`. It does not by itself establish optional scanout support under the current separate-display-bit rule. |
+> | `BLENDABLE` | Optional blending -> `Support1.BLENDABLE`, only when render target use is supported. |
+> | `MULTISAMPLE_RENDERTARGET` | Optional multisampled render target use -> `Support1.MULTISAMPLE_RENDERTARGET`; sample count quality is queried separately. |
 > | `MULTISAMPLE_LOAD` | Optional multisample loads -> `Support1.MULTISAMPLE_LOAD`. |
-> | `DECODER_OUTPUT` | Decoder-output format reporting -> `Support1.DECODER_OUTPUT` when the applicable video interface and format support are exposed. |
-> | `VIDEO_PROCESSOR_OUTPUT` | Video-processor output -> `Support1.VIDEO_PROCESSOR_OUTPUT` under video/format eligibility. |
-> | `VIDEO_PROCESSOR_INPUT` | Video-processor input -> `Support1.VIDEO_PROCESSOR_INPUT` under video/format eligibility. |
+> | `DECODER_OUTPUT` | Decoder output format reporting -> `Support1.DECODER_OUTPUT` when the applicable video interface and format support are exposed. |
+> | `VIDEO_PROCESSOR_OUTPUT` | Video processor output -> `Support1.VIDEO_PROCESSOR_OUTPUT` under video/format eligibility. |
+> | `VIDEO_PROCESSOR_INPUT` | Video processor input -> `Support1.VIDEO_PROCESSOR_INPUT` under video/format eligibility. |
 > | `VERTEX_BUFFER` | Optional vertex input -> `Support1.IA_VERTEX_BUFFER`. |
-> | `UAV_WRITES` | Optional typed-UAV view/store -> `Support1.TYPED_UNORDERED_ACCESS_VIEW` and `Support2.UAV_TYPED_STORE`; this is not typed-load or atomic support. |
-> | `BUFFER` | Optional typed-buffer view support -> `Support1.BUFFER`. |
-> | `CAPTURE` | Capture-engine output format reporting; this driver bit is not an extra bit in the public API support words declared above. |
-> | `VIDEO_ENCODER` | Video-encoder input format reporting -> `Support1.VIDEO_ENCODER` under video/format eligibility. |
-> | `OUTPUT_MERGER_LOGIC_OP` | Published per-format logic-operation report; the API result also follows format requirements and device logic-operation capability, not a raw copy of this bit. |
+> | `UAV_WRITES` | Optional typed UAV view/store -> `Support1.TYPED_UNORDERED_ACCESS_VIEW` and `Support2.UAV_TYPED_STORE`. This is not typed load or atomic support. |
+> | `BUFFER` | Optional typed buffer view support -> `Support1.BUFFER`. |
+> | `CAPTURE` | Capture-engine output format reporting. This driver bit is not an extra bit in the public API support words declared above. |
+> | `VIDEO_ENCODER` | Video encoder input format reporting -> `Support1.VIDEO_ENCODER` under video/format eligibility. |
+> | `OUTPUT_MERGER_LOGIC_OP` | Published per-format logic operation report. The API result also follows format requirements and device logic operation capability, not a raw copy of this bit. |
 > | `SHADER_GATHER` | Optional gather -> `Support1.SHADER_GATHER`. |
-> | `MULTIPLANE_OVERLAY` | Multiplane-overlay reporting -> `Support2.MULTIPLANE_OVERLAY`; it is not permission for every view or display configuration. |
-> | `TILED` | Published tiled 1D/2D/cube/array report, excluding 3D in this bit's definition; API `Support2.TILED` is derived from format requirements and tiled-resource capability, not a raw copy. |
-> | `UAV_READS` | Optional typed-UAV load -> `Support2.UAV_TYPED_LOAD`, additionally gated by the applicable typed-load capability/group and typed-UAV write eligibility. |
+> | `MULTIPLANE_OVERLAY` | Multiplane-overlay reporting -> `Support2.MULTIPLANE_OVERLAY`. It is not permission for every view or display configuration. |
+> | `TILED` | Published tiled 1D/2D/cube/array report, excluding 3D in this bit's definition; API `Support2.TILED` is derived from format requirements and tiled resource capability, not a raw copy. |
+> | `UAV_READS` | Optional typed UAV load -> `Support2.UAV_TYPED_LOAD`, additionally gated by the applicable typed load capability/group and typed UAV write eligibility. |
 > | `DISPLAY` | Required for optional scanout reporting as `Support1.DISPLAY` under the current separate-display-bit interface; eligible displayable formats also use it for `Support2.DISPLAYABLE`. The two API uses remain distinct. |
 > | `NOT_SUPPORTED` | Whole-format rejection under the restricted format rule above; not an API support bit. |
 
@@ -2500,7 +2454,7 @@ Implemented by the client driver to check the format support.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Mapping `UAV_READS` also requires the applicable [typed-UAV load-format group](#typed-uav-loads) and typed-UAV store eligibility.
+> Mapping `UAV_READS` also requires the applicable [typed UAV load format group](#typed-uav-loads) and typed UAV store eligibility.
 
 <!-- d3d12-review-alert:end:formats:FQ-driver-bit-mapping:2 -->
 
@@ -2509,7 +2463,7 @@ Implemented by the client driver to check the format support.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Logic-op, tiled and sampler-feedback support are derived from their format/device requirements, not additional optional driver-mask bits.
+> Logic-op, tiled and sampler feedback support are derived from their format/device requirements, not additional optional driver mask bits.
 
 <!-- d3d12-review-alert:end:formats:FQ-driver-bit-mapping:3 -->
 
@@ -2518,7 +2472,7 @@ Implemented by the client driver to check the format support.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> From DDI revision `_0107`, optional scanout requires the driver's `DISPLAY` bit. Render-target support alone does not produce API `Support1.DISPLAY`. Displayable-format reporting retains its separate eligibility rules.
+> From DDI revision `_0107`, optional scanout requires the driver's `DISPLAY` bit. Render target support alone does not produce API `Support1.DISPLAY`. Displayable-format reporting retains its separate eligibility rules.
 
 <!-- d3d12-review-alert:end:formats:FQ-driver-bit-mapping:4 -->
 
@@ -2527,7 +2481,7 @@ Implemented by the client driver to check the format support.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Below DDI revision `_0107`, optional render-target/UAV support for `DXGI_FORMAT_R9G9B9E5_SHAREDEXP` is not reported regardless of the driver bits. Its shader-resource support is unchanged. For eligible drivers, the [shared-exponent group](#shared-exponent-support) retains its all-or-nothing and derived-resolve rules. `NV12` shader-load reporting follows shader-sample support because this DDI has no independent shader-load flag.
+> Below DDI revision `_0107`, optional render target/UAV support for `DXGI_FORMAT_R9G9B9E5_SHAREDEXP` is not reported regardless of the driver bits. Its shader resource support is unchanged. For eligible drivers, the [shared exponent group](#shared-exponent-support) retains its all-or-nothing and derived-resolve rules. `NV12` shader load reporting follows shader sample support because this DDI has no independent shader load flag.
 
 <!-- d3d12-review-alert:end:formats:FQ-driver-bit-mapping:5 -->
 
@@ -2542,7 +2496,7 @@ Implemented by the client driver to check multi-sample quality levels.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAG_TILED_RESOURCE` requests the tiled-resource configuration.
+> `D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAG_TILED_RESOURCE` requests the tiled resource configuration.
 
 <!-- d3d12-review-alert:end:formats:FQ-quality-reporting:0 -->
 
@@ -2560,7 +2514,7 @@ Implemented by the client driver to check multi-sample quality levels.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Format/tiled-resource capability can reduce the exposed quality count to zero after a positive driver result. The runtime caps the exposed count at `0x80000000`, reserving the upper half of the `UINT` quality-value range for standard/custom sample-pattern values.
+> Format/tiled resource capability can reduce the exposed quality count to zero after a positive driver result. The runtime caps the exposed count at `0x80000000`, reserving the upper half of the `UINT` quality value range for standard/custom sample pattern values.
 
 <!-- d3d12-review-alert:end:formats:FQ-quality-reporting:2 -->
 

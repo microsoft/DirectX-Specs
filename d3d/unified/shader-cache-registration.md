@@ -1,6 +1,6 @@
 <a id="shader-cache-registration"></a>
 
-# Shader-cache registration lifecycle and target discovery
+# Shader cache registration lifecycle and target discovery
 
 <!-- d3d12-review-legend:begin -->
 
@@ -22,8 +22,8 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [registration ABI](#registration-abi) defines the scope, application-description
-> and compiler-property types used below.
+> The [registration ABI](#registration-abi) defines the scope, application description
+> and compiler property types used below.
 
 <!-- d3d12-review-alert:end:cache-registration:registration-type-forward:0 -->
 
@@ -57,7 +57,7 @@ This diagram demonstrates the interactions between the Game Store/Installer and 
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:scope-meaning:0 -->`D3D_SHADER_CACHE_APP_REGISTRATION_SCOPE` defines the user account scope<!-- d3d12-review-inline:end:cache-registration:scope-meaning:0 --></ins> of shader cache application registration. In practice this will determine the root path in the Windows registry where data will be stored. For example, if the installer is run with Windows Administrator privilege level then `D3D_SHADER_CACHE_APP_REGISTRATION_SCOPE_SYSTEM` should be used.
 
-A shader component represents the pairing of one State Object Database (SODB) to <ins><!-- d3d12-review-inline:begin:cache-registration:component-concept:0 -->zero or more Pre-Compiled Shader Databases (PSDB), identified by adapter-family mappings.<!-- d3d12-review-inline:end:cache-registration:component-concept:0 --></ins> A shader component has an identifying name as well as a file system path to the installed SODB file and associated PSDB files.
+A shader component represents the pairing of one State Object Database (SODB) to <ins><!-- d3d12-review-inline:begin:cache-registration:component-concept:0 -->zero or more Pre-Compiled Shader Databases (PSDB), identified by adapter family mappings.<!-- d3d12-review-inline:end:cache-registration:component-concept:0 --></ins> A shader component has an identifying name as well as a file system path to the installed SODB file and associated PSDB files.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:application-concept:0 -->`ID3DShaderCacheApplication` represents an application<!-- d3d12-review-inline:end:cache-registration:application-concept:0 --></ins> or game installed on a system. Each application can have <ins><!-- d3d12-review-inline:begin:cache-registration:application-concept:0 -->zero or more Components<!-- d3d12-review-inline:end:cache-registration:application-concept:0 --></ins> which represent cached shader objects.
 
@@ -66,7 +66,7 @@ A shader component represents the pairing of one State Object Database (SODB) to
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Registration state is persistent catalog state, not the lifetime of a returned interface. User registrations are associated with the current user and system registrations are machine-wide; write access is required for the selected scope. Explorer lookup considers system and current-user state. Scope selection does not grant elevation, and the API does not define a general conflict-precedence policy among scopes or installers.
+> Registration state is persistent catalog state, not the lifetime of a returned interface. User registrations are associated with the current user and system registrations are machine-wide. Write access is required for the selected scope. Explorer lookup considers system and current-user state. Scope selection does not grant elevation, and the API does not define a general conflict-precedence policy among scopes or installers.
 
 <!-- d3d12-review-alert:end:cache-registration:catalog-lifecycle:0 -->
 
@@ -75,7 +75,7 @@ A shader component represents the pairing of one State Object Database (SODB) to
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Within an installer and its scope, application-name registration is an upsert: reusing a registered application name updates its description and executable path while retaining its components. The full executable path is the explorer lookup key, not proof of a unique catalog entry across names or installers. `pExeFilename` instead supplies the game's stable identifying filename even when the on-disk file is renamed. No path-canonicalization, hard-link equivalence, unique-executable ownership or case-distinct-name isolation guarantee is added by this description.
+> Within an installer and its scope, application name registration is an upsert: reusing a registered application name updates its description and executable path while retaining its components. The full executable path is the explorer lookup key, not proof of a unique catalog entry across names or installers. `pExeFilename` instead supplies the game's stable identifying filename even when the on-disk file is renamed. No path canonicalization, hard-link equivalence, unique-executable ownership or case-distinct-name isolation guarantee is added by this description.
 
 <!-- d3d12-review-alert:end:cache-registration:catalog-lifecycle:1 -->
 
@@ -84,7 +84,7 @@ A shader component represents the pairing of one State Object Database (SODB) to
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Component registration updates the named SODB association and supplied adapter-family mappings. Families not supplied by an update are retained; remove the component registration when the entire association must be removed. Registration removal and file deletion are different operations. Registering a path does not validate file contents or transfer file ownership.
+> Component registration updates the named SODB association and supplied adapter family mappings. Families not supplied by an update are retained; remove the component registration when the entire association must be removed. Registration removal and file deletion are different operations. Registering a path does not validate file contents or transfer file ownership.
 
 <!-- d3d12-review-alert:end:cache-registration:catalog-lifecycle:2 -->
 
@@ -102,7 +102,7 @@ A shader component represents the pairing of one State Object Database (SODB) to
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [Automatic runtime discovery](runtime-cache-discovery.md#default-discovery) defines the process-path lookup, exact `default` component and current-family path used during device initialization. Its [retained-state rules](runtime-cache-discovery.md#failure-and-lifetime) do not turn these catalog objects into live views or make registration updates refresh an existing device automatically.
+> [Automatic runtime discovery](runtime-cache-discovery.md#default-discovery) defines the process path lookup, exact `default` component and current-family path used during device initialization. Its [retained-state rules](runtime-cache-discovery.md#failure-and-lifetime) do not turn these catalog objects into live views or make registration updates refresh an existing device automatically.
 
 <!-- d3d12-review-alert:end:cache-registration:D144-runtime-catalog-consumer:0 -->
 
@@ -111,7 +111,7 @@ A shader component represents the pairing of one State Object Database (SODB) to
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Active installer exclusion uses the installer name and scope. For `D3D_SHADER_CACHE_APP_REGISTRATION_SCOPE_USER`, a name can have only one active installer within a Windows session; this does not exclude another session. For `D3D_SHADER_CACHE_APP_REGISTRATION_SCOPE_SYSTEM`, the exclusion applies across the machine. Active installer names are compared case-sensitively.
+> Active installer exclusion uses the installer name and scope. For `D3D_SHADER_CACHE_APP_REGISTRATION_SCOPE_USER`, a name can have only one active installer within a Windows session. This does not exclude another session. For `D3D_SHADER_CACHE_APP_REGISTRATION_SCOPE_SYSTEM`, the exclusion applies across the machine. Active installer names are compared case-sensitively.
 
 <!-- d3d12-review-alert:end:cache-registration:installer-name-identity:0 -->
 
@@ -120,7 +120,7 @@ A shader component represents the pairing of one State Object Database (SODB) to
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Persistent installer, application, component and adapter-family catalog keys are case-insensitive. Case-variant active installer names therefore do not establish independent catalogs or safe identity-isolated writes. The client must return a consistent installer name throughout its installer object's lifetime. Catalog identity and active-instance exclusion are distinct rules.
+> Persistent installer, application, component and adapter family catalog keys are case-insensitive. Case-variant active installer names therefore do not establish independent catalogs or safe identity-isolated writes. The client must return a consistent installer name throughout its installer object's lifetime. Catalog identity and active-instance exclusion are distinct rules.
 
 <!-- d3d12-review-alert:end:cache-registration:installer-name-identity:1 -->
 
@@ -134,7 +134,7 @@ A shader component represents the pairing of one State Object Database (SODB) to
 
 CompilerVersion is provided for informational purposes.  It indicates the version of the compiler itself, and may not rev when application profiles do.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:application-target-filter:0 -->For installer system-target discovery, when the D3D_SHADER_CACHE_APPLICATION_DESC is provided, it is used to filter the adapter list to the adapters preferred for use with the application.  The D3D_SHADER_CACHE_APPLICATION_DESC also informs the ApplicationProfileVersion, which is necessary to determine PSDB compatibility for a given application.<!-- d3d12-review-inline:end:cache-registration:application-target-filter:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:application-target-filter:0 -->For installer system target discovery, when the D3D_SHADER_CACHE_APPLICATION_DESC is provided, it is used to filter the adapter list to the adapters preferred for use with the application.  The D3D_SHADER_CACHE_APPLICATION_DESC also informs the ApplicationProfileVersion, which is necessary to determine PSDB compatibility for a given application.<!-- d3d12-review-inline:end:cache-registration:application-target-filter:0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:application-target-optional:0 -->For installer target enumeration, D3D_SHADER_CACHE_APPLICATION_DESC is optional.<!-- d3d12-review-inline:end:cache-registration:application-target-optional:0 --></ins>  If not supplied, the ApplicationProfileVersion is not determined and is set to zero on output.  It may be useful to initially obtain version information that is not dependent on application identity when negotiating with services, but ApplicationProfileVersion should still be checked for compatibility before downloading PSDBs.  Additionally, the list of preferred adapters is not filtered when application identity is not known, so a check with application identity is needed to only download psdbs for preferred adapters.
 
@@ -143,7 +143,7 @@ CompilerVersion is provided for informational purposes.  It indicates the versio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> When application metadata is supplied, system-target discovery must filter eligible adapter records to the adapters preferred for that application and sort the results by application preference. Installer-derived application targets follow this application-dependent discovery contract. Eligibility and application preference determine the candidate records; they are distinct from compiler-family support, ABI intersection and application-profile queries. No particular Windows settings algorithm, order among equally preferred adapters, or stability across updates is specified.
+> When application metadata is supplied, system target discovery must filter eligible adapter records to the adapters preferred for that application and sort the results by application preference. Installer-derived application targets follow this application-dependent discovery contract. Eligibility and application preference determine the candidate records. They are distinct from compiler family support, ABI intersection and application profile queries. No particular Windows settings algorithm, order among equally preferred adapters, or stability across updates is specified.
 
 <!-- d3d12-review-alert:end:cache-registration:application-target-ordering:0 -->
 
@@ -152,7 +152,7 @@ CompilerVersion is provided for informational purposes.  It indicates the versio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> An explorer's explicit device or adapter context is caller-selected and scopes discovery to that context. A system application-preference list must not silently discard that explicitly selected context. A catalog-only explorer has no adapter targets.
+> An explorer's explicit device or adapter context is caller-selected and scopes discovery to that context. A system application preference list must not silently discard that explicitly selected context. A catalog-only explorer has no adapter targets.
 
 <!-- d3d12-review-alert:end:cache-registration:application-target-ordering:1 -->
 
@@ -161,7 +161,7 @@ CompilerVersion is provided for informational purposes.  It indicates the versio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The installer captures its adapter records during installer creation. Records without offline-cache ABI metadata or without a present adapter at that time do not contribute. `GetMaxPrecompileTargetCount` is the resulting snapshot's upper bound, not a new physical-hardware query. Later driver or compiler changes can affect profile queries and can cause adapter omission or discovery failure without automatically refreshing that bound. An application object retains its discovered target records; callbacks do not automatically refresh those records.
+> The installer captures its adapter records during installer creation. Records without offline cache ABI metadata or without a present adapter at that time do not contribute. `GetMaxPrecompileTargetCount` is the resulting snapshot's upper bound, not a new physical-hardware query. Later driver or compiler changes can affect profile queries and can cause adapter omission or discovery failure without automatically refreshing that bound. An application object retains its discovered target records; callbacks do not automatically refresh those records.
 
 <!-- d3d12-review-alert:end:cache-registration:target-context-rules:0 -->
 
@@ -170,7 +170,7 @@ CompilerVersion is provided for informational purposes.  It indicates the versio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The driver-supported interval is inclusive. An adapter-family identifier, supported ABI interval, compiler version and application profile are not interchangeable identifiers. See [Version domains](offline-compilation.md#version-domains) and the device's [shader-cache ABI support payload](devices-and-capabilities.md#d3d12_feature_data_shadercache_abi_support). Discovery reports driver-side target information; it does not expand the compiler factory's potentially sparse supported-ABI set or make every ABI in a driver interval available from every registered compiler.
+> The driver-supported interval is inclusive. An adapter family identifier, supported ABI interval, compiler version and application profile are not interchangeable identifiers. See [Version domains](offline-compilation.md#version-domains) and the device's [shader cache ABI support payload](devices-and-capabilities.md#d3d12_feature_data_shadercache_abi_support). Discovery reports driver-side target information. It does not expand the compiler factory's potentially sparse supported ABI set or make every ABI in a driver interval available from every registered compiler.
 
 <!-- d3d12-review-alert:end:cache-registration:target-context-rules:1 -->
 
@@ -179,7 +179,7 @@ CompilerVersion is provided for informational purposes.  It indicates the versio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The installer upper-bound query, installer in/out-capacity enumeration, application count/fixed-capacity prefix copy, and component exact-size PSDB-map copy are four distinct protocols. Returned records need not be unique by adapter family. Application-preference sorting does not establish a stable tie order, a cross-call race-free snapshot or automatic callback-driven refresh.
+> The installer upper bound query, installer in/out-capacity enumeration, application count/fixed-capacity prefix copy, and component exact-size PSDB map copy are four distinct protocols. Returned records need not be unique by adapter family. Application preference sorting does not establish a stable tie order, a cross-call race-free snapshot or automatic callback-driven refresh.
 
 <!-- d3d12-review-alert:end:cache-registration:target-context-rules:2 -->
 
@@ -188,7 +188,7 @@ CompilerVersion is provided for informational purposes.  It indicates the versio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [PSDB recognition and compatibility](runtime-cache-discovery.md#compatibility) define runtime eligibility independently of these target-array protocols. [Compatible-output preference and driver reporting](runtime-cache-discovery.md#preference-and-reporting) distinguish installer/service recommendations from the runtime's one-path default lookup and from application-preferred adapter filtering.
+> [PSDB recognition and compatibility](runtime-cache-discovery.md#compatibility) define runtime eligibility independently of these target array protocols. [Compatible-output preference and driver reporting](runtime-cache-discovery.md#preference-and-reporting) distinguish installer/service recommendations from the runtime's one-path default lookup and from application-preferred adapter filtering.
 
 <!-- d3d12-review-alert:end:cache-registration:D144-compatibility-selection:0 -->
 
@@ -206,7 +206,7 @@ CompilerVersion is provided for informational purposes.  It indicates the versio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> An incompatible compiler family or an empty intersection with the driver's interval fails discovery with `DXGI_ERROR_DRIVER_INTERNAL_ERROR`. A missing registered compiler path can omit the adapter; other compiler/adapter query failures can fail discovery. The returned record still reports the driver's ABI interval and compiler version, not a contiguous expansion of the compiler's supported ABI set and not necessarily the ABI chosen to query the profile. Without application metadata no application profile is queried and `ApplicationProfileVersion` is zero.
+> An incompatible compiler family or an empty intersection with the driver's interval fails discovery with `DXGI_ERROR_DRIVER_INTERNAL_ERROR`. A missing registered compiler path can omit the adapter. Other compiler/adapter query failures can fail discovery. The returned record still reports the driver's ABI interval and compiler version, not a contiguous expansion of the compiler's supported ABI set and not necessarily the ABI chosen to query the profile. Without application metadata no application profile is queried and `ApplicationProfileVersion` is zero.
 
 <!-- d3d12-review-alert:end:cache-registration:registration-profile-query:1 -->
 
@@ -292,7 +292,7 @@ typedef struct SC_HANDLE__ *SC_HANDLE;
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D_SHADER_CACHE_APP_REGISTRATION_SCOPE_USER` is 0; `D3D_SHADER_CACHE_APP_REGISTRATION_SCOPE_SYSTEM` is 1. `D3D_SHADER_CACHE_TARGET_FLAG_NONE` is 0 and all other target flags are reserved. `D3D_VERSION_NUMBER` overlays `UINT64 Version` and four 16-bit parts; its shared version meaning is defined in [Version numbers](state-object-databases-and-identity.md#d3d12_version_number). The application description field order is `pExeFilename`, `pName`, `Version`, `pEngineName`, `EngineVersion`.
+> `D3D_SHADER_CACHE_APP_REGISTRATION_SCOPE_USER` is 0. `D3D_SHADER_CACHE_APP_REGISTRATION_SCOPE_SYSTEM` is 1. `D3D_SHADER_CACHE_TARGET_FLAG_NONE` is 0 and all other target flags are reserved. `D3D_VERSION_NUMBER` overlays `UINT64 Version` and four 16-bit parts. Its shared version meaning is defined in [Version numbers](state-object-databases-and-identity.md#d3d12_version_number). The application description field order is `pExeFilename`, `pName`, `Version`, `pEngineName`, `EngineVersion`.
 
 <!-- d3d12-review-alert:end:cache-registration:field-semantics:0 -->
 
@@ -357,7 +357,7 @@ Notes:
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D_SHADER_CACHE_PSDB_PROPERTIES` pairs a NUL-terminated adapter-family identifier with a NUL-terminated PSDB file path. The compiler properties contain an inline `wchar_t[128]` family string, inclusive minimum/maximum driver-supported ABI values, the compiler version, and an application-dependent profile version. The inline family storage is 128 wide characters including any terminating NUL, not a pointer or a byte length. Compiler versions, ABI versions, application/engine versions and application profile versions are different domains. Target identity and ABI/profile meaning are defined by [Offline compilation](offline-compilation.md#offline-compilation); this registration structure does not change newest-first compiler ABI enumeration or the compiler's zero-as-maximum target convention.
+> `D3D_SHADER_CACHE_PSDB_PROPERTIES` pairs a NUL-terminated adapter family identifier with a NUL-terminated PSDB file path. The compiler properties contain an inline `wchar_t[128]` family string, inclusive minimum/maximum driver-supported ABI values, the compiler version, and an application-dependent profile version. The inline family storage is 128 wide characters including any terminating NUL, not a pointer or a byte length. Compiler versions, ABI versions, application/engine versions and application profile versions are different domains. Target identity and ABI/profile meaning are defined by [Offline compilation](offline-compilation.md#offline-compilation). This registration structure does not change newest-first compiler ABI enumeration or the compiler's zero-as-maximum target convention.
 
 <!-- d3d12-review-alert:end:cache-registration:target-field-details:0 -->
 
@@ -370,7 +370,7 @@ Notes:
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The factory is retrieved through [D3D12GetInterface](devices-and-capabilities.md#d3d12getinterface), using `CLSID_D3DShaderCacheInstallerFactory` and `IID_ID3DShaderCacheInstallerFactory`. There is no separate registration-factory export. The returned runtime interfaces use `IUnknown` reference ownership. The client is caller-owned and must persist for the installer lifetime; its pointer is retained, not an `IUnknown` reference. Releasing a factory does not release independently held installer/explorer references. Application and component interfaces likewise own their retained metadata; releasing a parent interface is not catalog unregistration or a transfer of ownership of a child's borrowed strings.
+> The factory is retrieved through [D3D12GetInterface](devices-and-capabilities.md#d3d12getinterface), using `CLSID_D3DShaderCacheInstallerFactory` and `IID_ID3DShaderCacheInstallerFactory`. There is no separate registration factory export. The returned runtime interfaces use `IUnknown` reference ownership. The client is caller-owned and must persist for the installer lifetime. Its pointer is retained, not an `IUnknown` reference. Releasing a factory does not release independently held installer/explorer references. Application and component interfaces likewise own their retained metadata; releasing a parent interface is not catalog unregistration or a transfer of ownership of a child's borrowed strings.
 
 <!-- d3d12-review-alert:end:cache-registration:factory-bootstrap:0 -->
 
@@ -424,7 +424,7 @@ A pointer to receive the installer interface.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pClient` and `ppvInstaller` are required; a null output is not a creation probe. `riid` selects the requested interface, normally `IID_ID3DShaderCacheInstaller`. On success the caller owns the returned interface reference and must release it. The client must remain alive until the installer and any notification teardown have completed. The client has no `AddRef`/`Release` protocol. A caller must not unload a DLL that supplies a still-live client implementation or runtime interface.
+> `pClient` and `ppvInstaller` are required. A null output is not a creation probe. `riid` selects the requested interface, normally `IID_ID3DShaderCacheInstaller`. On success the caller owns the returned interface reference and must release it. The client must remain alive until the installer and any notification teardown have completed. The client has no `AddRef`/`Release` protocol. A caller must not unload a DLL that supplies a still-live client implementation or runtime interface.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstallerfactory-createinstaller-parameter-rules:0 -->
 
@@ -435,7 +435,7 @@ A pointer to receive the installer interface.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `S_OK` on success; `E_INVALIDARG` for a null client or output; `E_NOINTERFACE` for an unsupported requested interface; `E_OUTOFMEMORY` for allocation failure. A duplicate active identity can fail with `HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS)`. Access and other initialization errors propagate. There is no general promise that an early construction failure clears the caller's output. If interface negotiation is reached and rejects `riid`, the corresponding interface output is set to null; this does not extend to earlier failures.
+> `S_OK` on success; `E_INVALIDARG` for a null client or output; `E_NOINTERFACE` for an unsupported requested interface; `E_OUTOFMEMORY` for allocation failure. A duplicate active identity can fail with `HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS)`. Access and other initialization errors propagate. There is no general promise that an early construction failure clears the caller's output. If interface negotiation is reached and rejects `riid`, the corresponding interface output is set to null. This does not extend to earlier failures.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstallerfactory-createinstaller-returns:0 -->
 
@@ -458,7 +458,7 @@ Creates a shader cache explorer.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The explorer provides catalog lookup without a mutable installer. `pUnknown` can supply an `ID3D12Device`, an `IDXCoreAdapter`, or a DXGI adapter object that exposes `IDXGIAdapter4`. A base `IDXGIAdapter` pointer is acceptable when its underlying object supports querying `IDXGIAdapter4`; no older DXGI fallback is provided. The device and DXCore adapter paths are separate accepted paths. A device or adapter supplies caller-selected context for application target discovery; it does not change the full-executable-path catalog key or make returned objects writable. Application preferences do not discard this explicitly selected context. A null context permits catalog-only exploration, with no adapter targets supplied by that explorer. The returned objects do not depend on the caller retaining the original device/adapter merely to keep copied registration metadata alive.
+> The explorer provides catalog lookup without a mutable installer. `pUnknown` can supply an `ID3D12Device`, an `IDXCoreAdapter`, or a DXGI adapter object that exposes `IDXGIAdapter4`. A base `IDXGIAdapter` pointer is acceptable when its underlying object supports querying `IDXGIAdapter4`; no older DXGI fallback is provided. The device and DXCore adapter paths are separate accepted paths. A device or adapter supplies caller-selected context for application target discovery. It does not change the full-executable-path catalog key or make returned objects writable. Application preferences do not discard this explicitly selected context. A null context permits catalog-only exploration, with no adapter targets supplied by that explorer. The returned objects do not depend on the caller retaining the original device/adapter merely to keep copied registration metadata alive.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstallerfactory-createexplorer-behavior:0 -->
 
@@ -492,7 +492,7 @@ A pointer to receive the explorer interface.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `S_OK` on success; `E_INVALIDARG` for a null output or unsupported non-null context; `E_NOINTERFACE` for an unsupported requested output interface; `E_OUTOFMEMORY` for allocation failure. Device feature-query and adapter/context discovery failures propagate. Factory availability does not guarantee usable target metadata, and early failures do not uniformly initialize the output. If interface negotiation is reached and rejects `riid`, the corresponding interface output is set to null; this does not extend to earlier failures.
+> `S_OK` on success; `E_INVALIDARG` for a null output or unsupported non-null context; `E_NOINTERFACE` for an unsupported requested output interface; `E_OUTOFMEMORY` for allocation failure. Device feature query and adapter/context discovery failures propagate. Factory availability does not guarantee usable target metadata, and early failures do not uniformly initialize the output. If interface negotiation is reached and rejects `riid`, the corresponding interface output is set to null. This does not extend to earlier failures.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstallerfactory-createexplorer-returns:0 -->
 
@@ -542,7 +542,7 @@ A pointer to a wide character buffer to receive the name.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pNameLength` is required and is an in/out count of `wchar_t` characters, not bytes. With `pName == nullptr`, return the required character count including the terminating NUL. With a non-null buffer, the input count is its character capacity and must be at least the required count; write the NUL-terminated name within that capacity. This is the caller-buffer protocol; it must not be substituted for the pointer-returning application `GetInstallerName`. The runtime first queries the count, then supplies storage. An implementation must not write beyond an undersized buffer.
+> `pNameLength` is required and is an in/out count of `wchar_t` characters, not bytes. With `pName == nullptr`, return the required character count including the terminating NUL. With a non-null buffer, the input count is its character capacity and must be at least the required count. Write the NUL-terminated name within that capacity. This is the caller buffer protocol. It must not be substituted for the pointer-returning application `GetInstallerName`. The runtime first queries the count, then supplies storage. An implementation must not write beyond an undersized buffer.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstallerclient-getinstallername-parameter-rules:0 -->
 
@@ -553,7 +553,7 @@ A pointer to a wide character buffer to receive the name.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The caller implementation returns `S_OK` when it supplies the requested length or name, and a failure `HRESULT` when it cannot do so. The primary example returns `E_INVALIDARG` for null `pNameLength` or insufficient capacity; that example does not establish a unique required short-buffer HRESULT for every client implementation. Creation propagates a failed client result.
+> The caller implementation returns `S_OK` when it supplies the requested length or name, and a failure `HRESULT` when it cannot do so. The primary example returns `E_INVALIDARG` for null `pNameLength` or insufficient capacity. That example does not establish a unique required short-buffer HRESULT for every client implementation. Creation propagates a failed client result.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstallerclient-getinstallername-returns:0 -->
 
@@ -624,7 +624,7 @@ This is a callback function that will be called by the system when a graphics dr
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The system calls this client method for driver-update notification after listener registration. The installer can review the applications it has registered and determine which PSDB registrations need updating. Notification is not an automatic download, recompilation, cache replacement or catalog update. The callback is asynchronous to the installer's ordinary call flow; no compiler-style application-wide thread-safety guarantee, ordering guarantee, or generic reentrancy prohibition is specified here.
+> The system calls this client method for driver update notification after listener registration. The installer can review the applications it has registered and determine which PSDB registrations need updating. Notification is not an automatic download, recompilation, cache replacement or catalog update. The callback is asynchronous to the installer's ordinary call flow; no compiler-style application-wide thread safety guarantee, ordering guarantee, or generic reentrancy prohibition is specified here.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-behavior:0 -->
 
@@ -650,7 +650,7 @@ A pointer to an `ID3DShaderCacheInstaller` object that was listening for the dri
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The client returns an `HRESULT` describing its handling. Failure does not establish catalog rollback, retry scheduling, callback re-delivery, or unregistration. The example returns `E_NOTIMPL`; it does not register a listener.
+> The client returns an `HRESULT` describing its handling. Failure does not establish catalog rollback, retry scheduling, callback re-delivery, or unregistration. The example returns `E_NOTIMPL`. It does not register a listener.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-returns:0 -->
 
@@ -679,7 +679,7 @@ Registers a shader cache application.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Registers or updates application metadata within this installer and scope. The fully qualified executable path is the lookup key exposed to the explorer; `pExeFilename` is stable application-identification metadata, not that path. Registration does not install application files, create SODBs or PSDBs, or register their paths. Components are registered separately. Registration updates do not imply that all previously returned application objects refresh their retained descriptions.
+> Registers or updates application metadata within this installer and scope. The fully qualified executable path is the lookup key exposed to the explorer. `pExeFilename` is stable application-identification metadata, not that path. Registration does not install application files, create SODBs or PSDBs, or register their paths. Components are registered separately. Registration updates do not imply that all previously returned application objects refresh their retained descriptions.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-registerapplication-behavior:0 -->
 
@@ -706,7 +706,7 @@ A pointer to receive the application interface.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pExePath`, `pApplicationDesc`, the description's `pName` and `pExeFilename` are required and the strings must be nonempty and NUL-terminated. `pEngineName` may be null and is represented as an empty engine name on readback. Input strings are copied; the caller need not retain them after the call. `riid` selects the returned application interface. A null `ppvApp` requests registration without returning an object; it is not a no-side-effect validation probe. A non-null output receives a caller-owned reference on success. With a null interface-output pointer, `riid` is not negotiated.
+> `pExePath`, `pApplicationDesc`, the description's `pName` and `pExeFilename` are required and the strings must be nonempty and NUL-terminated. `pEngineName` may be null and is represented as an empty engine name on readback. Input strings are copied. The caller need not retain them after the call. `riid` selects the returned application interface. A null `ppvApp` requests registration without returning an object. It is not a no-side-effect validation probe. A non-null output receives a caller-owned reference on success. With a null interface output pointer, `riid` is not negotiated.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-registerapplication-parameter-rules:0 -->
 
@@ -717,7 +717,7 @@ A pointer to receive the application interface.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `S_OK` on success; `E_INVALIDARG` for the described missing/empty required values; `E_NOINTERFACE` for an unsupported requested interface when an object is requested; allocation, permission and persistent-catalog errors can propagate. Persistent registration can complete before output-object creation or interface negotiation fails; failure is not a universal rollback guarantee. Application-name upsert and executable-path lookup retain the distinct identity rules in [Catalog identity and persistence](#catalog-identity). If interface negotiation is reached and rejects `riid`, the corresponding interface output is set to null; this does not extend to earlier failures.
+> `S_OK` on success; `E_INVALIDARG` for the described missing/empty required values; `E_NOINTERFACE` for an unsupported requested interface when an object is requested; allocation, permission and persistent-catalog errors can propagate. Persistent registration can complete before output object creation or interface negotiation fails. Failure is not a universal rollback guarantee. Application name upsert and executable path lookup retain the distinct identity rules in [Catalog identity and persistence](#catalog-identity). If interface negotiation is reached and rejects `riid`, the corresponding interface output is set to null. This does not extend to earlier failures.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-registerapplication-returns:0 -->
 
@@ -742,7 +742,7 @@ Removes a shader cache application.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Removes the application's registration and associated component registrations from this installer's catalog, not the application's files or the SODB/PSDB files named by those registrations. After successful removal the supplied application object must not be used for further application operations. Release its reference. Cached application indices are invalidated; this does not promise that every separately acquired object becomes stale simultaneously.
+> Removes the application's registration and associated component registrations from this installer's catalog, not the application's files or the SODB/PSDB files named by those registrations. After successful removal the supplied application object must not be used for further application operations. Release its reference. Cached application indices are invalidated. This does not promise that every separately acquired object becomes stale simultaneously.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-removeapplication-behavior:0 -->
 
@@ -757,7 +757,7 @@ A pointer to the application to remove.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pApplication` is required and must be a runtime-provided application object identifying a registration belonging to this installer and scope, not a fabricated interface implementation or an unrelated application's object. The call does not consume the caller's COM reference. Holding a read-only application view neither grants nor revokes the authority of a separately held mutable installer; this removal operation remains subject to that installer's ownership and provenance preconditions.
+> `pApplication` is required and must be a runtime-provided application object identifying a registration belonging to this installer and scope, not a fabricated interface implementation or an unrelated application's object. The call does not consume the caller's COM reference. Holding a read-only application view neither grants nor revokes the authority of a separately held mutable installer. This removal operation remains subject to that installer's ownership and provenance preconditions.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-removeapplication-parameter-rules:0 -->
 
@@ -813,7 +813,7 @@ Retrieves the number of applications.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The application count. A catalog-read failure can yield zero; zero is not an `HRESULT` and does not distinguish an empty catalog from every read failure.
+> The application count. A catalog read failure can yield zero; zero is not an `HRESULT` and does not distinguish an empty catalog from every read failure.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-getapplicationcount-returns:0 -->
 
@@ -859,7 +859,7 @@ A pointer to receive the application interface.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `index` selects an existing entry. `riid` normally requests `IID_ID3DShaderCacheApplication`; the required `ppvApp` receives a caller-owned reference. A null output is not a documented enumeration or validation probe.
+> `index` selects an existing entry. `riid` normally requests `IID_ID3DShaderCacheApplication`. The required `ppvApp` receives a caller-owned reference. A null output is not a documented enumeration or validation probe.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-getapplication-parameter-rules:0 -->
 
@@ -870,7 +870,7 @@ A pointer to receive the application interface.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `S_OK` on success. An index at or beyond the currently counted entries returns `E_INVALIDARG`, not an end-of-enumeration `S_FALSE`. Unsupported requested interfaces return `E_NOINTERFACE`; catalog/allocation failures can propagate. No uniform early-failure output clearing is promised. If interface negotiation is reached and rejects `riid`, the corresponding interface output is set to null; this does not extend to earlier failures.
+> `S_OK` on success. An index at or beyond the currently counted entries returns `E_INVALIDARG`, not an end-of-enumeration `S_FALSE`. Unsupported requested interfaces return `E_NOINTERFACE`; catalog/allocation failures can propagate. No uniform early failure output clearing is promised. If interface negotiation is reached and rejects `riid`, the corresponding interface output is set to null. This does not extend to earlier failures.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-getapplication-returns:0 -->
 
@@ -938,7 +938,7 @@ Retrieves the maximum number of precompile targets <ins><!-- d3d12-review-inline
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Provides the upper bound from adapter records captured during installer creation for allocating the installer target array. The initial capture excludes records without offline-cache ABI metadata or a present adapter at that time. This call is not a fresh physical-hardware query, does not automatically remove an adapter from the captured bound after later removal, and is not a count of installed offline compiler plugins. Multiple physical adapters can contribute the same family, so this count is not a distinct-family count.
+> Provides the upper bound from adapter records captured during installer creation for allocating the installer target array. The initial capture excludes records without offline cache ABI metadata or a present adapter at that time. This call is not a fresh physical-hardware query, does not automatically remove an adapter from the captured bound after later removal, and is not a count of installed offline compiler plugins. Multiple physical adapters can contribute the same family, so this count is not a distinct-family count.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-getmaxprecompiletargetcount-behavior:0 -->
 
@@ -960,7 +960,7 @@ Retrieves the maximum number of precompile targets <ins><!-- d3d12-review-inline
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A `UINT` target-count upper bound from this installer's captured adapter records. Application preference filtering and later profile-query omission can produce fewer entries; later query failures can fail discovery. The bound does not promise current hardware state or automatic callback-driven refresh.
+> A `UINT` target count upper bound from this installer's captured adapter records. Application preference filtering and later profile query omission can produce fewer entries; later query failures can fail discovery. The bound does not promise current hardware state or automatic callback-driven refresh.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-getmaxprecompiletargetcount-returns:0 -->
 
@@ -983,7 +983,7 @@ Retrieves the precompile targets.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Returns driver/compiler properties from the installer's captured adapter records. With application metadata, discovery must filter eligible adapters by application preference, sort the preferred results, and determine their application profile versions as described in [Target discovery](#target-discovery). A missing registered compiler path can omit an adapter; incompatible compiler family or ABI sets and other query failures can fail discovery. Without an application description there is no application-preference filter, and the profile version is zero. This is installed-adapter discovery, not enumeration of every compiler registered with the offline compiler factory. It does not deduplicate identical family records into a promised distinct-family set.
+> Returns driver/compiler properties from the installer's captured adapter records. With application metadata, discovery must filter eligible adapters by application preference, sort the preferred results, and determine their application profile versions as described in [Target discovery](#target-discovery). A missing registered compiler path can omit an adapter; incompatible compiler family or ABI sets and other query failures can fail discovery. Without an application description there is no application preference filter, and the profile version is zero. This is installed-adapter discovery, not enumeration of every compiler registered with the offline compiler factory. It does not deduplicate identical family records into a promised distinct-family set.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-behavior:0 -->
 
@@ -1010,7 +1010,7 @@ Modifiers for target lookup behavior.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pApplicationDesc` is optional. When supplied, it must provide valid readable NUL-terminated `pExeFilename` and application-title `pName` strings; `pEngineName` is optional and must be readable and NUL-terminated when non-null. The description and its input strings must remain valid for the call; the method does not retain caller storage. A null descriptor requests profile-independent discovery, rather than supplying fallback values for missing required members of a non-null descriptor. `pArraySize` is required: on input it is the number of array elements available; on successful discovery it receives the available element count, which can exceed input capacity. `pArray` supplies caller-owned `D3D_SHADER_CACHE_COMPILER_PROPERTIES` storage for the input capacity. Returned family strings are inline in those structures and need no separate allocator or release. A zero-capacity query does not write an element; a null array is usable only with zero capacity, not as a positive-capacity probe. Counts are structures, not bytes. The method writes the prefix that fits and zero-initializes excess capacity beyond available records. Use `D3D_SHADER_CACHE_TARGET_FLAG_NONE`; other flags are invalid.
+> `pApplicationDesc` is optional. When supplied, it must provide valid readable NUL-terminated `pExeFilename` and application-title `pName` strings. `pEngineName` is optional and must be readable and NUL-terminated when non-null. The description and its input strings must remain valid for the call. The method does not retain caller storage. A null descriptor requests profile-independent discovery, rather than supplying fallback values for missing required members of a non-null descriptor. `pArraySize` is required: on input it is the number of array elements available; on successful discovery it receives the available element count, which can exceed input capacity. `pArray` supplies caller-owned `D3D_SHADER_CACHE_COMPILER_PROPERTIES` storage for the input capacity. Returned family strings are inline in those structures and need no separate allocator or release. A zero-capacity query does not write an element. A null array is usable only with zero capacity, not as a positive-capacity probe. Counts are structures, not bytes. The method writes the prefix that fits and zero-initializes excess capacity beyond available records. Use `D3D_SHADER_CACHE_TARGET_FLAG_NONE`. Other flags are invalid.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-parameter-rules:0 -->
 
@@ -1021,7 +1021,7 @@ Modifiers for target lookup behavior.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `S_OK` when the available count fits the supplied capacity, including an empty result. `DXGI_ERROR_MORE_DATA` when the count exceeds capacity; the updated count describes available entries and a prefix may already have been written. `E_INVALIDARG` for nonzero reserved flags. `DXGI_ERROR_DRIVER_INTERNAL_ERROR` for an incompatible compiler family or no supported compiler ABI in the inclusive driver interval. Allocation and other discovery failures propagate. On such failure there is no general count reset or zeroing guarantee. A count query and a later fill are separate calls, not a transaction.
+> `S_OK` when the available count fits the supplied capacity, including an empty result. `DXGI_ERROR_MORE_DATA` when the count exceeds capacity. The updated count describes available entries and a prefix may already have been written. `E_INVALIDARG` for nonzero reserved flags. `DXGI_ERROR_DRIVER_INTERNAL_ERROR` for an incompatible compiler family or no supported compiler ABI in the inclusive driver interval. Allocation and other discovery failures propagate. On such failure there is no general count reset or zeroing guarantee. A count query and a later fill are separate calls, not a transaction.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-returns:0 -->
 
@@ -1050,7 +1050,7 @@ When a new driver is available on the system the installer will need to review a
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Registers this installer for driver-update notifications delivered through its retained client's `HandleDriverUpdate`. It does not retain the client through `IUnknown`, nor does it automatically refresh catalog registrations or compiler-target objects. There is one active listener subscription per installer object.
+> Registers this installer for driver update notifications delivered through its retained client's `HandleDriverUpdate`. It does not retain the client through `IUnknown`, nor does it automatically refresh catalog registrations or compiler target objects. There is one active listener subscription per installer object.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-registerdriverupdatelistener-behavior:0 -->
 
@@ -1095,7 +1095,7 @@ Unregisters a listener for driver updates.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Removes this installer's listener subscription. Successful teardown waits for outstanding notification completion. Installer destruction also tears down its subscription; neither operation removes a separately configured service trigger. The contract does not establish that invoking teardown from inside the callback is safe.
+> Removes this installer's listener subscription. Successful teardown waits for outstanding notification completion. Installer destruction also tears down its subscription. Neither operation removes a separately configured service trigger. The contract does not establish that invoking teardown from inside the callback is safe.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-unregisterdriverupdatelistener-behavior:0 -->
 
@@ -1144,7 +1144,7 @@ This function registers a Windows service trigger that will automatically start 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Adds the driver-update service-start trigger to the specified service configuration, preserving unrelated triggers. This persistent service configuration is distinct from an in-process listener subscription and is not owned by the installer object's lifetime. Triggering starts the configured service; it does not itself repair application registrations or fetch PSDBs.
+> Adds the driver update service start trigger to the specified service configuration, preserving unrelated triggers. This persistent service configuration is distinct from an in-process listener subscription and is not owned by the installer object's lifetime. Triggering starts the configured service. It does not itself repair application registrations or fetch PSDBs.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-registerservicedriverupdatetrigger-behavior:0 -->
 
@@ -1159,7 +1159,7 @@ The service handle.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `hServiceHandle` is a caller-owned, borrowed Windows service handle, not an output handle. It must permit querying and changing service configuration (`SERVICE_QUERY_CONFIG` and `SERVICE_CHANGE_CONFIG`). The caller keeps it valid for this call and closes its own handle using the service API; this method does not transfer ownership or require retaining the handle for the trigger's persistence. Windows service configuration and service startup remain external Win32 contracts.
+> `hServiceHandle` is a caller-owned, borrowed Windows service handle, not an output handle. It must permit querying and changing service configuration (`SERVICE_QUERY_CONFIG` and `SERVICE_CHANGE_CONFIG`). The caller keeps it valid for this call and closes its own handle using the service API. This method does not transfer ownership or require retaining the handle for the trigger's persistence. Windows service configuration and service startup remain external Win32 contracts.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-registerservicedriverupdatetrigger-parameter-rules:0 -->
 
@@ -1193,7 +1193,7 @@ Unregisters a service driver update trigger.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Removes matching driver-update trigger data from the specified service, retaining unrelated trigger data and triggers. It is not a blanket removal of all service triggers, does not stop the service and does not remove a live installer listener. Releasing the installer is not a substitute for this operation.
+> Removes matching driver update trigger data from the specified service, retaining unrelated trigger data and triggers. It is not a blanket removal of all service triggers, does not stop the service and does not remove a live installer listener. Releasing the installer is not a substitute for this operation.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-unregisterservicedriverupdatetrigger-behavior:0 -->
 
@@ -1208,7 +1208,7 @@ The service handle.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `hServiceHandle` is borrowed and requires `SERVICE_QUERY_CONFIG` and `SERVICE_CHANGE_CONFIG`. The caller owns and closes it. No output or service-handle ownership transfer occurs.
+> `hServiceHandle` is borrowed and requires `SERVICE_QUERY_CONFIG` and `SERVICE_CHANGE_CONFIG`. The caller owns and closes it. No output or service handle ownership transfer occurs.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-unregisterservicedriverupdatetrigger-parameter-rules:0 -->
 
@@ -1219,7 +1219,7 @@ The service handle.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `S_OK` on success; `DXGI_ERROR_NOT_FOUND` if no matching trigger is present; `E_ACCESSDENIED` for denied access; `E_INVALIDARG` for an invalid service handle detected during query; `E_FAIL` for other query/change failures. There is no generic catalog rollback or service-state guarantee.
+> `S_OK` on success; `DXGI_ERROR_NOT_FOUND` if no matching trigger is present; `E_ACCESSDENIED` for denied access; `E_INVALIDARG` for an invalid service handle detected during query; `E_FAIL` for other query/change failures. There is no generic catalog rollback or service state guarantee.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheinstaller-unregisterservicedriverupdatetrigger-returns:0 -->
 
@@ -1261,7 +1261,7 @@ An out parameter that receives a pointer to the exe path.  The string's lifetime
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pExePath` is required. On success it receives a borrowed NUL-terminated wide-string pointer owned by the application object. It is not a caller buffer, has no character-capacity input and requires no caller allocator or free operation. Keep the application alive while using the string.
+> `pExePath` is required. On success it receives a borrowed NUL-terminated wide string pointer owned by the application object. It is not a caller buffer, has no character capacity input and requires no caller allocator or free operation. Keep the application alive while using the string.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheapplication-getexepath-parameter-rules:0 -->
 
@@ -1371,7 +1371,7 @@ HRESULT GetInstallerName( const wchar_t** pInstallerName);
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pInstallerName` is required. It receives a borrowed NUL-terminated wide-string pointer with application-object lifetime. There is no `SIZE_T` count, caller-provided character buffer, allocation or caller free operation. This is distinct from the caller-implemented client's `GetInstallerName`.
+> `pInstallerName` is required. It receives a borrowed NUL-terminated wide string pointer with application object lifetime. There is no `SIZE_T` count, caller-provided character buffer, allocation or caller free operation. This is distinct from the caller-implemented client's `GetInstallerName`.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheapplication-getinstallername-parameters:1 -->
 
@@ -1442,7 +1442,7 @@ A pointer to receive the component interface.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pName` is a required nonempty NUL-terminated component name. `pStateObjectDBPath` is a required NUL-terminated SODB path. `NumPSDB` is an element count and `pPSDBs` supplies that many structures with required NUL-terminated family/path strings; zero entries do not dereference the array. Input strings are copied. `riid` normally requests `IID_ID3DShaderCacheComponent`. A null `ppvComponent` requests catalog mutation without returning an object; it is not a no-side-effect probe. A returned interface is caller-owned. Explorer-derived objects are subject to the read-only requirement. With a null interface-output pointer, `riid` is not negotiated.
+> `pName` is a required nonempty NUL-terminated component name. `pStateObjectDBPath` is a required NUL-terminated SODB path. `NumPSDB` is an element count and `pPSDBs` supplies that many structures with required NUL-terminated family/path strings; zero entries do not dereference the array. Input strings are copied. `riid` normally requests `IID_ID3DShaderCacheComponent`. A null `ppvComponent` requests catalog mutation without returning an object. It is not a no-side-effect probe. A returned interface is caller-owned. Explorer-derived objects are subject to the read-only requirement. With a null interface output pointer, `riid` is not negotiated.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheapplication-registercomponent-parameter-rules:0 -->
 
@@ -1453,7 +1453,7 @@ A pointer to receive the component interface.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `S_OK` on success; `E_INVALIDARG` for a missing/empty name; `DXGI_ERROR_NOT_CURRENT` for an explicitly invalidated application; `E_NOINTERFACE` for an unsupported requested output interface; permission, allocation and catalog failures can propagate. Registration may precede output-object/interface failure, so failure does not establish rollback. Null malformed path/array inputs are not defined legal probes. If interface negotiation is reached and rejects `riid`, the corresponding interface output is set to null; this does not extend to earlier failures.
+> `S_OK` on success; `E_INVALIDARG` for a missing/empty name; `DXGI_ERROR_NOT_CURRENT` for an explicitly invalidated application; `E_NOINTERFACE` for an unsupported requested output interface; permission, allocation and catalog failures can propagate. Registration may precede output object/interface failure, so failure does not establish rollback. Null malformed path/array inputs are not defined legal probes. If interface negotiation is reached and rejects `riid`, the corresponding interface output is set to null. This does not extend to earlier failures.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheapplication-registercomponent-returns:0 -->
 
@@ -1572,7 +1572,7 @@ Retrieves a specific component by index.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Retrieves a component by its current zero-based enumeration position. Returned component metadata has the component object's lifetime rather than the caller's input-array lifetime. Explorer-derived components remain read-only.
+> Retrieves a component by its current zero-based enumeration position. Returned component metadata has the component object's lifetime rather than the caller's input array lifetime. Explorer-derived components remain read-only.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheapplication-getcomponent-behavior:0 -->
 
@@ -1606,7 +1606,7 @@ A pointer to receive the component interface.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `S_OK` only when acquisition succeeds and returns the requested component interface; `E_INVALIDARG` for an index outside the currently enumerated components; `E_NOINTERFACE` for an unsupported requested interface. Enumeration, read and open failures, including a change between enumeration and opening, must be propagated as a failure `HRESULT`. No single error code is required for every catalog-change race, and no `S_FALSE` end marker, stable snapshot or universal early-output clearing is specified. If interface negotiation is reached and rejects `riid`, the corresponding interface output is set to null; this does not extend to earlier failures.
+> `S_OK` only when acquisition succeeds and returns the requested component interface; `E_INVALIDARG` for an index outside the currently enumerated components; `E_NOINTERFACE` for an unsupported requested interface. Enumeration, read and open failures, including a change between enumeration and opening, must be propagated as a failure `HRESULT`. No single error code is required for every catalog change race, and no `S_FALSE` end marker, stable snapshot or universal early output clearing is specified. If interface negotiation is reached and rejects `riid`, the corresponding interface output is set to null. This does not extend to earlier failures.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheapplication-getcomponent-returns:0 -->
 
@@ -1629,7 +1629,7 @@ Retrieves the number of precompile targets.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Returns the number of application-dependent target records retained by this application object. Installer-derived applications use the installer's captured adapter context and the application-preference filtering/sorting and profile-query contract in [Target discovery](#target-discovery). Explorer-derived applications use the caller-selected device/adapter context without discarding it based on a system preference list, or no targets for catalog-only exploration. It is not a count of registered components, PSDBs, compiler plugins or unique adapter families. The retained results are not automatically refreshed by driver-update callbacks.
+> Returns the number of application-dependent target records retained by this application object. Installer-derived applications use the installer's captured adapter context and the application preference filtering/sorting and profile query contract in [Target discovery](#target-discovery). Explorer-derived applications use the caller-selected device/adapter context without discarding it based on a system preference list, or no targets for catalog-only exploration. It is not a count of registered components, PSDBs, compiler plugins or unique adapter families. The retained results are not automatically refreshed by driver update callbacks.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheapplication-getprecompiletargetcount-behavior:0 -->
 
@@ -1712,7 +1712,7 @@ Modifiers for target lookup behavior.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `S_OK` for a valid prefix copy, including zero capacity; it does not mean the supplied capacity held every target. `E_INVALIDARG` for nonzero reserved flags; `DXGI_ERROR_NOT_CURRENT` for an explicitly invalidated application. It does not use the installer's `DXGI_ERROR_MORE_DATA` sizing protocol or promise failure initialization.
+> `S_OK` for a valid prefix copy, including zero capacity. It does not mean the supplied capacity held every target. `E_INVALIDARG` for nonzero reserved flags; `DXGI_ERROR_NOT_CURRENT` for an explicitly invalidated application. It does not use the installer's `DXGI_ERROR_MORE_DATA` sizing protocol or promise failure initialization.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheapplication-getprecompiletargets-returns:0 -->
 
@@ -1754,7 +1754,7 @@ A pointer to receive the component name.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pName` is required. On success it receives a borrowed NUL-terminated wide string owned by the component. Keep the component alive; do not modify or free the string. There is no caller character buffer or size query.
+> `pName` is required. On success it receives a borrowed NUL-terminated wide string owned by the component. Keep the component alive. Do not modify or free the string. There is no caller character buffer or size query.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercachecomponent-getcomponentname-parameter-rules:0 -->
 
@@ -1803,7 +1803,7 @@ A pointer to receive the path.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pPath` is required and receives a borrowed NUL-terminated wide string owned by the component; there is no caller buffer, length parameter or caller free operation. Keep the component alive.
+> `pPath` is required and receives a borrowed NUL-terminated wide string owned by the component. There is no caller buffer, length parameter or caller free operation. Keep the component alive.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercachecomponent-getstateobjectdatabasepath-parameter-rules:0 -->
 
@@ -1837,7 +1837,7 @@ Retrieves the path to the precompiled cache.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Looks up the component object's retained PSDB path by exact, case-sensitive adapter-family name comparison. This retained-map lookup does not establish independent persistent catalog slots for case variants; persistent family keys are case-insensitive. It is a registration mapping lookup, not a cache opening, compatibility test or runtime selection operation.
+> Looks up the component object's retained PSDB path by exact, case-sensitive adapter family name comparison. This retained-map lookup does not establish independent persistent catalog slots for case variants; persistent family keys are case-insensitive. It is a registration mapping lookup, not a cache opening, compatibility test or runtime selection operation.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercachecomponent-getprecompiledcachepath-behavior:0 -->
 
@@ -1856,7 +1856,7 @@ A pointer to receive the path.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `pAdapterFamily` is a required NUL-terminated family identifier. `pPath` is a required pointer-output location, not a character buffer. On success it receives a borrowed NUL-terminated string owned by the component. The IDL's in/out pointer annotation does not establish a buffer-capacity protocol or transfer allocator ownership.
+> `pAdapterFamily` is a required NUL-terminated family identifier. `pPath` is a required pointer output location, not a character buffer. On success it receives a borrowed NUL-terminated string owned by the component. The IDL's in/out pointer annotation does not establish a buffer capacity protocol or transfer allocator ownership.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercachecomponent-getprecompiledcachepath-parameter-rules:0 -->
 
@@ -1954,7 +1954,7 @@ A pointer to an array to receive the database properties.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `ArraySize` must equal `GetPrecompiledShaderDatabaseCount()` for this component object. `pPSDBs` is required even when that count is zero. It points to caller-owned structure storage; each returned family/path pointer is borrowed from the component and must not be modified, freed or used after its lifetime. Counts are elements, not bytes. No caller-allocated strings or two-call null-output probe is defined.
+> `ArraySize` must equal `GetPrecompiledShaderDatabaseCount()` for this component object. `pPSDBs` is required even when that count is zero. It points to caller-owned structure storage. Each returned family/path pointer is borrowed from the component and must not be modified, freed or used after its lifetime. Counts are elements, not bytes. No caller-allocated strings or two-call null output probe is defined.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercachecomponent-getprecompiledshaderdatabases-parameter-rules:0 -->
 
@@ -1992,7 +1992,7 @@ Retrieves an application based on its executable path.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Looks up a catalog registration by full executable path and returns a read-only application object. It searches system and current-user registration visibility; it is not limited to the applications of a mutable installer created by this caller. The lookup itself belongs to the catalog contract and does not select, open or consume a PSDB. Returned application and component mutation operations are subject to the read-only requirement.
+> Looks up a catalog registration by full executable path and returns a read-only application object. It searches system and current-user registration visibility. It is not limited to the applications of a mutable installer created by this caller. The lookup itself belongs to the catalog contract and does not select, open or consume a PSDB. Returned application and component mutation operations are subject to the read-only requirement.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-behavior:0 -->
 
@@ -2026,7 +2026,7 @@ A pointer to receive the application interface.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `S_OK` on success; `E_INVALIDARG` for a null path or output; `E_NOINTERFACE` for an unsupported requested interface. A catalog search that completes without a matching application returns `E_FAIL`, not an `S_FALSE` enumeration marker. Catalog/allocation/context-dependent discovery errors can propagate. Early failure does not guarantee null output. If interface negotiation is reached and rejects `riid`, the corresponding interface output is set to null; this does not extend to earlier failures.
+> `S_OK` on success; `E_INVALIDARG` for a null path or output; `E_NOINTERFACE` for an unsupported requested interface. A catalog search that completes without a matching application returns `E_FAIL`, not an `S_FALSE` enumeration marker. Catalog/allocation/context-dependent discovery errors can propagate. Early failure does not guarantee null output. If interface negotiation is reached and rejects `riid`, the corresponding interface output is set to null. This does not extend to earlier failures.
 
 <!-- d3d12-review-alert:end:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-returns:0 -->
 
@@ -2039,7 +2039,7 @@ A pointer to receive the application interface.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> This illustrative registration example uses store-owned paths and a placeholder PSDB download. A real installation supplies the PSDB selected for each target; the example does not verify PSDB contents or require every system to expose a precompile target. `VERIFY_SUCCEEDED`, the COM smart pointer and standard C++ library types are assumed by the example. It is not an instruction to perform a registration as part of reading this specification.
+> This illustrative registration example uses store-owned paths and a placeholder PSDB download. A real installation supplies the PSDB selected for each target. The example does not verify PSDB contents or require every system to expose a precompile target. `VERIFY_SUCCEEDED`, the COM smart pointer and standard C++ library types are assumed by the example. It is not an instruction to perform a registration as part of reading this specification.
 
 <!-- d3d12-review-alert:end:cache-registration:example-context:0 -->
 
@@ -2201,6 +2201,6 @@ A pointer to receive the application interface.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The registration surface is part of the released D3D12 Agility SDK 1.619.5 package and its non-prerelease DirectX-Headers release. Runtime deployment and global-interface retrieval are defined in [Devices and capabilities](devices-and-capabilities.md#d3d12getinterface). The catalog, listener and service-trigger operations also depend on the corresponding Windows facilities and caller permissions; API publication does not establish universal OS deployment or usable hardware/cache contents.
+> The registration surface is part of the released D3D12 Agility SDK 1.619.5 package and its non-prerelease DirectX-Headers release. Runtime deployment and global interface retrieval are defined in [Devices and capabilities](devices-and-capabilities.md#d3d12getinterface). The catalog, listener and service-trigger operations also depend on the corresponding Windows facilities and caller permissions; API publication does not establish universal OS deployment or usable hardware/cache contents.
 
 <!-- d3d12-review-alert:end:cache-registration:availability:0 -->

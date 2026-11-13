@@ -20,7 +20,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Raytracing pipelines execute raygeneration, intersection, any-hit, closest-hit, miss and callable shaders. This chapter defines their execution, shader-table addressing, dispatch and stack contracts, and shader execution reordering.
+> Raytracing pipelines execute raygeneration, intersection, any-hit, closest-hit, miss and callable shaders. This chapter defines their execution, shader table addressing, dispatch and stack contracts, and shader execution reordering.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-scope:0 -->
 
@@ -29,7 +29,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [ray and coordinate-space definitions](ray-traversal.md#rays), [ray extents](ray-traversal.md#ray-extents), [triangle intersection rules](ray-traversal.md#fixed-function-ray-triangle-intersection-specification), [instance masking](ray-traversal.md#instance-masking), [ray flags](ray-traversal.md#ray-flags), [opacity-micromap traversal](ray-traversal.md#opacity-micromap-traversal), and [RayQuery operations](ray-traversal.md#rayquery-operations) are canonical in Ray traversal. The [Acceleration structures chapter](acceleration-structures.md) defines geometry, build/update, storage and determinism. The [local/global root-signature contract](binding.md#local-signatures) defines the 4064-byte local footprint (4096-byte record minus 32-byte identifier), register non-overlap, static-sampler identity/limits and root representation; the [acceleration-structure SRV contract](binding.md#acceleration-structure-srvs) defines NULL versus uninitialized acceleration-structure bindings.
+> The [ray and coordinate space definitions](ray-traversal.md#rays), [ray extents](ray-traversal.md#ray-extents), [triangle intersection rules](ray-traversal.md#fixed-function-ray-triangle-intersection-specification), [instance masking](ray-traversal.md#instance-masking), [ray flags](ray-traversal.md#ray-flags), [opacity micromap traversal](ray-traversal.md#opacity-micromap-traversal), and [RayQuery operations](ray-traversal.md#rayquery-operations) are canonical in Ray traversal. The [Acceleration structures chapter](acceleration-structures.md) defines geometry, build/update, storage and determinism. The [local/global root signature contract](binding.md#local-signatures) defines the 4064-byte local footprint (4096-byte record minus 32-byte identifier), register non-overlap, static sampler identity/limits and root representation. The [acceleration structure SRV contract](binding.md#acceleration-structure-srvs) defines NULL versus uninitialized acceleration structure bindings.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-owners:0 -->
 
@@ -47,7 +47,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [Raytracing shader visibility](binding.md#raytracing-shader-visibility) is defined with root binding. Both global and local root-argument visibility retain that shared contract.
+> [Raytracing shader visibility](binding.md#raytracing-shader-visibility) is defined with root binding. Both global and local root argument visibility retain that shared contract.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-ray-visibility-owner:0 -->
 
@@ -436,31 +436,14 @@ them.
 
 In a given record in a shader table, the root arguments that follow the
 shader identifier must match the local root signature the specified
-shader was compiled with. The argument layout is defined by packing each
-argument with padding as needed to align each to its individual
-(defined) size, and in the order declared in the local root signature.
-Root descriptors and descriptor handles (identifying
-descriptor tables) are each 8 bytes in size and therefore need to be at
-the nearest 8 byte aligned offset from the start of the record after
-whatever argument precedes it. Root constants are an array of DWORD
-values, and since they are the smallest data type available in the
-root signature, no extra padding or alignment is needed.
-
-> In the global root signature cost function, a descriptor table is
-> considered to be one DWORD (4 bytes), despite the API handle type being
-> an 8 byte value. For hardware that is constrained in their root argument
-> space, they are able to compress this value by diffing it against the
-> currently-bound root descriptor table to produce a 32-bit offset. Note
-> that for a local root signature, the full 64-bit value should be placed
-> in the shader table, which makes the local root signature size calculation
-> different than the global root signature cost function.
+shader was compiled with.
 
 <!-- d3d12-review-alert:begin:raytracing-pipelines:N-record-root-owner:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [local/global root-signature contract](binding.md#local-signatures) defines root-parameter representation and limits. The packing rules above specify how those arguments are serialized in shader records.
+> The arguments following the 32-byte shader identifier use the shared [local root argument layout](binding.md#local-root-argument-layout). The [local/global root signature contract](binding.md#local-signatures) defines their footprint limits.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-record-root-owner:0 -->
 
@@ -473,7 +456,7 @@ root signature, no extra padding or alignment is needed.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `RayGenerationShaderRecord` describes a single record, not an indexed table: it has `StartAddress` and `SizeInBytes`, with no `StrideInBytes`. Its start has the same 64-byte table-base alignment. A record contains the 32-byte identifier and its serialized local-root arguments; the [local-root footprint limit](binding.md#local-signatures) leaves at most 4064 bytes after that identifier.
+> `RayGenerationShaderRecord` describes a single record, not an indexed table: it has `StartAddress` and `SizeInBytes`, with no `StrideInBytes`. Its start has the same 64-byte table-base alignment. A record contains the 32-byte identifier and its serialized local root arguments. The [local root footprint limit](binding.md#local-signatures) leaves at most 4064 bytes after that identifier.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-range-validity:0 -->
 
@@ -482,7 +465,7 @@ root signature, no extra padding or alignment is needed.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Only shader records that will be accessed need valid contents. An unused miss, hit-group or callable table does not cause a shader invocation. A zero stride selects the same record for every index; it does not make a missing, empty or uninitialized record valid. A NULL shader identifier consists of exactly 32 zero bytes. A NULL shader identifier in a valid record is distinct from a missing table, an uninitialized identifier or an out-of-bounds record. The CPU `nullptr` returned for an unavailable shader by [GetShaderIdentifier](state-objects.md#id3d12stateobjectpropertiesgetshaderidentifier) is not the identifier data of a valid NULL shader record. The NULL-identifier behavior above does not exempt a lookup from the initialization and bounds rules.
+> Only shader records that will be accessed need valid contents. An unused miss, hit group or callable table does not cause a shader invocation. A zero stride selects the same record for every index. It does not make a missing, empty or uninitialized record valid. A NULL shader identifier consists of exactly 32 zero bytes. A NULL shader identifier in a valid record is distinct from a missing table, an uninitialized identifier or an out-of-bounds record. The CPU `nullptr` returned for an unavailable shader by [GetShaderIdentifier](state-objects.md#id3d12stateobjectpropertiesgetshaderidentifier) is not the identifier data of a valid NULL shader record. The NULL identifier behavior above does not exempt a lookup from the initialization and bounds rules.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-range-validity:1 -->
 
@@ -538,7 +521,7 @@ uninitialized or contains stale data.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The HLSL index inputs are unsigned `uint`. `TraceRay` uses the low 4 bits of `RayContributionToHitGroupIndex`, the low 4 bits of `MultiplierForGeometryContributionToHitGroupIndex`, and the low 16 bits of `MissShaderIndex`; `CallShader` supplies its `uint ShaderIndex` directly. `HitObject::SetShaderTableIndex` instead selects a final hit-group index using 28 bits, or a miss index using 16 bits.
+> The HLSL index inputs are unsigned `uint`. `TraceRay` uses the low 4 bits of `RayContributionToHitGroupIndex`, the low 4 bits of `MultiplierForGeometryContributionToHitGroupIndex`, and the low 16 bits of `MissShaderIndex`. `CallShader` supplies its `uint ShaderIndex` directly. `HitObject::SetShaderTableIndex` instead selects a final hit group index using 28 bits, or a miss index using 16 bits.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-index-widths:0 -->
 
@@ -547,7 +530,7 @@ uninitialized or contains stale data.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For the hit-group calculation, the [geometry-count limit](acceleration-structures.md#geometry-limits) is 2^24 and the instance contribution has 24 bits. Therefore the greatest index from legal `TraceRay` contributions is `15 + 15 * (2^24 - 1) + (2^24 - 1) = 2^28 - 1`; the intermediate record index does not require unsigned 32-bit wraparound. This is distinct from multiplication by the byte stride and addition to the GPU virtual address. GPU-address ranges and strides are 64-bit. The addressing formulas do not grant permission to wrap an overflowing address into an unrelated range: an accessed record outside the supplied table is governed by the undefined out-of-bounds rule.
+> For the hit group calculation, the [geometry count limit](acceleration-structures.md#geometry-limits) is 2^24 and the instance contribution has 24 bits. Therefore the greatest index from legal `TraceRay` contributions is `15 + 15 * (2^24 - 1) + (2^24 - 1) = 2^28 - 1`. The intermediate record index does not require unsigned 32-bit wraparound. This is distinct from multiplication by the byte stride and addition to the GPU virtual address. GPU address ranges and strides are 64-bit. The addressing formulas do not grant permission to wrap an overflowing address into an unrelated range: an accessed record outside the supplied table is governed by the undefined out-of-bounds rule.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-index-widths:1 -->
 
@@ -808,7 +791,7 @@ Also see [Reorder points](#reorder-points) and [Reorder points - memory coherenc
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [incremental-addition contract](state-objects.md#id3d12device7addtostateobject) specifies that the new object inherits the previous object's stack setting, not a recomputed budget for its newly added shaders. It also specifies family locking for export-property queries and the separate application synchronization requirement for stack-setting changes during addition.
+> The [incremental-addition contract](state-objects.md#id3d12device7addtostateobject) specifies that the new object inherits the previous object's stack setting, not a recomputed budget for its newly added shaders. It also specifies family locking for export property queries and the separate application synchronization requirement for stack setting changes during addition.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-stack-cases:3 -->
 
@@ -871,7 +854,7 @@ Parameter                           | Definition
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Command-list type, initial/reset and pipeline-selection state are defined in [Command-list state](command-list-state.md). Recording errors follow the [Close contract](execution.md#close). `DispatchRays` is forbidden inside an open render pass, whether direct or issued by `ExecuteIndirect`; see the [render-pass operation surface](output-merger.md#render-pass-operation-surface). [Predication](counters-queries-and-predication.md#predication-operation-matrix) defines predicate evaluation, and [query lifecycle](counters-queries-and-predication.md#query-lifecycle) and [pipeline statistics](counters-queries-and-predication.md#pipeline-statistics) define eligible query scopes and measured workloads. Shader-table reads use the [resource-state and barrier rules](synchronization.md).
+> Command list type, initial/reset and pipeline selection state are defined in [Command list state](command-list-state.md). Recording errors follow the [Close contract](execution.md#close). `DispatchRays` is forbidden inside an open render pass, whether direct or issued by `ExecuteIndirect`. See the [render pass operation surface](output-merger.md#render-pass-operation-surface). [Predication](counters-queries-and-predication.md#predication-operation-matrix) defines predicate evaluation, and [query lifecycle](counters-queries-and-predication.md#query-lifecycle) and [pipeline statistics](counters-queries-and-predication.md#pipeline-statistics) define eligible query scopes and measured workloads. Shader table reads use the [resource state and barrier rules](synchronization.md).
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-dispatch-context:0 -->
 
@@ -880,7 +863,7 @@ Parameter                           | Definition
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The description supplies GPU addresses, sizes and strides; it does not supply CPU pointers to shader records. CPU recording validation of the description does not establish that GPU shader identifiers, local-root arguments or dynamically selected records are initialized or in bounds. The [out-of-bounds rule](#out-of-bounds-shader-table-indexing) and [initialization rule](#shader-table-memory-initialization) apply when those records are used. Debug-layer diagnostics are not a substitute for those GPU-content requirements.
+> The description supplies GPU addresses, sizes and strides. It does not supply CPU pointers to shader records. CPU recording validation of the description does not establish that GPU shader identifiers, local root arguments or dynamically selected records are initialized or in bounds. The [out-of-bounds rule](#out-of-bounds-shader-table-indexing) and [initialization rule](#shader-table-memory-initialization) apply when those records are used. Debug layer diagnostics are not a substitute for those GPU content requirements.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-dispatch-context:1 -->
 
@@ -893,20 +876,20 @@ Parameter                           | Definition
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Source-inspected debug-layer checks include a null `pDesc`, unsupported raytracing, missing or mismatched pipeline state, a null or non-64-byte-aligned raygeneration start, and GPU-address range/resource references. For a nonzero miss/hit-group/callable base, the inspected path checks 64-byte base alignment, 32-byte stride alignment, and `SizeInBytes` being a multiple of a nonzero stride. These are description/command-state diagnostics; they do not establish CPU inspection of the eventual GPU records.
+> Source-inspected debug layer checks include a null `pDesc`, unsupported raytracing, missing or mismatched pipeline state, a null or non-64-byte-aligned raygeneration start, and GPU address range/resource references. For a nonzero miss/hit group/callable base, the inspected path checks 64-byte base alignment, 32-byte stride alignment, and `SizeInBytes` being a multiple of a nonzero stride. These are description/command state diagnostics. They do not establish CPU inspection of the eventual GPU records.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-dispatch-diagnostics:0 -->
 
 <a id="shader-table-access"></a>
 
-### Shader-table access and synchronization
+### Shader table access and synchronization
 
 <!-- d3d12-review-alert:begin:raytracing-pipelines:N-shader-table-access:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Shader tables and the raygeneration record are buffer shader-resource reads. With enhanced barriers, the consumer access is `D3D12_BARRIER_ACCESS_SHADER_RESOURCE` and the raytracing execution scope is `D3D12_BARRIER_SYNC_RAYTRACING`; see [barrier access](synchronization.md#barrier-access) and [synchronization scopes](synchronization.md#barrier-sync). The producer's access and scope depend on how the table data was written. Buffer accesses do not assign a texture layout.
+> Shader tables and the raygeneration record are buffer shader resource reads. With enhanced barriers, the consumer access is `D3D12_BARRIER_ACCESS_SHADER_RESOURCE` and the raytracing execution scope is `D3D12_BARRIER_SYNC_RAYTRACING`. See [barrier access](synchronization.md#barrier-access) and [synchronization scopes](synchronization.md#barrier-sync). The producer's access and scope depend on how the table data was written. Buffer accesses do not assign a texture layout.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-shader-table-access:0 -->
 
@@ -915,7 +898,7 @@ Parameter                           | Definition
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> With legacy barriers, shader-table memory must be in `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`, as qualified in the member descriptions below. That legacy state is not an additional state assignment for an enhanced-barrier consumer. Switching barrier models follows the [model-interoperation contract](synchronization.md#model-interoperation), including its COMMON and completion/flush requirements.
+> With legacy barriers, shader table memory must be in `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`, as qualified in the member descriptions below. That legacy state is not an additional state assignment for an enhanced barrier consumer. Switching barrier models follows the [model-interoperation contract](synchronization.md#model-interoperation), including its COMMON and completion/flush requirements.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-shader-table-access:1 -->
 
@@ -944,9 +927,9 @@ typedef struct D3D12_DISPATCH_RAYS_DESC
 > Member                              | Definition
 > ---------                           | ----------
 > `D3D12_GPU_VIRTUAL_ADDRESS_RANGE RayGenerationShaderRecord` | [Shader record](#shader-record) for the [Ray generation shader](#ray-generation-shaders) to use. With legacy barriers, memory must be in state `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`. Address must be aligned to 64 bytes ([D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT](#constants)).
-> `D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE MissShaderTable` | <p>[Shader table](#shader-tables) for [Miss shader](#miss-shaders). The stride is record stride, and must be aligned to 32 bytes ([D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT](#constants)), and in the range \[0...4096\] bytes.</p><p>With legacy barriers, memory must be in state `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`. Address must be aligned to 64 bytes([D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT](#constants)).</p>
-> `D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE HitGroupTable` | <p>[Shader table](#shader-tables) for [Hit Group](#hit-groups). The stride is record stride, and must be aligned to 32 bytes ([D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT](#constants)), and in the range \[0...4096\] bytes.</p><p> With legacy barriers, memory must be in state `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`. Address must be aligned to 64 bytes ([D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT](#constants)).</p>
-> `D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE CallableShaderTable` | <p> [Shader table](#shader-tables) for [Callable shaders](#callable-shaders). The stride is record stride, and must be aligned to 32 bytes ([D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT](#constants)), and in the range \[0...4096\] bytes.</p><p>With legacy barriers, memory must be in state `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`. Address must be aligned to 64 bytes ([D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT](#constants)).</p>
+> `D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE MissShaderTable` | [Shader table](#shader-tables) for [Miss shader](#miss-shaders). The stride is record stride, and must be aligned to 32 bytes ([D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT](#constants)), and in the range \[0...4096\] bytes.<br><br>With legacy barriers, memory must be in state `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`. Address must be aligned to 64 bytes([D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT](#constants)).
+> `D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE HitGroupTable` | [Shader table](#shader-tables) for [Hit Group](#hit-groups). The stride is record stride, and must be aligned to 32 bytes ([D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT](#constants)), and in the range \[0...4096\] bytes.<br><br> With legacy barriers, memory must be in state `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`. Address must be aligned to 64 bytes ([D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT](#constants)).
+> `D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE CallableShaderTable` |  [Shader table](#shader-tables) for [Callable shaders](#callable-shaders). The stride is record stride, and must be aligned to 32 bytes ([D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT](#constants)), and in the range \[0...4096\] bytes.<br><br>With legacy barriers, memory must be in state `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`. Address must be aligned to 64 bytes ([D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT](#constants)).
 > `UINT Width` | Width of ray generation shader thread grid.
 > `UINT Height` | Height of ray generation shader thread grid.
 > `UINT Depth` | Depth of ray generation shader thread grid.
@@ -998,7 +981,7 @@ Member                              | Definition
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [Indirect execution](indirect-execution.md) defines `ExecuteIndirect`, command-signature construction, argument packing and the 104-byte `D3D12_DISPATCH_RAYS_DESC` indirect payload, including its four trailing padding bytes. There is no implicit interargument padding. The table descriptions above define the dispatch payload's fields; the indirect ABI is unchanged.
+> [Indirect execution](indirect-execution.md) defines `ExecuteIndirect`, command signature construction, argument packing and the 104-byte `D3D12_DISPATCH_RAYS_DESC` indirect payload, including its four trailing padding bytes. There is no implicit interargument padding. The table descriptions above define the dispatch payload's fields. The indirect ABI is unchanged.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-indirect:0 -->
 
@@ -1081,7 +1064,7 @@ Current pipeline stack size in bytes.
 
 <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-api-GetPipelineStackSize:4 -->Calling this method on a state object other than a raytracing pipeline is invalid, including collections and non-raytracing executable state objects. Such a call returns `UINT32_MAX` promoted to `UINT64`, namely `0x00000000ffffffff`; it does not return a valid zero budget or `UINT64_MAX`.<!-- d3d12-review-inline:end:raytracing-pipelines:R-api-GetPipelineStackSize:4 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-api-GetPipelineStackSize:5 -->The 32-bit sentinel is intentional: in ordinary 64-bit stack-budget arithmetic it makes the result too large for `SetPipelineStackSize`, which drops values at or above `0xffffffff`, rather than using `UINT64_MAX`, which can overflow back to an apparently valid small value when added. This is not a guarantee against application narrowing, arbitrary arithmetic or overflow of a 64-bit calculation. The invalid/unresolved-export result of `GetShaderStackSize` is a separate contract with the same poisoning purpose. Valid raytracing-pipeline calls return the current pipeline budget, including its initialized default until changed.<!-- d3d12-review-inline:end:raytracing-pipelines:R-api-GetPipelineStackSize:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-api-GetPipelineStackSize:5 -->The 32-bit sentinel is intentional: in ordinary 64-bit stack budget arithmetic it makes the result too large for `SetPipelineStackSize`, which drops values at or above `0xffffffff`, rather than using `UINT64_MAX`, which can overflow back to an apparently valid small value when added. This is not a guarantee against application narrowing, arbitrary arithmetic or overflow of a 64-bit calculation. The invalid/unresolved-export result of `GetShaderStackSize` is a separate contract with the same poisoning purpose. Valid raytracing pipeline calls return the current pipeline budget, including its initialized default until changed.<!-- d3d12-review-inline:end:raytracing-pipelines:R-api-GetPipelineStackSize:5 --></ins>
 
 <a id="id3d12stateobjectpropertiessetpipelinestacksize"></a>
 
@@ -1118,7 +1101,7 @@ The runtime drops calls to state objects other than raytracing pipelines
 
 Parameter                           | Definition
 ---------                           | ----------
-`UINT64 PipelineStackSizeInBytes` | <p>Stack size in bytes to use during pipeline execution for each shader thread (of which there can be many thousands in flight on the GPU).</p><p>If the value is \>= 0xffffffff (max 32-bit UINT) the runtime drops the call (debug layer will print an error) as this is likely the result of summing up invalid stack sizes returned from [GetShaderStackSize()](#id3d12stateobjectpropertiesgetshaderstacksize) called with invalid parameters (which return 0xffffffff). In this case the previously set stack size (or default) remains.</p><p>This is only UINT64 at the API. In the DDI this is a UINT; as described above, massive stack sizes will not be requested from drivers.</p>
+`UINT64 PipelineStackSizeInBytes` | Stack size in bytes to use during pipeline execution for each shader thread (of which there can be many thousands in flight on the GPU).<br><br>If the value is \>= 0xffffffff (max 32-bit UINT) the runtime drops the call (debug layer will print an error) as this is likely the result of summing up invalid stack sizes returned from [GetShaderStackSize()](#id3d12stateobjectpropertiesgetshaderstacksize) called with invalid parameters (which return 0xffffffff). In this case the previously set stack size (or default) remains.<br><br>This is only UINT64 at the API. In the DDI this is a UINT; as described above, massive stack sizes will not be requested from drivers.
 
 <a id="setpipelinestacksize-return-values"></a>
 
@@ -1579,7 +1562,7 @@ void TraceRay(RaytracingAccelerationStructure AccelerationStructure,
 > ---------                           | ----------
 > `RaytracingAccelerationStructure AccelerationStructure` | Top-level acceleration structure to use. Specifying a NULL acceleration structure forces a miss, see [Additional SRV type](binding.md#acceleration-structure-srvs) for what NULL means here.
 > `uint RayFlags` | Valid combination of [Ray flags](ray-traversal.md#ray-flags). Only defined ray flags are propagated by the system, e.g. visible to the [RayFlags()](#rayflags) shader intrinsic.  Presence of unknown flags results in undefined behavior.
-> `uint InstanceInclusionMask` |<p>Bottom 8 bits of InstanceInclusionMask are used to include/reject geometry instances based on the InstanceMask in each [instance](acceleration-structures.md#d3d12_raytracing_instance_desc):</p><p>`if(!((InstanceInclusionMask & InstanceMask) & 0xff)) { ignore intersection }`</p>
+> `uint InstanceInclusionMask` |Bottom 8 bits of InstanceInclusionMask are used to include/reject geometry instances based on the InstanceMask in each [instance](acceleration-structures.md#d3d12_raytracing_instance_desc):<br><br>`if(!((InstanceInclusionMask & InstanceMask) & 0xff)) { ignore intersection }`
 > `uint RayContributionToHitGroupIndex` | Offset to add into [Addressing calculations within shader tables](#addressing-calculations-within-shader-tables) for hit group indexing. Only the bottom 4 bits of this value are used.
 > `uint MultiplierForGeometryContributionToHitGroupIndex` | Stride to multiply by GeometryContributionToHitGroupIndex (which is just the 0 based index the geometry was supplied by the app into its bottom-level acceleration structure). See [Addressing calculations within shader tables](#addressing-calculations-within-shader-tables) for hit group indexing. Only the bottom 4 bits of this multiplier value are used.
 > `uint MissShaderIndex` | Miss shader index in [Addressing calculations within shader tables](#addressing-calculations-within-shader-tables). Only the bottom 16 bits of this value are used.
@@ -2012,7 +1995,7 @@ functionality into two distinct stages: the traversal stage and the shading
 stage. For SER's `MaybeReorderThread`, the minimal allowed implementation is simply a
 no-op, while implementations that already employ more sophisticated scheduling
 strategies are likely able to reuse existing mechanisms to implement support
-for SER. <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-shader-execution-reordering:4 -->The shader programming-model additions are in HLSL and DXIL; actual-reordering capability is exposed by the device query below.<!-- d3d12-review-inline:end:raytracing-pipelines:R-shader-execution-reordering:4 --></ins>
+for SER. <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-shader-execution-reordering:4 -->The shader programming model additions are in HLSL and DXIL; actual-reordering capability is exposed by the device query below.<!-- d3d12-review-inline:end:raytracing-pipelines:R-shader-execution-reordering:4 --></ins>
 
 This feature is a required part of Shader Model 6.9 for devices with raytracing support.  It is also a required part of [D3D12_RAYTRACING_TIER_1_2](devices-and-capabilities.md#raytracing-tiers), though even if a device doesn't support this tier it <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-shader-execution-reordering:5 -->must still support<!-- d3d12-review-inline:end:raytracing-pipelines:R-shader-execution-reordering:5 --></ins> SER if it supports Shader Model 6.9.
 
@@ -2104,7 +2087,7 @@ ignore the `MaybeReorderThread()` call.<!-- d3d12-review-inline:end:raytracing-p
 
 ## HitObject
 
-<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-hitobject:0 -->The [stored-result type contract](ray-traversal.md#stored-results) defines HitObject value semantics, default NOP initialization, storage restrictions, hit/miss/NOP distinctions and legal stages. [RayQuery](ray-traversal.md#rayquery) has reference semantics rather than HitObject's value semantics. In particular, converting `COMMITTED_NOTHING` produces a NOP object, not a stored miss. The following operations use that shared type contract.<!-- d3d12-review-inline:end:raytracing-pipelines:R-hitobject:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-hitobject:0 -->The [stored result type contract](ray-traversal.md#stored-results) defines HitObject value semantics, default NOP initialization, storage restrictions, hit/miss/NOP distinctions and legal stages. [RayQuery](ray-traversal.md#rayquery) has reference semantics rather than HitObject's value semantics. In particular, converting `COMMITTED_NOTHING` produces a NOP object, not a stored miss. The following operations use that shared type contract.<!-- d3d12-review-inline:end:raytracing-pipelines:R-hitobject:0 --></ins>
 
 |`HitObject` methods:|
 |---------------------|
@@ -3312,10 +3295,10 @@ For the application developer, the following classification provides a descripti
 >
 > qualifier|semantic
 > ---|---
-> `read`|<p>Indicates that for the given stage, the payload field is available for reading and will contain the last value written by a previous stage.</p>
-> `write`|<p>Indicates that the payload field will be overwritten by the given stage, if the stage executes. The field will be overwritten regardless of whether the executed shader explicitly assigns a value. If a value is not explicitly written by the shader, then an undefined value is written to the payload field at the end of the shader.</p><p>If the given stage does not execute, the payload field remains unmodified. A shader stage may not execute for various reasons. Examples include [ray flags](ray-traversal.md#ray-flags) (`FORCE_OPAQUE` does not execute anyhit, `SKIP_CLOSESTHIT` does not execute closesthit) or dynamic behavior (rays that miss all geometry do not execute closesthit, rays that hit geometry do not execute miss, etc).</p><p>*Note that invoking a NULL shader identifier in the Shader Table is equivalent to executing an empty shader, so in that case the stage counts as executed.*</p>
-> `read+write`|<p>Indicates that the given stage may read and/or write the payload field. This is analogous to inout function parameters. If the shader does not explicitly assign a value or if the stage is not executed, the payload field remains unmodified.</p>
-> `<none>`|<p>The payload field is neither available for reading nor are its contents modified by the given stage.</p>
+> `read`|Indicates that for the given stage, the payload field is available for reading and will contain the last value written by a previous stage.
+> `write`|Indicates that the payload field will be overwritten by the given stage, if the stage executes. The field will be overwritten regardless of whether the executed shader explicitly assigns a value. If a value is not explicitly written by the shader, then an undefined value is written to the payload field at the end of the shader.<br><br>If the given stage does not execute, the payload field remains unmodified. A shader stage may not execute for various reasons. Examples include [ray flags](ray-traversal.md#ray-flags) (`FORCE_OPAQUE` does not execute anyhit, `SKIP_CLOSESTHIT` does not execute closesthit) or dynamic behavior (rays that miss all geometry do not execute closesthit, rays that hit geometry do not execute miss, etc).<br><br>*Note that invoking a NULL shader identifier in the Shader Table is equivalent to executing an empty shader, so in that case the stage counts as executed.*
+> `read+write`|Indicates that the given stage may read and/or write the payload field. This is analogous to inout function parameters. If the shader does not explicitly assign a value or if the stage is not executed, the payload field remains unmodified.
+> `<none>`|The payload field is neither available for reading nor are its contents modified by the given stage.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:R-anyhitclosesthitmiss-stages:0 -->
 
@@ -3753,7 +3736,7 @@ lacks `write(closesthit)`.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Shader Model 6.9, shader execution reordering and the HLSL opacity-micromap functionality are shipped in retail Agility SDK 1.619. Devices supporting Shader Model 6.9 and raytracing tier 1.0 or higher must support SER semantics; this does not require actual thread reordering. Tier 1.2 is the bundle including opacity micromaps and SER. `ShaderExecutionReorderingActuallyReorders` reports actual-reordering capability separately from semantic support.
+> Shader Model 6.9, shader execution reordering and the HLSL opacity micromap functionality are shipped in retail Agility SDK 1.619. Devices supporting Shader Model 6.9 and raytracing tier 1.0 or higher must support SER semantics. This does not require actual thread reordering. Tier 1.2 is the bundle including opacity micromaps and SER. `ShaderExecutionReorderingActuallyReorders` reports actual-reordering capability separately from semantic support.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-maturity:0 -->
 
@@ -3762,7 +3745,7 @@ lacks `write(closesthit)`.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [provisional FORCE_OMM_2_STATE caller condition](ray-traversal.md#provisional-conservative-force-two-state-condition) applies to ray flags passed by pipeline operations as well as inline traversal. Other flag domains retain their own stated rules. Baseline dynamic-raytracing shader libraries use Shader Model 6.3; [GeometryIndex](#geometryindex) requires Shader Model 6.5 and raytracing tier 1.1, [payload qualifiers](#availability) have their stated Shader Model 6.6/6.7 behavior, and HitObject/MaybeReorderThread require Shader Model 6.9.
+> The [provisional FORCE_OMM_2_STATE caller condition](ray-traversal.md#provisional-conservative-force-two-state-condition) applies to ray flags passed by pipeline operations as well as inline traversal. Other flag domains retain their own stated rules. Baseline dynamic-raytracing shader libraries use Shader Model 6.3. [GeometryIndex](#geometryindex) requires Shader Model 6.5 and raytracing tier 1.1, [payload qualifiers](#availability) have their stated Shader Model 6.6/6.7 behavior, and HitObject/MaybeReorderThread require Shader Model 6.9.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-maturity:1 -->
 
@@ -3775,7 +3758,7 @@ lacks `write(closesthit)`.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [stack-property DDIs](state-objects.md#published-driver-declarations) use `UINT` stack sizes, while the API uses `UINT64`. The runtime rejects setter values at or above `0xffffffff` before narrowing.
+> The [stack property DDIs](state-objects.md#published-driver-declarations) use `UINT` stack sizes, while the API uses `UINT64`. The runtime rejects setter values at or above `0xffffffff` before narrowing.
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-ddi-ownership:0 -->
 
@@ -3824,13 +3807,13 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DISPATCH_RAYS_0054 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `PFND3D12DDI_DISPATCH_RAYS_0054` is the `pfnDispatchRays` member of `D3D12DDI_COMMAND_LIST_FUNCS_3D_0054`. Stack-property DDI membership in the device DDI tables is listed in [State objects](state-objects.md#callback-table-membership).
+> `PFND3D12DDI_DISPATCH_RAYS_0054` is the `pfnDispatchRays` member of `D3D12DDI_COMMAND_LIST_FUNCS_3D_0054`. Stack property DDI membership in the device DDI tables is listed in [State objects](state-objects.md#callback-table-membership).
 
 <!-- d3d12-review-alert:end:raytracing-pipelines:N-ddi-membership:0 -->
 
 <a id="driver-current-ray-dispatch"></a>
 
-#### Current ray-dispatch forms
+#### Current ray dispatch forms
 
 <!-- d3d12-review-alert:begin:raytracing-pipelines:RD-current-roles:0 -->
 

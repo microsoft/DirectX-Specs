@@ -20,12 +20,12 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The current vertex and input-layout driver object creation/sizing/destruction contracts
+> The current vertex and input layout driver object creation/sizing/destruction contracts
 > are defined with [pipeline component creation](pipeline-state.md#driver-shader-objects)
 > and its [exact slot associations](pipeline-state.md#driver-object-slots).
 > They do not add application shader/state object APIs or replace this stage's
-> execution, linkage, capability or resource-lifetime rules. The
-> [element-layout driver representation](pipeline-state.md#driver-element-layout)
+> execution, linkage, capability or resource lifetime rules. The
+> [element layout driver representation](pipeline-state.md#driver-element-layout)
 > resolves input semantics to shader registers.
 
 <!-- d3d12-review-alert:end:geometry:PC-stage-creation-owner:0 -->
@@ -36,7 +36,7 @@
 
 <ins><!-- d3d12-review-inline:begin:geometry:H-overview:0 -->The Input Assembler (IA) introduces triangles, lines, points or Control Points (for Patches) into the graphics Pipeline, by pulling source geometry data out of 1D [Buffers](resources.md#buffer-description).<!-- d3d12-review-inline:end:geometry:H-overview:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:geometry:H-overview:1 -->Vertex data can come from multiple Buffers, accessed in an "Array-of-Structures" fashion from each Buffer. The Buffers are each bound to an individual input slot and given a structure stride. The layout of data across all the Buffers is specified by an Input Declaration, in which each entry defines an "Element" with: an input slot, a structure offset, a data type, and a shader-input semantic (resolved to an input register for the Vertex Shader).<!-- d3d12-review-inline:end:geometry:H-overview:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:H-overview:1 -->Vertex data can come from multiple Buffers, accessed in an "Array-of-Structures" fashion from each Buffer. The Buffers are each bound to an individual input slot and given a structure stride. The layout of data across all the Buffers is specified by an Input Declaration, in which each entry defines an "Element" with: an input slot, a structure offset, a data type, and a shader input semantic (resolved to an input register for the Vertex Shader).<!-- d3d12-review-inline:end:geometry:H-overview:1 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:geometry:H-overview:2 -->A given sequence of vertices is constructed out of data fetched from Buffers, in a traversal directed by a combination of fixed-function state and various Draw*() API/DDI calls. Various primitive topologies are available to make the sequence of vertex data represent a sequence of primitives. Example topologies are: point-list, line-list, triangle-list, triangle-strip, 8 control-point patch-list.<!-- d3d12-review-inline:end:geometry:H-overview:2 --></ins>
 
@@ -55,7 +55,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The selected [graphics PSO](pipeline-state.md#graphics-description) contains the [input layout](pipeline-state.md#input-and-stream-output) and topology class. The command list supplies the vertex/index buffer views and detailed primitive topology. Input-layout use requires the root signature's `D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT` permission. [Initial/reset and bundle state](command-list-state.md#buffer-bindings) and [primitive-topology initialization](command-list-state.md#base-graphics) remain the canonical state rules.
+> The selected [graphics PSO](pipeline-state.md#graphics-description) contains the [input layout](pipeline-state.md#input-and-stream-output) and topology class. The command list supplies the vertex/index buffer views and detailed primitive topology. Input layout use requires the root signature's `D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT` permission. [Initial/reset and bundle state](command-list-state.md#buffer-bindings) and [primitive topology initialization](command-list-state.md#base-graphics) remain the canonical state rules.
 
 <!-- d3d12-review-alert:end:geometry:N-state-owners:0 -->
 
@@ -64,7 +64,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The PSO's [input-layout constraints](pipeline-state.md#input-layout-constraints) define same-slot classification/step-rate agreement and per-slot appended-element placement. These constraints give each `Slot[s]` in the traversal algorithms one classification and one step rate.
+> The PSO's [input layout constraints](pipeline-state.md#input-layout-constraints) define same-slot classification/step rate agreement and per-slot appended-element placement. These constraints give each `Slot[s]` in the traversal algorithms one classification and one step rate.
 
 <!-- d3d12-review-alert:end:geometry:N-layout-prerequisites:0 -->
 
@@ -74,7 +74,7 @@
 
 ### Input elements and buffer views
 
-<ins><!-- d3d12-review-inline:begin:geometry:H-layout:0 -->Input-layout elements declare 1D Buffer structure layout. Structure fields are defined with format and offset, plus a shader-input semantic. Multiple elements (from one or more structures) can not feed a single register.<!-- d3d12-review-inline:end:geometry:H-layout:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:H-layout:0 -->Input layout elements declare 1D Buffer structure layout. Structure fields are defined with format and offset, plus a shader input semantic. Multiple elements (from one or more structures) can not feed a single register.<!-- d3d12-review-inline:end:geometry:H-layout:0 --></ins>
 
 <a id="d3d12_vertex_buffer_view"></a>
 
@@ -124,20 +124,22 @@ The size in bytes of the index buffer.
 
 `Format`
 
-A [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format)-typed value for the index-buffer format.
+A [DXGI_FORMAT](formats.md#dxgi-format)-typed value for the index-buffer format.
 
 <!-- d3d12-review-alert:begin:geometry:N-view-bounds:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `BufferLocation` is the start GPU virtual address of the view; `SizeInBytes` specifies its accessible byte extent. Vertex/index views are supplied directly, not through descriptor-heap handles. The input-layout element format interprets vertex data; an index-buffer view supplies its own scalar index format. The ordinary index formats are `DXGI_FORMAT_R16_UINT` and `DXGI_FORMAT_R32_UINT`.
+> `BufferLocation` is the start GPU virtual address of the view. `SizeInBytes` specifies its accessible byte extent. Vertex/index views are supplied directly, not through descriptor heap handles. The input layout element format interprets vertex data. An index buffer view supplies its own scalar index format. The ordinary index formats are `DXGI_FORMAT_R16_UINT` and `DXGI_FORMAT_R32_UINT`.
 
 <!-- d3d12-review-alert:end:geometry:N-view-bounds:0 -->
 
 <a id="topology-enumeration"></a>
 
 ### Detailed primitive topology
+
+<a id="d3d-primitive-topology"></a>
 
 ```cpp
 typedef enum D3D_PRIMITIVE_TOPOLOGY
@@ -215,7 +217,7 @@ Bind information about the primitive type, and data order that describes input d
 
 `[in] PrimitiveTopology`
 
-The type of primitive and ordering of the primitive data (see [D3D_PRIMITIVE_TOPOLOGY](https://learn.microsoft.com/en-us/windows/desktop/api/d3dcommon/ne-d3dcommon-d3d_primitive_topology)).
+The type of primitive and ordering of the primitive data (see [D3D_PRIMITIVE_TOPOLOGY](#d3d-primitive-topology)).
 
 #### Return values
 
@@ -228,7 +230,7 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The selected topology must be compatible with the PSO's `PrimitiveTopologyType` and active shader stages. `D3D_PRIMITIVE_TOPOLOGY_UNDEFINED` is not a drawable topology. List/strip/adjacency selection is command-list state, not a change to the PSO's stored topology class.
+> The selected topology must be compatible with the PSO's `PrimitiveTopologyType` and active shader stages. `D3D_PRIMITIVE_TOPOLOGY_UNDEFINED` is not a drawable topology. List/strip/adjacency selection is command list state, not a change to the PSO's stored topology class.
 
 <!-- d3d12-review-alert:end:geometry:N-topology-use:0 -->
 
@@ -248,7 +250,7 @@ void IASetVertexBuffers(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:geometry:B-IASetVertexBuffers:0 -->Sets vertex buffer views in the input-assembler binding slots.<!-- d3d12-review-inline:end:geometry:B-IASetVertexBuffers:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:B-IASetVertexBuffers:0 -->Sets vertex buffer views in the input assembler binding slots.<!-- d3d12-review-inline:end:geometry:B-IASetVertexBuffers:0 --></ins>
 
 #### Parameters
 
@@ -262,7 +264,7 @@ The number of views in the *pViews* array.
 
 `[in, optional] pViews`
 
-Specifies the vertex buffer views in an array of [D3D12_VERTEX_BUFFER_VIEW](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_vertex_buffer_view) structures.
+Specifies the vertex buffer views in an array of [D3D12_VERTEX_BUFFER_VIEW](#d3d12_vertex_buffer_view) structures.
 
 #### Return values
 
@@ -275,7 +277,7 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `StartSlot` must be less than 32, and `NumViews` must not exceed `32 - StartSlot`. A null `pViews` clears that range; a valid zero count changes no slots. Slots outside the specified range are unchanged. A vertex stride of zero is permitted; the maximum is `D3D12_REQ_MULTI_ELEMENT_STRUCTURE_SIZE_IN_BYTES` (2048). A zero `BufferLocation` with nonzero `SizeInBytes` is invalid. The views carry addresses, sizes and strides; they do not bind or retain resource COM objects.
+> `StartSlot` must be less than 32, and `NumViews` must not exceed `32 - StartSlot`. A null `pViews` clears that range. A valid zero count changes no slots. Slots outside the specified range are unchanged. A vertex stride of zero is permitted. The maximum is `D3D12_REQ_MULTI_ELEMENT_STRUCTURE_SIZE_IN_BYTES` (2048). A zero `BufferLocation` with nonzero `SizeInBytes` is invalid. The views carry addresses, sizes and strides. They do not bind or retain resource COM objects.
 
 <!-- d3d12-review-alert:end:geometry:N-vertex-bind:0 -->
 
@@ -301,7 +303,7 @@ Only one index buffer can be bound to the graphics pipeline at any one time.
 
 `[in, optional] pView`
 
-The view specifies the index buffer's address, size, and [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format), as a pointer to a [D3D12_INDEX_BUFFER_VIEW](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ns-d3d12-d3d12_index_buffer_view) structure.
+The view specifies the index buffer's address, size, and [DXGI_FORMAT](formats.md#dxgi-format), as a pointer to a [D3D12_INDEX_BUFFER_VIEW](#d3d12_index_buffer_view) structure.
 
 #### Return values
 
@@ -314,7 +316,7 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A null `pView` unbinds the index buffer. The view's `BufferLocation` must be aligned to its index-element size. A zero `BufferLocation` with nonzero `SizeInBytes` is invalid.
+> A null `pView` unbinds the index buffer. The view's `BufferLocation` must be aligned to its index element size. A zero `BufferLocation` with nonzero `SizeInBytes` is invalid.
 
 <!-- d3d12-review-alert:end:geometry:N-index-bind:0 -->
 
@@ -337,7 +339,7 @@ void IASetIndexBufferStripCutValue(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Sets the current index-buffer strip-cut value. The [dynamic application-state contract](command-list-state.md#dynamic-application-state) defines `DynamicIndexBufferStripCutSupported`, the required pipeline creation flag, initial/reset and bundle values, and overwrite on PSO selection. This command does not change the PSO's stored description.
+> Sets the current index buffer strip-cut value. The [dynamic application state contract](command-list-state.md#dynamic-application-state) defines `DynamicIndexBufferStripCutSupported`, the required pipeline creation flag, initial/reset and bundle values, and overwrite on PSO selection. This command does not change the PSO's stored description.
 
 <!-- d3d12-review-alert:end:geometry:N-dynamic-cut:0 -->
 
@@ -381,7 +383,7 @@ void IASetIndexBufferStripCutValue(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> These graphics input-binding and direct draw commands are supported on DIRECT and BUNDLE recordings, not COMPUTE or COPY recordings. Draws require a compatible graphics PSO, root signature and detailed topology. Bound resources must satisfy [recording/execution lifetime](execution.md#lifetime), [residency](resources.md#residency), and the applicable [legacy states](synchronization.md#legacy-resource-states) or [enhanced access rules](synchronization.md#barrier-access). Vertex and index reads have distinct access categories; binding a view does not perform a transition.
+> These graphics input binding and direct draw commands are supported on DIRECT and BUNDLE recordings, not COMPUTE or COPY recordings. Draws require a compatible graphics PSO, root signature and detailed topology. Bound resources must satisfy [recording/execution lifetime](execution.md#lifetime), [residency](resources.md#residency), and the applicable [legacy states](synchronization.md#legacy-resource-states) or [enhanced access rules](synchronization.md#barrier-access). Vertex and index reads have distinct access categories; binding a view does not perform a transition.
 
 <!-- d3d12-review-alert:end:geometry:N-recording:0 -->
 
@@ -431,7 +433,7 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The draw uses the currently selected graphics state. A zero per-instance count or zero `InstanceCount` generates no primitives; it does not waive other recording-state requirements.
+> The draw uses the currently selected graphics state. A zero per-instance count or zero `InstanceCount` generates no primitives. It does not waive other recording state requirements.
 
 <!-- d3d12-review-alert:end:geometry:N-work-DrawInstanced:0 -->
 
@@ -483,7 +485,7 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The draw uses the currently selected graphics state. A zero per-instance count or zero `InstanceCount` generates no primitives; it does not waive other recording-state requirements.
+> The draw uses the currently selected graphics state. A zero per-instance count or zero `InstanceCount` generates no primitives. It does not waive other recording state requirements.
 
 <!-- d3d12-review-alert:end:geometry:N-work-DrawIndexedInstanced:0 -->
 
@@ -492,7 +494,7 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The same draw-field meanings and traversal rules apply to the [non-indexed](indirect-execution.md#draw-arguments) and [indexed](indirect-execution.md#draw-indexed-arguments) indirect payloads. Command signatures, record layouts and argument/count-buffer execution have their canonical definition in [Indirect execution](indirect-execution.md#argument-records).
+> The same draw field meanings and traversal rules apply to the [non-indexed](indirect-execution.md#draw-arguments) and [indexed](indirect-execution.md#draw-indexed-arguments) indirect payloads. Command signatures, record layouts and argument/count buffer execution have their canonical definition in [Indirect execution](indirect-execution.md#argument-records).
 
 <!-- d3d12-review-alert:end:geometry:N-indirect-canonical-owner:0 -->
 
@@ -505,7 +507,7 @@ None
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The following pseudocode specifies vertex/index traversal; its abstract `Slot`, layout/register mapping and helper functions are not additional API structures. `Slot[s].StrideInBytes` is the bound vertex view's stride, and its layout is the PSO input layout resolved against the vertex-shader signature. Addresses in the algorithms are view-relative byte offsets; the fetch adds the view's 64-bit `BufferLocation` and applies its `SizeInBytes` bounds. The view's starting address incorporates any initial resource-relative buffer offset; that offset is not added a second time. `sizeof(IndexBuffer.Format)` means the index-element width in bytes, not the C++ enum's size.
+> The following pseudocode specifies vertex/index traversal. Its abstract `Slot`, layout/register mapping and helper functions are not additional API structures. `Slot[s].StrideInBytes` is the bound vertex view's stride, and its layout is the PSO input layout resolved against the vertex shader signature. Addresses in the algorithms are view-relative byte offsets. The fetch adds the view's 64-bit `BufferLocation` and applies its `SizeInBytes` bounds. The view's starting address incorporates any initial resource-relative buffer offset. That offset is not added a second time. `sizeof(IndexBuffer.Format)` means the index element width in bytes, not the C++ enum's size.
 
 <!-- d3d12-review-alert:end:geometry:N-pseudocode-model:0 -->
 
@@ -748,9 +750,11 @@ for(UINT InstanceID = 0; InstanceID < InstanceCount; InstanceID++)
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED` disables index-value restart. The other selected values are 0xffff and 0xffffffff. `IsCutIndex` in the pseudocode tests the fetched index against the enabled cut value before adding `BaseVertexLocation`. Static `IBStripCutValue` belongs to the PSO; [dynamic strip-cut state](command-list-state.md#dynamic-state) defines capability, creation flag, bundle and PSO-reselection effects.
+> `D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED` disables index value restart. The other selected values are 0xffff and 0xffffffff. `IsCutIndex` in the pseudocode tests the fetched index against the enabled cut value before adding `BaseVertexLocation`. Static `IBStripCutValue` belongs to the PSO. [Dynamic strip-cut state](command-list-state.md#dynamic-state) defines capability, creation flag, bundle and PSO-reselection effects.
 
 <!-- d3d12-review-alert:end:geometry:N-cut-state:0 -->
+
+<a id="d3d12-index-buffer-strip-cut-value"></a>
 
 ```cpp
 typedef enum D3D12_INDEX_BUFFER_STRIP_CUT_VALUE
@@ -785,7 +789,7 @@ typedef enum D3D12_INDEX_BUFFER_STRIP_CUT_VALUE
 
 <ins><!-- d3d12-review-inline:begin:geometry:H-adjacency:1 -->The inputs to the Geometry Shader are like a single primitive of any of the "list" primitive topologies (with or without adjacency) in the diagram above. When adjacency is available, the Geometry Shader will see the appropriate adjacent vertices along with the primitive's vertices. So for example if the Geometry Shader is invoked with a triangle including adjacency (the source could have been a strip with adjacency), this would mean that data for 6 vertices would be available as input in the Geometry Shader: 3 vertices for the triangle, and 3 for the adjacency.<!-- d3d12-review-inline:end:geometry:H-adjacency:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:geometry:H-adjacency:2 -->The data layout for adjacent vertices is identical to the standard vertices they accompany. Note that adjacent vertices participate in [vertex processing](#vertex-invocation) just like other vertices, subject to the same result-cache reuse. Note that adjacent vertices are typically also surface vertices of some other primitive that will get drawn, so the Vertex Shader result cache can take advantage of this.<!-- d3d12-review-inline:end:geometry:H-adjacency:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:H-adjacency:2 -->The data layout for adjacent vertices is identical to the standard vertices they accompany. Note that adjacent vertices participate in [vertex processing](#vertex-invocation) just like other vertices, subject to the same result cache reuse. Note that adjacent vertices are typically also surface vertices of some other primitive that will get drawn, so the Vertex Shader result cache can take advantage of this.<!-- d3d12-review-inline:end:geometry:H-adjacency:2 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:geometry:H-adjacency:3 -->When the IA is instructed to produce a primitive topology with adjacency for its output, all adjacent vertices must be specified. There is no concept of handling edges with no adjacent primitive. The application must deal with this on their own, perhaps by providing a dummy vertex (possibly forming a degenerate triangle), or perhaps by flagging in one of the vertex attributes whether the vertex "exists" or not. The application's Geometry Shader code will have to detect this situation, if desired, and deal with it manually. Implied in this is that there must be no culling of degenerate primitives until rasterizer setup, so that the Geometry Shader is guaranteed to see all geometry.<!-- d3d12-review-inline:end:geometry:H-adjacency:3 --></ins>
 
@@ -800,7 +804,7 @@ typedef enum D3D12_INDEX_BUFFER_STRIP_CUT_VALUE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> VertexID, PrimitiveID and InstanceID correspond to the HLSL system-value semantics `SV_VertexID`, `SV_PrimitiveID` and `SV_InstanceID`. The counter behavior below is independent of shader representation; the retained register and declaration descriptions are specific to DXBC.
+> VertexID, PrimitiveID and InstanceID correspond to the HLSL system value semantics `SV_VertexID`, `SV_PrimitiveID` and `SV_InstanceID`. The counter behavior below is independent of shader representation. The retained register and declaration descriptions are specific to DXBC.
 
 <!-- d3d12-review-alert:end:geometry:N-system-semantics:0 -->
 
@@ -1049,7 +1053,7 @@ for(UINT InstanceID = 0; InstanceID < InstanceCount; InstanceID++)
 
 ### Alignment
 
-<ins><!-- d3d12-review-inline:begin:geometry:H-alignment:0 -->For input-assembler data, an offset for an Element is required, a stride for a structure (e.g. vertex) is required, or an initial offset for a Buffer is required. All of these types of values have the following alignment restrictions:<!-- d3d12-review-inline:end:geometry:H-alignment:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:H-alignment:0 -->For input assembler data, an offset for an Element is required, a stride for a structure (e.g. vertex) is required, or an initial offset for a Buffer is required. All of these types of values have the following alignment restrictions:<!-- d3d12-review-inline:end:geometry:H-alignment:0 --></ins>
 
 - <ins><!-- d3d12-review-inline:begin:geometry:H-alignment:1 -->The alignment of an Element in a structure in memory must be, in bytes, the nearest power of 2 greater or equal to the width of the Element's format, or 4, whichever is less.<!-- d3d12-review-inline:end:geometry:H-alignment:1 --></ins>
 Thus alignment is always at 1 byte, 2 bytes or 4 byte granularity. This alignment is measured from the starting address of the structure. The starting address of the structure must also maintain alignment of all its members.
@@ -1069,7 +1073,7 @@ aligned as per the previous rule.
 
 - R11G11B10_FLOAT: 4
 
-<ins><!-- d3d12-review-inline:begin:geometry:H-alignment:4 -->However, these alignment rules do not apply to Buffer offsets in shader-resource and unordered-access views. These Buffer offsets have more stringent requirements, detailed in the [buffer-view definitions](formats.md#buffer-srv).<!-- d3d12-review-inline:end:geometry:H-alignment:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:H-alignment:4 -->However, these alignment rules do not apply to Buffer offsets in shader resource and unordered access views. These Buffer offsets have more stringent requirements, detailed in the [buffer view definitions](binding.md#buffer-srv).<!-- d3d12-review-inline:end:geometry:H-alignment:4 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:geometry:H-alignment:5 -->There is also some similar discussion, focused on memory accesses common to [UAVs](../archive/D3D11_3_FunctionalSpec.htm#UAVs), SRVs and Thread Group Shared Memory in the [Memory Addressing and Alignment Issues](../archive/D3D11_3_FunctionalSpec.htm#MemoryAddressingAndAlignment) section.<!-- d3d12-review-inline:end:geometry:H-alignment:5 --></ins>
 
@@ -1096,7 +1100,7 @@ aligned as per the previous rule.
 
 <ins><!-- d3d12-review-inline:begin:geometry:H-reuse:2 -->Another way to achieve the same effect of reusing a single set of data is to bind the source texture coordinate Buffer to a single slot and provide a data declaration where the definition of 2 different texture coordinates overlaps (same structure offset). Partial-overlapping of types in a data declaration is even permitted (even though it isn't interesting); the point is that D3D12 doesn't care or bother to check.<!-- d3d12-review-inline:end:geometry:H-reuse:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:geometry:H-reuse:3 -->Similarly, the structure stride in a vertex-buffer view can be any non-negative value (up to a maximum of 2048 Bytes, and conforming to [alignment](#alignment) rules), without regards to whether it is large enough to support the fields defined for the structure. Again, the point is that D3D12 doesn't care or bother to check. Debug tools can be provided to optionally enforce well-ordered, logical data layouts, however the arithmetic that underlying hardware uses to actually address data simply blindly follows the intent shown by the pseudocode for address-calculations for the [Draw*()](#direct-draws) routines.<!-- d3d12-review-inline:end:geometry:H-reuse:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:H-reuse:3 -->Similarly, the structure stride in a vertex buffer view can be any non-negative value (up to a maximum of 2048 Bytes, and conforming to [alignment](#alignment) rules), without regards to whether it is large enough to support the fields defined for the structure. Again, the point is that D3D12 doesn't care or bother to check. Debug tools can be provided to optionally enforce well-ordered, logical data layouts, however the arithmetic that underlying hardware uses to actually address data simply blindly follows the intent shown by the pseudocode for address-calculations for the [Draw*()](#direct-draws) routines.<!-- d3d12-review-inline:end:geometry:H-reuse:3 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:geometry:H-reuse:4 -->It is legal to have a single Buffer containing both vertex data and index data, and thus bind the Buffer at both a Vertex Buffer input slot and as an Index Buffer simultaneously. One might store indices at the beginning of the Buffer and the vertex data being referred to elsewhere in the same Buffer. D3D12 doesn't care.<!-- d3d12-review-inline:end:geometry:H-reuse:4 --></ins>
 
@@ -1120,7 +1124,7 @@ aligned as per the previous rule.
 
 <a id="worked-example"></a>
 
-## Indexed-instancing example
+## Indexed instancing example
 
 <ins><!-- d3d12-review-inline:begin:geometry:H-example-prose:0 -->The following example shows [DrawIndexedInstanced()](#drawindexedinstanced) being used to draw 3 instances of an indexed mesh.<!-- d3d12-review-inline:end:geometry:H-example-prose:0 --></ins>
 
@@ -1128,7 +1132,7 @@ aligned as per the previous rule.
 
 <ins><!-- d3d12-review-inline:begin:geometry:H-example-prose:2 -->As input, one Vertex Buffer supplies Vertex Data, another Vertex Buffer supplies Instance Data, and there is an Index Buffer. The data layouts and configuration of all of these buffers is illustrated. [VertexID](#vertex-id), [PrimitiveID](#primitive-id) and [InstanceID](#instance-id) are all shown as well, assuming Shaders in the pipeline requested them. The [Primitive Topology](#primitive-topologies) being rendered is triangle strip with adjacency. The Index Buffer has a [Cut](#strip-cuts) in it, so multiple strips are produced (per instance).<!-- d3d12-review-inline:end:geometry:H-example-prose:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:geometry:H-example-prose:3 -->The following setup table specifies the buffer views and input-layout state; the figure shows the resulting workload.<!-- d3d12-review-inline:end:geometry:H-example-prose:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:H-example-prose:3 -->The following setup table specifies the buffer views and input layout state; the figure shows the resulting workload.<!-- d3d12-review-inline:end:geometry:H-example-prose:3 --></ins>
 
 <!-- d3d12-review-alert:begin:geometry:N-example-views:0 -->
 
@@ -1161,7 +1165,7 @@ DrawIndexedInstanced(17, 3, 3, 2, 6);
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The underlying buffers contain 400, 240 and 48 bytes, respectively; each view starts at its buffer's GPU address plus the listed offset. The four layout elements map to logical input registers 0, 1, 2 and 3 in the order listed. The complete index-buffer data is:
+> The underlying buffers contain 400, 240 and 48 bytes, respectively. Each view starts at its buffer's GPU address plus the listed offset. The four layout elements map to logical input registers 0, 1, 2 and 3 in the order listed. The complete index buffer data is:
 
 <!-- d3d12-review-alert:end:geometry:N-example-views:3 -->
 
@@ -1187,7 +1191,7 @@ DrawIndexedInstanced(17, 3, 3, 2, 6);
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The vertex data items A through N occupy the first buffer; the initial view offset and `BaseVertexLocation` make index 0 select C. The instance items O through Z occupy the second buffer; `StartInstanceLocation` selects U, V and W for the three instances.
+> The vertex data items A through N occupy the first buffer. The initial view offset and `BaseVertexLocation` make index 0 select C. The instance items O through Z occupy the second buffer. `StartInstanceLocation` selects U, V and W for the three instances.
 
 <!-- d3d12-review-alert:end:geometry:N-example-views:7 -->
 
@@ -1198,7 +1202,7 @@ DrawIndexedInstanced(17, 3, 3, 2, 6);
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The topology label in the historical artwork denotes `D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ`. The figure shows the same index sequence for each instance, PrimitiveID continuing across the explicit cut and restarting for the next instance, and InstanceID values 0, 1 and 2 rather than the instance-data offsets 6, 7 and 8.
+> The topology label in the historical artwork denotes `D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ`. The figure shows the same index sequence for each instance, PrimitiveID continuing across the explicit cut and restarting for the next instance, and InstanceID values 0, 1 and 2 rather than the instance data offsets 6, 7 and 8.
 
 <!-- d3d12-review-alert:end:geometry:N-example-caption:0 -->
 
@@ -1211,7 +1215,7 @@ DrawIndexedInstanced(17, 3, 3, 2, 6);
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The graphics PSO selects the vertex, hull and domain shaders. Their [creation/linkage constraints](pipeline-state.md#compatibility) and [root-signature/resource binding](binding.md#pipeline-compatibility) apply independently of the stage execution rules below. The input-assembler path uses the [fetching and generated identifiers](#address-generation) already defined in this chapter.
+> The graphics PSO selects the vertex, hull and domain shaders. Their [creation/linkage constraints](pipeline-state.md#compatibility) and [root signature/resource binding](binding.md#pipeline-compatibility) apply independently of the stage execution rules below. The input assembler path uses the [fetching and generated identifiers](#address-generation) already defined in this chapter.
 
 <!-- d3d12-review-alert:end:geometry:STAGES-program-selection:0 -->
 
@@ -1244,9 +1248,9 @@ DrawIndexedInstanced(17, 3, 3, 2, 6);
 > | Interface or storage | Capacity |
 > | --- | --- |
 > | Vertex input and output signatures | 32 vectors of four components: 128 logical scalar positions each |
-> | HS/DS control-point interface, per control point | 32 vectors of four components: 128 logical scalar positions |
-> | Aggregate HS control-point output / DS control-point input for a patch | 3968 scalars |
-> | HS patch-constant output / DS patch-constant input | 32 vectors of four components: 128 scalars, separate from control-point storage |
+> | HS/DS control point interface, per control point | 32 vectors of four components: 128 logical scalar positions |
+> | Aggregate HS control point output / DS control point input for a patch | 3968 scalars |
+> | HS patch constant output / DS patch constant input | 32 vectors of four components: 128 scalars, separate from control point storage |
 
 <!-- d3d12-review-alert:end:geometry:STAGES-common-interface-capacities:1 -->
 
@@ -1264,7 +1268,7 @@ DrawIndexedInstanced(17, 3, 3, 2, 6);
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Tables explicitly labeled DXBC describe that register and declaration model; they do not prescribe a DXIL register encoding. Shared resource binding and its limits are defined by [Resource binding and root signatures](binding.md).
+> Tables explicitly labeled DXBC describe that register and declaration model. They do not prescribe a DXIL register encoding. Shared resource binding and its limits are defined by [Resource binding and root signatures](binding.md).
 
 <!-- d3d12-review-alert:end:geometry:STAGES-logical-model:0 -->
 
@@ -1282,7 +1286,7 @@ DrawIndexedInstanced(17, 3, 3, 2, 6);
 
 <a id="vertex-logical-interfaces"></a>
 
-### DXBC vertex-stage interfaces
+### DXBC vertex stage interfaces
 
 <ins><!-- d3d12-review-inline:begin:geometry:STAGES-9.5:0 -->The following registers are available in the vs_5_0 model:<!-- d3d12-review-inline:end:geometry:STAGES-9.5:0 --></ins>
 
@@ -1307,7 +1311,7 @@ DrawIndexedInstanced(17, 3, 3, 2, 6);
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [PSO view-instancing declaration and capability gates](pipeline-state.md#view-instancing) and [command-list view mask](command-list-state.md#view-mask) apply. The following rules describe traditional graphics-stage dependencies, interstage storage and ordering, including tessellation; they do not impose a shader-invocation order merely because primitives retire in order.
+> The [PSO view instancing declaration and capability gates](pipeline-state.md#view-instancing) and [command list view mask](command-list-state.md#view-mask) apply. The following rules describe traditional graphics stage dependencies, interstage storage and ordering, including tessellation. They do not impose a shader invocation order merely because primitives retire in order.
 
 <!-- d3d12-review-alert:end:geometry:STAGES-view-owners:0 -->
 
@@ -1332,7 +1336,7 @@ only the implementations that need to will do it when compiling the PSO.
 
 <a id="geometry-view-ia"></a>
 
-### Input-assembler interaction
+### Input assembler interaction
 
 With *draw* instancing, Input Assembler vertex fetches can be made to be
 dependent on the current instance, but with *view* instancing the Input
@@ -1464,13 +1468,13 @@ results of UAV reads before the rasterizer are not SV_ViewID dependent.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Mesh shading adds [ViewID-dependent output and groupshared limits](amplification-and-mesh-shaders.md#sv_viewid), [aligned output-space accounting](amplification-and-mesh-shaders.md#mesh-shader-output-size-limits), [per-view primitive culling](amplification-and-mesh-shaders.md#sv_cullprimitive), [rasterization ordering](amplification-and-mesh-shaders.md#rasterization-order) and [MSPrimitives view counting](counters-queries-and-predication.md#msprimitives-and-view-instancing). For mesh-stage dependency analysis, a global-memory read at a ViewID-dependent address is dependent; the preceding ordinary-geometry UAV-result assumption does not override that mesh-specific rule. AS does not receive ViewID.
+> Mesh shading adds [ViewID-dependent output and groupshared limits](amplification-and-mesh-shaders.md#sv_viewid), [aligned output space accounting](amplification-and-mesh-shaders.md#mesh-shader-output-size-limits), [per-view primitive culling](amplification-and-mesh-shaders.md#sv_cullprimitive), [rasterization ordering](amplification-and-mesh-shaders.md#rasterization-order) and [MSPrimitives view counting](counters-queries-and-predication.md#msprimitives-and-view-instancing). For mesh stage dependency analysis, a global memory read at a ViewID-dependent address is dependent. The preceding ordinary-geometry UAV result assumption does not override that mesh-specific rule. AS does not receive ViewID.
 
 <!-- d3d12-review-alert:end:geometry:N-mesh-view-contribution:0 -->
 
 <a id="geometry-view-tessellation"></a>
 
-### Tessellation-factor selection
+### Tessellation factor selection
 
 When View Instancing is used with Tessellation, an application may want
 the same tessellation factor selections to apply to all views so that
@@ -1529,7 +1533,7 @@ particular view, all primitives are retired by the rasterizer in order.
 ### Overlapping viewports and scissors
 
 <ins><!-- d3d12-review-inline:begin:geometry:STAGES-view-overlap:0 -->If multiple view instances go to overlapping viewport/scissor regions on
-the same render-target array index, rendering results in the overlapping
+the same render target array index, rendering results in the overlapping
 area are undefined given the flexibility implementations have in
 progressing through work over separate views.<!-- d3d12-review-inline:end:geometry:STAGES-view-overlap:0 --></ins>
 
@@ -1557,9 +1561,9 @@ an application knows will not be covered.
 >
 > The mask is honored only by PSOs that enable view instancing and set
 > `D3D12_VIEW_INSTANCING_FLAG_ENABLE_VIEW_INSTANCE_MASKING`. It does not change
-> the PSO's view-instance declaration. Initial/reset values and the distinct
+> the PSO's view instance declaration. Initial/reset values and the distinct
 > bundle input/output behavior follow the
-> [canonical view-mask state](command-list-state.md#view-mask).
+> [canonical view mask state](command-list-state.md#view-mask).
 
 <!-- d3d12-review-alert:end:geometry:GS-view-mask-rules:0 -->
 
@@ -1594,7 +1598,7 @@ an application knows will not be covered.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime resolves input-layout semantics against the vertex shader's signature before driver pipeline-state creation.
+> The runtime resolves input layout semantics against the vertex shader's signature before driver pipeline state creation.
 
 <!-- d3d12-review-alert:end:geometry:N-driver:0 -->
 
@@ -1620,7 +1624,7 @@ Driver support for unrestricted vertex element alignment (potentially unaligned 
 
 <a id="driver-state"></a>
 
-### Input binding and view-mask DDIs
+### Input binding and view mask DDIs
 
 ```cpp
 typedef struct D3D12DDI_INDEX_BUFFER_VIEW
@@ -1674,7 +1678,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SETVIEWINSTANCEMASK_0033 )( D3D12DDI_HCOMMA
 > |---|---|
 > | `PFND3D12DDI_IA_SETTOPOLOGY_0003` | [IASetPrimitiveTopology](#iasetprimitivetopology): the driver topology enum represents the selected detailed topology after runtime conversion, not the PSO's coarser topology class |
 > | `PFND3D12DDI_IA_SET_INDEX_BUFFER` | [IASetIndexBuffer](#iasetindexbuffer): optional driver buffer view with GPU address, byte extent and index format |
-> | `PFND3D12DDI_IA_SET_VERTEX_BUFFERS_0003` | [IASetVertexBuffers](#iasetvertexbuffers): replace or clear the specified slot range using driver GPU-address/byte-size/stride views |
+> | `PFND3D12DDI_IA_SET_VERTEX_BUFFERS_0003` | [IASetVertexBuffers](#iasetvertexbuffers): replace or clear the specified slot range using driver GPU address/byte size/stride views |
 > | `PFND3D12DDI_SET_INDEX_BUFFER_STRIP_CUT_VALUE_0099` | [IASetIndexBufferStripCutValue](#iasetindexbufferstripcutvalue): dynamic cut selection, with the API's capability and PSO permission requirements |
 > | `PFND3D12DDI_SETVIEWINSTANCEMASK_0033` | [SetViewInstanceMask](#setviewinstancemask): view-enable bits and the canonical PSO/default/bundle contract |
 
@@ -1685,20 +1689,20 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SETVIEWINSTANCEMASK_0033 )( D3D12DDI_HCOMMA
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The driver consumes input-buffer view structures during the call and copies any values it needs afterward.
+> The driver consumes input buffer view structures during the call and copies any values it needs afterward.
 
 <!-- d3d12-review-alert:end:geometry:GS-I-roles:0 -->
 
 <a id="driver-input-forms"></a>
 
-#### Current input-binding representations
+#### Current input binding representations
 
 <!-- d3d12-review-alert:begin:geometry:IF-representations:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The `_0114` input-binding entries participate in [runtime bypass](execution.md#work-command-handles). Their ordinary counterparts use `D3D12DDI_HCOMMANDLIST`.
+> The `_0114` input binding entries participate in [runtime bypass](execution.md#work-command-handles). Their ordinary counterparts use `D3D12DDI_HCOMMANDLIST`.
 
 <!-- d3d12-review-alert:end:geometry:IF-representations:0 -->
 
@@ -1707,7 +1711,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SETVIEWINSTANCEMASK_0033 )( D3D12DDI_HCOMMA
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> | Member in each table | Ordinary type | API-handle type | Canonical API contract |
+> | Member in each table | Ordinary type | API handle type | Canonical API contract |
 > |---|---|---|---|
 > | `pfnIaSetTopology` | `PFND3D12DDI_IA_SETTOPOLOGY_0003` | `PFND3D12DDI_IA_SETTOPOLOGY_0114` | [IASetPrimitiveTopology](#iasetprimitivetopology) |
 > | `pfnIASetIndexBuffer` | `PFND3D12DDI_IA_SET_INDEX_BUFFER` | `PFND3D12DDI_IA_SET_INDEX_BUFFER_0114` | [IASetIndexBuffer](#iasetindexbuffer) |
@@ -1791,7 +1795,7 @@ typedef enum D3D12DDI_PRIMITIVE_TOPOLOGY
 
 <a id="driver-view-mask-forms"></a>
 
-#### Current view-mask representations
+#### Current view mask representations
 
 <!-- d3d12-review-alert:begin:geometry:FC-view-roles:0 -->
 
@@ -1807,7 +1811,7 @@ typedef enum D3D12DDI_PRIMITIVE_TOPOLOGY
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> | Member in each table | Ordinary type | API-handle type | API contract |
+> | Member in each table | Ordinary type | API handle type | API contract |
 > |---|---|---|---|
 > | `pfnSetViewInstanceMask` | `PFND3D12DDI_SETVIEWINSTANCEMASK_0033` | `PFND3D12DDI_SETVIEWINSTANCEMASK_0114` | [SetViewInstanceMask](#setviewinstancemask) |
 

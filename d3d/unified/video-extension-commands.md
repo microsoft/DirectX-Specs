@@ -22,7 +22,7 @@
 >
 > This subordinate [Video](video.md) reference describes opaque extension
 > commands identified by a command GUID. Discovery and parameter reflection
-> describe command-defined structures; they do not define a common extension
+> describe command-defined structures. They do not define a common extension
 > algorithm or establish binary compatibility between different commands.
 > The route is [discovery and packing](#extension-discovery),
 > [objects and CPU execution](#extension-objects), [GPU recording](#extension-recording),
@@ -36,7 +36,7 @@
 > **Authored synthesis - human review pending.**
 >
 > This is a **qualified draft**. Published behavioral requirements remain
-> source-only except for the explicitly scoped source-inspection corroboration.
+> source-only except for the explicitly scoped source inspection corroboration.
 > Qualifications do not establish expert or hardware approval.
 
 <!-- d3d12-review-alert:end:video-extension:N-route:1 -->
@@ -79,10 +79,10 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Query the command count for a node before filling the command-info array.
+> Query the command count for a node before filling the command info array.
 > `CommandCount` must equal the returned count, not merely an available capacity.
 > For each command GUID and stage, query parameter count and packing before
-> filling the parameter-info array; `ParameterCount` must equal that stage's
+> filling the parameter info array. `ParameterCount` must equal that stage's
 > returned count. No capacity/truncation or `MORE_DATA` protocol is specified.
 > Caller arrays and blobs must accommodate their declared counts or byte sizes.
 > The support query uses `CAPS_INPUT` and `CAPS_OUTPUT`; successful HRESULT
@@ -96,10 +96,10 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The command-info `Name` and parameter-info `Name` are wide-string pointers.
+> The command info `Name` and parameter info `Name` are wide string pointers.
 > The owning published DDI contracts require the driver to allocate and retain
 > both names for the device lifetime. This is a Video-specific published
-> requirement; it does not transfer ownership of either string to the caller.
+> requirement. It does not transfer ownership of either string to the caller.
 > The arrays themselves are allocated by the caller at the API boundary and
 > by the runtime at the driver boundary.
 
@@ -115,8 +115,8 @@
 > parameter enumeration use exact counts. Invalid driver packing or metadata,
 > or a driver failure for an asserted supported parameter set, can produce
 > `DXGI_ERROR_DRIVER_INTERNAL_ERROR`. On a negotiated video DDI older than
-> `_0076_0`, the inspected CPU-stage parameter-count path returns zero count
-> and packing; this does not establish a callable CPU execution path.
+> `_0076_0`, the inspected CPU stage parameter count path returns zero count
+> and packing. This does not establish a callable CPU execution path.
 
 <!-- d3d12-review-alert:end:video-extension:N-query:4 -->
 
@@ -150,7 +150,7 @@
 > padding, and translates resource members. This establishes the inspected
 > packing/translation route, not a universal rule that arbitrary extra bytes,
 > undersized blobs, null pointers or unknown layouts are valid.
-> No independent per-extension structure size or trailing-padding requirement
+> No independent per-extension structure size or trailing padding requirement
 > is inferred from that helper.
 
 <!-- d3d12-review-alert:end:video-extension:N-packing:1 -->
@@ -180,8 +180,8 @@
 >
 > GPU recording uses a video family compatible with the command's reported
 > `CommandListSupportFlags`. Use that family's command list, allocator and
-> queue on a compatible device/node. The published command-info contract says
-> only one family flag may be set; that upper bound does not establish an
+> queue on a compatible device/node. The published command info contract says
+> only one family flag may be set. That upper bound does not establish an
 > unconditional nonzero-mask requirement or GPU recording support for a zero
 > mask. The creation description selects one node; enumeration on another
 > node is not a support guarantee.
@@ -196,10 +196,10 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> CPU device execution is a separate route. A GPU-family flag does not by
+> CPU device execution is a separate route. A GPU family flag does not by
 > itself establish CPU execution support. The selected sources do not settle
 > zero-mask or CPU-only command validity; no such validity rule is inferred.
-> The three API video-family flag contributions are:
+> The three API video family flag contributions are:
 
 <!-- d3d12-review-alert:end:video-extension:N-resources:1 -->
 
@@ -221,7 +221,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The published resource-parameter contract requires the caller to transition
+> The published resource parameter contract requires the caller to transition
 > resources to the appropriate video read/write states:
 
 <!-- d3d12-review-alert:end:video-extension:N-resource-states:0 -->
@@ -250,10 +250,10 @@
 > [enhanced encode](synchronization.md#encode-enhanced-barrier),
 > [access scopes](synchronization.md#barrier-access),
 > [synchronization scopes](synchronization.md#barrier-sync), and
-> [barrier-model interoperation](synchronization.md#model-interoperation)
+> [barrier model interoperation](synchronization.md#model-interoperation)
 > own the corresponding shared barrier rules. Resource dimensions, formats,
-> subresources, read/write aliasing and any simultaneous-read/write use must
-> be established by the particular command contract; this table does not
+> subresources, read/write aliasing and any simultaneous read/write use must
+> be established by the particular command contract. This table does not
 > permit incompatible state combinations. GPU state names do not establish
 > CPU execution's resource access/synchronization semantics.
 
@@ -272,7 +272,7 @@
 > On successful creation, `ppVideoExtensionCommand` receives a caller-owned
 > reference to the requested interface identified by `riid`. The caller
 > releases it under the [object lifetime rules](execution.md#lifetime).
-> The creation description is copied; `GetDesc` returns a value copy of the
+> The creation description is copied. `GetDesc` returns a value copy of the
 > immutable description. Modifying the returned value does not reconfigure
 > the command.
 
@@ -284,13 +284,13 @@
 > **Authored synthesis - human review pending.**
 >
 > `pProtectedResourceSession` can be null for unprotected operation. A non-null
-> session associates the command with that protected session; the getter
+> session associates the command with that protected session. The getter
 > retrieves the association, not a new session. On success it returns a
 > caller-owned reference to the requested session interface through
-> `ppProtectedSession`; the caller releases it under the same lifetime rules.
-> The selected sources do not establish a precise no-session HRESULT/null-output
+> `ppProtectedSession`. The caller releases it under the same lifetime rules.
+> The selected sources do not establish a precise no-session HRESULT/null output
 > postcondition. No additional protection lifecycle is implied.
-> The existing [shared protected-resource flags](video-motion-estimation.md#d3d12-video-protected-resource-support-flags)
+> The existing [shared protected resource flags](video-motion-estimation.md#d3d12-video-protected-resource-support-flags)
 > retain their canonical definition; no extension-specific support payload is
 > invented from those flags.
 
@@ -306,13 +306,13 @@
 > enumeration; invalid selection or unsupported GUID produces `E_INVALIDARG`.
 > Creation propagates validation/driver HRESULT failures. A null result pointer
 > takes a validation-only path returning `S_FALSE` after successful description
-> validation and creates no object; that path is not a complete creation-blob
+> validation and creates no object. That path is not a complete creation blob
 > validation guarantee and does not change the required output annotation in
 > the released declaration. The inspected CPU device execution path rejects
 > a negotiated video DDI older than `_0076_0` with `E_INVALIDARG`.
-> The inspected creation-parameter translation rejects swap-chain resources
+> The inspected creation parameter translation rejects swap chain resources
 > in the creation blob with `E_INVALIDARG`. CPU device execution propagates
-> driver/conversion HRESULT failures; its local allocation-failure handler
+> driver/conversion HRESULT failures. Its local allocation failure handler
 > returns `E_INVALIDARG`, not a promise of `E_OUTOFMEMORY`.
 
 <!-- d3d12-review-alert:end:video-extension:N-lifetime:2 -->
@@ -322,15 +322,15 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **Scoped CPU-storage corroboration:** creation translates a temporary copy
+> **Scoped CPU storage corroboration:** creation translates a temporary copy
 > of a nonempty creation blob before calling the driver. The CPU device method
 > copies/translates its input, calls the driver, then copies the output on
 > success. Published CPU execution completes before return. The inspected GPU
-> recording route copies nonempty parameter blobs into command-list temporary
+> recording route copies nonempty parameter blobs into command list temporary
 > storage and translates resource pointers before the recording DDI.
 > Those source-inspected copies do not establish a driver-wide borrowing rule
 > for embedded resources, private payload semantics or every implementation's
-> creation-data retention. Scalar/blob storage and the resources named in it
+> creation data retention. Scalar/blob storage and the resources named in it
 > are distinct lifetime obligations.
 
 <!-- d3d12-review-alert:end:video-extension:N-lifetime:3 -->
@@ -364,7 +364,7 @@ Creates a video extension command.
 
 `pCreationParameters`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:7 -->A pointer to the creation parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_CREATION](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:7 -->A pointer to the creation parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](#d3d12-feature-data-video-extension-command-parameters) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_CREATION](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:7 --></ins>
 
 `CreationParametersDataSizeInBytes`
 
@@ -372,15 +372,15 @@ The size of the *pCreationParameters* parameter structure, in bytes.
 
 `pProtectedResourceSession`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:11 -->A [ID3D12ProtectedResourceSession](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12protectedresourcesession) for managing access to protected resources.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:11 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:11 -->A [ID3D12ProtectedResourceSession](resources.md#protected-resource-sessions) for managing access to protected resources.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:11 --></ins>
 
 `riid`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:13 -->The globally unique identifier (GUID) for the [ID3D12VideoExtensionCommand](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videoextensioncommand) interface.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:13 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:13 -->The globally unique identifier (GUID) for the [ID3D12VideoExtensionCommand](#extension-objects) interface.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:13 --></ins>
 
 `ppVideoExtensionCommand`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:15 -->A pointer to a memory block that receives a pointer to the [ID3D12VideoExtensionCommand](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videoextensioncommand) interface.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:15 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:15 -->A pointer to a memory block that receives a pointer to the [ID3D12VideoExtensionCommand](#extension-objects) interface.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-CreateVideoExtensionCommand:15 --></ins>
 
 #### Return values
 
@@ -416,11 +416,11 @@ Video extension commands executed through this method must complete before this 
 
 `pExtensionCommand`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:7 -->Pointer to an [ID3D12VideoExtensionCommand](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videoextensioncommand) representing the video extension command to execute. The caller is responsible for maintaining object lifetime until command execution is complete.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:7 -->Pointer to an [ID3D12VideoExtensionCommand](#extension-objects) representing the video extension command to execute. The caller is responsible for maintaining object lifetime until command execution is complete.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:7 --></ins>
 
 `pExecutionParameters`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:9 -->A pointer to the execution input parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_DEVICE_EXECUTE_INPUT](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:9 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:9 -->A pointer to the execution input parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](#d3d12-feature-data-video-extension-command-parameters) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_DEVICE_EXECUTE_INPUT](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:9 --></ins>
 
 `ExecutionParametersSizeInBytes`
 
@@ -475,7 +475,7 @@ HRESULT GetProtectedResourceSession(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoExtensionCommand-GetProtectedResourceSession:2 -->Gets the [ID3D12ProtectedResourceSession](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12protectedresourcesession) that was passed into [ID3D12VideoDevice2::CreateVideoExtensionCommand](#videodevice2-createvideoextensioncommand) when the [ID3D12VideoExtensionCommand](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videoextensioncommand) was created.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoExtensionCommand-GetProtectedResourceSession:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoExtensionCommand-GetProtectedResourceSession:2 -->Gets the [ID3D12ProtectedResourceSession](resources.md#protected-resource-sessions) that was passed into [ID3D12VideoDevice2::CreateVideoExtensionCommand](#videodevice2-createvideoextensioncommand) when the [ID3D12VideoExtensionCommand](#extension-objects) was created.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoExtensionCommand-GetProtectedResourceSession:2 --></ins>
 
 #### Parameters
 
@@ -515,7 +515,7 @@ This method returns HRESULT.
 > **Authored synthesis - human review pending.**
 >
 > All six GPU methods retain the [extension-defined predication policy](counters-queries-and-predication.md#predication-operation-matrix).
-> Initialization is not specified to ignore predication. No generic dirty-state
+> Initialization is not specified to ignore predication. No generic dirty state
 > mask or automatic ClearState policy is imposed by these methods.
 > [Recording storage](execution.md#command-storage),
 > [object/resource lifetime](execution.md#lifetime),
@@ -538,7 +538,7 @@ This method returns HRESULT.
 > The public GPU methods return void; recording/initialization errors are
 > reported through debug layers and the list's `Close` return value.
 > **Scoped retail validation:** the inspected shared three-family recording
-> implementation puts an unsupported-family call into command-list error with
+> implementation puts an unsupported-family call into command list error with
 > `E_INVALIDARG`; translation storage exhaustion uses `E_OUTOFMEMORY`.
 > The inspected debug layer translates resource pointers to the next layer.
 > Its presence or absence of additional diagnostics is not a validity oracle.
@@ -571,11 +571,11 @@ void InitializeExtensionCommand(
 
 `pExtensionCommand`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDecodeCommandList2-InitializeExtensionCommand:6 -->Pointer to an [ID3D12VideoExtensionCommand](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videoextensioncommand) representing the video extension command to initialize. The caller is responsible for maintaining object lifetime until command execution is complete.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDecodeCommandList2-InitializeExtensionCommand:6 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDecodeCommandList2-InitializeExtensionCommand:6 -->Pointer to an [ID3D12VideoExtensionCommand](#extension-objects) representing the video extension command to initialize. The caller is responsible for maintaining object lifetime until command execution is complete.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDecodeCommandList2-InitializeExtensionCommand:6 --></ins>
 
 `pInitializationParameters`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDecodeCommandList2-InitializeExtensionCommand:8 -->A pointer to the initialization parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_INITIALIZATION](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDecodeCommandList2-InitializeExtensionCommand:8 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDecodeCommandList2-InitializeExtensionCommand:8 -->A pointer to the initialization parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](#d3d12-feature-data-video-extension-command-parameters) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_INITIALIZATION](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDecodeCommandList2-InitializeExtensionCommand:8 --></ins>
 
 `InitializationParametersSizeInBytes`
 
@@ -609,11 +609,11 @@ Records a command to execute a video extension command into a decode command lis
 
 `pExtensionCommand`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDecodeCommandList2-ExecuteExtensionCommand:6 -->Pointer to an [ID3D12VideoExtensionCommand](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videoextensioncommand) representing the video extension command to execute. The caller is responsible for maintaining object lifetime until command execution is complete.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDecodeCommandList2-ExecuteExtensionCommand:6 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDecodeCommandList2-ExecuteExtensionCommand:6 -->Pointer to an [ID3D12VideoExtensionCommand](#extension-objects) representing the video extension command to execute. The caller is responsible for maintaining object lifetime until command execution is complete.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDecodeCommandList2-ExecuteExtensionCommand:6 --></ins>
 
 `pExecutionParameters`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDecodeCommandList2-ExecuteExtensionCommand:8 -->A pointer to the execution parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_EXECUTION](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDecodeCommandList2-ExecuteExtensionCommand:8 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDecodeCommandList2-ExecuteExtensionCommand:8 -->A pointer to the execution parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](#d3d12-feature-data-video-extension-command-parameters) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_EXECUTION](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDecodeCommandList2-ExecuteExtensionCommand:8 --></ins>
 
 `ExecutionParametersSizeInBytes`
 
@@ -647,11 +647,11 @@ void InitializeExtensionCommand(
 
 `pExtensionCommand`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoProcessCommandList2-InitializeExtensionCommand:6 -->Pointer to an [ID3D12VideoExtensionCommand](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videoextensioncommand) representing the video extension command to initialize. The caller is responsible for maintaining object lifetime until command execution is complete.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoProcessCommandList2-InitializeExtensionCommand:6 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoProcessCommandList2-InitializeExtensionCommand:6 -->Pointer to an [ID3D12VideoExtensionCommand](#extension-objects) representing the video extension command to initialize. The caller is responsible for maintaining object lifetime until command execution is complete.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoProcessCommandList2-InitializeExtensionCommand:6 --></ins>
 
 `pInitializationParameters`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoProcessCommandList2-InitializeExtensionCommand:8 -->A pointer to the initialization parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_INITIALIZATION](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoProcessCommandList2-InitializeExtensionCommand:8 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoProcessCommandList2-InitializeExtensionCommand:8 -->A pointer to the initialization parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](#d3d12-feature-data-video-extension-command-parameters) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_INITIALIZATION](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoProcessCommandList2-InitializeExtensionCommand:8 --></ins>
 
 `InitializationParametersSizeInBytes`
 
@@ -685,11 +685,11 @@ Records a command to execute a video extension command into a video process comm
 
 `pExtensionCommand`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoProcessCommandList2-ExecuteExtensionCommand:6 -->Pointer to an [ID3D12VideoExtensionCommand](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videoextensioncommand) representing the video extension command to execute. The caller is responsible for maintaining object lifetime until command execution is complete.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoProcessCommandList2-ExecuteExtensionCommand:6 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoProcessCommandList2-ExecuteExtensionCommand:6 -->Pointer to an [ID3D12VideoExtensionCommand](#extension-objects) representing the video extension command to execute. The caller is responsible for maintaining object lifetime until command execution is complete.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoProcessCommandList2-ExecuteExtensionCommand:6 --></ins>
 
 `pExecutionParameters`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoProcessCommandList2-ExecuteExtensionCommand:8 -->A pointer to the execution parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_EXECUTION](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoProcessCommandList2-ExecuteExtensionCommand:8 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoProcessCommandList2-ExecuteExtensionCommand:8 -->A pointer to the execution parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](#d3d12-feature-data-video-extension-command-parameters) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_EXECUTION](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoProcessCommandList2-ExecuteExtensionCommand:8 --></ins>
 
 `ExecutionParametersSizeInBytes`
 
@@ -723,11 +723,11 @@ void InitializeExtensionCommand(
 
 `pExtensionCommand`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoEncodeCommandList1-InitializeExtensionCommand:6 -->Pointer to an [ID3D12VideoExtensionCommand](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videoextensioncommand) representing the video extension command to initialize. The caller is responsible for maintaining object lifetime until command execution is complete.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoEncodeCommandList1-InitializeExtensionCommand:6 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoEncodeCommandList1-InitializeExtensionCommand:6 -->Pointer to an [ID3D12VideoExtensionCommand](#extension-objects) representing the video extension command to initialize. The caller is responsible for maintaining object lifetime until command execution is complete.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoEncodeCommandList1-InitializeExtensionCommand:6 --></ins>
 
 `pInitializationParameters`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoEncodeCommandList1-InitializeExtensionCommand:8 -->A pointer to the initialization parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_INITIALIZATION](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoEncodeCommandList1-InitializeExtensionCommand:8 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoEncodeCommandList1-InitializeExtensionCommand:8 -->A pointer to the initialization parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](#d3d12-feature-data-video-extension-command-parameters) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_INITIALIZATION](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoEncodeCommandList1-InitializeExtensionCommand:8 --></ins>
 
 `InitializationParametersSizeInBytes`
 
@@ -761,11 +761,11 @@ Records a command to execute a video extension command into an encode command li
 
 `pExtensionCommand`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoEncodeCommandList1-ExecuteExtensionCommand:6 -->Pointer to an [ID3D12VideoExtensionCommand](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videoextensioncommand) representing the video extension command to execute. The caller is responsible for maintaining object lifetime until command execution is complete.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoEncodeCommandList1-ExecuteExtensionCommand:6 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoEncodeCommandList1-ExecuteExtensionCommand:6 -->Pointer to an [ID3D12VideoExtensionCommand](#extension-objects) representing the video extension command to execute. The caller is responsible for maintaining object lifetime until command execution is complete.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoEncodeCommandList1-ExecuteExtensionCommand:6 --></ins>
 
 `pExecutionParameters`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoEncodeCommandList1-ExecuteExtensionCommand:8 -->A pointer to the execution parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_EXECUTION](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoEncodeCommandList1-ExecuteExtensionCommand:8 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoEncodeCommandList1-ExecuteExtensionCommand:8 -->A pointer to the execution parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](#d3d12-feature-data-video-extension-command-parameters) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_EXECUTION](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoEncodeCommandList1-ExecuteExtensionCommand:8 --></ins>
 
 `ExecutionParametersSizeInBytes`
 
@@ -783,7 +783,7 @@ None
 
 ### D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_COUNT
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_COUNT:0 -->Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_COUNT](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video). Retrieves the supported number of video extension commands.<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_COUNT:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_COUNT:0 -->Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_COUNT](#d3d12-feature-data-video-extension-command-count). Retrieves the supported number of video extension commands.<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_COUNT:0 --></ins>
 
 #### Declaration
 
@@ -836,13 +836,13 @@ A pointer to a wide string containing the name of the command.
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_INFO:11 -->An array of this structure is provided in a [D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMANDS](#d3d12-feature-data-video-extension-commands) structure returned from a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_EXTENSION_COMMANDS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video).<!-- d3d12-review-inline:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_INFO:11 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_INFO:11 -->An array of this structure is provided in a [D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMANDS](#d3d12-feature-data-video-extension-commands) structure returned from a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_EXTENSION_COMMANDS](#d3d12-feature-data-video-extension-commands).<!-- d3d12-review-inline:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_INFO:11 --></ins>
 
 <a id="d3d12-feature-data-video-extension-commands"></a>
 
 ### D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMANDS
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMANDS:0 -->Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_EXTENSION_COMMANDS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video). Retrieves the list of video extension commands from the driver.<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMANDS:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMANDS:0 -->Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_EXTENSION_COMMANDS](#d3d12-feature-data-video-extension-commands). Retrieves the list of video extension commands from the driver.<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMANDS:0 --></ins>
 
 #### Declaration
 
@@ -862,7 +862,7 @@ In multi-adapter operation, this indicates which physical adapter of the device 
 
 `CommandCount`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMANDS:7 -->The supported number of video extension commands. This value must be the count returned by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_COUNT](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video) specified as the feature.<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMANDS:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMANDS:7 -->The supported number of video extension commands. This value must be the count returned by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_COUNT](#d3d12-feature-data-video-extension-command-count) specified as the feature.<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMANDS:7 --></ins>
 
 `pCommandInfos`
 
@@ -872,7 +872,7 @@ In multi-adapter operation, this indicates which physical adapter of the device 
 
 ### D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_PARAMETER_COUNT
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_PARAMETER_COUNT:0 -->Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETER_COUNT](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video). Retrieves the number of video extension command parameters for the specified parameter stage.<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_PARAMETER_COUNT:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_PARAMETER_COUNT:0 -->Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETER_COUNT](#d3d12-feature-data-video-extension-command-parameter-count). Retrieves the number of video extension command parameters for the specified parameter stage.<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_PARAMETER_COUNT:0 --></ins>
 
 #### Declaration
 
@@ -935,13 +935,13 @@ typedef struct D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_INFO {
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_INFO:11 -->An array of this structure is provided in a [D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_PARAMETERS](#d3d12-feature-data-video-extension-command-parameters) structure returned from a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video).<!-- d3d12-review-inline:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_INFO:11 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_INFO:11 -->An array of this structure is provided in a [D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_PARAMETERS](#d3d12-feature-data-video-extension-command-parameters) structure returned from a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](#d3d12-feature-data-video-extension-command-parameters).<!-- d3d12-review-inline:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_INFO:11 --></ins>
 
 <a id="d3d12-feature-data-video-extension-command-parameters"></a>
 
 ### D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_PARAMETERS
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_PARAMETERS:0 -->Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video). Retrieves the list of video extension command parameters for the specified parameter stage.<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_PARAMETERS:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_PARAMETERS:0 -->Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](#d3d12-feature-data-video-extension-command-parameters). Retrieves the list of video extension command parameters for the specified parameter stage.<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_PARAMETERS:0 --></ins>
 
 #### Declaration
 
@@ -966,7 +966,7 @@ The unique identifier for the video extension command for which parameters are r
 
 `ParameterCount`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_PARAMETERS:9 -->The supported number of video extension command parameters. This value must be the count returned by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETER_COUNT](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video) specified as the feature.<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_PARAMETERS:9 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_PARAMETERS:9 -->The supported number of video extension command parameters. This value must be the count returned by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETER_COUNT](#d3d12-feature-data-video-extension-command-parameter-count) specified as the feature.<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_PARAMETERS:9 --></ins>
 
 `pParameterInfos`
 
@@ -976,7 +976,7 @@ The unique identifier for the video extension command for which parameters are r
 
 ### D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SUPPORT
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SUPPORT:0 -->Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_SUPPORT](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video). Retrieves video extension command support using command-defined input and output structures.<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SUPPORT:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SUPPORT:0 -->Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_SUPPORT](#d3d12-feature-data-video-extension-command-support). Retrieves video extension command support using command-defined input and output structures.<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SUPPORT:0 --></ins>
 
 #### Declaration
 
@@ -1021,7 +1021,7 @@ The byte size of the output data allocation.
 
 ### D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE:0 -->Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_SIZE](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video). Checks the allocation size of a video extension command.<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE:0 -->Provides data for calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) when the feature specified is [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_SIZE](#d3d12-feature-data-video-extension-command-size). Checks the allocation size of a video extension command.<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE:0 --></ins>
 
 #### Declaration
 
@@ -1048,7 +1048,7 @@ The unique identifier for the video extension command for which size is queried.
 
 `pCreationParameters`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE:9 -->A pointer to the creation parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_CREATION](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE:9 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE:9 -->A pointer to the creation parameters structure, which is defined by the command. The parameters structure must match the parameters enumerated by a call to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature value of [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](#d3d12-feature-data-video-extension-command-parameters) and a parameter stage value of [D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_CREATION](#d3d12-video-extension-command-parameter-stage).<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE:9 --></ins>
 
 `CreationParametersSizeInBytes`
 
@@ -1056,11 +1056,11 @@ The size of the *pCreationParameters* parameter structure, in bytes.
 
 `MemoryPoolL0Size`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE:13 -->The allocation size of the video extension command in the L0 memory pool. L0 is the physical system memory pool. When the adapter is discrete/NUMA, this pool has greater bandwidth for the CPU and less bandwidth for the GPU. When the adapter is UMA, this pool is the only one which is valid. For more information, see [Residency](https://learn.microsoft.com/en-us/windows/win32/direct3d12/residency).<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE:13 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE:13 -->The allocation size of the video extension command in the L0 memory pool. L0 is the physical system memory pool. When the adapter is discrete/NUMA, this pool has greater bandwidth for the CPU and less bandwidth for the GPU. When the adapter is UMA, this pool is the only one which is valid. For more information, see [Residency](resources.md#residency).<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE:13 --></ins>
 
 `MemoryPoolL1Size`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE:15 -->The allocation size of the video extension command heap in the L1 memory pool. L1 is typically known as the physical video memory pool. L1 is only available when the adapter is discrete/NUMA, and has greater bandwidth for the GPU and cannot even be accessed by the CPU. When the adapter is UMA, this pool is not available. For more information, see [Residency](https://learn.microsoft.com/en-us/windows/win32/direct3d12/residency).<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE:15 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE:15 -->The allocation size of the video extension command heap in the L1 memory pool. L1 is typically known as the physical video memory pool. L1 is only available when the adapter is discrete/NUMA, and has greater bandwidth for the GPU and cannot even be accessed by the CPU. When the adapter is UMA, this pool is not available. For more information, see [Residency](resources.md#residency).<!-- d3d12-review-inline:end:video-extension:T-D3D12_FEATURE_DATA_VIDEO_EXTENSION_COMMAND_SIZE:15 --></ins>
 
 <a id="d3d12-video-extension-command-desc"></a>
 
@@ -1089,7 +1089,7 @@ The unique identifier for the video extension command.
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_DESC:9 -->Pass this structure to [ID3D12VideoDevice2::CreateVideoExtensionCommand](#videodevice2-createvideoextensioncommand) to create an instance of [ID3D12VideoExtensionCommand](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/nn-d3d12video-id3d12videoextensioncommand).<!-- d3d12-review-inline:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_DESC:9 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_DESC:9 -->Pass this structure to [ID3D12VideoDevice2::CreateVideoExtensionCommand](#videodevice2-createvideoextensioncommand) to create an instance of [ID3D12VideoExtensionCommand](#extension-objects).<!-- d3d12-review-inline:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_DESC:9 --></ins>
 
 <a id="d3d12-video-extension-command-parameter-stage"></a>
 
@@ -1132,7 +1132,7 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE {
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE:6 -->Values from this enumeration are used when querying for video extension parameter information with calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature specified as [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video) or [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETER_COUNT](https://learn.microsoft.com/en-us/windows/win32/api/d3d12video/ne-d3d12video-d3d12_feature_video). The results of these parameter queries may be different for different parameter stages.<!-- d3d12-review-inline:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE:6 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE:6 -->Values from this enumeration are used when querying for video extension parameter information with calls to [ID3D12VideoDevice::CheckFeatureSupport](video-decode.md#video-check-feature-support) with the feature specified as [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETERS](#d3d12-feature-data-video-extension-command-parameters) or [D3D12_FEATURE_VIDEO_EXTENSION_COMMAND_PARAMETER_COUNT](#d3d12-feature-data-video-extension-command-parameter-count). The results of these parameter queries may be different for different parameter stages.<!-- d3d12-review-inline:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE:6 --></ins>
 
 <a id="d3d12-video-extension-command-parameter-type"></a>
 
@@ -1248,9 +1248,9 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS {
 > **Authored synthesis - human review pending.**
 >
 > `D3D12DDI_TABLE_TYPE_0020_DEVICE_VIDEO` selects the device-video function
-> table. `_0063` provides private-size/create/destroy slots; `_0076` adds
+> table. `_0063` provides private size/create/destroy slots. `_0076` adds
 > `pfnExecuteDeviceVideoExtensionCommand`. The DECODE, PROCESS and ENCODE
-> `_0063` command-list tables each provide both
+> `_0063` command list tables each provide both
 > `pfnInitializeVideoExtensionCommand` and `pfnExecuteVideoExtensionCommand`.
 > Their table types are `D3D12DDI_TABLE_TYPE_0022_COMMAND_LIST_VIDEO_DECODE`
 > (12), `D3D12DDI_TABLE_TYPE_0022_COMMAND_LIST_VIDEO_PROCESS` (14) and
@@ -1317,6 +1317,8 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS {
 
 #### Feature version, handle and stages
 
+<a id="d3d12ddi-video-extension-command-parameter-stage-0063"></a>
+
 ```cpp
 // Version: D3D12DDI_FEATURE_VERSION_VIDEO_0063
 // Usermode DDI Min Version: D3D12DDI_SUPPORTED_0043
@@ -1341,6 +1343,9 @@ typedef enum D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_0063
 <a id="extension-ddi-parameter-types"></a>
 
 #### Parameter types and usage flags
+
+<a id="d3d12ddi-video-extension-command-parameter-flags-0063"></a>
+<a id="d3d12ddi-video-extension-command-parameter-type-0063"></a>
 
 ```cpp
 typedef enum D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE_0063
@@ -1372,6 +1377,8 @@ DEFINE_ENUM_FLAG_OPERATORS( D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS_006
 <a id="extension-ddi-command-enumeration"></a>
 
 #### Command enumeration
+
+<a id="d3d12ddi-video-extension-command-count-data-0063"></a>
 
 ```cpp
 // D3D12DDICAPS_TYPE_VIDEO_0063_EXTENSION_COMMAND_COUNT
@@ -1411,6 +1418,8 @@ typedef struct D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_INFO_0063
 } D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_INFO_0063;
 ```
 
+<a id="d3d12ddi-video-extension-command-parameter-count-data-0063"></a>
+
 ```cpp
 // D3D12DDICAPS_TYPE_VIDEO_0063_EXTENSION_COMMAND_PARAMETER_COUNT
 typedef struct D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_COUNT_DATA_0063
@@ -1433,7 +1442,7 @@ typedef struct D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETERS_DATA_0063
 
 <a id="extension-ddi-support-size"></a>
 
-#### Support and residency-size payloads
+#### Support and residency size payloads
 
 ```cpp
 // D3D12DDICAPS_TYPE_VIDEO_0063_EXTENSION_COMMAND_CAPS
@@ -1462,6 +1471,8 @@ typedef struct D3D12DDI_VIDEO_EXTENSION_COMMAND_SIZE_DATA_0063
 <a id="extension-ddi-object-callbacks"></a>
 
 #### Object creation and destruction
+
+<a id="d3d12ddiarg-create-video-extension-command-0063"></a>
 
 ```cpp
 typedef struct D3D12DDIARG_CREATE_VIDEO_EXTENSION_COMMAND_0063
@@ -1607,7 +1618,7 @@ Indicates the Video Command Queue that the video extension targets. Only one of 
 
 `[in] CommandCount`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_commands_data_0063:5 -->The number of video extension commands supported. This count must match the **CommandCount** returned by [D3D12DDI_VIDEO_EXTENSION_COMMAND_COUNT_DATA_0063](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ns-d3d12umddi-d3d12ddi_video_extension_command_count_data_0063).<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_commands_data_0063:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_commands_data_0063:5 -->The number of video extension commands supported. This count must match the **CommandCount** returned by [D3D12DDI_VIDEO_EXTENSION_COMMAND_COUNT_DATA_0063](#d3d12ddi-video-extension-command-count-data-0063).<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_commands_data_0063:5 --></ins>
 
 `[out] pCommandInfos`
 
@@ -1647,11 +1658,11 @@ Indicates struct member packing.
 
 `Type`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameter_info_0063:5 -->The parameter type. See [D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_type_0063).<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameter_info_0063:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameter_info_0063:5 -->The parameter type. See [D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE](#d3d12ddi-video-extension-command-parameter-type-0063).<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameter_info_0063:5 --></ins>
 
 `Flags`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameter_info_0063:7 -->Parameter flags. See [D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_flags_0063).<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameter_info_0063:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameter_info_0063:7 -->Parameter flags. See [D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS](#d3d12ddi-video-extension-command-parameter-flags-0063).<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameter_info_0063:7 --></ins>
 
 #### D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETERS_DATA_0063
 
@@ -1669,7 +1680,7 @@ The parameter stage to query.
 
 `[in] ParameterCount`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameters_data_0063:7 -->This must match the **ParameterCount** returned by the [D3D12DDICAPS_TYPE_VIDEO_0063_EXTENSION_COMMAND_PARAMETER_COUNT](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ns-d3d12umddi-d3d12ddi_video_extension_command_parameter_count_data_0063) query.<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameters_data_0063:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameters_data_0063:7 -->This must match the **ParameterCount** returned by the [D3D12DDICAPS_TYPE_VIDEO_0063_EXTENSION_COMMAND_PARAMETER_COUNT](#d3d12ddi-video-extension-command-parameter-count-data-0063) query.<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameters_data_0063:7 --></ins>
 
 `[out] pParameterInfos`
 
@@ -1691,7 +1702,7 @@ The unique identifier for the video extension command.
 
 `[in] pInputData`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:7 -->Input data for the capability query allocated by the caller with a size of **InputDataSizeInBytes**. This struct is enumerable as the **D3D12DDI\_VIDEO\_EXTENSION\_COMMAND\_PARAMETER\_STAGE\_0063\_CAPS\_INPUT** parameter stage of the [D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_0063](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_stage_0063) enumeration.<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:7 -->Input data for the capability query allocated by the caller with a size of **InputDataSizeInBytes**. This struct is enumerable as the **D3D12DDI\_VIDEO\_EXTENSION\_COMMAND\_PARAMETER\_STAGE\_0063\_CAPS\_INPUT** parameter stage of the [D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_0063](#d3d12ddi-video-extension-command-parameter-stage-0063) enumeration.<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:7 --></ins>
 
 `[in] InputDataSizeInBytes`
 
@@ -1699,7 +1710,7 @@ The byte size of the input data allocation.
 
 `[out] pOutputData`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:11 -->Output data for the capability query allocated by the caller with a size of OutputDataSizeInBytes. This struct is enumerable as the **D3D12DDI\_VIDEO\_EXTENSION\_COMMAND\_PARAMETER\_STAGE\_0063\_CAPS\_OUTPUT** parameter stage of the [D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_0063](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_stage_0063) enumeration.<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:11 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:11 -->Output data for the capability query allocated by the caller with a size of OutputDataSizeInBytes. This struct is enumerable as the **D3D12DDI\_VIDEO\_EXTENSION\_COMMAND\_PARAMETER\_STAGE\_0063\_CAPS\_OUTPUT** parameter stage of the [D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_0063](#d3d12ddi-video-extension-command-parameter-stage-0063) enumeration.<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:11 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:12 -->`OutputDataSizeInBytes` (input)<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:12 --></ins>
 
@@ -1729,11 +1740,11 @@ The unique identifier for the video extension command.
 
 `[out] MemoryPoolL0Size`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_size_data_0063:11 -->Allocation size in L0; see the [API size payload](#d3d12-feature-data-video-extension-command-size) and [residency-size qualification](#extension-qualifications).<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_size_data_0063:11 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_size_data_0063:11 -->Allocation size in L0; see the [API size payload](#d3d12-feature-data-video-extension-command-size) and [residency size qualification](#extension-qualifications).<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_size_data_0063:11 --></ins>
 
 `[out] MemoryPoolL1Size`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_size_data_0063:13 -->Allocation size in L1; see the [API size payload](#d3d12-feature-data-video-extension-command-size) and [residency-size qualification](#extension-qualifications).<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_size_data_0063:13 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_size_data_0063:13 -->Allocation size in L1; see the [API size payload](#d3d12-feature-data-video-extension-command-size) and [residency size qualification](#extension-qualifications).<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_size_data_0063:13 --></ins>
 
 ##### Behavior
 
@@ -1789,7 +1800,7 @@ Parameter types are used to enumerate the members of each parameter stage parame
 > | `D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE_0063_SINT64` | Signed 64-bit integer. |
 > | `D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE_0063_FLOAT` | IEEE 32-bit floating point number. |
 > | `D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE_0063_DOUBLE` | IEEE 64-bit floating point number. |
-> | `D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE_0063_RESOURCE` | A D3D12DDI\_HRESOURCE handle. See the resource-state table below. |
+> | `D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE_0063_RESOURCE` | A D3D12DDI\_HRESOURCE handle. See the resource state table below. |
 > | `D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE_0063_MAX_VALID` | One past the last supported parameter type; a sentinel, not a parameter type. |
 
 <!-- d3d12-review-alert:end:video-extension:D-ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_type_0063:2 -->
@@ -1833,7 +1844,7 @@ Video Extensions must specify a command parameter flag.
 
 #### PFND3D12DDI_CALCPRIVATEVIDEOEXTENSIONCOMMANDSIZE_0061
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_calcprivatevideoextensioncommandsize_0061:0 -->Returns the driver-object size for the video extension command. Direct3D runtime allocates space for this driver object. On creation, the driver places the object into the allocation that was provided by the runtime.<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_calcprivatevideoextensioncommandsize_0061:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_calcprivatevideoextensioncommandsize_0061:0 -->Returns the driver object size for the video extension command. Direct3D runtime allocates space for this driver object. On creation, the driver places the object into the allocation that was provided by the runtime.<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_calcprivatevideoextensioncommandsize_0061:0 --></ins>
 
 ##### Parameters
 
@@ -1843,7 +1854,7 @@ Handle for the D3D12 device.
 
 `pArgs`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_calcprivatevideoextensioncommandsize_0061:5 -->Pointer to a [D3D12DDIARG_CREATE_VIDEO_EXTENSION_COMMAND_0063](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ns-d3d12umddi-d3d12ddiarg_create_video_extension_command_0063) structure.<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_calcprivatevideoextensioncommandsize_0061:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_calcprivatevideoextensioncommandsize_0061:5 -->Pointer to a [D3D12DDIARG_CREATE_VIDEO_EXTENSION_COMMAND_0063](#d3d12ddiarg-create-video-extension-command-0063) structure.<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_calcprivatevideoextensioncommandsize_0061:5 --></ins>
 
 ##### Return values
 
@@ -1861,7 +1872,7 @@ Handle for the Direct3D 12 device.
 
 `pArgs`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_createvideoextensioncommand_0063:5 -->Pointer to a [D3D12DDIARG_CREATE_VIDEO_EXTENSION_COMMAND_0063](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ns-d3d12umddi-d3d12ddiarg_create_video_extension_command_0063) structure that contains arguments.<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_createvideoextensioncommand_0063:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_createvideoextensioncommand_0063:5 -->Pointer to a [D3D12DDIARG_CREATE_VIDEO_EXTENSION_COMMAND_0063](#d3d12ddiarg-create-video-extension-command-0063) structure that contains arguments.<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_createvideoextensioncommand_0063:5 --></ins>
 
 `hDrvVideoExtensionCommand`
 
@@ -1905,7 +1916,7 @@ Handle to the video extension command to initialize.
 
 `pInitializationParameters`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_initialize_video_extension_command_0063:7 -->Pointer to the initialization parameters structure. Parameters for this structure must match the parameter enumeration for [D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_0063_INITIALIZATION](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_stage_0063).<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_initialize_video_extension_command_0063:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_initialize_video_extension_command_0063:7 -->Pointer to the initialization parameters structure. Parameters for this structure must match the parameter enumeration for [D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_0063_INITIALIZATION](#d3d12ddi-video-extension-command-parameter-stage-0063).<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_initialize_video_extension_command_0063:7 --></ins>
 
 `InitializationParametersSizeInBytes`
 
@@ -1937,7 +1948,7 @@ Handle for the command list.
 
 `pExecutionParameters`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:7 -->Pointer to the execution parameters structure. Parameters for this structure must match the parameter enumeration for [D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_0063_EXECUTION](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_stage_0063).<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:7 -->Pointer to the execution parameters structure. Parameters for this structure must match the parameter enumeration for [D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_0063_EXECUTION](#d3d12ddi-video-extension-command-parameter-stage-0063).<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:7 --></ins>
 
 `ExecutionParametersSizeInBytes`
 
@@ -1976,7 +1987,7 @@ The unique identifier for the video extension command.
 
 `[in] pCreationParameters`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddiarg_create_video_extension_command_0063:7 -->Pointer to the creation parameters structure. Parameters for this structure must match the parameter enumeration for [D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_0063_CREATION](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3d12umddi/ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_stage_0063).<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddiarg_create_video_extension_command_0063:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddiarg_create_video_extension_command_0063:7 -->Pointer to the creation parameters structure. Parameters for this structure must match the parameter enumeration for [D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_0063_CREATION](#d3d12ddi-video-extension-command-parameter-stage-0063).<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddiarg_create_video_extension_command_0063:7 --></ins>
 
 `CreationParametersDataSizeInBytes`
 
@@ -2006,6 +2017,6 @@ The size of the creation parameters structure in bytes.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The residency-size query takes creation parameters and reports L0 system memory and L1 discrete video memory. The published DDI prose that names initialization parameters and reverses the pools is incorrect.
+> The residency size query takes creation parameters and reports L0 system memory and L1 discrete video memory. The published DDI prose that names initialization parameters and reverses the pools is incorrect.
 
 <!-- d3d12-review-alert:end:video-extension:N-qualifications:1 -->

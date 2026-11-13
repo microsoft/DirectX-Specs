@@ -41,7 +41,7 @@ typedef struct D3D12_FEATURE_DATA_FENCE_BARRIERS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Set `NodeIndex` and `CommandListType` to the node and command-list type being used, then query `D3D12_FEATURE_FENCE_BARRIERS` with `CheckFeatureSupport`. A failed query does not advertise support. The rules below describe `D3D12_FENCE_BARRIERS_TIER_1`; `D3D12_FENCE_BARRIERS_TIER_NOT_SUPPORTED` provides no fence-barrier operations. The interface `ID3D12CommandListFenceBarriers` is obtained from the owning command-list object. Queue types include direct, compute, copy, and the supported video types; bundles do not support these recording operations.
+> Set `NodeIndex` and `CommandListType` to the node and command list type being used, then query `D3D12_FEATURE_FENCE_BARRIERS` with `CheckFeatureSupport`. A failed query does not advertise support. The rules below describe `D3D12_FENCE_BARRIERS_TIER_1`; `D3D12_FENCE_BARRIERS_TIER_NOT_SUPPORTED` provides no fence barrier operations. The interface `ID3D12CommandListFenceBarriers` is obtained from the owning command list object. Queue types include direct, compute, copy, and the supported video types; bundles do not support these recording operations.
 
 <!-- d3d12-review-alert:end:fence-barriers:FB-query:0 -->
 
@@ -84,7 +84,7 @@ typedef struct D3D12_FEATURE_DATA_FENCE_BARRIERS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The common [synchronization scopes](synchronization.md#barrier-sync), [access masks](synchronization.md#barrier-access), and [compatibility constraints](synchronization.md#access-sync-compatibility) apply except where the fence-barrier rules explicitly specify different before/after semantics.
+> The common [synchronization scopes](synchronization.md#barrier-sync), [access masks](synchronization.md#barrier-access), and [compatibility constraints](synchronization.md#access-sync-compatibility) apply except where the fence barrier rules explicitly specify different before/after semantics.
 
 <!-- d3d12-review-alert:end:fence-barriers:FB-canonical-access:0 -->
 
@@ -97,7 +97,7 @@ typedef struct D3D12_FEATURE_DATA_FENCE_BARRIERS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Fence creation flags, [command-list-scoped fence rules](execution.md#command-list-scoped-fences), and [CPU/queue observation restrictions](execution.md#fence-flags) are defined in the common execution reference. Sharing does not implicitly enable command-list barriers: the barrier flag must be requested explicitly. A fence must actually support GPU barrier access; ordinary queue synchronization capability alone is not sufficient.
+> Fence creation flags, [command list scoped fence rules](execution.md#command-list-scoped-fences), and [CPU/queue observation restrictions](execution.md#fence-flags) are defined in the common execution reference. Sharing does not implicitly enable command list barriers: the barrier flag must be requested explicitly. A fence must actually support GPU barrier access; ordinary queue synchronization capability alone is not sufficient.
 
 <!-- d3d12-review-alert:end:fence-barriers:FB-kinds-links:0 -->
 
@@ -114,7 +114,7 @@ Consecutive layout transitioning `WaitBarrier` operations with no intervening `S
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `SignalBarrier` operations on the same fence require an ordered dependency chain: barrier synchronization must ensure the preceding signal completes before the next signal is reached. Resolve its outstanding synchronization scopes with the current or intervening barriers; an unresolved split signal requires its dependent wait. A scoped wait must be satisfied by its most recent applicable producer, as defined in the [scoped-fence rules](execution.md#command-list-scoped-fences).
+> `SignalBarrier` operations on the same fence require an ordered dependency chain: barrier synchronization must ensure the preceding signal completes before the next signal is reached. Resolve its outstanding synchronization scopes with the current or intervening barriers. An unresolved split signal requires its dependent wait. A scoped wait must be satisfied by its most recent applicable producer, as defined in the [scoped fence rules](execution.md#command-list-scoped-fences).
 
 <!-- d3d12-review-alert:end:fence-barriers:FB-producer-order:0 -->
 
@@ -163,7 +163,7 @@ Resource is either not accessed before/after the barrier in the same `ExecuteCom
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A Tier-1 signal barrier may export completed barrier work to a CPU observer or another queue through a queue/CPU-capable fence. The consumer uses ordinary CPU notification or queue `Wait`; Tier-1 `WaitBarrier` uses only command-list-scoped fences. The global-access requirement does not itself create an execution dependency or change a texture's layout.
+> A Tier-1 signal barrier may export completed barrier work to a CPU observer or another queue through a queue/CPU-capable fence. The consumer uses ordinary CPU notification or queue `Wait`; Tier-1 `WaitBarrier` uses only command list scoped fences. The global access requirement does not itself create an execution dependency or change a texture's layout.
 
 <!-- d3d12-review-alert:end:fence-barriers:FB-external-tier:0 -->
 
@@ -188,7 +188,7 @@ void SignalBarrier(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:fence-barriers:FB-SignalBarrier-behavior:0 -->`SignalBarrier` executes the provided barriers, signalling a fence after all barrier transactions have fully completed. An outstanding local split-barrier dependency must be completed by a `WaitBarrier` with matching fence/value pairs before its dependent operations.<!-- d3d12-review-inline:end:fence-barriers:FB-SignalBarrier-behavior:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:fence-barriers:FB-SignalBarrier-behavior:0 -->`SignalBarrier` executes the provided barriers, signalling a fence after all barrier transactions have fully completed. An outstanding local split barrier dependency must be completed by a `WaitBarrier` with matching fence/value pairs before its dependent operations.<!-- d3d12-review-inline:end:fence-barriers:FB-SignalBarrier-behavior:0 --></ins>
 
 If a wait barrier on a texture subresource corresponds to a preceding signal barrier, the `LayoutBefore` on the wait barrier must match the `LayoutAfter` from the signal barrier or be set to `D3D12_BARRIER_LAYOUT_UNDEFINED`, which avoids a layout transition. This effectively matches split barrier behavior where a barrier transaction is started by the split-begin barrier, and completed by the split-end barrier.
 
@@ -208,7 +208,7 @@ If a wait barrier on a texture subresource corresponds to a preceding signal bar
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The target must be a writable fence explicitly enabled with `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS`. [Read-only status fences](execution.md#status-fences) cannot be signaled. For CPU or other-queue dependencies, the fence also requires `D3D12_FENCE_FLAG_ALLOW_QUEUE_AND_CPU_SYNC` and the [external-dependency coherency rules](#external-dependencies).
+> The target must be a writable fence explicitly enabled with `D3D12_FENCE_FLAG_ALLOW_COMMAND_LIST_BARRIERS`. [Read-only status fences](execution.md#status-fences) cannot be signaled. For CPU or other-queue dependencies, the fence also requires `D3D12_FENCE_FLAG_ALLOW_QUEUE_AND_CPU_SYNC` and the [external dependency coherency rules](#external-dependencies).
 
 <!-- d3d12-review-alert:end:fence-barriers:FB-signal-kind:0 -->
 
@@ -219,7 +219,7 @@ If a wait barrier on a texture subresource corresponds to a preceding signal bar
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> This method returns no value. It records GPU work; it is not a CPU wait for GPU completion. Recording failures are reported through `Close` on the owning graphics or video command-list interface, following [deferred recording error rules](execution.md#lifecycle-driver-errors). Debug validation also checks dependency/layout requirements during recording and submission; applications must obey them independently of diagnostic coverage.
+> This method returns no value. It records GPU work. It is not a CPU wait for GPU completion. Recording failures are reported through `Close` on the owning graphics or video command list interface, following [deferred recording error rules](execution.md#lifecycle-driver-errors). Debug validation also checks dependency/layout requirements during recording and submission. Applications must obey them independently of diagnostic coverage.
 
 <!-- d3d12-review-alert:end:fence-barriers:FB-SignalBarrier-results:0 -->
 
@@ -260,7 +260,7 @@ void WaitBarrier(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For `D3D12_FENCE_BARRIERS_TIER_1`, every input fence must be [command-list scoped](execution.md#command-list-scoped-fences). `pFenceValues[i]` is the threshold for `ppFences[i]`; the full set of conditions must be satisfied, not merely any one condition. The scoped-fence producer rules apply across the command lists in the same `ExecuteCommandLists` group.
+> For `D3D12_FENCE_BARRIERS_TIER_1`, every input fence must be [command list scoped](execution.md#command-list-scoped-fences). `pFenceValues[i]` is the threshold for `ppFences[i]`. The full set of conditions must be satisfied, not merely any one condition. The scoped fence producer rules apply across the command lists in the same `ExecuteCommandLists` group.
 
 <!-- d3d12-review-alert:end:fence-barriers:FB-wait-kind:0 -->
 
@@ -271,7 +271,7 @@ void WaitBarrier(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> This method returns no value. It records GPU work; it is not a CPU wait for GPU completion. Recording failures are reported through `Close` on the owning graphics or video command-list interface, following [deferred recording error rules](execution.md#lifecycle-driver-errors). Debug validation also checks dependency/layout requirements during recording and submission; applications must obey them independently of diagnostic coverage.
+> This method returns no value. It records GPU work. It is not a CPU wait for GPU completion. Recording failures are reported through `Close` on the owning graphics or video command list interface, following [deferred recording error rules](execution.md#lifecycle-driver-errors). Debug validation also checks dependency/layout requirements during recording and submission. Applications must obey them independently of diagnostic coverage.
 
 <!-- d3d12-review-alert:end:fence-barriers:FB-WaitBarrier-results:0 -->
 
@@ -284,6 +284,6 @@ void WaitBarrier(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A signal proves completion only for the work/cache operations covered by its barrier scopes. It is not automatically a full-command-list or allocator-idle marker. Resource/storage reuse requires completion of every remaining use, and fence storage must remain valid while GPU references remain. Resetting a command-list object does not reset an independent fence or establish completion; see [resource lifetime](execution.md#lifetime) and [allocator storage](execution.md#command-storage).
+> A signal proves completion only for the work/cache operations covered by its barrier scopes. It does not automatically prove completion of the full command list or show that the allocator is idle. Resource/storage reuse requires completion of every remaining use, and fence storage must remain valid while GPU references remain. Resetting a command list object does not reset an independent fence or establish completion. See [resource lifetime](execution.md#lifetime) and [allocator storage](execution.md#command-storage).
 
 <!-- d3d12-review-alert:end:fence-barriers:FB-lifetime:0 -->

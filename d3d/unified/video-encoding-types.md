@@ -31,7 +31,7 @@
 
 <a id="encoding-av1-tile-bounds"></a>
 
-## AV1 tile-array bounds
+## AV1 tile array bounds
 
 ```cpp
 const UINT D3D12_VIDEO_ENCODER_AV1_MAX_TILE_COLS = 64;
@@ -606,7 +606,7 @@ typedef enum D3D12_VIDEO_ENCODER_AV1_COMP_PREDICTION_TYPE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The declaration below lists this family's selected members; it is not an exhaustive inventory of separately specified extensions.
+> The declaration below lists this family's selected members. It is not an exhaustive inventory of separately specified extensions.
 
 <!-- d3d12-review-alert:end:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAGS:0 -->
 
@@ -1373,7 +1373,7 @@ typedef enum D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_CUSIZE {
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The declaration below lists this family's selected members; it is not an exhaustive inventory of separately specified extensions.
+> The declaration below lists this family's selected members. It is not an exhaustive inventory of separately specified extensions.
 
 <!-- d3d12-review-alert:end:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAGS:0 -->
 
@@ -1553,7 +1553,7 @@ typedef enum D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The declaration below lists this family's selected members; it is not an exhaustive inventory of separately specified extensions.
+> The declaration below lists this family's selected members. It is not an exhaustive inventory of separately specified extensions.
 
 <!-- d3d12-review-alert:end:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS1:0 -->
 
@@ -3270,7 +3270,7 @@ typedef enum D3D12_VIDEO_ENCODER_SUBREGION_COMPRESSED_BITSTREAM_BUFFER_MODE
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The declaration below lists this family's selected members; it is not an exhaustive inventory of separately specified extensions.
+> The declaration below lists this family's selected members. It is not an exhaustive inventory of separately specified extensions.
 
 <!-- d3d12-review-alert:end:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_SUPPORT_FLAGS:0 -->
 

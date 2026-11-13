@@ -18,7 +18,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The common representations, arithmetic requirements and conversion algorithms are defined here. [Common shader internals](common-shader-internals.md#minimum-precision) defines minimum-precision execution; [Formats](formats.md#modifiers) defines component interpretation and [missing-component defaults](formats.md#missing-components). The operation-specific requirements in [texture filtering](common-shader-internals.md#archive-7-18-16-2), [rasterizer interpolation](rasterization.md#interpolator-precision), [depth clamping](output-merger.md#depth-clamp), [blending precision](output-merger.md#blending-precision), and [clear conversion](resource-operations.md#clear-conversion) retain their own qualifications. Native shader FP16 arithmetic does not change the clear-command denormal and clamping rules.
+> The common representations, arithmetic requirements and conversion algorithms are defined here. [Common shader internals](common-shader-internals.md#minimum-precision) defines minimum-precision execution. [Formats](formats.md#modifiers) defines component interpretation and [missing-component defaults](formats.md#missing-components). The operation-specific requirements in [texture filtering](common-shader-internals.md#archive-7-18-16-2), [rasterizer interpolation](rasterization.md#interpolator-precision), [depth clamping](output-merger.md#depth-clamp), [blending precision](output-merger.md#blending-precision), and [clear conversion](resource-operations.md#clear-conversion) retain their own qualifications. Native shader FP16 arithmetic does not change the clear command denormal and clamping rules.
 
 <!-- d3d12-review-alert:end:numeric-rules:N-owners:0 -->
 
@@ -219,7 +219,7 @@ The exceptions are:
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Native `float16_t` shader execution and binary16 resource storage are separate contracts; both use the [16-bit representation](#numeric-3-1-5). Native execution is distinct from minimum-precision execution. Native 16-bit scalar types require Shader Model 6.2 or later, HLSL 2018 or later and `-enable-16bit-types`; their device gate is [`D3D12_FEATURE_DATA_D3D12_OPTIONS4::Native16BitShaderOpsSupported`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options4). In this mode `half` maps to `float16_t`, and 16-bit minimum-precision names map to their exact-width types. Without this native mode, the [minimum-precision model](common-shader-internals.md#minimum-precision) remains distinct.
+> Native `float16_t` shader execution and binary16 resource storage are separate contracts. Both use the [16-bit representation](#numeric-3-1-5). Native execution is distinct from minimum-precision execution. Native 16-bit scalar types require Shader Model 6.2 or later, HLSL 2018 or later and `-enable-16bit-types`. Their device gate is [`D3D12_FEATURE_DATA_D3D12_OPTIONS4::Native16BitShaderOpsSupported`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options4). In this mode `half` maps to `float16_t`, and 16-bit minimum-precision names map to their exact-width types. Without this native mode, the [minimum-precision model](common-shader-internals.md#minimum-precision) remains distinct.
 
 <!-- d3d12-review-alert:end:numeric-rules:N-native-mode:0 -->
 
@@ -239,7 +239,7 @@ The exceptions are:
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The native mode also enables `int16_t` and `uint16_t`; it is separate from the [`Int64ShaderOps`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options1) support condition for 64-bit integer operations and the [double-precision support condition](#numeric-3-1-4). The Shader Model 6.9 native16 requirement and 16-bit classification intrinsics are defined in [Common shader internals](common-shader-internals.md#core-operations).
+> The native mode also enables `int16_t` and `uint16_t`. It is separate from the [`Int64ShaderOps`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options1) support condition for 64-bit integer operations and the [double-precision support condition](#numeric-3-1-4). The Shader Model 6.9 native16 requirement and 16-bit classification intrinsics are defined in [Common shader internals](common-shader-internals.md#core-operations).
 
 <!-- d3d12-review-alert:end:numeric-rules:N-integer-availability:0 -->
 
@@ -292,7 +292,7 @@ section.<!-- d3d12-review-inline:end:numeric-rules:L-3.2.1:0 --></ins>
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The format conversions in this section do not redefine shader instruction-specific conversion rules. For example, integer `trunc` discards high-order bits, `zext` zero-extends and `sext` sign-extends in [DXIL's admitted core operations](https://github.com/microsoft/DirectXShaderCompiler/blob/194bb75bea2becb42810d72a16195089c1908e10/docs/DXIL.rst#operations-via-instructions), whereas the [integer format-width conversions](#numeric-3-2-3-9) specify their own extension and clamping. Native DXIL `FPTrunc` and `FPExt` are distinct from `LegacyF32ToF16` and `LegacyF16ToF32`.
+> The format conversions in this section do not redefine shader instruction-specific conversion rules. For example, integer `trunc` discards high-order bits, `zext` zero-extends and `sext` sign-extends in [DXIL's admitted core operations](https://github.com/microsoft/DirectXShaderCompiler/blob/194bb75bea2becb42810d72a16195089c1908e10/docs/DXIL.rst#operations-via-instructions), whereas the [integer format width conversions](#numeric-3-2-3-9) specify their own extension and clamping. Native DXIL `FPTrunc` and `FPExt` are distinct from `LegacyF32ToF16` and `LegacyF16ToF32`.
 
 <!-- d3d12-review-alert:end:numeric-rules:N-conversion-boundary:0 -->
 
@@ -633,7 +633,7 @@ Specific choices of bit allocations for fixed point integers are listed in the p
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> **Diagram arithmetic note:** The diagram's final integer and fractional fields denote `-8192 + 0.3671875 = -8191.6328125`. The printed `-8192.3671875` is not their decimal numerical value. The original diagram is retained; its nearest-even construction is a reference result, not a tightening of the permitted 0.6 ULP tolerance.
+> **Diagram arithmetic note:** The diagram's final integer and fractional fields denote `-8192 + 0.3671875 = -8191.6328125`. The printed `-8192.3671875` is not their decimal numerical value. The original diagram is retained. Its nearest-even construction is a reference result, not a tightening of the permitted 0.6 ULP tolerance.
 
 <!-- d3d12-review-alert:end:numeric-rules:N-fixed-figure-correction:0 -->
 
@@ -681,7 +681,7 @@ A color is represented by 3 mantissas and an exponent as follows:
 
 <ins><!-- d3d12-review-inline:begin:numeric-rules:L-19.3.2:4 -->v = (0.frac)\*2<sup>(e-15)</sup><!-- d3d12-review-inline:end:numeric-rules:L-19.3.2:4 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:numeric-rules:L-19.3.2:5 -->`DXGI_FORMAT_R9G9B9E5_SHAREDEXP` render-target and UAV availability is defined by [optional shared-exponent format support](formats.md#shared-exponent-support).<!-- d3d12-review-inline:end:numeric-rules:L-19.3.2:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:numeric-rules:L-19.3.2:5 -->`DXGI_FORMAT_R9G9B9E5_SHAREDEXP` render target and UAV availability is defined by [optional shared exponent format support](formats.md#shared-exponent-support).<!-- d3d12-review-inline:end:numeric-rules:L-19.3.2:5 --></ins>
 
 <a id="numeric-19-3-2-1"></a>
 
@@ -718,7 +718,7 @@ values with an encoded exponent of 31 may not be treated as INF or NAN.<!-- d3d1
 
 <ins><!-- d3d12-review-inline:begin:numeric-rules:L-19.3.2.2:0 -->The following algorithm is used to convert from floating point to RGBE:<!-- d3d12-review-inline:end:numeric-rules:L-19.3.2.2:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:numeric-rules:L-19.3.2.2:1 -->**Historical note (D3D11.3):** This conversion to RGBE was never performed in D3D11.3 (i.e. hardware). In that specification, this conversion was listed merely for completeness and might be used by a software encoder. Current render-target/UAV availability is defined by [shared-exponent format support](formats.md#shared-exponent-support).<!-- d3d12-review-inline:end:numeric-rules:L-19.3.2.2:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:numeric-rules:L-19.3.2.2:1 -->**Historical note (D3D11.3):** This conversion to RGBE was never performed in D3D11.3 (i.e. hardware). In that specification, this conversion was listed merely for completeness and might be used by a software encoder. Current render target/UAV availability is defined by [shared exponent format support](formats.md#shared-exponent-support).<!-- d3d12-review-inline:end:numeric-rules:L-19.3.2.2:1 --></ins>
 
 ```
     sharedExponent =  max(redExponent, greenExponent, blueExponent); [note, these are treated as unbiased]

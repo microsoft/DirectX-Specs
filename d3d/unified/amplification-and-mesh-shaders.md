@@ -1088,7 +1088,7 @@ Thread group count in Z direction.
 
 <a id="driver-current-mesh-dispatch"></a>
 
-### Current mesh-dispatch forms
+### Current mesh dispatch forms
 
 The `_0114` form of [DispatchMesh](#dispatchmesh) participates in [runtime bypass](execution.md#work-command-handles). Both forms receive `ThreadGroupCountX`, `ThreadGroupCountY` and `ThreadGroupCountZ` in that order.
 

@@ -20,7 +20,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> This chapter specifies command-list copies, immediate buffer writes, descriptor-addressed clears, resolves and resource discard. These commands operate on the resources, subresources and views supplied to the call, rather than on draw attachment bindings.
+> This chapter specifies command list copies, immediate buffer writes, descriptor-addressed clears, resolves and resource discard. These commands operate on the resources, subresources and views supplied to the call, rather than on draw attachment bindings.
 
 <!-- d3d12-review-alert:end:resource-operations:scope:0 -->
 
@@ -29,7 +29,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> This is a source-preserving draft. The selected copy, clear, resolve and discard contracts include the applicable maintainer resolutions; source-only requirements are not claims of universal implementation verification.
+> This is a source-preserving draft. The selected copy, clear, resolve and discard contracts include the applicable maintainer resolutions. Source-only requirements are not claims of universal implementation verification.
 
 <!-- d3d12-review-alert:end:resource-operations:scope:1 -->
 
@@ -38,7 +38,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [Resources and memory](resources.md#resource-storage) defines resource identity, [subresource indexing](resources.md#subresources), [resource flags](resources.md#resource-flags), [heap types](resources.md#heap-types), [CPU mapping](resources.md#cpu-access) and [physical write boundaries](resources.md#hardware-memory-access). [Formats and views](formats.md#interpretation) defines format interpretation, [casting](formats.md#casting), [planar depth/stencil staging](formats.md#depth-stencil-views), [view descriptions](formats.md#view-descriptions) and [format support queries](formats.md#support). [Binding](binding.md#descriptor-population) owns descriptor storage and lifetime, and [execution](execution.md#lifetime) owns resource lifetime.
+> [Resources and memory](resources.md#resource-storage) defines resource identity, [subresource indexing](resources.md#subresources), [resource flags](resources.md#resource-flags), [heap types](resources.md#heap-types), [CPU mapping](resources.md#cpu-access) and [physical write boundaries](resources.md#hardware-memory-access). [Formats](formats.md#interpretation) defines format interpretation, [casting](formats.md#casting), [planar depth/stencil staging](formats.md#depth-stencil-views) and [format support queries](formats.md#support). Binding owns [view descriptions](binding.md#view-descriptions) and [descriptor storage and lifetime](binding.md#descriptor-population). [Execution](execution.md#lifetime) owns resource lifetime.
 
 <!-- d3d12-review-alert:end:resource-operations:owners:0 -->
 
@@ -47,7 +47,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [Synchronization](synchronization.md#foundations) defines enhanced access/layouts, legacy resource states, queue interchange and aliasing. General shader memory semantics remain at the [memory-model owner](memory-model.md). No additional memory model is defined here.
+> [Synchronization](synchronization.md#foundations) defines enhanced access/layouts, legacy resource states, queue interchange and aliasing. General shader memory semantics remain at the [memory model owner](memory-model.md). No additional memory model is defined here.
 
 <!-- d3d12-review-alert:end:resource-operations:owners:1 -->
 
@@ -56,7 +56,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [Rasterization](rasterization.md#sample-patterns) defines standard and programmed sample patterns. [Output merger](output-merger.md#clear-copy-resolve-interactions) defines attachment/write-mask and read-only-view interactions; its [render-pass command table](output-merger.md#render-pass-recording) is the canonical recording-context contract. [Queries and predication](counters-queries-and-predication.md#predication-operation-matrix) specifies the exact policy for each operation; clear, copy, resolve and discard do not acquire one inferred uniform predication policy.
+> [Rasterization](rasterization.md#sample-patterns) defines standard and programmed sample patterns. [Output merger](output-merger.md#clear-copy-resolve-interactions) defines attachment/write mask and read-only view interactions. Its [render pass command table](output-merger.md#render-pass-recording) is the canonical recording context contract. [Queries and predication](counters-queries-and-predication.md#predication-operation-matrix) specifies the exact policy for each operation; clear, copy, resolve and discard do not acquire one inferred uniform predication policy.
 
 <!-- d3d12-review-alert:end:resource-operations:owners:2 -->
 
@@ -69,7 +69,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The declaring interface for the base methods is `ID3D12GraphicsCommandList`; the regional resolve is declared by `ID3D12GraphicsCommandList1`. Inheritance does not create additional API identities.
+> The declaring interface for the base methods is `ID3D12GraphicsCommandList`. The regional resolve is declared by `ID3D12GraphicsCommandList1`. Inheritance does not create additional API identities.
 
 <!-- d3d12-review-alert:end:resource-operations:queue-matrix:0 -->
 
@@ -91,7 +91,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> None of these ordinary methods may be called inside an open render pass. Render-pass beginning/ending clear, resolve and discard accesses are different operations, governed by the [pass access types](output-merger.md#render-pass-access). Their `NO_ACCESS` pairing/terminal-flow and suspend/resume qualifications remain at that owner.
+> None of these ordinary methods may be called inside an open render pass. Render pass beginning/ending clear, resolve and discard accesses are different operations, governed by the [pass access types](output-merger.md#render-pass-access). Their `NO_ACCESS` pairing/terminal flow and suspend/resume qualifications remain at that owner.
 
 <!-- d3d12-review-alert:end:resource-operations:queue-matrix:2 -->
 
@@ -100,7 +100,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> All eleven methods return `void`; none returns a per-call `HRESULT`. Recording failure and `Close` results follow [command-list errors](execution.md#close). An API's invalid-usage rule, a core runtime check and a debug-layer diagnostic are distinct contracts; a missing diagnostic does not make a call valid.
+> All eleven methods return `void`; none returns a per-call `HRESULT`. Recording failure and `Close` results follow [command list errors](execution.md#close). An API's invalid-usage rule, a core runtime check and a debug layer diagnostic are distinct contracts. A missing diagnostic does not make a call valid.
 
 <!-- d3d12-review-alert:end:resource-operations:queue-matrix:3 -->
 
@@ -109,10 +109,10 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The tables and eleven-method render-pass restriction in this section cover
+> The tables and eleven-method render pass restriction in this section cover
 > the copy/clear/resolve and graphics DiscardResource methods. The separate
-> [immediate-write entries](#immediate-buffer-writes) and video discard
-> entries define their own declaring-list and recording contexts; they do not
+> [immediate write entries](#immediate-buffer-writes) and video discard
+> entries define their own declaring-list and recording contexts. They do not
 > inherit a blanket ban from this table.
 
 <!-- d3d12-review-alert:end:resource-operations:queue-matrix:4 -->
@@ -133,7 +133,7 @@
 >
 > | Operation/use | Enhanced access | Texture layout where applicable | Legacy state |
 > |---|---|---|---|
-> | Copy source / destination, including the direction selected by `CopyTiles` | `COPY_SOURCE` / `COPY_DEST` | Copy-compatible source/destination layout; common-layout cases retain their canonical permissions | `COPY_SOURCE` / `COPY_DEST` |
+> | Copy source / destination, including the direction selected by `CopyTiles` | `COPY_SOURCE` / `COPY_DEST` | Copy-compatible source/destination layout; common layout cases retain their canonical permissions | `COPY_SOURCE` / `COPY_DEST` |
 > | RTV clear | `RENDER_TARGET` | `RENDER_TARGET` | `RENDER_TARGET` |
 > | DSV clear, selected aspect | `DEPTH_STENCIL_WRITE` | `DEPTH_STENCIL_WRITE` | `DEPTH_WRITE` |
 > | UAV clear | `UNORDERED_ACCESS` | UAV-compatible layout | `UNORDERED_ACCESS` |
@@ -146,7 +146,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The access names in this table have the `D3D12_BARRIER_ACCESS_` prefix, layouts have `D3D12_BARRIER_LAYOUT_`, and legacy states have `D3D12_RESOURCE_STATE_`. Buffers have no transitionable texture layout. [Queue/layout/access compatibility](synchronization.md#queue-compatibility) and [legacy COPY-queue interchange](synchronization.md#legacy-common-state-promotion) remain requirements; the table is not permission to use an unsupported queue or format.
+> The access names in this table have the `D3D12_BARRIER_ACCESS_` prefix, layouts have `D3D12_BARRIER_LAYOUT_`, and legacy states have `D3D12_RESOURCE_STATE_`. Buffers have no transitionable texture layout. [Queue/layout/access compatibility](synchronization.md#queue-compatibility) and [legacy COPY queue interchange](synchronization.md#legacy-common-state-promotion) remain requirements. The table is not permission to use an unsupported queue or format.
 
 <!-- d3d12-review-alert:end:resource-operations:access-table:2 -->
 
@@ -155,7 +155,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Discard uses its [command-list/resource-flag-specific access rules](#discardresource), rather than an invented generic discard state. In-place `DECOMPRESS` retains the source-access exception defined in [regional resolve](#resolvesubresourceregion).
+> Discard uses its [command list/resource-flag-specific access rules](#discardresource), rather than an invented generic discard state. In-place `DECOMPRESS` retains the source access exception defined in [regional resolve](#resolvesubresourceregion).
 
 <!-- d3d12-review-alert:end:resource-operations:access-table:3 -->
 
@@ -164,7 +164,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The operation scopes are [`D3D12_BARRIER_SYNC_COPY`, `D3D12_BARRIER_SYNC_RESOLVE`, `D3D12_BARRIER_SYNC_RENDER_TARGET`, `D3D12_BARRIER_SYNC_DEPTH_STENCIL`, and `D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW`](synchronization.md#barrier-sync). The UAV-clear scope is not the compute-shading scope. [Barrier-free access](synchronization.md#barrier-free-access) and [model interoperation](synchronization.md#model-interoperation) determine which dependencies require barriers; ordinary UAV clears do not obtain an implicit dispatch-ordering guarantee.
+> The operation scopes are [`D3D12_BARRIER_SYNC_COPY`, `D3D12_BARRIER_SYNC_RESOLVE`, `D3D12_BARRIER_SYNC_RENDER_TARGET`, `D3D12_BARRIER_SYNC_DEPTH_STENCIL`, and `D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW`](synchronization.md#barrier-sync). The UAV-clear scope is not the compute shading scope. [Barrier-free access](synchronization.md#barrier-free-access) and [model interoperation](synchronization.md#model-interoperation) determine which dependencies require barriers; ordinary UAV clears do not obtain an implicit dispatch ordering guarantee.
 
 <!-- d3d12-review-alert:end:resource-operations:sync-links:0 -->
 
@@ -173,7 +173,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For protected resource operations, the [output-protection contract](../ProtectedResources.md#overview) requires the output to be protected whenever an operation reads protected input. This includes ordinary copies and resolves; copying protected contents to an unprotected destination is not permitted. The [command-list protected-session state](command-list-state.md#protection) and [resource/heap protection association](resources.md#protected-creation) apply to accesses and writes through the selected APIs. The [protected-operation predication restriction](counters-queries-and-predication.md#predication-operation-matrix) remains part of Queries' policy rather than an inferred uniform predicate rule.
+> For protected resource operations, the [output protection contract](../ProtectedResources.md#overview) requires the output to be protected whenever an operation reads protected input. This includes ordinary copies and resolves; copying protected contents to an unprotected destination is not permitted. The [command list protected session state](command-list-state.md#protection) and [resource/heap protection association](resources.md#protected-creation) apply to accesses and writes through the selected APIs. The [protected operation predication restriction](counters-queries-and-predication.md#predication-operation-matrix) remains part of Queries' policy rather than an inferred uniform predicate rule.
 
 <!-- d3d12-review-alert:end:resource-operations:protected-interactions:0 -->
 
@@ -186,7 +186,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A texture copy location selects either a texture subresource or a placed footprint in a buffer. Texture subresources identify a mip, array slice and plane using the [canonical indexing rule](resources.md#subresources); a 3D texture's depth slices are not array subresources. Coordinates are relative to the selected mip/plane, not implicitly to mip zero.
+> A texture copy location selects either a texture subresource or a placed footprint in a buffer. Texture subresources identify a mip, array slice and plane using the [canonical indexing rule](resources.md#subresources). A 3D texture's depth slices are not array subresources. Coordinates are relative to the selected mip/plane, not implicitly to mip zero.
 
 <!-- d3d12-review-alert:end:resource-operations:index-and-footprints:0 -->
 
@@ -195,7 +195,7 @@
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `ID3D12Device::GetCopyableFootprints` computes adapter-independent transfer footprints, row counts, unpadded row sizes and the required total size. Its [complete API contract](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getcopyablefootprints) is part of resource layout, not a copy command or a description of an opaque GPU texture's physical layout. The footprint types used by the selected operation are defined here.
+> `ID3D12Device::GetCopyableFootprints` computes adapter-independent transfer footprints, row counts, unpadded row sizes and the required total size. Its [complete API contract](resources.md#get-copyable-footprints) is part of resource layout, not a copy command or a description of an opaque GPU texture's physical layout. The footprint types used by the selected operation are defined here.
 
 <!-- d3d12-review-alert:end:resource-operations:index-and-footprints:1 -->
 
@@ -324,7 +324,7 @@ The z position of the back of the box, plus 1. This means that `back - front` eq
 
 #### Remarks
 
-This structure is used by the methods [WriteToSubresource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nf-d3d12-id3d12resource-writetosubresource), [ReadFromSubresource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nf-d3d12-id3d12resource-readfromsubresource) and [CopyTextureRegion](#copytextureregion).
+This structure is used by the methods [WriteToSubresource](resources.md#resource-write-to-subresource), [ReadFromSubresource](resources.md#resource-read-from-subresource) and [CopyTextureRegion](#copytextureregion).
 
 <a id="d3d12-subresource-footprint"></a>
 
@@ -346,7 +346,7 @@ typedef struct D3D12_SUBRESOURCE_FOOTPRINT {
 
 `Format`
 
-A [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format)-typed value that specifies the viewing format.
+A [DXGI_FORMAT](formats.md#dxgi-format)-typed value that specifies the viewing format.
 
 `Width`
 
@@ -389,7 +389,7 @@ typedef struct D3D12_PLACED_SUBRESOURCE_FOOTPRINT {
 
 The offset of the subresource within the parent resource, in bytes. The offset between the start of the parent resource and this subresource.
 
-This value must be aligned to D3D12\_TEXTURE\_DATA\_PLACEMENT\_ALIGNMENT (512) unless [D3D12_FEATURE_DATA_D3D12_OPTIONS13::UnrestrictedBufferTextureCopyPitchSupported](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options13) is TRUE.
+This value must be aligned to D3D12\_TEXTURE\_DATA\_PLACEMENT\_ALIGNMENT (512) unless [D3D12_FEATURE_DATA_D3D12_OPTIONS13::UnrestrictedBufferTextureCopyPitchSupported](devices-and-capabilities.md#d3d12_feature_data_d3d12_options13) is TRUE.
 
 `Footprint`
 
@@ -397,9 +397,9 @@ The format, width, height, depth, and row-pitch of the subresource, as a [D3D12_
 
 #### Remarks
 
-This structure is used in the [D3D12_TEXTURE_COPY_LOCATION](#d3d12-texture-copy-location) structure, and by [ID3D12Device::GetCopyableFootprints](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nf-d3d12-id3d12device-getcopyablefootprints).
+This structure is used in the [D3D12_TEXTURE_COPY_LOCATION](#d3d12-texture-copy-location) structure, and by [ID3D12Device::GetCopyableFootprints](resources.md#get-copyable-footprints).
 
-All the data referenced by the footprint structure must fit within the bounds of the parent resource. If you use [GetCopyableFootprints](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nf-d3d12-id3d12device-getcopyablefootprints) to fill out the structure, the *pTotalBytes* output field indicates the required size of the resource.
+All the data referenced by the footprint structure must fit within the bounds of the parent resource. If you use [GetCopyableFootprints](resources.md#get-copyable-footprints) to fill out the structure, the *pTotalBytes* output field indicates the required size of the resource.
 
 This structure is <ins><!-- d3d12-review-inline:begin:resource-operations:type-D3D12_PLACED_SUBRESOURCE_FOOTPRINT:11 -->also used in a number<!-- d3d12-review-inline:end:resource-operations:type-D3D12_PLACED_SUBRESOURCE_FOOTPRINT:11 --></ins> of helper functions (refer to [Helper Structures and Functions for D3D12](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/helper-structures-and-functions-for-d3d12)).
 
@@ -419,7 +419,7 @@ const UINT D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT = 512;
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12_FEATURE_DATA_D3D12_OPTIONS13.UnrestrictedBufferTextureCopyPitchSupported` selects the relaxed buffer/texture copy alignment contract. Otherwise the 256-byte row-pitch and 512-byte placed-footprint offset alignments apply. The footprint must fit the buffer, and the pitch must still cover each complete row. The public OPTIONS13 capability structure is available with Windows 11 version 22H2 or DirectX 12 Agility SDK 1.6 or later.
+> `D3D12_FEATURE_DATA_D3D12_OPTIONS13.UnrestrictedBufferTextureCopyPitchSupported` selects the relaxed buffer/texture copy alignment contract. Otherwise the 256-byte row pitch and 512-byte placed footprint offset alignments apply. The footprint must fit the buffer, and the pitch must still cover each complete row. The public OPTIONS13 capability structure is available with Windows 11 version 22H2 or DirectX 12 Agility SDK 1.6 or later.
 
 <!-- d3d12-review-alert:end:resource-operations:pitch-constants:1 -->
 
@@ -451,7 +451,7 @@ Support for copying between textures whose dimensionality does not match will be
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Copy format compatibility is not arbitrary equal-byte-size casting. Ordinary copies preserve bits within identical formats or a compatible typeless family. The exact equal-bit-width exceptions and 1:4 block/texel scaling are defined in [reinterpret copy](#reinterpret-copy). View-format casting and explicit resource cast lists remain distinct [Formats contracts](formats.md#casting).
+> Copy format compatibility is not arbitrary equal-byte-size casting. Ordinary copies preserve bits within identical formats or a compatible typeless family. The exact equal-bit-width exceptions and 1:4 block/texel scaling are defined in [reinterpret copy](#reinterpret-copy). View format casting and explicit resource cast lists remain distinct [Formats contracts](formats.md#casting).
 
 <!-- d3d12-review-alert:end:resource-operations:copy-format-route:0 -->
 
@@ -460,7 +460,7 @@ Support for copying between textures whose dimensionality does not match will be
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For block-compressed regions, origins and box endpoints retain compression-block alignment; pitches describe rows of blocks. A complete selected mip may have logical dimensions smaller than 4×4 or nonmultiples of four. Copy boxes use padded whole-block endpoints, including the portions of the final block beyond the logical mip edge. Storage padding does not enlarge the logical mip dimensions. The [BC padded-transfer bounds](#bc-copy-edges) define this exception to logical texture bounds; they do not permit arbitrary unaligned interior endpoints.
+> For block-compressed regions, origins and box endpoints retain compression block alignment; pitches describe rows of blocks. A complete selected mip may have logical dimensions smaller than 4×4 or nonmultiples of four. Copy boxes use padded whole-block endpoints, including the portions of the final block beyond the logical mip edge. Storage padding does not enlarge the logical mip dimensions. The [BC padded-transfer bounds](#bc-copy-edges) define this exception to logical texture bounds. They do not permit arbitrary unaligned interior endpoints.
 
 <!-- d3d12-review-alert:end:resource-operations:copy-format-route:1 -->
 
@@ -469,7 +469,7 @@ Support for copying between textures whose dimensionality does not match will be
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For planar copies, the selected plane determines its element format, dimensions and subsampling alignment. The exact [planar depth/stencil buffer layout](formats.md#depth-stencil-views) defines plane 0/1, `D24X8` bits 0–23 and zero-initialized bits 24–31, `D32` and `S8` byte layouts, and the R32/R8 transfer-format families. A copy does not interleave the depth and stencil planes.
+> For planar copies, the selected plane determines its element format, dimensions and subsampling alignment. The exact [planar depth/stencil buffer layout](formats.md#depth-stencil-views) defines plane 0/1, `D24X8` bits 0–23 and zero-initialized bits 24–31, `D32` and `S8` byte layouts, and the R32/R8 transfer format families. A copy does not interleave the depth and stencil planes.
 
 <!-- d3d12-review-alert:end:resource-operations:copy-format-route:2 -->
 
@@ -478,7 +478,7 @@ Support for copying between textures whose dimensionality does not match will be
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `GetCopyableFootprints` returns row counts separately from unpadded row sizes. The transfer address of a row within a footprint is its buffer base plus `Offset`, plus its depth-slice pitch, plus its row index times `RowPitch`; row padding is not additional texel data. [Resource write boundaries](resources.md#hardware-memory-access) govern which destination bytes may be modified.
+> `GetCopyableFootprints` returns row counts separately from unpadded row sizes. The transfer address of a row within a footprint is its buffer base plus `Offset`, plus its depth slice pitch, plus its row index times `RowPitch`; row padding is not additional texel data. [Resource write boundaries](resources.md#hardware-memory-access) govern which destination bytes may be modified.
 
 <!-- d3d12-review-alert:end:resource-operations:copy-format-route:3 -->
 
@@ -486,30 +486,14 @@ Support for copying between textures whose dimensionality does not match will be
 
 #### BC logical dimensions, tails and outer edges
 
-##### Syntax
-
-```cpp
-typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS8 {
-  BOOL UnalignedBlockTexturesSupported;
-} D3D12_FEATURE_DATA_D3D12_OPTIONS8;
-```
-
-##### Members
-
-`UnalignedBlockTexturesSupported`
-
-Type: \_Out\_ **[BOOL](https://learn.microsoft.com/en-us/windows/desktop/winprog/windows-data-types)**
-
-Indicates whether or not unaligned block-compressed textures are supported.
-
-If `false`, then Direct3D 12 requires that the dimensions of the top-level mip of a block-compressed texture are aligned to multiples of 4 (such alignment requirements do not apply to less-detailed mips). If `true`, then no such alignment requirement applies to any mip level of a block-compressed texture.
+The [BC format and dimension contract](formats.md#bc-dimensions) defines the `UnalignedBlockTexturesSupported` capability and logical mip dimensions.
 
 <!-- d3d12-review-alert:begin:resource-operations:bc-tail-copies:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12_FEATURE_D3D12_OPTIONS8` reports `UnalignedBlockTexturesSupported`. This is a texture-dimension capability, not a general permission for unaligned interior copy offsets. Even when it is FALSE, less-detailed BC mips may have logical dimensions such as 6×6, 2×2 or 1×1. A whole selected small mip can be copied to a matching destination mip with zero destination offsets and a null source box.
+> `D3D12_FEATURE_D3D12_OPTIONS8` reports `UnalignedBlockTexturesSupported`. This is a texture dimension capability, not a general permission for unaligned interior copy offsets. Even when it is FALSE, less-detailed BC mips may have logical dimensions such as 6×6, 2×2 or 1×1. A whole selected small mip can be copied to a matching destination mip with zero destination offsets and a null source box.
 
 <!-- d3d12-review-alert:end:resource-operations:bc-tail-copies:0 -->
 
@@ -527,7 +511,7 @@ If `false`, then Direct3D 12 requires that the dimensions of the top-level mip o
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For BC transfers, padded width and height are `4 * ceil(logical dimension / 4)`. Explicit source box endpoints and destination-offset-plus-transfer-extents are checked against those padded whole-block bounds, not just the logical texture width and height. Origins and endpoints must remain block-aligned. For a logical width of 6, copying the last block from `left = 4` uses `right = 8`, not 6. An explicit full 2×2 BC mip uses `left = top = 0` and `right = bottom = 4`; its 2D box still uses `front = 0`, `back = 1`. The whole block is copied even where it exceeds the logical texture bounds. The same padded destination bounds permit the corresponding full block at a texture edge.
+> For BC transfers, padded width and height are `4 * ceil(logical dimension / 4)`. Explicit source box endpoints and destination-offset-plus-transfer-extents are checked against those padded whole-block bounds, not just the logical texture width and height. Origins and endpoints must remain block-aligned. For a logical width of 6, copying the last block from `left = 4` uses `right = 8`, not 6. An explicit full 2×2 BC mip uses `left = top = 0` and `right = bottom = 4`. Its 2D box still uses `front = 0`, `back = 1`. The whole block is copied even where it exceeds the logical texture bounds. The same padded destination bounds permit the corresponding full block at a texture edge.
 
 <!-- d3d12-review-alert:end:resource-operations:bc-tail-copies:2 -->
 
@@ -536,13 +520,13 @@ If `false`, then Direct3D 12 requires that the dimensions of the top-level mip o
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The padded block payload and buffer footprint pitch must not be substituted for logical mip dimensions. Conversely, the texture-edge exception does not extend the actual byte bounds of a backing buffer: every complete compressed block referenced by a placed footprint must fit that buffer. Row-pitch and placement-alignment rules remain applicable. A null source box selecting the whole mip and an explicit padded full-mip box both retain whole-block transfer behavior.
+> The padded block payload and buffer footprint pitch must not be substituted for logical mip dimensions. Conversely, the texture-edge exception does not extend the actual byte bounds of a backing buffer: every complete compressed block referenced by a placed footprint must fit that buffer. Row pitch and placement alignment rules remain applicable. A null source box selecting the whole mip and an explicit padded full-mip box both retain whole-block transfer behavior.
 
 <!-- d3d12-review-alert:end:resource-operations:bc-tail-copies:3 -->
 
 <a id="plane-copy-layouts"></a>
 
-#### Copyable plane and format-unit layouts
+#### Copyable plane and format unit layouts
 
 <!-- d3d12-review-alert:begin:resource-operations:plane-copy-table:0 -->
 
@@ -603,7 +587,7 @@ If `false`, then Direct3D 12 requires that the dimensions of the top-level mip o
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [enhanced self-copy contract](synchronization.md#simultaneous-access) permits the same common-layout subresource as source and destination in `CopyBufferRegion` or `CopyTextureRegion` when the memory regions do not intersect. Intersecting source/destination regions produce undefined results, and the debug layer must validate this. Buffers have no transitionable texture layout; enhanced same-buffer copies use this non-intersection rule rather than legacy read/write-state exclusivity.
+> The [enhanced self-copy contract](synchronization.md#simultaneous-access) permits the same common layout subresource as source and destination in `CopyBufferRegion` or `CopyTextureRegion` when the memory regions do not intersect. Intersecting source/destination regions produce undefined results, and the debug layer must validate this. Buffers have no transitionable texture layout; enhanced same-buffer copies use this non-intersection rule rather than legacy read/write state exclusivity.
 
 <!-- d3d12-review-alert:end:resource-operations:self-copy-route:0 -->
 
@@ -621,7 +605,7 @@ If `false`, then Direct3D 12 requires that the dimensions of the top-level mip o
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [Enhanced alias initialization](synchronization.md#enhanced-aliasing) and [legacy activation/initialization](synchronization.md#legacy-aliasing) define when clear, full copy or discard initializes reused storage. An operation's permission to initialize an alias is not blanket permission for arbitrary intersecting source/destination mappings. Reserved-resource duplicate mappings retain the [tile-copy limitations](#copytiles).
+> [Enhanced alias initialization](synchronization.md#enhanced-aliasing) and [legacy activation/initialization](synchronization.md#legacy-aliasing) define when clear, full copy or discard initializes reused storage. An operation's permission to initialize an alias is not blanket permission for arbitrary intersecting source/destination mappings. Reserved resource duplicate mappings retain the [tile copy limitations](#copytiles).
 
 <!-- d3d12-review-alert:end:resource-operations:self-copy-route:2 -->
 
@@ -630,7 +614,7 @@ If `false`, then Direct3D 12 requires that the dimensions of the top-level mip o
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The specialized [reference-only DPB video-processing scaling route](video-encoding-controls.md#source-s08-032) is not an ordinary CopyResource/CopyTextureRegion operation and does not remove their reference-only allocation restrictions. Readable reconstructed-picture support permits appropriately created ordinary textures; it does not turn an allocation that still has VIDEO_ENCODE_REFERENCE_ONLY into a general copy or shader resource.
+> The specialized [reference-only DPB video processing scaling route](video-encoding-controls.md#source-s08-032) is not an ordinary CopyResource/CopyTextureRegion operation and does not remove their reference-only allocation restrictions. Readable reconstructed-picture support permits appropriately created ordinary textures. It does not turn an allocation that still has VIDEO_ENCODE_REFERENCE_ONLY into a general copy or shader resource.
 
 <!-- d3d12-review-alert:end:resource-operations:D162-dpb-scaling-copy-boundary:0 -->
 
@@ -639,7 +623,7 @@ If `false`, then Direct3D 12 requires that the dimensions of the top-level mip o
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For reserved-resource tile sharing, [data compatibility across tiled resources sharing tiles](resources.md#tiled-data-compatibility) defines the dimension/format/render-target/depth-stencil compatibility cases, compatible block/uncompressed aliases, solid-color packed/non-packed case and all-zero inheritance case. D3D12's [aliasing synchronization and initialization](synchronization.md#legacy-aliasing) replaces that source's `TiledResourceBarrier` mechanism. That source's data-compatibility cases do not grant D3D12 intersecting-copy permission.
+> For reserved resource tile sharing, [data compatibility across tiled resources sharing tiles](resources.md#tiled-data-compatibility) defines the dimension/format/render target/depth-stencil compatibility cases, compatible block/uncompressed aliases, solid-color packed/non-packed case and all-zero inheritance case. D3D12's [aliasing synchronization and initialization](synchronization.md#legacy-aliasing) replaces that source's `TiledResourceBarrier` mechanism. That source's data compatibility cases do not grant D3D12 intersecting-copy permission.
 
 <!-- d3d12-review-alert:end:resource-operations:tile-inheritance-source:0 -->
 
@@ -681,7 +665,7 @@ Copies a region of a buffer from one resource to another.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Both resources must be buffers. `SrcOffset` and `DstOffset` are byte offsets; the complete `NumBytes` ranges must fit without unsigned overflow. Unlike atomic-copy operations, ordinary byte copies do not impose a natural 4- or 8-byte alignment. A zero-byte copy transfers no data. The [self-copy and alias rules](#copy-self-and-alias) apply; the enhanced same-buffer non-overlap case must not be rejected merely because legacy states cannot express it.
+> Both resources must be buffers. `SrcOffset` and `DstOffset` are byte offsets. The complete `NumBytes` ranges must fit without unsigned overflow. Unlike atomic copy operations, ordinary byte copies do not impose a natural 4- or 8-byte alignment. A zero-byte copy transfers no data. The [self-copy and alias rules](#copy-self-and-alias) apply. The enhanced same-buffer non-overlap case must not be rejected merely because legacy states cannot express it.
 
 <!-- d3d12-review-alert:end:resource-operations:CopyBufferRegion-integration:0 -->
 
@@ -690,7 +674,7 @@ Copies a region of a buffer from one resource to another.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Structured/raw/typed interpretations are view properties of a buffer, not buffer-creation strides. The D3D11 structured-copy restrictions requiring equal structure strides and whole-structure regions do not apply to an ordinary D3D12 buffer byte copy. Counter storage is also ordinary application buffer storage: [counter-copy interactions](#counter-interactions) apply.
+> Structured/raw/typed interpretations are view properties of a buffer, not buffer creation strides. The D3D11 structured copy restrictions requiring equal structure strides and whole-structure regions do not apply to an ordinary D3D12 buffer byte copy. Counter storage is also ordinary application buffer storage: [counter copy interactions](#counter-interactions) apply.
 
 <!-- d3d12-review-alert:end:resource-operations:CopyBufferRegion-integration:1 -->
 
@@ -698,9 +682,9 @@ Copies a region of a buffer from one resource to another.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:CopyBufferRegion-parameters:1 -->`pDstBuffer`<!-- d3d12-review-inline:end:resource-operations:CopyBufferRegion-parameters:1 --></ins>
 
-Type: **[ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource)\***
+Type: **[ID3D12Resource](resources.md#resource-storage)\***
 
-Specifies the destination [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource).
+Specifies the destination [ID3D12Resource](resources.md#resource-storage).
 
 `DstOffset`
 
@@ -710,9 +694,9 @@ Specifies a UINT64 offset (in bytes) into the destination resource.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:CopyBufferRegion-parameters:7 -->`pSrcBuffer`<!-- d3d12-review-inline:end:resource-operations:CopyBufferRegion-parameters:7 --></ins>
 
-Type: **[ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource)\***
+Type: **[ID3D12Resource](resources.md#resource-storage)\***
 
-Specifies the source [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource).
+Specifies the source [ID3D12Resource](resources.md#resource-storage).
 
 `SrcOffset`
 
@@ -734,7 +718,7 @@ None
 
 Consider using the [CopyResource](#copyresource) method when copying an entire resource, and use this method for copying regions of a resource.
 
-**CopyBufferRegion** may be used to initialize resources which alias the same heap memory. See [CreatePlacedResource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nf-d3d12-id3d12device-createplacedresource) for more details.
+**CopyBufferRegion** may be used to initialize resources which alias the same heap memory. See [CreatePlacedResource](resources.md#create-placed-resource) for more details.
 
 ##### Examples
 
@@ -826,7 +810,7 @@ This method uses the GPU to copy texture data between two locations. Both the so
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A null `pSrcBox` selects the full source subresource or footprint. A non-null box describes half-open source coordinates; when any extent is empty (`right <= left`, `bottom <= top`, or `back <= front`), no data is copied. For nonempty regions the source box and destination-offset-plus-extent must fit the selected transfer bounds, with the [format/block/plane scaling](#copy-formats). For BC texture locations these are the [padded whole-block bounds](#bc-copy-edges), which may exceed the logical mip edge; actual backing-buffer byte bounds are not relaxed. A box does not select a mip, array slice or plane: the copy location does.
+> A null `pSrcBox` selects the full source subresource or footprint. A non-null box describes half-open source coordinates. When any extent is empty (`right <= left`, `bottom <= top`, or `back <= front`), no data is copied. For nonempty regions the source box and the sum of the destination offset and extent must fit the selected transfer bounds, with the [format/block/plane scaling](#copy-formats). For BC texture locations these are the [padded whole-block bounds](#bc-copy-edges), which may exceed the logical mip edge; actual backing buffer byte bounds are not relaxed. A box does not select a mip, array slice or plane: the copy location does.
 
 <!-- d3d12-review-alert:end:resource-operations:CopyTextureRegion-integration:0 -->
 
@@ -835,7 +819,7 @@ This method uses the GPU to copy texture data between two locations. Both the so
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `DstY` is zero for 1D destinations and `DstZ` is zero for 1D/2D destinations. A 2D source box uses `front = 0`, `back = 1`; a 1D box also uses `top = 0`, `bottom = 1`. Footprint offsets/pitches follow [the copy capability rules](#copy-pitch).
+> `DstY` is zero for 1D destinations and `DstZ` is zero for 1D/2D destinations. A 2D source box uses `front = 0`, `back = 1`. A 1D box also uses `top = 0`, `bottom = 1`. Footprint offsets/pitches follow [the copy capability rules](#copy-pitch).
 
 <!-- d3d12-review-alert:end:resource-operations:CopyTextureRegion-integration:1 -->
 
@@ -844,7 +828,7 @@ This method uses the GPU to copy texture data between two locations. Both the so
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For baseline devices without programmable sample-position support, depth/stencil or multisampled copies require the complete subresource rectangle, zero destination offsets and equal subresource dimensions. `pSrcBox` is null or explicitly covers the complete source subresource. Source and destination sample counts must match; multisampled quality levels must match as well. With programmable sample-position support, partial depth/stencil and multisampled copies are supported subject to [the full/partial sample-pattern contracts](rasterization.md#sample-copy-depthstencil-full-subresource) and ordinary bounds/format requirements. Color copies ignore sample positions; depth copies must preserve the source pattern association, and partial depth copies retain the uncovered-destination compatibility requirement. Stencil-only partial copies have the canonical exception.
+> For baseline devices without programmable sample position support, depth/stencil or multisampled copies require the complete subresource rectangle, zero destination offsets and equal subresource dimensions. `pSrcBox` is null or explicitly covers the complete source subresource. Source and destination sample counts must match; multisampled quality levels must match as well. With programmable sample position support, partial depth/stencil and multisampled copies are supported subject to [the full/partial sample pattern contracts](rasterization.md#sample-copy-depthstencil-full-subresource) and ordinary bounds/format requirements. Color copies ignore sample positions; depth copies must preserve the source pattern association, and partial depth copies retain the uncovered-destination compatibility requirement. Stencil-only partial copies have the canonical exception.
 
 <!-- d3d12-review-alert:end:resource-operations:CopyTextureRegion-integration:2 -->
 
@@ -853,7 +837,7 @@ This method uses the GPU to copy texture data between two locations. Both the so
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For same-subresource copies, the [enhanced non-intersecting common-layout exception](#copy-self-and-alias) replaces the ordinary different-subresource restriction. Feedback maps cannot be copied by `CopyTextureRegion`; use their [whole-resource copy contract](#feedback-transcoding).
+> For same-subresource copies, the [enhanced non-intersecting common layout exception](#copy-self-and-alias) replaces the ordinary different-subresource restriction. Feedback maps cannot be copied by `CopyTextureRegion`. Use their [whole-resource copy contract](#feedback-transcoding).
 
 <!-- d3d12-review-alert:end:resource-operations:CopyTextureRegion-integration:3 -->
 
@@ -901,20 +885,20 @@ None
 
 #### Operation requirements
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-remarks:0 -->The source box must fit the selected source transfer bounds. For BC texture locations, the [padded whole-block bounds](#bc-copy-edges) may extend beyond the logical mip width or height.<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-remarks:0 --></ins> The destination offsets, (x, y, and z), allow the source box to be offset when writing into the destination resource; <ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-remarks:0 -->however, the destination offsets plus the transfer extents must fit the selected destination transfer bounds, including the padded BC edge case.<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-remarks:0 --></ins> <ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-remarks:0 -->If you copy beyond the permitted destination transfer bounds or specify a source box beyond the permitted source transfer bounds,<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-remarks:0 --></ins> the behavior of **CopyTextureRegion** is undefined. If you created a device that supports the [debug layer](https://learn.microsoft.com/en-us/windows/desktop/direct3d11/overviews-direct3d-11-devices-layers), the debug output reports an error on this invalid **CopyTextureRegion** call. Invalid parameters to **CopyTextureRegion** cause undefined behavior and might result in incorrect rendering, clipping, no copy, or even the removal of the rendering device.
+<ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-remarks:0 -->The source box must fit the selected source transfer bounds. For BC texture locations, the [padded whole-block bounds](#bc-copy-edges) may extend beyond the logical mip width or height.<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-remarks:0 --></ins> The destination offsets, (x, y, and z), allow the source box to be offset when writing into the destination resource; <ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-remarks:0 -->however, the destination offsets plus the transfer extents must fit the selected destination transfer bounds, including the padded BC edge case.<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-remarks:0 --></ins> <ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-remarks:0 -->If you copy beyond the permitted destination transfer bounds or specify a source box beyond the permitted source transfer bounds,<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-remarks:0 --></ins> the behavior of **CopyTextureRegion** is undefined. If you created a device that supports the [debug layer](diagnostics.md#debug-configuration), the debug output reports an error on this invalid **CopyTextureRegion** call. Invalid parameters to **CopyTextureRegion** cause undefined behavior and might result in incorrect rendering, clipping, no copy, or even the removal of the rendering device.
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-remarks:1 -->Coordinates are in texels of the selected texture or buffer-footprint format; format block/subsampling alignment still applies. `CopyBufferRegion` separately uses byte offsets.<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-remarks:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-remarks:1 -->Coordinates are in texels of the selected texture or buffer footprint format; format block/subsampling alignment still applies. `CopyBufferRegion` separately uses byte offsets.<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-remarks:1 --></ins>
 
 **CopyTextureRegion** performs the copy on the GPU (similar to a `memcpy` by the CPU). As a consequence, the source and destination resources:
 
 - <ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-remarks:3 -->Must be different subresources (although they can be from the same resource), except for the [enhanced self-copy case](#copy-self-and-alias).<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-remarks:3 --></ins>
-- Must have compatible [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/desktop/api/dxgiformat/ne-dxgiformat-dxgi_format)s (identical or from the same type group). For example, a DXGI\_FORMAT\_R32G32B32\_FLOAT texture can be copied to a DXGI\_FORMAT\_R32G32B32\_UINT texture since both of these formats are in the DXGI\_FORMAT\_R32G32B32\_TYPELESS group. **CopyTextureRegion** can copy between a few format types. For more info, see [Format Conversion using Direct3D 10.1](https://learn.microsoft.com/en-us/windows/desktop/direct3d10/d3d10-graphics-programming-guide-resources-block-compression).
+- Must have compatible [DXGI_FORMAT](formats.md#dxgi-format)s (identical or from the same type group). For example, a DXGI\_FORMAT\_R32G32B32\_FLOAT texture can be copied to a DXGI\_FORMAT\_R32G32B32\_UINT texture since both of these formats are in the DXGI\_FORMAT\_R32G32B32\_TYPELESS group. **CopyTextureRegion** can copy between a few format types. For more info, see [Format Conversion using Direct3D 10.1](#reinterpret-copy).
 
 **CopyTextureRegion** only supports copy; it does not support any stretch, color key, or blend. **CopyTextureRegion** can reinterpret the resource data between a few format types.
-Note that for a depth-stencil buffer, the depth and stencil planes are [separate subresources](https://learn.microsoft.com/en-us/windows/win32/direct3d12/subresources#plane-slice) within the buffer.
+Note that for a depth-stencil buffer, the depth and stencil planes are [separate subresources](formats.md#planes) within the buffer.
 
 To copy an entire resource, rather than just a region of a subresource, we recommend to use [CopyResource](#copyresource) instead.
-<ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-remarks:5 -->For depth/stencil and multisampled copies, the [baseline/full and programmable-pattern/partial requirements](#copytextureregion) above apply.<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-remarks:5 --></ins> **CopyTextureRegion** may be used to initialize resources which alias the same heap memory. See [CreatePlacedResource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nf-d3d12-id3d12device-createplacedresource) for more details.
+<ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-remarks:5 -->For depth/stencil and multisampled copies, the [baseline/full and programmable pattern/partial requirements](#copytextureregion) above apply.<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-remarks:5 --></ins> **CopyTextureRegion** may be used to initialize resources which alias the same heap memory. See [CreatePlacedResource](resources.md#create-placed-resource) for more details.
 #### Example
  The following code snippet copies the box (located at (120,100),(200,220)) from a source texture into the region (10,20),(90,140) in a destination texture.
 
@@ -957,7 +941,7 @@ Copies the entire contents of the source resource to the destination resource.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The complete resource is copied, including every mip, array slice and plane rather than a selected region. Source and destination must have the same actual mip-level count, array-slice count and plane count, and therefore the same subresource cardinality. Corresponding `(mip, array slice, plane)` subresources are paired. For a texture this count is `MipLevels * ArraySize * PlaneCount`; a 3D texture has array size one, and its mip depth slices belong to that mip's subresource, not additional array subresources. Buffer resources have one subresource and must have equal `Width` in bytes.
+> The complete resource is copied, including every mip, array slice and plane rather than a selected region. Source and destination must have the same actual mip level count, array slice count and plane count, and therefore the same subresource cardinality. Corresponding `(mip, array slice, plane)` subresources are paired. For a texture this count is `MipLevels * ArraySize * PlaneCount`. A 3D texture has array size one, and its mip depth slices belong to that mip's subresource, not additional array subresources. Buffer resources have one subresource and must have equal `Width` in bytes.
 
 <!-- d3d12-review-alert:end:resource-operations:CopyResource-integration:0 -->
 
@@ -966,7 +950,7 @@ Copies the entire contents of the source resource to the destination resource.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For textures, depth must match and width/height must be equivalent under the permitted format interpretation. In the reinterpret cases, compare complete format-unit rows and row byte sizes, not unequal logical BC texel dimensions: a BC block covers 4×4 texels, and one matching uncompressed element holds its 8- or 16-byte payload. The resources still require identical mip and array counts. For example, an 8×8 uncompressed texture with four mips and a 32×32 BC texture with four mips have paired chains down to 1×1 elements and 4×4 texels. Their respective natural full chains of four and six mips cannot be copied wholesale to each other: the extra BC mips are not implicitly skipped or synthesized.
+> For textures, depth must match and width/height must be equivalent under the permitted format interpretation. In the reinterpret cases, compare complete format unit rows and row byte sizes, not unequal logical BC texel dimensions: a BC block covers 4×4 texels, and one matching uncompressed element holds its 8- or 16-byte payload. The resources still require identical mip and array counts. For example, an 8×8 uncompressed texture with four mips and a 32×32 BC texture with four mips have paired chains down to 1×1 elements and 4×4 texels. Their respective natural full chains of four and six mips cannot be copied wholesale to each other: the extra BC mips are not implicitly skipped or synthesized.
 
 <!-- d3d12-review-alert:end:resource-operations:CopyResource-integration:1 -->
 
@@ -975,7 +959,7 @@ Copies the entire contents of the source resource to the destination resource.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> “Same total size (bytes)” refers to the resource's logical copy payload, including its mip/array/plane data and format-unit rounding, not equal heap allocation sizes, `GetResourceAllocationInfo` sizes, metadata, row-placement padding, or transfer-buffer footprint padding. For BC formats, that payload includes the complete compression blocks covering each mip, including block portions past the logical edge. This is distinct from driver-private allocation or row-stride padding. `CopyResource` is not a byte-for-byte clone of driver-private allocation padding. The [resource write-boundary contract](resources.md#hardware-memory-access) remains applicable.
+> “Same total size (bytes)” refers to the resource's logical copy payload, including its mip/array/plane data and format unit rounding, not equal heap allocation sizes, `GetResourceAllocationInfo` sizes, metadata, row placement padding, or transfer buffer footprint padding. For BC formats, that payload includes the complete compression blocks covering each mip, including block portions past the logical edge. This is distinct from driver-private allocation or row stride padding. `CopyResource` is not a byte-for-byte clone of driver-private allocation padding. The [resource write-boundary contract](resources.md#hardware-memory-access) remains applicable.
 
 <!-- d3d12-review-alert:end:resource-operations:CopyResource-integration:2 -->
 
@@ -984,7 +968,7 @@ Copies the entire contents of the source resource to the destination resource.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [reinterpret-copy table](#reinterpret-copy) gives the exact format exceptions. [Heap restrictions](resources.md#heap-types), [copy access](#recording-and-access), [programmed depth-pattern requirements](rasterization.md#sample-copy-depthstencil-full-subresource), [alias initialization](#copy-self-and-alias) and [feedback map copy](#feedback-transcoding) apply independently.
+> The [reinterpret-copy table](#reinterpret-copy) gives the exact format exceptions. [Heap restrictions](resources.md#heap-types), [copy access](#recording-and-access), [programmed depth pattern requirements](rasterization.md#sample-copy-depthstencil-full-subresource), [alias initialization](#copy-self-and-alias) and [feedback map copy](#feedback-transcoding) apply independently.
 
 <!-- d3d12-review-alert:end:resource-operations:CopyResource-integration:3 -->
 
@@ -993,7 +977,7 @@ Copies the entire contents of the source resource to the destination resource.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Copies of a data buffer do not carry an associated UAV counter by descriptor association. If counter bytes themselves lie inside the copied resource, they are copied like any other bytes; a separate counter resource is not copied implicitly.
+> Copies of a data buffer do not carry an associated UAV counter by descriptor association. If counter bytes themselves lie inside the copied resource, they are copied like any other bytes. A separate counter resource is not copied implicitly.
 
 <!-- d3d12-review-alert:end:resource-operations:CopyResource-integration:4 -->
 
@@ -1003,13 +987,13 @@ Copies the entire contents of the source resource to the destination resource.
 
 Type: **ID3D12Resource\***
 
-A pointer to the [ID3D12Resource](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource) interface that represents the destination resource.
+A pointer to the [ID3D12Resource](resources.md#resource-storage) interface that represents the destination resource.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:CopyResource-parameters:4 -->`pSrcResource`<!-- d3d12-review-inline:end:resource-operations:CopyResource-parameters:4 --></ins>
 
 Type: **ID3D12Resource\***
 
-A pointer to the [ID3D12Resource](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource) interface that represents the source resource.
+A pointer to the [ID3D12Resource](resources.md#resource-storage) interface that represents the source resource.
 
 #### Return values
 
@@ -1019,13 +1003,13 @@ None
 
 **CopyResource** operations are performed on the GPU, and do not incur a significant CPU workload linearly dependent on the size of the data to copy.
 
-**CopyResource** can be used to initialize resources that alias the same heap memory. See [CreatePlacedResource](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createplacedresource) for more details.
+**CopyResource** can be used to initialize resources that alias the same heap memory. See [CreatePlacedResource](resources.md#create-placed-resource) for more details.
 
 #### Debug layer
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:CopyResource-remarks:3 -->For legacy state validation: The debug layer issues an error if the source subresource is not in the [D3D12_RESOURCE_STATE_COPY_SOURCE](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_states) state.<!-- d3d12-review-inline:end:resource-operations:CopyResource-remarks:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:CopyResource-remarks:3 -->For legacy state validation: The debug layer issues an error if the source subresource is not in the [D3D12_RESOURCE_STATE_COPY_SOURCE](synchronization.md#d3d12-resource-states) state.<!-- d3d12-review-inline:end:resource-operations:CopyResource-remarks:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:CopyResource-remarks:4 -->For legacy state validation: The debug layer issues an error if the destination subresource is not in the [D3D12_RESOURCE_STATE_COPY_DEST](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_states) state.<!-- d3d12-review-inline:end:resource-operations:CopyResource-remarks:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:CopyResource-remarks:4 -->For legacy state validation: The debug layer issues an error if the destination subresource is not in the [D3D12_RESOURCE_STATE_COPY_DEST](synchronization.md#d3d12-resource-states) state.<!-- d3d12-review-inline:end:resource-operations:CopyResource-remarks:4 --></ins>
 
 #### Restrictions
 
@@ -1033,16 +1017,16 @@ This method has a few restrictions designed for improving performance. For insta
 
 - Must be different resources.
 - Must be the same type.
-- <ins><!-- d3d12-review-inline:begin:resource-operations:CopyResource-remarks:7 -->Must have the same logical copy payload size, under the complete mip/array/plane and format-unit [shape requirements](#copyresource); allocation and placement padding are not the copied payload.<!-- d3d12-review-inline:end:resource-operations:CopyResource-remarks:7 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resource-operations:CopyResource-remarks:7 -->Must have the same logical copy payload size, under the complete mip/array/plane and format unit [shape requirements](#copyresource); allocation and placement padding are not the copied payload.<!-- d3d12-review-inline:end:resource-operations:CopyResource-remarks:7 --></ins>
 - Must have identical dimensions (width, height, depth) or be a compatible Reinterpret Copy.
-- Must have compatible [DXGI formats](https://learn.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format), which means the formats must be identical or at least from the same type group. For example, a DXGI\_FORMAT\_R32G32B32\_FLOAT texture can be copied to a DXGI\_FORMAT\_R32G32B32\_UINT texture since both of these formats are in the DXGI\_FORMAT\_R32G32B32\_TYPELESS group. **CopyResource** can copy between a few format types (see Reinterpret copy).
+- Must have compatible [DXGI formats](formats.md#dxgi-format), which means the formats must be identical or at least from the same type group. For example, a DXGI\_FORMAT\_R32G32B32\_FLOAT texture can be copied to a DXGI\_FORMAT\_R32G32B32\_UINT texture since both of these formats are in the DXGI\_FORMAT\_R32G32B32\_TYPELESS group. **CopyResource** can copy between a few format types (see Reinterpret copy).
 - <ins><!-- d3d12-review-inline:begin:resource-operations:CopyResource-remarks:7 -->[Persistent CPU mapping](resources.md#resource-map) is permitted under the resource's mapping and CPU/GPU synchronization contract; mapping itself does not prohibit the copy.<!-- d3d12-review-inline:end:resource-operations:CopyResource-remarks:7 --></ins>
 
 **CopyResource** only supports copy; it doesn't support any stretch, color key, or blend.
 
 **CopyResource** can reinterpret the resource data between a few format types, see Reinterpret Copy below for details.
 
-You can use a [depth-stencil](https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ne-d3d11-d3d11_bind_flag) resource as either a source or a destination. Resources created with multi-sampling capability (see [DXGI_SAMPLE_DESC](https://learn.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_sample_desc)) can be used as source and destination only if both source and destination have identical multi-sampled count and quality. If source and destination differ in multi-sampled count and quality or if one is multi-sampled and the other is not multi-sampled, the call to **CopyResource** fails. Use [ResolveSubresource](#resolvesubresource) to resolve a multi-sampled resource to a resource that is not multi-sampled.
+You can use a [depth-stencil](resources.md#resource-flags) resource as either a source or a destination. Resources created with multi-sampling capability (see [DXGI_SAMPLE_DESC](https://learn.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_sample_desc)) can be used as source and destination only if both source and destination have identical multi-sampled count and quality. If source and destination differ in multi-sampled count and quality or if one is multi-sampled and the other is not multi-sampled, the call to **CopyResource** fails. Use [ResolveSubresource](#resolvesubresource) to resolve a multi-sampled resource to a resource that is not multi-sampled.
 
 The method is an asynchronous call, which may be added to the command-buffer queue. This attempts to remove pipeline stalls that may occur when copying data. For more info, see [performance considerations](https://learn.microsoft.com/en-us/windows/win32/direct3d10/d3d10-graphics-programming-guide-resources-mapping).
 
@@ -1052,7 +1036,7 @@ Consider using [CopyTextureRegion](#copytextureregion) or [CopyBufferRegion](#co
 
 #### Reinterpret copy
 
-The following table lists the allowable source and destination formats that you can use in the reinterpretation type of format conversion. The underlying data values are not converted or compressed/decompressed and must be encoded properly for the reinterpretation to work as expected. For more info, see [Format Conversion using Direct3D 10.1](https://learn.microsoft.com/en-us/windows/desktop/direct3d10/d3d10-graphics-programming-guide-resources-block-compression).
+The following table lists the allowable source and destination formats that you can use in the reinterpretation type of format conversion. The underlying data values are not converted or compressed/decompressed and must be encoded properly for the reinterpretation to work as expected. For more info, see [Format Conversion using Direct3D 10.1](#reinterpret-copy).
 
 For DXGI\_FORMAT\_R9G9B9E5\_SHAREDEXP the width and height must be equal (1 texel per block).
 
@@ -1142,7 +1126,7 @@ Copies tiles from buffer to tiled resource or vice versa.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Tile payloads have size `D3D12_TILED_RESOURCE_TILE_SIZE_IN_BYTES` (65536). `BufferStartOffsetInBytes` is a byte offset into the linear buffer, which must contain the complete sequence of 64-KB tiles selected by the region. Exactly one copy-direction flag must be specified; that direction identifies which resource needs source access and which needs destination access. `NO_HAZARD` is deprecated and does not establish an application hazard promise or synchronization relaxation.
+> Tile payloads have size `D3D12_TILED_RESOURCE_TILE_SIZE_IN_BYTES` (65536). `BufferStartOffsetInBytes` is a byte offset into the linear buffer, which must contain the complete sequence of 64-KB tiles selected by the region. Exactly one copy direction flag must be specified. That direction identifies which resource needs source access and which needs destination access. `NO_HAZARD` is deprecated and does not establish an application hazard promise or synchronization relaxation.
 
 <!-- d3d12-review-alert:end:resource-operations:CopyTiles-integration:0 -->
 
@@ -1151,7 +1135,7 @@ Copies tiles from buffer to tiled resource or vice versa.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The shared coordinate and region types are defined in [Resources](resources.md#tile-types). Their shared packed-mip representation is useful to tile-mapping APIs, but `CopyTiles` itself cannot transfer packed mip tiles. For ordinary copies involving reserved resources, duplicate mappings that create hidden source/destination overlap yield undefined results; duplicated destination tiles produce undefined results unless the written data is identical. D3D11 overlap-copy guarantees must not be inferred for D3D12 self-copy.
+> The shared coordinate and region types are defined in [Resources](resources.md#tile-types). Their shared packed mip representation is useful to tile mapping APIs, but `CopyTiles` itself cannot transfer packed mip tiles. For ordinary copies involving reserved resources, duplicate mappings that create hidden source/destination overlap yield undefined results; duplicated destination tiles produce undefined results unless the written data is identical. D3D11 overlap copy guarantees must not be inferred for D3D12 self-copy.
 
 <!-- d3d12-review-alert:end:resource-operations:CopyTiles-integration:1 -->
 
@@ -1160,7 +1144,7 @@ Copies tiles from buffer to tiled resource or vice versa.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> On COPY command lists, the debug layer reports an invalid layout if the tiled resource uses `D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE` and `D3D12_FEATURE_DATA_D3D12_OPTIONS.StandardSwizzle64KBSupported` is FALSE. Cross-adapter resource-creation exceptions do not remove this checked COPY-list restriction.
+> On COPY command lists, the debug layer reports an invalid layout if the tiled resource uses `D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE` and `D3D12_FEATURE_DATA_D3D12_OPTIONS.StandardSwizzle64KBSupported` is FALSE. Cross-adapter resource creation exceptions do not remove this checked COPY list restriction.
 
 <!-- d3d12-review-alert:end:resource-operations:CopyTiles-integration:2 -->
 
@@ -1169,7 +1153,7 @@ Copies tiles from buffer to tiled resource or vice versa.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `BufferStartOffsetInBytes` has no buffer-side alignment requirement. The buffer range from that offset through the complete sequence of tile payloads must fit without overflow, and the appropriate source/destination access is still required. The 65536-byte payload size does not impose a 65536-byte buffer-start offset alignment.
+> `BufferStartOffsetInBytes` has no buffer-side alignment requirement. The buffer range from that offset through the complete sequence of tile payloads must fit without overflow, and the appropriate source/destination access is still required. The 65536-byte payload size does not impose a 65536-byte buffer start offset alignment.
 
 <!-- d3d12-review-alert:end:resource-operations:CopyTiles-integration:3 -->
 
@@ -1197,7 +1181,7 @@ A pointer to a [D3D12_TILE_REGION_SIZE](#d3d12-tile-region-size) structure that 
 
 Type: **ID3D12Resource\***
 
-A pointer to an [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) <ins><!-- d3d12-review-inline:begin:resource-operations:CopyTiles-parameters:12 -->that represents the linear buffer. Its permitted heap usage is defined by [heap types](resources.md#heap-types).<!-- d3d12-review-inline:end:resource-operations:CopyTiles-parameters:12 --></ins>
+A pointer to an [ID3D12Resource](resources.md#resource-storage) <ins><!-- d3d12-review-inline:begin:resource-operations:CopyTiles-parameters:12 -->that represents the linear buffer. Its permitted heap usage is defined by [heap types](resources.md#heap-types).<!-- d3d12-review-inline:end:resource-operations:CopyTiles-parameters:12 --></ins>
 
 `BufferStartOffsetInBytes`
 
@@ -1217,7 +1201,7 @@ None
 
 #### Operation requirements
 
-**CopyTiles** drops write operations to unmapped areas and handles read operations from unmapped areas (except on Tier\_1 tiled resources, where reading and writing unmapped areas is invalid - refer to [D3D12_TILED_RESOURCES_TIER](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_tiled_resources_tier)).
+**CopyTiles** drops write operations to unmapped areas and handles read operations from unmapped areas (except on Tier\_1 tiled resources, where reading and writing unmapped areas is invalid - refer to [D3D12_TILED_RESOURCES_TIER](resources.md#d3d12-tiled-resources-tier)).
 
 If a copy operation involves writing to the same memory location multiple times because multiple locations in the destination resource are mapped to the same tile memory, the resulting write operations to multi-mapped tiles are non-deterministic and non-repeatable; that is, accesses to the tile memory happen in whatever order the hardware happens to execute the copy operation.
 
@@ -1243,7 +1227,7 @@ resource must be in the COPY_SOURCE <ins><!-- d3d12-review-inline:begin:resource
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Exactly one of `D3D12_TILE_COPY_FLAG_LINEAR_BUFFER_TO_SWIZZLED_TILED_RESOURCE` (`0x2`) and `D3D12_TILE_COPY_FLAG_SWIZZLED_TILED_RESOURCE_TO_LINEAR_BUFFER` (`0x4`) must be specified. The first selects buffer-to-tiled copying; the second selects tiled-to-buffer copying. Thus the direction mask `Flags & 0x6` must be `0x2` or `0x4`, not zero or `0x6`.
+> Exactly one of `D3D12_TILE_COPY_FLAG_LINEAR_BUFFER_TO_SWIZZLED_TILED_RESOURCE` (`0x2`) and `D3D12_TILE_COPY_FLAG_SWIZZLED_TILED_RESOURCE_TO_LINEAR_BUFFER` (`0x4`) must be specified. The first selects buffer-to-tiled copying. The second selects tiled-to-buffer copying. Thus the direction mask `Flags & 0x6` must be `0x2` or `0x4`, not zero or `0x6`.
 
 <!-- d3d12-review-alert:end:resource-operations:tile-copy-combinations:0 -->
 
@@ -1261,7 +1245,7 @@ resource must be in the COPY_SOURCE <ins><!-- d3d12-review-inline:begin:resource
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12_TILE_COPY_FLAG_NO_HAZARD` (`0x1`) is deprecated; the enum value and corresponding driver ABI value remain declared. It does not provide an active application hazard promise or synchronization relaxation. Deprecation does not specify new acceptance, ignoring or rejection behavior for bit `0x1`; the exactly-one-direction requirement is independent of that deprecated bit. Bits outside the declared mask are not application flags.
+> `D3D12_TILE_COPY_FLAG_NO_HAZARD` (`0x1`) is deprecated. The enum value and corresponding driver ABI value remain declared. It does not provide an active application hazard promise or synchronization relaxation. Deprecation does not specify new acceptance, ignoring or rejection behavior for bit `0x1`. The exactly-one-direction requirement is independent of that deprecated bit. Bits outside the declared mask are not application flags.
 
 <!-- d3d12-review-alert:end:resource-operations:tile-copy-combinations:2 -->
 
@@ -1342,7 +1326,7 @@ This enum is used by the [CopyTiles](#copytiles) method.
 > `AtomicCopyBufferUINT` and `AtomicCopyBufferUINT64` record a copy of one
 > 32-bit or 64-bit primary element, respectively. The dependency list
 > identifies payload data whose updates precede publication of that
-> element; it is not an array of additional copy source/destination pairs.
+> element. It is not an array of additional copy source/destination pairs.
 > The operation does not copy those dependent resource contents.
 
 <!-- d3d12-review-alert:end:resource-operations:AC-scope:0 -->
@@ -1367,8 +1351,8 @@ This enum is used by the [CopyTiles](#copytiles) method.
 > **Authored synthesis - human review pending.**
 >
 > Source and destination use the [copy access/state contract](#recording-and-access).
-> CPU argument arrays are consumed during recording; the resources retain
-> the [recorded-use/GPU lifetime obligations](execution.md#lifetime).
+> CPU argument arrays are consumed during recording. The resources retain
+> the [recorded use/GPU lifetime obligations](execution.md#lifetime).
 > A use case involving already dispatched rendering does not allow calls
 > on a closed/executing recording or mutation of submitted commands.
 > Predication follows the [exact operation matrix](counters-queries-and-predication.md#predication-operation-matrix),
@@ -1384,7 +1368,7 @@ This enum is used by the [CopyTiles](#copytiles) method.
 > **Draft qualification:** The published logical-publication guarantee
 > below is an operation contract, not independently established hardware
 > conformance. It does not define a general shader/CPU memory model,
-> arbitrary concurrent writer protocol or a GPU-completion guarantee.
+> arbitrary concurrent writer protocol or a GPU completion guarantee.
 
 <!-- d3d12-review-context:end:resource-operations:AC-publication-qualification:0 -->
 
@@ -1438,7 +1422,7 @@ A memory range within the subresource.
 >
 > `Dependencies` counts corresponding entries in both arrays. A nonzero
 > count requires both arrays and a non-null resource at every index.
-> Zero permits no dependency entries; it does not synchronize unspecified
+> Zero permits no dependency entries. It does not synchronize unspecified
 > payload data. The debug layer warns for zero dependencies rather than
 > making that warning a retail failure.
 
@@ -1450,10 +1434,10 @@ A memory range within the subresource.
 > **Authored synthesis - human review pending.**
 >
 > `Range` is a byte interval [`Begin`, `End`), not texel coordinates. Generic
-> ranges can be empty, but an atomic-copy dependency requires `Begin` < `End`.
+> ranges can be empty, but an atomic copy dependency requires `Begin` < `End`.
 > `UINT64_MAX` as `End` denotes the end of the selected subresource.
 > `D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES` requires the whole-resource
-> sentinel `Begin` = 0, `End` = `UINT64_MAX`; it is not a literal memory extent.
+> sentinel `Begin` = 0, `End` = `UINT64_MAX`. It is not a literal memory extent.
 
 <!-- d3d12-review-alert:end:resource-operations:AC-range-rules:1 -->
 
@@ -1465,14 +1449,14 @@ A memory range within the subresource.
 > The layout names below have the `D3D12_TEXTURE_LAYOUT_` prefix.
 > For a buffer, a single selected `Subresource` is 0, and a finite `End`
 > cannot exceed the buffer size. A selected texture subresource must be
-> in range. Packed-mip subresources and textures with `UNKNOWN` or `ROW_MAJOR`
+> in range. Packed mip subresources and textures with `UNKNOWN` or `ROW_MAJOR`
 > layout require `Begin` = 0, `End` = `UINT64_MAX`. For a standard mip of a
-> 64KB-tiled texture, a finite `End` cannot exceed its tile-allocation size.
+> 64KB-tiled texture, a finite `End` cannot exceed its tile allocation size.
 > For `64KB_UNDEFINED_SWIZZLE`, `Begin` and finite `End` must align to the
-> 64-KiB tile size; `UINT64_MAX` remains the end-of-subresource sentinel.
-> `64KB_STANDARD_SWIZZLE` does not acquire that extra tile-alignment rule.
+> 64-KiB tile size. `UINT64_MAX` remains the end-of-subresource sentinel.
+> `64KB_STANDARD_SWIZZLE` does not acquire that extra tile alignment rule.
 > These are byte ranges of the resource representation, not an assumed
-> tightly packed texture footprint or a new general range-barrier API.
+> tightly packed texture footprint or a new general range barrier API.
 
 <!-- d3d12-review-alert:end:resource-operations:AC-range-rules:2 -->
 
@@ -1624,7 +1608,7 @@ This method is typically used to update resources for which normal rendering pip
 > offsets, overflowing/out-of-bounds primary extents, non-`UMA` `UINT64` use,
 > missing nonempty dependency arrays and invalid dependency resources or
 > ranges. Recording allocation failure is also a recording error.
-> Checked-layer copy-state/residency diagnostics remain distinct from
+> Checked-layer copy state/residency diagnostics remain distinct from
 > retail validation and actual driver/hardware conformance.
 
 <!-- d3d12-review-alert:end:resource-operations:AC-validation:0 -->
@@ -1642,7 +1626,7 @@ This method is typically used to update resources for which normal rendering pip
 
 <a id="atomic-copy-driver"></a>
 
-### Current driver atomic-copy association
+### Current driver atomic copy association
 
 <!-- d3d12-review-alert:begin:resource-operations:AC-driver:0 -->
 
@@ -1658,14 +1642,14 @@ This method is typically used to update resources for which normal rendering pip
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> On the enhanced-barrier path, the runtime represents each dependency
+> On the enhanced barrier path, the runtime represents each dependency
 > as a current [ranged acquire barrier](synchronization.md#enhanced-driver),
 > followed by a source primary range acquire with `D3D12DDI_RANGED_BARRIER_FLAG_ATOMIC_COPY_0094`. It invokes
-> the atomic-copy slot, then emits a destination primary range release
+> the atomic copy slot, then emits a destination primary range release
 > with `D3D12DDI_RANGED_BARRIER_FLAG_ATOMIC_COPY_0094`. Primary ranges use subresource 0 and [offset, offset +
 > copied width); dependency ranges retain their selected resource,
 > subresource and bounds. Current ranged flags/types and barrier signature
-> retain their canonical owner; these internal ranges do not expand the
+> retain their canonical owner. These internal ranges do not expand the
 > application Barrier API to arbitrary buffer subregions.
 
 <!-- d3d12-review-alert:end:resource-operations:AC-driver:1 -->
@@ -1675,7 +1659,7 @@ This method is typically used to update resources for which normal rendering pip
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The atomic-copy path also supports legacy barriers.
+> The atomic copy path also supports legacy barriers.
 
 <!-- d3d12-review-alert:end:resource-operations:AC-driver:2 -->
 
@@ -1710,12 +1694,12 @@ Immediate write operations use 4-byte aligned GPU virtual addresses to designate
 > **Authored synthesis - human review pending.**
 >
 > Each entry supplies a 32-bit value and a GPU virtual destination address
-> in buffer storage; there is no source resource or deferred CPU-data read.
+> in buffer storage. There is no source resource or deferred CPU data read.
 > `Count` gives the number of entries. The optional mode array has the same
-> element count; a null mode pointer selects DEFAULT for every entry.
+> element count. A null mode pointer selects DEFAULT for every entry.
 > The address/alignment and valid-mode requirements apply even when modes
 > are omitted. A zero count writes no values but does not waive support or
-> recording-context requirements.
+> recording context requirements.
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-write-contract:0 -->
 
@@ -1752,9 +1736,9 @@ Immediate write operations use 4-byte aligned GPU virtual addresses to designate
 >
 > Support for the recording list's type is reported by
 > [`OPTIONS3.WriteBufferImmediateSupportFlags`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options3),
-> together with the device's existing required-support contract. A declaration
+> together with the device's existing required support contract. A declaration
 > or driver table slot does not grant unsupported video/list use. The
-> [render-pass operation contract](output-merger.md#render-pass-operation-surface)
+> [render pass operation contract](output-merger.md#render-pass-operation-surface)
 > and [predication matrix](counters-queries-and-predication.md#predication-operation-matrix)
 > remain applicable: supported immediate writes may be recorded inside an
 > open pass without consuming that pass's writes. COPY lists have no predicate
@@ -1767,8 +1751,8 @@ Immediate write operations use 4-byte aligned GPU virtual addresses to designate
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> MARKER_IN and MARKER_OUT constrain local command-stream timing, not a new
-> global cache-visibility or CPU synchronization model. They do not replace
+> MARKER_IN and MARKER_OUT constrain local command stream timing, not a new
+> global cache visibility or CPU synchronization model. They do not replace
 > required access dependencies, fences or CPU/GPU completion synchronization.
 > Completion of ExecuteCommandLists in the multi-context qualification means
 > completion of submitted GPU work, not return of the CPU submission method.
@@ -1841,7 +1825,7 @@ Writes a number of 32-bit immediate values to the specified buffer locations dir
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [shared immediate-write contract](#writebufferimmediate-contract), including the matching list-type support bit, modes, access, lifetime and recording-context requirements, applies.
+> The [shared immediate write contract](#writebufferimmediate-contract), including the matching list type support bit, modes, access, lifetime and recording context requirements, applies.
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-ID3D12GraphicsCommandList2-shared:0 -->
 
@@ -1893,7 +1877,7 @@ Writes a number of 32-bit immediate values to the specified buffer locations dir
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [shared immediate-write contract](#writebufferimmediate-contract), including the matching list-type support bit, modes, access, lifetime and recording-context requirements, applies.
+> The [shared immediate write contract](#writebufferimmediate-contract), including the matching list type support bit, modes, access, lifetime and recording context requirements, applies.
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-ID3D12VideoDecodeCommandList-shared:0 -->
 
@@ -1945,7 +1929,7 @@ Writes a number of 32-bit immediate values to the specified buffer locations dir
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [shared immediate-write contract](#writebufferimmediate-contract), including the matching list-type support bit, modes, access, lifetime and recording-context requirements, applies.
+> The [shared immediate write contract](#writebufferimmediate-contract), including the matching list type support bit, modes, access, lifetime and recording context requirements, applies.
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-ID3D12VideoProcessCommandList-shared:0 -->
 
@@ -1997,7 +1981,7 @@ Writes a number of 32-bit immediate values to the specified buffer locations dir
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [shared immediate-write contract](#writebufferimmediate-contract), including the matching list-type support bit, modes, access, lifetime and recording-context requirements, applies.
+> The [shared immediate write contract](#writebufferimmediate-contract), including the matching list type support bit, modes, access, lifetime and recording context requirements, applies.
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-ID3D12VideoEncodeCommandList-shared:0 -->
 
@@ -2039,7 +2023,7 @@ The number of elements in the *pParams* and *pModes* arrays.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The supplied view, not the currently bound RTV/DSV or root table, selects the clear destination. The [Output-merger clear contract](output-merger.md#clear-copy-resolve-interactions) specifies that draw write masks, blending, sample masks and scissor state do not constrain the clear. The [direct-clear read-only aspect restriction](output-merger.md#clear-copy-resolve-interactions) is separately defined at the output-merger owner.
+> The supplied view, not the currently bound RTV/DSV or root table, selects the clear destination. The [Output merger clear contract](output-merger.md#clear-copy-resolve-interactions) specifies that draw write masks, blending, sample masks and scissor state do not constrain the clear. The [direct-clear read-only aspect restriction](output-merger.md#clear-copy-resolve-interactions) is separately defined at the output merger owner.
 
 <!-- d3d12-review-alert:end:resource-operations:clear-regions:0 -->
 
@@ -2048,7 +2032,7 @@ The number of elements in the *pParams* and *pModes* arrays.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> With `NumRects == 0`, the clear covers the full view. With a nonzero count, `pRects` must supply that many rectangles. Rectangles are in the coordinate space of the view format; the same rectangles apply to the view's selected array slices. Empty rectangles do not select pixels. Subsampled formats retain whole-sample alignment constraints; a view on a planar format addresses its selected plane, not an implicit whole YUV image.
+> With `NumRects == 0`, the clear covers the full view. With a nonzero count, `pRects` must supply that many rectangles. Rectangles are in the coordinate space of the view format. The same rectangles apply to the view's selected array slices. Empty rectangles do not select pixels. Subsampled formats retain whole-sample alignment constraints. A view on a planar format addresses its selected plane, not an implicit whole YUV image.
 
 <!-- d3d12-review-alert:end:resource-operations:clear-regions:1 -->
 
@@ -2065,7 +2049,7 @@ The number of elements in the *pParams* and *pModes* arrays.
 
 <a id="clear-conversion"></a>
 
-### Render-target conversion precision
+### Render target conversion precision
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:archive-clear-conversion:0 -->The floating point values passed in through the DDI must be converted to the
 fully qualified format type of the View desired to be cleared. The
@@ -2099,7 +2083,7 @@ Color[3]: A
 (e.g. An RTV of the Y plane of an NV12 surface, of format R8_*, would take the color from R.  An RTV of the UV plane of an NV12 surface, of format R8G8_*, would take the color from RG.)
 ```
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:archive-clear-rect-mapping:0 -->For RTVs and UAVS: The space the clear-operation rectangles apply on is that of the view format (as opposed to the surface format, which for video surfaces can be different sizes). This is
+<ins><!-- d3d12-review-inline:begin:resource-operations:archive-clear-rect-mapping:0 -->For RTVs and UAVS: The space the clear operation rectangles apply on is that of the view format (as opposed to the surface format, which for video surfaces can be different sizes). This is
 consistent with how Viewports and rendering work on those views. e.g. for a 64x64 YUYV surface, an RTV with the format R8G8B8A8\_UINT appears in shaders (and to RSSetViewports())
 as having dimensions 32x64 RGBA values. The clear operation's rects apply to the same space. The “color” coming into the clear operation just maps to the channels in the view (RGBA)
 ignoring the video layout. So a single clear color could really mean “stripes” of color if interpreted in video space. That’s not interesting to do, but it just
@@ -2131,7 +2115,7 @@ Sets all the elements in a render target to one value.
 
 Type: **[D3D12_CPU_DESCRIPTOR_HANDLE](binding.md#descriptor-heaps)**
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearRenderTargetView-parameters:3 -->Specifies the CPU descriptor handle identifying the render-target view to be cleared.<!-- d3d12-review-inline:end:resource-operations:ClearRenderTargetView-parameters:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:ClearRenderTargetView-parameters:3 -->Specifies the CPU descriptor handle identifying the render target view to be cleared.<!-- d3d12-review-inline:end:resource-operations:ClearRenderTargetView-parameters:3 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearRenderTargetView-parameters:4 -->`ColorRGBA`<!-- d3d12-review-inline:end:resource-operations:ClearRenderTargetView-parameters:4 --></ins>
 
@@ -2157,7 +2141,7 @@ None
 
 #### Operation requirements
 
-**ClearRenderTargetView** may be used to initialize resources which alias the same heap memory. See [CreatePlacedResource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nf-d3d12-id3d12device-createplacedresource) for more details.
+**ClearRenderTargetView** may be used to initialize resources which alias the same heap memory. See [CreatePlacedResource](resources.md#create-placed-resource) for more details.
 
 #### Runtime validation
  For floating-point inputs, the runtime will set denormalized values to 0 (while preserving NANs).
@@ -2165,7 +2149,7 @@ Validation failure will result in the call to [Close](execution.md#close) return
 
 #### Debug layer
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearRenderTargetView-remarks:4 --> The debug layer will issue errors if the input colors are denormalized.
-For legacy state validation: The debug layer will issue an error if the subresources referenced by the view are not in the appropriate state. For **ClearRenderTargetView**, the state must be [D3D12_RESOURCE_STATE_RENDER_TARGET](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_resource_states).<!-- d3d12-review-inline:end:resource-operations:ClearRenderTargetView-remarks:4 --></ins>
+For legacy state validation: The debug layer will issue an error if the subresources referenced by the view are not in the appropriate state. For **ClearRenderTargetView**, the state must be [D3D12_RESOURCE_STATE_RENDER_TARGET](synchronization.md#d3d12-resource-states).<!-- d3d12-review-inline:end:resource-operations:ClearRenderTargetView-remarks:4 --></ins>
 
 ##### Examples
 
@@ -2334,7 +2318,7 @@ None
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearDepthStencilView-remarks:0 -->Only direct command lists support this operation.<!-- d3d12-review-inline:end:resource-operations:ClearDepthStencilView-remarks:0 --></ins>
 
-**ClearDepthStencilView** may be used to initialize resources which alias the same heap memory. See [CreatePlacedResource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nf-d3d12-id3d12device-createplacedresource) for more details.
+**ClearDepthStencilView** may be used to initialize resources which alias the same heap memory. See [CreatePlacedResource](resources.md#create-placed-resource) for more details.
 
 #### Runtime validation
  For floating-point inputs, the runtime will set denormalized values to 0 (while preserving NANs).
@@ -2342,7 +2326,7 @@ Validation failure will result in the call to [Close](execution.md#close) return
 
 #### Debug layer
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearDepthStencilView-remarks:5 --> The debug layer will issue errors if the input depth value is denormalized.
-For legacy state validation: The debug layer will issue an error if the subresources referenced by the view are not in the appropriate state. For **ClearDepthStencilView**, the state must be [D3D12_RESOURCE_STATE_DEPTH_WRITE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_resource_states).<!-- d3d12-review-inline:end:resource-operations:ClearDepthStencilView-remarks:5 --></ins>
+For legacy state validation: The debug layer will issue an error if the subresources referenced by the view are not in the appropriate state. For **ClearDepthStencilView**, the state must be [D3D12_RESOURCE_STATE_DEPTH_WRITE](synchronization.md#d3d12-resource-states).<!-- d3d12-review-inline:end:resource-operations:ClearDepthStencilView-remarks:5 --></ins>
 
 #### Examples
 
@@ -2514,7 +2498,7 @@ This enum is used by [ID3D12GraphicsCommandList::ClearDepthStencilView](#clearde
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `ClearFlags` must select depth, stencil, or both: the valid nonzero masks are `0x1`, `0x2` and `0x3`. The directly supplied RTV/DSV must be an initialized descriptor of the required view kind referencing the destination resource; a null descriptor is not a clear destination. Read-only aspect invalidity is the [canonical direct-clear rule](output-merger.md#clear-copy-resolve-interactions), independent of draw write masks.
+> `ClearFlags` must select depth, stencil, or both: the valid nonzero masks are `0x1`, `0x2` and `0x3`. The directly supplied RTV/DSV must be an initialized descriptor of the required view kind referencing the destination resource. A null descriptor is not a clear destination. Read-only aspect invalidity is the [canonical direct-clear rule](output-merger.md#clear-copy-resolve-interactions), independent of draw write masks.
 
 <!-- d3d12-review-alert:end:resource-operations:clear-flag-validity:0 -->
 
@@ -2543,7 +2527,7 @@ different combinations of the handles to perform the clear operation.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The CPU and GPU UAV descriptors must describe the same view of `pResource`. The GPU descriptor is initialized in the currently bound shader-visible CBV/SRV/UAV heap; the CPU descriptor is initialized in a separate non-shader-visible heap. They are not interchangeable numerical handles. [Descriptor population/lifetime](binding.md#descriptor-population) and [heap selection](binding.md#descriptor-heaps) remain binding contracts.
+> The CPU and GPU UAV descriptors must describe the same view of `pResource`. The GPU descriptor is initialized in the currently bound shader-visible CBV/SRV/UAV heap. The CPU descriptor is initialized in a separate non-shader-visible heap. They are not interchangeable numerical handles. [Descriptor population/lifetime](binding.md#descriptor-population) and [heap selection](binding.md#descriptor-heaps) remain binding contracts.
 
 <!-- d3d12-review-alert:end:resource-operations:uav-match:0 -->
 
@@ -2560,7 +2544,7 @@ On other UAVs, the operation is invalid.<!-- d3d12-review-inline:end:resource-op
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Structured-buffer UAVs must not be supplied to either `ClearUnorderedAccessViewUint` or `ClearUnorderedAccessViewFloat`. Raw-buffer Uint clears use the first value repeatedly in 32-bit elements. Typed UAV Uint clears select the corresponding component's low bits, not FLOAT-to-format numeric conversion. For an `R8_UNORM` UAV, `Values[0] == 0xff` writes the bit pattern `0xff`; it is not an out-of-range normalized floating-point input.
+> Structured buffer UAVs must not be supplied to either `ClearUnorderedAccessViewUint` or `ClearUnorderedAccessViewFloat`. Raw buffer Uint clears use the first value repeatedly in 32-bit elements. Typed UAV Uint clears select the corresponding component's low bits, not FLOAT-to-format numeric conversion. For an `R8_UNORM` UAV, `Values[0] == 0xff` writes the bit pattern `0xff`. It is not an out-of-range normalized floating-point input.
 
 <!-- d3d12-review-alert:end:resource-operations:structured-dispute:0 -->
 
@@ -2582,7 +2566,7 @@ On other UAVs, the operation is invalid.<!-- d3d12-review-inline:end:resource-op
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> [Counter association and placement](formats.md#buffer-uav) identifies ordinary application-owned 32-bit storage, which may be in a separate resource from the UAV data. [Queries' counter-storage distinction](counters-queries-and-predication.md#application-counters) is independent of predicate storage. Clearing a UAV data view does not implicitly reset the associated counter. To initialize, copy, or read a counter, the application operates on its actual four backing bytes; if a separately selected ordinary view covers those same bytes, clearing that view modifies the bytes as data.
+> [Counter association and placement](binding.md#buffer-uav) identifies ordinary application-owned 32-bit storage, which may be in a separate resource from the UAV data. [Queries' counter storage distinction](counters-queries-and-predication.md#application-counters) is independent of predicate storage. Clearing a UAV data view does not implicitly reset the associated counter. To initialize, copy, or read a counter, the application operates on its actual four backing bytes. If a separately selected ordinary view covers those same bytes, clearing that view modifies the bytes as data.
 
 <!-- d3d12-review-alert:end:resource-operations:counter-lifetime-link:0 -->
 
@@ -2591,7 +2575,7 @@ On other UAVs, the operation is invalid.<!-- d3d12-review-inline:end:resource-op
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Copying the data resource does not implicitly copy a separate `pCounterResource`; copying a buffer range that includes counter storage does copy those bytes. Creation, binding and command-list reset do not initialize the counter value. Counter placement/alignment and shader counter operations retain their named owners rather than a new lifecycle or atomic memory model in this chapter.
+> Copying the data resource does not implicitly copy a separate `pCounterResource`; copying a buffer range that includes counter storage does copy those bytes. Creation, binding and command list reset do not initialize the counter value. Counter placement/alignment and shader counter operations retain their named owners rather than a new lifecycle or atomic memory model in this chapter.
 
 <!-- d3d12-review-alert:end:resource-operations:counter-lifetime-link:1 -->
 
@@ -2600,7 +2584,7 @@ On other UAVs, the operation is invalid.<!-- d3d12-review-inline:end:resource-op
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Using copied counter bytes to produce indirect control data follows [argument initialization](indirect-execution.md#argument-initialization). The [indirect command count](indirect-execution.md#executeindirect) counts records, not vertices, groups or stream-output bytes.
+> Using copied counter bytes to produce indirect control data follows [argument initialization](indirect-execution.md#argument-initialization). The [indirect command count](indirect-execution.md#executeindirect) counts records, not vertices, groups or stream output bytes.
 
 <!-- d3d12-review-alert:end:resource-operations:N-indirect-canonical-owner:0 -->
 
@@ -2645,9 +2629,9 @@ A [D3D12_CPU_DESCRIPTOR_HANDLE](binding.md#descriptor-heaps) in a non-shader vis
 
 `pResource`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-parameters:9 -->Type: <!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-parameters:9 --></ins>**[ID3D12Resource](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource)\***
+<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-parameters:9 -->Type: <!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-parameters:9 --></ins>**[ID3D12Resource](resources.md#resource-storage)\***
 
-A pointer to the [ID3D12Resource](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource) interface that represents the unordered-access-view (UAV) resource to clear.
+A pointer to the [ID3D12Resource](resources.md#resource-storage) interface that represents the unordered-access-view (UAV) resource to clear.
 
 `Values`
 
@@ -2677,9 +2661,9 @@ Validation failure results in the call to [ID3D12GraphicsCommandList::Close](exe
 
 #### Debug layer
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-remarks:3 -->**Diagnostic-source qualification.** The short reference's normalized-range error claim is not reconciled with the bit-precise Uint and defined Float-clamping contracts. It does not impose an additional normalized input-validity restriction.<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-remarks:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-remarks:3 -->**Diagnostic source qualification.** The short reference's normalized range error claim is not reconciled with the bit-precise Uint and defined Float-clamping contracts. It does not impose an additional normalized input validity restriction.<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-remarks:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-remarks:4 -->For legacy state validation: The debug layer issues an error if the subresources referenced by the view aren't in the appropriate state. For **ClearUnorderedAccessViewUint**, the state must be [D3D12_RESOURCE_STATE_UNORDERED_ACCESS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_states).<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-remarks:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-remarks:4 -->For legacy state validation: The debug layer issues an error if the subresources referenced by the view aren't in the appropriate state. For **ClearUnorderedAccessViewUint**, the state must be [D3D12_RESOURCE_STATE_UNORDERED_ACCESS](synchronization.md#d3d12-resource-states).<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-remarks:4 --></ins>
 
 <a id="clearunorderedaccessviewfloat"></a>
 
@@ -2722,9 +2706,9 @@ A [D3D12_CPU_DESCRIPTOR_HANDLE](binding.md#descriptor-heaps) in a non-shader vis
 
 `pResource`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-parameters:9 -->Type: <!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-parameters:9 --></ins>**[ID3D12Resource](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource)\***
+<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-parameters:9 -->Type: <!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-parameters:9 --></ins>**[ID3D12Resource](resources.md#resource-storage)\***
 
-A pointer to the [ID3D12Resource](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource) interface that represents the unordered-access-view (UAV) resource to clear.
+A pointer to the [ID3D12Resource](resources.md#resource-storage) interface that represents the unordered-access-view (UAV) resource to clear.
 
 `Values`
 
@@ -2758,9 +2742,9 @@ Validation failure results in the call to [ID3D12GraphicsCommandList::Close](exe
 
 #### Debug layer
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-remarks:5 -->**Diagnostic-source qualification.** The short reference's normalized-range error claim is not reconciled with the bit-precise Uint and defined Float-clamping contracts. It does not impose an additional normalized input-validity restriction.<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-remarks:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-remarks:5 -->**Diagnostic source qualification.** The short reference's normalized range error claim is not reconciled with the bit-precise Uint and defined Float-clamping contracts. It does not impose an additional normalized input validity restriction.<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-remarks:5 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-remarks:6 -->For legacy state validation: The debug layer issues an error if the subresources referenced by the view aren't in the appropriate state. For **ClearUnorderedAccessViewFloat**, the state must be [D3D12_RESOURCE_STATE_UNORDERED_ACCESS](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_states).<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-remarks:6 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-remarks:6 -->For legacy state validation: The debug layer issues an error if the subresources referenced by the view aren't in the appropriate state. For **ClearUnorderedAccessViewFloat**, the state must be [D3D12_RESOURCE_STATE_UNORDERED_ACCESS](synchronization.md#d3d12-resource-states).<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-remarks:6 --></ins>
 
 <a id="resolve-commands"></a>
 
@@ -2779,7 +2763,7 @@ conversion to linear prior to filtering and blending arithmetic operations.<!-- 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> For the fixed standard/center sample patterns, resolving is a simple average of the samples within each pixel. Other multisample quality modes retain the implementation-dependent resolve algorithm described by the multisample contract. The regional modes specify minimum, maximum, average or decompression explicitly; they do not perform arbitrary color-format conversion.
+> For the fixed standard/center sample patterns, resolving is a simple average of the samples within each pixel. Other multisample quality modes retain the implementation-dependent resolve algorithm described by the multisample contract. The regional modes specify minimum, maximum, average or decompression explicitly. They do not perform arbitrary color format conversion.
 
 <!-- d3d12-review-alert:end:resource-operations:resolve-patterns:0 -->
 
@@ -2797,7 +2781,7 @@ conversion to linear prior to filtering and blending arithmetic operations.<!-- 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Format support is per operation: multisample rendering/load support is not by itself resolve support. The [`D3D12_FORMAT_SUPPORT1_MULTISAMPLE_RESOLVE` and multisample-quality contracts](formats.md#support) and each mode's format restrictions apply. The ordinary typed/typeless format cases appear in `ResolveSubresource`; the [fully typed casting restrictions](formats.md#casting), including FLOAT/non-FLOAT and SNORM/UNORM exclusions, remain independent of raw copy reinterpretation.
+> Format support is per operation: multisample rendering/load support is not by itself resolve support. The [`D3D12_FORMAT_SUPPORT1_MULTISAMPLE_RESOLVE` and multisample-quality contracts](formats.md#support) and each mode's format restrictions apply. The ordinary typed/typeless format cases appear in `ResolveSubresource`. The [fully typed casting restrictions](formats.md#casting), including FLOAT/non-FLOAT and SNORM/UNORM exclusions, remain independent of raw copy reinterpretation.
 
 <!-- d3d12-review-alert:end:resource-operations:resolve-patterns:2 -->
 
@@ -2827,13 +2811,13 @@ Copy a multi-sampled resource into a non-multi-sampled resource.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresource-parameters:2 -->Type: <!-- d3d12-review-inline:end:resource-operations:ResolveSubresource-parameters:2 --></ins>**ID3D12Resource\***
 
-Destination resource. <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresource-parameters:3 -->Must be created on<!-- d3d12-review-inline:end:resource-operations:ResolveSubresource-parameters:3 --></ins> a [D3D12_HEAP_TYPE_DEFAULT](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_heap_type) heap and be single-sampled. See [ID3D12Resource](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource).
+Destination resource. <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresource-parameters:3 -->Must be created on<!-- d3d12-review-inline:end:resource-operations:ResolveSubresource-parameters:3 --></ins> a [D3D12_HEAP_TYPE_DEFAULT](resources.md#d3d12-heap-type) heap and be single-sampled. See [ID3D12Resource](resources.md#resource-storage).
 
 `DstSubresource`
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresource-parameters:5 -->Type: <!-- d3d12-review-inline:end:resource-operations:ResolveSubresource-parameters:5 --></ins>**UINT**
 
-A zero-based index, that identifies the destination subresource. Use [D3D12CalcSubresource](https://learn.microsoft.com/en-us/windows/win32/direct3d12/d3d12calcsubresource) to calculate the subresource index if the parent resource is complex.
+A zero-based index, that identifies the destination subresource. Use [D3D12CalcSubresource](resources.md#subresources) to calculate the subresource index if the parent resource is complex.
 
 `pSrcResource`
 
@@ -2851,15 +2835,15 @@ The source subresource of the source resource.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresource-parameters:14 -->Type: <!-- d3d12-review-inline:end:resource-operations:ResolveSubresource-parameters:14 --></ins>**DXGI\_FORMAT**
 
-A [DXGI_FORMAT](https://learn.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format) that indicates how the multisampled resource will be resolved to a single-sampled resource. <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresource-parameters:15 -->See the [format requirements](#resolvesubresource).<!-- d3d12-review-inline:end:resource-operations:ResolveSubresource-parameters:15 --></ins>
+A [DXGI_FORMAT](formats.md#dxgi-format) that indicates how the multisampled resource will be resolved to a single-sampled resource. <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresource-parameters:15 -->See the [format requirements](#resolvesubresource).<!-- d3d12-review-inline:end:resource-operations:ResolveSubresource-parameters:15 --></ins>
 
 #### Return values
 
 None
 
 #### Debug layer
-<ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresource-remarks:1 -->For legacy state validation: The debug layer will issue an error if the source subresource is not in the [D3D12_RESOURCE_STATE_RESOLVE_SOURCE](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_states) state.
-For legacy state validation: The debug layer will issue an error if the destination subresource is not in the [D3D12_RESOURCE_STATE_RESOLVE_DEST](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_states) state.<!-- d3d12-review-inline:end:resource-operations:ResolveSubresource-remarks:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresource-remarks:1 -->For legacy state validation: The debug layer will issue an error if the source subresource is not in the [D3D12_RESOURCE_STATE_RESOLVE_SOURCE](synchronization.md#d3d12-resource-states) state.
+For legacy state validation: The debug layer will issue an error if the destination subresource is not in the [D3D12_RESOURCE_STATE_RESOLVE_DEST](synchronization.md#d3d12-resource-states) state.<!-- d3d12-review-inline:end:resource-operations:ResolveSubresource-remarks:1 --></ins>
 
 #### Format requirements
 
@@ -2885,7 +2869,7 @@ For legacy state validation: The debug layer will issue an error if the destinat
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `ResolveSubresource` resolves the complete selected source subresource into the complete selected destination subresource. Unlike `CopyResource`, it does not require identical total mip/array/plane cardinalities. The source MSAA resource has mip zero; the destination may select a mip of a larger single-sampled texture, provided the selected subresource extents and the format/sample requirements match. For example, a 128×128 multisampled source can resolve into mip 2 of a 512×512 single-sampled destination texture, whose selected mip is 128×128. Other destination mips are not resolved by this call.
+> `ResolveSubresource` resolves the complete selected source subresource into the complete selected destination subresource. Unlike `CopyResource`, it does not require identical total mip/array/plane cardinalities. The source MSAA resource has mip zero. The destination may select a mip of a larger single-sampled texture, provided the selected subresource extents and the format/sample requirements match. For example, a 128×128 multisampled source can resolve into mip 2 of a 512×512 single-sampled destination texture, whose selected mip is 128×128. Other destination mips are not resolved by this call.
 
 <!-- d3d12-review-alert:end:resource-operations:whole-resolve-shape:0 -->
 
@@ -2936,7 +2920,7 @@ Destination resource. <ins><!-- d3d12-review-inline:begin:resource-operations:Re
 
 Type: **UINT**
 
-A zero-based index that identifies the destination subresource. Use [D3D12CalcSubresource](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/d3d12calcsubresource) to calculate the subresource index if the parent resource is complex.
+A zero-based index that identifies the destination subresource. Use [D3D12CalcSubresource](resources.md#subresources) to calculate the subresource index if the parent resource is complex.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:7 -->`DstX`<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:7 --></ins>
 
@@ -3076,7 +3060,7 @@ typedef enum D3D12_RESOLVE_MODE {
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The values of `D3D12_RESOLVE_MODE_ENCODE_SAMPLER_FEEDBACK` and `D3D12_RESOLVE_MODE_DECODE_SAMPLER_FEEDBACK` are 4 and 5. Encode writes an opaque feedback map from its decoded representation; decode writes the application-usable representation from an opaque feedback map. Their exact prerequisites, indexing, rectangles and value meanings are specified [below](#feedback-transcoding), not by the ordinary MSAA sample-count rules.
+> The values of `D3D12_RESOLVE_MODE_ENCODE_SAMPLER_FEEDBACK` and `D3D12_RESOLVE_MODE_DECODE_SAMPLER_FEEDBACK` are 4 and 5. Encode writes an opaque feedback map from its decoded representation; decode writes the application-usable representation from an opaque feedback map. Their exact prerequisites, indexing, rectangles and value meanings are specified [below](#feedback-transcoding), not by the ordinary MSAA sample count rules.
 
 <!-- d3d12-review-alert:end:resource-operations:resolve-feedback-modes:0 -->
 
@@ -3089,7 +3073,7 @@ typedef enum D3D12_RESOLVE_MODE {
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Ordinary regional multisample resolve/decompression is supported with programmable sample-position Tier 1 or Tier 2, reported by `D3D12_FEATURE_DATA_D3D12_OPTIONS2.ProgrammableSamplePositionsTier`. Tier 0 does not support these ordinary regional modes. Feedback encode/decode instead follows `D3D12_FEATURE_DATA_D3D12_OPTIONS7.SamplerFeedbackTier` and its [feedback constraints](#feedback-transcoding); it does not require the ordinary programmable-position capability.
+> Ordinary regional multisample resolve/decompression is supported with programmable sample position Tier 1 or Tier 2, reported by `D3D12_FEATURE_DATA_D3D12_OPTIONS2.ProgrammableSamplePositionsTier`. Tier 0 does not support these ordinary regional modes. Feedback encode/decode instead follows `D3D12_FEATURE_DATA_D3D12_OPTIONS7.SamplerFeedbackTier` and its [feedback constraints](#feedback-transcoding). It does not require the ordinary programmable position capability.
 
 <!-- d3d12-review-alert:end:resource-operations:regional-resolve-availability:0 -->
 
@@ -3098,7 +3082,7 @@ typedef enum D3D12_RESOLVE_MODE {
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The source rectangle and destination rectangle have equal width and height; both must lie within their selected subresources. A null source rectangle means the complete source subresource. The nonempty ordinary rectangle has `left < right` and `top < bottom`. For an in-place `DECOMPRESS`, the source/destination subresource and region must match, and source access/state suffices rather than demanding conflicting simultaneous source/destination states.
+> The source rectangle and destination rectangle have equal width and height. Both must lie within their selected subresources. A null source rectangle means the complete source subresource. The nonempty ordinary rectangle has `left < right` and `top < bottom`. For an in-place `DECOMPRESS`, the source/destination subresource and region must match, and source access/state suffices rather than demanding conflicting simultaneous source/destination states.
 
 <!-- d3d12-review-alert:end:resource-operations:regional-resolve-availability:1 -->
 
@@ -3107,20 +3091,20 @@ typedef enum D3D12_RESOLVE_MODE {
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime validates resource/subresource/format/sample and rectangle compatibility; the debug layer additionally validates the source/destination resolve accesses. In-place decompression uses source access on both sides. Invalid parameters invalidate recording under the `Close` contract. The ordinary programmable-position capability contract specifies device removal for use of `ResolveSubresourceRegion` on a device without Tier 1 support; feedback modes retain their independent capability gate. Device removal is not a per-call return value, and debug-layer absence does not guarantee validity.
+> The runtime validates resource/subresource/format/sample and rectangle compatibility. The debug layer additionally validates the source/destination resolve accesses. In-place decompression uses source access on both sides. Invalid parameters invalidate recording under the `Close` contract. The ordinary programmable position capability contract specifies device removal for use of `ResolveSubresourceRegion` on a device without Tier 1 support; feedback modes retain their independent capability gate. Device removal is not a per-call return value, and debug layer absence does not guarantee validity.
 
 <!-- d3d12-review-alert:end:resource-operations:regional-resolve-availability:2 -->
 
 <a id="feedback-transcoding"></a>
 
-### Sampler-feedback copy, clear and transcoding
+### Sampler feedback copy, clear and transcoding
 
 <!-- d3d12-review-alert:begin:resource-operations:feedback-owner-links:0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The opaque feedback formats are `DXGI_FORMAT_SAMPLER_FEEDBACK_MIN_MIP_OPAQUE` and `DXGI_FORMAT_SAMPLER_FEEDBACK_MIP_REGION_USED_OPAQUE`. [Resource descriptions and creation](resources.md#extended-description) own their mip-region/resource constraints, supplemented by the exact source definitions of [mip-region constraints](../SamplerFeedback.md#mip-region-constraints) and [feedback resource properties](../SamplerFeedback.md#resource-properties). [Feedback UAV creation](formats.md#create-sampler-feedback-uav) owns pairing and descriptor construction. Shader feedback collection and the feature's [capability tiers](common-shader-internals.md#feedback-capability-tiers) are defined by [feedback sampling](common-shader-internals.md#sampler-feedback). The following sections specify the transfer/clear contributions to this chapter's selected APIs.
+> The opaque feedback formats are `DXGI_FORMAT_SAMPLER_FEEDBACK_MIN_MIP_OPAQUE` and `DXGI_FORMAT_SAMPLER_FEEDBACK_MIP_REGION_USED_OPAQUE`. [Resource descriptions and creation](resources.md#extended-description) own their mip region/resource constraints, supplemented by the exact source definitions of [mip region constraints](../SamplerFeedback.md#mip-region-constraints) and [feedback resource properties](../SamplerFeedback.md#resource-properties). [Feedback UAV creation](binding.md#create-sampler-feedback-uav) owns pairing and descriptor construction. Shader feedback collection and the feature's [capability tiers](common-shader-internals.md#feedback-capability-tiers) are defined by [feedback sampling](common-shader-internals.md#sampler-feedback). The following sections specify the transfer/clear contributions to this chapter's selected APIs.
 
 <!-- d3d12-review-alert:end:resource-operations:feedback-owner-links:0 -->
 
@@ -3248,6 +3232,8 @@ Feedback maps are eligible for heap serialization on platforms that support it (
 
 #### Heap serialization capability
 
+<a id="d3d12-heap-serialization-tier"></a>
+
 ```cpp
 typedef enum D3D12_HEAP_SERIALIZATION_TIER
 {
@@ -3266,7 +3252,7 @@ typedef enum D3D12_HEAP_SERIALIZATION_TIER
 > | Constant | Value | Meaning |
 > |---|---|---|
 > | `D3D12_HEAP_SERIALIZATION_TIER_0` | `(0)` | Indicates that heap serialization is not supported. |
-> | `D3D12_HEAP_SERIALIZATION_TIER_10` | `(10)` | Indicates that heap serialization is supported. Your application can serialize resource data in heaps through copying APIs such as [CopyResource](#copyresource), without necessarily requiring an explicit [state transition](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/using-resource-barriers-to-synchronize-resource-states-in-direct3d-12#implicit-state-transitions) of resources on those heaps. |
+> | `D3D12_HEAP_SERIALIZATION_TIER_10` | `(10)` | Indicates that heap serialization is supported. Your application can serialize resource data in heaps through copying APIs such as [CopyResource](#copyresource), without necessarily requiring an explicit [state transition](synchronization.md#legacy-promotion-and-decay) of resources on those heaps. |
 
 <!-- d3d12-review-alert:end:resource-operations:cap-heap-serialization-tier:1 -->
 
@@ -3288,7 +3274,7 @@ An input field, indicating the adapter index to query.
 
 `HeapSerializationTier`
 
-Type: **[D3D12_HEAP_SERIALIZATION_TIER](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_heap_serialization_tier)**
+Type: **[D3D12_HEAP_SERIALIZATION_TIER](#d3d12-heap-serialization-tier)**
 
 An output field, indicating the tier of heap serialization support.
 
@@ -3297,7 +3283,7 @@ An output field, indicating the tier of heap serialization support.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The public heap-serialization capability is available starting with Windows 10 Build 20348. `ID3D12Device::CheckFeatureSupport(D3D12_FEATURE_SERIALIZATION, ...)` uses `D3D12_FEATURE_DATA_SERIALIZATION.NodeIndex` to select the adapter node and returns `HeapSerializationTier`. Tier 0 provides no heap-serialization support; the feedback heap-serialization paragraph requires reported Tier 10. This does not require every adapter to support Tier 10 or replace the [resource access/layout and aliasing contracts](synchronization.md#foundations).
+> The public heap serialization capability is available starting with Windows 10 Build 20348. `ID3D12Device::CheckFeatureSupport(D3D12_FEATURE_SERIALIZATION, ...)` uses `D3D12_FEATURE_DATA_SERIALIZATION.NodeIndex` to select the adapter node and returns `HeapSerializationTier`. Tier 0 provides no heap serialization support. The feedback heap serialization paragraph requires reported Tier 10. This does not require every adapter to support Tier 10 or replace the [resource access/layout and aliasing contracts](synchronization.md#foundations).
 
 <!-- d3d12-review-alert:end:resource-operations:heap-serialization-gate:0 -->
 
@@ -3306,7 +3292,7 @@ An output field, indicating the tier of heap serialization support.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The [resource/heap representation and lifetime owner](resources.md#resource-storage) remains separate from this feedback-copy contribution.
+> The [resource/heap representation and lifetime owner](resources.md#resource-storage) remains separate from this feedback copy contribution.
 
 <!-- d3d12-review-alert:end:resource-operations:heap-serialization-gate:1 -->
 
@@ -3414,7 +3400,7 @@ Indicates that the contents of a resource don't need to be preserved. The functi
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Discard declares that prior contents need not be preserved; it is not a request to fill the resource with zero or the optimized clear value. Contents in a discarded region are undefined until written or initialized by an appropriate later operation. A null `pRegion` selects the whole resource; otherwise `FirstSubresource` and `NumSubresources` select a contiguous, in-range subresource interval without integer overflow. A non-null region with `NumRects == 0` discards the complete selected subresources, not implicitly all subresources of the resource. A zero `NumSubresources` selects no subresources, subject to the rectangular-discard validity rules. A nonzero rectangle count requires the counted rectangle array.
+> Discard declares that prior contents need not be preserved. It is not a request to fill the resource with zero or the optimized clear value. Contents in a discarded region are undefined until written or initialized by an appropriate later operation. A null `pRegion` selects the whole resource. Otherwise `FirstSubresource` and `NumSubresources` select a contiguous, in-range subresource interval without integer overflow. A non-null region with `NumRects == 0` discards the complete selected subresources, not implicitly all subresources of the resource. A zero `NumSubresources` selects no subresources, subject to the rectangular-discard validity rules. A nonzero rectangle count requires the counted rectangle array.
 
 <!-- d3d12-review-alert:end:resource-operations:DiscardResource-integration:0 -->
 
@@ -3423,7 +3409,7 @@ Indicates that the contents of a resource don't need to be preserved. The functi
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The selected enhanced access follows the direct/compute and resource-flag cases in the operation requirements: render-target access/layout for render-target resources, writable depth/stencil access/layout for depth/stencil resources, and unordered-access for compute discard. [Barrier discard-initialization](synchronization.md#enhanced-aliasing) is a separate mechanism with its own layout-transition flexibility; it must not be confused with the state/access requirements of this command.
+> The selected enhanced access follows the direct/compute and resource flag cases in the operation requirements: render target access/layout for render target resources, writable depth/stencil access/layout for depth/stencil resources, and unordered access for compute discard. [Barrier discard initialization](synchronization.md#enhanced-aliasing) is a separate mechanism with its own layout transition flexibility. It must not be confused with the state/access requirements of this command.
 
 <!-- d3d12-review-alert:end:resource-operations:DiscardResource-integration:1 -->
 
@@ -3432,7 +3418,7 @@ Indicates that the contents of a resource don't need to be preserved. The functi
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Rectangular discard supports buffer resources and 2D texture subresources. A buffer's width is measured in bytes; its other dimensions retain the [one-dimensional buffer extent](resources.md#buffer-description). Rectangle bounds and the selected subresource interval must be valid. All selected subresources must have the same dimensions. If rectangles are supplied and the resource has more than one mip level, `NumSubresources` must be exactly one; this is a strict usage restriction, including when two array slices would have equal dimensions.
+> Rectangular discard supports buffer resources and 2D texture subresources. A buffer's width is measured in bytes. Its other dimensions retain the [one-dimensional buffer extent](resources.md#buffer-description). Rectangle bounds and the selected subresource interval must be valid. All selected subresources must have the same dimensions. If rectangles are supplied and the resource has more than one mip level, `NumSubresources` must be exactly one. This is a strict usage restriction, including when two array slices would have equal dimensions.
 
 <!-- d3d12-review-alert:end:resource-operations:DiscardResource-integration:2 -->
 
@@ -3440,9 +3426,9 @@ Indicates that the contents of a resource don't need to be preserved. The functi
 
 `pResource`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:DiscardResource-parameters:2 -->Type: **[ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource)\***<!-- d3d12-review-inline:end:resource-operations:DiscardResource-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:DiscardResource-parameters:2 -->Type: **[ID3D12Resource](resources.md#resource-storage)\***<!-- d3d12-review-inline:end:resource-operations:DiscardResource-parameters:2 --></ins>
 
-A pointer to the [ID3D12Resource](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/nn-d3d12-id3d12resource) interface for the resource to discard.
+A pointer to the [ID3D12Resource](resources.md#resource-storage) interface for the resource to discard.
 
 `pRegion`
 
@@ -3458,15 +3444,15 @@ None
 
 The semantics of **DiscardResource** change based on the command list type.
 
-For [D3D12_COMMAND_LIST_TYPE_DIRECT](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_command_list_type), the following two rules apply:
+For [D3D12_COMMAND_LIST_TYPE_DIRECT](execution.md#command-list-types), the following two rules apply:
 
-- When a resource has the [D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_resource_flags) flag, **DiscardResource** must be called when the discarded subresource regions are in the [D3D12_RESOURCE_STATE_RENDER_TARGET](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_resource_states) resource barrier state.
-- <ins><!-- d3d12-review-inline:begin:resource-operations:DiscardResource-remarks:2 -->When a resource has the [D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_resource_flags) flag, **DiscardResource** must be called when the discarded subresource regions are in the [D3D12_RESOURCE_STATE_DEPTH_WRITE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_resource_states).<!-- d3d12-review-inline:end:resource-operations:DiscardResource-remarks:2 --></ins>
+- When a resource has the [D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET](resources.md#d3d12-resource-flags) flag, **DiscardResource** must be called when the discarded subresource regions are in the [D3D12_RESOURCE_STATE_RENDER_TARGET](synchronization.md#d3d12-resource-states) resource barrier state.
+- <ins><!-- d3d12-review-inline:begin:resource-operations:DiscardResource-remarks:2 -->When a resource has the [D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL](resources.md#d3d12-resource-flags) flag, **DiscardResource** must be called when the discarded subresource regions are in the [D3D12_RESOURCE_STATE_DEPTH_WRITE](synchronization.md#d3d12-resource-states).<!-- d3d12-review-inline:end:resource-operations:DiscardResource-remarks:2 --></ins>
 
- For [D3D12_COMMAND_LIST_TYPE_COMPUTE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_command_list_type), the following rule applies:
-- The resource must have the [D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_resource_flags) flag, and **DiscardResource** must be called when the discarded subresource regions are in the [D3D12_RESOURCE_STATE_UNORDERED_ACCESS](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_resource_states) resource barrier state.
+ For [D3D12_COMMAND_LIST_TYPE_COMPUTE](execution.md#command-list-types), the following rule applies:
+- The resource must have the [D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS](resources.md#d3d12-resource-flags) flag, and **DiscardResource** must be called when the discarded subresource regions are in the [D3D12_RESOURCE_STATE_UNORDERED_ACCESS](synchronization.md#d3d12-resource-states) resource barrier state.
 
-**DiscardResource** is not supported on command lists with either [D3D12_COMMAND_LIST_TYPE_BUNDLE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_command_list_type) <ins><!-- d3d12-review-inline:begin:resource-operations:DiscardResource-remarks:3 -->or **D3D12\_COMMAND\_LIST\_TYPE\_COPY**<!-- d3d12-review-inline:end:resource-operations:DiscardResource-remarks:3 --></ins>.
+**DiscardResource** is not supported on command lists with either [D3D12_COMMAND_LIST_TYPE_BUNDLE](execution.md#command-list-types) <ins><!-- d3d12-review-inline:begin:resource-operations:DiscardResource-remarks:3 -->or **D3D12\_COMMAND\_LIST\_TYPE\_COPY**<!-- d3d12-review-inline:end:resource-operations:DiscardResource-remarks:3 --></ins>.
 
 <a id="id3d12videodecodecommandlist-discardresource"></a>
 
@@ -3490,14 +3476,14 @@ void DiscardResource(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> This is the same discard hint and undefined-content/initialization
+> This is the same discard hint and undefined content/initialization
 > contract as [ordinary discard](#discardresource), on the matching video
-> command-list type. The graphics entry's DIRECT/COMPUTE resource-flag/state
+> command list type. The graphics entry's DIRECT/COMPUTE resource flag/state
 > cases are not additional video state requirements. The resource must remain
 > compatible with the video queue's [access/layout contract](synchronization.md#queue-compatibility),
-> with protected-session, residency and execution lifetime preserved.
+> with protected session, residency and execution lifetime preserved.
 > [Predication policy](counters-queries-and-predication.md#predication-operation-matrix)
-> classifies video discard as unpredicated; a discard hint may be ignored and
+> classifies video discard as unpredicated. A discard hint may be ignored and
 > does not promise clearing, preserved old bytes or deallocation.
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-ID3D12VideoDecodeCommandList-discard-rules:0 -->
@@ -3511,7 +3497,7 @@ void DiscardResource(
 >
 > `pResource` identifies the resource. Optional `pRegion` selects the
 > rectangle/subresource range; null selects the whole resource. The
-> [discard-region contract](#d3d12-discard-region) defines counted arrays,
+> [discard region contract](#d3d12-discard-region) defines counted arrays,
 > subresource bounds and buffer/2D rectangular restrictions.
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-ID3D12VideoDecodeCommandList-discard-parameters:0 -->
@@ -3549,14 +3535,14 @@ Indicates that the current contents of a resource can be discarded.  The current
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> This is the same discard hint and undefined-content/initialization
+> This is the same discard hint and undefined content/initialization
 > contract as [ordinary discard](#discardresource), on the matching video
-> command-list type. The graphics entry's DIRECT/COMPUTE resource-flag/state
+> command list type. The graphics entry's DIRECT/COMPUTE resource flag/state
 > cases are not additional video state requirements. The resource must remain
 > compatible with the video queue's [access/layout contract](synchronization.md#queue-compatibility),
-> with protected-session, residency and execution lifetime preserved.
+> with protected session, residency and execution lifetime preserved.
 > [Predication policy](counters-queries-and-predication.md#predication-operation-matrix)
-> classifies video discard as unpredicated; a discard hint may be ignored and
+> classifies video discard as unpredicated. A discard hint may be ignored and
 > does not promise clearing, preserved old bytes or deallocation.
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-ID3D12VideoProcessCommandList-discard-rules:0 -->
@@ -3570,7 +3556,7 @@ Indicates that the current contents of a resource can be discarded.  The current
 >
 > `pResource` identifies the resource. Optional `pRegion` selects the
 > rectangle/subresource range; null selects the whole resource. The
-> [discard-region contract](#d3d12-discard-region) defines counted arrays,
+> [discard region contract](#d3d12-discard-region) defines counted arrays,
 > subresource bounds and buffer/2D rectangular restrictions.
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-ID3D12VideoProcessCommandList-discard-parameters:0 -->
@@ -3608,14 +3594,14 @@ void DiscardResource(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> This is the same discard hint and undefined-content/initialization
+> This is the same discard hint and undefined content/initialization
 > contract as [ordinary discard](#discardresource), on the matching video
-> command-list type. The graphics entry's DIRECT/COMPUTE resource-flag/state
+> command list type. The graphics entry's DIRECT/COMPUTE resource flag/state
 > cases are not additional video state requirements. The resource must remain
 > compatible with the video queue's [access/layout contract](synchronization.md#queue-compatibility),
-> with protected-session, residency and execution lifetime preserved.
+> with protected session, residency and execution lifetime preserved.
 > [Predication policy](counters-queries-and-predication.md#predication-operation-matrix)
-> classifies video discard as unpredicated; a discard hint may be ignored and
+> classifies video discard as unpredicated. A discard hint may be ignored and
 > does not promise clearing, preserved old bytes or deallocation.
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-ID3D12VideoEncodeCommandList-discard-rules:0 -->
@@ -3629,7 +3615,7 @@ void DiscardResource(
 >
 > `pResource` identifies the resource. Optional `pRegion` selects the
 > rectangle/subresource range; null selects the whole resource. The
-> [discard-region contract](#d3d12-discard-region) defines counted arrays,
+> [discard region contract](#d3d12-discard-region) defines counted arrays,
 > subresource bounds and buffer/2D rectangular restrictions.
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-ID3D12VideoEncodeCommandList-discard-parameters:0 -->
@@ -3702,7 +3688,7 @@ resource later requires less look-ahead for the driver to know what it can do.<!
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> A full-resource/subresource discard can establish the initialization required for reused render-target/depth-stencil storage under the [canonical aliasing initialization rules](synchronization.md#legacy-aliasing); it still does not establish a particular pixel value. Rectangular discard does not promise initialization of untouched regions. [Optimized clear values](resources.md#optimized-clear-value) are creation-time optimization information, not automatically executed clears.
+> A full-resource/subresource discard can establish the initialization required for reused render target/depth-stencil storage under the [canonical aliasing initialization rules](synchronization.md#legacy-aliasing). It still does not establish a particular pixel value. Rectangular discard does not promise initialization of untouched regions. [Optimized clear values](resources.md#optimized-clear-value) are creation time optimization information, not automatically executed clears.
 
 <!-- d3d12-review-alert:end:resource-operations:discard-initialize:0 -->
 
@@ -3711,7 +3697,7 @@ resource later requires less look-ahead for the driver to know what it can do.<!
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Feedback maps have the separately specified [clear/discard initialization interpretation](#feedback-transcoding). Ordinary discard does not change a resource's allocation lifetime, tile mappings or descriptor association, and it is not the render-pass `NO_ACCESS` declaration.
+> Feedback maps have the separately specified [clear/discard initialization interpretation](#feedback-transcoding). Ordinary discard does not change a resource's allocation lifetime, tile mappings or descriptor association, and it is not the render pass `NO_ACCESS` declaration.
 
 <!-- d3d12-review-alert:end:resource-operations:discard-initialize:1 -->
 
@@ -4079,7 +4065,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_WRITEBUFFERIMMEDIATE_0032 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Driver unrestricted-pitch reporting uses `D3D12DDI_OPTIONS_DATA_0091` with `D3D12DDICAPS_TYPE_OPTIONS_0091`, available starting at `e_DDI_12_8_0091`. Cross-dimension texture-copy support is required for drivers reporting that DDI version or greater. Ordinary regional resolve/decompression uses the programmable-sample-position tier contract; feedback encode/decode retains the sampler-feedback tier and its opaque-format/transcode contract.
+> Driver unrestricted-pitch reporting uses `D3D12DDI_OPTIONS_DATA_0091` with `D3D12DDICAPS_TYPE_OPTIONS_0091`, available starting at `e_DDI_12_8_0091`. Cross-dimension texture copy support is required for drivers reporting that DDI version or greater. Ordinary regional resolve/decompression uses the programmable sample position tier contract; feedback encode/decode retains the sampler feedback tier and its opaque format/transcode contract.
 
 <!-- d3d12-review-alert:end:resource-operations:hardware-responsibilities:2 -->
 
@@ -4088,6 +4074,6 @@ typedef VOID ( APIENTRY* PFND3D12DDI_WRITEBUFFERIMMEDIATE_0032 )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Opaque acceleration-structure cloning, compaction, serialization and deserialization use [CopyRaytracingAccelerationStructure](acceleration-structures.md#copyraytracingaccelerationstructure), not the ordinary copy-operation definitions in this chapter.
+> Opaque acceleration structure cloning, compaction, serialization and deserialization use [CopyRaytracingAccelerationStructure](acceleration-structures.md#copyraytracingaccelerationstructure), not the ordinary copy operation definitions in this chapter.
 
 <!-- d3d12-review-alert:end:resource-operations:N-specialized-as-copy-owner:0 -->
