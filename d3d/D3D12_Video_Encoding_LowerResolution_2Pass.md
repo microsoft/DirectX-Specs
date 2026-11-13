@@ -495,7 +495,7 @@ Please note:
 3. [Frame 1] Once `RFn` is ready, the app is notified that that frame is completed (including slice/tile data + frame stats).
     - Note that [D3D12_Video_Encoding_SubregionNotification](D3D12_Video_Encoding_SubregionNotification.md) can be used to get slices/tiles earlier in the `CPU Consumer` timeline.
 4. [Future frames] Once the next input frame is available, same process as for `Frame 1` explained above happens. The app will be able to track a parallel DPB array of textures / texture array of downsampled reconstructed pictured that mirrors the full resolution DPB to pass to the subsequent `EFn` calls. The downscaled DPB textures are tracked/evicted along their full resolution DPB texture counterpart.
-    - `Input Ready N` is assumed to have no dependencies with previous encode outputs (e.g stats) in this diagram, with the frames flowing in from another pipeline upstream. Any additional delays in `Input Ready N` would also delay the begining of the `VPIn` command (and the subsequent delay of the tasks depending on it).
+    - `Input Ready N` is assumed to have no dependencies with previous encode outputs (e.g stats) in this diagram, with the frames flowing in from another pipeline upstream. Any additional delays in `Input Ready N` would also delay the beginning of the `VPIn` command (and the subsequent delay of the tasks depending on it).
 
 ![VPBlit VPblitEncodeTimeline](./images/D3D12_Video_Encoding_LowerResolution_2Pass/VPblitEncodeTimeline.png)
 
@@ -570,7 +570,7 @@ Please note:
     - Note that [D3D12_Video_Encoding_SubregionNotification](D3D12_Video_Encoding_SubregionNotification.md) can be used to get slices/tiles earlier in the `CPU Consumer` timeline.
 5. [Future frames] Once the next input frame is available, same process as for `Frame 1` explained above happens, but there is an additional dependency to `EFn`, the downscaled reference picture from the previous frame (if used as reference and placed in the full resolution DPB). As a result, there's an additional waiting dependency on `EFn` with `VPR n-1`. The app will be able to track a parallel DPB array of textures / texture array of downsampled reconstructed pictured that mirrors the full resolution DPB to pass to the subsequent `EFn` calls. The downscaled DPB textures are tracked/evicted along their full resolution DPB texture counterpart.
     - Please note that `VPR2` takes longer to execute than `VPR1` in the diagram to show how such delays would add latency between `EFn` executions.
-    - Similarly, `Input Ready N` is assumed to have no dependencies with previous encode outputs (e.g stats) in this diagram, with the frames flowing in from another pipeline upstream. Any additional delays in `Input Ready N` would also delay the begining of the `VPIn` command (and the subsequent delay of the tasks depending on it).
+    - Similarly, `Input Ready N` is assumed to have no dependencies with previous encode outputs (e.g stats) in this diagram, with the frames flowing in from another pipeline upstream. Any additional delays in `Input Ready N` would also delay the beginning of the `VPIn` command (and the subsequent delay of the tasks depending on it).
 
 ![VPBlit VPblitEncodeTimeline_external](./images/D3D12_Video_Encoding_LowerResolution_2Pass/VPblitEncodeTimeline_external.png)
 
@@ -596,6 +596,6 @@ Please note:
     - For future frames, the app must externally downscale the full resolution (2nd pass) output reconstructed picture to provide the lower resolution DPB.
 6. [Future frames] Once the next input frame is available, same process as for `Frame 1` explained above happens, but there is an additional dependency to `EFn`, the downscaled reference picture from the previous frame (if used as reference and placed in the full resolution DPB). As a result, there's an additional waiting dependency on `EFn` with `VPR n-1`. The app will be able to track a parallel DPB array of textures / texture array of downsampled reconstructed pictured that mirrors the full resolution DPB to pass to the subsequent `EFn` calls. The downscaled DPB textures are tracked/evicted along their full resolution DPB texture counterpart.
     - Please note that `VPR2` takes longer to execute than `VPR1` in the diagram to show how such delays would add latency between `EFn` executions.
-    - Similarly, `Input Ready N` is assumed to have no dependencies with previous encode outputs (e.g stats) in this diagram, with the frames flowing in from another pipeline upstream. Any additional delays in `Input Ready N` would also delay the begining of the `VPIn` command (and the subsequent delay of the tasks depending on it).
+    - Similarly, `Input Ready N` is assumed to have no dependencies with previous encode outputs (e.g stats) in this diagram, with the frames flowing in from another pipeline upstream. Any additional delays in `Input Ready N` would also delay the beginning of the `VPIn` command (and the subsequent delay of the tasks depending on it).
 
 ![VPBlit VPblitEncodeTimeline_external](./images/D3D12_Video_Encoding_LowerResolution_2Pass/VPblitEncodeTimeline_external_skipping.png)
