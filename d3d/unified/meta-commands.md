@@ -15,42 +15,21 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:meta-command:P-overview:0 -->A meta command is a Direct3D 12 object representing an algorithm that is accelerated by independent hardware vendors (IHVs). It's an opaque reference to a command generator that is implemented by the driver.<!-- d3d12-review-inline:end:meta-command:P-overview:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:meta-command:P-overview:0:modified:migration-94c042c41c55986c-0 -->A meta command is a Direct3D 12 object representing an algorithm that is accelerated by independent hardware vendors (IHVs). It's an opaque reference to a command generator that is implemented by the driver.<!-- d3d12-review-inline:end:meta-command:P-overview:0:modified:migration-94c042c41c55986c-0 --></ins>
 
 A meta command can encapsulate a set of pipeline state objects (PSOs), bindings, intermediate resource states, and Draw/Dispatch calls. You can think of the signature of a meta command as being similar to a C-style function, with multiple in/out parameters, and no return value.
 
-<!-- d3d12-review-alert:begin:meta-command:N-availability:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-availability:0:authored:migration-1a2f07bbba7e741f-0 -->`ID3D12MetaCommand` is a pageable device object representing an instance of an enumerated algorithm.<!-- d3d12-review-inline:end:meta-command:N-availability:0:authored:migration-1a2f07bbba7e741f-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `ID3D12Device5` declares meta command enumeration, parameter enumeration and creation. `ID3D12MetaCommand` derives from `ID3D12Pageable`, then `ID3D12DeviceChild`, `ID3D12Object` and `IUnknown`. It declares `GetRequiredParameterResourceSize`. `ID3D12GraphicsCommandList4` declares initialization and execution. Inherited methods retain their declaring identities.
+<ins><!-- d3d12-review-inline:begin:meta-command:N-availability:1:authored:migration-7fe2fbe580b17e9b-0 -->An enumerated `Id` identifies an available algorithm, not a feature level guarantee or a portable algorithm implementation. The algorithm's definition supplies the meanings of its parameters. Generic meta command reflection does not standardize an algorithm catalog. The optional algorithm-specific [meta command capability query](devices-and-capabilities.md#d3d12_feature_data_query_meta_command) has its own input/output payload contract.<!-- d3d12-review-inline:end:meta-command:N-availability:1:authored:migration-7fe2fbe580b17e9b-0 --></ins>
 
-<!-- d3d12-review-alert:end:meta-command:N-availability:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:N-availability:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> An enumerated `Id` identifies an available algorithm, not a feature level guarantee or a portable algorithm implementation. The algorithm's definition supplies the meanings of its parameters. Generic meta command reflection does not standardize an algorithm catalog. The optional algorithm-specific [meta command capability query](devices-and-capabilities.md#d3d12_feature_data_query_meta_command) has its own input/output payload contract.
-
-<!-- d3d12-review-alert:end:meta-command:N-availability:1 -->
-
-<ins><!-- d3d12-review-inline:begin:meta-command:P-approved:0 -->The runtime validates the meta-command GUID against an approved list. This check can only be bypassed in developer mode. Outside developer mode, only predefined meta-commands are allowed.<!-- d3d12-review-inline:end:meta-command:P-approved:0 --></ins>
+The runtime <ins><!-- d3d12-review-inline:begin:meta-command:P-approved:0:modified:source-403f24642ea83b8b-0-0 -->validates<!-- d3d12-review-inline:end:meta-command:P-approved:0:modified:source-403f24642ea83b8b-0-0 --></ins> the meta-command <ins><!-- d3d12-review-inline:begin:meta-command:P-approved:0:modified:source-403f24642ea83b8b-0-1 -->GUID against<!-- d3d12-review-inline:end:meta-command:P-approved:0:modified:source-403f24642ea83b8b-0-1 --></ins> an approved list. This check can only be bypassed in developer mode. <ins><!-- d3d12-review-inline:begin:meta-command:P-approved:0:modified:source-403f24642ea83b8b-0-2 -->Outside developer mode,<!-- d3d12-review-inline:end:meta-command:P-approved:0:modified:source-403f24642ea83b8b-0-2 --></ins> only predefined meta-commands are allowed.
 
 <a id="parameter-layout"></a>
 
 ## Reflection and parameter layout
 
-<!-- d3d12-review-alert:begin:meta-command:N-stages:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Creation parameters describe the instance created on the CPU. Initialization and execution parameters are supplied to their respective recorded operations. Reflection is selected separately for each stage. `pTotalStructureSizeInBytes` describes the parameter value block, not the array of parameter descriptors and not the size of a referenced GPU resource.
-
-<!-- d3d12-review-alert:end:meta-command:N-stages:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-stages:0:authored:migration-2047789cb0e00ba1-0 -->Creation parameters describe the instance created on the CPU. Initialization and execution parameters are supplied to their respective recorded operations. Reflection is selected separately for each stage. `pTotalStructureSizeInBytes` describes the parameter value block, not the array of parameter descriptors and not the size of a referenced GPU resource.<!-- d3d12-review-inline:end:meta-command:N-stages:0:authored:migration-2047789cb0e00ba1-0 --></ins>
 
 <a id="d3d12_meta_command_parameter_stage"></a>
 
@@ -65,7 +44,7 @@ typedef enum D3D12_META_COMMAND_PARAMETER_STAGE
 } D3D12_META_COMMAND_PARAMETER_STAGE;
 ```
 
-<!-- d3d12-review-alert:begin:meta-command:P-stage:0 -->
+<!-- d3d12-review-alert:begin:meta-command:P-stage:0:modified:migration-e67c95920cfbd62a-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -76,7 +55,7 @@ typedef enum D3D12_META_COMMAND_PARAMETER_STAGE
 > | `D3D12_META_COMMAND_PARAMETER_STAGE_INITIALIZATION` | Specifies that the parameter is used at the meta command initialization stage. |
 > | `D3D12_META_COMMAND_PARAMETER_STAGE_EXECUTION` | Specifies that the parameter is used at the meta command execution stage. |
 
-<!-- d3d12-review-alert:end:meta-command:P-stage:0 -->
+<!-- d3d12-review-alert:end:meta-command:P-stage:0:modified:migration-e67c95920cfbd62a-0 -->
 
 <a id="d3d12_meta_command_parameter_type"></a>
 
@@ -93,7 +72,7 @@ typedef enum D3D12_META_COMMAND_PARAMETER_TYPE
 } D3D12_META_COMMAND_PARAMETER_TYPE;
 ```
 
-<!-- d3d12-review-alert:begin:meta-command:P-type:0 -->
+<!-- d3d12-review-alert:begin:meta-command:P-type:0:modified:migration-35da7a626ec94056-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -106,7 +85,7 @@ typedef enum D3D12_META_COMMAND_PARAMETER_TYPE
 > | `D3D12_META_COMMAND_PARAMETER_TYPE_CPU_DESCRIPTOR_HANDLE_HEAP_TYPE_CBV_SRV_UAV` | Specifies that the parameter is a CPU descriptor handle to a heap containing either constant buffer views, shader resource views, or unordered access views. |
 > | `D3D12_META_COMMAND_PARAMETER_TYPE_GPU_DESCRIPTOR_HANDLE_HEAP_TYPE_CBV_SRV_UAV` | Specifies that the parameter is a GPU descriptor handle to a heap containing either constant buffer views, shader resource views, or unordered access views. |
 
-<!-- d3d12-review-alert:end:meta-command:P-type:0 -->
+<!-- d3d12-review-alert:end:meta-command:P-type:0:modified:migration-35da7a626ec94056-0 -->
 
 <a id="d3d12_meta_command_parameter_flags"></a>
 
@@ -122,7 +101,7 @@ typedef enum D3D12_META_COMMAND_PARAMETER_FLAGS
 
 Defines constants that specify the flags for a parameter to a meta command. Values can be bitwise OR'd together.
 
-<!-- d3d12-review-alert:begin:meta-command:P-flags:0 -->
+<!-- d3d12-review-alert:begin:meta-command:P-flags:0:modified:migration-3612eaf562e17ee0-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -132,7 +111,7 @@ Defines constants that specify the flags for a parameter to a meta command. Valu
 > | `D3D12_META_COMMAND_PARAMETER_FLAG_INPUT` | Specifies that the parameter is an input resource. |
 > | `D3D12_META_COMMAND_PARAMETER_FLAG_OUTPUT` | Specifies that the parameter is an output resource. |
 
-<!-- d3d12-review-alert:end:meta-command:P-flags:0 -->
+<!-- d3d12-review-alert:end:meta-command:P-flags:0:modified:migration-3612eaf562e17ee0-0 -->
 
 <a id="d3d12_meta_command_parameter_desc"></a>
 
@@ -171,23 +150,9 @@ The 4-byte aligned offset for this parameter, within the structure containing th
 
 The driver reports the list of parameters and their type and the runtime calculates a 4-byte aligned offset in a structure that the user developer passes these parameters in.
 
-<!-- d3d12-review-alert:begin:meta-command:N-layout-use:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-layout-use:0:authored:migration-2d0b0dad2486e889-0 -->The application must supply each stage's values at the returned `StructureOffset` positions in a block of the returned total byte size. The 4-byte offset alignment does not imply 8-byte alignment of a `UINT64`, GPU virtual address or descriptor handle parameter. A native C/C++ structure's padding is not a replacement for the reflected layout.<!-- d3d12-review-inline:end:meta-command:N-layout-use:0:authored:migration-2d0b0dad2486e889-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The application must supply each stage's values at the returned `StructureOffset` positions in a block of the returned total byte size. The 4-byte offset alignment does not imply 8-byte alignment of a `UINT64`, GPU virtual address or descriptor handle parameter. A native C/C++ structure's padding is not a replacement for the reflected layout.
-
-<!-- d3d12-review-alert:end:meta-command:N-layout-use:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:N-layout-use:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> A parameter's input/output flags describe resource usage. They do not make the stage's parameter block optional. A null parameter block pointer is paired with a zero byte size. A stage with parameters requires its parameter value block.
-
-<!-- d3d12-review-alert:end:meta-command:N-layout-use:1 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-layout-use:1:authored:migration-047a156f3cc89626-0 -->A parameter's input/output flags describe resource usage. They do not make the stage's parameter block optional. A null parameter block pointer is paired with a zero byte size. A stage with parameters requires its parameter value block.<!-- d3d12-review-inline:end:meta-command:N-layout-use:1:authored:migration-047a156f3cc89626-0 --></ins>
 
 <a id="d3d12_meta_command_desc"></a>
 
@@ -211,23 +176,9 @@ A [GUID](https://learn.microsoft.com/en-us/windows/win32/api/guiddef/ns-guiddef-
 
 The meta command name.
 
-<!-- d3d12-review-alert:begin:meta-command:N-desc-state:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-desc-state:0:authored:migration-a338b325ade16645-0 -->`InitializationDirtyState` and `ExecutionDirtyState` use [`D3D12_GRAPHICS_STATES`](#d3d12_graphics_states). Their operative state effects and subsequent restoration are defined in [command list state: meta commands](command-list-state.md#meta-commands), including its unresolved all-dirty-bits/`ClearState` qualification. This reference does not assert that equivalence.<!-- d3d12-review-inline:end:meta-command:N-desc-state:0:authored:migration-a338b325ade16645-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `InitializationDirtyState` and `ExecutionDirtyState` use [`D3D12_GRAPHICS_STATES`](#d3d12_graphics_states). Their operative state effects and subsequent restoration are defined in [command list state: meta commands](command-list-state.md#meta-commands), including its unresolved all-dirty-bits/`ClearState` qualification. This reference does not assert that equivalence.
-
-<!-- d3d12-review-alert:end:meta-command:N-desc-state:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:N-reflection-storage:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The application owns the descriptor array storage supplied to enumeration. Both command description `Name` strings and parameter description `Name` strings are borrowed device lifetime storage. The application must not free these strings. Their lifetime is distinct from that of the caller's descriptor arrays.
-
-<!-- d3d12-review-alert:end:meta-command:N-reflection-storage:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-reflection-storage:0:authored:migration-4c40407ed176f9ee-0 -->The application owns the descriptor array storage supplied to enumeration. Both command description `Name` strings and parameter description `Name` strings are borrowed device lifetime storage. The application must not free these strings. Their lifetime is distinct from that of the caller's descriptor arrays.<!-- d3d12-review-inline:end:meta-command:N-reflection-storage:0:authored:migration-4c40407ed176f9ee-0 --></ins>
 
 <a id="d3d12_graphics_states"></a>
 
@@ -260,7 +211,7 @@ typedef enum D3D12_GRAPHICS_STATES
 
 Defines flags that specify states related to a graphics command list. Values can be bitwise OR'd together.
 
-<!-- d3d12-review-alert:begin:meta-command:P-states:0 -->
+<!-- d3d12-review-alert:begin:meta-command:P-states:0:modified:migration-8ed4213f47f1e273-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -286,16 +237,9 @@ Defines flags that specify states related to a graphics command list. Values can
 > | `D3D12_GRAPHICS_STATE_SAMPLE_POSITIONS` | Specifies the state of the sample positions. |
 > | `D3D12_GRAPHICS_STATE_VIEW_INSTANCE_MASK` | Specifies the state of the view instances mask. |
 
-<!-- d3d12-review-alert:end:meta-command:P-states:0 -->
+<!-- d3d12-review-alert:end:meta-command:P-states:0:modified:migration-8ed4213f47f1e273-0 -->
 
-<!-- d3d12-review-alert:begin:meta-command:N-state-route:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The affected families are defined by [vertex/index and stream output buffer bindings](command-list-state.md#buffer-bindings), [primitive topology, viewports, scissor rectangles and blend factor](command-list-state.md#base-graphics), [descriptor heaps and root signatures](command-list-state.md#resource-binding), [predication](command-list-state.md#queries), [render targets](command-list-state.md#output-bindings), [stencil reference](command-list-state.md#stencil-references), [depth bounds](command-list-state.md#depth-bounds), [pipeline state](command-list-state.md#pipeline-selection), [sample positions](command-list-state.md#sample-positions) and [view instance mask](command-list-state.md#view-mask). This flag reference does not redefine their initial values.
-
-<!-- d3d12-review-alert:end:meta-command:N-state-route:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-state-route:0:authored:migration-10d4e2ec697cf9d6-0 -->The affected families are defined by [vertex/index and stream output buffer bindings](command-list-state.md#buffer-bindings), [primitive topology, viewports, scissor rectangles and blend factor](command-list-state.md#base-graphics), [descriptor heaps and root signatures](command-list-state.md#resource-binding), [predication](command-list-state.md#queries), [render targets](command-list-state.md#output-bindings), [stencil reference](command-list-state.md#stencil-references), [depth bounds](command-list-state.md#depth-bounds), [pipeline state](command-list-state.md#pipeline-selection), [sample positions](command-list-state.md#sample-positions) and [view instance mask](command-list-state.md#view-mask).<!-- d3d12-review-inline:end:meta-command:N-state-route:0:authored:migration-10d4e2ec697cf9d6-0 --></ins>
 
 <a id="discovery-and-creation"></a>
 
@@ -318,23 +262,9 @@ HRESULT EnumerateMetaCommands(
 
 Queries reflection metadata about available meta commands.
 
-<!-- d3d12-review-alert:begin:meta-command:N-enumerate-capacity:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-enumerate-capacity:0:authored:migration-f48953a59f259aa9-0 -->For a valid query, on entry `*pNumMetaCommands` is the capacity of the caller's descriptor array. On return, it is the total number of available commands, not the number copied. With a null `pDescs`, the input capacity is ignored and the method returns the full count and `S_OK` without writing descriptors.<!-- d3d12-review-inline:end:meta-command:N-enumerate-capacity:0:authored:migration-f48953a59f259aa9-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For a valid query, on entry `*pNumMetaCommands` is the capacity of the caller's descriptor array. On return, it is the total number of available commands, not the number copied. With a null `pDescs`, the input capacity is ignored and the method returns the full count and `S_OK` without writing descriptors.
-
-<!-- d3d12-review-alert:end:meta-command:N-enumerate-capacity:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:N-enumerate-capacity:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> With a non-null `pDescs`, the method copies the first `min(capacity, total count)` descriptions. An insufficient capacity returns `DXGI_ERROR_MORE_DATA` after writing that prefix and the full count. A capacity at least as large as the total returns `S_OK`. An oversized capacity does not cause extra descriptors to be read or written. If no commands are available, the returned count is zero, no descriptors are written, and the method returns `S_OK`.
-
-<!-- d3d12-review-alert:end:meta-command:N-enumerate-capacity:1 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-enumerate-capacity:1:authored:migration-feae02c16846126c-0 -->With a non-null `pDescs`, the method copies the first `min(capacity, total count)` descriptions. An insufficient capacity returns `DXGI_ERROR_MORE_DATA` after writing that prefix and the full count. A capacity at least as large as the total returns `S_OK`. An oversized capacity does not cause extra descriptors to be read or written. If no commands are available, the returned count is zero, no descriptors are written, and the method returns `S_OK`.<!-- d3d12-review-inline:end:meta-command:N-enumerate-capacity:1:authored:migration-feae02c16846126c-0 --></ins>
 
 #### Parameters
 
@@ -370,32 +300,11 @@ HRESULT EnumerateMetaCommandParameters(
 
 Queries reflection metadata about the parameters of the specified meta command.
 
-<!-- d3d12-review-alert:begin:meta-command:N-parameter-capacity:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-parameter-capacity:0:authored:migration-b48e3b87186e2ef2-0 -->For a valid query, on entry `*pParameterCount` is the capacity of the caller's descriptor array. On return, it is the total number of parameters for `CommandId` and `Stage`, not the number copied. With a null `pParameterDescs`, the input capacity is ignored and the method returns the full count and `S_OK` without writing descriptors.<!-- d3d12-review-inline:end:meta-command:N-parameter-capacity:0:authored:migration-b48e3b87186e2ef2-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For a valid query, on entry `*pParameterCount` is the capacity of the caller's descriptor array. On return, it is the total number of parameters for `CommandId` and `Stage`, not the number copied. With a null `pParameterDescs`, the input capacity is ignored and the method returns the full count and `S_OK` without writing descriptors.
+<ins><!-- d3d12-review-inline:begin:meta-command:N-parameter-capacity:1:authored:migration-9105ab84233856b4-0 -->With a non-null `pParameterDescs`, the method copies the first `min(capacity, total count)` descriptions. An insufficient capacity returns `DXGI_ERROR_MORE_DATA` after writing that prefix and the full count. A capacity at least as large as the total returns `S_OK`. An oversized capacity does not cause extra descriptors to be read or written. For a valid stage with no parameters, the returned count is zero, no descriptors are written, and the method returns `S_OK`.<!-- d3d12-review-inline:end:meta-command:N-parameter-capacity:1:authored:migration-9105ab84233856b4-0 --></ins>
 
-<!-- d3d12-review-alert:end:meta-command:N-parameter-capacity:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:N-parameter-capacity:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> With a non-null `pParameterDescs`, the method copies the first `min(capacity, total count)` descriptions. An insufficient capacity returns `DXGI_ERROR_MORE_DATA` after writing that prefix and the full count. A capacity at least as large as the total returns `S_OK`. An oversized capacity does not cause extra descriptors to be read or written. For a valid stage with no parameters, the returned count is zero, no descriptors are written, and the method returns `S_OK`.
-
-<!-- d3d12-review-alert:end:meta-command:N-parameter-capacity:1 -->
-
-<!-- d3d12-review-alert:begin:meta-command:N-parameter-capacity:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> When supplied, `pTotalStructureSizeInBytes` receives the complete stage's parameter value block size, including on a count query or `DXGI_ERROR_MORE_DATA` result. It is not shortened to match a descriptor prefix. A valid stage with no parameters returns zero through this output.
-
-<!-- d3d12-review-alert:end:meta-command:N-parameter-capacity:2 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-parameter-capacity:2:authored:migration-c0348b45071c4e74-0 -->When supplied, `pTotalStructureSizeInBytes` receives the complete stage's parameter value block size, including on a count query or `DXGI_ERROR_MORE_DATA` result. It is not shortened to match a descriptor prefix. A valid stage with no parameters returns zero through this output.<!-- d3d12-review-inline:end:meta-command:N-parameter-capacity:2:authored:migration-c0348b45071c4e74-0 --></ins>
 
 #### Parameters
 
@@ -474,7 +383,7 @@ A pointer to a memory block that receives a pointer to the meta command. This is
 
 If this method succeeds, it returns **S\_OK**. Otherwise, it returns an **HRESULT** error code.
 
-<!-- d3d12-review-alert:begin:meta-command:P-create-return:1 -->
+<!-- d3d12-review-alert:begin:meta-command:P-create-return:1:modified:migration-249b42046af02174-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -483,58 +392,23 @@ If this method succeeds, it returns **S\_OK**. Otherwise, it returns an **HRESUL
 > | --- | --- |
 > | `DXGI_ERROR_UNSUPPORTED` | The requested algorithm is unsupported, or a creation parameter combination for a known algorithm is unsupported |
 
-<!-- d3d12-review-alert:end:meta-command:P-create-return:1 -->
+<!-- d3d12-review-alert:end:meta-command:P-create-return:1:modified:migration-249b42046af02174-0 -->
 
 <a id="parameter-resources"></a>
 
 ## Parameter resources and recorded use
 
-<!-- d3d12-review-alert:begin:meta-command:N-recording-admission:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-recording-admission:0:authored:migration-71cc734ccaa054e8-0 -->Initialization and execution are supported on direct and compute command lists. The application must not record either operation in a bundle or on a copy command list.<!-- d3d12-review-inline:end:meta-command:N-recording-admission:0:authored:migration-71cc734ccaa054e8-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Initialization and execution are supported on direct and compute command lists. The application must not record either operation in a bundle or on a copy command list. This recording admission does not waive the selected algorithm's capability or resource requirements.
+<ins><!-- d3d12-review-inline:begin:meta-command:P-lifetime:0:modified:source-12f2d884abbbbdd7-0-0 -->Creation returns a caller-owned COM interface reference. The application must keep the meta command object alive for its recorded and in-flight GPU uses under the [execution lifetime contract](execution.md#lifetime)<!-- d3d12-review-inline:end:meta-command:P-lifetime:0:modified:source-12f2d884abbbbdd7-0-0 --></ins>.
 
-<!-- d3d12-review-alert:end:meta-command:N-recording-admission:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-cpu-parameter-lifetime:0:authored:migration-3e23ba332aecc67d-0 -->The application owns the CPU parameter value blocks passed to creation, initialization and execution. It must keep each block's bytes valid through the call; after the call returns, that CPU storage may be reused or freed. GPU resources and descriptor storage identified by values in the block have their separate GPU use lifetime; releasing the CPU block does not release or shorten those obligations.<!-- d3d12-review-inline:end:meta-command:N-cpu-parameter-lifetime:0:authored:migration-3e23ba332aecc67d-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:meta-command:P-lifetime:0 -->Creation returns a caller-owned COM interface reference. The application must keep the meta command object alive for all of its recorded GPU uses under the [execution lifetime contract](execution.md#lifetime), including recorded uses not yet submitted. The absence of a currently executing command list does not by itself make release safe. Command list Reset is not proof that earlier GPU uses have completed.<!-- d3d12-review-inline:end:meta-command:P-lifetime:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:meta-command:N-resource-lifetime:0:authored:migration-79633e840fa93e6a-0 -->Parameter resource size and parameter block size are independent: the resource size query below is indexed by stage and parameter, not by byte offset. The application must keep resources and descriptor storage supplied to GPU operations valid for their use under [execution lifetime](execution.md#lifetime), [resource residency](resources.md#residency) and [binding lifetime](binding.md#table-indexing-and-descriptor-lifetime). The algorithm's initialization contract identifies any required persistent cache resource. An execution's temporary storage and input/output storage are resource parameters, not allocations implicitly made by the parameter value block.<!-- d3d12-review-inline:end:meta-command:N-resource-lifetime:0:authored:migration-79633e840fa93e6a-0 --></ins>
 
-<!-- d3d12-review-alert:begin:meta-command:N-cpu-parameter-lifetime:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-resource-lifetime:1:authored:migration-274eb17b37b42e6d-0 -->The expected state is the reflected `RequiredResourceState` and the algorithm's parameter definition. [Resource state transitions and UAV ordering](synchronization.md) retain their canonical contract; passing a resource parameter does not perform an application-required transition.<!-- d3d12-review-inline:end:meta-command:N-resource-lifetime:1:authored:migration-274eb17b37b42e6d-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The application owns the CPU parameter value blocks passed to creation, initialization and execution. It must keep each block's bytes valid through the call; after the call returns, that CPU storage may be reused or freed. GPU resources and descriptor storage identified by values in the block have their separate GPU use lifetime; releasing the CPU block does not release or shorten those obligations.
-
-<!-- d3d12-review-alert:end:meta-command:N-cpu-parameter-lifetime:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:N-resource-lifetime:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Parameter resource size and parameter block size are independent: the resource size query below is indexed by stage and parameter, not by byte offset. The application must keep resources and descriptor storage supplied to GPU operations valid for their use under [execution lifetime](execution.md#lifetime), [resource residency](resources.md#residency) and [binding lifetime](binding.md#table-indexing-and-descriptor-lifetime). The algorithm's initialization contract identifies any required persistent cache resource. An execution's temporary storage and input/output storage are resource parameters, not allocations implicitly made by the parameter value block.
-
-<!-- d3d12-review-alert:end:meta-command:N-resource-lifetime:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:N-resource-lifetime:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The expected state is the reflected `RequiredResourceState` and the algorithm's parameter definition. [Resource state transitions and UAV ordering](synchronization.md) retain their canonical contract; passing a resource parameter does not perform an application-required transition.
-
-<!-- d3d12-review-alert:end:meta-command:N-resource-lifetime:1 -->
-
-<!-- d3d12-review-alert:begin:meta-command:N-resource-roles:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Persistent-cache and temporary/scratch roles belong to the selected algorithm's parameter definition. The generic input/output flags do not distinguish those roles. Storage needed by later executions must remain valid for those uses. Repeated execution is permitted, but does not replace the required GPU initialization. Repeated initialization, persistent-storage replacement and scratch reuse follow the algorithm's definition and normal resource lifetime and ordering rules. The generic interface adds no extra reinitialization protocol. The generic interface does not supply an implicit allocation or a default resource binding when a parameter is omitted.
-
-<!-- d3d12-review-alert:end:meta-command:N-resource-roles:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-resource-roles:0:authored:migration-d2f7a71d96ffe4f1-0 -->Persistent-cache and temporary/scratch roles belong to the selected algorithm's parameter definition, rather than the generic input/output flags. Storage needed by later executions must remain valid for those uses. Repeated execution is permitted after the required GPU initialization. Repeated initialization, persistent-storage replacement and scratch reuse follow the algorithm's definition and the [resource lifetime](execution.md#lifetime) and [ordering rules](synchronization.md).<!-- d3d12-review-inline:end:meta-command:N-resource-roles:0:authored:migration-d2f7a71d96ffe4f1-0 --></ins>
 
 <a id="getrequiredparameterresourcesize"></a>
 
@@ -564,14 +438,7 @@ The zero-based index of the parameter within the stage.
 
 The number of bytes required for the specified runtime parameter resource.
 
-<!-- d3d12-review-alert:begin:meta-command:N-size-validity:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The application must supply a valid `Stage` and the enumerated ordinal of a resource parameter for this meta command instance. `ParameterIndex` uses the stage's zero-based parameter order, not a resource-only filtered order. The query's result is a byte requirement for that parameter resource. It is not a parameter count result, a resource state transition or an initialization operation. No zero sentinel, HRESULT or other result guarantee is specified outside that valid input domain.
-
-<!-- d3d12-review-alert:end:meta-command:N-size-validity:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-size-validity:0:authored:migration-29eb32f1262c1ab8-0 -->The application must supply a valid `Stage` and the enumerated ordinal of a resource parameter for this meta command instance. `ParameterIndex` uses the stage's zero-based parameter order, not a resource-only filtered order. No zero sentinel, HRESULT or other result guarantee is specified outside that valid input domain.<!-- d3d12-review-inline:end:meta-command:N-size-validity:0:authored:migration-29eb32f1262c1ab8-0 --></ins>
 
 <a id="initializemetacommand"></a>
 
@@ -589,7 +456,7 @@ void InitializeMetaCommand(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:meta-command:P-initialize-behavior:0 -->You must initialize a meta command at least once prior (on the GPU's timeline) to executing it. Initializing gives the implementation the chance to perform any work necessary to accelerate the invocation of the meta command. You must supply sufficient resource parameters declared by the algorithm, including a persistent cache resource when the algorithm requires one.<!-- d3d12-review-inline:end:meta-command:P-initialize-behavior:0 --></ins>
+You must initialize a meta command at least once prior (on the GPU's timeline) to executing it. Initializing gives the implementation the chance to perform any work necessary to accelerate the invocation of the meta command. You must supply <ins><!-- d3d12-review-inline:begin:meta-command:P-initialize-behavior:0:modified:source-0af90c87988d5b6a-0-0 -->sufficient resource parameters declared by the algorithm, including a persistent cache resource when the algorithm requires one<!-- d3d12-review-inline:end:meta-command:P-initialize-behavior:0:modified:source-0af90c87988d5b6a-0-0 --></ins>.
 
 #### Parameters
 
@@ -607,25 +474,11 @@ A [SIZE_T](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-dat
 
 #### Return values
 
-<!-- d3d12-review-alert:begin:meta-command:N-initialize-void:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This method returns no value. Recording failures follow the [command list error contract](execution.md#deferred-recording-errors).
-
-<!-- d3d12-review-alert:end:meta-command:N-initialize-void:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-initialize-void:0:authored:migration-d357e12d957134ba-0 -->This method returns no value. Recording failures follow the [command list error contract](execution.md#deferred-recording-errors).<!-- d3d12-review-inline:end:meta-command:N-initialize-void:0:authored:migration-d357e12d957134ba-0 --></ins>
 
 #### State and execution context
 
-<!-- d3d12-review-alert:begin:meta-command:N-initialize-context:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The initialization state contribution is [`InitializationDirtyState`](command-list-state.md#meta-commands). Initialization ordering is on the GPU timeline, not merely the order of CPU calls recording different lists. The [render pass operation admission table](output-merger.md#render-pass-operation-surface) forbids initialization inside an open render pass. Initialization ignores predication, as defined in the [predication matrix](counters-queries-and-predication.md#predication-operation-matrix).
-
-<!-- d3d12-review-alert:end:meta-command:N-initialize-context:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-initialize-context:0:authored:migration-935528a24abc5de0-0 -->The initialization state contribution is [`InitializationDirtyState`](command-list-state.md#meta-commands). Initialization ordering is on the GPU timeline, not merely the order of CPU calls recording different lists. The [render pass operation admission table](output-merger.md#render-pass-operation-surface) forbids initialization inside an open render pass. Initialization ignores predication, as defined in the [predication matrix](counters-queries-and-predication.md#predication-operation-matrix).<!-- d3d12-review-inline:end:meta-command:N-initialize-context:0:authored:migration-935528a24abc5de0-0 --></ins>
 
 <a id="executemetacommand"></a>
 
@@ -669,47 +522,19 @@ A [SIZE_T](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-dat
 
 #### Return values
 
-<!-- d3d12-review-alert:begin:meta-command:N-execute-void:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This method returns no value. Recording failures follow the [command list error contract](execution.md#deferred-recording-errors).
-
-<!-- d3d12-review-alert:end:meta-command:N-execute-void:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-execute-void:0:authored:migration-6683aed187f2e593-0 -->This method returns no value. Recording failures follow the [command list error contract](execution.md#deferred-recording-errors).<!-- d3d12-review-inline:end:meta-command:N-execute-void:0:authored:migration-6683aed187f2e593-0 --></ins>
 
 #### State and execution context
 
-<!-- d3d12-review-alert:begin:meta-command:N-execute-context:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The execution state contribution is [`ExecutionDirtyState`](command-list-state.md#meta-commands). The [render pass operation admission table](output-merger.md#render-pass-operation-surface) forbids execution inside an open render pass. The [predication matrix](counters-queries-and-predication.md#predication-operation-matrix) defines execution predication as algorithm-defined. A dirty state mask is not a predicate support declaration.
-
-<!-- d3d12-review-alert:end:meta-command:N-execute-context:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-execute-context:0:authored:migration-eb4130052a31e031-0 -->The execution state contribution is [`ExecutionDirtyState`](command-list-state.md#meta-commands). The [render pass operation admission table](output-merger.md#render-pass-operation-surface) forbids execution inside an open render pass. The [predication matrix](counters-queries-and-predication.md#predication-operation-matrix) defines execution predication as algorithm-defined. A dirty state mask is not a predicate support declaration.<!-- d3d12-review-inline:end:meta-command:N-execute-context:0:authored:migration-eb4130052a31e031-0 --></ins>
 
 <a id="driver-interface"></a>
 
 ## Published driver interface
 
-<!-- d3d12-review-alert:begin:meta-command:N-ddi-route:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-ddi-route:0:authored:migration-c16b82e08a76b71a-0 -->Private sizing reports CPU object storage. GetMetaCommandRequiredParameterInfo separately reports parameter resource memory requirements.<!-- d3d12-review-inline:end:meta-command:N-ddi-route:0:authored:migration-c16b82e08a76b71a-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Private sizing reports CPU object storage. GetMetaCommandRequiredParameterInfo separately reports parameter resource memory requirements.
-
-<!-- d3d12-review-alert:end:meta-command:N-ddi-route:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:N-ddi-route:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The driver parameter descriptor omits `StructureOffset`. The runtime derives API offsets from the ordered parameter types under [parameter layout](#d3d12_meta_command_parameter_desc).
-
-<!-- d3d12-review-alert:end:meta-command:N-ddi-route:1 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:N-ddi-route:1:authored:migration-2ff88c1417b29486-0 -->The driver parameter descriptor omits `StructureOffset`. The runtime derives API offsets from the ordered parameter types under [parameter layout](#d3d12_meta_command_parameter_desc).<!-- d3d12-review-inline:end:meta-command:N-ddi-route:1:authored:migration-2ff88c1417b29486-0 --></ins>
 
 ```cpp
 typedef enum D3D12DDI_META_COMMAND_PARAMETER_TYPE
@@ -802,235 +627,107 @@ The meta-command initialize call must be executed at least once prior to any exe
 
 ### Driver-owned command names
 
-<ins><!-- d3d12-review-inline:begin:meta-command:P-driver-string:0 -->`D3D12DDIARG_META_COMMAND_DESC::Name` is a pointer to a wide string that holds the name of the meta-command. The driver allocates and keeps this string for the lifetime of the device.<!-- d3d12-review-inline:end:meta-command:P-driver-string:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:meta-command:P-driver-string:0:modified:migration-a0145d61c9be2401-0 -->`D3D12DDIARG_META_COMMAND_DESC::Name` is a pointer to a wide string that holds the name of the meta-command. The driver allocates and keeps this string for the lifetime of the device.<!-- d3d12-review-inline:end:meta-command:P-driver-string:0:modified:migration-a0145d61c9be2401-0 --></ins>
 
 ### Parameter validation
 
-<ins><!-- d3d12-review-inline:begin:meta-command:P-ddi-debug:0 -->The debug layer validates parameter block sizes and supplied GPU virtual addresses and descriptor handles during creation, initialization and execution. These checks do not replace application resource state and synchronization responsibilities.<!-- d3d12-review-inline:end:meta-command:P-ddi-debug:0 --></ins>
+The debug layer validates <ins><!-- d3d12-review-inline:begin:meta-command:P-ddi-debug:0:modified:source-85d57f91e77ba643-0-0 -->parameter block sizes and supplied GPU virtual addresses and descriptor handles during creation, initialization and execution. These checks do not replace application resource state and synchronization responsibilities<!-- d3d12-review-inline:end:meta-command:P-ddi-debug:0:modified:source-85d57f91e77ba643-0-0 --></ins>.
 
 <a id="driver-meta-slots"></a>
 
 ### Current slot associations
 
-<!-- d3d12-review-alert:begin:meta-command:MC-current-slots:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-current-slots:0:authored:migration-350e7e1c1daeae7d-0 -->The six device entries are in `D3D12DDI_DEVICE_FUNCS_CORE_0119`. The two recording entries retain their `_0052` signatures in both `_0108` and `_0114` command list tables.<!-- d3d12-review-inline:end:meta-command:MC-current-slots:0:authored:migration-350e7e1c1daeae7d-0 --></ins>
+
+<!-- d3d12-review-alert:begin:meta-command:MC-current-slots:1:authored:migration-39098d727077f13c-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The six device entries are in `D3D12DDI_DEVICE_FUNCS_CORE_0119`. The two recording entries retain their `_0052` signatures in both `_0108` and `_0114` command list tables.
-
-<!-- d3d12-review-alert:end:meta-command:MC-current-slots:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:MC-current-slots:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> | Member | Signature | Contract |
+> | Member | Signature | API and driver contract |
 > | --- | --- | --- |
-> | `pfnEnumerateMetaCommands` | `PFND3D12DDI_ENUMERATE_META_COMMANDS_0052` | [Driver responsibility](#driver-enumerate-meta-commands) |
-> | `pfnEnumerateMetaCommandParameters` | `PFND3D12DDI_ENUMERATE_META_COMMAND_PARAMETERS_0052` | [Driver responsibility](#driver-enumerate-meta-parameters) |
-> | `pfnCalcPrivateMetaCommandSize` | `PFND3D12DDI_CALC_PRIVATE_META_COMMAND_SIZE_0052` | [Driver responsibility](#driver-meta-private-size) |
-> | `pfnCreateMetaCommand` | `PFND3D12DDI_CREATE_META_COMMAND_0052` | [Driver responsibility](#driver-create-meta-command) |
-> | `pfnDestroyMetaCommand` | `PFND3D12DDI_DESTROY_META_COMMAND_0052` | [Driver responsibility](#driver-destroy-meta-command) |
-> | `pfnGetMetaCommandRequiredParameterInfo` | `PFND3D12DDI_GET_META_COMMAND_REQUIRED_PARAMETER_INFO_0052` | [Driver responsibility](#driver-meta-resource-info) |
-> | `pfnInitializeMetaCommand` | `PFND3D12DDI_INITIALIZE_META_COMMAND_0052` | [Driver responsibility](#driver-initialize-meta-command) |
-> | `pfnExecuteMetaCommand` | `PFND3D12DDI_EXECUTE_META_COMMAND_0052` | [Driver responsibility](#driver-execute-meta-command) |
+> | `pfnEnumerateMetaCommands` | `PFND3D12DDI_ENUMERATE_META_COMMANDS_0052` | [EnumerateMetaCommands](#enumeratemetacommands); [driver enumeration protocol](#driver-enumerate-meta-commands) |
+> | `pfnEnumerateMetaCommandParameters` | `PFND3D12DDI_ENUMERATE_META_COMMAND_PARAMETERS_0052` | [EnumerateMetaCommandParameters](#enumeratemetacommandparameters); [driver enumeration protocol](#driver-enumerate-meta-parameters) |
+> | `pfnCalcPrivateMetaCommandSize` | `PFND3D12DDI_CALC_PRIVATE_META_COMMAND_SIZE_0052` | [Driver-private sizing](#driver-meta-private-size) |
+> | `pfnCreateMetaCommand` | `PFND3D12DDI_CREATE_META_COMMAND_0052` | [CreateMetaCommand](#createmetacommand); [driver construction](#driver-create-meta-command) |
+> | `pfnDestroyMetaCommand` | `PFND3D12DDI_DESTROY_META_COMMAND_0052` | [Driver destruction](#driver-destroy-meta-command) |
+> | `pfnGetMetaCommandRequiredParameterInfo` | `PFND3D12DDI_GET_META_COMMAND_REQUIRED_PARAMETER_INFO_0052` | [GetRequiredParameterResourceSize](#getrequiredparameterresourcesize); [driver parameter ordinal](#driver-meta-resource-info) |
+> | `pfnInitializeMetaCommand` | `PFND3D12DDI_INITIALIZE_META_COMMAND_0052` | [InitializeMetaCommand](#initializemetacommand); [retained parameter bytes](#driver-initialize-meta-command) |
+> | `pfnExecuteMetaCommand` | `PFND3D12DDI_EXECUTE_META_COMMAND_0052` | [ExecuteMetaCommand](#executemetacommand); [retained parameter bytes](#driver-execute-meta-command) |
 
-<!-- d3d12-review-alert:end:meta-command:MC-current-slots:1 -->
+<!-- d3d12-review-alert:end:meta-command:MC-current-slots:1:authored:migration-39098d727077f13c-0 -->
 
 <a id="driver-meta-storage"></a>
 
 ### Driver-private object storage
 
-<!-- d3d12-review-alert:begin:meta-command:MC-private-storage:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The runtime allocates the reported private bytes and supplies that region through `D3D12DDI_HMETACOMMAND_0052`. The driver initializes it and must not free it. The driver cleans up its own additional allocations.
-
-<!-- d3d12-review-alert:end:meta-command:MC-private-storage:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-private-storage:0:authored:migration-945edcb8c59e799e-0 -->The runtime allocates the reported private bytes and supplies that region through `D3D12DDI_HMETACOMMAND_0052`. The driver initializes it and must not free it. The driver cleans up its own additional allocations.<!-- d3d12-review-inline:end:meta-command:MC-private-storage:0:authored:migration-945edcb8c59e799e-0 --></ins>
 
 <a id="driver-enumerate-meta-commands"></a>
 
 ### PFND3D12DDI_ENUMERATE_META_COMMANDS_0052
 
-The **PFND3D12DDI_ENUMERATE_META_COMMANDS_0052** function enumerates meta-commands.
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-contract-enumerate_meta_commands:0:authored:migration-41b1a38c14e94583-0 -->With null `pDescs`, the driver reports the available count. For retrieval, the runtime supplies enough storage for the complete array and the driver returns the written count.<!-- d3d12-review-inline:end:meta-command:MC-contract-enumerate_meta_commands:0:authored:migration-41b1a38c14e94583-0 --></ins>
 
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-enumerate_meta_commands:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-contract-enumerate_meta_commands:1:authored:migration-1ae3687830832b77-0 -->Description names remain valid for the device lifetime. The runtime may cache and filter descriptions using the approval rule.<!-- d3d12-review-inline:end:meta-command:MC-contract-enumerate_meta_commands:1:authored:migration-1ae3687830832b77-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> With null `pDescs`, the driver reports the available count. For retrieval, the runtime supplies enough storage for the complete array and the driver returns the written count.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-enumerate_meta_commands:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-enumerate_meta_commands:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Description names remain valid for the device lifetime. The runtime may cache and filter descriptions using the approval rule.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-enumerate_meta_commands:1 -->
-
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-enumerate_meta_commands:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The DDI requires full-array capacity. It does not expose the API's partial-prefix or `DXGI_ERROR_MORE_DATA` protocol.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-enumerate_meta_commands:2 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-contract-enumerate_meta_commands:2:authored:migration-1a6bdec3ba971c17-0 -->The DDI requires full-array capacity. It does not expose the API's partial-prefix or `DXGI_ERROR_MORE_DATA` protocol.<!-- d3d12-review-inline:end:meta-command:MC-contract-enumerate_meta_commands:2:authored:migration-1a6bdec3ba971c17-0 --></ins>
 
 <a id="driver-enumerate-meta-parameters"></a>
 
 ### PFND3D12DDI_ENUMERATE_META_COMMAND_PARAMETERS_0052
 
-Enumerates meta-command parameters.
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-contract-enumerate_meta_command_parameters:0:authored:migration-2f0bd557209aafa5-0 -->With null `pParameterDescs`, the driver reports the stage's parameter count. For retrieval, the runtime supplies enough storage for the complete ordered array. The driver returns the written count through `pParameterCount`.<!-- d3d12-review-inline:end:meta-command:MC-contract-enumerate_meta_command_parameters:0:authored:migration-2f0bd557209aafa5-0 --></ins>
 
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-enumerate_meta_command_parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> With null `pParameterDescs`, the driver reports the stage's parameter count. For retrieval, the runtime supplies enough storage for the complete ordered array. The driver returns the written count through `pParameterCount`.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-enumerate_meta_command_parameters:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-enumerate_meta_command_parameters:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The array order defines parameter ordinals. Names remain valid for the device lifetime. The runtime derives offsets and total block size from the ordered types.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-enumerate_meta_command_parameters:1 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-contract-enumerate_meta_command_parameters:1:authored:migration-1b4777e78ffefff6-0 -->The array order defines parameter ordinals. Names remain valid for the device lifetime. The runtime derives offsets and total block size from the ordered types.<!-- d3d12-review-inline:end:meta-command:MC-contract-enumerate_meta_command_parameters:1:authored:migration-1b4777e78ffefff6-0 --></ins>
 
 <a id="driver-meta-private-size"></a>
 
 ### PFND3D12DDI_CALC_PRIVATE_META_COMMAND_SIZE_0052
 
-**PFND3D12DDI_CALC_PRIVATE_META_COMMAND_SIZE_0052** calculates the private meta-command size.
-
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-calc_private_meta_command_size:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Sizing and creation use the same creation parameters. Recoverable rejection is reported by Create, not a size sentinel.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-calc_private_meta_command_size:1 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-contract-calc_private_meta_command_size:1:authored:migration-426b4e04a7cdd95a-0 -->Sizing and creation use the same creation parameters. Recoverable rejection is reported by Create, not a size sentinel.<!-- d3d12-review-inline:end:meta-command:MC-contract-calc_private_meta_command_size:1:authored:migration-426b4e04a7cdd95a-0 --></ins>
 
 <a id="driver-create-meta-command"></a>
 
 ### PFND3D12DDI_CREATE_META_COMMAND_0052
 
-Creates a meta-command.
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-contract-create_meta_command:0:authored:migration-4748ac50ffcad9ab-0 -->The runtime resolves the API node convention to the selected single-node DDI mask.<!-- d3d12-review-inline:end:meta-command:MC-contract-create_meta_command:0:authored:migration-4748ac50ffcad9ab-0 --></ins>
 
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-create_meta_command:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-contract-create_meta_command:1:authored:migration-787064316bbc0207-0 -->Creation receives separate driver and runtime meta command handles. The driver copies creation parameter bytes needed after the call.<!-- d3d12-review-inline:end:meta-command:MC-contract-create_meta_command:1:authored:migration-787064316bbc0207-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The runtime resolves the API node convention to the selected single-node DDI mask.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-create_meta_command:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-create_meta_command:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Creation receives separate driver and runtime meta command handles. The driver copies creation parameter bytes needed after the call.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-create_meta_command:1 -->
-
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-create_meta_command:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The driver unwinds failed creation. Destruction is called only after successful creation. Allowed results are defined under [per-call results](#driver-meta-results).
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-create_meta_command:2 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-contract-create_meta_command:2:authored:migration-b98af00d81c1a6ea-0 -->The driver unwinds failed creation. Destruction is called only after successful creation. Allowed results are defined under [per-call results](#driver-meta-results).<!-- d3d12-review-inline:end:meta-command:MC-contract-create_meta_command:2:authored:migration-b98af00d81c1a6ea-0 --></ins>
 
 <a id="driver-destroy-meta-command"></a>
 
 ### PFND3D12DDI_DESTROY_META_COMMAND_0052
 
-**PFND3D12DDI_DESTROY_META_COMMAND_0052** destroys a meta-command.
-
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-destroy_meta_command:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Destroy releases driver-owned allocations without freeing runtime-provided private storage.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-destroy_meta_command:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-contract-destroy_meta_command:0:authored:migration-cd4e339dc30def29-0 -->Destroy releases driver-owned allocations without freeing runtime-provided private storage.<!-- d3d12-review-inline:end:meta-command:MC-contract-destroy_meta_command:0:authored:migration-cd4e339dc30def29-0 --></ins>
 
 <a id="driver-meta-resource-info"></a>
 
 ### PFND3D12DDI_GET_META_COMMAND_REQUIRED_PARAMETER_INFO_0052
 
-**PFND3D12DDI_GET_META_COMMAND_REQUIRED_PARAMETER_INFO_0052** gets required information for a meta-command.
-
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-get_meta_command_required_parameter_info:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> ParameterIndex uses the complete enumerated stage order, not a resource-only filtered order.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-get_meta_command_required_parameter_info:1 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-contract-get_meta_command_required_parameter_info:1:authored:migration-14f9da4587f1c275-0 -->ParameterIndex uses the complete enumerated stage order, not a resource-only filtered order.<!-- d3d12-review-inline:end:meta-command:MC-contract-get_meta_command_required_parameter_info:1:authored:migration-14f9da4587f1c275-0 --></ins>
 
 <a id="driver-initialize-meta-command"></a>
 
 ### PFND3D12DDI_INITIALIZE_META_COMMAND_0052
 
-**PFND3D12DDI_INITIALIZE_META_COMMAND_0052** initializes a meta-command.
-
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-initialize_meta_command:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The driver copies initialization parameter bytes needed after the recording call.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-initialize_meta_command:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-contract-initialize_meta_command:0:authored:migration-f27cfc38e237abd9-0 -->The driver copies initialization parameter bytes needed after the recording call.<!-- d3d12-review-inline:end:meta-command:MC-contract-initialize_meta_command:0:authored:migration-f27cfc38e237abd9-0 --></ins>
 
 <a id="driver-execute-meta-command"></a>
 
 ### PFND3D12DDI_EXECUTE_META_COMMAND_0052
 
-**PFND3D12DDI_EXECUTE_META_COMMAND_0052** executes a meta-command.
-
-<!-- d3d12-review-alert:begin:meta-command:MC-contract-execute_meta_command:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The driver copies execution parameter bytes needed after the recording call.
-
-<!-- d3d12-review-alert:end:meta-command:MC-contract-execute_meta_command:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-contract-execute_meta_command:0:authored:migration-4dcb4681b31465be-0 -->The driver copies execution parameter bytes needed after the recording call.<!-- d3d12-review-inline:end:meta-command:MC-contract-execute_meta_command:0:authored:migration-4dcb4681b31465be-0 --></ins>
 
 <a id="driver-meta-results"></a>
 
 ### Per-call results and failure reporting
 
-<!-- d3d12-review-alert:begin:meta-command:MC-call-results:0 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-call-results:0:authored:migration-d4efb1a7afc0fd58-0 -->The HRESULT-returning DDIs have call-specific outcomes:<!-- d3d12-review-inline:end:meta-command:MC-call-results:0:authored:migration-d4efb1a7afc0fd58-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The HRESULT-returning DDIs have call-specific outcomes:
-
-<!-- d3d12-review-alert:end:meta-command:MC-call-results:0 -->
-
-<!-- d3d12-review-alert:begin:meta-command:MC-call-results:1 -->
+<!-- d3d12-review-alert:begin:meta-command:MC-call-results:1:authored:migration-571e6fa4c2888eab-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -1041,31 +738,10 @@ Creates a meta-command.
 > | `pfnEnumerateMetaCommandParameters` | `S_OK` | `E_OUTOFMEMORY`, `DXGI_ERROR_UNSUPPORTED` |
 > | `pfnCreateMetaCommand` | `S_OK` | `E_OUTOFMEMORY`, `DXGI_ERROR_UNSUPPORTED` |
 
-<!-- d3d12-review-alert:end:meta-command:MC-call-results:1 -->
+<!-- d3d12-review-alert:end:meta-command:MC-call-results:1:authored:migration-571e6fa4c2888eab-0 -->
 
-<!-- d3d12-review-alert:begin:meta-command:MC-call-results:2 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-call-results:2:authored:migration-fa3676bc8602a97a-0 -->`E_OUTOFMEMORY` covers driver allocation failures during parameter enumeration and creation. `E_INVALIDARG` and `DXGI_ERROR_MORE_DATA` are not recoverable driver results here.<!-- d3d12-review-inline:end:meta-command:MC-call-results:2:authored:migration-fa3676bc8602a97a-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `E_OUTOFMEMORY` covers driver allocation failures during parameter enumeration and creation. `E_INVALIDARG` and `DXGI_ERROR_MORE_DATA` are not recoverable driver results here.
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-call-results:3:authored:migration-650594bd228439f2-0 -->For these HRESULT-returning calls, the runtime normalizes legacy `D3DERR_OUTOFVIDEOMEMORY` to `E_OUTOFMEMORY`. `D3DDDIERR_DEVICEREMOVED` maps to `DXGI_ERROR_DEVICE_REMOVED`; `D3DDDIERR_APPLICATIONERROR` maps to `DXGI_ERROR_INVALID_CALL` and device failure. Other unsupported result codes cause driver-internal error/device removal. An already removed device can supersede an otherwise recoverable result.<!-- d3d12-review-inline:end:meta-command:MC-call-results:3:authored:migration-650594bd228439f2-0 --></ins>
 
-<!-- d3d12-review-alert:end:meta-command:MC-call-results:2 -->
-
-<!-- d3d12-review-alert:begin:meta-command:MC-call-results:3 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For these HRESULT-returning calls, the runtime normalizes legacy `D3DERR_OUTOFVIDEOMEMORY` to `E_OUTOFMEMORY`. `D3DDDIERR_DEVICEREMOVED` maps to `DXGI_ERROR_DEVICE_REMOVED`; `D3DDDIERR_APPLICATIONERROR` maps to `DXGI_ERROR_INVALID_CALL` and device failure. Other unsupported result codes cause driver-internal error/device removal. An already removed device can supersede an otherwise recoverable result.
-
-<!-- d3d12-review-alert:end:meta-command:MC-call-results:3 -->
-
-<!-- d3d12-review-alert:begin:meta-command:MC-call-results:4 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Sizing, destruction and required parameter information have no operation level recoverable failure. Initialization/execution use [recording errors](execution.md#deferred-recording-errors).
-
-<!-- d3d12-review-alert:end:meta-command:MC-call-results:4 -->
+<ins><!-- d3d12-review-inline:begin:meta-command:MC-call-results:4:authored:migration-c71086bc6d54c49b-0 -->Sizing, destruction and required parameter information have no operation level recoverable failure. Initialization/execution use [recording errors](execution.md#deferred-recording-errors).<!-- d3d12-review-inline:end:meta-command:MC-call-results:4:authored:migration-c71086bc6d54c49b-0 --></ins>

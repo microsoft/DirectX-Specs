@@ -15,25 +15,18 @@
 
 <!-- d3d12-review-legend:end -->
 
-<!-- d3d12-review-alert:begin:video-encoding-controls:entry:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> **Qualified draft.** This supporting reference defines encoding capability
-> tuples, rate control, picture/sequence inputs and optional statistics,
-> notification, input map and two-pass contracts. [Video encoding](video-encoding.md)
-> owns the conceptual route, object/recording lifetimes and declaring API entries.
-> Shared released declarations belong to the [type reference](video-encoding-types.md);
-> codec-specific syntax and qualifications belong to the [codec contract](video-encoding-codecs.md).
-
-<!-- d3d12-review-alert:end:video-encoding-controls:entry:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:entry:0:authored:migration-73d9e9055ef9c816-0 -->**Qualified draft.** This supporting reference defines encoding capability
+tuples, rate control, picture/sequence inputs and optional statistics,
+notification, input map and two-pass contracts. [Video encoding](video-encoding.md)
+owns the conceptual route, object/recording lifetimes and declaring API entries.
+Shared released declarations belong to the [type reference](video-encoding-types.md);
+codec-specific syntax and qualifications belong to the [codec contract](video-encoding-codecs.md).<!-- d3d12-review-inline:end:video-encoding-controls:entry:0:authored:migration-73d9e9055ef9c816-0 --></ins>
 
 <a id="encoding-query-selectors"></a>
 
 ## Encoding query selectors
 
-<!-- d3d12-review-alert:begin:video-encoding-controls:query-selectors:0 -->
+<!-- d3d12-review-alert:begin:video-encoding-controls:query-selectors:0:authored:migration-a4a74933a6512b74-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -64,25 +57,11 @@
 > | `D3D12_FEATURE_VIDEO_ENCODER_HEAP_SIZE1` | 56 | [`D3D12_FEATURE_DATA_VIDEO_ENCODER_HEAP_SIZE1`](video-encoding-types.md#d3d12-feature-data-video-encoder-heap-size1) |
 > | `D3D12_FEATURE_VIDEO_ENCODER_RATE_CONTROL_FRAME_ANALYSIS` | 57 | [`D3D12_FEATURE_DATA_VIDEO_ENCODER_RATE_CONTROL_FRAME_ANALYSIS`](video-encoding-types.md#d3d12-feature-data-video-encoder-rate-control-frame-analysis) |
 
-<!-- d3d12-review-alert:end:video-encoding-controls:query-selectors:0 -->
+<!-- d3d12-review-alert:end:video-encoding-controls:query-selectors:0:authored:migration-a4a74933a6512b74-0 -->
 
-<!-- d3d12-review-alert:begin:video-encoding-controls:query-selectors:1 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:query-selectors:1:authored:migration-00f11be12927670e-0 -->`FeatureSupportDataSize` is the selected fixed payload's `sizeof`. Pointed-to arrays and codec payloads have their separate sizes/counts. They are not included by increasing that fixed size.<!-- d3d12-review-inline:end:video-encoding-controls:query-selectors:1:authored:migration-00f11be12927670e-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `FeatureSupportDataSize` is the selected fixed payload's `sizeof`. Pointed-to arrays and codec payloads have their separate sizes/counts. They are not included by increasing that fixed size.
-
-<!-- d3d12-review-alert:end:video-encoding-controls:query-selectors:1 -->
-
-<!-- d3d12-review-alert:begin:video-encoding-controls:codec-qualification-route:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Detailed H.264/HEVC header, POC, temporal reference and numeric qualifications belong to the [codec contract](video-encoding-codecs.md#family-h264-hevc). They do not change the fixed capability payload protocol described here.
-
-<!-- d3d12-review-alert:end:video-encoding-controls:codec-qualification-route:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:codec-qualification-route:0:authored:migration-cca5c51422b16823-0 -->Detailed H.264/HEVC header, POC, temporal reference and numeric qualifications belong to the [codec contract](video-encoding-codecs.md#family-h264-hevc). They do not change the fixed capability payload protocol described here.<!-- d3d12-review-inline:end:video-encoding-controls:codec-qualification-route:0:authored:migration-cca5c51422b16823-0 --></ins>
 
 <a id="control-capabilities"></a>
 
@@ -250,7 +229,7 @@ Indicates the resolution ratio denominator.
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-027:0 -->Released declaration: [`D3D12_FEATURE_DATA_VIDEO_ENCODER_OUTPUT_RESOLUTION_RATIOS_COUNT`](video-encoding-types.md#d3d12-feature-data-video-encoder-output-resolution-ratios-count).<!-- d3d12-review-inline:end:video-encoding-controls:S01-027:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-027:1 -->Structure returning the number of supported resolution ratios for the selected codec.<!-- d3d12-review-inline:end:video-encoding-controls:S01-027:1 --></ins>
+Structure returning the number of supported <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-027:1:modified:source-666e8d1b22e2aae0-0-0 -->resolution ratios for the selected codec<!-- d3d12-review-inline:end:video-encoding-controls:S01-027:1:modified:source-666e8d1b22e2aae0-0-0 --></ins>.
 
 **Members**
 
@@ -289,7 +268,7 @@ Indicates the resolution height in pixels.
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-029:0 -->Released declaration: [`D3D12_FEATURE_DATA_VIDEO_ENCODER_OUTPUT_RESOLUTION`](video-encoding-types.md#d3d12-feature-data-video-encoder-output-resolution).<!-- d3d12-review-inline:end:video-encoding-controls:S01-029:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-029:1 -->Structure returning supported resolution bounds, dimension multiples and resolution ratios for the selected codec.<!-- d3d12-review-inline:end:video-encoding-controls:S01-029:1 --></ins>
+Structure returning <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-029:1:modified:source-650384d9d142d912-0-0 -->supported resolution bounds, dimension multiples and resolution ratios for the selected codec<!-- d3d12-review-inline:end:video-encoding-controls:S01-029:1:modified:source-650384d9d142d912-0-0 --></ins>.
 
 **Members**
 
@@ -545,31 +524,31 @@ Reports HW capabilities for H264.
 
 **Constants**
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-040:3 -->*D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_CABAC_ENCODING_SUPPORT*<!-- d3d12-review-inline:end:video-encoding-controls:S01-040:3 --></ins>
+*<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-040:3:modified:source-439cf1f2575187c5-0-0 -->D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_CABAC_ENCODING_SUPPORT<!-- d3d12-review-inline:end:video-encoding-controls:S01-040:3:modified:source-439cf1f2575187c5-0-0 --></ins>*
 
 Indicates if support is available for CABAC Encoding.
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-040:5 -->*D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_INTRA_SLICE_CONSTRAINED_ENCODING_SUPPORT*<!-- d3d12-review-inline:end:video-encoding-controls:S01-040:5 --></ins>
+*<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-040:5:modified:source-280d4fe2033d0bd3-0-0 -->D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_INTRA_SLICE_CONSTRAINED_ENCODING_SUPPORT<!-- d3d12-review-inline:end:video-encoding-controls:S01-040:5:modified:source-280d4fe2033d0bd3-0-0 --></ins>*
 
 Indicates if support is available for slice constrained encoding in which every slice in a frame is encoded independently from other slices in the same frame. This mode restricts the motion vector search range to the region box of the current slice (eg. can’t use motion vectors outside the slice boundary).
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-040:7 -->*D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_BFRAME_LTR_COMBINED_SUPPORT*<!-- d3d12-review-inline:end:video-encoding-controls:S01-040:7 --></ins>
+*<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-040:7:modified:source-b047fe25a1c545f2-0-0 -->D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_BFRAME_LTR_COMBINED_SUPPORT<!-- d3d12-review-inline:end:video-encoding-controls:S01-040:7:modified:source-b047fe25a1c545f2-0-0 --></ins>*
 
 Indicates support for using B-frames and long term references at the same time.
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-040:9 -->*D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_ADAPTIVE_8x8_TRANSFORM_ENCODING_SUPPORT*<!-- d3d12-review-inline:end:video-encoding-controls:S01-040:9 --></ins>
+*<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-040:9:modified:source-232a90535cefa892-0-0 -->D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_ADAPTIVE_8x8_TRANSFORM_ENCODING_SUPPORT<!-- d3d12-review-inline:end:video-encoding-controls:S01-040:9:modified:source-232a90535cefa892-0-0 --></ins>*
 
 Indicates support for using adaptive 8x8 transforms when encoding.
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-040:11 -->*D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_DIRECT_SPATIAL_ENCODING_SUPPORT*<!-- d3d12-review-inline:end:video-encoding-controls:S01-040:11 --></ins>
+*<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-040:11:modified:source-010e398f2919c1b8-0-0 -->D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_DIRECT_SPATIAL_ENCODING_SUPPORT<!-- d3d12-review-inline:end:video-encoding-controls:S01-040:11:modified:source-010e398f2919c1b8-0-0 --></ins>*
 
 Indicates support for spatial direct mode.
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-040:13 -->*D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_DIRECT_TEMPORAL_ENCODING_SUPPORT*<!-- d3d12-review-inline:end:video-encoding-controls:S01-040:13 --></ins>
+*<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-040:13:modified:source-e9ef2cb7436d7cca-0-0 -->D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_DIRECT_TEMPORAL_ENCODING_SUPPORT<!-- d3d12-review-inline:end:video-encoding-controls:S01-040:13:modified:source-e9ef2cb7436d7cca-0-0 --></ins>*
 
 Indicates support for temporal direct mode.
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-040:15 -->*D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_CONSTRAINED_INTRAPREDICTION_SUPPORT*<!-- d3d12-review-inline:end:video-encoding-controls:S01-040:15 --></ins>
+*<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-040:15:modified:source-b9a68f6c7e789025-0-0 -->D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_CONSTRAINED_INTRAPREDICTION_SUPPORT<!-- d3d12-review-inline:end:video-encoding-controls:S01-040:15:modified:source-b9a68f6c7e789025-0-0 --></ins>*
 
 Indicates if support is available for constrained intraprediction, that if activated will force the encoding of each intra-coded block with residual data only from other intra-coded blocks (eg. not from inter-coded blocks). This refers to constrained_intra_pred_flag in the PPS.
 
@@ -656,15 +635,15 @@ If bit set, reports support for disabling loop filter across slices.
 
 *D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAG_P_FRAMES_IMPLEMENTED_AS_LOW_DELAY_B_FRAMES*
 
-<!-- d3d12-review-context:begin:video-encoding-controls:S01-044:21 -->
+<!-- d3d12-review-context:begin:video-encoding-controls:S01-044:21:modified:migration-dfe1bc24b0af780f-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
 
 If bit set, informs the user that when encoding frames with type D3D12_VIDEO_ENCODER_FRAME_TYPE_HEVC_P_FRAME, they will be written as low delay B-Frames in the compressed bitstream. If bit off, informs P frames will be written in the compressed bitstream.
- > Note: When operating under this mode, is the user responsibility to code the correct frame type in _AUD_NUT_ and other parts of the HEVC bitstream, taking into account that P frames will be treated as generalized B frames with only references to past frames in POC order.
+ > Note: When operating under this mode, it is the user's responsibility to code the correct frame type in _AUD_NUT_ and other parts of the HEVC bitstream, taking into account that P frames will be treated as generalized B frames with only references to past frames in POC order.
 
-<!-- d3d12-review-context:end:video-encoding-controls:S01-044:21 -->
+<!-- d3d12-review-context:end:video-encoding-controls:S01-044:21:modified:migration-dfe1bc24b0af780f-0 -->
 
 *D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAG_NUM_REF_IDX_ACTIVE_OVERRIDE_FLAG_SLICE_SUPPORT*
 
@@ -680,19 +659,19 @@ Indicates possible values for luma coding block sizes for HEVC. These values can
 
 *D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_CUSIZE_8x8*
 
-Indicates a luma coding block if pixel size 8.
+Indicates a luma coding block <ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-vi06-cu8:0:preserved-repair:of -->of<!-- d3d12-review-inline:end:video-encoding-controls:weekend-vi06-cu8:0:preserved-repair:of --></ins> pixel size 8.
 
 *D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_CUSIZE_16x16*
 
-Indicates a luma coding block if pixel size 16.
+Indicates a luma coding block <ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-vi06-cu16:0:preserved-repair:of -->of<!-- d3d12-review-inline:end:video-encoding-controls:weekend-vi06-cu16:0:preserved-repair:of --></ins> pixel size 16.
 
 *D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_CUSIZE_32x32*
 
-Indicates a luma coding block if pixel size 32.
+Indicates a luma coding block <ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-vi06-cu32:0:preserved-repair:of -->of<!-- d3d12-review-inline:end:video-encoding-controls:weekend-vi06-cu32:0:preserved-repair:of --></ins> pixel size 32.
 
 *D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_CUSIZE_64x64*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-045:9 -->Indicates a luma coding block if pixel size 64.<!-- d3d12-review-inline:end:video-encoding-controls:S01-045:9 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-045:9:modified:vi06-of -->Indicates a luma coding block of pixel size 64.<!-- d3d12-review-inline:end:video-encoding-controls:S01-045:9:modified:vi06-of --></ins>
 
 <a id="source-s01-046"></a>
 
@@ -704,19 +683,19 @@ Indicates possible values for luma transform block sizes for HEVC. These values 
 
 *D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_TUSIZE_4x4*
 
-Indicates a luma transform block if pixel size 4.
+Indicates a luma transform block <ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-vi06-tu4:0:preserved-repair:of -->of<!-- d3d12-review-inline:end:video-encoding-controls:weekend-vi06-tu4:0:preserved-repair:of --></ins> pixel size 4.
 
 *D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_TUSIZE_8x8*
 
-Indicates a luma transform block if pixel size 8.
+Indicates a luma transform block <ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-vi06-tu8:0:preserved-repair:of -->of<!-- d3d12-review-inline:end:video-encoding-controls:weekend-vi06-tu8:0:preserved-repair:of --></ins> pixel size 8.
 
 *D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_TUSIZE_16x16*
 
-Indicates a luma transform block if pixel size 16.
+Indicates a luma transform block <ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-vi06-tu16:0:preserved-repair:of -->of<!-- d3d12-review-inline:end:video-encoding-controls:weekend-vi06-tu16:0:preserved-repair:of --></ins> pixel size 16.
 
 *D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_TUSIZE_32x32*
 
-Indicates a luma transform block if pixel size 32.
+Indicates a luma transform block <ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-vi06-tu32:0:preserved-repair:of -->of<!-- d3d12-review-inline:end:video-encoding-controls:weekend-vi06-tu32:0:preserved-repair:of --></ins> pixel size 32.
 
 <a id="source-s01-047"></a>
 
@@ -933,11 +912,11 @@ Disable direct modes.
 
 *D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_H264_DIRECT_MODES_SPATIAL*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-055:5 -->Enables Direct spatial mode. Please check for support in D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_DIRECT_SPATIAL_ENCODING_SUPPORT.<!-- d3d12-review-inline:end:video-encoding-controls:S01-055:5 --></ins>
+Enables Direct spatial mode. Please check for support in <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-055:5:modified:source-70589427442cc7a8-0-0 -->D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_DIRECT_SPATIAL_ENCODING_SUPPORT<!-- d3d12-review-inline:end:video-encoding-controls:S01-055:5:modified:source-70589427442cc7a8-0-0 --></ins>.
 
 *D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_H264_DIRECT_MODES_TEMPORAL*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-055:7 -->Enables Direct temporal mode. Please check for support in D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_DIRECT_TEMPORAL_ENCODING_SUPPORT.<!-- d3d12-review-inline:end:video-encoding-controls:S01-055:7 --></ins>
+Enables Direct temporal mode. Please check for support in <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-055:7:modified:source-3723c47a03c9f476-0-0 -->D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_DIRECT_TEMPORAL_ENCODING_SUPPORT<!-- d3d12-review-inline:end:video-encoding-controls:S01-055:7:modified:source-3723c47a03c9f476-0-0 --></ins>.
 
 <a id="source-s01-056"></a>
 
@@ -945,7 +924,7 @@ Disable direct modes.
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-056:0 -->Released declaration: [`D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_H264_FLAGS`](video-encoding-types.md#d3d12-video-encoder-codec-configuration-h264-flags).<!-- d3d12-review-inline:end:video-encoding-controls:S01-056:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-056:1 -->The host sets this configuration flags based on the limits queried in the [capability contracts](video-encoding-controls.md#control-capabilities).<!-- d3d12-review-inline:end:video-encoding-controls:S01-056:1 --></ins>
+The host sets <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-056:1:modified:source-6968e88539646a30-0-0 -->these<!-- d3d12-review-inline:end:video-encoding-controls:S01-056:1:modified:source-6968e88539646a30-0-0 --></ins> configuration flags based on the limits queried in the <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-056:1:modified:source-6968e88539646a30-0-1 -->[capability contracts](video-encoding-controls.md#control-capabilities)<!-- d3d12-review-inline:end:video-encoding-controls:S01-056:1:modified:source-6968e88539646a30-0-1 --></ins>.
 
 **Constants**
 
@@ -955,15 +934,15 @@ No Flags.
 
 *D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_H264_FLAG_USE_CONSTRAINED_INTRAPREDICTION*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-056:6 -->If activated will force the encoding of each intra-coded block with residual data only from other intra-coded blocks (eg. not from inter-coded blocks) in the frame. Please check for support in D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_CONSTRAINED_INTRAPREDICTION_SUPPORT. This refers to constrained_intra_pred_flag in the PPS.<!-- d3d12-review-inline:end:video-encoding-controls:S01-056:6 --></ins>
+If activated will force the encoding of each intra-coded block with residual data only from other intra-coded blocks (eg. not from inter-coded blocks) in the frame. Please check for support in <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-056:6:modified:source-556c42bcd08b2392-0-0 -->D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_CONSTRAINED_INTRAPREDICTION_SUPPORT<!-- d3d12-review-inline:end:video-encoding-controls:S01-056:6:modified:source-556c42bcd08b2392-0-0 --></ins>. This refers to constrained_intra_pred_flag in the PPS.
 
 *D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_H264_FLAG_USE_ADAPTIVE_8x8_TRANSFORM*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-056:8 -->If activated, enables the usage of adaptive 8x8 transform. Please check for support in D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_ADAPTIVE_8x8_TRANSFORM_ENCODING_SUPPORT.<!-- d3d12-review-inline:end:video-encoding-controls:S01-056:8 --></ins>
+If activated, enables the usage of adaptive 8x8 transform. Please check for support in <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-056:8:modified:source-a96f577ceb818db3-0-0 -->D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_ADAPTIVE_8x8_TRANSFORM_ENCODING_SUPPORT<!-- d3d12-review-inline:end:video-encoding-controls:S01-056:8:modified:source-a96f577ceb818db3-0-0 --></ins>.
 
 *D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_H264_FLAG_ENABLE_CABAC_ENCODING*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-056:10 -->If set to 1 enables CABAC entropy coding. If turned off, will use CAVLC. Please check for support in D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_CABAC_ENCODING_SUPPORT.<!-- d3d12-review-inline:end:video-encoding-controls:S01-056:10 --></ins>
+If set to 1 enables CABAC entropy coding. If turned off, will use CAVLC. Please check for support in <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-056:10:modified:source-40309f0cddb71307-0-0 -->D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264_FLAG_CABAC_ENCODING_SUPPORT<!-- d3d12-review-inline:end:video-encoding-controls:S01-056:10:modified:source-40309f0cddb71307-0-0 --></ins>.
 
 *D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_H264_FLAG_ALLOW_REQUEST_INTRA_CONSTRAINED_SLICES*
 
@@ -993,8 +972,8 @@ Configuration related to _disable_deblocking_filter_idc_ syntax for H264 spec.
 
 ### D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAGS
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-058:0 -->Released declaration: [`D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAGS`](video-encoding-types.md#d3d12-video-encoder-codec-configuration-hevc-flags).
-The host sets this configuration flags based on the limits queried in the [capability contracts](video-encoding-controls.md#control-capabilities).<!-- d3d12-review-inline:end:video-encoding-controls:S01-058:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-058:0:modified:vi06-agreement -->Released declaration: [`D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAGS`](video-encoding-types.md#d3d12-video-encoder-codec-configuration-hevc-flags).
+The host sets these configuration flags based on the limits queried in the [capability contracts](video-encoding-controls.md#control-capabilities).<!-- d3d12-review-inline:end:video-encoding-controls:S01-058:0:modified:vi06-agreement --></ins>
 
 **Constants**
 
@@ -1115,7 +1094,7 @@ Indicates that the precision for motion estimation vectors has to be at most hal
 
 Indicates that the precision for motion estimation vectors has to be at most quarter pixel.
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-062:11 -->*D3D12_VIDEO_ENCODER_MOTION_ESTIMATION_PRECISION_MODE_EIGHTH_PIXEL*<!-- d3d12-review-inline:end:video-encoding-controls:S01-062:11 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-062:11:authored:migration-98f31b5bc435dcc3-0 -->*D3D12_VIDEO_ENCODER_MOTION_ESTIMATION_PRECISION_MODE_EIGHTH_PIXEL*<!-- d3d12-review-inline:end:video-encoding-controls:S01-062:11:authored:migration-98f31b5bc435dcc3-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-062:12 -->Requests a maximum motion estimation vector precision of one-eighth pixel through [D3D12_VIDEO_ENCODER_DESC.MaxMotionEstimationPrecision](#source-s01-083). The AV1 contribution adds this released enum member (value 4). As with other precision limits, selection is subject to the encoding configuration and `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_MOTION_ESTIMATION_PRECISION_MODE_LIMIT_AVAILABLE`; declaration does not establish one-eighth-pixel support for every codec or tuple.<!-- d3d12-review-inline:end:video-encoding-controls:S01-062:12 --></ins>
 
@@ -1141,14 +1120,14 @@ Indicates for the associated resolution, the maximum number that can be used in 
 Indicates for the associated resolution, the size in pixels of the squared regions that will be used to partition the frame for the subregion layout (eg. slices) semantics. The resolution of the frame will be rounded up to be aligned to this value when it's partitioned in blocks.
 The configuration of the subregion partitioning will use a number of squared subregions, that have their size in pixels according to the returned value in this argument.
 
-<!-- d3d12-review-context:begin:video-encoding-controls:S01-063:8 -->
+<!-- d3d12-review-context:begin:video-encoding-controls:S01-063:8:modified:migration-8dee15c14d7817cb-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
 
 > Note: For HEVC this indicates the resolution block alignment for the compressed bitstream. For example: If SubregionBlockPixelsSize = 32, then SPS.pic_width/height_in_luma_samples must be aligned to this value and SPS.conf_win_\*_offset/conformance_window_flag indicate the difference between this aligned resolution and the current frame resolution indicated by the input resource's Width and Height of the input video texture. SubregionBlockPixelsSize must be aligned to D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC.MinLumaCodingUnitSize (minCUSize), so SPS.pic_width/height_in_luma_samples ends up aligned to minCUSize as required by the HEVC codec spec.
 
-<!-- d3d12-review-context:end:video-encoding-controls:S01-063:8 -->
+<!-- d3d12-review-context:end:video-encoding-controls:S01-063:8:modified:migration-8dee15c14d7817cb-0 -->
 
 *QPMapRegionPixelsSize*
 
@@ -1330,7 +1309,7 @@ This argument returns the matching profile for the requested configuration.
 
 *SuggestedLevel*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-068:35 -->This argument returns a single matching level for the requested configuration and resolution list.<!-- d3d12-review-inline:end:video-encoding-controls:S01-068:35 --></ins>
+This argument returns <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-068:35:modified:source-a33f13b0e57a36bb-0-0 -->a single matching level for the requested configuration and resolution list<!-- d3d12-review-inline:end:video-encoding-controls:S01-068:35:modified:source-a33f13b0e57a36bb-0-0 --></ins>.
 
 *pResolutionDependentSupport*
 
@@ -1366,7 +1345,7 @@ Input parameter, indicates the encoder resolution to be used.
 
 *IsSupported*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-069:13 -->Output parameter, indicates whether the requested codec/profile/format/resolution tuple is supported.<!-- d3d12-review-inline:end:video-encoding-controls:S01-069:13 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-069:13:authored:migration-fca4c45558625a1d-0 -->Output parameter, indicates whether the requested codec/profile/format/resolution tuple is supported.<!-- d3d12-review-inline:end:video-encoding-controls:S01-069:13:authored:migration-fca4c45558625a1d-0 --></ins>
 
 *CompressedBitstreamBufferAccessAlignment*
 
@@ -1386,18 +1365,11 @@ Indicates the maximum size in bytes needed for the ID3D12Resource that will be a
 
 ## Rate control and spatial adaptive QP
 
-<!-- d3d12-review-alert:begin:video-encoding-controls:rate-control-route:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Rate control extension 1 is shared by H.264, HEVC and AV1. Legacy and
-> extension-1 configuration payloads remain distinct. The enable flag, not the
-> codec name, selects the payload version. The source tables below specify the
-> selected pointer and `DataSize` for every mode. Spatial adaptive QP is
-> orthogonal and requires its own reported support and per-frame enable flag.
-
-<!-- d3d12-review-alert:end:video-encoding-controls:rate-control-route:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:rate-control-route:0:authored:migration-25184384ae38704c-0 -->Rate control extension 1 is shared by H.264, HEVC and AV1. Legacy and
+extension-1 configuration payloads remain distinct. The enable flag, not the
+codec name, selects the payload version. The source tables below specify the
+selected pointer and `DataSize` for every mode. Spatial adaptive QP is
+orthogonal and requires its own reported support and per-frame enable flag.<!-- d3d12-review-inline:end:video-encoding-controls:rate-control-route:0:authored:migration-25184384ae38704c-0 --></ins>
 
 <a id="source-s01-072"></a>
 
@@ -1421,24 +1393,24 @@ No rate control flag.
 
 *D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_FRAME_ANALYSIS*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-072:9 -->If available in D3D12_VIDEO_ENCODER_SUPPORT_FLAGS.D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_FRAME_ANALYSIS_AVAILABLE, enables the rate control algorithm to optimize bitrate usage by selecting QP values based on statistics collected by doing frame analysis on a first pass.<!-- d3d12-review-inline:end:video-encoding-controls:S01-072:9 --></ins>
+If available in D3D12_VIDEO_ENCODER_SUPPORT_FLAGS.<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-072:9:modified:source-5a09960d7c4b080e-0-0 -->D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_FRAME_ANALYSIS_AVAILABLE<!-- d3d12-review-inline:end:video-encoding-controls:S01-072:9:modified:source-5a09960d7c4b080e-0-0 --></ins>, enables the rate control algorithm to optimize bitrate usage by selecting QP values based on statistics collected by doing frame analysis on a first pass.
 
 *D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_QP_RANGE*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-072:11 -->If turned on with these rate control modes, will use the *MinQP/MaxQP* values as a range for the rate control algorithm.<!-- d3d12-review-inline:end:video-encoding-controls:S01-072:11 --></ins>
+If turned on with these rate control modes, will use the *<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-072:11:modified:source-84e366e9102c62bd-0-0 -->MinQP<!-- d3d12-review-inline:end:video-encoding-controls:S01-072:11:modified:source-84e366e9102c62bd-0-0 --></ins>/MaxQP* values as a range for the rate control algorithm.
 
 *D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_INITIAL_QP*
 
-If turned on with these rate control modes, will use the *InitialQP* values as a range for the rate control algorithm.
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-initial-qp:0 -->If turned on, allows *InitialQP* to be used by the rate control algorithm, as defined by the [rate control configuration members](#source-s01-076).<!-- d3d12-review-inline:end:video-encoding-controls:weekend-initial-qp:0 --></ins>
 
 *D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_MAX_FRAME_SIZE*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-072:15 -->If turned on, the rate control algorithm will limit the maximum size per frame to the specified parameter in the rate control configuration.
-Please check for support in D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_MAX_FRAME_SIZE_AVAILABLE.<!-- d3d12-review-inline:end:video-encoding-controls:S01-072:15 --></ins>
+If turned on, the rate control algorithm will limit the maximum size per frame to the specified parameter in the rate control configuration.
+Please check for support in <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-072:15:modified:source-36ef7d01783e3af6-0-0 -->D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_MAX_FRAME_SIZE_AVAILABLE<!-- d3d12-review-inline:end:video-encoding-controls:S01-072:15:modified:source-36ef7d01783e3af6-0-0 --></ins>.
 
 *D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_VBV_SIZES*
 
-If turned on, enabled the usage of VBVCapacity and InitialVBVFullness.
+If turned on, <ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-vbv-agreement:0 -->enables<!-- d3d12-review-inline:end:video-encoding-controls:weekend-vbv-agreement:0 --></ins> the usage of VBVCapacity and InitialVBVFullness.
 
 <a id="source-s01-074"></a>
 
@@ -1458,11 +1430,7 @@ Specifies flags for the rate control.
 
 *ConfigParams*
 
-Points to specific configuration structures based on the selection of *Mode*. Please note that for absolute QP matrix mode, the configuration arguments are provided per *EncodeFrame* basis.
-
-If the selected rate control is D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_ABSOLUTE_QP_MAP, the QP values in *pRateControlQPMap* are used as absolute QP values.
-
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-074:9 -->For the other rate control modes, enables the usage of the codec-specific picture control `pRateControlQPMap` to be interpreted as a delta QP map to be used for the current frame encode operation. The values provided in the map are incremented/decremented on top of the QP values decided by the rate control algorithm or the baseline QP constant set in CQP mode.<!-- d3d12-review-inline:end:video-encoding-controls:S01-074:9 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-rate-config-route:0 -->*Mode* and *Flags* select the [configuration payload and DataSize](#source-s02-006). The [rate control flags](#source-s01-072) define absolute and enabled delta QP map interpretation.<!-- d3d12-review-inline:end:video-encoding-controls:weekend-rate-config-route:0 --></ins>
 
 *TargetFrameRate*
 
@@ -1745,7 +1713,7 @@ No flags.
 
 *NodeMask*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-038:3 -->For single GPU operation, set this to zero. If there are multiple GPU nodes, set a bit to identify the node (the device's physical adapter) to which the encoder heap applies. Each bit in the mask corresponds to a single node. Only 1 bit may be set.<!-- d3d12-review-inline:end:video-encoding-controls:S01-038:3 --></ins>
+For single GPU operation, set this to zero. If there are multiple GPU nodes, set a bit to identify the node (the device's physical adapter) to which the <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-038:3:modified:source-4a62c9ffdd897bec-0-0 -->encoder heap<!-- d3d12-review-inline:end:video-encoding-controls:S01-038:3:modified:source-4a62c9ffdd897bec-0-0 --></ins> applies. Each bit in the mask corresponds to a single node. Only 1 bit may be set.
 
 *Flags*
 
@@ -1783,21 +1751,21 @@ Indicates the list of resolutions requested to be supported.
 
 **Members**
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-039:2 -->*HeapDesc*<!-- d3d12-review-inline:end:video-encoding-controls:S01-039:2 --></ins>
+*<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-039:2:modified:source-6971ab45193296fc-0-0 -->HeapDesc<!-- d3d12-review-inline:end:video-encoding-controls:S01-039:2:modified:source-6971ab45193296fc-0-0 --></ins>*
 
 The creation properties for a video encoder heap. Driver should map these creation properties to size and assume the maximum resolution allowed for such heap.
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-039:4 -->*IsSupported*<!-- d3d12-review-inline:end:video-encoding-controls:S01-039:4 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-039:5 -->Output parameter, indicates whether the requested heap description is supported.<!-- d3d12-review-inline:end:video-encoding-controls:S01-039:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-039:5:authored:migration-9667806646830816-0 -->Output parameter, indicates whether the requested heap description is supported.<!-- d3d12-review-inline:end:video-encoding-controls:S01-039:5:authored:migration-9667806646830816-0 --></ins>
 
 *MemoryPoolL0Size*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-039:7 -->Output parameter, the L0 size of the heap object. [Memory pools](resources.md#memory-pools) defines L0 as physical system memory.<!-- d3d12-review-inline:end:video-encoding-controls:S01-039:7 --></ins>
+Output parameter, the L0 size of the heap object. <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-039:7:modified:source-877049d15c67f8ca-0-0 -->[Memory pools](resources.md#memory-pools) defines L0 as physical system memory<!-- d3d12-review-inline:end:video-encoding-controls:S01-039:7:modified:source-877049d15c67f8ca-0-0 --></ins>.
 
 *MemoryPoolL1Size*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-039:9 -->Output parameter, the L1 size of the heap object. [Memory pools](resources.md#memory-pools) defines L1 as physical video memory on discrete adapters; L1 is unavailable on UMA.<!-- d3d12-review-inline:end:video-encoding-controls:S01-039:9 --></ins>
+Output parameter, the L1 size of the heap object. <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-039:9:modified:source-c7202591d93becb0-0-0 -->[Memory pools](resources.md#memory-pools) defines L1 as physical video memory on discrete adapters; L1 is unavailable on UMA<!-- d3d12-review-inline:end:video-encoding-controls:S01-039:9:modified:source-c7202591d93becb0-0-0 --></ins>.
 
 <a id="source-s01-082"></a>
 
@@ -1821,7 +1789,7 @@ No flags.
 
 *NodeMask*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-083:3 -->For single GPU operation, set this to zero. If there are multiple GPU nodes, set a bit to identify the node (the device's physical adapter) to which the encoder applies. Each bit in the mask corresponds to a single node. Only 1 bit may be set.<!-- d3d12-review-inline:end:video-encoding-controls:S01-083:3 --></ins>
+For single GPU operation, set this to zero. If there are multiple GPU nodes, set a bit to identify the node (the device's physical adapter) to which the <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-083:3:modified:source-4a62c9ffdd897bec-0-0 -->encoder<!-- d3d12-review-inline:end:video-encoding-controls:S01-083:3:modified:source-4a62c9ffdd897bec-0-0 --></ins> applies. Each bit in the mask corresponds to a single node. Only 1 bit may be set.
 
 *Flags*
 
@@ -1869,7 +1837,7 @@ Number of textures in the array.
 
 The array of textures.
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-122:7 -->*pSubresources*<!-- d3d12-review-inline:end:video-encoding-controls:S01-122:7 --></ins>
+*<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-122:7:modified:source-e59fbde06c47cd31-0-0 -->pSubresources<!-- d3d12-review-inline:end:video-encoding-controls:S01-122:7:modified:source-e59fbde06c47cd31-0-0 --></ins>*
 
 An array of subresource indices for the reference textures specified in ppTexture2Ds. NULL indicates that subresource 0 should be assumed for each resource.
 
@@ -1940,7 +1908,7 @@ There's no limitation to the number of DPB entries being passed in pReferenceFra
 
  **Please note that a request for an IDR frame will act as a barrier between frame references and the DPB buffer and its state might need to be flushed accordingly by the host**.
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-124:14 -->HEVC2 uses [complete temporary lists and separate active counts](video-encoding-codecs.md#family-hevc-referencelistextension); AV1 uses its [eight-slot DPB and compact resource array](video-encoding-codecs.md#family-av1), not these legacy L0/L1 structures.<!-- d3d12-review-inline:end:video-encoding-controls:S01-124:14 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-124:14:authored:migration-f79e90f23f8b562d-0 -->HEVC2 uses [complete temporary lists and separate active counts](video-encoding-codecs.md#family-hevc-referencelistextension); AV1 uses its [eight-slot DPB and compact resource array](video-encoding-codecs.md#family-av1), not these legacy L0/L1 structures.<!-- d3d12-review-inline:end:video-encoding-controls:S01-124:14:authored:migration-f79e90f23f8b562d-0 --></ins>
 
 <a id="source-s01-125"></a>
 
@@ -1966,7 +1934,7 @@ Advises about a change in D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_DESC.RateControl
 
 *D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_FLAG_SUBREGION_LAYOUT_CHANGE*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-125:10 -->Advises about a change in D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_DESC.SelectedLayoutMode or D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_DESC.FrameSubregionsLayoutData<!-- d3d12-review-inline:end:video-encoding-controls:S01-125:10 --></ins>
+Advises about a change in D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_DESC.SelectedLayoutMode or D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_DESC.<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-125:10:modified:source-00c1d0231d84737e-0-0 -->FrameSubregionsLayoutData<!-- d3d12-review-inline:end:video-encoding-controls:S01-125:10:modified:source-00c1d0231d84737e-0-0 --></ins>
 
 *D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_FLAG_REQUEST_INTRA_REFRESH*
 
@@ -1974,7 +1942,7 @@ Starts an intra-refresh session starting at this frame using the configuration i
 
 *D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_FLAG_GOP_SEQUENCE_CHANGE*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-125:14 -->Advises about a change in D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_DESC.CodecGopSequence.<!-- d3d12-review-inline:end:video-encoding-controls:S01-125:14 --></ins>
+Advises about a change in D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_DESC.<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-125:14:modified:source-88141c5a3f7514ec-0-0 -->CodecGopSequence<!-- d3d12-review-inline:end:video-encoding-controls:S01-125:14:modified:source-88141c5a3f7514ec-0-0 --></ins>.
 
 **Please note that depending on the codec, a request for reconfiguration might need to insert an IDR in the bitstream and new SPS headers**.
 
@@ -2034,7 +2002,7 @@ Indicates the parameters for the intra-refresh mode that should be used when tri
 
 2. <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-128:8 -->The usage of infinite intra-refresh is possible by requesting periodically a new wave of intra-refresh after each of them finishes.<!-- d3d12-review-inline:end:video-encoding-controls:S01-128:8 --></ins>
 
-3. <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-128:8 -->When starting an intra-refresh of N frames of duration, the hosts sets the corresponding picture control flag to start intra-refresh (kept enabled during the entire IR session) and controls the frame index between [0..N) also in the picture control structure (See IntraRefreshFrameIndex) to hint the driver about the progress about the intra refresh session.<!-- d3d12-review-inline:end:video-encoding-controls:S01-128:8 --></ins>
+3. <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-128:8:modified:vi01-intra-refresh -->When starting an intra-refresh of N frames of duration, the host sets D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_FLAG_REQUEST_INTRA_REFRESH in the sequence control flags (kept enabled during the entire IR session) and controls IntraRefreshFrameIndex between [0..N) in the picture control structure to hint the driver about the progress of the intra-refresh session.<!-- d3d12-review-inline:end:video-encoding-controls:S01-128:8:modified:vi01-intra-refresh --></ins>
 
 4. <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-128:8 -->Expected behaviour when explicitly requesting an intra refresh wave with duration N frames:<!-- d3d12-review-inline:end:video-encoding-controls:S01-128:8 --></ins>
 
@@ -2072,13 +2040,13 @@ Describes the resolution to use when encoding this frame.
 
 *SelectedLayoutMode*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-128:18 -->Indicates which layout mode is being used and hence, which union members to use in *FrameSubregionsLayoutData*.<!-- d3d12-review-inline:end:video-encoding-controls:S01-128:18 --></ins>
+Indicates which layout mode is being used and hence, which union members to use in *<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-128:18:modified:source-6b5544a402e3d5f9-0-0 -->FrameSubregionsLayoutData<!-- d3d12-review-inline:end:video-encoding-controls:S01-128:18:modified:source-6b5544a402e3d5f9-0-0 --></ins>*.
 
 **Remarks**
 
 1. <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-128:20 -->Please check support for subregion dynamic reconfiguration in D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGION_LAYOUT_RECONFIGURATION_AVAILABLE. If no support is given for this, this indicates the target subregion mode of the full encoding session and must not be changed during the encoding session. Otherwise this indicates the subregion partitioning mode used for the associated *EncodeFrame* command.<!-- d3d12-review-inline:end:video-encoding-controls:S01-128:20 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-128:21 -->*FrameSubregionsLayoutData*<!-- d3d12-review-inline:end:video-encoding-controls:S01-128:21 --></ins>
+*<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-128:21:modified:source-7764b90b4fd037d1-0-0 -->FrameSubregionsLayoutData<!-- d3d12-review-inline:end:video-encoding-controls:S01-128:21:modified:source-7764b90b4fd037d1-0-0 --></ins>*
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-128:22 -->Picture subregions layout codec-specific data. The released field is a value wrapper containing `DataSize` and codec-selected pointers; a whole-wrapper `NULL` is not a C++ argument. Modes without additional layout data do not supply a codec-specific layout payload.<!-- d3d12-review-inline:end:video-encoding-controls:S01-128:22 --></ins>
 
@@ -2263,7 +2231,7 @@ Output parameter containing how many bytes it wrote into *D3D12_VIDEO_ENCODER_CO
 
 Output parameter containing the number of subregions used to encode the current frame.
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-135:10 -->This must be coherent with the settings specified in D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_DESC.FrameSubregionsLayoutData. In other words, if number of subregions was specified, this should match that value. If other mode was used, **this is how the driver reports the final number of subregions**. If the output is a full frame, then there is only 1 subregion.<!-- d3d12-review-inline:end:video-encoding-controls:S01-135:10 --></ins>
+This must be coherent with the settings specified in D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_DESC.<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-135:10:modified:source-a6257cbf799d4e56-0-0 -->FrameSubregionsLayoutData<!-- d3d12-review-inline:end:video-encoding-controls:S01-135:10:modified:source-a6257cbf799d4e56-0-0 --></ins>. In other words, if number of subregions was specified, this should match that value. If other mode was used, **this is how the driver reports the final number of subregions**. If the output is a full frame, then there is only 1 subregion.
 
 **Remarks**
 
@@ -2345,7 +2313,7 @@ Bitstream for the result of the encoding operation.
 
 *EncoderOutputMetadata*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-139:8 -->Metadata returned by the encoder regarding the output in HW specific layout. This data needs to be resolved into a readable format using *ID3D12VideoEncodeCommandList2::ResolveEncoderOutputMetadata*.<!-- d3d12-review-inline:end:video-encoding-controls:S01-139:8 --></ins>
+Metadata returned by the encoder regarding the output in HW specific layout. This data needs to be resolved into a readable format using *<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-139:8:modified:source-7b4cafab108c7776-0-0 -->ID3D12VideoEncodeCommandList2<!-- d3d12-review-inline:end:video-encoding-controls:S01-139:8:modified:source-7b4cafab108c7776-0-0 --></ins>::ResolveEncoderOutputMetadata*.
 
 **Remarks about output resources**
 
@@ -2409,6 +2377,8 @@ Resolves the output metadata to a readable format.
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-143:1 -->![Resolved metadata layout](../images/D3D12VideoEncoding/arrayallocation-diagram.png)<!-- d3d12-review-inline:end:video-encoding-controls:S01-143:1 --></ins>
 
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-143:1:authored:vi09-slice-label -->Figure label correction: the second illustrated subregion record is “Slice 2”, not the repeated “Slice 1”. The fixed header followed by contiguous subregion records, including the final illustrated record labeled with WrittenSubregionsCount, is unchanged.<!-- d3d12-review-inline:end:video-encoding-controls:S01-143:1:authored:vi09-slice-label --></ins>
+
 **Parameters**
 
 *pInputArguments*
@@ -2422,17 +2392,6 @@ Output structure to place the readable metadata.
 <a id="control-readable-reconstruction"></a>
 
 ## Readable reconstruction
-
-<!-- d3d12-review-alert:begin:video-encoding-controls:readable-route:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Reporting readable support must
-> not remove reference-only support or hide a driver-side layout conversion.
-> All format, dimension, DPB, state and lifetime constraints still apply.
-
-<!-- d3d12-review-alert:end:video-encoding-controls:readable-route:0 -->
 
 <a id="source-s05-003"></a>
 
@@ -2456,21 +2415,14 @@ Drivers must only report `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_READABLE_RECONSTRUCTE
 
 ## Optional statistics
 
-<!-- d3d12-review-alert:begin:video-encoding-controls:qualification-Stats_Metadata:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> **Statistics qualification.** Collection, signed QP representation,
-> component counts and per-block texture meanings below are source-only hardware
-> requirements. No unprovided PSNR aggregation, rounding, saturation or precision
-> algorithm is inferred. The resolved portable records are separate from the
-> opaque encoder output. Their storage requirements must not be interchanged.
-> Where the source says a configuration is zeroed/NULL, the released value
-> wrapper is zero-initialized with a null payload pointer. It is not itself a
-> pointer-valued parameter.
-
-<!-- d3d12-review-alert:end:video-encoding-controls:qualification-Stats_Metadata:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:qualification-Stats_Metadata:0:authored:migration-a65780d4ec393d29-0 -->**Statistics qualification.** Collection, signed QP representation,
+component counts and per-block texture meanings below are source-only hardware
+requirements. No unprovided PSNR aggregation, rounding, saturation or precision
+algorithm is inferred. The resolved portable records are separate from the
+opaque encoder output. Their storage requirements must not be interchanged.
+Where the source says a configuration is zeroed/NULL, the released value
+wrapper is zero-initialized with a null payload pointer. It is not itself a
+pointer-valued parameter.<!-- d3d12-review-inline:end:video-encoding-controls:qualification-Stats_Metadata:0:authored:migration-a65780d4ec393d29-0 --></ins>
 
 <a id="source-s06-003"></a>
 
@@ -2522,7 +2474,7 @@ Associated to `D3D12_FEATURE_VIDEO_ENCODER_RESOURCE_REQUIREMENTS1`.
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S06-005:1 -->Released declaration: [`D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOURCE_REQUIREMENTS1`](video-encoding-types.md#d3d12-feature-data-video-encoder-resource-requirements1).<!-- d3d12-review-inline:end:video-encoding-controls:S06-005:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S06-005:2 -->The driver uses the optional-metadata selection to determine the output requirements (e.g The `MaxEncoderOutputMetadataBufferSize` may vary if different `OptionalMetadata` flags are enabled or disabled).<!-- d3d12-review-inline:end:video-encoding-controls:S06-005:2 --></ins>
+The driver uses <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S06-005:2:modified:source-cb7b548ae7cf18c5-0-0 -->the optional-metadata selection to determine the output requirements<!-- d3d12-review-inline:end:video-encoding-controls:S06-005:2:modified:source-cb7b548ae7cf18c5-0-0 --></ins> (e.g The `MaxEncoderOutputMetadataBufferSize` may vary if different `OptionalMetadata` flags are enabled or disabled).
 
 **Remarks**
 
@@ -2592,7 +2544,7 @@ Driver reports optional support for `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_*_METADATA
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S06-007:0 -->Released declaration: [`D3D12_VIDEO_ENCODER_ENCODEFRAME_INPUT_ARGUMENTS1`](video-encoding-types.md#d3d12-video-encoder-encodeframe-input-arguments1).<!-- d3d12-review-inline:end:video-encoding-controls:S06-007:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S06-007:1 -->Extension of `D3D12_VIDEO_ENCODER_ENCODEFRAME_INPUT_ARGUMENTS` with an additional input parameter `OptionalMetadata`.<!-- d3d12-review-inline:end:video-encoding-controls:S06-007:1 --></ins>
+Extension of `D3D12_VIDEO_ENCODER_ENCODEFRAME_INPUT_ARGUMENTS` with <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S06-007:1:modified:source-10af655d070310d7-0-0 -->an additional input parameter<!-- d3d12-review-inline:end:video-encoding-controls:S06-007:1:modified:source-10af655d070310d7-0-0 --></ins> `OptionalMetadata`.
 
 *OptionalMetadata*
 
@@ -2604,7 +2556,7 @@ Input parameter. Indicates the driver which optional metadata (if any) needs to 
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S06-011:0 -->Released declaration: [`D3D12_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS1`](video-encoding-types.md#d3d12-video-encoder-resolve-metadata-input-arguments1).<!-- d3d12-review-inline:end:video-encoding-controls:S06-011:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S06-011:1 -->Extension of `D3D12_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS` with an additional input parameter `OptionalMetadata`.<!-- d3d12-review-inline:end:video-encoding-controls:S06-011:1 --></ins>
+Extension of `D3D12_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS` with <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S06-011:1:modified:source-6a6496bed0a28a4f-0-0 -->an additional input parameter<!-- d3d12-review-inline:end:video-encoding-controls:S06-011:1:modified:source-6a6496bed0a28a4f-0-0 --></ins> `OptionalMetadata`.
 
 *OptionalMetadata*
 
@@ -2639,14 +2591,14 @@ Corresponds to the metadata associated with `D3D12_VIDEO_ENCODER_OPTIONAL_METADA
 
 When present, must be a texture with format `DXGI_FORMAT_R8_SINT` for H264, HEVC or `DXGI_FORMAT_R8_UINT` for AV1. The dimensions must correspond with the value returned by the driver in `D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOURCE_REQUIREMENTS1.EncoderOutputMetadataQPMapTextureDimensions`.
 
-<!-- d3d12-review-context:begin:video-encoding-controls:S06-013:6 -->
+<!-- d3d12-review-context:begin:video-encoding-controls:S06-013:6:modified:migration-9d477e7c8b473a75-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
 
 > For any codecs/configurations where the QP ranges can be negative, the ranges used by `pOutputQPMap` are kept in that native signed range. For example for HEVC `[0, 51]` range for 8 bit pixel depth, the range for 10 bits `[-12, 51]`, and similar for higher bit depths are all considered as-is from the contract.
 
-<!-- d3d12-review-context:end:video-encoding-controls:S06-013:6 -->
+<!-- d3d12-review-context:end:video-encoding-controls:S06-013:6:modified:migration-9d477e7c8b473a75-0 -->
 
 *pOutputSATDMap*
 
@@ -2680,22 +2632,15 @@ The contents of the resolved buffer, must be interpreted as a packed array of `W
 
 ## Subregion completion and output buffers
 
-<!-- d3d12-review-alert:begin:video-encoding-controls:qualification-SubregionNotification:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> **Subregion notification qualification.** The published per-interval
-> availability and fence signaling obligations are retained. The bounded runtime
-> support path corroborates the gating on 64-bit fence atomics, the applicable
-> DDI and kernel support. It does not demonstrate hardware cache flush correctness.
-> The final public support flag spellings place `AVAILABLE` at the end.
-> All six subregion arrays have `ExpectedSubregionCount` entries. The published
-> DDI uses arrays of handles for sizes and offsets, not one handle for each entire
-> array. The early per-subregion signal is not whole-frame completion or availability
-> of AV1 post-encode header values.
-
-<!-- d3d12-review-alert:end:video-encoding-controls:qualification-SubregionNotification:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:qualification-SubregionNotification:0:authored:migration-4cf74fa01b283b31-0 -->**Subregion notification qualification.** The published per-interval
+availability and fence signaling obligations are retained. The bounded runtime
+support path corroborates the gating on 64-bit fence atomics, the applicable
+DDI and kernel support. It does not demonstrate hardware cache flush correctness.
+The final public support flag spellings place `AVAILABLE` at the end.
+All six subregion arrays have `ExpectedSubregionCount` entries. The published
+DDI uses arrays of handles for sizes and offsets, not one handle for each entire
+array. The early per-subregion signal is not whole-frame completion or availability
+of AV1 post-encode header values.<!-- d3d12-review-inline:end:video-encoding-controls:qualification-SubregionNotification:0:authored:migration-4cf74fa01b283b31-0 --></ins>
 
 <a id="source-s04-001"></a>
 
@@ -2713,7 +2658,7 @@ The contents of the resolved buffer, must be interpreted as a packed array of `W
 
 **Remarks**
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S04-003:2 -->Driver reports `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGION_NOTIFICATION_*_AVAILABLE` to report hardware capabilities that would allow user to wait for interrupt notifications using fences.<!-- d3d12-review-inline:end:video-encoding-controls:S04-003:2 --></ins>
+Driver reports <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S04-003:2:modified:source-c6df35bd56fc59a1-0-0 -->`D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGION_NOTIFICATION_*_AVAILABLE`<!-- d3d12-review-inline:end:video-encoding-controls:S04-003:2:modified:source-c6df35bd56fc59a1-0-0 --></ins> to report hardware capabilities that would allow user to wait for interrupt notifications using fences.
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S04-003:3 -->Please note that the runtime will require the published R8 core DDI build 111 ([`D3D12DDI_SUPPORTED_0111`](video-encoding.md#d3d12ddi-supported-0111)) or higher DDI version reported by the driver and also verify [`DXGK_VIDSCHCAPS.No64BitAtomics`](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3dkmddi/ns-d3dkmddi-_dxgk_vidschcaps) is reported as `FALSE` by the driver in addition to `D3D12DDI_VIDEO_ENCODER_SUPPORT_FLAG_0104_SUBREGION_NOTIFICATION_*_AVAILABLE` to be reported by the driver, before reporting `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGION_NOTIFICATION_*_AVAILABLE`. This is a synchronization requirement for the [`FenceValueGPUVirtualAddress`](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3dukmdt/ns-d3dukmdt-_d3dddi_synchronizationobjectinfo2) of the fences, to point to an underlying 64 bit fence value and the GPU to be able to atomically signal/update it.<!-- d3d12-review-inline:end:video-encoding-controls:S04-003:3 --></ins>
 
@@ -2727,7 +2672,7 @@ The contents of the resolved buffer, must be interpreted as a packed array of `W
 
 Please note that the driver must report variations (if any) in memory usage when these flags are set in `D3D12_FEATURE_DATA_VIDEO_ENCODER_HEAP_SIZE`.
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S04-004:3 -->Before using these flags in `D3D12_VIDEO_ENCODER_HEAP_DESC` for usages such as `CreateVideoEncoderHeap` or `D3D12_FEATURE_DATA_VIDEO_ENCODER_HEAP_SIZE`, the app (and runtime will validate as well) must validate first the driver reported support for `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGION_NOTIFICATION_*_AVAILABLE` using the `ID3D12VideoDevice` object.<!-- d3d12-review-inline:end:video-encoding-controls:S04-004:3 --></ins>
+Before using <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S04-004:3:modified:source-ad63ba82d73a21a0-0-0 -->these<!-- d3d12-review-inline:end:video-encoding-controls:S04-004:3:modified:source-ad63ba82d73a21a0-0-0 --></ins> flags in `D3D12_VIDEO_ENCODER_HEAP_DESC` for usages such as `CreateVideoEncoderHeap` or `D3D12_FEATURE_DATA_VIDEO_ENCODER_HEAP_SIZE`, the app (and runtime will validate as well) must validate first the driver reported support for <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S04-004:3:modified:source-ad63ba82d73a21a0-0-1 -->`D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGION_NOTIFICATION_*_AVAILABLE`<!-- d3d12-review-inline:end:video-encoding-controls:S04-004:3:modified:source-ad63ba82d73a21a0-0-1 --></ins> using the `ID3D12VideoDevice` object.
 
 <a id="source-s04-005"></a>
 
@@ -2747,11 +2692,11 @@ Indicates how will the output buffers be passed in `D3D12_VIDEO_ENCODER_SUBREGIO
 
 *D3D12_VIDEO_ENCODER_SUBREGION_COMPRESSED_BITSTREAM_BUFFER_MODE_ARRAY_OF_BUFFERS*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S04-006:3 -->Requires `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGION_NOTIFICATION_ARRAY_OF_BUFFERS_AVAILABLE` supported.<!-- d3d12-review-inline:end:video-encoding-controls:S04-006:3 --></ins>
+Requires <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S04-006:3:modified:source-fe48524e2863d6a6-0-0 -->`D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGION_NOTIFICATION_ARRAY_OF_BUFFERS_AVAILABLE`<!-- d3d12-review-inline:end:video-encoding-controls:S04-006:3:modified:source-fe48524e2863d6a6-0-0 --></ins> supported.
 
 *D3D12_VIDEO_ENCODER_SUBREGION_COMPRESSED_BITSTREAM_BUFFER_MODE_SINGLE_BUFFER*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S04-006:5 -->Requires `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGION_NOTIFICATION_SINGLE_BUFFER_AVAILABLE` supported.<!-- d3d12-review-inline:end:video-encoding-controls:S04-006:5 --></ins>
+Requires <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S04-006:5:modified:source-1d5ee7d85229a789-0-0 -->`D3D12_VIDEO_ENCODER_SUPPORT_FLAG_SUBREGION_NOTIFICATION_SINGLE_BUFFER_AVAILABLE`<!-- d3d12-review-inline:end:video-encoding-controls:S04-006:5:modified:source-1d5ee7d85229a789-0-0 --></ins> supported.
 
 <a id="source-s04-007"></a>
 
@@ -2780,7 +2725,7 @@ The table below specifies the expectations for the app input and the driver part
 
 For all `BufferMode` modes, at the moment the driver signals completion at `ppSubregionFences[i]`, all pending writes and cache flushes to output buffers **on the byte intervals specified below** must be completed by the driver to ensure the data is accessible.
 
-<!-- d3d12-review-alert:begin:video-encoding-controls:S04-009:1 -->
+<!-- d3d12-review-alert:begin:video-encoding-controls:S04-009:1:modified:migration-0944e9d36a181fce-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -2791,9 +2736,9 @@ For all `BufferMode` modes, at the moment the driver signals completion at `ppSu
 > | `ppSubregionSizes[i]` | `[0, sizeof(UINT64)]` |
 > | `ppSubregionBitstreams[i]` | `[ppSubregionOffsets[i], ppSubregionOffsets[i] + ppSubregionSizes[i]]` |
 
-<!-- d3d12-review-alert:end:video-encoding-controls:S04-009:1 -->
+<!-- d3d12-review-alert:end:video-encoding-controls:S04-009:1:modified:migration-0944e9d36a181fce-0 -->
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S04-009:2 -->This allows the app to begin readbacks from different threads on copy queues waiting on `ppSubregionFences[i]`, while `ID3D12VideoEncodeCommandList4::EncodeFrame1` is still in execution. Once the fence wait is unblocked on the reader, the app will readback from `ppSubregionOffsets[i]` and `ppSubregionSizes[i]` respectively at the `[0, sizeof(UINT64)]` byte intervals to gather the `ReadbackOffset` and `ReadbackSize` values. Then it will kick-off a `CopyBufferRegion` operation from `ppSubregionBitstreams[i]` at the `[ReadbackOffset, ReadbackOffset + ReadbackSize]` byte interval to retrieve the subregion result.<!-- d3d12-review-inline:end:video-encoding-controls:S04-009:2 --></ins>
+This allows the app to begin readbacks from different threads on copy queues waiting on `ppSubregionFences[i]`, while <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S04-009:2:modified:source-7a5fa7efcf666d8e-0-0 -->`ID3D12VideoEncodeCommandList4::EncodeFrame1`<!-- d3d12-review-inline:end:video-encoding-controls:S04-009:2:modified:source-7a5fa7efcf666d8e-0-0 --></ins> is still in execution. Once the fence wait is unblocked on the reader, the app will readback from `ppSubregionOffsets[i]` and `ppSubregionSizes[i]` respectively at the `[0, sizeof(UINT64)]` byte intervals to gather the `ReadbackOffset` and `ReadbackSize` values. Then it will kick-off a `CopyBufferRegion` operation from `ppSubregionBitstreams[i]` at the `[ReadbackOffset, ReadbackOffset + ReadbackSize]` byte interval to retrieve the subregion result.
 
 To avoid unnecessary performance penalties, the driver must issue pending writes and cache flushes to the smallest possible memory blocks that cover the subregion data being signaled as ready. For cache flushes these can be aligned to the cache line byte size.
 
@@ -2842,7 +2787,7 @@ Array contains `ExpectedSubregionCount` fences passed by the app **to be notifie
 
 *pSubregionFenceValues*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S04-009:25 -->Array contains `ExpectedSubregionCount` UINT64 values passed by the app. `pSubregionFenceValues[i]` is the expected value the driver must use to signal the `ppSubregionFences[i]`.<!-- d3d12-review-inline:end:video-encoding-controls:S04-009:25 --></ins>
+Array contains `ExpectedSubregionCount` <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S04-009:25:modified:source-f0af356cefbeb15c-0-0 -->UINT64 values<!-- d3d12-review-inline:end:video-encoding-controls:S04-009:25:modified:source-f0af356cefbeb15c-0-0 --></ins> passed by the app. `pSubregionFenceValues[i]` is the expected value the driver must use to signal the `ppSubregionFences[i]`.
 
 <a id="source-s04-010"></a>
 
@@ -2888,7 +2833,7 @@ Depending on the value of [`DXGK_VIDSCHCAPS.No64BitAtomics`](https://learn.micro
 
 ### Feature Usage
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S04-014:0 -->The following example illustrates application use of subregion notification.<!-- d3d12-review-inline:end:video-encoding-controls:S04-014:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S04-014:0:modified:source-6e07cd9c0cf7d549-0-0 -->The following example illustrates application use of subregion notification<!-- d3d12-review-inline:end:video-encoding-controls:S04-014:0:modified:source-6e07cd9c0cf7d549-0-0 --></ins>.
 
 <a id="source-s04-015"></a>
 
@@ -2920,7 +2865,7 @@ Depending on the value of [`DXGK_VIDSCHCAPS.No64BitAtomics`](https://learn.micro
     - `ppSubregionSizes` and `ppSubregionOffsets` with `ExpectedSubregionCount` app-allocated **zeroed** buffers.
     - `ppSubregionFences/pSubregionFenceValues` with the expected fences and values to wait on.
 2. User sets `D3D12_VIDEO_ENCODER_COMPRESSED_BITSTREAM_NOTIFICATION_MODE_SUBREGIONS`, records `EncodeFrame1` and calls `ExecuteCommandLists` to kick-off the full frame encoding execution in the GPU.
-3. User launches one new threads per subregion, waiting on `ppSubregionFences[i]`, without assuming any subregion completion ordering from the CPU timeline in parallel to the GPU `EncodeFrame` execution.
+3. User launches one new <ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-style-subregion-thread:0 -->thread<!-- d3d12-review-inline:end:video-encoding-controls:weekend-style-subregion-thread:0 --></ins> per subregion, waiting on `ppSubregionFences[i]`, without assuming any subregion completion ordering from the CPU timeline in parallel to the GPU `EncodeFrame` execution.
     - On each slice reader thread:
         - When `ppSubregionFences[i]` is signaled by the driver with the `pSubregionFenceValues[i]` value, the subregion output memory is flushed and accessible, user acknowledges this notification and begins a new operation (**in parallel, without waiting for `EncodeFrame` to finish for the whole frame**) to:
         - Read `ppSubregionOffsets[i]` and `ppSubregionSizes[i]` with the reported values from the driver.
@@ -2931,20 +2876,13 @@ Depending on the value of [`DXGK_VIDSCHCAPS.No64BitAtomics`](https://learn.micro
 
 ## CPU/GPU input maps and layout resolution
 
-<!-- d3d12-review-alert:begin:video-encoding-controls:qualification-Texture_QPMap_DirtyMap_MotionVectors:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> **Input map qualification.** The per-pixel and per-block requirements
-> below preserve the published contract. The limited-distance motion search
-> percentage rule does not specify a zero-vector denominator, tie-breaking or
-> rounding rule; none is invented here. Resolving a map establishes its
-> hardware-specific representation, not an implicit barrier, queue wait or
-> permission to reuse its backing storage before its consumer completes.
-> The final picture control union is version 1 and selects HEVC2 for HEVC.
-
-<!-- d3d12-review-alert:end:video-encoding-controls:qualification-Texture_QPMap_DirtyMap_MotionVectors:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:qualification-Texture_QPMap_DirtyMap_MotionVectors:0:authored:migration-6d7bdd7209ea824a-0 -->**Input map qualification.** The per-pixel and per-block requirements
+below preserve the published contract. The limited-distance motion search
+percentage rule does not specify a zero-vector denominator, tie-breaking or
+rounding rule; none is invented here. Resolving a map establishes its
+hardware-specific representation, not an implicit barrier, queue wait or
+permission to reuse its backing storage before its consumer completes.
+The final picture control union is version 1 and selects HEVC2 for HEVC.<!-- d3d12-review-inline:end:video-encoding-controls:qualification-Texture_QPMap_DirtyMap_MotionVectors:0:authored:migration-6d7bdd7209ea824a-0 --></ins>
 
 <a id="source-s07-002"></a>
 
@@ -2952,7 +2890,7 @@ Depending on the value of [`DXGK_VIDSCHCAPS.No64BitAtomics`](https://learn.micro
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S07-002:0 -->These protocols describe the version-1 picture control additions. They do not add a QPMAP_INPUT query requirement to the supported original CPU QP map path.<!-- d3d12-review-inline:end:video-encoding-controls:S07-002:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S07-002:1 -->The CPU and GPU input protocols are:<!-- d3d12-review-inline:end:video-encoding-controls:S07-002:1 --></ins>
+The <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S07-002:1:modified:source-ce1875fd566615d6-0-0 -->CPU and GPU input protocols are<!-- d3d12-review-inline:end:video-encoding-controls:S07-002:1:modified:source-ce1875fd566615d6-0-0 --></ins>:
 
 *From inputs in CPU buffers:*
 
@@ -3241,7 +3179,7 @@ Output parameter, indicates the size of the allocation the user must make for th
 
 ### D3D12_VIDEO_ENCODER_VALIDATION_FLAGS
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S07-019:0 -->`D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT2.ValidationFlags` reports unsupported combinations of the versioned query inputs, using the [released validation flags](video-encoding-types.md#d3d12-video-encoder-validation-flags).<!-- d3d12-review-inline:end:video-encoding-controls:S07-019:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S07-019:0:modified:migration-a6038b8796ea93d5-0 -->`D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT2.ValidationFlags` reports unsupported combinations of the versioned query inputs, using the [released validation flags](video-encoding-types.md#d3d12-video-encoder-validation-flags).<!-- d3d12-review-inline:end:video-encoding-controls:S07-019:0:modified:migration-a6038b8796ea93d5-0 --></ins>
 
 <a id="source-s07-020"></a>
 
@@ -3333,7 +3271,7 @@ Output parameter. Only reported when `D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT2.
 
 *pResolutionDependentSupport*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S07-027:7 -->Output parameter. Driver fills this in for each resolution passed in `pResolutionList`. New output params in `D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOLUTION_SUPPORT_LIMITS1` for QPMap, dirty regions, motion search depend on the additional inputs to `D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT2`.<!-- d3d12-review-inline:end:video-encoding-controls:S07-027:7 --></ins>
+Output parameter. Driver fills this in for each resolution passed in `pResolutionList`. New output params in `D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOLUTION_SUPPORT_LIMITS1` for QPMap, dirty regions, motion search depend on the <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S07-027:7:modified:source-e4cb9ff6bae7bbc5-0-0 -->additional<!-- d3d12-review-inline:end:video-encoding-controls:S07-027:7:modified:source-e4cb9ff6bae7bbc5-0-0 --></ins> inputs to `D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT2`.
 
 *QPMap*
 
@@ -3351,7 +3289,7 @@ Input parameter. Intended configuration to be used for motion search.
 
 ### Input parameter layout conversions API
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S07-028:0 -->In order for the GPU to accept the `ID3D12Resource` **texture** input parameters  added in this contract in `ID3D12VideoEncodeCommandList4::EncodeFrame1`, certain memory layout conversions may need to happen before the hardware can understand the inputs, and `ID3D12VideoEncodeCommandList4::ResolveInputParamLayout` performs this conversion.<!-- d3d12-review-inline:end:video-encoding-controls:S07-028:0 --></ins>
+In order for the GPU to accept the `ID3D12Resource` **texture** input parameters  added in this <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S07-028:0:modified:source-bc3d22f4b6e4191a-0-0 -->contract<!-- d3d12-review-inline:end:video-encoding-controls:S07-028:0:modified:source-bc3d22f4b6e4191a-0-0 --></ins> in `ID3D12VideoEncodeCommandList4::EncodeFrame1`, certain memory layout conversions may need to happen before the hardware can understand the inputs, and <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S07-028:0:modified:source-bc3d22f4b6e4191a-0-1 -->`ID3D12VideoEncodeCommandList4::ResolveInputParamLayout` performs this conversion<!-- d3d12-review-inline:end:video-encoding-controls:S07-028:0:modified:source-bc3d22f4b6e4191a-0-1 --></ins>.
 
 <a id="source-s07-029"></a>
 
@@ -3361,7 +3299,7 @@ Input parameter. Intended configuration to be used for motion search.
 
 **Remarks**
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S07-029:2 -->Converts from the hardware agnostic input layouts of the maps defined in this contract, into the hardware specific opaque layouts.<!-- d3d12-review-inline:end:video-encoding-controls:S07-029:2 --></ins>
+Converts from the hardware agnostic input layouts of the maps defined in this <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S07-029:2:modified:source-b9b251811e7dabca-0-0 -->contract<!-- d3d12-review-inline:end:video-encoding-controls:S07-029:2:modified:source-b9b251811e7dabca-0-0 --></ins>, into the hardware specific opaque layouts.
 
 Input resources must be in `D3D12_RESOURCE_STATE_VIDEO_ENCODE_READ` and output resources in `D3D12_RESOURCE_STATE_VIDEO_ENCODE_WRITE` before executing this command.
 
@@ -3383,7 +3321,7 @@ Contains the input data along with the input type being resolved.
 
 *pOpaqueLayoutBuffer*
 
-Contains the resolved output to hardware specific layout. This allocation is owned by the app and must be allocated according to the value reported in` D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOLVE_INPUT_PARAM_LAYOUT.MaxResolvedBufferAllocationSize` for the input argument being resolved.
+Contains the resolved output to hardware specific layout. This allocation is owned by the app and must be allocated according to the value <ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-vi06-layout-spacing:0:preserved-repair:delimiter -->reported in `D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOLVE_INPUT_PARAM_LAYOUT.MaxResolvedBufferAllocationSize`<!-- d3d12-review-inline:end:video-encoding-controls:weekend-vi06-layout-spacing:0:preserved-repair:delimiter --></ins> for the input argument being resolved.
 
 <a id="source-s07-032"></a>
 
@@ -3476,7 +3414,7 @@ Subresources indices for when `ppMotionVectorMaps` is a texture array, `NULL` ot
 
 *ppMotionVectorMapsMetadata*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S07-035:11 -->Each 2D texture in `ppMotionVectorMapsMetadata[i]` represents the metadata for the i-th motion vector hint for each (x, y) pixel position, where `i` is in the range `[0, NumHintsPerPixel)`.<!-- d3d12-review-inline:end:video-encoding-controls:S07-035:11 --></ins>
+Each 2D texture in <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S07-035:11:modified:source-8b7011432593d7c2-0-0 -->`ppMotionVectorMapsMetadata[i]`<!-- d3d12-review-inline:end:video-encoding-controls:S07-035:11:modified:source-8b7011432593d7c2-0-0 --></ins> represents the metadata for the i-th motion vector hint for each (x, y) pixel position, where `i` is in the range `[0, NumHintsPerPixel)`.
 
 The dimension must match with the input texture frame. Each component of this 2D texture is an `DXGI_FORMAT_R8_UINT` element where `R8` holds the reference frame index in the DPB from which this motion vector **points from**. A value of `255` indicates the current motion vector must be ignored from the driver. Other value indicates current motion vector may be used by driver.
 
@@ -3599,7 +3537,7 @@ Indicates which source uses for the feature.
 
 Use with `D3D12_VIDEO_ENCODER_INPUT_MAP_SOURCE_GPU_TEXTURE`.
 
-Contains the resolved output to hardware specific layout. This allocation is owned by the app and must be allocated according to the value reported in` D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOLVE_INPUT_PARAM_LAYOUT.MaxResolvedBufferAllocationSize` for the input argument being resolved.
+Contains the resolved output to hardware specific layout. This allocation is owned by the app and must be allocated according to the value <ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-vi06-qp-spacing:0:preserved-repair:delimiter -->reported in `D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOLVE_INPUT_PARAM_LAYOUT.MaxResolvedBufferAllocationSize`<!-- d3d12-review-inline:end:video-encoding-controls:weekend-vi06-qp-spacing:0:preserved-repair:delimiter --></ins> for the input argument being resolved.
 
 *pCPUBuffer*
 
@@ -3663,7 +3601,7 @@ Indicates which source uses for the feature.
 
 Use with `D3D12_VIDEO_ENCODER_INPUT_MAP_SOURCE_GPU_TEXTURE`.
 
-Contains the resolved output to hardware specific layout. This allocation is owned by the app and must be allocated according to the value reported in` D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOLVE_INPUT_PARAM_LAYOUT.MaxResolvedBufferAllocationSize` for the input argument being resolved.
+Contains the resolved output to hardware specific layout. This allocation is owned by the app and must be allocated according to the value <ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-vi06-motion-spacing:0:preserved-repair:delimiter -->reported in `D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOLVE_INPUT_PARAM_LAYOUT.MaxResolvedBufferAllocationSize`<!-- d3d12-review-inline:end:video-encoding-controls:weekend-vi06-motion-spacing:0:preserved-repair:delimiter --></ins> for the input argument being resolved.
 
 *pCPUBuffer*
 
@@ -3673,23 +3611,16 @@ Use with `D3D12_VIDEO_ENCODER_INPUT_MAP_SOURCE_CPU_BUFFER`.
 
 ## Full- and lower-resolution frame analysis
 
-<!-- d3d12-review-alert:begin:video-encoding-controls:qualification-LowerResolution_2Pass:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> **Two-pass qualification.** The downscale, mirrored-DPB and optional-output
-> requirements below remain published hardware obligations, not measured quality
-> or performance guarantees. There is no implicit scaling in `EncodeFrame1`.
-> Allocation padding is distinct from the exactly divided active image area.
-> The final declaration takes `ID3D12VideoEncoderHeap1*`. The older full-resolution
-> `EncodeFrame` path still takes `ID3D12VideoEncoderHeap*`. Changing a heap's
-> downscale factor means creating a different heap, not mutating the old object.
-> In reconstruction requirements and examples, NULL or an allocation refers to
-> the nested `pReconstructedPicture` field, not setting an entire
-> `D3D12_VIDEO_ENCODER_RECONSTRUCTED_PICTURE` value wrapper to NULL.
-
-<!-- d3d12-review-alert:end:video-encoding-controls:qualification-LowerResolution_2Pass:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:qualification-LowerResolution_2Pass:0:authored:migration-41fbcbdef87fa7fe-0 -->**Two-pass qualification.** The downscale, mirrored-DPB and optional-output
+requirements below remain published hardware obligations, not measured quality
+or performance guarantees. There is no implicit scaling in `EncodeFrame1`.
+Allocation padding is distinct from the exactly divided active image area.
+The final declaration takes `ID3D12VideoEncoderHeap1*`. The older full-resolution
+`EncodeFrame` path still takes `ID3D12VideoEncoderHeap*`. Changing a heap's
+downscale factor means creating a different heap, not mutating the old object.
+In reconstruction requirements and examples, NULL or an allocation refers to
+the nested `pReconstructedPicture` field, not setting an entire
+`D3D12_VIDEO_ENCODER_RECONSTRUCTED_PICTURE` value wrapper to NULL.<!-- d3d12-review-inline:end:video-encoding-controls:qualification-LowerResolution_2Pass:0:authored:migration-41fbcbdef87fa7fe-0 --></ins>
 
 <a id="source-s08-001"></a>
 
@@ -3786,7 +3717,7 @@ Output parameter. Only reported when `D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT2.
 
 *D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_FRAME_ANALYSIS_AVAILABLE*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-017:2 -->This flag indicates support on the legacy path for rate control modes that involve frame analysis to optimize the bitrate usage at the cost of a slower performance. This two pass is currently done at full resolution from the `D3D12_VIDEO_ENCODER_ENCODEFRAME_INPUT_ARGUMENTS.pInputFrame` texture. On legacy encoder support queries without the `FrameAnalysis` input parameter to them, the reporting of this flag will continue to indicate support for full-resolution two pass.<!-- d3d12-review-inline:end:video-encoding-controls:S08-017:2 --></ins>
+This flag <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-017:2:modified:source-8148a9cb8ec86f99-0-0 -->indicates support on the legacy path<!-- d3d12-review-inline:end:video-encoding-controls:S08-017:2:modified:source-8148a9cb8ec86f99-0-0 --></ins> for rate control modes that involve frame analysis to optimize the bitrate usage at the cost of a slower performance. This two pass is currently done at full resolution from the `D3D12_VIDEO_ENCODER_ENCODEFRAME_INPUT_ARGUMENTS.pInputFrame` texture. On legacy encoder support queries without the `FrameAnalysis` input parameter to them, the reporting of this flag will continue to indicate support for full-resolution two pass.
 
 When this flag is already reported by the driver, further support for performing two pass at lower resolutions can be queried in `D3D12_FEATURE_DATA_VIDEO_ENCODER_RATE_CONTROL_FRAME_ANALYSIS`.
 
@@ -3810,7 +3741,7 @@ Input parameter. Indicates the downscaling ratio to be used for the two pass dow
 
 For simplicity and to keep certain format restrictions on planar formats like `DXGI_FORMAT_NV12`/`DXGI_FORMAT_P010` (e.g dimensions must be 2 aligned), etc we will require that `InputWidth`/`InputHeight` to always be exactly divisible by `2^Pow2DownscaleFactor`. The drivers must also enforce this by reporting no support in this cap where the division is not exact.
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-018:8 -->For example let `InputWidth`/`InputHeight` be the `D3D12_VIDEO_ENCODER_ENCODEFRAME_INPUT_ARGUMENTS1.pInputFrame` dimensions:<!-- d3d12-review-inline:end:video-encoding-controls:S08-018:8 --></ins>
+For example let `InputWidth`/`InputHeight` be the <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-018:8:modified:source-32615664269b4f48-0-0 -->`D3D12_VIDEO_ENCODER_ENCODEFRAME_INPUT_ARGUMENTS1.pInputFrame`<!-- d3d12-review-inline:end:video-encoding-controls:S08-018:8:modified:source-32615664269b4f48-0-0 --></ins> dimensions:
 
 | `Pow2DownscaleFactor` | `Two pass width` | `Two pass height` |
 | -------- | -------- | -------- |
@@ -3865,14 +3796,14 @@ Using external downscaling may provide better quality at a higher performance co
 > The external downscaling is explicitly kept separate from the `EncodeFrame` operation to give app more flexibility on how to perform the downscaling and how to synchronize it with the rest of the D3D12 workloads.
 As at times, video processing and video encoding happen on different HW engines, keeping this separate avoids implicit scheduling delays by having two engines tied into a single D3D12 command.
 
-<!-- d3d12-review-context:begin:video-encoding-controls:S08-019:17 -->
+<!-- d3d12-review-context:begin:video-encoding-controls:S08-019:17:modified:migration-ac99bf6b8127203c-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
 
 > Please note that to support this flag, at least one of these two must also be supported: `D3D12_VIDEO_ENCODER_SUPPORT_FLAG_READABLE_RECONSTRUCTED_PICTURE_LAYOUT_AVAILABLE` for readable reconstructed pictures or `D3D12_VIDEO_SCALE_SUPPORT_FLAG_DPB_ENCODER_RESOURCES` to support VPBlit scaling of resources with `D3D12_RESOURCE_FLAG_VIDEO_ENCODE_REFERENCE_ONLY`.
 
-<!-- d3d12-review-context:end:video-encoding-controls:S08-019:17 -->
+<!-- d3d12-review-context:end:video-encoding-controls:S08-019:17:modified:migration-ac99bf6b8127203c-0 -->
 
 **Remarks**
 
@@ -3900,7 +3831,7 @@ Disabling `D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_FRAME_ANALYSIS` will mak
 
 > Note: Changing `D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_FRAME_ANALYSIS` between frames must not trigger the app to set `D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_FLAG_RATE_CONTROL_CHANGE` (or encoder recreation) if no other rate control change happened.
 
-<!-- d3d12-review-context:begin:video-encoding-controls:S08-019:26 -->
+<!-- d3d12-review-context:begin:video-encoding-controls:S08-019:26:modified:migration-7673a42b6c74fde5-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -3908,7 +3839,7 @@ Disabling `D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_FRAME_ANALYSIS` will mak
 > Please note that if `D3D12_VIDEO_ENCODER_PICTURE_CONTROL_FLAG_USED_AS_REFERENCE_PICTURE` is set for a `EncodeFrame1` command that skips 1st pass, supporting
  `D3D12_VIDEO_ENCODER_RATE_CONTROL_FRAME_ANALYSIS_SUPPORT_FLAG_DYNAMIC_1ST_PASS_SKIP` requires the driver to also support `D3D12_VIDEO_ENCODER_RATE_CONTROL_FRAME_ANALYSIS_SUPPORT_FLAG_EXTERNAL_DPB_DOWNSCALING` (and `D3D12_VIDEO_SCALE_SUPPORT_FLAG_DPB_ENCODER_RESOURCES` if necessary for opaque reconstructed pictures) as the app must externally downscale the full resolution output reconstructed picture to keep the DPB mirrored between the two resolution streams.
 
-<!-- d3d12-review-context:end:video-encoding-controls:S08-019:26 -->
+<!-- d3d12-review-context:end:video-encoding-controls:S08-019:26:modified:migration-7673a42b6c74fde5-0 -->
 
 *D3D12_VIDEO_ENCODER_RATE_CONTROL_FRAME_ANALYSIS_SUPPORT_FLAG_DYNAMIC_DOWNSCALE_FACTOR_CHANGE_KEY_FRAME*
 
@@ -4010,11 +3941,13 @@ Please note:
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-028:4 -->![VPBlit VPblitEncodeTimeline](../images/D3D12_Video_Encoding_LowerResolution_2Pass/VPblitEncodeTimeline.png)<!-- d3d12-review-inline:end:video-encoding-controls:S08-028:4 --></ins>
 
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-028:4:authored:vi09-third-input -->Figure label corrections: the third producer input is “Input 3 Ready”, and its input-downscale work is VPI3, not the repeated “Input 2 Ready” and VPI2. These labels identify the input consumed by EF3; the depicted queue dependencies are unchanged.<!-- d3d12-review-inline:end:video-encoding-controls:S08-028:4:authored:vi09-third-input --></ins>
+
 <a id="source-s08-029"></a>
 
 ### Video Processing API
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-029:0 -->The following processing rules support external downscaling of DPB reconstructed pictures for supporting `D3D12_VIDEO_ENCODER_RATE_CONTROL_FRAME_ANALYSIS_SUPPORT_FLAG_EXTERNAL_DPB_DOWNSCALING` when driver requires `D3D12_RESOURCE_FLAG_VIDEO_ENCODE_REFERENCE_ONLY`.<!-- d3d12-review-inline:end:video-encoding-controls:S08-029:0 --></ins>
+The following <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-029:0:modified:source-d1499a69db7199c5-0-0 -->processing rules<!-- d3d12-review-inline:end:video-encoding-controls:S08-029:0:modified:source-d1499a69db7199c5-0-0 --></ins> support external downscaling of DPB reconstructed pictures for supporting `D3D12_VIDEO_ENCODER_RATE_CONTROL_FRAME_ANALYSIS_SUPPORT_FLAG_EXTERNAL_DPB_DOWNSCALING` when driver requires `D3D12_RESOURCE_FLAG_VIDEO_ENCODE_REFERENCE_ONLY`.
 
 <a id="source-s08-031"></a>
 
@@ -4022,7 +3955,7 @@ Please note:
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-031:0 -->The canonical [`D3D12_VIDEO_SCALE_SUPPORT_FLAGS`](video-decode.md#d3d12-video-scale-support-flags) declaration assigns `D3D12_VIDEO_SCALE_SUPPORT_FLAG_DPB_ENCODER_RESOURCES` the value `0x4`.<!-- d3d12-review-inline:end:video-encoding-controls:S08-031:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-031:1 -->*D3D12_VIDEO_SCALE_SUPPORT_FLAG_DPB_ENCODER_RESOURCES*<!-- d3d12-review-inline:end:video-encoding-controls:S08-031:1 --></ins>
+*<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-031:1:modified:source-a5ebc19022cd1f36-0-0 -->D3D12_VIDEO_SCALE_SUPPORT_FLAG_DPB_ENCODER_RESOURCES<!-- d3d12-review-inline:end:video-encoding-controls:S08-031:1:modified:source-a5ebc19022cd1f36-0-0 --></ins>*
 
 Indicates support for scaling resources with `D3D12_RESOURCE_FLAG_VIDEO_ENCODE_REFERENCE_ONLY`. If the DPB resources don't have this restriction, the downscaling can be performed as it was any `ID3D12Resource` (e.g with shaders, CPU, usual video processing APIs etc).
 
@@ -4032,7 +3965,7 @@ Indicates support for scaling resources with `D3D12_RESOURCE_FLAG_VIDEO_ENCODE_R
 
 **Remarks**
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-032:1 -->The following rules apply to `ID3D12VideoProcessCommandList::ProcessFrames` for this feature:<!-- d3d12-review-inline:end:video-encoding-controls:S08-032:1 --></ins>
+The following rules <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-032:1:modified:source-0c5e96a40768596e-0-0 -->apply to<!-- d3d12-review-inline:end:video-encoding-controls:S08-032:1:modified:source-0c5e96a40768596e-0-0 --></ins> `ID3D12VideoProcessCommandList::ProcessFrames` for this feature:
 
 - <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-032:2 -->`D3D12_VIDEO_SCALE_SUPPORT_FLAG_DPB_ENCODER_RESOURCES` needs to be reported for the command arguments passed to `ProcessFrames`.<!-- d3d12-review-inline:end:video-encoding-controls:S08-032:2 --></ins>
 - Only 1 input stream with `D3D12_RESOURCE_FLAG_VIDEO_ENCODE_REFERENCE_ONLY` passed to `ProcessFrames` (e.g no blending)
@@ -4048,7 +3981,7 @@ Indicates support for scaling resources with `D3D12_RESOURCE_FLAG_VIDEO_ENCODE_R
     - **Local source conflict:** the encoding source also says `DestinationRectangle` must cover the input dimensions. That destination-extent requirement is withheld because it conflicts with output-relative placement and meaningful downscaling. This does not substitute a new special-path requirement that the destination cover the full output texture; the permitted destination extent for reference-only DPB scaling needs specialist reconciliation. The separate full-output `TargetRectangle` requirement above and all other restrictions in this list remain.
     - `D3D12_VIDEO_PROCESS_INPUT_STREAM_FLAGS`, `D3D12_VIDEO_PROCESS_INPUT_STREAM_RATE` are ignored by the driver.
     - `FilterLevels` is ignored (since `D3D12_VIDEO_PROCESS_FILTER_FLAGS` are restricted in `ID3D12VideoProcessor` objects to use this feature)
-    - `D3D12_VIDEO_PROCESS_ALPHA_BLENDING.Enabled` must be `FALSE`.
+    - <ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-alpha-enable-member:0 -->`D3D12_VIDEO_PROCESS_ALPHA_BLENDING.Enable`<!-- d3d12-review-inline:end:video-encoding-controls:weekend-alpha-enable-member:0 --></ins> must be `FALSE`.
 
 - Restrictions to the `ID3D12VideoProcessor` used in `ID3D12VideoProcessCommandList::ProcessFrames` for this feature (viewed from `CreateVideoProcessor` params):
     - `D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC.AlphaFillMode` must be `D3D12_VIDEO_PROCESS_ALPHA_FILL_MODE_OPAQUE`
@@ -4056,7 +3989,7 @@ Indicates support for scaling resources with `D3D12_RESOURCE_FLAG_VIDEO_ENCODE_R
     - `D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC.FilterFlags` must be `D3D12_VIDEO_PROCESS_FILTER_FLAG_NONE`.
     - `D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC.DeinterlaceMode` must be `D3D12_VIDEO_PROCESS_DEINTERLACE_FLAG_NONE`.
     - `D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC.EnableAlphaBlending` must be `FALSE`.
-    - `D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC.LumaKey.Enabled` must be `FALSE`.
+    - <ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-luma-enable-member:0 -->`D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC.LumaKey.Enable`<!-- d3d12-review-inline:end:video-encoding-controls:weekend-luma-enable-member:0 --></ins> must be `FALSE`.
     - `D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC.EnableAutoProcessing` must be `FALSE`.
 
 - For drivers requiring texture array DPB allocations, `ID3D12VideoProcessCommandList::ProcessFrames` will allow the input/output streams to be downscaled from `{RegularSizeDPBTexArray + RegularSizeSubres}` into `{DownscaledDPBTexArray + DownscaledSubres}` in `D3D12_VIDEO_PROCESS_INPUT_STREAM` and `D3D12_VIDEO_PROCESS_OUTPUT_STREAM` arguments respectively.
@@ -4086,6 +4019,8 @@ Please note:
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-033:4 -->![VPBlit VPblitEncodeTimeline_external](../images/D3D12_Video_Encoding_LowerResolution_2Pass/VPblitEncodeTimeline_external.png)<!-- d3d12-review-inline:end:video-encoding-controls:S08-033:4 --></ins>
 
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-033:4:authored:vi09-third-input -->Figure label corrections: the third producer input is “Input 3 Ready”, and its input-downscale work is VPI3, not the repeated “Input 2 Ready” and VPI2. These labels identify the input consumed by EF3; reconstructed-picture downscaling and all depicted queue dependencies are unchanged.<!-- d3d12-review-inline:end:video-encoding-controls:S08-033:4:authored:vi09-third-input --></ins>
+
 <a id="source-s08-034"></a>
 
 ### Diagram: Feature usage with externally downscaled reconstructed picture textures and dynamic 1st pass skipping
@@ -4114,6 +4049,8 @@ Please note:
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-034:4 -->![VPBlit VPblitEncodeTimeline_external](../images/D3D12_Video_Encoding_LowerResolution_2Pass/VPblitEncodeTimeline_external_skipping.png)<!-- d3d12-review-inline:end:video-encoding-controls:S08-034:4 --></ins>
 
+<ins><!-- d3d12-review-inline:begin:video-encoding-controls:S08-034:4:authored:vi09-third-input -->Figure labels: the third producer input is “Input 3 Ready”, and its input-downscale work is VPI3. The second-frame first-pass skip, third-frame work and all depicted queue dependencies are unchanged.<!-- d3d12-review-inline:end:video-encoding-controls:S08-034:4:authored:vi09-third-input --></ins>
+
 <a id="encoding-host-usage"></a>
 
 ## Queries, annotations and host usage example
@@ -4130,7 +4067,7 @@ There must be support for using the Video Encode Command List function _SetPredi
 
 ### SetMarker
 
-There must be support for using the Video Encode Command List function _SetMarker_ for while using the encode operations defined in this API.
+There must be support for using the Video Encode Command List function _SetMarker_ <ins><!-- d3d12-review-inline:begin:video-encoding-controls:weekend-style-marker-grammar:0 -->while using<!-- d3d12-review-inline:end:video-encoding-controls:weekend-style-marker-grammar:0 --></ins> the encode operations defined in this API.
 
 <a id="source-s01-155"></a>
 
@@ -4144,7 +4081,7 @@ There must be support for capturing and storing GPU timestamps using D3D12_QUERY
 
 A host might follow the steps outlined below to use the low level D3D12 API in a basic encoding session.
 
-1. <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-157:1 -->Host queries supported codecs, profiles, maximum level, available codec features, etc. Host queries input color format support, subsampling and bit depth modes support, HW specific requirements such as memory alignment constraints, support cap flags and limits for reconstructed picture memory allocations, maximum subregions number, etc.<!-- d3d12-review-inline:end:video-encoding-controls:S01-157:1 --></ins>
+1. Host queries supported codecs, profiles, maximum level, available codec features, etc. Host queries input color format support, subsampling and bit depth modes support, HW specific <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-157:1:modified:source-fedb3ebcfb0bc347-0-0 -->requirements<!-- d3d12-review-inline:end:video-encoding-controls:S01-157:1:modified:source-fedb3ebcfb0bc347-0-0 --></ins> such as memory alignment constraints, support cap flags and limits for reconstructed picture memory allocations, maximum subregions number, etc.
 
 2. Host selects desired configuration based on (1) and queries *Encoder_Support_Flags* to check if selected configuration is supported and to read back potential additional constraints such as texture array memory layout limitations and reconstructed picture layout format limitations, optional feature flags such as dynamic resolution/rate control changes, etc
 
@@ -4154,7 +4091,7 @@ A host might follow the steps outlined below to use the low level D3D12 API in a
 
 4. *Preparation for encoding loop;* Host has input frame resources ready, allocates resources for DPB buffer and compressed output resources according to the encoder flags, alignment requirements and maximum size constraints. *Depending on available resources on physical system, the user will select a size for the in-flight sliding window of commands to fill the GPU work pipeline. This resources are instanciated/prepared at this stage.*
 
-4. <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-157:1 -->*Preparation for encoding loop;* Host prepares command submission order according to the GOP configured (taking into account B frame reordering) and fills in the picture control, reference picture control structures according to the resources allocated in previous step. At this point, the user might also pass the codec specific syntax associated to the current picture header, if any.<!-- d3d12-review-inline:end:video-encoding-controls:S01-157:1 --></ins>
+4. *Preparation for encoding loop;* Host prepares command submission order <ins><!-- d3d12-review-inline:begin:video-encoding-controls:S01-157:1:modified:source-fedb3ebcfb0bc347-1-0 -->according<!-- d3d12-review-inline:end:video-encoding-controls:S01-157:1:modified:source-fedb3ebcfb0bc347-1-0 --></ins> to the GOP configured (taking into account B frame reordering) and fills in the picture control, reference picture control structures according to the resources allocated in previous step. At this point, the user might also pass the codec specific syntax associated to the current picture header, if any.
 
 5. *Video encoding loop;* Please see diagram below that depicts *an example* of how a sequence of execution might look like as a particular example.
     * Optional step in the encoding loop: Host might be able to reconfigure some aspects of the encoding session such as resolution/subregions layout/rate control/gop pattern in the command recording. User needs to take into account the codec restrictions such as an IDR frame requirement and hence the picture management buffers flushing on resolution change, etc.

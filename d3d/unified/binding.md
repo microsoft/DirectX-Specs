@@ -16,7 +16,7 @@ There are many different types of descriptors. Shader Resource Views
 The size of a descriptor varies by hardware/driver and by object type.
 There is no guaranteed upper bound.
 
-> ![NOTE]
+> [!NOTE]
 > In practice, descriptors that reside in GPU-visible memory have historically been <= 64 bytes, though this is not a hard requirement.
 
 Applications can ask the system to translate API level definitions of
@@ -414,8 +414,6 @@ See [initial binding state](command-list-state.md#initial-bindings), [binding-ch
 <a id="table-indexing"></a>
 
 ### Table indexing and descriptor lifetime
-
-<!-- d3d12-review-alert:end:binding:N-common-resource-operation-boundary:0 -->
 
 Descriptor tables, each identifying a range in a descriptor heap, are
 bound at slots defined by the current root signature on a command list /

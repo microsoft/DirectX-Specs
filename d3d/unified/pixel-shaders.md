@@ -15,42 +15,19 @@
 
 <!-- d3d12-review-legend:end -->
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-stage:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-stage:0:authored:migration-36b1964e2a68401b-0 -->A pixel shader consumes rasterizer-produced/interpolated primitive data, computes color/depth/coverage/stencil reference outputs and may access shader resources and UAVs. [Rasterization](rasterization.md#rasterization) defines geometric coverage and sample patterns. [Pipeline state](pipeline-state.md#graphics-description) selects the program and output configuration. Shader/root/resource binding, lifetime and synchronization retain their [binding](binding.md#pipeline-compatibility), [execution](execution.md#lifetime) and [resource access](synchronization.md#barrier-access) contracts.<!-- d3d12-review-inline:end:pixel-shaders:N-stage:0:authored:migration-36b1964e2a68401b-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> A pixel shader consumes rasterizer-produced/interpolated primitive data, computes color/depth/coverage/stencil reference outputs and may access shader resources and UAVs. [Rasterization](rasterization.md#rasterization) defines geometric coverage and sample patterns. [Pipeline state](pipeline-state.md#graphics-description) selects the program and output configuration. Shader/root/resource binding, lifetime and synchronization retain their [binding](binding.md#pipeline-compatibility), [execution](execution.md#lifetime) and [resource access](synchronization.md#barrier-access) contracts.
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-stage:1:authored:migration-144213c1dd108e9a-0 -->Shared [lane/wave terminology](common-shader-internals.md#execution-terminology) and [wave capabilities](common-shader-internals.md#waves) apply. Pixel-specific quads, helper invocations, discard, ROV ordering and VRS execution are defined here. The stage supports applicable DXBC SM5.0/5.1 and DXIL SM6.x programs. This does not expose every historical profile or every instruction on every device.<!-- d3d12-review-inline:end:pixel-shaders:N-stage:1:authored:migration-144213c1dd108e9a-0 --></ins>
 
-<!-- d3d12-review-alert:end:pixel-shaders:N-stage:0 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:N-stage:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Shared [lane/wave terminology](common-shader-internals.md#execution-terminology) and [wave capabilities](common-shader-internals.md#waves) apply. Pixel-specific quads, helper invocations, discard, ROV ordering and VRS execution are defined here. The stage supports applicable DXBC SM5.0/5.1 and DXIL SM6.x programs. This does not expose every historical profile or every instruction on every device.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-stage:1 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:PC-stage-creation-owner:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The current pixel driver object creation/sizing/destruction contracts
-> are defined with [pipeline component creation](pipeline-state.md#driver-shader-objects)
-> and its [exact slot associations](pipeline-state.md#driver-object-slots).
-> They do not add application shader/state object APIs or replace this stage's
-> execution, linkage, capability or resource lifetime rules.
-
-<!-- d3d12-review-alert:end:pixel-shaders:PC-stage-creation-owner:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:PC-stage-creation-owner:0:authored:migration-e432e5f672c78327-0 -->The current pixel driver object creation/sizing/destruction contracts
+are defined with [pipeline component creation](pipeline-state.md#driver-shader-objects)
+and its [exact slot associations](pipeline-state.md#driver-object-slots).<!-- d3d12-review-inline:end:pixel-shaders:PC-stage-creation-owner:0:authored:migration-e432e5f672c78327-0 --></ins>
 
 <a id="representations"></a>
 
 ## Capabilities and representations
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-caps:0 -->
+<!-- d3d12-review-alert:begin:pixel-shaders:N-caps:0:authored:migration-235640afebf40f67-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -66,43 +43,13 @@
 > | Variable rate shading | `OPTIONS6.VariableShadingRateTier`; additional/viewport-indexed rates have separate bits |
 > | SUM combiner / mesh rate output | `OPTIONS10.VariableRateShadingSumCombinerSupported` / `MeshShaderPerPrimitiveShadingRateSupported` |
 
-<!-- d3d12-review-alert:end:pixel-shaders:N-caps:0 -->
+<!-- d3d12-review-alert:end:pixel-shaders:N-caps:0:authored:migration-235640afebf40f67-0 -->
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-caps:1 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-dxil-model:0:authored:migration-bbe6a776c3d88812-0 -->A final DXIL PS is identified by the `ps` shader model declaration and `dx.entryPoints`. Input/output signature metadata describes user attributes and signature-carried system values; private computations use typed SSA values rather than a fixed bank of DXBC temporary registers. `LoadInput` and `StoreOutput` access the declared signature elements. IsFrontFace requires a scalar 32-bit integer signature element despite HLSL `bool` spelling.<!-- d3d12-review-inline:end:pixel-shaders:N-dxil-model:0:authored:migration-bbe6a776c3d88812-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Common wave/native type and later-profile requirements do not imply that all optional targets or PS features are available. PSO shader feature validation is distinct from diagnostic coverage and from a universal guarantee about invalid program execution.
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-dxil-model:1:authored:migration-1de1796fc853f573-0 -->`SampleIndex`, `Coverage`, `InnerCoverage` and `ViewID` are obtained by their operations, not ordinary packed input signature elements. Barycentric inputs are declared in the signature but do not reserve ordinary interpolator storage. Depth and stencil reference output semantics and the early depth/stencil shader property are part of the program contract, not mutable D3D11 shader object state.<!-- d3d12-review-inline:end:pixel-shaders:N-dxil-model:1:authored:migration-1de1796fc853f573-0 --></ins>
 
-<!-- d3d12-review-alert:end:pixel-shaders:N-caps:1 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:N-dxil-model:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> A final DXIL PS is identified by the `ps` shader model declaration and `dx.entryPoints`. Input/output signature metadata describes user attributes and signature-carried system values; private computations use typed SSA values rather than a fixed bank of DXBC temporary registers. `LoadInput` and `StoreOutput` access the declared signature elements. IsFrontFace requires a scalar 32-bit integer signature element despite HLSL `bool` spelling.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-dxil-model:0 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:N-dxil-model:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `SampleIndex`, `Coverage`, `InnerCoverage` and `ViewID` are obtained by their operations, not ordinary packed input signature elements. Barycentric inputs are declared in the signature but do not reserve ordinary interpolator storage. Depth and stencil reference output semantics and the early depth/stencil shader property are part of the program contract, not mutable D3D11 shader object state.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-dxil-model:1 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:N-dxil-model:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Relevant operation families include interpolation evaluation, derivatives and sampling, discard/helper queries, resource and counter accesses, wave/quad operations and feature-qualified ray queries. The [inline ray query owner](../Raytracing.md#inline-raytracing) supplies that optional operation model. Full instruction/intrinsic behavior and encodings remain the shader appendices, not a substitute for these stage rules.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-dxil-model:2 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-dxil-model:2:authored:migration-5747b3bde7360df9-0 -->[Inline raytracing](../Raytracing.md#inline-raytracing) defines the optional ray query operation model.<!-- d3d12-review-inline:end:pixel-shaders:N-dxil-model:2:authored:migration-5747b3bde7360df9-0 --></ins>
 
 <a id="dxbc-storage"></a>
 
@@ -110,7 +57,7 @@
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-registers:0 -->The following registers are available in the ps_5_0 model:<!-- d3d12-review-inline:end:pixel-shaders:A-registers:0 --></ins>
 
-<!-- d3d12-review-alert:begin:pixel-shaders:A-registers:1 -->
+<!-- d3d12-review-alert:begin:pixel-shaders:A-registers:1:modified:migration-f1d5b1b2faed210c-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -132,16 +79,9 @@
 > | 32-bit UINT output sample mask (oMask) | 1 | w | 1 | n/a | n/a | y |
 > | 32-bit UINT stencil reference output | 1 | w | 1 | n/a | n/a | y |
 
-<!-- d3d12-review-alert:end:pixel-shaders:A-registers:1 -->
+<!-- d3d12-review-alert:end:pixel-shaders:A-registers:1:modified:migration-f1d5b1b2faed210c-0 -->
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-register-scope:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The table is the archival DXBC logical interface, not a DXIL private register limit or a D3D12 binding slot allocation. SM5.1 register spaces/ranges and [binding tiers](binding.md#binding-capabilities) govern descriptors. D3D12 does not subtract the number of RTVs from a shared API UAV slot count. Ordinary declared shader inputs remain subject to [graphics interface capacities](vertex-processing.md#geometry-interface-capacities); native/minimum-precision types do not by themselves double those slot budgets.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-register-scope:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-register-scope:0:authored:migration-9b8e45706539f865-0 -->The table is the archival DXBC logical interface, not a DXIL private register limit or a D3D12 binding slot allocation. SM5.1 register spaces/ranges and [binding tiers](binding.md#binding-capabilities) govern descriptors. D3D12 does not subtract the number of RTVs from a shared API UAV slot count. Ordinary declared shader inputs remain subject to [graphics interface capacities](vertex-processing.md#geometry-interface-capacities); native/minimum-precision types do not by themselves double those slot budgets.<!-- d3d12-review-inline:end:pixel-shaders:N-register-scope:0:authored:migration-9b8e45706539f865-0 --></ins>
 
 <a id="invocation"></a>
 
@@ -169,23 +109,9 @@ discarded anyway.<!-- d3d12-review-inline:end:pixel-shaders:A-invocation:3 --></
 
 ### Pixel quads and coarse execution
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-frequency-scope:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-frequency-scope:0:authored:migration-4ae590a8d3c35220-0 -->The baseline pixel/sample-frequency descriptions use fine 1x1 pixels. [VRS](#vrs) can shade several fine pixels as one coarse invocation while retaining fine pixel/sample coverage and depth/stencil storage. A derivative quad consists of a 2x2 set of pixel shader invocations at the applicable shading frequency, not necessarily an entire wave. Sample-frequency execution forms quads for the relevant sample index; helper invocations fill required neighboring positions.<!-- d3d12-review-inline:end:pixel-shaders:N-frequency-scope:0:authored:migration-4ae590a8d3c35220-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The baseline pixel/sample-frequency descriptions use fine 1x1 pixels. [VRS](#vrs) can shade several fine pixels as one coarse invocation while retaining fine pixel/sample coverage and depth/stencil storage. A derivative quad consists of a 2x2 set of pixel shader invocations at the applicable shading frequency, not necessarily an entire wave. Sample-frequency execution forms quads for the relevant sample index; helper invocations fill required neighboring positions.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-frequency-scope:0 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:N-frequency-scope:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Reading `SV_SampleIndex` or requesting sample-frequency input evaluation selects sample-frequency execution. Safe early culling, forced early testing and side effect rules below qualify whether covered candidates execute as visible invocations. [Pipeline statistics](counters-queries-and-predication.md#pipeline-statistics) count actual stage invocations under their canonical definitions, not simply every geometric candidate.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-frequency-scope:1 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-frequency-scope:1:authored:migration-fd416be7fb753194-0 -->Reading `SV_SampleIndex` or requesting sample-frequency input evaluation selects sample-frequency execution. Safe early culling, forced early testing and side effect rules below qualify whether covered candidates execute as visible invocations. [Pipeline statistics](counters-queries-and-predication.md#pipeline-statistics) count actual stage invocations under their canonical definitions, not simply every geometric candidate.<!-- d3d12-review-inline:end:pixel-shaders:N-frequency-scope:1:authored:migration-fd416be7fb753194-0 --></ins>
 
 <a id="sample-frequency"></a>
 
@@ -243,23 +169,9 @@ sample location (and forces sample-frequency execution). Note: Separately the [s
 of any given sample (including the current) within the pixel in terms of a delta from the pixel center, where the absolute location can
 be obtained by adding the delta to the pixel center position.<!-- d3d12-review-inline:end:pixel-shaders:A-inputs:4 --></ins>
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-input-scope:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-input-scope:0:authored:migration-c2f7c7417acb756a-0 -->The v-register input/declaration wording above is DXBC notation; DXIL representation follows the [signature/operation model](#representations). Fine pixel `SV_Position` locations follow the declared center/centroid/sample mode. Under coarse shading, [VRS interpolation](#vrs-center) supplies the applicable location. Programmable position restrictions on sample position queries and attribute-by-sample evaluation remain those of [sample pattern operations](rasterization.md#sample-shader-samplepos).<!-- d3d12-review-inline:end:pixel-shaders:N-input-scope:0:authored:migration-c2f7c7417acb756a-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The v-register input/declaration wording above is DXBC notation; DXIL representation follows the [signature/operation model](#representations). Fine pixel `SV_Position` locations follow the declared center/centroid/sample mode. Under coarse shading, [VRS interpolation](#vrs-center) supplies the applicable location. Programmable position restrictions on sample position queries and attribute-by-sample evaluation remain those of [sample pattern operations](rasterization.md#sample-shader-samplepos).
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-input-scope:0 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:N-input-scope:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `SV_PrimitiveID` follows its [producer/reset/leading-vertex contract](vertex-processing.md#primitive-id). View/layer/viewport values follow [rasterizer selection](rasterization.md#viewport-selection), not a new native support gate. `SV_ViewID` uses the existing [view execution model](vertex-processing.md#geometry-view-instancing). `SV_InnerCoverage` generation and uncertainty are [conservative rasterization](rasterization.md#conservative-innercoverage), with the [coarse packed mask extension](rasterization.md#conservative-vrs).
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-input-scope:1 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-input-scope:1:authored:migration-33edeae69b91b287-0 -->`SV_PrimitiveID` follows its [producer/reset/leading-vertex contract](vertex-processing.md#primitive-id). View/layer/viewport values follow [rasterizer selection](rasterization.md#viewport-selection), not a new native support gate. `SV_ViewID` uses the existing [view execution model](vertex-processing.md#geometry-view-instancing). `SV_InnerCoverage` generation and uncertainty are [conservative rasterization](rasterization.md#conservative-innercoverage), with the [coarse packed mask extension](rasterization.md#conservative-vrs).<!-- d3d12-review-inline:end:pixel-shaders:N-input-scope:1:authored:migration-33edeae69b91b287-0 --></ins>
 
 <a id="input-depth"></a>
 
@@ -291,8 +203,8 @@ has not been performed on the PS input Z. However, if the SRV format is float32,
 [InputCoverage](../archive/D3D11_3_FunctionalSpec.htm#generatedvalue_INPUTCOVERAGE). This is a bitfield, where bit i from the LSB indicates (with 1) if the current primitive covers sample
 i in the current pixel on the RenderTarget.<!-- d3d12-review-inline:end:pixel-shaders:A-input-coverage:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:A-input-coverage:1 -->Regardless of whether the Pixel Shader is configured to be invoked at pixel frequency or sample frequency, the first n bits in InputCoverage from the LSB
-are used to indicate primitive coverage, given an n sample per pixel RenderTarget and/or Depth/Stencil buffer is bound at the Output Merger. The rest of the bits are 0.<!-- d3d12-review-inline:end:pixel-shaders:A-input-coverage:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:A-input-coverage:1:authored:migration-d08b772ce45c5c6d-0 -->Regardless of whether the Pixel Shader is configured to be invoked at pixel frequency or sample frequency, the first n bits in InputCoverage from the LSB
+are used to indicate primitive coverage, given an n sample per pixel RenderTarget and/or Depth/Stencil buffer is bound at the Output Merger. The rest of the bits are 0.<!-- d3d12-review-inline:end:pixel-shaders:A-input-coverage:1:authored:migration-d08b772ce45c5c6d-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-input-coverage:2 -->DXBC declares InputCoverage as one input register component with constant interpolation. DXIL obtains it through the `Coverage` operation (`NotInSig`).<!-- d3d12-review-inline:end:pixel-shaders:A-input-coverage:2 --></ins>
 
@@ -300,14 +212,7 @@ The InputCoverage bitfield is not affected by depth/stencil tests, but it is AND
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-input-coverage:4 -->If no samples are covered, such as on helper pixels executed off the bounds of a primitive to fill out 2x2 pixel stamps, InputCoverage is 0.<!-- d3d12-review-inline:end:pixel-shaders:A-input-coverage:4 --></ins>
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-coverage-scope:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The ordinary fine pixel input is geometric coverage AND the applicable PSO SampleMask; four covered samples with mask `0x5` give input `0x5`, not `0xf`. [Forced-count rasterization](rasterization.md#forced-pattern-behavior), [conservative coverage](rasterization.md#conservative-inputcoverage-interaction) and [VRS packing](#vrs-sv_coverage) supply their named extensions. They do not turn an ordinary input mask into an unmasked geometric mask.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-coverage-scope:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-coverage-scope:0:authored:migration-e48b4b6e8416181b-0 -->The ordinary fine pixel input is geometric coverage AND the applicable PSO SampleMask; four covered samples with mask `0x5` give input `0x5`, not `0xf`. [Forced-count rasterization](rasterization.md#forced-pattern-behavior), [conservative coverage](rasterization.md#conservative-inputcoverage-interaction) and [VRS packing](#vrs-sv_coverage) supply their named extensions. They do not turn an ordinary input mask into an unmasked geometric mask.<!-- d3d12-review-inline:end:pixel-shaders:N-coverage-scope:0:authored:migration-e48b4b6e8416181b-0 --></ins>
 
 <a id="interpolation"></a>
 
@@ -374,29 +279,15 @@ Centroid behaves exactly as follows:
 
 - <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-centroid:2 -->(3) If no samples are covered, such as on helper pixels executed off the bounds of a primitive to fill out 2x2 pixel stamps, the attribute is evaluated as follows: If the SampleMask Rasterizer state is a subset of the samples in the pixel, then the first sample covered by the SampleMask Rasterizer State is the evaluation point. Otherwise (full SampleMask), the pixel center is the evaluation point.<!-- d3d12-review-inline:end:pixel-shaders:A-centroid:2 --></ins>
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-programmed-centroid:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-programmed-centroid:0:authored:migration-a761c30b5e7fe4ed-0 -->The full-coverage pixel center exception is retained when sample positions are programmed. In fine pixel centroid evaluation, test the applicable SampleMask-filtered coverage against the entire sample set, not merely whether all enabled samples are covered. If all sample bits are covered, use the pixel center. Otherwise choose the first covered sample in the programmed order, or use the no-covered-sample fallback above. Thus four geometric samples covered with SampleMask `0x5` do not satisfy the all-samples-covered shortcut.<!-- d3d12-review-inline:end:pixel-shaders:N-programmed-centroid:0:authored:migration-a761c30b5e7fe4ed-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The full-coverage pixel center exception is retained when sample positions are programmed. In fine pixel centroid evaluation, test the applicable SampleMask-filtered coverage against the entire sample set, not merely whether all enabled samples are covered. If all sample bits are covered, use the pixel center. Otherwise choose the first covered sample in the programmed order, or use the no-covered-sample fallback above. Thus four geometric samples covered with SampleMask `0x5` do not satisfy the all-samples-covered shortcut.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-programmed-centroid:0 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:N-programmed-centroid:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [coarse centroid rule](#vrs-centroid), [conservative center rule](rasterization.md#conservative-attribute-interpolation-interaction) and [TIR SampleMask distinction](rasterization.md#forced-pattern-behavior) remain separate cases.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-programmed-centroid:1 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-programmed-centroid:1:authored:migration-d3a6763978dc7737-0 -->The [coarse centroid rule](#vrs-centroid), [conservative center rule](rasterization.md#conservative-attribute-interpolation-interaction) and [TIR SampleMask distinction](rasterization.md#forced-pattern-behavior) remain separate cases.<!-- d3d12-review-inline:end:pixel-shaders:N-programmed-centroid:1:authored:migration-d3a6763978dc7737-0 --></ins>
 
 <a id="pull-model"></a>
 
 ## Pull model evaluation
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:A-pull:0 -->The following signatures are generic intrinsic notation (`numeric` is the input type; `attrib` identifies an interpolated input), not complete HLSL declarations.<!-- d3d12-review-inline:end:pixel-shaders:A-pull:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:A-pull:0:authored:migration-9febca66d7dde035-0 -->The following signatures are generic intrinsic notation (`numeric` is the input type; `attrib` identifies an interpolated input), not complete HLSL declarations.<!-- d3d12-review-inline:end:pixel-shaders:A-pull:0:authored:migration-9febca66d7dde035-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-pull:1 -->Attributes evaluated without use of the intrinsics defined below will be evaluated according to the specification in the previous section.<!-- d3d12-review-inline:end:pixel-shaders:A-pull:1 --></ins>
 
@@ -511,14 +402,7 @@ fU = ((float)iU)/16
 
 ## Barycentric and per-vertex inputs
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-bary-gate:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> SM6.1 barycentric inputs and `GetAttributeAtVertex` require `OPTIONS3.BarycentricsSupported`. Their ordering follows original primitives and the mesh stage exception rather than post-clip triangle replacement. Code fragments below illustrate declarations and modifiers; ellipses stand for omitted shader bodies, not executable HLSL.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-bary-gate:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-bary-gate:0:authored:migration-21c04bb7347661c2-0 -->SM6.1 barycentric inputs and `GetAttributeAtVertex` require `OPTIONS3.BarycentricsSupported`. Their ordering follows original primitives and the mesh stage exception rather than post-clip triangle replacement. Code fragments below illustrate declarations and modifiers; ellipses stand for omitted shader bodies, not executable HLSL.<!-- d3d12-review-inline:end:pixel-shaders:N-bary-gate:0:authored:migration-21c04bb7347661c2-0 --></ins>
 
 <a id="bary-system-generated-barycentric-coordinates"></a>
 
@@ -534,8 +418,8 @@ Attributes declared with the SV_Barycentrics system-generated value must be a ve
 
 The 3 values are NOT guaranteed to add up to floating-point 1.0 exactly. If it is desired for the pixel shader to ensure that the weights have this property, it can reconstruct the third coordinate per fragment by subtracting the sum of the other two from 1.0.
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:B-bary-system-generated-barycentric-coordinates:4 -->Also note, that individual barycentric weights may take on arbitrarily large or arbitrarily small values, and are not constrained to be within [0...1] range necessarily – this may happen for screen-space (non-perspective-correct) barycentric interpolants, extrapolated locations.
-For triangle primitives, all 3 weights will typically contain non-zero values, but for line primitives the third barycentric weight (e.g. myBaryWeights.z) is guaranteed to be exactly 0.0. With this definition, pixel shaders can remain agnostic to the primitive type being rasterized (i.e. they can evaluate barycentric sums using all 3 barycentric weights for both triangles and lines).<!-- d3d12-review-inline:end:pixel-shaders:B-bary-system-generated-barycentric-coordinates:4 --></ins>
+Also note, that individual barycentric weights may take on arbitrarily large or arbitrarily small values, and are not constrained to be within [0...1] range necessarily – this may happen for screen-space (non-perspective-correct) barycentric interpolants, <ins><!-- d3d12-review-inline:begin:pixel-shaders:B-bary-system-generated-barycentric-coordinates:4:modified:source-f85d1d1132ddddbb-0-0 -->extrapolated locations<!-- d3d12-review-inline:end:pixel-shaders:B-bary-system-generated-barycentric-coordinates:4:modified:source-f85d1d1132ddddbb-0-0 --></ins>.
+For triangle primitives, all 3 weights will typically contain non-zero values, but for line primitives the third barycentric weight (e.g. myBaryWeights.z) is guaranteed to be exactly 0.0. With this definition, pixel shaders can remain agnostic to the primitive type being rasterized (i.e. they can evaluate barycentric sums using all 3 barycentric weights for both triangles and lines).
 
 Implementers note: attributes declared as barycentrics will not have space reserved in the pixel shader signature storage.
 
@@ -571,7 +455,7 @@ One important exception to the above rule is triangle strips: due to the way tri
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:B-bary-barycentric-coordinate-ordering:1 --> ![Triangle-strip barycentric ordering](../images/pixel-shaders/BarycentricTriangleStrip.jpg)<!-- d3d12-review-inline:end:pixel-shaders:B-bary-barycentric-coordinate-ordering:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:B-bary-barycentric-coordinate-ordering:2 -->The first two triangles will specify their barycentric weights in the following order (corresponding to x,y,z components of the SV_Barycentrics vector):<!-- d3d12-review-inline:end:pixel-shaders:B-bary-barycentric-coordinate-ordering:2 --></ins>
+The first two triangles will specify their barycentric weights in the following order (corresponding to x,y,z components of the <ins><!-- d3d12-review-inline:begin:pixel-shaders:B-bary-barycentric-coordinate-ordering:2:modified:source-dae891b7f816c45b-0-0 -->SV_Barycentrics<!-- d3d12-review-inline:end:pixel-shaders:B-bary-barycentric-coordinate-ordering:2:modified:source-dae891b7f816c45b-0-0 --></ins> vector):
 
 Triangle 0: [x:0, y:1, z:2], 0 is the provoking vertex
 
@@ -635,14 +519,7 @@ Per-vertex attributes are never clipped, and always passed along unmodified, so 
 
 When drawing primitives with wireframe rasterizer mode (i.e., D3D12_FILL_MODE_WIREFRAME), barycentric co-ordinates follow the same order as the input vertices. This means that when drawing triangle primitives for example, where a barycentric co-ordinate in a wireframe tends to have a zero component and two non-zero ones, the 3rd component isn't necessary the zero.
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-mesh-bary:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For mesh output, the [mesh primitive-vertex order](amplification-and-mesh-shaders.md#primitive-attributes) controls barycentric components and vertex-attribute lookup. This is a stage-specific ordering contribution, not arbitrary vertex sorting by the pixel shader.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-mesh-bary:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-mesh-bary:0:authored:fragment-prefix -->For mesh output, the <!-- d3d12-review-inline:end:pixel-shaders:N-mesh-bary:0:authored:fragment-prefix --></ins><ins><!-- d3d12-review-inline:begin:pixel-shaders:GRI10:0:modified:reference -->[mesh primitive-vertex order](amplification-and-mesh-shaders.md#overview)<!-- d3d12-review-inline:end:pixel-shaders:GRI10:0:modified:reference --></ins><ins><!-- d3d12-review-inline:begin:pixel-shaders:N-mesh-bary:0:authored:fragment-suffix --> controls barycentric components and vertex-attribute lookup. This is a stage-specific ordering contribution, not arbitrary vertex sorting by the pixel shader.<!-- d3d12-review-inline:end:pixel-shaders:N-mesh-bary:0:authored:fragment-suffix --></ins>
 
 <a id="derivative-flow"></a>
 
@@ -669,14 +546,7 @@ The restriction is conservatively defined to permit some implementation flexibil
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-derivative-flow:3 -->The high level shading language compiler will attempt to emit warnings (but will not fail) when these restrictions are violated.
 Not all cases can be caught depending on how programs get compiled.<!-- d3d12-review-inline:end:pixel-shaders:A-derivative-flow:3 --></ins>
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-derivative-scope:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The primitive-varying register/control flow formulation below preserves the legacy DXBC diagnostic model. For DXIL computed values, the operative participating-lane requirement is [quad-uniform control flow](#quad-uniformity), which can still diverge across a primitive or wave. This does not permit reading an uninitialized/inactive neighboring temporary value.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-derivative-scope:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-derivative-scope:0:authored:migration-1be703b2b4084cc9-0 -->The primitive-varying register/control flow formulation below preserves the legacy DXBC diagnostic model. For DXIL computed values, the operative participating-lane requirement is [quad-uniform control flow](#quad-uniformity), which can still diverge across a primitive or wave. This does not permit reading an uninitialized/inactive neighboring temporary value.<!-- d3d12-review-inline:end:pixel-shaders:N-derivative-scope:0:authored:migration-1be703b2b4084cc9-0 --></ins>
 
 <a id="derivative-terms"></a>
 
@@ -771,14 +641,7 @@ registers is not validated or enforced in general.<!-- d3d12-review-inline:end:p
 
 ### Pixel/sample derivative quads
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-common-lod-algorithms:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> These stage-specific derivatives feed the shared [LOD/anisotropy calculation](common-shader-internals.md#lod-and-anisotropy) and [sampling/addressing precision rules](common-shader-internals.md#sampling-precision). The common texture algorithm does not change this stage's quad formation or participating-lane requirements.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-common-lod-algorithms:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-common-lod-algorithms:0:authored:migration-7a3379a09a33a648-0 -->These stage-specific derivatives feed the shared [LOD/anisotropy calculation](common-shader-internals.md#lod-and-anisotropy) and [sampling/addressing precision rules](common-shader-internals.md#sampling-precision). The common texture algorithm does not change this stage's quad formation or participating-lane requirements.<!-- d3d12-review-inline:end:pixel-shaders:N-common-lod-algorithms:0:authored:migration-7a3379a09a33a648-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-derivatives:0 -->Pixel Shaders always run in minimum 2x2 quanta to be able to support derivative calculations,
 regardless of the RenderTarget sample count. These Pixel Shader derivative calculations, used in texture filtering operations,
@@ -881,48 +744,20 @@ but it satisfies the requirements for well-defined gradient calculations on each
 since each gradient operation will only read from other lanes in the same quad.
 `QuadAny` makes it convenient to write code that preserves quad-uniform control flow.
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-quad-votes:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-quad-votes:0:authored:migration-c7b22c1c32c29064-0 -->SM6.7 `QuadAny` and `QuadAll` compare all four lanes, including helper lanes. Calls require quad-uniform flow and `WaveOps`. They are not the default helper-excluding wave-wide votes. Existing quad read operations can support older-profile lowering, but a particular compiler's fallback is not a new DXBC instruction.<!-- d3d12-review-inline:end:pixel-shaders:N-quad-votes:0:authored:migration-c7b22c1c32c29064-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> SM6.7 `QuadAny` and `QuadAll` compare all four lanes, including helper lanes. Calls require quad-uniform flow and `WaveOps`. They are not the default helper-excluding wave-wide votes. Existing quad read operations can support older-profile lowering, but a particular compiler's fallback is not a new DXBC instruction.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-quad-votes:0 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:N-later-sampling:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Implicit gradient sampling instructions retain the quad-uniform source restrictions. SM6.7 `SampleCmpLevel` supplies explicit LOD; SM6.8 `SampleCmpGrad` supplies explicit gradients, whereas `SampleCmpBias` still uses implicit gradients. These additions do not make implicit gradient evaluation in arbitrary divergent flow defined.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-later-sampling:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-later-sampling:0:authored:migration-036ffc0093dd97fa-0 -->Implicit gradient sampling instructions retain the quad-uniform source restrictions. SM6.7 `SampleCmpLevel` supplies explicit LOD; SM6.8 `SampleCmpGrad` supplies explicit gradients, whereas `SampleCmpBias` still uses implicit gradients. These additions do not make implicit gradient evaluation in arbitrary divergent flow defined.<!-- d3d12-review-inline:end:pixel-shaders:N-later-sampling:0:authored:migration-036ffc0093dd97fa-0 --></ins>
 
 <a id="outputs"></a>
 
 ## Outputs
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-om-output-consumer:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-om-output-consumer:0:authored:migration-876aeb8070e531b8-0 -->The [output merger](output-merger.md#depth-stencil) defines attachment testing and updates, [color write masks](output-merger.md#write-masks), [dual source blending](output-merger.md#dual-source-blending) and [alpha-to-coverage](output-merger.md#alpha-to-coverage). The shader output declaration, early/late, discard/helper and ROV execution contracts remain PS-owned.<!-- d3d12-review-inline:end:pixel-shaders:N-om-output-consumer:0:authored:migration-876aeb8070e531b8-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [output merger](output-merger.md#depth-stencil) defines attachment testing and updates, [color write masks](output-merger.md#write-masks), [dual source blending](output-merger.md#dual-source-blending) and [alpha-to-coverage](output-merger.md#alpha-to-coverage). The shader output declaration, early/late, discard/helper and ROV execution contracts remain PS-owned.
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:A-outputs:0:modified:migration-72d710c94761fa04-0 -->The Pixel Shader is capable of outputting up to 8 32-bit*4-component elements of data, in addition
+to an optional 32-bit float scalar depth value for the depth test.<!-- d3d12-review-inline:end:pixel-shaders:A-outputs:0:modified:migration-72d710c94761fa04-0 --></ins>
 
-<!-- d3d12-review-alert:end:pixel-shaders:N-om-output-consumer:0 -->
-
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:A-outputs:0 -->The Pixel Shader is capable of outputting up to 8 32-bit*4-component elements of data, in addition
-to an optional 32-bit float scalar depth value for the depth test.<!-- d3d12-review-inline:end:pixel-shaders:A-outputs:0 --></ins>
-
-<!-- d3d12-review-alert:begin:pixel-shaders:N-output-scope:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Color output component types follow HLSL/profile and render target compatibility. The baseline four-component register interface is not a float-only requirement. Coverage and stencil reference are scalar integer outputs, and depth is scalar float. `earlydepthstencil` lowers to the PS early depth/stencil property for DXIL, with the same pre-shader tests/updates and ignored depth/stencil export semantics in [execution control](#execution-control).
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-output-scope:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-output-scope:0:authored:migration-6d836356ddbbf001-0 -->Color output component types follow HLSL/profile and render target compatibility. The baseline four-component register interface is not a float-only requirement. Coverage and stencil reference are scalar integer outputs, and depth is scalar float. `earlydepthstencil` lowers to the PS early depth/stencil property for DXIL, with the same pre-shader tests/updates and ignored depth/stencil export semantics in [execution control](#execution-control).<!-- d3d12-review-inline:end:pixel-shaders:N-output-scope:0:authored:migration-6d836356ddbbf001-0 --></ins>
 
 <a id="output-writes"></a>
 
@@ -1017,8 +852,7 @@ comparison mode is "less" or "less or equal".
 If the shader declares the depth output as SV_DepthLessEqual, the system assumes it can enable early depth cull when the depth
 comparison mode is "greater" or "greater or equal".
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:A-conservative-depth-modes:4 -->Using SV_DepthGreaterEqual and SV_DepthLessEqual is valid with any depth mode, but the early depth cull will be disabled if the knowledge of is
-GreaterEqual/LessEqual is not compatible with the early depth cull optimization.<!-- d3d12-review-inline:end:pixel-shaders:A-conservative-depth-modes:4 --></ins>
+Using SV_DepthGreaterEqual and SV_DepthLessEqual is valid with any depth mode, but the early depth cull will be disabled if the <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-conservative-depth-modes:4:modified:GRI11 -->knowledge of GreaterEqual/LessEqual<!-- d3d12-review-inline:end:pixel-shaders:A-conservative-depth-modes:4:modified:GRI11 --></ins> is not compatible with the early depth cull optimization.
 
 <a id="conservative-depth-clamp"></a>
 
@@ -1057,9 +891,9 @@ Alpha to Coverage is disabled if this register is written in a shader.<!-- d3d12
 processed. As a result, sample N is always masked by bit N of oMask. This allows a shader to run at either sample-frequency or
 pixel-frequency with identical oMask behavior. The same rule applies to Alpha To Coverage when the shader runs at sample-frequency.<!-- d3d12-review-inline:end:pixel-shaders:A-output-mask:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:A-output-mask:2 -->If a Shader intends to write to oMask, it must be [declared](../archive/D3D11_3_FunctionalSpec.htm#inst_oMaskDCL) statically in the Shader, just as o# registers.
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:A-output-mask:2:authored:migration-12aac155839e87a5-0 -->If a Shader intends to write to oMask, it must be [declared](../archive/D3D11_3_FunctionalSpec.htm#inst_oMaskDCL) statically in the Shader, just as o# registers.
 The Shader is then assumed to always write oMask. Failure to write oMask means its contents are undefined as with any other output register
-(which may or may not cause random samples to disappear).<!-- d3d12-review-inline:end:pixel-shaders:A-output-mask:2 --></ins>
+(which may or may not cause random samples to disappear).<!-- d3d12-review-inline:end:pixel-shaders:A-output-mask:2:authored:migration-12aac155839e87a5-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-output-mask:3 -->It is valid for a Pixel Shader to not have any outputs other than oMask, such as for a z-prepass. This is similar to outputting
 nothing but using [discard](../archive/D3D11_3_FunctionalSpec.htm#inst_DISCARD), except with per-sample control.<!-- d3d12-review-inline:end:pixel-shaders:A-output-mask:3 --></ins>
@@ -1076,14 +910,7 @@ The shader specified value replaces the API-specified reference value for that i
 
 This feature is optional in both D3D12 and D3D11.3. To test for its support, check the *PSSpecifiedStencilRefSupported* boolean field of [**D3D12\_FEATURE\_DATA\_D3D12\_OPTIONS**](devices-and-capabilities.md#d3d12_feature_data_d3d12_options) using [**CheckFeatureSupport**](devices-and-capabilities.md#id3d12device-checkfeaturesupport).
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-stencil-interface:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `SV_StencilRef` is a scalar `uint` output. At pixel frequency its reference is used for the covered samples of that invocation; sample-frequency execution can provide separate values. It replaces the API reference used by stencil testing/REPLACE, not a direct unmasked write to stencil storage. Forced-early behavior follows the execution control rules below.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-stencil-interface:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-stencil-interface:0:authored:migration-b45a0d743a3219a2-0 -->`SV_StencilRef` is a scalar `uint` output. At pixel frequency its reference is used for the covered samples of that invocation; sample-frequency execution can provide separate values. It replaces the API reference used by stencil testing/REPLACE, not a direct unmasked write to stencil storage. Forced-early behavior follows the execution control rules below.<!-- d3d12-review-inline:end:pixel-shaders:N-stencil-interface:0:authored:migration-b45a0d743a3219a2-0 --></ins>
 
 <a id="unordered-access"></a>
 
@@ -1091,16 +918,9 @@ This feature is optional in both D3D12 and D3D11.3. To test for its support, che
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-uav-intro:0 -->Pixel shaders can perform applicable loads, stores, counter accesses and atomics through UAVs. This does not expose compute thread group shared memory or a group execution rendezvous to a pixel shader. [Binding](binding.md#descriptor-tables) and [typed UAV format support](formats.md#typed-uav-loads) remain canonical; [general memory/atomic semantics](memory-model.md#memory-consistency) are separate from PS execution masking.<!-- d3d12-review-inline:end:pixel-shaders:A-uav-intro:0 --></ins>
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-memory-eligibility:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-memory-eligibility:0:authored:migration-9bfa2ce77d639be5-0 -->PS has no visible HLSL thread group, group shared allocation or group execution rendezvous. Stage eligibility is:<!-- d3d12-review-inline:end:pixel-shaders:N-memory-eligibility:0:authored:migration-9bfa2ce77d639be5-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> PS has no visible HLSL thread group, group shared allocation or group execution rendezvous. Stage eligibility is:
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-memory-eligibility:0 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:N-memory-eligibility:1 -->
+<!-- d3d12-review-alert:begin:pixel-shaders:N-memory-eligibility:1:authored:migration-fd53879b8822efbb-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -1115,25 +935,11 @@ This feature is optional in both D3D12 and D3D11.3. To test for its support, che
 > | SM6.8 `Barrier(UAVResource object, uint SemanticFlags)` | Supported for a UAV object without group semantic flags; restricts the affected memory to that resource |
 > | Node record overload | Not a PS form |
 
-<!-- d3d12-review-alert:end:pixel-shaders:N-memory-eligibility:1 -->
+<!-- d3d12-review-alert:end:pixel-shaders:N-memory-eligibility:1:authored:migration-fd53879b8822efbb-0 -->
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-memory-eligibility:2 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-memory-eligibility:2:authored:migration-470fac30b6e12f1f-0 -->For both SM6.8 PS forms, `GROUP_SCOPE` and `GROUP_SYNC` are not permitted. `DEVICE_SCOPE` requires UAV memory or a UAV object; semantic flags zero provide only the specified per-invocation ordering, not inter-invocation visibility. Explicit group shared/node memory kind bits are not valid PS kinds. Their removal from the special `ALL_MEMORY` mask does not legalize arbitrary kind masks. Flags must be statically resolvable. SM6.8 `Barrier(ALL_MEMORY, DEVICE_SCOPE)` must not be confused with the legacy `AllMemoryBarrier()` lowering, which includes TGSM fencing.<!-- d3d12-review-inline:end:pixel-shaders:N-memory-eligibility:2:authored:migration-470fac30b6e12f1f-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For both SM6.8 PS forms, `GROUP_SCOPE` and `GROUP_SYNC` are not permitted. `DEVICE_SCOPE` requires UAV memory or a UAV object; semantic flags zero provide only the specified per-invocation ordering, not inter-invocation visibility. Explicit group shared/node memory kind bits are not valid PS kinds. Their removal from the special `ALL_MEMORY` mask does not legalize arbitrary kind masks. Flags must be statically resolvable. SM6.8 `Barrier(ALL_MEMORY, DEVICE_SCOPE)` must not be confused with the legacy `AllMemoryBarrier()` lowering, which includes TGSM fencing.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-memory-eligibility:2 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:N-memory-eligibility:3 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [shared fence/coherence semantics](memory-model.md#shader-barriers) remain separate. These eligibility rules do not supply a group rendezvous, cross-invocation progress guarantee or command list resource barrier.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-memory-eligibility:3 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-memory-eligibility:3:authored:migration-a8a10b73136302d2-0 -->The [shared fence/coherence semantics](memory-model.md#shader-barriers) remain separate. These eligibility rules do not supply a group rendezvous, cross-invocation progress guarantee or command list resource barrier.<!-- d3d12-review-inline:end:pixel-shaders:N-memory-eligibility:3:authored:migration-a8a10b73136302d2-0 --></ins>
 
 <a id="uav-only"></a>
 
@@ -1152,8 +958,8 @@ to execute at. The size cannot come from the dimensions of the UAV, since in gen
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-execution-control:0 -->To improve the ability to achieve deterministic output for shaders performing write operations to [Unordered Access Views](binding.md#buffer-uav) (UAVs),
 it is important for an application to be able to have predictable control over how many Pixel Shader invocations are invoked which are permitted to write to UAVs.<!-- d3d12-review-inline:end:pixel-shaders:A-execution-control:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:A-execution-control:1 -->When depth/stencil testing is being used, some hardware is able to pull the depth/stencil test before PS invocation when it knows the Pixel Shader
-is not going to affect the result of the depth/stencil test. This saves executing the depth/stencil test unnecessarily, without affecting functional behavior.<!-- d3d12-review-inline:end:pixel-shaders:A-execution-control:1 --></ins>
+When depth/stencil testing is being used, some hardware is able to pull the depth/stencil test before PS invocation when it knows the Pixel Shader
+is not going to affect the result of the depth/stencil test. This saves executing the <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-execution-control:1:modified:GRI07 -->Pixel Shader<!-- d3d12-review-inline:end:pixel-shaders:A-execution-control:1:modified:GRI07 --></ins> unnecessarily, without affecting functional behavior.
 
 If a Pixel Shader has any UAVs declared for access, the decision about whether to run the PS or not based on depth/stencil must be under the control of the application.
 
@@ -1227,7 +1033,7 @@ when helper or discarded pixels access UAVs.<!-- d3d12-review-inline:end:pixel-s
 a helper lane.  Helper lanes are nonvisible pixels that are executing due to gradient operations or discarded pixels.
 IsHelperLane() returns false for all visible pixels in a pixel shader and it returns false for all other shader stages.<!-- d3d12-review-inline:end:pixel-shaders:H-query:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:H-query:1 -->On supported earlier DXIL profiles, the compiler supplies a software fallback for IsHelperLane().<!-- d3d12-review-inline:end:pixel-shaders:H-query:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:H-query:1:modified:source-67a0576366e8fcae-0-0 -->On supported earlier DXIL profiles, the compiler supplies a software fallback for IsHelperLane()<!-- d3d12-review-inline:end:pixel-shaders:H-query:1:modified:source-67a0576366e8fcae-0-0 --></ins>.
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:H-query:2 -->When using the default helper-excluding wave intrinsics in pixel shaders, you can end up with undefined results for certain
 values in helper lanes.  This can lead to problems, like undefined screen-space derivatives or unintentional infinite loops (hangs),
@@ -1311,14 +1117,7 @@ set in the blob part DFCC_FeatureInfo (FourCC SFI0).
 
 The device must include helper lanes in all wave operations in pixel shaders that have `WaveOpsIncludeHelperLanes` attribute specified.
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-wave-helper-default:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> By default wave operations exclude helpers. `[WaveOpsIncludeHelperLanes]` extends participation/lifetime of existing helpers as specified above. It does not make their resource writes or discarded outputs visible and does not activate new helpers. Quad-vote/read operations retain their separate all-quad-lane requirements.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-wave-helper-default:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-wave-helper-default:0:authored:migration-1fb4c8ef7cf9ab75-0 -->By default wave operations exclude helpers. `[WaveOpsIncludeHelperLanes]` extends participation/lifetime of existing helpers as specified above. It does not make their resource writes or discarded outputs visible and does not activate new helpers. Quad-vote/read operations retain their separate all-quad-lane requirements.<!-- d3d12-review-inline:end:pixel-shaders:N-wave-helper-default:0:authored:migration-1fb4c8ef7cf9ab75-0 --></ins>
 
 <a id="rovs"></a>
 
@@ -1360,23 +1159,9 @@ Objects, and are only allowed in the Pixel Shader:<!-- d3d12-review-inline:end:p
 - `RasterizerOrderedTexture2DArray`
 - `RasterizerOrderedTexture3D`
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-rov-contract:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-rov-contract:0:authored:fragment-prefix -->ROVs require `OPTIONS.ROVsSupported`<!-- d3d12-review-inline:end:pixel-shaders:N-rov-contract:0:authored:fragment-prefix --></ins><ins><!-- d3d12-review-inline:begin:pixel-shaders:SG3:0:modified:punctuation -->.<!-- d3d12-review-inline:end:pixel-shaders:SG3:0:modified:punctuation --></ins><ins><!-- d3d12-review-inline:begin:pixel-shaders:N-rov-contract:0:authored:fragment-middle --> PSO creation validates the shader's requirement. They use ordinary UAV resources/descriptors with shader-declared rasterizer ordering. DXBC marks ordered UAV declarations<!-- d3d12-review-inline:end:pixel-shaders:N-rov-contract:0:authored:fragment-middle --></ins><ins><!-- d3d12-review-inline:begin:pixel-shaders:SG3:1:modified:punctuation -->.<!-- d3d12-review-inline:end:pixel-shaders:SG3:1:modified:punctuation --></ins><ins><!-- d3d12-review-inline:begin:pixel-shaders:N-rov-contract:0:authored:fragment-suffix --> DXIL resource properties carry the ordered requirement. Accesses through ordered declarations must honor the same overlap contract.<!-- d3d12-review-inline:end:pixel-shaders:N-rov-contract:0:authored:fragment-suffix --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> ROVs require `OPTIONS.ROVsSupported`; PSO creation validates the shader's requirement. They use ordinary UAV resources/descriptors with shader-declared rasterizer ordering, not a separate D3D12 CreatePixelShader or ROV state object. DXBC marks ordered UAV declarations; DXIL resource properties carry the ordered requirement. Accesses through ordered declarations must honor the same overlap contract.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-rov-contract:0 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:N-rov-contract:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The guarantee is scoped to overlapping PS invocations of the same draw. It is not a general inter-draw resource barrier or an ordering guarantee for arbitrary nonoverlapping coordinates/ordinary UAV accesses. Under [VRS](#vrs-raster-order-views), interlock granularity remains fine pixel/sample based. Helpers/discarded invocations still obey PS side effect suppression.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-rov-contract:1 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-rov-contract:1:authored:migration-3ad1bb61672501df-0 -->The guarantee is scoped to overlapping PS invocations of the same draw. It is not a general inter-draw resource barrier or an ordering guarantee for arbitrary nonoverlapping coordinates/ordinary UAV accesses. Under [VRS](#vrs-raster-order-views), interlock granularity remains fine pixel/sample based. Helpers/discarded invocations still obey PS side effect suppression.<!-- d3d12-review-inline:end:pixel-shaders:N-rov-contract:1:authored:migration-3ad1bb61672501df-0 --></ins>
 
 <a id="vrs"></a>
 
@@ -1386,14 +1171,7 @@ Objects, and are only allowed in the Pixel Shader:<!-- d3d12-review-inline:end:p
 
 ### VRS capability and combiner types
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-options6-owner:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> VRS capability fields are reported in [`D3D12_FEATURE_DATA_D3D12_OPTIONS6`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options6).
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-options6-owner:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-options6-owner:0:authored:migration-dd3ae6bc0580ef4a-0 -->VRS capability fields are reported in [`D3D12_FEATURE_DATA_D3D12_OPTIONS6`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options6).<!-- d3d12-review-inline:end:pixel-shaders:N-options6-owner:0:authored:migration-dd3ae6bc0580ef4a-0 --></ins>
 
 ```cpp
 typedef enum D3D12_VARIABLE_SHADING_RATE_TIER
@@ -1429,7 +1207,7 @@ typedef enum D3D12_SHADING_RATE_COMBINER
 
 ### Coarse size and MSAA support
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-model:0 -->Coarse shading extends supersampling-with-MSAA into the opposite, “coarse pixel”, direction, by adding a new concept of coarse shading. This is where shading can be performed at a frequency coarser than a pixel. That is to say, a group of pixels can be shaded as a single unit and the result is then broadcast to all samples in the group.<!-- d3d12-review-inline:end:pixel-shaders:V-model:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-model:0:modified:source-5824c27da68804cf-0-0 -->Coarse shading<!-- d3d12-review-inline:end:pixel-shaders:V-model:0:modified:source-5824c27da68804cf-0-0 --></ins> extends supersampling-with-MSAA into the opposite, “coarse pixel”, direction, by adding a new concept of coarse shading. This is where shading can be performed at a frequency coarser than a pixel. That is to say, a group of pixels can be shaded as a single unit and the result is then broadcast to all samples in the group.
 
 A coarse shading API allows apps to specify the number of pixels that belong to a shaded group. The coarse pixel size can be varied after the render target is allocated. So, different portions of the screen or different draw passes can have different subsampling rates.
 
@@ -1440,9 +1218,9 @@ Following is a table describing which MSAA level is supported with which coarse 
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-model:4 -->There exists a 2x4 cap and not 4x2 for 2x MSAA due to the supported MSAA/coarse size combinations.<!-- d3d12-review-inline:end:pixel-shaders:V-model:4 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-model:5 -->For what is exposed by Tiers 1 and 2, and in the tiered feature, there is no coarse-pixel-size-and-sample-count combination where hardware must track more than 16 samples per pixel shader invocation. For illustration purposes those are halftone-shaded above.<!-- d3d12-review-inline:end:pixel-shaders:V-model:5 --></ins>
+For what is exposed by Tiers 1 and 2, and in the <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-model:5:modified:source-c3e2d8c1c78d29ad-0-0 -->tiered<!-- d3d12-review-inline:end:pixel-shaders:V-model:5:modified:source-c3e2d8c1c78d29ad-0-0 --></ins> feature, there is no coarse-pixel-size-and-sample-count combination where hardware must track more than 16 samples per pixel shader invocation. For illustration purposes those are halftone-shaded above.
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-vrs-msaa-matrix:0 -->
+<!-- d3d12-review-alert:begin:pixel-shaders:N-vrs-msaa-matrix:0:authored:migration-d90637e3929b463b-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -1454,26 +1232,19 @@ Following is a table describing which MSAA level is supported with which coarse 
 > | 4 | 1x2, 2x1, 2x2 | none |
 > | 8 or 16 | none | none |
 
-<!-- d3d12-review-alert:end:pixel-shaders:N-vrs-msaa-matrix:0 -->
+<!-- d3d12-review-alert:end:pixel-shaders:N-vrs-msaa-matrix:0:authored:migration-d90637e3929b463b-0 -->
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-vrs-msaa-matrix:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Fine 1x1 execution is separate from coarse rate support. The sixteen-samples-per-coarse-invocation ceiling is necessary, not sufficient: for example, 4x2 at 2x MSAA is not supported although its product is sixteen. Tier/feature fallbacks and forced-fine cases still apply.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-vrs-msaa-matrix:1 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-vrs-msaa-matrix:1:authored:migration-28592566f59ca069-0 -->Fine 1x1 execution is separate from coarse rate support. The sixteen-samples-per-coarse-invocation ceiling is necessary, not sufficient: for example, 4x2 at 2x MSAA is not supported although its product is sixteen. Tier/feature fallbacks and forced-fine cases still apply.<!-- d3d12-review-inline:end:pixel-shaders:N-vrs-msaa-matrix:1:authored:migration-28592566f59ca069-0 --></ins>
 
 <a id="vrs-tiering"></a>
 
 ### Tiers and capabilities
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-tiers:0 -->Two variable rate shading tiers are exposed, with separate capability flags.<!-- d3d12-review-inline:end:pixel-shaders:V-tiers:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-tiers:0:modified:source-b7c68c742ce68c3d-0-0 -->Two variable rate shading tiers are exposed, with separate capability flags<!-- d3d12-review-inline:end:pixel-shaders:V-tiers:0:modified:source-b7c68c742ce68c3d-0-0 --></ins>.
 
 Features for each tier are described in greater detail below the table.
 
-<!-- d3d12-review-alert:begin:pixel-shaders:V-tiers:2 -->
+<!-- d3d12-review-alert:begin:pixel-shaders:V-tiers:2:modified:migration-38d55a32ce3242f1-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -1494,7 +1265,7 @@ Features for each tier are described in greater detail below the table.
 > | SampleMask may be something other than full mask when coarse pixel shading is used | N | Y |
 > | Pull model can be used when coarse pixel shading is used | N | Y |
 
-<!-- d3d12-review-alert:end:pixel-shaders:V-tiers:2 -->
+<!-- d3d12-review-alert:end:pixel-shaders:V-tiers:2:modified:migration-38d55a32ce3242f1-0 -->
 
 #### Tier 1
 * Shading rate can only be specified on a per-draw-basis; nothing more granular than that
@@ -1539,7 +1310,7 @@ This is the simplest mechanism for setting the shading rate, available on Tier 1
 
 Values for this state are expressed through the enumeration D3D12_SHADING_RATE.
 
-##### Coarse pixel size support
+#### Coarse pixel size support
 The shading rates 1x1, 1x2, 2x1 and 2x2 can be requested on all tiers.
 
 There is a cap, AdditionalShadingRatesSupported, to indicate whether 2x4, 4x2, and 4x4 are available on the device.
@@ -1550,16 +1321,16 @@ There is a cap, AdditionalShadingRatesSupported, to indicate whether 2x4, 4x2, a
 
 On Tier 2 and higher, pixel shading rate can be specified by a screen-space image.
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-image:1 -->The screen-space image allows the app to create an “LOD mask” image indicating regions of varying quality, such as areas which will be covered by motion blur, depth-of-field blur, transparent objects, or HUD UI elements. The resolution of the image is in macroblocks, not the resolution of the render target. In other words, the subsampling data is specified at a granularity of 8x8, 16x16 or 32x32 pixel tiles as indicated by the VRS tile size.<!-- d3d12-review-inline:end:pixel-shaders:V-image:1 --></ins>
+The screen-space image allows the app to create an “LOD mask” image indicating regions of varying quality, such as areas which will be covered by motion blur, depth-of-field blur, transparent objects, or HUD UI elements. The resolution of the image is in macroblocks, not the resolution of the render target. In other words, the subsampling data is specified at a granularity of 8x8<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-image:1:modified:source-7ba66acede55ffd2-0-0 -->, 16x16 or 32x32<!-- d3d12-review-inline:end:pixel-shaders:V-image:1:modified:source-7ba66acede55ffd2-0-0 --></ins> pixel tiles as indicated by the VRS tile size.
 
-##### Tile size
+#### Tile size
 The app can query an API to know the supported VRS tile size for its device.
 
 Tiles are square, and the size refers to the tile’s width or height in texels.
 
 If the hardware does not support Tier 2 variable rate shading, the capability query for the tile size will yield 0.
 
-<!-- d3d12-review-alert:begin:pixel-shaders:V-image:6 -->
+<!-- d3d12-review-alert:begin:pixel-shaders:V-image:6:modified:migration-d69702139bffbcd5-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -1569,9 +1340,9 @@ If the hardware does not support Tier 2 variable rate shading, the capability qu
 > * 16
 > * 32
 
-<!-- d3d12-review-alert:end:pixel-shaders:V-image:6 -->
+<!-- d3d12-review-alert:end:pixel-shaders:V-image:6:modified:migration-d69702139bffbcd5-0 -->
 
-##### Screen space image size
+#### Screen space image size
 For a render target of size {rtWidth, rtHeight}, using a given tile size called VRSTileSize, the screen space image that will cover it is of dimensions
 
 ```
@@ -1584,9 +1355,9 @@ To look up the (x,y) co-ordinate of a tile that corresponds to a particular loca
 
 If the screen space image is larger than it needs to be for a given render target, the extra portions at the right and/or bottom are not used.
 
-If the screen space image is too small for a given render target, any attempted read from the image beyond its actual extents yields a default shading rate of 1x1. Since the screenspace image’s top left (0, 0) is locked to the render-target’s top left (0, 0) and “reading beyond the render-target extents” means reading too-great of values for x and y.
+If the screen space image is too small for a given render target, any attempted read from the image beyond its actual extents yields a default shading rate of 1x1.
 
-##### Format, layout, resource properties
+#### Format, layout, resource properties
 The format of this surface is a single-channel 8-bit surface (DXGI_FORMAT_R8_UINT).
 
 The resource is dimension TEXTURE2D.
@@ -1617,10 +1388,10 @@ The resource’s heap type cannot be UPLOAD or READBACK.
 
 The resource cannot be SIMULTANEOUS_ACCESS. The resource is not allowed to be cross-adapter.
 
-##### Data
+#### Data
 Each byte of the screen space image corresponds to a value of the D3D12_SHADING_RATE enum.
 
-##### Resource state
+#### Resource state
 A resource needs to be transitioned into a read-only state when used as a screen-space image. A read-only state, D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE, is defined for this purpose.
 
 Validation of shading rate image resource state occurs at Draw time. In other words, resources need to be in SHADING_RATE_SOURCE state when a Draw is executed that has the shading rate image set.
@@ -1629,24 +1400,17 @@ When a resource is passed as an argument to RSSetShadingRateImage, it can be in 
 
 An image resource is transitioned out of SHADING_RATE_SOURCE to become writable again.
 
-##### Setting the image
+#### Setting the image
 The screen-space image for specifying shader rate is set on the command list.
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-image:32 -->A resource used by a draw as its shading rate source cannot simultaneously be read or written from any shader stage. Merely recording the setter does not prohibit preparing the resource earlier.<!-- d3d12-review-inline:end:pixel-shaders:V-image:32 --></ins>
 
 A *null* screen-space image can be set for specifying shader rate. This has the effect of 1x1 being consistently used as contribution from the screen-space image. The screen-space image can initially be considered set to *null*.
 
-##### Promotion and Decay
+#### Promotion and Decay
 A screen-space image resource does not have any special implications with respect to promotion or decay.
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-image-enhanced:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For enhanced barriers, use `D3D12_BARRIER_LAYOUT_SHADING_RATE_SOURCE` with `D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE` and the applicable `D3D12_BARRIER_SYNC_PIXEL_SHADING` synchronization. The [layout/access/creation restrictions](synchronization.md#layout-transitions) and [draw access timing](synchronization.md#barrier-access) apply. Changing the binding is not a barrier and the required source layout/access applies when a draw uses the image.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-image-enhanced:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-image-enhanced:0:authored:migration-f947615f0f588b7e-0 -->For enhanced barriers, use `D3D12_BARRIER_LAYOUT_SHADING_RATE_SOURCE` with `D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE` and the applicable `D3D12_BARRIER_SYNC_PIXEL_SHADING` synchronization. The [layout/access/creation restrictions](synchronization.md#layout-transitions) and [draw access timing](synchronization.md#barrier-access) apply. Changing the binding is not a barrier and the required source layout/access applies when a draw uses the image.<!-- d3d12-review-inline:end:pixel-shaders:N-image-enhanced:0:authored:migration-f947615f0f588b7e-0 --></ins>
 
 <a id="vrs-primitive"></a>
 
@@ -1661,12 +1425,12 @@ Setting SV_ShadingRate is permitted from VS, GS or MS stages. It is not permitte
 Applications are only permitted to set SV_ShadingRate from the MS (mesh shader) stage if the MeshShaderPerPrimitiveShadingRateSupported cap is TRUE. If an application tries to set SV_ShadingRate from a mesh shader and the MeshShaderPerPrimitiveShadingRateSupported cap is FALSE, the rendering behavior is undefined.
 
 > #### Remark
-> The MeshShaderPerPrimitiveShadingRateSupported cap was added in a Windows release after the initial release of variable rate shading went out. With this in mind, the runtime does not strictly validate setting of MS per-primitive shading rates against the cap because that could mean an application-breaking change. Instead, SDK layers produces a softer-than-error message if the application tries to set a per-primitive shading rate from MS but the cap does not permit it.
+> The MeshShaderPerPrimitiveShadingRateSupported cap was added in a Windows release after the initial release of variable rate shading went out. With this in mind, the runtime does not strictly validate setting of MS per-primitive shading rates against the cap because that could mean an application-breaking change. Instead, SDK layers <ins><!-- d3d12-review-inline:begin:pixel-shaders:GRI11:2:modified:grammar -->produce<!-- d3d12-review-inline:end:pixel-shaders:GRI11:2:modified:grammar --></ins> a softer-than-error message if the application tries to set a per-primitive shading rate from MS but the cap does not permit it.
 
 If a VS, GS or MS sets SV_ShadingRate but no per-primitive contribution is enabled through the combiners, the semantic-setting has no effect.
 If no value for SV_ShadingRate is specified per-primitive, a shading rate value of 1x1 is assumed as the per-primitive contribution.
 
-##### Interaction with View Instancing
+#### Interaction with View Instancing
 Applications can output SV_ShadingRate in a view-dependent manner. To put it another way: if an application outputs different SV_ShadingRates for different values of SV_ViewID, the resulting view instances have different per-primitive shading rates.
 
 <a id="vrs-combiners"></a>
@@ -1679,7 +1443,7 @@ The various sources of shading rate are applied in sequence using this diagram.
 
 Each pair of A and B is combined using a combiner.
 
-<!-- d3d12-review-alert:begin:pixel-shaders:V-combiners:3 -->
+<!-- d3d12-review-alert:begin:pixel-shaders:V-combiners:3:modified:migration-0763efc5e5f8adf6-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -1688,26 +1452,19 @@ Each pair of A and B is combined using a combiner.
 > * If a geometry shader or mesh shader is used, shading rate can be specified through that.
 > * If a geometry shader or mesh shader is not used, the shading rate is specified by the provoking vertex.
 
-<!-- d3d12-review-alert:end:pixel-shaders:V-combiners:3 -->
+<!-- d3d12-review-alert:end:pixel-shaders:V-combiners:3:modified:migration-0763efc5e5f8adf6-0 -->
 
-##### List of combiners
-<!-- d3d12-review-alert:begin:pixel-shaders:V-combiners:5 -->
+#### List of combiners
+The following combiners are supported. Using a Combiner (C) and two inputs (A and B):
+* Passthrough. C.xy = A.xy
+* Override. C.xy = B.xy
+* Higher quality. C.xy = min(A.xy, B.xy)
+* Lower quality. C.xy = max(A.xy, B.xy)
+* Apply cost B relative to A. C.xy = min(maxRate, A.xy + B.xy), also called "sum"
 
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> The following combiners are supported. Using a Combiner (C) and two inputs (A and B):
-> * Passthrough. C.xy = A.xy
-> * Override. C.xy = B.xy
-> * Higher quality. C.xy = min(A.xy, B.xy)
-> * Lower quality. C.xy = max(A.xy, B.xy)
-> * Apply cost B relative to A. C.xy = min(maxRate, A.xy + B.xy), also called "sum"
->
-> where *maxRate* is the largest permitted per-axis logarithmic shading rate on the device. This would be
-> * D3D12_AXIS_SHADING_RATE_2X (i.e., a value of 1), if AdditionalShadingRatesSupported is false
-> * D3D12_AXIS_SHADING_RATE_4X (i.e., a value of 2), if AdditionalShadingRatesSupported is true
-
-<!-- d3d12-review-alert:end:pixel-shaders:V-combiners:5 -->
+where *maxRate* is the largest permitted <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-combiners:5:modified:source-4a2d35d55e871aa5-0-0 -->per-axis logarithmic shading rate<!-- d3d12-review-inline:end:pixel-shaders:V-combiners:5:modified:source-4a2d35d55e871aa5-0-0 --></ins> on the device. This would be
+* D3D12_AXIS_SHADING_RATE_2X (i.e., a value of 1), if AdditionalShadingRatesSupported is false
+* D3D12_AXIS_SHADING_RATE_4X (i.e., a value of 2), if AdditionalShadingRatesSupported is true
 
 Combiners operate on the x and y D3D12_AXIS_SHADING_RATEs of the coarse pixel separately, not the enum value as a whole. For example, when evaluating the MIN of 1X2 and 2X1, the result is 1x1.
 
@@ -1719,30 +1476,16 @@ If the source to a combiner is a D3D12_AXIS_SHADING_RATE which is not allowed in
 
 If the output of a combiner does not correspond to a shading rate supported on the platform, the result is sanitized to a shading rate that is supported.
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-combiners:11 -->Application usage of the "sum" combiner is only permitted when the VariableRateShadingSumCombinerSupported capability is TRUE. Using the "sum" combiner when the VariableRateShadingSumCombinerSupported is FALSE means undefined rendering behavior.<!-- d3d12-review-inline:end:pixel-shaders:V-combiners:11 --></ins>
+Application usage of the "sum" combiner is only permitted when the VariableRateShadingSumCombinerSupported capability is TRUE. <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-combiners:11:modified:source-fe8d37bdaf3ce979-0-0 -->Using<!-- d3d12-review-inline:end:pixel-shaders:V-combiners:11:modified:source-fe8d37bdaf3ce979-0-0 --></ins> the "sum" combiner when the VariableRateShadingSumCombinerSupported is FALSE means undefined rendering behavior.
 
 > ##### Remark
-> The VariableRateShadingSumCombinerSupported cap was added in a Windows release after the initial release of variable rate shading went out. With this in mind, the runtime does not strictly validate usage of the combiner against the cap because that could mean an application-breaking change. Instead, SDK layers produces a softer-than-error message if the SUM combiner is used but the cap does not permit it.
+> The VariableRateShadingSumCombinerSupported cap was added in a Windows release after the initial release of variable rate shading went out. With this in mind, the runtime does not strictly validate usage of the combiner against the cap because that could mean an application-breaking change. Instead, SDK layers <ins><!-- d3d12-review-inline:begin:pixel-shaders:GRI11:3:modified:grammar -->produce<!-- d3d12-review-inline:end:pixel-shaders:GRI11:3:modified:grammar --></ins> a softer-than-error message if the SUM combiner is used but the cap does not permit it.
 
 On variable rate shading Tier 1 devices, using combiners other than PASSTHROUGH is not categorically an API error. The choice of combiners won't however, do anything too interesting on those devices since you can only set one shading rate source- the command list one.
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-combiner-state:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-combiner-state:0:authored:migration-00f32425c95df54c-0 -->`Combiners[0]` combines command and primitive; `Combiners[1]` combines that result and image. Inputs `A.xy` and `B.xy` are logarithmic per-axis exponents, not packed enum values or physical dimensions: X is `rate >> 2`, Y is `rate & 3`. For example, MIN(1x2,2x1) is 1x1, and SUM(2x1,1x2) is 2x2.<!-- d3d12-review-inline:end:pixel-shaders:N-combiner-state:0:authored:migration-00f32425c95df54c-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `Combiners[0]` combines command and primitive; `Combiners[1]` combines that result and image. Inputs `A.xy` and `B.xy` are logarithmic per-axis exponents, not packed enum values or physical dimensions: X is `rate >> 2`, Y is `rate & 3`. For example, MIN(1x2,2x1) is 1x1, and SUM(2x1,1x2) is 2x2.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-combiner-state:0 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:N-combiner-state:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Source/result normalization above describes shader/image contributions and supported coarse size combinations. It does not legalize an invalid API enumeration or guarantee how retail execution treats invalid API arguments. The exact initial/reset/ClearState/PSO/bundle rules belong to [shading rate command list state](command-list-state.md#shading-rate).
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-combiner-state:1 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-combiner-state:1:authored:migration-823a52433d64b5bf-0 -->Source/result normalization above describes shader/image contributions and supported coarse size combinations. It does not legalize an invalid API enumeration or guarantee how retail execution treats invalid API arguments. The exact initial/reset/ClearState/PSO/bundle rules belong to [shading rate command list state](command-list-state.md#shading-rate).<!-- d3d12-review-inline:end:pixel-shaders:N-combiner-state:1:authored:migration-823a52433d64b5bf-0 --></ins>
 
 <a id="vrs-query"></a>
 
@@ -1775,7 +1518,7 @@ A pixel shader fails compilation if it inputs SV_ShadingRate and also uses sampl
 
 When coarse pixel shading is used, depth and stencil and coverage are always computed and emitted at the full sample resolution.
 
-<!-- d3d12-review-context:begin:pixel-shaders:V-depth:1 -->
+<!-- d3d12-review-context:begin:pixel-shaders:V-depth:1:modified:migration-214e569e4ef7a643-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -1783,7 +1526,7 @@ When coarse pixel shading is used, depth and stencil and coverage are always com
 > ### Remark: Reading depth from pixel shaders
 > When SV_Position.z is read from a pixel shader, the value read is an interpolated position value. This value may differ from the corresponding depth buffer contents. See [input depth requirements](#input-depth). Reading SV_Position.z from a pixel shader does not affect coarse shading.
 
-<!-- d3d12-review-context:end:pixel-shaders:V-depth:1 -->
+<!-- d3d12-review-context:end:pixel-shaders:V-depth:1:modified:migration-214e569e4ef7a643-0 -->
 
 #### Export of Depth and Stencil
 If a pixel shader exports depth or stencil (for example, by writing SV_Depth or SV_StencilRef) then shading occurs at fine rate. That is to say, coarse shading is disabled.
@@ -1794,14 +1537,14 @@ If a pixel shader exports depth or stencil (for example, by writing SV_Depth or 
 
 For all tiers, it is expected that if a shading rate is requested, and it is supported on the device-and-MSAA-level-combination together with the relevant rendering feature areas, then that is the shading rate delivered by the hardware.
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-grid-interpolation:1 -->A requested shading rate means a shading rate computed as an output of the combiners (see [combiners](#vrs-combiners)).<!-- d3d12-review-inline:end:pixel-shaders:V-grid-interpolation:1 --></ins>
+A requested shading rate means a shading rate computed as an output of the combiners (see <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-grid-interpolation:1:modified:source-ce7c276b72f46c54-0-0 -->[combiners](#vrs-combiners)<!-- d3d12-review-inline:end:pixel-shaders:V-grid-interpolation:1:modified:source-ce7c276b72f46c54-0-0 --></ins>).
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-grid-interpolation:2 -->A supported shading rate is 1x1, 1x2, 2x1, or 2x2 in a rendering operation where the sample count is less than or equal to four. If the *AdditionalShadingRatesSupported* cap is true, then 2x4, 4x2, 4x4 are also supported shading rates for some sample counts (see [coarse size support table](#vrs-support)). On some VRS Tier 1 platforms, coarse shading is not guaranteed in certain situations (see [feature tiering](#vrs-tiering)).<!-- d3d12-review-inline:end:pixel-shaders:V-grid-interpolation:2 --></ins>
 
 ### Positioning of the Coarse Pixel Grid
 When coarse pixel shading is used, the exact positioning of the coarse pixel grid (i.e., relative to the top left of the render target) may vary across different platforms.
 
-<!-- d3d12-review-context:begin:pixel-shaders:V-grid-interpolation:5 -->
+<!-- d3d12-review-context:begin:pixel-shaders:V-grid-interpolation:5:modified:migration-1ba8c5c55f0643f5-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -1809,14 +1552,14 @@ When coarse pixel shading is used, the exact positioning of the coarse pixel gri
 >### Remark
 > This is reminiscent of how the positioning of the 2x2 rasterizer quad stamp grid may vary across platforms.
 
-<!-- d3d12-review-context:end:pixel-shaders:V-grid-interpolation:5 -->
+<!-- d3d12-review-context:end:pixel-shaders:V-grid-interpolation:5:modified:migration-1ba8c5c55f0643f5-0 -->
 
 ### VRS Tiles
 On Tier 2 platforms, there is the notion of a "VRS Tile". VRS tile size determines
 * The width and height of the render target area described by one texel of the screenspace image; it is likely to affect the size of the screenspace image an application will want to allocate
 * The width and height of the region of a target having uniform shading rate when drawing one primitive
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-grid-interpolation:8 -->Because of this, "VRS tile size" is synonymous with "shading rate image tile size". For information on this queryable quantity, see [Tile size](#vrs-image).<!-- d3d12-review-inline:end:pixel-shaders:V-grid-interpolation:8 --></ins>
+Because of this, "VRS tile size" is synonymous with "shading rate image tile size". For information on this <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-grid-interpolation:8:modified:source-fa2870cadd00b68b-0-0 -->queryable quantity, see [Tile size](#vrs-image)<!-- d3d12-review-inline:end:pixel-shaders:V-grid-interpolation:8:modified:source-fa2870cadd00b68b-0-0 --></ins>.
 
 An application may specify shading rates through the screenspace image or per-primitive or any type of combiners thereof, but it is not possible to have more than one shading rate used within the same VRS tile for one primitive.
 
@@ -1850,7 +1593,7 @@ SV_Position is always interpolated at center of the coarse pixel region.
 #### Centroid
 When coarse pixel shading is used with MSAA, for each fine pixel there will still be writes to the full number of samples allocated for the target’s MSAA level. So, the centroid interpolation location will consider all samples for fine pixels within coarse pixels. That being said, the centroid interpolation location is defined as the first covered sample, in increasing order of sample index. The sample’s effective coverage is and-ed with the corresponding bit of the rasterizer state SampleMask.
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-grid-interpolation:26 -->There is an ordering of sample indices within a coarse pixel. It's the same as the ordering of sample indices in the coverage mask. See [packed coverage order](#vrs-sv_coverage) for information on this.<!-- d3d12-review-inline:end:pixel-shaders:V-grid-interpolation:26 --></ins>
+There is an ordering of sample indices within a coarse pixel. It's the same as the ordering of sample indices in the coverage mask. See <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-grid-interpolation:26:modified:source-fac2999242ee988b-0-0 -->[packed coverage order](#vrs-sv_coverage)<!-- d3d12-review-inline:end:pixel-shaders:V-grid-interpolation:26:modified:source-fac2999242ee988b-0-0 --></ins> for information on this.
 
 > ### Note
 >
@@ -1891,13 +1634,13 @@ The table below describes the interpretation of EvaluateAttributeSnapped’s off
 |4x2                |{\[-32, 31\], \[-16, 15\]}  |{64, 32}                  |{6, 5}                        |{0000000000xxxxxx, 00000000000xxxxx}|
 |4x4                |{\[-32, 31\], \[-32, 31\]}  |{64, 64}                  |{6, 6}                        |{0000000000xxxxxx, 0000000000xxxxxx}|
 
-The tables below are a guide for conversion to from the fixed-point to decimal and fractional representation. The first usable bit in the binary mask is the sign bit, and the rest of the binary mask comprise the numerical portion.
+The tables below are a guide for <ins><!-- d3d12-review-inline:begin:pixel-shaders:GRI11:4:modified:grammar -->conversion from fixed-point to decimal and fractional representation<!-- d3d12-review-inline:end:pixel-shaders:GRI11:4:modified:grammar --></ins>. The first usable bit in the binary mask is the sign bit, and the rest of the binary mask comprise the numerical portion.
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-grid-interpolation:41 -->The four-bit conversion used by fine pixels is repeated here alongside the wider coarse pixel conversions.<!-- d3d12-review-inline:end:pixel-shaders:V-grid-interpolation:41 --></ins>
 
 For four-bit values:
 
-<!-- d3d12-review-alert:begin:pixel-shaders:V-grid-interpolation:43 -->
+<!-- d3d12-review-alert:begin:pixel-shaders:V-grid-interpolation:43:modified:migration-a62b9b5b5a070ccb-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -1921,7 +1664,7 @@ For four-bit values:
 > |         0110 |0.375f    |6 / 16      |
 > |         0111 |0.4375f   |7 / 16      |
 
-<!-- d3d12-review-alert:end:pixel-shaders:V-grid-interpolation:43 -->
+<!-- d3d12-review-alert:end:pixel-shaders:V-grid-interpolation:43:modified:migration-a62b9b5b5a070ccb-0 -->
 
 For five-bit values:
 
@@ -2043,9 +1786,9 @@ If SV_Coverage is declared as a shader input or output on Tier 1, coarse pixel s
 
 The SV_Coverage semantic is usable with coarse pixel shading on Tier 2 and reflects which samples of an MSAA target are being written.
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-samples-coverage:5 -->When coarse pixel shading is used— allowing multiple source pixels to comprise a coarse pixel— the coverage mask represents all samples in that coarse pixel.<!-- d3d12-review-inline:end:pixel-shaders:V-samples-coverage:5 --></ins>
+When coarse pixel shading is used— allowing multiple source pixels to comprise a <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-samples-coverage:5:modified:source-d4f4f92d841f12de-0-0 -->coarse pixel<!-- d3d12-review-inline:end:pixel-shaders:V-samples-coverage:5:modified:source-d4f4f92d841f12de-0-0 --></ins>— the coverage mask represents all samples <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-samples-coverage:5:modified:source-d4f4f92d841f12de-0-1 -->in that coarse pixel<!-- d3d12-review-inline:end:pixel-shaders:V-samples-coverage:5:modified:source-d4f4f92d841f12de-0-1 --></ins>.
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-samples-coverage:6 -->Given coarse pixel shading’s compatibility with MSAA, the number of coverage bits required to be specified can vary. For example, with a 4x MSAA resource using D3D12_SHADING_RATE_2X2, each coarse pixel will write to four fine pixels, and each fine pixel has four samples. This means each coarse pixel will write to a total of 4 * 4 = 16 samples.<!-- d3d12-review-inline:end:pixel-shaders:V-samples-coverage:6 --></ins>
+Given coarse pixel shading’s compatibility with MSAA, the number of coverage bits required to be specified can vary. For example, with a 4x MSAA resource using <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-samples-coverage:6:modified:source-2b6f64f49120bb56-0-0 -->D3D12_SHADING_RATE_2X2<!-- d3d12-review-inline:end:pixel-shaders:V-samples-coverage:6:modified:source-2b6f64f49120bb56-0-0 --></ins>, each coarse pixel will write to four fine pixels, and each fine pixel has four samples. This means each coarse pixel will write to a total of 4 * 4 = 16 samples.
 
 The following table indicates how many coverage bits are needed for each combination of coarse pixel size and MSAA level.
 
@@ -2085,14 +1828,7 @@ TIR is not supported when subsampling is used.
 #### Raster Order Views
 ROV interlocks are specified as operating at fine pixel granularity. If shading is performed per sample then interlocks are operating at sample granularity.
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-vrs-conservative:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> [Conservative/VRS rasterization](rasterization.md#conservative-vrs) defines full/zero fine pixel masks, packed inner coverage and the conservative centroid-as-center override. Those geometric masks feed the [PS input coverage](#input-coverage) and [packed consumption](#vrs-sv_coverage) above.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-vrs-conservative:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-vrs-conservative:0:authored:migration-5dfa94d2a2148ac1-0 -->[Conservative/VRS rasterization](rasterization.md#conservative-vrs) defines full/zero fine pixel masks, packed inner coverage and the conservative centroid-as-center override. Those geometric masks feed the [PS input coverage](#input-coverage) and [packed consumption](#vrs-sv_coverage) above.<!-- d3d12-review-inline:end:pixel-shaders:N-vrs-conservative:0:authored:migration-5dfa94d2a2148ac1-0 --></ins>
 
 <a id="vrs-encodings"></a>
 
@@ -2137,7 +1873,7 @@ As a convenience, there is also:
 #define D3D12_GET_COARSE_SHADING_RATE_Y_AXIS(y) ((y) & 3 )
 ```
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:V-rate-encoding:7 -->which can be used to dissect and understand SV_ShadingRate.<!-- d3d12-review-inline:end:pixel-shaders:V-rate-encoding:7 --></ins>
+which can be used to dissect and understand <ins><!-- d3d12-review-inline:begin:pixel-shaders:V-rate-encoding:7:modified:source-72a2b686bde1a504-0-0 -->SV_ShadingRate<!-- d3d12-review-inline:end:pixel-shaders:V-rate-encoding:7:modified:source-72a2b686bde1a504-0-0 --></ins>.
 
 > #### Remarks
 >
@@ -2162,49 +1898,21 @@ void RSSetShadingRate(
 
 #### Behavior
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-set-rate-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Sets the command level base rate and two combiners. The [sequential per-axis combination](#vrs-combiners), supported rate/MSAA combinations and tier/capability requirements apply. Defaults, NULL-combiner interpretation, bundle inheritance/leakage, ClearState and unchanged-across-PSO behavior follow [canonical shading rate state](command-list-state.md#shading-rate). This is non-predicatable state setting, permitted on DIRECT command lists and bundles, including inside render passes.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-set-rate-behavior:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-set-rate-behavior:0:authored:migration-044220d0d83f7ff5-0 -->Sets the command level base rate and two combiners. The [sequential per-axis combination](#vrs-combiners), supported rate/MSAA combinations and tier/capability requirements apply. Defaults, NULL-combiner interpretation, bundle inheritance/leakage, ClearState and unchanged-across-PSO behavior follow [canonical shading rate state](command-list-state.md#shading-rate). This is non-predicatable state setting, permitted on DIRECT command lists and bundles, including inside render passes.<!-- d3d12-review-inline:end:pixel-shaders:N-set-rate-behavior:0:authored:migration-044220d0d83f7ff5-0 --></ins>
 
 <a id="rssetshadingrate-parameters"></a>
 
 #### Parameters
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-set-rate-parameters:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-set-rate-parameters:0:authored:migration-0de657ffecbeff04-0 -->`baseShadingRate` is a `D3D12_SHADING_RATE` value selecting the command level contribution.<!-- d3d12-review-inline:end:pixel-shaders:N-set-rate-parameters:0:authored:migration-0de657ffecbeff04-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `baseShadingRate` is a `D3D12_SHADING_RATE` value selecting the command level contribution.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-set-rate-parameters:0 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:N-set-rate-parameters:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `combiners` is optional. If non-NULL, it points to exactly two `D3D12_SHADING_RATE_COMBINER` elements (`D3D12_RS_SET_SHADING_RATE_COMBINER_COUNT`): first command/primitive, then image. NULL sets both to PASSTHROUGH rather than retaining the previous pair. The [SUM capability](#vrs-combiners) is independent of `AdditionalShadingRatesSupported`.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-set-rate-parameters:1 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-set-rate-parameters:1:authored:migration-f6cdb66ca659a548-0 -->`combiners` is optional. If non-NULL, it points to exactly two `D3D12_SHADING_RATE_COMBINER` elements (`D3D12_RS_SET_SHADING_RATE_COMBINER_COUNT`): first command/primitive, then image. NULL sets both to PASSTHROUGH rather than retaining the previous pair. The [SUM capability](#vrs-combiners) is independent of `AdditionalShadingRatesSupported`.<!-- d3d12-review-inline:end:pixel-shaders:N-set-rate-parameters:1:authored:migration-f6cdb66ca659a548-0 --></ins>
 
 <a id="rssetshadingrate-validation"></a>
 
 #### Return values and validation
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-set-rate-validation:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns no value. Invalid rate/combiner enumeration values and unsupported requested rates violate the API contract; checked validation diagnoses them, which is not a general retail sanitization guarantee. SUM without its capability has the explicitly undefined rendering/soft-diagnostic behavior above. PS input/shader combinations retain their separate compile/PSO validation.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-set-rate-validation:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-set-rate-validation:0:authored:migration-a57f23e703287674-0 -->Returns no value. Invalid rate/combiner enumeration values and unsupported requested rates violate the API contract; checked validation diagnoses them, which is not a general retail sanitization guarantee. SUM without its capability has the explicitly undefined rendering/soft-diagnostic behavior above. PS input/shader combinations retain their separate compile/PSO validation.<!-- d3d12-review-inline:end:pixel-shaders:N-set-rate-validation:0:authored:migration-a57f23e703287674-0 --></ins>
 
 <a id="rssetshadingrateimage"></a>
 
@@ -2224,49 +1932,21 @@ void RSSetShadingRateImage(
 
 #### Behavior
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-set-image-behavior:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-set-image-behavior:0:authored:migration-e47729c2cb6dfe33-0 -->Sets the optional screen-space shading rate image; requires VRS Tier 2. The [complete image resource/heap/format/dimension/state rules](#vrs-image) apply. Source state/layout is required when a draw uses the image, not merely when the setter is recorded. The second combiner controls whether the image contributes; default PASSTHROUGH ignores it.<!-- d3d12-review-inline:end:pixel-shaders:N-set-image-behavior:0:authored:migration-e47729c2cb6dfe33-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Sets the optional screen-space shading rate image; requires VRS Tier 2. The [complete image resource/heap/format/dimension/state rules](#vrs-image) apply. Source state/layout is required when a draw uses the image, not merely when the setter is recorded. The second combiner controls whether the image contributes; default PASSTHROUGH ignores it.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-set-image-behavior:0 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:N-set-image-behavior:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The call is non-predicatable state setting on DIRECT command lists and bundles, permitted inside render passes. Lifetime, reset and inheritance follow [command list state](command-list-state.md#shading-rate) and [resource lifetime](execution.md#lifetime).
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-set-image-behavior:1 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-set-image-behavior:1:authored:migration-b307a1f24bbc5586-0 -->The call is non-predicatable state setting on DIRECT command lists and bundles, permitted inside render passes. Lifetime, reset and inheritance follow [command list state](command-list-state.md#shading-rate) and [resource lifetime](execution.md#lifetime).<!-- d3d12-review-inline:end:pixel-shaders:N-set-image-behavior:1:authored:migration-b307a1f24bbc5586-0 --></ins>
 
 <a id="rssetshadingrateimage-parameters"></a>
 
 #### Parameters
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-set-image-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `shadingRateImage` points to the resource, or NULL for a 1x1 contribution everywhere. `OPTIONS6.ShadingRateImageTileSize` determines image/target mapping. Missing/OOB image texels contribute 1x1 before combiners. They do not force the final rate to 1x1. Oversized right/bottom image areas are unused.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-set-image-parameters:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-set-image-parameters:0:authored:migration-82e91b413349726c-0 -->`shadingRateImage` points to the resource, or NULL for a 1x1 contribution everywhere. `OPTIONS6.ShadingRateImageTileSize` determines image/target mapping. Missing/OOB image texels contribute 1x1 before combiners. They do not force the final rate to 1x1. Oversized right/bottom image areas are unused.<!-- d3d12-review-inline:end:pixel-shaders:N-set-image-parameters:0:authored:migration-82e91b413349726c-0 --></ins>
 
 <a id="rssetshadingrateimage-validation"></a>
 
 #### Return values and validation
 
-<!-- d3d12-review-alert:begin:pixel-shaders:N-set-image-validation:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns no value. Resource dimensions, format, flags, heap and capability requirements are checked where applicable; draw time state validation is separate. An invalid resource is not guaranteed to be silently replaced by a NULL image. The image must remain alive through all uses under the existing lifetime rules.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-set-image-validation:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-set-image-validation:0:authored:migration-5a8284c4d999a957-0 -->Returns no value. Resource dimensions, format, flags, heap and capability requirements are checked where applicable; draw time state validation is separate. An invalid resource is not guaranteed to be silently replaced by a NULL image. The image must remain alive through all uses under the existing lifetime rules.<!-- d3d12-review-inline:end:pixel-shaders:N-set-image-validation:0:authored:migration-5a8284c4d999a957-0 --></ins>
 
 <a id="driver-hardware"></a>
 
@@ -2327,16 +2007,9 @@ A handle to the resource that contains the shading rate image.
 
 #### Current VRS state representations
 
-<!-- d3d12-review-alert:begin:pixel-shaders:VR-current-roles:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:VR-current-roles:0:authored:migration-a8e60ba68bc111c7-0 -->Only shading rate selection participates in [runtime bypass](execution.md#work-command-handles). Image binding retains ordinary driver handles in both tables.<!-- d3d12-review-inline:end:pixel-shaders:VR-current-roles:0:authored:migration-a8e60ba68bc111c7-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Only shading rate selection participates in [runtime bypass](execution.md#work-command-handles). Image binding retains ordinary driver handles in both tables.
-
-<!-- d3d12-review-alert:end:pixel-shaders:VR-current-roles:0 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:VR-current-roles:1 -->
+<!-- d3d12-review-alert:begin:pixel-shaders:VR-current-roles:1:authored:migration-3ea8603e9c74e7e9-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -2348,7 +2021,7 @@ A handle to the resource that contains the shading rate image.
 > | `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108::pfnRSSetShadingRateImage` | `PFND3D12DDI_RS_SET_SHADING_RATE_IMAGE_0062` | [RSSetShadingRateImage](#rssetshadingrateimage) |
 > | `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114::pfnRSSetShadingRateImage` | `PFND3D12DDI_RS_SET_SHADING_RATE_IMAGE_0062` | [RSSetShadingRateImage](#rssetshadingrateimage) |
 
-<!-- d3d12-review-alert:end:pixel-shaders:VR-current-roles:1 -->
+<!-- d3d12-review-alert:end:pixel-shaders:VR-current-roles:1:authored:migration-3ea8603e9c74e7e9-0 -->
 
 <a id="d3d12ddi-shading-rate-0062"></a>
 <a id="d3d12ddi-shading-rate-combiner-0062"></a>
@@ -2386,22 +2059,8 @@ typedef VOID ( APIENTRY* PFND3D12DDI_RS_SET_SHADING_RATE_IMAGE_0062 )(
     D3D12DDI_HRESOURCE hShadingRateImage);
 ```
 
-<!-- d3d12-review-alert:begin:pixel-shaders:VR-rate-values:0 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:VR-rate-values:0:authored:migration-e7ab67fb97b5b266-0 -->The driver rate and combiner enums use the API numeric encodings.<!-- d3d12-review-inline:end:pixel-shaders:VR-rate-values:0:authored:migration-e7ab67fb97b5b266-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The driver rate and combiner enums use the API numeric encodings.
-
-<!-- d3d12-review-alert:end:pixel-shaders:VR-rate-values:0 -->
-
-<!-- d3d12-review-alert:begin:pixel-shaders:VR-rate-values:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The driver captures both combiner values during the call. A null `Combiners` pointer selects two `PASSTHROUGH` values, so the driver cannot assume a materialized default array.
-
-<!-- d3d12-review-alert:end:pixel-shaders:VR-rate-values:1 -->
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:VR-rate-values:1:authored:migration-058c926e0b0d3910-0 -->The driver captures both combiner values during the call. A null `Combiners` pointer selects two `PASSTHROUGH` values, so the driver cannot assume a materialized default array.<!-- d3d12-review-inline:end:pixel-shaders:VR-rate-values:1:authored:migration-058c926e0b0d3910-0 --></ins>
 
 

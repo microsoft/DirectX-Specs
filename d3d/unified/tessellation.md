@@ -15,18 +15,9 @@
 
 <!-- d3d12-review-legend:end -->
 
-<!-- d3d12-review-alert:begin:tessellation:PC-stage-creation-owner:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The current hull/domain driver object creation/sizing/destruction contracts
-> are defined with [pipeline component creation](pipeline-state.md#driver-shader-objects)
-> and its [exact slot associations](pipeline-state.md#driver-object-slots).
-> They do not add application shader/state object APIs or replace this stage's
-> execution, linkage, capability or resource lifetime rules.
-
-<!-- d3d12-review-alert:end:tessellation:PC-stage-creation-owner:0 -->
+<ins><!-- d3d12-review-inline:begin:tessellation:PC-stage-creation-owner:0:authored:migration-bfbeb8a6e9bac9c2-0 -->The current hull/domain driver object creation/sizing/destruction contracts
+are defined with [pipeline component creation](pipeline-state.md#driver-shader-objects)
+and its [exact slot associations](pipeline-state.md#driver-object-slots).<!-- d3d12-review-inline:end:tessellation:PC-stage-creation-owner:0:authored:migration-bfbeb8a6e9bac9c2-0 --></ins>
 
 <a id="tessellation"></a>
 
@@ -60,14 +51,47 @@
 
 <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.4:3 -->[Domain Shader](#domain-shader)<!-- d3d12-review-inline:end:tessellation:STAGES-11.4:3 --></ins>
 
-<!-- d3d12-review-alert:begin:tessellation:STAGES-phase-scope:0 -->
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-phase-scope:0:authored:migration-af66e4c70fbbf30e-0 -->Hull shader control point computation produces output control points, and patch constant computation produces per-patch data including tessellation factors. The DXIL and DXBC subsections describe their respective program organization. DXBC fork/join mini-programs and register declarations are not additional API shader stages. The fixed-function tessellator consumes the final factors regardless of the shader representation that produced them.<!-- d3d12-review-inline:end:tessellation:STAGES-phase-scope:0:authored:migration-af66e4c70fbbf30e-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Hull shader control point computation produces output control points, and patch constant computation produces per-patch data including tessellation factors. The DXIL and DXBC subsections describe their respective program organization. DXBC fork/join mini-programs and register declarations are not additional API shader stages. The fixed-function tessellator consumes the final factors regardless of the shader representation that produced them.
+<a id="tessellation-enablement"></a>
 
-<!-- d3d12-review-alert:end:tessellation:STAGES-phase-scope:0 -->
+## Tessellation stage selection
+
+<a id="tessellation-stage-selection"></a>
+
+### Stage presence and topology
+
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.8.1:0 -->The presence of both a Hull Shader and Domain Shader enables tessellation. When a Hull Shader and Domain Shader are selected, the Input Assembler topology is required to be a patch type (otherwise the draw configuration is invalid). If a Hull Shader is selected and no Domain Shader is selected, or vice versa, the pipeline configuration is invalid.<!-- d3d12-review-inline:end:tessellation:STAGES-11.8.1:0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.8.1:1 -->Patches can be used at the Input Assembler without tessellation (no Hull Shader or Domain Shader), as long as the Geometry Shader and/or Stream Output are being used.<!-- d3d12-review-inline:end:tessellation:STAGES-11.8.1:1 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-selection-owner:0:authored:migration-1668c258695257d6-0 -->The [PSO compatibility rules](pipeline-state.md#compatibility) require hull/domain pairing, compatible signatures, control point counts and tessellator domain. The command list topology supplies the patch's actual input control point count. Shader selection and creation validity are distinct from fixed-function factor clamping/culling during execution.<!-- d3d12-review-inline:end:tessellation:STAGES-selection-owner:0:authored:migration-1668c258695257d6-0 --></ins>
+
+## Untessellated patch routing
+
+<a id="untessellated-patches-gs"></a>
+
+### Untessellated patches to the geometry shader
+
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.8.1.1:0 -->When tessellation is disabled (no Hull Shader and no Domain Shader bound), patches arriving at the Geometry Shader cause the GS to be invoked once per patch. Each GS invocation sees all the Control Points of the patch as an array of input vertices.<!-- d3d12-review-inline:end:tessellation:STAGES-11.8.1.1:0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.8.1.1:1 -->Allowing the GS to be invoked with patches allows it to effectively input non-traditional topologies (beyond points, lines, triangles). E.g. to invoke the GS with a cube as its input primitive, one could send 8 Control Point patches.<!-- d3d12-review-inline:end:tessellation:STAGES-11.8.1.1:1 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.8.1.1:2 -->The GS does not support output of patches. The output of the GS remains one of: point list, line strips or triangle strips.<!-- d3d12-review-inline:end:tessellation:STAGES-11.8.1.1:2 --></ins>
+
+<a id="untessellated-patches-so"></a>
+
+### Untessellated patches to stream output
+
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.8.1.2:0 -->Sending un-tessellated patches to NULL GS + Stream Output is valid. This enables, for example, Control Points that have gone through the Vertex Shader to be streamed out for multi-pass or reuse scenarios. Note, however, it is not possible for Hull Shader outputs to be streamed out (or go into the GS) - the presence of the Hull Shader requires a simultaneous Domain Shader and enables Tessellation – both of which consume Hull Shader output entirely.<!-- d3d12-review-inline:end:tessellation:STAGES-11.8.1.2:0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.8.1.2:1 -->When un-tessellated patches arrive at Stream Output, each Control Point in the patch appears as a single vertex for Stream Output. This definition is similar to the way NULL GS + Stream Output behaves with traditional primitive topologies such as triangle lists. As with other primitive types, only complete patches get written out; if there is not enough room to store a complete patch, it is discarded.<!-- d3d12-review-inline:end:tessellation:STAGES-11.8.1.2:1 --></ins>
+
+<a id="untessellated-patches-rasterizer"></a>
+
+### Untessellated patches and rasterization
+
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.8.1.3:0 -->It could have been defined that Control Points arriving at the rasterizer are interpreted as points and rasterized as such, but that would have required a RenderTarget-space projected "position" to be present in the control points, and the application would have to have wanted to draw them as points. This is an extremely unlikely scenario, not worth targeting. Routing an untessellated patch directly to active rasterization is an invalid pipeline configuration. If such a patch nevertheless reaches the rasterizer, its behavior is undefined.<!-- d3d12-review-inline:end:tessellation:STAGES-11.8.1.3:0 --></ins>
 
 <a id="hull-shader"></a>
 
@@ -79,7 +103,7 @@
 
 ### Hull Shader Invocation
 
-<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-10.2:0 -->The Hull Shader operates once per patch, transforming Control Points, computing Patch Constant data and defining Tessellation Factors.<!-- d3d12-review-inline:end:tessellation:STAGES-10.2:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-10.2:0:modified:migration-51c03fc486ebdce7-0 -->The Hull Shader operates once per patch, transforming Control Points, computing Patch Constant data and defining Tessellation Factors.<!-- d3d12-review-inline:end:tessellation:STAGES-10.2:0:modified:migration-51c03fc486ebdce7-0 --></ins>
 
 <a id="patch-constant-overview"></a>
 
@@ -95,37 +119,23 @@
 
 The hull shader is represented as two functions, related via metadata: (1) control point phase function, which is the entry point of the hull shader, and (2) patch constant phase function.
 
-<ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-patch-inputs:0 -->The inputs to both functions are the input control points for an entire patch, and therefore each element may be indexed by row and, in addition, is indexed by vertex.<!-- d3d12-review-inline:end:tessellation:DXIL-HS-patch-inputs:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-patch-inputs:0:modified:migration-c2bfcc7f4a8eeac4-0 -->The inputs to both functions are the input control points for an entire patch, and therefore each element may be indexed by row and, in addition, is indexed by vertex.<!-- d3d12-review-inline:end:tessellation:DXIL-HS-patch-inputs:0:modified:migration-c2bfcc7f4a8eeac4-0 --></ins>
 
-<!-- d3d12-review-alert:begin:tessellation:DXIL-HS-execution-bridge:0 -->
+<ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-execution-bridge:0:authored:migration-fa404562dc53c3fc-0 -->The control point function is the hull shader's entry point, not a separately bound shader per control point. It logically processes each output control point, identified by `SV_OutputControlPointID`. Patch constant computation can read the patch's input control points and completed output control points and produces data shared by the patch, including its tessellation factors. These are the same [control point/patch constant data dependencies](#patch-constant-overview) and [logical storage limits](vertex-processing.md#geometry-interface-capacities) used by the stage. The two functions are not two application API shader stages.<!-- d3d12-review-inline:end:tessellation:DXIL-HS-execution-bridge:0:authored:migration-fa404562dc53c3fc-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The control point function is the hull shader's entry point, not a separately bound shader per control point. It logically processes each output control point, identified by `SV_OutputControlPointID`. Patch constant computation can read the patch's input control points and completed output control points and produces data shared by the patch, including its tessellation factors. These are the same [control point/patch constant data dependencies](#patch-constant-overview) and [logical storage limits](vertex-processing.md#geometry-interface-capacities) used by the stage. The two functions are not two application API shader stages.
-
-<!-- d3d12-review-alert:end:tessellation:DXIL-HS-execution-bridge:0 -->
-
-<ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-patch-function:0 -->The patch constant function represents original HLSL computation, and is not separated into fork and join phases, as is the case in DXBC. The driver compiler may perform such separation if this is profitable for the target GPU.<!-- d3d12-review-inline:end:tessellation:DXIL-HS-patch-function:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-patch-function:0:modified:migration-aeb998f0c4fe43bf-0 -->The patch constant function represents original HLSL computation, and is not separated into fork and join phases, as is the case in DXBC. The driver compiler may perform such separation if this is profitable for the target GPU.<!-- d3d12-review-inline:end:tessellation:DXIL-HS-patch-function:0:modified:migration-aeb998f0c4fe43bf-0 --></ins>
 
 <a id="dxil-hull-data-flow"></a>
 
 #### Signatures and data flow
 
-<!-- d3d12-review-alert:begin:tessellation:DXIL-HS-signatures:0 -->
+<ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-signatures:0:authored:migration-45f91e01e12df336-0 -->The input signature describes one input control point and is used across the input patch. The output signature describes one output control point. The patch constant signature describes the per-patch data passed to the domain shader, including tessellation factors. The [HS/DS interface matching rules](pipeline-state.md#compatibility) apply to both control point and patch constant interfaces.<!-- d3d12-review-inline:end:tessellation:DXIL-HS-signatures:0:authored:migration-45f91e01e12df336-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The input signature describes one input control point and is used across the input patch. The output signature describes one output control point. The patch constant signature describes the per-patch data passed to the domain shader, including tessellation factors. The [HS/DS interface matching rules](pipeline-state.md#compatibility) apply to both control point and patch constant interfaces.
+<ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-system-values:0:modified:migration-22c813389645dc9b-0 -->`SV_OutputControlPointID` and `SV_PrimitiveID` input elements are system-generated values loaded through DXIL intrinsics, and are not present in the signature at all.  These have a semantic interpretation of `SemanticInterpretationKind::NotInSig`.<!-- d3d12-review-inline:end:tessellation:DXIL-HS-system-values:0:modified:migration-22c813389645dc9b-0 --></ins>
 
-<!-- d3d12-review-alert:end:tessellation:DXIL-HS-signatures:0 -->
+The following table summarizes the <ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-table-intro:0:modified:source-8e361002b10db1da-0-0 -->input/output operation roles<!-- d3d12-review-inline:end:tessellation:DXIL-HS-table-intro:0:modified:source-8e361002b10db1da-0-0 --></ins> of hull and domain shaders. CP stands for Control Point, PC - for Patch Constant.
 
-<ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-system-values:0 -->`SV_OutputControlPointID` and `SV_PrimitiveID` input elements are system-generated values loaded through DXIL intrinsics, and are not present in the signature at all.  These have a semantic interpretation of `SemanticInterpretationKind::NotInSig`.<!-- d3d12-review-inline:end:tessellation:DXIL-HS-system-values:0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-table-intro:0 -->The following table summarizes the input/output operation roles of hull and domain shaders. CP stands for Control Point, PC - for Patch Constant.<!-- d3d12-review-inline:end:tessellation:DXIL-HS-table-intro:0 --></ins>
-
-<!-- d3d12-review-alert:begin:tessellation:DXIL-HS-operations-table:0 -->
+<!-- d3d12-review-alert:begin:tessellation:DXIL-HS-operations-table:0:modified:migration-a3e87d229f9e75d5-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -140,28 +150,21 @@ The hull shader is represented as two functions, related via metadata: (1) contr
 > | Load PC | - | `LoadPatchConstant` ([converted DXBC](#dxil-hull-dxbc-conversion)) | `LoadPatchConstant` |
 > | Store Output Vertex | - | - | `StoreOutput` |
 
-<!-- d3d12-review-alert:end:tessellation:DXIL-HS-operations-table:0 -->
+<!-- d3d12-review-alert:end:tessellation:DXIL-HS-operations-table:0:modified:migration-a3e87d229f9e75d5-0 -->
 
 <a id="dxil-hull-counts"></a>
 
 #### Control point counts
 
-<!-- d3d12-review-alert:begin:tessellation:STAGES-profile-counts:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For DXIL hull shaders, the output control point count is 1 through 32. The [zero-output and absent-control-point-program cases](#hull-control-program-presence) describe the DXBC model, not an alternative DXIL program structure. DXIL validation permits zero input control point metadata only when the input signature is empty. These metadata distinctions do not add a zero-control-point input assembler topology; actual IA patch topologies still contain 1 through 32 control points, and the remaining shader/PSO validity conditions apply.
-
-<!-- d3d12-review-alert:end:tessellation:STAGES-profile-counts:0 -->
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-profile-counts:0:authored:fragment-prefix -->For DXIL hull shaders, the output control point count is 1 through 32. The <!-- d3d12-review-inline:end:tessellation:STAGES-profile-counts:0:authored:fragment-prefix --></ins><ins><!-- d3d12-review-inline:begin:tessellation:SG1:0:modified:concept -->[cases with zero output or an absent control point program](#hull-control-program-presence)<!-- d3d12-review-inline:end:tessellation:SG1:0:modified:concept --></ins><ins><!-- d3d12-review-inline:begin:tessellation:STAGES-profile-counts:0:authored:fragment-middle --> describe the DXBC model, not an alternative DXIL program structure. DXIL validation permits zero input control point metadata only when the input signature is empty. These metadata distinctions do not add a <!-- d3d12-review-inline:end:tessellation:STAGES-profile-counts:0:authored:fragment-middle --></ins><ins><!-- d3d12-review-inline:begin:tessellation:GRI15:0:modified:terminology -->zero control point<!-- d3d12-review-inline:end:tessellation:GRI15:0:modified:terminology --></ins><ins><!-- d3d12-review-inline:begin:tessellation:STAGES-profile-counts:0:authored:fragment-suffix --> input assembler topology; actual IA patch topologies still contain 1 through 32 control points, and the remaining shader/PSO validity conditions apply.<!-- d3d12-review-inline:end:tessellation:STAGES-profile-counts:0:authored:fragment-suffix --></ins>
 
 <a id="dxil-hull-properties"></a>
 
 #### Hull shader properties
 
-<ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-properties:0 -->The hull shader properties associate the patch constant function and specify the stage state:<!-- d3d12-review-inline:end:tessellation:DXIL-HS-properties:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-properties:0:modified:source-854112b6038d3b13-0-0 -->The hull shader properties associate the patch constant function and specify the stage state:<!-- d3d12-review-inline:end:tessellation:DXIL-HS-properties:0:modified:source-854112b6038d3b13-0-0 --></ins>
 
-<!-- d3d12-review-alert:begin:tessellation:DXIL-HS-properties:1 -->
+<!-- d3d12-review-alert:begin:tessellation:DXIL-HS-properties:1:modified:migration-1fd49760aea302ec-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -176,7 +179,7 @@ The hull shader is represented as two functions, related via metadata: (1) contr
 > | Tessellator output primitive | The selected output topology |
 > | Maximum tessellation factor | The declared maximum tessellation factor |
 
-<!-- d3d12-review-alert:end:tessellation:DXIL-HS-properties:1 -->
+<!-- d3d12-review-alert:end:tessellation:DXIL-HS-properties:1:modified:migration-1fd49760aea302ec-0 -->
 
 <ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-properties:2 -->The [tessellator state and factor rules](#tessellator-state) define the common execution contract. A maximum factor property is not a substitute for the [shader/compiler-side enforcement obligation](#maximum-tessellation-factor).<!-- d3d12-review-inline:end:tessellation:DXIL-HS-properties:2 --></ins>
 
@@ -212,7 +215,7 @@ The hull shader is represented as two functions, related via metadata: (1) contr
 
 ### DXBC patch constant phases
 
-<ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-DXBC-PC-phases:0 -->There are two Patch Constant phases:<!-- d3d12-review-inline:end:tessellation:DXIL-HS-DXBC-PC-phases:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-DXBC-PC-phases:0:modified:migration-efd399175539e65b-0 -->There are two Patch Constant phases:<!-- d3d12-review-inline:end:tessellation:DXIL-HS-DXBC-PC-phases:0:modified:migration-efd399175539e65b-0 --></ins>
 
 <a id="hull-fork"></a>
 
@@ -266,10 +269,10 @@ The hull shader is represented as two functions, related via metadata: (1) contr
 
 <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-10.7:0 -->[hs_control_point_phase](../archive/D3D11_3_FunctionalSpec.htm#inst_HS_CONTROL_POINT_PHASE) is a shader program with the following register model. Note the footnotes which provide a detailed discussion of output storage size calculations.<!-- d3d12-review-inline:end:tessellation:STAGES-10.7:0 --></ins>
 
-<!-- d3d12-review-alert:begin:tessellation:STAGES-10.7:1 -->
+<!-- d3d12-review-alert:begin:tessellation:STAGES-10.7:1:authored:migration-1eade275602b1a7b-0 -->
 
 > [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
+> **Authored synthesis - human review pending.**
 >
 > | Register Type | Count | r/w | Dimension | Indexable by r# | Defaults | Requires DCL |
 > | --- | --- | --- | --- | --- | --- | --- |
@@ -279,7 +282,7 @@ The hull shader is represented as two functions, related via metadata: (1) contr
 > | **Output Registers:** |  |  |  |  |  |  |
 > | 32-bit output Vertex Data Element (o#) | 32, see [output storage](#hull-cp-output-storage) | w | 4 | Y | None | Y |
 
-<!-- d3d12-review-alert:end:tessellation:STAGES-10.7:1 -->
+<!-- d3d12-review-alert:end:tessellation:STAGES-10.7:1:authored:migration-1eade275602b1a7b-0 -->
 
 <a id="hull-cp-output-storage"></a>
 
@@ -299,14 +302,7 @@ The hull shader is represented as two functions, related via metadata: (1) contr
 
 <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-10.7.1:2 -->[OutputControlPointID](../archive/D3D11_3_FunctionalSpec.htm#generatedvalue_OUTPUT_CONTROL_POINT_ID) is a scalar 32-bit integer input for each Control Point identifying which one it is [0..n-1] given n declared output Control Points.<!-- d3d12-review-inline:end:tessellation:STAGES-10.7.1:2 --></ins>
 
-<!-- d3d12-review-alert:begin:tessellation:STAGES-hull-system-semantic:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> In the hull shader, the control point invocation identifier is exposed through `SV_OutputControlPointID`.
-
-<!-- d3d12-review-alert:end:tessellation:STAGES-hull-system-semantic:0 -->
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-hull-system-semantic:0:authored:migration-8947ff8dd2b9b97a-0 -->In the hull shader, the control point invocation identifier is exposed through `SV_OutputControlPointID`.<!-- d3d12-review-inline:end:tessellation:STAGES-hull-system-semantic:0:authored:migration-8947ff8dd2b9b97a-0 --></ins>
 
 <a id="hull-fork-programs"></a>
 
@@ -324,7 +320,7 @@ The hull shader is represented as two functions, related via metadata: (1) contr
 
 <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-10.8.2:2 -->Note the footnotes which provide a detailed discussion of output storage size calculations.<!-- d3d12-review-inline:end:tessellation:STAGES-10.8.2:2 --></ins>
 
-<!-- d3d12-review-alert:begin:tessellation:STAGES-10.8.2:3 -->
+<!-- d3d12-review-alert:begin:tessellation:STAGES-10.8.2:3:modified:migration-72dda9dcbe555f57-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -338,7 +334,7 @@ The hull shader is represented as two functions, related via metadata: (1) contr
 > | **Output Registers:** |  |  |  |  |  |  |
 > | 32-bit output Patch Constant Data Element (o#) | 32, see [shared patch constant output](#hull-fork-shared-output) | w | 4 | Y | None | Y |
 
-<!-- d3d12-review-alert:end:tessellation:STAGES-10.8.2:3 -->
+<!-- d3d12-review-alert:end:tessellation:STAGES-10.8.2:3:modified:migration-72dda9dcbe555f57-0 -->
 
 <a id="hull-fork-input-subsets"></a>
 
@@ -392,7 +388,7 @@ The hull shader is represented as two functions, related via metadata: (1) contr
 
 <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-10.9.2:2 -->Note the footnotes which provide a detailed discussion of output storage size calculations.<!-- d3d12-review-inline:end:tessellation:STAGES-10.9.2:2 --></ins>
 
-<!-- d3d12-review-alert:begin:tessellation:STAGES-10.9.2:3 -->
+<!-- d3d12-review-alert:begin:tessellation:STAGES-10.9.2:3:modified:migration-c14ebb0fd2b255e3-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -407,7 +403,7 @@ The hull shader is represented as two functions, related via metadata: (1) contr
 > | **Output Registers:** |  |  |  |  |  |  |
 > | 32-bit output Patch Constant Data Element (o#) | 32, see [shared patch constant output](#hull-join-shared-output) | w | 4 | Y | None | Y |
 
-<!-- d3d12-review-alert:end:tessellation:STAGES-10.9.2:3 -->
+<!-- d3d12-review-alert:end:tessellation:STAGES-10.9.2:3:modified:migration-c14ebb0fd2b255e3-0 -->
 
 <a id="hull-join-input-subsets"></a>
 
@@ -557,7 +553,7 @@ SV_InsideTessFactor
 
 ### DXBC-to-DXIL conversion
 
-<ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-conversion:0 -->In DXBC to DXIL conversion, the original patch constant function cannot be recovered during DXBC-to-DXIL conversion. Instead, instructions of each fork and join phase are 'wrapped' by a loop that iterates the corresponding number of phase-instance-count iterations. Thus, fork/join instance ID becomes the loop induction variable. The `LoadPatchConstant` operation represents load from DXBC `vpc` register.<!-- d3d12-review-inline:end:tessellation:DXIL-HS-conversion:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-conversion:0:modified:migration-9f93dceb0aac4ef7-0 -->In DXBC to DXIL conversion, the original patch constant function cannot be recovered during DXBC-to-DXIL conversion. Instead, instructions of each fork and join phase are 'wrapped' by a loop that iterates the corresponding number of phase-instance-count iterations. Thus, fork/join instance ID becomes the loop induction variable. The `LoadPatchConstant` operation represents load from DXBC `vpc` register.<!-- d3d12-review-inline:end:tessellation:DXIL-HS-conversion:0:modified:migration-9f93dceb0aac4ef7-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:tessellation:DXIL-HS-pc-intermediates:0 -->`LoadPatchConstant` in the patch constant function is generated only by DXBC-to-DXIL converter, to access DXBC `vpc` registers. The HLSL compiler produces IR that references LLVM IR values directly.<!-- d3d12-review-inline:end:tessellation:DXIL-HS-pc-intermediates:0 --></ins>
 
@@ -929,7 +925,7 @@ A more concrete description can be found in the reference fixed function tessell
 
 <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.11.2:2 -->Otherwise, hardware must clamp each edge input TessFactor to the range specified below.<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.11.2:2 --></ins>
 
-<!-- d3d12-review-alert:begin:tessellation:STAGES-11.7.11.2:3 -->
+<!-- d3d12-review-alert:begin:tessellation:STAGES-11.7.11.2:3:modified:migration-a529a6e934a1dc31-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -940,7 +936,7 @@ A more concrete description can be found in the reference fixed function tessell
 > | Odd_Fractional | 1 | 63 |  |
 > | Integer (Pow2 maps to integer in hardware) | 1 | 64 | After clamping, round result to next integer. |
 
-<!-- d3d12-review-alert:end:tessellation:STAGES-11.7.11.2:3 -->
+<!-- d3d12-review-alert:end:tessellation:STAGES-11.7.11.2:3:modified:migration-a529a6e934a1dc31-0 -->
 
 <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.11.2:4 -->For IsoLines, the LineDensity Tessfactor (which is how many constant V iso-lines to draw) is clamped by the hardware to [1...64] and rounded to the next integer.<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.11.2:4 --></ins>
 
@@ -1062,51 +1058,6 @@ Suppose a single patch is drawn 64 meters wide.
 
 - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.15:0 -->[MaxTessFactor](../archive/D3D11_3_FunctionalSpec.htm#inst_DCL_MAX_TESSFACTOR): {1..64} // Clamp placed on all TessFactors coming out of the Hull Shader.<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.15:0 --></ins>
 
-<a id="tessellation-enablement"></a>
-
-## Tessellation stage selection
-
-<a id="tessellation-stage-selection"></a>
-
-### Stage presence and topology
-
-<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.8.1:0 -->The presence of both a Hull Shader and Domain Shader enables tessellation. When a Hull Shader and Domain Shader are selected, the Input Assembler topology is required to be a patch type (otherwise the draw configuration is invalid). If a Hull Shader is selected and no Domain Shader is selected, or vice versa, the pipeline configuration is invalid.<!-- d3d12-review-inline:end:tessellation:STAGES-11.8.1:0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.8.1:1 -->Patches can be used at the Input Assembler without tessellation (no Hull Shader or Domain Shader), as long as the Geometry Shader and/or Stream Output are being used.<!-- d3d12-review-inline:end:tessellation:STAGES-11.8.1:1 --></ins>
-
-<a id="untessellated-patches-gs"></a>
-
-### Untessellated patches to the geometry shader
-
-<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.8.1.1:0 -->When tessellation is disabled (no Hull Shader and no Domain Shader bound), patches arriving at the Geometry Shader cause the GS to be invoked once per patch. Each GS invocation sees all the Control Points of the patch as an array of input vertices.<!-- d3d12-review-inline:end:tessellation:STAGES-11.8.1.1:0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.8.1.1:1 -->Allowing the GS to be invoked with patches allows it to effectively input non-traditional topologies (beyond points, lines, triangles). E.g. to invoke the GS with a cube as its input primitive, one could send 8 Control Point patches.<!-- d3d12-review-inline:end:tessellation:STAGES-11.8.1.1:1 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.8.1.1:2 -->The GS does not support output of patches. The output of the GS remains one of: point list, line strips or triangle strips.<!-- d3d12-review-inline:end:tessellation:STAGES-11.8.1.1:2 --></ins>
-
-<a id="untessellated-patches-so"></a>
-
-### Untessellated patches to stream output
-
-<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.8.1.2:0 -->Sending un-tessellated patches to NULL GS + Stream Output is valid. This enables, for example, Control Points that have gone through the Vertex Shader to be streamed out for multi-pass or reuse scenarios. Note, however, it is not possible for Hull Shader outputs to be streamed out (or go into the GS) - the presence of the Hull Shader requires a simultaneous Domain Shader and enables Tessellation – both of which consume Hull Shader output entirely.<!-- d3d12-review-inline:end:tessellation:STAGES-11.8.1.2:0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.8.1.2:1 -->When un-tessellated patches arrive at Stream Output, each Control Point in the patch appears as a single vertex for Stream Output. This definition is similar to the way NULL GS + Stream Output behaves with traditional primitive topologies such as triangle lists. As with other primitive types, only complete patches get written out; if there is not enough room to store a complete patch, it is discarded.<!-- d3d12-review-inline:end:tessellation:STAGES-11.8.1.2:1 --></ins>
-
-<a id="untessellated-patches-rasterizer"></a>
-
-### Untessellated patches and rasterization
-
-<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.8.1.3:0 -->It could have been defined that Control Points arriving at the rasterizer are interpreted as points and rasterized as such, but that would have required a RenderTarget-space projected "position" to be present in the control points, and the application would have to have wanted to draw them as points. This is an extremely unlikely scenario, not worth targeting. Routing an untessellated patch directly to active rasterization is an invalid pipeline configuration. If such a patch nevertheless reaches the rasterizer, its behavior is undefined.<!-- d3d12-review-inline:end:tessellation:STAGES-11.8.1.3:0 --></ins>
-
-<!-- d3d12-review-alert:begin:tessellation:STAGES-selection-owner:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [PSO compatibility rules](pipeline-state.md#compatibility) require hull/domain pairing, compatible signatures, control point counts and tessellator domain. The command list topology supplies the patch's actual input control point count. Shader selection and creation validity are distinct from fixed-function factor clamping/culling during execution.
-
-<!-- d3d12-review-alert:end:tessellation:STAGES-selection-owner:0 -->
-
 <a id="domain-shader"></a>
 
 ## Domain shader
@@ -1131,7 +1082,7 @@ Suppose a single patch is drawn 64 meters wide.
 
 <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-12.2.2:0 -->The following registers are available in the ds_5_0 model.<!-- d3d12-review-inline:end:tessellation:STAGES-12.2.2:0 --></ins>
 
-<!-- d3d12-review-alert:begin:tessellation:STAGES-12.2.2:1 -->
+<!-- d3d12-review-alert:begin:tessellation:STAGES-12.2.2:1:modified:migration-df36b61e2b02de2d-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -1145,7 +1096,7 @@ Suppose a single patch is drawn 64 meters wide.
 > | **Output Registers:** |  |  |  |  |  |  |
 > | 32-bit output Vertex Data Element (o#) | 32 | w | 4 | Y | None | Y |
 
-<!-- d3d12-review-alert:end:tessellation:STAGES-12.2.2:1 -->
+<!-- d3d12-review-alert:end:tessellation:STAGES-12.2.2:1:modified:migration-df36b61e2b02de2d-0 -->
 
 <a id="domain-cp-pc-inputs"></a>
 
@@ -1163,24 +1114,10 @@ Suppose a single patch is drawn 64 meters wide.
 
 <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-12.2.3:2 -->The final set of System Values are the various TessFactors produced by the Hull Shader, discussed [elsewhere](#tessellation-factor-output). These can be declared as input out of part of the input Patch Constant (vpc) registers.<!-- d3d12-review-inline:end:tessellation:STAGES-12.2.3:2 --></ins>
 
-<!-- d3d12-review-alert:begin:tessellation:STAGES-stage-semantics:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> In the domain shader, tessellator domain coordinates are exposed through `SV_DomainLocation`, and patch identity through `SV_PrimitiveID`. The register names in the logical-interface tables are DXBC representation, not additional API bindings.
-
-<!-- d3d12-review-alert:end:tessellation:STAGES-stage-semantics:0 -->
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-stage-semantics:0:authored:migration-e61f3a8db17cb7ff-0 -->In the domain shader, tessellator domain coordinates are exposed through `SV_DomainLocation`, and patch identity through `SV_PrimitiveID`. The register names in the logical-interface tables are DXBC representation, not additional API bindings.<!-- d3d12-review-inline:end:tessellation:STAGES-stage-semantics:0:authored:migration-e61f3a8db17cb7ff-0 --></ins>
 
 <a id="programmable-geometry-driver"></a>
 
 ## Driver responsibilities
 
-<!-- d3d12-review-alert:begin:tessellation:STAGES-driver-contract:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [pipeline state driver aggregate](pipeline-state.md#driver) selects the vertex, hull and domain shaders. They are not independently bound on the command list.
-
-<!-- d3d12-review-alert:end:tessellation:STAGES-driver-contract:0 -->
+<ins><!-- d3d12-review-inline:begin:tessellation:STAGES-driver-contract:0:authored:migration-fd13d7bc6ab2b9e6-0 -->The [pipeline state driver aggregate](pipeline-state.md#driver) selects the vertex, hull and domain shaders. They are not independently bound on the command list.<!-- d3d12-review-inline:end:tessellation:STAGES-driver-contract:0:authored:migration-fd13d7bc6ab2b9e6-0 --></ins>

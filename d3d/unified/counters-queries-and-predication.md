@@ -15,47 +15,26 @@
 
 <!-- d3d12-review-legend:end -->
 
-<!-- d3d12-review-alert:begin:queries:N-overview:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Queries measure GPU work and expose typed results through query heaps. Predication consumes an application-selected 64-bit buffer value to condition eligible GPU operations. It is not a query object binding. Application-managed SO/UAV counters, query results and predicate values have different storage, widths and lifetime contracts.
-
-<!-- d3d12-review-alert:end:queries:N-overview:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-overview:0:authored:migration-0d3a2220c5cb6256-0 -->Queries measure GPU work and expose typed results through query heaps. Predication consumes an application-selected 64-bit buffer value to condition eligible GPU operations. It is not a query object binding. Application-managed SO/UAV counters, query results and predicate values have different storage, widths and lifetime contracts.<!-- d3d12-review-inline:end:queries:N-overview:0:authored:migration-0d3a2220c5cb6256-0 --></ins>
 
 <a id="application-counters"></a>
 
 ## Application-managed counters
 
-<!-- d3d12-review-alert:begin:queries:N-resource-operations-counter-consumer:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Ordinary [counter backing byte copy/clear interactions](resource-operations.md#counter-interactions) do not implicitly operate on a separately associated counter resource. Query/counter/predicate distinctions and each operation's policy remain canonical in this chapter.
-
-<!-- d3d12-review-alert:end:queries:N-resource-operations-counter-consumer:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-resource-operations-counter-consumer:0:authored:migration-a04cc6b70bc49917-0 -->Ordinary [counter backing byte copy/clear interactions](resource-operations.md#counter-interactions) do not implicitly operate on a separately associated counter resource. Query/counter/predicate distinctions and each operation's policy remain canonical in this chapter.<!-- d3d12-review-inline:end:queries:N-resource-operations-counter-consumer:0:authored:migration-a04cc6b70bc49917-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:queries:CQ-so-counter-concept:0 -->The application is responsible for allocating storage for a 32-bit
 quantity called the BufferFilledSize. This contains the number of bytes
-of data in the stream-output buffer. This storage may be placed in the resource containing the stream-output data or in a different resource. This
-value is accessed by the GPU in the stream-output stage to determine
+of data in the <!-- d3d12-review-inline:end:queries:CQ-so-counter-concept:0 --></ins><ins><!-- d3d12-review-inline:begin:queries:STYLE-O3:0:preserved-repair:buffer-stage-name -->stream output<!-- d3d12-review-inline:end:queries:STYLE-O3:0:preserved-repair:buffer-stage-name --></ins><ins><!-- d3d12-review-inline:begin:queries:CQ-so-counter-concept:1 --> buffer. This storage may be placed in the resource containing the <!-- d3d12-review-inline:end:queries:CQ-so-counter-concept:1 --></ins><ins><!-- d3d12-review-inline:begin:queries:STYLE-O3:1:preserved-repair:data-stage-name -->stream output<!-- d3d12-review-inline:end:queries:STYLE-O3:1:preserved-repair:data-stage-name --></ins><ins><!-- d3d12-review-inline:begin:queries:CQ-so-counter-concept:2 --> data or in a different resource. This
+value is accessed by the GPU in the <!-- d3d12-review-inline:end:queries:CQ-so-counter-concept:2 --></ins><ins><!-- d3d12-review-inline:begin:queries:STYLE-O3:2:preserved-repair:stage-name -->stream output<!-- d3d12-review-inline:end:queries:STYLE-O3:2:preserved-repair:stage-name --></ins><ins><!-- d3d12-review-inline:begin:queries:CQ-so-counter-concept:3 --> stage to determine
 where to append new vertex data in the buffer. Additionally, this value
-is accessed by the GPU to determine when overflow has occurred.<!-- d3d12-review-inline:end:queries:CQ-so-counter-concept:0 --></ins>
+is accessed by the GPU to determine when overflow has occurred.<!-- d3d12-review-inline:end:queries:CQ-so-counter-concept:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:queries:CQ-uav-counter-concept:0 -->The application is responsible for allocating 32-bits of storage for UAV
-counters. This storage can be allocated in a different resource from the
-one that contains data accessible via the UAV.<!-- d3d12-review-inline:end:queries:CQ-uav-counter-concept:0 --></ins>
+The application is responsible for allocating 32-bits of storage for UAV
+counters. This storage can be allocated in a different resource <ins><!-- d3d12-review-inline:begin:queries:CQ-uav-counter-concept:0:modified:source-39cedf7afe362e11-0-0 -->from<!-- d3d12-review-inline:end:queries:CQ-uav-counter-concept:0:modified:source-39cedf7afe362e11-0-0 --></ins> the
+one that contains data accessible via the UAV.
 
-<!-- d3d12-review-alert:begin:queries:N-counter-owners:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> [SO filled size storage and append](geometry-shaders-and-stream-output.md#filled-size) define capture progress. [Counter-bearing UAV creation](binding.md#buffer-uav) defines UAV counter association and access. Neither query heap creation nor command list reset initializes those application buffers. A 32-bit counter is not automatically a valid zero-extended 64-bit predicate: the predicate consumes all eight selected bytes.
-
-<!-- d3d12-review-alert:end:queries:N-counter-owners:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-counter-owners:0:authored:migration-e2ece0e54a6dc33e-0 -->[SO filled size storage and append](geometry-shaders-and-stream-output.md#filled-size) define capture progress. [Counter-bearing UAV creation](binding.md#buffer-uav) defines UAV counter association and access. Neither query heap creation nor command list reset initializes those application buffers. A 32-bit counter is not automatically a valid zero-extended 64-bit predicate: the predicate consumes all eight selected bytes.<!-- d3d12-review-inline:end:queries:N-counter-owners:0:authored:migration-e2ece0e54a6dc33e-0 --></ins>
 
 <a id="query-heaps"></a>
 
@@ -140,20 +119,13 @@ typedef enum D3D12_QUERY_HEAP_FLAGS
 } D3D12_QUERY_HEAP_FLAGS;
 ```
 
-<!-- d3d12-review-alert:begin:queries:N-heap-model:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The query type/node selection must be valid and `Count` must be positive. `ID3D12QueryHeap` is opaque pageable storage, not a resource exposing application-readable raw query bytes. Creating a heap does not perform its queries. A query element must have been produced before it is resolved. The [CPU-resolve flag](#cpu-resolution) chooses the CPU result retrieval path. An ordinary heap uses command list resolution.
-
-<!-- d3d12-review-alert:end:queries:N-heap-model:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-heap-model:0:authored:migration-7f676cb5cb90607d-0 -->The query type/node selection must be valid and `Count` must be positive. `ID3D12QueryHeap` is opaque pageable storage, not a resource exposing application-readable raw query bytes. Creating a heap does not perform its queries. A query element must have been produced before it is resolved. The [CPU-resolve flag](#cpu-resolution) chooses the CPU result retrieval path. An ordinary heap uses command list resolution.<!-- d3d12-review-inline:end:queries:N-heap-model:0:authored:migration-7f676cb5cb90607d-0 --></ins>
 
 <a id="query-support"></a>
 
 ### Query issuance and completion
 
-<!-- d3d12-review-alert:begin:queries:N-support-table:0 -->
+<!-- d3d12-review-alert:begin:queries:N-support-table:0:authored:migration-b0e5d81287117c91-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -168,22 +140,15 @@ typedef enum D3D12_QUERY_HEAP_FLAGS
 > | `SO_STATISTICS_STREAM0` through `STREAM3` | `SO_STATISTICS` | DIRECT | Begin/End interval |
 > | `VIDEO_DECODE_STATISTICS` | `VIDEO_DECODE_STATISTICS` | VIDEO_DECODE | End only; latest decode in the same list |
 
-<!-- d3d12-review-alert:end:queries:N-support-table:0 -->
+<!-- d3d12-review-alert:end:queries:N-support-table:0:authored:migration-b0e5d81287117c91-0 -->
 
-<!-- d3d12-review-alert:begin:queries:N-support-table:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> No query type is supported in BUNDLE recordings. Timestamp and video decode statistics are both End-only. Video BeginQuery declarations do not introduce a supported interval query type.
-
-<!-- d3d12-review-alert:end:queries:N-support-table:1 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-support-table:1:authored:migration-e41ea359c8fde806-0 -->No query type is supported in BUNDLE recordings. Timestamp and video decode statistics are both End-only. Video BeginQuery declarations do not introduce a supported interval query type.<!-- d3d12-review-inline:end:queries:N-support-table:1:authored:migration-e41ea359c8fde806-0 --></ins>
 
 <a id="result-layout"></a>
 
 ### Result layout
 
-<!-- d3d12-review-alert:begin:queries:N-result-layout:0 -->
+<!-- d3d12-review-alert:begin:queries:N-result-layout:0:authored:migration-3baca98cb04c2786-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -198,22 +163,15 @@ typedef enum D3D12_QUERY_HEAP_FLAGS
 > | Each SO stream | `D3D12_QUERY_DATA_SO_STATISTICS` | 16 bytes |
 > | Video decode statistics | `D3D12_QUERY_DATA_VIDEO_DECODE_STATISTICS` | 32 bytes, including structure padding |
 
-<!-- d3d12-review-alert:end:queries:N-result-layout:0 -->
+<!-- d3d12-review-alert:end:queries:N-result-layout:0:authored:migration-3baca98cb04c2786-0 -->
 
-<!-- d3d12-review-alert:begin:queries:N-result-layout:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> GPU resolution writes consecutive records beginning at an eight-byte-aligned destination offset. The destination range must contain every record without overflow. CPU resolution requires a correctly sized CPU output range for the same typed records.
-
-<!-- d3d12-review-alert:end:queries:N-result-layout:1 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-result-layout:1:authored:migration-2c445b75e2fd8bdf-0 -->GPU resolution writes consecutive records beginning at an eight-byte-aligned destination offset. The destination range must contain every record without overflow. CPU resolution requires a correctly sized CPU output range for the same typed records.<!-- d3d12-review-inline:end:queries:N-result-layout:1:authored:migration-2c445b75e2fd8bdf-0 --></ins>
 
 <a id="gpu-resolve-support"></a>
 
 ### GPU resolution support
 
-<!-- d3d12-review-alert:begin:queries:N-resolve-support:0 -->
+<!-- d3d12-review-alert:begin:queries:N-resolve-support:0:authored:migration-cef3b3b791746ba4-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -226,63 +184,37 @@ typedef enum D3D12_QUERY_HEAP_FLAGS
 > | VIDEO_DECODE | TIMESTAMP, VIDEO_DECODE_STATISTICS |
 > | VIDEO_PROCESS, VIDEO_ENCODE | TIMESTAMP |
 
-<!-- d3d12-review-alert:end:queries:N-resolve-support:0 -->
+<!-- d3d12-review-alert:end:queries:N-resolve-support:0:authored:migration-cef3b3b791746ba4-0 -->
 
-<!-- d3d12-review-alert:begin:queries:N-resolve-support:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Issuance and resolution support are separate checks. A declaration alone does not authorize other query families on a list. A CPU-resolve heap cannot use this GPU operation.
-
-<!-- d3d12-review-alert:end:queries:N-resolve-support:1 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-resolve-support:1:authored:migration-832b613c9efbb4ff-0 -->Issuance and resolution support are separate checks. A declaration alone does not authorize other query families on a list. A CPU-resolve heap cannot use this GPU operation.<!-- d3d12-review-inline:end:queries:N-resolve-support:1:authored:migration-832b613c9efbb4ff-0 --></ins>
 
 <a id="query-lifecycle"></a>
 
 ## Query lifecycle and access
 
+<!-- d3d12-review-alert:begin:queries:OI1-query-validation:0:authored:index-range-and-errors -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `BeginQuery` and `EndQuery` require an index within the query heap. For GPU `ResolveQueryData`, the complete range selected by `StartIndex` and `NumQueries` must lie within that heap. The core runtime validates the index/range, query type/heap/list compatibility, buffer destination, eight-byte destination alignment and output bounds. Recording failures follow the [command list error contract](execution.md#close).
+
+<!-- d3d12-review-alert:end:queries:OI1-query-validation:0:authored:index-range-and-errors -->
+
 Each individual element within a query heap can be start/stopped
 separately.
 
-<!-- d3d12-review-alert:begin:queries:N-lifecycle:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-lifecycle:0:authored:migration-53a80be2a779f109-0 -->An interval query begins and ends at the same heap/index with the same query type. Its result is the measured interval, not a pair of already-resolved cumulative samples for the application to subtract. An active element cannot be begun again; different elements may be active concurrently without a global LIFO nesting requirement. Intervals do not span command list boundaries or Reset, and outstanding intervals must end before Close or a protected session change. End-only queries do not use BeginQuery.<!-- d3d12-review-inline:end:queries:N-lifecycle:0:authored:migration-53a80be2a779f109-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> An interval query begins and ends at the same heap/index with the same query type. Its result is the measured interval, not a pair of already-resolved cumulative samples for the application to subtract. An active element cannot be begun again; different elements may be active concurrently without a global LIFO nesting requirement. Intervals do not span command list boundaries or Reset, and outstanding intervals must end before Close or a protected session change. End-only queries do not use BeginQuery.
+<ins><!-- d3d12-review-inline:begin:queries:N-lifecycle:1:authored:migration-21284217300583e1-0 -->The corresponding EndQuery must execute before a GPU resolve consumes that element. Resolving an incomplete or never-performed element is undefined and may hang or remove the device. An application must order reuse and resolution so it consumes the intended result rather than a later overwrite. Cross-queue dependencies and CPU consumption require the normal [fence/completion contract](execution.md#fence-operations). Heap and result buffer [lifetime](execution.md#lifetime) and [residency](resources.md#residency) remain application obligations.<!-- d3d12-review-inline:end:queries:N-lifecycle:1:authored:migration-21284217300583e1-0 --></ins>
 
-<!-- d3d12-review-alert:end:queries:N-lifecycle:0 -->
-
-<!-- d3d12-review-alert:begin:queries:N-lifecycle:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The corresponding EndQuery must execute before a GPU resolve consumes that element. Resolving an incomplete or never-performed element is undefined and may hang or remove the device. An application must order reuse and resolution so it consumes the intended result rather than a later overwrite. Cross-queue dependencies and CPU consumption require the normal [fence/completion contract](execution.md#fence-operations); heap and result buffer [lifetime](execution.md#lifetime) and [residency](resources.md#residency) remain application obligations.
-
-<!-- d3d12-review-alert:end:queries:N-lifecycle:1 -->
-
-<!-- d3d12-review-alert:begin:queries:N-query-access:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> With legacy resource states, GPU query result destinations require `D3D12_RESOURCE_STATE_COPY_DEST`; predicate reads require `D3D12_RESOURCE_STATE_PREDICATION`, an alias of `D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT`. Enhanced barriers use the corresponding [COPY_DEST and PREDICATION access scopes](synchronization.md#barrier-access) and [synchronization scopes](synchronization.md#barrier-sync). Normal heap restrictions still apply. An UPLOAD heap is not a valid GPU resolve destination. Opaque query production followed by resolution on the same queue is ordered by the query commands themselves; no application resource barrier on the opaque query heap is required.
-
-<!-- d3d12-review-alert:end:queries:N-query-access:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-query-access:0:authored:migration-b4eb9dfec2f8c6cb-0 -->With legacy resource states, GPU query result destinations require `D3D12_RESOURCE_STATE_COPY_DEST`; predicate reads require `D3D12_RESOURCE_STATE_PREDICATION`, an alias of `D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT`. Enhanced barriers use the corresponding [COPY_DEST and PREDICATION access scopes](synchronization.md#barrier-access) and [synchronization scopes](synchronization.md#barrier-sync). Normal heap restrictions still apply. An UPLOAD heap is not a valid GPU resolve destination. Opaque query production followed by resolution on the same queue is ordered by the query commands themselves; no application resource barrier on the opaque query heap is required.<!-- d3d12-review-inline:end:queries:N-query-access:0:authored:migration-b4eb9dfec2f8c6cb-0 --></ins>
 
 <a id="occlusion"></a>
 
 ## Occlusion results
 
-<!-- d3d12-review-alert:begin:queries:N-om-depth-bounds-owner:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [depth bounds algorithm and early/late side effect interface](output-merger.md#depth-bounds) are defined by Output merger and PS. The query result/counting definitions here remain canonical. [Render pass recording/access behavior](output-merger.md#render-pass-recording) does not redefine the predication operation matrix.
-
-<!-- d3d12-review-alert:end:queries:N-om-depth-bounds-owner:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-om-depth-bounds-owner:0:authored:migration-19bafa3b31e2fd1c-0 -->The [depth bounds algorithm and early/late side effect interface](output-merger.md#depth-bounds) are defined by Output merger and PS. The query result/counting definitions here remain canonical. [Render pass recording/access behavior](output-merger.md#render-pass-recording) does not redefine the predication operation matrix.<!-- d3d12-review-inline:end:queries:N-om-depth-bounds-owner:0:authored:migration-19bafa3b31e2fd1c-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:queries:A-occlusion:0 -->The data associated with this Query Type is a UINT64. This value contains the number of multisamples which passed depth and stencil testing, also known as "visible" multisamples, for primitives in the measured query interval. If the rendertarget is not multisampled, then the counter, naturally is incremented by the number of whole pixels that are "visible". The counter should wrap around when it overflows.<!-- d3d12-review-inline:end:queries:A-occlusion:0 --></ins>
 
@@ -290,20 +222,13 @@ separately.
 
 <ins><!-- d3d12-review-inline:begin:queries:A-occlusion:2 -->If [ForcedSampleCount](../archive/D3D11_3_FunctionalSpec.htm#ForcedSampleCount) is used (> 0) recall that the pass count reflects how many rasterizer samples are covered (independent of the output sample count). If SampleMask (which applies to the output) is configured to turn off output writes (or pixel discard, output coverage mask or alpha-to-coverage turns off all output samples), the count of samples recorded into the query may be either 0 or the number of rasterizer samples covered, as the specific behavior was never tightly specified. It is recommended for implementations to count 0 in this case for consistency with known implementations.<!-- d3d12-review-inline:end:queries:A-occlusion:2 --></ins>
 
-<!-- d3d12-review-alert:begin:queries:N-occlusion-interval:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The returned occlusion value is the Begin/End interval result. Binary occlusion returns zero if no sample passed and one if any sample passed. Its upper 63 bits are zero. It does not encode a query readiness status or a 32-bit D3D11 predicate object.
-
-<!-- d3d12-review-alert:end:queries:N-occlusion-interval:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-occlusion-interval:0:authored:migration-232904a5bd2e0556-0 -->The returned occlusion value is the Begin/End interval result. Binary occlusion returns zero if no sample passed and one if any sample passed. Its upper 63 bits are zero. It does not encode a query readiness status or a 32-bit D3D11 predicate object.<!-- d3d12-review-inline:end:queries:N-occlusion-interval:0:authored:migration-232904a5bd2e0556-0 --></ins>
 
 <a id="pipeline-statistics"></a>
 
 ## Pipeline statistics
 
-<ins><!-- d3d12-review-inline:begin:queries:A-statistics-mechanism:0 -->Well-defined statistics for the Pipeline stages will be continuously calculated throughout the usage of the graphics accelerator. This typically indicates the need for hardware counters for each stage of the Pipeline. Such counters would be associated with the graphics context, so they require the ability to be context switched. Typically, drivers use the standard graphics Pipeline available on the graphics accelerator in order to implement some sort of functionality. For example, a Blt may actually be implemented as a textured quad rendering. In such a case, the graphics accelerator should not calculate statistics for such an operation. For example, such an emulated Blt operation should not appear to draw 2 triangles. This indicates the graphics accelerator needs to be able to toggle actual statistics calculation in an efficient manner. Most important, the graphics Pipeline should run at the same speed regardless of whether statistics are calculated or not; as the hardware counters will be expected to always be tabulating (except as previously mentioned, where the tabulation should be muted when performing emulation). The Pipeline statistics will be collected through the query interval and resolution mechanism. **Note that D3D12_QUERY_TYPE_OCCLUSION and the per-stream SO statistics queries are considered to be well-defined Pipeline statistics, even though they are kept separate from D3D12_QUERY_DATA_PIPELINE_STATISTICS.**<!-- d3d12-review-inline:end:queries:A-statistics-mechanism:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:A-statistics-mechanism:0:modified:migration-d80279f569656cfa-0 -->Well-defined statistics for the Pipeline stages will be continuously calculated throughout the usage of the graphics accelerator. This typically indicates the need for hardware counters for each stage of the Pipeline. Such counters would be associated with the graphics context, so they require the ability to be context switched. Typically, drivers use the standard graphics Pipeline available on the graphics accelerator in order to implement some sort of functionality. For example, a Blt may actually be implemented as a textured quad rendering. In such a case, the graphics accelerator should not calculate statistics for such an operation. For example, such an emulated Blt operation should not appear to draw 2 triangles. This indicates the graphics accelerator needs to be able to toggle actual statistics calculation in an efficient manner. Most important, the graphics Pipeline should run at the same speed regardless of whether statistics are calculated or not; as the hardware counters will be expected to always be tabulating (except as previously mentioned, where the tabulation should be muted when performing emulation). The Pipeline statistics will be collected through the query interval and resolution mechanism. **Note that D3D12_QUERY_TYPE_OCCLUSION and the per-stream SO statistics queries are considered to be well-defined Pipeline statistics, even though they are kept separate from D3D12_QUERY_DATA_PIPELINE_STATISTICS.**<!-- d3d12-review-inline:end:queries:A-statistics-mechanism:0:modified:migration-d80279f569656cfa-0 --></ins>
 
 ```cpp
 typedef struct D3D12_QUERY_DATA_PIPELINE_STATISTICS
@@ -339,9 +264,9 @@ typedef struct D3D12_QUERY_DATA_PIPELINE_STATISTICS
 
 <ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:6 -->With respect to PSInvocations, early Depth/ Stencil optimizations may or may not prevent the work from the pixel shader from being realized. So, when pixels fail the depth tests, PSInvocations may or may not be incremented depending on where the Depth test is actually occurring in the pipeline. If the Pixel Shader outputs depth, then PSInvocations must increment as expected, even if the output depth fails.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:6 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:7 -->With respect to IAVertices and VSInvocations, adjacent vertex processing may be optimized out if the GS does not declare the adjacency vertices as inputs to the GS. So, when the GS does not declare adjacent vertices as inputs, IAVertices and VSInvocations may or may not reflect the work implied by the adjacent vertices. If the GS declares adjacent vertices, then the IAVertices should include the adjacent vertices (with no regard to any post-VS caching); and VSInvocations should include the adjacent vertices (along with any effects of post-VS caching).<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:7:authored:migration-35b2898e166c71a2-0 -->With respect to IAVertices and VSInvocations, adjacent vertex processing may be optimized out if the GS does not declare the adjacency vertices as inputs to the GS. So, when the GS does not declare adjacent vertices as inputs, IAVertices and VSInvocations may or may not reflect the work implied by the adjacent vertices. If the GS declares adjacent vertices, then the IAVertices should include the adjacent vertices (with no regard to any post-VS caching); and VSInvocations should include the adjacent vertices (along with any effects of post-VS caching).<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:7:authored:migration-35b2898e166c71a2-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:8 -->HSInvocations increments once per patch that causes the Hull Shader to run.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:8 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:8:authored:migration-6cd14866ed2138b9-0 -->HSInvocations increments once per patch that causes the Hull Shader to run.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:8:authored:migration-6cd14866ed2138b9-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:9 -->For the DSInvocations statistic, note that hardware may generate identical points in a patch multiple times in the course of tessellating the domain, and each repeated point counts as an additional DSInvocation. If the Tessellator's output primitive is points (as opposed to triangles or lines), that scenario requires only unique points within a patch to be generated, so the DSInvocations count will increment by exactly the number of unique points tessellated for the patch. The one exception is points that are on the threshold of merging, if TessFactors were to incrementally decrease, may appear in the system as duplicated points (with the same U/V coords) in an implementation dependent way.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:9 --></ins>
 
@@ -351,27 +276,11 @@ typedef struct D3D12_QUERY_DATA_PIPELINE_STATISTICS
 
 <ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:12 -->Since the Compute Shader honors predicated rendering, if a Dispatch call or an ExecuteIndirect compute dispatch action is predicated off, then CSInvocations will not increment, given the Compute Shader will not be invoked.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:12 --></ins>
 
-<!-- d3d12-review-alert:begin:queries:N-pipeline-field-units:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `IAVertices` and `IAPrimitives` measure input assembly events; `VSInvocations`, `GSInvocations`, `PSInvocations` and `CSInvocations` count their respective shader executions. `GSPrimitives` counts GS-generated primitives; `CInvocations` and `CPrimitives` count clipper input/output events. `HSInvocations` counts patches that invoke HS, not output control points; `DSInvocations` counts evaluated domain locations and may include permitted repeated evaluations. `CSInvocations` counts individual threads, not groups.
-
-<!-- d3d12-review-alert:end:queries:N-pipeline-field-units:0 -->
-
-<!-- d3d12-review-alert:begin:queries:N-pipeline-field-units:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Pixel shader invocation counts are not counts of visible depth samples or unique output pixels. Helper invocations, early depth/stencil, per-sample shading and coarse shading affect that relationship. A historical per-pixel test inequality is not a universal modern pipeline contract.
-
-<!-- d3d12-review-alert:end:queries:N-pipeline-field-units:1 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-pipeline-field-units:1:authored:migration-55472c86cfa5f4ad-0 -->Pixel shader invocation counts are not counts of visible depth samples or unique output pixels. Helper invocations, early depth/stencil, per-sample shading and coarse shading affect that relationship. A historical per-pixel test inequality is not a universal modern pipeline contract.<!-- d3d12-review-inline:end:queries:N-pipeline-field-units:1:authored:migration-55472c86cfa5f4ad-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:queries:W-graph-statistics:0 -->Pipeline statistics report invocations of nodes against the corresponding shader type.  So compute-based node shader invocations increment `CSInvocations`.<!-- d3d12-review-inline:end:queries:W-graph-statistics:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:queries:G-gs-invocation-statistics:0 -->The GSInvocations [Pipeline Statistics counter](#pipeline-statistics) reports the number of primitives input to the GS multiplied by the instance count per primitive. That is, each "instance" counts as a GSInvocation.<!-- d3d12-review-inline:end:queries:G-gs-invocation-statistics:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:G-gs-invocation-statistics:0:modified:migration-636f2fd8ec06886c-0 -->The GSInvocations [Pipeline Statistics counter](#pipeline-statistics) reports the number of primitives input to the GS multiplied by the instance count per primitive. That is, each "instance" counts as a GSInvocation.<!-- d3d12-review-inline:end:queries:G-gs-invocation-statistics:0:modified:migration-636f2fd8ec06886c-0 --></ins>
 
 <a id="mesh-statistics"></a>
 
@@ -400,14 +309,7 @@ typedef struct D3D12_QUERY_DATA_PIPELINE_STATISTICS1
 } D3D12_QUERY_DATA_PIPELINE_STATISTICS1;
 ```
 
-<!-- d3d12-review-alert:begin:queries:M-statistics-contract:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1` and `D3D12_QUERY_TYPE_PIPELINE_STATISTICS1` select this result. `ASInvocations` and `MSInvocations` count individual shader thread invocations, not thread groups; `MSPrimitives` counts mesh output primitives with the view/culling qualifications below. Query begin/end and result resolution retain the [query contract](#query-lifecycle). `OPTIONS9.MeshShaderPipelineStatsSupported` advertises support; creating this statistics heap requires that capability. An unsupported heap is not a valid way to obtain zero-valued AS/MS fields. The older fields retain their existing meanings. Driver reporting uses the corresponding `D3D12DDI_QUERY_DATA_PIPELINE_STATISTICS1`, query heap and query type contracts.
-
-<!-- d3d12-review-alert:end:queries:M-statistics-contract:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:M-statistics-contract:0:authored:migration-bdb1d826752d0817-0 -->`D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1` and `D3D12_QUERY_TYPE_PIPELINE_STATISTICS1` select this result. `ASInvocations` and `MSInvocations` count individual shader thread invocations, not thread groups. `MSPrimitives` counts mesh output primitives with the view/culling qualifications below. Query begin/end and result resolution retain the [query contract](#query-lifecycle). Creating this statistics heap requires `OPTIONS9.MeshShaderPipelineStatsSupported`. The older fields retain their existing meanings. Driver reporting uses the corresponding `D3D12DDI_QUERY_DATA_PIPELINE_STATISTICS1`, query heap and query type contracts.<!-- d3d12-review-inline:end:queries:M-statistics-contract:0:authored:migration-bdb1d826752d0817-0 --></ins>
 
 <a id="msprimitives-and-view-instancing"></a>
 
@@ -445,11 +347,11 @@ typedef enum D3D12_TRI_STATE {
 
 Culled primitives might or might not be included in MSPrimitives, depending on the GPU implementation.
 
-<ins><!-- d3d12-review-inline:begin:queries:M-culled-statistics:1 -->Applications can find out whether the GPU implementation includes culled primitives in the MSPrimitives count, using a queryable capability called MSPrimitivesPipelineStatisticIncludesCulledPrimitives.<!-- d3d12-review-inline:end:queries:M-culled-statistics:1 --></ins>
+Applications can find out whether the GPU implementation includes culled primitives in the MSPrimitives count, using a <ins><!-- d3d12-review-inline:begin:queries:M-culled-statistics:1:modified:source-341424b746f10797-0-0 -->queryable<!-- d3d12-review-inline:end:queries:M-culled-statistics:1:modified:source-341424b746f10797-0-0 --></ins> capability called MSPrimitivesPipelineStatisticIncludesCulledPrimitives.
 
 If the capability value is FALSE, then culled primitives are not included in the MSPrimitives count.
 
-<ins><!-- d3d12-review-inline:begin:queries:M-culled-statistics:3 -->If the capability value is TRUE, then culled primitives are included in the MSPrimitives count.<!-- d3d12-review-inline:end:queries:M-culled-statistics:3 --></ins>
+If the capability value is TRUE, then <ins><!-- d3d12-review-inline:begin:queries:M-culled-statistics:3:modified:source-15fd568b9fa8141c-0-0 -->culled<!-- d3d12-review-inline:end:queries:M-culled-statistics:3:modified:source-15fd568b9fa8141c-0-0 --></ins> primitives are included in the MSPrimitives count.
 
 If the capability value is UNKNOWN, then the culled primitives might or might not be included in the count.
 
@@ -464,7 +366,7 @@ If the capability value is UNKNOWN, then the culled primitives might or might no
 
 ## Stream output statistics
 
-<ins><!-- d3d12-review-inline:begin:queries:A-so-statistics:0 -->`D3D12_QUERY_DATA_SO_STATISTICS` contains statistics for monitoring the amount of data streamed out to the given Stream at the [Stream Output](geometry-shaders-and-stream-output.md#stream-output) stage of the Pipeline. Only complete primitives (e.g. points, lines or triangles) are Streamed Out, as counted by these stats. Should the primitive type change (e.g. lines to triangles), the counting is not adjusted in any way; the count is always total primitives, regardless of type.<!-- d3d12-review-inline:end:queries:A-so-statistics:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:A-so-statistics:0:modified:migration-c1b937b726d2d45f-0 -->`D3D12_QUERY_DATA_SO_STATISTICS` contains statistics for monitoring the amount of data streamed out to the given Stream at the [Stream Output](geometry-shaders-and-stream-output.md#stream-output) stage of the Pipeline. Only complete primitives (e.g. points, lines or triangles) are Streamed Out, as counted by these stats. Should the primitive type change (e.g. lines to triangles), the counting is not adjusted in any way; the count is always total primitives, regardless of type.<!-- d3d12-review-inline:end:queries:A-so-statistics:0:modified:migration-c1b937b726d2d45f-0 --></ins>
 
 ```cpp
 typedef struct D3D12_QUERY_DATA_SO_STATISTICS
@@ -480,25 +382,11 @@ The number of primitives (that is, points, lines, and triangles) that were actua
 
 `PrimitivesStorageNeeded`
 
-If the stream output resource is large enough, then *PrimitivesStorageNeeded* represents the total number of primitives written to the stream output resource. Otherwise, it represents the total number of primitives that *would* have been written to the stream-output resource had there been enough space for them all.
+If the stream output resource is large enough, then *PrimitivesStorageNeeded* represents the total number of primitives written to the stream output resource. Otherwise, it represents the total number of primitives that *would* have been written to the <ins><!-- d3d12-review-inline:begin:queries:STYLE-O3:3:preserved-repair:statistics-resource-name -->stream output<!-- d3d12-review-inline:end:queries:STYLE-O3:3:preserved-repair:statistics-resource-name --></ins> resource had there been enough space for them all.
 
-<!-- d3d12-review-alert:begin:queries:G-so-statistics-contract:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:G-so-statistics-contract:0:authored:migration-777df26a537db373-0 -->`D3D12_QUERY_TYPE_SO_STATISTICS_STREAM0` through `D3D12_QUERY_TYPE_SO_STATISTICS_STREAM3` select per-stream statistics from a `D3D12_QUERY_HEAP_TYPE_SO_STATISTICS` heap. These primitive counts are distinct from the filled size byte value and GS emission limits. `BeginQuery` and `EndQuery` define the measured interval; `ResolveQueryData` makes its result available. Unequal written and storage-needed results indicate insufficient capture storage. Predicate and [indirect execution](indirect-execution.md#argument-initialization) use their own buffer/operation contracts.<!-- d3d12-review-inline:end:queries:G-so-statistics-contract:0:authored:migration-777df26a537db373-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `D3D12_QUERY_TYPE_SO_STATISTICS_STREAM0` through `D3D12_QUERY_TYPE_SO_STATISTICS_STREAM3` select per-stream statistics from a `D3D12_QUERY_HEAP_TYPE_SO_STATISTICS` heap. These primitive counts are distinct from the filled size byte value and GS emission limits. `BeginQuery` and `EndQuery` define the measured interval; `ResolveQueryData` makes its result available. Unequal written and storage-needed results indicate insufficient capture storage. Predicate and [indirect execution](indirect-execution.md#argument-initialization) use their own buffer/operation contracts.
-
-<!-- d3d12-review-alert:end:queries:G-so-statistics-contract:0 -->
-
-<!-- d3d12-review-alert:begin:queries:N-so-owner:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> These counters measure complete primitives per stream, not filled size bytes. Stream overflow, whole-primitive write suppression and independence between streams are defined by [SO capture behavior](geometry-shaders-and-stream-output.md#overflow-and-statistics). A comparison of the two interval results can detect insufficient storage. There is no separate D3D12 SO overflow predicate query object.
-
-<!-- d3d12-review-alert:end:queries:N-so-owner:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-so-owner:0:authored:migration-8a9521525d9e8e5a-0 -->These counters measure complete primitives per stream, not filled size bytes. Stream overflow, whole-primitive write suppression and independence between streams are defined by [SO capture behavior](geometry-shaders-and-stream-output.md#overflow-and-statistics). A comparison of the two interval results can detect insufficient storage. There is no separate D3D12 SO overflow predicate query object.<!-- d3d12-review-inline:end:queries:N-so-owner:0:authored:migration-8a9521525d9e8e5a-0 --></ins>
 
 <a id="video-decode-statistics"></a>
 
@@ -581,7 +469,7 @@ Specifies the query heap in a [D3D12_QUERY_HEAP_DESC](#d3d12_query_heap_desc) st
 
 Type: **REFIID**
 
-<ins><!-- d3d12-review-inline:begin:queries:P-ID3D12Device%3A%3ACreateQueryHeap:5 -->Identifies the requested query-heap interface, not an individual heap instance.<!-- d3d12-review-inline:end:queries:P-ID3D12Device%3A%3ACreateQueryHeap:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:P-ID3D12Device%3A%3ACreateQueryHeap:5:modified:style-o2-query-heap -->Identifies the requested query heap interface, not an individual heap instance.<!-- d3d12-review-inline:end:queries:P-ID3D12Device%3A%3ACreateQueryHeap:5:modified:style-o2-query-heap --></ins>
 
 `[out, optional] ppvHeap`
 
@@ -597,14 +485,7 @@ This method returns one of the [Direct3D 12 Return Codes](devices-and-capabiliti
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12Device%3A%3ACreateQueryHeap:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The heap type/count/node and relevant capability must be valid under [query support](#query-support). A null output requests validation only; valid parameters return `S_FALSE` without creating an object, as specified by the public parameter contract.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12Device%3A%3ACreateQueryHeap:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12Device%3A%3ACreateQueryHeap:0:authored:migration-92e17a93e00f7dc0-0 -->The heap type/count/node and relevant capability must be valid under [query support](#query-support).<!-- d3d12-review-inline:end:queries:C-ID3D12Device%3A%3ACreateQueryHeap:0:authored:migration-92e17a93e00f7dc0-0 --></ins>
 
 <a id="graphics-beginquery"></a>
 
@@ -650,14 +531,7 @@ None
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12GraphicsCommandList%3A%3ABeginQuery:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12GraphicsCommandList%3A%3ABeginQuery:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12GraphicsCommandList%3A%3ABeginQuery:0:authored:migration-48813c0694b480f2-0 -->The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply.<!-- d3d12-review-inline:end:queries:C-ID3D12GraphicsCommandList%3A%3ABeginQuery:0:authored:migration-48813c0694b480f2-0 --></ins>
 
 <a id="graphics-endquery"></a>
 
@@ -703,14 +577,7 @@ None
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12GraphicsCommandList%3A%3AEndQuery:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12GraphicsCommandList%3A%3AEndQuery:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12GraphicsCommandList%3A%3AEndQuery:0:authored:migration-c99216ceef5259fe-0 -->The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply.<!-- d3d12-review-inline:end:queries:C-ID3D12GraphicsCommandList%3A%3AEndQuery:0:authored:migration-c99216ceef5259fe-0 --></ins>
 
 <a id="graphics-resolvequerydata"></a>
 
@@ -777,14 +644,7 @@ None
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12GraphicsCommandList%3A%3AResolveQueryData:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12GraphicsCommandList%3A%3AResolveQueryData:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12GraphicsCommandList%3A%3AResolveQueryData:0:authored:migration-46dea6c5b7e213c1-0 -->The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply.<!-- d3d12-review-inline:end:queries:C-ID3D12GraphicsCommandList%3A%3AResolveQueryData:0:authored:migration-46dea6c5b7e213c1-0 --></ins>
 
 <a id="videodecode-beginquery"></a>
 
@@ -824,14 +684,7 @@ None
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12VideoDecodeCommandList%3A%3ABeginQuery:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply. No currently supported video query type uses BeginQuery. This declaration does not permit beginning a timestamp or decode statistics query.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12VideoDecodeCommandList%3A%3ABeginQuery:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12VideoDecodeCommandList%3A%3ABeginQuery:0:authored:migration-095be059288d7e45-0 -->The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply. No currently supported video query type uses BeginQuery. This declaration does not permit beginning a timestamp or decode statistics query.<!-- d3d12-review-inline:end:queries:C-ID3D12VideoDecodeCommandList%3A%3ABeginQuery:0:authored:migration-095be059288d7e45-0 --></ins>
 
 <a id="videodecode-endquery"></a>
 
@@ -871,14 +724,7 @@ None
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12VideoDecodeCommandList%3A%3AEndQuery:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply. Decode statistics samples only the latest decode operation in this same command list, not an interval.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12VideoDecodeCommandList%3A%3AEndQuery:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12VideoDecodeCommandList%3A%3AEndQuery:0:authored:migration-1ec2a29ea3c2656d-0 -->The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply. Decode statistics samples only the latest decode operation in this same command list, not an interval.<!-- d3d12-review-inline:end:queries:C-ID3D12VideoDecodeCommandList%3A%3AEndQuery:0:authored:migration-1ec2a29ea3c2656d-0 --></ins>
 
 <a id="videodecode-resolvequerydata"></a>
 
@@ -933,14 +779,7 @@ None
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12VideoDecodeCommandList%3A%3AResolveQueryData:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12VideoDecodeCommandList%3A%3AResolveQueryData:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12VideoDecodeCommandList%3A%3AResolveQueryData:0:authored:migration-f8dcf66a6a31ca36-0 -->The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply.<!-- d3d12-review-inline:end:queries:C-ID3D12VideoDecodeCommandList%3A%3AResolveQueryData:0:authored:migration-f8dcf66a6a31ca36-0 --></ins>
 
 <a id="videoprocess-beginquery"></a>
 
@@ -980,14 +819,7 @@ None
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12VideoProcessCommandList%3A%3ABeginQuery:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply. No currently supported video query type uses BeginQuery. This declaration does not permit beginning a timestamp or decode statistics query.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12VideoProcessCommandList%3A%3ABeginQuery:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12VideoProcessCommandList%3A%3ABeginQuery:0:authored:migration-3e2c5288d596bfa1-0 -->The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply. No currently supported video query type uses BeginQuery. This declaration does not permit beginning a timestamp or decode statistics query.<!-- d3d12-review-inline:end:queries:C-ID3D12VideoProcessCommandList%3A%3ABeginQuery:0:authored:migration-3e2c5288d596bfa1-0 --></ins>
 
 <a id="videoprocess-endquery"></a>
 
@@ -1027,14 +859,7 @@ None
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12VideoProcessCommandList%3A%3AEndQuery:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12VideoProcessCommandList%3A%3AEndQuery:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12VideoProcessCommandList%3A%3AEndQuery:0:authored:migration-94e49df235bda670-0 -->The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply.<!-- d3d12-review-inline:end:queries:C-ID3D12VideoProcessCommandList%3A%3AEndQuery:0:authored:migration-94e49df235bda670-0 --></ins>
 
 <a id="videoprocess-resolvequerydata"></a>
 
@@ -1089,14 +914,7 @@ None
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12VideoProcessCommandList%3A%3AResolveQueryData:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12VideoProcessCommandList%3A%3AResolveQueryData:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12VideoProcessCommandList%3A%3AResolveQueryData:0:authored:migration-1a3c8c915eeab6e5-0 -->The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply.<!-- d3d12-review-inline:end:queries:C-ID3D12VideoProcessCommandList%3A%3AResolveQueryData:0:authored:migration-1a3c8c915eeab6e5-0 --></ins>
 
 <a id="videoencode-beginquery"></a>
 
@@ -1136,14 +954,7 @@ None
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12VideoEncodeCommandList%3A%3ABeginQuery:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply. No currently supported video query type uses BeginQuery. This declaration does not permit beginning a timestamp or decode statistics query.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12VideoEncodeCommandList%3A%3ABeginQuery:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12VideoEncodeCommandList%3A%3ABeginQuery:0:authored:migration-f505595db496f01e-0 -->The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply. No currently supported video query type uses BeginQuery. This declaration does not permit beginning a timestamp or decode statistics query.<!-- d3d12-review-inline:end:queries:C-ID3D12VideoEncodeCommandList%3A%3ABeginQuery:0:authored:migration-f505595db496f01e-0 --></ins>
 
 <a id="videoencode-endquery"></a>
 
@@ -1183,14 +994,7 @@ None
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12VideoEncodeCommandList%3A%3AEndQuery:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12VideoEncodeCommandList%3A%3AEndQuery:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12VideoEncodeCommandList%3A%3AEndQuery:0:authored:migration-36f6bdca2a592a36-0 -->The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply.<!-- d3d12-review-inline:end:queries:C-ID3D12VideoEncodeCommandList%3A%3AEndQuery:0:authored:migration-36f6bdca2a592a36-0 --></ins>
 
 <a id="videoencode-resolvequerydata"></a>
 
@@ -1245,14 +1049,7 @@ None
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12VideoEncodeCommandList%3A%3AResolveQueryData:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12VideoEncodeCommandList%3A%3AResolveQueryData:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12VideoEncodeCommandList%3A%3AResolveQueryData:0:authored:migration-c019269ea90a7076-0 -->The [type/heap/list support](#query-support), [lifecycle](#query-lifecycle), [result layout](#result-layout), [resource access](#query-lifecycle) and [operation predication](#predication-operation-matrix) contracts apply.<!-- d3d12-review-inline:end:queries:C-ID3D12VideoEncodeCommandList%3A%3AResolveQueryData:0:authored:migration-c019269ea90a7076-0 --></ins>
 
 <a id="cpu-resolution"></a>
 
@@ -1270,7 +1067,7 @@ None
 
 **Remarks:**
 
-<ins><!-- d3d12-review-inline:begin:queries:CPU-flag-contract:3 -->Query heaps created without the `D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE` flag cannot be used with the `ID3D12Device15::ResolveQueryData()` method and will return `E_INVALIDARG` if attempted. Conversely, heaps created with the CPU resolve flag cannot be used with the Command List resolve API.<!-- d3d12-review-inline:end:queries:CPU-flag-contract:3 --></ins>
+Query heaps created without the `D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE` flag cannot be used with the <ins><!-- d3d12-review-inline:begin:queries:CPU-flag-contract:3:modified:source-f886e74fc4692b85-0-0 -->`ID3D12Device15::ResolveQueryData()`<!-- d3d12-review-inline:end:queries:CPU-flag-contract:3:modified:source-f886e74fc4692b85-0-0 --></ins> method and will return `E_INVALIDARG` if attempted. Conversely, heaps created with the CPU resolve flag cannot be used with the Command List resolve API.
 
 <a id="createqueryheap1"></a>
 
@@ -1288,47 +1085,19 @@ HRESULT CreateQueryHeap1(
 
 #### Behavior
 
-<!-- d3d12-review-alert:begin:queries:B-ID3D12Device15%3A%3ACreateQueryHeap1:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Creates a query heap with explicit CPU/GPU result retrieval selection.
-
-<!-- d3d12-review-alert:end:queries:B-ID3D12Device15%3A%3ACreateQueryHeap1:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:B-ID3D12Device15%3A%3ACreateQueryHeap1:0:authored:migration-0a2e607d211450a6-0 -->Creates a query heap with explicit CPU/GPU result retrieval selection.<!-- d3d12-review-inline:end:queries:B-ID3D12Device15%3A%3ACreateQueryHeap1:0:authored:migration-0a2e607d211450a6-0 --></ins>
 
 #### Parameters
 
-<!-- d3d12-review-alert:begin:queries:P-ID3D12Device15%3A%3ACreateQueryHeap1:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pDesc` supplies [Type, Count and NodeMask](#query-heaps). `Flags` is `D3D12_QUERY_HEAP_FLAG_NONE` for ordinary GPU resolution or `D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE` for CPU resolution. `riid` identifies the requested heap interface. `ppvHeap` receives the created object. As with CreateQueryHeap, a null `ppvHeap` requests validation without returning an object.
-
-<!-- d3d12-review-alert:end:queries:P-ID3D12Device15%3A%3ACreateQueryHeap1:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:P-ID3D12Device15%3A%3ACreateQueryHeap1:0:authored:migration-ca7848830bd5637e-0 -->`pDesc` supplies [Type, Count and NodeMask](#query-heaps). `Flags` is `D3D12_QUERY_HEAP_FLAG_NONE` for ordinary GPU resolution or `D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE` for CPU resolution. `riid` identifies the requested heap interface. `ppvHeap` receives the created object. As with CreateQueryHeap, a null `ppvHeap` requests validation without returning an object.<!-- d3d12-review-inline:end:queries:P-ID3D12Device15%3A%3ACreateQueryHeap1:0:authored:migration-ca7848830bd5637e-0 --></ins>
 
 #### Return values
 
-<!-- d3d12-review-alert:begin:queries:R-ID3D12Device15%3A%3ACreateQueryHeap1:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Successful object creation returns `S_OK`; successful null output validation returns `S_FALSE`. Invalid parameters return `E_INVALIDARG`, with allocation and device errors reported by the standard HRESULT contract.
-
-<!-- d3d12-review-alert:end:queries:R-ID3D12Device15%3A%3ACreateQueryHeap1:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:R-ID3D12Device15%3A%3ACreateQueryHeap1:0:authored:migration-78827e42d80b47b9-0 -->Successful object creation returns `S_OK`; successful null output validation returns `S_FALSE`. Invalid parameters return `E_INVALIDARG`, with allocation and device errors reported by the standard HRESULT contract.<!-- d3d12-review-inline:end:queries:R-ID3D12Device15%3A%3ACreateQueryHeap1:0:authored:migration-78827e42d80b47b9-0 --></ins>
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12Device15%3A%3ACreateQueryHeap1:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> With flags NONE, the heap is equivalent to the ordinary creation path. CPU-resolve heaps cannot be passed to command list ResolveQueryData, and ordinary heaps cannot be passed to the CPU method.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12Device15%3A%3ACreateQueryHeap1:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12Device15%3A%3ACreateQueryHeap1:0:authored:migration-bf6fc9f3145a4c51-0 -->With flags NONE, the heap is equivalent to the ordinary creation path. CPU-resolve heaps cannot be passed to command list ResolveQueryData, and ordinary heaps cannot be passed to the CPU method.<!-- d3d12-review-inline:end:queries:C-ID3D12Device15%3A%3ACreateQueryHeap1:0:authored:migration-bf6fc9f3145a4c51-0 --></ins>
 
 <a id="cpu-resolvequerydata"></a>
 
@@ -1347,47 +1116,17 @@ HRESULT ResolveQueryData(
 
 #### Behavior
 
-<!-- d3d12-review-alert:begin:queries:B-ID3D12Device15%3A%3AResolveQueryData:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Resolves the selected completed query records into CPU memory on the CPU timeline.
-
-<!-- d3d12-review-alert:end:queries:B-ID3D12Device15%3A%3AResolveQueryData:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:B-ID3D12Device15%3A%3AResolveQueryData:0:authored:migration-82c5a3b29c052f24-0 -->Resolves the selected completed query records into CPU memory on the CPU timeline.<!-- d3d12-review-inline:end:queries:B-ID3D12Device15%3A%3AResolveQueryData:0:authored:migration-82c5a3b29c052f24-0 --></ins>
 
 #### Parameters
 
-<!-- d3d12-review-alert:begin:queries:P-ID3D12Device15%3A%3AResolveQueryData:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pQueryHeap` identifies a heap created with CPU_RESOLVE. `Type` selects compatible result records. `StartIndex` and nonzero `NumQueries` select the consecutive query range. The range must fit and the output must be non-null and correctly sized. `pResolvedQueryData` receives the [typed records](#result-layout).
-
-<!-- d3d12-review-alert:end:queries:P-ID3D12Device15%3A%3AResolveQueryData:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:P-ID3D12Device15%3A%3AResolveQueryData:0:authored:migration-b69cd5eea68ee556-0 -->`pQueryHeap` identifies a heap created with CPU_RESOLVE. `Type` selects compatible result records. `StartIndex` and nonzero `NumQueries` select the consecutive query range. The range must fit and the output must be non-null and correctly sized. `pResolvedQueryData` receives the [typed records](#result-layout).<!-- d3d12-review-inline:end:queries:P-ID3D12Device15%3A%3AResolveQueryData:0:authored:migration-b69cd5eea68ee556-0 --></ins>
 
 #### Return values
 
-<!-- d3d12-review-alert:begin:queries:R-ID3D12Device15%3A%3AResolveQueryData:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `S_OK` reports successful resolution; invalid parameters return `E_INVALIDARG`. This is not a readiness-polling API.
-
-<!-- d3d12-review-alert:end:queries:R-ID3D12Device15%3A%3AResolveQueryData:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:R-ID3D12Device15%3A%3AResolveQueryData:0:authored:migration-8d879a91673a34a8-0 -->`S_OK` reports successful resolution; invalid parameters return `E_INVALIDARG`. This is not a readiness-polling API.<!-- d3d12-review-inline:end:queries:R-ID3D12Device15%3A%3AResolveQueryData:0:authored:migration-8d879a91673a34a8-0 --></ins>
 
 #### Constraints
-
-<!-- d3d12-review-alert:begin:queries:C-ID3D12Device15%3A%3AResolveQueryData:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The application must establish completion of every GPU producer of the selected results before calling. The method does not wait for the GPU or establish implicit synchronization.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12Device15%3A%3AResolveQueryData:0 -->
 
 This method resolves query data on the CPU timeline. Any required post-processing of the raw query data generated on the GPU timeline is performed on the CPU immediately by the runtime and/or driver before this method returns.
 
@@ -1407,7 +1146,7 @@ When a query heap is created with the `D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE` flag o
 
 2. **Internal Buffer Management**: The runtime creates and manages internal GPU-visible destination buffers to store the resolved query results. These buffers are sized appropriately for the query types and counts used.
 
-3. <ins><!-- d3d12-review-inline:begin:queries:CPU-fallback:3 -->**Transparent Operation**: Applications using `ID3D12Device15::ResolveQueryData()` are unaware of the fallback - the method behaves identically whether using native support or runtime emulation.<!-- d3d12-review-inline:end:queries:CPU-fallback:3 --></ins>
+3. **Transparent Operation**: Applications using <ins><!-- d3d12-review-inline:begin:queries:CPU-fallback:3:modified:source-9f32acad5cf93b30-0-0 -->`ID3D12Device15::ResolveQueryData()`<!-- d3d12-review-inline:end:queries:CPU-fallback:3:modified:source-9f32acad5cf93b30-0-0 --></ins> are unaware of the fallback - the method behaves identically whether using native support or runtime emulation.
 
 <a id="timestamps"></a>
 
@@ -1445,14 +1184,7 @@ This method returns one of the [Direct3D 12 Return Codes](devices-and-capabiliti
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12CommandQueue%3A%3AGetTimestampFrequency:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Timestamp support, clock domains, units and idle/calibration qualifications are defined below; unsupported queues return `E_FAIL`.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12CommandQueue%3A%3AGetTimestampFrequency:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12CommandQueue%3A%3AGetTimestampFrequency:0:authored:migration-e4fc630790ba3478-0 -->Timestamp support, clock domains, units and idle/calibration qualifications are defined below; unsupported queues return `E_FAIL`.<!-- d3d12-review-inline:end:queries:C-ID3D12CommandQueue%3A%3AGetTimestampFrequency:0:authored:migration-e4fc630790ba3478-0 --></ins>
 
 <a id="getclockcalibration"></a>
 
@@ -1469,7 +1201,7 @@ HRESULT GetClockCalibration(
 
 #### Behavior
 
-This method samples the CPU and GPU timestamp counters at the same moment in time.
+This method samples the CPU and GPU timestamp counters <ins><!-- d3d12-review-inline:begin:queries:OI3-clock-calibration:0:modified:sampling-qualification -->at nearly the same time<!-- d3d12-review-inline:end:queries:OI3-clock-calibration:0:modified:sampling-qualification --></ins>.
 
 #### Parameters
 
@@ -1493,14 +1225,7 @@ This method returns one of the [Direct3D 12 Return Codes](devices-and-capabiliti
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12CommandQueue%3A%3AGetClockCalibration:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Timestamp support, clock domains, units and idle/calibration qualifications are defined below; unsupported queues return `E_FAIL`.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12CommandQueue%3A%3AGetClockCalibration:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12CommandQueue%3A%3AGetClockCalibration:0:authored:migration-6b22155052f37629-0 -->Timestamp support, clock domains, units and idle/calibration qualifications are defined below; unsupported queues return `E_FAIL`.<!-- d3d12-review-inline:end:queries:C-ID3D12CommandQueue%3A%3AGetClockCalibration:0:authored:migration-6b22155052f37629-0 --></ins>
 
 A timestamp is sampled by the GPU at the moment that the GPU is finished with all of the preceding workload. It's the same behavior adopted by Direct3D 11 (see [D3D11_QUERY_TIMESTAMP](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#20.4.3%20D3D11_QUERY_TIMESTAMP) in the Direct3D 11.3 Functional Specification on GitHub). That means that timestamp queries are a bottom-of-pipe (BOP) operation in Direct3D 12.
 
@@ -1515,23 +1240,30 @@ GPU timestamp clocks can stop ticking on some hardware when the GPU is idle, so 
 Timestamp frequencies do not change, even if other clock frequencies
 on the GPU change.
 
-<!-- d3d12-review-alert:begin:queries:N-timestamp-units:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-timestamp-units:0:authored:migration-316c7b0b742b6eb4-0 -->A timestamp is a 64-bit tick value with unspecified origin. Differences quantify elapsed GPU clock ticks within the supported comparison domain; divide by the corresponding queue frequency for seconds, using floating-point arithmetic when fractional time is needed. CPU calibration values are QueryPerformanceCounter ticks and use that counter's frequency, not the GPU queue frequency. A timestamp is not a fence signal and does not by itself establish CPU visibility or resource synchronization.<!-- d3d12-review-inline:end:queries:N-timestamp-units:0:authored:migration-316c7b0b742b6eb4-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> A timestamp is a 64-bit tick value with unspecified origin. Differences quantify elapsed GPU clock ticks within the supported comparison domain; divide by the corresponding queue frequency for seconds, using floating-point arithmetic when fractional time is needed. CPU calibration values are QueryPerformanceCounter ticks and use that counter's frequency, not the GPU queue frequency. A timestamp is not a fence signal and does not by itself establish CPU visibility or resource synchronization.
+<ins><!-- d3d12-review-inline:begin:queries:N-timestamp-comparison:0:authored:migration-65aeff99a3925f0d-0 -->Two timestamp queries issued in the same command list are reliably comparable. Comparisons across command lists must account for GPU idle intervals and clock domain/calibration behavior; stable power is a development-time aid for stable correlation. Do not compare raw ticks from different queue clock domains as if they necessarily had a common origin and frequency.<!-- d3d12-review-inline:end:queries:N-timestamp-comparison:0:authored:migration-65aeff99a3925f0d-0 --></ins>
 
-<!-- d3d12-review-alert:end:queries:N-timestamp-units:0 -->
+<a id="ddi-clock-calibration"></a>
 
-<!-- d3d12-review-alert:begin:queries:N-timestamp-comparison:0 -->
+### Driver clock calibration
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Two timestamp queries issued in the same command list are reliably comparable. Comparisons across command lists must account for GPU idle intervals and clock domain/calibration behavior; stable power is a development-time aid for stable correlation. Do not compare raw ticks from different queue clock domains as if they necessarily had a common origin and frequency.
+```cpp
+typedef void (APIENTRY* PFND3D12DDI_QUERY_CLOCK_CALIBRATION_0054)(
+    D3D12DDI_HDEVICE, D3D12DDI_HCOMMANDQUEUE, _Out_ D3D12DDI_GPUCLOCKDATA_0054* pClockData);
 
-<!-- d3d12-review-alert:end:queries:N-timestamp-comparison:0 -->
+typedef struct D3D12DDI_GPUCLOCKDATA_0054
+{
+    ULONGLONG               GpuFrequency;
+    ULONGLONG               GpuClockCounter;
+    ULONGLONG               CpuClockCounter;
+} D3D12DDI_GPUCLOCKDATA_0054;
+```
+
+<ins><!-- d3d12-review-inline:begin:execution:CS-presentation-services:3:authored:migration-30f25e84526e45a8-0 -->The downlevel QueryClockCalibration entry writes GPU frequency and correlated GPU/CPU counters for the specified driver queue.<!-- d3d12-review-inline:end:execution:CS-presentation-services:3:authored:migration-30f25e84526e45a8-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:execution:IF06-clock-owner-route:0:authored:migration-1006458d20ae03c0-0 -->[Clock calibration](counters-queries-and-predication.md#getclockcalibration)
+defines the API's timestamp support, clock domains and idle-clock qualifications.<!-- d3d12-review-inline:end:execution:IF06-clock-owner-route:0:authored:migration-1006458d20ae03c0-0 --></ins>
 
 <a id="setstablepowerstate"></a>
 
@@ -1563,20 +1295,13 @@ This method returns one of the [Direct3D 12 Return Codes](devices-and-capabiliti
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12Device%3A%3ASetStablePowerState:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This is a development-time profiling control, not a requirement to issue timestamp queries. Developer Mode is required.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12Device%3A%3ASetStablePowerState:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12Device%3A%3ASetStablePowerState:0:authored:migration-714c80ab46eae359-0 -->This is a development-time profiling control, not a requirement to issue timestamp queries. Developer Mode is required.<!-- d3d12-review-inline:end:queries:C-ID3D12Device%3A%3ASetStablePowerState:0:authored:migration-714c80ab46eae359-0 --></ins>
 
 This method is only useful during the development of applications. It enables developers to profile GPU usage of multiple algorithms without experiencing artifacts from [dynamic frequency scaling](https://en.wikipedia.org/wiki/Dynamic_frequency_scaling).
 
 <ins><!-- d3d12-review-inline:begin:queries:P-stable-power-mode:1 -->Do not call this method in normal execution for a shipped application. This method only works while the machine is in [developer mode](https://learn.microsoft.com/en-us/windows/uwp/get-started/enable-your-device-for-development). If developer mode is not enabled, then device removal will occur.<!-- d3d12-review-inline:end:queries:P-stable-power-mode:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:queries:P-stable-power-effects:0 -->A stable power state typically fixes GPU clock rates at a slower setting that is significantly lower than that experienced by users under normal application load. This reduction in clock rate affects the entire system. Slow clock rates are required to ensure processors don’t exhaust power, current, and thermal limits. Normal usage scenarios commonly leverage a processor's ability to dynamically over-clock. Any conclusions made by comparing two designs under a stable power state should be double-checked with supporting results from real usage scenarios.<!-- d3d12-review-inline:end:queries:P-stable-power-effects:0 --></ins>
+A stable power state typically fixes GPU clock rates at a slower setting that is significantly lower than that experienced by users under normal application load. This reduction in clock rate affects the entire system. Slow clock rates are required to ensure processors don’t exhaust power, current, and thermal limits. Normal usage scenarios commonly leverage a <ins><!-- d3d12-review-inline:begin:queries:P-stable-power-effects:0:modified:source-c107397fef1d7d79-0-0 -->processor's<!-- d3d12-review-inline:end:queries:P-stable-power-effects:0:modified:source-c107397fef1d7d79-0-0 --></ins> ability to dynamically over-clock. Any conclusions made by comparing two designs under a stable power state should be double-checked with supporting results from real usage scenarios.
 
 <a id="predication"></a>
 
@@ -1595,7 +1320,7 @@ typedef enum D3D12_PREDICATION_OP
 } D3D12_PREDICATION_OP;
 ```
 
-<!-- d3d12-review-alert:begin:queries:N-predicate-truth:0 -->
+<!-- d3d12-review-alert:begin:queries:N-predicate-truth:0:authored:migration-ba36dd99e42930c5-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -1607,38 +1332,17 @@ typedef enum D3D12_PREDICATION_OP
 > | `NOT_EQUAL_ZERO` | Zero | EXECUTE |
 > | `NOT_EQUAL_ZERO` | Nonzero | SKIP |
 
-<!-- d3d12-review-alert:end:queries:N-predicate-truth:0 -->
+<!-- d3d12-review-alert:end:queries:N-predicate-truth:0:authored:migration-ba36dd99e42930c5-0 -->
 
-<!-- d3d12-review-alert:begin:queries:N-predicate-truth:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> These names select the condition for suppressing work, not a condition for executing it. A null predicate buffer disables predication. The GPU samples the selected value when SetPredication executes; recording does not read it, and subsequent writes do not retroactively change that sampled predicate.
-
-<!-- d3d12-review-alert:end:queries:N-predicate-truth:1 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-predicate-truth:1:authored:migration-0482004606c39daf-0 -->These names select the condition for suppressing work, not a condition for executing it. A null predicate buffer disables predication. The GPU samples the selected value when SetPredication executes; recording does not read it, and subsequent writes do not retroactively change that sampled predicate.<!-- d3d12-review-inline:end:queries:N-predicate-truth:1:authored:migration-0482004606c39daf-0 --></ins>
 
 <a id="predicate-state"></a>
 
 ### Predicate state, access and protected resources
 
-<!-- d3d12-review-alert:begin:queries:N-predicate-state:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-predicate-state:0:authored:migration-d937382b167d7279-0 -->Predication is supported by DIRECT, COMPUTE and the video command list types, not COPY or BUNDLE setters. Direct/compute/video recordings begin with predication disabled; Reset/ClearState restore disabled state. Bundles inherit the direct list predicate but cannot set it; executing the bundle is not itself skipped, and its state changes still occur. [Canonical graphics initial/reset/bundle state](command-list-state.md#queries) remains the owner of graphics recording boundaries. The video predicate defaults are specified here.<!-- d3d12-review-inline:end:queries:N-predicate-state:0:authored:migration-d937382b167d7279-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Predication is supported by DIRECT, COMPUTE and the video command list types, not COPY or BUNDLE setters. Direct/compute/video recordings begin with predication disabled; Reset/ClearState restore disabled state. Bundles inherit the direct list predicate but cannot set it; executing the bundle is not itself skipped, and its state changes still occur. [Canonical graphics initial/reset/bundle state](command-list-state.md#queries) remains the owner of graphics recording boundaries. The video predicate defaults are specified here.
-
-<!-- d3d12-review-alert:end:queries:N-predicate-state:0 -->
-
-<!-- d3d12-review-alert:begin:queries:N-predicate-state:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> When `pBuffer` is null, `AlignedBufferOffset` must be zero and `Operation` must be `D3D12_PREDICATION_OP_EQUAL_ZERO`. A non-null predicate source is an unprotected buffer with an eight-byte-aligned, in-bounds eight-byte range. All 64 bits participate. Its production and subsequent sampling require the normal [resource access and synchronization contract](synchronization.md#barrier-access), with lifetime and residency preserved through execution. Predication does not legalize invalid commands or skip CPU-side recording/state validation. [Protected resource operations](../ProtectedResources.md#predication-not-supported) have their additional restriction.
-
-<!-- d3d12-review-alert:end:queries:N-predicate-state:1 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-predicate-state:1:authored:migration-b4f6a516ad159992-0 -->When `pBuffer` is null, `AlignedBufferOffset` must be zero and `Operation` must be `D3D12_PREDICATION_OP_EQUAL_ZERO`. A non-null predicate source is an unprotected buffer with an eight-byte-aligned, in-bounds eight-byte range. All 64 bits participate. Its production and subsequent sampling require the normal [resource access and synchronization contract](synchronization.md#barrier-access), with lifetime and residency preserved through execution. Predication does not legalize invalid commands or skip CPU-side recording/state validation. [Protected resource operations](../ProtectedResources.md#predication-not-supported) have their additional restriction.<!-- d3d12-review-inline:end:queries:N-predicate-state:1:authored:migration-b4f6a516ad159992-0 --></ins>
 
 <a id="graphics-setpredication"></a>
 
@@ -1684,14 +1388,7 @@ None
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12GraphicsCommandList%3A%3ASetPredication:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [truth table](#predication), [state/access restrictions](#predicate-state) and [operation matrix](#predication-operation-matrix) define its current behavior. Predication state changes themselves are not suppressed by the old predicate.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12GraphicsCommandList%3A%3ASetPredication:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12GraphicsCommandList%3A%3ASetPredication:0:authored:migration-3bdd8a178ee86b94-0 -->The [truth table](#predication), [state/access restrictions](#predicate-state) and [operation matrix](#predication-operation-matrix) define its current behavior. Predication state changes themselves are not suppressed by the old predicate.<!-- d3d12-review-inline:end:queries:C-ID3D12GraphicsCommandList%3A%3ASetPredication:0:authored:migration-3bdd8a178ee86b94-0 --></ins>
 
 <a id="videodecode-setpredication"></a>
 
@@ -1731,14 +1428,7 @@ None
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12VideoDecodeCommandList%3A%3ASetPredication:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [truth table](#predication), [state/access restrictions](#predicate-state) and [operation matrix](#predication-operation-matrix) define its current behavior. Predication state changes themselves are not suppressed by the old predicate.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12VideoDecodeCommandList%3A%3ASetPredication:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12VideoDecodeCommandList%3A%3ASetPredication:0:authored:migration-c4739982861a6e42-0 -->The [truth table](#predication), [state/access restrictions](#predicate-state) and [operation matrix](#predication-operation-matrix) define its current behavior. Predication state changes themselves are not suppressed by the old predicate.<!-- d3d12-review-inline:end:queries:C-ID3D12VideoDecodeCommandList%3A%3ASetPredication:0:authored:migration-c4739982861a6e42-0 --></ins>
 
 <a id="videoprocess-setpredication"></a>
 
@@ -1778,14 +1468,7 @@ None
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12VideoProcessCommandList%3A%3ASetPredication:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [truth table](#predication), [state/access restrictions](#predicate-state) and [operation matrix](#predication-operation-matrix) define its current behavior. Predication state changes themselves are not suppressed by the old predicate.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12VideoProcessCommandList%3A%3ASetPredication:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12VideoProcessCommandList%3A%3ASetPredication:0:authored:migration-c598699ffd15bac8-0 -->The [truth table](#predication), [state/access restrictions](#predicate-state) and [operation matrix](#predication-operation-matrix) define its current behavior. Predication state changes themselves are not suppressed by the old predicate.<!-- d3d12-review-inline:end:queries:C-ID3D12VideoProcessCommandList%3A%3ASetPredication:0:authored:migration-c598699ffd15bac8-0 --></ins>
 
 <a id="videoencode-setpredication"></a>
 
@@ -1825,20 +1508,13 @@ None
 
 #### Constraints
 
-<!-- d3d12-review-alert:begin:queries:C-ID3D12VideoEncodeCommandList%3A%3ASetPredication:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [truth table](#predication), [state/access restrictions](#predicate-state) and [operation matrix](#predication-operation-matrix) define its current behavior. Predication state changes themselves are not suppressed by the old predicate.
-
-<!-- d3d12-review-alert:end:queries:C-ID3D12VideoEncodeCommandList%3A%3ASetPredication:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12VideoEncodeCommandList%3A%3ASetPredication:0:authored:migration-cf7aa165c7b9bf10-0 -->The [truth table](#predication), [state/access restrictions](#predicate-state) and [operation matrix](#predication-operation-matrix) define its current behavior. Predication state changes themselves are not suppressed by the old predicate.<!-- d3d12-review-inline:end:queries:C-ID3D12VideoEncodeCommandList%3A%3ASetPredication:0:authored:migration-cf7aa165c7b9bf10-0 --></ins>
 
 <a id="predication-operation-matrix"></a>
 
 ### Operation matrix
 
-<!-- d3d12-review-alert:begin:queries:N-operation-matrix:0 -->
+<!-- d3d12-review-alert:begin:queries:N-operation-matrix:0:authored:migration-cdd0ec395055d67c-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -1925,25 +1601,11 @@ None
 > | `ID3D12VideoProcessCommandList::ResourceBarrier` | unpredicated | video process. |
 > | `ID3D12VideoProcessCommandList::WriteBufferImmediate` | predicated | On permitted list types. COPY has no supported predicate selection. |
 
-<!-- d3d12-review-alert:end:queries:N-operation-matrix:0 -->
+<!-- d3d12-review-alert:end:queries:N-operation-matrix:0:authored:migration-cdd0ec395055d67c-0 -->
 
-<!-- d3d12-review-alert:begin:queries:N-operation-boundaries:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-operation-boundaries:0:authored:migration-778aaabdb5d7e944-0 -->State/recording/annotation methods do not acquire a blanket skip condition from an active predicate. Some state methods also schedule maintenance work, which is separately qualified above. Query Begin/End and result resolution are not predicated. Wrappers and their generated work must be distinguished: ExecuteBundle preserves state execution while eligible bundle work uses the inherited predicate. ExecuteIndirect-generated eligible actions honor predication while required state cleanup remains independent.<!-- d3d12-review-inline:end:queries:N-operation-boundaries:0:authored:migration-778aaabdb5d7e944-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> State/recording/annotation methods do not acquire a blanket skip condition from an active predicate. Some state methods also schedule maintenance work, which is separately qualified above. Query Begin/End and result resolution are not predicated. Wrappers and their generated work must be distinguished: ExecuteBundle preserves state execution while eligible bundle work uses the inherited predicate. ExecuteIndirect-generated eligible actions honor predication while required state cleanup remains independent.
-
-<!-- d3d12-review-alert:end:queries:N-operation-boundaries:0 -->
-
-<!-- d3d12-review-alert:begin:queries:N-operation-boundaries:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For render passes translated into ordinary clear/resolve operations, beginning access CLEAR and ending access RESOLVE honor the predicate through those operations. Bindings, barriers and pass boundaries are not themselves skipped. Resuming does not repeat the beginning clear; suspending does not perform ending resolves. Native pass execution retains the [render pass access contract](output-merger.md#render-pass-access). The CLEAR/RESOLVE rule does not assign a blanket conditional behavior to every implicit load, store or discard. Each work operation retains its independent command type, capability, access and validity restrictions.
-
-<!-- d3d12-review-alert:end:queries:N-operation-boundaries:1 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-operation-boundaries:1:authored:migration-2118a710cf143e18-0 -->For render passes translated into ordinary clear/resolve operations, beginning access CLEAR and ending access RESOLVE honor the predicate through those operations. Bindings, barriers and pass boundaries are not themselves skipped. Resuming does not repeat the beginning clear; suspending does not perform ending resolves. Native pass execution retains the [render pass access contract](output-merger.md#render-pass-access). The CLEAR/RESOLVE rule does not assign a blanket conditional behavior to every implicit load, store or discard. Each work operation retains its independent command type, capability, access and validity restrictions.<!-- d3d12-review-inline:end:queries:N-operation-boundaries:1:authored:migration-2118a710cf143e18-0 --></ins>
 
 <a id="query-driver"></a>
 
@@ -2002,32 +1664,21 @@ typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALC_PRIVATE_QUERY_HEAP_SIZE_0001 )( D3D1
 typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_QUERY_HEAP ) ( D3D12DDI_HDEVICE, D3D12DDI_HQUERYHEAP );
 ```
 
-<!-- d3d12-review-alert:begin:queries:QD-lifecycle-roles:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:QD-lifecycle-roles:0:authored:migration-47c90330667661a2-0 -->The runtime allocates the private bytes reported by the sizing DDI and passes that storage through `D3D12DDI_HQUERYHEAP` to Create. The driver owns any additional allocations it makes, but must not free the runtime-supplied private region.<!-- d3d12-review-inline:end:queries:QD-lifecycle-roles:0:authored:migration-47c90330667661a2-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The runtime allocates the private bytes reported by the sizing DDI and passes that storage through `D3D12DDI_HQUERYHEAP` to Create. The driver owns any additional allocations it makes, but must not free the runtime-supplied private region.
+<ins><!-- d3d12-review-inline:begin:queries:QD-lifecycle-roles:1:authored:migration-d886989b9aeaa74c-0 -->A failed Create must unwind partial driver state and allocations. The runtime calls DestroyQueryHeap only after successful driver creation, including when later API initialization fails. Destroy releases driver-owned state without freeing the runtime-supplied private region.<!-- d3d12-review-inline:end:queries:QD-lifecycle-roles:1:authored:migration-d886989b9aeaa74c-0 --></ins>
 
-<!-- d3d12-review-alert:end:queries:QD-lifecycle-roles:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:QD-lifecycle-roles:2:authored:migration-6b745576bc6a71eb-0 -->Query heap creation receives the driver `Type`, element `Count` and resolved `NodeMask`. CPU resolution path selection is specified separately under [CPU query flags](#cpu-query-flags).<!-- d3d12-review-inline:end:queries:QD-lifecycle-roles:2:authored:migration-6b745576bc6a71eb-0 --></ins>
 
-<!-- d3d12-review-alert:begin:queries:QD-lifecycle-roles:1 -->
+#### Driver handle storage
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> A failed Create must unwind partial driver state and allocations. The runtime calls DestroyQueryHeap only after successful driver creation, including when later API initialization fails. Destroy releases driver-owned state without freeing the runtime-supplied private region.
+`D3D12DDI_HQUERYHEAP`
 
-<!-- d3d12-review-alert:end:queries:QD-lifecycle-roles:1 -->
+<ins><!-- d3d12-review-inline:begin:queries:OI6-storage:0:preserved-repair:opaque-heap-relocation -->The handle of a query heap, which represents an array of query results. The underlying data representation of a query result is IHV dependent in query heaps and opaque to applications. Query results are stored in a query heap until they are later “resolved” into the API defined format.<!-- d3d12-review-inline:end:queries:OI6-storage:0:preserved-repair:opaque-heap-relocation --></ins>
 
-<!-- d3d12-review-alert:begin:queries:QD-lifecycle-roles:2 -->
+`D3D12DDI_HCOMMANDLIST`
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Query heap creation receives the driver `Type`, element `Count` and resolved `NodeMask`. CPU resolution path selection is specified separately under [CPU query flags](#cpu-query-flags).
-
-<!-- d3d12-review-alert:end:queries:QD-lifecycle-roles:2 -->
+<ins><!-- d3d12-review-inline:begin:queries:OI6-storage:1:preserved-repair:command-list-relocation -->A handle to the driver's data for the command list. The driver uses this region of memory to store internal data structures that are related to its command list.<!-- d3d12-review-inline:end:queries:OI6-storage:1:preserved-repair:command-list-relocation --></ins>
 
 <a id="ddi-create-query-heap"></a>
 
@@ -2051,6 +1702,26 @@ Pointer to a D3D12DDIARG\_CREATE\_QUERY\_HEAP\_0001 structure.
 
 A query heap handle.
 
+<a id="ddi-recording-contracts"></a>
+
+### Recording API associations and shared rules
+
+<!-- d3d12-review-alert:begin:queries:N-ddi-parameter-bridge:0:authored:oi6-association-relocation -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Driver slot / operation | Precise API contracts |
+> |---|---|
+> | `pfnBeginQuery` using `PFND3D12DDI_BEGIN_END_QUERY_0003` | [Graphics](#graphics-beginquery), [decode](#videodecode-beginquery), [process](#videoprocess-beginquery), [encode](#videoencode-beginquery), subject to the issuance table |
+> | `pfnEndQuery` using `PFND3D12DDI_BEGIN_END_QUERY_0003` | [Graphics](#graphics-endquery), [decode](#videodecode-endquery), [process](#videoprocess-endquery), [encode](#videoencode-endquery) |
+> | `PFND3D12DDI_RESOLVE_QUERY_DATA` | [Graphics](#graphics-resolvequerydata), [decode](#videodecode-resolvequerydata), [process](#videoprocess-resolvequerydata), [encode](#videoencode-resolvequerydata) |
+> | `PFND3D12DDI_SET_PREDICATION` | [Graphics](#graphics-setpredication), [decode](#videodecode-setpredication), [process](#videoprocess-setpredication), [encode](#videoencode-setpredication) |
+
+<!-- d3d12-review-alert:end:queries:N-ddi-parameter-bridge:0:authored:oi6-association-relocation -->
+
+<ins><!-- d3d12-review-inline:begin:queries:QD-recording-boundaries:0:authored:migration-06099e3aa49cd543-0 -->The DDIs implement the query and predication operations identified in the table above.<!-- d3d12-review-inline:end:queries:QD-recording-boundaries:0:authored:migration-06099e3aa49cd543-0 --></ins>
+
 <a id="ddi-begin-end-query"></a>
 
 ### PFND3D12DDI_BEGIN_END_QUERY_0003
@@ -2061,40 +1732,15 @@ typedef VOID ( APIENTRY* PFND3D12DDI_BEGIN_END_QUERY_0003 )( D3D12DDI_HCOMMANDLI
 
 #### Parameters
 
-`unnamedParam1`
-
-*hCommandList*
-
-A handle to the driver's data for the command list. The driver uses this region of memory to store internal data structures that are related to its command list.
-
-`unnamedParam2`
-
-*hQueryHeap*
-
-The handle of a query heap, which represents an array of query results. The underlying data representation of a query result is IHV dependent in query heaps and opaque to applications. Query results are stored in a query heap until they are later “resolved” into the API defined format.
-
-`unnamedParam3`
-
-*QueryType*
-
-The type of query. Resolve is used by applications to transform a query result previously stored in a query heap into the API defined format. The resolved data is stored in a D3D12 buffer. The results can then be consumed by a shader, predication, or mapped and read on the CPU.
-
 `unnamedParam4`
 
-<ins><!-- d3d12-review-inline:begin:queries:DDI-ddi-begin-end-query:12 -->*Index*<!-- d3d12-review-inline:end:queries:DDI-ddi-begin-end-query:12 --></ins>
+*<ins><!-- d3d12-review-inline:begin:queries:DDI-ddi-begin-end-query:12:modified:source-60adfd547931ad76-0-0 -->Index<!-- d3d12-review-inline:end:queries:DDI-ddi-begin-end-query:12:modified:source-60adfd547931ad76-0-0 --></ins>*
 
-<ins><!-- d3d12-review-inline:begin:queries:DDI-ddi-begin-end-query:13 -->The zero-based index of the single query element.<!-- d3d12-review-inline:end:queries:DDI-ddi-begin-end-query:13 --></ins>
+The <ins><!-- d3d12-review-inline:begin:queries:DDI-ddi-begin-end-query:13:modified:source-2d3222c9b8327950-0-0 -->zero-based index of the single query<!-- d3d12-review-inline:end:queries:DDI-ddi-begin-end-query:13:modified:source-2d3222c9b8327950-0-0 --></ins> element.
 
 #### Driver behavior
 
-<!-- d3d12-review-alert:begin:queries:QD-begin-end-roles:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pfnBeginQuery` and `pfnEndQuery` share `PFND3D12DDI_BEGIN_END_QUERY_0003`. The selected slot identifies the phase.
-
-<!-- d3d12-review-alert:end:queries:QD-begin-end-roles:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:QD-begin-end-roles:0:authored:migration-e5ed925ed6ea35c4-0 -->`pfnBeginQuery` and `pfnEndQuery` share `PFND3D12DDI_BEGIN_END_QUERY_0003`. The selected slot identifies the phase.<!-- d3d12-review-inline:end:queries:QD-begin-end-roles:0:authored:migration-e5ed925ed6ea35c4-0 --></ins>
 
 <a id="ddi-resolve-query"></a>
 
@@ -2112,61 +1758,11 @@ typedef VOID ( APIENTRY* PFND3D12DDI_RESOLVE_QUERY_DATA )(
     );
 ```
 
-#### Parameters
-
-`unnamedParam1`
-
-hCommandList
-
-A handle to the driver's data for the command list. The driver uses this region of memory to store internal data structures that are related to its command list.
-
-`unnamedParam2`
-
-hQueryHeap
-
-The handle of a query heap.
-
-`unnamedParam3`
-
-QueryType
-
-A query type.
-
-`StartElement`
-
-The value of the start element.
-
-`ElementCount`
-
-The element count.
-
-`hDrvDestinationBuffer`
-
-The handle of a destination buffer.
-
-`DestinationOffset`
-
-The destination offset.
-
 #### Driver behavior
 
-<!-- d3d12-review-alert:begin:queries:QD-resolve-roles:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:QD-resolve-roles:0:authored:migration-1a6eb90c07b79696-0 -->The driver converts opaque query storage into the [API result layout](#result-layout) in the supplied destination resource. The opaque heap's internal representation need not match that layout.<!-- d3d12-review-inline:end:queries:QD-resolve-roles:0:authored:migration-1a6eb90c07b79696-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The driver converts opaque query storage into the [API result layout](#result-layout) in the supplied destination resource. The opaque heap's internal representation need not match that layout.
-
-<!-- d3d12-review-alert:end:queries:QD-resolve-roles:0 -->
-
-<!-- d3d12-review-alert:begin:queries:QD-resolve-roles:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The `CPU_RESOLVE` restriction on application GPU resolution calls does not prohibit the runtime's internal use of this DDI for [CPU resolution fallback](#cpu-resolution).
-
-<!-- d3d12-review-alert:end:queries:QD-resolve-roles:1 -->
+<ins><!-- d3d12-review-inline:begin:queries:QD-resolve-roles:1:authored:migration-4c5385fcd8388add-0 -->The `CPU_RESOLVE` restriction on application GPU resolution calls does not prohibit the runtime's internal use of this DDI for [CPU resolution fallback](#cpu-resolution).<!-- d3d12-review-inline:end:queries:QD-resolve-roles:1:authored:migration-4c5385fcd8388add-0 --></ins>
 
 <a id="ddi-set-predication"></a>
 
@@ -2178,75 +1774,16 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_PREDICATION )( D3D12DDI_HCOMMANDLIST, D
 
 #### Parameters
 
-`unnamedParam1`
-
-*hCommandList*
-
-A handle to the driver's data for the command list. The driver uses this region of memory to store internal data structures that are related to its command list.
-
-`unnamedParam2`
-
-*hResource*
-
-The handle of a resource.
-
 `unnamedParam3`
 
-<ins><!-- d3d12-review-inline:begin:queries:DDI-ddi-set-predication:9 -->The byte offset of the 64-bit predicate source.<!-- d3d12-review-inline:end:queries:DDI-ddi-set-predication:9 --></ins>
-
-`unnamedParam4`
-
-*PredicationOp*
-
-A predication operation. For more information, see the [D3D12DDI_PREDICATION_OP](#d3d12ddi-predication-op) enumeration.
+<ins><!-- d3d12-review-inline:begin:queries:DDI-ddi-set-predication:9:authored:migration-4a45b1c8d60661cc-0 -->The byte offset of the 64-bit predicate source.<!-- d3d12-review-inline:end:queries:DDI-ddi-set-predication:9:authored:migration-4a45b1c8d60661cc-0 --></ins>
 
 #### Driver behavior
 
-<!-- d3d12-review-alert:begin:queries:QD-predicate-roles:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The driver comparison enum names specify when to skip work. Use the [predicate truth table](#predication) when translating the API operation.
-
-<!-- d3d12-review-alert:end:queries:QD-predicate-roles:1 -->
-
-<a id="ddi-recording-contracts"></a>
-
-### Recording API associations and shared rules
-
-<!-- d3d12-review-alert:begin:queries:N-ddi-parameter-bridge:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> | Driver slot / operation | Precise API contracts |
-> |---|---|
-> | `pfnBeginQuery` using `PFND3D12DDI_BEGIN_END_QUERY_0003` | [Graphics](#graphics-beginquery), [decode](#videodecode-beginquery), [process](#videoprocess-beginquery), [encode](#videoencode-beginquery), subject to the issuance table |
-> | `pfnEndQuery` using `PFND3D12DDI_BEGIN_END_QUERY_0003` | [Graphics](#graphics-endquery), [decode](#videodecode-endquery), [process](#videoprocess-endquery), [encode](#videoencode-endquery) |
-> | `PFND3D12DDI_RESOLVE_QUERY_DATA` | [Graphics](#graphics-resolvequerydata), [decode](#videodecode-resolvequerydata), [process](#videoprocess-resolvequerydata), [encode](#videoencode-resolvequerydata) |
-> | `PFND3D12DDI_SET_PREDICATION` | [Graphics](#graphics-setpredication), [decode](#videodecode-setpredication), [process](#videoprocess-setpredication), [encode](#videoencode-setpredication) |
-
-<!-- d3d12-review-alert:end:queries:N-ddi-parameter-bridge:0 -->
-
-<!-- d3d12-review-alert:begin:queries:QD-recording-boundaries:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The DDIs implement the query and predication operations identified in the table above.
-
-<!-- d3d12-review-alert:end:queries:QD-recording-boundaries:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:QD-predicate-roles:1:authored:migration-8f5413eb6da793d8-0 -->The driver comparison enum names specify when to skip work. Use the [predicate truth table](#predication) when translating the API operation.<!-- d3d12-review-inline:end:queries:QD-predicate-roles:1:authored:migration-8f5413eb6da793d8-0 --></ins>
 
 <a id="ddi-cpu-resolution"></a>
 
 ### CPU timeline driver resolution
 
-<!-- d3d12-review-alert:begin:queries:N-cpu-ddi:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The CPU resolution path and its runtime fallback are specified under [CPU query resolution](#cpu-resolution).
-
-<!-- d3d12-review-alert:end:queries:N-cpu-ddi:0 -->
+<ins><!-- d3d12-review-inline:begin:queries:N-cpu-ddi:0:authored:migration-d291ef3ff57a809c-0 -->The CPU resolution path and its runtime fallback are specified under [CPU query resolution](#cpu-resolution).<!-- d3d12-review-inline:end:queries:N-cpu-ddi:0:authored:migration-d291ef3ff57a809c-0 --></ins>

@@ -15,50 +15,25 @@
 
 <!-- d3d12-review-legend:end -->
 
-<!-- d3d12-review-alert:begin:video-extension:N-route:0 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-route:0:authored:migration-2a0e5003d0a0d664-0 -->This subordinate [Video](video.md) reference describes opaque extension
+commands identified by a command GUID. Discovery and parameter reflection
+describe command-defined structures for [creation and CPU execution](#extension-objects)
+and [GPU recording](#extension-recording).<!-- d3d12-review-inline:end:video-extension:N-route:0:authored:migration-2a0e5003d0a0d664-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This subordinate [Video](video.md) reference describes opaque extension
-> commands identified by a command GUID. Discovery and parameter reflection
-> describe command-defined structures. They do not define a common extension
-> algorithm or establish binary compatibility between different commands.
-> The route is [discovery and packing](#extension-discovery),
-> [objects and CPU execution](#extension-objects), [GPU recording](#extension-recording),
-> then subordinate [API types](#extension-types) and [driver reference](#extension-driver).
-
-<!-- d3d12-review-alert:end:video-extension:N-route:0 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-route:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This is a **qualified draft**. Published behavioral requirements remain
-> source-only except for the explicitly scoped source inspection corroboration.
-> Qualifications do not establish expert or hardware approval.
-
-<!-- d3d12-review-alert:end:video-extension:N-route:1 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-route:1:authored:migration-dc8a84c7085e8f5a-0 -->This is a **qualified draft**. Published behavioral requirements remain
+source-only except for the explicitly scoped source inspection corroboration.
+Qualifications do not establish expert or hardware approval.<!-- d3d12-review-inline:end:video-extension:N-route:1:authored:migration-dc8a84c7085e8f5a-0 --></ins>
 
 <a id="extension-discovery"></a>
 
 ## Discovery and parameter structures
 
-<!-- d3d12-review-alert:begin:video-extension:N-query:0 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-query:0:authored:migration-8d146d5d1e4fe2d6-0 -->[`ID3D12VideoDevice::CheckFeatureSupport`](video-decode.md#video-check-feature-support)
+owns the fixed-payload size and HRESULT protocol.
+Initialize inputs. Interpret outputs only after success. `NodeIndex` is a zero-based node index,
+not the single-node creation `NodeMask`.<!-- d3d12-review-inline:end:video-extension:N-query:0:authored:migration-8d146d5d1e4fe2d6-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> [`ID3D12VideoDevice::CheckFeatureSupport`](video-decode.md#video-check-feature-support)
-> owns the declaring API, fixed-payload size and HRESULT protocol. The following
-> are contributions to that API, not additional methods. Initialize inputs;
-> interpret outputs only after success. `NodeIndex` is a zero-based node index,
-> not the single-node creation `NodeMask`.
-
-<!-- d3d12-review-alert:end:video-extension:N-query:0 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-query:1 -->
+<!-- d3d12-review-alert:begin:video-extension:N-query:1:authored:migration-94b8a86e9a855955-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -72,136 +47,80 @@
 > | `EXTENSION_COMMAND_SUPPORT` | 26 | `EXTENSION_COMMAND_SUPPORT` | `NodeIndex`, `CommandId`, input blob and both sizes | output blob |
 > | `EXTENSION_COMMAND_SIZE` | 27 | `EXTENSION_COMMAND_SIZE` | `NodeIndex`, `CommandId`, creation blob and size | `MemoryPoolL0Size`, `MemoryPoolL1Size` |
 
-<!-- d3d12-review-alert:end:video-extension:N-query:1 -->
+<!-- d3d12-review-alert:end:video-extension:N-query:1:authored:migration-94b8a86e9a855955-0 -->
 
-<!-- d3d12-review-alert:begin:video-extension:N-query:2 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-query:2:authored:migration-1f1aa24c5073f251-0 -->Query the command count for a node before filling the command info array.
+`CommandCount` must equal the returned count, not merely an available capacity.
+For each command GUID and stage, query parameter count and packing before
+filling the parameter info array. `ParameterCount` must equal that stage's
+returned count. No capacity/truncation or `MORE_DATA` protocol is specified.
+Caller arrays and blobs must accommodate their declared counts or byte sizes.
+The support query uses `CAPS_INPUT` and `CAPS_OUTPUT`; successful HRESULT
+transport is not itself a command-defined support result. The size query
+describes residency allocations, not allocation of an extension object.<!-- d3d12-review-inline:end:video-extension:N-query:2:authored:migration-1f1aa24c5073f251-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Query the command count for a node before filling the command info array.
-> `CommandCount` must equal the returned count, not merely an available capacity.
-> For each command GUID and stage, query parameter count and packing before
-> filling the parameter info array. `ParameterCount` must equal that stage's
-> returned count. No capacity/truncation or `MORE_DATA` protocol is specified.
-> Caller arrays and blobs must accommodate their declared counts or byte sizes.
-> The support query uses `CAPS_INPUT` and `CAPS_OUTPUT`; successful HRESULT
-> transport is not itself a command-defined support result. The size query
-> describes residency allocations, not allocation of an extension object.
+<ins><!-- d3d12-review-inline:begin:video-extension:N-query:3:authored:migration-b4154af9a045e1bf-0 -->The command info `Name` and parameter info `Name` are wide string pointers.
+The owning published DDI contracts require the driver to allocate and retain
+both names for the device lifetime. This is a Video-specific published
+requirement. It does not transfer ownership of either string to the caller.
+The arrays themselves are allocated by the caller at the API boundary and
+by the runtime at the driver boundary.<!-- d3d12-review-inline:end:video-extension:N-query:3:authored:migration-b4154af9a045e1bf-0 --></ins>
 
-<!-- d3d12-review-alert:end:video-extension:N-query:2 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-query:4:authored:migration-a834523b39123c07-0 -->**Scoped query validation:** an out-of-range query node returns `E_INVALIDARG`
+in the inspected count, enumeration, support and size paths. Command and
+parameter enumeration use exact counts. Invalid driver packing or metadata,
+or a driver failure for an asserted supported parameter set, can produce
+`DXGI_ERROR_DRIVER_INTERNAL_ERROR`. On a negotiated video DDI older than
+`_0076_0`, the inspected CPU stage parameter count path returns zero count
+and packing. This does not establish a callable CPU execution path.<!-- d3d12-review-inline:end:video-extension:N-query:4:authored:migration-a834523b39123c07-0 --></ins>
 
-<!-- d3d12-review-alert:begin:video-extension:N-query:3 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-packing:0:authored:migration-cef0f80916ef2b62-0 -->Each stage has its own ordered parameter list and packing. The stages are
+`CREATION` (0), `INITIALIZATION` (1), GPU `EXECUTION` (2), `CAPS_INPUT` (3),
+`CAPS_OUTPUT` (4), `DEVICE_EXECUTE_INPUT` (5) and `DEVICE_EXECUTE_OUTPUT` (6).
+CPU device execution does not use GPU `EXECUTION` parameters.
+Integer types are unsigned/signed 8, 16, 32 or 64 bits; `FLOAT` and `DOUBLE`
+are IEEE 32-bit and 64-bit values. `RESOURCE` is an `ID3D12Resource*` at the
+API boundary, translated to `D3D12DDI_HRESOURCE` at the driver boundary.<!-- d3d12-review-inline:end:video-extension:N-packing:0:authored:migration-cef0f80916ef2b62-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The command info `Name` and parameter info `Name` are wide string pointers.
-> The owning published DDI contracts require the driver to allocate and retain
-> both names for the device lifetime. This is a Video-specific published
-> requirement. It does not transfer ownership of either string to the caller.
-> The arrays themselves are allocated by the caller at the API boundary and
-> by the runtime at the driver boundary.
+<ins><!-- d3d12-review-inline:begin:video-extension:N-packing:1:authored:migration-bf2786b46148f377-0 -->**Scoped packing corroboration:** the inspected runtime accepts packing
+values 1, 2, 4 or 8 from the driver. Starting at byte offset zero, each member
+is aligned to `min(natural_alignment(type), ParameterPacking)`, then occupies
+its scalar size (or pointer size for `RESOURCE`). In notation,
+`offset[i] = align_up(end[i-1], min(alignment[i], packing))` and
+`end[i] = offset[i] + size[i]`, with `end[-1] = 0`.
+The helper copies the supplied byte range, zeroes inter-member and remaining
+padding, and translates resource members. This establishes the inspected
+packing/translation route, not a universal rule that arbitrary extra bytes,
+undersized blobs, null pointers or unknown layouts are valid.
+No independent per-extension structure size or trailing padding requirement
+is inferred from that helper.<!-- d3d12-review-inline:end:video-extension:N-packing:1:authored:migration-bf2786b46148f377-0 --></ins>
 
-<!-- d3d12-review-alert:end:video-extension:N-query:3 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-query:4 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> **Scoped query validation:** an out-of-range query node returns `E_INVALIDARG`
-> in the inspected count, enumeration, support and size paths. Command and
-> parameter enumeration use exact counts. Invalid driver packing or metadata,
-> or a driver failure for an asserted supported parameter set, can produce
-> `DXGI_ERROR_DRIVER_INTERNAL_ERROR`. On a negotiated video DDI older than
-> `_0076_0`, the inspected CPU stage parameter count path returns zero count
-> and packing. This does not establish a callable CPU execution path.
-
-<!-- d3d12-review-alert:end:video-extension:N-query:4 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-packing:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Each stage has its own ordered parameter list and packing. The stages are
-> `CREATION` (0), `INITIALIZATION` (1), GPU `EXECUTION` (2), `CAPS_INPUT` (3),
-> `CAPS_OUTPUT` (4), `DEVICE_EXECUTE_INPUT` (5) and `DEVICE_EXECUTE_OUTPUT` (6).
-> CPU device execution does not use GPU `EXECUTION` parameters.
-> Integer types are unsigned/signed 8, 16, 32 or 64 bits; `FLOAT` and `DOUBLE`
-> are IEEE 32-bit and 64-bit values. `RESOURCE` is an `ID3D12Resource*` at the
-> API boundary, translated to `D3D12DDI_HRESOURCE` at the driver boundary.
-
-<!-- d3d12-review-alert:end:video-extension:N-packing:0 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-packing:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> **Scoped packing corroboration:** the inspected runtime accepts packing
-> values 1, 2, 4 or 8 from the driver. Starting at byte offset zero, each member
-> is aligned to `min(natural_alignment(type), ParameterPacking)`, then occupies
-> its scalar size (or pointer size for `RESOURCE`). In notation,
-> `offset[i] = align_up(end[i-1], min(alignment[i], packing))` and
-> `end[i] = offset[i] + size[i]`, with `end[-1] = 0`.
-> The helper copies the supplied byte range, zeroes inter-member and remaining
-> padding, and translates resource members. This establishes the inspected
-> packing/translation route, not a universal rule that arbitrary extra bytes,
-> undersized blobs, null pointers or unknown layouts are valid.
-> No independent per-extension structure size or trailing padding requirement
-> is inferred from that helper.
-
-<!-- d3d12-review-alert:end:video-extension:N-packing:1 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-packing:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Simple data parameters use `FLAG_NONE`; resource flags describe read/write
-> usage. The inspected metadata validation requires a nonzero read/write flag
-> for a resource and rejects resource types in `CAPS_INPUT`, `CAPS_OUTPUT` and
-> `DEVICE_EXECUTE_OUTPUT`. Non-resource parameters with nonzero flags are
-> rejected. These are scoped runtime checks, not a complete per-extension
-> semantic validator.
-
-<!-- d3d12-review-alert:end:video-extension:N-packing:2 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-packing:2:authored:migration-39b2520d0ad9568b-0 -->Simple data parameters use `FLAG_NONE`; resource flags describe read/write
+usage. The inspected metadata validation requires a nonzero read/write flag
+for a resource and rejects resource types in `CAPS_INPUT`, `CAPS_OUTPUT` and
+`DEVICE_EXECUTE_OUTPUT`. Non-resource parameters with nonzero flags are
+rejected. These are scoped runtime checks, not a complete per-extension
+semantic validator.<!-- d3d12-review-inline:end:video-extension:N-packing:2:authored:migration-39b2520d0ad9568b-0 --></ins>
 
 <a id="extension-resources"></a>
 
 ### Resource parameters and execution context
 
-<!-- d3d12-review-alert:begin:video-extension:N-resources:0 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-resources:0:authored:migration-93b711bd524b4412-0 -->GPU recording uses a video family compatible with the command's reported
+`CommandListSupportFlags`. Use that family's command list, allocator and
+queue on a compatible device/node. The published command info contract says
+only one family flag may be set. That upper bound does not establish an
+unconditional nonzero-mask requirement or GPU recording support for a zero
+mask. The creation description selects one node; enumeration on another
+node is not a support guarantee.
+[List/queue types](execution.md#command-list-types),
+[creation](execution.md#creation) and [submission validation](execution.md#validation)
+own the common compatibility requirements.<!-- d3d12-review-inline:end:video-extension:N-resources:0:authored:migration-93b711bd524b4412-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> GPU recording uses a video family compatible with the command's reported
-> `CommandListSupportFlags`. Use that family's command list, allocator and
-> queue on a compatible device/node. The published command info contract says
-> only one family flag may be set. That upper bound does not establish an
-> unconditional nonzero-mask requirement or GPU recording support for a zero
-> mask. The creation description selects one node; enumeration on another
-> node is not a support guarantee.
-> [List/queue types](execution.md#command-list-types),
-> [creation](execution.md#creation) and [submission validation](execution.md#validation)
-> own the common compatibility requirements.
-
-<!-- d3d12-review-alert:end:video-extension:N-resources:0 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-resources:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> CPU device execution is a separate route. A GPU family flag does not by
-> itself establish CPU execution support. The selected sources do not settle
-> zero-mask or CPU-only command validity; no such validity rule is inferred.
-> The three API video family flag contributions are:
-
-<!-- d3d12-review-alert:end:video-extension:N-resources:1 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-resources:1:authored:migration-2cfba9a4dc7789dd-0 -->CPU device execution is a separate route. A GPU family flag does not by
+itself establish CPU execution support. The selected sources do not settle
+zero-mask or CPU-only command validity; no such validity rule is inferred.
+The three API video family flag contributions are:<!-- d3d12-review-inline:end:video-extension:N-resources:1:authored:migration-2cfba9a4dc7789dd-0 --></ins>
 
 <!-- d3d12-review-alert:begin:video-extension:F-video-support-flags:0 -->
 
@@ -216,17 +135,10 @@
 
 <!-- d3d12-review-alert:end:video-extension:F-video-support-flags:0 -->
 
-<!-- d3d12-review-alert:begin:video-extension:N-resource-states:0 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-resource-states:0:authored:migration-6e8cc83ae27487fd-0 -->The published resource parameter contract requires the caller to transition
+resources to the appropriate video read/write states:<!-- d3d12-review-inline:end:video-extension:N-resource-states:0:authored:migration-6e8cc83ae27487fd-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The published resource parameter contract requires the caller to transition
-> resources to the appropriate video read/write states:
-
-<!-- d3d12-review-alert:end:video-extension:N-resource-states:0 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-resource-states:1 -->
+<!-- d3d12-review-alert:begin:video-extension:N-resource-states:1:authored:migration-5496685880f9f8a4-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -237,103 +149,68 @@
 > | VIDEO_PROCESS | `D3D12_RESOURCE_STATE_VIDEO_PROCESS_READ` | `D3D12_RESOURCE_STATE_VIDEO_PROCESS_WRITE` |
 > | VIDEO_ENCODE | `D3D12_RESOURCE_STATE_VIDEO_ENCODE_READ` | `D3D12_RESOURCE_STATE_VIDEO_ENCODE_WRITE` |
 
-<!-- d3d12-review-alert:end:video-extension:N-resource-states:1 -->
+<!-- d3d12-review-alert:end:video-extension:N-resource-states:1:authored:migration-5496685880f9f8a4-0 -->
 
-<!-- d3d12-review-alert:begin:video-extension:N-resource-states:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [video resource contract](video.md#video-resource-contract),
-> [enhanced decode](synchronization.md#decode-enhanced-barrier),
-> [enhanced process](synchronization.md#process-enhanced-barrier),
-> [enhanced encode](synchronization.md#encode-enhanced-barrier),
-> [access scopes](synchronization.md#barrier-access),
-> [synchronization scopes](synchronization.md#barrier-sync), and
-> [barrier model interoperation](synchronization.md#model-interoperation)
-> own the corresponding shared barrier rules. Resource dimensions, formats,
-> subresources, read/write aliasing and any simultaneous read/write use must
-> be established by the particular command contract. This table does not
-> permit incompatible state combinations. GPU state names do not establish
-> CPU execution's resource access/synchronization semantics.
-
-<!-- d3d12-review-alert:end:video-extension:N-resource-states:2 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-resource-states:2:authored:migration-0e7f26544c3d5123-0 -->The [video resource contract](video.md#video-resource-contract),
+[enhanced decode](synchronization.md#decode-enhanced-barrier),
+[enhanced process](synchronization.md#process-enhanced-barrier),
+[enhanced encode](synchronization.md#encode-enhanced-barrier),
+[access scopes](synchronization.md#barrier-access),
+[synchronization scopes](synchronization.md#barrier-sync), and
+[barrier model interoperation](synchronization.md#model-interoperation)
+own the corresponding shared barrier rules. Resource dimensions, formats,
+subresources, read/write aliasing and any simultaneous read/write use must
+be established by the particular command contract. This table does not
+permit incompatible state combinations. GPU state names do not establish
+CPU execution's resource access/synchronization semantics.<!-- d3d12-review-inline:end:video-extension:N-resource-states:2:authored:migration-0e7f26544c3d5123-0 --></ins>
 
 <a id="extension-objects"></a>
 
 ## Objects and CPU execution
 
-<!-- d3d12-review-alert:begin:video-extension:N-lifetime:0 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-lifetime:0:authored:migration-d2afa609d9e2d24b-0 -->`ID3D12VideoExtensionCommand` derives from `ID3D12Pageable`.
+On successful creation, `ppVideoExtensionCommand` receives a caller-owned
+reference to the requested interface identified by `riid`. The caller
+releases it under the [object lifetime rules](execution.md#lifetime).
+The creation description is copied. `GetDesc` returns a value copy of the
+immutable description. Modifying the returned value does not reconfigure
+the command.<!-- d3d12-review-inline:end:video-extension:N-lifetime:0:authored:migration-d2afa609d9e2d24b-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `ID3D12VideoExtensionCommand` derives from `ID3D12Pageable`.
-> On successful creation, `ppVideoExtensionCommand` receives a caller-owned
-> reference to the requested interface identified by `riid`. The caller
-> releases it under the [object lifetime rules](execution.md#lifetime).
-> The creation description is copied. `GetDesc` returns a value copy of the
-> immutable description. Modifying the returned value does not reconfigure
-> the command.
+<ins><!-- d3d12-review-inline:begin:video-extension:N-lifetime:1:authored:migration-d701616049471c95-0 -->`pProtectedResourceSession` can be null for unprotected operation. A non-null
+session associates the command with that protected session. The getter
+retrieves the association, not a new session. On success it returns a
+caller-owned reference to the requested session interface through
+`ppProtectedSession`. The caller releases it under the same lifetime rules.
+The selected sources do not establish a precise no-session HRESULT/null output
+postcondition. No additional protection lifecycle is implied.
+The existing [shared protected resource flags](video-motion-estimation.md#d3d12-video-protected-resource-support-flags)
+retain their canonical definition; no extension-specific support payload is
+invented from those flags.<!-- d3d12-review-inline:end:video-extension:N-lifetime:1:authored:migration-d701616049471c95-0 --></ins>
 
-<!-- d3d12-review-alert:end:video-extension:N-lifetime:0 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-lifetime:2:authored:migration-798e4f55ea36c090-0 -->**Scoped creation validation:** the inspected creation validator checks the
+single-node selection and that the GUID appears in the selected node's command
+enumeration; invalid selection or unsupported GUID produces `E_INVALIDARG`.
+Creation propagates validation/driver HRESULT failures. A null result pointer
+takes a validation-only path returning `S_FALSE` after successful description
+validation and creates no object. That path is not a complete creation blob
+validation guarantee and does not change the required output annotation in
+the released declaration. The inspected CPU device execution path rejects
+a negotiated video DDI older than `_0076_0` with `E_INVALIDARG`.
+The inspected creation parameter translation rejects swap chain resources
+in the creation blob with `E_INVALIDARG`. CPU device execution propagates
+driver/conversion HRESULT failures. Its local allocation failure handler
+returns `E_INVALIDARG`, not a promise of `E_OUTOFMEMORY`.<!-- d3d12-review-inline:end:video-extension:N-lifetime:2:authored:migration-798e4f55ea36c090-0 --></ins>
 
-<!-- d3d12-review-alert:begin:video-extension:N-lifetime:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pProtectedResourceSession` can be null for unprotected operation. A non-null
-> session associates the command with that protected session. The getter
-> retrieves the association, not a new session. On success it returns a
-> caller-owned reference to the requested session interface through
-> `ppProtectedSession`. The caller releases it under the same lifetime rules.
-> The selected sources do not establish a precise no-session HRESULT/null output
-> postcondition. No additional protection lifecycle is implied.
-> The existing [shared protected resource flags](video-motion-estimation.md#d3d12-video-protected-resource-support-flags)
-> retain their canonical definition; no extension-specific support payload is
-> invented from those flags.
-
-<!-- d3d12-review-alert:end:video-extension:N-lifetime:1 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-lifetime:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> **Scoped creation validation:** the inspected creation validator checks the
-> single-node selection and that the GUID appears in the selected node's command
-> enumeration; invalid selection or unsupported GUID produces `E_INVALIDARG`.
-> Creation propagates validation/driver HRESULT failures. A null result pointer
-> takes a validation-only path returning `S_FALSE` after successful description
-> validation and creates no object. That path is not a complete creation blob
-> validation guarantee and does not change the required output annotation in
-> the released declaration. The inspected CPU device execution path rejects
-> a negotiated video DDI older than `_0076_0` with `E_INVALIDARG`.
-> The inspected creation parameter translation rejects swap chain resources
-> in the creation blob with `E_INVALIDARG`. CPU device execution propagates
-> driver/conversion HRESULT failures. Its local allocation failure handler
-> returns `E_INVALIDARG`, not a promise of `E_OUTOFMEMORY`.
-
-<!-- d3d12-review-alert:end:video-extension:N-lifetime:2 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-lifetime:3 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> **Scoped CPU storage corroboration:** creation translates a temporary copy
-> of a nonempty creation blob before calling the driver. The CPU device method
-> copies/translates its input, calls the driver, then copies the output on
-> success. Published CPU execution completes before return. The inspected GPU
-> recording route copies nonempty parameter blobs into command list temporary
-> storage and translates resource pointers before the recording DDI.
-> Those source-inspected copies do not establish a driver-wide borrowing rule
-> for embedded resources, private payload semantics or every implementation's
-> creation data retention. Scalar/blob storage and the resources named in it
-> are distinct lifetime obligations.
-
-<!-- d3d12-review-alert:end:video-extension:N-lifetime:3 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-lifetime:3:authored:migration-cdd6be3e5a8edec2-0 -->**Scoped CPU storage corroboration:** creation translates a temporary copy
+of a nonempty creation blob before calling the driver. The CPU device method
+copies/translates its input, calls the driver, then copies the output on
+success. Published CPU execution completes before return. The inspected GPU
+recording route copies nonempty parameter blobs into command list temporary
+storage and translates resource pointers before the recording DDI.
+Those source-inspected copies do not establish a driver-wide borrowing rule
+for embedded resources, private payload semantics or every implementation's
+creation data retention. Scalar/blob storage and the resources named in it
+are distinct lifetime obligations.<!-- d3d12-review-inline:end:video-extension:N-lifetime:3:authored:migration-cdd6be3e5a8edec2-0 --></ins>
 
 <a id="videodevice2-createvideoextensioncommand"></a>
 
@@ -432,7 +309,7 @@ The size of the *pExecutionParameters* parameter structure, in bytes.
 
 `OutputDataSizeInBytes`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:15 -->The size of the *pOutputData* output allocation, in bytes.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:15 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:15:modified:source-e944d9c8dbb49e22-0-0 -->The size of the *pOutputData* output allocation<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoDevice2-ExecuteExtensionCommand:15:modified:source-e944d9c8dbb49e22-0-0 --></ins>, in bytes.
 
 #### Return values
 
@@ -450,11 +327,11 @@ D3D12_VIDEO_EXTENSION_COMMAND_DESC GetDesc();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoExtensionCommand-GetDesc:2 -->Gets the [D3D12_VIDEO_EXTENSION_COMMAND_DESC](#d3d12-video-extension-command-desc) provided when the interface was created.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoExtensionCommand-GetDesc:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoExtensionCommand-GetDesc:2:authored:migration-35ca021f2e695b7d-0 -->Gets the [D3D12_VIDEO_EXTENSION_COMMAND_DESC](#d3d12-video-extension-command-desc) provided when the interface was created.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoExtensionCommand-GetDesc:2:authored:migration-35ca021f2e695b7d-0 --></ins>
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoExtensionCommand-GetDesc:4 -->None.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoExtensionCommand-GetDesc:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoExtensionCommand-GetDesc:4:authored:migration-7a6c183ba6f0a0b9-0 -->None.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoExtensionCommand-GetDesc:4:authored:migration-7a6c183ba6f0a0b9-0 --></ins>
 
 #### Return values
 
@@ -495,57 +372,36 @@ This method returns HRESULT.
 
 ## GPU initialization and execution
 
-<!-- d3d12-review-alert:begin:video-extension:N-record:0 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-record:0:authored:migration-a9d3fce11329a0e5-0 -->Initialization records initialization or re-initialization; execution records
+the command's work. These are not CPU completion calls. The extension's
+contract must establish when initialization is required, reusable state,
+re-initialization ordering and any concurrent-use restriction. There is no
+generic per-extension algorithm or decoder-derived serialization rule for
+processor/encoder extensions.<!-- d3d12-review-inline:end:video-extension:N-record:0:authored:migration-a9d3fce11329a0e5-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Initialization records initialization or re-initialization; execution records
-> the command's work. These are not CPU completion calls. The extension's
-> contract must establish when initialization is required, reusable state,
-> re-initialization ordering and any concurrent-use restriction. There is no
-> generic per-extension algorithm or decoder-derived serialization rule for
-> processor/encoder extensions.
+<ins><!-- d3d12-review-inline:begin:video-extension:N-record:1:authored:migration-dc1ccfddfb8f574a-0 -->All six GPU methods retain the [extension-defined predication policy](counters-queries-and-predication.md#predication-operation-matrix).
+Initialization is not specified to ignore predication. No generic dirty state
+mask or automatic ClearState policy is imposed by these methods.
+[Recording storage](execution.md#command-storage),
+[object/resource lifetime](execution.md#lifetime),
+[completion and lifetime](execution.md#completion-lifetime),
+[submission and ordering](execution.md#submission),
+[CPU threading](execution.md#threading) and
+[submission threading](execution.md#submission-threading) remain shared.
+The command and all resources needed by recorded uses that will execute
+must remain alive while recorded but unsubmitted, and through completion of
+those GPU uses. Recording is not an automatic `AddRef` guarantee.
+Reset does not complete previously submitted GPU work.<!-- d3d12-review-inline:end:video-extension:N-record:1:authored:migration-dc1ccfddfb8f574a-0 --></ins>
 
-<!-- d3d12-review-alert:end:video-extension:N-record:0 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-record:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> All six GPU methods retain the [extension-defined predication policy](counters-queries-and-predication.md#predication-operation-matrix).
-> Initialization is not specified to ignore predication. No generic dirty state
-> mask or automatic ClearState policy is imposed by these methods.
-> [Recording storage](execution.md#command-storage),
-> [object/resource lifetime](execution.md#lifetime),
-> [completion and lifetime](execution.md#completion-lifetime),
-> [submission and ordering](execution.md#submission),
-> [CPU threading](execution.md#threading) and
-> [submission threading](execution.md#submission-threading) remain shared.
-> The command and all resources needed by recorded uses that will execute
-> must remain alive while recorded but unsubmitted, and through completion of
-> those GPU uses. Recording is not an automatic `AddRef` guarantee.
-> Reset does not complete previously submitted GPU work.
-
-<!-- d3d12-review-alert:end:video-extension:N-record:1 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-record:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The public GPU methods return void; recording/initialization errors are
-> reported through debug layers and the list's `Close` return value.
-> **Scoped retail validation:** the inspected shared three-family recording
-> implementation puts an unsupported-family call into command list error with
-> `E_INVALIDARG`; translation storage exhaustion uses `E_OUTOFMEMORY`.
-> The inspected debug layer translates resource pointers to the next layer.
-> Its presence or absence of additional diagnostics is not a validity oracle.
-> The complete command-defined argument/error contract is not established by
-> these checks.
-
-<!-- d3d12-review-alert:end:video-extension:N-record:2 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-record:2:authored:migration-fc7c70caf3b68d41-0 -->The public GPU methods return void; recording/initialization errors are
+reported through debug layers and the list's `Close` return value.
+**Scoped retail validation:** the inspected shared three-family recording
+implementation puts an unsupported-family call into command list error with
+`E_INVALIDARG`; translation storage exhaustion uses `E_OUTOFMEMORY`.
+The inspected debug layer translates resource pointers to the next layer.
+Its presence or absence of additional diagnostics is not a validity oracle.
+The complete command-defined argument/error contract is not established by
+these checks.<!-- d3d12-review-inline:end:video-extension:N-record:2:authored:migration-fc7c70caf3b68d41-0 --></ins>
 
 <a id="videodecodecommandlist2-initializeextensioncommand"></a>
 
@@ -923,7 +779,7 @@ typedef struct D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_INFO {
 
 `Name`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_INFO:5 -->A pointer to a wide string containing the name of the parameter.<!-- d3d12-review-inline:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_INFO:5 --></ins>
+A pointer to a wide string containing the name of the <ins><!-- d3d12-review-inline:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_INFO:5:modified:source-ba31dd4e92ef31e7-0-0 -->parameter<!-- d3d12-review-inline:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_INFO:5:modified:source-ba31dd4e92ef31e7-0-0 --></ins>.
 
 `Type`
 
@@ -1113,7 +969,7 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE {
 
 #### Constants
 
-<!-- d3d12-review-alert:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE:4 -->
+<!-- d3d12-review-alert:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE:4:modified:migration-be154fbb125a1e14-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -1128,7 +984,7 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE {
 > | `D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_DEVICE_EXECUTE_INPUT` | 5 | The parameter stage is device execution input. |
 > | `D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_DEVICE_EXECUTE_OUTPUT` | 6 | The parameter stage is device execution output. |
 
-<!-- d3d12-review-alert:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE:4 -->
+<!-- d3d12-review-alert:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE:4:modified:migration-be154fbb125a1e14-0 -->
 
 #### Behavior
 
@@ -1160,7 +1016,7 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE {
 
 #### Constants
 
-<!-- d3d12-review-alert:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE:4 -->
+<!-- d3d12-review-alert:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE:4:modified:migration-13f4ae63bcc81cd3-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -1179,7 +1035,7 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE {
 > | `D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE_DOUBLE` | 9 | IEEE 64-bit floating point number |
 > | `D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE_RESOURCE` | 10 | An `ID3D12Resource*` at the API boundary; see [resource parameters and states](#extension-resources). |
 
-<!-- d3d12-review-alert:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE:4 -->
+<!-- d3d12-review-alert:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_TYPE:4:modified:migration-13f4ae63bcc81cd3-0 -->
 
 #### Behavior
 
@@ -1203,7 +1059,7 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS {
 
 #### Constants
 
-<!-- d3d12-review-alert:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS:4 -->
+<!-- d3d12-review-alert:begin:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS:4:modified:migration-3cffbb694ebb37dd-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -1214,7 +1070,7 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS {
 > | `D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAG_READ` | 0x1 | The resource parameter is read. This flag is for **ID3D12Resource** only and is not valid for simple data type parameters. |
 > | `D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAG_WRITE` | 0x2 | The resource parameter is written. This flag is for **ID3D12Resource** only and is not valid for simple data type parameters. |
 
-<!-- d3d12-review-alert:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS:4 -->
+<!-- d3d12-review-alert:end:video-extension:T-D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS:4:modified:migration-3cffbb694ebb37dd-0 -->
 
 #### Behavior
 
@@ -1224,67 +1080,32 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS {
 
 ## Driver reference
 
-<!-- d3d12-review-alert:begin:video-extension:N-ddi:0 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-ddi:0:authored:migration-ca82eaa8e2d6b100-0 -->The GPU extension DDIs return HRESULT even though their API recording methods return void.<!-- d3d12-review-inline:end:video-extension:N-ddi:0:authored:migration-ca82eaa8e2d6b100-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The GPU extension DDIs return HRESULT even though their API recording methods return void.
+<ins><!-- d3d12-review-inline:begin:video-extension:N-ddi:1:authored:migration-018e299b1f2d1061-0 -->Video feature `_0063_0` (15) supplies discovery, object lifecycle and GPU initialization/execution. `_0076_0` (17) adds device CPU execution. Both require at least `D3D12DDI_SUPPORTED_0043`.<!-- d3d12-review-inline:end:video-extension:N-ddi:1:authored:migration-018e299b1f2d1061-0 --></ins>
 
-<!-- d3d12-review-alert:end:video-extension:N-ddi:0 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-ddi:2:authored:migration-d43dfb77e39aa43a-0 -->`D3D12DDI_TABLE_TYPE_0020_DEVICE_VIDEO` selects the device-video function
+table. `_0063` provides private size/create/destroy slots. `_0076` adds
+`pfnExecuteDeviceVideoExtensionCommand`. The DECODE, PROCESS and ENCODE
+`_0063` command list tables each provide both
+`pfnInitializeVideoExtensionCommand` and `pfnExecuteVideoExtensionCommand`.
+Their table types are `D3D12DDI_TABLE_TYPE_0022_COMMAND_LIST_VIDEO_DECODE`
+(12), `D3D12DDI_TABLE_TYPE_0022_COMMAND_LIST_VIDEO_PROCESS` (14) and
+`D3D12DDI_TABLE_TYPE_0053_COMMAND_LIST_VIDEO_ENCODE` (21), respectively.
+The extension's handle type is `D3D12DDI_HT_0061_VIDEO_EXTENSION_COMMAND`
+(47).
+Queue flags use `_0022_VIDEO_DECODE = 0x10`, `_0022_VIDEO_PROCESS = 0x20`
+and `_0053_VIDEO_ENCODE = 0x40` in `D3D12DDI_COMMAND_QUEUE_FLAGS`.<!-- d3d12-review-inline:end:video-extension:N-ddi:2:authored:migration-d43dfb77e39aa43a-0 --></ins>
 
-<!-- d3d12-review-alert:begin:video-extension:N-ddi:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Video feature `_0063_0` (15) supplies discovery, object lifecycle and GPU initialization/execution. `_0076_0` (17) adds device CPU execution. Both require at least `D3D12DDI_SUPPORTED_0043`.
-
-<!-- d3d12-review-alert:end:video-extension:N-ddi:1 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-ddi:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `D3D12DDI_TABLE_TYPE_0020_DEVICE_VIDEO` selects the device-video function
-> table. `_0063` provides private size/create/destroy slots. `_0076` adds
-> `pfnExecuteDeviceVideoExtensionCommand`. The DECODE, PROCESS and ENCODE
-> `_0063` command list tables each provide both
-> `pfnInitializeVideoExtensionCommand` and `pfnExecuteVideoExtensionCommand`.
-> Their table types are `D3D12DDI_TABLE_TYPE_0022_COMMAND_LIST_VIDEO_DECODE`
-> (12), `D3D12DDI_TABLE_TYPE_0022_COMMAND_LIST_VIDEO_PROCESS` (14) and
-> `D3D12DDI_TABLE_TYPE_0053_COMMAND_LIST_VIDEO_ENCODE` (21), respectively.
-> The extension's handle type is `D3D12DDI_HT_0061_VIDEO_EXTENSION_COMMAND`
-> (47).
-> Queue flags use `_0022_VIDEO_DECODE = 0x10`, `_0022_VIDEO_PROCESS = 0x20`
-> and `_0053_VIDEO_ENCODE = 0x40` in `D3D12DDI_COMMAND_QUEUE_FLAGS`.
-
-<!-- d3d12-review-alert:end:video-extension:N-ddi:2 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-ddi:3 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Drivers must support MakeResident/Evict for extension command handles. Significant internal allocations should be made at creation, but later allocations are not forbidden.
-
-<!-- d3d12-review-alert:end:video-extension:N-ddi:3 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-ddi:3:authored:migration-a05c9684d281d2cf-0 -->Drivers must support MakeResident/Evict for extension command handles. Significant internal allocations should be made at creation, but later allocations are not forbidden.<!-- d3d12-review-inline:end:video-extension:N-ddi:3:authored:migration-a05c9684d281d2cf-0 --></ins>
 
 <a id="extension-ddi-capabilities"></a>
 
 ### Driver capability requests
 
-<!-- d3d12-review-alert:begin:video-extension:N-ddi-capabilities:0 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-ddi-capabilities:0:authored:migration-899086e5c63045f1-0 -->For the six extension queries, `pData` points to the listed payload and `DataSize` is its `sizeof`, not a nested array or blob size.<!-- d3d12-review-inline:end:video-extension:N-ddi-capabilities:0:authored:migration-899086e5c63045f1-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For the six extension queries, `pData` points to the listed payload and `DataSize` is its `sizeof`, not a nested array or blob size.
-
-<!-- d3d12-review-alert:end:video-extension:N-ddi-capabilities:0 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-ddi-capabilities:1 -->
+<!-- d3d12-review-alert:begin:video-extension:N-ddi-capabilities:1:authored:migration-f35b86df53b0a961-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -1298,16 +1119,9 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS {
 > | `EXTENSION_COMMAND_SUPPORT` | `EXTENSION_COMMAND_CAPS` | 26 | `D3D12DDI_VIDEO_EXTENSION_COMMAND_CAPS_DATA_0063` | `NodeIndex`, `CommandId`, `pInputData`, `InputDataSizeInBytes`, output allocation and `OutputDataSizeInBytes` | `pOutputData` bytes |
 > | `EXTENSION_COMMAND_SIZE` | `EXTENSION_COMMAND_SIZE` | 27 | `D3D12DDI_VIDEO_EXTENSION_COMMAND_SIZE_DATA_0063` | `NodeIndex`, `CommandId`, `pCreationParameters`, `CreationParametersSizeInBytes` | `MemoryPoolL0Size`, `MemoryPoolL1Size` |
 
-<!-- d3d12-review-alert:end:video-extension:N-ddi-capabilities:1 -->
+<!-- d3d12-review-alert:end:video-extension:N-ddi-capabilities:1:authored:migration-f35b86df53b0a961-0 -->
 
-<!-- d3d12-review-alert:begin:video-extension:N-ddi-capabilities:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> API SUPPORT maps to the DDI CAPS case. These requests do not share a universal null-`pInfo` convention.
-
-<!-- d3d12-review-alert:end:video-extension:N-ddi-capabilities:2 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-ddi-capabilities:2:authored:migration-a173bedf12be6c73-0 -->API SUPPORT maps to the DDI CAPS case. These requests do not share a universal null-`pInfo` convention.<!-- d3d12-review-inline:end:video-extension:N-ddi-capabilities:2:authored:migration-a173bedf12be6c73-0 --></ins>
 
 <a id="extension-ddi-declarations"></a>
 
@@ -1546,7 +1360,7 @@ typedef HRESULT(APIENTRY* PFND3D12DDI_EXECUTEDEVICEVIDEOEXTENSIONCOMMAND_0076)(
 
 ### Extension DDI associations
 
-<!-- d3d12-review-alert:begin:video-extension:D229-current-extension-members:0 -->
+<!-- d3d12-review-alert:begin:video-extension:D229-current-extension-members:0:authored:migration-2d14df600936771c-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -1564,7 +1378,7 @@ typedef HRESULT(APIENTRY* PFND3D12DDI_EXECUTEDEVICEVIDEOEXTENSIONCOMMAND_0076)(
 > | `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnDestroyVideoExtensionCommand` | `PFND3D12DDI_DESTROYVIDEOEXTENSIONCOMMAND_0063` |
 > | `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnExecuteDeviceVideoExtensionCommand` | `PFND3D12DDI_EXECUTEDEVICEVIDEOEXTENSIONCOMMAND_0076` |
 
-<!-- d3d12-review-alert:end:video-extension:D229-current-extension-members:0 -->
+<!-- d3d12-review-alert:end:video-extension:D229-current-extension-members:0:authored:migration-2d14df600936771c-0 -->
 
 <a id="extension-ddi-behavior"></a>
 
@@ -1596,7 +1410,7 @@ The unique identifier for the video extension command.
 
 `Name`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_info_0063:5 -->Pointer to a wide string that the driver allocates and keeps for the lifetime of the device.<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_info_0063:5 --></ins>
+Pointer to a wide string<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_info_0063:5:modified:source-d1184def547dbcaf-0-0 --> that the<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_info_0063:5:modified:source-d1184def547dbcaf-0-0 --></ins> driver allocates and <ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_info_0063:5:modified:source-d1184def547dbcaf-0-1 -->keeps<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_info_0063:5:modified:source-d1184def547dbcaf-0-1 --></ins> for the lifetime of the device.
 
 `CommandQueueFlags`
 
@@ -1654,7 +1468,7 @@ Indicates struct member packing.
 
 `Name`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameter_info_0063:3 -->Pointer to a wide string name of the parameter. The driver allocates the string and keeps it for the lifetime of the device.<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameter_info_0063:3 --></ins>
+Pointer to a wide string name of the parameter. The driver allocates <ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameter_info_0063:3:modified:source-43ae22ccdea4b98e-0-0 -->the string and keeps it<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_parameter_info_0063:3:modified:source-43ae22ccdea4b98e-0-0 --></ins> for the lifetime of the device.
 
 `Type`
 
@@ -1712,7 +1526,7 @@ The byte size of the input data allocation.
 
 <ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:11 -->Output data for the capability query allocated by the caller with a size of OutputDataSizeInBytes. This struct is enumerable as the **D3D12DDI\_VIDEO\_EXTENSION\_COMMAND\_PARAMETER\_STAGE\_0063\_CAPS\_OUTPUT** parameter stage of the [D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_0063](#d3d12ddi-video-extension-command-parameter-stage-0063) enumeration.<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:11 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:12 -->`OutputDataSizeInBytes` (input)<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:12 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:12:modified:source-cdc5a61cc29aa1d2-0-0 -->`OutputDataSizeInBytes` (input)<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:12:modified:source-cdc5a61cc29aa1d2-0-0 --></ins>
 
 The byte size of the output data allocation.
 
@@ -1732,7 +1546,7 @@ The unique identifier for the video extension command.
 
 `[in] pCreationParameters`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_size_data_0063:7 -->Pointer to the creation parameters structure, matching the CREATION stage.<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_size_data_0063:7 --></ins>
+Pointer to the <ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_size_data_0063:7:modified:source-c56519914730273f-0-0 -->creation parameters structure, matching the CREATION stage<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_size_data_0063:7:modified:source-c56519914730273f-0-0 --></ins>.
 
 `[in] CreationParametersSizeInBytes`
 
@@ -1809,7 +1623,7 @@ Parameter types are used to enumerate the members of each parameter stage parame
 
 When the **D3D12DDI\_VIDEO\_EXTENSION\_COMMAND\_PARAMETER\_TYPE\_0063\_RESOURCE** value is specified, the caller must use resource barriers to transition to the state appropriate for the parameter:
 
-<!-- d3d12-review-alert:begin:video-extension:D-ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_type_0063:5 -->
+<!-- d3d12-review-alert:begin:video-extension:D-ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_type_0063:5:modified:migration-0031e511e07daa28-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -1820,7 +1634,7 @@ When the **D3D12DDI\_VIDEO\_EXTENSION\_COMMAND\_PARAMETER\_TYPE\_0063\_RESOURCE*
 > | `D3D12DDI_COMMAND_QUEUE_FLAG_0022_VIDEO_PROCESS` | `D3D12DDI_RESOURCE_STATE_0020_VIDEO_PROCESS_READ` | `D3D12DDI_RESOURCE_STATE_0020_VIDEO_PROCESS_WRITE` |
 > | `D3D12DDI_COMMAND_QUEUE_FLAG_0053_VIDEO_ENCODE` | `D3D12DDI_RESOURCE_STATE_0060_VIDEO_ENCODE_READ` | `D3D12DDI_RESOURCE_STATE_0060_VIDEO_ENCODE_WRITE` |
 
-<!-- d3d12-review-alert:end:video-extension:D-ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_type_0063:5 -->
+<!-- d3d12-review-alert:end:video-extension:D-ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_type_0063:5:modified:migration-0031e511e07daa28-0 -->
 
 #### D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS_0063
 
@@ -1828,7 +1642,7 @@ Video Extensions must specify a command parameter flag.
 
 ##### Constants
 
-<!-- d3d12-review-alert:begin:video-extension:D-ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_flags_0063:2 -->
+<!-- d3d12-review-alert:begin:video-extension:D-ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_flags_0063:2:modified:migration-e776ed6faba6121e-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -1840,7 +1654,7 @@ Video Extensions must specify a command parameter flag.
 > | `D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAG_0063_WRITE` | Indicates that a GPU resource is written. Not valid for POD parameters. |
 > | `D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAG_0063_MASK` | Indicates read/write. |
 
-<!-- d3d12-review-alert:end:video-extension:D-ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_flags_0063:2 -->
+<!-- d3d12-review-alert:end:video-extension:D-ne-d3d12umddi-d3d12ddi_video_extension_command_parameter_flags_0063:2:modified:migration-e776ed6faba6121e-0 -->
 
 #### PFND3D12DDI_CALCPRIVATEVIDEOEXTENSIONCOMMANDSIZE_0061
 
@@ -1944,7 +1758,7 @@ Handle for the command list.
 
 `hDrvVideoExtensionCommand`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:5 -->Handle to the video extension command to execute.<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:5 --></ins>
+Handle to the video extension command to <ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:5:modified:source-774d3c5ca63b2afa-0-0 -->execute<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:5:modified:source-774d3c5ca63b2afa-0-0 --></ins>.
 
 `pExecutionParameters`
 
@@ -1952,13 +1766,13 @@ Handle for the command list.
 
 `ExecutionParametersSizeInBytes`
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:9 -->The size of the execution parameters structure in bytes.<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:9 --></ins>
+The size of the <ins><!-- d3d12-review-inline:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:9:modified:source-1a19353059e3da3e-0-0 -->execution<!-- d3d12-review-inline:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:9:modified:source-1a19353059e3da3e-0-0 --></ins> parameters structure in bytes.
 
 ##### Return values
 
 The following error codes are allowed:
 
-<!-- d3d12-review-alert:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:12 -->
+<!-- d3d12-review-alert:begin:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:12:modified:migration-990275c41bef8569-0 -->
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
@@ -1969,7 +1783,7 @@ The following error codes are allowed:
 > | D3DDDIERR\_APPLICATIONERROR | The caller has attempted to execute the command incorrectly. For example, provided an invalid argument. This error puts the command list in error and an error code is returned from the Close method on the API command list. |
 > | D3DDDIERR\_DEVICEREMOVED | Cannot execute the command because the device is in a device removed state. If the runtime has not already realized that the device was removed, this will set the device and command list in error. |
 
-<!-- d3d12-review-alert:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:12 -->
+<!-- d3d12-review-alert:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:12:modified:migration-990275c41bef8569-0 -->
 
 #### D3D12DDIARG_CREATE_VIDEO_EXTENSION_COMMAND_0063
 
@@ -2003,20 +1817,6 @@ The size of the creation parameters structure in bytes.
 
 ### API/DDI description corrections
 
-<!-- d3d12-review-alert:begin:video-extension:N-qualifications:0 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-qualifications:0:authored:migration-a28fba275d569ae2-0 -->Device CPU execution consumes DEVICE_EXECUTE_INPUT and produces DEVICE_EXECUTE_OUTPUT. `OutputDataSizeInBytes` is the input capacity of the output allocation. CPU execution completes before returning.<!-- d3d12-review-inline:end:video-extension:N-qualifications:0:authored:migration-a28fba275d569ae2-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Device CPU execution consumes DEVICE_EXECUTE_INPUT and produces DEVICE_EXECUTE_OUTPUT. `OutputDataSizeInBytes` is the input capacity of the output allocation. CPU execution completes before returning.
-
-<!-- d3d12-review-alert:end:video-extension:N-qualifications:0 -->
-
-<!-- d3d12-review-alert:begin:video-extension:N-qualifications:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The residency size query takes creation parameters and reports L0 system memory and L1 discrete video memory. The published DDI prose that names initialization parameters and reverses the pools is incorrect.
-
-<!-- d3d12-review-alert:end:video-extension:N-qualifications:1 -->
+<ins><!-- d3d12-review-inline:begin:video-extension:N-qualifications:1:authored:migration-5696bdaa7089d0d8-0 -->The residency size query takes creation parameters and reports L0 system memory and L1 discrete video memory. The published DDI prose that names initialization parameters and reverses the pools is incorrect.<!-- d3d12-review-inline:end:video-extension:N-qualifications:1:authored:migration-5696bdaa7089d0d8-0 --></ins>

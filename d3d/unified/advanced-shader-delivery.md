@@ -29,4 +29,4 @@ discovery and use.
   during ordinary creation.
 
 [Application caches, cache controls, cached PSO blobs and pipeline libraries](shader-delivery-and-caching.md)
-are separate..
+are separate.

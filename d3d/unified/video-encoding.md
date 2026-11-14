@@ -15,128 +15,69 @@
 
 <!-- d3d12-review-legend:end -->
 
-<!-- d3d12-review-alert:begin:video-encoding:intro:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:intro:0:authored:migration-8d99b877dd2a05ea-0 -->This subordinate [Video](video.md) reference specifies encoding objects,
+capability tuples, application-managed reference pictures, recording and
+metadata conversion for H.264, HEVC and AV1.
+[Controls](video-encoding-controls.md), [codec contracts](video-encoding-codecs.md)
+and [type declarations](video-encoding-types.md) support the
+[API reference](#encoding-api).<!-- d3d12-review-inline:end:video-encoding:intro:0:authored:migration-8d99b877dd2a05ea-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This subordinate [Video](video.md) reference specifies encoding objects,
-> capability tuples, application-managed reference pictures, recording and
-> metadata conversion for H.264, HEVC and AV1. The compact route is
-> [capabilities](#encoding-capabilities), [objects](#encoding-objects),
-> [recording](#encoding-recording), [metadata](#encoding-metadata), and the
-> [declaring API reference](#encoding-api). Detailed controls, codec syntax and released types retain subordinate
-> references, not independent entry points. Published driver layouts and
-> DDIs are integrated with the corresponding contracts below.
+<ins><!-- d3d12-review-inline:begin:video-encoding:intro:1:authored:migration-c37d642628b650c6-0 -->This is a **qualified draft**. Codec
+syntax, algorithms, numeric/statistical details and hardware behavior retained
+from the published sources remain source-only unless explicitly qualified
+otherwise. Specific source discrepancies are qualified beside the affected
+contracts.<!-- d3d12-review-inline:end:video-encoding:intro:1:authored:migration-c37d642628b650c6-0 --></ins>
 
-<!-- d3d12-review-alert:end:video-encoding:intro:0 -->
-
-<!-- d3d12-review-alert:begin:video-encoding:intro:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This is a **qualified draft**. Codec
-> syntax, algorithms, numeric/statistical details and hardware behavior retained
-> from the published sources remain source-only unless explicitly qualified
-> otherwise. Specific source discrepancies are qualified beside the affected
-> contracts.
-
-<!-- d3d12-review-alert:end:video-encoding:intro:1 -->
-
-<!-- d3d12-review-alert:begin:video-encoding:LA-video-annotation-owner:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [command list annotation reference](diagnostics.md#command-list-annotations)
-> defines the three internal BeginEvent/EndEvent/SetMarker support methods
-> on `ID3D12VideoEncodeCommandList`. Their recording and allocator data lifetime
-> follows [common annotation state](command-list-state.md#annotations), not
-> a new video processing mode or GPU synchronization operation.
-
-<!-- d3d12-review-alert:end:video-encoding:LA-video-annotation-owner:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:LA-video-annotation-owner:0:authored:migration-13289dbb20126e92-0 -->The [command list annotation reference](diagnostics.md#command-list-annotations)
+defines BeginEvent/EndEvent/SetMarker on `ID3D12VideoEncodeCommandList`.
+Their recording and allocator data lifetime follows
+[common annotation state](command-list-state.md#annotations).<!-- d3d12-review-inline:end:video-encoding:LA-video-annotation-owner:0:authored:migration-13289dbb20126e92-0 --></ins>
 
 <a id="encoding-capabilities"></a>
 
 ## Capabilities and versioned inputs
 
-<!-- d3d12-review-alert:begin:video-encoding:capabilities:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:capabilities:0:authored:migration-93f42f1ed91b550d-0 -->[`ID3D12VideoDevice::CheckFeatureSupport`](video-decode.md#video-check-feature-support)
+owns the declaring API and common return protocol. Encoding queries contribute
+fixed payload cases to that owner. They are not new methods. `FeatureSupportDataSize`
+is `sizeof` the selected payload. `NodeIndex` is a zero-based node index;
+creation uses `NodeMask`. Initialize inputs and supply writable storage for
+pointed-to outputs. A successful HRESULT alone is not feature support.<!-- d3d12-review-inline:end:video-encoding:capabilities:0:authored:migration-93f42f1ed91b550d-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> [`ID3D12VideoDevice::CheckFeatureSupport`](video-decode.md#video-check-feature-support)
-> owns the declaring API and common return protocol. Encoding queries contribute
-> fixed payload cases to that owner. They are not new methods. `FeatureSupportDataSize`
-> is `sizeof` the selected payload. `NodeIndex` is a zero-based node index;
-> creation uses `NodeMask`. Initialize inputs and supply writable storage for
-> pointed-to outputs. A successful HRESULT alone is not feature support.
+<ins><!-- d3d12-review-inline:begin:video-encoding:capabilities:1:authored:migration-9ececc2d940e1c98-0 -->Individual codec, profile/level, input format, rate control, intra-refresh and
+subregion mode support are not a guarantee of simultaneous support. The
+`SUPPORT`, `SUPPORT1` and `SUPPORT2` payloads query the combined tuple and return
+validation/support flags, a suggested profile/level, and one
+`pResolutionDependentSupport` entry per `pResolutionList` entry. The application
+provides both arrays with `ResolutionsListCount` entries and codec-selected
+storage for `SuggestedProfile` and `SuggestedLevel`. `SUPPORT2` uses the
+version-1 per-resolution limits, not the old element stride.<!-- d3d12-review-inline:end:video-encoding:capabilities:1:authored:migration-9ececc2d940e1c98-0 --></ins>
 
-<!-- d3d12-review-alert:end:video-encoding:capabilities:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:capabilities:2:authored:migration-9535c71f84c83559-0 -->`OUTPUT_RESOLUTION_RATIOS_COUNT` returns the count for the codec;
+`OUTPUT_RESOLUTION` receives that same count and an application-allocated
+output ratio array. It also reports minimum/maximum dimensions and divisibility
+requirements. This query is not itself a profile and level tuple query.
+`RESOURCE_REQUIREMENTS` sizes/aligns the opaque hardware metadata and
+compressed bitstream access for the selected codec/profile/format/resolution.
+Version 1 additionally accounts for the enabled optional statistics. Its
+opaque buffer size is not the portable resolved record size.<!-- d3d12-review-inline:end:video-encoding:capabilities:2:authored:migration-9535c71f84c83559-0 --></ins>
 
-<!-- d3d12-review-alert:begin:video-encoding:capabilities:1 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:capabilities:3:authored:migration-ba6ed532401da25d-0 -->`SUPPORT1` is required for AV1: the older `SUPPORT` query reports codec-not-supported
+rather than accepting AV1. Rate control extension 1 and quality versus speed
+are shared capabilities, not AV1-only controls. The complete legacy/extension-1
+selection and `DataSize` tables are in
+[rate control](video-encoding-controls.md#control-rate-control).
+QP map, dirty region, motion search and lower-resolution frame analysis inputs
+join the combined tuple through `SUPPORT2`. Disabled additions preserve the
+specified older query semantics; CPU QP compatibility reporting has its own
+explicit exception in the detailed controls.<!-- d3d12-review-inline:end:video-encoding:capabilities:3:authored:migration-ba6ed532401da25d-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Individual codec, profile/level, input format, rate control, intra-refresh and
-> subregion mode support are not a guarantee of simultaneous support. The
-> `SUPPORT`, `SUPPORT1` and `SUPPORT2` payloads query the combined tuple and return
-> validation/support flags, a suggested profile/level, and one
-> `pResolutionDependentSupport` entry per `pResolutionList` entry. The application
-> provides both arrays with `ResolutionsListCount` entries and codec-selected
-> storage for `SuggestedProfile` and `SuggestedLevel`. `SUPPORT2` uses the
-> version-1 per-resolution limits, not the old element stride.
-
-<!-- d3d12-review-alert:end:video-encoding:capabilities:1 -->
-
-<!-- d3d12-review-alert:begin:video-encoding:capabilities:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `OUTPUT_RESOLUTION_RATIOS_COUNT` returns the count for the codec;
-> `OUTPUT_RESOLUTION` receives that same count and an application-allocated
-> output ratio array. It also reports minimum/maximum dimensions and divisibility
-> requirements. This query is not itself a profile and level tuple query.
-> `RESOURCE_REQUIREMENTS` sizes/aligns the opaque hardware metadata and
-> compressed bitstream access for the selected codec/profile/format/resolution.
-> Version 1 additionally accounts for the enabled optional statistics. Its
-> opaque buffer size is not the portable resolved record size.
-
-<!-- d3d12-review-alert:end:video-encoding:capabilities:2 -->
-
-<!-- d3d12-review-alert:begin:video-encoding:capabilities:3 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `SUPPORT1` is required for AV1: the older `SUPPORT` query reports codec-not-supported
-> rather than accepting AV1. Rate control extension 1 and quality-versus-speed
-> are shared capabilities, not AV1-only controls. The complete legacy/extension-1
-> selection and `DataSize` tables are in
-> [rate control](video-encoding-controls.md#control-rate-control).
-> QP map, dirty region, motion search and lower-resolution frame analysis inputs
-> join the combined tuple through `SUPPORT2`. Disabled additions preserve the
-> specified older query semantics; CPU QP compatibility reporting has its own
-> explicit exception in the detailed controls.
-
-<!-- d3d12-review-alert:end:video-encoding:capabilities:3 -->
-
-<!-- d3d12-review-alert:begin:video-encoding:capabilities:4 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [detailed capability/parameter reference](video-encoding-controls.md)
-> retains per-field input/output directions, count protocols and per-resolution
-> limits. The [codec reference](video-encoding-codecs.md) retains codec-specific
-> support/configuration, format, tile, header and DPB requirements.
-> The [type reference](video-encoding-types.md) supplies one selected final
-> declaration for each common type; separate versioned types remain separate.
-
-<!-- d3d12-review-alert:end:video-encoding:capabilities:4 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:capabilities:4:authored:migration-1325ef0ad84e36f8-0 -->The [detailed capability/parameter reference](video-encoding-controls.md)
+retains per-field input/output directions, count protocols and per-resolution
+limits. The [codec reference](video-encoding-codecs.md) retains codec-specific
+support/configuration, format, tile, header and DPB requirements.
+The [type reference](video-encoding-types.md) supplies one selected final
+declaration for each common type; separate versioned types remain separate.<!-- d3d12-review-inline:end:video-encoding:capabilities:4:authored:migration-1325ef0ad84e36f8-0 --></ins>
 
 <a id="encoding-driver-capabilities"></a>
 
@@ -153,21 +94,14 @@
 The [published DDI-table associations](video-encoding.md#encoding-ddi-table-associations) identify the actual video-device and encode-list slots.
 ---
 
-<!-- d3d12-review-alert:begin:video-encoding:ddi-query-associations:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:ddi-query-associations:0:authored:migration-986d5ffdf66b1ccc-0 -->These are the published `D3D12DDICAPS_TYPE` cases and the selected
+versioned capability payloads. The case values are DDI values, not the
+`D3D12_FEATURE_VIDEO` API ordinals. The fixed `pData` size is `sizeof` the
+selected payload; codec-specific pointers and arrays have their own storage.
+Input/output directions are retained in the payloads and in the matching
+[API capability contracts](video-encoding-controls.md#control-capabilities).<!-- d3d12-review-inline:end:video-encoding:ddi-query-associations:0:authored:migration-986d5ffdf66b1ccc-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> These are the published `D3D12DDICAPS_TYPE` cases and the selected
-> versioned capability payloads. The case values are DDI values, not the
-> `D3D12_FEATURE_VIDEO` API ordinals. The fixed `pData` size is `sizeof` the
-> selected payload; codec-specific pointers and arrays have their own storage.
-> Input/output directions are retained in the payloads and in the matching
-> [API capability contracts](video-encoding-controls.md#control-capabilities).
-
-<!-- d3d12-review-alert:end:video-encoding:ddi-query-associations:0 -->
-
-<!-- d3d12-review-alert:begin:video-encoding:ddi-query-associations:1 -->
+<!-- d3d12-review-alert:begin:video-encoding:ddi-query-associations:1:authored:migration-6f667f3ae191cfbd-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -198,7 +132,7 @@ The [published DDI-table associations](video-encoding.md#encoding-ddi-table-asso
 > | `D3D12DDICAPS_TYPE_VIDEO_0110_ENCODER_HEAP_SIZE1` | 55 | [`D3D12DDICAPS_VIDEO_ENCODER_HEAP_SIZE_DATA_0110_0`](#d3d12ddicaps-video-encoder-heap-size-data-0110-0) |
 > | `D3D12DDICAPS_TYPE_VIDEO_0110_ENCODER_RATE_CONTROL_FRAME_ANALYSIS` | 56 | [`D3D12DDICAPS_VIDEO_ENCODER_RATE_CONTROL_FRAME_ANALYSIS_DATA_0110_0`](#d3d12ddicaps-video-encoder-rate-control-frame-analysis-data-0110-0) |
 
-<!-- d3d12-review-alert:end:video-encoding:ddi-query-associations:1 -->
+<!-- d3d12-review-alert:end:video-encoding:ddi-query-associations:1:authored:migration-6f667f3ae191cfbd-0 -->
 
 <a id="d3d12ddicaps-encoder-dirty-regions-0103"></a>
 
@@ -766,7 +700,7 @@ typedef struct D3D12DDI_FEATURE_DATA_VIDEO_ENCODER_RESOLUTION_SUPPORT_QPMAP_0107
 
 #### Published DDI table associations
 
-<!-- d3d12-review-alert:begin:video-encoding:ddi-table-associations:0 -->
+<!-- d3d12-review-alert:begin:video-encoding:ddi-table-associations:0:authored:migration-9439f3e82a1fd688-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
@@ -783,69 +717,451 @@ typedef struct D3D12DDI_FEATURE_DATA_VIDEO_ENCODER_RESOLUTION_SUPPORT_QPMAP_0107
 > | `D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_ENCODE_0103` | `pfnEncodeFrame` | `PFND3D12DDI_VIDEO_ENCODE_FRAME_0103_0` |
 > | `D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_ENCODE_0103` | `pfnResolveInputParamLayout` | `PFND3D12DDI_VIDEO_RESOLVE_INPUT_PARAM_LAYOUT_0103_0` |
 
-<!-- d3d12-review-alert:end:video-encoding:ddi-table-associations:0 -->
+<!-- d3d12-review-alert:end:video-encoding:ddi-table-associations:0:authored:migration-9439f3e82a1fd688-0 -->
 
 <a id="encoding-objects"></a>
 
 ## Encoder objects and heaps
 
-<!-- d3d12-review-alert:begin:video-encoding:objects:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:objects:0:authored:migration-82775ff88c925ef8-0 -->An encoder fixes codec, profile, input format, sequence level codec
+configuration and maximum motion estimation precision. A heap fixes codec,
+profile, level and its supported resolution list. Their descriptions are
+different contracts: the encoder does not acquire the heap's level or resolution
+list, and the heap does not replace the encoder's codec configuration.
+The objects used together must be compatible with the supported tuple.
+Reflection retrieves creation values; modifying a returned copy does not
+modify either object.<!-- d3d12-review-inline:end:video-encoding:objects:0:authored:migration-82775ff88c925ef8-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> An encoder fixes codec, profile, input format, sequence level codec
-> configuration and maximum motion estimation precision. A heap fixes codec,
-> profile, level and its supported resolution list. Their descriptions are
-> different contracts: the encoder does not acquire the heap's level or resolution
-> list, and the heap does not replace the encoder's codec configuration.
-> The objects used together must be compatible with the supported tuple.
-> Reflection retrieves creation values; modifying a returned copy does not
-> modify either object.
+<ins><!-- d3d12-review-inline:begin:video-encoding:objects:1:authored:migration-855eca19dbb8aa22-0 -->Both object families derive from `ID3D12Pageable`. Successful creation returns
+a caller-owned COM reference. The descriptions and their pointed-to creation
+data are CPU call inputs and are copied during creation, including the heap's
+resolution list. Resource storage, fences and the encoder/heap are separate
+GPU lifetime objects; retaining a CPU description is not a substitute for
+retaining them.<!-- d3d12-review-inline:end:video-encoding:objects:1:authored:migration-855eca19dbb8aa22-0 --></ins>
 
-<!-- d3d12-review-alert:end:video-encoding:objects:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:objects:2:authored:migration-fbf7204c86a54483-0 -->`ID3D12VideoEncoderHeap1` adds the immutable `Pow2DownscaleFactor`. Lower-resolution
+two-pass requires the frame analysis heap flag and supported frame analysis
+configuration. The factor applies to every dynamic resolution in that heap's
+list. Encoding performs no implicit downscaling. The application prepares the
+downscaled input and maintains the mirrored full/downscaled DPB.
+Changing the factor requires a new heap under the published key frame/DPB
+restrictions; supported older full-resolution frame analysis is not removed.<!-- d3d12-review-inline:end:video-encoding:objects:2:authored:migration-fbf7204c86a54483-0 --></ins>
 
-<!-- d3d12-review-alert:begin:video-encoding:objects:1 -->
+<a id="encoding-api"></a>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Both object families derive from `ID3D12Pageable`. Successful creation returns
-> a caller-owned COM reference. The descriptions and their pointed-to creation
-> data are CPU call inputs and are copied during creation, including the heap's
-> resolution list. Resource storage, fences and the encoder/heap are separate
-> GPU lifetime objects; retaining a CPU description is not a substitute for
-> retaining them.
+<a id="declaring-api-reference"></a>
 
-<!-- d3d12-review-alert:end:video-encoding:objects:1 -->
+<a id="id3d12videodevice3--createvideoencoder"></a>
 
-<!-- d3d12-review-alert:begin:video-encoding:objects:2 -->
+### ID3D12VideoDevice3::CreateVideoEncoder
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `ID3D12VideoEncoderHeap1` adds the immutable `Pow2DownscaleFactor`. Lower-resolution
-> two-pass requires the frame analysis heap flag and supported frame analysis
-> configuration. The factor applies to every dynamic resolution in that heap's
-> list. Encoding performs no implicit downscaling. The application prepares the
-> downscaled input and maintains the mirrored full/downscaled DPB.
-> Changing the factor requires a new heap under the published key frame/DPB
-> restrictions; supported older full-resolution frame analysis is not removed.
+#### Declaration
 
-<!-- d3d12-review-alert:end:video-encoding:objects:2 -->
+```cpp
+HRESULT CreateVideoEncoder(
+        const D3D12_VIDEO_ENCODER_DESC* pDesc,
+        REFIID riid,
+        void** ppVideoEncoder);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoder-behavior:0:authored:migration-8016e4acd6fcd2ab-0 -->Creates a video encoder instance.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoder-behavior:0:authored:migration-8016e4acd6fcd2ab-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoder-parameters:0:authored:migration-3a3adbf9969f8129-0 -->`pDesc` points to the input [`D3D12_VIDEO_ENCODER_DESC`](video-encoding-types.md#d3d12-video-encoder-desc).
+`riid` identifies the requested interface. `ppVideoEncoder` receives a caller-owned
+reference to `ID3D12VideoEncoder` on successful creation. CPU description storage, including
+pointed-to profile and codec configuration data, is copied
+during creation. It is not GPU picture storage. Releasing the returned COM
+reference remains the caller's responsibility.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoder-parameters:0:authored:migration-3a3adbf9969f8129-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoder-return-values:0:authored:migration-b9a61b6c5654d2f1-0 -->Returns an HRESULT. The scoped inspected creation wrappers propagate validation
+or object creation failure. Their null output validation-only path returns
+`S_FALSE` after successful validation and creates no object. This observation
+does not change the required output annotation in the released declaration.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoder-return-values:0:authored:migration-b9a61b6c5654d2f1-0 --></ins>
+
+<a id="id3d12videodevice3--createvideoencoderheap"></a>
+
+### ID3D12VideoDevice3::CreateVideoEncoderHeap
+
+#### Declaration
+
+```cpp
+HRESULT CreateVideoEncoderHeap(
+        const D3D12_VIDEO_ENCODER_HEAP_DESC* pDesc,
+        REFIID riid,
+        void** ppVideoEncoderHeap);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoderheap-behavior:0:authored:migration-958cb4f944047bf1-0 -->Creates a video encoder heap instance.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoderheap-behavior:0:authored:migration-958cb4f944047bf1-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoderheap-parameters:0:authored:migration-6d5673a54c8cce72-0 -->`pDesc` points to the input [`D3D12_VIDEO_ENCODER_HEAP_DESC`](video-encoding-types.md#d3d12-video-encoder-heap-desc).
+`riid` identifies the requested interface. `ppVideoEncoderHeap` receives a caller-owned
+reference to `ID3D12VideoEncoderHeap` on successful creation. CPU description storage, including
+pointed-to profile/level data and the resolution list, is copied
+during creation. It is not GPU picture storage. Releasing the returned COM
+reference remains the caller's responsibility.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoderheap-parameters:0:authored:migration-6d5673a54c8cce72-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoderheap-return-values:0:authored:migration-83b46f798f45e128-0 -->Returns an HRESULT. The scoped inspected creation wrappers propagate validation
+or object creation failure. Their null output validation-only path returns
+`S_FALSE` after successful validation and creates no object. This observation
+does not change the required output annotation in the released declaration.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoderheap-return-values:0:authored:migration-83b46f798f45e128-0 --></ins>
+
+<a id="id3d12videodevice4--createvideoencoderheap1"></a>
+
+### ID3D12VideoDevice4::CreateVideoEncoderHeap1
+
+#### Declaration
+
+```cpp
+HRESULT CreateVideoEncoderHeap1(
+        const D3D12_VIDEO_ENCODER_HEAP_DESC1* pDesc,
+        REFIID riid,
+        void** ppVideoEncoderHeap);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videodevice4-%2Dcreatevideoencoderheap1-behavior:0:authored:migration-f3fbcf66871f80c5-0 -->Creates a video encoder heap instance. The heap description additionally fixes `Pow2DownscaleFactor`.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videodevice4-%2Dcreatevideoencoderheap1-behavior:0:authored:migration-f3fbcf66871f80c5-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videodevice4-%2Dcreatevideoencoderheap1-parameters:0:authored:migration-637eec298ba938fe-0 -->`pDesc` points to the input [`D3D12_VIDEO_ENCODER_HEAP_DESC1`](video-encoding-types.md#d3d12-video-encoder-heap-desc1).
+`riid` identifies the requested interface. `ppVideoEncoderHeap` receives a caller-owned
+reference to `ID3D12VideoEncoderHeap1` on successful creation. CPU description storage, including
+pointed-to profile/level data and the resolution list, is copied
+during creation. It is not GPU picture storage. Releasing the returned COM
+reference remains the caller's responsibility.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videodevice4-%2Dcreatevideoencoderheap1-parameters:0:authored:migration-637eec298ba938fe-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videodevice4-%2Dcreatevideoencoderheap1-return-values:0:authored:migration-1c809cc77808f475-0 -->Returns an HRESULT. The scoped inspected creation wrappers propagate validation
+or object creation failure. Their null output validation-only path returns
+`S_FALSE` after successful validation and creates no object. This observation
+does not change the required output annotation in the released declaration.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videodevice4-%2Dcreatevideoencoderheap1-return-values:0:authored:migration-1c809cc77808f475-0 --></ins>
+
+<a id="id3d12videoencoder--getnodemask"></a>
+
+### ID3D12VideoEncoder::GetNodeMask
+
+#### Declaration
+
+```cpp
+UINT GetNodeMask();
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetnodemask-behavior:0:authored:migration-892a8a382edf6afd-0 -->Retrieves the immutable `NodeMask` value used at object creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetnodemask-behavior:0:authored:migration-892a8a382edf6afd-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetnodemask-return-values:0:authored:migration-227885a963c79ce7-0 -->Returns the stored `NodeMask` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetnodemask-return-values:0:authored:migration-227885a963c79ce7-0 --></ins>
+
+<a id="id3d12videoencoder--getencoderflags"></a>
+
+### ID3D12VideoEncoder::GetEncoderFlags
+
+#### Declaration
+
+```cpp
+D3D12_VIDEO_ENCODER_FLAGS GetEncoderFlags();
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetencoderflags-behavior:0:authored:migration-2856a4904ecc4c0e-0 -->Retrieves the immutable `Flags` value used at object creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetencoderflags-behavior:0:authored:migration-2856a4904ecc4c0e-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetencoderflags-return-values:0:authored:migration-d6043d4fc0a418ef-0 -->Returns the stored `Flags` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetencoderflags-return-values:0:authored:migration-d6043d4fc0a418ef-0 --></ins>
+
+<a id="id3d12videoencoder--getcodec"></a>
+
+### ID3D12VideoEncoder::GetCodec
+
+#### Declaration
+
+```cpp
+D3D12_VIDEO_ENCODER_CODEC GetCodec();
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodec-behavior:0:authored:migration-dadc3221b5537bf9-0 -->Retrieves the immutable `EncodeCodec` value used at object creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetcodec-behavior:0:authored:migration-dadc3221b5537bf9-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodec-return-values:0:authored:migration-5b536b0caca039bc-0 -->Returns the stored `EncodeCodec` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetcodec-return-values:0:authored:migration-5b536b0caca039bc-0 --></ins>
+
+<a id="id3d12videoencoder--getcodecprofile"></a>
+
+### ID3D12VideoEncoder::GetCodecProfile
+
+#### Declaration
+
+```cpp
+HRESULT GetCodecProfile(D3D12_VIDEO_ENCODER_PROFILE_DESC dstProfile);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodecprofile-behavior:0:authored:migration-1bce77601b6094bb-0 -->Retrieves a copy of the immutable profile selected at creation. It does not reconfigure the object.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetcodecprofile-behavior:0:authored:migration-1bce77601b6094bb-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodecprofile-parameters:0:authored:migration-7c08335874e19041-0 -->`dstProfile` is passed by value. Initialize its `DataSize` and codec-selected
+pointer to caller-owned writable storage of exactly the selected payload's
+size. The getter writes that pointed-to payload. It does not allocate storage
+or return a pointer into the object's private state.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetcodecprofile-parameters:0:authored:migration-7c08335874e19041-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodecprofile-return-values:0:authored:migration-a471da9d3aadbf64-0 -->The inspected getter returns `S_OK` on copying the payload and `E_INVALIDARG` for a null selected pointer, mismatched `DataSize`, or unrecognized codec. These are scoped runtime observations, not a hardware validation guarantee.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetcodecprofile-return-values:0:authored:migration-a471da9d3aadbf64-0 --></ins>
+
+<a id="id3d12videoencoder--getcodecconfiguration"></a>
+
+### ID3D12VideoEncoder::GetCodecConfiguration
+
+#### Declaration
+
+```cpp
+HRESULT GetCodecConfiguration(D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION dstCodecConfig);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodecconfiguration-behavior:0:authored:migration-802535490ddc7d77-0 -->Retrieves a copy of the immutable codec configuration selected at creation. It does not reconfigure the object.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetcodecconfiguration-behavior:0:authored:migration-802535490ddc7d77-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodecconfiguration-parameters:0:authored:migration-24a3155b0a5ae744-0 -->`dstCodecConfig` is passed by value. Initialize its `DataSize` and codec-selected
+pointer to caller-owned writable storage of exactly the selected payload's
+size. The getter writes that pointed-to payload. It does not allocate storage
+or return a pointer into the object's private state.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetcodecconfiguration-parameters:0:authored:migration-24a3155b0a5ae744-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodecconfiguration-return-values:0:authored:migration-3541227d0d5f5616-0 -->The inspected getter returns `S_OK` on copying the payload and `E_INVALIDARG` for a null selected pointer, mismatched `DataSize`, or unrecognized codec. These are scoped runtime observations, not a hardware validation guarantee.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetcodecconfiguration-return-values:0:authored:migration-3541227d0d5f5616-0 --></ins>
+
+<a id="id3d12videoencoder--getinputformat"></a>
+
+### ID3D12VideoEncoder::GetInputFormat
+
+#### Declaration
+
+```cpp
+DXGI_FORMAT GetInputFormat();
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetinputformat-behavior:0:authored:migration-618912b9db8bcf0f-0 -->Retrieves the immutable `InputFormat` value used at object creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetinputformat-behavior:0:authored:migration-618912b9db8bcf0f-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetinputformat-return-values:0:authored:migration-a779217fe1c2b2f7-0 -->Returns the stored `InputFormat` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetinputformat-return-values:0:authored:migration-a779217fe1c2b2f7-0 --></ins>
+
+<a id="id3d12videoencoder--getmaxmotionestimationprecision"></a>
+
+### ID3D12VideoEncoder::GetMaxMotionEstimationPrecision
+
+#### Declaration
+
+```cpp
+D3D12_VIDEO_ENCODER_MOTION_ESTIMATION_PRECISION_MODE GetMaxMotionEstimationPrecision();
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetmaxmotionestimationprecision-behavior:0:authored:migration-938f95a867556520-0 -->Retrieves the immutable `MaxMotionEstimationPrecision` value used at object creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetmaxmotionestimationprecision-behavior:0:authored:migration-938f95a867556520-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetmaxmotionestimationprecision-return-values:0:authored:migration-562f18cf4ab52076-0 -->Returns the stored `MaxMotionEstimationPrecision` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetmaxmotionestimationprecision-return-values:0:authored:migration-562f18cf4ab52076-0 --></ins>
+
+<a id="id3d12videoencoderheap--getnodemask"></a>
+
+### ID3D12VideoEncoderHeap::GetNodeMask
+
+#### Declaration
+
+```cpp
+UINT GetNodeMask();
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetnodemask-behavior:0:authored:migration-ea05611c0d0f0b79-0 -->Retrieves the immutable `NodeMask` value used at object creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetnodemask-behavior:0:authored:migration-ea05611c0d0f0b79-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetnodemask-return-values:0:authored:migration-e452b2daf7e5b8ea-0 -->Returns the stored `NodeMask` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetnodemask-return-values:0:authored:migration-e452b2daf7e5b8ea-0 --></ins>
+
+<a id="id3d12videoencoderheap--getencoderheapflags"></a>
+
+### ID3D12VideoEncoderHeap::GetEncoderHeapFlags
+
+#### Declaration
+
+```cpp
+D3D12_VIDEO_ENCODER_HEAP_FLAGS GetEncoderHeapFlags();
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetencoderheapflags-behavior:0:authored:migration-139c0f2e5d2753aa-0 -->Retrieves the immutable `Flags` value used at object creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetencoderheapflags-behavior:0:authored:migration-139c0f2e5d2753aa-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetencoderheapflags-return-values:0:authored:migration-959bb9980e29191c-0 -->Returns the stored `Flags` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetencoderheapflags-return-values:0:authored:migration-959bb9980e29191c-0 --></ins>
+
+<a id="id3d12videoencoderheap--getcodec"></a>
+
+### ID3D12VideoEncoderHeap::GetCodec
+
+#### Declaration
+
+```cpp
+D3D12_VIDEO_ENCODER_CODEC GetCodec();
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodec-behavior:0:authored:migration-34a48dc4c31b6cd6-0 -->Retrieves the immutable `EncodeCodec` value used at object creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodec-behavior:0:authored:migration-34a48dc4c31b6cd6-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodec-return-values:0:authored:migration-6a8bb859e8ea5768-0 -->Returns the stored `EncodeCodec` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodec-return-values:0:authored:migration-6a8bb859e8ea5768-0 --></ins>
+
+<a id="id3d12videoencoderheap--getcodecprofile"></a>
+
+### ID3D12VideoEncoderHeap::GetCodecProfile
+
+#### Declaration
+
+```cpp
+HRESULT GetCodecProfile(D3D12_VIDEO_ENCODER_PROFILE_DESC dstProfile);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodecprofile-behavior:0:authored:migration-2ae0a2c329f65b9b-0 -->Retrieves a copy of the immutable profile selected at creation. It does not reconfigure the object.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodecprofile-behavior:0:authored:migration-2ae0a2c329f65b9b-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodecprofile-parameters:0:authored:migration-35449cade22ae966-0 -->`dstProfile` is passed by value. Initialize its `DataSize` and codec-selected
+pointer to caller-owned writable storage of exactly the selected payload's
+size. The getter writes that pointed-to payload. It does not allocate storage
+or return a pointer into the object's private state.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodecprofile-parameters:0:authored:migration-35449cade22ae966-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodecprofile-return-values:0:authored:migration-d41821cf06e9c835-0 -->The inspected getter returns `S_OK` on copying the payload and `E_INVALIDARG` for a null selected pointer, mismatched `DataSize`, or unrecognized codec. These are scoped runtime observations, not a hardware validation guarantee.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodecprofile-return-values:0:authored:migration-d41821cf06e9c835-0 --></ins>
+
+<a id="id3d12videoencoderheap--getcodeclevel"></a>
+
+### ID3D12VideoEncoderHeap::GetCodecLevel
+
+#### Declaration
+
+```cpp
+HRESULT GetCodecLevel(D3D12_VIDEO_ENCODER_LEVEL_SETTING dstLevel);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodeclevel-behavior:0:authored:migration-2ce1b5a2eeb96800-0 -->Retrieves a copy of the immutable level selected at creation. It does not reconfigure the object.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodeclevel-behavior:0:authored:migration-2ce1b5a2eeb96800-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodeclevel-parameters:0:authored:migration-63e7caa4c248879a-0 -->`dstLevel` is passed by value. Initialize its `DataSize` and codec-selected
+pointer to caller-owned writable storage of exactly the selected payload's
+size. The getter writes that pointed-to payload. It does not allocate storage
+or return a pointer into the object's private state.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodeclevel-parameters:0:authored:migration-63e7caa4c248879a-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodeclevel-return-values:0:authored:migration-6aebee3f1cbc36dc-0 -->The inspected getter returns `S_OK` on copying the payload and `E_INVALIDARG` for a null selected pointer, mismatched `DataSize`, or unrecognized codec. These are scoped runtime observations, not a hardware validation guarantee.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodeclevel-return-values:0:authored:migration-6aebee3f1cbc36dc-0 --></ins>
+
+<a id="id3d12videoencoderheap--getresolutionlistcount"></a>
+
+### ID3D12VideoEncoderHeap::GetResolutionListCount
+
+#### Declaration
+
+```cpp
+UINT GetResolutionListCount();
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlistcount-behavior:0:authored:migration-81852f7dcaf29b8a-0 -->Retrieves the immutable `ResolutionsListCount` value used at object creation. This count sizes the destination for `GetResolutionList`. It is not an adapter-wide list of supported resolutions.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlistcount-behavior:0:authored:migration-81852f7dcaf29b8a-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlistcount-return-values:0:authored:migration-7543d1d7ecbcd564-0 -->Returns the stored `ResolutionsListCount` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlistcount-return-values:0:authored:migration-7543d1d7ecbcd564-0 --></ins>
+
+<a id="id3d12videoencoderheap--getresolutionlist"></a>
+
+### ID3D12VideoEncoderHeap::GetResolutionList
+
+#### Declaration
+
+```cpp
+HRESULT GetResolutionList(
+        const UINT ResolutionsListCount,
+        D3D12_VIDEO_ENCODER_PICTURE_RESOLUTION_DESC* pResolutionList);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlist-behavior:0:authored:migration-a63d7e9695632eca-0 -->Retrieves the immutable list of resolutions requested when creating this heap.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlist-behavior:0:authored:migration-a63d7e9695632eca-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlist-parameters:0:authored:migration-fcc12d4026e858b5-0 -->`ResolutionsListCount` must equal `GetResolutionListCount()`.
+`pResolutionList` points to caller-allocated writable storage for exactly that
+many `D3D12_VIDEO_ENCODER_PICTURE_RESOLUTION_DESC` entries. This is a copy of the
+heap's list, not a query that allocates or grows a returned array.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlist-parameters:0:authored:migration-fcc12d4026e858b5-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlist-return-values:0:authored:migration-6c407c2b453ae77e-0 -->The inspected getter returns `S_OK` on copying the list and `E_INVALIDARG` for a count unequal to the stored count. No capacity/MORE_DATA convention is established.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlist-return-values:0:authored:migration-6c407c2b453ae77e-0 --></ins>
+
+<a id="id3d12videoencoderheap1--getpow2downscalefactor"></a>
+
+### ID3D12VideoEncoderHeap1::GetPow2DownscaleFactor
+
+#### Declaration
+
+```cpp
+UINT GetPow2DownscaleFactor();
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap1-%2Dgetpow2downscalefactor-behavior:0:authored:migration-f5c49d4d6477a133-0 -->Retrieves the immutable `Pow2DownscaleFactor` value used at object creation. When the heap was not created with `D3D12_VIDEO_ENCODER_HEAP_FLAG_ALLOW_RATE_CONTROL_FRAME_ANALYSIS`, the published contract returns zero.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap1-%2Dgetpow2downscalefactor-behavior:0:authored:migration-f5c49d4d6477a133-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap1-%2Dgetpow2downscalefactor-return-values:0:authored:migration-ffc1b46e309ccc2f-0 -->Returns the stored `Pow2DownscaleFactor` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap1-%2Dgetpow2downscalefactor-return-values:0:authored:migration-ffc1b46e309ccc2f-0 --></ins>
 
 <a id="encoding-driver-objects"></a>
 
 ### Encoder and heap driver contracts
 
-<!-- d3d12-review-alert:begin:video-encoding:ddi-contract:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [DDI table associations](#encoding-ddi-table-associations) identify the creation, destruction and recording entries below.
-
-<!-- d3d12-review-alert:end:video-encoding:ddi-contract:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:ddi-contract:0:authored:migration-1710767ae0d7799a-0 -->The [DDI table associations](#encoding-ddi-table-associations) identify the creation, destruction and recording entries below.<!-- d3d12-review-inline:end:video-encoding:ddi-contract:0:authored:migration-1710767ae0d7799a-0 --></ins>
 
 <a id="source-s01-091"></a>
 
@@ -885,7 +1201,7 @@ Encoder creation parameters.
 
 *hDrvVideoEncoder*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:S01-092:8 -->Handle to the hDrvVideoEncoder. Runtime has allocated space according to the result of PFND3D12DDI_CALCPRIVATEVIDEOENCODERSIZE_0082_0 for the driver to place its object.<!-- d3d12-review-inline:end:video-encoding:S01-092:8 --></ins>
+Handle to the hDrvVideoEncoder. Runtime has allocated space according to the result of <ins><!-- d3d12-review-inline:begin:video-encoding:S01-092:8:modified:source-6d94010630c5788e-0-0 -->PFND3D12DDI_CALCPRIVATEVIDEOENCODERSIZE_0082_0<!-- d3d12-review-inline:end:video-encoding:S01-092:8:modified:source-6d94010630c5788e-0-0 --></ins> for the driver to place its object.
 
 <a id="source-s01-093"></a>
 
@@ -941,7 +1257,7 @@ Handle for the D3D12 device.
 
 *hDrvVideoEncoderHeap*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:S01-096:8 -->Handle to the hDrvVideoEncoderHeap. Runtime has allocated space according to the result of PFND3D12DDI_CALCPRIVATEVIDEOENCODERHEAPSIZE_0110_0 for the driver to place its object.<!-- d3d12-review-inline:end:video-encoding:S01-096:8 --></ins>
+Handle to the hDrvVideoEncoderHeap. Runtime has allocated space according to the result of <ins><!-- d3d12-review-inline:begin:video-encoding:S01-096:8:modified:source-2772df53b830d068-0-0 -->PFND3D12DDI_CALCPRIVATEVIDEOENCODERHEAPSIZE_0110_0<!-- d3d12-review-inline:end:video-encoding:S01-096:8:modified:source-2772df53b830d068-0-0 --></ins> for the driver to place its object.
 
 <a id="source-s01-097"></a>
 
@@ -1097,130 +1413,185 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYVIDEOENCODER_0080 )(
 
 ## Recording, ordering, resources and lifetime
 
-<!-- d3d12-review-alert:begin:video-encoding:recording:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:recording:0:authored:migration-f41683ac5859cd4a-0 -->Encoding uses `D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE` lists, allocators and
+queues. [Queue/list compatibility](execution.md#command-list-types),
+[CPU threading](execution.md#threading), [submission threading](execution.md#submission-threading),
+[submission ordering](execution.md#submission), [recording storage](execution.md#command-storage),
+and [object/resource lifetime](execution.md#lifetime) retain their canonical
+contracts. The base declaring entries for `ClearState`, `Close` and `Reset`
+remain in [motion estimation](video-motion-estimation.md). They are not
+declared again here.<!-- d3d12-review-inline:end:video-encoding:recording:0:authored:migration-f41683ac5859cd4a-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Encoding uses `D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE` lists, allocators and
-> queues. [Queue/list compatibility](execution.md#command-list-types),
-> [CPU threading](execution.md#threading), [submission threading](execution.md#submission-threading),
-> [submission ordering](execution.md#submission), [recording storage](execution.md#command-storage),
-> and [object/resource lifetime](execution.md#lifetime) retain their canonical
-> contracts. The base declaring entries for `ClearState`, `Close` and `Reset`
-> remain in [motion estimation](video-motion-estimation.md). They are not
-> declared again here.
+<ins><!-- d3d12-review-inline:begin:video-encoding:recording:1:authored:migration-651952f379e9db36-0 -->CPU frame argument structures, arrays and codec payloads are recording-call
+inputs and must remain valid for that call. Their storage is distinct from
+the referenced COM objects and GPU allocations; keeping only those CPU
+structures does not retain the objects or make their backing memory resident.<!-- d3d12-review-inline:end:video-encoding:recording:1:authored:migration-651952f379e9db36-0 --></ins>
 
-<!-- d3d12-review-alert:end:video-encoding:recording:0 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:recording:2:authored:migration-12674feaf48f438e-0 -->The application serializes recording and submission against each encoder and
+heap and records commands in GPU execution order. Multiple compatible
+reconfiguration requests may be in flight against one heap, but this does not
+permit concurrent unsynchronized access to the encoder/heap from independent
+execution flows. Reconfiguration flags and capabilities do not mutate immutable
+creation properties or silently change the codec headers/DPB.<!-- d3d12-review-inline:end:video-encoding:recording:2:authored:migration-12674feaf48f438e-0 --></ins>
 
-<!-- d3d12-review-alert:begin:video-encoding:recording:1 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:recording:3:authored:migration-8580293c7619dbd9-0 -->The encoder, heap, picture resources, metadata/bitstream buffers, input map
+buffers and notification fences must remain alive for every recorded use
+that will execute, including recordings not yet submitted, and until their
+GPU uses complete. The caller retains its owned references; recording is not
+assumed to take an additional COM reference. Resetting a list does not complete
+earlier execution or reclaim an in-use allocator.<!-- d3d12-review-inline:end:video-encoding:recording:3:authored:migration-8580293c7619dbd9-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> CPU frame argument structures, arrays and codec payloads are recording-call
-> inputs and must remain valid for that call. Their storage is distinct from
-> the referenced COM objects and GPU allocations; keeping only those CPU
-> structures does not retain the objects or make their backing memory resident.
+<ins><!-- d3d12-review-inline:begin:video-encoding:recording:4:authored:migration-373a846213aa799c-0 -->Input pictures, DPB references and opaque resolved input maps are read by
+encoding; reconstructed pictures, compressed bitstreams and opaque output
+metadata are written. Legacy transitions use `VIDEO_ENCODE_READ` and
+`VIDEO_ENCODE_WRITE` as appropriate. Metadata resolution reads the opaque
+metadata and writes portable destinations. Input map resolution reads its
+GPU textures and writes the opaque input buffer, which must be made readable
+for the consuming encode.
+[Enhanced encode barriers](synchronization.md#encode-enhanced-barrier),
+[legacy encode barriers](synchronization.md#encode-resource-barrier),
+[access scopes](synchronization.md#barrier-access),
+[synchronization scopes](synchronization.md#barrier-sync), and
+[barrier model interoperation](synchronization.md#model-interoperation)
+own the actual barrier contracts. These commands do not implicitly supply the
+application's transitions, residency or cross-queue waits.<!-- d3d12-review-inline:end:video-encoding:recording:4:authored:migration-373a846213aa799c-0 --></ins>
 
-<!-- d3d12-review-alert:end:video-encoding:recording:1 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:recording:5:authored:migration-fd5df02f50925daa-0 -->[Video resources](video.md#video-resource-contract) own common allocation and
+residency. Input pictures must not be `VIDEO_ENCODE_REFERENCE_ONLY`.
+Reference-only reconstructed pictures remain supported. Optional readable
+reconstruction removes that requirement only for a tuple reporting the
+readable-layout support flag. It must not hide a driver conversion/performance
+penalty. The detailed readable-reconstruction contribution is retained in
+[controls](video-encoding-controls.md#control-readable-reconstruction).<!-- d3d12-review-inline:end:video-encoding:recording:5:authored:migration-fd5df02f50925daa-0 --></ins>
 
-<!-- d3d12-review-alert:begin:video-encoding:recording:2 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:recording:6:authored:migration-be577232b75046bc-0 -->The application owns DPB allocation, snapshots, lifetime and reference strategy,
+submission in encode rather than display order, and non-payload codec headers.
+An IDR/key frame or resolution change does not automatically implement the
+host's DPB flushing, reference reordering or header production.<!-- d3d12-review-inline:end:video-encoding:recording:6:authored:migration-be577232b75046bc-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The application serializes recording and submission against each encoder and
-> heap and records commands in GPU execution order. Multiple compatible
-> reconfiguration requests may be in flight against one heap, but this does not
-> permit concurrent unsynchronized access to the encoder/heap from independent
-> execution flows. Reconfiguration flags and capabilities do not mutate immutable
-> creation properties or silently change the codec headers/DPB.
+<ins><!-- d3d12-review-inline:begin:video-encoding:recording:7:authored:migration-7608c99c2d785104-0 -->[Encode predication](counters-queries-and-predication.md#videoencode-setpredication)
+and the [operation matrix](counters-queries-and-predication.md#predication-operation-matrix)
+remain the policy owners; no software-only observation is generalized into
+hardware policy here. [Encode queries](counters-queries-and-predication.md#videoencode-beginquery),
+[timestamp ending](counters-queries-and-predication.md#videoencode-endquery), and
+[query resolution](counters-queries-and-predication.md#videoencode-resolvequerydata)
+own query eligibility and lifecycle. Encoder statistics are metadata, not
+timestamp or completion queries.<!-- d3d12-review-inline:end:video-encoding:recording:7:authored:migration-7608c99c2d785104-0 --></ins>
 
-<!-- d3d12-review-alert:end:video-encoding:recording:2 -->
+<a id="protected-video-api-contracts"></a>
 
-<!-- d3d12-review-alert:begin:video-encoding:recording:3 -->
+<a id="protected-session-video-api-contracts"></a>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The encoder, heap, picture resources, metadata/bitstream buffers, input map
-> buffers and notification fences must remain alive for every recorded use
-> that will execute, including recordings not yet submitted, and until their
-> GPU uses complete. The caller retains its owned references; recording is not
-> assumed to take an additional COM reference. Resetting a list does not complete
-> earlier execution or reclaim an in-use allocator.
+<a id="api-id3d12videoencodecommandlist-setprotectedresourcesession"></a>
 
-<!-- d3d12-review-alert:end:video-encoding:recording:3 -->
+### ID3D12VideoEncodeCommandList::SetProtectedResourceSession
 
-<!-- d3d12-review-alert:begin:video-encoding:recording:4 -->
+#### Declaration
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Input pictures, DPB references and opaque resolved input maps are read by
-> encoding; reconstructed pictures, compressed bitstreams and opaque output
-> metadata are written. Legacy transitions use `VIDEO_ENCODE_READ` and
-> `VIDEO_ENCODE_WRITE` as appropriate. Metadata resolution reads the opaque
-> metadata and writes portable destinations. Input map resolution reads its
-> GPU textures and writes the opaque input buffer, which must be made readable
-> for the consuming encode.
-> [Enhanced encode barriers](synchronization.md#encode-enhanced-barrier),
-> [legacy encode barriers](synchronization.md#encode-resource-barrier),
-> [access scopes](synchronization.md#barrier-access),
-> [synchronization scopes](synchronization.md#barrier-sync), and
-> [barrier model interoperation](synchronization.md#model-interoperation)
-> own the actual barrier contracts. These commands do not implicitly supply the
-> application's transitions, residency or cross-queue waits.
+```cpp
+void SetProtectedResourceSession(
+    ID3D12ProtectedResourceSession *pProtectedResourceSession);
+```
 
-<!-- d3d12-review-alert:end:video-encoding:recording:4 -->
+#### Behavior
 
-<!-- d3d12-review-alert:begin:video-encoding:recording:5 -->
+Specifies whether or not protected resources can be accessed by subsequent commands in the command list. By default, no protected resources are enabled. After calling **SetProtectedResourceSession** with a valid session, protected resources of the same type can refer to that session. After calling **SetProtectedResourceSession** with **NULL**, no protected resources can be accessed.
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> [Video resources](video.md#video-resource-contract) own common allocation and
-> residency. Input pictures must not be `VIDEO_ENCODE_REFERENCE_ONLY`.
-> Reference-only reconstructed pictures remain supported. Optional readable
-> reconstruction removes that requirement only for a tuple reporting the
-> readable-layout support flag. It must not hide a driver conversion/performance
-> penalty. The detailed readable-reconstruction contribution is retained in
-> [controls](video-encoding-controls.md#control-readable-reconstruction).
+<ins><!-- d3d12-review-inline:begin:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:0:authored:migration-0f298097fb45e592-0 -->Selects only the supported command list's protection context. Ordinary
+bindings are preserved (D272). This is not ClearState. Null disables protected
+access. [Session/device/node/type and operation support](video.md#protected-video-support),
+the [canonical selection and open-query rules](command-list-state.md#protection)
+and [protected operation predication](counters-queries-and-predication.md#predication-operation-matrix)
+remain required.<!-- d3d12-review-inline:end:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:0:authored:migration-0f298097fb45e592-0 --></ins>
 
-<!-- d3d12-review-alert:end:video-encoding:recording:5 -->
+#### Parameters
 
-<!-- d3d12-review-alert:begin:video-encoding:recording:6 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:2:authored:migration-64c6ba46962f8aeb-0 -->`pProtectedResourceSession` is the optional translated session association. It is not a video encoder/decoder object and its selection does not allocate one.<!-- d3d12-review-inline:end:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:2:authored:migration-64c6ba46962f8aeb-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The application owns DPB allocation, snapshots, lifetime and reference strategy,
-> submission in encode rather than display order, and non-payload codec headers.
-> An IDR/key frame or resolution change does not automatically implement the
-> host's DPB flushing, reference reordering or header production.
+#### Return values
 
-<!-- d3d12-review-alert:end:video-encoding:recording:6 -->
+<ins><!-- d3d12-review-inline:begin:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:4:authored:migration-74fc91058f15c4f8-0 -->Returns no value. Recording/list errors remain distinct from content validity and GPU completion.<!-- d3d12-review-inline:end:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:4:authored:migration-74fc91058f15c4f8-0 --></ins>
+<a id="id3d12videoencodecommandlist2--encodeframe"></a>
 
-<!-- d3d12-review-alert:begin:video-encoding:recording:7 -->
+### ID3D12VideoEncodeCommandList2::EncodeFrame
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> [Encode predication](counters-queries-and-predication.md#videoencode-setpredication)
-> and the [operation matrix](counters-queries-and-predication.md#predication-operation-matrix)
-> remain the policy owners; no software-only observation is generalized into
-> hardware policy here. [Encode queries](counters-queries-and-predication.md#videoencode-beginquery),
-> [timestamp ending](counters-queries-and-predication.md#videoencode-endquery), and
-> [query resolution](counters-queries-and-predication.md#videoencode-resolvequerydata)
-> own query eligibility and lifecycle. Encoder statistics are metadata, not
-> timestamp or completion queries.
+#### Declaration
 
-<!-- d3d12-review-alert:end:video-encoding:recording:7 -->
+```cpp
+void EncodeFrame(
+        ID3D12VideoEncoder* pEncoder,
+        ID3D12VideoEncoderHeap *pHeap,
+        const D3D12_VIDEO_ENCODER_ENCODEFRAME_INPUT_ARGUMENTS *pInputArguments,
+        const D3D12_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_ARGUMENTS *pOutputArguments);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-behavior:0:authored:migration-fbc64fe8e949a92d-0 -->Records encoding of a frame's codec payload. The application supplies the
+sequence controls, picture controls and DPB snapshot and codes the remaining
+bitstream headers. [Recording and lifetime](#encoding-recording) and the
+[detailed controls reference](video-encoding-controls.md) apply.
+This is the supported older full-frame path. It uses the original picture control
+union, including HEVC/HEVC1, and does not request optional metadata or GPU map
+inputs. Legacy full-resolution frame analysis remains available when supported.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-behavior:0:authored:migration-fbc64fe8e949a92d-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-parameters:0:authored:migration-ffdfb5f137499580-0 -->`pEncoder` is the encoder for this operation. `pHeap` is the compatible encoder
+heap. `pInputArguments` points to
+[`D3D12_VIDEO_ENCODER_ENCODEFRAME_INPUT_ARGUMENTS`](video-encoding-types.md#d3d12-video-encoder-encodeframe-input-arguments).
+`pOutputArguments` points to
+[`D3D12_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_ARGUMENTS`](video-encoding-types.md#d3d12-video-encoder-encodeframe-output-arguments),
+which identifies application allocations written by GPU execution, not CPU
+output storage written when recording returns.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-parameters:0:authored:migration-ffdfb5f137499580-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-return-values:0:authored:migration-137b8418b5f9e606-0 -->Returns no value. Recording returns before GPU completion. Execution errors are reported through encoder metadata; recording/list errors are distinct.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-return-values:0:authored:migration-137b8418b5f9e606-0 --></ins>
+
+<a id="id3d12videoencodecommandlist4--encodeframe1"></a>
+
+### ID3D12VideoEncodeCommandList4::EncodeFrame1
+
+#### Declaration
+
+```cpp
+void EncodeFrame1(
+        ID3D12VideoEncoder* pEncoder,
+        ID3D12VideoEncoderHeap1* pHeap,
+        const D3D12_VIDEO_ENCODER_ENCODEFRAME_INPUT_ARGUMENTS1* pInputArguments,
+        const D3D12_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_ARGUMENTS1* pOutputArguments);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-behavior:0:authored:migration-5d1e73fbb98b0853-0 -->Records encoding of a frame's codec payload. The application supplies the
+sequence controls, picture controls and DPB snapshot and codes the remaining
+bitstream headers. [Recording and lifetime](#encoding-recording) and the
+[detailed controls reference](video-encoding-controls.md) apply.
+This version uses HEVC2 through the version-1 picture control union, optional
+statistics, CPU/GPU map inputs, subregion notification and frame analysis
+parameters. Enabling one optional feature does not imply support for another.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-behavior:0:authored:migration-5d1e73fbb98b0853-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-parameters:0:authored:migration-3aab894f39bad943-0 -->`pEncoder` is the encoder for this operation. `pHeap` is the compatible encoder
+heap. `pInputArguments` points to
+[`D3D12_VIDEO_ENCODER_ENCODEFRAME_INPUT_ARGUMENTS1`](video-encoding-types.md#d3d12-video-encoder-encodeframe-input-arguments1).
+`pOutputArguments` points to
+[`D3D12_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_ARGUMENTS1`](video-encoding-types.md#d3d12-video-encoder-encodeframe-output-arguments1),
+which identifies application allocations written by GPU execution, not CPU
+output storage written when recording returns.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-parameters:0:authored:migration-3aab894f39bad943-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-return-values:0:authored:migration-dc09d1bf40b07b02-0 -->Returns no value. Recording returns before GPU completion. Execution errors are reported through encoder metadata; recording/list errors are distinct.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-return-values:0:authored:migration-dc09d1bf40b07b02-0 --></ins>
 
 <a id="encoding-driver-recording"></a>
 
-### Driver recording payloads and entry points
+<a id="driver-recording-payloads-and-entry-points"></a>
+
+### Frame recording DDIs
 
 <a id="source-s01-145"></a>
 
@@ -1229,6 +1600,427 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYVIDEOENCODER_0080 )(
 <ins><!-- d3d12-review-inline:begin:video-encoding:S01-145:0 -->Released declaration: [`D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_INPUT_STREAM_ARGUMENTS_0082_0`](video-encoding.md#d3d12ddi-video-encoder-encodeframe-input-stream-arguments-0082-0).<!-- d3d12-review-inline:end:video-encoding:S01-145:0 --></ins>
 
 Parameters for the input of the encoding operation.
+
+<a id="pfnd3d12ddi-video-encode-frame-0082-0"></a>
+
+<a id="pfnd3d12ddi-video-encode-frame-0102-0"></a>
+
+<a id="pfnd3d12ddi-video-encode-frame-0103-0"></a>
+
+#### PFND3D12DDI_VIDEO_ENCODE_FRAME_0103_0
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_ENCODE_FRAME_0103_0 )(
+    D3D12DDI_HCOMMANDLIST hDrvCommandList,
+    D3D12DDI_HVIDEOENCODER_0080 hDrvEncoder,
+    D3D12DDI_HVIDEOENCODERHEAP_0080 hDrvVideoEncoderHeap,
+    const D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_INPUT_STREAM_ARGUMENTS_0103_0* pInputStreamArguments,
+    const D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0102_0* pOutputStreamArguments);
+```
+
+<a id="driver-current-encode-operations"></a>
+
+<a id="current-encode-and-input-layout-recording-behavior"></a>
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:CS-encode-operations:0:authored:migration-7ba207d8a724ddbb-0 -->`PFND3D12DDI_VIDEO_ENCODE_FRAME_0103_0` implements
+[EncodeFrame](#id3d12videoencodecommandlist2--encodeframe) and
+[EncodeFrame1](#id3d12videoencodecommandlist4--encodeframe1).<!-- d3d12-review-inline:end:video-encoding:CS-encode-operations:0:authored:migration-7ba207d8a724ddbb-0 --></ins>
+
+<a id="encoding-input-layout"></a>
+
+## GPU input map layout resolution
+
+<a id="id3d12videoencodecommandlist4--resolveinputparamlayout"></a>
+
+### ID3D12VideoEncodeCommandList4::ResolveInputParamLayout
+
+#### Declaration
+
+```cpp
+void ResolveInputParamLayout(
+        const D3D12_VIDEO_ENCODER_RESOLVE_INPUT_PARAM_LAYOUT_INPUT_ARGUMENTS* pInputArguments,
+        const D3D12_VIDEO_ENCODER_RESOLVE_INPUT_PARAM_LAYOUT_OUTPUT_ARGUMENTS* pOutputArguments);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveinputparamlayout-behavior:0:authored:migration-211c231f48218299-0 -->Converts hardware-agnostic GPU map textures into the hardware-specific opaque
+input layout consumed by `EncodeFrame1`. Record it before the consuming encode
+on the same list, or complete it and synchronize the producer/consumer queues
+with fences. It is not metadata output resolution.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveinputparamlayout-behavior:0:authored:migration-211c231f48218299-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveinputparamlayout-parameters:0:authored:migration-6638da22853f62d7-0 -->`pInputArguments` supplies session information and the selected QP, dirty region
+or motion vector map data. `pOutputArguments` identifies the application-owned
+opaque output buffer, allocated to
+`D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOLVE_INPUT_PARAM_LAYOUT.MaxResolvedBufferAllocationSize`.
+Inputs are VIDEO_ENCODE_READ. The destination is VIDEO_ENCODE_WRITE for the resolve,
+then VIDEO_ENCODE_READ when consumed by encoding. The opaque layout is not a
+portable CPU record format.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveinputparamlayout-parameters:0:authored:migration-6638da22853f62d7-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveinputparamlayout-return-values:0:authored:migration-9d0c65555c3f0074-0 -->Returns no value. It records work. It neither waits for completion nor inserts the caller's cross-queue fence dependencies.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveinputparamlayout-return-values:0:authored:migration-9d0c65555c3f0074-0 --></ins>
+
+<a id="pfnd3d12ddi-video-resolve-input-param-layout-0103-0"></a>
+
+#### PFND3D12DDI_VIDEO_RESOLVE_INPUT_PARAM_LAYOUT_0103_0
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_RESOLVE_INPUT_PARAM_LAYOUT_0103_0 )(
+    D3D12DDI_HCOMMANDLIST hDrvCommandList,
+    const D3D12DDI_VIDEO_ENCODER_RESOLVE_INPUT_PARAM_LAYOUT_INPUT_ARGUMENTS_0103_0* pInputArguments,
+    const D3D12DDI_VIDEO_ENCODER_RESOLVE_INPUT_PARAM_LAYOUT_OUTPUT_ARGUMENTS_0103_0* pOutputArguments);
+```
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:CS-encode-operations:1:authored:migration-39ab73aea951ef42-0 -->`PFND3D12DDI_VIDEO_RESOLVE_INPUT_PARAM_LAYOUT_0103_0` implements the
+[ResolveInputParamLayout operation](#id3d12videoencodecommandlist4--resolveinputparamlayout).<!-- d3d12-review-inline:end:video-encoding:CS-encode-operations:1:authored:migration-39ab73aea951ef42-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:CS-encode-operations:2:authored:migration-d7a07ad4b8b53ace-0 -->`PFND3D12DDI_VIDEO_ENCODE_FRAME_0103_0` and
+`PFND3D12DDI_VIDEO_RESOLVE_INPUT_PARAM_LAYOUT_0103_0` capture needed CPU descriptions during recording, without
+snapshotting the referenced GPU data.<!-- d3d12-review-inline:end:video-encoding:CS-encode-operations:2:authored:migration-d7a07ad4b8b53ace-0 --></ins>
+
+<a id="encoding-metadata"></a>
+
+## Metadata, optional statistics and early notifications
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:metadata:0:authored:migration-65c3c2efe2e23092-0 -->`EncodeFrame`/`EncodeFrame1` write hardware layout metadata into the
+application's opaque output buffer. `ResolveEncoderOutputMetadata` and its
+version-1 form record conversion to portable records. The CPU argument
+structures contain resource references, not the resolved record bytes.
+The portable header and subregion records contain fixed-width values, not
+pointers into a packed array.<!-- d3d12-review-inline:end:video-encoding:metadata:0:authored:migration-65c3c2efe2e23092-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:metadata:1:authored:migration-b03475f603e165af-0 -->For H.264/HEVC, the mandatory resolved layout is
+`D3D12_VIDEO_ENCODER_OUTPUT_METADATA` immediately followed by
+`WrittenSubregionsCount` packed `D3D12_VIDEO_ENCODER_FRAME_SUBREGION_METADATA`
+records. AV1 additionally appends its tile grid structure and post-encode
+values. Resolved capacity is calculated from this layout and the maximum
+supported subregion count. Do not use the opaque hardware metadata size as
+that calculation. Offsets and `bSize` are in bytes. `bHeaderSize` is
+in bits. Each subregion's `bSize` includes its initial padding; `bStartOffset`
+is the amount to skip within that region, not an absolute bitstream offset.<!-- d3d12-review-inline:end:video-encoding:metadata:1:authored:migration-b03475f603e165af-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:metadata:2:authored:migration-a6c20e375739187e-0 -->Optional QP/SATD/bit-allocation maps and frame/subregion PSNR retain separate
+support, enable, sizing and output destination rules. Disabling optional
+statistics does not remove mandatory old metadata. Spatial adaptive QP has
+separate support and enable flags and applies to all supported rate control
+modes, not just modes that budget a bitrate.<!-- d3d12-review-inline:end:video-encoding:metadata:2:authored:migration-a6c20e375739187e-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:metadata:3:authored:migration-4bb8e01a7acab55b-0 -->Subregion notification can make a slice/tile interval available before the
+whole frame completes. It does not make frame statistics or AV1 post-encode
+header values available early. The application supplies all output arrays,
+base offsets, zeroed size/offset feedback buffers, fences and target values;
+it waits without assuming notification order. `SUBREGIONS` notification
+uses the subregion outputs rather than `FrameOutputBuffer` and reports zero
+mandatory written-subregion count/total bitstream bytes, with no ordinary
+subregion record array. AV1's appended records still follow the mandatory
+header and the zero-length array. The detailed contracts retain the exact
+per-interval flush/signaling obligations, whole-frame completion fallback,
+count and alignment rules.<!-- d3d12-review-inline:end:video-encoding:metadata:3:authored:migration-4bb8e01a7acab55b-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:metadata:4:authored:migration-753ef294557435ac-0 -->The [controls reference](video-encoding-controls.md) retains the full
+statistics, notification, input map and two-pass contracts, including their
+formulas, examples and figures. The [codec reference](video-encoding-codecs.md)
+retains the additional AV1 metadata and header responsibilities.
+The [driver metadata contracts](#encoding-driver-metadata) contain actual published
+versioned DDI payloads and DDI types; API layouts are not assumed to be
+DDI layouts.<!-- d3d12-review-inline:end:video-encoding:metadata:4:authored:migration-753ef294557435ac-0 --></ins>
+
+<a id="id3d12videoencodecommandlist2--resolveencoderoutputmetadata"></a>
+
+### ID3D12VideoEncodeCommandList2::ResolveEncoderOutputMetadata
+
+#### Declaration
+
+```cpp
+void ResolveEncoderOutputMetadata(
+        const D3D12_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS* pInputArguments,
+        const D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS* pOutputArguments);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-behavior:0:authored:migration-d61a7f3700a3b3e1-0 -->Records conversion of the opaque encoder output into the portable resolved
+metadata layout. It does not encode a frame or generate the host's codec headers.
+The source codec/profile/format/resolution must describe the associated encoding.
+This form resolves the mandatory metadata. Optional statistics use
+`ResolveEncoderOutputMetadata1`, not this method.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-behavior:0:authored:migration-d61a7f3700a3b3e1-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-parameters:0:authored:migration-91c1a126399c6781-0 -->`pInputArguments` points to
+[`D3D12_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS`](video-encoding-types.md#d3d12-video-encoder-resolve-metadata-input-arguments),
+including the opaque input buffer and byte offset. `pOutputArguments` points to
+[`D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS`](video-encoding-types.md#d3d12-video-encoder-resolve-metadata-output-arguments),
+including application-owned resolved destinations and offsets. These destinations
+are GPU outputs. The mandatory layout remains unchanged for H.264/HEVC; AV1
+appends its tile grid and post-encode records. This form has no optional-statistics output destinations.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-parameters:0:authored:migration-91c1a126399c6781-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-return-values:0:authored:migration-9006651f04903c58-0 -->Returns no value. The resolved records become consumable only after the application establishes GPU completion and the required resource access/synchronization.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-return-values:0:authored:migration-9006651f04903c58-0 --></ins>
+
+<a id="id3d12videoencodecommandlist4--resolveencoderoutputmetadata1"></a>
+
+### ID3D12VideoEncodeCommandList4::ResolveEncoderOutputMetadata1
+
+#### Declaration
+
+```cpp
+void ResolveEncoderOutputMetadata1(
+        const D3D12_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS1* pInputArguments,
+        const D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS1* pOutputArguments);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-behavior:0:authored:migration-56e78a6bd7f902fc-0 -->Records conversion of the opaque encoder output into the portable resolved
+metadata layout. It does not encode a frame or generate the host's codec headers.
+The source codec/profile/format/resolution must describe the associated encoding.
+This version additionally selects the optional statistics collected for
+that frame and supplies the associated codec configuration.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-behavior:0:authored:migration-56e78a6bd7f902fc-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-parameters:0:authored:migration-781127f91af9d71f-0 -->`pInputArguments` points to
+[`D3D12_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS1`](video-encoding-types.md#d3d12-video-encoder-resolve-metadata-input-arguments1),
+including the opaque input buffer and byte offset. `pOutputArguments` points to
+[`D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS1`](video-encoding-types.md#d3d12-video-encoder-resolve-metadata-output-arguments1),
+including application-owned resolved destinations and offsets. These destinations
+are GPU outputs. The mandatory layout remains unchanged for H.264/HEVC; AV1
+appends its tile grid and post-encode records. Optional statistics use their separate output textures/buffers.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-parameters:0:authored:migration-781127f91af9d71f-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-return-values:0:authored:migration-3c95fb2c1e6fb743-0 -->Returns no value. The resolved records become consumable only after the application establishes GPU completion and the required resource access/synchronization.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-return-values:0:authored:migration-3c95fb2c1e6fb743-0 --></ins>
+
+<a id="encoding-driver-metadata"></a>
+
+### Driver metadata and notification contracts
+
+<a id="source-s01-149"></a>
+
+#### D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0080_2
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:S01-149:0 -->Released declaration: [`D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0080_2`](video-encoding.md#d3d12ddi-video-encoder-encodeframe-output-stream-arguments-0080-2).<!-- d3d12-review-inline:end:video-encoding:S01-149:0 --></ins>
+
+Parameters for the output of the encoding operation.
+
+<a id="source-s01-151"></a>
+
+<a id="metadata-resolution-callback"></a>
+
+#### Metadata resolution DDI
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:ddi-metadata-versioning:0:authored:migration-88461084f51186ed-0 -->For the selected current API and public WDK declarations, the
+[API metadata layout](video-encoding.md#encoding-metadata) corresponds to
+[`D3D12DDI_VIDEO_ENCODER_OUTPUT_METADATA_0083_0`](#d3d12ddi-video-encoder-output-metadata-0083-0),
+its statistics and the 64-bit subregion records. This is a selected-layout
+correspondence, not a record selection rule for every historically negotiated
+DDI. The `_0082_0` DDI suffix alone establishes neither selection of the
+older `_0082_0` record nor universal selection of `_0083_0` on historical paths.
+Older record references retained in the original published header comments
+do not settle that version question. Historical selection remains qualified
+pending reconciliation with the applicable negotiated-version contract;
+the current API's portable layout is not changed by that unresolved question.
+AV1 adds its tile grid and post-encode record;
+optional statistics retain their separate destinations.<!-- d3d12-review-inline:end:video-encoding:ddi-metadata-versioning:0:authored:migration-88461084f51186ed-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:ddi-metadata-versioning:1:authored:migration-2eb6fbc063f0fa61-0 -->The API version-1 HEVC union selects HEVC2. Its DDI counterpart is the `_0108_0` picture control union.<!-- d3d12-review-inline:end:video-encoding:ddi-metadata-versioning:1:authored:migration-2eb6fbc063f0fa61-0 --></ins>
+
+<a id="d3d12ddi-video-encoder-compressed-bitstream-notification-mode-0102"></a>
+
+#### D3D12DDI_VIDEO_ENCODER_COMPRESSED_BITSTREAM_NOTIFICATION_MODE_0102
+
+```cpp
+typedef enum D3D12DDI_VIDEO_ENCODER_COMPRESSED_BITSTREAM_NOTIFICATION_MODE_0102
+{
+    D3D12DDI_VIDEO_ENCODER_COMPRESSED_BITSTREAM_NOTIFICATION_MODE_0102_FULL_FRAME = 0,
+    D3D12DDI_VIDEO_ENCODER_COMPRESSED_BITSTREAM_NOTIFICATION_MODE_0102_SUBREGIONS = 1,
+} D3D12DDI_VIDEO_ENCODER_COMPRESSED_BITSTREAM_NOTIFICATION_MODE_0102;
+```
+
+<a id="d3d12ddi-video-encoder-encodeframe-output-stream-arguments-0080-2"></a>
+
+#### D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0080_2
+
+```cpp
+typedef struct D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0080_2
+{
+    D3D12DDI_VIDEO_ENCODER_COMPRESSED_BITSTREAM_0080 CompressedBitstream;
+    D3D12DDI_VIDEO_ENCODE_RECONSTRUCTED_PICTURE_0080 ReconstructedPicture;
+    D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2 HWLayoutEncoderMetadataDrvBuffer;
+} D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0080_2;
+```
+
+<a id="d3d12ddi-video-encoder-encodeframe-output-stream-arguments-0102-0"></a>
+
+#### D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0102_0
+
+```cpp
+typedef struct D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0102_0
+{
+    D3D12DDI_VIDEO_ENCODER_COMPRESSED_BITSTREAM_0102 CompressedBitstream;
+    D3D12DDI_VIDEO_ENCODE_RECONSTRUCTED_PICTURE_0080 ReconstructedPicture;
+    D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2 HWLayoutEncoderMetadataDrvBuffer;
+    D3D12DDI_VIDEO_ENCODE_RECONSTRUCTED_PICTURE_0080 FrameAnalysisReconstructedPicture;
+} D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0102_0;
+```
+
+<a id="d3d12ddi-video-encoder-encode-operation-metadata-buffer-0080-2"></a>
+
+#### D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2
+
+```cpp
+typedef struct D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2
+{
+    D3D12DDI_HRESOURCE hDrvBuffer;
+    UINT64 Offset;
+} D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2;
+```
+
+<a id="d3d12ddi-video-encoder-frame-subregion-metadata-0083-0"></a>
+
+#### D3D12DDI_VIDEO_ENCODER_FRAME_SUBREGION_METADATA_0083_0
+
+```cpp
+typedef struct D3D12DDI_VIDEO_ENCODER_FRAME_SUBREGION_METADATA_0083_0
+{
+    UINT64 bSize;
+    UINT64 bStartOffset;
+    UINT64 bHeaderSize;
+} D3D12DDI_VIDEO_ENCODER_FRAME_SUBREGION_METADATA_0083_0;
+```
+
+<a id="d3d12ddi-video-encoder-metadata-statistics-0083-0"></a>
+
+#### D3D12DDI_VIDEO_ENCODER_METADATA_STATISTICS_0083_0
+
+```cpp
+typedef struct D3D12DDI_VIDEO_ENCODER_METADATA_STATISTICS_0083_0
+{
+    UINT64 AverageQP;
+    UINT64 IntraCodingUnitsCount;
+    UINT64 InterCodingUnitsCount;
+    UINT64 SkipCodingUnitsCount;
+    UINT64 AverageMotionEstimationXDirection;
+    UINT64 AverageMotionEstimationYDirection;
+} D3D12DDI_VIDEO_ENCODER_METADATA_STATISTICS_0083_0;
+```
+
+<a id="d3d12ddi-video-encoder-optional-metadata-enable-flags-0102-0"></a>
+
+#### D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAGS_0102_0
+
+```cpp
+typedef enum D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAGS_0102_0
+{
+    D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_0102_0_NONE = 0x0,
+    D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_0102_0_QP_MAP = 0x1,
+    D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_0102_0_SATD_MAP = 0x2,
+    D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_0102_0_RC_BIT_ALLOCATION_MAP = 0x4,
+    D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_0109_0_FRAME_PSNR = 0x8,
+    D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_0109_0_SUBREGIONS_PSNR = 0x10,
+} D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAGS_0102_0;
+```
+
+<a id="d3d12ddi-video-encoder-output-metadata-0083-0"></a>
+
+#### D3D12DDI_VIDEO_ENCODER_OUTPUT_METADATA_0083_0
+
+```cpp
+typedef struct D3D12DDI_VIDEO_ENCODER_OUTPUT_METADATA_0083_0
+{
+    UINT64 EncodeErrorFlags; // D3D12DDI_VIDEO_ENCODER_ENCODE_ERROR_FLAGS_0082_0
+    D3D12DDI_VIDEO_ENCODER_METADATA_STATISTICS_0083_0 EncodeStats;
+    UINT64 EncodedBitstreamWrittenBytesCount;
+    UINT64 WrittenSubregionsCount;
+} D3D12DDI_VIDEO_ENCODER_OUTPUT_METADATA_0083_0;
+```
+
+<a id="d3d12ddi-video-encoder-resolve-metadata-input-arguments-0080-2"></a>
+
+#### D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS_0080_2
+
+```cpp
+typedef struct D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS_0080_2
+{
+    D3D12DDI_VIDEO_ENCODER_CODEC_0080 EncoderCodec;
+    D3D12DDI_VIDEO_ENCODER_PROFILE_DESC_0080_2 EncoderProfile;
+    DXGI_FORMAT EncoderInputFormat;
+    D3D12DDI_VIDEO_ENCODER_PICTURE_RESOLUTION_DESC_0080 EncodedPictureEffectiveResolution;
+    D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2 HWLayoutEncoderMetadataDrvBuffer;
+} D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS_0080_2;
+```
+
+<a id="d3d12ddi-video-encoder-resolve-metadata-input-arguments-0102-0"></a>
+
+#### D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS_0102_0
+
+```cpp
+typedef struct D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS_0102_0
+{
+    D3D12DDI_VIDEO_ENCODER_CODEC_0080 EncoderCodec;
+    D3D12DDI_VIDEO_ENCODER_PROFILE_DESC_0080_2 EncoderProfile;
+    DXGI_FORMAT EncoderInputFormat;
+    D3D12DDI_VIDEO_ENCODER_PICTURE_RESOLUTION_DESC_0080 EncodedPictureEffectiveResolution;
+    D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2 HWLayoutEncoderMetadataDrvBuffer;
+    D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAGS_0102_0 OptionalMetadata;
+    D3D12DDI_VIDEO_ENCODER_CODEC_CONFIGURATION_0082_0 CodecConfiguration;
+} D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS_0102_0;
+```
+
+<a id="d3d12ddi-video-encoder-resolve-metadata-output-arguments-0082-0"></a>
+
+#### D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS_0082_0
+
+```cpp
+typedef struct D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS_0082_0
+{
+    // Selected current API-corresponding layout: D3D12DDI_VIDEO_ENCODER_OUTPUT_METADATA_0083_0; not a historical negotiation rule
+    D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2 ResolvedLayoutEncoderMetadataDrvBuffer;
+} D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS_0082_0;
+```
+
+<a id="d3d12ddi-video-encoder-resolve-metadata-output-arguments-0102-0"></a>
+
+#### D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS_0102_0
+
+```cpp
+typedef struct D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS_0102_0
+{
+    // Selected current API-corresponding layout: D3D12DDI_VIDEO_ENCODER_OUTPUT_METADATA_0083_0; not a historical negotiation rule
+    D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2 ResolvedLayoutEncoderMetadataDrvBuffer;
+    D3D12DDI_HRESOURCE hDrvQPMap;
+    D3D12DDI_HRESOURCE hDrvSATDMap;
+    D3D12DDI_HRESOURCE hDrvBitAllocationMap;
+    D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2 ResolvedFramePSNRData;
+    D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2 ResolvedSubregionsPSNRData;
+} D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS_0102_0;
+```
+
+<a id="pfnd3d12ddi-video-encode-resolve-output-metadata-0082-0"></a>
+
+<a id="pfnd3d12ddi-video-encode-resolve-output-metadata-0102-0"></a>
+
+#### PFND3D12DDI_VIDEO_ENCODE_RESOLVE_OUTPUT_METADATA_0102_0
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_ENCODE_RESOLVE_OUTPUT_METADATA_0102_0 )(
+    D3D12DDI_HCOMMANDLIST hDrvCommandList,
+    const D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS_0102_0* pInputArguments,
+    const D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS_0102_0* pOutputArguments);
+```
+
+<a id="encoding-driver-types"></a>
+
+## Shared driver supporting type reference
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:weekend-vi03-type-owners:0:authored:routes -->The [codec contracts](video-encoding-codecs.md#video-encoding-codecs), [sequence and rate controls](video-encoding-controls.md#video-encoding-controls), [capability protocol](#encoding-capabilities) and [recording contracts](#encoding-recording) own the semantics of the corresponding shared driver types below.<!-- d3d12-review-inline:end:video-encoding:weekend-vi03-type-owners:0:authored:routes --></ins>
+
+### Driver type declarations
 
 <a id="source-s01-150"></a>
 
@@ -3863,1564 +4655,3 @@ typedef struct D3D12DDI_VIDEO_ENCODE_REFERENCE_FRAMES_0080
     UINT* pSubresources;
 } D3D12DDI_VIDEO_ENCODE_REFERENCE_FRAMES_0080;
 ```
-
-<a id="pfnd3d12ddi-video-encode-frame-0082-0"></a>
-
-<a id="pfnd3d12ddi-video-encode-frame-0102-0"></a>
-
-<a id="pfnd3d12ddi-video-encode-frame-0103-0"></a>
-
-#### PFND3D12DDI_VIDEO_ENCODE_FRAME_0103_0
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_ENCODE_FRAME_0103_0 )(
-    D3D12DDI_HCOMMANDLIST hDrvCommandList,
-    D3D12DDI_HVIDEOENCODER_0080 hDrvEncoder,
-    D3D12DDI_HVIDEOENCODERHEAP_0080 hDrvVideoEncoderHeap,
-    const D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_INPUT_STREAM_ARGUMENTS_0103_0* pInputStreamArguments,
-    const D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0102_0* pOutputStreamArguments);
-```
-
-<a id="pfnd3d12ddi-video-resolve-input-param-layout-0103-0"></a>
-
-#### PFND3D12DDI_VIDEO_RESOLVE_INPUT_PARAM_LAYOUT_0103_0
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_RESOLVE_INPUT_PARAM_LAYOUT_0103_0 )(
-    D3D12DDI_HCOMMANDLIST hDrvCommandList,
-    const D3D12DDI_VIDEO_ENCODER_RESOLVE_INPUT_PARAM_LAYOUT_INPUT_ARGUMENTS_0103_0* pInputArguments,
-    const D3D12DDI_VIDEO_ENCODER_RESOLVE_INPUT_PARAM_LAYOUT_OUTPUT_ARGUMENTS_0103_0* pOutputArguments);
-```
-
-<a id="encoding-metadata"></a>
-
-## Metadata, optional statistics and early notifications
-
-<!-- d3d12-review-alert:begin:video-encoding:metadata:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `EncodeFrame`/`EncodeFrame1` write hardware layout metadata into the
-> application's opaque output buffer. `ResolveEncoderOutputMetadata` and its
-> version-1 form record conversion to portable records. The CPU argument
-> structures contain resource references, not the resolved record bytes.
-> The portable header and subregion records contain fixed-width values, not
-> pointers into a packed array.
-
-<!-- d3d12-review-alert:end:video-encoding:metadata:0 -->
-
-<!-- d3d12-review-alert:begin:video-encoding:metadata:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For H.264/HEVC, the mandatory resolved layout is
-> `D3D12_VIDEO_ENCODER_OUTPUT_METADATA` immediately followed by
-> `WrittenSubregionsCount` packed `D3D12_VIDEO_ENCODER_FRAME_SUBREGION_METADATA`
-> records. AV1 additionally appends its tile grid structure and post-encode
-> values. Resolved capacity is calculated from this layout and the maximum
-> supported subregion count. Do not use the opaque hardware metadata size as
-> that calculation. Offsets and `bSize` are in bytes. `bHeaderSize` is
-> in bits. Each subregion's `bSize` includes its initial padding; `bStartOffset`
-> is the amount to skip within that region, not an absolute bitstream offset.
-
-<!-- d3d12-review-alert:end:video-encoding:metadata:1 -->
-
-<!-- d3d12-review-alert:begin:video-encoding:metadata:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Optional QP/SATD/bit-allocation maps and frame/subregion PSNR retain separate
-> support, enable, sizing and output destination rules. Disabling optional
-> statistics does not remove mandatory old metadata. Spatial adaptive QP has
-> separate support and enable flags and applies to all supported rate control
-> modes, not just modes that budget a bitrate.
-
-<!-- d3d12-review-alert:end:video-encoding:metadata:2 -->
-
-<!-- d3d12-review-alert:begin:video-encoding:metadata:3 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Subregion notification can make a slice/tile interval available before the
-> whole frame completes. It does not make frame statistics or AV1 post-encode
-> header values available early. The application supplies all output arrays,
-> base offsets, zeroed size/offset feedback buffers, fences and target values;
-> it waits without assuming notification order. `SUBREGIONS` notification
-> uses the subregion outputs rather than `FrameOutputBuffer` and reports zero
-> mandatory written-subregion count/total bitstream bytes, with no ordinary
-> subregion record array. AV1's appended records still follow the mandatory
-> header and the zero-length array. The detailed contracts retain the exact
-> per-interval flush/signaling obligations, whole-frame completion fallback,
-> count and alignment rules.
-
-<!-- d3d12-review-alert:end:video-encoding:metadata:3 -->
-
-<!-- d3d12-review-alert:begin:video-encoding:metadata:4 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The [controls reference](video-encoding-controls.md) retains the full
-> statistics, notification, input map and two-pass contracts, including their
-> formulas, examples and figures. The [codec reference](video-encoding-codecs.md)
-> retains the additional AV1 metadata and header responsibilities.
-> The [driver metadata contracts](#encoding-driver-metadata) contain actual published
-> versioned DDI payloads and DDI types; API layouts are not assumed to be
-> DDI layouts.
-
-<!-- d3d12-review-alert:end:video-encoding:metadata:4 -->
-
-<a id="encoding-driver-metadata"></a>
-
-### Driver metadata and notification contracts
-
-<a id="source-s01-149"></a>
-
-#### D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0080_2
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:S01-149:0 -->Released declaration: [`D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0080_2`](video-encoding.md#d3d12ddi-video-encoder-encodeframe-output-stream-arguments-0080-2).<!-- d3d12-review-inline:end:video-encoding:S01-149:0 --></ins>
-
-Parameters for the output of the encoding operation.
-
-<a id="source-s01-151"></a>
-
-<a id="metadata-resolution-callback"></a>
-
-#### Metadata resolution DDI
-
-<!-- d3d12-review-alert:begin:video-encoding:ddi-metadata-versioning:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For the selected current API and public WDK declarations, the
-> [API metadata layout](video-encoding.md#encoding-metadata) corresponds to
-> [`D3D12DDI_VIDEO_ENCODER_OUTPUT_METADATA_0083_0`](#d3d12ddi-video-encoder-output-metadata-0083-0),
-> its statistics and the 64-bit subregion records. This is a selected-layout
-> correspondence, not a record selection rule for every historically negotiated
-> DDI. The `_0082_0` DDI suffix alone establishes neither selection of the
-> older `_0082_0` record nor universal selection of `_0083_0` on historical paths.
-> Older record references retained in the original published header comments
-> do not settle that version question. Historical selection remains qualified
-> pending reconciliation with the applicable negotiated-version contract;
-> the current API's portable layout is not changed by that unresolved question.
-> AV1 adds its tile grid and post-encode record;
-> optional statistics retain their separate destinations.
-
-<!-- d3d12-review-alert:end:video-encoding:ddi-metadata-versioning:0 -->
-
-<!-- d3d12-review-alert:begin:video-encoding:ddi-metadata-versioning:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The API version-1 HEVC union selects HEVC2. Its DDI counterpart is the `_0108_0` picture control union.
-
-<!-- d3d12-review-alert:end:video-encoding:ddi-metadata-versioning:1 -->
-
-<a id="d3d12ddi-video-encoder-compressed-bitstream-notification-mode-0102"></a>
-
-#### D3D12DDI_VIDEO_ENCODER_COMPRESSED_BITSTREAM_NOTIFICATION_MODE_0102
-
-```cpp
-typedef enum D3D12DDI_VIDEO_ENCODER_COMPRESSED_BITSTREAM_NOTIFICATION_MODE_0102
-{
-    D3D12DDI_VIDEO_ENCODER_COMPRESSED_BITSTREAM_NOTIFICATION_MODE_0102_FULL_FRAME = 0,
-    D3D12DDI_VIDEO_ENCODER_COMPRESSED_BITSTREAM_NOTIFICATION_MODE_0102_SUBREGIONS = 1,
-} D3D12DDI_VIDEO_ENCODER_COMPRESSED_BITSTREAM_NOTIFICATION_MODE_0102;
-```
-
-<a id="d3d12ddi-video-encoder-encodeframe-output-stream-arguments-0080-2"></a>
-
-#### D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0080_2
-
-```cpp
-typedef struct D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0080_2
-{
-    D3D12DDI_VIDEO_ENCODER_COMPRESSED_BITSTREAM_0080 CompressedBitstream;
-    D3D12DDI_VIDEO_ENCODE_RECONSTRUCTED_PICTURE_0080 ReconstructedPicture;
-    D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2 HWLayoutEncoderMetadataDrvBuffer;
-} D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0080_2;
-```
-
-<a id="d3d12ddi-video-encoder-encodeframe-output-stream-arguments-0102-0"></a>
-
-#### D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0102_0
-
-```cpp
-typedef struct D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0102_0
-{
-    D3D12DDI_VIDEO_ENCODER_COMPRESSED_BITSTREAM_0102 CompressedBitstream;
-    D3D12DDI_VIDEO_ENCODE_RECONSTRUCTED_PICTURE_0080 ReconstructedPicture;
-    D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2 HWLayoutEncoderMetadataDrvBuffer;
-    D3D12DDI_VIDEO_ENCODE_RECONSTRUCTED_PICTURE_0080 FrameAnalysisReconstructedPicture;
-} D3D12DDI_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_STREAM_ARGUMENTS_0102_0;
-```
-
-<a id="d3d12ddi-video-encoder-encode-operation-metadata-buffer-0080-2"></a>
-
-#### D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2
-
-```cpp
-typedef struct D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2
-{
-    D3D12DDI_HRESOURCE hDrvBuffer;
-    UINT64 Offset;
-} D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2;
-```
-
-<a id="d3d12ddi-video-encoder-frame-subregion-metadata-0083-0"></a>
-
-#### D3D12DDI_VIDEO_ENCODER_FRAME_SUBREGION_METADATA_0083_0
-
-```cpp
-typedef struct D3D12DDI_VIDEO_ENCODER_FRAME_SUBREGION_METADATA_0083_0
-{
-    UINT64 bSize;
-    UINT64 bStartOffset;
-    UINT64 bHeaderSize;
-} D3D12DDI_VIDEO_ENCODER_FRAME_SUBREGION_METADATA_0083_0;
-```
-
-<a id="d3d12ddi-video-encoder-metadata-statistics-0083-0"></a>
-
-#### D3D12DDI_VIDEO_ENCODER_METADATA_STATISTICS_0083_0
-
-```cpp
-typedef struct D3D12DDI_VIDEO_ENCODER_METADATA_STATISTICS_0083_0
-{
-    UINT64 AverageQP;
-    UINT64 IntraCodingUnitsCount;
-    UINT64 InterCodingUnitsCount;
-    UINT64 SkipCodingUnitsCount;
-    UINT64 AverageMotionEstimationXDirection;
-    UINT64 AverageMotionEstimationYDirection;
-} D3D12DDI_VIDEO_ENCODER_METADATA_STATISTICS_0083_0;
-```
-
-<a id="d3d12ddi-video-encoder-optional-metadata-enable-flags-0102-0"></a>
-
-#### D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAGS_0102_0
-
-```cpp
-typedef enum D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAGS_0102_0
-{
-    D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_0102_0_NONE = 0x0,
-    D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_0102_0_QP_MAP = 0x1,
-    D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_0102_0_SATD_MAP = 0x2,
-    D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_0102_0_RC_BIT_ALLOCATION_MAP = 0x4,
-    D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_0109_0_FRAME_PSNR = 0x8,
-    D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAG_0109_0_SUBREGIONS_PSNR = 0x10,
-} D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAGS_0102_0;
-```
-
-<a id="d3d12ddi-video-encoder-output-metadata-0083-0"></a>
-
-#### D3D12DDI_VIDEO_ENCODER_OUTPUT_METADATA_0083_0
-
-```cpp
-typedef struct D3D12DDI_VIDEO_ENCODER_OUTPUT_METADATA_0083_0
-{
-    UINT64 EncodeErrorFlags; // D3D12DDI_VIDEO_ENCODER_ENCODE_ERROR_FLAGS_0082_0
-    D3D12DDI_VIDEO_ENCODER_METADATA_STATISTICS_0083_0 EncodeStats;
-    UINT64 EncodedBitstreamWrittenBytesCount;
-    UINT64 WrittenSubregionsCount;
-} D3D12DDI_VIDEO_ENCODER_OUTPUT_METADATA_0083_0;
-```
-
-<a id="d3d12ddi-video-encoder-resolve-metadata-input-arguments-0080-2"></a>
-
-#### D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS_0080_2
-
-```cpp
-typedef struct D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS_0080_2
-{
-    D3D12DDI_VIDEO_ENCODER_CODEC_0080 EncoderCodec;
-    D3D12DDI_VIDEO_ENCODER_PROFILE_DESC_0080_2 EncoderProfile;
-    DXGI_FORMAT EncoderInputFormat;
-    D3D12DDI_VIDEO_ENCODER_PICTURE_RESOLUTION_DESC_0080 EncodedPictureEffectiveResolution;
-    D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2 HWLayoutEncoderMetadataDrvBuffer;
-} D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS_0080_2;
-```
-
-<a id="d3d12ddi-video-encoder-resolve-metadata-input-arguments-0102-0"></a>
-
-#### D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS_0102_0
-
-```cpp
-typedef struct D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS_0102_0
-{
-    D3D12DDI_VIDEO_ENCODER_CODEC_0080 EncoderCodec;
-    D3D12DDI_VIDEO_ENCODER_PROFILE_DESC_0080_2 EncoderProfile;
-    DXGI_FORMAT EncoderInputFormat;
-    D3D12DDI_VIDEO_ENCODER_PICTURE_RESOLUTION_DESC_0080 EncodedPictureEffectiveResolution;
-    D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2 HWLayoutEncoderMetadataDrvBuffer;
-    D3D12DDI_VIDEO_ENCODER_OPTIONAL_METADATA_ENABLE_FLAGS_0102_0 OptionalMetadata;
-    D3D12DDI_VIDEO_ENCODER_CODEC_CONFIGURATION_0082_0 CodecConfiguration;
-} D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS_0102_0;
-```
-
-<a id="d3d12ddi-video-encoder-resolve-metadata-output-arguments-0082-0"></a>
-
-#### D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS_0082_0
-
-```cpp
-typedef struct D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS_0082_0
-{
-    // Selected current API-corresponding layout: D3D12DDI_VIDEO_ENCODER_OUTPUT_METADATA_0083_0; not a historical negotiation rule
-    D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2 ResolvedLayoutEncoderMetadataDrvBuffer;
-} D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS_0082_0;
-```
-
-<a id="d3d12ddi-video-encoder-resolve-metadata-output-arguments-0102-0"></a>
-
-#### D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS_0102_0
-
-```cpp
-typedef struct D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS_0102_0
-{
-    // Selected current API-corresponding layout: D3D12DDI_VIDEO_ENCODER_OUTPUT_METADATA_0083_0; not a historical negotiation rule
-    D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2 ResolvedLayoutEncoderMetadataDrvBuffer;
-    D3D12DDI_HRESOURCE hDrvQPMap;
-    D3D12DDI_HRESOURCE hDrvSATDMap;
-    D3D12DDI_HRESOURCE hDrvBitAllocationMap;
-    D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2 ResolvedFramePSNRData;
-    D3D12DDI_VIDEO_ENCODER_ENCODE_OPERATION_METADATA_BUFFER_0080_2 ResolvedSubregionsPSNRData;
-} D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS_0102_0;
-```
-
-<a id="pfnd3d12ddi-video-encode-resolve-output-metadata-0082-0"></a>
-
-<a id="pfnd3d12ddi-video-encode-resolve-output-metadata-0102-0"></a>
-
-#### PFND3D12DDI_VIDEO_ENCODE_RESOLVE_OUTPUT_METADATA_0102_0
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_ENCODE_RESOLVE_OUTPUT_METADATA_0102_0 )(
-    D3D12DDI_HCOMMANDLIST hDrvCommandList,
-    const D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS_0102_0* pInputArguments,
-    const D3D12DDI_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS_0102_0* pOutputArguments);
-```
-
-<a id="encoding-api"></a>
-
-## Declaring API reference
-
-<a id="id3d12videodevice3--createvideoencoder"></a>
-
-### ID3D12VideoDevice3::CreateVideoEncoder
-
-#### Declaration
-
-```cpp
-HRESULT CreateVideoEncoder(
-        const D3D12_VIDEO_ENCODER_DESC* pDesc,
-        REFIID riid,
-        void** ppVideoEncoder);
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoder-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Creates a video encoder instance.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoder-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoder-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pDesc` points to the input [`D3D12_VIDEO_ENCODER_DESC`](video-encoding-types.md#d3d12-video-encoder-desc).
-> `riid` identifies the requested interface. `ppVideoEncoder` receives a caller-owned
-> reference to `ID3D12VideoEncoder` on successful creation. CPU description storage, including
-> pointed-to profile and codec configuration data, is copied
-> during creation. It is not GPU picture storage. Releasing the returned COM
-> reference remains the caller's responsibility.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoder-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoder-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns an HRESULT. The scoped inspected creation wrappers propagate validation
-> or object creation failure. Their null output validation-only path returns
-> `S_FALSE` after successful validation and creates no object. This observation
-> does not change the required output annotation in the released declaration.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoder-return-values:0 -->
-
-<a id="id3d12videodevice3--createvideoencoderheap"></a>
-
-### ID3D12VideoDevice3::CreateVideoEncoderHeap
-
-#### Declaration
-
-```cpp
-HRESULT CreateVideoEncoderHeap(
-        const D3D12_VIDEO_ENCODER_HEAP_DESC* pDesc,
-        REFIID riid,
-        void** ppVideoEncoderHeap);
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoderheap-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Creates a video encoder heap instance.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoderheap-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoderheap-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pDesc` points to the input [`D3D12_VIDEO_ENCODER_HEAP_DESC`](video-encoding-types.md#d3d12-video-encoder-heap-desc).
-> `riid` identifies the requested interface. `ppVideoEncoderHeap` receives a caller-owned
-> reference to `ID3D12VideoEncoderHeap` on successful creation. CPU description storage, including
-> pointed-to profile/level data and the resolution list, is copied
-> during creation. It is not GPU picture storage. Releasing the returned COM
-> reference remains the caller's responsibility.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoderheap-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoderheap-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns an HRESULT. The scoped inspected creation wrappers propagate validation
-> or object creation failure. Their null output validation-only path returns
-> `S_FALSE` after successful validation and creates no object. This observation
-> does not change the required output annotation in the released declaration.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoderheap-return-values:0 -->
-
-<a id="id3d12videodevice4--createvideoencoderheap1"></a>
-
-### ID3D12VideoDevice4::CreateVideoEncoderHeap1
-
-#### Declaration
-
-```cpp
-HRESULT CreateVideoEncoderHeap1(
-        const D3D12_VIDEO_ENCODER_HEAP_DESC1* pDesc,
-        REFIID riid,
-        void** ppVideoEncoderHeap);
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videodevice4-%2Dcreatevideoencoderheap1-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Creates a video encoder heap instance. The heap description additionally fixes `Pow2DownscaleFactor`.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videodevice4-%2Dcreatevideoencoderheap1-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videodevice4-%2Dcreatevideoencoderheap1-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pDesc` points to the input [`D3D12_VIDEO_ENCODER_HEAP_DESC1`](video-encoding-types.md#d3d12-video-encoder-heap-desc1).
-> `riid` identifies the requested interface. `ppVideoEncoderHeap` receives a caller-owned
-> reference to `ID3D12VideoEncoderHeap1` on successful creation. CPU description storage, including
-> pointed-to profile/level data and the resolution list, is copied
-> during creation. It is not GPU picture storage. Releasing the returned COM
-> reference remains the caller's responsibility.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videodevice4-%2Dcreatevideoencoderheap1-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videodevice4-%2Dcreatevideoencoderheap1-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns an HRESULT. The scoped inspected creation wrappers propagate validation
-> or object creation failure. Their null output validation-only path returns
-> `S_FALSE` after successful validation and creates no object. This observation
-> does not change the required output annotation in the released declaration.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videodevice4-%2Dcreatevideoencoderheap1-return-values:0 -->
-
-<a id="id3d12videoencoder--getnodemask"></a>
-
-### ID3D12VideoEncoder::GetNodeMask
-
-#### Declaration
-
-```cpp
-UINT GetNodeMask();
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetnodemask-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Retrieves the immutable `NodeMask` value used at object creation.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetnodemask-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetnodemask-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This method has no parameters.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetnodemask-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetnodemask-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns the stored `NodeMask` value directly; no HRESULT or additional COM reference is returned.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetnodemask-return-values:0 -->
-
-<a id="id3d12videoencoder--getencoderflags"></a>
-
-### ID3D12VideoEncoder::GetEncoderFlags
-
-#### Declaration
-
-```cpp
-D3D12_VIDEO_ENCODER_FLAGS GetEncoderFlags();
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetencoderflags-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Retrieves the immutable `Flags` value used at object creation.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetencoderflags-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetencoderflags-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This method has no parameters.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetencoderflags-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetencoderflags-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns the stored `Flags` value directly; no HRESULT or additional COM reference is returned.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetencoderflags-return-values:0 -->
-
-<a id="id3d12videoencoder--getcodec"></a>
-
-### ID3D12VideoEncoder::GetCodec
-
-#### Declaration
-
-```cpp
-D3D12_VIDEO_ENCODER_CODEC GetCodec();
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodec-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Retrieves the immutable `EncodeCodec` value used at object creation.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetcodec-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodec-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This method has no parameters.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetcodec-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodec-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns the stored `EncodeCodec` value directly; no HRESULT or additional COM reference is returned.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetcodec-return-values:0 -->
-
-<a id="id3d12videoencoder--getcodecprofile"></a>
-
-### ID3D12VideoEncoder::GetCodecProfile
-
-#### Declaration
-
-```cpp
-HRESULT GetCodecProfile(D3D12_VIDEO_ENCODER_PROFILE_DESC dstProfile);
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodecprofile-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Retrieves a copy of the immutable profile selected at creation. It does not reconfigure the object.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetcodecprofile-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodecprofile-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `dstProfile` is passed by value. Initialize its `DataSize` and codec-selected
-> pointer to caller-owned writable storage of exactly the selected payload's
-> size. The getter writes that pointed-to payload. It does not allocate storage
-> or return a pointer into the object's private state.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetcodecprofile-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodecprofile-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The inspected getter returns `S_OK` on copying the payload and `E_INVALIDARG` for a null selected pointer, mismatched `DataSize`, or unrecognized codec. These are scoped runtime observations, not a hardware validation guarantee.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetcodecprofile-return-values:0 -->
-
-<a id="id3d12videoencoder--getcodecconfiguration"></a>
-
-### ID3D12VideoEncoder::GetCodecConfiguration
-
-#### Declaration
-
-```cpp
-HRESULT GetCodecConfiguration(D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION dstCodecConfig);
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodecconfiguration-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Retrieves a copy of the immutable codec configuration selected at creation. It does not reconfigure the object.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetcodecconfiguration-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodecconfiguration-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `dstCodecConfig` is passed by value. Initialize its `DataSize` and codec-selected
-> pointer to caller-owned writable storage of exactly the selected payload's
-> size. The getter writes that pointed-to payload. It does not allocate storage
-> or return a pointer into the object's private state.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetcodecconfiguration-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodecconfiguration-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The inspected getter returns `S_OK` on copying the payload and `E_INVALIDARG` for a null selected pointer, mismatched `DataSize`, or unrecognized codec. These are scoped runtime observations, not a hardware validation guarantee.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetcodecconfiguration-return-values:0 -->
-
-<a id="id3d12videoencoder--getinputformat"></a>
-
-### ID3D12VideoEncoder::GetInputFormat
-
-#### Declaration
-
-```cpp
-DXGI_FORMAT GetInputFormat();
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetinputformat-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Retrieves the immutable `InputFormat` value used at object creation.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetinputformat-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetinputformat-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This method has no parameters.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetinputformat-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetinputformat-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns the stored `InputFormat` value directly; no HRESULT or additional COM reference is returned.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetinputformat-return-values:0 -->
-
-<a id="id3d12videoencoder--getmaxmotionestimationprecision"></a>
-
-### ID3D12VideoEncoder::GetMaxMotionEstimationPrecision
-
-#### Declaration
-
-```cpp
-D3D12_VIDEO_ENCODER_MOTION_ESTIMATION_PRECISION_MODE GetMaxMotionEstimationPrecision();
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetmaxmotionestimationprecision-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Retrieves the immutable `MaxMotionEstimationPrecision` value used at object creation.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetmaxmotionestimationprecision-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetmaxmotionestimationprecision-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This method has no parameters.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetmaxmotionestimationprecision-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoder-%2Dgetmaxmotionestimationprecision-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns the stored `MaxMotionEstimationPrecision` value directly; no HRESULT or additional COM reference is returned.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoder-%2Dgetmaxmotionestimationprecision-return-values:0 -->
-
-<a id="id3d12videoencoderheap--getnodemask"></a>
-
-### ID3D12VideoEncoderHeap::GetNodeMask
-
-#### Declaration
-
-```cpp
-UINT GetNodeMask();
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetnodemask-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Retrieves the immutable `NodeMask` value used at object creation.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetnodemask-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetnodemask-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This method has no parameters.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetnodemask-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetnodemask-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns the stored `NodeMask` value directly; no HRESULT or additional COM reference is returned.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetnodemask-return-values:0 -->
-
-<a id="id3d12videoencoderheap--getencoderheapflags"></a>
-
-### ID3D12VideoEncoderHeap::GetEncoderHeapFlags
-
-#### Declaration
-
-```cpp
-D3D12_VIDEO_ENCODER_HEAP_FLAGS GetEncoderHeapFlags();
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetencoderheapflags-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Retrieves the immutable `Flags` value used at object creation.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetencoderheapflags-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetencoderheapflags-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This method has no parameters.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetencoderheapflags-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetencoderheapflags-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns the stored `Flags` value directly; no HRESULT or additional COM reference is returned.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetencoderheapflags-return-values:0 -->
-
-<a id="id3d12videoencoderheap--getcodec"></a>
-
-### ID3D12VideoEncoderHeap::GetCodec
-
-#### Declaration
-
-```cpp
-D3D12_VIDEO_ENCODER_CODEC GetCodec();
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodec-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Retrieves the immutable `EncodeCodec` value used at object creation.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodec-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodec-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This method has no parameters.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodec-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodec-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns the stored `EncodeCodec` value directly; no HRESULT or additional COM reference is returned.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodec-return-values:0 -->
-
-<a id="id3d12videoencoderheap--getcodecprofile"></a>
-
-### ID3D12VideoEncoderHeap::GetCodecProfile
-
-#### Declaration
-
-```cpp
-HRESULT GetCodecProfile(D3D12_VIDEO_ENCODER_PROFILE_DESC dstProfile);
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodecprofile-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Retrieves a copy of the immutable profile selected at creation. It does not reconfigure the object.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodecprofile-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodecprofile-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `dstProfile` is passed by value. Initialize its `DataSize` and codec-selected
-> pointer to caller-owned writable storage of exactly the selected payload's
-> size. The getter writes that pointed-to payload. It does not allocate storage
-> or return a pointer into the object's private state.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodecprofile-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodecprofile-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The inspected getter returns `S_OK` on copying the payload and `E_INVALIDARG` for a null selected pointer, mismatched `DataSize`, or unrecognized codec. These are scoped runtime observations, not a hardware validation guarantee.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodecprofile-return-values:0 -->
-
-<a id="id3d12videoencoderheap--getcodeclevel"></a>
-
-### ID3D12VideoEncoderHeap::GetCodecLevel
-
-#### Declaration
-
-```cpp
-HRESULT GetCodecLevel(D3D12_VIDEO_ENCODER_LEVEL_SETTING dstLevel);
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodeclevel-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Retrieves a copy of the immutable level selected at creation. It does not reconfigure the object.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodeclevel-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodeclevel-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `dstLevel` is passed by value. Initialize its `DataSize` and codec-selected
-> pointer to caller-owned writable storage of exactly the selected payload's
-> size. The getter writes that pointed-to payload. It does not allocate storage
-> or return a pointer into the object's private state.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodeclevel-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodeclevel-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The inspected getter returns `S_OK` on copying the payload and `E_INVALIDARG` for a null selected pointer, mismatched `DataSize`, or unrecognized codec. These are scoped runtime observations, not a hardware validation guarantee.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodeclevel-return-values:0 -->
-
-<a id="id3d12videoencoderheap--getresolutionlistcount"></a>
-
-### ID3D12VideoEncoderHeap::GetResolutionListCount
-
-#### Declaration
-
-```cpp
-UINT GetResolutionListCount();
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlistcount-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Retrieves the immutable `ResolutionsListCount` value used at object creation. This count sizes the destination for `GetResolutionList`. It is not an adapter-wide list of supported resolutions.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlistcount-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlistcount-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This method has no parameters.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlistcount-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlistcount-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns the stored `ResolutionsListCount` value directly; no HRESULT or additional COM reference is returned.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlistcount-return-values:0 -->
-
-<a id="id3d12videoencoderheap--getresolutionlist"></a>
-
-### ID3D12VideoEncoderHeap::GetResolutionList
-
-#### Declaration
-
-```cpp
-HRESULT GetResolutionList(
-        const UINT ResolutionsListCount,
-        D3D12_VIDEO_ENCODER_PICTURE_RESOLUTION_DESC* pResolutionList);
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlist-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Retrieves the immutable list of resolutions requested when creating this heap.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlist-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlist-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `ResolutionsListCount` must equal `GetResolutionListCount()`.
-> `pResolutionList` points to caller-allocated writable storage for exactly that
-> many `D3D12_VIDEO_ENCODER_PICTURE_RESOLUTION_DESC` entries. This is a copy of the
-> heap's list, not a query that allocates or grows a returned array.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlist-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlist-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The inspected getter returns `S_OK` on copying the list and `E_INVALIDARG` for a count unequal to the stored count. No capacity/MORE_DATA convention is established.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlist-return-values:0 -->
-
-<a id="id3d12videoencoderheap1--getpow2downscalefactor"></a>
-
-### ID3D12VideoEncoderHeap1::GetPow2DownscaleFactor
-
-#### Declaration
-
-```cpp
-UINT GetPow2DownscaleFactor();
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap1-%2Dgetpow2downscalefactor-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Retrieves the immutable `Pow2DownscaleFactor` value used at object creation. When the heap was not created with `D3D12_VIDEO_ENCODER_HEAP_FLAG_ALLOW_RATE_CONTROL_FRAME_ANALYSIS`, the published contract returns zero.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap1-%2Dgetpow2downscalefactor-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap1-%2Dgetpow2downscalefactor-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This method has no parameters.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap1-%2Dgetpow2downscalefactor-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencoderheap1-%2Dgetpow2downscalefactor-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns the stored `Pow2DownscaleFactor` value directly; no HRESULT or additional COM reference is returned.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencoderheap1-%2Dgetpow2downscalefactor-return-values:0 -->
-
-<a id="id3d12videoencodecommandlist2--encodeframe"></a>
-
-### ID3D12VideoEncodeCommandList2::EncodeFrame
-
-#### Declaration
-
-```cpp
-void EncodeFrame(
-        ID3D12VideoEncoder* pEncoder,
-        ID3D12VideoEncoderHeap *pHeap,
-        const D3D12_VIDEO_ENCODER_ENCODEFRAME_INPUT_ARGUMENTS *pInputArguments,
-        const D3D12_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_ARGUMENTS *pOutputArguments);
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Records encoding of a frame's codec payload. The application supplies the
-> sequence controls, picture controls and DPB snapshot and codes the remaining
-> bitstream headers. [Recording and lifetime](#encoding-recording) and the
-> [detailed controls reference](video-encoding-controls.md) apply.
-> This is the supported older full-frame path. It uses the original picture control
-> union, including HEVC/HEVC1, and does not request optional metadata or GPU map
-> inputs. Legacy full-resolution frame analysis remains available when supported.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pEncoder` is the encoder for this operation. `pHeap` is the compatible encoder
-> heap. `pInputArguments` points to
-> [`D3D12_VIDEO_ENCODER_ENCODEFRAME_INPUT_ARGUMENTS`](video-encoding-types.md#d3d12-video-encoder-encodeframe-input-arguments).
-> `pOutputArguments` points to
-> [`D3D12_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_ARGUMENTS`](video-encoding-types.md#d3d12-video-encoder-encodeframe-output-arguments),
-> which identifies application allocations written by GPU execution, not CPU
-> output storage written when recording returns.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns no value. Recording returns before GPU completion. Execution errors are reported through encoder metadata; recording/list errors are distinct.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-return-values:0 -->
-
-<a id="id3d12videoencodecommandlist2--resolveencoderoutputmetadata"></a>
-
-### ID3D12VideoEncodeCommandList2::ResolveEncoderOutputMetadata
-
-#### Declaration
-
-```cpp
-void ResolveEncoderOutputMetadata(
-        const D3D12_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS* pInputArguments,
-        const D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS* pOutputArguments);
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Records conversion of the opaque encoder output into the portable resolved
-> metadata layout. It does not encode a frame or generate the host's codec headers.
-> The source codec/profile/format/resolution must describe the associated encoding.
-> This form resolves the mandatory metadata. Optional statistics use
-> `ResolveEncoderOutputMetadata1`, not this method.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pInputArguments` points to
-> [`D3D12_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS`](video-encoding-types.md#d3d12-video-encoder-resolve-metadata-input-arguments),
-> including the opaque input buffer and byte offset. `pOutputArguments` points to
-> [`D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS`](video-encoding-types.md#d3d12-video-encoder-resolve-metadata-output-arguments),
-> including application-owned resolved destinations and offsets. These destinations
-> are GPU outputs. The mandatory layout remains unchanged for H.264/HEVC; AV1
-> appends its tile grid and post-encode records. This form has no optional-statistics output destinations.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns no value. The resolved records become consumable only after the application establishes GPU completion and the required resource access/synchronization.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-return-values:0 -->
-
-<a id="id3d12videoencodecommandlist4--encodeframe1"></a>
-
-### ID3D12VideoEncodeCommandList4::EncodeFrame1
-
-#### Declaration
-
-```cpp
-void EncodeFrame1(
-        ID3D12VideoEncoder* pEncoder,
-        ID3D12VideoEncoderHeap1* pHeap,
-        const D3D12_VIDEO_ENCODER_ENCODEFRAME_INPUT_ARGUMENTS1* pInputArguments,
-        const D3D12_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_ARGUMENTS1* pOutputArguments);
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Records encoding of a frame's codec payload. The application supplies the
-> sequence controls, picture controls and DPB snapshot and codes the remaining
-> bitstream headers. [Recording and lifetime](#encoding-recording) and the
-> [detailed controls reference](video-encoding-controls.md) apply.
-> This version uses HEVC2 through the version-1 picture control union, optional
-> statistics, CPU/GPU map inputs, subregion notification and frame analysis
-> parameters. Enabling one optional feature does not imply support for another.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pEncoder` is the encoder for this operation. `pHeap` is the compatible encoder
-> heap. `pInputArguments` points to
-> [`D3D12_VIDEO_ENCODER_ENCODEFRAME_INPUT_ARGUMENTS1`](video-encoding-types.md#d3d12-video-encoder-encodeframe-input-arguments1).
-> `pOutputArguments` points to
-> [`D3D12_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_ARGUMENTS1`](video-encoding-types.md#d3d12-video-encoder-encodeframe-output-arguments1),
-> which identifies application allocations written by GPU execution, not CPU
-> output storage written when recording returns.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns no value. Recording returns before GPU completion. Execution errors are reported through encoder metadata; recording/list errors are distinct.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-return-values:0 -->
-
-<a id="id3d12videoencodecommandlist4--resolveencoderoutputmetadata1"></a>
-
-### ID3D12VideoEncodeCommandList4::ResolveEncoderOutputMetadata1
-
-#### Declaration
-
-```cpp
-void ResolveEncoderOutputMetadata1(
-        const D3D12_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS1* pInputArguments,
-        const D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS1* pOutputArguments);
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Records conversion of the opaque encoder output into the portable resolved
-> metadata layout. It does not encode a frame or generate the host's codec headers.
-> The source codec/profile/format/resolution must describe the associated encoding.
-> This version additionally selects the optional statistics collected for
-> that frame and supplies the associated codec configuration.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pInputArguments` points to
-> [`D3D12_VIDEO_ENCODER_RESOLVE_METADATA_INPUT_ARGUMENTS1`](video-encoding-types.md#d3d12-video-encoder-resolve-metadata-input-arguments1),
-> including the opaque input buffer and byte offset. `pOutputArguments` points to
-> [`D3D12_VIDEO_ENCODER_RESOLVE_METADATA_OUTPUT_ARGUMENTS1`](video-encoding-types.md#d3d12-video-encoder-resolve-metadata-output-arguments1),
-> including application-owned resolved destinations and offsets. These destinations
-> are GPU outputs. The mandatory layout remains unchanged for H.264/HEVC; AV1
-> appends its tile grid and post-encode records. Optional statistics use their separate output textures/buffers.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns no value. The resolved records become consumable only after the application establishes GPU completion and the required resource access/synchronization.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-return-values:0 -->
-
-<a id="id3d12videoencodecommandlist4--resolveinputparamlayout"></a>
-
-### ID3D12VideoEncodeCommandList4::ResolveInputParamLayout
-
-#### Declaration
-
-```cpp
-void ResolveInputParamLayout(
-        const D3D12_VIDEO_ENCODER_RESOLVE_INPUT_PARAM_LAYOUT_INPUT_ARGUMENTS* pInputArguments,
-        const D3D12_VIDEO_ENCODER_RESOLVE_INPUT_PARAM_LAYOUT_OUTPUT_ARGUMENTS* pOutputArguments);
-```
-
-#### Behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveinputparamlayout-behavior:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Converts hardware-agnostic GPU map textures into the hardware-specific opaque
-> input layout consumed by `EncodeFrame1`. Record it before the consuming encode
-> on the same list, or complete it and synchronize the producer/consumer queues
-> with fences. It is not metadata output resolution.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveinputparamlayout-behavior:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveinputparamlayout-parameters:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pInputArguments` supplies session information and the selected QP, dirty region
-> or motion vector map data. `pOutputArguments` identifies the application-owned
-> opaque output buffer, allocated to
-> `D3D12_FEATURE_DATA_VIDEO_ENCODER_RESOLVE_INPUT_PARAM_LAYOUT.MaxResolvedBufferAllocationSize`.
-> Inputs are VIDEO_ENCODE_READ. The destination is VIDEO_ENCODE_WRITE for the resolve,
-> then VIDEO_ENCODE_READ when consumed by encoding. The opaque layout is not a
-> portable CPU record format.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveinputparamlayout-parameters:0 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveinputparamlayout-return-values:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns no value. It records work. It neither waits for completion nor inserts the caller's cross-queue fence dependencies.
-
-<!-- d3d12-review-alert:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveinputparamlayout-return-values:0 -->
-
-<a id="driver-current-encode-operations"></a>
-
-### Current encode and input layout recording behavior
-
-<!-- d3d12-review-alert:begin:video-encoding:CS-encode-operations:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `PFND3D12DDI_VIDEO_ENCODE_FRAME_0103_0` records an encode frame operation
-> on the driver video encode command list. The operation retains
-> [EncodeFrame](#id3d12videoencodecommandlist2--encodeframe) and
-> [EncodeFrame1](#id3d12videoencodecommandlist4--encodeframe1) behavior:
-> the selected encoder/heap and translated sequence, picture, reference and
-> input controls determine the frame; bitstream and opaque metadata
-> destinations are GPU outputs, not CPU return buffers. Optional input maps,
-> statistics and notification features keep their independent capability and
-> version requirements. The application still supplies the codec headers
-> assigned to it and resolves output metadata separately.
-
-<!-- d3d12-review-alert:end:video-encoding:CS-encode-operations:0 -->
-
-<!-- d3d12-review-alert:begin:video-encoding:CS-encode-operations:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `PFND3D12DDI_VIDEO_RESOLVE_INPUT_PARAM_LAYOUT_0103_0` records the
-> [ResolveInputParamLayout operation](#id3d12videoencodecommandlist4--resolveinputparamlayout).
-> Its session information and selected hardware-agnostic GPU maps are
-> converted to the driver-specific opaque layout in `hDrvOpaqueLayoutBuffer`
-> for a later consuming encode. This is not encoding or output metadata
-> resolution. The application owns that buffer and allocates the size reported
-> for the selected input by the layout resolution capability query.
-> Inputs require encode read access. The destination requires encode write
-> for resolution and encode read for its consuming encode. Resolution precedes
-> the consumer on the same list, or completes with the required interqueue
-> fence synchronization.
-
-<!-- d3d12-review-alert:end:video-encoding:CS-encode-operations:1 -->
-
-<!-- d3d12-review-alert:begin:video-encoding:CS-encode-operations:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Both DDIs capture needed CPU descriptions during recording, without
-> snapshotting the referenced GPU data. They retain the full
-> [recording/resource lifetime](#encoding-recording), control and synchronization
-> contracts and return no value. Neither reports GPU completion or inserts
-> the application's cross-queue dependencies.
-
-<!-- d3d12-review-alert:end:video-encoding:CS-encode-operations:2 -->
-
-<a id="protected-video-api-contracts"></a>
-
-## Protected session video API contracts
-
-<a id="api-id3d12videoencodecommandlist-setprotectedresourcesession"></a>
-
-### ID3D12VideoEncodeCommandList::SetProtectedResourceSession
-
-#### Declaration
-
-```cpp
-void SetProtectedResourceSession(
-    ID3D12ProtectedResourceSession *pProtectedResourceSession);
-```
-
-#### Behavior
-
-Specifies whether or not protected resources can be accessed by subsequent commands in the command list. By default, no protected resources are enabled. After calling **SetProtectedResourceSession** with a valid session, protected resources of the same type can refer to that session. After calling **SetProtectedResourceSession** with **NULL**, no protected resources can be accessed.
-
-<!-- d3d12-review-alert:begin:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Selects only the supported command list's protection context. Ordinary
-> bindings are preserved (D272). This is not ClearState. Null disables protected
-> access. [Session/device/node/type and operation support](video.md#protected-video-support),
-> the [canonical selection and open-query rules](command-list-state.md#protection)
-> and [protected operation predication](counters-queries-and-predication.md#predication-operation-matrix)
-> remain required.
-
-<!-- d3d12-review-alert:end:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:0 -->
-
-#### Parameters
-
-<!-- d3d12-review-alert:begin:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pProtectedResourceSession` is the optional translated session association. It is not a video encoder/decoder object and its selection does not allocate one.
-
-<!-- d3d12-review-alert:end:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:2 -->
-
-#### Return values
-
-<!-- d3d12-review-alert:begin:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:4 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Returns no value. Recording/list errors remain distinct from content validity and GPU completion.
-
-<!-- d3d12-review-alert:end:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:4 -->

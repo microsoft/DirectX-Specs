@@ -15,18 +15,10 @@
 
 <!-- d3d12-review-legend:end -->
 
-<!-- d3d12-review-alert:begin:sodb-input-format:format-boundary:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> This is the published SQLite format associated with the
-> [state object database input contract](state-object-databases-and-identity.md).
-> The format below has `user_version` 2 and application ID `0x0D3D50DB`.
-> These are format identifiers, not application versions or per-object versions.
-> This definition does not assert that every writer emits this version forever.
-
-<!-- d3d12-review-alert:end:sodb-input-format:format-boundary:0 -->
+<ins><!-- d3d12-review-inline:begin:sodb-input-format:format-boundary:0:authored:migration-004bb9e79bbc6edb-0 -->This is the published SQLite format associated with the
+[state object database input contract](state-object-databases-and-identity.md).
+The format below has `user_version` 2 and application ID `0x0D3D50DB`.
+These are format identifiers, not application versions or per-object versions.<!-- d3d12-review-inline:end:sodb-input-format:format-boundary:0:authored:migration-004bb9e79bbc6edb-0 --></ins>
 
 <a id="published-sql-schema"></a>
 
@@ -91,72 +83,28 @@ CREATE TABLE app_id (id INTEGER NOT NULL PRIMARY KEY , exe TEXT NOT NULL ,app_na
 
 ## Tables and relationships
 
-<!-- d3d12-review-alert:begin:sodb-input-format:schema-mapping:0 -->
+<ins><!-- d3d12-review-inline:begin:sodb-input-format:schema-mapping:0:authored:migration-a4331bfaaf35a380-0 -->`groups` maps an application-selected object key to an object version and the
+pipeline state (`PSOKey`) or state object (`SOKey`) record. The `Key` primary key
+is shared across those object kinds. It is not a composite of key and version.
+The API's single stored version is represented by the group's `Version`, not
+by `PRAGMA user_version`.<!-- d3d12-review-inline:end:sodb-input-format:schema-mapping:0:authored:migration-a4331bfaaf35a380-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `groups` maps an application-selected object key to an object version and the
-> pipeline state (`PSOKey`) or state object (`SOKey`) record. The `Key` primary key
-> is shared across those object kinds. It is not a composite of key and version.
-> The API's single stored version is represented by the group's `Version`, not
-> by `PRAGMA user_version`.
+<ins><!-- d3d12-review-inline:begin:sodb-input-format:schema-mapping:1:authored:migration-de4d0b45e5107d3b-0 -->Export selection and association records are part of the
+[stored dependency graph](state-object-databases-and-identity.md#keys-and-versions),
+not incidental ordering to be discarded.<!-- d3d12-review-inline:end:sodb-input-format:schema-mapping:1:authored:migration-de4d0b45e5107d3b-0 --></ins>
 
-<!-- d3d12-review-alert:end:sodb-input-format:schema-mapping:0 -->
+<ins><!-- d3d12-review-inline:begin:sodb-input-format:schema-mapping:2:authored:migration-922b0eaf17d927c8-0 -->`shader_bytecode.Bytecode` and `root_signatures.value` are
+[opaque input blobs](state-object-databases-and-identity.md#database-inputs).<!-- d3d12-review-inline:end:sodb-input-format:schema-mapping:2:authored:migration-922b0eaf17d927c8-0 --></ins>
 
-<!-- d3d12-review-alert:begin:sodb-input-format:schema-mapping:1 -->
+<ins><!-- d3d12-review-inline:begin:sodb-input-format:schema-mapping:3:authored:migration-3ecab7d77d826cfb-0 -->Application metadata is the `app_id` record used by `SetApplicationDesc` and
+`GetApplicationDesc`. The API uses the single application row at `id = 0`.
+`exe`, `app_name`, `engine_name`, `app_version` and `engine_version` correspond
+to `D3D12_APPLICATION_DESC`. There is no application-GUID field in this
+published schema. SQL `NOT NULL` does not mean that a string is nonempty, and
+schema constraints alone do not replace owning-API validation.<!-- d3d12-review-inline:end:sodb-input-format:schema-mapping:3:authored:migration-3ecab7d77d826cfb-0 --></ins>
 
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pipeline_states` contains PSO state and references bytecode, serialized root
-> signatures and shared state descriptions. `state_objects` contains type,
-> node mask, flags and the `AddToStateObjectParent` relationship. The `so_to_*`
-> association tables carry root signatures, DXIL libraries, existing collections,
-> hit groups, configurations, export associations, generic programs and work
-> graphs. Export selection and association records are part of the stored graph,
-> not incidental ordering to be discarded.
-
-<!-- d3d12-review-alert:end:sodb-input-format:schema-mapping:1 -->
-
-<!-- d3d12-review-alert:begin:sodb-input-format:schema-mapping:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The remaining description tables and their association tables retain shared
-> component storage, including input elements, stream output declarations,
-> render target/depth-stencil/blend/rasterizer/view instancing data and work graph
-> nodes/overrides. `shader_bytecode.Bytecode` and `root_signatures.value` are
-> opaque blobs in this contract. Table and column presence alone does not extend
-> the creation capabilities defined by the pipeline, state object or work graph
-> chapters.
-
-<!-- d3d12-review-alert:end:sodb-input-format:schema-mapping:2 -->
-
-<!-- d3d12-review-alert:begin:sodb-input-format:schema-mapping:3 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Application metadata is the `app_id` record used by `SetApplicationDesc` and
-> `GetApplicationDesc`. The API uses the single application row at `id = 0`.
-> `exe`, `app_name`, `engine_name`, `app_version` and `engine_version` correspond
-> to `D3D12_APPLICATION_DESC`. There is no application-GUID field in this
-> published schema. SQL `NOT NULL` does not mean that a string is nonempty, and
-> schema constraints alone do not replace owning-API validation.
-
-<!-- d3d12-review-alert:end:sodb-input-format:schema-mapping:3 -->
-
-<!-- d3d12-review-alert:begin:sodb-input-format:schema-mapping:4 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The DDL declares primary/unique keys, partial unique indexes and foreign-key
-> relationships exactly as published. It does not issue `PRAGMA foreign_keys`;
-> declarations of foreign keys do not establish that SQLite foreign-key
-> enforcement is enabled. The API's typed keys and dependency requirements must
-> not be inferred solely from what an unconstrained SQL insert accepts.
-
-<!-- d3d12-review-alert:end:sodb-input-format:schema-mapping:4 -->
+<ins><!-- d3d12-review-inline:begin:sodb-input-format:schema-mapping:4:authored:migration-fc7f26ab8cc1e5b8-0 -->The DDL declares primary/unique keys, partial unique indexes and foreign-key
+relationships exactly as published. It does not issue `PRAGMA foreign_keys`;
+declarations of foreign keys do not establish that SQLite foreign-key
+enforcement is enabled. The API's typed keys and dependency requirements must
+not be inferred solely from what an unconstrained SQL insert accepts.<!-- d3d12-review-inline:end:sodb-input-format:schema-mapping:4:authored:migration-fc7f26ab8cc1e5b8-0 --></ins>

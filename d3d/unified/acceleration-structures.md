@@ -78,7 +78,7 @@ The enumeration and overall tier requirements are defined in [Raytracing support
 
 > [!NOTE]
 >
-> Resource state requirements in the descriptions below apply to the legacy resource-state/barrier path. Enhanced barrier callers use the [access masks](synchronization.md#barrier-access) and [synchronization scopes](synchronization.md#barrier-sync), rather than legacy states to satisfy those descriptions. Acceleration structure creation and for both paths are defined in [Storage and lifetime](#storage-and-lifetime).
+> Resource state requirements in the descriptions below apply to the legacy resource-state/barrier path. Enhanced barrier callers use the [access masks](synchronization.md#barrier-access) and [synchronization scopes](synchronization.md#barrier-sync), rather than legacy states to satisfy those descriptions. Acceleration structure creation for both paths is defined in [Storage and lifetime](#storage-and-lifetime).
 
 <a id="d3d12_raytracing_acceleration_structure_type"></a>
 
