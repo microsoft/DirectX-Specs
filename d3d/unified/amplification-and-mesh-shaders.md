@@ -124,7 +124,7 @@ Mesh shader, many instances of it, if needed.
 ## Availability and pipeline selection
 
 To determine whether mesh and amplification shaders are supported, call `CheckFeatureSupport` using the `D3D12_FEATURE` enum,
-`D3D12_FEATURE_D3D12_OPTIONS7`, which populates `pFeatureSupportData` with the structure `D3D12_FEATURE_DATA_D3D12_OPTIONS7`.
+`D3D12_FEATURE_D3D12_OPTIONS7`, which populates `pFeatureSupportData` with the structure [`D3D12_FEATURE_DATA_D3D12_OPTIONS7`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options7).
 
 <a id="d3d12_mesh_shader_tier"></a>
 
@@ -138,50 +138,15 @@ typedef enum D3D12_MESH_SHADER_TIER
 } D3D12_MESH_SHADER_TIER;
 ```
 
-<a id="d3d12_feature_data_d3d12_options7"></a>
-
-### D3D12_FEATURE_DATA_D3D12_OPTIONS7
-
-```cpp
-typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS7
-{
-    D3D12_MESH_SHADER_TIER MeshShaderTier;
-    D3D12_SAMPLER_FEEDBACK_TIER SamplerFeedbackTier;
-
-} D3D12_FEATURE_DATA_D3D12_OPTIONS7;
-```
-
-<a id="d3d12_feature_data_d3d12_options9"></a>
-
-### D3D12_FEATURE_DATA_D3D12_OPTIONS9
-
-```cpp
-typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS9
-{
-    BOOL MeshShaderPipelineStatsSupported;
-    BOOL MeshShaderSupportsFullRangeRenderTargetArrayIndex;
-    BOOL AtomicInt64OnTypedResourceSupported;
-    BOOL AtomicInt64OnGroupSharedSupported;
-    BOOL DerivativesInMeshAndAmplificationShadersSupported;
-    D3D12_WAVE_MMA_TIER WaveMMATier;
-} D3D12_FEATURE_DATA_D3D12_OPTIONS9;
-```
-
-<a id="d3d12_feature_data_d3d12_options10"></a>
-
-### D3D12_FEATURE_DATA_D3D12_OPTIONS10
-
-The shared `D3D12_FEATURE_DATA_D3D12_OPTIONS10` declaration is defined in [Pixel shaders](pixel-shaders.md#vrs-types).
-
 <a id="d3d12_tri_state"></a>
 
 ### D3D12_TRI_STATE
 
 `D3D12_TRI_STATE` and its culled-primitive capability interpretation are defined in [Counters, queries, and predication](counters-queries-and-predication.md#d3d12_tri_state).
 
-The complete [`D3D12_FEATURE_DATA_D3D12_OPTIONS12` declaration](synchronization.md#enhanced-barriers) is shared with enhanced barrier support. Its `MSPrimitivesPipelineStatisticIncludesCulledPrimitives` member uses `D3D12_TRI_STATE` and has the mesh-specific meaning defined [by the query contract](counters-queries-and-predication.md#culled-primitives).
+The complete [`D3D12_FEATURE_DATA_D3D12_OPTIONS12` declaration](devices-and-capabilities.md#d3d12_feature_data_d3d12_options12) is shared with enhanced barrier support. Its `MSPrimitivesPipelineStatisticIncludesCulledPrimitives` member uses `D3D12_TRI_STATE` and has the mesh-specific meaning defined [by the query contract](counters-queries-and-predication.md#culled-primitives).
 
-`MeshShaderTier` other than `D3D12_MESH_SHADER_TIER_NOT_SUPPORTED` advertises AS/MS support. The shader stages begin with `as_6_5` and `ms_6_5` or newer, and they use DXIL. `OPTIONS9.MeshShaderPipelineStatsSupported` indicates whether [AS/MS statistics fields](counters-queries-and-predication.md#mesh-statistics) are supported. `MeshShaderSupportsFullRangeRenderTargetArrayIndex` indicates whether [render target array index](#render-target-array-index) has full or limited range. `MSPrimitivesPipelineStatisticIncludesCulledPrimitives` describes the [culled-primitive statistic](counters-queries-and-predication.md#culled-primitives). `DerivativesInMeshAndAmplificationShadersSupported` gates [derivative-dependent operations](#derivatives). `OPTIONS10.MeshShaderPerPrimitiveShadingRateSupported` gates mesh output of `SV_ShadingRate`. The other members are described elsewhere.
+`MeshShaderTier` other than `D3D12_MESH_SHADER_TIER_NOT_SUPPORTED` advertises AS/MS support. The shader stages begin with `as_6_5` and `ms_6_5` or newer, and they use DXIL. `OPTIONS9.MeshShaderPipelineStatsSupported` indicates whether [AS/MS statistics fields](counters-queries-and-predication.md#mesh-statistics) are supported. `MeshShaderSupportsFullRangeRenderTargetArrayIndex` indicates whether [render target array index](#render-target-array-index) has full or limited range. `MSPrimitivesPipelineStatisticIncludesCulledPrimitives` describes the [culled-primitive statistic](counters-queries-and-predication.md#culled-primitives). `DerivativesInMeshAndAmplificationShadersSupported` gates [derivative-dependent operations](#derivatives). `OPTIONS10.MeshShaderPerPrimitiveShadingRateSupported` gates mesh output of `SV_ShadingRate`.
 
 The [mesh PSO contract](pipeline-state.md#mesh-pipelines) requires MS and permits AS and PS. It excludes the ordinary geometry shader stages and input layout/stream output declarations. Graphics-stage visibility and deny flags apply to AS/MS root arguments under the [visibility and root flags](binding.md#shader-visibility). Lack of a pixel shader does not itself disable depth/stencil rasterization. `DispatchMesh` uses the graphics root bindings and applicable graphics output state, not the compute root bindings.
 

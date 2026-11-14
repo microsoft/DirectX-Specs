@@ -1594,7 +1594,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime maps StorePipeline's name to a library-local `UINT PipelineIndex`. The add DDI receives that index and no name string.
+> The runtime maps [StorePipeline](#id3d12pipelinelibrary-storepipeline)'s name to a library-local `UINT PipelineIndex`. The add DDI receives that index and no name string.
 
 <!-- d3d12-review-alert:end:shader-cache:PL-indices:0 -->
 
@@ -1603,7 +1603,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> Multiple indices may refer to the same PSO information. Successful add makes the PSO's cache information available through that index. Failed stores follow the [API mapping rule](#id3d12pipelinelibrary-storepipeline).
+> Multiple indices may refer to the same PSO information. Successful add makes the PSO's cache information available through that index.
 
 <!-- d3d12-review-alert:end:shader-cache:PL-indices:1 -->
 

@@ -2240,20 +2240,6 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SETSAMPLEPOSITIONS_0027 )(
 );
 ```
 
-<!-- d3d12-review-alert:begin:rasterization:GS-R-associations:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> | Driver entry | Canonical API contract |
-> |---|---|
-> | `PFND3D12DDI_RS_SETVIEWPORTS_0003` | [RSSetViewports](#rssetviewports): replace the complete counted viewport set |
-> | `PFND3D12DDI_RS_SETSCISSORRECTS_0003` | [RSSetScissorRects](#rssetscissorrects): replace the complete counted scissor set |
-> | `PFND3D12DDI_SETSAMPLEPOSITIONS_0027` | [SetSamplePositions](#setsamplepositions): the declared pixel/sample dimensions and ordered sample position pattern |
-> | `PFND3D12DDI_SET_DEPTH_BIAS_STATE_0099` | [RSSetDepthBias](#rssetdepthbias): constant bias, clamp and slope-scaled bias, with the API's capability/PSO permission requirements |
-
-<!-- d3d12-review-alert:end:rasterization:GS-R-associations:0 -->
-
 <!-- d3d12-review-alert:begin:rasterization:GS-R-roles:0 -->
 
 > [!WARNING]

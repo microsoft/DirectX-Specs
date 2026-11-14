@@ -1669,21 +1669,6 @@ typedef VOID(APIENTRY* PFND3D12DDI_SET_INDEX_BUFFER_STRIP_CUT_VALUE_0099)(
 typedef VOID ( APIENTRY* PFND3D12DDI_SETVIEWINSTANCEMASK_0033 )( D3D12DDI_HCOMMANDLIST, UINT Mask );
 ```
 
-<!-- d3d12-review-alert:begin:geometry:GS-I-associations:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> | Driver entry | Canonical API contract |
-> |---|---|
-> | `PFND3D12DDI_IA_SETTOPOLOGY_0003` | [IASetPrimitiveTopology](#iasetprimitivetopology): the driver topology enum represents the selected detailed topology after runtime conversion, not the PSO's coarser topology class |
-> | `PFND3D12DDI_IA_SET_INDEX_BUFFER` | [IASetIndexBuffer](#iasetindexbuffer): optional driver buffer view with GPU address, byte extent and index format |
-> | `PFND3D12DDI_IA_SET_VERTEX_BUFFERS_0003` | [IASetVertexBuffers](#iasetvertexbuffers): replace or clear the specified slot range using driver GPU address/byte size/stride views |
-> | `PFND3D12DDI_SET_INDEX_BUFFER_STRIP_CUT_VALUE_0099` | [IASetIndexBufferStripCutValue](#iasetindexbufferstripcutvalue): dynamic cut selection, with the API's capability and PSO permission requirements |
-> | `PFND3D12DDI_SETVIEWINSTANCEMASK_0033` | [SetViewInstanceMask](#setviewinstancemask): view-enable bits and the canonical PSO/default/bundle contract |
-
-<!-- d3d12-review-alert:end:geometry:GS-I-associations:0 -->
-
 <!-- d3d12-review-alert:begin:geometry:GS-I-roles:0 -->
 
 > [!WARNING]
@@ -1825,6 +1810,15 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SETVIEWINSTANCEMASK_0114 )( D3D12DDI_API_HC
 
 ### Direct draw DDIs
 
+<!-- d3d12-review-alert:begin:geometry:N-draw-parameter-order:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> After the command-list handle, draw arguments follow the associated API's parameter order.
+
+<!-- d3d12-review-alert:end:geometry:N-draw-parameter-order:0 -->
+
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_DRAWINSTANCED )(
     D3D12DDI_HCOMMANDLIST, UINT, UINT, UINT, UINT );
@@ -1838,10 +1832,10 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DRAWINDEXEDINSTANCED )(
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> | Driver entry | Canonical API contract and ordered fields |
+> | Driver entry | API contract |
 > |---|---|
-> | `PFND3D12DDI_DRAWINSTANCED` | [DrawInstanced](#drawinstanced): VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation |
-> | `PFND3D12DDI_DRAWINDEXEDINSTANCED` | [DrawIndexedInstanced](#drawindexedinstanced): IndexCountPerInstance, InstanceCount, StartIndexLocation, signed BaseVertexLocation, StartInstanceLocation |
+> | `PFND3D12DDI_DRAWINSTANCED` | [DrawInstanced](#drawinstanced) |
+> | `PFND3D12DDI_DRAWINDEXEDINSTANCED` | [DrawIndexedInstanced](#drawindexedinstanced) |
 
 <!-- d3d12-review-alert:end:geometry:WE-draw-associations:0 -->
 

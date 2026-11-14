@@ -1523,9 +1523,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_EXECUTECOMMANDLISTS ) (
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The first argument identifies the UMD queue. `Count` gives the number of
-> driver command list handles in `pCommandLists`. These are not COM interface
-> pointers. The UMD executes the supplied recordings under the
+> The UMD executes the supplied recordings under the
 > [application ordering and recording lifetime contract](execution.md#execute-command-lists)
 > and [driver recording storage rules](execution.md#object-model).
 > Runtime adaptation does not establish a universal one-to-one relationship
@@ -1663,7 +1661,7 @@ Applications can submit command lists to any command queue from multiple threads
 > callbacks are opaque runtime handles. The runtime translates them to kernel
 > handles when performing the operation. In contrast, returned `D3DKMT_HANDLE`
 > synchronization object values are OS synchronization object handles. Neither
-> kind is interchangeable with a UMD private fence handle or a COM pointer.
+> kind is interchangeable with a UMD private fence handle.
 
 <!-- d3d12-review-alert:end:execution:QT-N06:0 -->
 
@@ -1676,7 +1674,7 @@ Applications can submit command lists to any command queue from multiple threads
 > `_Inout_` descriptions also return the indicated results. Array counts and
 > fixed-array capacities are part of the corresponding payload contract;
 > counts must describe the supplied arrays, and reserved flag bits must be
-> zero. The callback's `HRESULT` reports its operation, not GPU completion.
+> zero. The callback's `HRESULT` reports its operation result.
 > Some removal paths can return `S_OK` after the device has failed, so success
 > does not independently establish a healthy device.
 
@@ -3093,7 +3091,7 @@ typedef _Check_return_ HRESULT (APIENTRY CALLBACK *PFND3D12DDI_SIGNALSYNCHRONIZA
 > `hContext`, an object array/count and `FenceValue` for a context stream wait.
 > Signal supplies context/object arrays, broadcast contexts and flags selecting
 > a fence value or CPU event. The callbacks return an `HRESULT` for the
-> requested operation, not GPU completion. Their separate table ownership
+> requested operation. Their separate table ownership
 > does not imply that every D3D12 device supplies downlevel support.
 
 <!-- d3d12-review-alert:end:execution:QT-N27:0 -->

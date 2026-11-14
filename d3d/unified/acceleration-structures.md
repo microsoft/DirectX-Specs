@@ -62,26 +62,9 @@ See [Acceleration structure properties](#acceleration-structure-properties) for 
 
 ## Availability
 
-`ID3D12Device::CheckFeatureSupport` with `D3D12_FEATURE_D3D12_OPTIONS5` reports `D3D12_FEATURE_DATA_D3D12_OPTIONS5::RaytracingTier`. With respect to acceleration structure interactions, specifically, tier 1.0 supports the baseline acceleration-structure contract, tier 1.1 adds the vertex input formats identified in `D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC`, and opacity-micromap construction and linkage require tier 1.2.
+`ID3D12Device::CheckFeatureSupport` with `D3D12_FEATURE_D3D12_OPTIONS5` reports [`D3D12_FEATURE_DATA_D3D12_OPTIONS5::RaytracingTier`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options5). With respect to acceleration structure interactions, specifically, tier 1.0 supports the baseline acceleration-structure contract, tier 1.1 adds the vertex input formats identified in `D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC`, and opacity-micromap construction and linkage require tier 1.2.
 
 When raytracing is not supported, attempts to create raytracing-related objects fail and using raytracing-related APIs on command lists results in undefined behavior.
-
-<a id="d3d12_feature_data_d3d12_options5"></a>
-
-### D3D12_FEATURE_DATA_D3D12_OPTIONS5
-
-```cpp
-typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS5
-{
-    BOOL SRVOnlyTiledResourceTier3;
-    D3D12_RENDER_PASS_TIER RenderPassesTier;
-    D3D12_RAYTRACING_TIER RaytracingTier;
-} D3D12_FEATURE_DATA_D3D12_OPTIONS5;
-```
-
-The D3D12 options struct that reports RaytracingTier, the raytracing
-support level (among other unrelated features). See
-[D3D12_RAYTRACING_TIER](devices-and-capabilities.md#raytracing-tiers).
 
 <a id="d3d12_raytracing_tier"></a>
 
@@ -2181,16 +2164,7 @@ of pointers and referenced nested CPU descriptions, including OMM metadata.
 The driver cannot retain caller array/description storage merely because
 GPU execution occurs later.
 
-`D3D12DDIARG_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_0054` packages
-destination, `Inputs`, source/update address, scratch address and the
-postbuild count/description pointer in one argument. A zero postbuild
-count requests no attached reports. The API's
-[per-type report uniqueness](#buildraytracingaccelerationstructure) remains
-required.
-
-The DDIs implement the operation semantics of the API contracts listed above. Recording errors from build, postbuild-info emission and copy use [SetCommandListErrorCb](execution.md#lifecycle-driver-errors).
-
-`D3D12DDIARG_EMIT_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_0054` supplies its source GPU addresses in a CPU array. The driver consumes that array during recording.
+Recording errors from build, postbuild-info emission and copy use [SetCommandListErrorCb](execution.md#lifecycle-driver-errors).
 
 <a id="driver-current-matching-query"></a>
 

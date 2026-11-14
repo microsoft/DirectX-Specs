@@ -2052,7 +2052,7 @@ To help applications understand if the device actually does reordering,
 <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-ser-device-support:1 -->D3D12 exposes a device capability that can be queried via<!-- d3d12-review-inline:end:raytracing-pipelines:R-ser-device-support:1 --></ins>
 `CheckFeatureSupport()`:
 
-<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-ser-device-support:2 -->The `BOOL ShaderExecutionReorderingActuallyReorders` member of [D3D12_FEATURE_DATA_D3D12_OPTIONS22](compute.md#options22) reports whether the device actually performs thread reordering. It is distinct from required SER semantic support. The complete four-field structure is defined at that canonical owner.<!-- d3d12-review-inline:end:raytracing-pipelines:R-ser-device-support:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-ser-device-support:2 -->The `BOOL ShaderExecutionReorderingActuallyReorders` member of [D3D12_FEATURE_DATA_D3D12_OPTIONS22](devices-and-capabilities.md#d3d12_feature_data_d3d12_options22) reports whether the device actually performs thread reordering. It is distinct from required SER semantic support. The complete four-field structure is defined at that canonical owner.<!-- d3d12-review-inline:end:raytracing-pipelines:R-ser-device-support:2 --></ins>
 
 e.g.:
 

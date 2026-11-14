@@ -2172,21 +2172,6 @@ typedef VOID ( APIENTRY* PFND3D12DDI_OM_SET_RENDER_TARGETS_0003 )(
     _In_opt_ CONST D3D12DDI_CPU_DESCRIPTOR_HANDLE* pDepthStencilDescriptor);
 ```
 
-<!-- d3d12-review-alert:begin:output-merger:GS-O-associations:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> | Driver entry | Canonical API contract |
-> |---|---|
-> | `PFND3D12DDI_OM_SETBLENDFACTOR` | [OMSetBlendFactor](#omsetblendfactor): four floating-point components, also supplying the alpha component used by scalar alpha factor blend modes |
-> | `PFND3D12DDI_OM_SETSTENCILREF` | [OMSetStencilRef](#omsetstencilref): one reference sets both faces |
-> | `PFND3D12DDI_OM_SETFRONTANDBACKSTENCILREF_0095` | [OMSetFrontAndBackStencilRef](#omsetfrontandbackstencilref): separate references. This does not change the PSO masks |
-> | `PFND3D12DDI_OM_SETDEPTHBOUNDS_0025` | [OMSetDepthBounds](#omsetdepthbounds): normalized dynamic Min/Max values. The PSO separately enables the test |
-> | `PFND3D12DDI_OM_SET_RENDER_TARGETS_0003` | [OMSetRenderTargets](#omsetrendertargets): driver CPU RTV/DSV handles and the declared contiguous-range versus handle array mode |
-
-<!-- d3d12-review-alert:end:output-merger:GS-O-associations:0 -->
-
 <!-- d3d12-review-alert:begin:output-merger:GS-O-roles:0 -->
 
 > [!WARNING]

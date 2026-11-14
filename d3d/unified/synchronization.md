@@ -65,18 +65,9 @@ The enhanced Barrier <ins><!-- d3d12-review-inline:begin:synchronization:FB-thre
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> `D3D12_FEATURE_DATA_D3D12_OPTIONS12::EnhancedBarriersSupported` reports enhanced barrier support. `Barrier` calls and resource creation using enhanced initial layouts require that support. The legacy `ResourceBarrier` contract remains supported independently of this optional capability.
+> [`D3D12_FEATURE_DATA_D3D12_OPTIONS12::EnhancedBarriersSupported`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options12) reports enhanced barrier support. `Barrier` calls and resource creation using enhanced initial layouts require that support. The legacy `ResourceBarrier` contract remains supported independently of this optional capability.
 
 <!-- d3d12-review-alert:end:synchronization:S-enhanced-availability:0 -->
-
-```cpp
-typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS12
-{
-    D3D12_TRI_STATE MSPrimitivesPipelineStatisticIncludesCulledPrimitives;
-    BOOL EnhancedBarriersSupported;
-    BOOL RelaxedFormatCastingSupported;
-} D3D12_FEATURE_DATA_D3D12_OPTIONS12;
-```
 
 <a id="barrier-operations"></a>
 

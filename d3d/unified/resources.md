@@ -1937,11 +1937,11 @@ The destination and the source regions must each entirely fit in their resource 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> | Driver entry | Exact logical API contract |
+> | Driver entry | API operation / query use |
 > |---|---|
-> | `PFND3D12DDI_UPDATETILEMAPPINGS` | [UpdateTileMappings](#update-tile-mappings), after the runtime resolves its CPU defaults |
-> | `PFND3D12DDI_COPYTILEMAPPINGS` | [CopyTileMappings](#copy-tile-mappings), including overlapping-region snapshot semantics |
-> | `PFND3D12DDI_GETMIPPACKING` | Supplies packed mip counts used with the runtime's standard tiling calculation for [GetResourceTiling](#get-resource-tiling); not a signature mirror of that API |
+> | `PFND3D12DDI_UPDATETILEMAPPINGS` | [UpdateTileMappings](#update-tile-mappings) |
+> | `PFND3D12DDI_COPYTILEMAPPINGS` | [CopyTileMappings](#copy-tile-mappings) |
+> | `PFND3D12DDI_GETMIPPACKING` | Packed mip and tile counts used by [GetResourceTiling](#get-resource-tiling) |
 
 <!-- d3d12-review-alert:end:resources:TD-associations:0 -->
 
@@ -1963,30 +1963,12 @@ The destination and the source regions must each entirely fit in their resource 
 
 <!-- d3d12-review-alert:end:resources:TD-lifetime-errors:0 -->
 
-<!-- d3d12-review-alert:begin:resources:TD-lifetime-errors:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> Mapping errors and rollback use SetErrorCb as specified below.
-
-<!-- d3d12-review-alert:end:resources:TD-lifetime-errors:1 -->
-
-<!-- d3d12-review-alert:begin:resources:TD-mip-query:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> For arrays, packed mip and packed tile counts have the per-slice interpretation defined below.
-
-<!-- d3d12-review-alert:end:resources:TD-mip-query:0 -->
-
 <!-- d3d12-review-alert:begin:resources:TD-mip-query:1 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime can cache GetMipPacking results and combine them with standard tiling information. GetResourceTiling need not issue this DDI on every call.
+> The runtime can cache GetMipPacking results. GetResourceTiling need not issue this DDI on every call.
 
 <!-- d3d12-review-alert:end:resources:TD-mip-query:1 -->
 
@@ -2123,18 +2105,14 @@ typedef enum D3D12DDI_TILE_RANGE_FLAGS
 } D3D12DDI_TILE_RANGE_FLAGS;
 ```
 
-```cpp
-typedef struct D3D12DDI_D3D12_OPTIONS_DATA_0003
-{
-    D3D12DDI_RESOURCE_BINDING_TIER ResourceBindingTier;
-    D3D12DDI_CONSERVATIVE_RASTERIZATION_TIER ConservativeRasterizationTier;
-    D3D12DDI_TILED_RESOURCES_TIER TiledResourcesTier;
-    D3D12DDI_CROSS_NODE_SHARING_TIER CrossNodeSharingTier;
-    BOOL VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation;
-    BOOL OutputMergerLogicOp;
-    D3D12DDI_RESOURCE_HEAP_TIER ResourceHeapTier;
-} D3D12DDI_D3D12_OPTIONS_DATA_0003;
-```
+<!-- d3d12-review-alert:begin:resources:N-shared-driver-options:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The shared driver options payload, including `TiledResourcesTier`, is [`D3D12DDI_D3D12_OPTIONS_DATA_0003`](devices-and-capabilities.md#d3d12ddi_d3d12_options_data_0003).
+
+<!-- d3d12-review-alert:end:resources:N-shared-driver-options:0 -->
 
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
@@ -6630,8 +6608,7 @@ typedef enum D3D12DDI_MEMORY_SEGMENT_GROUP_0054
 > `AllocateCb` uses `NumAllocations` and the allocation info array, with
 > driver-private byte payloads, optional supplied system memory and per-allocation
 > outputs. Reserved fields do not become application inputs. Deallocation
-> identifies the runtime resource/allocation handle list and flags, not a COM
-> `Release` operation. Packet/private metadata consumption is separate from the
+> identifies the runtime resource/allocation handle list and flags. Packet/private metadata consumption is separate from the
 > lifetime of backing system memory and the resulting allocation objects.
 
 <!-- d3d12-review-alert:end:resources:CS-allocation-boundary:1 -->

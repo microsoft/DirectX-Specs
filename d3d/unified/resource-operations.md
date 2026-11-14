@@ -3705,15 +3705,6 @@ resource later requires less look-ahead for the driver to know what it can do.<!
 
 ## Driver and hardware contract
 
-<!-- d3d12-review-alert:begin:resource-operations:ddi-intro:2 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The DDIs implement the API operations identified in the association table below.
-
-<!-- d3d12-review-alert:end:resource-operations:ddi-intro:2 -->
-
 <a id="driver-copy-types"></a>
 
 ### Copy placement and region structures

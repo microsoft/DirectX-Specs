@@ -532,44 +532,6 @@ represents the corresponding (GroupThreadID.x, GroupThreadID.y) values:<!-- d3d1
 
 ## Dispatch dimensions and capabilities
 
-<a id="options22"></a>
-
-### D3D12_FEATURE_DATA_D3D12_OPTIONS22
-
-```cpp
-typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22
-{
-    BOOL ShaderExecutionReorderingActuallyReorders;
-    BOOL CreateByteOffsetViewsSupported;
-    UINT Max1DDispatchSize;
-    UINT Max1DDispatchMeshSize;
-} D3D12_FEATURE_DATA_D3D12_OPTIONS22;
-```
-
-<!-- d3d12-review-alert:begin:compute:N-capability-selector:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `CheckFeatureSupport` with `D3D12_FEATURE_D3D12_OPTIONS22` (enum value 65) returns this structure. `Max1DDispatchSize` and `Max1DDispatchMeshSize` are independent compute and mesh group count limits. The other members retain their [SER support](../Raytracing.md#ser-device-support) and [byte offset view support](../D3D12RevisedCreateViews.md#feature-check-d3d12_feature_data_d3d12_options22createbyteoffsetviewssupported) contracts.
-
-<!-- d3d12-review-alert:end:compute:N-capability-selector:0 -->
-
-- **Max1DDispatchSize** - The maximum number of thread groups that can be dispatched in the X dimension for Compute Shaders when Y = 1 and Z = 1. Must be at least 65,535 (the value of `D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION`). This limit also applies to grids launched in Work Graphs, however Work Graphs are additionally constrained by the maximum total number of thread groups as defined by `D3D12_WORK_GRAPHS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID` (16,777,215). This means that while `Max1DDispatchSize` may be larger than 16,777,215, Work Graph dispatches cannot exceed this total thread group limit.
-
-- **Max1DDispatchMeshSize** - The maximum number of thread groups that can be dispatched in the X dimension for Mesh Shaders (via `DispatchMesh`) when Y = 1 and Z = 1. Must be at least 65,535 (the value of `D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION`). This value must not exceed 4,194,303 (the value of `D3D12_MS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID`), which is the maximum total number of thread groups allowed for Mesh Shader dispatches.
-
-<ins><!-- d3d12-review-inline:begin:compute:D-older-driver-fallback:0 -->When queried on an existing driver which does not provide the expanded dispatch capabilities the D3D runtime will automatically return 65535 for both `Max1DDispatchSize` and `Max1DDispatchMeshSize` as defined by `D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION`.<!-- d3d12-review-inline:end:compute:D-older-driver-fallback:0 --></ins>
-
-<!-- d3d12-review-alert:begin:compute:N-mesh-support:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> These fields report grid dimensions, not optional shader stage support. A mesh dispatch still requires the [mesh shader capability and pipeline](amplification-and-mesh-shaders.md#availability). The reported mesh field is constrained to the interval 65,535 through 4,194,303. That reporting requirement is separate from the total group check on every mesh grid.
-
-<!-- d3d12-review-alert:end:compute:N-mesh-support:0 -->
-
 <a id="shared-grid-limits"></a>
 
 ### Shared grid limits
@@ -581,9 +543,9 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22
 >
 > | Operation/grid | Ordinary per-axis bound | Expanded one-dimensional bound | Independent total group bound |
 > |---|---|---|---|
-> | Direct or indirect compute dispatch | Each axis at most 65,535 | X at most `Max1DDispatchSize`, with Y=Z=1 | No mesh/work graph total is imposed by this compute grid rule |
-> | API, indirect, or AS-intrinsic mesh dispatch | Each axis at most 65,535 | X at most `Max1DDispatchMeshSize`, with Y=Z=1 | `X*Y*Z < 2^22` (at most 4,194,303) |
-> | Work graph execution grid | Each axis at most 65,535 | X at most `Max1DDispatchSize`, with Y=Z=1 | `X*Y*Z < 2^24` (at most 16,777,215) |
+> | Direct or indirect compute dispatch | Each axis at most 65,535 | X at most [`Max1DDispatchSize`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options22), with Y=Z=1 | No mesh/work graph total is imposed by this compute grid rule |
+> | API, indirect, or AS-intrinsic mesh dispatch | Each axis at most 65,535 | X at most [`Max1DDispatchMeshSize`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options22), with Y=Z=1 | `X*Y*Z < 2^22` (at most 4,194,303) |
+> | Work graph execution grid | Each axis at most 65,535 | X at most [`Max1DDispatchSize`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options22), with Y=Z=1 | `X*Y*Z < 2^24` (at most 16,777,215) |
 
 <!-- d3d12-review-alert:end:compute:N-dimension-table:0 -->
 
@@ -675,11 +637,6 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22
 
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
->
-> **Capability Reporting:**
-> - Reported values must be at least 65,535 (D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION)
-> - `Max1DDispatchMeshSize` must not exceed 4,194,303 (D3D12_MS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID)
-> - Drivers may report different values for Compute and Mesh dispatches based on hardware capabilities
 >
 > **Dispatch Handling:**
 > - Drivers must correctly handle Compute dispatches with X dimension up to the reported `Max1DDispatchSize`

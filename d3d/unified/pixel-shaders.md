@@ -1386,6 +1386,15 @@ Objects, and are only allowed in the Pixel Shader:<!-- d3d12-review-inline:end:p
 
 ### VRS capability and combiner types
 
+<!-- d3d12-review-alert:begin:pixel-shaders:N-options6-owner:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> VRS capability fields are reported in [`D3D12_FEATURE_DATA_D3D12_OPTIONS6`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options6).
+
+<!-- d3d12-review-alert:end:pixel-shaders:N-options6-owner:0 -->
+
 ```cpp
 typedef enum D3D12_VARIABLE_SHADING_RATE_TIER
 {
@@ -1395,16 +1404,7 @@ typedef enum D3D12_VARIABLE_SHADING_RATE_TIER
 } D3D12_VARIABLE_SHADING_RATE_TIER;
 ```
 
-```cpp
-typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS6
-{
-    BOOL AdditionalShadingRatesSupported;
-    BOOL PerPrimitiveShadingRateSupportedWithViewportIndexing;
-    D3D12_VARIABLE_SHADING_RATE_TIER VariableShadingRateTier;
-    UINT ShadingRateImageTileSize;
-    BOOL BackgroundProcessingSupported;
-} D3D12_FEATURE_DATA_D3D12_OPTIONS6;
-```
+<a id="d3d12_feature_data_d3d12_options10"></a>
 
 ```cpp
 typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS10
@@ -2271,15 +2271,6 @@ void RSSetShadingRateImage(
 <a id="driver-hardware"></a>
 
 ### Driver and hardware contract
-
-<!-- d3d12-review-alert:begin:pixel-shaders:N-ddi-context:0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> `pfnRSSetShadingRate` and `pfnRSSetShadingRateImage` implement the corresponding VRS setters.
-
-<!-- d3d12-review-alert:end:pixel-shaders:N-ddi-context:0 -->
 
 <a id="ddi-rate"></a>
 

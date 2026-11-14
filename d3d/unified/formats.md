@@ -2505,7 +2505,7 @@ Implemented by the client driver to check multi-sample quality levels.
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime can answer sample count 1 without invoking the DDI. Counts zero or greater than 32 fail the API support calculation.
+> The runtime can answer sample count 1 without invoking the DDI.
 
 <!-- d3d12-review-alert:end:formats:FQ-quality-reporting:1 -->
 

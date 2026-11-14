@@ -1522,6 +1522,70 @@ typedef struct D3D12DDIARG_GETCAPS
 
 <!-- d3d12-review-alert:end:devices-capabilities:B042:0 -->
 
+<a id="shared-driver-options"></a>
+
+#### Shared driver options payloads
+
+<a id="d3d12ddi_d3d12_options_data_0003"></a>
+
+##### D3D12DDI_D3D12_OPTIONS_DATA_0003
+
+```cpp
+typedef struct D3D12DDI_D3D12_OPTIONS_DATA_0003
+{
+    D3D12DDI_RESOURCE_BINDING_TIER ResourceBindingTier;
+    D3D12DDI_CONSERVATIVE_RASTERIZATION_TIER ConservativeRasterizationTier;
+    D3D12DDI_TILED_RESOURCES_TIER TiledResourcesTier;
+    D3D12DDI_CROSS_NODE_SHARING_TIER CrossNodeSharingTier;
+    BOOL VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation;
+    BOOL OutputMergerLogicOp;
+    D3D12DDI_RESOURCE_HEAP_TIER ResourceHeapTier;
+} D3D12DDI_D3D12_OPTIONS_DATA_0003;
+```
+
+<a id="d3d12ddi_options_data_0122"></a>
+
+##### D3D12DDI_OPTIONS_DATA_0122
+
+<!-- d3d12-review-alert:begin:devices-capabilities:options-0122-selection:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> Byte-offset view support requires negotiated DDI revision 122 or later and the driver's `ViewCreationByteOffsetSupported` report through `D3D12DDICAPS_TYPE_OPTIONS_0122` (1105). The runtime reports the resulting capability through `CreateByteOffsetViewsSupported`.
+
+<!-- d3d12-review-alert:end:devices-capabilities:options-0122-selection:0 -->
+
+```cpp
+typedef struct D3D12DDI_OPTIONS_DATA_0122
+{
+    UINT Max1DDispatchSize;
+    UINT Max1DDispatchMeshSize;
+    BOOL ViewCreationByteOffsetSupported;
+} D3D12DDI_OPTIONS_DATA_0122;
+```
+
+<!-- d3d12-review-alert:begin:devices-capabilities:options-0122-fields:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> The dispatch-size fields retain their [compute and mesh limit contracts](devices-and-capabilities.md#d3d12_feature_data_d3d12_options22). `ViewCreationByteOffsetSupported` reports support for the byte-offset resource dimension and both byte-offset view representations.
+
+<!-- d3d12-review-alert:end:devices-capabilities:options-0122-fields:0 -->
+
+<!-- d3d12-review-alert:begin:compute:D-driver-capability-reporting:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> **Capability Reporting:**
+> - Reported values must be at least 65,535 (D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION)
+> - `Max1DDispatchMeshSize` must not exceed 4,194,303 (D3D12_MS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID)
+> - Drivers may report different values for Compute and Mesh dispatches based on hardware capabilities
+
+<!-- d3d12-review-alert:end:compute:D-driver-capability-reporting:0 -->
+
 <a id="table-discovery"></a>
 
 ### Required and additional function tables
@@ -3275,37 +3339,37 @@ The WriteBufferImmediateSupportFlags capability D3D12_COMMAND_LIST_SUPPORT_FLAG_
 > | `D3D12_OPTIONS4` | 23 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS4](#d3d12_feature_data_d3d12_options4) |
 > | `SERIALIZATION` | 24 | `NodeIndex` input; `HeapSerializationTier` output | [D3D12_FEATURE_DATA_SERIALIZATION](resource-operations.md#heap-serialization-capability) |
 > | `CROSS_NODE` | 25 | No inputs; payload fields output | [D3D12_FEATURE_DATA_CROSS_NODE](#d3d12_feature_data_cross_node) |
-> | `D3D12_OPTIONS5` | 27 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS5](acceleration-structures.md#d3d12_feature_data_d3d12_options5) |
+> | `D3D12_OPTIONS5` | 27 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS5](devices-and-capabilities.md#d3d12_feature_data_d3d12_options5) |
 > | `DISPLAYABLE` | 28 | No inputs; payload fields output | [D3D12_FEATURE_DATA_DISPLAYABLE](#d3d12_feature_data_displayable) |
-> | `D3D12_OPTIONS6` | 30 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS6](pixel-shaders.md#vrs-types) |
+> | `D3D12_OPTIONS6` | 30 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS6](devices-and-capabilities.md#d3d12_feature_data_d3d12_options6) |
 > | `QUERY_META_COMMAND` | 31 | `CommandId`, `NodeMask`, query input pointer/size and output pointer/size input; pointed-to output buffer written | [D3D12_FEATURE_DATA_QUERY_META_COMMAND](#d3d12_feature_data_query_meta_command) |
-> | `D3D12_OPTIONS7` | 32 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS7](amplification-and-mesh-shaders.md#d3d12_feature_data_d3d12_options7) |
+> | `D3D12_OPTIONS7` | 32 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS7](devices-and-capabilities.md#d3d12_feature_data_d3d12_options7) |
 > | `PROTECTED_RESOURCE_SESSION_TYPE_COUNT` | 33 | `NodeIndex` input; `Count` output | [D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPE_COUNT](#d3d12_feature_data_protected_resource_session_type_count) |
 > | `PROTECTED_RESOURCE_SESSION_TYPES` | 34 | `NodeIndex`, `Count`, `pTypes` input; pointed-to GUID array output; count matches TYPE_COUNT result | [D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPES](#d3d12_feature_data_protected_resource_session_types) |
 > | `D3D12_OPTIONS8` | 36 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS8](formats.md#bc-dimensions) |
-> | `D3D12_OPTIONS9` | 37 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS9](amplification-and-mesh-shaders.md#d3d12_feature_data_d3d12_options9) |
-> | `D3D12_OPTIONS10` | 39 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS10](pixel-shaders.md#vrs-types) |
+> | `D3D12_OPTIONS9` | 37 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS9](devices-and-capabilities.md#d3d12_feature_data_d3d12_options9) |
+> | `D3D12_OPTIONS10` | 39 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS10](pixel-shaders.md#d3d12_feature_data_d3d12_options10) |
 > | `D3D12_OPTIONS11` | 40 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS11](#d3d12_feature_data_d3d12_options11) |
-> | `D3D12_OPTIONS12` | 41 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS12](synchronization.md#enhanced-barriers) |
+> | `D3D12_OPTIONS12` | 41 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS12](devices-and-capabilities.md#d3d12_feature_data_d3d12_options12) |
 > | `D3D12_OPTIONS13` | 42 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS13](#d3d12_feature_data_d3d12_options13) |
 > | `D3D12_OPTIONS14` | 43 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS14](#d3d12_feature_data_d3d12_options14) |
 > | `D3D12_OPTIONS15` | 44 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS15](#d3d12_feature_data_d3d12_options15) |
 > | `D3D12_OPTIONS16` | 45 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS16](#d3d12_feature_data_d3d12_options16) |
 > | `D3D12_OPTIONS17` | 46 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS17](#d3d12_feature_data_d3d12_options17) |
-> | `D3D12_OPTIONS18` | 47 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS18](output-merger.md#render-pass-support) |
+> | `D3D12_OPTIONS18` | 47 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS18](devices-and-capabilities.md#d3d12_feature_data_d3d12_options18) |
 > | `D3D12_OPTIONS19` | 48 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS19](#d3d12_feature_data_d3d12_options19) |
 > | `D3D12_OPTIONS20` | 49 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS20](#d3d12_feature_data_d3d12_options20) |
 > | `PREDICATION` | 50 | No inputs; payload fields output | [D3D12_FEATURE_DATA_PREDICATION](#d3d12_feature_data_predication) |
 > | `PLACED_RESOURCE_SUPPORT_INFO` | 51 | `Format`, `Dimension`, `DestHeapProperties` input; `Supported` output | [D3D12_FEATURE_DATA_PLACED_RESOURCE_SUPPORT_INFO](#d3d12_feature_data_placed_resource_support_info) |
 > | `HARDWARE_COPY` | 52 | No inputs; payload fields output | [D3D12_FEATURE_DATA_HARDWARE_COPY](#d3d12_feature_data_hardware_copy) |
-> | `D3D12_OPTIONS21` | 53 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS21](indirect-execution.md#incrementing-constant) |
+> | `D3D12_OPTIONS21` | 53 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS21](devices-and-capabilities.md#d3d12_feature_data_d3d12_options21) |
 > | `D3D12_TIGHT_ALIGNMENT` | 54 | No inputs; payload fields output | [D3D12_FEATURE_DATA_TIGHT_ALIGNMENT](resources.md#tight-alignment) |
 > | `APPLICATION_SPECIFIC_DRIVER_STATE` | 56 | No inputs; `Supported` output | [D3D12_FEATURE_DATA_APPLICATION_SPECIFIC_DRIVER_STATE](#d3d12_feature_data_application_specific_driver_state) |
 > | `BYTECODE_BYPASS_HASH_SUPPORTED` | 57 | No inputs; `Supported` output | [D3D12_FEATURE_DATA_BYTECODE_BYPASS_HASH_SUPPORTED](#d3d12_feature_data_bytecode_bypass_hash_supported) |
 > | `HARDWARE_SCHEDULING_QUEUE_GROUPINGS` | 60 | No inputs; `ComputeQueuesPer3DQueue` output | [D3D12_FEATURE_DATA_HARDWARE_SCHEDULING_QUEUE_GROUPINGS](execution.md#hardware-scheduling-queue-groupings) |
 > | `SHADER_CACHE_ABI_SUPPORT` | 61 | No inputs; adapter family array, ABI range and compiler/profile versions output | [D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT](#d3d12_feature_data_shadercache_abi_support) |
 > | `BARRIER_LAYOUT` | 64 | `CommandListType`, `Layout` input; `Supported` output | [D3D12_FEATURE_DATA_BARRIER_LAYOUT](#d3d12_feature_data_barrier_layout) |
-> | `D3D12_OPTIONS22` | 65 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS22](compute.md#options22) |
+> | `D3D12_OPTIONS22` | 65 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS22](devices-and-capabilities.md#d3d12_feature_data_d3d12_options22) |
 
 <!-- d3d12-review-alert:end:devices-capabilities:catalog-table:0 -->
 
@@ -3569,6 +3633,80 @@ Indicates native 16-bit shader operations are supported. These operations requir
 
 <!-- d3d12-review-alert:end:devices-capabilities:D111-sharing-capability-domains:0 -->
 
+<a id="d3d12_feature_data_d3d12_options5"></a>
+
+#### D3D12_FEATURE_DATA_D3D12_OPTIONS5
+
+```cpp
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS5
+{
+    BOOL SRVOnlyTiledResourceTier3;
+    D3D12_RENDER_PASS_TIER RenderPassesTier;
+    D3D12_RAYTRACING_TIER RaytracingTier;
+} D3D12_FEATURE_DATA_D3D12_OPTIONS5;
+```
+
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options5-field-owners:0 -->`SRVOnlyTiledResourceTier3`: [read-only volume tiled resources](resources.md#tiled-tiers).<!-- d3d12-review-inline:end:devices-capabilities:options5-field-owners:0 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options5-field-owners:1 -->`RenderPassesTier`: [render pass support tiers](output-merger.md#render-pass-support).<!-- d3d12-review-inline:end:devices-capabilities:options5-field-owners:1 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options5-field-owners:2 -->`RaytracingTier`: [raytracing support tiers](#raytracing-tiers).<!-- d3d12-review-inline:end:devices-capabilities:options5-field-owners:2 --></ins>
+
+<a id="d3d12_feature_data_d3d12_options6"></a>
+
+#### D3D12_FEATURE_DATA_D3D12_OPTIONS6
+
+```cpp
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS6
+{
+    BOOL AdditionalShadingRatesSupported;
+    BOOL PerPrimitiveShadingRateSupportedWithViewportIndexing;
+    D3D12_VARIABLE_SHADING_RATE_TIER VariableShadingRateTier;
+    UINT ShadingRateImageTileSize;
+    BOOL BackgroundProcessingSupported;
+} D3D12_FEATURE_DATA_D3D12_OPTIONS6;
+```
+
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options6-field-owners:0 -->`AdditionalShadingRatesSupported`: [coarse shading sizes and MSAA support](pixel-shaders.md#vrs-support).<!-- d3d12-review-inline:end:devices-capabilities:options6-field-owners:0 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options6-field-owners:1 -->`PerPrimitiveShadingRateSupportedWithViewportIndexing`: [VRS tier capabilities](pixel-shaders.md#vrs-tiering).<!-- d3d12-review-inline:end:devices-capabilities:options6-field-owners:1 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options6-field-owners:2 -->`VariableShadingRateTier`: [VRS tiers](pixel-shaders.md#vrs-tiering).<!-- d3d12-review-inline:end:devices-capabilities:options6-field-owners:2 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options6-field-owners:3 -->`ShadingRateImageTileSize`: [screen-space shading rate image](pixel-shaders.md#vrs-image).<!-- d3d12-review-inline:end:devices-capabilities:options6-field-owners:3 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options6-field-owners:4 -->`BackgroundProcessingSupported`: [background processing control](execution.md#id3d12device6-setbackgroundprocessingmode).<!-- d3d12-review-inline:end:devices-capabilities:options6-field-owners:4 --></ins>
+
+<a id="d3d12_feature_data_d3d12_options7"></a>
+
+#### D3D12_FEATURE_DATA_D3D12_OPTIONS7
+
+```cpp
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS7
+{
+    D3D12_MESH_SHADER_TIER MeshShaderTier;
+    D3D12_SAMPLER_FEEDBACK_TIER SamplerFeedbackTier;
+
+} D3D12_FEATURE_DATA_D3D12_OPTIONS7;
+```
+
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options7-field-owners:0 -->`MeshShaderTier`: [mesh and amplification shader support](amplification-and-mesh-shaders.md#availability).<!-- d3d12-review-inline:end:devices-capabilities:options7-field-owners:0 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options7-field-owners:1 -->`SamplerFeedbackTier`: [sampler feedback tiers](common-shader-internals.md#feedback-capability-tiers).<!-- d3d12-review-inline:end:devices-capabilities:options7-field-owners:1 --></ins>
+
+<a id="d3d12_feature_data_d3d12_options9"></a>
+
+#### D3D12_FEATURE_DATA_D3D12_OPTIONS9
+
+```cpp
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS9
+{
+    BOOL MeshShaderPipelineStatsSupported;
+    BOOL MeshShaderSupportsFullRangeRenderTargetArrayIndex;
+    BOOL AtomicInt64OnTypedResourceSupported;
+    BOOL AtomicInt64OnGroupSharedSupported;
+    BOOL DerivativesInMeshAndAmplificationShadersSupported;
+    D3D12_WAVE_MMA_TIER WaveMMATier;
+} D3D12_FEATURE_DATA_D3D12_OPTIONS9;
+```
+
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options9-field-owners:0 -->`MeshShaderPipelineStatsSupported`: [AS/MS pipeline statistics](counters-queries-and-predication.md#mesh-statistics).<!-- d3d12-review-inline:end:devices-capabilities:options9-field-owners:0 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options9-field-owners:1 -->`MeshShaderSupportsFullRangeRenderTargetArrayIndex`: [render target array index range](amplification-and-mesh-shaders.md#render-target-array-index).<!-- d3d12-review-inline:end:devices-capabilities:options9-field-owners:1 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options9-field-owners:2 -->`DerivativesInMeshAndAmplificationShadersSupported`: [mesh and amplification shader derivatives](amplification-and-mesh-shaders.md#derivatives).<!-- d3d12-review-inline:end:devices-capabilities:options9-field-owners:2 --></ins>
+
 <a id="d3d12_feature_data_d3d12_options11"></a>
 
 #### D3D12_FEATURE_DATA_D3D12_OPTIONS11
@@ -3588,6 +3726,23 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS11 {
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-D3D12_FEATURE_DATA_D3D12_OPTIONS11:4 -->Type: **[BOOL](https://learn.microsoft.com/en-us/windows/desktop/winprog/windows-data-types)**<!-- d3d12-review-inline:end:devices-capabilities:standalone-D3D12_FEATURE_DATA_D3D12_OPTIONS11:4 --></ins>
 
 Indicates whether or not 64-bit integer atomics on resources in descriptor heaps are supported. `true` if supported, otherwise `false`.
+
+<a id="d3d12_feature_data_d3d12_options12"></a>
+
+#### D3D12_FEATURE_DATA_D3D12_OPTIONS12
+
+```cpp
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS12
+{
+    D3D12_TRI_STATE MSPrimitivesPipelineStatisticIncludesCulledPrimitives;
+    BOOL EnhancedBarriersSupported;
+    BOOL RelaxedFormatCastingSupported;
+} D3D12_FEATURE_DATA_D3D12_OPTIONS12;
+```
+
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options12-field-owners:0 -->`MSPrimitivesPipelineStatisticIncludesCulledPrimitives`: [culled-primitive statistics](counters-queries-and-predication.md#culled-primitives).<!-- d3d12-review-inline:end:devices-capabilities:options12-field-owners:0 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options12-field-owners:1 -->`EnhancedBarriersSupported`: [enhanced barriers](synchronization.md#enhanced-barriers).<!-- d3d12-review-inline:end:devices-capabilities:options12-field-owners:1 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options12-field-owners:2 -->`RelaxedFormatCastingSupported`: [format casting](formats.md#casting).<!-- d3d12-review-inline:end:devices-capabilities:options12-field-owners:2 --></ins>
 
 <a id="d3d12_feature_data_d3d12_options13"></a>
 
@@ -4115,6 +4270,62 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS20
 * <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS20:1 -->`RecreateAtTier`: [capability contract](../RecreateAtGpuva-public.md#check-for-support).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS20:1 --></ins>
 
 * <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS20:1 -->`ComputeOnlyWriteWatchSupported` reports write-watch support only for devices whose actual maximum supported feature level is `D3D_FEATURE_LEVEL_1_0_CORE`. The option is irrelevant on devices with a higher maximum supported feature level, even when device creation requested a `1_0_CORE` minimum. [Resources](resources.md#compute-only-heap-support) defines the resulting prohibition on all `D3D12_HEAP_FLAG_ALLOW_WRITE_WATCH` uses when this field is `FALSE` in the applicable device class.<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS20:1 --></ins>
+
+<a id="d3d12_feature_data_d3d12_options21"></a>
+
+#### D3D12_FEATURE_DATA_D3D12_OPTIONS21
+
+```cpp
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS21
+{
+    D3D12_WORK_GRAPHS_TIER WorkGraphsTier;
+    D3D12_EXECUTE_INDIRECT_TIER ExecuteIndirectTier;
+    BOOL SampleCmpGradientAndBiasSupported;
+    BOOL ExtendedCommandInfoSupported;
+} D3D12_FEATURE_DATA_D3D12_OPTIONS21;
+```
+
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options21-field-owners:0 -->`WorkGraphsTier`: [work graph tiers](state-objects.md#d3d12_work_graphs_tier).<!-- d3d12-review-inline:end:devices-capabilities:options21-field-owners:0 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options21-field-owners:1 -->`ExecuteIndirectTier`: [indirect execution tiers](indirect-execution.md#incrementing-constant).<!-- d3d12-review-inline:end:devices-capabilities:options21-field-owners:1 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:options21-field-owners:2 -->`SampleCmpGradientAndBiasSupported`: [comparison sampling with bias or explicit gradients](common-shader-internals.md#expanded-comparison-sampling).<!-- d3d12-review-inline:end:devices-capabilities:options21-field-owners:2 --></ins>
+
+<a id="d3d12_feature_data_d3d12_options22"></a>
+
+#### D3D12_FEATURE_DATA_D3D12_OPTIONS22
+
+```cpp
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22
+{
+    BOOL ShaderExecutionReorderingActuallyReorders;
+    BOOL CreateByteOffsetViewsSupported;
+    UINT Max1DDispatchSize;
+    UINT Max1DDispatchMeshSize;
+} D3D12_FEATURE_DATA_D3D12_OPTIONS22;
+```
+
+<!-- d3d12-review-alert:begin:compute:N-capability-selector:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> `CheckFeatureSupport` with `D3D12_FEATURE_D3D12_OPTIONS22` (enum value 65) returns this structure. `Max1DDispatchSize` and `Max1DDispatchMeshSize` are independent compute and mesh group count limits. The other members retain their [SER support](../Raytracing.md#ser-device-support) and [byte offset view support](binding.md#byte-offset-view-support) contracts.
+
+<!-- d3d12-review-alert:end:compute:N-capability-selector:0 -->
+
+- **Max1DDispatchSize** - The maximum number of thread groups that can be dispatched in the X dimension for Compute Shaders when Y = 1 and Z = 1. Must be at least 65,535 (the value of `D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION`). This limit also applies to grids launched in Work Graphs, however Work Graphs are additionally constrained by the maximum total number of thread groups as defined by `D3D12_WORK_GRAPHS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID` (16,777,215). This means that while `Max1DDispatchSize` may be larger than 16,777,215, Work Graph dispatches cannot exceed this total thread group limit.
+
+- **Max1DDispatchMeshSize** - The maximum number of thread groups that can be dispatched in the X dimension for Mesh Shaders (via `DispatchMesh`) when Y = 1 and Z = 1. Must be at least 65,535 (the value of `D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION`). This value must not exceed 4,194,303 (the value of `D3D12_MS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID`), which is the maximum total number of thread groups allowed for Mesh Shader dispatches.
+
+<ins><!-- d3d12-review-inline:begin:compute:D-older-driver-fallback:0 -->When queried on an existing driver which does not provide the expanded dispatch capabilities the D3D runtime will automatically return 65535 for both `Max1DDispatchSize` and `Max1DDispatchMeshSize` as defined by `D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION`.<!-- d3d12-review-inline:end:compute:D-older-driver-fallback:0 --></ins>
+
+<!-- d3d12-review-alert:begin:compute:N-mesh-support:0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> These fields report grid dimensions, not optional shader stage support. A mesh dispatch still requires the [mesh shader capability and pipeline](amplification-and-mesh-shaders.md#availability). The reported mesh field is constrained to the interval 65,535 through 4,194,303. That reporting requirement is separate from the total group check on every mesh grid.
+
+<!-- d3d12-review-alert:end:compute:N-mesh-support:0 -->
 
 <a id="d3d12_feature_data_predication"></a>
 

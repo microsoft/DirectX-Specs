@@ -499,16 +499,6 @@ typedef enum D3D12_EXECUTE_INDIRECT_TIER
 } D3D12_EXECUTE_INDIRECT_TIER;
 ```
 
-```cpp
-typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS21
-{
-    D3D12_WORK_GRAPHS_TIER WorkGraphsTier;
-    D3D12_EXECUTE_INDIRECT_TIER ExecuteIndirectTier;
-    BOOL SampleCmpGradientAndBiasSupported;
-    BOOL ExtendedCommandInfoSupported;
-} D3D12_FEATURE_DATA_D3D12_OPTIONS21;
-```
-
 <ins><!-- d3d12-review-inline:begin:indirect-execution:D-feature-tiers:0 -->All D3D12 devices support tier 1.0.<!-- d3d12-review-inline:end:indirect-execution:D-feature-tiers:0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:indirect-execution:D-feature-tiers:1 -->Tier 1.1 adds support for [Incrementing constant](#incrementing-constant). Device support for tier 1.1 is reported in `D3D12_FEATURE_DATA_D3D12_OPTIONS21::ExecuteIndirectTier`, queried with `D3D12_FEATURE_D3D12_OPTIONS21` via `CheckFeatureSupport()`.<!-- d3d12-review-inline:end:indirect-execution:D-feature-tiers:1 --></ins>
@@ -1095,7 +1085,7 @@ The layout of a single structure within the indirect argument buffer is:
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The runtime translates the API command signature into `D3D12DDIARG_CREATE_COMMAND_SIGNATURE_0001`. The DDI descriptor uses a driver root signature handle and resolved node mask.
+> The runtime translates [CreateCommandSignature](#createcommandsignature) inputs into `D3D12DDIARG_CREATE_COMMAND_SIGNATURE_0001`. The DDI descriptor uses a driver root signature handle and resolved node mask.
 
 <!-- d3d12-review-alert:end:indirect-execution:N-ddi-intro:0 -->
 
@@ -1104,7 +1094,7 @@ The layout of a single structure within the indirect argument buffer is:
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> The `_0001` command signature creation DDIs and unversioned `PFND3D12DDI_EXECUTE_INDIRECT` are also used for ray, mesh and incrementing-constant arguments.
+> The `_0001` command signature creation DDIs and unversioned `PFND3D12DDI_EXECUTE_INDIRECT`, implementing [ExecuteIndirect](#executeindirect), are also used for ray, mesh and incrementing-constant arguments.
 
 <!-- d3d12-review-alert:end:indirect-execution:N-ddi-intro:1 -->
 
@@ -1205,12 +1195,6 @@ typedef VOID ( APIENTRY* PFND3D12DDI_EXECUTE_INDIRECT )(
     );
 ```
 
-<ins><!-- d3d12-review-inline:begin:indirect-execution:P-ddi-size:0 -->**Size calculation:** Calculates the command signature size.<!-- d3d12-review-inline:end:indirect-execution:P-ddi-size:0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:indirect-execution:P-ddi-create:0 -->**Creation:** Create a command signature.<!-- d3d12-review-inline:end:indirect-execution:P-ddi-create:0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:indirect-execution:P-ddi-destroy:0 -->**Destruction:** Destroys a command signature.<!-- d3d12-review-inline:end:indirect-execution:P-ddi-destroy:0 --></ins>
-
 <!-- d3d12-review-alert:begin:indirect-execution:N-ddi-execution:0 -->
 
 > [!WARNING]
@@ -1219,15 +1203,6 @@ typedef VOID ( APIENTRY* PFND3D12DDI_EXECUTE_INDIRECT )(
 > After ExecuteIndirect, the runtime issues the [state-resetting DDIs](command-list-state.md#indirect).
 
 <!-- d3d12-review-alert:end:indirect-execution:N-ddi-execution:0 -->
-
-<!-- d3d12-review-alert:begin:indirect-execution:N-ddi-execution:1 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> The incrementing-constant argument consumes no GPU argument bytes. The driver supplies its zero-based sequence.
-
-<!-- d3d12-review-alert:end:indirect-execution:N-ddi-execution:1 -->
 
 <a id="driver-lifetime"></a>
 
