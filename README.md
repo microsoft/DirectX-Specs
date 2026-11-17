@@ -92,6 +92,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
 * Developer Features
     * [Agility SDK](d3d/D3D12Redistributable.md)
     * [Device Removed Extended Data](d3d/DeviceRemovedExtendedData.md)
+    * [Structured Driver Errors](d3d/D3D12StructuredDriverErrors.md) (proposal)
     * [Debug Object Auto Name](d3d/DebugObjectAutoName.md)
     * [Debug Layer Message Callbacks](d3d/MessageCallback.md)
     * [Independent Devices](d3d/IndependentDevices.md)
