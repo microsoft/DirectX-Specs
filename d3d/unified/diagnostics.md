@@ -13,10 +13,6 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:chapter-introduction:0:authored:migration-1c7bac36f76bf39e-0 -->Device removal status, Device Removed Extended Data (DRED), debug controller configuration, object names and debug messages provide complementary diagnostic information. A removal reason is an observed status, not proof that a particular application operation caused the GPU fault.<!-- d3d12-review-inline:end:diagnostics:chapter-introduction:0:authored:migration-1c7bac36f76bf39e-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:chapter-introduction:1:authored:migration-337dc172163d8861-0 -->[Execution](execution.md#completion-lifetime) defines completion, removal notification and the lifetime of submitted work. [Devices and capabilities](devices-and-capabilities.md#d3d12createdevice) defines singleton recovery and independent creation. Its [factory configuration](devices-and-capabilities.md#id3d12devicefactory-getconfigurationinterface) contract defines SDK selection and configuration snapshots.<!-- d3d12-review-inline:end:diagnostics:chapter-introduction:1:authored:migration-337dc172163d8861-0 --></ins>
-
 <a id="device-removal"></a>
 
 ## Device removal status
@@ -45,7 +41,7 @@ This method returns the reason that the device was removed.
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:removed-reason-context:0:authored:migration-4e8846ccd8d27d3c-0 -->The return value is the device's removal status, not a new command submission result. A failure does not identify the exact offending GPU operation. DRED's breadcrumbs and allocation matches provide diagnostic correlations, not causal proof.<!-- d3d12-review-inline:end:diagnostics:removed-reason-context:0:authored:migration-4e8846ccd8d27d3c-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:removed-reason-context:1:authored:migration-a2ba3c0f38a8a7e0-0 -->Removal notification, CPU fence observations and the distinction between notification and successful completion remain defined by [Execution](execution.md#completion-lifetime). A removed device and its dependent objects are not made usable by querying this method; [device creation and recovery](devices-and-capabilities.md#d3d12createdevice) govern replacement.<!-- d3d12-review-inline:end:diagnostics:removed-reason-context:1:authored:migration-a2ba3c0f38a8a7e0-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:removed-reason-context:1:authored:migration-a2ba3c0f38a8a7e0-0 -->See [completion and device removal](execution.md#completion-lifetime) for removal notifications, CPU fence observations and the distinction between notification and successful completion. See [device creation and recovery](devices-and-capabilities.md#d3d12createdevice) for device replacement.<!-- d3d12-review-inline:end:diagnostics:removed-reason-context:1:authored:migration-a2ba3c0f38a8a7e0-0 --></ins>
 
 <a id="id3d12device5-removedevice"></a>
 
@@ -477,10 +473,6 @@ void SetForceLegacyBarrierValidation(BOOL Enable);
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:legacy-validation-return:0:authored:migration-88102886d501e507-0 -->None.<!-- d3d12-review-inline:end:diagnostics:legacy-validation-return:0:authored:migration-88102886d501e507-0 --></ins>
 
-#### Context
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:legacy-validation-interface-availability:0:authored:migration-3ff6cee939cb50a0-0 -->This method is declared by `ID3D12Debug6`. Obtaining the debug controller requires the matching SDK Layers component; interface availability does not itself enable the debug layer.<!-- d3d12-review-inline:end:diagnostics:legacy-validation-interface-availability:0:authored:migration-3ff6cee939cb50a0-0 --></ins>
-
 <a id="d3d12-gpu-based-validation-flags"></a>
 
 ### D3D12_GPU_BASED_VALIDATION_FLAGS
@@ -575,20 +567,16 @@ Note that this is simply a convenience wrapper around [ID3D12Object::SetPrivateD
 
 #### Ownership
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:name-ownership:0:authored:migration-aa02e44001203fbf-0 -->The name is copied as object private data. The application retains ownership of the input string and does not need to keep it alive after the call. A later name replaces the prior wide name. The name does not confer ownership of the object, extend its lifetime, or uniquely identify it. The automatic diagnostic name is distinct from this application-supplied name.<!-- d3d12-review-inline:end:diagnostics:name-ownership:0:authored:migration-aa02e44001203fbf-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:name-ownership:0:authored:migration-aa02e44001203fbf-0 -->The name is copied as object private data. The application retains ownership of the input string and does not need to keep it alive after the call. A later name replaces the prior wide name. The automatic diagnostic name is distinct from this application-supplied name.<!-- d3d12-review-inline:end:diagnostics:name-ownership:0:authored:migration-aa02e44001203fbf-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:name-input-validity:0:authored:migration-b2d755a8e6fb53d0-0 -->`Name` must point to a readable, null-terminated UTF-16 string. A null pointer is not an empty name. An empty string consists of its terminating wide null character. The string is copied, including its terminator. Allocation of the copied name can fail with `E_OUTOFMEMORY`. The method does not return a borrowed pointer to the input.<!-- d3d12-review-inline:end:diagnostics:name-input-validity:0:authored:migration-b2d755a8e6fb53d0-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:name-input-validity:0:authored:migration-b2d755a8e6fb53d0-0 -->`Name` must point to a readable, null-terminated UTF-16 string. A null pointer is not an empty name. An empty string consists of its terminating wide null character. The string is copied, including its terminator. Allocation of the copied name can fail with `E_OUTOFMEMORY`.<!-- d3d12-review-inline:end:diagnostics:name-input-validity:0:authored:migration-b2d755a8e6fb53d0-0 --></ins>
 
 <a id="command-list-annotations"></a>
 
 ## Command list instrumentation annotations
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-context:0:authored:migration-bbfbb9da7af95630-0 -->The declaring graphics and video interfaces below expose annotation
-support methods, not pipeline bindings or new work dispatch commands.
-All require an open recording under the
-[common list lifecycle/error contract](execution.md#recording-lifecycle).
-Metadata remains internal. These entries do not define a public packet
-encoding or arbitrary malformed-input behavior.<!-- d3d12-review-inline:end:diagnostics:LA-context:0:authored:migration-bbfbb9da7af95630-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:LA-context:0:authored:migration-bbfbb9da7af95630-0 -->Command list annotations require an open recording under the
+[common list lifecycle/error contract](execution.md#recording-lifecycle).<!-- d3d12-review-inline:end:diagnostics:LA-context:0:authored:migration-bbfbb9da7af95630-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:LA-context:1:authored:migration-8f92b0d5b3c5551b-0 -->Graphics clients use the PIX event runtime helpers. The video methods
 are internal-only support interfaces. They do not define a direct
@@ -613,9 +601,7 @@ instrumentation annotations.<!-- d3d12-review-inline:end:diagnostics:LA-lifetime
 When supplied, `pData` identifies the payload bytes described by `Size`.
 `Size` describes the payload byte span, not a string or element count;
 no text terminator or ownership transfer follows. The producing
-instrumentation runtime defines the valid encoding. This reference
-does not assign application-controlled metadata tags or a new
-recoverable HRESULT protocol.<!-- d3d12-review-inline:end:diagnostics:LA-payload:0:authored:migration-2dcb1e61a685a081-0 --></ins>
+instrumentation runtime defines the valid encoding.<!-- d3d12-review-inline:end:diagnostics:LA-payload:0:authored:migration-2dcb1e61a685a081-0 --></ins>
 
 <a id="id3d12graphicscommandlist-setmarker"></a>
 
@@ -630,9 +616,6 @@ void SetMarker(UINT Metadata, const void* pData, UINT Size);
 #### Behavior
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12GraphicsCommandList-SetMarker-behavior:0:modified:migration-173868c5760c22a5-0 -->To insert instrumentation markers at the current location within a D3D12 command list, use the `PIXSetMarker` function.  This is provided by the [WinPixEventRuntime](https://devblogs.microsoft.com/pix/winpixeventruntime/) NuGet package.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12GraphicsCommandList-SetMarker-behavior:0:modified:migration-173868c5760c22a5-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12GraphicsCommandList-SetMarker-shared:0:authored:migration-021d8b9bb9421763-0 -->The [shared command list annotation context](#command-list-annotations)
-and recording/allocator ownership rules apply.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12GraphicsCommandList-SetMarker-shared:0:authored:migration-021d8b9bb9421763-0 --></ins>
 
 #### Parameters
 
@@ -657,9 +640,6 @@ void BeginEvent(UINT Metadata, const void* pData, UINT Size);
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12GraphicsCommandList-BeginEvent-behavior:0:modified:migration-ac4638d84aa33efa-0 -->To mark the start of an instrumentation region at the current location within a D3D12 command list, use the `PIXBeginEvent` function or `PIXScopedEvent` macro.  These are provided by the [WinPixEventRuntime](https://devblogs.microsoft.com/pix/winpixeventruntime/) NuGet package.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12GraphicsCommandList-BeginEvent-behavior:0:modified:migration-ac4638d84aa33efa-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12GraphicsCommandList-BeginEvent-shared:0:authored:migration-fb5726080b75edcd-0 -->The [shared command list annotation context](#command-list-annotations)
-and recording/allocator ownership rules apply.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12GraphicsCommandList-BeginEvent-shared:0:authored:migration-fb5726080b75edcd-0 --></ins>
-
 #### Parameters
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12GraphicsCommandList-BeginEvent-parameters:0:authored:migration-a79cf9004ae3f54e-0 -->`Metadata`, `pData` and `Size` use the
@@ -683,9 +663,6 @@ void EndEvent();
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12GraphicsCommandList-EndEvent-behavior:0:modified:migration-b012d9e6fbf6f873-0 -->To mark the end of an instrumentation region at the current location within a D3D12 command list, use the `PIXEndEvent` function or `PIXScopedEvent` macro.  These are provided by the [WinPixEventRuntime](https://devblogs.microsoft.com/pix/winpixeventruntime/) NuGet package.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12GraphicsCommandList-EndEvent-behavior:0:modified:migration-b012d9e6fbf6f873-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12GraphicsCommandList-EndEvent-shared:0:authored:migration-093e77ff35414bd1-0 -->The [shared command list annotation context](#command-list-annotations)
-and recording/allocator ownership rules apply.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12GraphicsCommandList-EndEvent-shared:0:authored:migration-093e77ff35414bd1-0 --></ins>
-
 #### Return values
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12GraphicsCommandList-EndEvent-return:0:authored:migration-55bcecadbf1b60d5-0 -->This method does not return a value.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12GraphicsCommandList-EndEvent-return:0:authored:migration-55bcecadbf1b60d5-0 --></ins>
@@ -703,9 +680,6 @@ void SetMarker( UINT Metadata, const void* pData, UINT Size);
 #### Behavior
 
 For internal use only. Not intended to be called directly.
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoDecodeCommandList-SetMarker-shared:0:authored:migration-19d4aa4bb4e1222f-0 -->The [shared command list annotation context](#command-list-annotations)
-and recording/allocator ownership rules apply.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoDecodeCommandList-SetMarker-shared:0:authored:migration-19d4aa4bb4e1222f-0 --></ins>
 
 #### Parameters
 
@@ -730,9 +704,6 @@ void BeginEvent( UINT Metadata, const void* pData, UINT Size);
 
 For internal use only. Not intended to be called directly.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoDecodeCommandList-BeginEvent-shared:0:authored:migration-7e818c270527342b-0 -->The [shared command list annotation context](#command-list-annotations)
-and recording/allocator ownership rules apply.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoDecodeCommandList-BeginEvent-shared:0:authored:migration-7e818c270527342b-0 --></ins>
-
 #### Parameters
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoDecodeCommandList-BeginEvent-parameters:0:authored:migration-7361bab831c8cbad-0 -->`Metadata`, `pData` and `Size` use the
@@ -756,9 +727,6 @@ void EndEvent();
 
 For internal use only. Not intended to be called directly.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoDecodeCommandList-EndEvent-shared:0:authored:migration-febb5bdcdff06f5a-0 -->The [shared command list annotation context](#command-list-annotations)
-and recording/allocator ownership rules apply.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoDecodeCommandList-EndEvent-shared:0:authored:migration-febb5bdcdff06f5a-0 --></ins>
-
 #### Return values
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoDecodeCommandList-EndEvent-return:0:authored:migration-0fb5f0ccfa8cc4f8-0 -->This method does not return a value.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoDecodeCommandList-EndEvent-return:0:authored:migration-0fb5f0ccfa8cc4f8-0 --></ins>
@@ -776,9 +744,6 @@ void SetMarker( UINT Metadata, const void* pData, UINT Size);
 #### Behavior
 
 For internal use only. Not intended to be called directly.
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoProcessCommandList-SetMarker-shared:0:authored:migration-cd760a70f5351d54-0 -->The [shared command list annotation context](#command-list-annotations)
-and recording/allocator ownership rules apply.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoProcessCommandList-SetMarker-shared:0:authored:migration-cd760a70f5351d54-0 --></ins>
 
 #### Parameters
 
@@ -803,9 +768,6 @@ void BeginEvent( UINT Metadata, const void* pData, UINT Size);
 
 For internal use only. Not intended to be called directly.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoProcessCommandList-BeginEvent-shared:0:authored:migration-0c0f09cf8223bd5c-0 -->The [shared command list annotation context](#command-list-annotations)
-and recording/allocator ownership rules apply.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoProcessCommandList-BeginEvent-shared:0:authored:migration-0c0f09cf8223bd5c-0 --></ins>
-
 #### Parameters
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoProcessCommandList-BeginEvent-parameters:0:authored:migration-8c192941730f6214-0 -->`Metadata`, `pData` and `Size` use the
@@ -829,9 +791,6 @@ void EndEvent();
 
 For internal use only. Not intended to be called directly.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoProcessCommandList-EndEvent-shared:0:authored:migration-925ddfc2d11736c0-0 -->The [shared command list annotation context](#command-list-annotations)
-and recording/allocator ownership rules apply.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoProcessCommandList-EndEvent-shared:0:authored:migration-925ddfc2d11736c0-0 --></ins>
-
 #### Return values
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoProcessCommandList-EndEvent-return:0:authored:migration-f9eacfba34b9152c-0 -->This method does not return a value.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoProcessCommandList-EndEvent-return:0:authored:migration-f9eacfba34b9152c-0 --></ins>
@@ -849,9 +808,6 @@ void SetMarker( UINT Metadata, const void* pData, UINT Size);
 #### Behavior
 
 For internal use only. Not intended to be called directly.
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoEncodeCommandList-SetMarker-shared:0:authored:migration-45107ad27a2f4a15-0 -->The [shared command list annotation context](#command-list-annotations)
-and recording/allocator ownership rules apply.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoEncodeCommandList-SetMarker-shared:0:authored:migration-45107ad27a2f4a15-0 --></ins>
 
 #### Parameters
 
@@ -876,9 +832,6 @@ void BeginEvent( UINT Metadata, const void* pData, UINT Size);
 
 For internal use only. Not intended to be called directly.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoEncodeCommandList-BeginEvent-shared:0:authored:migration-e13e70ab06216310-0 -->The [shared command list annotation context](#command-list-annotations)
-and recording/allocator ownership rules apply.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoEncodeCommandList-BeginEvent-shared:0:authored:migration-e13e70ab06216310-0 --></ins>
-
 #### Parameters
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoEncodeCommandList-BeginEvent-parameters:0:authored:migration-6d3e4445d4030251-0 -->`Metadata`, `pData` and `Size` use the
@@ -902,9 +855,6 @@ void EndEvent();
 
 For internal use only. Not intended to be called directly.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoEncodeCommandList-EndEvent-shared:0:authored:migration-86bfd6c3677fe53f-0 -->The [shared command list annotation context](#command-list-annotations)
-and recording/allocator ownership rules apply.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoEncodeCommandList-EndEvent-shared:0:authored:migration-86bfd6c3677fe53f-0 --></ins>
-
 #### Return values
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:LA-ID3D12VideoEncodeCommandList-EndEvent-return:0:authored:migration-5fc0f84cc352dde4-0 -->This method does not return a value.<!-- d3d12-review-inline:end:diagnostics:LA-ID3D12VideoEncodeCommandList-EndEvent-return:0:authored:migration-5fc0f84cc352dde4-0 --></ins>
@@ -916,14 +866,10 @@ and recording/allocator ownership rules apply.<!-- d3d12-review-inline:end:diagn
 <ins><!-- d3d12-review-inline:begin:diagnostics:QA-purpose:0:modified:migration-7279ee7edee7ff4a-0 -->Not intended to be called directly.  Use the
 [PIX event runtime](https://devblogs.microsoft.com/pix/winpixeventruntime/) to insert events into a command queue.<!-- d3d12-review-inline:end:diagnostics:QA-purpose:0:modified:migration-7279ee7edee7ff4a-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:QA-context:0:authored:migration-1f287108fadcd5c3-0 -->These methods annotate a command queue for instrumentation. They are
-distinct from command list BeginEvent/EndEvent/SetMarker recordings.<!-- d3d12-review-inline:end:diagnostics:QA-context:0:authored:migration-1f287108fadcd5c3-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:diagnostics:QA-context:1:authored:migration-0697ff34058bd26f-0 -->[Synchronization-only queues](execution.md#synchronization-only-queues)
 support synchronization rather than these annotation methods. An
 unsupported annotation call is invalid usage and can invalidate the
-device. Ordinary core/video queue annotation support must not be
-inferred from a command list DRED breadcrumb rule.<!-- d3d12-review-inline:end:diagnostics:QA-context:1:authored:migration-0697ff34058bd26f-0 --></ins>
+device.<!-- d3d12-review-inline:end:diagnostics:QA-context:1:authored:migration-0697ff34058bd26f-0 --></ins>
 
 <a id="queue-annotation-payload"></a>
 
@@ -936,10 +882,7 @@ supplies the compatible metadata tag and optional input payload;
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:QA-payload:1:authored:migration-e984c3b21e6e071b-0 -->Payload bytes are consumed or captured during the API call; caller
 storage ownership is not transferred and need not extend to later GPU
-completion. These parameters provide no output buffer or HRESULT
-channel. No particular encoding, terminator or arbitrary malformed
-metadata behavior is defined here. Use the supported event runtime
-helpers rather than constructing raw internal packets.<!-- d3d12-review-inline:end:diagnostics:QA-payload:1:authored:migration-e984c3b21e6e071b-0 --></ins>
+completion.<!-- d3d12-review-inline:end:diagnostics:QA-payload:1:authored:migration-e984c3b21e6e071b-0 --></ins>
 
 <a id="id3d12commandqueue-setmarker"></a>
 
@@ -955,15 +898,10 @@ void SetMarker(UINT Metadata, const void* pData, UINT Size);
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:QA-SetMarker-behavior:0:modified:migration-56e0f9cfb6fbc695-0 -->To insert instrumentation markers at the current location within a D3D12 command queue, use the `PIXSetMarker` function.  This is provided by the [WinPixEventRuntime](https://devblogs.microsoft.com/pix/winpixeventruntime/) NuGet package.<!-- d3d12-review-inline:end:diagnostics:QA-SetMarker-behavior:0:modified:migration-56e0f9cfb6fbc695-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:QA-SetMarker-shared:0:authored:migration-7d572194d9c47b88-0 -->The [shared queue annotation context](#queue-annotations) applies. This is
-a support method for the event runtime, not a direct application
-instrumentation interface.<!-- d3d12-review-inline:end:diagnostics:QA-SetMarker-shared:0:authored:migration-7d572194d9c47b88-0 --></ins>
-
 #### Parameters
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:QA-SetMarker-parameters:0:authored:migration-118177b4535985b3-0 -->`Metadata`, optional input `pData`, and `Size` use the
-[internal annotation argument contract](#queue-annotation-payload).
-They are all internal parameters. The helper/runtime defines their encoding.<!-- d3d12-review-inline:end:diagnostics:QA-SetMarker-parameters:0:authored:migration-118177b4535985b3-0 --></ins>
+[internal annotation argument contract](#queue-annotation-payload).<!-- d3d12-review-inline:end:diagnostics:QA-SetMarker-parameters:0:authored:migration-118177b4535985b3-0 --></ins>
 
 #### Return values
 
@@ -983,15 +921,10 @@ void BeginEvent(UINT Metadata, const void* pData, UINT Size);
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:QA-BeginEvent-behavior:0:modified:migration-08025d487c7b876c-0 -->To mark the start of an instrumentation region at the current location within a D3D12 command queue, use the `PIXBeginEvent` function or `PIXScopedEvent` macro.  These are provided by the [WinPixEventRuntime](https://devblogs.microsoft.com/pix/winpixeventruntime/) NuGet package.<!-- d3d12-review-inline:end:diagnostics:QA-BeginEvent-behavior:0:modified:migration-08025d487c7b876c-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:QA-BeginEvent-shared:0:authored:migration-c30db1bafbb8603a-0 -->The [shared queue annotation context](#queue-annotations) applies. This is
-a support method for the event runtime, not a direct application
-instrumentation interface.<!-- d3d12-review-inline:end:diagnostics:QA-BeginEvent-shared:0:authored:migration-c30db1bafbb8603a-0 --></ins>
-
 #### Parameters
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:QA-BeginEvent-parameters:0:authored:migration-d8fea27c44cd4f92-0 -->`Metadata`, optional input `pData`, and `Size` use the
-[internal annotation argument contract](#queue-annotation-payload).
-They are all internal parameters. The helper/runtime defines their encoding.<!-- d3d12-review-inline:end:diagnostics:QA-BeginEvent-parameters:0:authored:migration-d8fea27c44cd4f92-0 --></ins>
+[internal annotation argument contract](#queue-annotation-payload).<!-- d3d12-review-inline:end:diagnostics:QA-BeginEvent-parameters:0:authored:migration-d8fea27c44cd4f92-0 --></ins>
 
 #### Return values
 
@@ -1011,10 +944,6 @@ void EndEvent();
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:QA-EndEvent-behavior:0:modified:migration-dc95fdb1ee7f275e-0 -->To mark the end of an instrumentation region at the current location within a D3D12 command queue, use the `PIXEndEvent` function or `PIXScopedEvent` macro.  These are provided by the [WinPixEventRuntime](https://devblogs.microsoft.com/pix/winpixeventruntime/) NuGet package.<!-- d3d12-review-inline:end:diagnostics:QA-EndEvent-behavior:0:modified:migration-dc95fdb1ee7f275e-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:QA-EndEvent-shared:0:authored:migration-abe4845cedd8df34-0 -->The [shared queue annotation context](#queue-annotations) applies. This is
-a support method for the event runtime, not a direct application
-instrumentation interface.<!-- d3d12-review-inline:end:diagnostics:QA-EndEvent-shared:0:authored:migration-abe4845cedd8df34-0 --></ins>
-
 #### Return values
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:QA-EndEvent-return:0:authored:migration-fd00e4714012618f-0 -->This method does not return a value.<!-- d3d12-review-inline:end:diagnostics:QA-EndEvent-return:0:authored:migration-fd00e4714012618f-0 --></ins>
@@ -1023,7 +952,7 @@ instrumentation interface.<!-- d3d12-review-inline:end:diagnostics:QA-EndEvent-s
 
 ## Device Removed Extended Data
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:diagnostics-responsibilities:0:authored:migration-33eb6355639069c6-0 -->The runtime controls DRED collection and assembles its diagnostic records. Automatic breadcrumbs use GPU progress writes backed by system memory that survives device removal. The driver must support the [existing system memory diagnostic heap facility](resources.md#existing-memory-heaps). GPU page-fault reporting depends on the GPU and driver. Diagnostic support is not a requirement that every invalid access produces a page fault or identifies one faulting operation. DRED allocation kinds correspond numerically to the published `D3D12DDI_HANDLETYPE` values. These output records are not new driver entry points.<!-- d3d12-review-inline:end:diagnostics:diagnostics-responsibilities:0:authored:migration-33eb6355639069c6-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:diagnostics-responsibilities:0:authored:migration-33eb6355639069c6-0 -->The runtime controls DRED collection and assembles its diagnostic records.<!-- d3d12-review-inline:end:diagnostics:diagnostics-responsibilities:0:authored:migration-33eb6355639069c6-0 --></ins>
 
 DRED extends the debugging toolset by <ins><!-- d3d12-review-inline:begin:diagnostics:dred-introduction:0:modified:source-07c1aeda5c19139d-0-0 -->providing<!-- d3d12-review-inline:end:diagnostics:dred-introduction:0:modified:source-07c1aeda5c19139d-0-0 --></ins> additional data about the state of GPU workload execution at (or near) the time of the GPU error.  DRED data includes automatic breadcrumbs (with optional PIX event/marker context) and GPU Page Fault analysis. DRED data can be examined in a user-mode debugger or with the use of the DRED interface <ins><!-- d3d12-review-inline:begin:diagnostics:dred-introduction:0:modified:source-07c1aeda5c19139d-0-1 -->APIs<!-- d3d12-review-inline:end:diagnostics:dred-introduction:0:modified:source-07c1aeda5c19139d-0-1 --></ins>.
 
@@ -1993,7 +1922,7 @@ This interface is obtained by querying it from the [ID3D12Device](devices-and-ca
 
 ### Scope of the information queue
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:infoqueue-scope:0:authored:migration-140b04b1f37deb05-0 -->The device's `ID3D12InfoQueue` controls messages associated with that device/producer. Storage, counters, filter stacks and callback delivery must not be assumed to be one process-global setting merely because infrastructure is shared. The callback mechanism supports multiple registrations without replacing another component's callback. A callback cookie identifies a registered callback. It is not a device or SDK selection identifier.<!-- d3d12-review-inline:end:diagnostics:infoqueue-scope:0:authored:migration-140b04b1f37deb05-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:infoqueue-scope:0:authored:migration-140b04b1f37deb05-0 -->The device's `ID3D12InfoQueue` controls messages associated with that device/producer. Storage, counters, filter stacks and callback delivery must not be assumed to be one process-global setting merely because infrastructure is shared. The callback mechanism supports multiple registrations without replacing another component's callback.<!-- d3d12-review-inline:end:diagnostics:infoqueue-scope:0:authored:migration-140b04b1f37deb05-0 --></ins>
 
 <a id="infoqueue-filtering"></a>
 
@@ -2021,7 +1950,7 @@ This interface is obtained by querying it from the [ID3D12Device](devices-and-ca
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:count-buffer-rules:2:authored:migration-316cb0dc1a610fd5-0 -->`GetMessage` indexes the retrieval-filtered sequence: valid indices satisfy `0 <= MessageIndex < GetNumStoredMessagesAllowedByRetrievalFilter()`. A count of zero has no valid index. It does not remove a message. `pMessageByteLength` is required. Its input is the caller buffer capacity in bytes, including the `D3D12_MESSAGE` structure and description. With `pMessage == nullptr`, the method reports the required size without writing a message. On success, `pDescription` points into the caller's returned buffer, not separately allocated runtime storage; `DescriptionByteLength` includes the terminating null byte. The description is narrow text. Keep the buffer alive while using that pointer.<!-- d3d12-review-inline:end:diagnostics:count-buffer-rules:2:authored:migration-316cb0dc1a610fd5-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:count-buffer-rules:3:authored:migration-42ea2374ee6279e3-0 -->`GetStorageFilter` and `GetRetrievalFilter` similarly accept a null `pFilter` to report the required byte size through `pFilterByteLength`. A nonnull destination must hold both `D3D12_INFO_QUEUE_FILTER` and all returned arrays. Its list pointers refer inside that caller-owned buffer. The byte length pointer is required. A size query is not a transaction with the later read: messages or filters can change between calls. Invalid message indices or insufficient buffers fail rather than supplying a complete result. A size query success is not a stored message removal. The individual methods define their exact `HRESULT` and length-update rules: a short GetMessage read leaves the caller's length unchanged, whereas a short filter read reports its required byte size. No failed call generally clears output fields.<!-- d3d12-review-inline:end:diagnostics:count-buffer-rules:3:authored:migration-42ea2374ee6279e3-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:count-buffer-rules:3:authored:migration-42ea2374ee6279e3-0 -->`GetStorageFilter` and `GetRetrievalFilter` similarly accept a null `pFilter` to report the required byte size through `pFilterByteLength`. A nonnull destination must hold both `D3D12_INFO_QUEUE_FILTER` and all returned arrays. Its list pointers refer inside that caller-owned buffer. The byte length pointer is required. A size query is not a transaction with the later read: messages or filters can change between calls. Invalid message indices or insufficient buffers fail rather than supplying a complete result. A short GetMessage read leaves the caller's length unchanged, whereas a short filter read reports its required byte size.<!-- d3d12-review-inline:end:diagnostics:count-buffer-rules:3:authored:migration-42ea2374ee6279e3-0 --></ins>
 
 <a id="id3d12infoqueue-addapplicationmessage"></a>
 
@@ -3369,8 +3298,6 @@ typedef enum D3D12_MESSAGE_CALLBACK_FLAGS
 
 Callbacks may be invoked with the internal runtimes in states which are unsafe to make other D3D calls. Any D3D API calls from a callback implementation could result in deadlocks and crashes.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:callback-flags-and-lifetime:0:authored:migration-d0b0a0c4009ccda9-0 -->`D3D12_MESSAGE_CALLBACK_FLAG_NONE` (0) filters the callback in the same way as debug text. `D3D12_MESSAGE_CALLBACK_IGNORE_FILTERS` (1) bypasses that filtering. These are not reentrancy flags and do not relax the prohibition on all D3D API calls from a callback.<!-- d3d12-review-inline:end:diagnostics:callback-flags-and-lifetime:0:authored:migration-d0b0a0c4009ccda9-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:diagnostics:callback-flags-and-lifetime:1:authored:migration-3227b89fa91e47ca-0 -->The callback receives the category, severity, ID and a narrow message description, and the application-supplied `pContext`. The application must not retain the description pointer beyond that invocation without copying its contents. `pContext` memory must remain valid until the callback is successfully unregistered. `UnregisterMessageCallback` waits for outstanding invocations. The application must call it outside callbacks before freeing the context or unloading callback code.<!-- d3d12-review-inline:end:diagnostics:callback-flags-and-lifetime:1:authored:migration-3227b89fa91e47ca-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:callback-flags-and-lifetime:2:authored:migration-7070244cfb2a2cc6-0 -->For a message delivered to multiple active callbacks, those callbacks are invoked sequentially in registration order. This does not establish a global ordering of messages from all application and internal validation threads. Internal threads, including GPU-based validation and queue-virtualization threads, can deliver callbacks.<!-- d3d12-review-inline:end:diagnostics:callback-flags-and-lifetime:2:authored:migration-7070244cfb2a2cc6-0 --></ins>
@@ -3381,9 +3308,7 @@ Callbacks may be invoked with the internal runtimes in states which are unsafe t
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-object-scope:0:authored:migration-742f186a1a54c8a0-0 -->Debug device, debug command list and debug command queue interfaces configure or inspect the debug layer associated with the corresponding D3D12 object. These controls are distinct from the [debug controller startup options](#debug-configuration). They do not enable GPU-based validation on a device that was created without it.<!-- d3d12-review-inline:end:diagnostics:D107-object-scope:0:authored:migration-742f186a1a54c8a0-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-object-scope:1:authored:migration-4689f46c60848cad-0 -->`ID3D12DebugDevice1` and `ID3D12DebugCommandList1` derive directly from `IUnknown`, rather than from the unnumbered debug interfaces. `ID3D12DebugDevice2` derives from `ID3D12DebugDevice`; `ID3D12DebugCommandList2` derives from `ID3D12DebugCommandList`, and `ID3D12DebugCommandList3` derives from `ID3D12DebugCommandList2`. `ID3D12DebugCommandQueue1` derives from `ID3D12DebugCommandQueue`. Directly redeclared methods below are separate declaring contracts; inherited methods are not repeated.<!-- d3d12-review-inline:end:diagnostics:D107-object-scope:1:authored:migration-4689f46c60848cad-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-object-scope:2:authored:migration-eeccdc969f25c1e7-0 -->These interfaces provide diagnostics, not resource barriers, GPU completion queries or permission to use resources in an otherwise-invalid state. [Synchronization](synchronization.md) owns resource states, barrier access and texture layout semantics.<!-- d3d12-review-inline:end:diagnostics:D107-object-scope:2:authored:migration-eeccdc969f25c1e7-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-object-scope:1:authored:migration-4689f46c60848cad-0 -->`ID3D12DebugDevice1` and `ID3D12DebugCommandList1` derive directly from `IUnknown`, rather than from the unnumbered debug interfaces. `ID3D12DebugDevice2` derives from `ID3D12DebugDevice`; `ID3D12DebugCommandList2` derives from `ID3D12DebugCommandList`, and `ID3D12DebugCommandList3` derives from `ID3D12DebugCommandList2`. `ID3D12DebugCommandQueue1` derives from `ID3D12DebugCommandQueue`.<!-- d3d12-review-inline:end:diagnostics:D107-object-scope:1:authored:migration-4689f46c60848cad-0 --></ins>
 
 <a id="live-object-report-options"></a>
 
@@ -3548,7 +3473,7 @@ typedef enum D3D12_DEBUG_DEVICE_BYTECODE_VALIDATION_MODE
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-bytecode-validation-policy:0:authored:migration-d286112101174084-0 -->`D3D12_DEBUG_DEVICE_BYTECODE_VALIDATION_MODE` is a 4-byte enum payload. `DISABLED` (0) disables the layer's bytecode validation policy; `WHEN_HASH_BYPASSED` (1) selects validation when the normal bytecode hash check is bypassed; `ALL_BYTECODE` (2) requests validation for all bytecode reaching that policy. `MODE_DEFAULT` aliases `WHEN_HASH_BYPASSED`. The device default is `MODE_DEFAULT`.<!-- d3d12-review-inline:end:diagnostics:D107-bytecode-validation-policy:0:authored:migration-d286112101174084-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-bytecode-validation-policy:1:authored:migration-f316408dce34bc98-0 -->The setter accepts those three mode values. Other mode values return `E_INVALIDARG`. This changes the associated device's validation policy for subsequent validation calls, not previously created shader objects or the underlying shader format/acceptance contract. The getter must return the current mode using the same exact 4-byte enum payload. An incorrect size returns `E_INVALIDARG`. A successful getter returns `S_OK`. This typed control does not enable GPU-based validation.<!-- d3d12-review-inline:end:diagnostics:D107-bytecode-validation-policy:1:authored:migration-f316408dce34bc98-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-bytecode-validation-policy:1:authored:migration-f316408dce34bc98-0 -->The setter accepts those three mode values. Other mode values return `E_INVALIDARG`. This changes the associated device's validation policy for subsequent validation calls, not previously created shader objects or the underlying shader format/acceptance contract. This typed control does not enable GPU-based validation.<!-- d3d12-review-inline:end:diagnostics:D107-bytecode-validation-policy:1:authored:migration-f316408dce34bc98-0 --></ins>
 
 #### D3D12_DEBUG_DEVICE_GPU_BASED_VALIDATION_SETTINGS
 
@@ -3617,9 +3542,9 @@ The SlowdownFactor is applied by artificially delaying the time it takes for a f
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-slowdown-validation:0:authored:migration-caa9fcbe39009c77-0 -->`SlowdownFactor` is a dimensionless factor, not a number of milliseconds. Negative values, including negative infinity, are invalid and return `E_INVALIDARG`. Zero, including negative zero, disables artificial slowdown; one requests approximately twice the nominal fence signal time. This does not establish a precise timer, GPU clock rate, completion deadline or ordering guarantee. The contract does not specify the result for NaN or positive infinity.<!-- d3d12-review-inline:end:diagnostics:D107-slowdown-validation:0:authored:migration-caa9fcbe39009c77-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-payload-layout-and-timing:0:authored:migration-8657a1f269224eb6-0 -->The device GPU-based validation structure contains three consecutive 4-byte members at offsets 0, 4 and 8, in declaration order. The list GPU-based validation structure contains its 4-byte mode at offset 0. The slowdown structure contains its 4-byte `FLOAT` at offset 0. These structures contain no pointers or variable-length data.<!-- d3d12-review-inline:end:diagnostics:D107-payload-layout-and-timing:0:authored:migration-8657a1f269224eb6-0 --></ins>
+#### Shader patch selection and pipeline state creation
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-payload-layout-and-timing:1:authored:migration-ea4409d2c8f8c77c-0 -->Device GPU-based validation settings supply the default shader patch mode for command list creation and reset. A list override changes that list's patch mode. It does not replace the device default or change other lists. A reset resamples the device default. Set a per-list override before recording the draw or dispatch operations to which it is intended to apply. A setting change does not retroactively patch previously recorded operations.<!-- d3d12-review-inline:end:diagnostics:D107-payload-layout-and-timing:1:authored:migration-ea4409d2c8f8c77c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-payload-layout-and-timing:1:authored:migration-ea4409d2c8f8c77c-0 -->Device GPU-based validation settings supply the default shader patch mode for command list creation and reset. A list override changes that list's patch mode. It does not replace the device default or change other lists. A [command list reset](execution.md#list-reset) resamples the device default. Use [ID3D12DebugCommandList1::SetDebugParameter](#id3d12debugcommandlist1-setdebugparameter) or [ID3D12DebugCommandList2::SetDebugParameter](#id3d12debugcommandlist2-setdebugparameter) to set a per-list override before recording the draw or dispatch operations to which it is intended to apply. A setting change does not retroactively patch previously recorded operations.<!-- d3d12-review-inline:end:diagnostics:D107-payload-layout-and-timing:1:authored:migration-ea4409d2c8f8c77c-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-payload-layout-and-timing:2:authored:migration-b24f55feb6b0690a-0 -->`PipelineStateCreateFlags` control work performed when pipeline state objects are created, rather than retroactively recreating existing objects. The per-list mode selects the corresponding patched variant used for subsequent recording. When GPU-based validation state tracking is disabled, a device request for `STATE_TRACKING_ONLY` is diagnosed and normalized to `NONE`. Changing these payloads does not turn on the startup GPU-based validation infrastructure.<!-- d3d12-review-inline:end:diagnostics:D107-payload-layout-and-timing:2:authored:migration-b24f55feb6b0690a-0 --></ins>
 
@@ -3689,7 +3614,7 @@ This enum is used by the [D3D12_DEBUG_DEVICE_GPU_BASED_VALIDATION_SETTINGS](#d3d
 
 Generally speaking most application developers are likely to leave this parameter unchanged. However, if the overhead of deferring patched PSO creation is suspected to be too much of a performance problem, then developers should consider changing this setting.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-patch-validity:0:authored:migration-51985be574cdaf37-0 -->Shader patch mode values 0 through 3 select `NONE`, `STATE_TRACKING_ONLY`, `UNGUARDED_VALIDATION` and `GUARDED_VALIDATION`, respectively. `NUM_D3D12_GPU_BASED_VALIDATION_SHADER_PATCH_MODES` is the count (4), not another mode. The front-load flags can be combined. `VALID_MASK` is `0x07` and is not a fourth independent option. Applications must not use undeclared patch modes or reserved pipeline create bits. The parameter entry points do not promise rejection of every invalid payload field merely because the selector and payload size are checked.<!-- d3d12-review-inline:end:diagnostics:D107-patch-validity:0:authored:migration-51985be574cdaf37-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-patch-validity:0:authored:migration-51985be574cdaf37-0 -->The front-load flags can be combined. Applications must not use undeclared patch modes or reserved pipeline create bits. The parameter entry points do not promise rejection of every invalid payload field merely because the selector and payload size are checked.<!-- d3d12-review-inline:end:diagnostics:D107-patch-validity:0:authored:migration-51985be574cdaf37-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-patch-validity:1:authored:migration-00ef02ecff992dc1-0 -->Guarded validation changes execution of erroneous instructions. It is not a guarantee that invalid work cannot remove the device. `NONE` and `STATE_TRACKING_ONLY` reduce or omit shader validation, and do not establish correctness of unreported work.<!-- d3d12-review-inline:end:diagnostics:D107-patch-validity:1:authored:migration-00ef02ecff992dc1-0 --></ins>
 
@@ -3755,7 +3680,7 @@ Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice-ReportLiveDeviceObjects-Return-value:1 -->This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice-ReportLiveDeviceObjects-Return-value:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice-ReportLiveDeviceObjects-report-contract:0:authored:migration-a0f31d896a6a35c5-0 -->[Live object report options](#live-object-report-options) define flag combinations, internal/external reference filtering, invalid bits, result meaning and ownership. This entry point reports the associated device's live objects and does not release them.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice-ReportLiveDeviceObjects-report-contract:0:authored:migration-a0f31d896a6a35c5-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice-ReportLiveDeviceObjects-report-contract:0:authored:migration-a0f31d896a6a35c5-0 -->[Live object report options and results](#live-object-report-options).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice-ReportLiveDeviceObjects-report-contract:0:authored:migration-a0f31d896a6a35c5-0 --></ins>
 
 <a id="id3d12debugdevice-setfeaturemask"></a>
 
@@ -3839,7 +3764,7 @@ Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-GetDebugParameter-typed-contract:0:authored:migration-44eaee3d53619a81-0 -->The [fixed-size selector and payload contract](#object-debug-parameters) defines the exact accepted sizes, copy behavior, results and object scope. The getter returns the current effective payload, not a required buffer size. It does not promise a zeroed output on failure.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-GetDebugParameter-typed-contract:0:authored:migration-44eaee3d53619a81-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-GetDebugParameter-typed-contract:0:authored:migration-44eaee3d53619a81-0 -->[Fixed-size selector and payload contract](#object-debug-parameters).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-GetDebugParameter-typed-contract:0:authored:migration-44eaee3d53619a81-0 --></ins>
 
 <a id="id3d12debugdevice1-reportlivedeviceobjects"></a>
 
@@ -3869,7 +3794,7 @@ Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-ReportLiveDeviceObjects-report-contract:0:authored:migration-d9d655415bb06be7-0 -->[Live object report options](#live-object-report-options) define flag combinations, internal/external reference filtering, invalid bits, result meaning and ownership. This entry point reports the associated device's live objects and does not release them.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-ReportLiveDeviceObjects-report-contract:0:authored:migration-d9d655415bb06be7-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-ReportLiveDeviceObjects-report-contract:0:authored:migration-d9d655415bb06be7-0 -->[Live object report options and results](#live-object-report-options).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-ReportLiveDeviceObjects-report-contract:0:authored:migration-d9d655415bb06be7-0 --></ins>
 
 <a id="id3d12debugdevice1-setdebugparameter"></a>
 
@@ -3911,7 +3836,7 @@ Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-SetDebugParameter-typed-contract:0:authored:migration-0f138ac7c9dad3cb-0 -->The [fixed-size selector and payload contract](#object-debug-parameters) defines the exact accepted sizes, copy behavior, results and object scope. [GPU-based validation payloads](#object-gbv-settings) define defaults, layouts, units and recording/creation timing.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-SetDebugParameter-typed-contract:0:authored:migration-0f138ac7c9dad3cb-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-SetDebugParameter-typed-contract:0:authored:migration-0f138ac7c9dad3cb-0 -->[Fixed-size selector and payload contract](#object-debug-parameters). [GPU-based validation settings and timing](#object-gbv-settings).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-SetDebugParameter-typed-contract:0:authored:migration-0f138ac7c9dad3cb-0 --></ins>
 
 <a id="id3d12debugdevice2-getdebugparameter"></a>
 
@@ -3953,7 +3878,7 @@ Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice2-GetDebugParameter-typed-contract:0:authored:migration-7e285d1e59a8edec-0 -->The [fixed-size selector and payload contract](#object-debug-parameters) defines the exact accepted sizes, copy behavior, results and object scope. The getter returns the current effective payload, not a required buffer size. It does not promise a zeroed output on failure.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice2-GetDebugParameter-typed-contract:0:authored:migration-7e285d1e59a8edec-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice2-GetDebugParameter-typed-contract:0:authored:migration-7e285d1e59a8edec-0 -->[Fixed-size selector and payload contract](#object-debug-parameters).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice2-GetDebugParameter-typed-contract:0:authored:migration-7e285d1e59a8edec-0 --></ins>
 
 <a id="id3d12debugdevice2-setdebugparameter"></a>
 
@@ -3995,7 +3920,7 @@ Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice2-SetDebugParameter-typed-contract:0:authored:migration-25266b1b5a0aefdd-0 -->The [fixed-size selector and payload contract](#object-debug-parameters) defines the exact accepted sizes, copy behavior, results and object scope. [GPU-based validation payloads](#object-gbv-settings) define defaults, layouts, units and recording/creation timing.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice2-SetDebugParameter-typed-contract:0:authored:migration-25266b1b5a0aefdd-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice2-SetDebugParameter-typed-contract:0:authored:migration-25266b1b5a0aefdd-0 -->[Fixed-size selector and payload contract](#object-debug-parameters). [GPU-based validation settings and timing](#object-gbv-settings).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice2-SetDebugParameter-typed-contract:0:authored:migration-25266b1b5a0aefdd-0 --></ins>
 
 <a id="id3d12debugcommandlist1-getdebugparameter"></a>
 
@@ -4037,7 +3962,7 @@ Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-GetDebugParameter-Return-value:1 -->Returns `S_OK` if successful, otherwise `E_INVALIDARG`.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-GetDebugParameter-Return-value:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-GetDebugParameter-typed-contract:0:authored:migration-cb124c5e721f6499-0 -->The [fixed-size selector and payload contract](#object-debug-parameters) defines the exact accepted sizes, copy behavior, results and object scope. The getter returns the current effective payload, not a required buffer size. It does not promise a zeroed output on failure.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-GetDebugParameter-typed-contract:0:authored:migration-cb124c5e721f6499-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-GetDebugParameter-typed-contract:0:authored:migration-cb124c5e721f6499-0 -->[Fixed-size selector and payload contract](#object-debug-parameters).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-GetDebugParameter-typed-contract:0:authored:migration-cb124c5e721f6499-0 --></ins>
 
 <a id="id3d12debugcommandlist1-setdebugparameter"></a>
 
@@ -4087,7 +4012,7 @@ This method returns one of the [Direct3D 12 Return Codes](devices-and-capabiliti
 
 Resetting a command list restores the debug parameters to the default values. This is because a command list reset is treated as equivalent to creating a new command list.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-SetDebugParameter-typed-contract:0:authored:migration-0822e1157adf8965-0 -->The [fixed-size selector and payload contract](#object-debug-parameters) defines the exact accepted sizes, copy behavior, results and object scope. [GPU-based validation payloads](#object-gbv-settings) define defaults, layouts, units and recording/creation timing.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-SetDebugParameter-typed-contract:0:authored:migration-0822e1157adf8965-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-SetDebugParameter-typed-contract:0:authored:migration-0822e1157adf8965-0 -->[Fixed-size selector and payload contract](#object-debug-parameters). [GPU-based validation settings and timing](#object-gbv-settings).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-SetDebugParameter-typed-contract:0:authored:migration-0822e1157adf8965-0 --></ins>
 
 <a id="id3d12debugcommandlist2-getdebugparameter"></a>
 
@@ -4129,7 +4054,7 @@ Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList2-GetDebugParameter-Return-value:1 -->Returns `S_OK` if successful, otherwise `E_INVALIDARG`.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList2-GetDebugParameter-Return-value:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList2-GetDebugParameter-typed-contract:0:authored:migration-65f2ef73e68419e4-0 -->The [fixed-size selector and payload contract](#object-debug-parameters) defines the exact accepted sizes, copy behavior, results and object scope. The getter returns the current effective payload, not a required buffer size. It does not promise a zeroed output on failure.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList2-GetDebugParameter-typed-contract:0:authored:migration-65f2ef73e68419e4-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList2-GetDebugParameter-typed-contract:0:authored:migration-65f2ef73e68419e4-0 -->[Fixed-size selector and payload contract](#object-debug-parameters).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList2-GetDebugParameter-typed-contract:0:authored:migration-65f2ef73e68419e4-0 --></ins>
 
 <a id="id3d12debugcommandlist2-setdebugparameter"></a>
 
@@ -4179,7 +4104,7 @@ Certain debug behaviors of D3D12 Debug Layer can be modified by setting debug pa
 
 Resetting a command list restores the debug parameters to the default values. This is because a command list reset is treated as equivalent to creating a new command list.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList2-SetDebugParameter-typed-contract:0:authored:migration-944a6f75fb838aeb-0 -->The [fixed-size selector and payload contract](#object-debug-parameters) defines the exact accepted sizes, copy behavior, results and object scope. [GPU-based validation payloads](#object-gbv-settings) define defaults, layouts, units and recording/creation timing.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList2-SetDebugParameter-typed-contract:0:authored:migration-944a6f75fb838aeb-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList2-SetDebugParameter-typed-contract:0:authored:migration-944a6f75fb838aeb-0 -->[Fixed-size selector and payload contract](#object-debug-parameters). [GPU-based validation settings and timing](#object-gbv-settings).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList2-SetDebugParameter-typed-contract:0:authored:migration-944a6f75fb838aeb-0 --></ins>
 
 <a id="id3d12debugcommandlist-getfeaturemask"></a>
 
@@ -4303,9 +4228,9 @@ Type: **BOOL**
 
 This method returns true if the resource or subresource is in the specified state, false otherwise.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList-AssertResourceState-model-qualification:0:authored:migration-db431e8b77abac28-0 -->The result describes validation of the tracked or assumed state, not observation of physical GPU state. For an unknown state, the layer can establish the asserted state for subsequent validation. A successful result in that case does not prove earlier work completed. `FALSE` also covers a null resource, invalid subresource index or unrecognized state bits. The assertion does not perform a resource transition.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList-AssertResourceState-model-qualification:0:authored:migration-db431e8b77abac28-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList-AssertResourceState-model-qualification:0:authored:migration-db431e8b77abac28-0 -->`FALSE` also covers a null resource, invalid subresource index or unrecognized state bits.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList-AssertResourceState-model-qualification:0:authored:migration-db431e8b77abac28-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList-AssertResourceState-model-qualification:1:authored:migration-f7dd56a9e9d2c52a-0 -->The command list recording-point and assumed-state behavior described for [`ID3D12DebugCommandList1::AssertResourceState`](#id3d12debugcommandlist1-assertresourcestate) also applies to this declaring entry point. [Legacy resource states](synchronization.md#legacy-resource-states) define the legal state combinations. [Resource assertions](#object-resource-assertions) defines common resource/subresource and lifetime requirements.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList-AssertResourceState-model-qualification:1:authored:migration-f7dd56a9e9d2c52a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList-AssertResourceState-model-qualification:1:authored:migration-f7dd56a9e9d2c52a-0 -->The command list recording-point and assumed-state behavior described for [`ID3D12DebugCommandList1::AssertResourceState`](#id3d12debugcommandlist1-assertresourcestate) also applies to this entry point. [Legal legacy resource state combinations](synchronization.md#legacy-resource-states).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList-AssertResourceState-model-qualification:1:authored:migration-f7dd56a9e9d2c52a-0 --></ins>
 
 <a id="id3d12debugcommandlist1-assertresourcestate"></a>
 
@@ -4355,9 +4280,9 @@ Often the state of a resource or subresource can either be known due to a previo
 
 This API is for debug validation only and does not affect the actual runtime or GPU state of the resource.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-AssertResourceState-model-qualification:0:authored:migration-a051420ff1ef1092-0 -->The result describes validation of the tracked or assumed state, not observation of physical GPU state. For an unknown state, the layer can establish the asserted state for subsequent validation. A successful result in that case does not prove earlier work completed. `FALSE` also covers a null resource, invalid subresource index or unrecognized state bits. The assertion does not perform a resource transition.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-AssertResourceState-model-qualification:0:authored:migration-a051420ff1ef1092-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-AssertResourceState-model-qualification:0:authored:migration-a051420ff1ef1092-0 -->`FALSE` also covers a null resource, invalid subresource index or unrecognized state bits.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-AssertResourceState-model-qualification:0:authored:migration-a051420ff1ef1092-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-AssertResourceState-model-qualification:1:authored:migration-718e82ea654e8b47-0 -->[Legacy resource states](synchronization.md#legacy-resource-states) define the legal state combinations. [Resource assertions](#object-resource-assertions) defines common resource/subresource and lifetime requirements.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-AssertResourceState-model-qualification:1:authored:migration-718e82ea654e8b47-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-AssertResourceState-model-qualification:1:authored:migration-718e82ea654e8b47-0 -->[Legal legacy resource state combinations](synchronization.md#legacy-resource-states).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-AssertResourceState-model-qualification:1:authored:migration-718e82ea654e8b47-0 --></ins>
 
 <a id="id3d12debugcommandlist3-assertresourceaccess"></a>
 
@@ -4371,7 +4296,7 @@ void AssertResourceAccess(ID3D12Resource* pResource, UINT Subresource, D3D12_BAR
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList3-AssertResourceAccess-behavior:0:authored:migration-9a108a1b1d5a9a97-0 -->Asserts the specified resource access in the command list validation model. [Synchronization's list access assertion contract](synchronization.md#debug-list-assert-access) defines the precise expectation, queue timeline/resource use scope and validation limitations. This method reports diagnostics and does not change the resource's actual access or layout.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList3-AssertResourceAccess-behavior:0:authored:migration-9a108a1b1d5a9a97-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList3-AssertResourceAccess-behavior:0:authored:migration-9a108a1b1d5a9a97-0 -->Asserts the specified [resource access](synchronization.md#debug-list-assert-access) in the command list validation model.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList3-AssertResourceAccess-behavior:0:authored:migration-9a108a1b1d5a9a97-0 --></ins>
 
 #### Parameters
 
@@ -4393,7 +4318,7 @@ void AssertTextureLayout(ID3D12Resource* pResource, UINT Subresource, D3D12_BARR
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList3-AssertTextureLayout-behavior:0:authored:migration-8a4b7b840fc34020-0 -->Asserts the specified texture layout in the command list validation model. [Synchronization's list layout assertion contract](synchronization.md#debug-list-assert-layout) defines the precise expectation, queue timeline/resource use scope and validation limitations. This method reports diagnostics and does not change the resource's actual access or layout.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList3-AssertTextureLayout-behavior:0:authored:migration-8a4b7b840fc34020-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList3-AssertTextureLayout-behavior:0:authored:migration-8a4b7b840fc34020-0 -->Asserts the specified [texture layout](synchronization.md#debug-list-assert-layout) in the command list validation model.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList3-AssertTextureLayout-behavior:0:authored:migration-8a4b7b840fc34020-0 --></ins>
 
 #### Parameters
 
@@ -4447,9 +4372,9 @@ This method returns true if the resource or subresource is in the specified stat
 
 This method is very similar to [ID3D12DebugCommandList::AssertResourceState](#id3d12debugcommandlist-assertresourcestate), however there are methods on the command queue that work directly with resources that might need to be monitored (for example [ID3D12CommandQueue::CopyTileMappings](resources.md#copy-tile-mappings)).
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandQueue-AssertResourceState-model-qualification:0:authored:migration-3c60f52e58ce610e-0 -->The result describes validation of the tracked or assumed state, not observation of physical GPU state. For an unknown state, the layer can establish the asserted state for subsequent validation. A successful result in that case does not prove earlier work completed. `FALSE` also covers a null resource, invalid subresource index or unrecognized state bits. The assertion does not perform a resource transition.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandQueue-AssertResourceState-model-qualification:0:authored:migration-3c60f52e58ce610e-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandQueue-AssertResourceState-model-qualification:0:authored:migration-3c60f52e58ce610e-0 -->`FALSE` also covers a null resource, invalid subresource index or unrecognized state bits.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandQueue-AssertResourceState-model-qualification:0:authored:migration-3c60f52e58ce610e-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandQueue-AssertResourceState-model-qualification:1:authored:migration-c048780c32097a0d-0 -->The assertion is ordered with queue operations in the queue's validation model, including resource uses performed directly by queue methods. [Legacy resource states](synchronization.md#legacy-resource-states) define the legal state combinations. [Resource assertions](#object-resource-assertions) defines common resource/subresource and lifetime requirements.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandQueue-AssertResourceState-model-qualification:1:authored:migration-c048780c32097a0d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandQueue-AssertResourceState-model-qualification:1:authored:migration-c048780c32097a0d-0 -->The assertion is ordered with queue operations in the queue's validation model, including resource uses performed directly by queue methods. [Legal legacy resource state combinations](synchronization.md#legacy-resource-states).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandQueue-AssertResourceState-model-qualification:1:authored:migration-c048780c32097a0d-0 --></ins>
 
 <a id="id3d12debugcommandqueue1-assertresourceaccess"></a>
 
@@ -4463,7 +4388,7 @@ void AssertResourceAccess(ID3D12Resource* pResource, UINT Subresource, D3D12_BAR
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandQueue1-AssertResourceAccess-behavior:0:authored:migration-a72652905f227182-0 -->Asserts the specified resource access in the command queue validation model. [Synchronization's queue access assertion contract](synchronization.md#debug-queue-assert-access) defines the precise expectation, queue timeline/resource use scope and validation limitations. This method reports diagnostics and does not change the resource's actual access or layout.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandQueue1-AssertResourceAccess-behavior:0:authored:migration-a72652905f227182-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandQueue1-AssertResourceAccess-behavior:0:authored:migration-a72652905f227182-0 -->Asserts the specified [resource access](synchronization.md#debug-queue-assert-access) in the command queue validation model.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandQueue1-AssertResourceAccess-behavior:0:authored:migration-a72652905f227182-0 --></ins>
 
 #### Parameters
 
@@ -4485,7 +4410,7 @@ void AssertTextureLayout(ID3D12Resource* pResource, UINT Subresource, D3D12_BARR
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandQueue1-AssertTextureLayout-behavior:0:authored:migration-f51de9719b255161-0 -->Asserts the specified texture layout in the command queue validation model. [Synchronization's queue layout assertion contract](synchronization.md#debug-queue-assert-layout) defines the precise expectation, queue timeline/resource use scope and validation limitations. This method reports diagnostics and does not change the resource's actual access or layout.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandQueue1-AssertTextureLayout-behavior:0:authored:migration-f51de9719b255161-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandQueue1-AssertTextureLayout-behavior:0:authored:migration-f51de9719b255161-0 -->Asserts the specified [texture layout](synchronization.md#debug-queue-assert-layout) in the command queue validation model.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandQueue1-AssertTextureLayout-behavior:0:authored:migration-f51de9719b255161-0 --></ins>
 
 #### Parameters
 
@@ -4550,7 +4475,7 @@ data they intend to inspect.<!-- d3d12-review-inline:end:diagnostics:AB-gbv-mode
 <ins><!-- d3d12-review-inline:begin:diagnostics:AB-gbv-model:1:authored:migration-d7f6dc6e44ea2d6b-0 -->Returned state words are GBV diagnostic observations, not permission to
 ignore normative resource state/access/lifetime requirements. Internal hashes
 and database offsets are not persistent application identifiers or GPU
-virtual addresses. Reserved neighboring vtable slots establish no operation.<!-- d3d12-review-inline:end:diagnostics:AB-gbv-model:1:authored:migration-d7f6dc6e44ea2d6b-0 --></ins>
+virtual addresses.<!-- d3d12-review-inline:end:diagnostics:AB-gbv-model:1:authored:migration-d7f6dc6e44ea2d6b-0 --></ins>
 
 <a id="api-id3d12gbvdiagnostics-getgbventiresubresourcestatesdata"></a>
 
@@ -4575,7 +4500,7 @@ HRESULT GetGBVEntireSubresourceStatesData(
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12gbvdiagnostics-getgbventiresubresourcestatesdata-contract:4:authored:migration-b6242abef088af55-0 -->Returns `S_OK` or a failure. Unavailable/bypassed GBV, unavailable state tracking for a state query, invalid required inputs/subresource/capacity, and readback failures do not return a fabricated valid snapshot.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12gbvdiagnostics-getgbventiresubresourcestatesdata-contract:4:authored:migration-b6242abef088af55-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12gbvdiagnostics-getgbventiresubresourcestatesdata-contract:4:authored:migration-b6242abef088af55-0 -->Returns `S_OK` on success.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12gbvdiagnostics-getgbventiresubresourcestatesdata-contract:4:authored:migration-b6242abef088af55-0 --></ins>
 
 <a id="api-id3d12gbvdiagnostics-getgbvsubresourcestate"></a>
 
@@ -4600,7 +4525,7 @@ HRESULT GetGBVSubresourceState(
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12gbvdiagnostics-getgbvsubresourcestate-contract:4:authored:migration-fa2c30de44481760-0 -->Returns `S_OK` or a failure. Unavailable/bypassed GBV, unavailable state tracking for a state query, invalid required inputs/subresource/capacity, and readback failures do not return a fabricated valid snapshot.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12gbvdiagnostics-getgbvsubresourcestate-contract:4:authored:migration-fa2c30de44481760-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12gbvdiagnostics-getgbvsubresourcestate-contract:4:authored:migration-fa2c30de44481760-0 -->Returns `S_OK` on success.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12gbvdiagnostics-getgbvsubresourcestate-contract:4:authored:migration-fa2c30de44481760-0 --></ins>
 
 <a id="api-id3d12gbvdiagnostics-getgbvresourceuniformstate"></a>
 
@@ -4624,7 +4549,7 @@ HRESULT GetGBVResourceUniformState(
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12gbvdiagnostics-getgbvresourceuniformstate-contract:4:authored:migration-2e935bef7480f8b5-0 -->Returns `S_OK` or a failure. Unavailable/bypassed GBV, unavailable state tracking for a state query, invalid required inputs/subresource/capacity, and readback failures do not return a fabricated valid snapshot.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12gbvdiagnostics-getgbvresourceuniformstate-contract:4:authored:migration-2e935bef7480f8b5-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12gbvdiagnostics-getgbvresourceuniformstate-contract:4:authored:migration-2e935bef7480f8b5-0 -->Returns `S_OK` on success.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12gbvdiagnostics-getgbvresourceuniformstate-contract:4:authored:migration-2e935bef7480f8b5-0 --></ins>
 
 <a id="api-id3d12gbvdiagnostics-getgbvresourceinfo"></a>
 
@@ -4650,7 +4575,7 @@ HRESULT GetGBVResourceInfo(
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12gbvdiagnostics-getgbvresourceinfo-contract:4:authored:migration-617bb4f799a922d1-0 -->Returns `S_OK` or a failure. Unavailable/bypassed GBV, unavailable state tracking for a state query, invalid required inputs/subresource/capacity, and readback failures do not return a fabricated valid snapshot.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12gbvdiagnostics-getgbvresourceinfo-contract:4:authored:migration-617bb4f799a922d1-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12gbvdiagnostics-getgbvresourceinfo-contract:4:authored:migration-617bb4f799a922d1-0 -->Returns `S_OK` on success.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12gbvdiagnostics-getgbvresourceinfo-contract:4:authored:migration-617bb4f799a922d1-0 --></ins>
 
 <a id="instrumentation-validation-controls"></a>
 
@@ -4672,17 +4597,16 @@ void EnableShaderInstrumentation(
 This method enables tools such as PIX to instrument shaders.
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12tools-enableshaderinstrumentation-contract:0:authored:migration-910c9f142663a685-0 -->Configures shader instrumentation for the associated tool/runtime
-configuration. It is not GPU-based validation, a promise that every shader
-has already been recompiled, or a change to resource bindings. Device
+configuration. Device
 creation consumes the relevant startup configuration.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12tools-enableshaderinstrumentation-contract:0:authored:migration-910c9f142663a685-0 --></ins>
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12tools-enableshaderinstrumentation-contract:2:authored:migration-2087cc1ebb2a5aa9-0 -->`bEnable` selects enabled/disabled. The tools-only and developer mode restrictions remain required. This is not an ordinary application's optimization switch.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12tools-enableshaderinstrumentation-contract:2:authored:migration-2087cc1ebb2a5aa9-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12tools-enableshaderinstrumentation-contract:2:authored:migration-2087cc1ebb2a5aa9-0 -->`bEnable` selects enabled/disabled. This tools-only method requires developer mode.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12tools-enableshaderinstrumentation-contract:2:authored:migration-2087cc1ebb2a5aa9-0 --></ins>
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12tools-enableshaderinstrumentation-contract:4:authored:migration-0da45ab3ca85f769-0 -->Returns no value. It does not synchronize running GPU work or report compilation completion.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12tools-enableshaderinstrumentation-contract:4:authored:migration-0da45ab3ca85f769-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12tools-enableshaderinstrumentation-contract:4:authored:migration-0da45ab3ca85f769-0 -->Returns no value.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12tools-enableshaderinstrumentation-contract:4:authored:migration-0da45ab3ca85f769-0 --></ins>
 
 <a id="api-id3d12tools-shaderinstrumentationenabled"></a>
 
@@ -4718,8 +4642,7 @@ void DisableFailuresFromStricterValidationInAppLocalRuntime(
 #### Behavior
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12runtimevalidationcontrol-disablefailuresfromstrictervalidationinapplocalruntime-contract:0:authored:migration-5ff87f9b39dbc77f-0 -->Sets the configuration's compatibility control for newly stricter app-local
-runtime validation failures. It does not disable all validation, authorize
-arbitrary invalid input, or change hardware resource/access requirements.
+runtime validation failures. It does not disable all validation.
 Existing device state is not retroactively rewritten by changing the setting.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12runtimevalidationcontrol-disablefailuresfromstrictervalidationinapplocalruntime-contract:0:authored:migration-5ff87f9b39dbc77f-0 --></ins>
 
 #### Parameters
@@ -4728,7 +4651,7 @@ Existing device state is not retroactively rewritten by changing the setting.<!-
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12runtimevalidationcontrol-disablefailuresfromstrictervalidationinapplocalruntime-contract:4:authored:migration-bde1a2f1fdc2d4c4-0 -->Returns no value. This is startup/configuration state, not a command list operation or GPU fence.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12runtimevalidationcontrol-disablefailuresfromstrictervalidationinapplocalruntime-contract:4:authored:migration-bde1a2f1fdc2d4c4-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12runtimevalidationcontrol-disablefailuresfromstrictervalidationinapplocalruntime-contract:4:authored:migration-bde1a2f1fdc2d4c4-0 -->Returns no value.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12runtimevalidationcontrol-disablefailuresfromstrictervalidationinapplocalruntime-contract:4:authored:migration-bde1a2f1fdc2d4c4-0 --></ins>
 
 <a id="api-id3d12runtimevalidationcontrol-failuresfromstrictervalidationinapplocalruntimedisabled"></a>
 
@@ -4742,7 +4665,7 @@ BOOL FailuresFromStricterValidationInAppLocalRuntimeDisabled();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12runtimevalidationcontrol-failuresfromstrictervalidationinapplocalruntimedisabled-contract:0:authored:migration-d5b44707278dac8e-0 -->Queries that configuration's stricter-validation compatibility setting. It is not the result of validating a particular program or device.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12runtimevalidationcontrol-failuresfromstrictervalidationinapplocalruntimedisabled-contract:0:authored:migration-d5b44707278dac8e-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12runtimevalidationcontrol-failuresfromstrictervalidationinapplocalruntimedisabled-contract:0:authored:migration-d5b44707278dac8e-0 -->Queries that configuration's stricter-validation compatibility setting.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12runtimevalidationcontrol-failuresfromstrictervalidationinapplocalruntimedisabled-contract:0:authored:migration-d5b44707278dac8e-0 --></ins>
 
 #### Return values
 
@@ -4769,19 +4692,11 @@ void Present(
 
 Notifies diagnostic tools about an end-of-frame operation without the use of a swap chain. Calling this API enables usage of tools like PIX with applications that either don't render to a window, or that do so in non-traditional ways.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-present-contract:0:authored:migration-1b658d1b35b18422-0 -->This diagnostic end-of-frame notification is not IDXGISwapChain::Present,
-does not create a swap chain and does not imply a display flip or GPU completion
-wait. It enables tooling for offscreen or nontraditional presentation.
-The selected subresource retains its COMMON/PRESENT access requirements;
-notification does not insert a transition or replace the applicable barrier model.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-present-contract:0:authored:migration-1b658d1b35b18422-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-present-contract:0:authored:migration-1b658d1b35b18422-0 -->The selected subresource must satisfy its COMMON/PRESENT access requirements.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-present-contract:0:authored:migration-1b658d1b35b18422-0 --></ins>
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-present-contract:2:authored:migration-73cde4bdb1ef922b-0 -->`pResource` identifies the final-frame resource. `Subresource` selects its subresource. `window` optionally identifies a tool UI target. The resource retains required access/lifetime constraints.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-present-contract:2:authored:migration-73cde4bdb1ef922b-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-present-contract:4:authored:migration-ae6222ec721c7922-0 -->Returns no value; diagnostic notification is not a presentation status HRESULT.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-present-contract:4:authored:migration-ae6222ec721c7922-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-present-contract:2:authored:migration-73cde4bdb1ef922b-0 -->`pResource` identifies the final-frame resource. `Subresource` selects its subresource. `window` optionally identifies a tool UI target.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-present-contract:2:authored:migration-73cde4bdb1ef922b-0 --></ins>
 
 <a id="api-id3d12sharingcontract-sharedfencesignal"></a>
 
@@ -4799,17 +4714,13 @@ void SharedFenceSignal(
 
 Signals a shared fence between the D3D layers and diagnostics tools.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-sharedfencesignal-contract:0:authored:migration-616384416a0ef9e8-0 -->Communicates the shared fence/value signal through the layer/tooling sharing
-contract. It does not by its void CPU return establish that GPU work completed;
-ordinary queue/fence/resource synchronization requirements remain.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-sharedfencesignal-contract:0:authored:migration-616384416a0ef9e8-0 --></ins>
-
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-sharedfencesignal-contract:2:authored:migration-f98ecf995f128a55-0 -->`pFence` is a shared fence. `FenceValue` is its 64-bit signal value, not a resource offset.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-sharedfencesignal-contract:2:authored:migration-f98ecf995f128a55-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-sharedfencesignal-contract:2:authored:migration-f98ecf995f128a55-0 -->`pFence` must be a shared fence. `FenceValue` is its signal value.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-sharedfencesignal-contract:2:authored:migration-f98ecf995f128a55-0 --></ins>
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-sharedfencesignal-contract:4:authored:migration-1dc0f865de700769-0 -->Returns no value. The selected wrapper diagnoses a non-shared fence; tooling observation is distinct from a successful queue Signal HRESULT.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-sharedfencesignal-contract:4:authored:migration-1dc0f865de700769-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-sharedfencesignal-contract:4:authored:migration-1dc0f865de700769-0 -->The selected wrapper diagnoses a non-shared fence.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-sharedfencesignal-contract:4:authored:migration-1dc0f865de700769-0 --></ins>
 
 <a id="api-id3d12sharingcontract-begincapturablework"></a>
 
@@ -4825,7 +4736,7 @@ void BeginCapturableWork(
 #### Behavior
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-begincapturablework-contract:0:authored:migration-0c816b4bf2fe8507-0 -->Delineates logical work for capture tools. The GUID differentiates categories
-of delineation. It is not a resource identity or hardware command. With no
+of delineation. With no
 interested tool the selected runtime/layer can ignore the notification.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-begincapturablework-contract:0:authored:migration-0c816b4bf2fe8507-0 --></ins>
 
 #### Parameters
@@ -4850,13 +4761,9 @@ void EndCapturableWork(
 #### Behavior
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-endcapturablework-contract:0:authored:migration-8afad0df1ebc8091-0 -->Delineates logical work for capture tools. The GUID differentiates categories
-of delineation. It is not a resource identity or hardware command. With no
+of delineation. With no
 interested tool the selected runtime/layer can ignore the notification.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-endcapturablework-contract:0:authored:migration-8afad0df1ebc8091-0 --></ins>
 
 #### Parameters
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-endcapturablework-contract:2:authored:migration-c5cdfa1cfe1a5619-0 -->`guid` identifies the capture work category; begin/end delimit that logical region.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-endcapturablework-contract:2:authored:migration-c5cdfa1cfe1a5619-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-endcapturablework-contract:4:authored:migration-00e6f2206cdd172e-0 -->Returns no value.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-endcapturablework-contract:4:authored:migration-00e6f2206cdd172e-0 --></ins>

@@ -19,17 +19,15 @@
 
 A meta command can encapsulate a set of pipeline state objects (PSOs), bindings, intermediate resource states, and Draw/Dispatch calls. You can think of the signature of a meta command as being similar to a C-style function, with multiple in/out parameters, and no return value.
 
-<ins><!-- d3d12-review-inline:begin:meta-command:N-availability:0:authored:migration-1a2f07bbba7e741f-0 -->`ID3D12MetaCommand` is a pageable device object representing an instance of an enumerated algorithm.<!-- d3d12-review-inline:end:meta-command:N-availability:0:authored:migration-1a2f07bbba7e741f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:meta-command:N-availability:0:authored:migration-1a2f07bbba7e741f-0 -->`ID3D12MetaCommand` is a pageable device object.<!-- d3d12-review-inline:end:meta-command:N-availability:0:authored:migration-1a2f07bbba7e741f-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:meta-command:N-availability:1:authored:migration-7fe2fbe580b17e9b-0 -->An enumerated `Id` identifies an available algorithm, not a feature level guarantee or a portable algorithm implementation. The algorithm's definition supplies the meanings of its parameters. Generic meta command reflection does not standardize an algorithm catalog. The optional algorithm-specific [meta command capability query](devices-and-capabilities.md#d3d12_feature_data_query_meta_command) has its own input/output payload contract.<!-- d3d12-review-inline:end:meta-command:N-availability:1:authored:migration-7fe2fbe580b17e9b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:meta-command:N-availability:1:authored:migration-7fe2fbe580b17e9b-0 -->An enumerated `Id` identifies an available algorithm, not a feature level guarantee or a portable algorithm implementation. The algorithm's definition supplies the meanings of its parameters. Generic meta command reflection does not standardize an algorithm catalog.<!-- d3d12-review-inline:end:meta-command:N-availability:1:authored:migration-7fe2fbe580b17e9b-0 --></ins>
 
 The runtime <ins><!-- d3d12-review-inline:begin:meta-command:P-approved:0:modified:source-403f24642ea83b8b-0-0 -->validates<!-- d3d12-review-inline:end:meta-command:P-approved:0:modified:source-403f24642ea83b8b-0-0 --></ins> the meta-command <ins><!-- d3d12-review-inline:begin:meta-command:P-approved:0:modified:source-403f24642ea83b8b-0-1 -->GUID against<!-- d3d12-review-inline:end:meta-command:P-approved:0:modified:source-403f24642ea83b8b-0-1 --></ins> an approved list. This check can only be bypassed in developer mode. <ins><!-- d3d12-review-inline:begin:meta-command:P-approved:0:modified:source-403f24642ea83b8b-0-2 -->Outside developer mode,<!-- d3d12-review-inline:end:meta-command:P-approved:0:modified:source-403f24642ea83b8b-0-2 --></ins> only predefined meta-commands are allowed.
 
 <a id="parameter-layout"></a>
 
 ## Reflection and parameter layout
-
-<ins><!-- d3d12-review-inline:begin:meta-command:N-stages:0:authored:migration-2047789cb0e00ba1-0 -->Creation parameters describe the instance created on the CPU. Initialization and execution parameters are supplied to their respective recorded operations. Reflection is selected separately for each stage. `pTotalStructureSizeInBytes` describes the parameter value block, not the array of parameter descriptors and not the size of a referenced GPU resource.<!-- d3d12-review-inline:end:meta-command:N-stages:0:authored:migration-2047789cb0e00ba1-0 --></ins>
 
 <a id="d3d12_meta_command_parameter_stage"></a>
 
@@ -176,7 +174,7 @@ A [GUID](https://learn.microsoft.com/en-us/windows/win32/api/guiddef/ns-guiddef-
 
 The meta command name.
 
-<ins><!-- d3d12-review-inline:begin:meta-command:N-desc-state:0:authored:migration-a338b325ade16645-0 -->`InitializationDirtyState` and `ExecutionDirtyState` use [`D3D12_GRAPHICS_STATES`](#d3d12_graphics_states). Their operative state effects and subsequent restoration are defined in [command list state: meta commands](command-list-state.md#meta-commands), including its unresolved all-dirty-bits/`ClearState` qualification. This reference does not assert that equivalence.<!-- d3d12-review-inline:end:meta-command:N-desc-state:0:authored:migration-a338b325ade16645-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:meta-command:N-desc-state:0:authored:migration-a338b325ade16645-0 -->`InitializationDirtyState` and `ExecutionDirtyState` use [`D3D12_GRAPHICS_STATES`](#d3d12_graphics_states). See [Meta commands](command-list-state.md#meta-commands) for affected state restoration and the unresolved all-bits dirty mask/`ClearState` qualification.<!-- d3d12-review-inline:end:meta-command:N-desc-state:0:authored:migration-a338b325ade16645-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:meta-command:N-reflection-storage:0:authored:migration-4c40407ed176f9ee-0 -->The application owns the descriptor array storage supplied to enumeration. Both command description `Name` strings and parameter description `Name` strings are borrowed device lifetime storage. The application must not free these strings. Their lifetime is distinct from that of the caller's descriptor arrays.<!-- d3d12-review-inline:end:meta-command:N-reflection-storage:0:authored:migration-4c40407ed176f9ee-0 --></ins>
 
@@ -238,8 +236,6 @@ Defines flags that specify states related to a graphics command list. Values can
 > | `D3D12_GRAPHICS_STATE_VIEW_INSTANCE_MASK` | Specifies the state of the view instances mask. |
 
 <!-- d3d12-review-alert:end:meta-command:P-states:0:modified:migration-8ed4213f47f1e273-0 -->
-
-<ins><!-- d3d12-review-inline:begin:meta-command:N-state-route:0:authored:migration-10d4e2ec697cf9d6-0 -->The affected families are defined by [vertex/index and stream output buffer bindings](command-list-state.md#buffer-bindings), [primitive topology, viewports, scissor rectangles and blend factor](command-list-state.md#base-graphics), [descriptor heaps and root signatures](command-list-state.md#resource-binding), [predication](command-list-state.md#queries), [render targets](command-list-state.md#output-bindings), [stencil reference](command-list-state.md#stencil-references), [depth bounds](command-list-state.md#depth-bounds), [pipeline state](command-list-state.md#pipeline-selection), [sample positions](command-list-state.md#sample-positions) and [view instance mask](command-list-state.md#view-mask).<!-- d3d12-review-inline:end:meta-command:N-state-route:0:authored:migration-10d4e2ec697cf9d6-0 --></ins>
 
 <a id="discovery-and-creation"></a>
 
@@ -319,6 +315,8 @@ A [D3D12_META_COMMAND_PARAMETER_STAGE](#d3d12_meta_command_parameter_stage) spec
 <ins><!-- d3d12-review-inline:begin:meta-command:P-parameters-parameters:4 -->`pTotalStructureSizeInBytes`<!-- d3d12-review-inline:end:meta-command:P-parameters-parameters:4 --></ins>
 
 An optional pointer to a [UINT](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types) containing the size of the structure containing the parameter values, which you pass when creating/initializing/executing the meta command, as appropriate.
+
+<ins><!-- d3d12-review-inline:begin:meta-command:N-stages:0:authored:migration-2047789cb0e00ba1-0 -->`pTotalStructureSizeInBytes` describes the parameter value block, not the array of parameter descriptors and not the size of a referenced GPU resource.<!-- d3d12-review-inline:end:meta-command:N-stages:0:authored:migration-2047789cb0e00ba1-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:meta-command:P-parameters-parameters:6 -->`pParameterCount`<!-- d3d12-review-inline:end:meta-command:P-parameters-parameters:6 --></ins>
 
@@ -404,11 +402,7 @@ If this method succeeds, it returns **S\_OK**. Otherwise, it returns an **HRESUL
 
 <ins><!-- d3d12-review-inline:begin:meta-command:N-cpu-parameter-lifetime:0:authored:migration-3e23ba332aecc67d-0 -->The application owns the CPU parameter value blocks passed to creation, initialization and execution. It must keep each block's bytes valid through the call; after the call returns, that CPU storage may be reused or freed. GPU resources and descriptor storage identified by values in the block have their separate GPU use lifetime; releasing the CPU block does not release or shorten those obligations.<!-- d3d12-review-inline:end:meta-command:N-cpu-parameter-lifetime:0:authored:migration-3e23ba332aecc67d-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:meta-command:N-resource-lifetime:0:authored:migration-79633e840fa93e6a-0 -->Parameter resource size and parameter block size are independent: the resource size query below is indexed by stage and parameter, not by byte offset. The application must keep resources and descriptor storage supplied to GPU operations valid for their use under [execution lifetime](execution.md#lifetime), [resource residency](resources.md#residency) and [binding lifetime](binding.md#table-indexing-and-descriptor-lifetime). The algorithm's initialization contract identifies any required persistent cache resource. An execution's temporary storage and input/output storage are resource parameters, not allocations implicitly made by the parameter value block.<!-- d3d12-review-inline:end:meta-command:N-resource-lifetime:0:authored:migration-79633e840fa93e6a-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:meta-command:N-resource-lifetime:1:authored:migration-274eb17b37b42e6d-0 -->The expected state is the reflected `RequiredResourceState` and the algorithm's parameter definition. [Resource state transitions and UAV ordering](synchronization.md) retain their canonical contract; passing a resource parameter does not perform an application-required transition.<!-- d3d12-review-inline:end:meta-command:N-resource-lifetime:1:authored:migration-274eb17b37b42e6d-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:meta-command:N-resource-roles:0:authored:migration-d2f7a71d96ffe4f1-0 -->Persistent-cache and temporary/scratch roles belong to the selected algorithm's parameter definition, rather than the generic input/output flags. Storage needed by later executions must remain valid for those uses. Repeated execution is permitted after the required GPU initialization. Repeated initialization, persistent-storage replacement and scratch reuse follow the algorithm's definition and the [resource lifetime](execution.md#lifetime) and [ordering rules](synchronization.md).<!-- d3d12-review-inline:end:meta-command:N-resource-roles:0:authored:migration-d2f7a71d96ffe4f1-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:meta-command:N-resource-roles:0:authored:migration-d2f7a71d96ffe4f1-0 -->Persistent-cache and temporary/scratch roles belong to the selected algorithm's parameter definition, rather than the generic input/output flags. Storage needed by later executions must remain valid for those uses. Repeated initialization, persistent-storage replacement and scratch reuse follow the algorithm's definition and the [resource lifetime](execution.md#lifetime) and [ordering rules](synchronization.md).<!-- d3d12-review-inline:end:meta-command:N-resource-roles:0:authored:migration-d2f7a71d96ffe4f1-0 --></ins>
 
 <a id="getrequiredparameterresourcesize"></a>
 
@@ -472,9 +466,9 @@ An optional pointer to a constant structure containing the values of the paramet
 
 A [SIZE_T](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types) containing the size of the structure pointed to by *pInitializationParametersData*, if set, otherwise 0.
 
-#### Return values
+#### Recording errors
 
-<ins><!-- d3d12-review-inline:begin:meta-command:N-initialize-void:0:authored:migration-d357e12d957134ba-0 -->This method returns no value. Recording failures follow the [command list error contract](execution.md#deferred-recording-errors).<!-- d3d12-review-inline:end:meta-command:N-initialize-void:0:authored:migration-d357e12d957134ba-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:meta-command:N-initialize-void:0:authored:migration-d357e12d957134ba-0 -->Recording failures follow the [command list error contract](execution.md#deferred-recording-errors).<!-- d3d12-review-inline:end:meta-command:N-initialize-void:0:authored:migration-d357e12d957134ba-0 --></ins>
 
 #### State and execution context
 
@@ -520,9 +514,9 @@ A [SIZE_T](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-dat
 
 <ins><!-- d3d12-review-inline:begin:meta-command:P-execute-resources:1 -->During an invocation, the driver may insert UAV barriers needed to synchronize the algorithm's internal output resource usage. These internal barriers do not replace the application's external state transitions and hazard ordering. The application must treat all output and input/output resources, including scratch memory, as written by the meta command.<!-- d3d12-review-inline:end:meta-command:P-execute-resources:1 --></ins>
 
-#### Return values
+#### Recording errors
 
-<ins><!-- d3d12-review-inline:begin:meta-command:N-execute-void:0:authored:migration-6683aed187f2e593-0 -->This method returns no value. Recording failures follow the [command list error contract](execution.md#deferred-recording-errors).<!-- d3d12-review-inline:end:meta-command:N-execute-void:0:authored:migration-6683aed187f2e593-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:meta-command:N-execute-void:0:authored:migration-6683aed187f2e593-0 -->Recording failures follow the [command list error contract](execution.md#deferred-recording-errors).<!-- d3d12-review-inline:end:meta-command:N-execute-void:0:authored:migration-6683aed187f2e593-0 --></ins>
 
 #### State and execution context
 
@@ -623,8 +617,6 @@ typedef VOID(APIENTRY* PFND3D12DDI_EXECUTE_META_COMMAND_0052)(
     D3D12DDI_HCOMMANDLIST, D3D12DDI_HMETACOMMAND_0052, _In_ CONST void *, _In_ SIZE_T );
 ```
 
-The meta-command initialize call must be executed at least once prior to any execute call being executed on the GPU timeline.
-
 ### Driver-owned command names
 
 <ins><!-- d3d12-review-inline:begin:meta-command:P-driver-string:0:modified:migration-a0145d61c9be2401-0 -->`D3D12DDIARG_META_COMMAND_DESC::Name` is a pointer to a wide string that holds the name of the meta-command. The driver allocates and keeps this string for the lifetime of the device.<!-- d3d12-review-inline:end:meta-command:P-driver-string:0:modified:migration-a0145d61c9be2401-0 --></ins>
@@ -651,7 +643,7 @@ The debug layer validates <ins><!-- d3d12-review-inline:begin:meta-command:P-ddi
 > | `pfnCalcPrivateMetaCommandSize` | `PFND3D12DDI_CALC_PRIVATE_META_COMMAND_SIZE_0052` | [Driver-private sizing](#driver-meta-private-size) |
 > | `pfnCreateMetaCommand` | `PFND3D12DDI_CREATE_META_COMMAND_0052` | [CreateMetaCommand](#createmetacommand); [driver construction](#driver-create-meta-command) |
 > | `pfnDestroyMetaCommand` | `PFND3D12DDI_DESTROY_META_COMMAND_0052` | [Driver destruction](#driver-destroy-meta-command) |
-> | `pfnGetMetaCommandRequiredParameterInfo` | `PFND3D12DDI_GET_META_COMMAND_REQUIRED_PARAMETER_INFO_0052` | [GetRequiredParameterResourceSize](#getrequiredparameterresourcesize); [driver parameter ordinal](#driver-meta-resource-info) |
+> | <a id="driver-meta-resource-info"></a>`pfnGetMetaCommandRequiredParameterInfo` | `PFND3D12DDI_GET_META_COMMAND_REQUIRED_PARAMETER_INFO_0052` | [GetRequiredParameterResourceSize](#getrequiredparameterresourcesize) |
 > | `pfnInitializeMetaCommand` | `PFND3D12DDI_INITIALIZE_META_COMMAND_0052` | [InitializeMetaCommand](#initializemetacommand); [retained parameter bytes](#driver-initialize-meta-command) |
 > | `pfnExecuteMetaCommand` | `PFND3D12DDI_EXECUTE_META_COMMAND_0052` | [ExecuteMetaCommand](#executemetacommand); [retained parameter bytes](#driver-execute-meta-command) |
 
@@ -703,12 +695,6 @@ The debug layer validates <ins><!-- d3d12-review-inline:begin:meta-command:P-ddi
 
 <ins><!-- d3d12-review-inline:begin:meta-command:MC-contract-destroy_meta_command:0:authored:migration-cd4e339dc30def29-0 -->Destroy releases driver-owned allocations without freeing runtime-provided private storage.<!-- d3d12-review-inline:end:meta-command:MC-contract-destroy_meta_command:0:authored:migration-cd4e339dc30def29-0 --></ins>
 
-<a id="driver-meta-resource-info"></a>
-
-### PFND3D12DDI_GET_META_COMMAND_REQUIRED_PARAMETER_INFO_0052
-
-<ins><!-- d3d12-review-inline:begin:meta-command:MC-contract-get_meta_command_required_parameter_info:1:authored:migration-14f9da4587f1c275-0 -->ParameterIndex uses the complete enumerated stage order, not a resource-only filtered order.<!-- d3d12-review-inline:end:meta-command:MC-contract-get_meta_command_required_parameter_info:1:authored:migration-14f9da4587f1c275-0 --></ins>
-
 <a id="driver-initialize-meta-command"></a>
 
 ### PFND3D12DDI_INITIALIZE_META_COMMAND_0052
@@ -724,8 +710,6 @@ The debug layer validates <ins><!-- d3d12-review-inline:begin:meta-command:P-ddi
 <a id="driver-meta-results"></a>
 
 ### Per-call results and failure reporting
-
-<ins><!-- d3d12-review-inline:begin:meta-command:MC-call-results:0:authored:migration-d4efb1a7afc0fd58-0 -->The HRESULT-returning DDIs have call-specific outcomes:<!-- d3d12-review-inline:end:meta-command:MC-call-results:0:authored:migration-d4efb1a7afc0fd58-0 --></ins>
 
 <!-- d3d12-review-alert:begin:meta-command:MC-call-results:1:authored:migration-571e6fa4c2888eab-0 -->
 

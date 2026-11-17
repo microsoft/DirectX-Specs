@@ -17,9 +17,6 @@
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:introduction:0:modified:source-6bfc1760b66f3c5a-0-0 -->The D3D Shader Cache Registration (D3DSCR)<!-- d3d12-review-inline:end:cache-registration:introduction:0:modified:source-6bfc1760b66f3c5a-0-0 --></ins> API is a <ins><!-- d3d12-review-inline:begin:cache-registration:introduction:0:modified:source-6bfc1760b66f3c5a-0-1 -->nano-COM-<!-- d3d12-review-inline:end:cache-registration:introduction:0:modified:source-6bfc1760b66f3c5a-0-1 --></ins>based API for managing the registration of and enumeration of <ins><!-- d3d12-review-inline:begin:cache-registration:introduction:0:modified:source-6bfc1760b66f3c5a-0-2 -->State Object Databases (SODBs) and Pre-Compiled Shader Databases (PSDBs) on the end-user system. This API is intended to be used by game installers such as the Xbox Store, Steam etc. during their game installation and update process<!-- d3d12-review-inline:end:cache-registration:introduction:0:modified:source-6bfc1760b66f3c5a-0-2 --></ins>.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:registration-type-forward:0:authored:migration-907d6a81270e2052-0 -->The [registration ABI](#registration-abi) defines the scope, application description
-and compiler property types used below.<!-- d3d12-review-inline:end:cache-registration:registration-type-forward:0:authored:migration-907d6a81270e2052-0 --></ins>
-
 <a id="installation-and-updates"></a>
 
 ## Installation and updates
@@ -29,11 +26,11 @@ and compiler property types used below.<!-- d3d12-review-inline:end:cache-regist
 This diagram demonstrates the interactions between the Game Store/Installer and the D3DSCR API during the game install and update process. A typical process is as <ins><!-- d3d12-review-inline:begin:cache-registration:install-workflow:1:modified:source-83cf186b700f2872-0-0 -->follows<!-- d3d12-review-inline:end:cache-registration:install-workflow:1:modified:source-83cf186b700f2872-0-0 --></ins>:
 
 1. The game's files are installed to the end user's machine, the SODBs are included with that step as they should be considered part of the game's content.
-2. <ins><!-- d3d12-review-inline:begin:cache-registration:install-workflow:2 -->The installer will instantiate the D3DSCR API and proceed to register the game that was just installed, providing its executable path on disk and application description to `RegisterApplication`, then registering each SODB and its component with `RegisterComponent`.<!-- d3d12-review-inline:end:cache-registration:install-workflow:2 --></ins>
+2. <ins><!-- d3d12-review-inline:begin:cache-registration:install-workflow:2:modified:section-pass-application -->The installer will instantiate the D3DSCR API and proceed to register the game that was just installed, providing its executable path on disk and application description to [`RegisterApplication`](#id3dshadercacheinstaller-registerapplication), then registering each SODB and its component with [`RegisterComponent`](#id3dshadercacheapplication-registercomponent).<!-- d3d12-review-inline:end:cache-registration:install-workflow:2:modified:section-pass-application --></ins>
 3. The installer uses D3DSCR to query which graphics adapter families and compiler ABI versions the installed game should target.
 4. With the adapter and compiler information in hand the installer will fetch a PSDB which matches the application and compiler combination from a compilation service.
-5. <ins><!-- d3d12-review-inline:begin:cache-registration:install-workflow:2 -->The PSDB is installed by the installer to a disk location of its choice.<!-- d3d12-review-inline:end:cache-registration:install-workflow:2 --></ins>
-6. <ins><!-- d3d12-review-inline:begin:cache-registration:install-workflow:2 -->The installer will use D3DSCR to register the newly installed PSDB for the game's component with `RegisterComponent`.<!-- d3d12-review-inline:end:cache-registration:install-workflow:2 --></ins>
+5. <ins><!-- d3d12-review-inline:begin:cache-registration:install-workflow:2:modified:section-pass-path -->The PSDB is installed by the installer to a disk location of its choice.<!-- d3d12-review-inline:end:cache-registration:install-workflow:2:modified:section-pass-path --></ins>
+6. <ins><!-- d3d12-review-inline:begin:cache-registration:install-workflow:2:modified:section-pass-psdb -->The installer will use D3DSCR to register the newly installed PSDB for the game's component with [`RegisterComponent`](#id3dshadercacheapplication-registercomponent).<!-- d3d12-review-inline:end:cache-registration:install-workflow:2:modified:section-pass-psdb --></ins>
 
 <a id="catalog-identity"></a>
 
@@ -80,8 +77,6 @@ CompilerVersion is provided for informational purposes.  It indicates the versio
 <ins><!-- d3d12-review-inline:begin:cache-registration:target-context-rules:0:authored:migration-5d746cf42cbab956-0 -->The installer captures its adapter records during installer creation. Records without offline cache ABI metadata or without a present adapter at that time do not contribute. `GetMaxPrecompileTargetCount` is the resulting snapshot's upper bound, not a new physical-hardware query. Later driver or compiler changes can affect profile queries and can cause adapter omission or discovery failure without automatically refreshing that bound. An application object retains its discovered target records; callbacks do not automatically refresh those records.<!-- d3d12-review-inline:end:cache-registration:target-context-rules:0:authored:migration-5d746cf42cbab956-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:target-context-rules:1:authored:migration-d4528e8c23cf630e-0 -->The driver-supported interval is inclusive. An adapter family identifier, supported ABI interval, compiler version and application profile are not interchangeable identifiers. See [Version domains](offline-compilation.md#version-domains) and the device's [shader cache ABI support payload](devices-and-capabilities.md#d3d12_feature_data_shadercache_abi_support). Discovery reports driver-side target information. It does not expand the compiler factory's potentially sparse supported ABI set or make every ABI in a driver interval available from every registered compiler.<!-- d3d12-review-inline:end:cache-registration:target-context-rules:1:authored:migration-d4528e8c23cf630e-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:cache-registration:target-context-rules:2:authored:migration-ee9f502a2b8d36da-0 -->The installer upper bound query, installer in/out-capacity enumeration, application count/fixed-capacity prefix copy, and component exact-size PSDB map copy are four distinct protocols. Returned records need not be unique by adapter family. Application preference sorting does not establish a stable tie order, a cross-call race-free snapshot or automatic callback-driven refresh.<!-- d3d12-review-inline:end:cache-registration:target-context-rules:2:authored:migration-ee9f502a2b8d36da-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:D144-compatibility-selection:0:authored:migration-a8ae50a5f70e1be9-0 -->[PSDB recognition and compatibility](runtime-cache-discovery.md#compatibility) define runtime eligibility independently of these target array protocols. [Compatible-output preference and driver reporting](runtime-cache-discovery.md#preference-and-reporting) distinguish installer/service recommendations from the runtime's one-path default lookup and from application-preferred adapter filtering.<!-- d3d12-review-inline:end:cache-registration:D144-compatibility-selection:0:authored:migration-a8ae50a5f70e1be9-0 --></ins>
 
@@ -167,6 +162,13 @@ typedef struct SC_HANDLE__ *SC_HANDLE;
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:target-flags-meaning:0:modified:migration-150647814bfad294-0 -->`D3D_SHADER_CACHE_TARGET_FLAGS` contains flags to modify target lookup behavior. The flags are currently reserved.<!-- d3d12-review-inline:end:cache-registration:target-flags-meaning:0:modified:migration-150647814bfad294-0 --></ins>
 
+<ins><!-- d3d12-review-inline:begin:cache-registration:target-field-details:0:authored:migration-c343f7ab2daac207-0 -->`D3D_SHADER_CACHE_PSDB_PROPERTIES::pAdapterFamily` and `pPsdbPath` must be
+NUL-terminated strings. The compiler properties' inline family storage holds
+128 wide characters including the terminating NUL. See
+[Version domains](offline-compilation.md#version-domains) and
+[Target discovery](#target-discovery) for the target ABI, inclusive driver
+interval and application profile meanings.<!-- d3d12-review-inline:end:cache-registration:target-field-details:0:authored:migration-c343f7ab2daac207-0 --></ins>
+
 <a id="d3d_shader_cache_application_desc"></a>
 
 ### D3D_SHADER_CACHE_APPLICATION_DESC
@@ -177,19 +179,13 @@ Notes:
 
 - <ins><!-- d3d12-review-inline:begin:cache-registration:application-fields:4 -->The pExeFilename should be the filename for the main game exe, not any storefront or other game launchers.  The filename should be the game's typical filename, and does not have to match the exe filename on disk.  For example, if the game exe were simply renamed, the pExeFilename passed to this API does not change.<!-- d3d12-review-inline:end:cache-registration:application-fields:4 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:target-field-details:0:authored:migration-c343f7ab2daac207-0 -->`D3D_SHADER_CACHE_PSDB_PROPERTIES::pAdapterFamily` and `pPsdbPath` must be
-NUL-terminated strings. The compiler properties' inline family storage holds
-128 wide characters including the terminating NUL. [Version domains](offline-compilation.md#version-domains)
-and [Target discovery](#target-discovery) define the target ABI, inclusive driver
-interval and application profile meanings.<!-- d3d12-review-inline:end:cache-registration:target-field-details:0:authored:migration-c343f7ab2daac207-0 --></ins>
-
 <a id="factory-bootstrap"></a>
 
 ## Factory bootstrap and ownership
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:factory-bootstrap:0:authored:migration-1fe997257bae69d2-0 -->The factory is retrieved through [D3D12GetInterface](devices-and-capabilities.md#d3d12getinterface), using `CLSID_D3DShaderCacheInstallerFactory` and `IID_ID3DShaderCacheInstallerFactory`. There is no separate registration factory export. The returned runtime interfaces use `IUnknown` reference ownership. The client is caller-owned and must persist for the installer lifetime. Its pointer is retained, not an `IUnknown` reference. Releasing a factory does not release independently held installer/explorer references. Application and component interfaces likewise own their retained metadata; releasing a parent interface is not catalog unregistration or a transfer of ownership of a child's borrowed strings.<!-- d3d12-review-inline:end:cache-registration:factory-bootstrap:0:authored:migration-1fe997257bae69d2-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:cache-registration:factory-source:0:modified:source-b9b1b2fe742dea5b-0-0 -->This is the factory<!-- d3d12-review-inline:end:cache-registration:factory-source:0:modified:source-b9b1b2fe742dea5b-0-0 --></ins> interface for creating shader cache installers and explorers. `ID3DShaderCacheInstallerFactory` <ins><!-- d3d12-review-inline:begin:cache-registration:factory-source:0:modified:source-b9b1b2fe742dea5b-1-0 -->objects<!-- d3d12-review-inline:end:cache-registration:factory-source:0:modified:source-b9b1b2fe742dea5b-1-0 --></ins> are created using the `D3D12GetInterface` function by passing the `CLSID_D3DShaderCacheInstallerFactory` GUID.
+
+<ins><!-- d3d12-review-inline:begin:cache-registration:factory-bootstrap:0:authored:migration-1fe997257bae69d2-0 -->Request `IID_ID3DShaderCacheInstallerFactory`. The returned runtime interfaces use `IUnknown` reference ownership. The client is caller-owned and must persist for the installer lifetime. Its pointer is retained, not an `IUnknown` reference. Application and component interfaces likewise own their retained metadata.<!-- d3d12-review-inline:end:cache-registration:factory-bootstrap:0:authored:migration-1fe997257bae69d2-0 --></ins>
 
 <a id="id3dshadercacheinstallerfactory"></a>
 
@@ -265,7 +261,7 @@ The reference ID of the interface to retrieve.
 
 A pointer to receive the explorer interface.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createexplorer-parameter-rules:0:authored:migration-4f5468ff43454255-0 -->`pUnknown` is the context object, not the application's executable or a compiler factory. A non-null object must expose one of the supported device/adapter interfaces, including `IDXGIAdapter4` for the DXGI path. `riid` normally requests `IID_ID3DShaderCacheExplorer`. `ppvExplorer` is required and receives a caller-owned reference. Null output is not a probe.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createexplorer-parameter-rules:0:authored:migration-4f5468ff43454255-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createexplorer-parameter-rules:0:authored:migration-4f5468ff43454255-0 -->A non-null object must expose one of the supported device/adapter interfaces, including `IDXGIAdapter4` for the DXGI path. `riid` normally requests `IID_ID3DShaderCacheExplorer`. `ppvExplorer` is required and receives a caller-owned reference. Null output is not a probe.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createexplorer-parameter-rules:0:authored:migration-4f5468ff43454255-0 --></ins>
 
 #### Return values
 
@@ -294,8 +290,6 @@ HRESULT GetInstallerName( SIZE_T* pNameLength, wchar_t* pName);
 Returns the name of the installer application.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-getinstallername-source-remarks:0:modified:migration-a4fcd3deeb871a8e-0 -->Used by an instance of `ID3DShaderCacheInstaller` to retrieve the name of store/installer application so that applications registered can be organized internally. This method should be called twice. Once with `pName` equal to `nullptr` in which case the method will return the length in characters (including null-terminator) in the memory pointed to by `pNameLength`. If `pName` is non-null then `pNameLength` must also be non-null and the value pointed to by it must be greater than or equal to the length of the name.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-getinstallername-source-remarks:0:modified:migration-a4fcd3deeb871a8e-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-getinstallername-behavior:0:authored:migration-a353868cbd04185c-0 -->This method is implemented by the installer, not by the runtime. The runtime uses its result to identify the store/installer and organize that installer's registered applications. Return a consistent name for the installer identity used by one installer object.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-getinstallername-behavior:0:authored:migration-a353868cbd04185c-0 --></ins>
 
 #### Parameters
 
@@ -352,9 +346,9 @@ HRESULT HandleDriverUpdate( ID3DShaderCacheInstaller* pInstaller);
 Callback handler called after a graphics driver update has occurred.
 
 This is a callback function that will be called by the system when a graphics driver update occurs. See
-`ID3DShaderCacheInstaller::RegisterDriverUpdateListener` for more information.
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-source-remarks:0:modified:section-pass-listener-link -->[`ID3DShaderCacheInstaller::RegisterDriverUpdateListener`](#id3dshadercacheinstaller-registerdriverupdatelistener)<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-source-remarks:0:modified:section-pass-listener-link --></ins> for more information.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-behavior:0:authored:migration-e8da05bef5ba025f-0 -->The system calls this client method for driver update notification after listener registration. The installer can review the applications it has registered and determine which PSDB registrations need updating. Notification is not an automatic download, recompilation, cache replacement or catalog update. The callback is asynchronous to the installer's ordinary call flow; no compiler-style application-wide thread safety guarantee, ordering guarantee, or generic reentrancy prohibition is specified here.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-behavior:0:authored:migration-e8da05bef5ba025f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-behavior:0:authored:migration-e8da05bef5ba025f-0 -->The system calls this client method for driver update notification after listener registration. The installer can review the applications it has registered and determine which PSDB registrations need updating. Notification is not an automatic download, recompilation, cache replacement or catalog update. The callback is asynchronous to the installer's ordinary call flow.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-behavior:0:authored:migration-e8da05bef5ba025f-0 --></ins>
 
 #### Parameters
 
@@ -366,7 +360,7 @@ A pointer to an `ID3DShaderCacheInstaller` object that was listening for the dri
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-returns:0:authored:migration-43baf2449e881551-0 -->The client returns an `HRESULT` describing its handling. Failure does not establish catalog rollback, retry scheduling, callback re-delivery, or unregistration. The example returns `E_NOTIMPL`. It does not register a listener.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-returns:0:authored:migration-43baf2449e881551-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-returns:0:authored:migration-43baf2449e881551-0 -->The client returns an `HRESULT` describing its handling.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-returns:0:authored:migration-43baf2449e881551-0 --></ins>
 
 <a id="id3dshadercacheinstaller"></a>
 
@@ -388,7 +382,7 @@ HRESULT RegisterApplication( const wchar_t* pExePath, const D3D_SHADER_CACHE_APP
 
 Registers a shader cache application.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerapplication-behavior:0:authored:migration-e58ea083fa63d52b-0 -->Registers or updates application metadata within this installer and scope. The fully qualified executable path is the lookup key exposed to the explorer. `pExeFilename` is stable application-identification metadata, not that path. Registration does not install application files, create SODBs or PSDBs, or register their paths. Components are registered separately. Registration updates do not imply that all previously returned application objects refresh their retained descriptions.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerapplication-behavior:0:authored:migration-e58ea083fa63d52b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerapplication-behavior:0:authored:migration-e58ea083fa63d52b-0 -->Registers or updates application metadata within this installer and scope. The fully qualified executable path is the lookup key exposed to the explorer. `pExeFilename` is stable application-identification metadata, not that path. Components are registered separately. Registration updates do not imply that all previously returned application objects refresh their retained descriptions.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerapplication-behavior:0:authored:migration-e58ea083fa63d52b-0 --></ins>
 
 #### Parameters
 
@@ -414,7 +408,7 @@ A pointer to receive the application interface.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:STYLE-D1:0:modified:RegisterApplication -->Returns `S_OK` on success. The described missing or empty required values return `E_INVALIDARG`. An unsupported requested interface returns `E_NOINTERFACE` when an object is requested. Allocation, permission and persistent catalog errors can propagate.<!-- d3d12-review-inline:end:cache-registration:STYLE-D1:0:modified:RegisterApplication --></ins>
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerapplication-returns:0:authored:migration-2f68e44820c1fa6c-0 -->Persistent registration can complete before output object creation or interface negotiation fails. Failure is not a universal rollback guarantee. Application name upsert and executable path lookup retain the distinct identity rules in [Catalog identity and persistence](#catalog-identity). If interface negotiation is reached and rejects `riid`, the corresponding interface output is set to null. This does not extend to earlier failures.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerapplication-returns:0:authored:migration-2f68e44820c1fa6c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerapplication-returns:0:authored:migration-2f68e44820c1fa6c-0 -->Persistent registration can complete before output object creation or interface negotiation fails. Failure is not a universal rollback guarantee. See [Catalog identity and persistence](#catalog-identity) for application name upserts and executable path lookup. If interface negotiation is reached and rejects `riid`, the corresponding interface output is set to null. This does not extend to earlier failures.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerapplication-returns:0:authored:migration-2f68e44820c1fa6c-0 --></ins>
 
 <a id="id3dshadercacheinstaller-removeapplication"></a>
 
@@ -432,7 +426,7 @@ Removes a shader cache application.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-removeapplication-source-remarks:0:modified:migration-6aba0c47de16f10c-0 -->After successful removal the `pApplication` will be in an invalid state and should be destroyed by the caller. Further operations on that object will return error results. Additionally any cached indices of `ID3DShaderCacheApplication` objects should be considered invalidated after this operation.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-removeapplication-source-remarks:0:modified:migration-6aba0c47de16f10c-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-removeapplication-behavior:0:authored:migration-cfeaa516abffafb9-0 -->Removes the application's registration and associated component registrations from this installer's catalog, not the application's files or the SODB/PSDB files named by those registrations. After successful removal the supplied application object must not be used for further application operations. Release its reference. Cached application indices are invalidated. This does not promise that every separately acquired object becomes stale simultaneously.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-removeapplication-behavior:0:authored:migration-cfeaa516abffafb9-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-removeapplication-behavior:0:authored:migration-cfeaa516abffafb9-0 -->Removes the application's registration and associated component registrations from this installer's catalog, not the application's files or the SODB/PSDB files named by those registrations. This does not promise that every separately acquired object becomes stale simultaneously.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-removeapplication-behavior:0:authored:migration-cfeaa516abffafb9-0 --></ins>
 
 #### Parameters
 
@@ -614,7 +608,7 @@ a graphics driver is installed or updated. The callback function `HandleDriverUp
 
 When a new driver is available on the system the installer will need to review applications it has registered to determine if the PSDBs associated with the device have been invalidated.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerdriverupdatelistener-behavior:0:authored:migration-b89991e8d1dcd002-0 -->Registers this installer for driver update notifications delivered through its retained client's `HandleDriverUpdate`. It does not retain the client through `IUnknown`, nor does it automatically refresh catalog registrations or compiler target objects. There is one active listener subscription per installer object.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerdriverupdatelistener-behavior:0:authored:migration-b89991e8d1dcd002-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerdriverupdatelistener-behavior:0:authored:migration-b89991e8d1dcd002-0 -->There is one active listener subscription per installer object.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerdriverupdatelistener-behavior:0:authored:migration-b89991e8d1dcd002-0 --></ins>
 
 #### Parameters
 
@@ -682,8 +676,6 @@ The service handle.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:STYLE-D1:0:modified:RegisterServiceTrigger -->Returns `S_OK` on success. An existing matching trigger returns `DXGI_ERROR_ALREADY_EXISTS`. Denied service configuration access returns `E_ACCESSDENIED`. An invalid service handle detected during query returns `E_INVALIDARG`. Other query or change failures return `E_FAIL`.<!-- d3d12-review-inline:end:cache-registration:STYLE-D1:0:modified:RegisterServiceTrigger --></ins>
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerservicedriverupdatetrigger-returns:0:authored:migration-d38a903361372b25-0 -->A failed call is not evidence that a service started or that a trigger was installed.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerservicedriverupdatetrigger-returns:0:authored:migration-d38a903361372b25-0 --></ins>
-
 <a id="id3dshadercacheinstaller-unregisterservicedriverupdatetrigger"></a>
 
 ### ID3DShaderCacheInstaller::UnregisterServiceDriverUpdateTrigger
@@ -712,8 +704,6 @@ The service handle.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:STYLE-D1:0:modified:UnregisterServiceTrigger -->Returns `S_OK` on success. If no matching trigger is present, the method returns `DXGI_ERROR_NOT_FOUND`. Denied access returns `E_ACCESSDENIED`. An invalid service handle detected during query returns `E_INVALIDARG`. Other query or change failures return `E_FAIL`.<!-- d3d12-review-inline:end:cache-registration:STYLE-D1:0:modified:UnregisterServiceTrigger --></ins>
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-unregisterservicedriverupdatetrigger-returns:0:authored:migration-eb39918d4a9ee507-0 -->There is no generic catalog rollback or service state guarantee.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-unregisterservicedriverupdatetrigger-returns:0:authored:migration-eb39918d4a9ee507-0 --></ins>
-
 <a id="id3dshadercacheapplication"></a>
 
 ## ID3DShaderCacheApplication
@@ -740,7 +730,7 @@ Retrieves the full path to the exe.
 
 An out parameter that receives a pointer to the exe path.  The string's lifetime is controlled by the ID3DShaderCacheApplication and must not be used if the application is released.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getexepath-parameter-rules:0:authored:migration-74889c20696250f4-0 -->`pExePath` is required. On success it receives a borrowed NUL-terminated wide string pointer owned by the application object. It is not a caller buffer, has no character capacity input and requires no caller allocator or free operation. Keep the application alive while using the string.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getexepath-parameter-rules:0:authored:migration-74889c20696250f4-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getexepath-parameter-rules:0:authored:migration-74889c20696250f4-0 -->`pExePath` is required. On success it receives a borrowed NUL-terminated wide string pointer owned by the application object.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getexepath-parameter-rules:0:authored:migration-74889c20696250f4-0 --></ins>
 
 #### Return values
 
@@ -768,7 +758,7 @@ Retrieves the application description.
 
 A pointer to a structure to receive the application desc.  The desc contains strings whose lifetime is controlled by the ID3DShaderCacheApplication and must not be used if the application is released.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getdesc-parameter-rules:0:authored:migration-365bdf0037895e42-0 -->`pApplicationDesc` is required and points to caller-owned structure storage. The returned string pointers are borrowed from the application object and must not be freed or used after it is released. The version values are copied. This method is not a two-call size query and does not allocate a caller-owned description/string block.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getdesc-parameter-rules:0:authored:migration-365bdf0037895e42-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getdesc-parameter-rules:0:authored:migration-365bdf0037895e42-0 -->`pApplicationDesc` is required and points to caller-owned structure storage. The returned string pointers are borrowed from the application object and must not be freed or used after it is released. The version values are copied.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getdesc-parameter-rules:0:authored:migration-365bdf0037895e42-0 --></ins>
 
 #### Return values
 
@@ -787,8 +777,6 @@ HRESULT GetInstallerName( const wchar_t** pInstallerName);
 #### Behavior
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getinstallername-source-behavior:0:authored:migration-a75601883fa3dba2-0 -->Retrieves the installer's name.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getinstallername-source-behavior:0:authored:migration-a75601883fa3dba2-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getinstallername-behavior:0:authored:migration-b213890e498a8232-0 -->Returns the name of the installer owning this application registration.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getinstallername-behavior:0:authored:migration-b213890e498a8232-0 --></ins>
 
 #### Parameters
 
@@ -868,7 +856,7 @@ Removes a component from the application.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-removecomponent-source-remarks:0:modified:migration-32019c2b15c17035-0 -->After successful removal the `pComponent` will be in an invalid state and should be destroyed by the caller. Further operations on that object will return error results. Additionally any cached indices of `ID3DShaderCacheComponent` objects should be considered invalidated after this operation.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-removecomponent-source-remarks:0:modified:migration-32019c2b15c17035-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-removecomponent-behavior:0:authored:migration-f876576346be3239-0 -->Removes a component registration and its family-to-PSDB mappings, not the SODB or PSDB files. After successful removal release the supplied object and discard cached component indices. Do not infer simultaneous invalidation of every independently acquired view. On an explorer-derived read-only application this mutable operation must fail without updating persistent catalog state.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-removecomponent-behavior:0:authored:migration-f876576346be3239-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-removecomponent-behavior:0:authored:migration-f876576346be3239-0 -->Removes a component registration and its family-to-PSDB mappings, not the SODB or PSDB files. Do not infer simultaneous invalidation of every independently acquired view. On an explorer-derived read-only application this mutable operation must fail without updating persistent catalog state.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-removecomponent-behavior:0:authored:migration-f876576346be3239-0 --></ins>
 
 #### Parameters
 
@@ -1024,8 +1012,6 @@ HRESULT GetComponentName( const wchar_t** pName);
 
 Retrieves the name of the component.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getcomponentname-behavior:0:authored:migration-6d343fe3a59897f9-0 -->Returns the component object's retained identifying name.<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getcomponentname-behavior:0:authored:migration-6d343fe3a59897f9-0 --></ins>
-
 #### Parameters
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getcomponentname-source-parameters:0 -->`[out] pName`<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getcomponentname-source-parameters:0 --></ins>
@@ -1060,7 +1046,7 @@ Retrieves the path to the state object database.
 
 A pointer to receive the path.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getstateobjectdatabasepath-parameter-rules:0:authored:migration-5ee2347889bc0be9-0 -->`pPath` is required and receives a borrowed NUL-terminated wide string owned by the component. There is no caller buffer, length parameter or caller free operation. Keep the component alive.<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getstateobjectdatabasepath-parameter-rules:0:authored:migration-5ee2347889bc0be9-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getstateobjectdatabasepath-parameter-rules:0:authored:migration-5ee2347889bc0be9-0 -->`pPath` is required and receives a borrowed NUL-terminated wide string owned by the component.<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getstateobjectdatabasepath-parameter-rules:0:authored:migration-5ee2347889bc0be9-0 --></ins>
 
 #### Return values
 
@@ -1138,7 +1124,7 @@ HRESULT GetPrecompiledShaderDatabases( UINT ArraySize, D3D_SHADER_CACHE_PSDB_PRO
 
 Retrieves the precompiled shader databases.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getprecompiledshaderdatabases-behavior:0:authored:migration-5d1776632f4a8e35-0 -->Returns the component object's retained family/path mappings. This exact-size protocol differs from both target enumeration protocols.<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getprecompiledshaderdatabases-behavior:0:authored:migration-5d1776632f4a8e35-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getprecompiledshaderdatabases-behavior:0:authored:migration-5d1776632f4a8e35-0 -->Returns the component object's retained family/path mappings.<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getprecompiledshaderdatabases-behavior:0:authored:migration-5d1776632f4a8e35-0 --></ins>
 
 #### Parameters
 
@@ -1174,7 +1160,7 @@ HRESULT GetApplicationFromExePath( const wchar_t* pFullExePath, REFIID riid, voi
 
 Retrieves an application based on its executable path.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-behavior:0:authored:migration-e2a3d3cb221a9f65-0 -->Looks up a catalog registration by full executable path and returns a read-only application object. It searches system and current-user registration visibility. It is not limited to the applications of a mutable installer created by this caller. The lookup itself belongs to the catalog contract and does not select, open or consume a PSDB. Returned application and component mutation operations are subject to the read-only requirement.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-behavior:0:authored:migration-e2a3d3cb221a9f65-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-behavior:0:authored:migration-e2a3d3cb221a9f65-0 -->Looks up a catalog registration by full executable path and returns a read-only application object. It searches system and current-user registration visibility. It is not limited to the applications of a mutable installer created by this caller.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-behavior:0:authored:migration-e2a3d3cb221a9f65-0 --></ins>
 
 #### Parameters
 

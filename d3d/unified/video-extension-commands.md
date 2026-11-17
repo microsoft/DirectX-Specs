@@ -15,22 +15,14 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:video-extension:N-route:0:authored:migration-2a0e5003d0a0d664-0 -->This subordinate [Video](video.md) reference describes opaque extension
-commands identified by a command GUID. Discovery and parameter reflection
-describe command-defined structures for [creation and CPU execution](#extension-objects)
-and [GPU recording](#extension-recording).<!-- d3d12-review-inline:end:video-extension:N-route:0:authored:migration-2a0e5003d0a0d664-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:video-extension:N-route:1:authored:migration-dc8a84c7085e8f5a-0 -->This is a **qualified draft**. Published behavioral requirements remain
-source-only except for the explicitly scoped source inspection corroboration.
-Qualifications do not establish expert or hardware approval.<!-- d3d12-review-inline:end:video-extension:N-route:1:authored:migration-dc8a84c7085e8f5a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:N-route:0:authored:migration-2a0e5003d0a0d664-0 -->Opaque extension commands are identified by a command GUID.<!-- d3d12-review-inline:end:video-extension:N-route:0:authored:migration-2a0e5003d0a0d664-0 --></ins>
 
 <a id="extension-discovery"></a>
 
 ## Discovery and parameter structures
 
-<ins><!-- d3d12-review-inline:begin:video-extension:N-query:0:authored:migration-8d146d5d1e4fe2d6-0 -->[`ID3D12VideoDevice::CheckFeatureSupport`](video-decode.md#video-check-feature-support)
-owns the fixed-payload size and HRESULT protocol.
-Initialize inputs. Interpret outputs only after success. `NodeIndex` is a zero-based node index,
+<ins><!-- d3d12-review-inline:begin:video-extension:N-query:0:authored:migration-8d146d5d1e4fe2d6-0 -->[`ID3D12VideoDevice::CheckFeatureSupport`](video-decode.md#video-check-feature-support):
+`NodeIndex` is a zero-based node index,
 not the single-node creation `NodeMask`.<!-- d3d12-review-inline:end:video-extension:N-query:0:authored:migration-8d146d5d1e4fe2d6-0 --></ins>
 
 <!-- d3d12-review-alert:begin:video-extension:N-query:1:authored:migration-94b8a86e9a855955-0 -->
@@ -59,10 +51,8 @@ The support query uses `CAPS_INPUT` and `CAPS_OUTPUT`; successful HRESULT
 transport is not itself a command-defined support result. The size query
 describes residency allocations, not allocation of an extension object.<!-- d3d12-review-inline:end:video-extension:N-query:2:authored:migration-1f1aa24c5073f251-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-extension:N-query:3:authored:migration-b4154af9a045e1bf-0 -->The command info `Name` and parameter info `Name` are wide string pointers.
-The owning published DDI contracts require the driver to allocate and retain
-both names for the device lifetime. This is a Video-specific published
-requirement. It does not transfer ownership of either string to the caller.
+<ins><!-- d3d12-review-inline:begin:video-extension:N-query:3:authored:migration-b4154af9a045e1bf-0 -->The driver must allocate and retain the wide strings referenced by command info
+`Name` and parameter info `Name` for the device lifetime. Ownership of neither string transfers to the caller.
 The arrays themselves are allocated by the caller at the API boundary and
 by the runtime at the driver boundary.<!-- d3d12-review-inline:end:video-extension:N-query:3:authored:migration-b4154af9a045e1bf-0 --></ins>
 
@@ -113,9 +103,9 @@ only one family flag may be set. That upper bound does not establish an
 unconditional nonzero-mask requirement or GPU recording support for a zero
 mask. The creation description selects one node; enumeration on another
 node is not a support guarantee.
-[List/queue types](execution.md#command-list-types),
+See [List/queue types](execution.md#command-list-types),
 [creation](execution.md#creation) and [submission validation](execution.md#validation)
-own the common compatibility requirements.<!-- d3d12-review-inline:end:video-extension:N-resources:0:authored:migration-93b711bd524b4412-0 --></ins>
+for command family and device/node compatibility.<!-- d3d12-review-inline:end:video-extension:N-resources:0:authored:migration-93b711bd524b4412-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-extension:N-resources:1:authored:migration-2cfba9a4dc7789dd-0 -->CPU device execution is a separate route. A GPU family flag does not by
 itself establish CPU execution support. The selected sources do not settle
@@ -151,17 +141,16 @@ resources to the appropriate video read/write states:<!-- d3d12-review-inline:en
 
 <!-- d3d12-review-alert:end:video-extension:N-resource-states:1:authored:migration-5496685880f9f8a4-0 -->
 
-<ins><!-- d3d12-review-inline:begin:video-extension:N-resource-states:2:authored:migration-0e7f26544c3d5123-0 -->The [video resource contract](video.md#video-resource-contract),
+<ins><!-- d3d12-review-inline:begin:video-extension:N-resource-states:2:authored:migration-0e7f26544c3d5123-0 -->See [Video resources](video.md#video-resource-contract) for allocation and residency. See
 [enhanced decode](synchronization.md#decode-enhanced-barrier),
 [enhanced process](synchronization.md#process-enhanced-barrier),
-[enhanced encode](synchronization.md#encode-enhanced-barrier),
+[enhanced encode](synchronization.md#encode-enhanced-barrier) barriers,
 [access scopes](synchronization.md#barrier-access),
 [synchronization scopes](synchronization.md#barrier-sync), and
 [barrier model interoperation](synchronization.md#model-interoperation)
-own the corresponding shared barrier rules. Resource dimensions, formats,
+for resource synchronization. Resource dimensions, formats,
 subresources, read/write aliasing and any simultaneous read/write use must
-be established by the particular command contract. This table does not
-permit incompatible state combinations. GPU state names do not establish
+be established by the particular command contract. GPU state names do not establish
 CPU execution's resource access/synchronization semantics.<!-- d3d12-review-inline:end:video-extension:N-resource-states:2:authored:migration-0e7f26544c3d5123-0 --></ins>
 
 <a id="extension-objects"></a>
@@ -182,10 +171,7 @@ retrieves the association, not a new session. On success it returns a
 caller-owned reference to the requested session interface through
 `ppProtectedSession`. The caller releases it under the same lifetime rules.
 The selected sources do not establish a precise no-session HRESULT/null output
-postcondition. No additional protection lifecycle is implied.
-The existing [shared protected resource flags](video-motion-estimation.md#d3d12-video-protected-resource-support-flags)
-retain their canonical definition; no extension-specific support payload is
-invented from those flags.<!-- d3d12-review-inline:end:video-extension:N-lifetime:1:authored:migration-d701616049471c95-0 --></ins>
+postcondition.<!-- d3d12-review-inline:end:video-extension:N-lifetime:1:authored:migration-d701616049471c95-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-extension:N-lifetime:2:authored:migration-798e4f55ea36c090-0 -->**Scoped creation validation:** the inspected creation validator checks the
 single-node selection and that the GUID appears in the selected node's command
@@ -329,10 +315,6 @@ D3D12_VIDEO_EXTENSION_COMMAND_DESC GetDesc();
 
 <ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoExtensionCommand-GetDesc:2:authored:migration-35ca021f2e695b7d-0 -->Gets the [D3D12_VIDEO_EXTENSION_COMMAND_DESC](#d3d12-video-extension-command-desc) provided when the interface was created.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoExtensionCommand-GetDesc:2:authored:migration-35ca021f2e695b7d-0 --></ins>
 
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoExtensionCommand-GetDesc:4:authored:migration-7a6c183ba6f0a0b9-0 -->None.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoExtensionCommand-GetDesc:4:authored:migration-7a6c183ba6f0a0b9-0 --></ins>
-
 #### Return values
 
 <ins><!-- d3d12-review-inline:begin:video-extension:A-ID3D12VideoExtensionCommand-GetDesc:6 -->The [D3D12_VIDEO_EXTENSION_COMMAND_DESC](#d3d12-video-extension-command-desc) provided when the interface was created.<!-- d3d12-review-inline:end:video-extension:A-ID3D12VideoExtensionCommand-GetDesc:6 --></ins>
@@ -375,23 +357,20 @@ This method returns HRESULT.
 <ins><!-- d3d12-review-inline:begin:video-extension:N-record:0:authored:migration-a9d3fce11329a0e5-0 -->Initialization records initialization or re-initialization; execution records
 the command's work. These are not CPU completion calls. The extension's
 contract must establish when initialization is required, reusable state,
-re-initialization ordering and any concurrent-use restriction. There is no
-generic per-extension algorithm or decoder-derived serialization rule for
-processor/encoder extensions.<!-- d3d12-review-inline:end:video-extension:N-record:0:authored:migration-a9d3fce11329a0e5-0 --></ins>
+re-initialization ordering and any concurrent-use restriction.<!-- d3d12-review-inline:end:video-extension:N-record:0:authored:migration-a9d3fce11329a0e5-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-extension:N-record:1:authored:migration-dc1ccfddfb8f574a-0 -->All six GPU methods retain the [extension-defined predication policy](counters-queries-and-predication.md#predication-operation-matrix).
 Initialization is not specified to ignore predication. No generic dirty state
 mask or automatic ClearState policy is imposed by these methods.
-[Recording storage](execution.md#command-storage),
+See [Recording storage](execution.md#command-storage),
 [object/resource lifetime](execution.md#lifetime),
 [completion and lifetime](execution.md#completion-lifetime),
 [submission and ordering](execution.md#submission),
 [CPU threading](execution.md#threading) and
-[submission threading](execution.md#submission-threading) remain shared.
+[submission threading](execution.md#submission-threading) for recording and submission requirements.
 The command and all resources needed by recorded uses that will execute
 must remain alive while recorded but unsubmitted, and through completion of
-those GPU uses. Recording is not an automatic `AddRef` guarantee.
-Reset does not complete previously submitted GPU work.<!-- d3d12-review-inline:end:video-extension:N-record:1:authored:migration-dc1ccfddfb8f574a-0 --></ins>
+those GPU uses. Recording is not an automatic `AddRef` guarantee.<!-- d3d12-review-inline:end:video-extension:N-record:1:authored:migration-dc1ccfddfb8f574a-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-extension:N-record:2:authored:migration-fc7c70caf3b68d41-0 -->The public GPU methods return void; recording/initialization errors are
 reported through debug layers and the list's `Close` return value.
@@ -1085,19 +1064,13 @@ typedef enum D3D12_VIDEO_EXTENSION_COMMAND_PARAMETER_FLAGS {
 <ins><!-- d3d12-review-inline:begin:video-extension:N-ddi:1:authored:migration-018e299b1f2d1061-0 -->Video feature `_0063_0` (15) supplies discovery, object lifecycle and GPU initialization/execution. `_0076_0` (17) adds device CPU execution. Both require at least `D3D12DDI_SUPPORTED_0043`.<!-- d3d12-review-inline:end:video-extension:N-ddi:1:authored:migration-018e299b1f2d1061-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-extension:N-ddi:2:authored:migration-d43dfb77e39aa43a-0 -->`D3D12DDI_TABLE_TYPE_0020_DEVICE_VIDEO` selects the device-video function
-table. `_0063` provides private size/create/destroy slots. `_0076` adds
-`pfnExecuteDeviceVideoExtensionCommand`. The DECODE, PROCESS and ENCODE
-`_0063` command list tables each provide both
-`pfnInitializeVideoExtensionCommand` and `pfnExecuteVideoExtensionCommand`.
-Their table types are `D3D12DDI_TABLE_TYPE_0022_COMMAND_LIST_VIDEO_DECODE`
+table. The DECODE, PROCESS and ENCODE command list table types are `D3D12DDI_TABLE_TYPE_0022_COMMAND_LIST_VIDEO_DECODE`
 (12), `D3D12DDI_TABLE_TYPE_0022_COMMAND_LIST_VIDEO_PROCESS` (14) and
 `D3D12DDI_TABLE_TYPE_0053_COMMAND_LIST_VIDEO_ENCODE` (21), respectively.
 The extension's handle type is `D3D12DDI_HT_0061_VIDEO_EXTENSION_COMMAND`
 (47).
 Queue flags use `_0022_VIDEO_DECODE = 0x10`, `_0022_VIDEO_PROCESS = 0x20`
 and `_0053_VIDEO_ENCODE = 0x40` in `D3D12DDI_COMMAND_QUEUE_FLAGS`.<!-- d3d12-review-inline:end:video-extension:N-ddi:2:authored:migration-d43dfb77e39aa43a-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:video-extension:N-ddi:3:authored:migration-a05c9684d281d2cf-0 -->Drivers must support MakeResident/Evict for extension command handles. Significant internal allocations should be made at creation, but later allocations are not forbidden.<!-- d3d12-review-inline:end:video-extension:N-ddi:3:authored:migration-a05c9684d281d2cf-0 --></ins>
 
 <a id="extension-ddi-capabilities"></a>
 
@@ -1816,7 +1789,5 @@ The size of the creation parameters structure in bytes.
 <a id="qualifications-and-validation-limits"></a>
 
 ### API/DDI description corrections
-
-<ins><!-- d3d12-review-inline:begin:video-extension:N-qualifications:0:authored:migration-a28fba275d569ae2-0 -->Device CPU execution consumes DEVICE_EXECUTE_INPUT and produces DEVICE_EXECUTE_OUTPUT. `OutputDataSizeInBytes` is the input capacity of the output allocation. CPU execution completes before returning.<!-- d3d12-review-inline:end:video-extension:N-qualifications:0:authored:migration-a28fba275d569ae2-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-extension:N-qualifications:1:authored:migration-5696bdaa7089d0d8-0 -->The residency size query takes creation parameters and reports L0 system memory and L1 discrete video memory. The published DDI prose that names initialization parameters and reverses the pools is incorrect.<!-- d3d12-review-inline:end:video-extension:N-qualifications:1:authored:migration-5696bdaa7089d0d8-0 --></ins>

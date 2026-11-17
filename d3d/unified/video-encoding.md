@@ -15,31 +15,40 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:intro:0:authored:migration-8d99b877dd2a05ea-0 -->This subordinate [Video](video.md) reference specifies encoding objects,
-capability tuples, application-managed reference pictures, recording and
-metadata conversion for H.264, HEVC and AV1.
-[Controls](video-encoding-controls.md), [codec contracts](video-encoding-codecs.md)
-and [type declarations](video-encoding-types.md) support the
-[API reference](#encoding-api).<!-- d3d12-review-inline:end:video-encoding:intro:0:authored:migration-8d99b877dd2a05ea-0 --></ins>
+<a id="encoding-objects"></a>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:intro:1:authored:migration-c37d642628b650c6-0 -->This is a **qualified draft**. Codec
-syntax, algorithms, numeric/statistical details and hardware behavior retained
-from the published sources remain source-only unless explicitly qualified
-otherwise. Specific source discrepancies are qualified beside the affected
-contracts.<!-- d3d12-review-inline:end:video-encoding:intro:1:authored:migration-c37d642628b650c6-0 --></ins>
+## Encoder objects and heaps
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:LA-video-annotation-owner:0:authored:migration-13289dbb20126e92-0 -->The [command list annotation reference](diagnostics.md#command-list-annotations)
-defines BeginEvent/EndEvent/SetMarker on `ID3D12VideoEncodeCommandList`.
-Their recording and allocator data lifetime follows
-[common annotation state](command-list-state.md#annotations).<!-- d3d12-review-inline:end:video-encoding:LA-video-annotation-owner:0:authored:migration-13289dbb20126e92-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding:objects:0:authored:migration-82775ff88c925ef8-0 -->An encoder fixes codec, profile, input format, sequence level codec
+configuration and maximum motion estimation precision. A heap fixes codec,
+profile, level and its supported resolution list. Their descriptions are
+different contracts: the encoder does not acquire the heap's level or resolution
+list, and the heap does not replace the encoder's codec configuration.
+The objects used together must be compatible with the supported tuple.
+Reflection retrieves creation values; modifying a returned copy does not
+modify either object.<!-- d3d12-review-inline:end:video-encoding:objects:0:authored:migration-82775ff88c925ef8-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:objects:1:authored:migration-855eca19dbb8aa22-0 -->Both object families derive from `ID3D12Pageable`. Successful creation returns
+a caller-owned COM reference. The descriptions and their pointed-to creation
+data are CPU call inputs and are copied during creation, including the heap's
+resolution list. Resource storage, fences and the encoder/heap are separate
+GPU lifetime objects; retaining a CPU description is not a substitute for
+retaining them.<!-- d3d12-review-inline:end:video-encoding:objects:1:authored:migration-855eca19dbb8aa22-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:objects:2:authored:migration-fbf7204c86a54483-0 -->`ID3D12VideoEncoderHeap1` adds the immutable `Pow2DownscaleFactor`. Lower-resolution
+two-pass requires the frame analysis heap flag and supported frame analysis
+configuration. The factor applies to every dynamic resolution in that heap's
+list. Encoding performs no implicit downscaling. The application prepares the
+downscaled input and maintains the mirrored full/downscaled DPB.
+Changing the factor requires a new heap under the published key frame/DPB
+restrictions; supported older full-resolution frame analysis is not removed.<!-- d3d12-review-inline:end:video-encoding:objects:2:authored:migration-fbf7204c86a54483-0 --></ins>
 
 <a id="encoding-capabilities"></a>
 
 ## Capabilities and versioned inputs
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:capabilities:0:authored:migration-93f42f1ed91b550d-0 -->[`ID3D12VideoDevice::CheckFeatureSupport`](video-decode.md#video-check-feature-support)
-owns the declaring API and common return protocol. Encoding queries contribute
-fixed payload cases to that owner. They are not new methods. `FeatureSupportDataSize`
+defines the common return protocol. `FeatureSupportDataSize`
 is `sizeof` the selected payload. `NodeIndex` is a zero-based node index;
 creation uses `NodeMask`. Initialize inputs and supply writable storage for
 pointed-to outputs. A successful HRESULT alone is not feature support.<!-- d3d12-review-inline:end:video-encoding:capabilities:0:authored:migration-93f42f1ed91b550d-0 --></ins>
@@ -72,13 +81,6 @@ join the combined tuple through `SUPPORT2`. Disabled additions preserve the
 specified older query semantics; CPU QP compatibility reporting has its own
 explicit exception in the detailed controls.<!-- d3d12-review-inline:end:video-encoding:capabilities:3:authored:migration-ba6ed532401da25d-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:capabilities:4:authored:migration-1325ef0ad84e36f8-0 -->The [detailed capability/parameter reference](video-encoding-controls.md)
-retains per-field input/output directions, count protocols and per-resolution
-limits. The [codec reference](video-encoding-codecs.md) retains codec-specific
-support/configuration, format, tile, header and DPB requirements.
-The [type reference](video-encoding-types.md) supplies one selected final
-declaration for each common type; separate versioned types remain separate.<!-- d3d12-review-inline:end:video-encoding:capabilities:4:authored:migration-1325ef0ad84e36f8-0 --></ins>
-
 <a id="encoding-driver-capabilities"></a>
 
 ### Driver capability payloads and interface tables
@@ -89,13 +91,11 @@ declaration for each common type; separate versioned types remain separate.<!-- 
 
 #### Video device DDI tables
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:S01-099:0 -->The [published video device DDI tables](#encoding-ddi-table-associations) contain the encoder/heap creation and destruction slots.<!-- d3d12-review-inline:end:video-encoding:S01-099:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding:S01-099:0 -->[Published video device DDI tables](#encoding-ddi-table-associations).<!-- d3d12-review-inline:end:video-encoding:S01-099:0 --></ins>
 
-The [published DDI-table associations](video-encoding.md#encoding-ddi-table-associations) identify the actual video-device and encode-list slots.
 ---
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:ddi-query-associations:0:authored:migration-986d5ffdf66b1ccc-0 -->These are the published `D3D12DDICAPS_TYPE` cases and the selected
-versioned capability payloads. The case values are DDI values, not the
+<ins><!-- d3d12-review-inline:begin:video-encoding:ddi-query-associations:0:authored:migration-986d5ffdf66b1ccc-0 -->The capability case values are DDI values, not the
 `D3D12_FEATURE_VIDEO` API ordinals. The fixed `pData` size is `sizeof` the
 selected payload; codec-specific pointers and arrays have their own storage.
 Input/output directions are retained in the payloads and in the matching
@@ -719,35 +719,9 @@ typedef struct D3D12DDI_FEATURE_DATA_VIDEO_ENCODER_RESOLUTION_SUPPORT_QPMAP_0107
 
 <!-- d3d12-review-alert:end:video-encoding:ddi-table-associations:0:authored:migration-9439f3e82a1fd688-0 -->
 
-<a id="encoding-objects"></a>
-
-## Encoder objects and heaps
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:objects:0:authored:migration-82775ff88c925ef8-0 -->An encoder fixes codec, profile, input format, sequence level codec
-configuration and maximum motion estimation precision. A heap fixes codec,
-profile, level and its supported resolution list. Their descriptions are
-different contracts: the encoder does not acquire the heap's level or resolution
-list, and the heap does not replace the encoder's codec configuration.
-The objects used together must be compatible with the supported tuple.
-Reflection retrieves creation values; modifying a returned copy does not
-modify either object.<!-- d3d12-review-inline:end:video-encoding:objects:0:authored:migration-82775ff88c925ef8-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:objects:1:authored:migration-855eca19dbb8aa22-0 -->Both object families derive from `ID3D12Pageable`. Successful creation returns
-a caller-owned COM reference. The descriptions and their pointed-to creation
-data are CPU call inputs and are copied during creation, including the heap's
-resolution list. Resource storage, fences and the encoder/heap are separate
-GPU lifetime objects; retaining a CPU description is not a substitute for
-retaining them.<!-- d3d12-review-inline:end:video-encoding:objects:1:authored:migration-855eca19dbb8aa22-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:objects:2:authored:migration-fbf7204c86a54483-0 -->`ID3D12VideoEncoderHeap1` adds the immutable `Pow2DownscaleFactor`. Lower-resolution
-two-pass requires the frame analysis heap flag and supported frame analysis
-configuration. The factor applies to every dynamic resolution in that heap's
-list. Encoding performs no implicit downscaling. The application prepares the
-downscaled input and maintains the mirrored full/downscaled DPB.
-Changing the factor requires a new heap under the published key frame/DPB
-restrictions; supported older full-resolution frame analysis is not removed.<!-- d3d12-review-inline:end:video-encoding:objects:2:authored:migration-fbf7204c86a54483-0 --></ins>
-
 <a id="encoding-api"></a>
+
+## Encoder creation and reflection
 
 <a id="declaring-api-reference"></a>
 
@@ -774,8 +748,7 @@ HRESULT CreateVideoEncoder(
 `riid` identifies the requested interface. `ppVideoEncoder` receives a caller-owned
 reference to `ID3D12VideoEncoder` on successful creation. CPU description storage, including
 pointed-to profile and codec configuration data, is copied
-during creation. It is not GPU picture storage. Releasing the returned COM
-reference remains the caller's responsibility.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoder-parameters:0:authored:migration-3a3adbf9969f8129-0 --></ins>
+during creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoder-parameters:0:authored:migration-3a3adbf9969f8129-0 --></ins>
 
 #### Return values
 
@@ -807,8 +780,7 @@ HRESULT CreateVideoEncoderHeap(
 `riid` identifies the requested interface. `ppVideoEncoderHeap` receives a caller-owned
 reference to `ID3D12VideoEncoderHeap` on successful creation. CPU description storage, including
 pointed-to profile/level data and the resolution list, is copied
-during creation. It is not GPU picture storage. Releasing the returned COM
-reference remains the caller's responsibility.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoderheap-parameters:0:authored:migration-6d5673a54c8cce72-0 --></ins>
+during creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videodevice3-%2Dcreatevideoencoderheap-parameters:0:authored:migration-6d5673a54c8cce72-0 --></ins>
 
 #### Return values
 
@@ -840,8 +812,7 @@ HRESULT CreateVideoEncoderHeap1(
 `riid` identifies the requested interface. `ppVideoEncoderHeap` receives a caller-owned
 reference to `ID3D12VideoEncoderHeap1` on successful creation. CPU description storage, including
 pointed-to profile/level data and the resolution list, is copied
-during creation. It is not GPU picture storage. Releasing the returned COM
-reference remains the caller's responsibility.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videodevice4-%2Dcreatevideoencoderheap1-parameters:0:authored:migration-637eec298ba938fe-0 --></ins>
+during creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videodevice4-%2Dcreatevideoencoderheap1-parameters:0:authored:migration-637eec298ba938fe-0 --></ins>
 
 #### Return values
 
@@ -864,10 +835,6 @@ UINT GetNodeMask();
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetnodemask-behavior:0:authored:migration-892a8a382edf6afd-0 -->Retrieves the immutable `NodeMask` value used at object creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetnodemask-behavior:0:authored:migration-892a8a382edf6afd-0 --></ins>
 
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetnodemask-return-values:0:authored:migration-227885a963c79ce7-0 -->Returns the stored `NodeMask` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetnodemask-return-values:0:authored:migration-227885a963c79ce7-0 --></ins>
-
 <a id="id3d12videoencoder--getencoderflags"></a>
 
 ### ID3D12VideoEncoder::GetEncoderFlags
@@ -882,10 +849,6 @@ D3D12_VIDEO_ENCODER_FLAGS GetEncoderFlags();
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetencoderflags-behavior:0:authored:migration-2856a4904ecc4c0e-0 -->Retrieves the immutable `Flags` value used at object creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetencoderflags-behavior:0:authored:migration-2856a4904ecc4c0e-0 --></ins>
 
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetencoderflags-return-values:0:authored:migration-d6043d4fc0a418ef-0 -->Returns the stored `Flags` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetencoderflags-return-values:0:authored:migration-d6043d4fc0a418ef-0 --></ins>
-
 <a id="id3d12videoencoder--getcodec"></a>
 
 ### ID3D12VideoEncoder::GetCodec
@@ -899,10 +862,6 @@ D3D12_VIDEO_ENCODER_CODEC GetCodec();
 #### Behavior
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodec-behavior:0:authored:migration-dadc3221b5537bf9-0 -->Retrieves the immutable `EncodeCodec` value used at object creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetcodec-behavior:0:authored:migration-dadc3221b5537bf9-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodec-return-values:0:authored:migration-5b536b0caca039bc-0 -->Returns the stored `EncodeCodec` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetcodec-return-values:0:authored:migration-5b536b0caca039bc-0 --></ins>
 
 <a id="id3d12videoencoder--getcodecprofile"></a>
 
@@ -927,7 +886,7 @@ or return a pointer into the object's private state.<!-- d3d12-review-inline:end
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodecprofile-return-values:0:authored:migration-a471da9d3aadbf64-0 -->The inspected getter returns `S_OK` on copying the payload and `E_INVALIDARG` for a null selected pointer, mismatched `DataSize`, or unrecognized codec. These are scoped runtime observations, not a hardware validation guarantee.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetcodecprofile-return-values:0:authored:migration-a471da9d3aadbf64-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodecprofile-return-values:0:authored:migration-a471da9d3aadbf64-0 -->The inspected getter returns `S_OK` on copying the payload and `E_INVALIDARG` for a null selected pointer, mismatched `DataSize`, or unrecognized codec.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetcodecprofile-return-values:0:authored:migration-a471da9d3aadbf64-0 --></ins>
 
 <a id="id3d12videoencoder--getcodecconfiguration"></a>
 
@@ -952,7 +911,7 @@ or return a pointer into the object's private state.<!-- d3d12-review-inline:end
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodecconfiguration-return-values:0:authored:migration-3541227d0d5f5616-0 -->The inspected getter returns `S_OK` on copying the payload and `E_INVALIDARG` for a null selected pointer, mismatched `DataSize`, or unrecognized codec. These are scoped runtime observations, not a hardware validation guarantee.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetcodecconfiguration-return-values:0:authored:migration-3541227d0d5f5616-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetcodecconfiguration-return-values:0:authored:migration-3541227d0d5f5616-0 -->The inspected getter returns `S_OK` on copying the payload and `E_INVALIDARG` for a null selected pointer, mismatched `DataSize`, or unrecognized codec.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetcodecconfiguration-return-values:0:authored:migration-3541227d0d5f5616-0 --></ins>
 
 <a id="id3d12videoencoder--getinputformat"></a>
 
@@ -968,10 +927,6 @@ DXGI_FORMAT GetInputFormat();
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetinputformat-behavior:0:authored:migration-618912b9db8bcf0f-0 -->Retrieves the immutable `InputFormat` value used at object creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetinputformat-behavior:0:authored:migration-618912b9db8bcf0f-0 --></ins>
 
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetinputformat-return-values:0:authored:migration-a779217fe1c2b2f7-0 -->Returns the stored `InputFormat` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetinputformat-return-values:0:authored:migration-a779217fe1c2b2f7-0 --></ins>
-
 <a id="id3d12videoencoder--getmaxmotionestimationprecision"></a>
 
 ### ID3D12VideoEncoder::GetMaxMotionEstimationPrecision
@@ -985,10 +940,6 @@ D3D12_VIDEO_ENCODER_MOTION_ESTIMATION_PRECISION_MODE GetMaxMotionEstimationPreci
 #### Behavior
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetmaxmotionestimationprecision-behavior:0:authored:migration-938f95a867556520-0 -->Retrieves the immutable `MaxMotionEstimationPrecision` value used at object creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetmaxmotionestimationprecision-behavior:0:authored:migration-938f95a867556520-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoder-%2Dgetmaxmotionestimationprecision-return-values:0:authored:migration-562f18cf4ab52076-0 -->Returns the stored `MaxMotionEstimationPrecision` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoder-%2Dgetmaxmotionestimationprecision-return-values:0:authored:migration-562f18cf4ab52076-0 --></ins>
 
 <a id="id3d12videoencoderheap--getnodemask"></a>
 
@@ -1004,10 +955,6 @@ UINT GetNodeMask();
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetnodemask-behavior:0:authored:migration-ea05611c0d0f0b79-0 -->Retrieves the immutable `NodeMask` value used at object creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetnodemask-behavior:0:authored:migration-ea05611c0d0f0b79-0 --></ins>
 
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetnodemask-return-values:0:authored:migration-e452b2daf7e5b8ea-0 -->Returns the stored `NodeMask` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetnodemask-return-values:0:authored:migration-e452b2daf7e5b8ea-0 --></ins>
-
 <a id="id3d12videoencoderheap--getencoderheapflags"></a>
 
 ### ID3D12VideoEncoderHeap::GetEncoderHeapFlags
@@ -1022,10 +969,6 @@ D3D12_VIDEO_ENCODER_HEAP_FLAGS GetEncoderHeapFlags();
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetencoderheapflags-behavior:0:authored:migration-139c0f2e5d2753aa-0 -->Retrieves the immutable `Flags` value used at object creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetencoderheapflags-behavior:0:authored:migration-139c0f2e5d2753aa-0 --></ins>
 
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetencoderheapflags-return-values:0:authored:migration-959bb9980e29191c-0 -->Returns the stored `Flags` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetencoderheapflags-return-values:0:authored:migration-959bb9980e29191c-0 --></ins>
-
 <a id="id3d12videoencoderheap--getcodec"></a>
 
 ### ID3D12VideoEncoderHeap::GetCodec
@@ -1039,10 +982,6 @@ D3D12_VIDEO_ENCODER_CODEC GetCodec();
 #### Behavior
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodec-behavior:0:authored:migration-34a48dc4c31b6cd6-0 -->Retrieves the immutable `EncodeCodec` value used at object creation.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodec-behavior:0:authored:migration-34a48dc4c31b6cd6-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodec-return-values:0:authored:migration-6a8bb859e8ea5768-0 -->Returns the stored `EncodeCodec` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodec-return-values:0:authored:migration-6a8bb859e8ea5768-0 --></ins>
 
 <a id="id3d12videoencoderheap--getcodecprofile"></a>
 
@@ -1067,7 +1006,7 @@ or return a pointer into the object's private state.<!-- d3d12-review-inline:end
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodecprofile-return-values:0:authored:migration-d41821cf06e9c835-0 -->The inspected getter returns `S_OK` on copying the payload and `E_INVALIDARG` for a null selected pointer, mismatched `DataSize`, or unrecognized codec. These are scoped runtime observations, not a hardware validation guarantee.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodecprofile-return-values:0:authored:migration-d41821cf06e9c835-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodecprofile-return-values:0:authored:migration-d41821cf06e9c835-0 -->The inspected getter returns `S_OK` on copying the payload and `E_INVALIDARG` for a null selected pointer, mismatched `DataSize`, or unrecognized codec.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodecprofile-return-values:0:authored:migration-d41821cf06e9c835-0 --></ins>
 
 <a id="id3d12videoencoderheap--getcodeclevel"></a>
 
@@ -1092,7 +1031,7 @@ or return a pointer into the object's private state.<!-- d3d12-review-inline:end
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodeclevel-return-values:0:authored:migration-6aebee3f1cbc36dc-0 -->The inspected getter returns `S_OK` on copying the payload and `E_INVALIDARG` for a null selected pointer, mismatched `DataSize`, or unrecognized codec. These are scoped runtime observations, not a hardware validation guarantee.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodeclevel-return-values:0:authored:migration-6aebee3f1cbc36dc-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetcodeclevel-return-values:0:authored:migration-6aebee3f1cbc36dc-0 -->The inspected getter returns `S_OK` on copying the payload and `E_INVALIDARG` for a null selected pointer, mismatched `DataSize`, or unrecognized codec.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetcodeclevel-return-values:0:authored:migration-6aebee3f1cbc36dc-0 --></ins>
 
 <a id="id3d12videoencoderheap--getresolutionlistcount"></a>
 
@@ -1107,10 +1046,6 @@ UINT GetResolutionListCount();
 #### Behavior
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlistcount-behavior:0:authored:migration-81852f7dcaf29b8a-0 -->Retrieves the immutable `ResolutionsListCount` value used at object creation. This count sizes the destination for `GetResolutionList`. It is not an adapter-wide list of supported resolutions.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlistcount-behavior:0:authored:migration-81852f7dcaf29b8a-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlistcount-return-values:0:authored:migration-7543d1d7ecbcd564-0 -->Returns the stored `ResolutionsListCount` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap-%2Dgetresolutionlistcount-return-values:0:authored:migration-7543d1d7ecbcd564-0 --></ins>
 
 <a id="id3d12videoencoderheap--getresolutionlist"></a>
 
@@ -1153,15 +1088,9 @@ UINT GetPow2DownscaleFactor();
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap1-%2Dgetpow2downscalefactor-behavior:0:authored:migration-f5c49d4d6477a133-0 -->Retrieves the immutable `Pow2DownscaleFactor` value used at object creation. When the heap was not created with `D3D12_VIDEO_ENCODER_HEAP_FLAG_ALLOW_RATE_CONTROL_FRAME_ANALYSIS`, the published contract returns zero.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap1-%2Dgetpow2downscalefactor-behavior:0:authored:migration-f5c49d4d6477a133-0 --></ins>
 
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencoderheap1-%2Dgetpow2downscalefactor-return-values:0:authored:migration-ffc1b46e309ccc2f-0 -->Returns the stored `Pow2DownscaleFactor` value directly; no HRESULT or additional COM reference is returned.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencoderheap1-%2Dgetpow2downscalefactor-return-values:0:authored:migration-ffc1b46e309ccc2f-0 --></ins>
-
 <a id="encoding-driver-objects"></a>
 
 ### Encoder and heap driver contracts
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:ddi-contract:0:authored:migration-1710767ae0d7799a-0 -->The [DDI table associations](#encoding-ddi-table-associations) identify the creation, destruction and recording entries below.<!-- d3d12-review-inline:end:video-encoding:ddi-contract:0:authored:migration-1710767ae0d7799a-0 --></ins>
 
 <a id="source-s01-091"></a>
 
@@ -1414,13 +1343,19 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYVIDEOENCODER_0080 )(
 ## Recording, ordering, resources and lifetime
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:recording:0:authored:migration-f41683ac5859cd4a-0 -->Encoding uses `D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE` lists, allocators and
-queues. [Queue/list compatibility](execution.md#command-list-types),
+queues. See [Queue/list compatibility](execution.md#command-list-types),
 [CPU threading](execution.md#threading), [submission threading](execution.md#submission-threading),
 [submission ordering](execution.md#submission), [recording storage](execution.md#command-storage),
-and [object/resource lifetime](execution.md#lifetime) retain their canonical
-contracts. The base declaring entries for `ClearState`, `Close` and `Reset`
-remain in [motion estimation](video-motion-estimation.md). They are not
-declared again here.<!-- d3d12-review-inline:end:video-encoding:recording:0:authored:migration-f41683ac5859cd4a-0 --></ins>
+and [object/resource lifetime](execution.md#lifetime) for recording and submission requirements.
+See [Encode list lifecycle](video-motion-estimation.md#motion-recording)
+for `ClearState`, `Close` and `Reset`.<!-- d3d12-review-inline:end:video-encoding:recording:0:authored:migration-f41683ac5859cd4a-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:LA-video-annotation-owner:0:authored:migration-13289dbb20126e92-0 -->See [Command list annotations](diagnostics.md#command-list-annotations) for the internal
+BeginEvent, EndEvent and SetMarker support methods on `ID3D12VideoEncodeCommandList`.
+See [Annotation state](command-list-state.md#annotations) for their recording
+and allocator data lifetime.<!-- d3d12-review-inline:end:video-encoding:LA-video-annotation-owner:0:authored:migration-13289dbb20126e92-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-return-values:0:authored:migration-137b8418b5f9e606-0 -->Execution errors are reported through encoder metadata; recording/list errors are distinct.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-return-values:0:authored:migration-137b8418b5f9e606-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:recording:1:authored:migration-651952f379e9db36-0 -->CPU frame argument structures, arrays and codec payloads are recording-call
 inputs and must remain valid for that call. Their storage is distinct from
@@ -1438,8 +1373,7 @@ creation properties or silently change the codec headers/DPB.<!-- d3d12-review-i
 buffers and notification fences must remain alive for every recorded use
 that will execute, including recordings not yet submitted, and until their
 GPU uses complete. The caller retains its owned references; recording is not
-assumed to take an additional COM reference. Resetting a list does not complete
-earlier execution or reclaim an in-use allocator.<!-- d3d12-review-inline:end:video-encoding:recording:3:authored:migration-8580293c7619dbd9-0 --></ins>
+assumed to take an additional COM reference.<!-- d3d12-review-inline:end:video-encoding:recording:3:authored:migration-8580293c7619dbd9-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:recording:4:authored:migration-373a846213aa799c-0 -->Input pictures, DPB references and opaque resolved input maps are read by
 encoding; reconstructed pictures, compressed bitstreams and opaque output
@@ -1448,21 +1382,22 @@ metadata are written. Legacy transitions use `VIDEO_ENCODE_READ` and
 metadata and writes portable destinations. Input map resolution reads its
 GPU textures and writes the opaque input buffer, which must be made readable
 for the consuming encode.
-[Enhanced encode barriers](synchronization.md#encode-enhanced-barrier),
+See [Enhanced encode barriers](synchronization.md#encode-enhanced-barrier),
 [legacy encode barriers](synchronization.md#encode-resource-barrier),
 [access scopes](synchronization.md#barrier-access),
 [synchronization scopes](synchronization.md#barrier-sync), and
 [barrier model interoperation](synchronization.md#model-interoperation)
-own the actual barrier contracts. These commands do not implicitly supply the
+for resource synchronization. These commands do not implicitly supply the
 application's transitions, residency or cross-queue waits.<!-- d3d12-review-inline:end:video-encoding:recording:4:authored:migration-373a846213aa799c-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:recording:5:authored:migration-fd5df02f50925daa-0 -->[Video resources](video.md#video-resource-contract) own common allocation and
+<ins><!-- d3d12-review-inline:begin:video-encoding:recording:5:authored:migration-fd5df02f50925daa-0 -->See [Video resources](video.md#video-resource-contract) for allocation and
 residency. Input pictures must not be `VIDEO_ENCODE_REFERENCE_ONLY`.
-Reference-only reconstructed pictures remain supported. Optional readable
+Reference-only reconstructed pictures are supported. Optional readable
 reconstruction removes that requirement only for a tuple reporting the
 readable-layout support flag. It must not hide a driver conversion/performance
-penalty. The detailed readable-reconstruction contribution is retained in
-[controls](video-encoding-controls.md#control-readable-reconstruction).<!-- d3d12-review-inline:end:video-encoding:recording:5:authored:migration-fd5df02f50925daa-0 --></ins>
+penalty. See
+[Readable reconstruction](video-encoding-controls.md#control-readable-reconstruction)
+for capability reporting and layout requirements.<!-- d3d12-review-inline:end:video-encoding:recording:5:authored:migration-fd5df02f50925daa-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:recording:6:authored:migration-be577232b75046bc-0 -->The application owns DPB allocation, snapshots, lifetime and reference strategy,
 submission in encode rather than display order, and non-payload codec headers.
@@ -1471,8 +1406,7 @@ host's DPB flushing, reference reordering or header production.<!-- d3d12-review
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:recording:7:authored:migration-7608c99c2d785104-0 -->[Encode predication](counters-queries-and-predication.md#videoencode-setpredication)
 and the [operation matrix](counters-queries-and-predication.md#predication-operation-matrix)
-remain the policy owners; no software-only observation is generalized into
-hardware policy here. [Encode queries](counters-queries-and-predication.md#videoencode-beginquery),
+define conditional execution. [Encode queries](counters-queries-and-predication.md#videoencode-beginquery),
 [timestamp ending](counters-queries-and-predication.md#videoencode-endquery), and
 [query resolution](counters-queries-and-predication.md#videoencode-resolvequerydata)
 own query eligibility and lifecycle. Encoder statistics are metadata, not
@@ -1497,20 +1431,13 @@ void SetProtectedResourceSession(
 
 Specifies whether or not protected resources can be accessed by subsequent commands in the command list. By default, no protected resources are enabled. After calling **SetProtectedResourceSession** with a valid session, protected resources of the same type can refer to that session. After calling **SetProtectedResourceSession** with **NULL**, no protected resources can be accessed.
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:0:authored:migration-0f298097fb45e592-0 -->Selects only the supported command list's protection context. Ordinary
-bindings are preserved (D272). This is not ClearState. Null disables protected
-access. [Session/device/node/type and operation support](video.md#protected-video-support),
-the [canonical selection and open-query rules](command-list-state.md#protection)
-and [protected operation predication](counters-queries-and-predication.md#predication-operation-matrix)
-remain required.<!-- d3d12-review-inline:end:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:0:authored:migration-0f298097fb45e592-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:0:authored:migration-0f298097fb45e592-0 -->This changes the command list's protection context and preserves ordinary
+bindings. See [Protected video](video.md#protected-video-support) for
+session/device/node/type compatibility and operation support,
+[Protection state](command-list-state.md#protection) for selection and open-query restrictions,
+and [Predication policies](counters-queries-and-predication.md#predication-operation-matrix)
+for protected operations.<!-- d3d12-review-inline:end:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:0:authored:migration-0f298097fb45e592-0 --></ins>
 
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:2:authored:migration-64c6ba46962f8aeb-0 -->`pProtectedResourceSession` is the optional translated session association. It is not a video encoder/decoder object and its selection does not allocate one.<!-- d3d12-review-inline:end:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:2:authored:migration-64c6ba46962f8aeb-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:4:authored:migration-74fc91058f15c4f8-0 -->Returns no value. Recording/list errors remain distinct from content validity and GPU completion.<!-- d3d12-review-inline:end:video-encoding:AB-id3d12videoencodecommandlist-setprotectedresourcesession-contract:4:authored:migration-74fc91058f15c4f8-0 --></ins>
 <a id="id3d12videoencodecommandlist2--encodeframe"></a>
 
 ### ID3D12VideoEncodeCommandList2::EncodeFrame
@@ -1529,8 +1456,8 @@ void EncodeFrame(
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-behavior:0:authored:migration-fbc64fe8e949a92d-0 -->Records encoding of a frame's codec payload. The application supplies the
 sequence controls, picture controls and DPB snapshot and codes the remaining
-bitstream headers. [Recording and lifetime](#encoding-recording) and the
-[detailed controls reference](video-encoding-controls.md) apply.
+bitstream headers. See [Recording and lifetime](#encoding-recording) for recording requirements
+and [Capabilities and controls](video-encoding-controls.md) for sequence and picture parameters.
 This is the supported older full-frame path. It uses the original picture control
 union, including HEVC/HEVC1, and does not request optional metadata or GPU map
 inputs. Legacy full-resolution frame analysis remains available when supported.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-behavior:0:authored:migration-fbc64fe8e949a92d-0 --></ins>
@@ -1544,10 +1471,6 @@ heap. `pInputArguments` points to
 [`D3D12_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_ARGUMENTS`](video-encoding-types.md#d3d12-video-encoder-encodeframe-output-arguments),
 which identifies application allocations written by GPU execution, not CPU
 output storage written when recording returns.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-parameters:0:authored:migration-ffdfb5f137499580-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-return-values:0:authored:migration-137b8418b5f9e606-0 -->Returns no value. Recording returns before GPU completion. Execution errors are reported through encoder metadata; recording/list errors are distinct.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dencodeframe-return-values:0:authored:migration-137b8418b5f9e606-0 --></ins>
 
 <a id="id3d12videoencodecommandlist4--encodeframe1"></a>
 
@@ -1567,8 +1490,8 @@ void EncodeFrame1(
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-behavior:0:authored:migration-5d1e73fbb98b0853-0 -->Records encoding of a frame's codec payload. The application supplies the
 sequence controls, picture controls and DPB snapshot and codes the remaining
-bitstream headers. [Recording and lifetime](#encoding-recording) and the
-[detailed controls reference](video-encoding-controls.md) apply.
+bitstream headers. See [Recording and lifetime](#encoding-recording) for recording requirements
+and [Capabilities and controls](video-encoding-controls.md) for sequence and picture parameters.
 This version uses HEVC2 through the version-1 picture control union, optional
 statistics, CPU/GPU map inputs, subregion notification and frame analysis
 parameters. Enabling one optional feature does not imply support for another.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-behavior:0:authored:migration-5d1e73fbb98b0853-0 --></ins>
@@ -1582,10 +1505,6 @@ heap. `pInputArguments` points to
 [`D3D12_VIDEO_ENCODER_ENCODEFRAME_OUTPUT_ARGUMENTS1`](video-encoding-types.md#d3d12-video-encoder-encodeframe-output-arguments1),
 which identifies application allocations written by GPU execution, not CPU
 output storage written when recording returns.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-parameters:0:authored:migration-3aab894f39bad943-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-return-values:0:authored:migration-dc09d1bf40b07b02-0 -->Returns no value. Recording returns before GPU completion. Execution errors are reported through encoder metadata; recording/list errors are distinct.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-return-values:0:authored:migration-dc09d1bf40b07b02-0 --></ins>
 
 <a id="encoding-driver-recording"></a>
 
@@ -1659,10 +1578,6 @@ Inputs are VIDEO_ENCODE_READ. The destination is VIDEO_ENCODE_WRITE for the reso
 then VIDEO_ENCODE_READ when consumed by encoding. The opaque layout is not a
 portable CPU record format.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveinputparamlayout-parameters:0:authored:migration-6638da22853f62d7-0 --></ins>
 
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveinputparamlayout-return-values:0:authored:migration-9d0c65555c3f0074-0 -->Returns no value. It records work. It neither waits for completion nor inserts the caller's cross-queue fence dependencies.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveinputparamlayout-return-values:0:authored:migration-9d0c65555c3f0074-0 --></ins>
-
 <a id="pfnd3d12ddi-video-resolve-input-param-layout-0103-0"></a>
 
 #### PFND3D12DDI_VIDEO_RESOLVE_INPUT_PARAM_LAYOUT_0103_0
@@ -1692,6 +1607,8 @@ structures contain resource references, not the resolved record bytes.
 The portable header and subregion records contain fixed-width values, not
 pointers into a packed array.<!-- d3d12-review-inline:end:video-encoding:metadata:0:authored:migration-65c3c2efe2e23092-0 --></ins>
 
+<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-return-values:0:authored:migration-9006651f04903c58-0 -->The resolved records become consumable only after the application establishes GPU completion and the required resource access/synchronization.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-return-values:0:authored:migration-9006651f04903c58-0 --></ins>
+
 <ins><!-- d3d12-review-inline:begin:video-encoding:metadata:1:authored:migration-b03475f603e165af-0 -->For H.264/HEVC, the mandatory resolved layout is
 `D3D12_VIDEO_ENCODER_OUTPUT_METADATA` immediately followed by
 `WrittenSubregionsCount` packed `D3D12_VIDEO_ENCODER_FRAME_SUBREGION_METADATA`
@@ -1720,14 +1637,6 @@ header and the zero-length array. The detailed contracts retain the exact
 per-interval flush/signaling obligations, whole-frame completion fallback,
 count and alignment rules.<!-- d3d12-review-inline:end:video-encoding:metadata:3:authored:migration-4bb8e01a7acab55b-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding:metadata:4:authored:migration-753ef294557435ac-0 -->The [controls reference](video-encoding-controls.md) retains the full
-statistics, notification, input map and two-pass contracts, including their
-formulas, examples and figures. The [codec reference](video-encoding-codecs.md)
-retains the additional AV1 metadata and header responsibilities.
-The [driver metadata contracts](#encoding-driver-metadata) contain actual published
-versioned DDI payloads and DDI types; API layouts are not assumed to be
-DDI layouts.<!-- d3d12-review-inline:end:video-encoding:metadata:4:authored:migration-753ef294557435ac-0 --></ins>
-
 <a id="id3d12videoencodecommandlist2--resolveencoderoutputmetadata"></a>
 
 ### ID3D12VideoEncodeCommandList2::ResolveEncoderOutputMetadata
@@ -1743,7 +1652,7 @@ void ResolveEncoderOutputMetadata(
 #### Behavior
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-behavior:0:authored:migration-d61a7f3700a3b3e1-0 -->Records conversion of the opaque encoder output into the portable resolved
-metadata layout. It does not encode a frame or generate the host's codec headers.
+metadata layout.
 The source codec/profile/format/resolution must describe the associated encoding.
 This form resolves the mandatory metadata. Optional statistics use
 `ResolveEncoderOutputMetadata1`, not this method.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-behavior:0:authored:migration-d61a7f3700a3b3e1-0 --></ins>
@@ -1757,10 +1666,6 @@ including the opaque input buffer and byte offset. `pOutputArguments` points to
 including application-owned resolved destinations and offsets. These destinations
 are GPU outputs. The mandatory layout remains unchanged for H.264/HEVC; AV1
 appends its tile grid and post-encode records. This form has no optional-statistics output destinations.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-parameters:0:authored:migration-91c1a126399c6781-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-return-values:0:authored:migration-9006651f04903c58-0 -->Returns no value. The resolved records become consumable only after the application establishes GPU completion and the required resource access/synchronization.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist2-%2Dresolveencoderoutputmetadata-return-values:0:authored:migration-9006651f04903c58-0 --></ins>
 
 <a id="id3d12videoencodecommandlist4--resolveencoderoutputmetadata1"></a>
 
@@ -1777,7 +1682,7 @@ void ResolveEncoderOutputMetadata1(
 #### Behavior
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-behavior:0:authored:migration-56e78a6bd7f902fc-0 -->Records conversion of the opaque encoder output into the portable resolved
-metadata layout. It does not encode a frame or generate the host's codec headers.
+metadata layout.
 The source codec/profile/format/resolution must describe the associated encoding.
 This version additionally selects the optional statistics collected for
 that frame and supplies the associated codec configuration.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-behavior:0:authored:migration-56e78a6bd7f902fc-0 --></ins>
@@ -1791,10 +1696,6 @@ including the opaque input buffer and byte offset. `pOutputArguments` points to
 including application-owned resolved destinations and offsets. These destinations
 are GPU outputs. The mandatory layout remains unchanged for H.264/HEVC; AV1
 appends its tile grid and post-encode records. Optional statistics use their separate output textures/buffers.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-parameters:0:authored:migration-781127f91af9d71f-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-return-values:0:authored:migration-3c95fb2c1e6fb743-0 -->Returns no value. The resolved records become consumable only after the application establishes GPU completion and the required resource access/synchronization.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dresolveencoderoutputmetadata1-return-values:0:authored:migration-3c95fb2c1e6fb743-0 --></ins>
 
 <a id="encoding-driver-metadata"></a>
 
@@ -2017,8 +1918,6 @@ typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_ENCODE_RESOLVE_OUTPUT_METADATA_0102_0
 <a id="encoding-driver-types"></a>
 
 ## Shared driver supporting type reference
-
-<ins><!-- d3d12-review-inline:begin:video-encoding:weekend-vi03-type-owners:0:authored:routes -->The [codec contracts](video-encoding-codecs.md#video-encoding-codecs), [sequence and rate controls](video-encoding-controls.md#video-encoding-controls), [capability protocol](#encoding-capabilities) and [recording contracts](#encoding-recording) own the semantics of the corresponding shared driver types below.<!-- d3d12-review-inline:end:video-encoding:weekend-vi03-type-owners:0:authored:routes --></ins>
 
 ### Driver type declarations
 

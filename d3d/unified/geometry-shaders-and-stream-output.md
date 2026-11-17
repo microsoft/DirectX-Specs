@@ -15,17 +15,15 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:gs-so:PC-stage-creation-owner:0:authored:migration-a5c1f33ead582deb-0 -->The current geometry and stream output driver object creation/sizing/destruction contracts
-are defined with [pipeline component creation](pipeline-state.md#driver-shader-objects)
-and its [exact slot associations](pipeline-state.md#driver-object-slots).<!-- d3d12-review-inline:end:gs-so:PC-stage-creation-owner:0:authored:migration-a5c1f33ead582deb-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:PC-stage-creation-owner:0:authored:migration-a5c1f33ead582deb-0 -->[Geometry shader/stream output driver creation](pipeline-state.md#driver-shader-objects) · [Device slots](pipeline-state.md#driver-object-slots).<!-- d3d12-review-inline:end:gs-so:PC-stage-creation-owner:0:authored:migration-a5c1f33ead582deb-0 --></ins>
 
 <a id="geometry-shader"></a>
 
 ## Geometry shader
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-selection:0:authored:migration-cde579bc87317314-0 -->The graphics PSO selects the geometry shader and stream output declaration. [Pipeline creation/linkage](pipeline-state.md#compatibility), [root signature compatibility](binding.md#pipeline-compatibility), [shared graphics capacities](vertex-processing.md#geometry-interface-capacities) and [view instancing rules](vertex-processing.md#geometry-view-instancing) apply. Geometry input comes from vertex processing or the tessellator/domain shader path; stream output can also capture the last active vertex processing stage when no GS is selected.<!-- d3d12-review-inline:end:gs-so:N-selection:0:authored:migration-cde579bc87317314-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:N-selection:0:authored:migration-cde579bc87317314-0 -->The graphics PSO selects the geometry shader and stream output declaration. Geometry input comes from vertex processing or the tessellator/domain shader path. Stream output can also capture the last active vertex processing stage when no GS is selected.<!-- d3d12-review-inline:end:gs-so:N-selection:0:authored:migration-cde579bc87317314-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-representation:0:authored:migration-34b559ea7afee7f1-0 -->Invocation, primitive topology and capture rules describe the stage contract. The register names and legacy instruction spellings used in the inherited descriptions are DXBC notation. [DXIL geometry shader processing](#gs-dxil-model) defines its peer entry/signature model. Representation-specific output budget calculations are identified separately.<!-- d3d12-review-inline:end:gs-so:N-representation:0:authored:migration-34b559ea7afee7f1-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:N-representation:0:authored:migration-34b559ea7afee7f1-0 -->The register names and legacy instruction spellings used in the inherited descriptions are DXBC notation. [DXIL geometry shader processing](#gs-dxil-model) defines its peer entry/signature model.<!-- d3d12-review-inline:end:gs-so:N-representation:0:authored:migration-34b559ea7afee7f1-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:gs-so:O-instructions:0 -->The DXBC Geometry Shader instruction set is listed in the [instruction reference](../archive/D3D11_3_FunctionalSpec.htm#GSInstructionSet).<!-- d3d12-review-inline:end:gs-so:O-instructions:0 --></ins>
 
@@ -119,7 +117,7 @@ Hardware must enforce the limit above by stopping writes if the Geometry Shader 
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-output-limitations:0 -->When the application knows that some GS outputs will be treated as per-primitive constant at the subsequent Pixel Shader, the Geometry Shader need only initialize such output registers when they represent the [Leading Vertex](vertex-processing.md#leading-vertex) for a primitive. For example, on the last 2 vertices in a triangle strip, outputs that (on Leading vertices) would have been treated as constant by the Pixel Shader need not be written. If Stream Output is being used, which has no knowledge of what data is per-primitive constant or not, in the expansion of GS output strips to lists, Stream Output simply dumps out all the declared outputs for each vertex for each primitive. If the GS chooses to not write out what it knows is non-Leading-Vertex data for Elements that will be used to drive per-primitive constants in a later pass, uninitialized data gets written to these unwritten Elements in Stream Output. This is fine as long as the application never attempts to later read such uninitialized Stream Output data. If the application later recirculates the Streamed Out data in a way that correctly interprets only per-primitive constant data at Leading Vertices and never interprets the uninitialized data at non-Leading-Vertices (even though it does get read back into the pipeline), no undefined behavior results.<!-- d3d12-review-inline:end:gs-so:H-output-limitations:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-output-limitations:1 -->There is a mechanism to retrieve the number of output primitives in the output buffer. Further details regarding writing to memory from the Geometry Shader are described [elsewhere in the spec.](#stream-output)<!-- d3d12-review-inline:end:gs-so:H-output-limitations:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:H-output-limitations:1 -->See [Stream output statistics](counters-queries-and-predication.md#stream-output-statistics) for written and required primitive counts.<!-- d3d12-review-inline:end:gs-so:H-output-limitations:1 --></ins>
 
 <a id="gs-incomplete"></a>
 
@@ -171,32 +169,28 @@ The following diagrams depict the layout of Geometry Shader Input Primitives int
 
 ### DXIL geometry shader processing
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-dxil-model:0:authored:migration-1c9956c881c50f0d-0 -->A DXIL geometry shader has a shader entry function with input/output signatures and geometry stage properties. Its vertex inputs are addressed by input element, row/component and vertex within the declared input primitive. `SV_PrimitiveID` and `SV_GSInstanceID` use the identifier provenance defined above. These system values are supplied through DXIL operations rather than ordinary input signature elements. Output signature elements identify their output stream. The function stores output attributes and uses the stream emission/cut operations to produce vertices and terminate strips. Every emitted vertex must define the components later consumed. A previous vertex's attributes are not a promise of initialized data for a later vertex. The logical invocation, output topology and stream rules above apply, with the representation-specific output budgets below.<!-- d3d12-review-inline:end:gs-so:N-dxil-model:0:authored:migration-1c9956c881c50f0d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:N-dxil-model:0:authored:migration-1c9956c881c50f0d-0 -->A DXIL geometry shader has a shader entry function with input/output signatures and geometry stage properties. Its vertex inputs are addressed by input element, row/component and vertex within the declared input primitive. `SV_PrimitiveID` and `SV_GSInstanceID` use the identifier provenance defined above. These system values are supplied through DXIL operations rather than ordinary input signature elements. Output signature elements identify their output stream. The function stores output attributes with `StoreOutput` and uses `EmitStream`, `CutStream` and `EmitThenCutStream` to produce vertices and terminate strips. Every emitted vertex must define the components later consumed. A previous vertex's attributes are not a promise of initialized data for a later vertex. The logical invocation, output topology and stream rules above apply, with the representation-specific output budgets below.<!-- d3d12-review-inline:end:gs-so:N-dxil-model:0:authored:migration-1c9956c881c50f0d-0 --></ins>
 
 <!-- d3d12-review-alert:begin:gs-so:N-dxil-properties:1:authored:migration-9399444bc4bac539-0 -->
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
 >
-> | Property | Role |
-> | --- | --- |
-> | Input primitive | The primitive/vertex array shape the GS consumes |
-> | Maximum vertex count | Declared maximum output vertices per invocation |
-> | Active stream mask | Which output streams are used |
-> | Output topology | The topology assigned to the active output streams |
-> | GS instance count | Logical invocations per input primitive |
+> | Property |
+> | --- |
+> | Input primitive |
+> | Maximum vertex count |
+> | Active stream mask |
+> | Output topology |
+> | GS instance count |
 
 <!-- d3d12-review-alert:end:gs-so:N-dxil-properties:1:authored:migration-9399444bc4bac539-0 -->
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-dxil-properties:2:authored:migration-00cf4b43529f6374-0 -->`StoreOutput`, `EmitStream`, `CutStream` and `EmitThenCutStream` provide the stage's output data flow roles.<!-- d3d12-review-inline:end:gs-so:N-dxil-properties:2:authored:migration-00cf4b43529f6374-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:gs-so:N-dxil-budget:0:authored:migration-1ab7907db10f8b94-0 -->For DXIL GS output signatures, the output scalar count is the sum of the row count times column count for every output signature element, including the elements of different streams. The declared maximum vertex count multiplied by that scalar count must not exceed 1024. This signature element sum is not the DXBC cross-stream register location union used in the [worked example](#so-example). The GS instance count and per-stream signature capacity restrictions remain separate.<!-- d3d12-review-inline:end:gs-so:N-dxil-budget:0:authored:migration-1ab7907db10f8b94-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:N-dxil-budget:0:authored:migration-1ab7907db10f8b94-0 -->For DXIL GS output signatures, the output scalar count is the sum of the row count times column count for every output signature element, including the elements of different streams. The declared maximum vertex count multiplied by that scalar count must not exceed 1024. This signature element sum is not the DXBC cross-stream register location union used in the [worked example](#so-example). GS instancing must also satisfy the [instance and total vertex count limits](#gs-instancing). Each stream must fit its output signature capacity independently of this aggregate scalar budget.<!-- d3d12-review-inline:end:gs-so:N-dxil-budget:0:authored:migration-1ab7907db10f8b94-0 --></ins>
 
 <a id="stream-output"></a>
 
 ## Stream output
-
-<ins><!-- d3d12-review-inline:begin:gs-so:N-buffer-terms:0:authored:migration-e6515bed28fb9c0c-0 -->In stream-to-buffer mapping and capacity rules, an output buffer denotes a bound target view/slot. The GPU address view defines the accessible data range. The filled size location defines its progress state. These rules do not describe a hidden cursor attached to a resource object.<!-- d3d12-review-inline:end:gs-so:N-buffer-terms:0:authored:migration-e6515bed28fb9c0c-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-so-overview:0 -->The Pipeline can stream vertices out to memory just before clipping and rasterization (even if rasterization is still enabled). Vertices are always written out as complete primitives (e.g. 3 vertices at a time for triangles); incomplete primitives are never written out.<!-- d3d12-review-inline:end:gs-so:H-so-overview:0 --></ins>
 
@@ -228,7 +222,7 @@ The following diagrams depict the layout of Geometry Shader Input Primitives int
 
 ### Stream output declaration
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-so-object:0:authored:migration-fa67d918c917802c-0 -->Stream output is described by the graphics PSO's `D3D12_STREAM_OUTPUT_DESC`, not a separately bound GS+SO object. The declaration selects source signature components, destination buffer slots, per-buffer strides and the rasterized stream. Without a GS, stream 0 carries the last active VS or DS output; HS output is not a direct stream output source. Stream output use requires the root signature's `D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT` permission, as specified by [PSO/root validation](pipeline-state.md#input-layout-constraints).<!-- d3d12-review-inline:end:gs-so:N-so-object:0:authored:migration-fa67d918c917802c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:N-so-object:0:authored:migration-fa67d918c917802c-0 -->Stream output is described by the graphics PSO's `D3D12_STREAM_OUTPUT_DESC`. Without a GS, stream 0 carries the last active VS or DS output; HS output is not a direct stream output source. Stream output use requires the root signature's `D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT` permission, as specified by [PSO/root validation](pipeline-state.md#input-layout-constraints).<!-- d3d12-review-inline:end:gs-so:N-so-object:0:authored:migration-fa67d918c917802c-0 --></ins>
 
 <a id="so-declaration-entry"></a>
 
@@ -311,7 +305,7 @@ The number of strides (or buffers) that the **pBufferStrides** member points to.
 
 The index number of the stream to be sent to the rasterizer stage.
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-layout-constraints:0:authored:migration-a7c559aee5e168a5-0 -->Declaration entries for a buffer are laid out consecutively. A null `SemanticName` creates a gap whose memory is not written. Otherwise `StartComponent` and `ComponentCount` select a contiguous subset of the named source signature element. A stream's source components cannot be replicated into multiple destination buffers or overlap in repeated selections; separate streams have independent declarations. Buffer strides include gaps, must cover the declared structure, and may leave untouched trailing padding. The capture window is at most 512 bytes per buffer and the stride at most 2048 bytes; stream and buffer slot counts are each at most four.<!-- d3d12-review-inline:end:gs-so:N-layout-constraints:0:authored:migration-a7c559aee5e168a5-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:N-layout-constraints:0:authored:migration-a7c559aee5e168a5-0 -->Declaration entries for a buffer are laid out consecutively. For non-gap entries, `StartComponent` and `ComponentCount` select a contiguous subset of the named source signature element. A stream's source components cannot be replicated into multiple destination buffers or overlap in repeated selections; separate streams have independent declarations. Buffer strides include gaps, must cover the declared structure, and may leave untouched trailing padding.<!-- d3d12-review-inline:end:gs-so:N-layout-constraints:0:authored:migration-a7c559aee5e168a5-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:gs-so:N-declaration-validation:0:authored:migration-46a9fff46dc0612b-0 -->Entries are ordered by nondecreasing `Stream`, with stream and output slot indices in 0..3. There are at most 128 declaration entries per stream, including gaps, and at most 512 across four streams. For each output slot, the sum of `ComponentCount` values, including gaps, must not exceed 128 components (512 bytes). Each used slot must have a non-gap entry and can receive only one stream. Non-gap selections have `StartComponent` in 0..3, count 1..4 and a selected range within the source element. Gap entries have zero `SemanticIndex` and `StartComponent` and a nonzero count. A count greater than four still must fit the independent per-slot window.<!-- d3d12-review-inline:end:gs-so:N-declaration-validation:0:authored:migration-46a9fff46dc0612b-0 --></ins>
 
@@ -382,7 +376,7 @@ None
 
 #### Recording constraints
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-binding:0:authored:migration-22252d4679fbf0ef-0 -->`StartSlot` must be less than four and `NumViews` must not exceed `4 - StartSlot`. A null `pViews` clears the specified range. A valid zero count changes no slots. Higher slots outside the range are unchanged. This is a DIRECT recording command, not a COMPUTE, COPY or BUNDLE command. Bundle draws can still use inherited targets. [Initial/reset and bundle bindings](command-list-state.md#buffer-bindings), [recording/execution lifetime](execution.md#lifetime), [residency](resources.md#residency) and [synchronization/access](synchronization.md#barrier-access) remain application obligations. Binding views does not initialize their filled size storage, extend resource lifetime or perform a resource state transition.<!-- d3d12-review-inline:end:gs-so:N-binding:0:authored:migration-22252d4679fbf0ef-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:N-binding:0:authored:migration-22252d4679fbf0ef-0 -->`StartSlot` must be less than four and `NumViews` must not exceed `4 - StartSlot`. A null `pViews` clears the specified range. A valid zero count changes no slots. Slots outside the range are unchanged. This is a DIRECT recording command, not a COMPUTE, COPY or BUNDLE command. Bundle draws can use inherited targets. See [Input and output buffer bindings](command-list-state.md#buffer-bindings) for initial/reset values and bundle inheritance, and [Recording and execution lifetime](execution.md#lifetime) for resource lifetime requirements.<!-- d3d12-review-inline:end:gs-so:N-binding:0:authored:migration-22252d4679fbf0ef-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:gs-so:N-view-validity:0:authored:migration-257e79ed8539f31f-0 -->For a nonempty view, data and filled size GPU addresses must be valid, nonzero, four-byte-aligned addresses in buffer resources, with their referenced ranges contained in the allocations. The application-managed filled size value is a 32-bit quantity. The 64-bit GPU address that points to it does not make the value 64-bit. Data and counter storage may occupy the same resource, as specified by the counter contract, but the counter must not lie in the target data range. The zero-size exceptions in the member descriptions above apply to empty views.<!-- d3d12-review-inline:end:gs-so:N-view-validity:0:authored:migration-257e79ed8539f31f-0 --></ins>
 
@@ -396,9 +390,9 @@ The application is responsible for allocating storage for a 32-bit quantity call
 
 With the legacy resource state model, when a resource is used as a <ins><!-- d3d12-review-inline:begin:gs-so:P-counter-state:0:modified:SG2 -->stream output target<!-- d3d12-review-inline:end:gs-so:P-counter-state:0:modified:SG2 --></ins>, the resources used must be in the D3D12\_RESOURCE\_STATE\_STREAM\_OUT state. This applies to both the vertex data and the *BufferFilledSize* (which can be in the same or separate resources).
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-counter-protocol:0:authored:migration-dee1dc9e316b9227-0 -->The application initializes the filled size value to the byte offset at which capture should begin; initializing it to zero starts at the beginning of the target view. Successive draws append according to that value. Rebinding does not supply a D3D11 append sentinel or reset an implicit per-resource cursor: the selected `BufferFilledSizeLocation` identifies the application-managed state. CPU/GPU writes, capture updates and later reads of that storage require the normal lifetime, access and ordering contracts.<!-- d3d12-review-inline:end:gs-so:N-counter-protocol:0:authored:migration-dee1dc9e316b9227-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:N-counter-protocol:0:authored:migration-dee1dc9e316b9227-0 -->The application initializes the filled size value to the byte offset at which capture should begin; initializing it to zero starts at the beginning of the target view. Successive draws append according to that value. Rebinding does not reset the filled size value. The selected `BufferFilledSizeLocation` identifies the application-managed state.<!-- d3d12-review-inline:end:gs-so:N-counter-protocol:0:authored:migration-dee1dc9e316b9227-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-access:0:authored:migration-11f5bcafdd9db1a2-0 -->With enhanced barriers, target data and filled size storage use the [stream output access and synchronization scopes](synchronization.md#barrier-access). A resource's heap/state restrictions still apply. Changing the filled size value with CPU/GPU work must be ordered before the capture that consumes it; later consumers likewise require the appropriate access synchronization.<!-- d3d12-review-inline:end:gs-so:N-access:0:authored:migration-11f5bcafdd9db1a2-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:N-access:0:authored:migration-11f5bcafdd9db1a2-0 -->With enhanced barriers, target data and filled size storage use the [stream output access and synchronization scopes](synchronization.md#barrier-access). Changing the filled size value with CPU/GPU work must be ordered before the capture that consumes it; later consumers likewise require the appropriate access synchronization.<!-- d3d12-review-inline:end:gs-so:N-access:0:authored:migration-11f5bcafdd9db1a2-0 --></ins>
 
 <a id="overflow-and-statistics"></a>
 
@@ -416,7 +410,7 @@ With the legacy resource state model, when a resource is used as a <ins><!-- d3d
 
 #### D3D12_QUERY_DATA_SO_STATISTICS
 
-<ins><!-- d3d12-review-inline:begin:gs-so:QF-so-stats:0:authored:migration-80728302ae95ad87-0 -->The complete [SO query payload, member meanings and per-stream interval semantics](counters-queries-and-predication.md#stream-output-statistics) are defined in the general query chapter; overflow and capture mechanics remain here.<!-- d3d12-review-inline:end:gs-so:QF-so-stats:0:authored:migration-80728302ae95ad87-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:QF-so-stats:0:authored:migration-80728302ae95ad87-0 -->[D3D12_QUERY_DATA_SO_STATISTICS](counters-queries-and-predication.md#stream-output-statistics).<!-- d3d12-review-inline:end:gs-so:QF-so-stats:0:authored:migration-80728302ae95ad87-0 --></ins>
 
 <a id="so-slot-behavior"></a>
 
@@ -484,8 +478,6 @@ Vertices can be emitted to either stream in any order.
 ## Driver responsibilities
 
 <ins><!-- d3d12-review-inline:begin:gs-so:N-driver:0:authored:migration-edc4adca7ee8940b-0 -->The runtime resolves semantic stream output selections against the last active shader's output signature before driver PSO creation.<!-- d3d12-review-inline:end:gs-so:N-driver:0:authored:migration-edc4adca7ee8940b-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:gs-so:P-driver-field:0:authored:migration-7e1a610af4ce69ca-0 -->The published command list function table identifies:<!-- d3d12-review-inline:end:gs-so:P-driver-field:0:authored:migration-7e1a610af4ce69ca-0 --></ins>
 
 ```cpp
 PFND3D12DDI_SO_SET_TARGETS_0003                                        pfnSOSetTargets;

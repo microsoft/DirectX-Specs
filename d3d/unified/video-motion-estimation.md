@@ -15,16 +15,9 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-entry:0:authored:migration-d72fc34085639e68-0 -->This subordinate [Video](video.md) reference describes motion estimation,
-opaque motion vector storage and its resolution, together with the base
-VIDEO_ENCODE command list lifecycle. A motion estimator maintains operation
+<ins><!-- d3d12-review-inline:begin:video-motion:N-entry:0:authored:migration-d72fc34085639e68-0 -->A motion estimator maintains operation
 context. A motion vector heap stores hardware-dependent output. A resolve
 records conversion into an application texture.<!-- d3d12-review-inline:end:video-motion:N-entry:0:authored:migration-d72fc34085639e68-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:video-motion:N-entry:1:authored:migration-18a3770e8993dd99-0 -->This is a **qualified draft**. Published motion search requirements remain
-source-only where algorithm, hardware-quality or implementation evidence is
-insufficient. Specific qualifications below do not establish expert or
-hardware approval.<!-- d3d12-review-inline:end:video-motion:N-entry:1:authored:migration-18a3770e8993dd99-0 --></ins>
 
 <a id="motion-model"></a>
 
@@ -40,59 +33,44 @@ quarter-pixel. The block size is not a search window radius. There is no
 published fixed search radius, tie-breaking rule or guaranteed VR quality
 in this contract. A prior heap may supply hints, not mandatory search results.<!-- d3d12-review-inline:end:video-motion:N-search:0:authored:migration-f62d5465077ab172-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-search:1:authored:migration-91596507883554b7-0 -->[Capabilities](#motion-capabilities) determine the supported search parameters.
-[Objects](#motion-objects) retain those parameters for [recording](#motion-recording).<!-- d3d12-review-inline:end:video-motion:N-search:1:authored:migration-91596507883554b7-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:video-motion:N-search:2:authored:migration-f1a1df4ff9884832-0 -->Motion estimation uses a list and allocator of
 `D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE`, submitted to a VIDEO_ENCODE queue.
-[CPU threading](execution.md#threading),
-[submission threading](execution.md#submission-threading),
-[queue/list types](execution.md#command-list-types),
-[creation](execution.md#creation) and [submission validation](execution.md#validation)
-own device/node and list/allocator/queue compatibility.
-[Submission and ordering](execution.md#submission) own execution order.
 The motion estimator's restriction on concurrent use on distinct queues
 is defined under [driver object lifetime](#motion-driver-objects).<!-- d3d12-review-inline:end:video-motion:N-search:2:authored:migration-f1a1df4ff9884832-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-search:3:authored:migration-54e43a80756075ad-0 -->[Recording storage](execution.md#command-storage),
-[object/resource lifetime](execution.md#lifetime),
-[completion and lifetime](execution.md#completion-lifetime), and
-[video resources](video.md#video-resource-contract) own storage, completion
-and residency. Both motion objects derive from `ID3D12Pageable`.
+<ins><!-- d3d12-review-inline:begin:video-motion:N-search:3:authored:migration-54e43a80756075ad-0 -->Both motion objects derive from `ID3D12Pageable`.
 The estimator, output and hint heaps, and input, reference and resolved output
-resources must remain alive for their recorded uses that will execute and
-until those GPU uses finish. CPU descriptions and argument structures are
-recording inputs.<!-- d3d12-review-inline:end:video-motion:N-search:3:authored:migration-54e43a80756075ad-0 --></ins>
+[resources](video.md#video-resource-contract) must [remain alive](execution.md#lifetime)
+for their recorded uses that will execute and until [those GPU uses finish](execution.md#completion-lifetime).
+CPU descriptions and argument structures are [recording inputs](execution.md#command-storage).<!-- d3d12-review-inline:end:video-motion:N-search:3:authored:migration-54e43a80756075ad-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-motion:N-search:4:authored:migration-eaccf3a92d4d05c5-0 -->Input and reference pictures are read in motion estimation. The legacy states
 are `D3D12_RESOURCE_STATE_VIDEO_ENCODE_READ` for those pictures and
 `D3D12_RESOURCE_STATE_VIDEO_ENCODE_WRITE` for the resolve destination texture.
 The opaque heap is not an `ID3D12Resource` to which an application applies
-resource barriers. [Enhanced encode barriers](synchronization.md#encode-enhanced-barrier)
-and [legacy encode barriers](synchronization.md#encode-resource-barrier)
-retain their full declarations; [access](synchronization.md#barrier-access),
+resource barriers. See [Enhanced encode barriers](synchronization.md#encode-enhanced-barrier)
+and [Legacy encode barriers](synchronization.md#encode-resource-barrier)
+for transitions, [access](synchronization.md#barrier-access),
 [synchronization scopes](synchronization.md#barrier-sync), and
-[barrier model interoperation](synchronization.md#model-interoperation) own
-the enhanced path. Neither motion call inserts an application resource
+[barrier model interoperation](synchronization.md#model-interoperation).
+Neither motion call inserts an application resource
 transition or a cross-queue fence wait.<!-- d3d12-review-inline:end:video-motion:N-search:4:authored:migration-eaccf3a92d4d05c5-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-search:5:authored:migration-45077137965abf9d-0 -->[Encode predication](counters-queries-and-predication.md#videoencode-setpredication)
+<ins><!-- d3d12-review-inline:begin:video-motion:N-search:5:authored:migration-45077137965abf9d-0 -->Both `EstimateMotion` and `ResolveMotionVectorHeap` are predicated.
+See [Encode predication](counters-queries-and-predication.md#videoencode-setpredication)
 and the [operation matrix](counters-queries-and-predication.md#predication-operation-matrix)
-own conditional execution: both `EstimateMotion` and `ResolveMotionVectorHeap`
-are predicated. [Encode queries](counters-queries-and-predication.md#videoencode-beginquery),
+for conditional execution. See [Encode queries](counters-queries-and-predication.md#videoencode-beginquery),
 [timestamp ending](counters-queries-and-predication.md#videoencode-endquery), and
 [query resolution](counters-queries-and-predication.md#videoencode-resolvequerydata)
-own the query/list/heap combinations and lifecycle. The encode route supports
+for supported query/list/heap combinations and query recording. The encode route supports
 timestamp queries, not a motion estimation statistics or completion query.<!-- d3d12-review-inline:end:video-motion:N-search:5:authored:migration-45077137965abf9d-0 --></ins>
 
 <a id="motion-capabilities"></a>
 
 ## Capability queries
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-query:0:authored:migration-81a7f0aae8ba9426-0 -->[`ID3D12VideoDevice::CheckFeatureSupport`](video-decode.md#video-check-feature-support)
-owns the common declaring entry and return protocol. Each query below uses
-a fixed payload and `FeatureSupportDataSize` equal to `sizeof` that payload.
-Initialize input fields and read output fields only on success.<!-- d3d12-review-inline:end:video-motion:N-query:0:authored:migration-81a7f0aae8ba9426-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-motion:N-query:0:authored:migration-81a7f0aae8ba9426-0 -->Each motion [`CheckFeatureSupport`](video-decode.md#video-check-feature-support) query
+uses a fixed payload and `FeatureSupportDataSize` equal to `sizeof` that payload.<!-- d3d12-review-inline:end:video-motion:N-query:0:authored:migration-81a7f0aae8ba9426-0 --></ins>
 
 <!-- d3d12-review-alert:begin:video-motion:N-query:1:authored:migration-582e6f8406254964-0 -->
 
@@ -148,10 +126,7 @@ range must be supported for that node. The selected size range may be a
 subset of supported sizes to reduce allocation requirements. It must
 accommodate each actual input and reference.<!-- d3d12-review-inline:end:video-motion:N-object:0:authored:migration-09a59cfacd8ae1aa-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-object:1:authored:migration-c0b4a4d0009c62d6-0 -->On successful creation, `ppVideoMotionEstimator` or
-`ppVideoMotionVectorHeap` receives a caller-owned reference to the requested
-interface identified by `riid`. The caller releases that reference under the
-common [object lifetime rules](execution.md#lifetime). Each creation method
+<ins><!-- d3d12-review-inline:begin:video-motion:N-object:1:authored:migration-c0b4a4d0009c62d6-0 -->Each creation method
 copies its CPU description during the call. The caller need not retain the
 description's storage after the call returns.<!-- d3d12-review-inline:end:video-motion:N-object:1:authored:migration-c0b4a4d0009c62d6-0 --></ins>
 
@@ -161,12 +136,10 @@ creation parameters require a new object.<!-- d3d12-review-inline:end:video-moti
 
 <ins><!-- d3d12-review-inline:begin:video-motion:N-object:3:authored:migration-2b1f379488e639e3-0 -->`pProtectedResourceSession` may be null for unprotected operation.
 For protected input, the estimator and vector heap must be created with a
-protected resource session and the output must be protected. These are
-narrow object association requirements, not an independent session lifecycle.
+protected resource session and the output must be protected.
 On success, each `GetProtectedResourceSession` returns an owned reference to
 the requested session interface through `ppProtectedSession`, identified by
-`riid`. The caller releases that reference under the same object lifetime
-rules; retrieving the interface does not create a new protection session.<!-- d3d12-review-inline:end:video-motion:N-object:3:authored:migration-2b1f379488e639e3-0 --></ins>
+`riid`.<!-- d3d12-review-inline:end:video-motion:N-object:3:authored:migration-2b1f379488e639e3-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-motion:N-object:4:authored:migration-4bc84a743bfff4e9-0 -->**Scoped creation validation:** the inspected creation paths validate the
 node, size range, reported block size and precision bits and protected support.
@@ -364,10 +337,9 @@ This method returns HRESULT.
 
 ## Encode list lifecycle and motion recording
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-recording:0:authored:migration-ddb90077b69dadb0-0 -->The base encode list has no graphics pipeline state argument.
-`ClearState` resets video recording state without beginning a new recording;
+<ins><!-- d3d12-review-inline:begin:video-motion:N-recording:0:authored:migration-ddb90077b69dadb0-0 -->`ClearState` resets video recording state without beginning a new recording;
 `Reset` starts recording with the supplied encode allocator after a successful
-close. `Close` ends recording, not GPU execution. Submission and allocator
+close. Submission and allocator
 reuse follow [recording and storage](execution.md#command-storage) and
 [completion](execution.md#completion-lifetime).<!-- d3d12-review-inline:end:video-motion:N-recording:0:authored:migration-ddb90077b69dadb0-0 --></ins>
 
@@ -375,7 +347,7 @@ reuse follow [recording and storage](execution.md#command-storage) and
 disable predication (null predicate, zero offset, `EQUAL_ZERO`) and clear the
 protected session binding on a protection-capable node. They do not clear
 motion vector heap contents or recreate a motion estimator.
-There is no graphics PSO or decoder binding implied by this state reset.<!-- d3d12-review-inline:end:video-motion:N-recording:1:authored:migration-1476d6876c765b11-0 --></ins>
+<!-- d3d12-review-inline:end:video-motion:N-recording:1:authored:migration-1476d6876c765b11-0 --></ins>
 
 <a id="encode-clear-state"></a>
 
@@ -590,11 +562,8 @@ scaling or universal driver support. No SNORM output contract is asserted.<!-- d
 
 ## API types and layout
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-type-context:0:authored:migration-86c84913458cec5a-0 -->The declarations below are API layouts, not driver layouts.
-[`D3D12_VIDEO_SIZE_RANGE`](video-decode.md#d3d12-video-size-range) retains its
-shared definition: maximum width/height and minimum width/height constrain
-both input and reference pictures. Query direction annotations identify
-inputs and outputs; creation descriptions contain only inputs.<!-- d3d12-review-inline:end:video-motion:N-type-context:0:authored:migration-86c84913458cec5a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-motion:N-type-context:0:authored:migration-86c84913458cec5a-0 -->[`D3D12_VIDEO_SIZE_RANGE`](video-decode.md#d3d12-video-size-range)
+constrains both input and reference pictures.<!-- d3d12-review-inline:end:video-motion:N-type-context:0:authored:migration-86c84913458cec5a-0 --></ins>
 
 <a id="d3d12-video-motion-estimator-search-block-size"></a>
 
@@ -1038,13 +1007,12 @@ The pixel height of the texture that the motion estimation operation was perform
 
 ## Driver reference
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-driver-entry:0:authored:migration-2094359687dde675-0 -->The API size query uses NodeIndex and heap size fields first. The DDI uses NodeMask and estimator size fields first. API `pHintMotionVectorHeap` becomes driver `hDrvPreviousMotionVectorHeap`. The `_0060` support and resolve layouts omit the earlier `_0053` differences-metric fields.<!-- d3d12-review-inline:end:video-motion:N-driver-entry:0:authored:migration-2094359687dde675-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-motion:N-driver-entry:0:authored:migration-2094359687dde675-0 -->The API size query uses NodeIndex and heap size fields first. The DDI uses NodeMask and estimator size fields first. API `pHintMotionVectorHeap` becomes driver `hDrvPreviousMotionVectorHeap`.<!-- d3d12-review-inline:end:video-motion:N-driver-entry:0:authored:migration-2094359687dde675-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-motion:N-driver-entry:1:authored:migration-c23e49f2c1ce76a0-0 -->The selected _0060 device table slots are
 `pfnCalcPrivateVideoMotionEstimatorSize`, `pfnCreateVideoMotionEstimator`,
 `pfnDestroyVideoMotionEstimator`, `pfnCalcPrivateVideoMotionVectorHeapSize`,
 `pfnCreateVideoMotionVectorHeap`, and `pfnDestroyVideoMotionVectorHeap`.
-Their function declarations appear with their objects below.
 The encode list _0060 table maps `pfnEstimateMotion` to
 `PFND3D12DDI_ESTIMATE_MOTION_0053` and
 `pfnResolveVideoMotionVectorHeap` to

@@ -15,15 +15,12 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-stage:0:authored:migration-ee1d6d28de65a1e1-0 -->Rasterization takes the positions and attributes from the last active vertex processing stage or a mesh shader and determines covered pixels/samples. Clipping, perspective divide, viewport transformation, primitive setup, culling and coverage generation precede pixel shader/output merger processing. The [shared graphics interface](vertex-processing.md#geometry-interface-capacities), [leading-vertex rule](vertex-processing.md#leading-vertex) and [view instancing execution/dependency contract](vertex-processing.md#geometry-view-instancing) retain their canonical owners.<!-- d3d12-review-inline:end:rasterization:N-stage:0:authored:migration-ee1d6d28de65a1e1-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:rasterization:N-stage:1:authored:migration-ab51fd68860322cb-0 -->The [pipeline rasterizer descriptions](pipeline-state.md#rasterizer) select fill/cull, depth clip/bias, line and conservative modes. The PSO's `SampleMask` filters coverage as described below. It is not the legacy `MultisampleEnable` line selector. [Command list state](command-list-state.md#base-graphics) owns initial/reset state and bundle inheritance. This chapter defines the behavior of those settings, not a separate mutable rasterizer state object.<!-- d3d12-review-inline:end:rasterization:N-stage:1:authored:migration-ab51fd68860322cb-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-stage:0:authored:migration-ee1d6d28de65a1e1-0 -->Rasterization takes the positions and attributes from the last active vertex processing stage or a mesh shader and determines covered pixels/samples.<!-- d3d12-review-inline:end:rasterization:N-stage:0:authored:migration-ee1d6d28de65a1e1-0 --></ins>
 
 <a id="rasterizer-state"></a>
+<a id="state-and-capabilities"></a>
 
-## State and capabilities
-
-<ins><!-- d3d12-review-inline:begin:rasterization:N-capabilities:0:authored:migration-6b11b84954514e14-0 -->Optional rasterization contributions have independent capabilities:<!-- d3d12-review-inline:end:rasterization:N-capabilities:0:authored:migration-6b11b84954514e14-0 --></ins>
+## Capabilities
 
 <!-- d3d12-review-alert:begin:rasterization:N-capabilities:1:authored:migration-a76e281e52f43a5a-0 -->
 
@@ -41,7 +38,7 @@
 
 <!-- d3d12-review-alert:end:rasterization:N-capabilities:1:authored:migration-a76e281e52f43a5a-0 -->
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-capabilities:2:authored:migration-b08992cec43e93c7-0 -->These are `CheckFeatureSupport` results in the corresponding `D3D12_FEATURE_DATA_D3D12_OPTIONS*` structures.<!-- d3d12-review-inline:end:rasterization:N-capabilities:2:authored:migration-b08992cec43e93c7-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-capabilities:2:authored:migration-b08992cec43e93c7-0 -->These are [CheckFeatureSupport](devices-and-capabilities.md#id3d12device-checkfeaturesupport) results in the corresponding `D3D12_FEATURE_DATA_D3D12_OPTIONS*` structures.<!-- d3d12-review-inline:end:rasterization:N-capabilities:2:authored:migration-b08992cec43e93c7-0 --></ins>
 
 <a id="rasterization-enable"></a>
 
@@ -49,11 +46,11 @@
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-disable:0 -->Rasterization is disabled when the following are all true:<!-- d3d12-review-inline:end:rasterization:A-disable:0 --></ins>
 
-- <ins><!-- d3d12-review-inline:begin:rasterization:A-disable:1 -->[The graphics pipeline has no pixel shader](pixel-shaders.md#output-writes)<!-- d3d12-review-inline:end:rasterization:A-disable:1 --></ins>
+- <ins><!-- d3d12-review-inline:begin:rasterization:A-disable:1:modified:section-20261117-1 -->[The graphics pipeline has no pixel shader](pixel-shaders.md#output-writes)<!-- d3d12-review-inline:end:rasterization:A-disable:1:modified:section-20261117-1 --></ins>
 
-- <ins><!-- d3d12-review-inline:begin:rasterization:A-disable:1 -->`DepthEnable` is set to FALSE<!-- d3d12-review-inline:end:rasterization:A-disable:1 --></ins>
+- <ins><!-- d3d12-review-inline:begin:rasterization:A-disable:1:modified:section-20261117-2 -->`DepthEnable` is set to FALSE<!-- d3d12-review-inline:end:rasterization:A-disable:1:modified:section-20261117-2 --></ins>
 
-- <ins><!-- d3d12-review-inline:begin:rasterization:A-disable:1 -->`StencilEnable` is set to FALSE<!-- d3d12-review-inline:end:rasterization:A-disable:1 --></ins>
+- <ins><!-- d3d12-review-inline:begin:rasterization:A-disable:1:modified:section-20261117-3 -->`StencilEnable` is set to FALSE<!-- d3d12-review-inline:end:rasterization:A-disable:1:modified:section-20261117-3 --></ins>
 
 <a id="pixel-coordinates"></a>
 
@@ -208,7 +205,7 @@ regardless of whether or not an implementation has a guard band in its clipper o
 Viewport's x/y extents (except a small nondeterministic region that appears if the viewport left and top extents have fractional coordinates, discussed in the
 [Viewport Range](#viewport-range) section).<!-- d3d12-review-inline:end:rasterization:A-viewport:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-viewport:3 -->Changing render targets does not automatically update viewports. Initial/reset and bundle viewport state follow the [canonical state contract](command-list-state.md#base-graphics).<!-- d3d12-review-inline:end:rasterization:A-viewport:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:A-viewport:3 -->Changing render targets does not automatically update viewports. See [Base graphics state](command-list-state.md#base-graphics) for initial/reset values and bundle inheritance.<!-- d3d12-review-inline:end:rasterization:A-viewport:3 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-viewport:4 -->Viewport scale is performed using float32 arithmetic according to the following formulas:<!-- d3d12-review-inline:end:rasterization:A-viewport:4 --></ins>
 
@@ -257,7 +254,7 @@ while adding 1 to the intended Viewport Width and Height, then defining the Scis
 This will crop out the non-deterministic zone and allow fractional viewports that, for example, smoothly move the inside contents
 (even thought the extents are rounded), without any non-deterministic rendering.<!-- d3d12-review-inline:end:rasterization:A-viewport-range:8 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-viewport-dimensions:0:authored:migration-72791218e30f1ece-0 -->Viewport Width must be nonnegative. Height must be nonnegative unless `InvertedViewportHeightFlipsYSupported` permits a negative value. Both depth endpoints remain in `[0,1]`; reversed ordering requires `InvertedViewportDepthFlipsZSupported`. The bounds above constrain both transformed X/Y endpoints, including an inverted height's second endpoint.<!-- d3d12-review-inline:end:rasterization:N-viewport-dimensions:0:authored:migration-72791218e30f1ece-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-viewport-dimensions:0:authored:migration-72791218e30f1ece-0 -->Viewport Width must be nonnegative. Height must be nonnegative unless `InvertedViewportHeightFlipsYSupported` permits a negative value. Both depth endpoints must be in `[0,1]`. Reversed ordering requires `InvertedViewportDepthFlipsZSupported`. The bounds above constrain both transformed X/Y endpoints, including an inverted height's second endpoint.<!-- d3d12-review-inline:end:rasterization:N-viewport-dimensions:0:authored:migration-72791218e30f1ece-0 --></ins>
 
 <a id="inverted-viewports"></a>
 
@@ -278,7 +275,7 @@ from which individual primitives can choose one (see [Selecting Viewport/Scissor
 ever apply to an individual primitive being rasterized, though this does not count the implied scissoring that is always applied to the [Viewport](#viewport-transform)'s
 x/y extents.<!-- d3d12-review-inline:end:rasterization:A-scissor:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-scissor:1 -->Scissor extents are signed `LONG` coordinates in `D3D12_RECT`, with right/bottom excluded. With equal-sized output views, the effective region is intersected with their dimensions. The [mismatched-output rules](#output-dimensions) instead require the application to stay within the smallest output. Scissor testing cannot be disabled. Initial/reset and bundle scissor state follow the [canonical state contract](command-list-state.md#base-graphics).<!-- d3d12-review-inline:end:rasterization:A-scissor:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:A-scissor:1 -->Scissor extents are signed `LONG` coordinates in `D3D12_RECT`, with right/bottom excluded. With equal-sized output views, the effective region is intersected with their dimensions. The [mismatched-output rules](#output-dimensions) instead require the application to stay within the smallest output. Scissor testing cannot be disabled. See [Base graphics state](command-list-state.md#base-graphics) for initial/reset values and bundle inheritance.<!-- d3d12-review-inline:end:rasterization:A-scissor:1 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-scissor:2 -->The implicit scissor to the viewport (mentioned in the [Viewport](#viewport-transform) section) rounds the viewport X and Y extents to negative infinity.
 This way the scissor extents are always integers. The rounding to derive scissor extents applies to the locations where the fractional
@@ -307,7 +304,7 @@ for a primitive reaching the rasterizer from an allowed shader feeding the raste
 then the rasterizer will use this 32-bit unsigned integer to select which surface to render to from the Pixel Shader for that primitive. This is useful with a RenderTarget that is a
 Texture1D/2D array or Texture3D view exposing multiple layers/slices, including cube faces through a Texture2D array view.<!-- d3d12-review-inline:end:rasterization:A-rt-selection:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-rt-selection:1 -->If the System Interpreted Value "renderTargetArrayIndex" is not used, the default array index rendered to is 0. Permitted producer stages and view instance offsets follow the shared graphics contract.<!-- d3d12-review-inline:end:rasterization:A-rt-selection:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:A-rt-selection:1 -->If the System Interpreted Value "renderTargetArrayIndex" is not used, the default array index rendered to is 0.<!-- d3d12-review-inline:end:rasterization:A-rt-selection:1 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-rt-selection:2 -->The range supported for renderTargetArrayIndex must be enough to accommodate the [maximum resource array size](../archive/D3D11_3_FunctionalSpec.htm#SystemLimits). When bound outputs have matching array sizes, if the value written to "renderTargetArrayIndex" is out of range of the
 particular resource array that is set as a RenderTarget, the 0-th RenderTarget is used. If the
@@ -565,7 +562,7 @@ which provides API settable upper bound (positive or negative) on the magnitude 
 
 <ins><!-- d3d12-review-inline:begin:rasterization:V-float-bias:0:modified:GRI14 -->The driver rasterizer description uses `FLOAT DepthBias`. Legacy integer input is converted to `FLOAT` before the same [depth bias equation](#depth-bias).<!-- d3d12-review-inline:end:rasterization:V-float-bias:0:modified:GRI14 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-bias-state:0:authored:migration-c4479fa372a7dbf1-0 -->Legacy rasterizer descriptions provide integer `DepthBias`, converted to float for the equation. The revised float description and dynamic setter use the same equation without requiring an integral input. Unsupported non-integral legacy-driver handling follows the [versioned rasterizer payload](pipeline-state.md#versioned-rasterizer). Dynamic updates require the corresponding capability and PSO flag. [PSO reselection and bundle state](command-list-state.md#dynamic-state) remain canonical there.<!-- d3d12-review-inline:end:rasterization:N-bias-state:0:authored:migration-c4479fa372a7dbf1-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-bias-state:0:authored:migration-c4479fa372a7dbf1-0 -->The revised float description and dynamic setter use the same equation without requiring an integral input. Unsupported non-integral legacy-driver handling follows the [versioned rasterizer payload](pipeline-state.md#versioned-rasterizer).<!-- d3d12-review-inline:end:rasterization:N-bias-state:0:authored:migration-c4479fa372a7dbf1-0 --></ins>
 
 <a id="primitive-coverage"></a>
 
@@ -692,7 +689,7 @@ where there is more than one sample overlapping the center of the pixel, in whic
 
 <!-- d3d12-review-alert:end:rasterization:N-lines:0:authored:migration-6ffb96fa54fd03eb-0 -->
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-lines:1:authored:migration-4d92353307610d56-0 -->`D3D12_RASTERIZER_DESC2` additionally selects `QUADRILATERAL_NARROW` when supported. Wide quadrilateral mode uses the 1.4-width baseline above; narrow mode uses 1.0. The legacy `MultisampleEnable` name does not enable/disable multisampling for points or triangles. The [pipeline descriptions](pipeline-state.md#versioned-rasterizer) own enum/payload availability and legacy-driver translation.<!-- d3d12-review-inline:end:rasterization:N-lines:1:authored:migration-4d92353307610d56-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-lines:1:authored:migration-4d92353307610d56-0 -->[`D3D12_RASTERIZER_DESC2`](pipeline-state.md#versioned-rasterizer) additionally selects `QUADRILATERAL_NARROW` when supported.<!-- d3d12-review-inline:end:rasterization:N-lines:1:authored:migration-4d92353307610d56-0 --></ins>
 
 <a id="line-sampling"></a>
 
@@ -743,9 +740,7 @@ the shader requests it.<!-- d3d12-review-inline:end:rasterization:A-point-state:
 
 ## Multisampling
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-msaa-scope:0:authored:migration-23ed8a214e44bfa0-0 -->The fine pixel coverage and pixel/sample-frequency explanations below describe 1x1 shading. Variable rate shading changes shader execution frequency, not fine pixel/sample storage. The [shading rate/sample count limits](pixel-shaders.md#vrs-support), [sample-based execution](pixel-shaders.md#vrs-grid), [centroid behavior](pixel-shaders.md#vrs-centroid) and [coverage packing](pixel-shaders.md#vrs-sv_coverage) apply when coarse shading is selected. Full pixel shader execution remains separate from this coverage interface.<!-- d3d12-review-inline:end:rasterization:N-msaa-scope:0:authored:migration-23ed8a214e44bfa0-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:rasterization:N-centroid-owner:0:authored:migration-c1699b41fbac2651-0 -->Pixel shader [centroid evaluation](pixel-shaders.md#centroid) owns fine pixel full-coverage/first-covered/helper selection, including programmed sample patterns. The [conservative interpolation override](#conservative-attribute-interpolation-interaction) and [coarse VRS selection](pixel-shaders.md#vrs-centroid) remain distinct.<!-- d3d12-review-inline:end:rasterization:N-centroid-owner:0:authored:migration-c1699b41fbac2651-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-msaa-scope:0:authored:migration-23ed8a214e44bfa0-0 -->The fine pixel coverage and pixel/sample-frequency explanations below describe 1x1 shading. Variable rate shading changes shader execution frequency, not fine pixel/sample storage. See [Variable rate shading](pixel-shaders.md#vrs-support) for shading rate/sample count limits, [sample-based execution](pixel-shaders.md#sample-based-execution), [centroid behavior](pixel-shaders.md#vrs-centroid) and [coverage packing](pixel-shaders.md#vrs-sv_coverage).<!-- d3d12-review-inline:end:rasterization:N-msaa-scope:0:authored:migration-23ed8a214e44bfa0-0 --></ins>
 
 <a id="multisample-overview"></a>
 
@@ -790,7 +785,7 @@ execution for these primitives, unless the sample count is 1, which is identical
 
 ### Standard and center sample patterns
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-sample-pattern-selector:0:authored:migration-85f43a1a21598e1c-0 -->Format/sample support and quality level queries are defined by [Formats](formats.md#d3d12-feature-data-multisample-quality-levels). For supported sample counts with standard patterns, `DXGI_SAMPLE_DESC::Quality` selects `D3D12_STANDARD_MULTISAMPLE_PATTERN` (`0xffffffff`) or `D3D12_CENTER_MULTISAMPLE_PATTERN` (`0xfffffffe`). Supported ordinary quality levels do not replace these special selectors. Standard patterns are defined for 1, 2, 4, 8 and 16 samples. Their locations and index ordering follow the original grids below.<!-- d3d12-review-inline:end:rasterization:N-sample-pattern-selector:0:authored:migration-85f43a1a21598e1c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-sample-pattern-selector:0:authored:migration-85f43a1a21598e1c-0 -->For supported sample counts with standard patterns, `DXGI_SAMPLE_DESC::Quality` selects `D3D12_STANDARD_MULTISAMPLE_PATTERN` (`0xffffffff`) or `D3D12_CENTER_MULTISAMPLE_PATTERN` (`0xfffffffe`). Supported ordinary quality levels do not replace these special selectors. Standard patterns are defined for 1, 2, 4, 8 and 16 samples.<!-- d3d12-review-inline:end:rasterization:N-sample-pattern-selector:0:authored:migration-85f43a1a21598e1c-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:rasterization:N-standard-pattern-figures:0:authored:migration-8242c56257ca7538-0 -->![MSAAGrid](../archive/images/d3d11/D3D11_3_MSAAGrid.png)<!-- d3d12-review-inline:end:rasterization:N-standard-pattern-figures:0:authored:migration-8242c56257ca7538-0 --></ins>
 
@@ -841,7 +836,7 @@ given the defined semantics.<!-- d3d12-review-inline:end:rasterization:A-forced-
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-forced-behavior:1 -->Here are the behaviors with ForcedSampleCount > 0.<!-- d3d12-review-inline:end:rasterization:A-forced-behavior:1 --></ins>
 
-- <ins><!-- d3d12-review-inline:begin:rasterization:A-forced-behavior:2 -->In the absence of a programmable position override, ForcedSampleCount identifies a D3D standard sample pattern of 1, 4, 8 or 16 samples (0 means no override). A matching [programmable sample pattern](#programmable-samples) replaces those default positions.<!-- d3d12-review-inline:end:rasterization:A-forced-behavior:2 --></ins>
+- <ins><!-- d3d12-review-inline:begin:rasterization:A-forced-behavior:2:modified:section-20261117-1 -->In the absence of a programmable position override, ForcedSampleCount identifies a D3D standard sample pattern of 1, 4, 8 or 16 samples (0 means no override). A matching [programmable sample pattern](#programmable-samples) replaces those default positions.<!-- d3d12-review-inline:end:rasterization:A-forced-behavior:2:modified:section-20261117-1 --></ins>
 
 - If ForcedSampleCount is greater than 1, any RTVs that are bound while rendering must only have a single sample, otherwise rendering behavior is undefined.
 
@@ -866,9 +861,9 @@ otherwise rendering behavior is undefined.
 
 - The centroid interpolation algorithm doesn't take into account the SampleMask Rasterizer State, since the SampleMask is relevant to the output sample pattern only, not the ForcedSampleCount pattern.
 
-- <ins><!-- d3d12-review-inline:begin:rasterization:A-forced-behavior:2 -->See [D3D12_QUERY_TYPE_OCCLUSION](counters-queries-and-predication.md#occlusion) for description of interaction of ForcedSampleCount, SampleMask and the occlusion query sample count.<!-- d3d12-review-inline:end:rasterization:A-forced-behavior:2 --></ins>
+- <ins><!-- d3d12-review-inline:begin:rasterization:A-forced-behavior:2:modified:section-20261117-2 -->See [D3D12_QUERY_TYPE_OCCLUSION](counters-queries-and-predication.md#occlusion) for description of interaction of ForcedSampleCount, SampleMask and the occlusion query sample count.<!-- d3d12-review-inline:end:rasterization:A-forced-behavior:2:modified:section-20261117-2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-forced-behavior:3 -->Availability based on feature level and rasterizer creation constraints follow the selected pipeline contract.<!-- d3d12-review-inline:end:rasterization:A-forced-behavior:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:A-forced-behavior:3 -->See [Feature level differences](#forced-feature-levels) for sample count support and [ForcedSampleCount](pipeline-state.md#d3d12-rasterizer-desc) for rasterizer creation constraints.<!-- d3d12-review-inline:end:rasterization:A-forced-behavior:3 --></ins>
 
 <a id="forced-feature-levels"></a>
 
@@ -909,7 +904,7 @@ Existing interactions with `ForcedSampleCount` remain:
 
 <ins><!-- d3d12-review-inline:begin:rasterization:V-no-output-samples:2 -->`OPTIONS19.SupportedSampleCountsWithNoOutputs` supplies the supported counts, using the [pipeline no-output sample count encoding](pipeline-state.md#no-output-samples).<!-- d3d12-review-inline:end:rasterization:V-no-output-samples:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-no-output-scope:0:authored:migration-ab22a8670b5ee9f6-0 -->The no-output sample-frequency path has `NumRenderTargets == 0`, `DSVFormat == DXGI_FORMAT_UNKNOWN`, a reported `SampleDesc.Count > 1` and `ForcedSampleCount == 0`. It is distinct from forced-count rasterization, whose sample-frequency prohibition remains. Target-independent rasterization is not supported with coarse variable rate shading. [The VRS interaction](pixel-shaders.md#vrs-raster-order-views) remains explicit.<!-- d3d12-review-inline:end:rasterization:N-no-output-scope:0:authored:migration-ab22a8670b5ee9f6-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-no-output-scope:0:authored:migration-ab22a8670b5ee9f6-0 -->The no-output sample-frequency path has `NumRenderTargets == 0`, `DSVFormat == DXGI_FORMAT_UNKNOWN`, a reported `SampleDesc.Count > 1` and `ForcedSampleCount == 0`. It is distinct from forced-count rasterization, whose sample-frequency prohibition remains. Target-independent rasterization is [not supported with coarse variable rate shading](pixel-shaders.md#vrs-raster-order-views).<!-- d3d12-review-inline:end:rasterization:N-no-output-scope:0:authored:migration-ab22a8670b5ee9f6-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:rasterization:N-no-output-floor:0:authored:migration-651a3ebcd5c8284c-0 -->For Feature Level 11_1 hardware using DDI version 0102 or later, `SupportedSampleCountsWithNoOutputs` must report at least mask `0b11101`, corresponding to 1, 4, 8 and 16 samples. This is a no-output rasterization reporting requirement, not a requirement that every render target/depth format support those resource sample counts.<!-- d3d12-review-inline:end:rasterization:N-no-output-floor:0:authored:migration-651a3ebcd5c8284c-0 --></ins>
 
@@ -917,7 +912,7 @@ Existing interactions with `ForcedSampleCount` remain:
 
 ## Conservative rasterization
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-conservative-scope:0:authored:migration-50332ebfcda14899-0 -->Conservative rasterization is selected by the pipeline rasterizer description and requires the reported `ConservativeRasterizationTier`. The coverage/inner coverage interface below describes fine 1x1 shading. The [coarse shading contribution](#conservative-vrs) applies separately. The three tiers refine this common behavior rather than introduce a separate D3D12 rasterizer state object.<!-- d3d12-review-inline:end:rasterization:N-conservative-scope:0:authored:migration-50332ebfcda14899-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-conservative-scope:0:authored:migration-50332ebfcda14899-0 -->The coverage/inner coverage interface below describes fine 1x1 shading. The [coarse shading contribution](#conservative-vrs) applies separately.<!-- d3d12-review-inline:end:rasterization:N-conservative-scope:0:authored:migration-50332ebfcda14899-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:rasterization:N-conservative-scope:1:authored:migration-2209c09c25469b99-0 -->InputCoverage and InnerCoverage denote the logical HLSL `SV_Coverage` and `SV_InnerCoverage` inputs. Output coverage (`oMask` in DXBC) is the pixel shader's `SV_Coverage` output; `oDepth` denotes its depth output. These feature interactions apply to DXBC and DXIL representations. `SV_InnerCoverage` requires a pixel shader of Shader Model 5.0 or later and Conservative Rasterization Tier 3.<!-- d3d12-review-inline:end:rasterization:N-conservative-scope:1:authored:migration-2209c09c25469b99-0 --></ins>
 
@@ -1434,10 +1429,6 @@ The above concept still holds when using coarse pixel shading. When coarse shadi
 
 ## Programmable sample positions
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-resource-operations-sample-consumer:0:authored:migration-d5fe98f904a45650-0 -->The full ordinary [copy](resource-operations.md#copy-commands), [clear](resource-operations.md#clear-commands) and [resolve](resource-operations.md#resolve-commands) entries link these operation-specific sample pattern requirements. Format/region/capability rules do not erase the source/destination depth pattern identity defined here.<!-- d3d12-review-inline:end:rasterization:N-resource-operations-sample-consumer:0:authored:migration-d5fe98f904a45650-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:rasterization:N-pattern-operation-scope:0:authored:migration-aa5c87ca675f2075-0 -->The rules below add sample pattern requirements to operations that are otherwise valid under their own API/resource contracts. They do not expand the allowed copy regions, formats, resource states/layouts or resolve modes.<!-- d3d12-review-inline:end:rasterization:N-pattern-operation-scope:0:authored:migration-aa5c87ca675f2075-0 --></ins>
-
 <a id="sample-position-coordinates"></a>
 
 ### Position coordinates
@@ -1660,15 +1651,13 @@ Type: **const [D3D12_VIEWPORT](#d3d12-viewport)\***
 
 An array of [D3D12_VIEWPORT](#d3d12-viewport) structures to bind to the device.
 
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:rasterization:R-RSSetViewports:0:authored:migration-c3e5f544bed71063-0 -->None<!-- d3d12-review-inline:end:rasterization:R-RSSetViewports:0:authored:migration-c3e5f544bed71063-0 --></ins>
+<a id="return-values"></a>
 
 #### Recording and state
 
 All viewports must be set atomically as one operation. Any viewports not defined by the call are disabled.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-RSSetViewports-recording:0:authored:migration-f174d43e637c2a59-0 -->This setter is valid on DIRECT command lists, not COMPUTE/COPY lists or bundles. It is permitted both inside and outside a render pass, subject to the [canonical render pass context](command-list-state.md#render-pass). Bundles inherit the parent's viewport/scissor state without setting it. Initial/reset state and subsequent inheritance follow the [canonical base-graphics state](command-list-state.md#base-graphics). Selection follows the [primitive viewport/scissor index](#viewport-selection), including allowed non-GS producers.<!-- d3d12-review-inline:end:rasterization:N-RSSetViewports-recording:0:authored:migration-f174d43e637c2a59-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-RSSetViewports-recording:0:authored:migration-f174d43e637c2a59-0 -->This setter is valid on DIRECT command lists, not COMPUTE/COPY lists or bundles. It is permitted inside and outside a render pass. Bundles inherit the parent's viewports without setting them. See [Base graphics state](command-list-state.md#base-graphics) for initial/reset values, and [Viewport and render target selection](#viewport-selection) for per-primitive viewport selection.<!-- d3d12-review-inline:end:rasterization:N-RSSetViewports-recording:0:authored:migration-f174d43e637c2a59-0 --></ins>
 
 <a id="rssetscissorrects"></a>
 
@@ -1701,15 +1690,13 @@ Type: **const D3D12\_RECT\***
 
 An array of scissor rectangles.
 
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:rasterization:R-RSSetScissorRects:0:authored:migration-60d5b5336a56350f-0 -->None<!-- d3d12-review-inline:end:rasterization:R-RSSetScissorRects:0:authored:migration-60d5b5336a56350f-0 --></ins>
+<a id="return-values-1"></a>
 
 #### Recording and state
 
 All scissor rectangles must be set atomically as one operation. Any scissor rectangles not defined by the call are disabled.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-RSSetScissorRects-recording:0:authored:migration-03d84f7a32de0659-0 -->This setter is valid on DIRECT command lists, not COMPUTE/COPY lists or bundles. It is permitted both inside and outside a render pass, subject to the [canonical render pass context](command-list-state.md#render-pass). Bundles inherit the parent's viewport/scissor state without setting it. Initial/reset state and subsequent inheritance follow the [canonical base-graphics state](command-list-state.md#base-graphics). Selection follows the [primitive viewport/scissor index](#viewport-selection), including allowed non-GS producers.<!-- d3d12-review-inline:end:rasterization:N-RSSetScissorRects-recording:0:authored:migration-03d84f7a32de0659-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-RSSetScissorRects-recording:0:authored:migration-03d84f7a32de0659-0 -->This setter is valid on DIRECT command lists, not COMPUTE/COPY lists or bundles. It is permitted inside and outside a render pass. Bundles inherit the parent's scissors without setting them. See [Base graphics state](command-list-state.md#base-graphics) for initial/reset values, and [Viewport and render target selection](#viewport-selection) for per-primitive scissor selection.<!-- d3d12-review-inline:end:rasterization:N-RSSetScissorRects-recording:0:authored:migration-03d84f7a32de0659-0 --></ins>
 
 <a id="rssetdepthbias"></a>
 
@@ -1727,7 +1714,7 @@ void RSSetDepthBias(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-dynamic-bias-behavior:0:authored:migration-a1c1ac798b0083dc-0 -->Changes the current `DepthBias`, `DepthBiasClamp` and `SlopeScaledDepthBias` for subsequent draws. The selected PSO must permit dynamic depth bias, using `D3D12_PIPELINE_STATE_FLAG_DYNAMIC_DEPTH_BIAS`, and the device must support `OPTIONS16.DynamicDepthBiasSupported`. It does not modify the PSO description.<!-- d3d12-review-inline:end:rasterization:N-dynamic-bias-behavior:0:authored:migration-a1c1ac798b0083dc-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-dynamic-bias-behavior:0:authored:migration-a1c1ac798b0083dc-0 -->Changes the current `DepthBias`, `DepthBiasClamp` and `SlopeScaledDepthBias` for subsequent draws. The selected PSO must permit dynamic depth bias, using `D3D12_PIPELINE_STATE_FLAG_DYNAMIC_DEPTH_BIAS`, and the device must support `OPTIONS16.DynamicDepthBiasSupported`.<!-- d3d12-review-inline:end:rasterization:N-dynamic-bias-behavior:0:authored:migration-a1c1ac798b0083dc-0 --></ins>
 
 #### Parameters
 
@@ -1737,13 +1724,11 @@ void RSSetDepthBias(
 
 <ins><!-- d3d12-review-inline:begin:rasterization:N-dynamic-bias-parameters:2:authored:migration-bd745c012b2f84c5-0 -->`SlopeScaledDepthBias`: coefficient multiplied by the maximum depth slope when nonzero.<!-- d3d12-review-inline:end:rasterization:N-dynamic-bias-parameters:2:authored:migration-bd745c012b2f84c5-0 --></ins>
 
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:rasterization:R-RSSetDepthBias:0:authored:migration-c6949aac167d1b8d-0 -->None<!-- d3d12-review-inline:end:rasterization:R-RSSetDepthBias:0:authored:migration-c6949aac167d1b8d-0 --></ins>
+<a id="return-values-2"></a>
 
 #### Recording and state
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-dynamic-bias-recording:0:authored:migration-df4cb04cd41fb605-0 -->The call is valid on DIRECT command lists and bundles, not COMPUTE/COPY lists. It is permitted inside and outside a render pass. A bundle executes under its parent's [render pass context](command-list-state.md#render-pass). Bundle changes persist on return. Setting a PSO again restores its described bias values even when its dynamic flag is present. The [canonical dynamic state contract](command-list-state.md#dynamic-state) governs selection and inheritance.<!-- d3d12-review-inline:end:rasterization:N-dynamic-bias-recording:0:authored:migration-df4cb04cd41fb605-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-dynamic-bias-recording:0:authored:migration-df4cb04cd41fb605-0 -->The call is valid on DIRECT command lists and bundles, not COMPUTE/COPY lists. It is permitted inside and outside a render pass. A bundle executes under its parent's [render pass context](command-list-state.md#render-pass). Bundle changes persist on return. Setting a PSO again restores its described bias values even when its dynamic flag is present.<!-- d3d12-review-inline:end:rasterization:N-dynamic-bias-recording:0:authored:migration-df4cb04cd41fb605-0 --></ins>
 
 <a id="setsamplepositions"></a>
 
@@ -1789,19 +1774,17 @@ Specifies an array of D3D12\_SAMPLE\_POSITION elements. The size of the array is
 
 <ins><!-- d3d12-review-inline:begin:rasterization:P-SetSamplePositions:10 -->If centroid interpolation is used during rendering, the order of positions for each pixel determines centroid-sampling priority. When the centroid rule selects a covered sample, the first covered sample in the order specified is chosen. This priority does not replace the [full-coverage pixel center exception](pixel-shaders.md#centroid).<!-- d3d12-review-inline:end:rasterization:P-SetSamplePositions:10 --></ins>
 
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:rasterization:R-SetSamplePositions:0:authored:migration-a725d21f4b2c1a14-0 -->None<!-- d3d12-review-inline:end:rasterization:R-SetSamplePositions:0:authored:migration-a725d21f4b2c1a14-0 --></ins>
+<a id="return-values-3"></a>
 
 #### Recording, reset and operation constraints
 
 <ins><!-- d3d12-review-inline:begin:rasterization:N-sample-recording:0:authored:migration-9528765fd370b587-0 -->`SetSamplePositions(0,0,NULL)` restores default positions. This explicit reset is the exception to the nonzero custom-pattern parameter combinations above. The operation otherwise obeys its reported [tier and pattern shape](#programmable-samples).<!-- d3d12-review-inline:end:rasterization:N-sample-recording:0:authored:migration-9528765fd370b587-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-sample-recording:1:authored:migration-c5fd2da1bd43e2e5-0 -->DIRECT command lists and bundles may set sample positions. COMPUTE/COPY lists may not. Bundles inherit the pattern and changes persist on return, following the [established current state contract](command-list-state.md#sample-positions).<!-- d3d12-review-inline:end:rasterization:N-sample-recording:1:authored:migration-c5fd2da1bd43e2e5-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-sample-recording:1:authored:migration-c5fd2da1bd43e2e5-0 -->DIRECT command lists and bundles may set sample positions. COMPUTE/COPY lists may not. Bundles inherit the pattern and changes persist on return. See [Sample positions](command-list-state.md#sample-positions) for initial/reset values and the ClearState exception.<!-- d3d12-review-inline:end:rasterization:N-sample-recording:1:authored:migration-c5fd2da1bd43e2e5-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-sample-recording:2:authored:migration-6d2e7ab42b18bcb0-0 -->The setter is permitted inside and outside render passes, including under the parent's [render pass context](command-list-state.md#render-pass) when called from a bundle. This permission does not waive depth content/pattern compatibility with clears or drawing.<!-- d3d12-review-inline:end:rasterization:N-sample-recording:2:authored:migration-6d2e7ab42b18bcb0-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-sample-recording:2:authored:migration-6d2e7ab42b18bcb0-0 -->The setter is permitted inside and outside render passes, including under the parent's [render pass context](command-list-state.md#render-pass) when called from a bundle.<!-- d3d12-review-inline:end:rasterization:N-sample-recording:2:authored:migration-6d2e7ab42b18bcb0-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-sample-recording:3:authored:migration-6dcbf0f5b286a1db-0 -->At draw, the programmed sample count must match the effective PSO/forced sample count. The [operation-specific pattern requirements](#programmable-samples) apply to subsequent depth clears, drawing, copies, resolves and decompression/transitions, not just draw calls. Invalid custom-pattern arguments are not guaranteed to be dropped by retail recording. Parameter validity and pattern compatibility remain requirements even when diagnostics cannot prove the content history of a resource.<!-- d3d12-review-inline:end:rasterization:N-sample-recording:3:authored:migration-6dcbf0f5b286a1db-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-sample-recording:3:authored:migration-6dcbf0f5b286a1db-0 -->Invalid custom-pattern arguments are not guaranteed to be dropped by retail recording.<!-- d3d12-review-inline:end:rasterization:N-sample-recording:3:authored:migration-6dcbf0f5b286a1db-0 --></ins>
 
 <a id="viewport-state"></a>
 
@@ -1852,8 +1835,6 @@ typedef struct tagRECT {
 typedef RECT D3D12_RECT;
 ```
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-rect-fields:0:authored:migration-b934348c09fa4252-0 -->`RECT` has signed `LONG` members `left`, `top`, `right` and `bottom`. The right and bottom edges are excluded.<!-- d3d12-review-inline:end:rasterization:N-rect-fields:0:authored:migration-b934348c09fa4252-0 --></ins>
-
 <a id="driver"></a>
 
 ## Driver responsibilities and validation boundaries
@@ -1862,8 +1843,6 @@ typedef RECT D3D12_RECT;
 typedef VOID(APIENTRY* PFND3D12DDI_SET_DEPTH_BIAS_STATE_0099)(
     D3D12DDI_HCOMMANDLIST, FLOAT DepthBias, FLOAT DepthBiasClamp, FLOAT SlopeScaledDepthBias);
 ```
-
-<ins><!-- d3d12-review-inline:begin:rasterization:N-driver:1:authored:migration-1a7535d893c9c436-0 -->Driver PSO selection restores the PSO's depth bias and strip-cut values even when dynamic state is enabled. See [dynamic pipeline state](command-list-state.md#dynamic-state).<!-- d3d12-review-inline:end:rasterization:N-driver:1:authored:migration-1a7535d893c9c436-0 --></ins>
 
 <a id="driver-state"></a>
 

@@ -42,9 +42,7 @@ The state object database <ins><!-- d3d12-review-inline:begin:sodb-input:overvie
 |Graphics and compute programs|Serialize each program including DXIL shaders|
 |Pipeline State Object|Serialize full pipeline state desc including DXIL shaders|
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:creation-owners:0:authored:migration-bfd7f548bd3be167-0 -->Storing a description does not create an API pipeline state object or state object
-and does not validate the stored input against driver-reported capabilities.
-The following creation and dependency contracts retain their canonical owners:<!-- d3d12-review-inline:end:sodb-input:creation-owners:0:authored:migration-bfd7f548bd3be167-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sodb-input:creation-owners:0:authored:migration-bfd7f548bd3be167-0 -->Storing a description does not validate the stored input against driver-reported capabilities.<!-- d3d12-review-inline:end:sodb-input:creation-owners:0:authored:migration-bfd7f548bd3be167-0 --></ins>
 
 <!-- d3d12-review-alert:begin:sodb-input:creation-owners:1:authored:migration-0bed3f80f521e149-0 -->
 
@@ -60,12 +58,9 @@ The following creation and dependency contracts retain their canonical owners:<!
 
 <!-- d3d12-review-alert:end:sodb-input:creation-owners:1:authored:migration-0bed3f80f521e149-0 -->
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:creation-owners:2:authored:migration-712c7c52a70012f9-0 -->The bytecode and serialized root signature blobs remain opaque to this storage
-contract. Their presence does not establish support for a shader, state object
-configuration, driver capability, or workload at object creation time.
-The graphics/compute program row describes stored inputs within the
-[existing executable program contract](state-objects.md#createstateobject);
-it does not extend that contract to additional program forms.<!-- d3d12-review-inline:end:sodb-input:creation-owners:2:authored:migration-712c7c52a70012f9-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sodb-input:creation-owners:2:authored:migration-712c7c52a70012f9-0 -->The bytecode and serialized root signature blobs are opaque to storage.
+See [Generic programs](state-objects.md#generic-programs) for the graphics and
+compute programs whose inputs are stored.<!-- d3d12-review-inline:end:sodb-input:creation-owners:2:authored:migration-712c7c52a70012f9-0 --></ins>
 
 <a id="keys-and-versions"></a>
 
@@ -92,9 +87,7 @@ The database format version is separate again.<!-- d3d12-review-inline:end:sodb-
 existing key returns `DXGI_ERROR_ALREADY_EXISTS`. There is no in-place overwrite.
 Description identity is the stored canonical input identity, not equality of
 transient CPU pointer values or a requirement for bit-identical input buffers.
-The existing entry remains unchanged on this conflict. This is not a guarantee
-of whole-database atomicity for every allocation, operating-system or storage
-failure.<!-- d3d12-review-inline:end:sodb-input:identity-separation:1:authored:migration-0d47c139623d30ff-0 --></ins>
+The existing entry remains unchanged on this conflict.<!-- d3d12-review-inline:end:sodb-input:identity-separation:1:authored:migration-0d47c139623d30ff-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sodb-input:identity-separation:2:authored:migration-fe7698f635f0df8b-0 -->The application must supply a nonnull `pKey` and a nonzero `KeySize` to
 `StorePipelineStateDesc`, `FindPipelineStateDesc`, `StoreStateObjectDesc`,
@@ -116,9 +109,9 @@ nonempty key identifying the already stored parent.<!-- d3d12-review-inline:end:
 
 ### Published database format
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:format-forward:0:authored:migration-d30e51b54401b735-0 -->The complete [published SQLite format](state-object-database-format.md)
-defines the schema, object groups, dependency relationships and application
-metadata row. Its format version is not an object or application version.<!-- d3d12-review-inline:end:sodb-input:format-forward:0:authored:migration-d30e51b54401b735-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sodb-input:format-forward:0:authored:migration-d30e51b54401b735-0 -->See [Published SQLite format](state-object-database-format.md#published-sql-schema)
+for the SQL schema and [Tables and relationships](state-object-database-format.md#tables-and-relationships)
+for its mapping to object keys, dependencies and application metadata.<!-- d3d12-review-inline:end:sodb-input:format-forward:0:authored:migration-d30e51b54401b735-0 --></ins>
 
 <a id="application-metadata"></a>
 
@@ -160,8 +153,6 @@ uses this same type for compiler and application profile versions. That query's
 inclusive minimum/maximum ABI range is not an application version or an object
 version.<!-- d3d12-review-inline:end:sodb-input:version-abi-order:1:authored:migration-3745ce313a653aba-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:D126-compiler-version-forward:0:authored:migration-962b1b9581116471-0 -->The offline compiler uses this same encoding for its [adapter family compiler and application profile versions](offline-compilation.md#version-domains). Its [target ABI](offline-compilation.md#d3d12_compiler_target) and negotiated plugin/usermode DDI versions retain their separate meanings.<!-- d3d12-review-inline:end:sodb-input:D126-compiler-version-forward:0:authored:migration-962b1b9581116471-0 --></ins>
-
 <a id="d3d12_application_desc"></a>
 
 ### D3D12_APPLICATION_DESC
@@ -197,8 +188,6 @@ Metadata to identify an application.  Information may be used to select an appli
 <ins><!-- d3d12-review-inline:begin:sodb-input:metadata-members:1:authored:migration-6a20a3e75f0eeb46-0 -->Nullability of `pExeFilename` is API-specific. The identity API's executable
 filename fallback does not supply missing database metadata.<!-- d3d12-review-inline:end:sodb-input:metadata-members:1:authored:migration-6a20a3e75f0eeb46-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:D131-cache-metadata-forward:0:authored:migration-987d436ee45d7cf6-0 -->[Compiler cache session creation](compiler-invocation-and-cache-output.md#id3d12compilerfactory-createcompilercachesession) defines supplied versus stored application metadata, target resolution and consistency across PSDB files. [GetApplicationDesc](compiler-invocation-and-cache-output.md#id3d12compilercachesession-getapplicationdesc) defines the resolved descriptor's borrowed lifetime. These consumers retain their API-specific input conditions.<!-- d3d12-review-inline:end:sodb-input:D131-cache-metadata-forward:0:authored:migration-987d436ee45d7cf6-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:sodb-input:D138-registration-metadata:0:authored:migration-83b50add828d586a-0 -->The separate registration [D3D_SHADER_CACHE_APPLICATION_DESC and D3D_VERSION_NUMBER](shader-cache-registration.md#registration-abi) retain their own ABI declarations. [RegisterApplication](shader-cache-registration.md#id3dshadercacheinstaller-registerapplication) distinguishes its full executable lookup path from the stable identifying filename in its metadata. Those catalog inputs are not this chapter's version-4 configuration `AppId`.<!-- d3d12-review-inline:end:sodb-input:D138-registration-metadata:0:authored:migration-83b50add828d586a-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sodb-input:D126-compiler-profile-metadata-forward:0:authored:migration-24ac5887e4ff84d5-0 -->[ID3D12CompilerFactory::GetApplicationProfileVersion](offline-compilation.md#id3d12compilerfactory-getapplicationprofileversion) also consumes this description. Its parameters define the explicit executable/title and engine metadata for an offline profile query. The identity method's process name fallback does not apply to that query.<!-- d3d12-review-inline:end:sodb-input:D126-compiler-profile-metadata-forward:0:authored:migration-24ac5887e4ff84d5-0 --></ins>
@@ -209,8 +198,7 @@ An application may have multiple SODBs, but the application information must be 
 
 <ins><!-- d3d12-review-inline:begin:sodb-input:app-guid-separation:0:authored:migration-55f7455e178c4d89-0 -->`AppId` on `SetApplicationIdentity` is a version-4 application UUID. It is not
 derived here from executable names, title strings, engine names, object keys
-or version fields. Identity metadata is not an authentication or permissions
-mechanism. `SetApplicationDesc` stores the application description, not an
+or version fields. `SetApplicationDesc` stores the application description, not an
 `AppId` argument. The published [format](state-object-database-format.md#published-sql-schema)
 has no application-GUID column.<!-- d3d12-review-inline:end:sodb-input:app-guid-separation:0:authored:migration-55f7455e178c4d89-0 --></ins>
 
@@ -232,6 +220,32 @@ correction obtains the serialized container through
 the COM pointer itself. Serialized input remains the explicit driver-independent
 form. It does not similarly make an existing-collection key a legal input to
 device or compiler state object creation.<!-- d3d12-review-inline:end:sodb-input:root-signature-versioned-input:0:authored:migration-c5b58ef9bece680a-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:sodb-input:serialized-root-members:0:authored:migration-3dc7b2eb09794296-0 -->The root signature binary format and creation/association semantics are defined
+by [root signatures](binding.md#root-signatures) and
+[state object root binding](state-objects.md#root-binding).<!-- d3d12-review-inline:end:sodb-input:serialized-root-members:0:authored:migration-3dc7b2eb09794296-0 --></ins>
+
+<!-- d3d12-review-alert:begin:sodb-input:serialized-root-members:1:authored:migration-62e4c3ec87e5c69c-0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Storage location | Tag | Payload |
+> | --- | --- | --- |
+> | Pipeline state stream | `D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SERIALIZED_ROOT_SIGNATURE = 29` | `D3D12_SERIALIZED_ROOT_SIGNATURE_DESC` |
+> | State object global root signature | `D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_SERIALIZED_ROOT_SIGNATURE = 31` | `D3D12_GLOBAL_SERIALIZED_ROOT_SIGNATURE` |
+> | State object local root signature | `D3D12_STATE_SUBOBJECT_TYPE_LOCAL_SERIALIZED_ROOT_SIGNATURE = 32` | `D3D12_LOCAL_SERIALIZED_ROOT_SIGNATURE` |
+> | State object existing collection | `D3D12_STATE_SUBOBJECT_TYPE_EXISTING_COLLECTION_BY_KEY = 36` | `D3D12_EXISTING_COLLECTION_BY_KEY_DESC` |
+
+<!-- d3d12-review-alert:end:sodb-input:serialized-root-members:1:authored:migration-62e4c3ec87e5c69c-0 -->
+
+<ins><!-- d3d12-review-inline:begin:sodb-input:serialized-root-members:2:authored:migration-f605d0a876572e76-0 -->See [Pipeline state streams](pipeline-state.md#streams) for stream record
+layout and alignment, [`D3D12_STATE_SUBOBJECT`](state-objects.md#d3d12_state_subobject)
+for state object type/payload layout, and
+[Subobject associations](state-objects.md#subobject-association-behavior)
+for association rules.<!-- d3d12-review-inline:end:sodb-input:serialized-root-members:2:authored:migration-f605d0a876572e76-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:sodb-input:D126-compiler-root-helper-forward:0:authored:migration-3f6a0ad03e2dd79f-0 -->The compiler host [D3D12CompilerSerializeVersionedRootSignature](offline-compilation.md#d3d12compilerserializeversionedrootsignature) defines root signature blob production for offline inputs.<!-- d3d12-review-inline:end:sodb-input:D126-compiler-root-helper-forward:0:authored:migration-3f6a0ad03e2dd79f-0 --></ins>
 
 <a id="d3d12_serialized_root_signature_desc"></a>
 
@@ -281,31 +295,6 @@ typedef struct D3D12_EXISTING_COLLECTION_BY_KEY_DESC
 } D3D12_EXISTING_COLLECTION_BY_KEY_DESC;
 ```
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:serialized-root-members:0:authored:migration-3dc7b2eb09794296-0 -->The root signature binary format and creation/association semantics are defined
-by [root signatures](binding.md#root-signatures) and
-[state object root binding](state-objects.md#root-binding).<!-- d3d12-review-inline:end:sodb-input:serialized-root-members:0:authored:migration-3dc7b2eb09794296-0 --></ins>
-
-<!-- d3d12-review-alert:begin:sodb-input:serialized-root-members:1:authored:migration-62e4c3ec87e5c69c-0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> | Storage location | Tag | Payload |
-> | --- | --- | --- |
-> | Pipeline state stream | `D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SERIALIZED_ROOT_SIGNATURE = 29` | `D3D12_SERIALIZED_ROOT_SIGNATURE_DESC` |
-> | State object global root signature | `D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_SERIALIZED_ROOT_SIGNATURE = 31` | `D3D12_GLOBAL_SERIALIZED_ROOT_SIGNATURE` |
-> | State object local root signature | `D3D12_STATE_SUBOBJECT_TYPE_LOCAL_SERIALIZED_ROOT_SIGNATURE = 32` | `D3D12_LOCAL_SERIALIZED_ROOT_SIGNATURE` |
-> | State object existing collection | `D3D12_STATE_SUBOBJECT_TYPE_EXISTING_COLLECTION_BY_KEY = 36` | `D3D12_EXISTING_COLLECTION_BY_KEY_DESC` |
-
-<!-- d3d12-review-alert:end:sodb-input:serialized-root-members:1:authored:migration-62e4c3ec87e5c69c-0 -->
-
-<ins><!-- d3d12-review-inline:begin:sodb-input:serialized-root-members:2:authored:migration-f605d0a876572e76-0 -->Stream records retain the [pipeline stream layout and alignment](pipeline-state.md#streams).
-State object records retain the `D3D12_STATE_SUBOBJECT` type/payload layout and
-[subobject associations](state-objects.md#createstateobject). The table lists
-selected storage tags, not a replacement definition of either entire enum.<!-- d3d12-review-inline:end:sodb-input:serialized-root-members:2:authored:migration-f605d0a876572e76-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:sodb-input:D126-compiler-root-helper-forward:0:authored:migration-3f6a0ad03e2dd79f-0 -->The compiler host [D3D12CompilerSerializeVersionedRootSignature](offline-compilation.md#d3d12compilerserializeversionedrootsignature) defines root signature blob production for offline inputs. Root signature contents and actual creation remain at the Binding owner linked above.<!-- d3d12-review-inline:end:sodb-input:D126-compiler-root-helper-forward:0:authored:migration-3f6a0ad03e2dd79f-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:sodb-input:existing-members:0 -->`pKey` (`const void*`, input field)<!-- d3d12-review-inline:end:sodb-input:existing-members:0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sodb-input:existing-members:1 -->A nonnull pointer to a unique sequence of bytes that identifies an already
@@ -330,8 +319,6 @@ readable export descriptions for the duration of the store call.<!-- d3d12-revie
 <a id="restoring-stored-input-graphs"></a>
 
 ## Restoring stored input graphs
-
-<ins><!-- d3d12-review-inline:begin:sodb-input:restore-graph:0:authored:migration-c02e39794b29327f-0 -->To restore a stored input graph for actual object creation:<!-- d3d12-review-inline:end:sodb-input:restore-graph:0:authored:migration-c02e39794b29327f-0 --></ins>
 
 1. <ins><!-- d3d12-review-inline:begin:sodb-input:restore-graph:1:authored:migration-ca8a87db5ee8f83c-0 -->Find the requested description by its application-selected key. Preserve the<!-- d3d12-review-inline:end:sodb-input:restore-graph:1:authored:migration-ca8a87db5ee8f83c-0 --></ins>
    returned object version in the caller's bookkeeping.
@@ -363,6 +350,19 @@ from the lookup result.<!-- d3d12-review-inline:end:sodb-input:restore-graph:2:a
 <a id="reconstruction-callbacks"></a>
 
 ## Reconstruction callbacks
+
+<ins><!-- d3d12-review-inline:begin:sodb-input:callback-context:0:authored:migration-c187e59b1df4ac99-0 -->The caller supplies the callback and optional `pContext`. The database passes
+that context through and does not take ownership of it. The callback and
+caller-owned key/context storage must remain valid until the calling method
+returns. A callback key can refer to the caller's original input key. Neither
+that key nor `pContext` becomes runtime-owned.<!-- d3d12-review-inline:end:sodb-input:callback-context:0:authored:migration-c187e59b1df4ac99-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:sodb-input:callback-context:1:authored:migration-ef823282cef514df-0 -->Reconstruction and callback invocation are synchronous within the calling
+method. Reconstructed descriptions and all reachable borrowed data, including
+any returned parent key data, remain valid until the callback returns. Consume
+or copy them during that interval. The application must not free
+runtime-provided reconstruction buffers. Caller-owned COM references and
+caller-created copies retain their own ownership and lifetime rules.<!-- d3d12-review-inline:end:sodb-input:callback-context:1:authored:migration-ef823282cef514df-0 --></ins>
 
 <a id="d3d12applicationdescfunc"></a>
 
@@ -492,22 +492,6 @@ An application specified context pointer that is passed to the callback.  Use th
 <ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12StateObjectFunc:19 -->Only one `Version` of a State Object may be stored in an SODB/PSDB at a time.  This value is present to allow an object to be versioned across revised databases without code changes for the lookup.<!-- d3d12-review-inline:end:sodb-input:callback-D3D12StateObjectFunc:19 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12StateObjectFunc:20 -->The `pDesc` parameter is not validated against any driver reported capabilities when stored.<!-- d3d12-review-inline:end:sodb-input:callback-D3D12StateObjectFunc:20 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-context:0:authored:migration-c187e59b1df4ac99-0 -->The caller supplies the callback and optional `pContext`. The database passes
-that context through and does not take ownership of it. The callback and
-caller-owned key/context storage must remain valid until the calling method
-returns. A callback key can refer to the caller's original input key. Neither
-that key nor `pContext` becomes runtime-owned.<!-- d3d12-review-inline:end:sodb-input:callback-context:0:authored:migration-c187e59b1df4ac99-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-context:1:authored:migration-ef823282cef514df-0 -->Reconstruction and callback invocation are synchronous within the calling
-method. Reconstructed descriptions and all reachable borrowed data, including
-any returned parent key data, remain valid until the callback returns. Consume
-or copy them during that interval. The application must not free
-runtime-provided reconstruction buffers. Caller-owned COM references and
-caller-created copies retain their own ownership and lifetime rules.<!-- d3d12-review-inline:end:sodb-input:callback-context:1:authored:migration-ef823282cef514df-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-context:2:authored:migration-11e69b983647ca89-0 -->These call lifetime guarantees do not establish a general cross-thread
-execution, same-database reentrancy or exception transport guarantee.<!-- d3d12-review-inline:end:sodb-input:callback-context:2:authored:migration-11e69b983647ca89-0 --></ins>
 
 <a id="application-identity-configuration"></a>
 
@@ -779,15 +763,14 @@ Stores a Pipeline State Desc in the database by key.
 
 #### Remarks
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-remarks:0 -->The [shared key and object version contract](#keys-and-versions) applies.<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-remarks:0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-remarks:1:modified:source-d6dc15f940f4f593-0-0 -->For the explicit driver-independent storage form, substitute the following pipeline stream input<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-remarks:1:modified:source-d6dc15f940f4f593-0-0 --></ins>:
 
 - <ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-remarks:2 -->Root signatures: `ID3D12RootSignature` pointers must be replaced by `D3D12_SERIALIZED_ROOT_SIGNATURE_DESC`<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-remarks:2 --></ins>
 
 These types do not have driver dependencies.
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-remarks:4 -->The [versioned root signature input support](#storage-only-forms) also applies.<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-remarks:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-remarks:4 -->See [Driver-independent description forms](#storage-only-forms) for root
+signature API object inputs.<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-remarks:4 --></ins>
 
 #### Return values
 
@@ -797,8 +780,7 @@ kind under an existing key returns `DXGI_ERROR_ALREADY_EXISTS`, leaving the
 existing entry unchanged. Read-only storage returns `DXGI_ERROR_ACCESS_DENIED`.
 The stream and its referenced data are consumed during the call, not retained
 as caller pointers. Parsing/storage failures are reported by `HRESULT`;
-successful storage is not GPU or driver capability validation. The
-[key and version contract](#keys-and-versions) applies.<!-- d3d12-review-inline:end:sodb-input:store-pso-completion:0:authored:migration-1ab20eb013569f13-0 --></ins>
+successful storage is not GPU or driver capability validation.<!-- d3d12-review-inline:end:sodb-input:store-pso-completion:0:authored:migration-1ab20eb013569f13-0 --></ins>
 
 <a id="id3d12stateobjectdatabase-findpipelinestatedesc"></a>
 
@@ -843,8 +825,9 @@ This method returns a compatible desc to what was stored, but may not be a bit e
 <ins><!-- d3d12-review-inline:begin:sodb-input:find-pso-completion:0:authored:migration-a76a7507fbc75c55-0 -->The key must identify a PSO:
 the PSO finder does not reinterpret a state object entry as a pipeline stream.
 Successful retrieval returns `S_OK`. A missing PSO returns
-`DXGI_ERROR_NOT_FOUND`. The [callback storage rules](#reconstruction-callbacks)
-and [storage-form substitutions](#storage-only-forms) apply.<!-- d3d12-review-inline:end:sodb-input:find-pso-completion:0:authored:migration-a76a7507fbc75c55-0 --></ins>
+`DXGI_ERROR_NOT_FOUND`. See [Reconstruction callbacks](#reconstruction-callbacks)
+for borrowed storage lifetime and [Driver-independent description forms](#storage-only-forms)
+for returned input representations.<!-- d3d12-review-inline:end:sodb-input:find-pso-completion:0:authored:migration-a76a7507fbc75c55-0 --></ins>
 
 <a id="state-object-input-methods"></a>
 
@@ -892,17 +875,20 @@ Stores a State Object Desc in the database by key.
 
 #### Remarks
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-remarks:0 -->The [shared key and object version contract](#keys-and-versions) applies.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-remarks:0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-remarks:1 -->For the explicit driver-independent storage form, substitute the following state object inputs:<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-remarks:1 --></ins>
 
-- <ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-remarks:2 -->Root signatures: `ID3D12RootSignature` pointers must be replaced by `D3D12_SERIALIZED_ROOT_SIGNATURE_DESC`<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-remarks:2 --></ins>
-- <ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-remarks:2 -->Existing Collections: `ID3D12StateObject` pointers embedded in the desc must be replaced by `D3D12_EXISTING_COLLECTION_BY_KEY_DESC`.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-remarks:2 --></ins>
-- <ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-remarks:2 -->Parents are referred to by key instead of by `ID3D12StateObject` pointer.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-remarks:2 --></ins>
+- <ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-remarks:2:modified:section-pass-roots -->Root signatures: `ID3D12RootSignature` pointers must be replaced by
+  [`D3D12_GLOBAL_SERIALIZED_ROOT_SIGNATURE`](#d3d12_global_serialized_root_signature)
+  with `D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_SERIALIZED_ROOT_SIGNATURE`, or
+  [`D3D12_LOCAL_SERIALIZED_ROOT_SIGNATURE`](#d3d12_local_serialized_root_signature)
+  with `D3D12_STATE_SUBOBJECT_TYPE_LOCAL_SERIALIZED_ROOT_SIGNATURE`.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-remarks:2:modified:section-pass-roots --></ins>
+- <ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-remarks:2:modified:section-pass-collections -->Existing Collections: `ID3D12StateObject` pointers embedded in the desc must be replaced by `D3D12_EXISTING_COLLECTION_BY_KEY_DESC`.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-remarks:2:modified:section-pass-collections --></ins>
+- <ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-remarks:2:modified:section-pass-parent -->Parents are referred to by key instead of by `ID3D12StateObject` pointer.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-remarks:2:modified:section-pass-parent --></ins>
 
 These types do not have driver dependencies.
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-remarks:4 -->The [versioned root signature input support](#storage-only-forms) also applies.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-remarks:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-remarks:4 -->See [Driver-independent description forms](#storage-only-forms) for root
+signature API object inputs.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-remarks:4 --></ins>
 
 #### Return values
 
@@ -913,8 +899,8 @@ existing entry unchanged. Read-only storage returns `DXGI_ERROR_ACCESS_DENIED`.
 The description and all reachable input data are consumed during the call.
 Parent and existing-collection keys identify already stored state object inputs,
 not live COM pointers. An unrelated PSO cannot satisfy those dependencies.
-The [graph restoration contract](#storage-only-forms) explains the required
-substitutions. The [key and version contract](#keys-and-versions) applies.<!-- d3d12-review-inline:end:sodb-input:completion-StoreStateObjectDesc:0:authored:migration-b072588b70238641-0 --></ins>
+See [Restoring stored input graphs](#restoring-stored-input-graphs) for dependency
+reconstruction and input substitutions.<!-- d3d12-review-inline:end:sodb-input:completion-StoreStateObjectDesc:0:authored:migration-b072588b70238641-0 --></ins>
 
 <a id="id3d12stateobjectdatabase-findstateobjectdesc"></a>
 
@@ -961,7 +947,7 @@ state object returns `DXGI_ERROR_NOT_FOUND`. A PSO key is not reinterpreted as a
 state object description. The callback receives the stored object version and
 the growth parent key/size, or no parent for an ordinary creation description.
 The callback's description can contain driver-independent root signature and
-existing-collection-by-key forms; [restore dependencies and substitute API objects](#storage-only-forms)
+existing-collection-by-key forms; [restore dependencies and substitute API objects](#restoring-stored-input-graphs)
 before actual creation. Borrowed reconstruction buffers are transient.<!-- d3d12-review-inline:end:sodb-input:completion-FindStateObjectDesc:0:authored:migration-60e6a84a8a4ff539-0 --></ins>
 
 <a id="id3d12stateobjectdatabase-findobjectversion"></a>
@@ -1007,8 +993,7 @@ database.<!-- d3d12-review-inline:end:sodb-input:FindObjectVersion-remarks:1 -->
 
 <ins><!-- d3d12-review-inline:begin:sodb-input:completion-FindObjectVersion:0:authored:migration-5fd49c4bb107d8d1-0 -->Successful lookup returns `S_OK` and writes the 32-bit stored object version
 to caller-owned `pVersion`, for either a PSO or a state object. Missing entries
-return `DXGI_ERROR_NOT_FOUND`. No version value is specified on failure. This is
-not a size query or null output probe API.<!-- d3d12-review-inline:end:sodb-input:completion-FindObjectVersion:0:authored:migration-5fd49c4bb107d8d1-0 --></ins>
+return `DXGI_ERROR_NOT_FOUND`. No version value is specified on failure.<!-- d3d12-review-inline:end:sodb-input:completion-FindObjectVersion:0:authored:migration-5fd49c4bb107d8d1-0 --></ins>
 
 <a id="database-examples"></a>
 

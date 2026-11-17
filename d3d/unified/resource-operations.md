@@ -15,19 +15,9 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:scope:0:authored:migration-78ad1268a4a4b40e-0 -->This chapter specifies command list copies, immediate buffer writes, descriptor-addressed clears, resolves and resource discard. These commands operate on the resources, subresources and views supplied to the call, rather than on draw attachment bindings.<!-- d3d12-review-inline:end:resource-operations:scope:0:authored:migration-78ad1268a4a4b40e-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:owners:0:authored:migration-de7b16c943ffbac5-0 -->[Resources and memory](resources.md#resource-storage) defines resource identity, [subresource indexing](resources.md#subresources), [resource flags](resources.md#resource-flags), [heap types](resources.md#heap-types), [CPU mapping](resources.md#cpu-access) and [physical write boundaries](resources.md#hardware-memory-access). [Formats](formats.md#interpretation) defines format interpretation, [casting](formats.md#casting), [planar depth/stencil staging](formats.md#depth-stencil-views) and [format support queries](formats.md#support). Binding owns [view descriptions](binding.md#view-descriptions) and [descriptor storage and lifetime](binding.md#descriptor-population). [Execution](execution.md#lifetime) owns resource lifetime.<!-- d3d12-review-inline:end:resource-operations:owners:0:authored:migration-de7b16c943ffbac5-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:owners:1:authored:migration-19534342bba84fcb-0 -->[Synchronization](synchronization.md#foundations) defines enhanced access/layouts, legacy resource states, queue interchange and aliasing. General shader memory semantics remain at the [memory model owner](memory-model.md).<!-- d3d12-review-inline:end:resource-operations:owners:1:authored:migration-19534342bba84fcb-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:owners:2:authored:migration-1dadebcee542a3e4-0 -->[Rasterization](rasterization.md#sample-patterns) defines standard and programmed sample patterns. [Output merger](output-merger.md#clear-copy-resolve-interactions) defines attachment/write mask and read-only view interactions. Its [render pass command table](output-merger.md#render-pass-recording) is the canonical recording context contract. [Queries and predication](counters-queries-and-predication.md#predication-operation-matrix) specifies the exact policy for each operation; clear, copy, resolve and discard do not acquire one inferred uniform predication policy.<!-- d3d12-review-inline:end:resource-operations:owners:2:authored:migration-1dadebcee542a3e4-0 --></ins>
-
 <a id="recording-and-access"></a>
 
 ## Recording, access and availability
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:queue-matrix:0:authored:migration-47694c8c02ccddcd-0 -->The declaring interface for the base methods is `ID3D12GraphicsCommandList`. The regional resolve is declared by `ID3D12GraphicsCommandList1`. Inheritance does not create additional API identities.<!-- d3d12-review-inline:end:resource-operations:queue-matrix:0:authored:migration-47694c8c02ccddcd-0 --></ins>
 
 <!-- d3d12-review-alert:begin:resource-operations:queue-matrix:1:authored:migration-33af350ab115b3dc-0 -->
 
@@ -36,23 +26,23 @@
 >
 > | Operations | DIRECT | COMPUTE | COPY | BUNDLE |
 > |---|---|---|---|---|
-> | `CopyBufferRegion`, `CopyTextureRegion`, `CopyResource`, `CopyTiles` | Yes | Yes | Yes | No |
-> | `ClearRenderTargetView`, `ClearDepthStencilView`, `ResolveSubresource`, `ResolveSubresourceRegion` | Yes | No | No | No |
-> | `ClearUnorderedAccessViewUint`, `ClearUnorderedAccessViewFloat`, `DiscardResource` | Yes | Yes | No | No |
+> | [CopyBufferRegion](#copybufferregion), [CopyTextureRegion](#copytextureregion), [CopyResource](#copyresource), [CopyTiles](#copytiles) | Yes | Yes | Yes | No |
+> | [ClearRenderTargetView](#clearrendertargetview), [ClearDepthStencilView](#cleardepthstencilview), [ResolveSubresource](#resolvesubresource), [ResolveSubresourceRegion](#resolvesubresourceregion) | Yes | No | No | No |
+> | [ClearUnorderedAccessViewUint](#clearunorderedaccessviewuint), [ClearUnorderedAccessViewFloat](#clearunorderedaccessviewfloat), [DiscardResource](#discardresource) | Yes | Yes | No | No |
 
 <!-- d3d12-review-alert:end:resource-operations:queue-matrix:1:authored:migration-33af350ab115b3dc-0 -->
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:queue-matrix:2:authored:migration-b9e7677c4db98c0a-0 -->None of these ordinary methods may be called inside an open render pass. Render pass beginning/ending clear, resolve and discard accesses are different operations, governed by the [pass access types](output-merger.md#render-pass-access). Their `NO_ACCESS` pairing/terminal flow and suspend/resume qualifications remain at that owner.<!-- d3d12-review-inline:end:resource-operations:queue-matrix:2:authored:migration-b9e7677c4db98c0a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:queue-matrix:2:authored:migration-b9e7677c4db98c0a-0 -->None of these ordinary methods may be called inside an open render pass. Render pass beginning/ending clear, resolve and discard accesses are different operations, governed by the [pass access types](output-merger.md#render-pass-access).<!-- d3d12-review-inline:end:resource-operations:queue-matrix:2:authored:migration-b9e7677c4db98c0a-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:queue-matrix:3:authored:migration-308223624edccf3f-0 -->All eleven methods return `void`; none returns a per-call `HRESULT`. Recording failure and `Close` results follow [command list errors](execution.md#close). An API's invalid-usage rule, a core runtime check and a debug layer diagnostic are distinct contracts. A missing diagnostic does not make a call valid.<!-- d3d12-review-inline:end:resource-operations:queue-matrix:3:authored:migration-308223624edccf3f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:queue-matrix:3:authored:migration-308223624edccf3f-0 -->Recording failure and `Close` results follow [command list errors](execution.md#close).<!-- d3d12-review-inline:end:resource-operations:queue-matrix:3:authored:migration-308223624edccf3f-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:queue-matrix:4:authored:migration-47bb74b72656297b-0 -->The tables and eleven-method render pass restriction in this section cover
-the copy/clear/resolve and graphics DiscardResource methods. The separate
-[immediate write entries](#immediate-buffer-writes) and video discard
-entries define their own declaring-list and recording contexts. They do not
-inherit a blanket ban from this table.<!-- d3d12-review-inline:end:resource-operations:queue-matrix:4:authored:migration-47bb74b72656297b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:queue-matrix:4:authored:migration-47bb74b72656297b-0 -->See [immediate buffer writes](#immediate-buffer-writes) and video discard
+([decode](#id3d12videodecodecommandlist-discardresource),
+[process](#id3d12videoprocesscommandlist-discardresource),
+[encode](#id3d12videoencodecommandlist-discardresource)) for their recording contexts.
+The render pass prohibition above covers only the eleven methods in the table.<!-- d3d12-review-inline:end:resource-operations:queue-matrix:4:authored:migration-47bb74b72656297b-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:access-table:0:authored:migration-dedd9c8d8afe6be8-0 -->The application must supply the access/layout appropriate to the operation under [enhanced barriers](synchronization.md#barrier-access). The corresponding legacy path remains supported under [resource states](synchronization.md#legacy-resource-states), including its [promotion/decay rules](synchronization.md#legacy-promotion-and-decay).<!-- d3d12-review-inline:end:resource-operations:access-table:0:authored:migration-dedd9c8d8afe6be8-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:access-table:0:authored:migration-dedd9c8d8afe6be8-0 -->The application must supply the access/layout appropriate to the operation under [enhanced barriers](synchronization.md#barrier-access). The legacy alternative uses [resource states](synchronization.md#legacy-resource-states), including [promotion/decay](synchronization.md#legacy-promotion-and-decay).<!-- d3d12-review-inline:end:resource-operations:access-table:0:authored:migration-dedd9c8d8afe6be8-0 --></ins>
 
 <!-- d3d12-review-alert:begin:resource-operations:access-table:1:authored:migration-c51fb10121d06b48-0 -->
 
@@ -69,13 +59,15 @@ inherit a blanket ban from this table.<!-- d3d12-review-inline:end:resource-oper
 
 <!-- d3d12-review-alert:end:resource-operations:access-table:1:authored:migration-c51fb10121d06b48-0 -->
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:access-table:2:authored:migration-3018dc997c21ec28-0 -->The access names in this table have the `D3D12_BARRIER_ACCESS_` prefix, layouts have `D3D12_BARRIER_LAYOUT_`, and legacy states have `D3D12_RESOURCE_STATE_`. Buffers have no transitionable texture layout. [Queue/layout/access compatibility](synchronization.md#queue-compatibility) and [legacy COPY queue interchange](synchronization.md#legacy-common-state-promotion) remain requirements. The table is not permission to use an unsupported queue or format.<!-- d3d12-review-inline:end:resource-operations:access-table:2:authored:migration-3018dc997c21ec28-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:access-table:2:authored:migration-3018dc997c21ec28-0 -->The access names in this table have the `D3D12_BARRIER_ACCESS_` prefix, layouts have `D3D12_BARRIER_LAYOUT_`, and legacy states have `D3D12_RESOURCE_STATE_`. Buffers have no transitionable texture layout. See [queue/layout/access compatibility](synchronization.md#queue-compatibility) and [legacy COMMON state](synchronization.md#d3d12-resource-states) for queue restrictions and COPY queue interchange.<!-- d3d12-review-inline:end:resource-operations:access-table:2:authored:migration-3018dc997c21ec28-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:access-table:3:authored:migration-4018542615c2bd20-0 -->Discard uses its [command list/resource-flag-specific access rules](#discardresource), rather than an invented generic discard state. In-place `DECOMPRESS` retains the source access exception defined in [regional resolve](#resolvesubresourceregion).<!-- d3d12-review-inline:end:resource-operations:access-table:3:authored:migration-4018542615c2bd20-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:access-table:3:authored:migration-4018542615c2bd20-0 -->Discard uses its [command list/resource-flag-specific access rules](#discardresource). In-place `DECOMPRESS` retains the source access exception defined in [regional resolve](#resolvesubresourceregion).<!-- d3d12-review-inline:end:resource-operations:access-table:3:authored:migration-4018542615c2bd20-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:sync-links:0:authored:migration-28409a11efd95aca-0 -->The operation scopes are [`D3D12_BARRIER_SYNC_COPY`, `D3D12_BARRIER_SYNC_RESOLVE`, `D3D12_BARRIER_SYNC_RENDER_TARGET`, `D3D12_BARRIER_SYNC_DEPTH_STENCIL`, and `D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW`](synchronization.md#barrier-sync). The UAV-clear scope is not the compute shading scope. [Barrier-free access](synchronization.md#barrier-free-access) and [model interoperation](synchronization.md#model-interoperation) determine which dependencies require barriers; ordinary UAV clears do not obtain an implicit dispatch ordering guarantee.<!-- d3d12-review-inline:end:resource-operations:sync-links:0:authored:migration-28409a11efd95aca-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:protected-interactions:0:authored:migration-5aa36772b37136bf-0 -->For protected resource operations, the [output protection contract](../ProtectedResources.md#overview) requires the output to be protected whenever an operation reads protected input. This includes ordinary copies and resolves; copying protected contents to an unprotected destination is not permitted. The [command list protected session state](command-list-state.md#protection) and [resource/heap protection association](resources.md#protected-creation) apply to accesses and writes through the selected APIs. The [protected operation predication restriction](counters-queries-and-predication.md#predication-operation-matrix) remains part of Queries' policy rather than an inferred uniform predicate rule.<!-- d3d12-review-inline:end:resource-operations:protected-interactions:0:authored:migration-5aa36772b37136bf-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:protected-interactions:0:authored:migration-5aa36772b37136bf-0 -->For protected resource operations, the [output protection contract](../ProtectedResources.md#overview) requires the output to be protected whenever an operation reads protected input. This includes ordinary copies and resolves. Copying protected contents to an unprotected destination is not permitted. See [command list protection](command-list-state.md#protection) for protected session state and [protected resource creation](resources.md#protected-creation) for resource/heap association.<!-- d3d12-review-inline:end:resource-operations:protected-interactions:0:authored:migration-5aa36772b37136bf-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resource-operations:owners:2:authored:migration-1dadebcee542a3e4-0 -->See [predicate state](counters-queries-and-predication.md#predicate-state) for the protected resource restriction and the [operation matrix](counters-queries-and-predication.md#predication-operation-matrix) for each operation's predication policy.<!-- d3d12-review-inline:end:resource-operations:owners:2:authored:migration-1dadebcee542a3e4-0 --></ins>
 
 <a id="copy-representation"></a>
 
@@ -83,7 +75,7 @@ inherit a blanket ban from this table.<!-- d3d12-review-inline:end:resource-oper
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:index-and-footprints:0:authored:migration-87b33573ff2ad475-0 -->A texture copy location selects either a texture subresource or a placed footprint in a buffer. Texture subresources identify a mip, array slice and plane using the [canonical indexing rule](resources.md#subresources). A 3D texture's depth slices are not array subresources. Coordinates are relative to the selected mip/plane, not implicitly to mip zero.<!-- d3d12-review-inline:end:resource-operations:index-and-footprints:0:authored:migration-87b33573ff2ad475-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:index-and-footprints:1:authored:migration-918e9c50ab7b02ec-0 -->`ID3D12Device::GetCopyableFootprints` computes adapter-independent transfer footprints, row counts, unpadded row sizes and the required total size. Its [complete API contract](resources.md#get-copyable-footprints) is part of resource layout, not a copy command or a description of an opaque GPU texture's physical layout. The footprint types used by the selected operation are defined here.<!-- d3d12-review-inline:end:resource-operations:index-and-footprints:1:authored:migration-918e9c50ab7b02ec-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:index-and-footprints:1:authored:migration-918e9c50ab7b02ec-0 -->[`ID3D12Device::GetCopyableFootprints`](resources.md#get-copyable-footprints) computes adapter-independent transfer footprints, row counts, unpadded row sizes and the required total size, not an opaque GPU texture's physical layout.<!-- d3d12-review-inline:end:resource-operations:index-and-footprints:1:authored:migration-918e9c50ab7b02ec-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:index-and-footprints:2:authored:migration-64853a923eaec6d7-0 -->`D3D12_RECT` is the canonical signed, half-open [rectangle type](rasterization.md#d3d12-rect). A copy box uses unsigned coordinates and excludes its right, bottom and back bounds.<!-- d3d12-review-inline:end:resource-operations:index-and-footprints:2:authored:migration-64853a923eaec6d7-0 --></ins>
 
@@ -300,9 +292,11 @@ With this feature, both offset and row-pitch MUST be aligned only to the whole u
 #### Driver availability
 Driver support for unrestricted copy alignments is reported via `UnrestrictedBufferTextureCopyPitchSupported` in `D3D12DDI_OPTIONS_DATA_0091` when `GetCaps` is called with `D3D12DDICAPS_TYPE_OPTIONS_0091`; available starting with DDI version `e_DDI_12_8_0091`.
 
+#### Copies between dimensions
+
 <ins><!-- d3d12-review-inline:begin:resource-operations:dimensions-gate:0:authored:migration-1eb7b0f35db46f88-0 -->`D3D12_FEATURE_DATA_D3D12_OPTIONS13.TextureCopyBetweenDimensionsSupported` reports support for `CopyTextureRegion` between textures of different dimensions. This does not relax `CopyResource`'s whole-resource type/dimension requirements or any region/format/sample restrictions.<!-- d3d12-review-inline:end:resource-operations:dimensions-gate:0:authored:migration-1eb7b0f35db46f88-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:dimensions-feature:0:modified:source-a27be58817f2903a-0-0 -->Examples include copying a slice of a 3D resource to a 2D resource or a row of a 3D or 2D resource to a 1D resource. Support formalizes these copy operations; absence of prior runtime validation does not establish support<!-- d3d12-review-inline:end:resource-operations:dimensions-feature:0:modified:source-a27be58817f2903a-0-0 --></ins>.
+<ins><!-- d3d12-review-inline:begin:resource-operations:dimensions-feature:0:modified:source-a27be58817f2903a-0-0 -->Examples include copying a slice of a 3D resource to a 2D resource or a row of a 3D or 2D resource to a 1D resource<!-- d3d12-review-inline:end:resource-operations:dimensions-feature:0:modified:source-a27be58817f2903a-0-0 --></ins>.
 
 #### Driver availability
 Support for copying between textures whose dimensionality does not match will be implied by, and must be supported on, drivers that report their DDI version to be `e_DDI_12_8_0091` or greater.
@@ -331,13 +325,13 @@ The [BC format and dimension contract](formats.md#bc-dimensions) defines the `Un
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:bc-tail-copies:2:authored:migration-4be5a0db47e49160-0 -->For BC transfers, padded width and height are `4 * ceil(logical dimension / 4)`. Explicit source box endpoints and destination-offset-plus-transfer-extents are checked against those padded whole-block bounds, not just the logical texture width and height. Origins and endpoints must remain block-aligned. For a logical width of 6, copying the last block from `left = 4` uses `right = 8`, not 6. An explicit full 2×2 BC mip uses `left = top = 0` and `right = bottom = 4`. Its 2D box still uses `front = 0`, `back = 1`. The whole block is copied even where it exceeds the logical texture bounds. The same padded destination bounds permit the corresponding full block at a texture edge.<!-- d3d12-review-inline:end:resource-operations:bc-tail-copies:2:authored:migration-4be5a0db47e49160-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:bc-tail-copies:3:authored:migration-75099198522983df-0 -->The padded block payload and buffer footprint pitch must not be substituted for logical mip dimensions. Conversely, the texture-edge exception does not extend the actual byte bounds of a backing buffer: every complete compressed block referenced by a placed footprint must fit that buffer. Row pitch and placement alignment rules remain applicable. A null source box selecting the whole mip and an explicit padded full-mip box both retain whole-block transfer behavior.<!-- d3d12-review-inline:end:resource-operations:bc-tail-copies:3:authored:migration-75099198522983df-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:bc-tail-copies:3:authored:migration-75099198522983df-0 -->The padded block payload and buffer footprint pitch must not be substituted for logical mip dimensions. Conversely, the texture-edge exception does not extend the actual byte bounds of a backing buffer: every complete compressed block referenced by a placed footprint must fit that buffer. See [pitch and placement](#copy-pitch) for footprint alignment. A null source box selecting the whole mip and an explicit padded full-mip box both retain whole-block transfer behavior.<!-- d3d12-review-inline:end:resource-operations:bc-tail-copies:3:authored:migration-75099198522983df-0 --></ins>
 
 <a id="plane-copy-layouts"></a>
 
 #### Copyable plane and format unit layouts
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:plane-copy-table:0:authored:migration-7bfde44bcdea3c5d-0 -->For a supported planar resource format, the copyable plane layout uses the following dimensions and format families. `W` and `H` are the selected mip's dimensions; `ceil` rounds up. This table specifies transfer representation, not permission to create every format on every device.<!-- d3d12-review-inline:end:resource-operations:plane-copy-table:0:authored:migration-7bfde44bcdea3c5d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:plane-copy-table:0:authored:migration-7bfde44bcdea3c5d-0 -->For a supported planar resource format, the copyable plane layout uses the following dimensions and format families. `W` and `H` are the selected mip's dimensions; `ceil` rounds up.<!-- d3d12-review-inline:end:resource-operations:plane-copy-table:0:authored:migration-7bfde44bcdea3c5d-0 --></ins>
 
 <!-- d3d12-review-alert:begin:resource-operations:plane-copy-table:1:authored:migration-ff408eab7600f2dd-0 -->
 
@@ -370,17 +364,21 @@ The [BC format and dimension contract](formats.md#bc-dimensions) defines the `Un
 
 ### Self-copy, overlap and alias initialization
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:self-copy-route:0:authored:migration-12b92c63bb0b08c5-0 -->The [enhanced self-copy contract](synchronization.md#simultaneous-access) permits the same common layout subresource as source and destination in `CopyBufferRegion` or `CopyTextureRegion` when the memory regions do not intersect. Intersecting source/destination regions produce undefined results, and the debug layer must validate this. Buffers have no transitionable texture layout; enhanced same-buffer copies use this non-intersection rule rather than legacy read/write state exclusivity.<!-- d3d12-review-inline:end:resource-operations:self-copy-route:0:authored:migration-12b92c63bb0b08c5-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:self-copy-route:0:authored:migration-12b92c63bb0b08c5-0 -->The [enhanced self-copy contract](synchronization.md#self-copy) permits the same common layout subresource as source and destination in `CopyBufferRegion` or `CopyTextureRegion` when the memory regions do not intersect. Intersecting source/destination regions produce undefined results, and the debug layer must validate this. Buffers have no transitionable texture layout; enhanced same-buffer copies use this non-intersection rule rather than legacy read/write state exclusivity.<!-- d3d12-review-inline:end:resource-operations:self-copy-route:0:authored:migration-12b92c63bb0b08c5-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:self-copy-route:1:authored:migration-04c518730cf0bc74-0 -->The [legacy state model](synchronization.md#legacy-states) cannot combine `COPY_SOURCE` and `COPY_DEST` on the same subresource, including by implicit promotion. Different texture subresources of one resource remain distinct. `CopyResource` separately requires different resources.<!-- d3d12-review-inline:end:resource-operations:self-copy-route:1:authored:migration-04c518730cf0bc74-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:self-copy-route:2:authored:migration-d00a10d28035d2b5-0 -->[Enhanced alias initialization](synchronization.md#enhanced-aliasing) and [legacy activation/initialization](synchronization.md#legacy-aliasing) define when clear, full copy or discard initializes reused storage. An operation's permission to initialize an alias is not blanket permission for arbitrary intersecting source/destination mappings. Reserved resource duplicate mappings retain the [tile copy limitations](#copytiles).<!-- d3d12-review-inline:end:resource-operations:self-copy-route:2:authored:migration-d00a10d28035d2b5-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:D162-dpb-scaling-copy-boundary:0:authored:migration-45d2288bb01946b3-0 -->The specialized [reference-only DPB video processing scaling route](video-encoding-controls.md#source-s08-032) is not an ordinary CopyResource/CopyTextureRegion operation and does not remove their reference-only allocation restrictions. Readable reconstructed-picture support permits appropriately created ordinary textures. It does not turn an allocation that still has VIDEO_ENCODE_REFERENCE_ONLY into a general copy or shader resource.<!-- d3d12-review-inline:end:resource-operations:D162-dpb-scaling-copy-boundary:0:authored:migration-45d2288bb01946b3-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:tile-inheritance-source:0:authored:migration-ef180f65f62ec3a8-0 -->For reserved resource tile sharing, [data compatibility across tiled resources sharing tiles](resources.md#tiled-data-compatibility) defines the dimension/format/render target/depth-stencil compatibility cases, compatible block/uncompressed aliases, solid-color packed/non-packed case and all-zero inheritance case.<!-- d3d12-review-inline:end:resource-operations:tile-inheritance-source:0:authored:migration-ef180f65f62ec3a8-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:tile-inheritance-source:0:authored:migration-ef180f65f62ec3a8-0 -->For reserved resource tile sharing, [data compatibility across tiled resources sharing tiles](resources.md#tiled-data-compatibility) defines the dimension/format/render target/depth-stencil compatibility cases, compatible block/uncompressed aliases, solid-color packed/non-packed case and all-zero inheritance case. D3D12's [aliasing synchronization and initialization](synchronization.md#legacy-aliasing) replaces that source's `TiledResourceBarrier` mechanism. That source's data compatibility cases do not grant D3D12 intersecting-copy permission.<!-- d3d12-review-inline:end:resource-operations:tile-inheritance-source:0:authored:migration-ef180f65f62ec3a8-0 --></ins>
+<a id="reference-only-copy-restrictions"></a>
+
+### Reference-only allocations
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:tile-inheritance-source:1:authored:migration-1488945df128e27f-0 -->Ordinary copies must not use allocations created with `D3D12_RESOURCE_FLAG_VIDEO_DECODE_REFERENCE_ONLY` or `D3D12_RESOURCE_FLAG_VIDEO_ENCODE_REFERENCE_ONLY`, including when the source and destination flags match.<!-- d3d12-review-inline:end:resource-operations:tile-inheritance-source:1:authored:migration-1488945df128e27f-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resource-operations:D162-dpb-scaling-copy-boundary:0:authored:migration-45d2288bb01946b3-0 -->The specialized [reference-only DPB video processing scaling route](video-encoding-controls.md#source-s08-032) is not an ordinary CopyResource/CopyTextureRegion operation and does not remove their reference-only allocation restrictions. Readable reconstructed-picture support permits appropriately created ordinary textures. It does not turn an allocation that still has VIDEO_ENCODE_REFERENCE_ONLY into a general copy or shader resource.<!-- d3d12-review-inline:end:resource-operations:D162-dpb-scaling-copy-boundary:0:authored:migration-45d2288bb01946b3-0 --></ins>
 
 <a id="copy-commands"></a>
 
@@ -644,7 +642,7 @@ Copies the entire contents of the source resource to the destination resource.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:CopyResource-integration:1:authored:migration-813bc71547b5b88b-0 -->For textures, depth must match and width/height must be equivalent under the permitted format interpretation. In the reinterpret cases, compare complete format unit rows and row byte sizes, not unequal logical BC texel dimensions: a BC block covers 4×4 texels, and one matching uncompressed element holds its 8- or 16-byte payload. The resources still require identical mip and array counts. For example, an 8×8 uncompressed texture with four mips and a 32×32 BC texture with four mips have paired chains down to 1×1 elements and 4×4 texels. Their respective natural full chains of four and six mips cannot be copied wholesale to each other: the extra BC mips are not implicitly skipped or synthesized.<!-- d3d12-review-inline:end:resource-operations:CopyResource-integration:1:authored:migration-813bc71547b5b88b-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:CopyResource-integration:2:authored:migration-74a5a01318e909d1-0 -->“Same total size (bytes)” refers to the resource's logical copy payload, including its mip/array/plane data and format unit rounding, not equal heap allocation sizes, `GetResourceAllocationInfo` sizes, metadata, row placement padding, or transfer buffer footprint padding. For BC formats, that payload includes the complete compression blocks covering each mip, including block portions past the logical edge. This is distinct from driver-private allocation or row stride padding. `CopyResource` is not a byte-for-byte clone of driver-private allocation padding. The [resource write-boundary contract](resources.md#hardware-memory-access) remains applicable.<!-- d3d12-review-inline:end:resource-operations:CopyResource-integration:2:authored:migration-74a5a01318e909d1-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:CopyResource-integration:2:authored:migration-74a5a01318e909d1-0 -->“Same total size (bytes)” refers to the resource's logical copy payload, including its mip/array/plane data and format unit rounding, not equal heap allocation sizes, `GetResourceAllocationInfo` sizes, metadata, row placement padding, or transfer buffer footprint padding. For BC formats, that payload includes the complete compression blocks covering each mip, including block portions past the logical edge. This is distinct from driver-private allocation or row stride padding. `CopyResource` is not a byte-for-byte clone of driver-private allocation padding. See [resource write boundaries](resources.md#hardware-memory-access) for permitted destination modifications.<!-- d3d12-review-inline:end:resource-operations:CopyResource-integration:2:authored:migration-74a5a01318e909d1-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:CopyResource-integration:3:authored:migration-a03767fb7e2aba5f-0 -->The [reinterpret-copy table](#reinterpret-copy) gives the exact format exceptions. [Heap restrictions](resources.md#heap-types), [copy access](#recording-and-access), [programmed depth pattern requirements](rasterization.md#sample-copy-depthstencil-full-subresource), [alias initialization](#copy-self-and-alias) and [feedback map copy](#feedback-transcoding) apply independently.<!-- d3d12-review-inline:end:resource-operations:CopyResource-integration:3:authored:migration-a03767fb7e2aba5f-0 --></ins>
 
@@ -1160,8 +1158,7 @@ This method is typically used to update resources for which normal rendering pip
 
 ### Recording results and validation
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-validation:0:authored:migration-7abbbfee61f5b2c1-0 -->Both methods return `void`, not a per-call `HRESULT` or a completion value.
-The [common recording/error contract](execution.md#recording-lifecycle)
+<ins><!-- d3d12-review-inline:begin:resource-operations:AC-validation:0:authored:migration-7abbbfee61f5b2c1-0 -->The [common recording/error contract](execution.md#recording-lifecycle)
 governs invalid recordings and `Close` results. Current core validation
 rejects null primary buffers, non-buffer primary resources, misaligned
 offsets, overflowing/out-of-bounds primary extents, non-`UMA` `UINT64` use,
@@ -1186,8 +1183,7 @@ followed by a source primary range acquire with `D3D12DDI_RANGED_BARRIER_FLAG_AT
 the atomic copy slot, then emits a destination primary range release
 with `D3D12DDI_RANGED_BARRIER_FLAG_ATOMIC_COPY_0094`. Primary ranges use subresource 0 and [offset, offset +
 copied width); dependency ranges retain their selected resource,
-subresource and bounds. Current ranged flags/types and barrier signature
-retain their canonical owner. These internal ranges do not expand the
+subresource and bounds. These internal ranges do not expand the
 application Barrier API to arbitrary buffer subregions.<!-- d3d12-review-inline:end:resource-operations:AC-driver:1:authored:migration-ebf0f38145a0a6e9-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:AC-driver:2:authored:migration-4d2331a654d64a86-0 -->The atomic copy path also supports legacy barriers.<!-- d3d12-review-inline:end:resource-operations:AC-driver:2:authored:migration-4d2331a654d64a86-0 --></ins>
@@ -1239,12 +1235,13 @@ The operation does not itself transition the resource.<!-- d3d12-review-inline:e
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ROF-write-contract:3:authored:migration-cc08a3111c2249d1-0 -->Support for the recording list's type is reported by
 [`OPTIONS3.WriteBufferImmediateSupportFlags`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options3),
-together with the device's existing required support contract. A declaration
-or driver table slot does not grant unsupported video/list use. The
-[render pass operation contract](output-merger.md#render-pass-operation-surface)
-and [predication matrix](counters-queries-and-predication.md#predication-operation-matrix)
-remain applicable: supported immediate writes may be recorded inside an
-open pass without consuming that pass's writes. COPY lists have no predicate
+together with the device's existing required support contract. Supported
+immediate writes may be recorded inside an open pass without
+consuming that pass's writes. See
+[render pass operations](output-merger.md#render-pass-operation-surface)
+for recording restrictions and the
+[predication matrix](counters-queries-and-predication.md#predication-operation-matrix)
+for conditional execution. COPY lists have no predicate
 selection; bundles use the inherited predicate where applicable.<!-- d3d12-review-inline:end:resource-operations:ROF-write-contract:3:authored:migration-cc08a3111c2249d1-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ROF-write-contract:4:authored:migration-2393ebf1beb80d44-0 -->MARKER_IN and MARKER_OUT constrain local command stream timing, not a new
@@ -1307,8 +1304,6 @@ void WriteBufferImmediate(
 
 Writes a number of 32-bit immediate values to the specified buffer locations directly from the command stream.
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ROF-ID3D12GraphicsCommandList2-shared:0:authored:migration-435fb4fed9267368-0 -->The [shared immediate write contract](#writebufferimmediate-contract) applies.<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12GraphicsCommandList2-shared:0:authored:migration-435fb4fed9267368-0 --></ins>
-
 #### Parameters
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ROF-ID3D12GraphicsCommandList2-parameters:0 -->`Count`<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12GraphicsCommandList2-parameters:0 --></ins>
@@ -1344,8 +1339,6 @@ void WriteBufferImmediate(
 #### Behavior
 
 Writes a number of 32-bit immediate values to the specified buffer locations directly from the command stream.
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:ROF-ID3D12VideoDecodeCommandList-shared:0:authored:migration-822517e33d91ac7c-0 -->The [shared immediate write contract](#writebufferimmediate-contract) applies.<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12VideoDecodeCommandList-shared:0:authored:migration-822517e33d91ac7c-0 --></ins>
 
 #### Parameters
 
@@ -1383,8 +1376,6 @@ void WriteBufferImmediate(
 
 Writes a number of 32-bit immediate values to the specified buffer locations directly from the command stream.
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ROF-ID3D12VideoProcessCommandList-shared:0:authored:migration-b84c8db01ea7dcb2-0 -->The [shared immediate write contract](#writebufferimmediate-contract) applies.<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12VideoProcessCommandList-shared:0:authored:migration-b84c8db01ea7dcb2-0 --></ins>
-
 #### Parameters
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ROF-ID3D12VideoProcessCommandList-parameters:0 -->`Count`<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12VideoProcessCommandList-parameters:0 --></ins>
@@ -1421,8 +1412,6 @@ void WriteBufferImmediate(
 
 Writes a number of 32-bit immediate values to the specified buffer locations directly from the command stream.
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ROF-ID3D12VideoEncodeCommandList-shared:0:authored:migration-4872fb64c4a516d8-0 -->The [shared immediate write contract](#writebufferimmediate-contract) applies.<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12VideoEncodeCommandList-shared:0:authored:migration-4872fb64c4a516d8-0 --></ins>
-
 #### Parameters
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ROF-ID3D12VideoEncodeCommandList-parameters:0 -->`Count`<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12VideoEncodeCommandList-parameters:0 --></ins>
@@ -1453,6 +1442,22 @@ The number of elements in the *pParams* and *pModes* arrays.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:clear-regions:1:authored:migration-4bc83447b879df5d-0 -->With `NumRects == 0`, the clear covers the full view. With a nonzero count, `pRects` must supply that many rectangles. Rectangles are in the coordinate space of the view format. The same rectangles apply to the view's selected array slices. Empty rectangles do not select pixels. Subsampled formats retain whole-sample alignment constraints. A view on a planar format addresses its selected plane, not an implicit whole YUV image.<!-- d3d12-review-inline:end:resource-operations:clear-regions:1:authored:migration-4bc83447b879df5d-0 --></ins>
 
+```text
+Color Mappings for RTVs and UAVs:
+Color[0]: R
+Color[1]: G
+Color[2]: B
+Color[3]: A
+(e.g. An RTV of the Y plane of an NV12 surface, of format R8_*, would take the color from R.  An RTV of the UV plane of an NV12 surface, of format R8G8_*, would take the color from RG.)
+```
+
+<ins><!-- d3d12-review-inline:begin:resource-operations:archive-clear-rect-mapping:0 -->For RTVs and UAVS: The space the clear operation rectangles apply on is that of the view format (as opposed to the surface format, which for video surfaces can be different sizes). This is
+consistent with how Viewports and rendering work on those views. e.g. for a 64x64 YUYV surface, an RTV with the format R8G8B8A8\_UINT appears in shaders (and to RSSetViewports())
+as having dimensions 32x64 RGBA values. The clear operation's rects apply to the same space. The “color” coming into the clear operation just maps to the channels in the view (RGBA)
+ignoring the video layout. So a single clear color could really mean “stripes” of color if interpreted in video space. That’s not interesting to do, but it just
+falls out and isn’t worth bothering to validate out – the user who makes D3D views of video surfaces has to know they are operating
+on the raw memory via D3D – be it shaders or APIs like the clear operation.<!-- d3d12-review-inline:end:resource-operations:archive-clear-rect-mapping:0 --></ins>
+
 <ins><!-- d3d12-review-inline:begin:resource-operations:clear-regions:2:authored:migration-190a6ee3a41bd9b4-0 -->The [programmed-pattern rules](rasterization.md#sample-clear-depthstencil) distinguish depth from stencil: the depth clear pattern must match future depth rendering; uncovered depth contents generated with a different pattern become undefined. Stencil-only and color clears ignore sample positions.<!-- d3d12-review-inline:end:resource-operations:clear-regions:2:authored:migration-190a6ee3a41bd9b4-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:archive-clear-clipping:0:modified:migration-d614b90bf7053def-0 -->The driver or hardware is responsible for clamping rects to the surface extents.<!-- d3d12-review-inline:end:resource-operations:archive-clear-clipping:0:modified:migration-d614b90bf7053def-0 --></ins>
@@ -1476,22 +1481,6 @@ are to be filled with 0's for \_UINT and positive \_SINT; or 1's for negative \_
 <ins><!-- d3d12-review-inline:begin:resource-operations:archive-clear-normalized:0:modified:migration-7b43c984051c88e9-0 -->Color values are converted/clamped to the destination format as appropriate per D3D conversion rules. E.g. if the format of the view is R8G8B8A8\_UNORM, inputs are clamped to 0.0f to 1.0f (NaN to 0).<!-- d3d12-review-inline:end:resource-operations:archive-clear-normalized:0:modified:migration-7b43c984051c88e9-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:archive-clear-integral:0:modified:migration-e16277378fd88705-0 -->If the format is integer, such as R8G8B8A8\_UINT, inputs are taken as integral floats, so 235.0f maps to 235 (fractions rounded to zero, out of range/INF values clamped to target range, NaN to 0).<!-- d3d12-review-inline:end:resource-operations:archive-clear-integral:0:modified:migration-e16277378fd88705-0 --></ins>
-
-```text
-Color Mappings for RTVs and UAVs:
-Color[0]: R
-Color[1]: G
-Color[2]: B
-Color[3]: A
-(e.g. An RTV of the Y plane of an NV12 surface, of format R8_*, would take the color from R.  An RTV of the UV plane of an NV12 surface, of format R8G8_*, would take the color from RG.)
-```
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:archive-clear-rect-mapping:0 -->For RTVs and UAVS: The space the clear operation rectangles apply on is that of the view format (as opposed to the surface format, which for video surfaces can be different sizes). This is
-consistent with how Viewports and rendering work on those views. e.g. for a 64x64 YUYV surface, an RTV with the format R8G8B8A8\_UINT appears in shaders (and to RSSetViewports())
-as having dimensions 32x64 RGBA values. The clear operation's rects apply to the same space. The “color” coming into the clear operation just maps to the channels in the view (RGBA)
-ignoring the video layout. So a single clear color could really mean “stripes” of color if interpreted in video space. That’s not interesting to do, but it just
-falls out and isn’t worth bothering to validate out – the user who makes D3D views of video surfaces has to know they are operating
-on the raw memory via D3D – be it shaders or APIs like the clear operation.<!-- d3d12-review-inline:end:resource-operations:archive-clear-rect-mapping:0 --></ins>
 
 <a id="clearrendertargetview"></a>
 
@@ -1932,6 +1921,8 @@ On other UAVs, the operation is invalid.<!-- d3d12-review-inline:end:resource-op
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:structured-dispute:1:authored:migration-b25aef07a9968d79-0 -->Float clears perform their defined numeric conversion, including clamping to the destination UNORM/SNORM range; out-of-range floating-point values do not create a new validity restriction in place of that clamping. The runtime's denormal-to-zero behavior remains defined even when the debug layer reports a denormal diagnostic. Diagnostics do not by themselves turn defined input conversion into invalid usage.<!-- d3d12-review-inline:end:resource-operations:structured-dispute:1:authored:migration-b25aef07a9968d79-0 --></ins>
 
+<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-remarks:3 -->**Unresolved diagnostic source qualification (human review pending).** The short reference's normalized range error claim is not reconciled with the bit-precise Uint and defined Float-clamping contracts. It does not impose an additional normalized input validity restriction.<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-remarks:3 --></ins>
+
 <a id="counter-interactions"></a>
 
 #### Counter interactions
@@ -2015,8 +2006,6 @@ Validation failure results in the call to [ID3D12GraphicsCommandList::Close](exe
 
 #### Debug layer
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-remarks:3 -->**Diagnostic source qualification.** The short reference's normalized range error claim is not reconciled with the bit-precise Uint and defined Float-clamping contracts. It does not impose an additional normalized input validity restriction.<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-remarks:3 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-remarks:4 -->For legacy state validation: The debug layer issues an error if the subresources referenced by the view aren't in the appropriate state. For **ClearUnorderedAccessViewUint**, the state must be [D3D12_RESOURCE_STATE_UNORDERED_ACCESS](synchronization.md#d3d12-resource-states).<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-remarks:4 --></ins>
 
 <a id="clearunorderedaccessviewfloat"></a>
@@ -2096,8 +2085,6 @@ Validation failure results in the call to [ID3D12GraphicsCommandList::Close](exe
 
 #### Debug layer
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-remarks:5 -->**Diagnostic source qualification.** The short reference's normalized range error claim is not reconciled with the bit-precise Uint and defined Float-clamping contracts. It does not impose an additional normalized input validity restriction.<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-remarks:5 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-remarks:6 -->For legacy state validation: The debug layer issues an error if the subresources referenced by the view aren't in the appropriate state. For **ClearUnorderedAccessViewFloat**, the state must be [D3D12_RESOURCE_STATE_UNORDERED_ACCESS](synchronization.md#d3d12-resource-states).<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-remarks:6 --></ins>
 
 <a id="resolve-commands"></a>
@@ -2112,7 +2099,7 @@ Validation failure results in the call to [ID3D12GraphicsCommandList::Close](exe
 performed prior to any arithmetic operations on the resource data, similar to the requirement for
 conversion to linear prior to filtering and blending arithmetic operations.<!-- d3d12-review-inline:end:resource-operations:archive-resolve-linear:0:modified:migration-6dd6e993239620cd-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:resolve-patterns:0:authored:migration-c1ef4311c17813df-0 -->For the fixed standard/center sample patterns, resolving is a simple average of the samples within each pixel. Other multisample quality modes retain the implementation-dependent resolve algorithm described by the multisample contract. The regional modes specify minimum, maximum, average or decompression explicitly. They do not perform arbitrary color format conversion.<!-- d3d12-review-inline:end:resource-operations:resolve-patterns:0:authored:migration-c1ef4311c17813df-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:resolve-patterns:0:authored:migration-c1ef4311c17813df-0 -->For the fixed standard/center sample patterns, resolving is a simple average of the samples within each pixel. Other multisample quality modes use an implementation-dependent resolve algorithm. The regional modes specify minimum, maximum, average or decompression explicitly. They do not perform arbitrary color format conversion.<!-- d3d12-review-inline:end:resource-operations:resolve-patterns:0:authored:migration-c1ef4311c17813df-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:resolve-patterns:1:authored:migration-0f673902e3cc4809-0 -->[Color resolves](rasterization.md#sample-resolve-rendertarget) ignore sample positions and operate on stored samples. [Depth resolves](rasterization.md#sample-resolve-depthstencil) require the currently set positions to match the source contents; stencil resolves ignore positions. [Depth decompression/transitions](rasterization.md#sample-transitioning-out-of-depth_read-or-depth_write-state) retain that same pattern association.<!-- d3d12-review-inline:end:resource-operations:resolve-patterns:1:authored:migration-0f673902e3cc4809-0 --></ins>
 
@@ -2397,7 +2384,7 @@ typedef enum D3D12_RESOLVE_MODE {
 
 ### Sampler feedback copy, clear and transcoding
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:feedback-owner-links:0:authored:migration-acdcbfb72150f1d3-0 -->The opaque feedback formats are `DXGI_FORMAT_SAMPLER_FEEDBACK_MIN_MIP_OPAQUE` and `DXGI_FORMAT_SAMPLER_FEEDBACK_MIP_REGION_USED_OPAQUE`. [Resource descriptions and creation](resources.md#extended-description) own their mip region/resource constraints, supplemented by the exact source definitions of [mip region constraints](../SamplerFeedback.md#mip-region-constraints) and [feedback resource properties](../SamplerFeedback.md#resource-properties). [Feedback UAV creation](binding.md#create-sampler-feedback-uav) owns pairing and descriptor construction. Shader feedback collection and the feature's [capability tiers](common-shader-internals.md#feedback-capability-tiers) are defined by [feedback sampling](common-shader-internals.md#sampler-feedback). The following sections specify the transfer/clear contributions to this chapter's selected APIs.<!-- d3d12-review-inline:end:resource-operations:feedback-owner-links:0:authored:migration-acdcbfb72150f1d3-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resource-operations:feedback-owner-links:0:authored:migration-acdcbfb72150f1d3-0 -->The opaque feedback formats are `DXGI_FORMAT_SAMPLER_FEEDBACK_MIN_MIP_OPAQUE` and `DXGI_FORMAT_SAMPLER_FEEDBACK_MIP_REGION_USED_OPAQUE`.<!-- d3d12-review-inline:end:resource-operations:feedback-owner-links:0:authored:migration-acdcbfb72150f1d3-0 --></ins>
 
 When a feedback map is said to be "cleared", it does not have feedback written for any mip. Generally, applications can clear feedback maps using a command list API.
 
@@ -2528,8 +2515,6 @@ Feedback maps are eligible for heap serialization on platforms that support it (
 > The feedback heap serialization paragraph requires reported Tier 10.
 
 <!-- d3d12-review-alert:end:resource-operations:heap-serialization-gate:0:authored:xc06-feedback-only -->
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:heap-serialization-gate:1:authored:migration-d095c99ccfb927a8-0 -->The [resource/heap representation and lifetime owner](resources.md#resource-storage) remains separate from this feedback copy contribution.<!-- d3d12-review-inline:end:resource-operations:heap-serialization-gate:1:authored:migration-d095c99ccfb927a8-0 --></ins>
 
 #### Transcode indexing and clear operations
 
@@ -2681,12 +2666,9 @@ void DiscardResource(
 <ins><!-- d3d12-review-inline:begin:resource-operations:ROF-ID3D12VideoDecodeCommandList-discard-rules:0:authored:migration-852d86c0a15c73f0-0 -->This is the same discard hint and undefined content/initialization
 contract as [ordinary discard](#discardresource), on the matching video
 command list type. The graphics entry's DIRECT/COMPUTE resource flag/state
-cases are not additional video state requirements. The resource must remain
-compatible with the video queue's [access/layout contract](synchronization.md#queue-compatibility),
-with protected session, residency and execution lifetime preserved.
+cases are not additional video state requirements.
 [Predication policy](counters-queries-and-predication.md#predication-operation-matrix)
-classifies video discard as unpredicated. A discard hint may be ignored and
-does not promise clearing, preserved old bytes or deallocation.<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12VideoDecodeCommandList-discard-rules:0:authored:migration-852d86c0a15c73f0-0 --></ins>
+classifies video discard as unpredicated.<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12VideoDecodeCommandList-discard-rules:0:authored:migration-852d86c0a15c73f0-0 --></ins>
 
 #### Parameters
 
@@ -2719,12 +2701,9 @@ Indicates that the current contents of a resource can be discarded.  The current
 <ins><!-- d3d12-review-inline:begin:resource-operations:ROF-ID3D12VideoProcessCommandList-discard-rules:0:authored:migration-e513a6b5298cf118-0 -->This is the same discard hint and undefined content/initialization
 contract as [ordinary discard](#discardresource), on the matching video
 command list type. The graphics entry's DIRECT/COMPUTE resource flag/state
-cases are not additional video state requirements. The resource must remain
-compatible with the video queue's [access/layout contract](synchronization.md#queue-compatibility),
-with protected session, residency and execution lifetime preserved.
+cases are not additional video state requirements.
 [Predication policy](counters-queries-and-predication.md#predication-operation-matrix)
-classifies video discard as unpredicated. A discard hint may be ignored and
-does not promise clearing, preserved old bytes or deallocation.<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12VideoProcessCommandList-discard-rules:0:authored:migration-e513a6b5298cf118-0 --></ins>
+classifies video discard as unpredicated.<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12VideoProcessCommandList-discard-rules:0:authored:migration-e513a6b5298cf118-0 --></ins>
 
 #### Parameters
 
@@ -2757,12 +2736,9 @@ void DiscardResource(
 <ins><!-- d3d12-review-inline:begin:resource-operations:ROF-ID3D12VideoEncodeCommandList-discard-rules:0:authored:migration-e462dbc79f83724f-0 -->This is the same discard hint and undefined content/initialization
 contract as [ordinary discard](#discardresource), on the matching video
 command list type. The graphics entry's DIRECT/COMPUTE resource flag/state
-cases are not additional video state requirements. The resource must remain
-compatible with the video queue's [access/layout contract](synchronization.md#queue-compatibility),
-with protected session, residency and execution lifetime preserved.
+cases are not additional video state requirements.
 [Predication policy](counters-queries-and-predication.md#predication-operation-matrix)
-classifies video discard as unpredicated. A discard hint may be ignored and
-does not promise clearing, preserved old bytes or deallocation.<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12VideoEncodeCommandList-discard-rules:0:authored:migration-e462dbc79f83724f-0 --></ins>
+classifies video discard as unpredicated.<!-- d3d12-review-inline:end:resource-operations:ROF-ID3D12VideoEncodeCommandList-discard-rules:0:authored:migration-e462dbc79f83724f-0 --></ins>
 
 #### Parameters
 
@@ -3109,8 +3085,6 @@ typedef VOID ( APIENTRY* PFND3D12DDI_WRITEBUFFERIMMEDIATE_0032 )(
 > | `PFND3D12DDI_WRITEBUFFERIMMEDIATE_0032` | [WriteBufferImmediate](#id3d12graphicscommandlist2-writebufferimmediate); [decode](#id3d12videodecodecommandlist-writebufferimmediate), [process](#id3d12videoprocesscommandlist-writebufferimmediate), [encode](#id3d12videoencodecommandlist-writebufferimmediate) |
 
 <!-- d3d12-review-alert:end:resource-operations:ROF-driver-associations:0:authored:migration-ff9ad8be201483d2-0 -->
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:ROF-driver-roles:0:authored:migration-8d54c201b93a59a5-0 -->The runtime may normalize inputs, omit empty work or use fallback DDIs.<!-- d3d12-review-inline:end:resource-operations:ROF-driver-roles:0:authored:migration-8d54c201b93a59a5-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ROF-driver-roles:1:authored:migration-0d6a419f864f0b31-0 -->CPU layouts, boxes, rectangles and value arrays are borrowed for the DDI call. The driver copies the recording inputs it needs afterward.<!-- d3d12-review-inline:end:resource-operations:ROF-driver-roles:1:authored:migration-0d6a419f864f0b31-0 --></ins>
 

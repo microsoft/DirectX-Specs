@@ -15,47 +15,17 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-entry:0:authored:migration-05ae9c3d48234999-0 -->This subordinate reference describes the selected ordinary processing contracts
-introduced by the [Video processing model](video.md#video-processing-model).
-A processor fixes the input and output
+<ins><!-- d3d12-review-inline:begin:video-process:N-entry:0:authored:migration-05ae9c3d48234999-0 -->A processor fixes the input and output
 stream descriptions. Each processing call supplies the current surfaces,
 reference surfaces and operation arguments. Capability results apply to the
 queried format, color space, size, field, stereo and rate combination, not to
 arbitrary combinations of individually reported features.<!-- d3d12-review-inline:end:video-process:N-entry:0:authored:migration-05ae9c3d48234999-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-entry:1:authored:migration-842e5f89440f71f4-0 -->This is a **qualified draft**. The qualifications below distinguish published
-contracts and scoped runtime validation from unestablished algorithm,
-precision and hardware guarantees.<!-- d3d12-review-inline:end:video-process:N-entry:1:authored:migration-842e5f89440f71f4-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:video-process:LA-video-annotation-owner:0:authored:migration-e3b1864c01851463-0 -->The [command list annotation reference](diagnostics.md#command-list-annotations)
-defines BeginEvent/EndEvent/SetMarker on `ID3D12VideoProcessCommandList`.
-Their recording and allocator data lifetime follows
-[common annotation state](command-list-state.md#annotations).<!-- d3d12-review-inline:end:video-process:LA-video-annotation-owner:0:authored:migration-e3b1864c01851463-0 --></ins>
-
 <a id="process-model"></a>
 
 ## Processing model and shared contracts
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-route:0:authored:migration-c9bcd15f4a5f0f7d-0 -->The compact route is [capabilities](#process-discovery),
-[processor creation and reflection](#process-objects), and
-[recording](#process-recording). The subordinate
-[stream types](#process-stream-types), [capability values](#process-capability-types)
-and [driver reference](#process-driver) provide the operative details.<!-- d3d12-review-inline:end:video-process:N-route:0:authored:migration-c9bcd15f4a5f0f7d-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:video-process:N-route:1:authored:migration-81a85fcaded2dcb6-0 -->The shared [format](video-decode.md#d3d12-video-format),
-[sample](video-decode.md#d3d12-video-sample),
-[size range](video-decode.md#d3d12-video-size-range),
-[scale support](video-decode.md#d3d12-video-scale-support) and
-[scale flags](video-decode.md#d3d12-video-scale-support-flags) retain their
-canonical definitions. Processing uses these types without changing their
-layout.<!-- d3d12-review-inline:end:video-process:N-route:1:authored:migration-81a85fcaded2dcb6-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:video-process:N-route:2:authored:migration-3146418e9760fe45-0 -->[CPU threading](execution.md#threading),
-[submission threading](execution.md#submission-threading),
-[queue types](execution.md#command-list-types),
-[submission and ordering](execution.md#submission), and
-[recording storage](execution.md#command-storage) retain their shared owners.
-Processing uses a command list and allocator of type
+<ins><!-- d3d12-review-inline:begin:video-process:N-route:2:authored:migration-3146418e9760fe45-0 -->Processing uses a command list and allocator of type
 `D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS`, submitted to a queue of that type.
 Recording and submission must use compatible device/node associations for
 the processor, list, allocator, queue and picture resource objects.
@@ -63,45 +33,41 @@ The [creation rules](execution.md#creation) require matching allocator/list
 types, and [submission validation](execution.md#validation) requires matching
 queue/list types and compatible node masks.<!-- d3d12-review-inline:end:video-process:N-route:2:authored:migration-3146418e9760fe45-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-route:3:authored:migration-83b9de45b66c0c81-0 -->[Object/resource lifetime](execution.md#lifetime),
-[completion and lifetime](execution.md#completion-lifetime), and the
-[video resource contract](video.md#video-resource-contract) own lifetime,
-completion and residency. The processor is an
-`ID3D12Pageable` object, not image storage or a graphics pipeline state object.
+<ins><!-- d3d12-review-inline:begin:video-process:N-route:3:authored:migration-83b9de45b66c0c81-0 -->The processor is an `ID3D12Pageable` object.
 The application must keep its processor, current/reference inputs and output
-resources alive for every recorded use that will execute,
+resources [alive](execution.md#lifetime) for every recorded use that will execute,
 including uses in unsubmitted recordings, and until the corresponding GPU
-uses finish. Residency for GPU use follows the video resource contract.
+uses [finish](execution.md#completion-lifetime). Residency for GPU use follows
+the [video resource contract](video.md#video-resource-contract).
 CPU argument structures and arrays are recording inputs. The
 [nested CPU pointer qualification](#process-argument-rules) addresses their
 unresolved retention and null-array behavior.<!-- d3d12-review-inline:end:video-process:N-route:3:authored:migration-83b9de45b66c0c81-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-process:N-route:4:authored:migration-108a47f130dea34e-0 -->Processing reads current and reference pictures and writes output pictures.
 The corresponding legacy states are `D3D12_RESOURCE_STATE_VIDEO_PROCESS_READ`
-and `D3D12_RESOURCE_STATE_VIDEO_PROCESS_WRITE`; enhanced access/layout rules
-are defined by [video process barriers](synchronization.md#process-enhanced-barrier),
-and [legacy process barriers](synchronization.md#process-resource-barrier)
-retain their full declaring owner. There is no implicit transition, fence wait,
-graphics binding or application picture resource allocation in `ProcessFrames`/`ProcessFrames1`.
-Ordering with decode, graphics, compute or another queue follows the shared
-submission and synchronization contracts.<!-- d3d12-review-inline:end:video-process:N-route:4:authored:migration-108a47f130dea34e-0 --></ins>
+and `D3D12_RESOURCE_STATE_VIDEO_PROCESS_WRITE`. See
+[Enhanced process barriers](synchronization.md#process-enhanced-barrier) for access and layouts
+and [Legacy process barriers](synchronization.md#process-resource-barrier) for transitions.
+The application supplies resource transitions and cross-queue synchronization
+for `ProcessFrames`/`ProcessFrames1`. See
+[Queue waits](execution.md#queue-waits) for ordering with decode, graphics,
+compute or another queue.<!-- d3d12-review-inline:end:video-process:N-route:4:authored:migration-108a47f130dea34e-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-route:5:authored:migration-5a95f5fe1ba0f959-0 -->[Predication](counters-queries-and-predication.md#videoprocess-setpredication)
+<ins><!-- d3d12-review-inline:begin:video-process:N-route:5:authored:migration-5a95f5fe1ba0f959-0 -->See [SetPredication](counters-queries-and-predication.md#videoprocess-setpredication)
 and [its operation matrix](counters-queries-and-predication.md#predication-operation-matrix)
-own conditional processing. [Process queries](counters-queries-and-predication.md#videoprocess-beginquery)
-and [resolution](counters-queries-and-predication.md#videoprocess-resolvequerydata)
-retain their declarations and query lifecycle. They are not processor
-capability queries.<!-- d3d12-review-inline:end:video-process:N-route:5:authored:migration-5a95f5fe1ba0f959-0 --></ins>
+for conditional processing. See [Process queries](counters-queries-and-predication.md#videoprocess-beginquery)
+and [ResolveQueryData](counters-queries-and-predication.md#videoprocess-resolvequerydata)
+for GPU query recording and result resolution.<!-- d3d12-review-inline:end:video-process:N-route:5:authored:migration-5a95f5fe1ba0f959-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-process:D162-reference-only-dpb-processing-forward:0:authored:migration-6331d25699e9e27f-0 -->Encoding's lower-resolution frame analysis route contributes the [reference-only DPB scaling contract](video-encoding-controls.md#source-s08-032): the DPB_ENCODER_RESOURCES scale capability, one reference-only input, matched dimension/mip/format/reference-only flags, full-surface requirements, disabled transforms and processor description restrictions. Its rectangle qualification remains explicit. Ordinary readable reconstructed textures retain the ordinary processing path. The scale flag's [shared declaration](video-decode.md#d3d12-video-scale-support-flags) remains canonical.<!-- d3d12-review-inline:end:video-process:D162-reference-only-dpb-processing-forward:0:authored:migration-6331d25699e9e27f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-process:D162-reference-only-dpb-processing-forward:0:authored:migration-6331d25699e9e27f-0 -->Video processing can downscale reference-only encoder DPB pictures for lower-resolution frame analysis when [`D3D12_VIDEO_SCALE_SUPPORT_FLAG_DPB_ENCODER_RESOURCES`](video-decode.md#d3d12-video-scale-support-flags) is supported. See [Reference-only DPB scaling](video-encoding-controls.md#source-s08-032) for capability, processor, picture and rectangle restrictions, including the unresolved destination extent. Readable reconstructed textures use the ordinary processing path.<!-- d3d12-review-inline:end:video-process:D162-reference-only-dpb-processing-forward:0:authored:migration-6331d25699e9e27f-0 --></ins>
 
 <a id="process-discovery"></a>
 
 ## Capability queries
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-query-protocol:0:authored:migration-4192c9f0f19ff45b-0 -->The full declaring entry for
+<ins><!-- d3d12-review-inline:begin:video-process:N-query-protocol:0:authored:migration-4192c9f0f19ff45b-0 -->See
 [`ID3D12VideoDevice::CheckFeatureSupport`](video-decode.md#video-check-feature-support)
-owns the common protocol and return values. For each processing case below,
+for the query protocol and return values. For each processing case below,
 `FeatureSupportDataSize` must equal `sizeof` the named payload. Initialize its
 input fields before the call. Inspect output fields only on success.
 `NodeIndex` is a zero-based node index, whereas the processor size query and
@@ -129,17 +95,14 @@ allocation sizes. It does not allocate or return stream descriptions.<!-- d3d12-
 
 <!-- d3d12-review-alert:end:video-process:N-query-table:0:authored:migration-4f285398b46bb8ad-0 -->
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-query-tuple:0:authored:migration-e0afe79f6d4d8cdd-0 -->PROCESS_SUPPORT describes the actual input sample (including width, height,
-DXGI format and color space), input field/stereo mode and input rate, together
-with output format/color space, stereo mode and output rate. The
-`SUPPORTED` bit establishes support for that conversion tuple. The remaining
+<ins><!-- d3d12-review-inline:begin:video-process:N-query-tuple:0:authored:migration-e0afe79f6d4d8cdd-0 -->The
+`SUPPORTED` bit establishes support for the queried conversion tuple. The remaining
 outputs describe scaling and supported processing options for that tuple.
 `ScaleSupport.OutputSizeRange` and its flags constrain output sizes; supported
 filter bits and `FilterRangeSupport` constrain enabled filters and their levels.
 PROCESS_MAX_INPUT_STREAMS is the node's simultaneous enabled-stream limit,
 not a guarantee that every tuple or multi-stream feature combination works.
-PROCESS_REFERENCE_INFO describes the selected deinterlace, filters, features,
-rates and automatic-processing choice. Its counts determine the processor's
+PROCESS_REFERENCE_INFO counts determine the processor's
 past/future reference requirements.<!-- d3d12-review-inline:end:video-process:N-query-tuple:0:authored:migration-e0afe79f6d4d8cdd-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-process:N-query-tuple:1:authored:migration-db7b46a87cefd5f0-0 -->**Scoped runtime validation:** the inspected ordinary query path rejects an
@@ -217,13 +180,6 @@ The input/reference and output resources are supplied later, not allocated
 by this call. The runtime copies the creation descriptions. Their caller-owned
 storage is not retained as mutable processor state.<!-- d3d12-review-inline:end:video-process:N-creation-validation:0:authored:migration-dcf2f398041fcc23-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-creation-validation:1:authored:migration-ab4a9e1f2d6ec5b8-0 -->On successful creation, `ppVideoProcessor` receives a caller-owned COM interface
-reference. The caller releases that reference under the normal
-[reference counting and recorded use lifetime rules](execution.md#lifetime).
-The application must preserve the processor and referenced resources for
-unsubmitted recordings that will execute and for outstanding GPU uses. This
-does not assume that recording automatically takes a COM reference on its behalf.<!-- d3d12-review-inline:end:video-process:N-creation-validation:1:authored:migration-ab4a9e1f2d6ec5b8-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:video-process:N-creation-validation:2:authored:migration-d2c3e19059af4175-0 -->**Scoped runtime validation:** invalid node selection, zero input streams,
 invalid size ranges, a failed/unsupported conversion query, unsupported
 requested options or mismatched required reference counts are rejected with
@@ -256,19 +212,10 @@ HRESULT CreateVideoProcessor1(
 
 Creates a video processor instance with support for protected resources.
 
-<ins><!-- d3d12-review-inline:begin:video-process:AB-id3d12videodevice2-createvideoprocessor1-contract:0:authored:migration-f2d2319fefeceab9-0 -->Retains the [processor's immutable stream description contract](#create-video-processor)
-and adds the protected session association. Null creates an unprotected
-processor. A non-null session requires compatible device/node/type and
-protected processing support. Recreate the processor to change its immutable
-creation descriptions. The association is not a per-frame setter.<!-- d3d12-review-inline:end:video-process:AB-id3d12videodevice2-createvideoprocessor1-contract:0:authored:migration-f2d2319fefeceab9-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:video-process:AB-id3d12videodevice2-createvideoprocessor1-contract:2:authored:migration-0ca72eb524d52a4c-0 -->NodeMask selects one applicable node. pOutputStreamDesc describes output, NumInputStreamDescs counts the pInputStreamDescs array, and pProtectedResourceSession is optional. riid/ppVideoProcessor request and receive the processor interface.<!-- d3d12-review-inline:end:video-process:AB-id3d12videodevice2-createvideoprocessor1-contract:2:authored:migration-0ca72eb524d52a4c-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-process:AB-id3d12videodevice2-createvideoprocessor1-contract:4:authored:migration-b33c4526090579e7-0 -->Returns the creation/interface HRESULT. Existing processing tuple, allocation and numerical/hardware qualifications remain; no GPU completion is implied.<!-- d3d12-review-inline:end:video-process:AB-id3d12videodevice2-createvideoprocessor1-contract:4:authored:migration-b33c4526090579e7-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-process:AB-id3d12videodevice2-createvideoprocessor1-contract:0:authored:migration-f2d2319fefeceab9-0 -->See [CreateVideoProcessor](#create-video-processor) for immutable stream descriptions.
+`pProtectedResourceSession` associates the processor with a protected session.
+Null creates an unprotected processor. A non-null session requires compatible
+device/node/type and [protected processing support](video.md#protected-video-support).<!-- d3d12-review-inline:end:video-process:AB-id3d12videodevice2-createvideoprocessor1-contract:0:authored:migration-f2d2319fefeceab9-0 --></ins>
 
 <a id="video-processor-get-node-mask"></a>
 
@@ -365,10 +312,7 @@ This method returns [D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC](#d3d12-video-proces
 
 #### Reflection contract
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-reflection-ownership:0:authored:migration-669c622f20b3db5e-0 -->The returned output description is a value copy of the creation description.
-`GetNodeMask` returns the creation node selection; `GetNumInputStreamDescs`
-returns the immutable number of creation descriptions. None of these methods
-records GPU work or reports mutable per-call picture arguments.<!-- d3d12-review-inline:end:video-process:N-reflection-ownership:0:authored:migration-669c622f20b3db5e-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-process:N-reflection-ownership:0:authored:migration-669c622f20b3db5e-0 -->The returned output description is a value copy of the creation description.<!-- d3d12-review-inline:end:video-process:N-reflection-ownership:0:authored:migration-669c622f20b3db5e-0 --></ins>
 
 <a id="api-id3d12videoprocessor1-getprotectedresourcesession"></a>
 
@@ -399,7 +343,7 @@ a different protection context.<!-- d3d12-review-inline:end:video-process:AB-id3
 
 <ins><!-- d3d12-review-inline:begin:video-process:AB-id3d12videoprocessor1-getprotectedresourcesession-contract:4:authored:migration-9a454cb07437c167-0 -->Returns the interface query's HRESULT. With no associated session it returns
 `DXGI_ERROR_NOT_FOUND` and a null output. An unsupported requested interface
-returns `E_NOINTERFACE`. Retrieval does not create or signal a session.<!-- d3d12-review-inline:end:video-process:AB-id3d12videoprocessor1-getprotectedresourcesession-contract:4:authored:migration-9a454cb07437c167-0 --></ins>
+returns `E_NOINTERFACE`.<!-- d3d12-review-inline:end:video-process:AB-id3d12videoprocessor1-getprotectedresourcesession-contract:4:authored:migration-9a454cb07437c167-0 --></ins>
 
 <a id="process-recording"></a>
 
@@ -408,16 +352,20 @@ returns `E_NOINTERFACE`. Retrieval does not create or signal a session.<!-- d3d1
 <ins><!-- d3d12-review-inline:begin:video-process:N-recording:0:authored:migration-bdf906ee2320ed00-0 -->`ID3D12VideoProcessCommandList` records video process work. Its version-1
 interface adds `ProcessFrames1`. `Reset` selects a compatible process allocator
 and opens a new recording. `ClearState` changes state within the recording, without reclaiming
-allocator storage or submitting work. Neither method takes a graphics PSO.
+allocator storage or submitting work.
 Both reset predication to disabled (null buffer, zero offset,
 `D3D12_PREDICATION_OP_EQUAL_ZERO`).<!-- d3d12-review-inline:end:video-process:N-recording:0:authored:migration-bdf906ee2320ed00-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-recording:1:authored:migration-84fbe69c38d7f57b-0 -->The shared [recording boundaries](command-list-state.md#recording-boundaries),
+<ins><!-- d3d12-review-inline:begin:video-process:N-recording:1:authored:migration-84fbe69c38d7f57b-0 -->See [Recording boundaries](command-list-state.md#recording-boundaries),
 [allocator storage](execution.md#command-storage) and
-[threading rules](execution.md#threading) remain applicable.
-Closing is not GPU completion. The runtime close wrapper can perform queued
-query resolution work before reaching the close DDI. It is not merely a
-direct driver call.<!-- d3d12-review-inline:end:video-process:N-recording:1:authored:migration-84fbe69c38d7f57b-0 --></ins>
+[threading rules](execution.md#threading) for command recording requirements.
+The runtime close wrapper can perform queued
+query resolution work before reaching the close DDI.<!-- d3d12-review-inline:end:video-process:N-recording:1:authored:migration-84fbe69c38d7f57b-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:video-process:LA-video-annotation-owner:0:authored:migration-e3b1864c01851463-0 -->See [Command list annotations](diagnostics.md#command-list-annotations) for the internal
+BeginEvent, EndEvent and SetMarker support methods on `ID3D12VideoProcessCommandList`.
+See [Annotation state](command-list-state.md#annotations) for their recording
+and allocator data lifetime.<!-- d3d12-review-inline:end:video-process:LA-video-annotation-owner:0:authored:migration-e3b1864c01851463-0 --></ins>
 
 <a id="process-clear-state"></a>
 
@@ -518,20 +466,13 @@ void SetProtectedResourceSession(
 
 Specifies whether or not protected resources can be accessed by subsequent commands in the video process command list. By default, no protected resources are enabled. After calling **SetProtectedResourceSession** with a valid session, protected resources of the same type can refer to that session. After calling **SetProtectedResourceSession** with **NULL**, no protected resources can be accessed.
 
-<ins><!-- d3d12-review-inline:begin:video-process:AB-id3d12videoprocesscommandlist2-setprotectedresourcesession-contract:0:authored:migration-b486de2c6a7588d8-0 -->Selects only the supported command list's protection context. Ordinary
-bindings are preserved (D272). This is not ClearState. Null disables protected
-access. [Session/device/node/type and operation support](video.md#protected-video-support),
-the [canonical selection and open-query rules](command-list-state.md#protection)
-and [protected operation predication](counters-queries-and-predication.md#predication-operation-matrix)
-remain required.<!-- d3d12-review-inline:end:video-process:AB-id3d12videoprocesscommandlist2-setprotectedresourcesession-contract:0:authored:migration-b486de2c6a7588d8-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-process:AB-id3d12videoprocesscommandlist2-setprotectedresourcesession-contract:0:authored:migration-b486de2c6a7588d8-0 -->This changes the command list's protection context and preserves ordinary
+bindings. See [Protected video](video.md#protected-video-support) for
+session/device/node/type compatibility and operation support,
+[Protection state](command-list-state.md#protection) for selection and open-query restrictions,
+and [Predication policies](counters-queries-and-predication.md#predication-operation-matrix)
+for protected operations.<!-- d3d12-review-inline:end:video-process:AB-id3d12videoprocesscommandlist2-setprotectedresourcesession-contract:0:authored:migration-b486de2c6a7588d8-0 --></ins>
 
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:video-process:AB-id3d12videoprocesscommandlist2-setprotectedresourcesession-contract:2:authored:migration-a8601bf2fe89bed0-0 -->`pProtectedResourceSession` is the optional translated session association. It is not a video encoder/decoder object and its selection does not allocate one.<!-- d3d12-review-inline:end:video-process:AB-id3d12videoprocesscommandlist2-setprotectedresourcesession-contract:2:authored:migration-a8601bf2fe89bed0-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-process:AB-id3d12videoprocesscommandlist2-setprotectedresourcesession-contract:4:authored:migration-a4feab9e4f4c45e5-0 -->Returns no value. Recording/list errors remain distinct from content validity and GPU completion.<!-- d3d12-review-inline:end:video-process:AB-id3d12videoprocesscommandlist2-setprotectedresourcesession-contract:4:authored:migration-a4feab9e4f4c45e5-0 --></ins>
 <a id="process-frames"></a>
 
 ### ID3D12VideoProcessCommandList::ProcessFrames
@@ -551,9 +492,7 @@ void ProcessFrames(
 
 Records a video processing operation to the command list, operating on one or more input samples and writing the result to an output surface.
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-process-forward:0:authored:migration-ff7cbe5647d14044-0 -->The [shared processing argument rules](#process-argument-rules) specify
-stream correspondence, resource roles, field type versioning and validation
-for both processing calls.<!-- d3d12-review-inline:end:video-process:N-process-forward:0:authored:migration-ff7cbe5647d14044-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-process:N-process-forward:0:authored:migration-ff7cbe5647d14044-0 -->[Shared processing argument rules](#process-argument-rules).<!-- d3d12-review-inline:end:video-process:N-process-forward:0:authored:migration-ff7cbe5647d14044-0 --></ins>
 
 #### Parameters
 
@@ -1264,7 +1203,7 @@ typedef struct D3D12_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS1
 
 <ins><!-- d3d12-review-inline:begin:video-process:N-args1-common:0:authored:migration-eb07afbdf3af7349-0 -->The common members have the same meanings as
 [`D3D12_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS`](#d3d12-video-process-input-stream-arguments).
-The following member supplies the per-call difference.<!-- d3d12-review-inline:end:video-process:N-args1-common:0:authored:migration-eb07afbdf3af7349-0 --></ins>
+<!-- d3d12-review-inline:end:video-process:N-args1-common:0:authored:migration-eb07afbdf3af7349-0 --></ins>
 
 #### Members
 
@@ -2440,6 +2379,9 @@ None
 
 #### Driver frame processing
 
+<ins><!-- d3d12-review-inline:begin:video-process:section-process-ddi-association:0:authored:section-20261117-challenge -->`PFND3D12DDI_VIDEO_PROCESS_FRAME_0106` implements
+[ProcessFrames](#process-frames) and [ProcessFrames1](#process-frames1).<!-- d3d12-review-inline:end:video-process:section-process-ddi-association:0:authored:section-20261117-challenge --></ins>
+
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_VIDEO_PROCESS_FRAME_0106) (
     D3D12DDI_HCOMMANDLIST hDrvCommandList,
@@ -2623,7 +2565,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEOPROCESSOR_0106 )( D3D12DDI_HD
 > | `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnCalcPrivateVideoProcessorSize` | `PFND3D12DDI_CALCPRIVATEVIDEOPROCESSORSIZE_0106` |
 > | `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnCreateVideoProcessor` | `PFND3D12DDI_CREATEVIDEOPROCESSOR_0106` |
 > | `D3D12DDI_DEVICE_FUNCS_VIDEO_0110` | `pfnDestroyVideoProcessor` | `PFND3D12DDI_DESTROYVIDEOPROCESSOR_0021` |
-> | `D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_PROCESS_0106` | `pfnProcessFrame` | `PFND3D12DDI_VIDEO_PROCESS_FRAME_0106` |
+> | `D3D12DDI_COMMAND_LIST_FUNCS_VIDEO_PROCESS_0106` | `pfnProcessFrame` | [`PFND3D12DDI_VIDEO_PROCESS_FRAME_0106`](#current-process-frame-ddi) |
 
 <!-- d3d12-review-alert:end:video-process:N-ddi-table:0:authored:migration-ef56a55287b7ff2b-0 -->
 
@@ -2637,5 +2579,4 @@ and output simultaneous stream limit.
 `D3D12DDICAPS_TYPE_VIDEO_0032_PROCESSOR_SIZE` uses the processor size layout
 appropriate to the selected DDI version, with input creation description and
 output L0/L1 sizes. The device table's `pfnGetCaps` owns these capability
-exchanges. The create DDI returns `HRESULT`. Success is not an NTSTATUS
-contract.<!-- d3d12-review-inline:end:video-process:N-ddi-table:1:authored:migration-9434527b82b2ce92-0 --></ins>
+exchanges. The create DDI returns `HRESULT`.<!-- d3d12-review-inline:end:video-process:N-ddi-table:1:authored:migration-9434527b82b2ce92-0 --></ins>

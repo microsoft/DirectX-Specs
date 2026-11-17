@@ -722,7 +722,7 @@ identifier. For work graphs, the maximum local root argument footprint is
 4096 bytes. Both use the [local root argument layout](#local-root-argument-layout)
 defined below. Table stride and base alignment requirements are defined
 with [raytracing shader tables](raytracing-pipelines.md#shader-tables) and
-[work-graph node-local argument tables](state-objects.md#d3d12_set_work_graph_desc).
+[work graph node-local argument tables](state-objects.md#d3d12_set_work_graph_desc).
 
 The shader "register" bindings (e.g. t0, u0 etc.) specified by a local
 root signature can't overlap with those in a global root signature for a
@@ -730,7 +730,7 @@ given shader.
 
 Note about static samplers: Local root signatures can define static
 samplers (just like global root signatures can), except that each local
-root signature used in a raytracing pipeline or work-graph [state object](state-objects.md#object-model)
+root signature used in a raytracing pipeline or work graph [state object](state-objects.md#object-model)
 must define any static samplers it uses identically as other local root
 signatures that define the same ones. So if any local root signature makes
 a definition for, say, sampler s0, all local root signatures that define

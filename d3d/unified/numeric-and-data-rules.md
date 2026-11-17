@@ -13,8 +13,6 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:numeric-rules:N-owners:0:authored:migration-3f7023d97d6da825-0 -->The common representations, arithmetic requirements and conversion algorithms are defined here. [Common shader internals](common-shader-internals.md#minimum-precision) defines minimum-precision execution. [Formats](formats.md#modifiers) defines component interpretation and [missing-component defaults](formats.md#missing-components). The operation-specific requirements in [texture filtering](common-shader-internals.md#archive-7-18-16-2), [rasterizer interpolation](rasterization.md#interpolator-precision), [depth clamping](output-merger.md#depth-clamp), [blending precision](output-merger.md#blending-precision), and [clear conversion](resource-operations.md#clear-conversion) retain their own qualifications. Native shader FP16 arithmetic does not change the clear command denormal and clamping rules.<!-- d3d12-review-inline:end:numeric-rules:N-owners:0:authored:migration-3f7023d97d6da825-0 --></ins>
-
 <a id="numeric-3-1"></a>
 
 ## Floating Point Rules
@@ -25,6 +23,8 @@
 
 <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.1:0 -->Direct3D supports several different floating point representations for storage. Floating point computations in Shader programs and fixed function operations such as texture filtering or RenderTarget blending
 operate under the applicable rules in this chapter, including the distinct 32-bit, 64-bit and 16-bit requirements.<!-- d3d12-review-inline:end:numeric-rules:L-3.1.1:0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:numeric-rules:N-owners:0:authored:section-operation-routes -->See [texture filtering](common-shader-internals.md#archive-7-18-16-2), [interpolator setup](rasterization.md#interpolator-precision), [depth clamping](output-merger.md#depth-clamp), [blending precision](output-merger.md#blending-precision) and [clear conversion](resource-operations.md#clear-conversion) for operation-specific numeric requirements.<!-- d3d12-review-inline:end:numeric-rules:N-owners:0:authored:section-operation-routes --></ins>
 
 <a id="numeric-3-1-2"></a>
 
@@ -59,7 +59,7 @@ of deviations or additions to IEEE-754 (some of which are significant). Refer to
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.1:1 -->INF - INF = NaN<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.1:1 --></ins>
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.1:1 -->(+/-)INF / (+/-)INF = NaN<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.1:1 --></ins>
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.1:1 -->(+/-)INF \* 0 = NaN<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.1:1 --></ins>
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.1:1 -->NaN (any OP) any-value = NaN<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.1:1 --></ins>
+- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.1:1:modified:section-nan-default -->Unless otherwise specified for the operation, NaN (any OP) any-value = NaN<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.1:1:modified:section-nan-default --></ins>
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.1:1 -->The comparisons EQ, GT, GE, LT, and LE, when either or both operands is NaN returns FALSE.<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.1:1 --></ins>
 - Comparisons ignore the sign of 0 (so +0 equals -0).
 - The comparison NE, when either or both operands is NaN returns TRUE.
@@ -83,7 +83,7 @@ of deviations or additions to IEEE-754 (some of which are significant). Refer to
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0 -->Floating point values provided to hardware through states, such as Viewport MinDepth/MaxDepth, BorderColor<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0 --></ins>
   values etc., may be provided as denorm values and may or may not be flushed before use by the hardware.
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0 -->min or max operations must flush denorms for comparison, but the result may or may not be denorm flushed.<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0 --></ins>
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0 -->NaN input to an operation obviously always produces NaN on output, however the exact bit pattern<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0 --></ins>
+- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0:modified:section-nan-output -->Unless otherwise specified for the operation, a NaN input produces a NaN output. The exact bit pattern<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0:modified:section-nan-output --></ins>
   of the NaN is not required to stay the same (unless the operation is a raw "mov" instruction which
   does not alter data at all.)
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0 -->The arithmetic rules in D3D10+ do not make any distinctions between "quiet" and "signaling" NaN values (QNaN vs SNaN). All "NaN" values are handled the same way.<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0 --></ins>
@@ -199,9 +199,11 @@ The exceptions are:
 
 All intrinsics and arithmetic operations that <ins><!-- d3d12-review-inline:begin:numeric-rules:W-native-arithmetic:0:modified:source-b43f68920bed54a5-0-0 -->support min16float/min16int also<!-- d3d12-review-inline:end:numeric-rules:W-native-arithmetic:0:modified:source-b43f68920bed54a5-0-0 --></ins> support float16/int16 types. For float16 operations, denormal numbers must be preserved.
 
-<ins><!-- d3d12-review-inline:begin:numeric-rules:N-native-numeric:0:authored:migration-c3c70195bed3f2b9-0 -->Native FP16 arithmetic follows the [16-bit floating-point requirements](#numeric-3-1-5), not the [lowered minimum-precision float16 allowances](common-shader-internals.md#archive-7-20-2). The `-denorm` option for FP32 does not permit native FP16 or FP64 denormals to be flushed.<!-- d3d12-review-inline:end:numeric-rules:N-native-numeric:0:authored:migration-c3c70195bed3f2b9-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:numeric-rules:N-native-numeric:0:authored:migration-c3c70195bed3f2b9-0 -->Native FP16 arithmetic follows the [16-bit floating-point requirements](#numeric-3-1-5), not the [lowered minimum-precision float16 allowances](common-shader-internals.md#archive-7-20-2-2-1).<!-- d3d12-review-inline:end:numeric-rules:N-native-numeric:0:authored:migration-c3c70195bed3f2b9-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:numeric-rules:N-integer-availability:0:authored:migration-f3a8c516d60e4c03-0 -->The native mode also enables `int16_t` and `uint16_t`. It is separate from the [`Int64ShaderOps`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options1) support condition for 64-bit integer operations and the [double-precision support condition](#numeric-3-1-4). The Shader Model 6.9 native16 requirement and 16-bit classification intrinsics are defined in [Common shader internals](common-shader-internals.md#core-operations).<!-- d3d12-review-inline:end:numeric-rules:N-integer-availability:0:authored:migration-f3a8c516d60e4c03-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:numeric-rules:N-owners:0:authored:migration-3f7023d97d6da825-0 -->Native shader FP16 arithmetic does not change the [clear command denormal and clamping rules](resource-operations.md#clear-conversion).<!-- d3d12-review-inline:end:numeric-rules:N-owners:0:authored:migration-3f7023d97d6da825-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:numeric-rules:N-integer-availability:0:authored:migration-f3a8c516d60e4c03-0 -->The native mode also enables `int16_t` and `uint16_t`.<!-- d3d12-review-inline:end:numeric-rules:N-integer-availability:0:authored:migration-f3a8c516d60e4c03-0 --></ins>
 
 <a id="numeric-3-1-6"></a>
 
@@ -247,7 +249,7 @@ The exceptions are:
 relevant information regarding data conversion is in the [Data Invertability](#numeric-19-1-2)
 section.<!-- d3d12-review-inline:end:numeric-rules:L-3.2.1:0:modified:migration-1af9632b8d4f40c5-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:numeric-rules:N-conversion-boundary:0:authored:migration-8aa18956fa7ebd97-0 -->The format conversions in this section do not redefine shader instruction-specific conversion rules. For example, integer `trunc` discards high-order bits, `zext` zero-extends and `sext` sign-extends in [DXIL's admitted core operations](https://github.com/microsoft/DirectXShaderCompiler/blob/194bb75bea2becb42810d72a16195089c1908e10/docs/DXIL.rst#operations-via-instructions), whereas the [integer format width conversions](#numeric-3-2-3-9) specify their own extension and clamping. Native DXIL `FPTrunc` and `FPExt` are distinct from `LegacyF32ToF16` and `LegacyF16ToF32`.<!-- d3d12-review-inline:end:numeric-rules:N-conversion-boundary:0:authored:migration-8aa18956fa7ebd97-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:numeric-rules:N-conversion-boundary:0:authored:migration-8aa18956fa7ebd97-0 -->The format conversions in this section do not redefine shader instruction-specific conversion rules. For example, integer `trunc` discards high-order bits, `zext` zero-extends and `sext` sign-extends in [DXIL's admitted core operations](https://github.com/microsoft/DirectXShaderCompiler/blob/194bb75bea2becb42810d72a16195089c1908e10/docs/DXIL.rst#operations-via-instructions), whereas the [integer format width conversions](#numeric-3-2-3-9) through [narrowing and signedness conversions](#numeric-3-2-3-13) specify their own extension and clamping. Native DXIL `FPTrunc` and `FPExt` are distinct from `LegacyF32ToF16` and `LegacyF16ToF32`.<!-- d3d12-review-inline:end:numeric-rules:N-conversion-boundary:0:authored:migration-8aa18956fa7ebd97-0 --></ins>
 
 <a id="numeric-19-1-2"></a>
 
@@ -277,7 +279,7 @@ output data must be identical in memory.<!-- d3d12-review-inline:end:numeric-rul
 > **Authored synthesis - human review pending.**
 
 > [!NOTE]
-> The [FP32 point-sampling denormal allowance](common-shader-internals.md#point-sample-float32) remains applicable. A read that performs that permitted flush is not a no-transformation round-trip path.
+> [FP32 point sampling](common-shader-internals.md#point-sample-float32) may flush denormals. A read that performs that permitted flush is not a no-transformation round-trip path.
 
 <!-- d3d12-review-context:end:numeric-rules:L-19.1.2:4:authored:BC-I05-point-flush-scope -->
 
@@ -584,7 +586,7 @@ Specific choices of bit allocations for fixed point integers are listed in the p
 
 <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.2.4.1:6 -->![](../archive/images/d3d11/D3D11_3_FixedPoint.png)<!-- d3d12-review-inline:end:numeric-rules:L-3.2.4.1:6 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:numeric-rules:N-fixed-figure-correction:0:authored:migration-33fed5de3e18203b-0 -->**Diagram arithmetic note:** The diagram's final integer and fractional fields denote `-8192 + 0.3671875 = -8191.6328125`. The printed `-8192.3671875` is not their decimal numerical value. The original diagram is retained. Its nearest-even construction is a reference result, not a tightening of the permitted 0.6 ULP tolerance.<!-- d3d12-review-inline:end:numeric-rules:N-fixed-figure-correction:0:authored:migration-33fed5de3e18203b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:numeric-rules:N-fixed-figure-correction:0:authored:migration-33fed5de3e18203b-0 -->**Diagram arithmetic note:** The diagram's final integer and fractional fields denote `-8192 + 0.3671875 = -8191.6328125`. The printed `-8192.3671875` is not their decimal numerical value. The diagram's nearest-even construction is a reference result, not a tightening of the permitted 0.6 ULP tolerance.<!-- d3d12-review-inline:end:numeric-rules:N-fixed-figure-correction:0:authored:migration-33fed5de3e18203b-0 --></ins>
 
 <a id="numeric-3-2-4-2"></a>
 

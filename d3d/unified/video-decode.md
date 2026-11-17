@@ -15,19 +15,6 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:video-decode:N-entry:0:authored:migration-7d788f5a8725a8f0-0 -->The compact [Video model](video.md#video) introduces device discovery,
-recording, ordering, lifetime and shared ownership. This subordinate reference
-defines decode APIs and their required types.
-It is a **qualified draft**, not a complete hardware/codec conformance
-specification. The explicit qualifications below withhold unsupported
-generalisations; capability reports remain scoped to their input tuple.<!-- d3d12-review-inline:end:video-decode:N-entry:0:authored:migration-7d788f5a8725a8f0-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:video-decode:LA-video-annotation-owner:0:authored:migration-d19af4d2525c6898-0 -->The [command list annotation reference](diagnostics.md#command-list-annotations)
-defines the three internal BeginEvent/EndEvent/SetMarker support methods
-on `ID3D12VideoDecodeCommandList`. Their recording and allocator data lifetime
-follows [common annotation state](command-list-state.md#annotations), not
-a new video processing mode or GPU synchronization operation.<!-- d3d12-review-inline:end:video-decode:LA-video-annotation-owner:0:authored:migration-d19af4d2525c6898-0 --></ins>
-
 <a id="decode-discovery"></a>
 
 ## Discovery and query protocol
@@ -113,7 +100,7 @@ use this same video device method.<!-- d3d12-review-inline:end:video-decode:D160
 <ins><!-- d3d12-review-inline:begin:video-decode:D161-extension-query-forward:0:authored:migration-f51c14fbc0890431-0 -->[Extension command discovery, parameter stage reflection, support and size queries](video-extension-commands.md#extension-discovery)
 use this same video device method.<!-- d3d12-review-inline:end:video-decode:D161-extension-query-forward:0:authored:migration-f51c14fbc0890431-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-decode:D162-encoding-query-forward:0:authored:migration-fd769d6bf81f1e72-0 -->Encoding contributes the [fixed query selectors and payloads](video-encoding-controls.md#encoding-query-selectors) and [combined tuple/count/size/version rules](video-encoding.md#encoding-capabilities), including encoder resource/heap sizes, per-resolution support, optional-statistics requirements, GPU map layout allocation and lower-resolution frame analysis. These remain contributions to this declaring method, not additional API identities.<!-- d3d12-review-inline:end:video-decode:D162-encoding-query-forward:0:authored:migration-fd769d6bf81f1e72-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-decode:D162-encoding-query-forward:0:authored:migration-fd769d6bf81f1e72-0 -->Encoding uses the [fixed query selectors and payloads](video-encoding-controls.md#encoding-query-selectors) and [combined tuple/count/size/version rules](video-encoding.md#encoding-capabilities).<!-- d3d12-review-inline:end:video-decode:D162-encoding-query-forward:0:authored:migration-fd769d6bf81f1e72-0 --></ins>
 
 <a id="decode-objects"></a>
 
@@ -190,19 +177,11 @@ HRESULT CreateVideoDecoder1(
 
 Creates a video decoder instance that contains the resolution-independent driver resources and state, with support for protected resources.
 
-<ins><!-- d3d12-review-inline:begin:video-decode:AB-id3d12videodevice2-createvideodecoder1-contract:0:authored:migration-55e23fc6139022c7-0 -->Retains the corresponding [decoder/heap creation contract](#create-video-decoder)
-and adds the explicit protected session association. Null selects an
-unprotected object; non-null requires the supported protected-video tuple
-and compatible device/node/type. Decoder and decoder heap lifetimes/roles
-remain distinct; no output/reference picture allocation is implied.<!-- d3d12-review-inline:end:video-decode:AB-id3d12videodevice2-createvideodecoder1-contract:0:authored:migration-55e23fc6139022c7-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:video-decode:AB-id3d12videodevice2-createvideodecoder1-contract:2:authored:migration-fc7d68a432e725b2-0 -->`pDesc` supplies the existing creation description. pProtectedResourceSession supplies the optional session; riid selects the interface and `ppVideoDecoder` receives its COM reference.<!-- d3d12-review-inline:end:video-decode:AB-id3d12videodevice2-createvideodecoder1-contract:2:authored:migration-fc7d68a432e725b2-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-decode:AB-id3d12videodevice2-createvideodecoder1-contract:4:authored:migration-7288a0c71f5360a3-0 -->Returns the creation/interface HRESULT. Existing video creation result, optional capability and hardware qualifications remain. Success does not report frame execution.<!-- d3d12-review-inline:end:video-decode:AB-id3d12videodevice2-createvideodecoder1-contract:4:authored:migration-7288a0c71f5360a3-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-decode:AB-id3d12videodevice2-createvideodecoder1-contract:0:authored:migration-55e23fc6139022c7-0 -->See [CreateVideoDecoder](#create-video-decoder) for decoder creation.
+`pProtectedResourceSession` associates the decoder with a protected session.
+Null selects an unprotected object. Non-null requires the
+[supported protected decode configuration](video.md#protected-video-support)
+and compatible device/node/type.<!-- d3d12-review-inline:end:video-decode:AB-id3d12videodevice2-createvideodecoder1-contract:0:authored:migration-55e23fc6139022c7-0 --></ins>
 
 <a id="create-video-decoder-heap"></a>
 
@@ -267,19 +246,11 @@ HRESULT CreateVideoDecoderHeap1(
 
 Allocates a video decoder heap that contains the resolution-dependent driver resources and state, with support for protected resources.
 
-<ins><!-- d3d12-review-inline:begin:video-decode:AB-id3d12videodevice2-createvideodecoderheap1-contract:0:authored:migration-1e63c2d572b52951-0 -->Retains the corresponding [decoder/heap creation contract](#create-video-decoder-heap)
-and adds the explicit protected session association. Null selects an
-unprotected object; non-null requires the supported protected-video tuple
-and compatible device/node/type. Decoder and decoder heap lifetimes/roles
-remain distinct; no output/reference picture allocation is implied.<!-- d3d12-review-inline:end:video-decode:AB-id3d12videodevice2-createvideodecoderheap1-contract:0:authored:migration-1e63c2d572b52951-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:video-decode:AB-id3d12videodevice2-createvideodecoderheap1-contract:2:authored:migration-428932bd2a276f25-0 -->`pVideoDecoderHeapDesc` supplies the existing creation description. pProtectedResourceSession supplies the optional session; riid selects the interface and `ppVideoDecoderHeap` receives its COM reference.<!-- d3d12-review-inline:end:video-decode:AB-id3d12videodevice2-createvideodecoderheap1-contract:2:authored:migration-428932bd2a276f25-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-decode:AB-id3d12videodevice2-createvideodecoderheap1-contract:4:authored:migration-6afe97cec40065a0-0 -->Returns the creation/interface HRESULT. Existing video creation result, optional capability and hardware qualifications remain. Success does not report frame execution.<!-- d3d12-review-inline:end:video-decode:AB-id3d12videodevice2-createvideodecoderheap1-contract:4:authored:migration-6afe97cec40065a0-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-decode:AB-id3d12videodevice2-createvideodecoderheap1-contract:0:authored:migration-1e63c2d572b52951-0 -->See [CreateVideoDecoderHeap](#create-video-decoder-heap) for decoder heap creation.
+`pProtectedResourceSession` associates the heap with a protected session.
+Null selects an unprotected object. Non-null requires the
+[supported protected decode configuration](video.md#protected-video-support)
+and compatible device/node/type.<!-- d3d12-review-inline:end:video-decode:AB-id3d12videodevice2-createvideodecoderheap1-contract:0:authored:migration-1e63c2d572b52951-0 --></ins>
 
 <a id="video-decoder-get-desc"></a>
 
@@ -328,7 +299,7 @@ a different protection context.<!-- d3d12-review-inline:end:video-decode:AB-id3d
 
 <ins><!-- d3d12-review-inline:begin:video-decode:AB-id3d12videodecoder1-getprotectedresourcesession-contract:4:authored:migration-6a3f927b8176d169-0 -->Returns the interface query's HRESULT. With no associated session it returns
 `DXGI_ERROR_NOT_FOUND` and a null output. An unsupported requested interface
-returns `E_NOINTERFACE`. Retrieval does not create or signal a session.<!-- d3d12-review-inline:end:video-decode:AB-id3d12videodecoder1-getprotectedresourcesession-contract:4:authored:migration-6a3f927b8176d169-0 --></ins>
+returns `E_NOINTERFACE`.<!-- d3d12-review-inline:end:video-decode:AB-id3d12videodecoder1-getprotectedresourcesession-contract:4:authored:migration-6a3f927b8176d169-0 --></ins>
 
 <a id="video-decoder-heap-get-desc"></a>
 
@@ -377,11 +348,16 @@ a different protection context.<!-- d3d12-review-inline:end:video-decode:AB-id3d
 
 <ins><!-- d3d12-review-inline:begin:video-decode:AB-id3d12videodecoderheap1-getprotectedresourcesession-contract:4:authored:migration-4545e9fb7c0e3453-0 -->Returns the interface query's HRESULT. With no associated session it returns
 `DXGI_ERROR_NOT_FOUND` and a null output. An unsupported requested interface
-returns `E_NOINTERFACE`. Retrieval does not create or signal a session.<!-- d3d12-review-inline:end:video-decode:AB-id3d12videodecoderheap1-getprotectedresourcesession-contract:4:authored:migration-4545e9fb7c0e3453-0 --></ins>
+returns `E_NOINTERFACE`.<!-- d3d12-review-inline:end:video-decode:AB-id3d12videodecoderheap1-getprotectedresourcesession-contract:4:authored:migration-4545e9fb7c0e3453-0 --></ins>
 
 <a id="decode-list-lifecycle"></a>
 
 ## Decode command list lifecycle
+
+<ins><!-- d3d12-review-inline:begin:video-decode:LA-video-annotation-owner:0:authored:migration-d19af4d2525c6898-0 -->See [Command list annotations](diagnostics.md#command-list-annotations) for the internal
+BeginEvent, EndEvent and SetMarker support methods on `ID3D12VideoDecodeCommandList`.
+See [Annotation state](command-list-state.md#annotations) for their recording
+and allocator data lifetime.<!-- d3d12-review-inline:end:video-decode:LA-video-annotation-owner:0:authored:migration-d19af4d2525c6898-0 --></ins>
 
 <a id="decode-clear-state"></a>
 
@@ -403,8 +379,7 @@ None
 
 <ins><!-- d3d12-review-inline:begin:video-decode:N-clear:0:authored:migration-4a4f1e6805248d1e-0 -->ClearState disables predication on the existing recording. It is not Reset
 and does not reclaim command allocator storage or erase earlier recorded
-decode work. The ordinary video contribution does not imply graphics root,
-descriptor heap or PSO initialization.<!-- d3d12-review-inline:end:video-decode:N-clear:0:authored:migration-4a4f1e6805248d1e-0 --></ins>
+decode work.<!-- d3d12-review-inline:end:video-decode:N-clear:0:authored:migration-4a4f1e6805248d1e-0 --></ins>
 
 <a id="decode-close"></a>
 
@@ -434,12 +409,8 @@ See [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes) for
 
 The runtime will validate that the command list has not previously been closed. If an error was encountered during recording, the error code is returned here. The runtime won't call the close device driver interface (DDI) in this case.
 
-<ins><!-- d3d12-review-inline:begin:video-decode:N-close:0:authored:migration-5de93a6fabebafa7-0 -->Close ends recording, not GPU execution. It is a lifecycle/query resolution
-wrapper: pending query resolution work can be emitted while closing. The
-wrapper classification does not assign a new predicate policy to the
-generated work or turn a successful Close into a decode status query.
-The [query protocol](counters-queries-and-predication.md#videodecode-resolvequerydata)
-and [completion rules](execution.md#completion-lifetime) remain canonical.<!-- d3d12-review-inline:end:video-decode:N-close:0:authored:migration-5de93a6fabebafa7-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-decode:N-close:0:authored:migration-5de93a6fabebafa7-0 -->Pending [query resolution](counters-queries-and-predication.md#videodecode-resolvequerydata)
+work can be emitted while closing.<!-- d3d12-review-inline:end:video-decode:N-close:0:authored:migration-5de93a6fabebafa7-0 --></ins>
 
 <a id="decode-reset"></a>
 
@@ -479,8 +450,7 @@ See [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes) for
 this list. Successful Reset puts the list into recording state and disables
 predication. Reset does not wait for GPU completion and is distinct from
 [`ID3D12CommandAllocator::Reset`](execution.md#allocator-reset). The allocator's
-recorded storage remains subject to its reuse/completion requirements.
-There is no initial graphics PSO parameter.<!-- d3d12-review-inline:end:video-decode:N-reset:0:authored:migration-086a9c7c4f96dbb4-0 --></ins>
+recorded storage remains subject to its reuse/completion requirements.<!-- d3d12-review-inline:end:video-decode:N-reset:0:authored:migration-086a9c7c4f96dbb4-0 --></ins>
 
 <a id="api-id3d12videodecodecommandlist2-setprotectedresourcesession"></a>
 
@@ -497,20 +467,13 @@ void SetProtectedResourceSession(
 
 Specifies whether or not protected resources can be accessed by subsequent commands in the video decode command list. By default, no protected resources are enabled. After calling **SetProtectedResourceSession** with a valid session, protected resources of the same type can refer to that session. After calling **SetProtectedResourceSession** with **NULL**, no protected resources can be accessed.
 
-<ins><!-- d3d12-review-inline:begin:video-decode:AB-id3d12videodecodecommandlist2-setprotectedresourcesession-contract:0:authored:migration-e6ba4c8c91a66a9b-0 -->Selects only the supported command list's protection context. Ordinary
-bindings are preserved (D272). This is not ClearState. Null disables protected
-access. [Session/device/node/type and operation support](video.md#protected-video-support),
-the [canonical selection and open-query rules](command-list-state.md#protection)
-and [protected operation predication](counters-queries-and-predication.md#predication-operation-matrix)
-remain required.<!-- d3d12-review-inline:end:video-decode:AB-id3d12videodecodecommandlist2-setprotectedresourcesession-contract:0:authored:migration-e6ba4c8c91a66a9b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-decode:AB-id3d12videodecodecommandlist2-setprotectedresourcesession-contract:0:authored:migration-e6ba4c8c91a66a9b-0 -->This changes the command list's protection context and preserves ordinary
+bindings. See [Protected video](video.md#protected-video-support) for
+session/device/node/type compatibility and operation support,
+[Protection state](command-list-state.md#protection) for selection and open-query restrictions,
+and [Predication policies](counters-queries-and-predication.md#predication-operation-matrix)
+for protected operations.<!-- d3d12-review-inline:end:video-decode:AB-id3d12videodecodecommandlist2-setprotectedresourcesession-contract:0:authored:migration-e6ba4c8c91a66a9b-0 --></ins>
 
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:video-decode:AB-id3d12videodecodecommandlist2-setprotectedresourcesession-contract:2:authored:migration-2d94a15163efe1a3-0 -->`pProtectedResourceSession` is the optional translated session association. It is not a video encoder/decoder object and its selection does not allocate one.<!-- d3d12-review-inline:end:video-decode:AB-id3d12videodecodecommandlist2-setprotectedresourcesession-contract:2:authored:migration-2d94a15163efe1a3-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:video-decode:AB-id3d12videodecodecommandlist2-setprotectedresourcesession-contract:4:authored:migration-409e0e07ca62f69b-0 -->Returns no value. Recording/list errors remain distinct from content validity and GPU completion.<!-- d3d12-review-inline:end:video-decode:AB-id3d12videodecodecommandlist2-setprotectedresourcesession-contract:4:authored:migration-409e0e07ca62f69b-0 --></ins>
 <a id="decode-frame-apis"></a>
 
 ## Recording a decode
@@ -591,8 +554,7 @@ A [D3D12_VIDEO_DECODE_INPUT_STREAM_ARGUMENTS](#d3d12-video-decode-input-stream-a
 
 None
 
-<ins><!-- d3d12-review-inline:begin:video-decode:N-frame-validation:0:authored:migration-a7d3502bd656017a-0 -->Both methods record a frame. Neither returns an HRESULT or the hardware
-decode result. The public Close contract reports deferred recording errors.
+<ins><!-- d3d12-review-inline:begin:video-decode:N-frame-validation:0:authored:migration-a7d3502bd656017a-0 -->[Close](#decode-close) reports deferred recording errors.
 The runtime checks frame argument types/picture parameter sizes, decoder/heap
 configuration compatibility, bitstream resource/range, reference resources
 and output/conversion/histogram arguments on the inspected ordinary path.
@@ -893,8 +855,9 @@ typedef struct D3D12_FEATURE_DATA_VIDEO_ARCHITECTURE
 the selected public declaration supplies this field but no complete
 decode-specific heap/cacheability truth table. This draft does not infer a
 new memory consistency rule or universal CPU-cacheable allocation permission
-from it. [CPU/GPU access and heap properties](resources.md#cpu-access) and
-[explicit completion](execution.md#completion-lifetime) retain their owners.<!-- d3d12-review-inline:end:video-decode:N-feature_data_video_architecture:0:authored:migration-9a985d1c0e694be6-0 --></ins>
+from it. See [CPU/GPU access and heap properties](resources.md#cpu-access) for
+allocation and access restrictions, and [Completion](execution.md#completion-lifetime)
+for tracking GPU use.<!-- d3d12-review-inline:end:video-decode:N-feature_data_video_architecture:0:authored:migration-9a985d1c0e694be6-0 --></ins>
 
 <a id="d3d12-feature-data-video-decode-histogram"></a>
 
@@ -970,11 +933,6 @@ an unverified codec-specific histogram stage relative to conversion.<!-- d3d12-r
 <a id="decode-arguments"></a>
 
 ## Decoder configuration and input/output types
-
-<ins><!-- d3d12-review-inline:begin:video-decode:N-array-extents:0:authored:migration-617105fb920e37ba-0 -->The declarations use `D3D12_VIDEO_DECODE_MAX_ARGUMENTS` for the ten
-frame argument slots and `D3D12_VIDEO_DECODE_MAX_HISTOGRAM_COMPONENTS` for the
-four per-component histogram slots. Their capacities are also shown in the
-owning public member descriptions. Neither expands codec support.<!-- d3d12-review-inline:end:video-decode:N-array-extents:0:authored:migration-617105fb920e37ba-0 --></ins>
 
 <a id="d3d12-video-decode-configuration"></a>
 
@@ -2045,7 +2003,7 @@ buffers or a universal supported profile list.<!-- d3d12-review-inline:end:video
 
 ## Published driver and hardware responsibilities
 
-<ins><!-- d3d12-review-inline:begin:video-decode:N-ddi-overview:0:authored:migration-d812726a28cf864c-0 -->The following DDIs implement decode capability queries, object creation/destruction and frame recording. The runtime can cache and translate capability results.<!-- d3d12-review-inline:end:video-decode:N-ddi-overview:0:authored:migration-d812726a28cf864c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-decode:N-ddi-overview:0:authored:migration-d812726a28cf864c-0 -->The runtime can cache and translate capability results.<!-- d3d12-review-inline:end:video-decode:N-ddi-overview:0:authored:migration-d812726a28cf864c-0 --></ins>
 
 ### Video capability query
 
@@ -2152,11 +2110,11 @@ The video decoder heap.
 
 ### Decode frame recording DDI
 
-<ins><!-- d3d12-review-inline:begin:video-decode:weekend-decode-ddi-route:0 -->`PFND3D12DDI_VIDEO_DECODE_FRAME_0041_1` implements [DecodeFrame](#decode-frame) and [DecodeFrame1](#decode-frame1). Its [declaration and driver parameters](#versioned-decode-frame-recording-callback) follow.<!-- d3d12-review-inline:end:video-decode:weekend-decode-ddi-route:0 --></ins>
-
 <a id="versioned-decode-frame-recording-callback"></a>
 
-### Versioned decode frame recording DDI
+<a id="versioned-decode-frame-recording-ddi"></a>
+
+<ins><!-- d3d12-review-inline:begin:video-decode:weekend-decode-ddi-route:0 -->`PFND3D12DDI_VIDEO_DECODE_FRAME_0041_1` implements [DecodeFrame](#decode-frame) and [DecodeFrame1](#decode-frame1).<!-- d3d12-review-inline:end:video-decode:weekend-decode-ddi-route:0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-decode:P-ddi-decode1-summary:0:modified:source-5b0017de2b4a086f-0-0 -->The client driver implements this DDI<!-- d3d12-review-inline:end:video-decode:P-ddi-decode1-summary:0:modified:source-5b0017de2b4a086f-0-0 --></ins> to decode a video frame.
 
@@ -2362,7 +2320,7 @@ typedef struct D3D12DDIARG_VIDEO_GETCAPS_0020
 } D3D12DDIARG_VIDEO_GETCAPS_0020;
 ```
 
-<ins><!-- d3d12-review-inline:begin:video-decode:N-ddi-caps-boundary:0:authored:migration-79b84efa4555a020-0 -->`Type` selects the capability payload and its `pInfo`, `pData` and `DataSize` protocol. The following definitions specify each request.<!-- d3d12-review-inline:end:video-decode:N-ddi-caps-boundary:0:authored:migration-79b84efa4555a020-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-decode:N-ddi-caps-boundary:0:authored:migration-79b84efa4555a020-0 -->`Type` selects the capability payload and its `pInfo`, `pData` and `DataSize` protocol.<!-- d3d12-review-inline:end:video-decode:N-ddi-caps-boundary:0:authored:migration-79b84efa4555a020-0 --></ins>
 
 <!-- d3d12-review-alert:begin:video-decode:N-ddi-cap-values:0:authored:migration-a9eeb9773f4ac7d4-0 -->
 

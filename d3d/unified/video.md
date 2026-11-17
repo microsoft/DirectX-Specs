@@ -15,15 +15,6 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:video-foundation:N-status:0:authored:migration-15e1c6e76d5662c0-0 -->**Qualified draft.** This chapter introduces the Video device and workload
-families. The [decode](video-decode.md#video-decode),
-[processing](video-processing.md#video-processing),
-[motion estimation](video-motion-estimation.md#video-motion-estimation),
-[extension command](video-extension-commands.md#video-extension-commands) and
-[encoding](video-encoding.md#video-encoding)
-references provide the selected API, type and driver contracts.
-The qualifications identify requirements not established by this draft.<!-- d3d12-review-inline:end:video-foundation:N-status:0:authored:migration-15e1c6e76d5662c0-0 --></ins>
-
 <a id="video-device-model"></a>
 
 ## Device and capability model
@@ -32,20 +23,17 @@ The qualifications identify requirements not established by this draft.<!-- d3d1
 device and derives directly from `IUnknown`. Its
 [`CheckFeatureSupport`](video-decode.md#video-check-feature-support) takes
 `D3D12_FEATURE_VIDEO` and video-specific payloads. It is not
-[`ID3D12Device::CheckFeatureSupport`](devices-and-capabilities.md#id3d12device-checkfeaturesupport).
-Decoder and decoder heap objects derive from `ID3D12Pageable`. Their inherited
-device/object methods retain their declaring owners.<!-- d3d12-review-inline:end:video-foundation:N-discovery:0:authored:migration-9c5305079ce5e2e7-0 --></ins>
+[`ID3D12Device::CheckFeatureSupport`](devices-and-capabilities.md#id3d12device-checkfeaturesupport).<!-- d3d12-review-inline:end:video-foundation:N-discovery:0:authored:migration-9c5305079ce5e2e7-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-foundation:N-discovery:1:authored:migration-467f66b65c68d8fa-0 -->Decode discovery separates the node's profile list, the formats supported for
+<ins><!-- d3d12-review-inline:begin:video-foundation:N-discovery:1:authored:migration-467f66b65c68d8fa-0 -->[Decode discovery](video-decode.md#decode-discovery) separates the node's profile list, the formats supported for
 a decode configuration, and support for an actual configuration, size, decode
 format, frame rate and bit rate. Enumerating a profile does not establish
 support for every such tuple. Conversion and histogram support have their own
-queries. The [selected video query protocol](video-decode.md#decode-discovery)
-defines count/result payloads, input/output fields and exact payload sizes.
+queries.
 The ordinary unencrypted configuration uses
 `D3D12_BITSTREAM_ENCRYPTION_TYPE_NONE`.<!-- d3d12-review-inline:end:video-foundation:N-discovery:1:authored:migration-467f66b65c68d8fa-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-foundation:D160-family-availability:0:authored:migration-29ce7529301be73c-0 -->The shared [command family availability query](#video-feature-area-support-api) reports decode, process and encode availability separately. Operation-specific capability queries still determine support for each requested configuration. The [driver capability contract](#video-feature-area-support-driver) defines the corresponding table population obligations.<!-- d3d12-review-inline:end:video-foundation:D160-family-availability:0:authored:migration-29ce7529301be73c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-foundation:D160-family-availability:0:authored:migration-29ce7529301be73c-0 -->The shared [command family availability query](#video-feature-area-support-api) reports decode, process and encode availability separately. Operation-specific capability queries determine support for each requested configuration.<!-- d3d12-review-inline:end:video-foundation:D160-family-availability:0:authored:migration-29ce7529301be73c-0 --></ins>
 
 <a id="video-feature-area-support-api"></a>
 
@@ -63,8 +51,7 @@ typedef struct D3D12_FEATURE_DATA_VIDEO_FEATURE_AREA_SUPPORT
 } D3D12_FEATURE_DATA_VIDEO_FEATURE_AREA_SUPPORT;
 ```
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-area-members:0:authored:migration-af445b1f2246359c-0 -->`NodeIndex` selects the physical adapter. The three BOOL outputs identify
-availability of the decode, process and encode command families separately.<!-- d3d12-review-inline:end:video-motion:N-area-members:0:authored:migration-af445b1f2246359c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-motion:N-area-members:0:authored:migration-af445b1f2246359c-0 -->`NodeIndex` selects the physical adapter.<!-- d3d12-review-inline:end:video-motion:N-area-members:0:authored:migration-af445b1f2246359c-0 --></ins>
 
 <a id="video-feature-area-support-driver"></a>
 
@@ -90,9 +77,6 @@ typedef struct D3D12DDI_VIDEO_FEATURE_AREA_SUPPORT_DATA_0053
 
 In multi-adapter operation, this indicates which physical adapter of the device this operation applies to.
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-feature-area-decode-owner:0:authored:migration-dac01aa2fdffeceb-0 -->The [decode driver associations](video-decode.md#ddi-table-members)
-define the decoding operations named by the following device slots.<!-- d3d12-review-inline:end:video-motion:N-feature-area-decode-owner:0:authored:migration-dac01aa2fdffeceb-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:video-motion:R-107:0:modified:migration-f2bf24d2a34f6416-0 -->If `VideoDecodeSupport` is TRUE:<!-- d3d12-review-inline:end:video-motion:R-107:0:modified:migration-f2bf24d2a34f6416-0 --></ins>
 
 - Predication, timestamp queries, and history buffers must be supported with the decode queue type.
@@ -110,9 +94,6 @@ define the decoding operations named by the following device slots.<!-- d3d12-re
   - <ins><!-- d3d12-review-inline:begin:video-motion:R-115:0 -->`pfnDestroyVideoDecoderHeap`<!-- d3d12-review-inline:end:video-motion:R-115:0 --></ins>
 
 When the flag is not set, all of these functions may be set to nullptr.
-
-<ins><!-- d3d12-review-inline:begin:video-motion:N-feature-area-process-owner:0:authored:migration-eac3cda9671dc18b-0 -->The [processing driver associations](video-processing.md#process-ddi-associations)
-define the processing operations named by the following device slots.<!-- d3d12-review-inline:end:video-motion:N-feature-area-process-owner:0:authored:migration-eac3cda9671dc18b-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-motion:R-128:0:modified:migration-ffdba8c006797177-0 -->If `VideoProcessSupport` is TRUE:<!-- d3d12-review-inline:end:video-motion:R-128:0:modified:migration-ffdba8c006797177-0 --></ins>
 
@@ -150,6 +131,8 @@ When the flag is not set, all of these functions may be set to nullptr.
 
 ## Decode objects and one frame
 
+<ins><!-- d3d12-review-inline:begin:video-foundation:N-discovery:0:authored:section-20261117-decode-objects -->Decoder and decoder heap objects derive from `ID3D12Pageable`.<!-- d3d12-review-inline:end:video-foundation:N-discovery:0:authored:section-20261117-decode-objects --></ins>
+
 <ins><!-- d3d12-review-inline:begin:video-foundation:P-decoder-role:0:modified:migration-99e971bdcb7b3b08-0 -->A Direct3D 12 video decoder<!-- d3d12-review-inline:end:video-foundation:P-decoder-role:0:modified:migration-99e971bdcb7b3b08-0 --></ins> <ins><!-- d3d12-review-inline:begin:video-foundation:P-decoder-role:0:modified:migration-1beb11135b15fe9d-1 -->contains<!-- d3d12-review-inline:end:video-foundation:P-decoder-role:0:modified:migration-1beb11135b15fe9d-1 --></ins> resolution-independent resources and state for performing the decode operation.
 
 <ins><!-- d3d12-review-inline:begin:video-foundation:P-heap-role:0:modified:migration-6a23a29f23d415e6-0 -->A Direct3D 12 video decoder heap<!-- d3d12-review-inline:end:video-foundation:P-heap-role:0:modified:migration-6a23a29f23d415e6-0 --></ins> <ins><!-- d3d12-review-inline:begin:video-foundation:P-heap-role:0:modified:migration-dddea14732078a71-1 -->contains<!-- d3d12-review-inline:end:video-foundation:P-heap-role:0:modified:migration-dddea14732078a71-1 --></ins> resolution-dependent resources and state for performing the decode operation.
@@ -185,13 +168,13 @@ non-key-frame changes merely because a decoder can be retained.<!-- d3d12-review
 
 <ins><!-- d3d12-review-inline:begin:video-foundation:D158-processing-route:0:authored:migration-cd72d6a269910155-0 -->A video processor fixes input and output stream descriptions. Each [processing call](video-processing.md#process-recording) supplies current/reference pictures and per-call operation arguments. The [processing capability and reflection reference](video-processing.md#process-discovery) defines the supported tuple, stream limits and immutable descriptions.<!-- d3d12-review-inline:end:video-foundation:D158-processing-route:0:authored:migration-cd72d6a269910155-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-foundation:D158-processing-route:1:authored:migration-08c69cec1fb1d6f4-0 -->A video process command list has type `D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS` and is submitted to a compatible video process queue. Core [creation](execution.md#creation), [submission](execution.md#execute-command-lists), [threading](execution.md#threading) and [lifetime](execution.md#lifetime) contracts remain common. The [processing reference](video-processing.md#process-model) defines its input/output states and object/resource use; decoder-specific recording serialization below is not a generic processor rule.<!-- d3d12-review-inline:end:video-foundation:D158-processing-route:1:authored:migration-08c69cec1fb1d6f4-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-foundation:D158-processing-route:1:authored:migration-08c69cec1fb1d6f4-0 -->A video process command list has type `D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS` and is submitted to a compatible video process queue. See [Execution](execution.md#creation) for command list creation, [submission](execution.md#execute-command-lists), [threading](execution.md#threading) and [lifetime](execution.md#lifetime). See [Processing model](video-processing.md#process-model) for resource states and object lifetimes.<!-- d3d12-review-inline:end:video-foundation:D158-processing-route:1:authored:migration-08c69cec1fb1d6f4-0 --></ins>
 
 <a id="video-motion-model"></a>
 
 ## Motion estimation and vector resolution
 
-<ins><!-- d3d12-review-inline:begin:video-foundation:D160-motion-route:0:authored:migration-75e287dec13ad99d-0 -->A [motion estimator](video-motion-estimation.md#motion-model) compares current and reference pictures. An opaque vector heap holds its output, and a resolve writes the published vector representation into an application texture. Motion estimation and resolution use VIDEO_ENCODE lists, allocators and queues. The [motion reference](video-motion-estimation.md#motion-recording) also owns the base encode list ClearState, Close and Reset contracts; decoder-specific serialized recording is not inherited.<!-- d3d12-review-inline:end:video-foundation:D160-motion-route:0:authored:migration-75e287dec13ad99d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-foundation:D160-motion-route:0:authored:migration-75e287dec13ad99d-0 -->A [motion estimator](video-motion-estimation.md#motion-model) compares current and reference pictures. An opaque vector heap holds its output, and a resolve writes the published vector representation into an application texture. Motion estimation and resolution use VIDEO_ENCODE lists, allocators and queues. See [Encode list lifecycle](video-motion-estimation.md#motion-recording) for ClearState, Close and Reset.<!-- d3d12-review-inline:end:video-foundation:D160-motion-route:0:authored:migration-75e287dec13ad99d-0 --></ins>
 
 <a id="video-extension-model"></a>
 
@@ -201,23 +184,28 @@ non-key-frame changes merely because a decoder can be retained.<!-- d3d12-review
 
 <a id="video-encoding-model"></a>
 
-## Encoding
+## [Encoding](video-encoding.md)
 
-<ins><!-- d3d12-review-inline:begin:video-foundation:D162-encoding-route:0:authored:migration-348d0d9133aca387-0 -->The [encoding reference](video-encoding.md) defines encoder/heap objects, combined capability tuples, H.264/HEVC/AV1 picture and DPB controls, frame recording, opaque output metadata resolution, optional statistics, subregion notifications, GPU input map resolution and full/lower-resolution frame analysis. Its codec/control, type and published driver references are subordinate to that route.<!-- d3d12-review-inline:end:video-foundation:D162-encoding-route:0:authored:migration-348d0d9133aca387-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-foundation:section-encoding-model:0:authored:section-20261117-reread -->Encoding produces codec payloads from input pictures. The application codes
+the remaining bitstream headers and manages reconstructed reference pictures
+in the decoded picture buffer (DPB). See [Video encoding](video-encoding.md#encoding-objects)
+for encoder objects and [Recording](video-encoding.md#encoding-recording)
+for frame submission and resource use.<!-- d3d12-review-inline:end:video-foundation:section-encoding-model:0:authored:section-20261117-reread --></ins>
 
 <a id="video-recording-lifetime"></a>
 
-## Recording, ordering and lifetime
+## Decode recording, ordering and lifetime
+
+<a id="recording-ordering-and-lifetime"></a>
 
 <ins><!-- d3d12-review-inline:begin:video-foundation:N-recording:0:authored:migration-a5109b03ad5aa0d3-0 -->A video decode command list has type `D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE`.
 The core device creates the command allocator, command list and queue. The
 video interface creates the decoder and decoder heap. The selected lifecycle
-methods are [ClearState, Close and Reset](video-decode.md#decode-list-lifecycle).
-The list has no graphics pipeline state argument on Reset.<!-- d3d12-review-inline:end:video-foundation:N-recording:0:authored:migration-a5109b03ad5aa0d3-0 --></ins>
+methods are [ClearState, Close and Reset](video-decode.md#decode-list-lifecycle).<!-- d3d12-review-inline:end:video-foundation:N-recording:0:authored:migration-a5109b03ad5aa0d3-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-foundation:N-recording:1:authored:migration-5ea01e0663627a5e-0 -->Core [list creation](execution.md#creation),
+<ins><!-- d3d12-review-inline:begin:video-foundation:N-recording:1:authored:migration-5ea01e0663627a5e-0 -->See [Execution](execution.md#creation) for command list creation,
 [submission](execution.md#execute-command-lists), [command storage](execution.md#command-storage),
-and [CPU threading](execution.md#threading) remain common contracts.
+and [CPU threading](execution.md#threading).
 A video decode list is submitted to a compatible video decode queue.
 Successful Close is a recording result, not a decoded picture success status.
 The [video decode statistics](counters-queries-and-predication.md#video-decode-statistics)
@@ -262,7 +250,11 @@ Cross-queue producer/decode/consumer dependencies use
 
 ## Resources, states and formats
 
-<ins><!-- d3d12-review-inline:begin:video-foundation:D162-common-video-resource-owners:0:authored:migration-ff05bfd010b53a3f-0 -->Video object backing allocations follow [application-controlled residency](resources.md#residency) and [object/resource lifetime](execution.md#lifetime). Workload-specific resource roles and capability constraints are defined by [decode](video-decode.md#decode-capabilities), [processing](video-processing.md#process-model), [motion estimation](video-motion-estimation.md#motion-model), [extension parameters](video-extension-commands.md#extension-resources) and [encoding](video-encoding.md#encoding-recording). The decode-specific state, tier and plane rules below do not redefine the other workloads' contracts.<!-- d3d12-review-inline:end:video-foundation:D162-common-video-resource-owners:0:authored:migration-ff05bfd010b53a3f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-foundation:D162-common-video-resource-owners:0:authored:migration-ff05bfd010b53a3f-0 -->Video object backing allocations follow [application-controlled residency](resources.md#residency) and [object/resource lifetime](execution.md#lifetime). Workload-specific resource roles and capability constraints are defined by [decode](video-decode.md#decode-capabilities), [processing](video-processing.md#process-model), [motion estimation](video-motion-estimation.md#motion-model), [extension parameters](video-extension-commands.md#extension-resources) and [encoding](video-encoding.md#encoding-recording).<!-- d3d12-review-inline:end:video-foundation:D162-common-video-resource-owners:0:authored:migration-ff05bfd010b53a3f-0 --></ins>
+
+<a id="video-decode-resources"></a>
+
+### Decode resources, states and formats
 
 <ins><!-- d3d12-review-inline:begin:video-foundation:N-states:0:authored:migration-3c4bf3c08d5a15de-0 -->The compressed bitstream and reference pictures actually read by the codec are
 decode reads. The output,
@@ -272,11 +264,9 @@ Their legacy states are `D3D12_RESOURCE_STATE_VIDEO_DECODE_READ` and
 [legacy video states](synchronization.md#legacy-states) and
 [enhanced barrier model](synchronization.md#enhanced-barriers) define transitions,
 access/layout combinations and queue compatibility.
-Video [`ResourceBarrier`](synchronization.md#decode-resource-barrier) and
-[`Barrier`](synchronization.md#decode-enhanced-barrier) retain their full definitions there.
 For planar pictures, decoding selects the first plane for the chosen array
-slice and accesses the picture's planes; subresource numbering remains the
-[resource subresource/plane contract](resources.md#subresources).
+slice and accesses the picture's planes. See
+[Subresources](resources.md#subresources) for plane and array slice numbering.
 An entry in the codec's picture table is not by itself a simultaneous read:
 the current output picture has the write role, even when that table also
 identifies it.<!-- d3d12-review-inline:end:video-foundation:N-states:0:authored:migration-3c4bf3c08d5a15de-0 --></ins>
@@ -284,23 +274,23 @@ identifies it.<!-- d3d12-review-inline:end:video-foundation:N-states:0:authored:
 <ins><!-- d3d12-review-inline:begin:video-foundation:N-states:1:authored:migration-a4576329a063c838-0 -->The reported decode tier and configuration flags constrain texture array
 references, compressed input alignment/packing, output height and separate
 native reference allocations. See [decode capabilities](video-decode.md#decode-capabilities).
-Reference-only allocations remain restricted by
+Reference-only allocations are restricted by
 [`VIDEO_DECODE_REFERENCE_ONLY`](resources.md#d3d12_resource_flag_video_decode_reference_only)
 and the [ordinary-copy prohibition](resource-operations.md#copy-self-and-alias).<!-- d3d12-review-inline:end:video-foundation:N-states:1:authored:migration-a4576329a063c838-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-foundation:N-states:2:authored:migration-f43aab781580f988-0 -->Decode capability does not itself grant arbitrary shader/RTV/UAV views.
-[Video format views](formats.md#video-views), [logical planes](formats.md#planes),
-and [format support](formats.md#support) retain format/channel, view and plane
-ownership. Video color space labels do not change the stored DXGI format or
+See [Video format views](formats.md#video-views), [Logical planes](formats.md#planes),
+and [Format support](formats.md#support) for supported formats, channels and views.
+Video color space labels do not change the stored DXGI format or
 grant a shader binding. Codec bitstream grammar and codec-specific DXVA payload
 layouts are [external decode inputs](video-decode.md#codec-input-boundary),
 not inferred from a profile GUID.<!-- d3d12-review-inline:end:video-foundation:N-states:2:authored:migration-f43aab781580f988-0 --></ins>
 
 <a id="driver-shared-object-contracts"></a>
 
-## Current video driver object and recording boundary
+## Video driver objects and recording
 
-<ins><!-- d3d12-review-inline:begin:video-foundation:CS-video-shared:0:authored:migration-74a48cc3400822ac-0 -->Video uses its own `pfnGetCaps`. Its typed protocols are defined by [decode](video-decode.md#ddi-capability-payloads), [processing](video-processing.md#process-discovery), [motion estimation](video-motion-estimation.md#motion-driver-capabilities), [extension commands](video-extension-commands.md#extension-ddi-behavior) and [encoding](video-encoding.md#encoding-driver-capabilities).<!-- d3d12-review-inline:end:video-foundation:CS-video-shared:0:authored:migration-74a48cc3400822ac-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-foundation:CS-video-shared:0:authored:migration-74a48cc3400822ac-0 -->Video uses its own `pfnGetCaps`. See [Decode](video-decode.md#ddi-capability-payloads), [Processing](video-processing.md#process-ddi-associations), [Motion estimation](video-motion-estimation.md#motion-driver-capabilities), [Extension commands](video-extension-commands.md#extension-ddi-capabilities) and [Encoding](video-encoding.md#encoding-driver-capabilities) for driver capability payloads and query protocols.<!-- d3d12-review-inline:end:video-foundation:CS-video-shared:0:authored:migration-74a48cc3400822ac-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-foundation:CS-video-shared:1:authored:migration-d758997e8d59af04-0 -->The runtime allocates the reported private CPU object storage. The driver unwinds failed creation and destroys successfully created objects without freeing runtime-provided storage. Picture allocations and L0/L1 memory requirements are separate.<!-- d3d12-review-inline:end:video-foundation:CS-video-shared:1:authored:migration-d758997e8d59af04-0 --></ins>
 
@@ -310,12 +300,11 @@ not inferred from a profile GUID.<!-- d3d12-review-inline:end:video-foundation:N
 
 ## Protected video capability and access model
 
-<ins><!-- d3d12-review-inline:begin:video-foundation:AB-protected-video-model:0:authored:migration-63ee39cd9ced016e-0 -->Protected support is per video operation. The following contracts apply to
-decode, processing and motion estimation/vector resolution operations and
-their associated creation/selection paths. Motion operations use the
+<ins><!-- d3d12-review-inline:begin:video-foundation:AB-protected-video-model:0:authored:migration-63ee39cd9ced016e-0 -->Protected support is reported per operation for decode, processing and
+motion estimation/vector resolution. Motion operations use the
 VIDEO_ENCODE family. The queue type or a protected session setter does not
 by itself establish protected support for every codec encoding operation.
-API session interfaces and the corresponding driver handles remain distinct.<!-- d3d12-review-inline:end:video-foundation:AB-protected-video-model:0:authored:migration-63ee39cd9ced016e-0 --></ins>
+API session interfaces and the corresponding driver handles are distinct.<!-- d3d12-review-inline:end:video-foundation:AB-protected-video-model:0:authored:migration-63ee39cd9ced016e-0 --></ins>
 
 ```cpp
 typedef
@@ -417,10 +406,6 @@ They use null pInfo, the corresponding payload in pData and that payload's
 sizeof as DataSize. NONE reports unsupported and SUPPORTED reports support;
 the negotiated video payload contract selects the layouts above.<!-- d3d12-review-inline:end:video-foundation:AB-protected-video-discovery:3:authored:migration-b58997c474674913-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-foundation:AB-protected-video-discovery:4:authored:migration-2f408c62857b6fb8-0 -->[Command family availability](video-motion-estimation.md#video-feature-area-support)
+<ins><!-- d3d12-review-inline:begin:video-foundation:AB-protected-video-discovery:4:authored:migration-2f408c62857b6fb8-0 -->[Command family availability](#video-feature-area-support-api)
 and [protected session resource support](resources.md#protected-resource-sessions)
 are separate from the operation-specific protected capability queries above.<!-- d3d12-review-inline:end:video-foundation:AB-protected-video-discovery:4:authored:migration-2f408c62857b6fb8-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:video-foundation:AB-protected-video-discovery:5:authored:migration-22e295b924d8fa75-0 -->**History:** motion protection was not a mandatory inference from the
-WDDM2.6 motion interface. The later WDDM2.7/video0072 contract makes it optional
-through explicit reporting. Existing setter slots alone did not establish it.<!-- d3d12-review-inline:end:video-foundation:AB-protected-video-discovery:5:authored:migration-22e295b924d8fa75-0 --></ins>

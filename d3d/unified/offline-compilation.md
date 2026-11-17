@@ -19,10 +19,6 @@
 and state object output from creation descriptions and shader bytecode. It is
 distinct from HLSL frontend compilation.<!-- d3d12-review-inline:end:compiler-foundation:scope:0:authored:migration-69efd42596151750-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:scope:1:authored:migration-12f63ebc7d6daa9c-0 -->The compiler API reference proceeds from factory and target queries below to
-[invocation and cache output](compiler-invocation-and-cache-output.md).
-The [plugin DDI](compiler-plugin-foundation.md) is the implementer-facing reference.<!-- d3d12-review-inline:end:compiler-foundation:scope:1:authored:migration-12f63ebc7d6daa9c-0 --></ins>
-
 <a id="motivation"></a>
 
 <a id="compiler-runtime-design"></a>
@@ -31,7 +27,7 @@ The [plugin DDI](compiler-plugin-foundation.md) is the implementer-facing refere
 
 GPU hardware vendors expose compilers in an <ins><!-- d3d12-review-inline:begin:compiler-foundation:design-foundation:0:preserved-repair:source-24139fc28290fe8e-0-0 -->[IHV Compiler Plugin](compiler-plugin-foundation.md)<!-- d3d12-review-inline:end:compiler-foundation:design-foundation:0:preserved-repair:source-24139fc28290fe8e-0-0 --></ins> dll via a <ins><!-- d3d12-review-inline:begin:compiler-foundation:design-foundation:0:preserved-repair:source-24139fc28290fe8e-0-1 -->[Plugin DDI](compiler-plugin-foundation.md#compiler-plugin-foundation)<!-- d3d12-review-inline:end:compiler-foundation:design-foundation:0:preserved-repair:source-24139fc28290fe8e-0-1 --></ins>.
 
-The <ins><!-- d3d12-review-inline:begin:compiler-foundation:design-foundation:1 -->[Microsoft Compiler Runtime](#availability)<!-- d3d12-review-inline:end:compiler-foundation:design-foundation:1 --></ins> <ins><!-- d3d12-review-inline:begin:compiler-foundation:design-foundation:1:modified:migration-730f3f5afa53a4df-1 -->wraps<!-- d3d12-review-inline:end:compiler-foundation:design-foundation:1:modified:migration-730f3f5afa53a4df-1 --></ins> these plugins with an <ins><!-- d3d12-review-inline:begin:compiler-foundation:design-foundation:1 -->[API](#exports)<!-- d3d12-review-inline:end:compiler-foundation:design-foundation:1 --></ins> <ins><!-- d3d12-review-inline:begin:compiler-foundation:design-foundation:1:modified:migration-d88b32c4a7a4b92f-3 -->in D3D12StateObjectCompiler.dll<!-- d3d12-review-inline:end:compiler-foundation:design-foundation:1:modified:migration-d88b32c4a7a4b92f-3 --></ins> to expose functionality to Independent Software Vendors(ISVs).
+The <ins><!-- d3d12-review-inline:begin:compiler-foundation:design-foundation:1:modified:section-pass-runtime -->[Microsoft Compiler Runtime](#availability)<!-- d3d12-review-inline:end:compiler-foundation:design-foundation:1:modified:section-pass-runtime --></ins> <ins><!-- d3d12-review-inline:begin:compiler-foundation:design-foundation:1:modified:migration-730f3f5afa53a4df-1 -->wraps<!-- d3d12-review-inline:end:compiler-foundation:design-foundation:1:modified:migration-730f3f5afa53a4df-1 --></ins> these plugins with an <ins><!-- d3d12-review-inline:begin:compiler-foundation:design-foundation:1:modified:section-pass-api -->[API](#exports)<!-- d3d12-review-inline:end:compiler-foundation:design-foundation:1:modified:section-pass-api --></ins> <ins><!-- d3d12-review-inline:begin:compiler-foundation:design-foundation:1:modified:migration-d88b32c4a7a4b92f-3 -->in D3D12StateObjectCompiler.dll<!-- d3d12-review-inline:end:compiler-foundation:design-foundation:1:modified:migration-d88b32c4a7a4b92f-3 --></ins> to expose functionality to Independent Software Vendors(ISVs).
 
 <a id="availability"></a>
 
@@ -44,18 +40,11 @@ The Plugin DDI is separate from the D3D12 Usermode DDI to support factoring comp
 
 - Compiler plugins must be usable without a hardware adapter present to support cloud compilation
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:DEL-I06-current-compatibility:0:authored:migration-b7e28722b2ad90a8-0 -->[Version domains](#version-domains) define the independently versioned compiler,
-application profile and target ABI. [Runtime PSDB compatibility](runtime-cache-discovery.md#compatibility)
-defines acceptance of delivered output by the installed driver.<!-- d3d12-review-inline:end:compiler-foundation:DEL-I06-current-compatibility:0:authored:migration-b7e28722b2ad90a8-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:independence:2:modified:source-3e38830b19db5ea6-0-0 -->The plugin DDI may be implemented with the usermode DDI, but it must not require the usermode driver to be installed or an adapter to be<!-- d3d12-review-inline:end:compiler-foundation:independence:2:modified:source-3e38830b19db5ea6-0-0 --></ins> present.
 
 The Microsoft API is nano-COM and exposes compiling and caching functionality to end users like ISVs and the cloud compilation service.  It allows callers to enumerate and create compilers.
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:factory-identity:0:authored:migration-3a04c61c1584bc22-0 -->`D3D12CompilerCreateFactory` is an export of `D3D12StateObjectCompiler.dll`.
-It creates an `ID3D12CompilerFactory` for the compiler plugin DLL named by the
-caller. Factory creation loads executable plugin code.
-The DLL path is not a data-only input or an authenticity credential.<!-- d3d12-review-inline:end:compiler-foundation:factory-identity:0:authored:migration-3a04c61c1584bc22-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-foundation:factory-identity:0:authored:migration-3a04c61c1584bc22-0 -->`D3D12CompilerCreateFactory` is an export of `D3D12StateObjectCompiler.dll`.<!-- d3d12-review-inline:end:compiler-foundation:factory-identity:0:authored:migration-3a04c61c1584bc22-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:factory-identity:1:authored:migration-6c80eee38960cfc4-0 -->`ID3D12CompilerFactory` and `ID3D12CompilerFactoryChild` derive from `IUnknown`.
 Returned interface references are owned
@@ -65,11 +54,10 @@ child. The plugin module remains loaded while the factory that owns its DDI
 object is alive. The compiler runtime module must remain available while its
 objects or returned blob implementations are in use.<!-- d3d12-review-inline:end:compiler-foundation:factory-identity:1:authored:migration-6c80eee38960cfc4-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:factory-identity:2:authored:migration-8568ccef7d89c2ab-0 -->Factory/target discovery does not establish the presence of a matching physical
-adapter or device support for a pipeline. Compiler host capabilities describe
-the selected target; actual runtime construction retains the capability rules
-of [pipeline state creation](pipeline-state.md) and
-[state object creation](state-objects.md#createstateobject).<!-- d3d12-review-inline:end:compiler-foundation:factory-identity:2:authored:migration-8568ccef7d89c2ab-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-foundation:factory-identity:2:authored:migration-8568ccef7d89c2ab-0 -->Compiler host capabilities describe the selected target. See
+[Pipeline state](pipeline-state.md) and
+[State object creation](state-objects.md#createstateobject) for device
+capability requirements.<!-- d3d12-review-inline:end:compiler-foundation:factory-identity:2:authored:migration-8568ccef7d89c2ab-0 --></ins>
 
 <a id="version-domains"></a>
 
@@ -144,6 +132,8 @@ Drivers often have application specific profiles for optimization or targeted bu
 
 The State Object Compiler queries certain caps to facilitate processing API state object descriptions to DDI descriptions.  State object arguments and other parameters re-use DDI structures to support common implementation between compilers and drivers.  The Usermode DDI version associated with the State Object Plugin DDI version dictates which version of these structures and behavior to use.
 
+### Version comparisons and ABI sets
+
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:distinct-domains:0:authored:migration-70df1600d01df977-0 -->Package version, plugin DDI version, associated usermode DDI version, adapter
 family compiler version, compiler target ABI version, application version and
 application profile version are distinct domains. Equality or numerical ordering
@@ -176,11 +166,8 @@ typedef struct D3D12_ADAPTER_FAMILY
 } D3D12_ADAPTER_FAMILY;
 ```
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:family-type:1:authored:migration-fa390f6707b763df-0 -->The structure contains only the inline adapter family name.
-There is no `CompilerVersion` member. The compiler version query below returns
-that version separately. `szAdapterFamily` has capacity for 128 `WCHAR` elements,
-including string termination. It is not a pointer to separately allocated
-storage and has no input length parameter.<!-- d3d12-review-inline:end:compiler-foundation:family-type:1:authored:migration-fa390f6707b763df-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-foundation:family-type:1:authored:migration-fa390f6707b763df-0 -->`szAdapterFamily` has capacity for 128 `WCHAR` elements,
+including string termination.<!-- d3d12-review-inline:end:compiler-foundation:family-type:1:authored:migration-fa390f6707b763df-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:family-semantics:0:modified:migration-14f8b46baefe172e-0 -->`szAdapterFamily` uniquely identifies an adapter family<!-- d3d12-review-inline:end:compiler-foundation:family-semantics:0:modified:migration-14f8b46baefe172e-0 --></ins> for a hardware vendor.
 
@@ -202,7 +189,7 @@ typedef struct D3D12_COMPILER_TARGET
 
 *AdapterFamilyIndex*
 
-The index of the adapter family to target.  See <ins><!-- d3d12-review-inline:begin:compiler-foundation:target:3 -->[D3D12_ADAPTER_FAMILY](#d3d12_adapter_family)<!-- d3d12-review-inline:end:compiler-foundation:target:3 --></ins> and <ins><!-- d3d12-review-inline:begin:compiler-foundation:target:3 -->[ID3D12CompilerFactory::EnumerateAdapterFamilies](#id3d12compilerfactory-enumerateadapterfamilies)<!-- d3d12-review-inline:end:compiler-foundation:target:3 --></ins>.
+The index of the adapter family to target.  See <ins><!-- d3d12-review-inline:begin:compiler-foundation:target:3:modified:section-pass-family -->[D3D12_ADAPTER_FAMILY](#d3d12_adapter_family)<!-- d3d12-review-inline:end:compiler-foundation:target:3:modified:section-pass-family --></ins> and <ins><!-- d3d12-review-inline:begin:compiler-foundation:target:3:modified:section-pass-enumeration -->[ID3D12CompilerFactory::EnumerateAdapterFamilies](#id3d12compilerfactory-enumerateadapterfamilies)<!-- d3d12-review-inline:end:compiler-foundation:target:3:modified:section-pass-enumeration --></ins>.
 
 *ABIVersion*
 
@@ -227,10 +214,6 @@ engine name (`nullptr` when not applicable), and engine version when an engine
 name is supplied. The process hosting the offline compiler does not supply an
 implicit executable name fallback. These inputs and all referenced strings must
 remain readable during the call. This query does not transfer their ownership.<!-- d3d12-review-inline:end:compiler-foundation:target-resolution:1:authored:migration-96bd5ad07fd031b3-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:D138-discovered-target-context:0:authored:migration-61d50622b365a4d7-0 -->[Registration target discovery](shader-cache-registration.md#target-discovery) supplies adapter-side ABI intervals and compiler/profile information for installation planning. Its application-dependent preference rules and device/adapter explorer context are defined there. The compiler factory's family indices, supported ABI enumeration and explicit target selection below remain distinct.<!-- d3d12-review-inline:end:compiler-foundation:D138-discovered-target-context:0:authored:migration-61d50622b365a4d7-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:D144-runtime-version-roles:0:authored:migration-4666d8827711a08e-0 -->[Runtime PSDB compatibility](runtime-cache-discovery.md#compatibility) applies the driver's inclusive ABI interval and high-32-bit application profile comparison to stored content. This is distinct from enumerating compiler-supported ABIs or resolving an explicit zero-ABI compiler target.<!-- d3d12-review-inline:end:compiler-foundation:D144-runtime-version-roles:0:authored:migration-4666d8827711a08e-0 --></ins>
 
 <a id="exports"></a>
 
@@ -322,12 +305,8 @@ HRESULT D3D12CompilerSerializeVersionedRootSignature(
 #### Behavior
 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:serializer:0:authored:migration-0e1e6a217df097d4-0 -->Serializes a versioned root signature description into an `ID3DBlob` for
-compiler host inputs. This is the compiler runtime export
-`D3D12CompilerSerializeVersionedRootSignature`, not an alias or renamed
-declaration of the ordinary runtime's
-[D3D12SerializeVersionedRootSignature](binding.md#d3d12serializeversionedrootsignature).
-Root signature structures, contents and root binding retain their
-[canonical contract](binding.md#root-signatures).<!-- d3d12-review-inline:end:compiler-foundation:serializer:0:authored:migration-0e1e6a217df097d4-0 --></ins>
+compiler host inputs. See [Root signatures](binding.md#root-signatures) for
+root signature structures, contents and root binding.<!-- d3d12-review-inline:end:compiler-foundation:serializer:0:authored:migration-0e1e6a217df097d4-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:serializer:1:authored:migration-88fae3d5de600d0d-0 -->Serialization does not create an `ID3D12RootSignature`, require an IHV compiler
 plugin or establish that a particular device supports the serialized contents.
@@ -523,7 +502,7 @@ Describes the version of a compiler for an adapter family.
 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-params:0 -->`[in] AdapterFamilyIndex`<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-params:0 --></ins>
 
-The index of the adapter family <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-params:1:modified:migration-ce60e4055f2bbdfc-0 -->to query for its compiler version<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-params:1:modified:migration-ce60e4055f2bbdfc-0 --></ins>.  See <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-params:1 -->[D3D12_ADAPTER_FAMILY](#d3d12_adapter_family)<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-params:1 --></ins> and <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-params:1 -->[ID3D12CompilerFactory::EnumerateAdapterFamilies](#id3d12compilerfactory-enumerateadapterfamilies)<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-params:1 --></ins>.
+The index of the adapter family <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-params:1:modified:migration-ce60e4055f2bbdfc-0 -->to query for its compiler version<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-params:1:modified:migration-ce60e4055f2bbdfc-0 --></ins>.  See <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-params:1:modified:section-pass-family -->[D3D12_ADAPTER_FAMILY](#d3d12_adapter_family)<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-params:1:modified:section-pass-family --></ins> and <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-params:1:modified:section-pass-enumeration -->[ID3D12CompilerFactory::EnumerateAdapterFamilies](#id3d12compilerfactory-enumerateadapterfamilies)<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-params:1:modified:section-pass-enumeration --></ins>.
 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-params:2:modified:migration-66df29e996904281-0 -->`[out] pCompilerVersion`<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-params:2:modified:migration-66df29e996904281-0 --></ins>
 
@@ -538,7 +517,7 @@ Version Hints: Major/Minor version change for "must" recompile such as security 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-results:0:authored:migration-48765762ebd6af49-0 -->`pCompilerVersion` is required writable storage; null returns `E_INVALIDARG`.
 Success returns the plugin's single compiler version for the family. An
 unavailable family is reported as `DXGI_ERROR_NOT_FOUND`. Other plugin failures
-remain failures. This method is not an array enumeration or null output probe.<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-results:0:authored:migration-48765762ebd6af49-0 --></ins>
+remain failures.<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-results:0:authored:migration-48765762ebd6af49-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-results:1:authored:migration-8499afabcb39d368-0 -->The caller must not consume `*pCompilerVersion` after failure. Failure does not
 guarantee a usable result or a zero version.<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-results:1:authored:migration-8499afabcb39d368-0 --></ins>
@@ -634,27 +613,23 @@ reference; releasing it does not detach the child from its owner.<!-- d3d12-revi
 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:get-factory-params:3:authored:migration-7b8497acde34c314-0 -->Required writable storage for an owned interface reference. On success the
 caller releases the returned reference. A null pointer is not an availability
-probe or a request to release the retained factory.<!-- d3d12-review-inline:end:compiler-foundation:get-factory-params:3:authored:migration-7b8497acde34c314-0 --></ins>
+probe.<!-- d3d12-review-inline:end:compiler-foundation:get-factory-params:3:authored:migration-7b8497acde34c314-0 --></ins>
 
 #### Return values
 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:get-factory-results:0:authored:migration-14af07e2e32376f9-0 -->Returns `S_OK` when the requested interface is returned, or `E_NOINTERFACE`
 when the factory does not expose `riid`. For valid output storage, a failed
 interface query returns no interface. A null `ppCompilerFactory` returns
-`E_POINTER`, following the owning factory's `IUnknown::QueryInterface` result.
-This query does not open or load a second plugin and does not create a device.<!-- d3d12-review-inline:end:compiler-foundation:get-factory-results:0:authored:migration-14af07e2e32376f9-0 --></ins>
+`E_POINTER`, following the owning factory's `IUnknown::QueryInterface` result.<!-- d3d12-review-inline:end:compiler-foundation:get-factory-results:0:authored:migration-14af07e2e32376f9-0 --></ins>
 
 <a id="threading"></a>
 
-## Threading and call lifetime
+## Threading
 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:threading-contract:0:authored:migration-af3b4119fd18f857-0 -->Concurrent compiler API calls do not require external application
 synchronization. The compiler plugin must synchronize its internal state as
 necessary. This application API concurrency contract includes
 `D3D12CompilerSerializeVersionedRootSignature`, which does not require a plugin.<!-- d3d12-review-inline:end:compiler-foundation:threading-contract:0:authored:migration-af3b4119fd18f857-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:threading-contract:1:authored:migration-8ec46bed1506aee1-0 -->Input and output pointers must remain valid for their calls, and interface
-references must remain alive while used.<!-- d3d12-review-inline:end:compiler-foundation:threading-contract:1:authored:migration-8ec46bed1506aee1-0 --></ins>
 
 <a id="foundation-example"></a>
 

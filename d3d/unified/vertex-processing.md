@@ -15,9 +15,7 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:geometry:PC-stage-creation-owner:0:authored:migration-da759e5d17fcae67-0 -->The current vertex and input layout driver object creation/sizing/destruction contracts
-are defined with [pipeline component creation](pipeline-state.md#driver-shader-objects)
-and its [exact slot associations](pipeline-state.md#driver-object-slots).<!-- d3d12-review-inline:end:geometry:PC-stage-creation-owner:0:authored:migration-da759e5d17fcae67-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:PC-stage-creation-owner:0:authored:migration-da759e5d17fcae67-0 -->[Vertex shader creation](pipeline-state.md#driver-shader-objects) · [Input layout translation](pipeline-state.md#driver-element-layout) · [Device slots](pipeline-state.md#driver-object-slots).<!-- d3d12-review-inline:end:geometry:PC-stage-creation-owner:0:authored:migration-da759e5d17fcae67-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:geometry:GRI08:0:modified:actor -->The runtime resolves input semantics to shader registers in the [element layout driver representation](pipeline-state.md#driver-element-layout).<!-- d3d12-review-inline:end:geometry:GRI08:0:modified:actor --></ins>
 
@@ -41,11 +39,13 @@ A given sequence of vertices is constructed out of data fetched from Buffers, in
 
 <ins><!-- d3d12-review-inline:begin:geometry:H-no-buffers:0:modified:migration-36bc773873680960-0 -->A minimal use of the Input Assembler is to not have any input Buffers bound (vertex or index data). The Input Assembler can generate counters such as [VertexID](#vertex-id), [InstanceID](#instance-id) and [PrimitiveID](#primitive-id), which can identify vertices/primitives generated in the pipeline by DrawInstanced(), or DrawIndexedInstanced() (if at least an Index Buffer is bound). Thus Shaders can minimally drive all their processing based on the IDs if desired, including fetching appropriate data from Buffers or Textures.<!-- d3d12-review-inline:end:geometry:H-no-buffers:0:modified:migration-36bc773873680960-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:geometry:N-state-owners:0:authored:migration-9718544bd8082929-0 -->The selected [graphics PSO](pipeline-state.md#graphics-description) contains the [input layout](pipeline-state.md#input-and-stream-output) and topology class. The command list supplies the vertex/index buffer views and detailed primitive topology. Input layout use requires the root signature's `D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT` permission. [Initial/reset and bundle state](command-list-state.md#buffer-bindings) and [primitive topology initialization](command-list-state.md#base-graphics) remain the canonical state rules.<!-- d3d12-review-inline:end:geometry:N-state-owners:0:authored:migration-9718544bd8082929-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:N-state-owners:0:authored:migration-9718544bd8082929-0 -->The selected [graphics PSO](pipeline-state.md#graphics-description) contains the [input layout](pipeline-state.md#input-and-stream-output) and topology class. The command list supplies the vertex/index buffer views and detailed primitive topology.<!-- d3d12-review-inline:end:geometry:N-state-owners:0:authored:migration-9718544bd8082929-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:geometry:N-state-owners:0:authored:section-20261117-input-state -->See [Input and output buffer bindings](command-list-state.md#buffer-bindings) for initial buffer bindings and bundle inheritance, [Base graphics state](command-list-state.md#base-graphics) for topology initialization and bundle behavior, and [Indirect execution](command-list-state.md#indirect) for input bindings cleared after `ExecuteIndirect`.<!-- d3d12-review-inline:end:geometry:N-state-owners:0:authored:section-20261117-input-state --></ins>
 
 <ins><!-- d3d12-review-inline:begin:geometry:N-layout-prerequisites:0:authored:migration-3867c23770c914df-0 -->The PSO's [input layout constraints](pipeline-state.md#input-layout-constraints) define same-slot classification/step rate agreement and per-slot appended-element placement. These constraints give each `Slot[s]` in the traversal algorithms one classification and one step rate.<!-- d3d12-review-inline:end:geometry:N-layout-prerequisites:0:authored:migration-3867c23770c914df-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:geometry:H-state:0:modified:migration-dbb1d61154ade3bf-0 -->The states defining the Input Assembler's operation are described here. Draw*() commands recorded on a command list, described [below](#direct-draws), use the currently active IA state to define most of their behavior.<!-- d3d12-review-inline:end:geometry:H-state:0:modified:migration-dbb1d61154ade3bf-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:H-state:0:modified:migration-dbb1d61154ade3bf-0 -->Draw*() commands recorded on a command list, described [below](#direct-draws), use the currently active IA state to define most of their behavior.<!-- d3d12-review-inline:end:geometry:H-state:0:modified:migration-dbb1d61154ade3bf-0 --></ins>
 
 <a id="buffer-views"></a>
 
@@ -103,7 +103,7 @@ The size in bytes of the index buffer.
 
 A [DXGI_FORMAT](formats.md#dxgi-format)-typed value for the index-buffer format.
 
-<ins><!-- d3d12-review-inline:begin:geometry:N-view-bounds:0:authored:migration-98e0536e8eaf5449-0 -->`BufferLocation` is the start GPU virtual address of the view. `SizeInBytes` specifies its accessible byte extent. Vertex/index views are supplied directly, not through descriptor heap handles. The input layout element format interprets vertex data. An index buffer view supplies its own scalar index format. The ordinary index formats are `DXGI_FORMAT_R16_UINT` and `DXGI_FORMAT_R32_UINT`.<!-- d3d12-review-inline:end:geometry:N-view-bounds:0:authored:migration-98e0536e8eaf5449-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:N-view-bounds:0:authored:migration-98e0536e8eaf5449-0 -->Vertex/index views are supplied directly, not through descriptor heap handles. The ordinary index formats are `DXGI_FORMAT_R16_UINT` and `DXGI_FORMAT_R32_UINT`.<!-- d3d12-review-inline:end:geometry:N-view-bounds:0:authored:migration-98e0536e8eaf5449-0 --></ins>
 
 <a id="topology-enumeration"></a>
 
@@ -162,6 +162,10 @@ typedef enum D3D_PRIMITIVE_TOPOLOGY
 ```cpp
 typedef D3D_PRIMITIVE_TOPOLOGY D3D12_PRIMITIVE_TOPOLOGY;
 ```
+
+## Recording requirements
+
+<ins><!-- d3d12-review-inline:begin:geometry:N-recording:0:authored:migration-768b109eb947bbc0-0 -->These graphics input binding and direct draw commands are supported on DIRECT and BUNDLE recordings, not COMPUTE or COPY recordings. Draws require a compatible graphics PSO, root signature and detailed topology. Bound resources must satisfy [recording/execution lifetime](execution.md#lifetime), [residency](resources.md#residency), and the applicable [legacy states](synchronization.md#legacy-resource-states) or [enhanced access rules](synchronization.md#barrier-access). Vertex and index reads have distinct access categories; binding a view does not perform a transition.<!-- d3d12-review-inline:end:geometry:N-recording:0:authored:migration-768b109eb947bbc0-0 --></ins>
 
 <a id="input-binding-apis"></a>
 
@@ -235,7 +239,7 @@ None
 
 #### Binding constraints
 
-<ins><!-- d3d12-review-inline:begin:geometry:N-vertex-bind:0:authored:migration-21d583afcf72d642-0 -->`StartSlot` must be less than 32, and `NumViews` must not exceed `32 - StartSlot`. A null `pViews` clears that range. A valid zero count changes no slots. Slots outside the specified range are unchanged. A vertex stride of zero is permitted. The maximum is `D3D12_REQ_MULTI_ELEMENT_STRUCTURE_SIZE_IN_BYTES` (2048). A zero `BufferLocation` with nonzero `SizeInBytes` is invalid. The views carry addresses, sizes and strides. They do not bind or retain resource COM objects.<!-- d3d12-review-inline:end:geometry:N-vertex-bind:0:authored:migration-21d583afcf72d642-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:N-vertex-bind:0:authored:migration-21d583afcf72d642-0 -->`StartSlot` must be less than 32, and `NumViews` must not exceed `32 - StartSlot`. A null `pViews` clears that range. A valid zero count changes no slots. Slots outside the specified range are unchanged. A vertex stride of zero is permitted. The maximum is `D3D12_REQ_MULTI_ELEMENT_STRUCTURE_SIZE_IN_BYTES` (2048). A zero `BufferLocation` with nonzero `SizeInBytes` is invalid.<!-- d3d12-review-inline:end:geometry:N-vertex-bind:0:authored:migration-21d583afcf72d642-0 --></ins>
 
 <a id="iasetindexbuffer"></a>
 
@@ -283,7 +287,7 @@ void IASetIndexBufferStripCutValue(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:geometry:N-dynamic-cut:0:authored:migration-db1a4d889ccd9f9b-0 -->Sets the current index buffer strip-cut value. The [dynamic application state contract](command-list-state.md#dynamic-application-state) defines `DynamicIndexBufferStripCutSupported`, the required pipeline creation flag, initial/reset and bundle values, and overwrite on PSO selection. This command does not change the PSO's stored description.<!-- d3d12-review-inline:end:geometry:N-dynamic-cut:0:authored:migration-db1a4d889ccd9f9b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:N-dynamic-cut:0:authored:migration-db1a4d889ccd9f9b-0 -->Sets the current [index buffer strip-cut value](command-list-state.md#dynamic-application-state).<!-- d3d12-review-inline:end:geometry:N-dynamic-cut:0:authored:migration-db1a4d889ccd9f9b-0 --></ins>
 
 #### Parameters
 
@@ -298,8 +302,6 @@ void IASetIndexBufferStripCutValue(
 <a id="direct-draws"></a>
 
 ## Direct draw APIs
-
-<ins><!-- d3d12-review-inline:begin:geometry:N-recording:0:authored:migration-768b109eb947bbc0-0 -->These graphics input binding and direct draw commands are supported on DIRECT and BUNDLE recordings, not COMPUTE or COPY recordings. Draws require a compatible graphics PSO, root signature and detailed topology. Bound resources must satisfy [recording/execution lifetime](execution.md#lifetime), [residency](resources.md#residency), and the applicable [legacy states](synchronization.md#legacy-resource-states) or [enhanced access rules](synchronization.md#barrier-access). Vertex and index reads have distinct access categories; binding a view does not perform a transition.<!-- d3d12-review-inline:end:geometry:N-recording:0:authored:migration-768b109eb947bbc0-0 --></ins>
 
 <a id="drawinstanced"></a>
 
@@ -342,7 +344,7 @@ None
 
 #### Execution constraints
 
-<ins><!-- d3d12-review-inline:begin:geometry:N-work-DrawInstanced:0:authored:migration-4e978bfbab16b567-0 -->The draw uses the currently selected graphics state. A zero per-instance count or zero `InstanceCount` generates no primitives. It does not waive other recording state requirements.<!-- d3d12-review-inline:end:geometry:N-work-DrawInstanced:0:authored:migration-4e978bfbab16b567-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:N-work-DrawInstanced:0:authored:migration-4e978bfbab16b567-0 -->A zero per-instance count or zero `InstanceCount` generates no primitives.<!-- d3d12-review-inline:end:geometry:N-work-DrawInstanced:0:authored:migration-4e978bfbab16b567-0 --></ins>
 
 <a id="drawindexedinstanced"></a>
 
@@ -387,15 +389,15 @@ None
 
 #### Execution constraints
 
-<ins><!-- d3d12-review-inline:begin:geometry:N-work-DrawIndexedInstanced:0:authored:migration-8a74c6684680c23f-0 -->The draw uses the currently selected graphics state. A zero per-instance count or zero `InstanceCount` generates no primitives. It does not waive other recording state requirements.<!-- d3d12-review-inline:end:geometry:N-work-DrawIndexedInstanced:0:authored:migration-8a74c6684680c23f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:N-work-DrawIndexedInstanced:0:authored:migration-8a74c6684680c23f-0 -->A zero per-instance count or zero `InstanceCount` generates no primitives.<!-- d3d12-review-inline:end:geometry:N-work-DrawIndexedInstanced:0:authored:migration-8a74c6684680c23f-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:geometry:N-indirect-canonical-owner:0:authored:migration-8be6cb352ae246f8-0 -->The same draw field meanings and traversal rules apply to the [non-indexed](indirect-execution.md#draw-arguments) and [indexed](indirect-execution.md#draw-indexed-arguments) indirect payloads. Command signatures, record layouts and argument/count buffer execution have their canonical definition in [Indirect execution](indirect-execution.md#argument-records).<!-- d3d12-review-inline:end:geometry:N-indirect-canonical-owner:0:authored:migration-8be6cb352ae246f8-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:N-indirect-canonical-owner:0:authored:migration-8be6cb352ae246f8-0 -->The same draw field meanings and traversal rules apply to the [non-indexed](indirect-execution.md#draw-arguments) and [indexed](indirect-execution.md#draw-indexed-arguments) indirect payloads.<!-- d3d12-review-inline:end:geometry:N-indirect-canonical-owner:0:authored:migration-8be6cb352ae246f8-0 --></ins>
 
 <a id="address-generation"></a>
 
 ## Address generation and instancing
 
-<ins><!-- d3d12-review-inline:begin:geometry:N-pseudocode-model:0:authored:migration-7e86c6ea03740dcf-0 -->The following pseudocode specifies vertex/index traversal. Its abstract `Slot`, layout/register mapping and helper functions are not additional API structures. `Slot[s].StrideInBytes` is the bound vertex view's stride, and its layout is the PSO input layout resolved against the vertex shader signature. Addresses in the algorithms are view-relative byte offsets. The fetch adds the view's 64-bit `BufferLocation` and applies its `SizeInBytes` bounds. The view's starting address incorporates any initial resource-relative buffer offset. That offset is not added a second time. `sizeof(IndexBuffer.Format)` means the index element width in bytes, not the C++ enum's size.<!-- d3d12-review-inline:end:geometry:N-pseudocode-model:0:authored:migration-7e86c6ea03740dcf-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:N-pseudocode-model:0:authored:migration-7e86c6ea03740dcf-0 -->The pseudocode's abstract `Slot`, layout/register mapping and helper functions are not additional API structures. `Slot[s].StrideInBytes` is the bound vertex view's stride, and its layout is the PSO input layout resolved against the vertex shader signature. Addresses in the algorithms are view-relative byte offsets. The fetch adds the view's 64-bit `BufferLocation` and applies its `SizeInBytes` bounds. The view's starting address incorporates any initial resource-relative buffer offset. That offset is not added a second time. `sizeof(IndexBuffer.Format)` means the index element width in bytes, not the C++ enum's size.<!-- d3d12-review-inline:end:geometry:N-pseudocode-model:0:authored:migration-7e86c6ea03740dcf-0 --></ins>
 
 <a id="nonindexed-addresses"></a>
 
@@ -631,7 +633,7 @@ for(UINT InstanceID = 0; InstanceID < InstanceCount; InstanceID++)
 
 <ins><!-- d3d12-review-inline:begin:geometry:H-cut:2 -->Note that providing a behavior for the cut value when used with a non-strip topology is a way of saying that the behavior is defined, allowing hardware to keep the cut behavior always enabled. In practice though, using cut for a list topology is obviously not a "feature" that it would ever make sense for an application to author to.<!-- d3d12-review-inline:end:geometry:H-cut:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:geometry:N-cut-state:0:authored:migration-74572e5e2dc3318d-0 -->`D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED` disables index value restart. The other selected values are 0xffff and 0xffffffff. `IsCutIndex` in the pseudocode tests the fetched index against the enabled cut value before adding `BaseVertexLocation`. Static `IBStripCutValue` belongs to the PSO. [Dynamic strip-cut state](command-list-state.md#dynamic-state) defines capability, creation flag, bundle and PSO-reselection effects.<!-- d3d12-review-inline:end:geometry:N-cut-state:0:authored:migration-74572e5e2dc3318d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:N-cut-state:0:authored:migration-74572e5e2dc3318d-0 -->`D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED` disables index value restart. The other selected values are 0xffff and 0xffffffff. `IsCutIndex` in the pseudocode tests the fetched index against the enabled cut value before adding `BaseVertexLocation`. Static `IBStripCutValue` belongs to the PSO.<!-- d3d12-review-inline:end:geometry:N-cut-state:0:authored:migration-74572e5e2dc3318d-0 --></ins>
 
 <a id="d3d12-index-buffer-strip-cut-value"></a>
 
@@ -1006,8 +1008,6 @@ aligned as per the previous rule.
 
 <ins><!-- d3d12-review-inline:begin:geometry:H-example-prose:3 -->The following setup table specifies the buffer views and input layout state; the figure shows the resulting workload.<!-- d3d12-review-inline:end:geometry:H-example-prose:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:geometry:N-example-views:0:authored:migration-7bf095bc4889e3d6-0 -->The API call and views for this example are:<!-- d3d12-review-inline:end:geometry:N-example-views:0:authored:migration-7bf095bc4889e3d6-0 --></ins>
-
 ```cpp
 DrawIndexedInstanced(17, 3, 3, 2, 6);
 ```
@@ -1047,8 +1047,6 @@ DrawIndexedInstanced(17, 3, 3, 2, 6);
 
 ## Vertex processing
 
-<ins><!-- d3d12-review-inline:begin:geometry:STAGES-program-selection:0:authored:migration-21dd5f3080ac00d7-0 -->The graphics PSO selects the vertex, hull and domain shaders. Their [creation/linkage constraints](pipeline-state.md#compatibility) and [root signature/resource binding](binding.md#pipeline-compatibility) apply independently of the stage execution rules below. The input assembler path uses the [fetching and generated identifiers](#address-generation) already defined in this chapter.<!-- d3d12-review-inline:end:geometry:STAGES-program-selection:0:authored:migration-21dd5f3080ac00d7-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:geometry:STAGES-9.1:0 -->The DXBC Vertex Shader instruction set is listed in the [instruction reference](../archive/D3D11_3_FunctionalSpec.htm#VSInstructionSet).<!-- d3d12-review-inline:end:geometry:STAGES-9.1:0 --></ins>
 
 <a id="vertex-invocation"></a>
@@ -1079,7 +1077,7 @@ DrawIndexedInstanced(17, 3, 3, 2, 6);
 
 <ins><!-- d3d12-review-inline:begin:geometry:STAGES-common-interface-capacities:2:authored:migration-d1c2762425719d9f-0 -->These are logical slot/storage budgets. The DXBC tables' 32-bit notation does not prohibit supported minimum-precision or native lower-precision component types, and narrower types do not by themselves double these capacities. The [view-dependent storage rules](#geometry-view-storage) also apply.<!-- d3d12-review-inline:end:geometry:STAGES-common-interface-capacities:2:authored:migration-d1c2762425719d9f-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:geometry:STAGES-logical-model:0:authored:migration-7ac0d98d44040101-0 -->Tables explicitly labeled DXBC describe that register and declaration model. They do not prescribe a DXIL register encoding. Shared resource binding and its limits are defined by [Resource binding and root signatures](binding.md).<!-- d3d12-review-inline:end:geometry:STAGES-logical-model:0:authored:migration-7ac0d98d44040101-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:STAGES-logical-model:0:authored:migration-7ac0d98d44040101-0 -->Tables explicitly labeled DXBC describe that register and declaration model. They do not prescribe a DXIL register encoding.<!-- d3d12-review-inline:end:geometry:STAGES-logical-model:0:authored:migration-7ac0d98d44040101-0 --></ins>
 
 <a id="vertex-inputs"></a>
 
@@ -1115,7 +1113,7 @@ DrawIndexedInstanced(17, 3, 3, 2, 6);
 
 ## View instancing across geometry stages
 
-<ins><!-- d3d12-review-inline:begin:geometry:STAGES-view-owners:0:authored:migration-2349a49c96b0281c-0 -->The [PSO view instancing declaration and capability gates](pipeline-state.md#view-instancing) and [command list view mask](command-list-state.md#view-mask) apply. The following rules describe traditional graphics stage dependencies, interstage storage and ordering, including tessellation. They do not impose a shader invocation order merely because primitives retire in order.<!-- d3d12-review-inline:end:geometry:STAGES-view-owners:0:authored:migration-2349a49c96b0281c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:STAGES-view-owners:0:authored:migration-2349a49c96b0281c-0 -->See [View instancing](pipeline-state.md#view-instancing) for the PSO declaration and capability gates, and [View mask](command-list-state.md#view-mask) for command list masking.<!-- d3d12-review-inline:end:geometry:STAGES-view-owners:0:authored:migration-2349a49c96b0281c-0 --></ins>
 
 <a id="geometry-view-id"></a>
 
@@ -1350,10 +1348,9 @@ enabled. This enables coarsely culling draws from particular views that
 an application knows will not be covered.
 
 <ins><!-- d3d12-review-inline:begin:geometry:GS-view-mask-rules:0:authored:migration-d23c4bee054e5727-0 -->The mask is honored only by PSOs that enable view instancing and set
-`D3D12_VIEW_INSTANCING_FLAG_ENABLE_VIEW_INSTANCE_MASKING`. It does not change
-the PSO's view instance declaration. Initial/reset values and the distinct
-bundle input/output behavior follow the
-[canonical view mask state](command-list-state.md#view-mask).<!-- d3d12-review-inline:end:geometry:GS-view-mask-rules:0:authored:migration-d23c4bee054e5727-0 --></ins>
+`D3D12_VIEW_INSTANCING_FLAG_ENABLE_VIEW_INSTANCE_MASKING`. See
+[View mask](command-list-state.md#view-mask) for initial/reset values and
+the distinct bundle input/output behavior.<!-- d3d12-review-inline:end:geometry:GS-view-mask-rules:0:authored:migration-d23c4bee054e5727-0 --></ins>
 
 #### Parameters
 
@@ -1367,9 +1364,7 @@ bundle input/output behavior follow the
 
 ## Driver responsibilities
 
-<ins><!-- d3d12-review-inline:begin:geometry:N-driver:0:authored:migration-7a2f0adf6591379d-0 -->The runtime resolves input layout semantics against the vertex shader's signature before driver pipeline state creation.<!-- d3d12-review-inline:end:geometry:N-driver:0:authored:migration-7a2f0adf6591379d-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:geometry:N-driver-surface:0:authored:migration-94e0ac0ebbb24335-0 -->The `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108` table contains these driver entry points:<!-- d3d12-review-inline:end:geometry:N-driver-surface:0:authored:migration-94e0ac0ebbb24335-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:geometry:N-driver-surface:0:authored:migration-94e0ac0ebbb24335-0 -->`D3D12DDI_COMMAND_LIST_FUNCS_3D_0108` members:<!-- d3d12-review-inline:end:geometry:N-driver-surface:0:authored:migration-94e0ac0ebbb24335-0 --></ins>
 
 ```cpp
 PFND3D12DDI_DRAWINSTANCED                                              pfnDrawInstanced;
@@ -1534,8 +1529,6 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SETVIEWINSTANCEMASK_0114 )( D3D12DDI_API_HC
 <a id="driver-draw"></a>
 
 ### Direct draw DDIs
-
-<ins><!-- d3d12-review-inline:begin:geometry:N-draw-parameter-order:0:authored:fragment-prefix -->After the <!-- d3d12-review-inline:end:geometry:N-draw-parameter-order:0:authored:fragment-prefix --></ins><ins><!-- d3d12-review-inline:begin:geometry:GRI15:0:modified:terminology -->command list<!-- d3d12-review-inline:end:geometry:GRI15:0:modified:terminology --></ins><ins><!-- d3d12-review-inline:begin:geometry:N-draw-parameter-order:0:authored:fragment-suffix --> handle, draw arguments follow the associated API's parameter order.<!-- d3d12-review-inline:end:geometry:N-draw-parameter-order:0:authored:fragment-suffix --></ins>
 
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_DRAWINSTANCED )(

@@ -15,14 +15,11 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-types:type-intro:0:authored:migration-89a2ba12e95ce43b-0 -->**Qualified draft.** The [encoding contract](video-encoding.md) owns the conceptual and API route.
-This reference supplies the selected released application-facing declarations.
-[Capabilities and controls](video-encoding-controls.md)
-and [codec contracts](video-encoding-codecs.md) define their field meanings
-and applicability.
-`DataSize` describes the selected pointed-to payload, not the wrapper itself.
-The [shared driver type reference](video-encoding.md#encoding-driver-types)
-is subordinate to the same encoding, codec and control contracts.<!-- d3d12-review-inline:end:video-encoding-types:type-intro:0:authored:migration-89a2ba12e95ce43b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding-types:type-intro:0:authored:migration-89a2ba12e95ce43b-0 -->`DataSize` describes the selected pointed-to payload, not the wrapper itself.
+See [Capabilities and controls](video-encoding-controls.md) for query inputs and outputs,
+units and parameter restrictions. See [Codec contracts](video-encoding-codecs.md)
+for codec-specific member meanings and bitstream syntax.
+<!-- d3d12-review-inline:end:video-encoding-types:type-intro:0:authored:migration-89a2ba12e95ce43b-0 --></ins>
 
 <a id="encoding-av1-tile-bounds"></a>
 
@@ -561,7 +558,7 @@ typedef struct D3D12_VIDEO_ENCODER_AV1_CODEC_CONFIGURATION {
 } D3D12_VIDEO_ENCODER_AV1_CODEC_CONFIGURATION;
 ```
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-types:weekend-vi07-codec-members:0:authored:owner -->The [AV1 codec configuration member contracts](video-encoding-codecs.md#source-s02-039) define FeatureFlags and the codec order-hint-width setting.<!-- d3d12-review-inline:end:video-encoding-types:weekend-vi07-codec-members:0:authored:owner --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding-types:weekend-vi07-codec-members:0:authored:owner -->[AV1 codec configuration member contracts](video-encoding-codecs.md#source-s02-039).<!-- d3d12-review-inline:end:video-encoding-types:weekend-vi07-codec-members:0:authored:owner --></ins>
 
 <a id="d3d12-video-encoder-av1-codec-configuration-support"></a>
 
@@ -597,8 +594,6 @@ typedef enum D3D12_VIDEO_ENCODER_AV1_COMP_PREDICTION_TYPE
 <a id="d3d12-video-encoder-av1-feature-flags"></a>
 
 ## D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAGS
-
-<ins><!-- d3d12-review-inline:begin:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAGS:0:authored:migration-985df7b1d0362bf5-0 -->The declaration below lists this family's selected members. It is not an exhaustive inventory of separately specified extensions.<!-- d3d12-review-inline:end:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAGS:0:authored:migration-985df7b1d0362bf5-0 --></ins>
 
 ```cpp
 typedef enum D3D12_VIDEO_ENCODER_AV1_FEATURE_FLAGS
@@ -1358,8 +1353,6 @@ typedef enum D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_CUSIZE {
 
 ## D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAGS
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAGS:0:authored:migration-a41b2558f3e6b6f6-0 -->The declaration below lists this family's selected members. It is not an exhaustive inventory of separately specified extensions.<!-- d3d12-review-inline:end:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAGS:0:authored:migration-a41b2558f3e6b6f6-0 --></ins>
-
 ```cpp
 typedef enum D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_HEVC_FLAGS
 {
@@ -1530,8 +1523,6 @@ typedef enum D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS
 <a id="d3d12-video-encoder-codec-configuration-support-hevc-flags1"></a>
 
 ## D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS1
-
-<ins><!-- d3d12-review-inline:begin:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS1:0:authored:migration-ce5baa87bcebabe5-0 -->The declaration below lists this family's selected members. It is not an exhaustive inventory of separately specified extensions.<!-- d3d12-review-inline:end:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS1:0:authored:migration-ce5baa87bcebabe5-0 --></ins>
 
 ```cpp
 typedef enum D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAGS1
@@ -3240,8 +3231,6 @@ typedef enum D3D12_VIDEO_ENCODER_SUBREGION_COMPRESSED_BITSTREAM_BUFFER_MODE
 <a id="d3d12-video-encoder-support-flags"></a>
 
 ## D3D12_VIDEO_ENCODER_SUPPORT_FLAGS
-
-<ins><!-- d3d12-review-inline:begin:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_SUPPORT_FLAGS:0:authored:migration-39417999a796eef1-0 -->The declaration below lists this family's selected members. It is not an exhaustive inventory of separately specified extensions.<!-- d3d12-review-inline:end:video-encoding-types:type-selected-D3D12_VIDEO_ENCODER_SUPPORT_FLAGS:0:authored:migration-39417999a796eef1-0 --></ins>
 
 ```cpp
 typedef enum D3D12_VIDEO_ENCODER_SUPPORT_FLAGS

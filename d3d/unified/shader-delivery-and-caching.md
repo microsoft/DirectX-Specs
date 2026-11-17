@@ -19,34 +19,19 @@
 [Offline driver/pipeline compilation](offline-compilation.md#compiler-runtime-design)
 produces vendor-dependent pipeline state and state object output from that bytecode.<!-- d3d12-review-inline:end:shader-cache:framing:0:authored:migration-0e7d8601ca6c4b9f-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:framing:1:authored:migration-96d71e0bd11851b5-0 -->Cached pipeline state blobs and pipeline libraries are supported legacy mechanisms.
-Legacy classification does not make their methods removed, deprecated or no-ops.
-Their complete storage, lifetime, matching and compatibility contracts apply.<!-- d3d12-review-inline:end:shader-cache:framing:1:authored:migration-96d71e0bd11851b5-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:shader-cache:framing:2:authored:migration-bbfd74208e4cc5d2-0 -->Application cache sessions store application-selected opaque key/value data.
 They are distinct from the caches used for driver compilations or runtime shader
-conversions. A cache operation does not compile, validate or sign its values.<!-- d3d12-review-inline:end:shader-cache:framing:2:authored:migration-bbfd74208e4cc5d2-0 --></ins>
+conversions.<!-- d3d12-review-inline:end:shader-cache:framing:2:authored:migration-bbfd74208e4cc5d2-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:owners:0:authored:migration-3df9dcd91ec9ad88-0 -->Pipeline state defines [aggregate PSO descriptions](pipeline-state.md#aggregate-descriptions),
-[stream descriptions](pipeline-state.md#streams), [PSO creation APIs](pipeline-state.md#apis)
-and [cached PSO input consumption](pipeline-state.md#cached-data).
-[Shader hash-bypass capability](devices-and-capabilities.md#d3d12_feature_data_bytecode_bypass_hash_supported)
-and [bytecode validation policy](diagnostics.md#d3d12-debug-device-bytecode-validation-mode)
-qualify shader acceptance; cache storage does not add an unconditional signed-shader
-requirement. [Feature queries](devices-and-capabilities.md#id3d12device-checkfeaturesupport)
-own payload layout and query validation. [CPU threading](execution.md#threading)
-and [submitted-object lifetime](execution.md#lifetime) remain execution
-contracts.<!-- d3d12-review-inline:end:shader-cache:owners:0:authored:migration-3df9dcd91ec9ad88-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:shader-cache:D147-ASD-reference:0:authored:migration-a735b683289156cf-0 -->[Advanced Shader Delivery](advanced-shader-delivery.md) groups SODB inputs, offline compiler interfaces and registered precompiled shader database (PSDB) delivery. [Compiler cache sessions](compiler-invocation-and-cache-output.md#output-storage) store typed compilation results and group mappings, distinct from the application-selected opaque values and supported legacy pipeline caches below. [Runtime discovery](runtime-cache-discovery.md#runtime-cache-discovery) defines read-only PSDB eligibility and [retained initialization state](runtime-cache-discovery.md#failure-and-lifetime). It is not a cache-hit guarantee or a promise that cache controls rediscover a different registered component.<!-- d3d12-review-inline:end:shader-cache:D147-ASD-reference:0:authored:migration-a735b683289156cf-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:D147-ASD-reference:0:authored:migration-a735b683289156cf-0 -->[Compiler cache sessions](compiler-invocation-and-cache-output.md#output-storage) store typed compilation results and group mappings, distinct from the application-selected opaque values and supported legacy pipeline caches below.<!-- d3d12-review-inline:end:shader-cache:D147-ASD-reference:0:authored:migration-a735b683289156cf-0 --></ins>
 
 <a id="cache-support"></a>
 
 ## Cache support and availability
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:capability-owner:0:authored:migration-13431584d701115a-0 -->The `SupportFlags` output of
-[`D3D12_FEATURE_DATA_SHADER_CACHE`](devices-and-capabilities.md#d3d12_feature_data_shader_cache)
-uses the following bits. [`D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT`](devices-and-capabilities.md#d3d12_feature_data_shadercache_abi_support)
+<ins><!-- d3d12-review-inline:begin:shader-cache:capability-owner:0:authored:migration-13431584d701115a-0 -->`D3D12_SHADER_CACHE_SUPPORT_FLAGS` describes the `SupportFlags` output of
+[`D3D12_FEATURE_DATA_SHADER_CACHE`](devices-and-capabilities.md#d3d12_feature_data_shader_cache).
+[`D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT`](devices-and-capabilities.md#d3d12_feature_data_shadercache_abi_support)
 is a distinct query. Its ABI range is not a portability guarantee for a legacy
 serialized library or cached PSO.<!-- d3d12-review-inline:end:shader-cache:capability-owner:0:authored:migration-13431584d701115a-0 --></ins>
 
@@ -87,20 +72,11 @@ typedef enum D3D12_SHADER_CACHE_SUPPORT_FLAGS
 <!-- d3d12-review-alert:end:shader-cache:support-meaning:0:authored:migration-8e1e610157f9a7c2-0 -->
 
 <ins><!-- d3d12-review-inline:begin:shader-cache:support-meaning:1:authored:migration-6394dad8901abc31-0 -->The shortened flag names in this table have prefix `D3D12_SHADER_CACHE_SUPPORT_`.
-Support bits describe capabilities, not the presence of a particular cache entry.
-An implicit cache kind may not exist even when a control request names it.
-Application session availability, clear capability and developer mode permission
-for enabling/disabling caches are separate conditions; driver compilation cache support is not application value validation.<!-- d3d12-review-inline:end:shader-cache:support-meaning:1:authored:migration-6394dad8901abc31-0 --></ins>
+An implicit cache kind may not exist even when a control request names it.<!-- d3d12-review-inline:end:shader-cache:support-meaning:1:authored:migration-6394dad8901abc31-0 --></ins>
 
 <a id="cache-sessions"></a>
 
 ## Application-owned cache sessions
-
-<ins><!-- d3d12-review-inline:begin:shader-cache:session-type-owners:0:authored:migration-886f53bc9dbb1a70-0 -->Sessions use the [session descriptor](#d3d12-shader-cache-session-desc),
-[storage modes](#d3d12-shader-cache-mode) and [session flags](#d3d12-shader-cache-flags).
-Cache control uses the separate [kind mask](#d3d12-shader-cache-kind-flags)
-and [control mask](#d3d12-shader-cache-control-flags). These types are not PSO
-descriptions or shader bytecode containers.<!-- d3d12-review-inline:end:shader-cache:session-type-owners:0:authored:migration-886f53bc9dbb1a70-0 --></ins>
 
 <!-- d3d12-review-alert:begin:shader-cache:session-background:0:modified:migration-7fd3131cc06cdc1e-0 -->
 
@@ -502,7 +478,7 @@ The size of the entry to add, in bytes.
 nonzero. These invalid arguments return `E_INVALIDARG`. Both sizes are
 `UINT` byte counts; application arithmetic must not overflow or truncate them.
 Cache storage and metadata limits may reject an entry before either count reaches
-`UINT_MAX`. These counts are not a minimum opaque shader/blob format size.<!-- d3d12-review-inline:end:shader-cache:contract-StoreValue:0:authored:migration-86199426e5daa787-0 --></ins>
+`UINT_MAX`.<!-- d3d12-review-inline:end:shader-cache:contract-StoreValue:0:authored:migration-86199426e5daa787-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:shader-cache:contract-StoreValue:1:authored:migration-628f4fe4e127c9d6-0 -->The cache consumes the key and value bytes during the call. The application may
 reuse its input buffers after the call returns. This does not transfer ownership
@@ -580,7 +556,8 @@ HRESULT ShaderCacheControl(D3D12_SHADER_CACHE_KIND_FLAGS Kinds, D3D12_SHADER_CAC
 `CLEAR` alone is permitted without developer mode when
 `D3D12_SHADER_CACHE_SUPPORT_SHADER_CONTROL_CLEAR` is reported.
 `ENABLE` and `DISABLE` require developer mode, including when combined with
-`CLEAR`. The [control scope and failure ordering](#cache-control-scope) apply.<!-- d3d12-review-inline:end:shader-cache:ID3D12Device9-ShaderCacheControl-description:1 --></ins>
+`CLEAR`. See [Control scope and failure ordering](#cache-control-scope) for
+per-device enable/disable state and partial effects on failure.<!-- d3d12-review-inline:end:shader-cache:ID3D12Device9-ShaderCacheControl-description:1 --></ins>
 
 #### Parameters
 
@@ -637,15 +614,7 @@ combined operation does not imply that enable/disable state is unchanged.<!-- d3
 <ins><!-- d3d12-review-inline:begin:shader-cache:library-model:0:authored:migration-83af036ca1550e7b-0 -->A pipeline library groups compatible PSOs and serializes their cache data.
 It does not replace the complete PSO description needed by the load methods.
 Sharing identical subcomponents can reduce metadata and duplicated data compared
-with separately serialized single-PSO caches. This is not a guarantee of a
-particular performance improvement.<!-- d3d12-review-inline:end:shader-cache:library-model:0:authored:migration-83af036ca1550e7b-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:shader-cache:library-model:1:authored:migration-bf1de0821c000614-0 -->The [library thread safety contract](#library-thread-safety) governs access.<!-- d3d12-review-inline:end:shader-cache:library-model:1:authored:migration-bf1de0821c000614-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:shader-cache:library-model:2:authored:migration-cb27ae3ff0432a39-0 -->**History:** Pipeline library caching was recommended to reduce driver PSO
-creation overhead. Driver/runtime updates,
-adapter or machine changes can invalidate stored data, and applications still
-incur matching, validation, storage and loading costs.<!-- d3d12-review-inline:end:shader-cache:library-model:2:authored:migration-cb27ae3ff0432a39-0 --></ins>
+with separately serialized single-PSO caches.<!-- d3d12-review-inline:end:shader-cache:library-model:0:authored:migration-83af036ca1550e7b-0 --></ins>
 
 <a id="library-thread-safety"></a>
 
@@ -712,16 +681,14 @@ Its success does not establish that the requested interface is supported.<!-- d3
 
 A pipeline library enables the following operations.
 
-- <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:2 -->Adding pipeline state objects (PSOs) to an existing library object (refer to [StorePipeline](#id3d12pipelinelibrary-storepipeline)).<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:2 --></ins>
-- <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:2 -->Serializing a PSO library into a contiguous block of memory for disk storage (refer to [Serialize](#id3d12pipelinelibrary-serialize)).<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:2 --></ins>
-- <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:2 -->De-serializing a PSO library from persistent storage (this is handled by **CreatePipelineLibrary**).<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:2 --></ins>
-- <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:2 -->Retrieving individual PSOs from the library (refer to [LoadComputePipeline](#id3d12pipelinelibrary-loadcomputepipeline) and [LoadGraphicsPipeline](#id3d12pipelinelibrary-loadgraphicspipeline)).<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:2 --></ins>
+- <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:2:modified:section-pass-store -->Adding pipeline state objects (PSOs) to an existing library object (refer to [StorePipeline](#id3d12pipelinelibrary-storepipeline)).<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:2:modified:section-pass-store --></ins>
+- <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:2:modified:section-pass-serialize -->Serializing a PSO library into a contiguous block of memory for disk storage (refer to [Serialize](#id3d12pipelinelibrary-serialize)).<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:2:modified:section-pass-serialize --></ins>
+- <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:2:modified:section-pass-open -->De-serializing a PSO library from persistent storage (this is handled by **CreatePipelineLibrary**).<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:2:modified:section-pass-open --></ins>
+- <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:2:modified:section-pass-load -->Retrieving individual PSOs from the library (refer to [LoadComputePipeline](#id3d12pipelinelibrary-loadcomputepipeline) and [LoadGraphicsPipeline](#id3d12pipelinelibrary-loadgraphicspipeline)).<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:2:modified:section-pass-load --></ins>
 
 At no point in the lifecycle of a pipeline library is there duplication between PSOs with identical sub-components.
 
 <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:4 -->A recommended solution for managing the lifetime of the provided pointer while only having to ref-count the returned interface is to leverage [`ID3D12Object::SetPrivateDataInterface`](devices-and-capabilities.md#id3d12object-setprivatedatainterface), and use an object which implements `IUnknown`, and frees the memory when the ref-count reaches 0.<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:4 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:5 -->The [library thread safety contract](#library-thread-safety) applies.<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:5 --></ins>
 
 ##### Examples
 
@@ -816,14 +783,16 @@ Specifies a pointer that will reference the returned PSO.
 
 <ins><!-- d3d12-review-inline:begin:shader-cache:contract-LoadGraphicsPipeline:0:authored:migration-435b108482f8421c-0 -->`pName` and `pDesc` are required. Names are case-sensitive.
 A same-name entry of another pipeline kind does not satisfy a graphics load.
-The [graphics description](pipeline-state.md#graphics-description) and
-[creation validation](pipeline-state.md#creation-validation) remain required.<!-- d3d12-review-inline:end:shader-cache:contract-LoadGraphicsPipeline:0:authored:migration-435b108482f8421c-0 --></ins>
+See [Graphics descriptions](pipeline-state.md#graphics-description) for the
+input state and [Creation validation](pipeline-state.md#creation-validation)
+for shared input validity and dependency lifetimes.<!-- d3d12-review-inline:end:shader-cache:contract-LoadGraphicsPipeline:0:authored:migration-435b108482f8421c-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:shader-cache:contract-LoadGraphicsPipeline:1:authored:migration-b575809912170db1-0 -->`ppPipelineState` is a required output for the requested `riid` interface.
 Successful load returns a COM reference owned by the caller. It may refer to a
 PSO already retained by the library. The caller must release its reference.
 This method has no specified null output validation-only probe.
-The [library thread safety contract](#library-thread-safety) applies.<!-- d3d12-review-inline:end:shader-cache:contract-LoadGraphicsPipeline:1:authored:migration-b575809912170db1-0 --></ins>
+See [Library thread safety](#library-thread-safety) for concurrent loads of
+the same PSO.<!-- d3d12-review-inline:end:shader-cache:contract-LoadGraphicsPipeline:1:authored:migration-b575809912170db1-0 --></ins>
 
 <a id="id3d12pipelinelibrary-loadcomputepipeline"></a>
 
@@ -865,14 +834,16 @@ Specifies a pointer that will reference the returned PSO.
 
 <ins><!-- d3d12-review-inline:begin:shader-cache:contract-LoadComputePipeline:0:authored:migration-877c7dc95a8e1fb2-0 -->`pName` and `pDesc` are required. Names are case-sensitive. A same-name
 entry of another pipeline kind does not satisfy a compute load.
-The [compute description](pipeline-state.md#compute-description) and
-[creation validation](pipeline-state.md#creation-validation) remain required.<!-- d3d12-review-inline:end:shader-cache:contract-LoadComputePipeline:0:authored:migration-877c7dc95a8e1fb2-0 --></ins>
+See [Compute descriptions](pipeline-state.md#compute-description) for the
+input state and [Creation validation](pipeline-state.md#creation-validation)
+for shared input validity and dependency lifetimes.<!-- d3d12-review-inline:end:shader-cache:contract-LoadComputePipeline:0:authored:migration-877c7dc95a8e1fb2-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:shader-cache:contract-LoadComputePipeline:1:authored:migration-b85b61b6be268a7a-0 -->`ppPipelineState` is a required output for the requested `riid` interface.
 Successful load returns a COM reference owned by the caller. It may refer to a
 PSO already retained by the library. The caller must release its reference.
 This method has no specified null output validation-only probe.
-The [library thread safety contract](#library-thread-safety) applies.<!-- d3d12-review-inline:end:shader-cache:contract-LoadComputePipeline:1:authored:migration-b85b61b6be268a7a-0 --></ins>
+See [Library thread safety](#library-thread-safety) for concurrent loads of
+the same PSO.<!-- d3d12-review-inline:end:shader-cache:contract-LoadComputePipeline:1:authored:migration-b85b61b6be268a7a-0 --></ins>
 
 <a id="id3d12pipelinelibrary1-loadpipeline"></a>
 
@@ -915,14 +886,15 @@ Specifies the pointer that will reference the PSO after the function successfull
 #### Stream dependencies and references
 
 <ins><!-- d3d12-review-inline:begin:shader-cache:contract-LoadPipeline:0:authored:migration-778e056c3264fb6c-0 -->`pName`, `pDesc` and `ppPipelineState` are required. Matching includes the
-pipeline kind. The
-[stream layout and subobjects](pipeline-state.md#streams) and
-[creation validation](pipeline-state.md#creation-validation) remain required.
+pipeline kind. See [Pipeline state streams](pipeline-state.md#streams) for
+layout and subobjects, and [Creation validation](pipeline-state.md#creation-validation)
+for shared input validity and dependency lifetimes.
 A malformed stream or incompatible description can return `E_INVALIDARG`.<!-- d3d12-review-inline:end:shader-cache:contract-LoadPipeline:0:authored:migration-778e056c3264fb6c-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:shader-cache:contract-LoadPipeline:1:authored:migration-86cd254fb50a8aef-0 -->Successful load returns the requested `riid` COM reference to the caller,
 which must release it. This method has no specified null output validation-only
-probe. The [library thread safety contract](#library-thread-safety) applies.<!-- d3d12-review-inline:end:shader-cache:contract-LoadPipeline:1:authored:migration-86cd254fb50a8aef-0 --></ins>
+probe. See [Library thread safety](#library-thread-safety) for concurrent
+loads of the same PSO.<!-- d3d12-review-inline:end:shader-cache:contract-LoadPipeline:1:authored:migration-86cd254fb50a8aef-0 --></ins>
 
 <a id="id3d12pipelinelibrary-getserializedsize"></a>
 
@@ -997,9 +969,9 @@ as a valid persisted library or assume that all destination bytes were zeroed.<!
 
 <ins><!-- d3d12-review-inline:begin:shader-cache:blob-model:0:authored:migration-85b2c97d3aa67d87-0 -->A cached PSO blob is an opaque optimization input for later pipeline creation,
 not a portable shader binary and not a replacement for a complete PSO description.
-[Cached input compatibility and consumption](pipeline-state.md#cached-data)
-remain at Pipeline state. In particular, the description and cached data must
-match, and the bytes can be specific to hardware, driver and machine.<!-- d3d12-review-inline:end:shader-cache:blob-model:0:authored:migration-85b2c97d3aa67d87-0 --></ins>
+The description and cached data must match, and the bytes can be specific to
+hardware, driver and machine. See [Cached pipeline data](pipeline-state.md#cached-data)
+for compatibility and consumption.<!-- d3d12-review-inline:end:shader-cache:blob-model:0:authored:migration-85b2c97d3aa67d87-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:shader-cache:blob-model:1:authored:migration-563f778f6a9dd396-0 -->The ordinary `CachedPSO` creation input must remain readable for the duration of
 that creation call. It does not impose `CreatePipelineLibrary`'s retained-input
@@ -1020,8 +992,6 @@ HRESULT GetCachedBlob(ID3DBlob** ppBlob);
 
 Gets the cached blob representing the pipeline state.
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:N-id3d12pipelinestate-getcachedblob:0:authored:migration-40b4a80d9f34b9ef-0 -->The [cached data contract](pipeline-state.md#cached-data) defines the output's scope and reuse requirements.<!-- d3d12-review-inline:end:shader-cache:N-id3d12pipelinestate-getcachedblob:0:authored:migration-40b4a80d9f34b9ef-0 --></ins>
-
 #### Parameters
 
 <ins><!-- d3d12-review-inline:begin:shader-cache:Q-id3d12pipelinestate-getcachedblob:1 -->`ppBlob` (output)<!-- d3d12-review-inline:end:shader-cache:Q-id3d12pipelinestate-getcachedblob:1 --></ins>
@@ -1037,14 +1007,10 @@ This method returns one of the [Direct3D 12 Return Codes](devices-and-capabiliti
 <ins><!-- d3d12-review-inline:begin:shader-cache:blob-ownership:0:authored:migration-ec159af06e306ff0-0 -->`ppBlob` is a required output pointer to an `ID3DBlob` COM interface.
 On success, the caller owns the returned reference and must release it.
 `ID3DBlob::GetBufferPointer` and `GetBufferSize` expose the blob's bytes and
-byte length. The pointer is valid only while the blob's storage remains alive.
-Copying or persisting bytes does not serialize the COM interface itself.<!-- d3d12-review-inline:end:shader-cache:blob-ownership:0:authored:migration-ec159af06e306ff0-0 --></ins>
+byte length. The pointer is valid only while the blob's storage remains alive.<!-- d3d12-review-inline:end:shader-cache:blob-ownership:0:authored:migration-ec159af06e306ff0-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:blob-ownership:1:authored:migration-b1c46bf4f466c16a-0 -->This supported legacy method retrieves cache data. It does not compile source
-offline. Allocation failure can return `E_OUTOFMEMORY`. No `S_FALSE` null output
-probe or generic minimum valid blob size is specified for this method.
-Cached data remains subject to the
-[creation and compatibility contract](pipeline-state.md#cached-data).<!-- d3d12-review-inline:end:shader-cache:blob-ownership:1:authored:migration-b1c46bf4f466c16a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:blob-ownership:1:authored:migration-b1c46bf4f466c16a-0 -->Allocation failure can return `E_OUTOFMEMORY`. No `S_FALSE` null output
+probe is specified for this method.<!-- d3d12-review-inline:end:shader-cache:blob-ownership:1:authored:migration-b1c46bf4f466c16a-0 --></ins>
 
 <a id="driver-cache-contract"></a>
 
@@ -1118,8 +1084,6 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 
 ### Pipeline library driver objects and initial bytes
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:PL-storage:0:authored:migration-26abb64ee17d1b4f-0 -->The `_0010` entries below remain the current pipeline library DDIs.<!-- d3d12-review-inline:end:shader-cache:PL-storage:0:authored:migration-26abb64ee17d1b4f-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:shader-cache:PL-storage:1:authored:migration-7394b5f4fea389a5-0 -->The runtime supplies the private storage reported by the size query. The driver initializes that region and must not free it. Failed creation must unwind partial initialization without relying on a Destroy call.<!-- d3d12-review-inline:end:shader-cache:PL-storage:1:authored:migration-7394b5f4fea389a5-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:shader-cache:PL-initial-data:0:authored:migration-fe48fa85476660e5-0 -->The size query and Create receive the same driver-private initial bytes, not the runtime-wrapped API blob. Fresh driver-library creation uses a zero byte count and null pointer.<!-- d3d12-review-inline:end:shader-cache:PL-initial-data:0:authored:migration-fe48fa85476660e5-0 --></ins>
@@ -1169,8 +1133,6 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 
 > [!WARNING]
 > **Authored synthesis - human review pending.**
->
-> These entries use the [published declarations](#cache-ddi-declarations).
 >
 > | Current core device slot | Published signature/contract |
 > |---|---|

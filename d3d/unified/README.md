@@ -16,9 +16,8 @@ of supported behavior.
 The specification describes shipped D3D12 functionality, including supported older
 paths, capability-dependent behavior, and relevant compatibility history.
 
-The supporting shader appendices will specify the complete DXBC shader model 4.0, 4.1,
-5.0, and 5.1 contract, not merely their incremental additions. Shader model
-availability and D3D12 applicability are distinct.
+<ins><!-- d3d12-review-inline:begin:index:dxbc-scope:0:authored:corrective-scope -->DXBC shader models 4.0, 4.1, 5.0 and 5.1 are in scope.<!-- d3d12-review-inline:end:index:dxbc-scope:0:authored:corrective-scope --></ins>
+Shader model availability and D3D12 applicability are distinct.
 
 The DXIL specification and its shader model 6.x contracts are also in scope as
 a supporting appendix. Shared API, DDI, and hardware requirements have canonical

@@ -15,16 +15,16 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:sodb-input-format:format-boundary:0:authored:migration-004bb9e79bbc6edb-0 -->This is the published SQLite format associated with the
-[state object database input contract](state-object-databases-and-identity.md).
-The format below has `user_version` 2 and application ID `0x0D3D50DB`.
-These are format identifiers, not application versions or per-object versions.<!-- d3d12-review-inline:end:sodb-input-format:format-boundary:0:authored:migration-004bb9e79bbc6edb-0 --></ins>
-
 <a id="published-sql-schema"></a>
 
 ## Published SQL schema
 
 The State Object Database is a [SQLite](https://sqlite.org/) database with the following schema.  The schema is versioned to facilitate future additions and bug fixes.
+
+<ins><!-- d3d12-review-inline:begin:sodb-input-format:format-boundary:0:authored:migration-004bb9e79bbc6edb-0 -->`PRAGMA user_version` and `PRAGMA application_id` are format identifiers,
+not application versions or per-object versions. See
+[Keys, object versions and dependency graphs](state-object-databases-and-identity.md#keys-and-versions)
+for the application-selected keys and object versions stored in this format.<!-- d3d12-review-inline:end:sodb-input-format:format-boundary:0:authored:migration-004bb9e79bbc6edb-0 --></ins>
 
 ```sql
 PRAGMA user_version = 2;
@@ -96,15 +96,15 @@ not incidental ordering to be discarded.<!-- d3d12-review-inline:end:sodb-input-
 <ins><!-- d3d12-review-inline:begin:sodb-input-format:schema-mapping:2:authored:migration-922b0eaf17d927c8-0 -->`shader_bytecode.Bytecode` and `root_signatures.value` are
 [opaque input blobs](state-object-databases-and-identity.md#database-inputs).<!-- d3d12-review-inline:end:sodb-input-format:schema-mapping:2:authored:migration-922b0eaf17d927c8-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input-format:schema-mapping:3:authored:migration-3ecab7d77d826cfb-0 -->Application metadata is the `app_id` record used by `SetApplicationDesc` and
-`GetApplicationDesc`. The API uses the single application row at `id = 0`.
+<ins><!-- d3d12-review-inline:begin:sodb-input-format:schema-mapping:3:authored:migration-3ecab7d77d826cfb-0 -->Application metadata is the `app_id` record used by
+[`SetApplicationDesc`](state-object-databases-and-identity.md#id3d12stateobjectdatabase-setapplicationdesc)
+and [`GetApplicationDesc`](state-object-databases-and-identity.md#id3d12stateobjectdatabase-getapplicationdesc).
+The API uses the single application row at `id = 0`.
 `exe`, `app_name`, `engine_name`, `app_version` and `engine_version` correspond
-to `D3D12_APPLICATION_DESC`. There is no application-GUID field in this
-published schema. SQL `NOT NULL` does not mean that a string is nonempty, and
-schema constraints alone do not replace owning-API validation.<!-- d3d12-review-inline:end:sodb-input-format:schema-mapping:3:authored:migration-3ecab7d77d826cfb-0 --></ins>
+to [`D3D12_APPLICATION_DESC`](state-object-databases-and-identity.md#d3d12_application_desc). There is no application-GUID field in this
+published schema. SQL `NOT NULL` does not mean that a string is nonempty.<!-- d3d12-review-inline:end:sodb-input-format:schema-mapping:3:authored:migration-3ecab7d77d826cfb-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input-format:schema-mapping:4:authored:migration-fc7f26ab8cc1e5b8-0 -->The DDL declares primary/unique keys, partial unique indexes and foreign-key
-relationships exactly as published. It does not issue `PRAGMA foreign_keys`;
+<ins><!-- d3d12-review-inline:begin:sodb-input-format:schema-mapping:4:authored:migration-fc7f26ab8cc1e5b8-0 -->The DDL does not issue `PRAGMA foreign_keys`;
 declarations of foreign keys do not establish that SQLite foreign-key
 enforcement is enabled. The API's typed keys and dependency requirements must
 not be inferred solely from what an unconstrained SQL insert accepts.<!-- d3d12-review-inline:end:sodb-input-format:schema-mapping:4:authored:migration-fc7f26ab8cc1e5b8-0 --></ins>

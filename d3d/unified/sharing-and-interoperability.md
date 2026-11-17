@@ -15,7 +15,7 @@
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-introduction:0:authored:migration-7d9bf282df9a60d1-0 -->Sharing exposes the same resource or heap backing, fence, or protected resource session to more than one device or process. A shared NT handle identifies the shared kernel object; opening it obtains an interface associated with the opening D3D12 device. It does not transfer the exporting device's COM object or GPU virtual address.<!-- d3d12-review-inline:end:sharing-interop:SH-introduction:0:authored:migration-7d9bf282df9a60d1-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-introduction:1:authored:migration-cd27ff1dc8bc859d-0 -->The [resource and heap storage models](resources.md#storage-models) distinguish committed resources, placed resources, and reserved resources. [Device identity and linked nodes](devices-and-capabilities.md#identity) distinguish an adapter LUID, a device, and a node. [Independent devices](devices-and-capabilities.md#independent-devices) can use the same adapter without being the same device. Sharing storage is not permission to pass one device's resource object or descriptors directly to another device.<!-- d3d12-review-inline:end:sharing-interop:SH-introduction:1:authored:migration-cd27ff1dc8bc859d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-introduction:1:authored:migration-cd27ff1dc8bc859d-0 -->[Independent devices](devices-and-capabilities.md#independent-devices) can use the same adapter without being the same device. Sharing storage is not permission to pass one device's resource object or descriptors directly to another device.<!-- d3d12-review-inline:end:sharing-interop:SH-introduction:1:authored:migration-cd27ff1dc8bc859d-0 --></ins>
 
 <a id="shared-backing"></a>
 
@@ -36,8 +36,6 @@ Since page tables are not shared between processes, shared resources are equival
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-local-identity:1:authored:migration-b9957f632d11f9e2-0 -->A raw shared heap carries storage, not an application's placed resource arrangement. Each participating device creates its own placed resources on the opened heap. The application must communicate heap offsets and compatible resource descriptions separately. For data inheritance between equivalent placed textures, the [complete resource description, optimized clear value, placement, creation kind, and initialization requirements](synchronization.md#legacy-aliasing) apply. [Enhanced aliasing](synchronization.md#enhanced-aliasing) defines the enhanced barrier path. Sharing does not make arbitrary descriptions equivalent. [Shared tiles and compatible data inheritance](resources.md#tiled-data-compatibility) defines reserved resource mapping compatibility.<!-- d3d12-review-inline:end:sharing-interop:SH-local-identity:1:authored:migration-b9957f632d11f9e2-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-object-kinds:0:authored:migration-fff95b8f329c2878-0 -->The supported shared object kinds are:<!-- d3d12-review-inline:end:sharing-interop:SH-object-kinds:0:authored:migration-fff95b8f329c2878-0 --></ins>
-
 <!-- d3d12-review-alert:begin:sharing-interop:SH-object-kinds:1:authored:migration-9ddcd8f49f056626-0 -->
 
 > [!WARNING]
@@ -54,11 +52,7 @@ Since page tables are not shared between processes, shared resources are equival
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-object-kinds:2:authored:migration-f01ca919b91546a2-0 -->An application must not export a placed or reserved resource object with `CreateSharedHandle`. A placed resource uses its explicitly created heap's sharing path. Separate devices or processes can create their own reserved resources and map them to a shared heap, subject to [tiled resource compatibility](resources.md#tiled-data-compatibility). This does not share the reserved resource's mappings or allow cross-adapter reserved resource sharing.<!-- d3d12-review-inline:end:sharing-interop:SH-object-kinds:2:authored:migration-f01ca919b91546a2-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-object-kinds:3:authored:migration-1f35f04e7b310603-0 -->The full [heap creation](resources.md#create-heap), [committed resource creation](resources.md#create-committed-resource), [placed resource creation](resources.md#create-placed-resource), [reserved resource creation](resources.md#create-reserved-resource), and [fence creation](execution.md#create-fence) contracts remain applicable. The [heap flags](resources.md#heap-flags), [resource flags](resources.md#resource-flags), and [fence flags](execution.md#fence-flags) define the underlying flag values and other interactions.<!-- d3d12-review-inline:end:sharing-interop:SH-object-kinds:3:authored:migration-1f35f04e7b310603-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-protected-session-sharing:0:authored:migration-58f4ebdef033f367-0 -->A protected resource session can be exported with [CreateSharedHandle](#id3d12device-createsharedhandle), opened on another compatible device with [OpenSharedHandle](#id3d12device-opensharedhandle), and looked up by its shared NT name with [OpenSharedHandleByName](#id3d12device-opensharedhandlebyname). The session's handle follows the common NT handle name, access, security, inheritance, duplication, and close requirements in this chapter. Its interface remains a separately owned COM reference.<!-- d3d12-review-inline:end:sharing-interop:SH-protected-session-sharing:0:authored:migration-58f4ebdef033f367-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-protected-session-sharing:1:authored:migration-bcf67f805c4d92c3-0 -->Protected resource sessions are always shared. The application does not add `D3D12_HEAP_FLAG_SHARED` or `D3D12_FENCE_FLAG_SHARED` to a session to make it exportable. Session sharing does not turn the session's status timeline into an ordinary application-signaled shared fence. The [protected resource session interface and creation contract](../ProtectedResources.md#interface-id3d12protectedresourcesession) and [protected session status fence contract](execution.md#status-fences) define those distinct objects and their roles.<!-- d3d12-review-inline:end:sharing-interop:SH-protected-session-sharing:1:authored:migration-bcf67f805c4d92c3-0 --></ins>
 
 <a id="shared-heaps"></a>
 
@@ -70,7 +64,7 @@ Shared heaps are specified with the <ins><!-- d3d12-review-inline:begin:sharing-
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-gpu-upload-forward:0:authored:migration-38c0df37d3b56e66-0 -->The CPU-accessible [GPU upload heap](resources.md#gpu-upload) likewise does not support creation with shared heap flags.<!-- d3d12-review-inline:end:sharing-interop:SH-gpu-upload-forward:0:authored:migration-38c0df37d3b56e66-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-shared-creation-scope:0:authored:migration-909d82eafc4b4cae-0 -->These CPU access restrictions apply when creating heaps with shared flags. They are not a blanket prohibition on opening compatible existing or imported CPU-accessible backing. The [existing-memory heap imports](resources.md#existing-memory-heaps) have distinct requirements. Their availability does not make CPU-accessible shared flag creation legal. The [heap property](resources.md#heap-properties) and [CPU access](resources.md#cpu-access) contracts remain applicable to the backing being used.<!-- d3d12-review-inline:end:sharing-interop:SH-shared-creation-scope:0:authored:migration-909d82eafc4b4cae-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-shared-creation-scope:0:authored:migration-909d82eafc4b4cae-0 -->These CPU access restrictions apply when creating heaps with shared flags. They are not a blanket prohibition on opening [compatible existing or imported CPU-accessible backing](resources.md#existing-memory-heaps).<!-- d3d12-review-inline:end:sharing-interop:SH-shared-creation-scope:0:authored:migration-909d82eafc4b4cae-0 --></ins>
 
 Precluding a non-deterministic choice of undefined texture layout can significantly impair deferred rendering scenarios on some GPUs, so it is not the default behavior for placed and committed resources. Deferred rendering is impaired on some GPU architectures because deterministic texture layouts decrease the effective memory bandwidth achieved when rendering simultaneously to multiple render target textures of the same format and size. GPU architectures are evolving away from leveraging non-deterministic texture layouts in order to support standardized swizzle patterns and standardized layouts efficiently for deferred rendering.
 
@@ -130,7 +124,7 @@ Cross-adapter sharing works with heaps created by calling [**ID3D12Device::Creat
 
 For cross-adapter sharing, all of the usual cross-queue resource sharing rules still apply. Your application must issue the appropriate barriers to ensure proper synchronization and coherence between the two adapters. Your application should use cross-adapter fences to coordinate the scheduling of command lists submitted to multiple adapters. There is no mechanism to share cross-adapter resources across D3D API versions. Cross-adapter shared resources are only supported in system memory. Cross-adapter shared heaps/resources are supported in <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-cross-coherence:0:modified:migration-0209ff6e709c69c3-0 -->`D3D12_HEAP_TYPE_DEFAULT`<!-- d3d12-review-inline:end:sharing-interop:SH-cross-coherence:0:modified:migration-0209ff6e709c69c3-0 --></ins> heaps and <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-cross-coherence:0:modified:migration-16fb02c06c903ab7-1 -->`D3D12_HEAP_TYPE_CUSTOM`<!-- d3d12-review-inline:end:sharing-interop:SH-cross-coherence:0:modified:migration-16fb02c06c903ab7-1 --></ins> heaps (with the L0 memory pool, and <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-cross-coherence:0:modified:migration-1d7d5f574edde2b9-2 -->`D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE` CPU page properties<!-- d3d12-review-inline:end:sharing-interop:SH-cross-coherence:0:modified:migration-1d7d5f574edde2b9-2 --></ins>). Drivers must be sure that GPU read/write operations to cross-adapter shared heaps are coherent with other GPUs on the system. For example, the driver may need to exclude the heap data from residing in GPU caches that typically don’t need to be flushed when the CPU can't directly access the heap data.
 
-Your application should confine the usage of cross adapter heaps to only those scenarios which require the functionality they provide. Cross-adapter heaps are located in <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-cross-cost:0:modified:migration-b7c9af869c4245ce-0 -->`D3D12_MEMORY_POOL_L0`<!-- d3d12-review-inline:end:sharing-interop:SH-cross-cost:0:modified:migration-b7c9af869c4245ce-0 --></ins>, which is not always what [**GetCustomHeapProperties**](resources.md#heap-properties) suggests. That memory pool is not efficient for discrete/ NUMA adapter architectures. And, the most efficient texture layouts are not always available.
+Your application should confine the usage of cross adapter heaps to only those scenarios which require the functionality they provide. Cross-adapter heaps are located in <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-cross-cost:0:modified:migration-b7c9af869c4245ce-0 -->`D3D12_MEMORY_POOL_L0`<!-- d3d12-review-inline:end:sharing-interop:SH-cross-cost:0:modified:migration-b7c9af869c4245ce-0 --></ins>, which is not always what <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-cross-cost:0:modified:section-pass-custom-heap-route -->[**GetCustomHeapProperties**](resources.md#get-custom-heap-properties)<!-- d3d12-review-inline:end:sharing-interop:SH-cross-cost:0:modified:section-pass-custom-heap-route --></ins> suggests. That memory pool is not efficient for discrete/ NUMA adapter architectures. And, the most efficient texture layouts are not always available.
 
 The following limitations also apply:
 
@@ -194,7 +188,7 @@ typedef enum D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER {
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-cross-api-tier-qualification:0:authored:migration-97688c89704dd07a-0 -->The table's D3D11 tiers are related capability reports, not numeric aliases for the D3D12 tier values. In particular, the D3D11 tier's own definition has additional NT handle format qualifications. This table does not replace the consuming API's resource creation and format support requirements.<!-- d3d12-review-inline:end:sharing-interop:SH-cross-api-tier-qualification:0:authored:migration-97688c89704dd07a-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-cross-api-tier-qualification:1:authored:migration-59e69e4041554045-0 -->For NT handle interoperation, D3D11 opens a shared resource through [ID3D11Device1::OpenSharedResource1](https://learn.microsoft.com/en-us/windows/win32/api/d3d11_1/nf-d3d11_1-id3d11device1-opensharedresource1) and a shared fence through [ID3D11Device5::OpenSharedFence](https://learn.microsoft.com/en-us/windows/win32/api/d3d11_4/nf-d3d11_4-id3d11device5-opensharedfence). Those D3D11 methods and their D3D11 capability requirements are not D3D12 methods.<!-- d3d12-review-inline:end:sharing-interop:SH-cross-api-tier-qualification:1:authored:migration-59e69e4041554045-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-cross-api-tier-qualification:1:authored:migration-59e69e4041554045-0 -->For NT handle interoperation, D3D11 opens a shared resource through [ID3D11Device1::OpenSharedResource1](https://learn.microsoft.com/en-us/windows/win32/api/d3d11_1/nf-d3d11_1-id3d11device1-opensharedresource1) and a shared fence through [ID3D11Device5::OpenSharedFence](https://learn.microsoft.com/en-us/windows/win32/api/d3d11_4/nf-d3d11_4-id3d11device5-opensharedfence).<!-- d3d12-review-inline:end:sharing-interop:SH-cross-api-tier-qualification:1:authored:migration-59e69e4041554045-0 --></ins>
 
 <a id="d3d11-description-baseline"></a>
 
@@ -257,8 +251,6 @@ HRESULT CreateSharedHandle(
 Creates a shared handle to a heap, resource, <ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHandle-behavior:0:modified:source-77beb22655fce40e-0-0 -->fence, or protected resource session<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHandle-behavior:0:modified:source-77beb22655fce40e-0-0 --></ins> object.
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHandle-context:0:authored:migration-03cd858fb02d97d7-0 -->`pObject` must be a valid object of a shareable kind described in [shared backing](#shared-backing), with the corresponding shared creation flag for a heap, committed resource, or fence. Protected resource sessions are always shared and do not use those flags. `pHandle` must point to writable `HANDLE` storage. A placed or reserved resource is not a valid export object. A null `Name` requests an unnamed handle.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHandle-context:0:authored:migration-03cd858fb02d97d7-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHandle-context:1:authored:migration-469e7ae9bafebc09-0 -->The method is free-threaded. It does not acquire a keyed mutex or initialize a fence value. [NT handle lifetime and transfer](#nt-handles) apply to the returned handle.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHandle-context:1:authored:migration-469e7ae9bafebc09-0 --></ins>
 
 ### Parameters
 
@@ -338,13 +330,13 @@ HRESULT OpenSharedHandle(
 
 Opens a handle for <ins><!-- d3d12-review-inline:begin:sharing-interop:API-OpenSharedHandle-behavior:0 -->shared resources, shared heaps, shared fences, and protected resource sessions<!-- d3d12-review-inline:end:sharing-interop:API-OpenSharedHandle-behavior:0 --></ins>, <ins><!-- d3d12-review-inline:begin:sharing-interop:API-OpenSharedHandle-behavior:0:modified:migration-6c920d787f6766e3-1 -->by using `HANDLE` and `REFIID`.<!-- d3d12-review-inline:end:sharing-interop:API-OpenSharedHandle-behavior:0:modified:migration-6c920d787f6766e3-1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-OpenSharedHandle-context:0:authored:migration-1dffecce301ffe70-0 -->The runtime opens the shared object on this device. `riid` must be supported by the kind of object represented by `NTHandle`; requesting a heap interface from a committed resource handle does not expose its implicit heap. The four supported kinds in [shared backing](#shared-backing) are not interchangeable.<!-- d3d12-review-inline:end:sharing-interop:API-OpenSharedHandle-context:0:authored:migration-1dffecce301ffe70-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:API-OpenSharedHandle-context:0:authored:migration-1dffecce301ffe70-0 -->The runtime opens the shared object on this device. `riid` must be supported by the kind of object represented by `NTHandle`; requesting a heap interface from a committed resource handle does not expose its implicit heap.<!-- d3d12-review-inline:end:sharing-interop:API-OpenSharedHandle-context:0:authored:migration-1dffecce301ffe70-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:API-OpenSharedHandle-context:1:authored:migration-2e7e81e177c8ba63-0 -->The handle remains owned by the caller. This method does not consume or close it. The application owns the returned interface reference. Opening an existing shared fence preserves the fence's value and properties. Opening a resource or heap does not import another process's virtual address or copy its contents.<!-- d3d12-review-inline:end:sharing-interop:API-OpenSharedHandle-context:1:authored:migration-2e7e81e177c8ba63-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:API-OpenSharedHandle-context:2:authored:migration-cb76566f39ebffe5-0 -->`NTHandle` must be valid in the caller's process. It can be an exported, duplicated, inherited, or name-opened compatible NT handle, including an NT resource or fence handle exported by a compatible D3D11 sharing path. It is not a numeric handle copied from another process without Windows handle transfer.<!-- d3d12-review-inline:end:sharing-interop:API-OpenSharedHandle-context:2:authored:migration-cb76566f39ebffe5-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-OpenSharedHandle-context:3:authored:migration-e3002d586736b81e-0 -->For linked node resources and heaps, node masks are inherited from the shared objects, with the runtime translating driver node remappings as needed. The method has no new node mask parameter. The full [heap node properties](resources.md#heap-properties) and [device node identity](devices-and-capabilities.md#identity) contracts apply.<!-- d3d12-review-inline:end:sharing-interop:API-OpenSharedHandle-context:3:authored:migration-e3002d586736b81e-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:API-OpenSharedHandle-context:3:authored:migration-e3002d586736b81e-0 -->For linked node resources and heaps, node masks are inherited from the shared objects, with the runtime translating driver node remappings as needed.<!-- d3d12-review-inline:end:sharing-interop:API-OpenSharedHandle-context:3:authored:migration-e3002d586736b81e-0 --></ins>
 
 ### Parameters
 
@@ -443,7 +435,7 @@ This method returns one of the [Direct3D 12 Return Codes](devices-and-capabiliti
 
 ## Compatibility creation and stored properties
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-compatibility-purpose:0:authored:migration-777cdf1dde9d86f1-0 -->`ID3D12CompatibilityDevice` is obtained from a D3D12 device using `QueryInterface`. It creates shared resources or heaps with compatibility metadata and reflects properties retained with shared backing. It is an `IUnknown`-derived compatibility interface. The methods below are declared on it, not inherited methods of `ID3D12Device`.<!-- d3d12-review-inline:end:sharing-interop:SH-compatibility-purpose:0:authored:migration-777cdf1dde9d86f1-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-compatibility-purpose:0:authored:migration-777cdf1dde9d86f1-0 -->`ID3D12CompatibilityDevice` is an `IUnknown`-derived interface obtained from a D3D12 device using `QueryInterface`.<!-- d3d12-review-inline:end:sharing-interop:SH-compatibility-purpose:0:authored:migration-777cdf1dde9d86f1-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-compatibility-purpose:1:authored:migration-9274d7cbe4ab847b-0 -->Compatibility creation records the requested sharing mode when the backing is created. It is not a way to add a keyed mutex, change NT versus non-NT sharing, or retrofit D3D11 creation flags onto an already-created resource. These methods are used by API implementations layered on D3D12, and their compatibility flags must agree with the resource's actual capabilities. Ordinary D3D12 sharing uses the [NT handle methods](#id3d12device-createsharedhandle) and does not implicitly acquire keyed mutex behavior.<!-- d3d12-review-inline:end:sharing-interop:SH-compatibility-purpose:1:authored:migration-9274d7cbe4ab847b-0 --></ins>
 
@@ -472,11 +464,11 @@ typedef enum D3D12_COMPATIBILITY_SHARED_FLAGS
 > | `D3D12_COMPATIBILITY_SHARED_FLAG_NONE` (`0`) | Default NT handle sharing mode; no keyed mutex or 9-on-12 allocation attribution is requested. |
 > | `D3D12_COMPATIBILITY_SHARED_FLAG_NON_NT_HANDLE` (`0x1`) | Requests legacy non-NT shared handle compatibility rather than NT handle export. |
 > | `D3D12_COMPATIBILITY_SHARED_FLAG_KEYED_MUTEX` (`0x2`) | Requests keyed mutex compatibility metadata and backing synchronization objects. This flag does not itself acquire or release the mutex. |
-> | `D3D12_COMPATIBILITY_SHARED_FLAG_9_ON_12` (`0x4`) | Identifies allocation compatibility for a resource created by 9-on-12. It is not permission to treat a D3D11 format restriction as a D3D9 restriction. |
+> | `D3D12_COMPATIBILITY_SHARED_FLAG_9_ON_12` (`0x4`) | Identifies allocation compatibility for a resource created by 9-on-12. |
 
 <!-- d3d12-review-alert:end:sharing-interop:SH-compat-flags:0:authored:migration-53816aed235c973f-0 -->
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-compat-flags:1:authored:migration-241dce690623b227-0 -->An application must not set undeclared flag bits. `CreateSharedResource` and `CreateSharedHeap` have different cross-adapter restrictions, specified below. Non-NT shared handles are not NT handles: the application must not call `CloseHandle` or `DuplicateHandle` on a reflected non-NT handle. Its validity is tied to the backing's lifetime. The creator must keep the shared resource alive until intended consumers have opened it.<!-- d3d12-review-inline:end:sharing-interop:SH-compat-flags:1:authored:migration-241dce690623b227-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-compat-flags:1:authored:migration-241dce690623b227-0 -->An application must not set undeclared flag bits. The application must not call `CloseHandle` or `DuplicateHandle` on a reflected non-NT handle. Its validity is tied to the backing's lifetime. The creator must keep the shared resource alive until intended consumers have opened it.<!-- d3d12-review-inline:end:sharing-interop:SH-compat-flags:1:authored:migration-241dce690623b227-0 --></ins>
 
 <a id="d3d11-resource-flags"></a>
 
@@ -491,8 +483,6 @@ typedef struct D3D11_RESOURCE_FLAGS {
 } D3D11_RESOURCE_FLAGS;
 ```
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-flags11-fields:0:authored:migration-84fee5ed63c239be-0 -->For compatibility creation, these four fields store D3D11 creation metadata:<!-- d3d12-review-inline:end:sharing-interop:SH-flags11-fields:0:authored:migration-84fee5ed63c239be-0 --></ins>
-
 <!-- d3d12-review-alert:begin:sharing-interop:SH-flags11-fields:1:authored:migration-2b44627310ef8bd6-0 -->
 
 > [!WARNING]
@@ -501,9 +491,9 @@ typedef struct D3D11_RESOURCE_FLAGS {
 > | Field | Stored meaning and compatibility constraint |
 > |---|---|
 > | `BindFlags` | A `D3D11_BIND_FLAG` mask. Requested binds must be supported by the D3D12 resource, not merely by the D3D11 enum. Buffers can carry vertex, index, constant buffer, and stream output attribution. Shader resource binding requires that `D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE` is clear; render target, depth-stencil, and UAV binds require `D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET`, `D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL`, and `D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS`, respectively. Decoder and video encoder attribution is permitted for a shared `Texture2D` with `D3D12_HEAP_FLAG_ALLOW_DISPLAY`. Otherwise it requires that `ALLOW_DISPLAY` is absent and the format is cross-D3D-API-shareable. This metadata check does not define the operational scope of `D3D12_FEATURE_DISPLAYABLE` or make a resource usable by a video operation that rejects its description. |
-> | `MiscFlags` | A `D3D11_RESOURCE_MISC_FLAG` mask retained with the resource. Shared and keyed mutex/NT handle declarations must agree with `CompatibilityFlags`. The exact checks are specified under `CreateSharedResource`. This field is not an instruction to invoke a D3D11 operation on a D3D12 object. |
+> | `MiscFlags` | A `D3D11_RESOURCE_MISC_FLAG` mask retained with the resource. Shared and keyed mutex/NT handle declarations must agree with `CompatibilityFlags`. See [CreateSharedResource](#id3d12compatibilitydevice-createsharedresource) for the exact checks. |
 > | `CPUAccessFlags` | A `D3D11_CPU_ACCESS_FLAG` mask constrained by the D3D12 heap's CPU access. Ordinary shared creation uses CPU-inaccessible heaps, so it cannot gain CPU access through this metadata. |
-> | `StructureByteStride` | Size in bytes of each element when the buffer is a D3D11 structured buffer. It is stored metadata, not the D3D12 GPU virtual address, a heap offset, or a texture row pitch. |
+> | `StructureByteStride` | Size in bytes of each element when the buffer is a D3D11 structured buffer. |
 
 <!-- d3d12-review-alert:end:sharing-interop:SH-flags11-fields:1:authored:migration-2b44627310ef8bd6-0 -->
 
@@ -513,9 +503,7 @@ typedef struct D3D11_RESOURCE_FLAGS {
 
 ### Creator identity
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-creator-purpose:0:authored:migration-5b38ef760c850394-0 -->Creator identifiers in `d3d12compatibility.h` identify components that implement APIs on D3D12. They are GUID identities, not resource descriptions, shared handles, access rights, or reflection selectors. [ID3D12Device9::CreateCommandQueue1](command-queues.md#id3d12device9-createcommandqueue1) accepts a `CreatorID` independently of the `riid` for the returned queue.<!-- d3d12-review-inline:end:sharing-interop:SH-creator-purpose:0:authored:migration-5b38ef760c850394-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-creator-purpose:1:authored:migration-7366a4c6707fa374-0 -->The reserved identifiers are:<!-- d3d12-review-inline:end:sharing-interop:SH-creator-purpose:1:authored:migration-7366a4c6707fa374-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-creator-purpose:0:authored:migration-5b38ef760c850394-0 -->Creator identifiers in `d3d12compatibility.h` identify components that implement APIs on D3D12. [ID3D12Device9::CreateCommandQueue1](command-queues.md#id3d12device9-createcommandqueue1) accepts a `CreatorID` independently of the `riid` for the returned queue.<!-- d3d12-review-inline:end:sharing-interop:SH-creator-purpose:0:authored:migration-5b38ef760c850394-0 --></ins>
 
 <!-- d3d12-review-alert:begin:sharing-interop:SH-creator-purpose:2:authored:migration-92d42a999cd2c7cd-0 -->
 
@@ -535,8 +523,6 @@ typedef struct D3D11_RESOURCE_FLAGS {
 
 <!-- d3d12-review-alert:end:sharing-interop:SH-creator-purpose:2:authored:migration-92d42a999cd2c7cd-0 -->
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-creator-purpose:3:authored:migration-c900c1e7051b5055-0 -->The three compatibility methods in this chapter have no `CreatorID` parameter. A creator identifier does not waive description, format, security, or synchronization requirements.<!-- d3d12-review-inline:end:sharing-interop:SH-creator-purpose:3:authored:migration-c900c1e7051b5055-0 --></ins>
-
 <a id="reflection-selectors"></a>
 
 ### D3D12_REFLECT_SHARED_PROPERTY
@@ -549,8 +535,6 @@ typedef enum D3D12_REFLECT_SHARED_PROPERTY
     D3D12_REFLECT_SHARED_PROPERTY_NON_NT_SHARED_HANDLE,       // HANDLE
 } D3D12_REFLECT_SHARED_PROPERTY;
 ```
-
-<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-reflect-selector-types:0:authored:migration-91096399b5d7faa0-0 -->The published spelling `D3D12_REFELCT_SHARED_PROPERTY_COMPATIBILITY_SHARED_FLAGS` is part of the API identifier and is not corrected to `REFLECT`.<!-- d3d12-review-inline:end:sharing-interop:SH-reflect-selector-types:0:authored:migration-91096399b5d7faa0-0 --></ins>
 
 <!-- d3d12-review-alert:begin:sharing-interop:SH-reflect-selector-types:1:authored:migration-4d4e70deb1250342-0 -->
 
@@ -620,11 +604,11 @@ HRESULT CreateSharedResource(
 
 #### InitialResourceState (input)
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:7:authored:migration-c49cd3bc2cfc4240-0 -->The resource's initial [D3D12_RESOURCE_STATES](synchronization.md#legacy-states) value, subject to the ordinary committed resource and heap type requirements. Creating or opening a shared object is not a synchronization operation.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:7:authored:migration-c49cd3bc2cfc4240-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:7:authored:migration-c49cd3bc2cfc4240-0 -->The resource's initial [D3D12_RESOURCE_STATES](synchronization.md#legacy-states) value, subject to the ordinary committed resource and heap type requirements.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:7:authored:migration-c49cd3bc2cfc4240-0 --></ins>
 
 #### pOptimizedClearValue (input, optional)
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:9:authored:migration-5470d40ee1d9c1d1-0 -->Optional pointer to [D3D12_CLEAR_VALUE](resources.md#optimized-clear-value), subject to the format, resource flag, and depth range requirements of committed resource creation. This value is a creation time optimization, not an operation that clears the shared resource.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:9:authored:migration-5470d40ee1d9c1d1-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:9:authored:migration-5470d40ee1d9c1d1-0 -->Optional pointer to [D3D12_CLEAR_VALUE](resources.md#optimized-clear-value), subject to the format, resource flag, and depth range requirements of committed resource creation.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:9:authored:migration-5470d40ee1d9c1d1-0 --></ins>
 
 #### pFlags11 (input, optional)
 
@@ -636,27 +620,32 @@ HRESULT CreateSharedResource(
 
 #### pLifetimeTracker (input, optional)
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:15:authored:migration-ef68b36cdf36a684-0 -->Null, or a valid [ID3D12LifetimeTracker](execution.md#api-id3d12device5-createlifetimetracker) to associate with the resource's tracked lifetime. The tracker is an `ID3D12DeviceChild` with an owning D3D12 device. It is an interface object, not a device identifier or a transferable shared handle.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:15:authored:migration-ef68b36cdf36a684-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:15:authored:migration-ef68b36cdf36a684-0 -->Null, or a valid [ID3D12LifetimeTracker](execution.md#api-id3d12device5-createlifetimetracker) to associate with the resource's tracked lifetime. The tracker is an `ID3D12DeviceChild` with an owning D3D12 device.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:15:authored:migration-ef68b36cdf36a684-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:16:authored:migration-fb4ceac2dda1970c-0 -->The tracker connects the resource to an application-defined [ID3D12LifetimeOwner](execution.md#api-id3d12lifetimeowner-lifetimestateupdated) callback. [LifetimeStateUpdated](execution.md#api-id3d12lifetimeowner-lifetimestateupdated) reports the tracked object's `D3D12_LIFETIME_STATE_IN_USE` or `D3D12_LIFETIME_STATE_NOT_IN_USE` state, and [DestroyOwnedObject](execution.md#api-id3d12lifetimetracker-destroyownedobject) provides the tracker's object-destruction operation. These lifetime notifications are not GPU completion fence observations.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:16:authored:migration-fb4ceac2dda1970c-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:17:authored:migration-8a53ebb3f12789e2-0 -->The supplied interface must be valid during the call. Passing it does not transfer the caller's COM reference. The caller remains responsible for references it owns. Tracking ownership and destroying the tracked resource are distinct from closing a shared NT handle. A null tracker supplies no explicit lifetime tracker association.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:17:authored:migration-8a53ebb3f12789e2-0 --></ins>
 
+<a id="external-api-boundaries"></a>
+
 #### pOwningSwapchain (input, optional)
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:19:authored:migration-3228080c0beaac16-0 -->Null, or a valid [ID3D12SwapChainAssistant](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12swapchainassistant) providing the resource's owning swap chain association. This `IUnknown`-derived interface supplies swap chain identity and operations. It is not the resource interface, an adapter identifier, or a shared handle.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:19:authored:migration-3228080c0beaac16-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:19:authored:migration-3228080c0beaac16-0 -->Null, or a valid [ID3D12SwapChainAssistant](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12swapchainassistant) providing the resource's owning swap chain association.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:19:authored:migration-3228080c0beaac16-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:20:authored:migration-450f4fc2d2ef32d1-0 -->The association allows the runtime to track writes to the resource for presentation/scan-out synchronization. The assistant interface exposes [GetLUID](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12swapchainassistant-getluid), [GetSwapChainObject](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12swapchainassistant-getswapchainobject), [GetCurrentResourceAndCommandQueue](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12swapchainassistant-getcurrentresourceandcommandqueue), and [InsertImplicitSync](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12swapchainassistant-insertimplicitsync). Supplying the association is not itself a request to present, export, or wait for the resource.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:20:authored:migration-450f4fc2d2ef32d1-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:AB-external-boundaries:1:authored:migration-3003a8ca820a76c7-0 -->The swap chain assistant supplied for compatibility resources is a
+DXGI-owned identity/current-resource/queue/implicit synchronization boundary.<!-- d3d12-review-inline:end:sharing-interop:AB-external-boundaries:1:authored:migration-3003a8ca820a76c7-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:20:authored:migration-450f4fc2d2ef32d1-0 -->The association allows the runtime to track writes to the resource for presentation/scan-out synchronization.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:20:authored:migration-450f4fc2d2ef32d1-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:21:authored:migration-cc72080a316f5977-0 -->The supplied interface must be valid during the call, and its implementation must keep any state used by its callbacks valid for those uses. Passing the assistant does not transfer the caller's COM reference. The caller releases references it owns separately from releasing the created resource. A null assistant supplies no explicit owning swap chain association.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:21:authored:migration-cc72080a316f5977-0 --></ins>
 
 #### riid (input)
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:23:authored:migration-50286a4e9e24a9ff-0 -->The requested resource interface IID. This is not a creator identifier.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:23:authored:migration-50286a4e9e24a9ff-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:23:authored:migration-50286a4e9e24a9ff-0 -->The requested resource interface IID.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:23:authored:migration-50286a4e9e24a9ff-0 --></ins>
 
 #### ppResource (output, optional)
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:25:authored:migration-cfe0a8dedfbaa4a4-0 -->Pointer to writable storage for the requested resource interface. On successful creation, the application owns the returned COM reference. A null pointer requests validation only. It does not create a resource. All required input pointers and descriptions must still be valid.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:25:authored:migration-cfe0a8dedfbaa4a4-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedResource-parameters:25:authored:migration-cfe0a8dedfbaa4a4-0 -->Pointer to writable storage for the requested resource interface. On successful creation, the application owns the returned COM reference. A null pointer requests validation only.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedResource-parameters:25:authored:migration-cfe0a8dedfbaa4a4-0 --></ins>
 
 ### Return values
 
@@ -680,11 +669,9 @@ HRESULT CreateSharedHeap(
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHeap-behavior:0:authored:migration-789fb1369dc28b9d-0 -->Creates a shared heap with compatibility sharing properties. The full [CreateHeap contract](resources.md#create-heap), [heap description](resources.md#heap-description), [heap types](resources.md#heap-types), [heap flags](resources.md#heap-flags), and [node mask requirements](resources.md#heap-properties) apply. It does not create a resource description or establish placed resource contents.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHeap-behavior:0:authored:migration-789fb1369dc28b9d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHeap-behavior:0:authored:migration-789fb1369dc28b9d-0 -->Creates a shared heap with compatibility sharing properties under the [CreateHeap contract](resources.md#create-heap).<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHeap-behavior:0:authored:migration-789fb1369dc28b9d-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHeap-behavior:1:authored:migration-31d709fc0a4ca2b3-0 -->`pHeapDesc->Flags` must contain `D3D12_HEAP_FLAG_SHARED` and must not contain `D3D12_HEAP_FLAG_SHARED_CROSS_ADAPTER`. Undeclared compatibility flag bits are invalid. Unlike `CreateSharedResource`, this method does not accept a D3D11 resource flags structure, a lifetime tracker, or an owning swap chain assistant.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHeap-behavior:1:authored:migration-31d709fc0a4ca2b3-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHeap-behavior:2:authored:migration-5a1eb1a26d2d80cd-0 -->An opened raw heap still requires each consumer to create compatible resource mappings and to coordinate offsets, descriptions, lifetime, and synchronization as specified in [shared backing](#shared-backing).<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHeap-behavior:2:authored:migration-5a1eb1a26d2d80cd-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHeap-behavior:1:authored:migration-31d709fc0a4ca2b3-0 -->`pHeapDesc->Flags` must contain `D3D12_HEAP_FLAG_SHARED` and must not contain `D3D12_HEAP_FLAG_SHARED_CROSS_ADAPTER`. Undeclared compatibility flag bits are invalid.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHeap-behavior:1:authored:migration-31d709fc0a4ca2b3-0 --></ins>
 
 ### Parameters
 
@@ -702,7 +689,7 @@ HRESULT CreateSharedHeap(
 
 #### ppHeap (output, optional)
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHeap-parameters:7:authored:migration-cb525c45470bc3f2-0 -->Pointer to writable storage for the returned heap interface. The application owns the returned COM reference. A null pointer requests validation only and does not create a heap. It does not relax the required descriptor pointer or input requirements.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHeap-parameters:7:authored:migration-cb525c45470bc3f2-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHeap-parameters:7:authored:migration-cb525c45470bc3f2-0 -->Pointer to writable storage for the returned heap interface. The application owns the returned COM reference. A null pointer requests validation only.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHeap-parameters:7:authored:migration-cb525c45470bc3f2-0 --></ins>
 
 ### Return values
 
@@ -726,7 +713,7 @@ HRESULT ReflectSharedProperties(
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-ReflectSharedProperties-behavior:0:authored:migration-744d3323dff0ace5-0 -->Copies the selected retained property into caller-owned storage. It does not create or open an object, perform a resource copy, export an NT handle, or synchronize resource use. The [selector table](#reflection-selectors) defines the complete payload, exact size, valid object kinds, and result ownership.<!-- d3d12-review-inline:end:sharing-interop:API-ReflectSharedProperties-behavior:0:authored:migration-744d3323dff0ace5-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:API-ReflectSharedProperties-behavior:0:authored:migration-744d3323dff0ace5-0 -->Copies the selected [retained property](#reflection-selectors) into caller-owned storage.<!-- d3d12-review-inline:end:sharing-interop:API-ReflectSharedProperties-behavior:0:authored:migration-744d3323dff0ace5-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:API-ReflectSharedProperties-behavior:1:authored:migration-14e2fb80992ee4e0-0 -->The D3D11-flags selector requires a resource with stored D3D11 creation metadata. A shared D3D12 resource is not by itself proof that such metadata exists. Compatibility flags reflection requires shared backing; non-NT handle reflection additionally requires non-NT sharing mode. A selector must not be used to reinterpret a resource or heap as an unrelated object kind.<!-- d3d12-review-inline:end:sharing-interop:API-ReflectSharedProperties-behavior:1:authored:migration-14e2fb80992ee4e0-0 --></ins>
 
@@ -752,7 +739,7 @@ HRESULT ReflectSharedProperties(
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:API-ReflectSharedProperties-returns:0:authored:migration-2f4cd8573b1447cb-0 -->Returns `S_OK` when the selected property is copied. An undeclared selector or a `DataSize` different from the selected payload's exact size returns `E_INVALIDARG`. An incompatible object kind or sharing mode fails; resource flags reflection also fails if the resource has no retained D3D11 creation metadata.<!-- d3d12-review-inline:end:sharing-interop:API-ReflectSharedProperties-returns:0:authored:migration-2f4cd8573b1447cb-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-ReflectSharedProperties-returns:1:authored:migration-5525760f8a401e17-0 -->The method does not initialize a generic result on failure and does not return a newly allocated payload. Required input/output pointers must be valid even though the method returns an `HRESULT`.<!-- d3d12-review-inline:end:sharing-interop:API-ReflectSharedProperties-returns:1:authored:migration-5525760f8a401e17-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:API-ReflectSharedProperties-returns:1:authored:migration-5525760f8a401e17-0 -->The method does not initialize a generic result on failure and does not return a newly allocated payload.<!-- d3d12-review-inline:end:sharing-interop:API-ReflectSharedProperties-returns:1:authored:migration-5525760f8a401e17-0 --></ins>
 
 <a id="sharing-driver"></a>
 
@@ -764,7 +751,7 @@ The necessary requirements to support <ins><!-- d3d12-review-inline:begin:sharin
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-driver-boundary:0:authored:migration-029ebb7fa86a4c6f-0 -->Cross-DDI opening requires compatible resource properties and allocation/private data representations.<!-- d3d12-review-inline:end:sharing-interop:SH-driver-boundary:0:authored:migration-029ebb7fa86a4c6f-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-driver-boundary:1:authored:migration-18b0bc5d67fe185f-0 -->Heap/resource opening receives kernel allocation information and driver-private metadata. Fence opening is specified in the [execution driver contract](execution.md#driver-responsibilities).<!-- d3d12-review-inline:end:sharing-interop:SH-driver-boundary:1:authored:migration-18b0bc5d67fe185f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-driver-boundary:1:authored:migration-18b0bc5d67fe185f-0 -->Heap/resource opening receives kernel allocation information and driver-private metadata. See [fence creation and destruction](execution.md#fence-creation-lifecycle) for fence opening.<!-- d3d12-review-inline:end:sharing-interop:SH-driver-boundary:1:authored:migration-18b0bc5d67fe185f-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-driver-boundary:2:authored:migration-e520d1fa32821e80-0 -->The driver must make shared writes coherent with other adapters under the [cross-adapter coherence requirements](#cross-adapter-heaps).<!-- d3d12-review-inline:end:sharing-interop:SH-driver-boundary:2:authored:migration-e520d1fa32821e80-0 --></ins>
 
@@ -773,38 +760,3 @@ The necessary requirements to support <ins><!-- d3d12-review-inline:begin:sharin
 ### Published heap/resource open ABI
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-open-ddi-payload:0:authored:migration-96eb4bddb52282f7-0 -->Heap/resource opening uses the [common open lifecycle](resources.md#open-heap-resource-ddi) and [private storage sizing](resources.md#heap-resource-private-sizing).<!-- d3d12-review-inline:end:sharing-interop:SH-open-ddi-payload:0:authored:migration-96eb4bddb52282f7-0 --></ins>
-
-<a id="canonical-contributors"></a>
-
-## Canonical contract contributors
-
-<!-- d3d12-review-alert:begin:sharing-interop:SH-contributors:0:authored:migration-54bb7ae30f4d0ebe-0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> | Contract | Complete owner and selected sharing contribution |
-> |---|---|
-> | Resource/heap backing and creation | [Storage models](resources.md#storage-models), [heap creation](resources.md#create-heap), [committed creation](resources.md#create-committed-resource), [placed creation](resources.md#create-placed-resource), [reserved creation](resources.md#create-reserved-resource), and [versioned creation](resources.md#versioned-creation). This chapter defines which objects and metadata can be shared. |
-> | Descriptions and formats | [Resource description](resources.md#resource-description), [resource flags](resources.md#resource-flags), [texture layouts](resources.md#texture-layout), [optimized clear values](resources.md#optimized-clear-value), [heap properties](resources.md#heap-properties), [heap flags](resources.md#heap-flags), and [tight alignment](resources.md#tight-alignment). This chapter defines sharing-specific combinations and cross-API format sets. |
-> | Physical memory and reuse | [Allocation information](resources.md#allocation-info), [residency](resources.md#residency), [CPU mapping](resources.md#cpu-access), and [shared tile compatibility](resources.md#tiled-data-compatibility); sharing does not create independent copies or make incompatible mappings safe. |
-> | Fence creation and observation | [CreateFence](execution.md#create-fence), [fence flags](execution.md#fence-flags), [fence observation requirements](execution.md#fence-observation-requirements), [queue signals](execution.md#queue-signal), [queue waits](execution.md#queue-waits), [CPU signal](execution.md#fence-signal), [completed value](execution.md#id3d12fencegetcompletedvalue), [events](execution.md#id3d12fenceseteventoncompletion), and [multiple-fence completion](execution.md#multiple-fence-completion). This chapter owns exporting/opening the fence. |
-> | Barriers and aliasing | [Enhanced layouts](synchronization.md#barrier-layout), [simultaneous access](synchronization.md#simultaneous-access), [enhanced aliasing](synchronization.md#enhanced-aliasing), [legacy states](synchronization.md#legacy-states), [legacy aliasing](synchronization.md#legacy-aliasing), [barrier model interoperation](synchronization.md#model-interoperation), and [queue compatibility](synchronization.md#queue-compatibility); handle operations do not perform these operations. |
-> | Device identity and capability queries | [Adapter/nodes](devices-and-capabilities.md#identity), [independent devices](devices-and-capabilities.md#independent-devices), [CheckFeatureSupport](devices-and-capabilities.md#id3d12device-checkfeaturesupport), [OPTIONS](devices-and-capabilities.md#d3d12_feature_data_d3d12_options), [OPTIONS4](devices-and-capabilities.md#d3d12_feature_data_d3d12_options4), [CROSS_NODE](devices-and-capabilities.md#d3d12_feature_data_cross_node), and [DISPLAYABLE](devices-and-capabilities.md#d3d12_feature_data_displayable). This chapter distinguishes their sharing domains, not their complete payload definitions. |
-> | Lifetime and common queue families | [Submission](execution.md#submission), [completion](execution.md#completion), [object/resource lifetime](execution.md#lifetime), [threading](execution.md#threading), and [queue types](execution.md#command-list-types); sharing has no implicit handoff for graphics, compute, copy, or video work. |
-
-<!-- d3d12-review-alert:end:sharing-interop:SH-contributors:0:authored:migration-54bb7ae30f4d0ebe-0 -->
-
-<a id="external-api-boundaries"></a>
-
-## Adjacent-system interface boundaries
-
-<ins><!-- d3d12-review-inline:begin:sharing-interop:AB-external-boundaries:0:authored:migration-944b3e7caec0095e-0 -->The DirectSR factory passes a D3D12 device, node selection and requested
-interface to the DirectSR provider. Provider algorithm/availability contracts
-belong to DirectSR. Virtualization guest sharing and fence file descriptor
-helpers belong to the guest/host integration and are not ordinary Win32
-shared handle or universal fence export contracts.<!-- d3d12-review-inline:end:sharing-interop:AB-external-boundaries:0:authored:migration-944b3e7caec0095e-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:sharing-interop:AB-external-boundaries:1:authored:migration-3003a8ca820a76c7-0 -->The swap chain assistant supplied for compatibility resources is a
-DXGI-owned identity/current-resource/queue/implicit synchronization boundary.
-Full DirectSR, guest-host and DXGI behavior is external to this specification.<!-- d3d12-review-inline:end:sharing-interop:AB-external-boundaries:1:authored:migration-3003a8ca820a76c7-0 --></ins>

@@ -15,8 +15,6 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-core-scope:0:authored:migration-61c55e97db544625-0 -->These shared execution concepts apply across shader stages. Stage chapters define how invocations form groups or pixel quads, how helpers are created, and which operations each stage supports. The shader representations and operation-specific contracts do not imply a universal physical scheduling order.<!-- d3d12-review-inline:end:common-shader-internals:N-core-scope:0:authored:migration-61c55e97db544625-0 --></ins>
-
 <a id="execution-terminology"></a>
 
 ## Execution terminology
@@ -33,21 +31,19 @@
 
 ## Wave operations and participation
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-wave-model:0:authored:migration-d68e6f9d965b28ea-0 -->Shader Model 6.0 adds wave queries, votes, broadcasts, reductions, scans and quad shuffles. `D3D12_FEATURE_DATA_D3D12_OPTIONS1::WaveOps` reports wave operation support; `WaveLaneCountMin` and `WaveLaneCountMax` report the supported lane count range. Shader Model 6.9 makes wave operations required. `WaveGetLaneCount()` returns the current wave's lane count, including inactive lanes, while `WaveGetLaneIndex()` identifies the current lane.<!-- d3d12-review-inline:end:common-shader-internals:N-wave-model:0:authored:migration-d68e6f9d965b28ea-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-wave-model:0:authored:migration-d68e6f9d965b28ea-0 -->Shader Model 6.0 adds wave queries, votes, broadcasts, reductions, scans and quad shuffles. [`D3D12_FEATURE_DATA_D3D12_OPTIONS1::WaveOps`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options1) reports wave operation support. `WaveLaneCountMin` and `WaveLaneCountMax` report the supported lane count range. Shader Model 6.9 makes wave operations required. `WaveGetLaneCount()` returns the current wave's lane count, including inactive lanes, while `WaveGetLaneIndex()` identifies the current lane.<!-- d3d12-review-inline:end:common-shader-internals:N-wave-model:0:authored:migration-d68e6f9d965b28ea-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:N-wave-model:1:authored:migration-e0f7eab83a1c28e6-0 -->Wave-wide votes/reductions operate on the active lanes at that operation. Divergent control flow can change this participating set. Reading a value from an inactive or nonexistent source lane is undefined. Floating-point reduction order is not defined. A program must not assume a fixed wave width or a stage-specific mapping not supplied by an explicit contract.<!-- d3d12-review-inline:end:common-shader-internals:N-wave-model:1:authored:migration-e0f7eab83a1c28e6-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-wave-model:2:authored:migration-5ca5c5a9367bd99a-0 -->Pixel shader [helper participation](pixel-shaders.md#wave-helper-participation) defines which helper lanes join these operations. Quad operations have their own participating-lane requirements. A wave is not synonymous with a derivative quad. Shared [memory ordering and fence rules](memory-model.md#memory-consistency) are separate from collective value operations.<!-- d3d12-review-inline:end:common-shader-internals:N-wave-model:2:authored:migration-5ca5c5a9367bd99a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-wave-model:2:authored:migration-5ca5c5a9367bd99a-0 -->Pixel shader [helper participation](pixel-shaders.md#wave-helper-participation) defines which helper lanes join these operations. A wave is not synonymous with a derivative quad. Shared [memory ordering and fence rules](memory-model.md#memory-consistency) are separate from collective value operations.<!-- d3d12-review-inline:end:common-shader-internals:N-wave-model:2:authored:migration-5ca5c5a9367bd99a-0 --></ins>
 
 <a id="program-model"></a>
 
 ## Program organization and availability
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-program-model:0:authored:migration-5aee8ecce0b24a68-0 -->A shader program describes the work of one invocation. Its stage supplies inputs, outputs and invocation organization. The representation supplies values, control flow and resource operations.<!-- d3d12-review-inline:end:common-shader-internals:N-program-model:0:authored:migration-5aee8ecce0b24a68-0 --></ins> <ins><!-- d3d12-review-inline:begin:common-shader-internals:N-program-model:0:authored:migration-484c920fc93a5d34-0 -->DXBC uses declared register files and tokenized instructions. DXIL uses typed static single assignment (SSA) values, LLVM instructions and `dx.op` operations.<!-- d3d12-review-inline:end:common-shader-internals:N-program-model:0:authored:migration-484c920fc93a5d34-0 --></ins> <ins><!-- d3d12-review-inline:begin:common-shader-internals:N-program-model:0:authored:migration-45a8ee9bcc2404aa-1 -->These are two representations of the shared shader model, not two different texture filtering contracts.<!-- d3d12-review-inline:end:common-shader-internals:N-program-model:0:authored:migration-45a8ee9bcc2404aa-1 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-program-model:0:authored:migration-484c920fc93a5d34-0 -->DXBC uses declared register files and tokenized instructions. DXIL uses typed static single assignment (SSA) values, LLVM instructions and `dx.op` operations.<!-- d3d12-review-inline:end:common-shader-internals:N-program-model:0:authored:migration-484c920fc93a5d34-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-program-model:1:authored:migration-e20754028c872231-0 -->Shader Models 4.0, 4.1 and 5.0 describe the inherited register/instruction model below. The D3D12 paths described here use SM5.0/5.1 DXBC shader assets and supported SM6.x DXIL shaders. SM5.1 adds resource range flexibility; existing SM5.0 shaders can use root signatures. Historical SM4.x instruction availability is not a D3D12 profile-acceptance rule. `D3D12_FEATURE_SHADER_MODEL` reports the supported shader model. Shader model, DXIL version, validator version and optional device capabilities are distinct conditions.<!-- d3d12-review-inline:end:common-shader-internals:N-program-model:1:authored:migration-e20754028c872231-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-program-model:2:authored:migration-03731ab02de558cb-0 -->The main body defines common operation family and sampling behavior. Exact token/container encodings, declarations and exhaustive per-opcode/per-intrinsic entries are the DXBC and DXIL supporting references. The [numeric definitions](numeric-and-data-rules.md#numeric-3-1), [conversion algorithms](numeric-and-data-rules.md#numeric-3-2) and [format interpretation](formats.md#interpretation) remain separately defined. This chapter does not replace their complete references.<!-- d3d12-review-inline:end:common-shader-internals:N-program-model:2:authored:migration-03731ab02de558cb-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-program-model:1:authored:migration-e20754028c872231-0 -->Shader Models 4.0, 4.1 and 5.0 describe the inherited register/instruction model below. The D3D12 paths described here use SM5.0/5.1 DXBC shader assets and supported SM6.x DXIL shaders. SM5.1 adds resource range flexibility. Existing SM5.0 shaders can use root signatures. Historical SM4.x instruction availability is not a D3D12 profile acceptance rule. `D3D12_FEATURE_SHADER_MODEL` reports the supported shader model. Shader model, DXIL version, validator version and optional device capabilities are distinct conditions.<!-- d3d12-review-inline:end:common-shader-internals:N-program-model:1:authored:migration-e20754028c872231-0 --></ins>
 
 <a id="archive-7-1"></a>
 
@@ -102,7 +98,7 @@ e.g., skip calls if the stack push would exceed the array bounds.<!-- d3d12-revi
 
 ### Double-precision DXBC values
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-numeric-dxbc-double-scope:0:authored:migration-d61aca16ca61c041-0 -->The following packing, swizzle and write mask rules apply to the DXBC register model, not to scalar DXIL SSA values. The [shared double-precision numeric contract](numeric-and-data-rules.md#numeric-3-1-4) defines arithmetic and availability.<!-- d3d12-review-inline:end:common-shader-internals:N-numeric-dxbc-double-scope:0:authored:migration-d61aca16ca61c041-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-numeric-dxbc-double-scope:0:authored:migration-d61aca16ca61c041-0 -->The following packing, swizzle and write mask rules apply to the DXBC register model, not to scalar DXIL SSA values.<!-- d3d12-review-inline:end:common-shader-internals:N-numeric-dxbc-double-scope:0:authored:migration-d61aca16ca61c041-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:N-numeric-dxbc-double-packing:0 -->An exception to the 4-vector register convention exists for double-precision floating-point instructions, which operate on pairs of doubles.
 Double-precision floating-point values are in IEEE 754R format. One double is stored in .xy with the least significant 32 bits in x, and the most significant 32 bits in y.
@@ -188,8 +184,7 @@ See the [Formats](formats.md#interpretation) section for detail.<!-- d3d12-revie
 
 ### Shader Input/Output
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:A-7-7:0 -->Details on Shader input/output registers (indeed all registers) are provided in the sections
-dedicated to each Shader unit elsewhere in the spec.<!-- d3d12-review-inline:end:common-shader-internals:A-7-7:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:A-7-7:0:modified:section-stage-routes -->See the [vertex](vertex-processing.md#vertex-logical-interfaces), [hull](tessellation.md#dxbc-hull-processing), [domain](tessellation.md#domain-logical-interfaces), [geometry](geometry-shaders-and-stream-output.md#gs-dxbc-interface), [pixel](pixel-shaders.md#dxbc-storage) and [compute](compute.md#dxbc-compute) interfaces for stage-specific DXBC registers.<!-- d3d12-review-inline:end:common-shader-internals:A-7-7:0:modified:section-stage-routes --></ins>
 
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:A-7-7:1 -->One thing in common about input/output registers for all shaders is that if they are [declared](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#inst_indexRange)
 to be dynamically indexable from the shader, and the shader indexes them out of the declared range, results are undefined,
@@ -310,21 +305,21 @@ address stack and a "call" is issued, the call is skipped over.<!-- d3d12-review
 
 ## Resource selection and memory access boundaries
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-resource-selection:0:authored:migration-82e12216566ed898-0 -->A shader resource reference selects a logical resource and a location within it. The descriptor/register space mapping, root descriptor restrictions, null descriptors and descriptor index bounds are defined by [Binding](binding.md#table-indexing). SM5.1 permits shader-computed resource and sampler indices; SM6 also represents resources as handles, including [direct heap indexing](binding.md#direct-indexing) in SM6.6.<!-- d3d12-review-inline:end:common-shader-internals:N-resource-selection:0:authored:migration-82e12216566ed898-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-resource-selection:0:authored:migration-82e12216566ed898-0 -->SM5.1 permits shader-computed resource and sampler indices. SM6 also represents resources as handles, including [direct heap indexing](binding.md#direct-indexing) in SM6.6.<!-- d3d12-review-inline:end:common-shader-internals:N-resource-selection:0:authored:migration-82e12216566ed898-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-resource-selection:1:authored:migration-a620d37c5f910582-0 -->A potentially non-uniform resource or sampler index must carry the `NonUniformResourceIndex` indication; omitting the required indication gives undefined results. Resource index divergence and control flow divergence are separate from per-invocation arithmetic. For implicit derivatives, the selected resource and contributing coordinate values must satisfy the stage's derivative/quad rules. Shader Model 6.7 permits quad-uniform control flow even if different quads of a wave diverge. It does not require wave-uniform control flow for those derivative operations.<!-- d3d12-review-inline:end:common-shader-internals:N-resource-selection:1:authored:migration-a620d37c5f910582-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-resource-selection:1:authored:migration-a620d37c5f910582-0 -->A potentially non-uniform resource or sampler index must carry the `NonUniformResourceIndex` indication. Omitting the required indication gives undefined results. For implicit derivatives, the selected resource and contributing coordinate values must satisfy the stage's derivative/quad rules. Shader Model 6.7 permits quad-uniform control flow even if different quads of a wave diverge. It does not require wave-uniform control flow for those derivative operations.<!-- d3d12-review-inline:end:common-shader-internals:N-resource-selection:1:authored:migration-a620d37c5f910582-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-resource-selection:2:authored:migration-b899f01fc2f20db4-0 -->Typed accesses use the resource dimension's element coordinates. Raw accesses use byte offsets; structured accesses use a structure index and byte offset within the structure. [DXBC alignment](memory-model.md#shared-memory-alignment) and [resource/shared memory access bounds](memory-model.md#shared-memory-bounds) define their distinct invalid and out-of-bounds cases. DXIL raw buffer alignment and native 16-bit accesses are operation/type dependent, not a universal four-byte rule. [Typed UAV load support](formats.md#typed-uav-loads) is a device and format contract, distinct from ordinary SRV texture loads.<!-- d3d12-review-inline:end:common-shader-internals:N-resource-selection:2:authored:migration-b899f01fc2f20db4-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-resource-selection:2:authored:migration-b899f01fc2f20db4-0 -->Typed accesses use the resource dimension's element coordinates. Raw accesses use byte offsets. Structured accesses use a structure index and byte offset within the structure. [DXBC alignment](memory-model.md#shared-memory-alignment) and [resource/shared memory access bounds](memory-model.md#shared-memory-bounds) define their distinct invalid and out-of-bounds cases. DXIL raw buffer alignment and native 16-bit accesses are operation/type dependent, not a universal four-byte rule. [Typed UAV load support](formats.md#typed-uav-loads) is a device and format contract, distinct from ordinary SRV texture loads.<!-- d3d12-review-inline:end:common-shader-internals:N-resource-selection:2:authored:migration-b899f01fc2f20db4-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-resource-selection:3:authored:migration-27f42fc1ef43209a-0 -->Memory ordering, races, atomicity and coherency are defined by the [memory model](memory-model.md#memory-consistency). [Shader barriers](memory-model.md#shader-barriers) are not implied by texture filtering or wave collectives. [Resource layouts and synchronization](synchronization.md#layout-transitions) and [reserved resource mapping](resources.md#reserved-resources) remain resource/command contracts. [Rasterizer ordered access](pixel-shaders.md#rovs) remains a pixel shader contract. The SM 6.8 [Barrier intrinsic](work-graphs.md#barrier) defines explicit memory type/scope flags, stage legality and record object overloads. This is distinct from command list barriers.<!-- d3d12-review-inline:end:common-shader-internals:N-resource-selection:3:authored:migration-27f42fc1ef43209a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-resource-selection:3:authored:migration-27f42fc1ef43209a-0 -->The SM 6.8 [Barrier intrinsic](work-graphs.md#barrier) defines explicit memory type/scope flags, stage legality and record object overloads. This is distinct from command list barriers.<!-- d3d12-review-inline:end:common-shader-internals:N-resource-selection:3:authored:migration-27f42fc1ef43209a-0 --></ins>
 
 <a id="dxil-model"></a>
 
 ## DXIL values, storage, signatures and operation families
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-dxil-program:0:authored:migration-6e79856910ab5e93-0 -->A DXIL module identifies its shader model and entry functions in metadata. SSA instructions define typed scalar values, branch/switch/loop control flow and calls. Signature metadata describes pipeline inputs and outputs; resource metadata describes SRV, UAV, CBV and sampler ranges. The stage entry function's signature and properties establish the stage contract. They are not extra user-visible register storage.<!-- d3d12-review-inline:end:common-shader-internals:N-dxil-program:0:authored:migration-6e79856910ab5e93-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-dxil-program:0:authored:migration-6e79856910ab5e93-0 -->A DXIL module identifies its shader model and entry functions in metadata. Signature metadata describes pipeline inputs and outputs. Resource metadata describes SRV, UAV, CBV and sampler ranges.<!-- d3d12-review-inline:end:common-shader-internals:N-dxil-program:0:authored:migration-6e79856910ab5e93-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-dxil-program:1:authored:migration-27943424170564c1-0 -->DXIL operation availability depends on shader model, stage and device capabilities. The following value and storage rules describe the baseline representation.<!-- d3d12-review-inline:end:common-shader-internals:N-dxil-program:1:authored:migration-27943424170564c1-0 --></ins>
+### Primitive types
 
 * <ins><!-- d3d12-review-inline:begin:common-shader-internals:X-primitive:0 -->`void`, `metadata`<!-- d3d12-review-inline:end:common-shader-internals:X-primitive:0 --></ins>
 * <ins><!-- d3d12-review-inline:begin:common-shader-internals:X-primitive:0 -->`i1`, `i8`, `i16`, `i32`, `i64`<!-- d3d12-review-inline:end:common-shader-internals:X-primitive:0 --></ins>
@@ -338,11 +333,13 @@ HLSL min12int, min16int and min16uint data types are mapped to i16.
 
 half and i16 are treated as corresponding DXBC min-<ins><!-- d3d12-review-inline:begin:common-shader-internals:X-primitive:4:modified:source-3088876c86734f77-0-0 -->precision<!-- d3d12-review-inline:end:common-shader-internals:X-primitive:4:modified:source-3088876c86734f77-0-0 --></ins> types (min16float, min16int/min16uint) in SM6.0.
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:X-primitive:5 -->Native 16-bit operations require their shader model/type mode and `Native16BitShaderOpsSupported`; double-precision operations and `Int64ShaderOps` have separate support conditions. Shader Model 6.9 requires native 16-bit, wave and 64-bit integer shader operations.<!-- d3d12-review-inline:end:common-shader-internals:X-primitive:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:X-primitive:5 -->Native 16-bit operations require their [shader model/type mode and device support](numeric-and-data-rules.md#native16). Double-precision operations require [double support](numeric-and-data-rules.md#numeric-3-1-4). Integer 64-bit operations require [`Int64ShaderOps`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options1). Shader Model 6.9 requires native 16-bit, wave and 64-bit integer shader operations.<!-- d3d12-review-inline:end:common-shader-internals:X-primitive:5 --></ins>
+
+### Values and storage
 
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:X-scalarized:0:authored:source-af4698fc46cc7ca3-0-0 -->In the baseline DXIL representation, <!-- d3d12-review-inline:end:common-shader-internals:X-scalarized:0:authored:source-af4698fc46cc7ca3-0-0 --></ins>HLSL vectors are scalarized. They do not participate in computation; however, they may be present in declarations to convey original variable layout to tools, debuggers, and reflection.
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:X-scalarized:1:authored:migration-424be16ae149e144-0 -->The [DXIL 1.9 vector extension](#dxil-vectors) adds native vector types and operations; the baseline scalarization rule is not a prohibition on that extension.<!-- d3d12-review-inline:end:common-shader-internals:X-scalarized:1:authored:migration-424be16ae149e144-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:X-scalarized:1:authored:migration-424be16ae149e144-0 -->The [DXIL 1.9 vector extension](#dxil-vectors) adds native vector types and operations.<!-- d3d12-review-inline:end:common-shader-internals:X-scalarized:1:authored:migration-424be16ae149e144-0 --></ins>
 
 Matrices are lowered to vectors, and are not referenced by instructions. They may be present in declarations to convey original variable layout to tools, debuggers, and reflection.
 
@@ -358,9 +355,13 @@ A texture buffer is mapped to RawBuffer. Texture buffer variable declarations ar
 
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:X-threadlocal:0:modified:migration-d6535f413ec2cc88-0 -->Indexable threadlocal memory (DXBC x-registers) is linear in DXIL. Threadlocal variables are "declared" via alloca instructions. Threadlocal variables are assumed to reside in addrspace(0). The variables are not allocated into some memory pool; the driver compiler can do this, if desired. Accesses to threadlocal variables occur via pointer load/store instructions.<!-- d3d12-review-inline:end:common-shader-internals:X-threadlocal:0:modified:migration-d6535f413ec2cc88-0 --></ins>
 
+### Signatures
+
 Formal parameters of a shader entry function in HLSL specify how the shader interacts with the graphics pipeline. Input parameters, referred to as an input signature, specify values received by the shader. Output parameters, referred to as an output signature, specify values produced by the shader. The shader compiler maps HLSL input and output signatures into DXIL specifications that conform to hardware constraints outlined in the Direct3D Functional Specification. DXIL specifications are also called signatures.
 
 Signature mapping is a complex process, as there are many constraints. All signature parameters must fit into a finite space of N 4x32-bit registers. For efficiency reasons, parameters are packed together in a way that does not violate specification constraints. The process is called signature packing. Most signatures are tightly packed; however, the VS input signature is not packed, as the values are coming from the Input Assembler (IA) stage rather than the graphics pipeline. Alternately, the PS output signature is allocated to align the SV_Target semantic index with the output register index.
+
+### Operations
 
 DXIL uses a subset of core LLVM IR instructions that make sense for HLSL, where the meaning of the LLVM IR operation matches the meaning of the HLSL operation.
 
@@ -372,9 +373,7 @@ Operations involving shader resources and samplers are expressed via external fu
 
 Wherever applicable, the return type indicates the "precision" at which the operation is executed. For example, sample intrinsic that returns half data is allowed to be executed at half precision, assuming hardware supports this; however, if the return type is float, the sample operation must be executed in float precision. If lower-precision is not supported by hardware, it is allowed to execute a higher-precision variant of the operation.
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-dxil-resource-results:0:authored:migration-df9eb1df57eccb99-0 -->A resource access uses a typed resource handle; sampler operations additionally use a sampler handle. Sample/load returns group the data components with a mapping status result, while stores have their own effects. Unused coordinates and offsets must follow the intrinsic's resource kind rules. The mapping status is interpreted by `CheckAccessFullyMapped`, not as an application-defined bit mask.<!-- d3d12-review-inline:end:common-shader-internals:N-dxil-resource-results:0:authored:migration-df9eb1df57eccb99-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-dxil-resource-results:1:authored:migration-6ca029048dba98d3-0 -->Indexable private storage is local to the invocation. Group shared storage is defined by [Compute](compute.md#thread-group-shared-memory), with [initialization](memory-model.md#shared-memory-initialization) and [synchronization](memory-model.md#shader-barriers) defined by the shared memory model.<!-- d3d12-review-inline:end:common-shader-internals:N-dxil-resource-results:1:authored:migration-6ca029048dba98d3-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-dxil-resource-results:0:authored:migration-df9eb1df57eccb99-0 -->A resource access uses a typed resource handle. Sampler operations additionally use a sampler handle. Sample/load returns group the data components with a mapping status result.<!-- d3d12-review-inline:end:common-shader-internals:N-dxil-resource-results:0:authored:migration-df9eb1df57eccb99-0 --></ins>
 
 <a id="dxil-vectors"></a>
 
@@ -436,9 +435,9 @@ including the role of [Fixed Point](numeric-and-data-rules.md#numeric-3-2-4-1) s
 
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:A-7-17:0 -->The load operation performs a non-filtered read of resource data. See the [ld](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#inst_LD) instruction definition for details.<!-- d3d12-review-inline:end:common-shader-internals:A-7-17:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-load-boundaries:0:authored:migration-94e572921832dc2f-0 -->`Load`/DXBC `ld` uses integer texel coordinates and an explicit mip level, without a sampler: no address mode wrapping, filtering or LOD bias is applied. Buffer loads do not have a mip level. Texture array indices are integer slice indices and are not spatially filtered. Integer coordinate/mip/slice out-of-range SRV loads return zero for present components and the format's [missing-component defaults](formats.md#missing-components). A null descriptor has its separately defined all-zero behavior.<!-- d3d12-review-inline:end:common-shader-internals:N-load-boundaries:0:authored:migration-94e572921832dc2f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-load-boundaries:0:authored:migration-94e572921832dc2f-0 -->`Load`/DXBC `ld` uses integer texel coordinates and an explicit mip level, without a sampler: no address mode wrapping, filtering or LOD bias is applied. Buffer loads do not have a mip level. Texture array indices are integer slice indices and are not spatially filtered. Integer coordinate/mip/slice out-of-range SRV loads return zero for present components and the format's [missing-component defaults](formats.md#missing-components). A compatible load through a [null descriptor](binding.md#null-descriptors) returns zero in all components.<!-- d3d12-review-inline:end:common-shader-internals:N-load-boundaries:0:authored:migration-94e572921832dc2f-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-load-boundaries:1:authored:migration-d1e43599d6087724-0 -->Texel offsets are applied in the selected mip's texel space, never along an array axis. DXBC offsets are signed four-bit immediates in `[-8,7]`; SM6.7 programmable offsets are described [below](#programmable-offsets). Loading an `R32_FLOAT` value into a 32-bit register preserves its bits, including denormals, unlike filtered sampling. MSAA loads select an integer sample index rather than blending samples. Their invalid sample index behavior is operation-specific, not sampler border addressing.<!-- d3d12-review-inline:end:common-shader-internals:N-load-boundaries:1:authored:migration-d1e43599d6087724-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-load-boundaries:1:authored:migration-d1e43599d6087724-0 -->Texel offsets are applied in the selected mip's texel space, never along an array axis. DXBC offsets are signed four-bit immediates in `[-8,7]`. See [Programmable offsets](#programmable-offsets) for SM6.7 offsets. Loading an `R32_FLOAT` value into a 32-bit register preserves its bits, including denormals, unlike filtered sampling.<!-- d3d12-review-inline:end:common-shader-internals:N-load-boundaries:1:authored:migration-d1e43599d6087724-0 --></ins>
 
 <a id="archive-7-17-1"></a>
 
@@ -463,11 +462,7 @@ is undefined, but cannot return data outside of the GPU process context.<!-- d3d
 
 ## Sampler and filtering model
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-sampler-model:0:authored:migration-2cef378b26ae10f9-0 -->Sampler state supplies minification, magnification and mip filtering; U/V/W address modes; border color; mip bias and LOD clamps; maximum anisotropy; and comparison function. [Sampler descriptions, filter encodings and creation](binding.md#samplers) define these fields and their defaults/validity, including static and dynamic samplers. Texture instructions select a resource independently from a sampler.<!-- d3d12-review-inline:end:common-shader-internals:N-sampler-model:0:authored:migration-2cef378b26ae10f9-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-sampler-model:1:authored:migration-d1b6f11bb180ace2-0 -->Standard filtering combines values with filter weights. Comparison filtering compares each selected texel with the reference value before filtering the resulting zeroes/ones. Minimum/maximum reduction uses the selected nonzero-weight footprint but reduces per-component minima/maxima instead of weighted blending. Point and linear address selection, mip selection and anisotropy determine that footprint. Filter reduction is not a separate address mode.<!-- d3d12-review-inline:end:common-shader-internals:N-sampler-model:1:authored:migration-d1b6f11bb180ace2-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-sampler-model:2:authored:migration-1576c957816e8b7b-0 -->The normalized coordinate algorithms below apply unless a [non-normalized coordinate sampler](#non-normalized-coordinates) is selected. Array indices select slices, not a filtering dimension; cube coordinates select a face and project onto that face.<!-- d3d12-review-inline:end:common-shader-internals:N-sampler-model:2:authored:migration-1576c957816e8b7b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-sampler-model:2:authored:migration-1576c957816e8b7b-0 -->See [Static and dynamic samplers](binding.md#samplers) for sampler descriptions and creation. The normalized coordinate algorithms below apply unless a [non-normalized coordinate sampler](#non-normalized-coordinates) is selected.<!-- d3d12-review-inline:end:common-shader-internals:N-sampler-model:2:authored:migration-1576c957816e8b7b-0 --></ins>
 
 <a id="array-coordinates"></a>
 
@@ -572,8 +567,6 @@ may affect the LOD calculation differently.<!-- d3d12-review-inline:end:common-s
 <a id="archive-7-18"></a>
 
 ## Texture Sampling
-
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:A-7-18:0 -->Texture sampling combines coordinate processing, texel addressing, mip selection and a supported filter. The following sections define these steps independently of descriptor creation.<!-- d3d12-review-inline:end:common-shader-internals:A-7-18:0 --></ins>
 
 <a id="archive-7-18-1"></a>
 
@@ -1138,13 +1131,11 @@ in which the possible choices are POINT and LINEAR. Ordinary anisotropic texture
 
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:L-shader-bias-range:0:modified:migration-f03db2f7c42c1f90-0 -->The range of `srcLODBias` is `[-16.0f, 15.99f]`, with both endpoints included; values outside of this range will produce undefined results.<!-- d3d12-review-inline:end:common-shader-internals:L-shader-bias-range:0:modified:migration-f03db2f7c42c1f90-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-bias-input-bounds:0:authored:migration-3436c6e85a271e5e-0 -->The sampler's `MipLODBias` interval has the same inclusive endpoints: `D3D12_MIP_LOD_BIAS_MIN` is `-16.0f`, and `D3D12_MIP_LOD_BIAS_MAX` is `15.99f`. [Binding](binding.md#sampler-fields) defines the sampler field.<!-- d3d12-review-inline:end:common-shader-internals:N-bias-input-bounds:0:authored:migration-3436c6e85a271e5e-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-bias-input-bounds:1:authored:migration-c0ebf8ac18c49e0a-0 -->The `MinLOD`/`MaxLOD` clamp does not make an out-of-range shader bias input valid. The out-of-range-result rule above is not a requirement to raise a runtime error for a shader-computed bias. DXIL validation diagnoses an out-of-range constant bias operand. That constant-operand check is separate from shader execution.<!-- d3d12-review-inline:end:common-shader-internals:N-bias-input-bounds:1:authored:migration-c0ebf8ac18c49e0a-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-bias-input-bounds:1:authored:migration-c0ebf8ac18c49e0a-0 -->The shader bias is added to the computed LOD along with sampler bias before the `MinLOD`/`MaxLOD` clamp. That clamp limits the resulting LOD. It does not establish a clamp that makes an out-of-range shader bias input valid. The out-of-range-result rule above is not a requirement to raise a runtime error for a shader-computed bias. DXIL validation diagnoses an out-of-range constant bias operand. That constant-operand check is separate from shader execution.<!-- d3d12-review-inline:end:common-shader-internals:N-bias-input-bounds:1:authored:migration-c0ebf8ac18c49e0a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-lod-operation-controls:0:authored:migration-6ac6875bdb44a0d4-0 -->`Sample` and `SampleBias` use implicit gradients. `SampleBias` adds its shader bias. `SampleGrad` uses supplied spatial gradients. `SampleLevel` uses an explicit LOD and no derivative-derived anisotropy. The inherited DXBC `sample_l` and `sample_c_lz` operation contracts honor sampler bias and LOD clamps, with `sample_c_lz` biasing from zero.<!-- d3d12-review-inline:end:common-shader-internals:N-lod-operation-controls:0:authored:migration-6ac6875bdb44a0d4-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-lod-operation-controls:0:authored:migration-6ac6875bdb44a0d4-0 -->LOD controls are operation-dependent. `Sample` and `SampleBias` use implicit gradients. `SampleBias` adds its shader bias. `SampleGrad` uses supplied spatial gradients. `SampleLevel` uses an explicit LOD and no derivative-derived anisotropy. Its ratio of anisotropy is one. The inherited DXBC `sample_l` and `sample_c_lz` operation contracts honor sampler bias and LOD clamps, with `sample_c_lz` biasing from zero. Those controls do not turn an explicit LOD into a derivative-derived footprint. The arithmetic above is the common bias/clamp calculation where the selected operation honors those controls, not an instruction to apply every bias to every operation.<!-- d3d12-review-inline:end:common-shader-internals:N-lod-operation-controls:0:authored:migration-6ac6875bdb44a0d4-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-lod-operation-controls:1:authored:migration-33e768472c46d833-0 -->`CalculateLevelOfDetail` returns the corresponding clamped LOD. `CalculateLevelOfDetailUnclamped` returns the unclamped result. `Gather` operates at the most detailed mip of the view rather than choosing a derivative-derived mip. A sample's optional minimum LOD operand supplies an additional lower clamp. It does not change descriptor mapping or residency.<!-- d3d12-review-inline:end:common-shader-internals:N-lod-operation-controls:1:authored:migration-33e768472c46d833-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-lod-operation-controls:1:authored:migration-33e768472c46d833-0 -->`CalculateLevelOfDetail` returns the corresponding clamped LOD. `CalculateLevelOfDetailUnclamped` returns the unclamped result. `Gather` operates at the most detailed mip of the view rather than choosing a derivative-derived mip. A sample's optional minimum LOD operand supplies an additional lower clamp.<!-- d3d12-review-inline:end:common-shader-internals:N-lod-operation-controls:1:authored:migration-33e768472c46d833-0 --></ins>
 
 <a id="lod-query-boundaries"></a>
 
@@ -1204,13 +1195,11 @@ See the [Formats](formats.md#interpretation) section for detail.<!-- d3d12-revie
 
 ## View/resource LOD clamping and fractional boundaries
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-resource-clamp:0:authored:migration-817df85b438b5545-0 -->`ResourceMinLODClamp` is SRV state in D3D12. It supplies the resource-relative minimum LOD clamp described below; `MostDetailedMip` establishes the view-relative mip zero. It is not a D3D11 per-resource setter or a sampler field. [Resource binding and root signatures](binding.md#texture-srv) defines the view fields and coordinate space. The inherited term “per-resource MinLOD clamp” in the following algorithms refers to this resource-relative clamp carried by the view.<!-- d3d12-review-inline:end:common-shader-internals:N-resource-clamp:0:authored:migration-817df85b438b5545-0 --></ins>
-
 <a id="archive-5-8-3"></a>
 
 ### Mipmap Number Space
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-canonical-mip-number-space:0:authored:migration-91d88732dc397752-0 -->The [texture SRV field definition](binding.md#texture-srv) defines the resource-relative `ResourceMinLODClamp` and view-relative sampler mip-number spaces. The fractional and empty-set algorithms below use those canonical spaces.<!-- d3d12-review-inline:end:common-shader-internals:N-canonical-mip-number-space:0:authored:migration-91d88732dc397752-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-resource-clamp:0:authored:migration-817df85b438b5545-0 -->[`ResourceMinLODClamp`](binding.md#texture-srv) is SRV state in D3D12. It supplies the resource-relative minimum LOD clamp described below. `MostDetailedMip` establishes the view-relative mip zero. The inherited term “per-resource MinLOD clamp” in the following algorithms refers to this resource-relative clamp carried by the view.<!-- d3d12-review-inline:end:common-shader-internals:N-resource-clamp:0:authored:migration-817df85b438b5545-0 --></ins>
 
 <a id="archive-5-8-4"></a>
 
@@ -1257,8 +1246,6 @@ the result is the out of bounds behavior (as opposed to returning the border col
 <a id="archive-5-8-6"></a>
 
 ### Per-Resource Clamp Examples
-
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:A-5-8-6:0:modified:migration-c4b47e4f72b667ae-0 -->The three cases below distinguish a clamp within both ranges, beyond the sampler clamp but within the view, and beyond the view.<!-- d3d12-review-inline:end:common-shader-internals:A-5-8-6:0:modified:migration-c4b47e4f72b667ae-0 --></ins>
 
 <a id="archive-5-8-6-1"></a>
 
@@ -1376,9 +1363,7 @@ Per-Resource MinLOD clamp = 6.5 (this is in the Resource mip number space)
 
 ## Per-sample clamps and mapping feedback
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-mapping-scope:0:authored:migration-92ba608743fea84b-0 -->The status returned by a resource access describes whether the accessed footprint was fully mapped. It is distinct from sampler feedback maps, which record texture usage. `CheckAccessFullyMapped` interprets the status. Mapping changes and tiled resource tier behavior remain [resource contracts](resources.md#reserved-resources). These shader-visible rules do not synchronize mapping or make an unmapped tile resident.<!-- d3d12-review-inline:end:common-shader-internals:N-mapping-scope:0:authored:migration-92ba608743fea84b-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-mapping-scope:1:authored:migration-adea073bc6be5ddc-0 -->Packed mip texture array availability follows the [tier-specific resource creation contract](resources.md#arrayed-packed-mips). The mapping status and sampling operations remain the shader-visible interface to those resources.<!-- d3d12-review-inline:end:common-shader-internals:N-mapping-scope:1:authored:migration-adea073bc6be5ddc-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-mapping-scope:0:authored:migration-92ba608743fea84b-0 -->The status returned by a resource access describes whether the accessed footprint was fully mapped. It is distinct from sampler feedback maps, which record texture usage.<!-- d3d12-review-inline:end:common-shader-internals:N-mapping-scope:0:authored:migration-92ba608743fea84b-0 --></ins>
 
 <a id="archive-5-9-4-5-2"></a>
 
@@ -1568,7 +1553,7 @@ Non-tiled resources always appear to be fully mapped.<!-- d3d12-review-inline:en
 
 <!-- d3d12-review-alert:end:common-shader-internals:TILED-hlsl-mapping-feedback:13 -->
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:TILED-hlsl-mapping-feedback:14 -->This table describes the listed mapping status families, not every later shader model overload. Sampler-based methods are not methods of RW texture objects. Texture3D does not acquire the comparison sampling methods from the other texture rows. Method-specific coordinate, offset and result signatures remain part of the shader reference; raw buffer `Load2`/`Load3`/`Load4` follow their load family status rules.<!-- d3d12-review-inline:end:common-shader-internals:TILED-hlsl-mapping-feedback:14 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:TILED-hlsl-mapping-feedback:14 -->This table describes the listed mapping status families, not every later shader model overload. Raw buffer `Load2`/`Load3`/`Load4` follow their load family status rules.<!-- d3d12-review-inline:end:common-shader-internals:TILED-hlsl-mapping-feedback:14 --></ins>
 
 <a id="minmax-filtering"></a>
 
@@ -1602,19 +1587,19 @@ min/max these texels still do not contribute to the result (and the weights do n
 
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:A-7-18-15:0 -->Comparison filtering is a building-block operation for percentage-closer filtering. Each selected texel is compared to the reference, and the resulting comparison values are filtered, rather than comparing an already filtered texture value.<!-- d3d12-review-inline:end:common-shader-internals:A-7-18-15:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-comparison-semantics:0:authored:migration-9f11fa53e16c14a7-0 -->The comparison is `reference ComparisonFunc texel.R`. A passing comparison contributes `1.0f`. A failing comparison contributes `0.0f`. The configured filter combines the per-texel values to produce a scalar result. Address modes, border handling, mip selection and supported comparison filters still apply. Comparison sampling uses a comparison sampler and a comparison-supported resource format; [format capabilities](formats.md#support) establish the typed support.<!-- d3d12-review-inline:end:common-shader-internals:N-comparison-semantics:0:authored:migration-9f11fa53e16c14a7-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-comparison-semantics:0:authored:migration-9f11fa53e16c14a7-0 -->The comparison is `reference ComparisonFunc texel.R`. A passing comparison contributes `1.0f`. A failing comparison contributes `0.0f`. The configured filter combines the per-texel values to produce a scalar result. Comparison sampling uses a comparison sampler and a comparison-supported resource format. See [format capabilities](formats.md#support) for typed support.<!-- d3d12-review-inline:end:common-shader-internals:N-comparison-semantics:0:authored:migration-9f11fa53e16c14a7-0 --></ins>
 
 <a id="comparison-component-mapping"></a>
 
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:N-comparison-component-mapping:0:authored:migration-b1c9993a6da40e9d-0 -->**Tentative component-mapping contract:** For comparison-filtered sampling, `texel.R` is selected before SRV component mapping. Each comparison result is completed to `(result, 0.0f, 0.0f, 1.0f)`. SRV component mapping applies to that intermediate before filtering. The scalar return is the R component of the filtered value.<!-- d3d12-review-inline:end:common-shader-internals:N-comparison-component-mapping:0:authored:migration-b1c9993a6da40e9d-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-comparison-semantics:1:authored:migration-9ee944053613107d-0 -->The inherited fixed-point/depth format comparison path quantizes/clamps the reference to the format's representable range before comparison. Floating-point texture comparisons follow floating-point comparison rules. The reference is not automatically clamped to `[0,1]` merely because comparison sampling is used. `SampleCmpLevelZero` selects LOD zero; SM6.7 `SampleCmpLevel` supplies an explicit LOD; SM6.8 adds bias and explicit gradient counterparts, described below.<!-- d3d12-review-inline:end:common-shader-internals:N-comparison-semantics:1:authored:migration-9ee944053613107d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-comparison-semantics:1:authored:migration-9ee944053613107d-0 -->The inherited fixed-point/depth format comparison path quantizes/clamps the reference to the format's representable range before comparison. Floating-point texture comparisons follow floating-point comparison rules. The reference is not automatically clamped to `[0,1]` merely because comparison sampling is used. `SampleCmpLevelZero` selects LOD zero. SM6.7 [`SampleCmpLevel`](#sample-cmp-level) supplies an explicit LOD. SM6.8 adds [bias and explicit gradient counterparts](#expanded-comparison-sampling).<!-- d3d12-review-inline:end:common-shader-internals:N-comparison-semantics:1:authored:migration-9ee944053613107d-0 --></ins>
 
 <a id="advanced-texture-operations"></a>
 
 ## Shader Model 6.7 advanced texture operations
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-advanced-capabilities:0:authored:migration-550700a1ab6fde13-0 -->Shader Model 6.7 advanced texture operations require `D3D12_FEATURE_DATA_D3D12_OPTIONS14::AdvancedTextureOpsSupported`. Writable MSAA textures have the separate `WriteableMSAATexturesSupported` capability. Sixteen-bit `GatherRaw` additionally requires native 16-bit shader operations (`OPTIONS4::Native16BitShaderOpsSupported`); 64-bit `GatherRaw` additionally requires `OPTIONS1::Int64ShaderOps`. Integer aliasing also requires the [relaxed format-casting contract](formats.md#cast-lists). Shader model alone does not replace these capabilities.<!-- d3d12-review-inline:end:common-shader-internals:N-advanced-capabilities:0:authored:migration-550700a1ab6fde13-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-advanced-capabilities:0:authored:migration-550700a1ab6fde13-0 -->Shader Model 6.7 advanced texture operations require [`D3D12_FEATURE_DATA_D3D12_OPTIONS14::AdvancedTextureOpsSupported`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options14). Writable MSAA textures have the separate `WriteableMSAATexturesSupported` capability. Sixteen-bit `GatherRaw` additionally requires [native 16-bit shader operations](numeric-and-data-rules.md#native16). The 64-bit form additionally requires [`OPTIONS1::Int64ShaderOps`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options1). Integer aliasing also requires [relaxed format casting](formats.md#cast-lists).<!-- d3d12-review-inline:end:common-shader-internals:N-advanced-capabilities:0:authored:migration-550700a1ab6fde13-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:F-integer-sampling:0 -->Values from unsigned integer formats can be used by texture retrieval intrinsics with certain restrictions on filtering.
 Integer samples may not use any `LINEAR` or `ANISOTROPIC` filtering modes.
@@ -1641,7 +1626,7 @@ to return a border color, the border value returned to the shader in the G
 channel (unless otherwise redirected via an SRV swizzle) may be the value
 specified in the sampler's border color in *either* the R or G channel.
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-integer-sampler-owner:0:authored:migration-f95c764f694ed6ec-0 -->Integer-border selection and static integer-border colors are defined by [sampler fields](binding.md#sampler-fields). `D3D12_SAMPLER_FLAG_UINT_BORDER_COLOR` selects integer border values for dynamic samplers. The signed interpretation and stencil/SRV swizzle ordering limitations above are not a promise of signed format sampling support beyond the operation's supported formats.<!-- d3d12-review-inline:end:common-shader-internals:N-integer-sampler-owner:0:authored:migration-f95c764f694ed6ec-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-integer-sampler-owner:0:authored:migration-f95c764f694ed6ec-0 -->[`D3D12_SAMPLER_FLAG_UINT_BORDER_COLOR`](binding.md#sampler-fields) selects integer border values for dynamic samplers. The signed interpretation and stencil/SRV swizzle ordering limitations above are not a promise of signed format sampling support beyond the operation's supported formats.<!-- d3d12-review-inline:end:common-shader-internals:N-integer-sampler-owner:0:authored:migration-f95c764f694ed6ec-0 --></ins>
 
 In HLSL code below, these notation conventions are used for non-native HLSL code:
 
@@ -1713,9 +1698,7 @@ Earlier shader models required that this offset be an immediate value.
 
 In Shader Model 6.7, the `Offset` parameters can be variables
  where the 4 least significant bits are honored as a signed value,
- yielding a [-8..7] range<ins><!-- d3d12-review-inline:begin:common-shader-internals:F-programmable-offsets:2:modified:source-05a604848fdef6ae-0-0 -->.<!-- d3d12-review-inline:end:common-shader-internals:F-programmable-offsets:2:modified:source-05a604848fdef6ae-0-0 --></ins>
-
-Note: no DXIL changes are needed as the operations already take i32 values for offsets.
+ yielding a [-8..7] range<ins><!-- d3d12-review-inline:begin:common-shader-internals:F-programmable-offsets:2:modified:source-05a604848fdef6ae-0-0 -->.<!-- d3d12-review-inline:end:common-shader-internals:F-programmable-offsets:2:modified:source-05a604848fdef6ae-0-0 --></ins> <ins><!-- d3d12-review-inline:begin:common-shader-internals:F-programmable-offsets:2:modified:corrective-C12-offset-width -->DXIL offset operands are `i32`.<!-- d3d12-review-inline:end:common-shader-internals:F-programmable-offsets:2:modified:corrective-C12-offset-width --></ins>
 
 <a id="sample-cmp-level"></a>
 
@@ -1775,7 +1758,7 @@ The number of components in the `Location` and `Offset` value depends on the typ
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:F-expanded-behavior:1 -->The only difference between these new functions and the existing comparison sample ops is how the LOD is computed. The computation of the LOD is identical to the equivalent non-comparison sampling operation.
 `SampleCmpGrad` uses explicit gradients to compute the LOD rather than implicit ones from other pixels in the current quad, and `SampleCmpBias` computes an implicit LOD and then adds a shader-computed bias value to the result.<!-- d3d12-review-inline:end:common-shader-internals:F-expanded-behavior:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-expanded-availability:0:authored:migration-164d2345d7cb23ef-0 -->Shader Model 6.8 `SampleCmpBias` and `SampleCmpGrad` require `D3D12_FEATURE_DATA_D3D12_OPTIONS21::SampleCmpGradientAndBiasSupported`. The `SampleCmpGradientOrBias` shader feature flag records this requirement. `SampleCmpGrad` uses explicit gradients and is available in all shader stages, for Texture1D[Array], Texture2D[Array] and TextureCube, but not TextureCubeArray. Cube forms have no texel offset operand. `SampleCmpBias` supports the comparison sampling texture kinds including TextureCubeArray, but requires implicit derivatives in the selected stage. Stage-specific derivative support, including the mesh/amplification capability, remains applicable.<!-- d3d12-review-inline:end:common-shader-internals:N-expanded-availability:0:authored:migration-164d2345d7cb23ef-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-expanded-availability:0:authored:migration-164d2345d7cb23ef-0 -->Shader Model 6.8 `SampleCmpBias` and `SampleCmpGrad` require [`D3D12_FEATURE_DATA_D3D12_OPTIONS21::SampleCmpGradientAndBiasSupported`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options21). The `SampleCmpGradientOrBias` shader feature flag records this requirement. `SampleCmpGrad` uses explicit gradients and is available in all shader stages, for Texture1D[Array], Texture2D[Array] and TextureCube, but not TextureCubeArray. Cube forms have no texel offset operand. `SampleCmpBias` supports the comparison sampling texture kinds including TextureCubeArray, but requires implicit derivatives in the selected stage. See the [pixel](pixel-shaders.md#derivatives), [compute](compute.md#compute-quads) and [optional amplification/mesh](amplification-and-mesh-shaders.md#derivatives) derivative rules for stage availability.<!-- d3d12-review-inline:end:common-shader-internals:N-expanded-availability:0:authored:migration-164d2345d7cb23ef-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:N-expanded-availability:1:authored:migration-c929f6ad98c16381-0 -->SM6.8 also adds `CalculateLevelOfDetail` and `CalculateLevelOfDetailUnclamped` overloads accepting comparison samplers. These LOD query overloads are required by SM6.8, independently of the optional gradient/bias sampling capability, and use the same LOD computations as non-comparison sampler overloads.<!-- d3d12-review-inline:end:common-shader-internals:N-expanded-availability:1:authored:migration-c929f6ad98c16381-0 --></ins>
 
@@ -1783,7 +1766,7 @@ The number of components in the `Location` and `Offset` value depends on the typ
 
 ## Gather footprint and ordering
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-gather-model:0:authored:migration-3568c5b302696a58-0 -->`Gather` retrieves one selected component from each of the four texels of the bilinear footprint at the view's most detailed mip, without blending them or computing a derivative-derived LOD. The component results are returned in counter-clockwise footprint order starting at the lower-left: `(u0,v1)`, `(u1,v1)`, `(u1,v0)`, `(u0,v0)`; V increases down the texture. A comparison gather compares the reference against each tap and returns the four comparison results, not their filtered average. Gather offsets shift the footprint in texel space and do not index the array dimension.<!-- d3d12-review-inline:end:common-shader-internals:N-gather-model:0:authored:migration-3568c5b302696a58-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-gather-model:0:authored:migration-3568c5b302696a58-0 -->`Gather` retrieves one selected component from each of the four texels of the bilinear footprint at the view's most detailed mip, without blending them or computing a derivative-derived LOD. The component results are returned in counter-clockwise footprint order starting at the lower-left: `(u0,v1)`, `(u1,v1)`, `(u1,v0)`, `(u0,v0)`. V increases down the texture. A comparison gather compares the reference against each tap and returns the four comparison results, not their filtered average. Gather offsets shift the footprint in texel space and do not index the array dimension.<!-- d3d12-review-inline:end:common-shader-internals:N-gather-model:0:authored:migration-3568c5b302696a58-0 --></ins>
 
 <a id="gather-component-mapping"></a>
 
@@ -1805,8 +1788,6 @@ The number of components in the `Location` and `Offset` value depends on the typ
 > **Draft qualification:** Comparison-gather ordering relative to comparison and its intermediate component representation remain unresolved.
 
 <!-- d3d12-review-context:end:common-shader-internals:N-gather-component-mapping:0:authored:BC-I03-unresolved-comparison-gather -->
-
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-gather-model:1:authored:migration-250fbcb120afd3b1-0 -->Cube gathers follow cube face/edge/corner rules. At a cube corner the virtual missing sample follows the gather operation's cube-corner behavior rather than imposing a four-independent-face assumption. `GatherRaw` has its stricter two-dimensional integer view restrictions [above](#raw-gather). Operation-specific per-tap offsets and supported gather components/types remain part of the supporting operation reference.<!-- d3d12-review-inline:end:common-shader-internals:N-gather-model:1:authored:migration-250fbcb120afd3b1-0 --></ins>
 
 <a id="gather-details"></a>
 
@@ -1920,13 +1901,13 @@ The result of sampling outside of the valid range is generally undefined in term
 
 Support for non-normalized texture sampling is implied by, and must be supported on, drivers that report their DDI version to be 0100 or greater.
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-nonnormalized-cap:0:authored:migration-639bd4e6b274f187-0 -->`D3D12_FEATURE_DATA_D3D12_OPTIONS17::NonNormalizedCoordinateSamplersSupported` reports this support. [Binding](binding.md#non-normalized-samplers) defines dynamic/static sampler representation and root signature version conditions. Those representation conditions are distinct from the sampling capability.<!-- d3d12-review-inline:end:common-shader-internals:N-nonnormalized-cap:0:authored:migration-639bd4e6b274f187-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-nonnormalized-cap:0:authored:migration-639bd4e6b274f187-0 -->`D3D12_FEATURE_DATA_D3D12_OPTIONS17::NonNormalizedCoordinateSamplersSupported` reports this support.<!-- d3d12-review-inline:end:common-shader-internals:N-nonnormalized-cap:0:authored:migration-639bd4e6b274f187-0 --></ins>
 
 <a id="sampler-feedback"></a>
 
 ## Sampler feedback usage recording
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-feedback-intro:0:authored:migration-dd425a868a0b0155-0 -->Sampler feedback writes record the texture footprint that a sampling operation would use, rather than returning filtered color. Feedback resources pair with the sampled texture. Their format/view pairing is defined by [Binding](binding.md#create-sampler-feedback-uav), and feedback region properties by [Resources](resources.md#extended-description). Feedback does not alter texture mapping or replace resource state synchronization.<!-- d3d12-review-inline:end:common-shader-internals:N-feedback-intro:0:authored:migration-dd425a868a0b0155-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-feedback-intro:0:authored:migration-dd425a868a0b0155-0 -->Sampler feedback writes record the texture footprint that a sampling operation would use, rather than returning filtered color. Feedback resources [pair with the sampled texture](binding.md#create-sampler-feedback-uav).<!-- d3d12-review-inline:end:common-shader-internals:N-feedback-intro:0:authored:migration-dd425a868a0b0155-0 --></ins>
 
 <a id="feedback-capability-tiers"></a>
 
@@ -1934,7 +1915,7 @@ Support for non-normalized texture sampling is implied by, and must be supported
 
 Sampler feedback support is not required as part of a Direct3D feature level.
 
-Support for sampler feedback is queryable from a CheckFeatureSupport capability tier.
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-feedback-operations:0:authored:corrective-C5-capability -->Support for sampler feedback is queryable through `CheckFeatureSupport` using `D3D12_FEATURE_DATA_D3D12_OPTIONS7::SamplerFeedbackTier`.<!-- d3d12-review-inline:end:common-shader-internals:N-feedback-operations:0:authored:corrective-C5-capability --></ins>
 
 The tiers are organized as version-numbers-with-fractions as follows:
 * TIER_NOT_SUPPORTED indicates sampler feedback is not supported. Attempts at calling sampler feedback APIs represent an error.
@@ -1958,9 +1939,7 @@ The tiers are organized as version-numbers-with-fractions as follows:
 
 ### Feedback method kinds and stage availability
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-feedback-method-contract:0:authored:migration-2b2dc4e16c4a5963-0 -->`FeedbackTexture2D<type>` methods take a paired `Texture2D`; `FeedbackTexture2DArray<type>` methods take a paired `Texture2DArray`. The feedback map `type` is `SAMPLER_FEEDBACK_MIN_MIP` or `SAMPLER_FEEDBACK_MIP_REGION_USED`. The sampled coordinates have two spatial components, with an additional array slice component for `Texture2DArray`.<!-- d3d12-review-inline:end:common-shader-internals:N-feedback-method-contract:0:authored:migration-2b2dc4e16c4a5963-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-feedback-method-contract:1:authored:migration-89b13e6d95f7c8e1-0 -->Tier1.0 removes the listed Tier0.9 sampler addressing and SRV field restrictions. The method kind, paired-texture identity and zero-offset requirements still apply.<!-- d3d12-review-inline:end:common-shader-internals:N-feedback-method-contract:1:authored:migration-89b13e6d95f7c8e1-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-feedback-method-contract:0:authored:migration-2b2dc4e16c4a5963-0 -->`FeedbackTexture2D<type>` methods take a paired `Texture2D`. `FeedbackTexture2DArray<type>` methods take a paired `Texture2DArray`. The feedback map `type` is `SAMPLER_FEEDBACK_MIN_MIP` or `SAMPLER_FEEDBACK_MIP_REGION_USED`. The sampled coordinates have two spatial components, with an additional array slice component for `Texture2DArray`.<!-- d3d12-review-inline:end:common-shader-internals:N-feedback-method-contract:0:authored:migration-2b2dc4e16c4a5963-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:N-feedback-method-contract:2:authored:migration-632423d95355484f-0 -->Sampler feedback operations require Shader Model 6.5 or later and sampler feedback device support. Their entry stage availability is operation-specific:<!-- d3d12-review-inline:end:common-shader-internals:N-feedback-method-contract:2:authored:migration-632423d95355484f-0 --></ins>
 
@@ -1978,7 +1957,7 @@ The tiers are organized as version-numbers-with-fractions as follows:
 
 <!-- d3d12-review-alert:end:common-shader-internals:N-feedback-method-contract:3:authored:migration-1986e133ba13239c-0 -->
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-feedback-method-contract:4:authored:migration-7c1a7d08b76d1baf-0 -->The implicit and bias feedback forms retain the pixel entry restriction in the selected DXIL operation contract. Their presence in library code does not authorize use from an otherwise ineligible entry stage. The [SM6.6 compute/mesh/amplification derivative extension](../HLSL_SM_6_6_Derivatives.md#texture-sample-methods) adds the listed sampling and LOD query operations to those stages. It does not extend these two feedback operations. Thus later derivative support alone does not authorize implicit or bias sampler feedback writes outside pixel shaders.<!-- d3d12-review-inline:end:common-shader-internals:N-feedback-method-contract:4:authored:migration-7c1a7d08b76d1baf-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-feedback-method-contract:4:authored:migration-7c1a7d08b76d1baf-0 -->The presence of implicit and bias feedback forms in library code does not authorize use from an otherwise ineligible entry stage. The [SM6.6 compute/mesh/amplification derivative extension](../HLSL_SM_6_6_Derivatives.md#texture-sample-methods) adds the listed sampling and LOD query operations to those stages. It does not extend these two feedback operations.<!-- d3d12-review-inline:end:common-shader-internals:N-feedback-method-contract:4:authored:migration-7c1a7d08b76d1baf-0 --></ins>
 
 <a id="feedback-zero-offset"></a>
 
@@ -1991,6 +1970,8 @@ The writing of feedback does not support offsets. That is, all feedback should b
 <a id="feedback-footprint"></a>
 
 ### Feedback footprint and helper behavior
+
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-feedback-operations:0:authored:corrective-C5-footprint -->`WriteSamplerFeedback`, `WriteSamplerFeedbackBias`, `WriteSamplerFeedbackLevel` and `WriteSamplerFeedbackGrad` mirror the corresponding implicit, bias, explicit LOD and explicit gradient sampling footprint calculations.<!-- d3d12-review-inline:end:common-shader-internals:N-feedback-operations:0:authored:corrective-C5-footprint --></ins>
 
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:F-feedback-values:0 -->Meaningful values for sampler feedback are obtained through [transcoding](resource-operations.md#feedback-transcoding). The interpretations depend on whether the map records [minimum mip](../SamplerFeedback.md#minmip-feedback-map) or [mip region use](../SamplerFeedback.md#mipregionused-feedback-map).<!-- d3d12-review-inline:end:common-shader-internals:F-feedback-values:0 --></ins>
 
@@ -2013,7 +1994,7 @@ Feedback map UAVs may be created against a NULL paired texture. If shader code i
 
 then the writes have no effect.
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:F-feedback-helpers:0:modified:source-bf88fbe6e83b1a26-0-0 -->On [pixel shader helper lanes](pixel-shaders.md#helper-lanes), sampler feedback writes are discarded, consistently with other UAV writes. This does not classify all inactive lanes as helper lanes<!-- d3d12-review-inline:end:common-shader-internals:F-feedback-helpers:0:modified:source-bf88fbe6e83b1a26-0-0 --></ins>.
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:F-feedback-helpers:0:modified:source-bf88fbe6e83b1a26-0-0 -->On [pixel shader helper lanes](pixel-shaders.md#helper-lanes), sampler feedback writes are discarded, consistently with other UAV writes<!-- d3d12-review-inline:end:common-shader-internals:F-feedback-helpers:0:modified:source-bf88fbe6e83b1a26-0-0 --></ins>.
 
 <!-- d3d12-review-context:begin:common-shader-internals:F-feedback-helpers:1:modified:migration-fcb45f72fef55bcd-0 -->
 
@@ -2039,8 +2020,6 @@ then the writes have no effect.
 
 <!-- d3d12-review-context:end:common-shader-internals:F-feedback-helpers:1:modified:migration-fcb45f72fef55bcd-0 -->
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-feedback-operations:0:authored:migration-1abb0b058faa410f-0 -->`WriteSamplerFeedback`, `WriteSamplerFeedbackBias`, `WriteSamplerFeedbackLevel` and `WriteSamplerFeedbackGrad` mirror the corresponding implicit, bias, explicit LOD and explicit gradient sampling footprint calculations. Their [method kinds and stage restrictions](#feedback-method-contract), [zero-offset and paired-texture requirements](#feedback-zero-offset), and [sampler/SRV capability tier restrictions](#feedback-capability-tiers) apply to those calculations. Support is reported by `D3D12_FEATURE_DATA_D3D12_OPTIONS7::SamplerFeedbackTier`.<!-- d3d12-review-inline:end:common-shader-internals:N-feedback-operations:0:authored:migration-1abb0b058faa410f-0 --></ins>
-
 <a id="sampling-precision"></a>
 
 ## Sampling precision and invariants
@@ -2048,8 +2027,6 @@ then the writes have no effect.
 <a id="archive-7-18-16"></a>
 
 ### Texture Sampling Precision
-
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:A-7-18-16:0:modified:migration-92d67205151bc533-0 -->Texture addressing/LOD precision, arithmetic precision and general invariants are separate requirements.<!-- d3d12-review-inline:end:common-shader-internals:A-7-18-16:0:modified:migration-92d67205151bc533-0 --></ins>
 
 <a id="archive-7-18-16-1"></a>
 
@@ -2103,9 +2080,9 @@ as the format.<!-- d3d12-review-inline:end:common-shader-internals:A-7-18-16-2:1
 
 ## Minimum precision and native arithmetic
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-minimum-precision:0:authored:migration-6b013f278f10045e-0 -->Minimum-precision declarations permit an implementation to use higher precision. They do not request a particular physical register allocation. D3D12 reports minimum-precision support through `D3D12_FEATURE_DATA_D3D12_OPTIONS::MinPrecisionSupport`. Native 16-bit operations use their separate SM6.2-and-later type mode and `OPTIONS4::Native16BitShaderOpsSupported` capability. Native 16-bit and minimum-precision operations are not interchangeable contracts.<!-- d3d12-review-inline:end:common-shader-internals:N-minimum-precision:0:authored:migration-6b013f278f10045e-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-minimum-precision:0:authored:migration-6b013f278f10045e-0 -->Minimum-precision declarations permit an implementation to use higher precision. They do not request a particular physical register allocation. D3D12 reports minimum-precision support through [`D3D12_FEATURE_DATA_D3D12_OPTIONS::MinPrecisionSupport`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options). See [Native 16-bit shader execution](numeric-and-data-rules.md#native16) for exact-width types and their support conditions.<!-- d3d12-review-inline:end:common-shader-internals:N-minimum-precision:0:authored:migration-6b013f278f10045e-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-minimum-precision:1:authored:migration-2f50f9fa71d9dc6a-0 -->The following inherited precision levels describe the applicable SM4+ minimum-precision model, not D3D9/level-9 profiles. Complete instruction rounding, format conversion and numeric special cases remain in the [numeric primary definitions](numeric-and-data-rules.md#numeric-3-1) and [conversion definitions](numeric-and-data-rules.md#numeric-3-2), together with the operation's supporting reference.<!-- d3d12-review-inline:end:common-shader-internals:N-minimum-precision:1:authored:migration-2f50f9fa71d9dc6a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:common-shader-internals:N-minimum-precision:1:authored:migration-2f50f9fa71d9dc6a-0 -->The following inherited precision levels describe the applicable SM4+ minimum-precision model, not D3D9/level-9 profiles.<!-- d3d12-review-inline:end:common-shader-internals:N-minimum-precision:1:authored:migration-2f50f9fa71d9dc6a-0 --></ins>
 
 <a id="archive-7-20-2"></a>
 
@@ -2158,8 +2135,6 @@ From the shader point of view the 10-bit min-precision <ins><!-- d3d12-review-in
 
 #### 16-bit min-precision level
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:A-7-20-2-2:0:modified:migration-bcc237e0d3189e06-0 -->The float16 and integer levels have distinct representation rules.<!-- d3d12-review-inline:end:common-shader-internals:A-7-20-2-2:0:modified:migration-bcc237e0d3189e06-0 --></ins>
-
 <a id="archive-7-20-2-2-1"></a>
 
 ##### float16
@@ -2170,7 +2145,7 @@ From the shader point of view the 10-bit min-precision <ins><!-- d3d12-review-in
 
 <a id="archive-7-20-2-3"></a>
 
-#### int16/uint16
+##### int16/uint16
 
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:A-7-20-2-3:0 -->For shader model 4+, native integer ops can be used on 16-bit min-precision values, however applications must beware that the device could choose to simply use larger-than-16-bit (e.g. 32 bit) integer ops without any clamping to maintain the illusion that there are not more than 16 bits present.<!-- d3d12-review-inline:end:common-shader-internals:A-7-20-2-3:0 --></ins>
 

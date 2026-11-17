@@ -15,33 +15,24 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-codecs:entry:0:authored:migration-6fe054a0194770d1-0 -->**Qualified draft.** This supporting reference covers H.264, HEVC and AV1
-capabilities, bitstream header responsibilities, picture controls and reference
-management, including the distinct legacy and HEVC2 list contracts.
-[Video encoding](video-encoding.md) owns the API and object/recording contracts.
-Shared released declarations belong to the [type reference](video-encoding-types.md).
-Unresolved codec and numerical requirements are qualified locally.<!-- d3d12-review-inline:end:video-encoding-codecs:entry:0:authored:migration-6fe054a0194770d1-0 --></ins>
-
 <a id="family-h264-hevc"></a>
 
 ## H.264 and legacy HEVC headers and picture controls
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-codecs:qualification-H264_HEVC:0:authored:migration-73da8abf6606695b-0 -->**Codec contract qualification.** The detailed codec syntax, reference-management,
-intra-refresh, precision and quality requirements in this reference are retained
-from the published encoding specification. They are source-only except for
-released declarations and the narrowly scoped object/recording observations in
-the main reference. In particular, the source's GOP prose permits
+<ins><!-- d3d12-review-inline:begin:video-encoding-codecs:qualification-H264_HEVC:0:authored:migration-73da8abf6606695b-0 -->**Codec contract qualification.** The source's GOP prose permits
 `pic_order_cnt_type` 0–2 while its H.264 SPS table only permits 0 and 2; no support
 for type 1 is established here. Temporal layer reference restrictions and the
 strict versus inclusive slice count boundary need codec-specialist confirmation.
 The baseline HEVC VPS/SPS/PPS tables describe Main/Main10 4:2:0 and the legacy
 reference list path, not the higher-profile or HEVC2 path. Their enum-to-header
-arithmetic must not be extended to higher profiles. The higher-profile and HEVC2
-sections retain their separate requirements. These tables are header coding
+arithmetic must not be extended to higher profiles. See
+[HEVC higher-profile configuration](#family-hevc-422-444) for profile-dependent configuration
+and [HEVC2 complete temporary reference lists](#family-hevc-referencelistextension)
+for temporary lists and active-list limits. These tables are header coding
 expectations, not an instruction to treat API enum ordinals as codec syntax.
 In header formulas, `minCuSize`, `maxCuSize`, `minTuSize` and `maxTuSize` denote
 the pixel dimensions represented by the selected CU/TU enums, not their ordinal
-values. Duplicated source table rows are consolidated. The source does not
+values. The source does not
 independently establish omitted chroma depth or intra-transform table entries,
 H.264 cropping-direction details, or the HEVC loop filter flag polarity.
 Those source-specific header details remain subject to codec review.<!-- d3d12-review-inline:end:video-encoding-codecs:qualification-H264_HEVC:0:authored:migration-73da8abf6606695b-0 --></ins>
@@ -507,6 +498,8 @@ Describes the picture level control elements for the associated *EncodeFrame* co
 
 Please note that if the current frame is marked as a reference picture, the output must contain the reconstructed picture along with the bitstream for the host to place it in future commands in the reconstructed pictures reference list. Please note that there might be limitations for some frame types to be marked as references, please check support before setting those values.
 
+<ins><!-- d3d12-review-inline:begin:video-encoding-codecs:S01-116:13 -->The H.264 deblocking setting is [`D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_H264.DisableDeblockingFilterConfig`](video-encoding-controls.md#source-s01-057), with allowed modes reported in [`D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264.DisableDeblockingFilterSupportedModes`](video-encoding-controls.md#source-s01-043). It is not a separate member of the released H.264 picture control structure.<!-- d3d12-review-inline:end:video-encoding-codecs:S01-116:13 --></ins>
+
 **Members**
 
 *Flags*
@@ -526,8 +519,6 @@ Value to be used in the slice headers of the current frame to reference the PPS.
 *idr_pic_id*
 
 When frame is of type *D3D12_VIDEO_ENCODER_FRAME_TYPE_H264_IDR_FRAME*, this indicates the identifier of such IDR frame to be used in all the slices headers present in the frame.
-
-<ins><!-- d3d12-review-inline:begin:video-encoding-codecs:S01-116:13 -->The H.264 deblocking setting is `D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_H264.DisableDeblockingFilterConfig`, with allowed modes reported in `D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_H264.DisableDeblockingFilterSupportedModes`. It is not a separate member of the released H.264 picture control structure.<!-- d3d12-review-inline:end:video-encoding-codecs:S01-116:13 --></ins>
 
 *PictureOrderCountNumber*
 
@@ -840,13 +831,9 @@ The QP map dimensions can be calculated using the current resolution and D3D12_F
 
 ## HEVC higher-profile configuration
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-codecs:qualification-HEVC_422_444:0:authored:migration-b1120cc32a9caaa5-0 -->**Higher-profile qualification.** The format lists and codec numeric
-restrictions below are published requirements, not independently tested
-hardware capabilities. Availability remains conditional on codec/profile/format
+<ins><!-- d3d12-review-inline:begin:video-encoding-codecs:qualification-HEVC_422_444:0:authored:migration-b1120cc32a9caaa5-0 -->**Higher-profile qualification.** Availability is conditional on codec/profile/format
 and combined-configuration support. The legacy Main/Main10 header tables do not
-define the higher-profile header syntax. Bitmask expressions are shown with
-explicit parentheses around the bitwise operation; no additional allowed values
-or codec tools are inferred.<!-- d3d12-review-inline:end:video-encoding-codecs:qualification-HEVC_422_444:0:authored:migration-b1120cc32a9caaa5-0 --></ins>
+define the higher-profile header syntax.<!-- d3d12-review-inline:end:video-encoding-codecs:qualification-HEVC_422_444:0:authored:migration-b1120cc32a9caaa5-0 --></ins>
 
 <a id="source-s03-004"></a>
 
@@ -1048,9 +1035,7 @@ Also, the coded <ins><!-- d3d12-review-inline:begin:video-encoding-codecs:S03-01
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-codecs:S03-012:1 -->For the higher HEVC profiles, the app must ensure support by calling `D3D12_FEATURE_VIDEO_ENCODER_PROFILE_LEVEL` first and then use `D3D12_VIDEO_ENCODER_PICTURE_CONTROL_CODEC_DATA_HEVC1` which contains the additional parameters to use the associated profile features.<!-- d3d12-review-inline:end:video-encoding-codecs:S03-012:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-codecs:S03-012:2 -->On the original picture control path, Main/Main10 use `D3D12_VIDEO_ENCODER_PICTURE_CONTROL_CODEC_DATA_HEVC`; the higher profiles use HEVC1. The version-1 picture control union selects HEVC2 for HEVC, including both 4:2:0 and 4:2:2/4:4:4 profiles.<!-- d3d12-review-inline:end:video-encoding-codecs:S03-012:2 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:video-encoding-codecs:S03-012:3 -->The `ID3D12VideoEncodeCommandList4::EncodeFrame1` path uses HEVC2; the original `EncodeFrame` picture control path remains supported and unchanged.<!-- d3d12-review-inline:end:video-encoding-codecs:S03-012:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding-codecs:S03-012:2 -->On the original picture control path, Main/Main10 use `D3D12_VIDEO_ENCODER_PICTURE_CONTROL_CODEC_DATA_HEVC`; the higher profiles use HEVC1. The version-1 picture control union for `ID3D12VideoEncodeCommandList4::EncodeFrame1` selects HEVC2 for HEVC, including both 4:2:0 and 4:2:2/4:4:4 profiles; the original `EncodeFrame` picture control path remains supported and unchanged.<!-- d3d12-review-inline:end:video-encoding-codecs:S03-012:2 --></ins>
 
 <a id="family-hevc-referencelistextension"></a>
 
@@ -1058,8 +1043,7 @@ Also, the coded <ins><!-- d3d12-review-inline:begin:video-encoding-codecs:S03-01
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-codecs:qualification-HEVC_ReferenceListExtension:0:authored:migration-baa643c38958d5c2-0 -->**HEVC2 qualification.** This section applies only to HEVC2 through the
 version-1 picture control path. Older HEVC/HEVC1 and H.264 retain their
-previous list count interpretation. Published complete-list construction and
-validation requirements are retained. The bounded recording wrapper shows a
+previous list count interpretation. The bounded recording wrapper shows a
 legacy-driver conversion, not universal hardware support for every HEVC2 list.
 The limits on active reference lists apply to `num_ref_idx_lx_active_minus1 + 1`,
 not to the length of the complete `RefPicListTempX` list.<!-- d3d12-review-inline:end:video-encoding-codecs:qualification-HEVC_ReferenceListExtension:0:authored:migration-baa643c38958d5c2-0 --></ins>
@@ -1165,18 +1149,12 @@ MaxDPBCapacity should be the maximum number of unique pictures that can be used 
 
 ## AV1 capabilities, picture controls and post-encode records
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-codecs:qualification-AV1:0:authored:migration-7d3e4d20782e3edc-0 -->**AV1 qualification.** Published AV1 syntax, segmentation, reference slot,
-tile and rate control details below remain source-only. Several source
-expressions are not promoted to independently verified codec guarantees:
-the `obu_extension_flag` inference, the Altref/Altref2 ordering tables, the
+<ins><!-- d3d12-review-inline:begin:video-encoding-codecs:qualification-AV1:0:authored:migration-7d3e4d20782e3edc-0 -->**AV1 qualification.** The `obu_extension_flag` inference, the Altref/Altref2 ordering tables, the
 refresh slot example's one-based versus zero-based labels, and the original
 eight-slot DPB versus compact resource count wording need codec-specialist
 reconciliation. `ReferenceIndices` has exactly seven elements. The DPB descriptor
 array has exactly eight. The seven reference type entries use indices [0..6];
-their values select DPB slots [0..7]. There are no released
-public API macros for the source's unused-DPB sentinel or super-resolution
-minimum: the source values 255 and 9 are written as literals here.
-Fields absent from the released picture structure are not independent inputs.<!-- d3d12-review-inline:end:video-encoding-codecs:qualification-AV1:0:authored:migration-7d3e4d20782e3edc-0 --></ins>
+their values select DPB slots [0..7].<!-- d3d12-review-inline:end:video-encoding-codecs:qualification-AV1:0:authored:migration-7d3e4d20782e3edc-0 --></ins>
 
 <a id="source-s02-009"></a>
 
@@ -1899,7 +1877,7 @@ The type of frame used to encode the described reference frame associated to thi
 
 *WarpedMotionInfo*
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-codecs:S02-058:12 -->Global motion parameters. Used only when the associated transformation is supported as reported by `D3D12_VIDEO_ENCODER_CODEC_AV1_PICTURE_CONTROL_SUPPORT.SupportedReferenceWarpedMotionFlags`; see the [API picture control capability owner](#source-s02-037).<!-- d3d12-review-inline:end:video-encoding-codecs:S02-058:12 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding-codecs:S02-058:12 -->Global motion parameters. Used only when the associated transformation is supported as reported by `D3D12_VIDEO_ENCODER_CODEC_AV1_PICTURE_CONTROL_SUPPORT.SupportedReferenceWarpedMotionFlags`. See [AV1 picture control support](#source-s02-037) for supported transformations.<!-- d3d12-review-inline:end:video-encoding-codecs:S02-058:12 --></ins>
 
 *OrderHint*
 
@@ -2246,7 +2224,7 @@ Related to AV1 syntax _reference_select_.
 
 <ins><!-- d3d12-review-inline:begin:video-encoding-codecs:S02-069:11:authored:migration-79f90658389dd15b-0 -->*TxMode*<!-- d3d12-review-inline:end:video-encoding-codecs:S02-069:11:authored:migration-79f90658389dd15b-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-codecs:S02-069:12:authored:migration-a5573c6448032412-0 -->Selects a transform mode reported in `SupportedTxModes` for the current `FrameType`.<!-- d3d12-review-inline:end:video-encoding-codecs:S02-069:12:authored:migration-a5573c6448032412-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding-codecs:S02-069:12:authored:migration-a5573c6448032412-0 -->Selects a transform mode reported in [`SupportedTxModes`](#source-s02-032) for the current `FrameType`.<!-- d3d12-review-inline:end:video-encoding-codecs:S02-069:12:authored:migration-a5573c6448032412-0 --></ins>
 
 *InterpolationFilter*
 

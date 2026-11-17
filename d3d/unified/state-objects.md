@@ -15,7 +15,39 @@
 
 <ins><!-- d3d12-review-inline:begin:state-objects:N-ownership:0:authored:migration-e9f8f99ff5599b2c-0 -->State objects package shaders and configuration for driver processing. Collections provide reusable compilation units. Executable state objects supply programs that can be selected for GPU work.<!-- d3d12-review-inline:end:state-objects:N-ownership:0:authored:migration-e9f8f99ff5599b2c-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:state-objects:N-ownership:1:authored:migration-7a044ef236efbb71-0 -->[Pipeline state](pipeline-state.md#apis) defines ordinary pipeline state objects. [Binding](binding.md#local-signatures) defines local/global root signature representation, argument layout, limits and sampler compatibility. The [pipeline selection contract](command-list-state.md#pipeline-selection) defines the single logical selection, initial/reset state and bundle postconditions. The object and program rules below apply in addition to those canonical contracts.<!-- d3d12-review-inline:end:state-objects:N-ownership:1:authored:migration-7a044ef236efbb71-0 --></ins>
+<a id="availability"></a>
+
+## Availability
+
+<ins><!-- d3d12-review-inline:begin:state-objects:N-availability:0:authored:migration-c03ae05841e19232-0 -->Raytracing pipeline state objects require device raytracing support. `D3D12_RAYTRACING_TIER_NOT_SUPPORTED` does not support creating raytracing-related objects. Attempting to use raytracing command list APIs has undefined behavior. See [Raytracing tiers](devices-and-capabilities.md#raytracing-tiers) for opacity micromap support.<!-- d3d12-review-inline:end:state-objects:N-availability:0:authored:migration-c03ae05841e19232-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:state-objects:N-availability:1:authored:migration-5f1beaf12eee9eda-0 -->Work graph support is reported by `D3D12_FEATURE_DATA_D3D12_OPTIONS21::WorkGraphsTier`. Node shaders use [shader target lib_6_8 or higher](work-graphs.md#shader-target).<!-- d3d12-review-inline:end:state-objects:N-availability:1:authored:migration-5f1beaf12eee9eda-0 --></ins>
+
+<a id="d3d12_work_graphs_tier"></a>
+
+### D3D12_WORK_GRAPHS_TIER
+
+```cpp
+typedef enum D3D12_WORK_GRAPHS_TIER {
+    D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED = 0,
+    D3D12_WORK_GRAPHS_TIER_1_0 = 10,
+} D3D12_WORK_GRAPHS_TIER;
+```
+
+<ins><!-- d3d12-review-inline:begin:state-objects:T-work_graphs_tier:1 -->Level of work graphs support on the device. Queried via
+[CheckFeatureSupport()](devices-and-capabilities.md#id3d12device-checkfeaturesupport).<!-- d3d12-review-inline:end:state-objects:T-work_graphs_tier:1 --></ins>
+
+<!-- d3d12-review-alert:begin:state-objects:T-work_graphs_tier:2:modified:migration-494273ff8f94e955-0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> Value                               | Definition
+> -----                               | ----------
+> `D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED` | No support for work graphs on the device. Attempts to create any work graphs related object will fail and using work graphs related APIs on command lists results in undefined behavior.
+> `D3D12_WORK_GRAPHS_TIER_1_0` | The device supports work graphs tier 1.0.  See [Discovering device support for work graphs](state-objects.md#availability).
+
+<!-- d3d12-review-alert:end:state-objects:T-work_graphs_tier:2:modified:migration-494273ff8f94e955-0 -->
 
 <a id="object-model"></a>
 
@@ -92,9 +124,9 @@ Existing ways of defining pipelines are still valid, to maintain code compatibil
 
 The term "program" is used rather than "pipeline" to step away from the connotation in a "pipeline" that there is a sequence of operations.  "Program" intends to convey a grouping of shaders and/or fixed function operations that are launched as logical grouping on the GPU.  In many cases this grouping is a sequence, like a pipeline.  But it can be a graph too, as in <ins><!-- d3d12-review-inline:begin:state-objects:C-program:3:modified:source-765b05d9f97c3864-0-0 -->a work graph<!-- d3d12-review-inline:end:state-objects:C-program:3:modified:source-765b05d9f97c3864-0-0 --></ins>.
 
-<ins><!-- d3d12-review-inline:begin:state-objects:N-identity:0:authored:migration-66ac83106daab00b-0 -->`ID3D12StateObject` derives from `ID3D12Pageable` and declares no additional methods. The state object exposes `ID3D12StateObjectProperties`, derived from `IUnknown`, and `ID3D12StateObjectProperties1`, which adds `GetProgramIdentifier`.<!-- d3d12-review-inline:end:state-objects:N-identity:0:authored:migration-66ac83106daab00b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:N-identity:0:authored:migration-66ac83106daab00b-0 -->`ID3D12StateObject` derives from `ID3D12Pageable`. The state object exposes `ID3D12StateObjectProperties`, derived from `IUnknown`, and `ID3D12StateObjectProperties1`, which adds `GetProgramIdentifier`.<!-- d3d12-review-inline:end:state-objects:N-identity:0:authored:migration-66ac83106daab00b-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:state-objects:N-identity:1:authored:migration-e955b65ae21d50f3-0 -->The application must keep the state object alive for recorded and in-flight GPU work that uses it, following [execution lifetime](execution.md#lifetime). State objects are not direct application residency targets; [residency](resources.md#residency) distinguishes runtime-managed object storage from application resources referenced by GPU addresses. Creation description storage and driver-visible description lifetime are specified under [driver lifetime](#driver-lifetime).<!-- d3d12-review-inline:end:state-objects:N-identity:1:authored:migration-e955b65ae21d50f3-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:N-identity:1:authored:migration-e955b65ae21d50f3-0 -->The application must keep the state object alive for recorded and in-flight GPU work that uses it, following [execution lifetime](execution.md#lifetime). State objects are not direct application residency targets; [residency](resources.md#residency) distinguishes runtime-managed object storage from application resources referenced by GPU addresses.<!-- d3d12-review-inline:end:state-objects:N-identity:1:authored:migration-e955b65ae21d50f3-0 --></ins>
 
 <a id="state-object-types"></a>
 
@@ -168,9 +200,9 @@ Parameter                           | Definition
 
 ### D3D12_STATE_SUBOBJECT_TYPE
 
-<ins><!-- d3d12-review-inline:begin:state-objects:D121-stored-state-object-inputs:0:authored:migration-17844a5fe2477793-0 -->The [database input and dependency restoration contract](state-object-databases-and-identity.md#storage-only-forms) defines recorded descriptions, serialized root signature forms, existing-collection keys and growth-parent keys. `D3D12_STATE_SUBOBJECT_TYPE_EXISTING_COLLECTION_BY_KEY` is a database input form, not permission to pass that storage-only subobject to device `CreateStateObject`. Actual creation, linking, associations and growth remain subject to this chapter.<!-- d3d12-review-inline:end:state-objects:D121-stored-state-object-inputs:0:authored:migration-17844a5fe2477793-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:D121-stored-state-object-inputs:0:authored:migration-17844a5fe2477793-0 -->`D3D12_STATE_SUBOBJECT_TYPE_EXISTING_COLLECTION_BY_KEY` is a [database input form](state-object-databases-and-identity.md#storage-only-forms), not permission to pass that storage-only subobject to device `CreateStateObject`.<!-- d3d12-review-inline:end:state-objects:D121-stored-state-object-inputs:0:authored:migration-17844a5fe2477793-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:state-objects:D131-compiler-state-object-inputs:0:authored:migration-c67f9937119c8513-0 -->Offline compilation uses [D3D12_COMPILER_EXISTING_COLLECTION_DESC](compiler-invocation-and-cache-output.md#d3d12_compiler_existing_collection_desc) with `D3D12_STATE_SUBOBJECT_TYPE_COMPILER_EXISTING_COLLECTION`, rather than a device collection or database key. [Compiler inputs and ownership](compiler-invocation-and-cache-output.md#input-ownership), [CompileStateObject](compiler-invocation-and-cache-output.md#id3d12compiler-compilestateobject) and [CompileAddToStateObject](compiler-invocation-and-cache-output.md#id3d12compiler-compileaddtostateobject) define target validation, collection/parent provenance and compiler-specific lifetimes. This is not permission to pass a compiler collection to device creation.<!-- d3d12-review-inline:end:state-objects:D131-compiler-state-object-inputs:0:authored:migration-c67f9937119c8513-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:D131-compiler-state-object-inputs:0:authored:migration-c67f9937119c8513-0 -->Offline compilation uses [D3D12_COMPILER_EXISTING_COLLECTION_DESC](compiler-invocation-and-cache-output.md#d3d12_compiler_existing_collection_desc) with `D3D12_STATE_SUBOBJECT_TYPE_COMPILER_EXISTING_COLLECTION`, rather than a device collection or database key. This is not permission to pass a compiler collection to device creation.<!-- d3d12-review-inline:end:state-objects:D131-compiler-state-object-inputs:0:authored:migration-c67f9937119c8513-0 --></ins>
 
 ```cpp
 typedef enum D3D12_STATE_SUBOBJECT_TYPE
@@ -231,8 +263,6 @@ To use any of the <ins><!-- d3d12-review-inline:begin:state-objects:T-state_subo
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
 >
-> The following subobjects supply pipeline state to a [generic program](#d3d12_generic_program_desc).
->
 > Subobject | Payload | Default if missing
 > --- | --- | ---
 > `D3D12_STATE_SUBOBJECT_TYPE_STREAM_OUTPUT` | `D3D12_STREAM_OUTPUT_DESC` | [Stream output](#missing-stream_output)
@@ -252,8 +282,6 @@ To use any of the <ins><!-- d3d12-review-inline:begin:state-objects:T-state_subo
 > `D3D12_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL2` | `D3D12_DEPTH_STENCIL_DESC2` | [Depth stencil](#missing-depth_stencil-or-depth_stencil1-or-depth_stencil2)
 
 <!-- d3d12-review-alert:end:state-objects:T-state_subobject_type:4 -->
-
-<ins><!-- d3d12-review-inline:begin:state-objects:N-payload-prerequisites:0:authored:migration-b0028ee4b73f0feb-0 -->The raytracing subobject payloads are [shader configuration](#d3d12_raytracing_shader_config), [pipeline configuration](#d3d12_raytracing_pipeline_config), [pipeline configuration with flags](#d3d12_raytracing_pipeline_config1), and [hit groups](#d3d12_hit_group_desc). Global/local root signatures, node masks, libraries, collections and both association forms are defined below. Graphics payload structures retain their [pipeline state definitions](pipeline-state.md#graphics-description), [rasterizer definitions](rasterization.md), [output merger definitions](output-merger.md), [input layout definitions](vertex-processing.md) and [stream output definitions](geometry-shaders-and-stream-output.md).<!-- d3d12-review-inline:end:state-objects:N-payload-prerequisites:0:authored:migration-b0028ee4b73f0feb-0 --></ins>
 
 <a id="raytracing-pipeline-state-object"></a>
 
@@ -615,7 +643,7 @@ across implementations.
 
 ### Subobject association requirements
 
-<ins><!-- d3d12-review-inline:begin:state-objects:N-association-applicability:0:authored:migration-1bf20f4474f853a0-0 -->The raytracing shader configuration and pipeline configuration rows apply to raytracing state objects. Work graph node shaders and generic program shaders use the applicable root signature, node mask and state object configuration rules. They do not acquire raytracing payload or recursion configuration merely by being contained in a state object.<!-- d3d12-review-inline:end:state-objects:N-association-applicability:0:authored:migration-1bf20f4474f853a0-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:N-association-applicability:0:authored:migration-1bf20f4474f853a0-0 -->The raytracing shader configuration and pipeline configuration rows apply to raytracing state objects. Work graph node shaders and generic program shaders use the applicable root signature, node mask and state object configuration rules.<!-- d3d12-review-inline:end:state-objects:N-association-applicability:0:authored:migration-1bf20f4474f853a0-0 --></ins>
 
 This table describes requirements for each subobject type that supports
 being associated with shader exports.
@@ -759,6 +787,7 @@ typedef enum D3D12_STATE_OBJECT_FLAGS
 
 <!-- d3d12-review-alert:end:state-objects:T-state_object_flags:1:modified:migration-a8adc683adf13550-0 -->
 
+<a id="root-binding"></a>
 <a id="d3d12_global_root_signature"></a>
 
 ### D3D12_GLOBAL_ROOT_SIGNATURE
@@ -859,12 +888,6 @@ all available nodes. If a node mask subobject has been associated with
 any part of a state object, a node mask association must be made to all
 exports in a state object (including imported collections) and all node
 mask subobjects that are referenced must have matching content.
-
-<a id="root-binding"></a>
-
-### Root binding
-
-<ins><!-- d3d12-review-inline:begin:state-objects:N-root-owner:0:authored:migration-cfcf14c8f6f86326-0 -->The representation, flags, maximum local argument footprint, register nonoverlap, and cross-local/global static sampler agreement and aggregate limit are defined in [Binding: local signatures](binding.md#local-signatures). The association/default/link rules above determine which signatures apply to each export. They do not replace those binding requirements.<!-- d3d12-review-inline:end:state-objects:N-root-owner:0:authored:migration-cfcf14c8f6f86326-0 --></ins>
 
 <a id="raytracing-payloads"></a>
 
@@ -1031,7 +1054,7 @@ typedef enum D3D12_RAYTRACING_PIPELINE_FLAGS
 
 Flags member of [D3D12_RAYTRACING_PIPELINE_CONFIG1](#d3d12_raytracing_pipeline_config1).
 
-<ins><!-- d3d12-review-inline:begin:state-objects:T-raytracing_pipeline_flags:2:modified:migration-05f13190c4c3be68-0 -->The complete skip/opacity flag meanings, valid combinations and traversal effects are defined in [Pipeline flag traversal behavior](ray-traversal.md#pipeline-flag-traversal-behavior). The declaration and configuration/association requirements remain defined here.<!-- d3d12-review-inline:end:state-objects:T-raytracing_pipeline_flags:2:modified:migration-05f13190c4c3be68-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:T-raytracing_pipeline_flags:2:modified:migration-05f13190c4c3be68-0 -->The complete skip/opacity flag meanings, valid combinations and traversal effects are defined in [Pipeline flag traversal behavior](ray-traversal.md#pipeline-flag-traversal-behavior).<!-- d3d12-review-inline:end:state-objects:T-raytracing_pipeline_flags:2:modified:migration-05f13190c4c3be68-0 --></ins>
 
 <a id="configuration-bounds"></a>
 
@@ -1191,7 +1214,7 @@ This subobject is only available on devices with <ins><!-- d3d12-review-inline:b
 
 ## Work graph construction
 
-<ins><!-- d3d12-review-inline:begin:state-objects:N-graph-construction:0:authored:migration-89382c71e7c9696c-0 -->A work graph is a named program in an executable state object. Its nodes reference exported node shaders. The graph description determines entrypoints, explicit overrides and deterministic automatic node population. Shader scheduling, node input/output record operations and `DispatchGraph` execution are defined in the [work graph execution specification](work-graphs.md#nodes-and-invocation). The construction definitions here select and validate the program consumed by those operations.<!-- d3d12-review-inline:end:state-objects:N-graph-construction:0:authored:migration-89382c71e7c9696c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:N-graph-construction:0:authored:migration-89382c71e7c9696c-0 -->A work graph is a named program in an executable state object. Its nodes reference exported node shaders.<!-- d3d12-review-inline:end:state-objects:N-graph-construction:0:authored:migration-89382c71e7c9696c-0 --></ins>
 
 <a id="node-id"></a>
 
@@ -1279,7 +1302,7 @@ typedef struct D3D12_WORK_GRAPH_DESC
 
 <ins><!-- d3d12-review-inline:begin:state-objects:T-work_graph_desc:2 -->The `pExplicitlyDefinedNodes`, `pEntrypoints` and the `D3D12_WORK_GRAPH_FLAG_INCLUDE_ALL_AVAILABLE_NODES` option in the `Flags` field provide three ways to specify the nodes in a graph.  Each can be used individually or any combination.  In terms of order of operations, the system populates the work graph first with any nodes in `pExplicitlyDefinedNodes`, then via `pEntrypoints`, and then via the flag `D3D12_WORK_GRAPH_FLAG_INCLUDE_ALL_AVAILABLE_NODES`.<!-- d3d12-review-inline:end:state-objects:T-work_graph_desc:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:state-objects:T-work_graph_desc:3 -->Any node IDs listed in `pEntrypoints` are obviously treated as program entrypoints, even if the shader doesn't specify it in the [shader function attributes](work-graphs.md#shader-function-attributes).  Additional nodes in the graph definition are auto-populated - automatically inferred by the runtime, traversing the declared node outputs starting at the entrypoints, recursively adding referenced child nodes in a depth first manner, traversing outputs for a given node in the order declared in the shader.  It is an error if an expected child node isn't present in the state object, unless the output being traversed is an array output from the parent node.  Array node outputs are allowed to not be fully populated in the graph.<!-- d3d12-review-inline:end:state-objects:T-work_graph_desc:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:T-work_graph_desc:3 -->Any node IDs listed in `pEntrypoints` are obviously treated as program entrypoints, even if the shader doesn't specify it in the [shader function attributes](work-graphs.md#shader-function-attributes).  Additional nodes in the graph definition are auto-populated - automatically inferred by the runtime, traversing the declared node outputs starting at the entrypoints, recursively adding referenced child nodes in a depth first manner, traversing outputs for a given node in the order declared in the shader.<!-- d3d12-review-inline:end:state-objects:T-work_graph_desc:3 --></ins> <ins><!-- d3d12-review-inline:begin:state-objects:T-work_graph_desc:3:modified:sparse-node-condition -->It is an error if an expected child node isn't present in the state object and the output's resolved sparse-node setting does not allow missing nodes. See [Node output attributes](work-graphs.md#node-output-attributes) for sparse-node permission and [D3D12_NODE_OUTPUT_OVERRIDES](#d3d12_node_output_overrides) for overrides.<!-- d3d12-review-inline:end:state-objects:T-work_graph_desc:3:modified:sparse-node-condition --></ins>
 
 The `D3D12_WORK_GRAPH_FLAG_INCLUDE_ALL_AVAILABLE_NODES` flag does similar graph auto-population, taking each node shader exported from DXIL libraries in the order they were exported, adding them to the graph and recursively adding their children (if not already in the graph).  Nodes added because of this flag that end up with no other node writing to them are taken to be graph entrypoints.
 
@@ -1620,7 +1643,7 @@ typedef struct D3D12_NODE_OUTPUT_OVERRIDES
 
 ### Graph structural validation
 
-<ins><!-- d3d12-review-inline:begin:state-objects:N-graph-validation-owner:0:authored:migration-7818b601d6b427ba-0 -->Graph construction validates the complete [node count and depth](work-graphs.md#node-count-limits), [output record and shared storage budgets](work-graphs.md#node-output-limits), [input record limits](work-graphs.md#node-input-limits) and [node array constraints](work-graphs.md#node-array-constraints) after applying node overrides. These record-dependent algorithms are defined in [Work graph execution](work-graphs.md#graph-validation), following the launch, record and input sharing definitions.<!-- d3d12-review-inline:end:state-objects:N-graph-validation-owner:0:authored:migration-7818b601d6b427ba-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:N-graph-validation-owner:0:authored:migration-7818b601d6b427ba-0 -->Graph construction validates the complete [node count and depth](work-graphs.md#node-count-limits), [output record and shared storage budgets](work-graphs.md#node-output-limits), [input record limits](work-graphs.md#node-input-limits) and [node array constraints](work-graphs.md#node-array-constraints) after applying node overrides.<!-- d3d12-review-inline:end:state-objects:N-graph-validation-owner:0:authored:migration-7818b601d6b427ba-0 --></ins>
 
 <a id="generic-programs"></a>
 
@@ -1676,6 +1699,8 @@ typedef struct D3D12_GENERIC_PROGRAM_DESC
 > `ppSubobjects` | Array of pointers to subobjects to include in the program.  This can be any of the [subobjects that can be listed in a generic program](#subobjects-that-can-be-listed-in-a-generic-program) that are needed.  For example `INPUT_LAYOUT`, `BLEND` etc.
 
 <!-- d3d12-review-alert:end:state-objects:T-generic-program:1:modified:migration-835567841265153e-0 -->
+
+<ins><!-- d3d12-review-inline:begin:state-objects:N-availability:2:authored:generic-graphics-compatibility -->See [Graphics pipeline compatibility](pipeline-state.md#compatibility) for shader stage and fixed-function compatibility.<!-- d3d12-review-inline:end:state-objects:N-availability:2:authored:generic-graphics-compatibility --></ins>
 
 <a id="subobjects-that-can-be-listed-in-a-generic-program"></a>
 
@@ -1846,6 +1871,10 @@ DEPTH_STENCIL_DESC2 default parameter values:
 
 ## Creation and incremental addition
 
+<ins><!-- d3d12-review-inline:begin:state-objects:N-availability:2:authored:migration-0d224dbff6da2676-0 -->Applications can call device methods from multiple threads simultaneously. See [AddToStateObject](#addtostateobject) for family locking and [GetPipelineStackSize](raytracing-pipelines.md#id3d12stateobjectpropertiesgetpipelinestacksize) and [SetPipelineStackSize](raytracing-pipelines.md#id3d12stateobjectpropertiessetpipelinestacksize) for stack property synchronization.<!-- d3d12-review-inline:end:state-objects:N-availability:2:authored:migration-0d224dbff6da2676-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:state-objects:D148-id3d12device5-createstateobject:0:authored:migration-e074d6923298f1fb-0 -->The driver can use [runtime compiled value lookup](runtime-cache-discovery.md#compiled-value-lookup) during creation and incremental addition.<!-- d3d12-review-inline:end:state-objects:D148-id3d12device5-createstateobject:0:authored:migration-e074d6923298f1fb-0 --></ins>
+
 <a id="createstateobject"></a>
 
 ### ID3D12Device5::CreateStateObject
@@ -1863,8 +1892,6 @@ HRESULT CreateStateObject(
 #### Behavior
 
 See <ins><!-- d3d12-review-inline:begin:state-objects:B-CreateStateObject:0:modified:source-4bff9e24e8aabd56-0-0 -->[Compilation and object model](#object-model)<!-- d3d12-review-inline:end:state-objects:B-CreateStateObject:0:modified:source-4bff9e24e8aabd56-0-0 --></ins> for an overview.
-
-<ins><!-- d3d12-review-inline:begin:state-objects:D148-id3d12device5-createstateobject:0:authored:migration-e074d6923298f1fb-0 -->The driver can use [runtime compiled value lookup](runtime-cache-discovery.md#compiled-value-lookup) while processing this ordinary creation description.<!-- d3d12-review-inline:end:state-objects:D148-id3d12device5-createstateobject:0:authored:migration-e074d6923298f1fb-0 --></ins>
 
 #### Parameters
 
@@ -1902,9 +1929,7 @@ HRESULT AddToStateObject(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:state-objects:N-D082-addition-gate:0:authored:migration-235bc764a6f858ad-0 -->`AddToStateObject` requires `D3D12_RAYTRACING_TIER_1_1` or higher for every call, including additions to generic program and work graph executable state objects. Calls below that tier fail with `E_INVALIDARG`. The requirements of the selected workload also apply.<!-- d3d12-review-inline:end:state-objects:N-D082-addition-gate:0:authored:migration-235bc764a6f858ad-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:state-objects:D148-id3d12device7-addtostateobject:0:authored:migration-b50936add53770ec-0 -->The driver can use [runtime compiled value lookup](runtime-cache-discovery.md#compiled-value-lookup) while processing this ordinary creation description.<!-- d3d12-review-inline:end:state-objects:D148-id3d12device7-addtostateobject:0:authored:migration-b50936add53770ec-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:N-D082-addition-gate:0:authored:migration-235bc764a6f858ad-0 -->`AddToStateObject` requires `D3D12_RAYTRACING_TIER_1_1` or higher for every call, including additions to generic program and work graph executable state objects. Calls below that tier fail with `E_INVALIDARG`.<!-- d3d12-review-inline:end:state-objects:N-D082-addition-gate:0:authored:migration-235bc764a6f858ad-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:state-objects:B-AddToStateObject:0:authored:migration-73e545f689fb9f0b-0 -->The following rules apply to raytracing pipeline additions. [Executable work graph and generic program additions](#executable-additions) are specified separately below.<!-- d3d12-review-inline:end:state-objects:B-AddToStateObject:0:authored:migration-73e545f689fb9f0b-0 --></ins>
 
@@ -2036,10 +2061,6 @@ otherwise nullptr is returned.<!-- d3d12-review-inline:end:state-objects:B-GetSh
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
 
-
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
 >
 > Parameter                           | Definition
 > ---------                           | ----------
@@ -2100,7 +2121,17 @@ typedef struct D3D12_PROGRAM_IDENTIFIER
 
 ### Raytracing stack properties
 
-<ins><!-- d3d12-review-inline:begin:state-objects:N-stack-owner:0:authored:migration-4bea2f47d70f9665-0 -->Raytracing pipeline stack sizing is defined by [Pipeline stack](raytracing-pipelines.md#pipeline-stack). The complete property contracts for [GetShaderStackSize](raytracing-pipelines.md#id3d12stateobjectpropertiesgetshaderstacksize), [GetPipelineStackSize](raytracing-pipelines.md#id3d12stateobjectpropertiesgetpipelinestacksize) and [SetPipelineStackSize](raytracing-pipelines.md#id3d12stateobjectpropertiessetpipelinestacksize) are defined there with that model. The [incremental-addition rules](#addtostateobject) above specify stack setting inheritance and thread safety interactions with those properties.<!-- d3d12-review-inline:end:state-objects:N-stack-owner:0:authored:migration-4bea2f47d70f9665-0 --></ins>
+<!-- d3d12-review-alert:begin:state-objects:N-stack-owner:0:authored:migration-4bea2f47d70f9665-0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> - [Pipeline stack](raytracing-pipelines.md#pipeline-stack)
+> - [GetShaderStackSize](raytracing-pipelines.md#id3d12stateobjectpropertiesgetshaderstacksize)
+> - [GetPipelineStackSize](raytracing-pipelines.md#id3d12stateobjectpropertiesgetpipelinestacksize)
+> - [SetPipelineStackSize](raytracing-pipelines.md#id3d12stateobjectpropertiessetpipelinestacksize)
+
+<!-- d3d12-review-alert:end:state-objects:N-stack-owner:0:authored:migration-4bea2f47d70f9665-0 -->
 
 <a id="global-root-signature-retrieval"></a>
 
@@ -2121,7 +2152,7 @@ HRESULT GetGlobalRootSignatureForProgram(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:state-objects:AB-id3d12stateobjectproperties2-getglobalrootsignatureforprogram-contract:0:authored:migration-10a47c9d6f985974-0 -->Retrieves the program's resolved global root signature association in the queried state object generation. An unknown program is invalid.<!-- d3d12-review-inline:end:state-objects:AB-id3d12stateobjectproperties2-getglobalrootsignatureforprogram-contract:0:authored:migration-10a47c9d6f985974-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:AB-id3d12stateobjectproperties2-getglobalrootsignatureforprogram-contract:0:authored:migration-10a47c9d6f985974-0 -->Retrieves the program's resolved global root signature association in the queried state object generation.<!-- d3d12-review-inline:end:state-objects:AB-id3d12stateobjectproperties2-getglobalrootsignatureforprogram-contract:0:authored:migration-10a47c9d6f985974-0 --></ins>
 
 #### Parameters
 
@@ -2160,7 +2191,7 @@ HRESULT GetGlobalRootSignatureForShader(
 
 ## Work graph metadata and backing memory
 
-<ins><!-- d3d12-review-inline:begin:state-objects:N-graph-metadata-ownership:0:authored:migration-58ccbe3a8da7bc21-0 -->`ID3D12WorkGraphProperties` derives from `IUnknown` and is exposed by the state object. Node/entrypoint enumeration and record layout reflection are specified in [the work graph properties reference](work-graphs.md#reflection). The name/index, local root table index and backing size methods below provide the construction-to-selection linkage.<!-- d3d12-review-inline:end:state-objects:N-graph-metadata-ownership:0:authored:migration-58ccbe3a8da7bc21-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:N-graph-metadata-ownership:0:authored:migration-58ccbe3a8da7bc21-0 -->`ID3D12WorkGraphProperties` derives from `IUnknown` and is exposed by the state object. Node/entrypoint enumeration and record layout reflection are specified in [the work graph properties reference](work-graphs.md#reflection).<!-- d3d12-review-inline:end:state-objects:N-graph-metadata-ownership:0:authored:migration-58ccbe3a8da7bc21-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:state-objects:N-stable-properties:0:modified:migration-f600a4db777fdc0c-0 -->The data returned by `ID3D12WorkGraphProperties` methods<!-- d3d12-review-inline:end:state-objects:N-stable-properties:0:modified:migration-f600a4db777fdc0c-0 --></ins> are stable given the same state object created <ins><!-- d3d12-review-inline:begin:state-objects:N-stable-properties:0:modified:creation-times -->at different times<!-- d3d12-review-inline:end:state-objects:N-stable-properties:0:modified:creation-times --></ins> or on different devices.  The exception is [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements), which is a query that is fielded by the driver, whose results can therefore vary.
 
@@ -2294,8 +2325,6 @@ Referenced by [GetWorkGraphMemoryRequirements](#getworkgraphmemoryrequirements).
 
 ### Backing memory
 
-<ins><!-- d3d12-review-inline:begin:state-objects:C-backing:0 -->[Record backing storage](work-graphs.md#backing-memory) defines the node input pool and independent graph execution contexts. Allocation sizing and binding remain defined here.<!-- d3d12-review-inline:end:state-objects:C-backing:0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:state-objects:C-backing:1 -->The [concurrent-queue restrictions on work graph backing memory](synchronization.md#operation-specific-contracts) are defined by the synchronization contract.<!-- d3d12-review-inline:end:state-objects:C-backing:1 --></ins>
 
 ---
@@ -2334,17 +2363,11 @@ Parameter                           | Definition
 ---------                           | ----------
 <ins><!-- d3d12-review-inline:begin:state-objects:B-SetPipelineState1:2:modified:source-2f2921c4a5ca1692-0-0 -->`ID3D12StateObject* pStateObject` | State object. This can only be of [type](#d3d12_state_object_type): `D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE`.<!-- d3d12-review-inline:end:state-objects:B-SetPipelineState1:2:modified:source-2f2921c4a5ca1692-0-0 --></ins>
 
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:state-objects:N-set-pipeline-state1-return:0:authored:migration-e579a50d5e8ffe94-0 -->None.<!-- d3d12-review-inline:end:state-objects:N-set-pipeline-state1-return:0:authored:migration-e579a50d5e8ffe94-0 --></ins>
-
 #### Recording constraints
 
-<ins><!-- d3d12-review-inline:begin:state-objects:N-set-pipeline-state1-contexts:0:authored:migration-2ef8209ac85dca12-0 -->`SetPipelineState1` records on `DIRECT` and `COMPUTE` command lists and `BUNDLE` recordings, not `COPY` lists. It must not be recorded in an open render pass. Bundle contents also retain their parent's [render pass restrictions](output-merger.md#render-pass-operation-surface). The [pipeline selection and bundle postconditions](command-list-state.md#pipeline-selection) remain canonical at Command list state.<!-- d3d12-review-inline:end:state-objects:N-set-pipeline-state1-contexts:0:authored:migration-2ef8209ac85dca12-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:N-set-pipeline-state1-contexts:0:authored:migration-2ef8209ac85dca12-0 -->`SetPipelineState1` must not be recorded in an [open render pass](output-merger.md#render-pass-operation-surface).<!-- d3d12-review-inline:end:state-objects:N-set-pipeline-state1-contexts:0:authored:migration-2ef8209ac85dca12-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:state-objects:N-set-pipeline-state1-contexts:1:authored:migration-25eb862c90d61bf4-0 -->Selection is not skipped by an active predicate. The [predication policy](counters-queries-and-predication.md#predication-operation-matrix) applies independently of later ray dispatch work. Invalid recording follows the [recording error/Close contract](execution.md#close), including the [pass-specific recording validation](output-merger.md#render-pass-operation-surface).<!-- d3d12-review-inline:end:state-objects:N-set-pipeline-state1-contexts:1:authored:migration-25eb862c90d61bf4-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:state-objects:N-state-owner:0:authored:migration-68ce80e8b28da4be-0 -->The selected state object's kind and program determine how subsequent commands interpret state. The [single logical pipeline selection, initial/reset and bundle postconditions](command-list-state.md#pipeline-selection), [raytracing selection contribution](command-list-state.md#set-pipeline-state1), [program selection contribution](command-list-state.md#set-program), and [backing memory initialization versus command list reset](command-list-state.md#work-graph-memory) are canonical at Command list state.<!-- d3d12-review-inline:end:state-objects:N-state-owner:0:authored:migration-68ce80e8b28da4be-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:N-set-pipeline-state1-contexts:1:authored:migration-25eb862c90d61bf4-0 -->Selection is [not skipped by an active predicate](counters-queries-and-predication.md#predication-operation-matrix). Invalid recording follows the [recording error/Close contract](execution.md#close), including the [pass-specific recording validation](output-merger.md#render-pass-operation-surface).<!-- d3d12-review-inline:end:state-objects:N-set-pipeline-state1-contexts:1:authored:migration-25eb862c90d61bf4-0 --></ins>
 
 <a id="setprogram"></a>
 
@@ -2375,17 +2398,13 @@ by GPU virtual addresses gets accessed, giving freedom for the
 application to change that memory independent of command list recording
 time.
 
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:state-objects:N-set-program-return:0:authored:migration-985759c96b0c5d67-0 -->None.<!-- d3d12-review-inline:end:state-objects:N-set-program-return:0:authored:migration-985759c96b0c5d67-0 --></ins>
-
 #### Recording constraints
 
-<ins><!-- d3d12-review-inline:begin:state-objects:N-set-program-contexts:0:authored:migration-3f52489b57a2bef5-0 -->Generic graphics and compute programs can be selected on `DIRECT`, `COMPUTE` and `BUNDLE` recordings, not `COPY` lists. Selection itself does not make a `COMPUTE` recording a graphics work context: subsequent work still requires its own compatible program and recording type. Generic program selection in a bundle retains the [pipeline selection and immutable bundle compatibility rules](command-list-state.md#pipeline-selection). Work graph selection is limited to `DIRECT` and `COMPUTE`, not `BUNDLE`.<!-- d3d12-review-inline:end:state-objects:N-set-program-contexts:0:authored:migration-3f52489b57a2bef5-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:N-set-program-contexts:0:authored:migration-3f52489b57a2bef5-0 -->Generic graphics and compute programs can be selected on `DIRECT`, `COMPUTE` and `BUNDLE` recordings, not `COPY` lists. Selection itself does not make a `COMPUTE` recording a graphics work context: subsequent work still requires its own compatible program and recording type. See [Pipeline selection](command-list-state.md#pipeline-selection) for selection and immutable compatibility rules in bundles.<!-- d3d12-review-inline:end:state-objects:N-set-program-contexts:0:authored:migration-3f52489b57a2bef5-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:state-objects:N-set-program-contexts:1:authored:migration-da4b240e06a541fc-0 -->Inside an open render pass, `SetProgram` has the [conditional, program-kind-specific recording admission](output-merger.md#render-pass-operation-surface) defined by Output merger. This is not blanket permission for every program or memory operation. Work graph backing memory initialization is GPU work, not a harmless state-only exception to the no-intervening-work rule between a suspending pass and its resuming pass. The pass access/dependency promises and the [initialization flag's synchronization requirements](#d3d12_set_work_graph_flags) remain applicable.<!-- d3d12-review-inline:end:state-objects:N-set-program-contexts:1:authored:migration-da4b240e06a541fc-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:N-set-program-contexts:1:authored:migration-da4b240e06a541fc-0 -->See [Current recording surface](output-merger.md#render-pass-operation-surface) for program-kind-specific `SetProgram` admission and pass access/dependency promises. Work graph backing memory initialization is GPU work, not a harmless state-only exception to the no-intervening-work rule between a suspending pass and its resuming pass. See [D3D12_SET_WORK_GRAPH_FLAGS](#d3d12_set_work_graph_flags) for synchronization before backing memory initialization.<!-- d3d12-review-inline:end:state-objects:N-set-program-contexts:1:authored:migration-da4b240e06a541fc-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:state-objects:N-set-program-contexts:2:authored:migration-704d8a8d5bc05edd-0 -->`SetProgram`, including optional backing memory initialization, is [unpredicated](counters-queries-and-predication.md#predication-operation-matrix). Invalid recording follows the [recording error/Close contract](execution.md#close) and applicable pass-specific validation. The [single-selection/reset/bundle contract](command-list-state.md#pipeline-selection) remains canonical at Command list state.<!-- d3d12-review-inline:end:state-objects:N-set-program-contexts:2:authored:migration-704d8a8d5bc05edd-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:N-set-program-contexts:2:authored:migration-704d8a8d5bc05edd-0 -->`SetProgram`, including optional backing memory initialization, is [unpredicated](counters-queries-and-predication.md#predication-operation-matrix). Invalid recording follows the [recording error/Close contract](execution.md#close) and applicable pass-specific validation.<!-- d3d12-review-inline:end:state-objects:N-set-program-contexts:2:authored:migration-704d8a8d5bc05edd-0 --></ins>
 
 <a id="d3d12_set_program_desc"></a>
 
@@ -2495,42 +2514,6 @@ typedef struct D3D12_SET_GENERIC_PIPELINE_DESC
 Member                           | Definition
 ---------                           | ----------
 `ProgramIdentifier` | Which generic program to set.  See [D3D12_PROGRAM_IDENTIFIER](#d3d12_program_identifier) and [GetProgramIdentifier](#getprogramidentifier).
-
-<a id="availability"></a>
-
-## Availability
-
-<ins><!-- d3d12-review-inline:begin:state-objects:N-availability:0:authored:migration-c03ae05841e19232-0 -->Raytracing pipeline state objects require device raytracing support. `D3D12_RAYTRACING_TIER_NOT_SUPPORTED` does not support creating raytracing-related objects; attempting to use raytracing command list APIs has undefined behavior. Every `AddToStateObject` call requires raytracing tier 1.1, including generic program and work graph additions, in addition to the selected workload's own capabilities. `D3D12_RAYTRACING_PIPELINE_CONFIG1` also requires raytracing tier 1.1. Opacity micromap pipeline support is part of the [opacity micromap capability contract](devices-and-capabilities.md#raytracing-tiers).<!-- d3d12-review-inline:end:state-objects:N-availability:0:authored:migration-c03ae05841e19232-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:state-objects:N-availability:1:authored:migration-5f1beaf12eee9eda-0 -->Work graph construction requires `D3D12_WORK_GRAPHS_TIER_1_0`, reported by `D3D12_FEATURE_DATA_D3D12_OPTIONS21::WorkGraphsTier`. If work graphs are unsupported, creating objects related to work graphs fails and using work graph command list APIs has undefined behavior. Node shaders use [shader target lib_6_8 or higher](work-graphs.md#shader-target).<!-- d3d12-review-inline:end:state-objects:N-availability:1:authored:migration-5f1beaf12eee9eda-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:state-objects:N-availability:2:authored:migration-0d224dbff6da2676-0 -->Generic programs are available on devices supporting shader model 6.8. The individual non-library shaders use shader model 6.0 or higher targets. Generic graphics programs retain the [shader stage and fixed-function compatibility requirements](pipeline-state.md#compatibility) of their selected graphics pipeline. Device methods can be called by multiple threads simultaneously. The addition/property locking and stack property exceptions above still apply.<!-- d3d12-review-inline:end:state-objects:N-availability:2:authored:migration-0d224dbff6da2676-0 --></ins>
-
-<a id="d3d12_work_graphs_tier"></a>
-
-### D3D12_WORK_GRAPHS_TIER
-
-```cpp
-typedef enum D3D12_WORK_GRAPHS_TIER {
-    D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED = 0,
-    D3D12_WORK_GRAPHS_TIER_1_0 = 10,
-} D3D12_WORK_GRAPHS_TIER;
-```
-
-<ins><!-- d3d12-review-inline:begin:state-objects:T-work_graphs_tier:1 -->Level of work graphs support on the device. Queried via
-[CheckFeatureSupport()](devices-and-capabilities.md#id3d12device-checkfeaturesupport).<!-- d3d12-review-inline:end:state-objects:T-work_graphs_tier:1 --></ins>
-
-<!-- d3d12-review-alert:begin:state-objects:T-work_graphs_tier:2:modified:migration-494273ff8f94e955-0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> Value                               | Definition
-> -----                               | ----------
-> `D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED` | No support for work graphs on the device. Attempts to create any work graphs related object will fail and using work graphs related APIs on command lists results in undefined behavior.
-> `D3D12_WORK_GRAPHS_TIER_1_0` | The device supports work graphs tier 1.0.  See [Discovering device support for work graphs](state-objects.md#availability).
-
-<!-- d3d12-review-alert:end:state-objects:T-work_graphs_tier:2:modified:migration-494273ff8f94e955-0 -->
 
 <a id="driver-contracts"></a>
 
@@ -2715,8 +2698,6 @@ However, in the runtime `C` does not hold a reference on the DDI object/handle f
 <a id="published-ddi"></a>
 
 ### Published driver declarations
-
-<ins><!-- d3d12-review-inline:begin:state-objects:N-ddi-boundary:0:authored:migration-489a6d808c5f1508-0 -->The [resolved export summaries and link validation](#export-summaries) define runtime preprocessing and the driver's additional linking validation.<!-- d3d12-review-inline:end:state-objects:N-ddi-boundary:0:authored:migration-489a6d808c5f1508-0 --></ins>
 
 <a id="d3d12ddi_state_subobject_type"></a>
 
@@ -3873,8 +3854,6 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_PROGRAM_0114 )(D3D12DDI_API_HCOMMANDLIS
 > | `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108` | `pfnSetProgram` | `PFND3D12DDI_SET_PROGRAM_0108` |
 
 <!-- d3d12-review-alert:end:state-objects:N-ddi-membership:0:authored:migration-b20082f2b204ac15-0 -->
-
-<ins><!-- d3d12-review-inline:begin:state-objects:N-ddi-graph-linkage:0:authored:migration-b6d49c29b1576cb9-0 -->Work graph creation receives runtime-resolved node and entrypoint lists. `D3D12DDI_WORK_GRAPH_DESC_0108::Version` identifies the graph version for additions. Driver program identifier and memory requirement queries select a program by name, while the API metadata queries use a work graph index.<!-- d3d12-review-inline:end:state-objects:N-ddi-graph-linkage:0:authored:migration-b6d49c29b1576cb9-0 --></ins>
 
 <a id="driver-current-state-object-services"></a>
 

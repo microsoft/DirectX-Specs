@@ -13,8 +13,6 @@
 
 <!-- d3d12-review-legend:end -->
 
-**Coverage: source-preserving draft.** This chapter assembles selected recording, submission, completion, lifetime, and threading text. It does not yet cover every execution contract.
-
 <a id="execution-objects"></a>
 
 ## Command lists and queues
@@ -52,9 +50,9 @@ Command queues can be created by calling [`ID3D12Device::CreateCommandQueue`](co
 
 In general, DIRECT queues and command lists accept <ins><!-- d3d12-review-inline:begin:execution:P03:2:modified:source-7d6789ef7d350142-0-0 -->graphics, compute, and copy commands<!-- d3d12-review-inline:end:execution:P03:2:modified:source-7d6789ef7d350142-0-0 --></ins>, COMPUTE queues and command lists accept compute and copy related commands, and COPY queues and command lists accept only copy commands.
 
-<ins><!-- d3d12-review-inline:begin:execution:D157-video-recording-reference:0:authored:migration-39684a1d022f18e2-0 -->Video decode recording, lifecycle, ordering and lifetime are defined in [Video](video.md#video-recording-lifetime), using the common queue/submission and completion contracts.<!-- d3d12-review-inline:end:execution:D157-video-recording-reference:0:authored:migration-39684a1d022f18e2-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:D157-video-recording-reference:0:authored:migration-39684a1d022f18e2-0 -->[Video decode recording and lifetime](video.md#video-recording-lifetime).<!-- d3d12-review-inline:end:execution:D157-video-recording-reference:0:authored:migration-39684a1d022f18e2-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:D158-processing-execution-forward:0:authored:migration-5f292714f2e24377-0 -->The distinct video process list/queue and processor route is defined in [Video processing](video.md#video-processing-model), using the common creation, submission, threading and completion contracts.<!-- d3d12-review-inline:end:execution:D158-processing-execution-forward:0:authored:migration-5f292714f2e24377-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:D158-processing-execution-forward:0:authored:migration-5f292714f2e24377-0 -->[Video process list, queue and processor](video.md#video-processing-model).<!-- d3d12-review-inline:end:execution:D158-processing-execution-forward:0:authored:migration-5f292714f2e24377-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:execution:D160-encode-execution-forward:0:authored:migration-eff0633401ddb137-0 -->The VIDEO_ENCODE [base list lifecycle and motion operations](video-motion-estimation.md#motion-recording) use these common creation, allocator storage, threading, submission and completion contracts. The motion estimator's [cross-queue exclusion rule](video-motion-estimation.md#motion-driver-objects) is an additional object-specific requirement, not decoder recording serialization.<!-- d3d12-review-inline:end:execution:D160-encode-execution-forward:0:authored:migration-eff0633401ddb137-0 --></ins>
 
@@ -62,10 +60,7 @@ In general, DIRECT queues and command lists accept <ins><!-- d3d12-review-inline
 
 <ins><!-- d3d12-review-inline:begin:execution:D162-encoding-execution-forward:0:authored:migration-d5e22f4b9539e6de-0 -->Encoding's [object and recording contract](video-encoding.md#encoding-recording) includes encoder/heap serialization and recorded execution order, creation description copies distinct from GPU storage, caller-owned COM references without assumed recording AddRef, and lifetime through unsubmitted recordings that will execute and completion of submitted uses. Reconfiguration does not mutate immutable creation properties or supply codec header/DPB policy.<!-- d3d12-review-inline:end:execution:D162-encoding-execution-forward:0:authored:migration-d5e22f4b9539e6de-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:D151-meta-command-reference:0:authored:migration-ece133d2de408c95-0 -->Meta command discovery, resource parameter layouts and initialization/execution are defined in the subordinate [Meta commands reference](meta-commands.md).<!-- d3d12-review-inline:end:execution:D151-meta-command-reference:0:authored:migration-ece133d2de408c95-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:execution:QF-queue-api-reference:0:authored:migration-8476c98cd5a09ff9-0 -->The [command queue chapter](command-queues.md) defines creation,
-creator IDs, the returned description and the four dynamic priority methods.<!-- d3d12-review-inline:end:execution:QF-queue-api-reference:0:authored:migration-8476c98cd5a09ff9-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:D151-meta-command-reference:0:authored:migration-ece133d2de408c95-0 -->[Meta command discovery, parameters and execution](meta-commands.md).<!-- d3d12-review-inline:end:execution:D151-meta-command-reference:0:authored:migration-ece133d2de408c95-0 --></ins>
 
 <a id="synchronization-only-queues"></a>
 
@@ -108,10 +103,6 @@ the runtime must still set
 queue. Omitting kernel priority setting must not suppress this UMD request.
 Passing the flag does not mean that the runtime set the group's kernel
 scheduling priority.<!-- d3d12-review-inline:end:execution:QF-P03:0:authored:migration-84375f967aef6b38-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:execution:QF-P04:0:authored:migration-e87dd6a15a41f40e-0 -->**History.** The compatibility path's omission of kernel priority setting originated
-as a bug. Correcting it caused application compatibility regressions, so the
-prior behavior was restored and is retained for compatibility.<!-- d3d12-review-inline:end:execution:QF-P04:0:authored:migration-e87dd6a15a41f40e-0 --></ins>
 
 <a id="dynamic-queue-priority"></a>
 
@@ -282,7 +273,7 @@ HRESULT CreateCommandList1(
 
 ## Closing and reusing command lists
 
-<ins><!-- d3d12-review-inline:begin:execution:A04:0:authored:migration-8c5f0a9bd7402940-0 -->This section covers DIRECT, COMPUTE, COPY, and BUNDLE recordings made through `ID3D12GraphicsCommandList`, and the corresponding `ID3D12CommandAllocator` objects. The three methods below belong to the baseline D3D12 interfaces. They do not require an optional feature query. Calls on the same command list or allocator object must obey the [CPU threading requirements](#threading).<!-- d3d12-review-inline:end:execution:A04:0:authored:migration-8c5f0a9bd7402940-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:A04:0:authored:migration-8c5f0a9bd7402940-0 -->This section covers DIRECT, COMPUTE, COPY, and BUNDLE recordings made through `ID3D12GraphicsCommandList`, and the corresponding `ID3D12CommandAllocator` objects.<!-- d3d12-review-inline:end:execution:A04:0:authored:migration-8c5f0a9bd7402940-0 --></ins>
 
 <a id="command-storage"></a>
 
@@ -391,7 +382,7 @@ list<!-- d3d12-review-inline:end:execution:P08-allocator:0:modified:source-70ada
 
 #### Initial recording state
 
-<ins><!-- d3d12-review-inline:begin:execution:A07:0:authored:migration-421af0376f7a96ba-0 -->Creation/Reset values and bundle entry/exit behavior are defined in [Command list state initialization](command-list-state.md#state-index). This includes the depth bounds, sample position, view mask, VRS, dynamic-PSO, protection, and recording context contributions.<!-- d3d12-review-inline:end:execution:A07:0:authored:migration-421af0376f7a96ba-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:A07:0:authored:migration-421af0376f7a96ba-0 -->[Creation/Reset values and bundle entry/exit behavior](command-list-state.md#state-index).<!-- d3d12-review-inline:end:execution:A07:0:authored:migration-421af0376f7a96ba-0 --></ins>
 
 #### Return values
 
@@ -443,7 +434,7 @@ It's undefined behavior to call **Reset** on a command allocator while it has a 
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:execution:A10:0:authored:migration-0135b082f3aab547-0 -->Returns `S_OK` on success. The active-recording failure is described below. Callers must check the returned HRESULT. Success is not proof of GPU completion.<!-- d3d12-review-inline:end:execution:A10:0:authored:migration-0135b082f3aab547-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:A10:0:authored:migration-0135b082f3aab547-0 -->Returns `S_OK` on success.<!-- d3d12-review-inline:end:execution:A10:0:authored:migration-0135b082f3aab547-0 --></ins>
 
 This method returns `E_FAIL` if there is an actively recording command list referencing the command allocator. The debug layer will also issue an error in this case. See [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes) for other possible return values.
 
@@ -452,6 +443,74 @@ This method returns `E_FAIL` if there is an actively recording command list refe
 The debug layer will issue <ins><!-- d3d12-review-inline:begin:execution:P12-debug:0:modified:source-ae4302862c6c4b6b-0-0 -->an error<!-- d3d12-review-inline:end:execution:P12-debug:0:modified:source-ae4302862c6c4b6b-0-0 --></ins> if it can't prove that there are no pending GPU references to command lists that have recorded commands in the allocator.
 
 The debug layer will issue an error if `Reset` is called concurrently by multiple threads (on the same allocator object).
+
+<a id="api-id3d12graphicscommandlist-clearstate"></a>
+
+### ID3D12GraphicsCommandList::ClearState
+
+#### Declaration
+
+```cpp
+void ClearState(
+    ID3D12PipelineState* pPipelineState);
+```
+
+#### Behavior
+
+Resets the state of a direct <ins><!-- d3d12-review-inline:begin:execution:AB-primary-id3d12graphicscommandlist-clearstate:0:authored:source-30b405a035a90708-0-0 -->or compute <!-- d3d12-review-inline:end:execution:AB-primary-id3d12graphicscommandlist-clearstate:0:authored:source-30b405a035a90708-0-0 --></ins>command list back to the state it was in when the command list was created.
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12graphicscommandlist-clearstate-contract:0:authored:migration-1e71fd96b951a510-0 -->[ClearState effects, defaults and exceptions](command-list-state.md#clear-state).<!-- d3d12-review-inline:end:execution:AB-id3d12graphicscommandlist-clearstate-contract:0:authored:migration-1e71fd96b951a510-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12graphicscommandlist-clearstate-contract:2:authored:migration-d108f0a0ff7ad979-0 -->`pPipelineState` supplies the graphics/compute PSO to select. Null selects the
+appropriate default state, not an application shader program.<!-- d3d12-review-inline:end:execution:AB-id3d12graphicscommandlist-clearstate-contract:2:authored:migration-d108f0a0ff7ad979-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12graphicscommandlist-clearstate-contract:4:authored:migration-4f88456e95f6c6bf-0 -->Returns no value; invalid recording follows the [Close/error contract](#close).<!-- d3d12-review-inline:end:execution:AB-id3d12graphicscommandlist-clearstate-contract:4:authored:migration-4f88456e95f6c6bf-0 --></ins>
+
+<a id="api-id3d12graphicscommandlist3-setprotectedresourcesession"></a>
+
+### ID3D12GraphicsCommandList3::SetProtectedResourceSession
+
+#### Declaration
+
+```cpp
+void SetProtectedResourceSession(
+    ID3D12ProtectedResourceSession *pProtectedResourceSession);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-primary-id3d12graphicscommandlist3-setprotectedresourcesession:0 -->Specifies whether or not protected resources can be accessed by subsequent commands in the command list. By default, no protected resources are enabled. After calling **SetProtectedResourceSession** with a valid session, protected resources of the same type can refer to that session. After calling **SetProtectedResourceSession** with **NULL**, no protected resources can be accessed.<!-- d3d12-review-inline:end:execution:AB-primary-id3d12graphicscommandlist3-setprotectedresourcesession:0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12graphicscommandlist3-setprotectedresourcesession-contract:0:authored:migration-9d7870aba5d72d07-0 -->Selects only the [protection context](command-list-state.md#protection).
+Ordinary pipeline/root/descriptor/output bindings and predication are preserved;
+this is not ClearState. Protected operations retain their no-predication
+requirement, so the caller must establish a valid predicate state separately.
+End all open query intervals before a supported session change. The session
+must be compatible with the device/node and operation. See
+[protection context selection](command-list-state.md#protection) for supported
+DIRECT/COMPUTE/COPY lists, bundle setter exclusion and render pass restrictions.<!-- d3d12-review-inline:end:execution:AB-id3d12graphicscommandlist3-setprotectedresourcesession-contract:0:authored:migration-9d7870aba5d72d07-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12graphicscommandlist3-setprotectedresourcesession-contract:2:authored:migration-bc99a6596041982f-0 -->`pProtectedResourceSession` is an optional session interface; null disables protected access for subsequent work. Passing it transfers no caller-owned COM reference.<!-- d3d12-review-inline:end:execution:AB-id3d12graphicscommandlist3-setprotectedresourcesession-contract:2:authored:migration-bc99a6596041982f-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12graphicscommandlist3-setprotectedresourcesession-contract:4:authored:migration-88d046185b547816-0 -->Returns no value; recording failures use the canonical list/Close path. It does not report protected content validity; query the session/status fence.<!-- d3d12-review-inline:end:execution:AB-id3d12graphicscommandlist3-setprotectedresourcesession-contract:4:authored:migration-88d046185b547816-0 --></ins>
+
+<a id="protected-session-driver"></a>
+
+#### Driver interface
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_SETPROTECTEDRESOURCESESSION_0030 )( D3D12DDI_HCOMMANDLIST, D3D12DDI_HPROTECTEDRESOURCESESSION_0030 );
+```
+
+<ins><!-- d3d12-review-inline:begin:execution:CS-recording-error-protection:1:authored:migration-7806e5ee03f91e43-0 -->SetProtectedResourceSession uses ordinary driver command list and session handles in both 3D layouts and the selected video tables. A null session handle clears the association.<!-- d3d12-review-inline:end:execution:CS-recording-error-protection:1:authored:migration-7806e5ee03f91e43-0 --></ins>
 
 <a id="executebundle"></a>
 
@@ -469,9 +528,9 @@ Executes a bundle.
 
 <ins><!-- d3d12-review-inline:begin:execution:EF-bundle-api-contract:0:authored:migration-e87ff5cd7e0a5ca3-0 -->`pCommandList` must identify a closed BUNDLE from the same device. The caller must be an open DIRECT recording. A bundle cannot execute another bundle. The bundle's device node selection must include the parent's execution node. Descriptor heaps explicitly set by the bundle must match the parent's corresponding heaps. Recording the call selects the bundle recording at that call, not a later re-recording of the same bundle object.<!-- d3d12-review-inline:end:execution:EF-bundle-api-contract:0:authored:migration-e87ff5cd7e0a5ca3-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:EF-bundle-api-contract:1:authored:migration-2efa30ac00f75acf-0 -->The [bundle entry/exit state contract](command-list-state.md#base-bundle-state), [root/descriptor inheritance](command-list-state.md#resource-binding) and [static descriptor/data promises](command-list-state.md#static-descriptors) remain canonical. A bundle does not inherit the parent's PSO or primitive topology. This wrapper is not predicated, but eligible work inside the bundle uses the inherited predicate under the [operation matrix](counters-queries-and-predication.md#predication-operation-matrix). Its state effects are not skipped with that work.<!-- d3d12-review-inline:end:execution:EF-bundle-api-contract:1:authored:migration-2efa30ac00f75acf-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:EF-bundle-api-contract:1:authored:migration-2efa30ac00f75acf-0 -->See [bundle entry/exit state](command-list-state.md#base-bundle-state) for state inheritance, [resource binding](command-list-state.md#resource-binding) for root/descriptor inheritance, and [static descriptors](command-list-state.md#static-descriptors) for descriptor/data promises. A bundle does not inherit the parent's PSO or primitive topology. `ExecuteBundle` is not predicated, but eligible work inside the bundle uses the inherited predicate under the [operation matrix](counters-queries-and-predication.md#predication-operation-matrix). Its state effects are not skipped with that work.<!-- d3d12-review-inline:end:execution:EF-bundle-api-contract:1:authored:migration-2efa30ac00f75acf-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:EF-bundle-api-contract:2:authored:migration-912d7ee2a6430376-0 -->The bundle's contents must satisfy the parent's [render pass admission and dependencies](output-merger.md#render-pass-operation-surface). The [recording generation and allocator storage rules](#command-storage), [object/resource lifetime](#lifetime), [residency](resources.md#residency) and [binding lifetime](binding.md#table-indexing-and-descriptor-lifetime) apply through all uses of the selected recording. Resetting/re-recording the bundle object does not retarget an earlier parent recording, and resetting its allocator does not make old references valid. This CPU recording call neither submits the parent to a queue nor waits for GPU completion.<!-- d3d12-review-inline:end:execution:EF-bundle-api-contract:2:authored:migration-912d7ee2a6430376-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:EF-bundle-api-contract:2:authored:migration-912d7ee2a6430376-0 -->The bundle's contents must satisfy the parent's [render pass admission and dependencies](output-merger.md#render-pass-operation-surface).<!-- d3d12-review-inline:end:execution:EF-bundle-api-contract:2:authored:migration-912d7ee2a6430376-0 --></ins>
 
 #### Parameters
 
@@ -481,7 +540,7 @@ Executes a bundle.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:execution:EF-bundle-api-return:0:authored:migration-1dd397974a696d2b-0 -->This method returns no value. Recording failures are reported through the parent's [deferred Close result](#deferred-recording-errors), not a direct HRESULT returned by `ExecuteBundle`. The common first-recorded-error precedence remains applicable, including when a validation failure records `E_INVALIDARG`.<!-- d3d12-review-inline:end:execution:EF-bundle-api-return:0:authored:migration-1dd397974a696d2b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:EF-bundle-api-return:0:authored:migration-1dd397974a696d2b-0 -->This method returns no value. Recording failures are reported through the parent's deferred Close result, not a direct HRESULT returned by `ExecuteBundle`. See [deferred recording errors](#deferred-recording-errors) for first-recorded-error precedence, including when a validation failure records `E_INVALIDARG`.<!-- d3d12-review-inline:end:execution:EF-bundle-api-return:0:authored:migration-1dd397974a696d2b-0 --></ins>
 
 #### Runtime validation
 
@@ -529,7 +588,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_EXECUTE_BUNDLE )(
 typedef VOID (APIENTRY CALLBACK *PFND3D12DDI_SETCOMMANDLISTERROR_CB)( D3D12DDI_HRTCOMMANDLIST, HRESULT );
 ```
 
-<ins><!-- d3d12-review-inline:begin:execution:CS-recording-error-protection:0:authored:migration-08ad31ae95351332-0 -->SetCommandListErrorCb uses `D3D12DDI_HRTCOMMANDLIST`. The runtime translates and records the error under the [recording error contract](#lifecycle-driver-errors).<!-- d3d12-review-inline:end:execution:CS-recording-error-protection:0:authored:migration-08ad31ae95351332-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:CS-recording-error-protection:0:authored:migration-08ad31ae95351332-0 -->SetCommandListErrorCb uses `D3D12DDI_HRTCOMMANDLIST`.<!-- d3d12-review-inline:end:execution:CS-recording-error-protection:0:authored:migration-08ad31ae95351332-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:execution:P42:0 -->`SetCommandListErrorCb` is used for errors encountered while executing
 command list recording DDIs. There are only 3 errors which drivers
@@ -736,8 +795,6 @@ Neither these fields nor queue flags replace the recording generation ID.<!-- d3
 
 #### Command pools
 
-<ins><!-- d3d12-review-inline:begin:execution:R020:0:authored:migration-cd695b8216e5e0f9-0 -->The `_0040` protocol separates pool storage from the recorder. Reset reclaims pool storage under the [CPU/GPU preconditions](#target-and-reclamation).<!-- d3d12-review-inline:end:execution:R020:0:authored:migration-cd695b8216e5e0f9-0 --></ins>
-
 ```cpp
 typedef enum D3D12DDI_COMMAND_POOL_FLAGS
 {
@@ -760,8 +817,6 @@ typedef VOID ( APIENTRY* PFND3D12DDI_RESET_COMMAND_POOL_0040 ) ( D3D12DDI_HDEVIC
 #### Command recorders
 
 <ins><!-- d3d12-review-inline:begin:execution:R022:0:authored:migration-2523247168bfe39d-0 -->Recorder creation does not begin a recording or select a target pool.<!-- d3d12-review-inline:end:execution:R022:0:authored:migration-2523247168bfe39d-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:execution:R023:0:authored:migration-bd25196c8967c871-0 -->SetCommandPoolAsTarget changes the recorder's target under the [idle target rules](#target-and-reclamation). Recorder destruction leaves valid pool-backed recordings intact.<!-- d3d12-review-inline:end:execution:R023:0:authored:migration-bd25196c8967c871-0 --></ins>
 
 ```cpp
 typedef enum D3D12DDI_COMMAND_RECORDER_FLAGS
@@ -794,8 +849,6 @@ new recording without reclaiming old pool storage. The runtime supplies the
 initial pipeline state and other applicable state through state setting DDIs,
 not through these reset arguments. The canonical
 [initial/reset state](command-list-state.md) defines those contributions.<!-- d3d12-review-inline:end:execution:R026:0:authored:migration-2912c112e40123cc-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:execution:R027:0:authored:migration-1c24d5372d3f476a-0 -->Close ends recording and releases recorder use. List destruction must support [abandonment without Close](#target-and-reclamation).<!-- d3d12-review-inline:end:execution:R027:0:authored:migration-1c24d5372d3f476a-0 --></ins>
 
 ```cpp
 typedef struct D3D12DDIARG_CREATE_COMMAND_LIST_0040
@@ -844,11 +897,9 @@ inline D3D12DDI_HCOMMANDLIST GetDriverCommandListHandle(D3D12DDI_API_HCOMMANDLIS
 }
 ```
 
-<ins><!-- d3d12-review-inline:begin:execution:EF-api-handle-contract:0:authored:migration-da261d2c2fe00661-0 -->The current command list layouts are alternative representations. In `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108`, the ordinary draw/dispatch entries receive `D3D12DDI_HCOMMANDLIST`. Their API-compatible counterparts in `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114` instead receive `D3D12DDI_API_HCOMMANDLIST`. All remaining ordered draw counts/starts, signed base vertex and dispatch group counts retain the linked logical API meanings.<!-- d3d12-review-inline:end:execution:EF-api-handle-contract:0:authored:migration-da261d2c2fe00661-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:EF-api-handle-contract:0:authored:migration-da261d2c2fe00661-0 -->The current command list layouts are alternative representations. In `D3D12DDI_COMMAND_LIST_FUNCS_3D_0108`, the ordinary draw/dispatch entries receive `D3D12DDI_HCOMMANDLIST`. Their API-compatible counterparts in `D3D12DDI_COMMAND_LIST_FUNCS_3D_0114` instead receive `D3D12DDI_API_HCOMMANDLIST`.<!-- d3d12-review-inline:end:execution:EF-api-handle-contract:0:authored:migration-da261d2c2fe00661-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:EF-api-handle-contract:1:authored:migration-10274074fd374143-0 -->The API handle identifies the application-side object/header, not the driver's ordinary command list storage. The published `GetDriverCommandListHandle` helper obtains `pDriverObject` from that header. The driver must not treat the API handle itself as its ordinary private object pointer. Neither the handle nor the header transfers COM ownership or changes the normal recording/object lifetime. The header's interface table member does not make driver-private memory interchangeable with an application object.<!-- d3d12-review-inline:end:execution:EF-api-handle-contract:1:authored:migration-10274074fd374143-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:execution:EF-api-handle-contract:2:authored:migration-52738cbd1f1a7227-0 -->These are conditional selected-table contracts, not a guarantee of bypass support or a particular performance benefit on every device. Changing representation does not relax input, state, resource, predicate, render pass or recording error requirements and does not prove that the runtime validated or clamped the arguments. Bundle execution retains its explicitly ordinary handle pair in both tables.<!-- d3d12-review-inline:end:execution:EF-api-handle-contract:2:authored:migration-52738cbd1f1a7227-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:EF-api-handle-contract:1:authored:migration-10274074fd374143-0 -->The API handle identifies the application-side object/header, not the driver's ordinary command list storage. The published `GetDriverCommandListHandle` helper obtains `pDriverObject` from that header. The driver must not treat the API handle itself as its ordinary private object pointer.<!-- d3d12-review-inline:end:execution:EF-api-handle-contract:1:authored:migration-10274074fd374143-0 --></ins>
 
 <!-- d3d12-review-alert:begin:execution:EF-api-handle-contract:3:authored:migration-8bf93e4a377ff144-0 -->
 
@@ -872,7 +923,7 @@ inline D3D12DDI_HCOMMANDLIST GetDriverCommandListHandle(D3D12DDI_API_HCOMMANDLIS
 
 ## Submission and ordering
 
-<ins><!-- d3d12-review-inline:begin:execution:SUB-scope:0:authored:migration-0c2fd91e3cc01c48-0 -->The submission and completion rules below apply to all supporting D3D12 command queue types, including video decode, process, and encode. The core queue/fence methods are declared by `ID3D12CommandQueue`, `ID3D12Device`, and `ID3D12Fence`. `SetEventOnMultipleFenceCompletion` is declared by `ID3D12Device1`. `GetCreationFlags` is declared by `ID3D12Fence1`.<!-- d3d12-review-inline:end:execution:SUB-scope:0:authored:migration-0c2fd91e3cc01c48-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:SUB-scope:0:authored:migration-0c2fd91e3cc01c48-0 -->The submission and completion rules below apply to all supporting D3D12 command queue types, including video decode, process, and encode.<!-- d3d12-review-inline:end:execution:SUB-scope:0:authored:migration-0c2fd91e3cc01c48-0 --></ins>
 
 <a id="execute-command-lists"></a>
 
@@ -913,10 +964,6 @@ The driver is free to patch the submitted command lists. It is the calling appli
 Applications are encouraged to batch together command list executions to reduce fixed costs associated with submitted commands to the GPU.
 
 <ins><!-- d3d12-review-inline:begin:execution:SUB-recording:0:authored:migration-a693956154f7fca9-0 -->The no-concurrent-reexecution rule concerns a particular recorded stream, not every recording ever made through the list object. Reset/re-recording may produce a new stream while an older stream executes, with valid backing storage and resources. See [recorded commands and allocator storage](#command-storage). Returning from `ExecuteCommandLists` does not establish GPU completion or make allocator/resource storage reusable.<!-- d3d12-review-inline:end:execution:SUB-recording:0:authored:migration-a693956154f7fca9-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:execution:SUB-execute-return:0:authored:migration-057db7e2b7ac625f-0 -->`ExecuteCommandLists` returns no value. Submission failures are not returned as an `HRESULT` from this method.<!-- d3d12-review-inline:end:execution:SUB-execute-return:0:authored:migration-057db7e2b7ac625f-0 --></ins>
 
 <a id="validation"></a>
 
@@ -964,8 +1011,7 @@ concurrently.
 call the command buffer submission callback. Drivers may not defer
 submission of command buffers until a later time.
 
-<ins><!-- d3d12-review-inline:begin:execution:QT-N04:0:authored:migration-2aee6c96187e4490-0 -->The DDI returns no `HRESULT`. Returning does not establish GPU completion
-or permit reuse of recording storage still in use. An execution failure that
+<ins><!-- d3d12-review-inline:begin:execution:QT-N04:0:authored:migration-2aee6c96187e4490-0 -->An execution failure that
 the UMD cannot resolve is reported through `PFND3D12DDI_SETERROR_CB`, not
 through the command list recording error callback or an application return
 value. Callback failures may be handled within the execution attempt, but
@@ -1001,10 +1047,6 @@ Applications can submit command lists to any command queue from multiple threads
 
 <a id="submission-driver"></a>
 
-### Runtime and driver submission responsibilities
-
-<ins><!-- d3d12-review-inline:begin:execution:SUB-driver-execute:0 -->The [ExecuteCommandLists DDI contract](#execute-command-lists-ddi) defines submission of the application's command lists to the user-mode driver.<!-- d3d12-review-inline:end:execution:SUB-driver-execute:0 --></ins>
-
 <a id="driver-submission-transport"></a>
 
 ### Driver submission transport
@@ -1016,8 +1058,9 @@ Applications can submit command lists to any command queue from multiple threads
 <ins><!-- d3d12-review-inline:begin:execution:QT-N05:0:authored:migration-6c0866cc390b6ee2-0 -->The shared callbacks are supplied through the device's `pKTCallbacks`
 `D3DDDI_DEVICECALLBACKS` table. Their first `HANDLE hDevice` identifies the
 runtime device callback context, not a UMD-private `D3D12DDI_HDEVICE` or an
-application command queue. Table lifetime and interface selection follow
-[Runtime UMD initialization](devices-and-capabilities.md#table-selection).<!-- d3d12-review-inline:end:execution:QT-N05:0:authored:migration-6c0866cc390b6ee2-0 --></ins>
+application command queue. See
+[runtime callback storage](devices-and-capabilities.md#callback-storage) for table lifetimes and
+[driver device creation](devices-and-capabilities.md#pfnd3d12ddi_createdevice_0003-and-pfnd3d12ddi_createdevice_0109) for callback interface selection.<!-- d3d12-review-inline:end:execution:QT-N05:0:authored:migration-6c0866cc390b6ee2-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:execution:QT-N06:0:authored:migration-f0ae94f4694dbaf6-0 -->Context and hardware queue `HANDLE` values returned by these D3D12 runtime
 callbacks are opaque runtime handles. The runtime translates them to kernel
@@ -1141,6 +1184,32 @@ the current uniqueness validity value (using `GetCompletedValue`), and add
 monitors for change of its value. This is a read-only fence.<!-- d3d12-review-inline:end:execution:F-status-observation:0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:execution:F-status-meaning:0:authored:migration-5f18ee5bb0eca22f-0 -->Read-only status fences must not be signaled through `ID3D12Fence::Signal`, `ID3D12CommandQueue::Signal`, or `ID3D12Device3::EnqueueMakeResident`. Their value changes indicate protected content invalidation, not completion of submitted application work. These writability and value meaning rules are separate from the [monitoring capability restrictions](#fence-flags).<!-- d3d12-review-inline:end:execution:F-status-meaning:0:authored:migration-5f18ee5bb0eca22f-0 --></ins>
+
+<a id="api-id3d12protectedsession-getstatusfence"></a>
+
+#### ID3D12ProtectedSession::GetStatusFence
+
+##### Declaration
+
+```cpp
+HRESULT GetStatusFence(
+    REFIID riid,
+    void** ppFence);
+```
+
+##### Behavior
+
+Retrieves the fence for the protected session. From the fence, you can retrieve the current uniqueness validity value (using <ins><!-- d3d12-review-inline:begin:execution:AB-primary-id3d12protectedsession-getstatusfence:0 -->[ID3D12Fence::GetCompletedValue](#id3d12fencegetcompletedvalue)<!-- d3d12-review-inline:end:execution:AB-primary-id3d12protectedsession-getstatusfence:0 --></ins>), and add monitors for changes to its value. This is a read-only fence.
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12protectedsession-getstatusfence-contract:0:authored:migration-8df63c59301f8692-0 -->See [Protected session status fences](#status-fences) for value interpretation and signaling restrictions.<!-- d3d12-review-inline:end:execution:AB-id3d12protectedsession-getstatusfence-contract:0:authored:migration-8df63c59301f8692-0 --></ins>
+
+##### Parameters
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12protectedsession-getstatusfence-contract:2:authored:migration-32cedbc907064941-0 -->`riid` requests an interface on the status fence. `ppFence` receives the resulting caller-owned COM reference; normal interface release remains the caller's responsibility.<!-- d3d12-review-inline:end:execution:AB-id3d12protectedsession-getstatusfence-contract:2:authored:migration-32cedbc907064941-0 --></ins>
+
+##### Return values
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12protectedsession-getstatusfence-contract:4:authored:migration-ebeffec4f914d6a7-0 -->Returns `S_OK` on successful interface retrieval, `E_NOINTERFACE` for an unsupported fence interface, or the applicable failure.<!-- d3d12-review-inline:end:execution:AB-id3d12protectedsession-getstatusfence-contract:4:authored:migration-ebeffec4f914d6a7-0 --></ins>
 
 <a id="fence-flags"></a>
 
@@ -1460,8 +1529,8 @@ ownership. Monitored, native and command list scoped representations have
 driver-visible objects on these paths. A runtime-managed legacy non-monitored
 fence does not imply a UMD CreateFence/DestroyFence pair. A size query alone
 does not commit the runtime to subsequently creating a driver object.
-Application [fence lifetimes and operation restrictions](execution.md#completion)
-remain separate from this transport selection.<!-- d3d12-review-inline:end:execution:QF-FN12:0:authored:migration-b801520f175964de-0 --></ins>
+See [fence completion](#completion) for application fence lifetimes and
+operation restrictions.<!-- d3d12-review-inline:end:execution:QF-FN12:0:authored:migration-b801520f175964de-0 --></ins>
 
 <a id="scoped-fence-output"></a>
 
@@ -1618,9 +1687,8 @@ queue handle and a fence operation description. `Fence` and `Value` identify
 the requested fence operation. `PhysicalAdapterMask` is an output used by the
 runtime-broadcast path described below. These DDIs return no `HRESULT`;
 their signatures are not the application methods' return value contract.
-The [application fence timelines and queue ordering](execution.md#fence-operations)
-remain applicable. These are UMD queue DDI contracts;
-[synchronization-only queues](execution.md#synchronization-only-queues)
+See [fence operations](#fence-operations) for application fence timelines
+and queue ordering. [Synchronization-only queues](#synchronization-only-queues)
 use their runtime-managed path rather than a UMD command queue object.<!-- d3d12-review-inline:end:execution:QF-T01:0:authored:migration-848bc7d31fcecf81-0 --></ins>
 
 ```cpp
@@ -2013,11 +2081,6 @@ passed into those APIs. This means applications are responsible for
 ensuring that a command list is never submitted for execution that
 references a destroyed resource.
 
-<ins><!-- d3d12-review-inline:begin:execution:DN-execution-lifetime-owner:0:authored:migration-ebe7614c451d77a1-0 -->The [destruction-notifier interface](devices-and-capabilities.md#destruction-notifications)
-observes CPU object destruction. Its callbacks and cancellation IDs do not
-retain recorded resource uses, prove GPU completion, or replace these
-application lifetime requirements.<!-- d3d12-review-inline:end:execution:DN-execution-lifetime-owner:0:authored:migration-ebe7614c451d77a1-0 --></ins>
-
 ### Resource lifetime separated from binding
 
 <ins><!-- d3d12-review-inline:begin:execution:P26:0 -->Before freeing any resource, such as a texture, applications must
@@ -2042,6 +2105,109 @@ before previous executions of the associated command list have
 completed. Additionally, applications can destroy command lists before
 previous executions have completed.
 
+<a id="recording-state-lifetime-apis"></a>
+
+### Tracked object lifetime APIs
+
+```cpp
+typedef
+enum D3D12_LIFETIME_STATE
+    {
+        D3D12_LIFETIME_STATE_IN_USE	= 0,
+        D3D12_LIFETIME_STATE_NOT_IN_USE	= ( D3D12_LIFETIME_STATE_IN_USE + 1 )
+    } 	D3D12_LIFETIME_STATE;
+```
+
+<a id="api-id3d12device5-createlifetimetracker"></a>
+
+#### ID3D12Device5::CreateLifetimeTracker
+
+##### Declaration
+
+```cpp
+HRESULT CreateLifetimeTracker(
+    ID3D12LifetimeOwner* pOwner,
+    REFIID riid,
+    void** ppvTracker);
+```
+
+##### Behavior
+
+Creates a lifetime tracker associated with an application-defined callback; the callback receives notifications when the lifetime of a tracked object is changed.
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12device5-createlifetimetracker-contract:0:authored:migration-2dbfcf2959023275-0 -->Creates an explicit ownership/lifetime tracker for objects created with its
+association, including the [compatibility resource path](sharing-and-interoperability.md#compatibility-creation).
+Its notifications reflect aggregate reference/use transitions, not a new
+application fence. Creating a tracker does not attach it to arbitrary existing
+objects or make ordinary resource lifetimes automatic.<!-- d3d12-review-inline:end:execution:AB-id3d12device5-createlifetimetracker-contract:0:authored:migration-2dbfcf2959023275-0 --></ins>
+
+##### Parameters
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12device5-createlifetimetracker-contract:2:authored:migration-963b20beff0f89c3-0 -->`pOwner` supplies the lifetime callback object retained by the tracker. `riid` selects the tracker interface and `ppvTracker` receives its COM reference.<!-- d3d12-review-inline:end:execution:AB-id3d12device5-createlifetimetracker-contract:2:authored:migration-963b20beff0f89c3-0 --></ins>
+
+##### Return values
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12device5-createlifetimetracker-contract:4:authored:migration-762d5e1a9f0987e2-0 -->Returns `S_OK` on successful construction or an HRESULT failure, including allocation/interface failures.<!-- d3d12-review-inline:end:execution:AB-id3d12device5-createlifetimetracker-contract:4:authored:migration-762d5e1a9f0987e2-0 --></ins>
+
+<a id="api-id3d12lifetimeowner-lifetimestateupdated"></a>
+
+#### ID3D12LifetimeOwner::LifetimeStateUpdated
+
+##### Declaration
+
+```cpp
+void LifetimeStateUpdated(
+    D3D12_LIFETIME_STATE NewState);
+```
+
+##### Behavior
+
+Called when the lifetime state of a lifetime-tracked object changes.
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12lifetimeowner-lifetimestateupdated-contract:0:authored:migration-d845c4aa6f392a4d-0 -->The runtime invokes this application callback when the tracker's aggregate
+observed references/uses transition between zero and nonzero. `IN_USE` means
+an observed reference/use exists; `NOT_IN_USE` means none remain at that
+transition. A notification is not one callback per command or per individual
+object, nor a promise of a dedicated callback thread or an initial notification.
+Callback/context ownership must remain valid while the tracker can notify.<!-- d3d12-review-inline:end:execution:AB-id3d12lifetimeowner-lifetimestateupdated-contract:0:authored:migration-d845c4aa6f392a4d-0 --></ins>
+
+##### Parameters
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12lifetimeowner-lifetimestateupdated-contract:2:authored:migration-3e14ed6312b519ed-0 -->`NewState` is `D3D12_LIFETIME_STATE_IN_USE` or `D3D12_LIFETIME_STATE_NOT_IN_USE`.<!-- d3d12-review-inline:end:execution:AB-id3d12lifetimeowner-lifetimestateupdated-contract:2:authored:migration-3e14ed6312b519ed-0 --></ins>
+
+##### Return values
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12lifetimeowner-lifetimestateupdated-contract:4:authored:migration-88b1b07894b7ad80-0 -->Returns no value. The callback does not itself destroy owned objects or substitute for application queue synchronization.<!-- d3d12-review-inline:end:execution:AB-id3d12lifetimeowner-lifetimestateupdated-contract:4:authored:migration-88b1b07894b7ad80-0 --></ins>
+
+<a id="api-id3d12lifetimetracker-destroyownedobject"></a>
+
+#### ID3D12LifetimeTracker::DestroyOwnedObject
+
+##### Declaration
+
+```cpp
+HRESULT DestroyOwnedObject(
+    ID3D12DeviceChild* pObject);
+```
+
+##### Behavior
+
+Destroys a lifetime-tracked object.
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12lifetimetracker-destroyownedobject-contract:0:authored:migration-22974bb0e5fe4fa0-0 -->Requests destruction of an object owned by this tracker and removes that
+ownership association. Physical cleanup retains outstanding runtime/GPU use
+lifetime rules. This method is not a GPU wait. Tracker destruction also
+releases its remaining owned objects. The caller must not treat a destroyed
+object as a new reusable resource merely because a COM pointer still exists.<!-- d3d12-review-inline:end:execution:AB-id3d12lifetimetracker-destroyownedobject-contract:0:authored:migration-22974bb0e5fe4fa0-0 --></ins>
+
+##### Parameters
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12lifetimetracker-destroyownedobject-contract:2:authored:migration-68dc74786c67cf3c-0 -->`pObject` identifies the device child belonging to this tracker, not an arbitrary device child or shared handle.<!-- d3d12-review-inline:end:execution:AB-id3d12lifetimetracker-destroyownedobject-contract:2:authored:migration-68dc74786c67cf3c-0 --></ins>
+
+##### Return values
+
+<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12lifetimetracker-destroyownedobject-contract:4:authored:migration-801717008a31c8e9-0 -->Returns `S_OK` for the owned-object destruction request. An object not in this tracker's ownership set returns `E_INVALIDARG`, and interface failures remain failures.<!-- d3d12-review-inline:end:execution:AB-id3d12lifetimetracker-destroyownedobject-contract:4:authored:migration-801717008a31c8e9-0 --></ins>
+
 <a id="threading"></a>
 
 ## CPU threading
@@ -2063,13 +2229,6 @@ All methods on the command queue are free-threaded.
 <a id="driver-responsibilities"></a>
 
 ## Driver responsibilities
-
-<ins><!-- d3d12-review-inline:begin:execution:QF-sizing-forward:0:authored:migration-494bb6306c3fc7a1-0 -->Driver fence [private sizing requirements](execution.md#fence-private-sizing)
-and [native fence callback ownership and failure cleanup](execution.md#native-fence-callbacks)
-are defined in this chapter, alongside
-the [queue Signal/Wait transport split](execution.md#queue-signal-wait).
-The [native operation error contract](execution.md#native-queue-errors)
-distinguishes device failure reporting from the application method's `HRESULT`.<!-- d3d12-review-inline:end:execution:QF-sizing-forward:0:authored:migration-494bb6306c3fc7a1-0 --></ins>
 
 ### Threading
 
@@ -2230,7 +2389,7 @@ HRESULT SetBackgroundProcessingMode(
 #### Behavior
 
 <ins><!-- d3d12-review-inline:begin:execution:CS-background-api-intro:5:authored:migration-f243e5e87aca284a-0 -->Controls optional driver optimization/profiling work, not correctness-critical
-processing or GPU submission. The mode/action behavior is defined below.<!-- d3d12-review-inline:end:execution:CS-background-api-intro:5:authored:migration-f243e5e87aca284a-0 --></ins>
+processing or GPU submission.<!-- d3d12-review-inline:end:execution:CS-background-api-intro:5:authored:migration-f243e5e87aca284a-0 --></ins>
 
 Developers and profiling tools can adjust this behavior using combinations of the above enums.  The BACKGROUND_PROCESSING_MODE parameter indicates what level of dynamic profiling and shader recompilation is enabled:
 
@@ -2270,12 +2429,9 @@ The **FurtherMeasurementsDesired** output value indicates whether the implementa
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:execution:CS-background-api-tail:1:authored:migration-135a02da869e0a07-0 -->`Mode` and `MeasurementsAction` are values of their published enumerations.
-`hEventToSignalUponCompletion` can be supplied for a commit action and must
-be null otherwise. The event tracks completion of that commit's background
+<ins><!-- d3d12-review-inline:begin:execution:CS-background-api-tail:1:authored:migration-135a02da869e0a07-0 -->`hEventToSignalUponCompletion` tracks completion of that commit's background
 tasks, not GPU work. `pbFurtherMeasurementsDesired` is optional and receives
-whether the driver wants further training. This indication is not a promise
-of convergence after a fixed number of workloads.<!-- d3d12-review-inline:end:execution:CS-background-api-tail:1:authored:migration-135a02da869e0a07-0 --></ins>
+whether the driver wants further training.<!-- d3d12-review-inline:end:execution:CS-background-api-tail:1:authored:migration-135a02da869e0a07-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:execution:CS-background-api-tail:2:authored:migration-1274b8d6fe372aa7-0 -->`OPTIONS6.BackgroundProcessingSupported` reports support. A valid call
 without driver support is a benign no-op: a supplied event is signaled and a
@@ -2336,7 +2492,7 @@ the selected asynchronous action. It is not a callback completion result.
 The runtime manages workers and serializes submissions, but parallel work
 does not imply completion in submission order or driver choice of worker.<!-- d3d12-review-inline:end:execution:CS-background-driver:2:authored:migration-93e844c60c0963b8-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:execution:CS-background-driver:3:authored:migration-420ecc7182f9e2d1-0 -->An accepted item is executed or canceled, never both. If a cancellation
+<ins><!-- d3d12-review-inline:begin:execution:CS-background-driver:3:authored:migration-420ecc7182f9e2d1-0 -->If a cancellation
 callback was supplied it receives the same opaque context on cancellation;
 absence of a callback does not invent a cancellation notification. In a
 disabled mode, cancellation can occur inline before enqueue returns.
@@ -2349,211 +2505,3 @@ synchronize GPU execution.<!-- d3d12-review-inline:end:execution:CS-background-d
 The runtime is responsible for cleaning up threads during device destruction. The runtime may, or may not, call any existing queued work.  <ins><!-- d3d12-review-inline:begin:execution:CS-background-primary-lifetime:0:modified:migration-212f41f7124afc43-0 -->If a queued work item is canceled (i.e. pfnCallback is skipped), its pfnCancel method will be called instead if one was supplied.<!-- d3d12-review-inline:end:execution:CS-background-primary-lifetime:0:modified:migration-212f41f7124afc43-0 --></ins>  <ins><!-- d3d12-review-inline:begin:execution:CS-background-primary-lifetime:0:modified:migration-fa9a4cd9179a9dd5-1 -->Execution and cancellation are mutually exclusive for each successfully queued work item.<!-- d3d12-review-inline:end:execution:CS-background-primary-lifetime:0:modified:migration-fa9a4cd9179a9dd5-1 --></ins>
 
 A hard guarantee is that the runtime will let the UMD complete any in-progress work items (the runtime won't call TerminateThread on the thread), and will wait until all in-flight work items are completed before calling pfnDestroyDevice.
-
-<a id="recording-state-lifetime-apis"></a>
-
-## Recording state and tracked object lifetime APIs
-
-```cpp
-typedef
-enum D3D12_LIFETIME_STATE
-    {
-        D3D12_LIFETIME_STATE_IN_USE	= 0,
-        D3D12_LIFETIME_STATE_NOT_IN_USE	= ( D3D12_LIFETIME_STATE_IN_USE + 1 )
-    } 	D3D12_LIFETIME_STATE;
-```
-
-<a id="api-id3d12graphicscommandlist-clearstate"></a>
-
-### ID3D12GraphicsCommandList::ClearState
-
-#### Declaration
-
-```cpp
-void ClearState(
-    ID3D12PipelineState* pPipelineState);
-```
-
-#### Behavior
-
-Resets the state of a direct <ins><!-- d3d12-review-inline:begin:execution:AB-primary-id3d12graphicscommandlist-clearstate:0:authored:source-30b405a035a90708-0-0 -->or compute <!-- d3d12-review-inline:end:execution:AB-primary-id3d12graphicscommandlist-clearstate:0:authored:source-30b405a035a90708-0-0 --></ins>command list back to the state it was in when the command list was created.
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12graphicscommandlist-clearstate-contract:0:authored:migration-1e71fd96b951a510-0 -->The precise [canonical ClearState effects](command-list-state.md#clear-state)
-apply. This records state changes on an open DIRECT/COMPUTE list. It does not
-erase commands, reset/reclaim its allocator, repair a recording error or end
-queries. It is invalid on COPY/BUNDLE lists or inside an open render pass.
-Custom sample positions and view mask are not implicitly restored by the
-generic reset description. Their explicit canonical setters remain required.<!-- d3d12-review-inline:end:execution:AB-id3d12graphicscommandlist-clearstate-contract:0:authored:migration-1e71fd96b951a510-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12graphicscommandlist-clearstate-contract:2:authored:migration-d108f0a0ff7ad979-0 -->`pPipelineState` supplies the graphics/compute PSO to select. Null selects the
-appropriate default state, not an application shader program. PSO-derived
-dynamic state follows that selection. Ordinary bindings/predication and the
-supported protection/VRS/depth state follow the canonical definition.<!-- d3d12-review-inline:end:execution:AB-id3d12graphicscommandlist-clearstate-contract:2:authored:migration-d108f0a0ff7ad979-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12graphicscommandlist-clearstate-contract:4:authored:migration-4f88456e95f6c6bf-0 -->Returns no value; invalid recording follows the [Close/error contract](#close).<!-- d3d12-review-inline:end:execution:AB-id3d12graphicscommandlist-clearstate-contract:4:authored:migration-4f88456e95f6c6bf-0 --></ins>
-
-<a id="api-id3d12graphicscommandlist3-setprotectedresourcesession"></a>
-
-### ID3D12GraphicsCommandList3::SetProtectedResourceSession
-
-#### Declaration
-
-```cpp
-void SetProtectedResourceSession(
-    ID3D12ProtectedResourceSession *pProtectedResourceSession);
-```
-
-#### Behavior
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-primary-id3d12graphicscommandlist3-setprotectedresourcesession:0 -->Specifies whether or not protected resources can be accessed by subsequent commands in the command list. By default, no protected resources are enabled. After calling **SetProtectedResourceSession** with a valid session, protected resources of the same type can refer to that session. After calling **SetProtectedResourceSession** with **NULL**, no protected resources can be accessed.<!-- d3d12-review-inline:end:execution:AB-primary-id3d12graphicscommandlist3-setprotectedresourcesession:0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12graphicscommandlist3-setprotectedresourcesession-contract:0:authored:migration-9d7870aba5d72d07-0 -->Selects only the [protection context](command-list-state.md#protection).
-Ordinary pipeline/root/descriptor/output bindings and predication are preserved;
-this is not ClearState. Protected operations retain their no-predication
-requirement, so the caller must establish a valid predicate state separately.
-End all open query intervals before a supported session change. The session
-must be compatible with the device/node and operation; selection is not session
-creation or GPU completion. Supported DIRECT/COMPUTE/COPY lists, bundle-side
-setter exclusion and render pass restrictions remain canonical.<!-- d3d12-review-inline:end:execution:AB-id3d12graphicscommandlist3-setprotectedresourcesession-contract:0:authored:migration-9d7870aba5d72d07-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12graphicscommandlist3-setprotectedresourcesession-contract:2:authored:migration-bc99a6596041982f-0 -->`pProtectedResourceSession` is an optional session interface; null disables protected access for subsequent work. Passing it transfers no caller-owned COM reference.<!-- d3d12-review-inline:end:execution:AB-id3d12graphicscommandlist3-setprotectedresourcesession-contract:2:authored:migration-bc99a6596041982f-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12graphicscommandlist3-setprotectedresourcesession-contract:4:authored:migration-88d046185b547816-0 -->Returns no value; recording failures use the canonical list/Close path. It does not report protected content validity; query the session/status fence.<!-- d3d12-review-inline:end:execution:AB-id3d12graphicscommandlist3-setprotectedresourcesession-contract:4:authored:migration-88d046185b547816-0 --></ins>
-
-<a id="protected-session-driver"></a>
-
-#### Driver interface
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_SETPROTECTEDRESOURCESESSION_0030 )( D3D12DDI_HCOMMANDLIST, D3D12DDI_HPROTECTEDRESOURCESESSION_0030 );
-```
-
-<ins><!-- d3d12-review-inline:begin:execution:CS-recording-error-protection:1:authored:migration-7806e5ee03f91e43-0 -->SetProtectedResourceSession uses ordinary driver command list and session handles in both 3D layouts and the selected video tables. A null session handle clears the association.<!-- d3d12-review-inline:end:execution:CS-recording-error-protection:1:authored:migration-7806e5ee03f91e43-0 --></ins>
-
-<a id="api-id3d12protectedsession-getstatusfence"></a>
-
-### ID3D12ProtectedSession::GetStatusFence
-
-#### Declaration
-
-```cpp
-HRESULT GetStatusFence(
-    REFIID riid,
-    void** ppFence);
-```
-
-#### Behavior
-
-Retrieves the fence for the protected session. From the fence, you can retrieve the current uniqueness validity value (using <ins><!-- d3d12-review-inline:begin:execution:AB-primary-id3d12protectedsession-getstatusfence:0 -->[ID3D12Fence::GetCompletedValue](#id3d12fencegetcompletedvalue)<!-- d3d12-review-inline:end:execution:AB-primary-id3d12protectedsession-getstatusfence:0 --></ins>), and add monitors for changes to its value. This is a read-only fence.
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12protectedsession-getstatusfence-contract:0:authored:migration-8df63c59301f8692-0 -->The [status fence contract](#status-fences) is a uniqueness/invalidation
-protocol, not an application completion timeline. The returned read-only fence
-can be observed and monitored. It must not be signaled by CPU, queues or
-residency-enqueue operations. Fence changes alone do not initialize invalid
-protected contents or prove a pending application workload completed.<!-- d3d12-review-inline:end:execution:AB-id3d12protectedsession-getstatusfence-contract:0:authored:migration-8df63c59301f8692-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12protectedsession-getstatusfence-contract:2:authored:migration-32cedbc907064941-0 -->`riid` requests an interface on the status fence. `ppFence` receives the resulting caller-owned COM reference; normal interface release remains the caller's responsibility.<!-- d3d12-review-inline:end:execution:AB-id3d12protectedsession-getstatusfence-contract:2:authored:migration-32cedbc907064941-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12protectedsession-getstatusfence-contract:4:authored:migration-ebeffec4f914d6a7-0 -->Returns `S_OK` on successful interface retrieval, `E_NOINTERFACE` for an unsupported fence interface, or the applicable failure. No GPU wait is performed by retrieval.<!-- d3d12-review-inline:end:execution:AB-id3d12protectedsession-getstatusfence-contract:4:authored:migration-ebeffec4f914d6a7-0 --></ins>
-
-<a id="api-id3d12device5-createlifetimetracker"></a>
-
-### ID3D12Device5::CreateLifetimeTracker
-
-#### Declaration
-
-```cpp
-HRESULT CreateLifetimeTracker(
-    ID3D12LifetimeOwner* pOwner,
-    REFIID riid,
-    void** ppvTracker);
-```
-
-#### Behavior
-
-Creates a lifetime tracker associated with an application-defined callback; the callback receives notifications when the lifetime of a tracked object is changed.
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12device5-createlifetimetracker-contract:0:authored:migration-2dbfcf2959023275-0 -->Creates an explicit ownership/lifetime tracker for objects created with its
-association, including the [compatibility resource path](sharing-and-interoperability.md#compatibility-creation).
-Its notifications reflect aggregate reference/use transitions, not a new
-application fence. Creating a tracker does not attach it to arbitrary existing
-objects or make ordinary resource lifetimes automatic.<!-- d3d12-review-inline:end:execution:AB-id3d12device5-createlifetimetracker-contract:0:authored:migration-2dbfcf2959023275-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12device5-createlifetimetracker-contract:2:authored:migration-963b20beff0f89c3-0 -->`pOwner` supplies the lifetime callback object retained by the tracker. `riid` selects the tracker interface and `ppvTracker` receives its COM reference.<!-- d3d12-review-inline:end:execution:AB-id3d12device5-createlifetimetracker-contract:2:authored:migration-963b20beff0f89c3-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12device5-createlifetimetracker-contract:4:authored:migration-762d5e1a9f0987e2-0 -->Returns `S_OK` on successful construction or an HRESULT failure, including allocation/interface failures. The output tracker is not a GPU completion result.<!-- d3d12-review-inline:end:execution:AB-id3d12device5-createlifetimetracker-contract:4:authored:migration-762d5e1a9f0987e2-0 --></ins>
-
-<a id="api-id3d12lifetimeowner-lifetimestateupdated"></a>
-
-### ID3D12LifetimeOwner::LifetimeStateUpdated
-
-#### Declaration
-
-```cpp
-void LifetimeStateUpdated(
-    D3D12_LIFETIME_STATE NewState);
-```
-
-#### Behavior
-
-Called when the lifetime state of a lifetime-tracked object changes.
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12lifetimeowner-lifetimestateupdated-contract:0:authored:migration-d845c4aa6f392a4d-0 -->The runtime invokes this application callback when the tracker's aggregate
-observed references/uses transition between zero and nonzero. `IN_USE` means
-an observed reference/use exists; `NOT_IN_USE` means none remain at that
-transition. A notification is not one callback per command or per individual
-object, nor a promise of a dedicated callback thread or an initial notification.
-Callback/context ownership must remain valid while the tracker can notify.<!-- d3d12-review-inline:end:execution:AB-id3d12lifetimeowner-lifetimestateupdated-contract:0:authored:migration-d845c4aa6f392a4d-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12lifetimeowner-lifetimestateupdated-contract:2:authored:migration-3e14ed6312b519ed-0 -->`NewState` is `D3D12_LIFETIME_STATE_IN_USE` or `D3D12_LIFETIME_STATE_NOT_IN_USE`.<!-- d3d12-review-inline:end:execution:AB-id3d12lifetimeowner-lifetimestateupdated-contract:2:authored:migration-3e14ed6312b519ed-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12lifetimeowner-lifetimestateupdated-contract:4:authored:migration-88b1b07894b7ad80-0 -->Returns no value. The callback does not itself destroy owned objects or substitute for application queue synchronization.<!-- d3d12-review-inline:end:execution:AB-id3d12lifetimeowner-lifetimestateupdated-contract:4:authored:migration-88b1b07894b7ad80-0 --></ins>
-
-<a id="api-id3d12lifetimetracker-destroyownedobject"></a>
-
-### ID3D12LifetimeTracker::DestroyOwnedObject
-
-#### Declaration
-
-```cpp
-HRESULT DestroyOwnedObject(
-    ID3D12DeviceChild* pObject);
-```
-
-#### Behavior
-
-Destroys a lifetime-tracked object.
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12lifetimetracker-destroyownedobject-contract:0:authored:migration-22974bb0e5fe4fa0-0 -->Requests destruction of an object owned by this tracker and removes that
-ownership association. Physical cleanup retains outstanding runtime/GPU use
-lifetime rules. This method is not a GPU wait. Tracker destruction also
-releases its remaining owned objects. The caller must not treat a destroyed
-object as a new reusable resource merely because a COM pointer still exists.<!-- d3d12-review-inline:end:execution:AB-id3d12lifetimetracker-destroyownedobject-contract:0:authored:migration-22974bb0e5fe4fa0-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12lifetimetracker-destroyownedobject-contract:2:authored:migration-68dc74786c67cf3c-0 -->`pObject` identifies the device child belonging to this tracker, not an arbitrary device child or shared handle.<!-- d3d12-review-inline:end:execution:AB-id3d12lifetimetracker-destroyownedobject-contract:2:authored:migration-68dc74786c67cf3c-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:execution:AB-id3d12lifetimetracker-destroyownedobject-contract:4:authored:migration-801717008a31c8e9-0 -->Returns `S_OK` for the owned-object destruction request. An object not in this tracker's ownership set returns `E_INVALIDARG`, and interface failures remain failures.<!-- d3d12-review-inline:end:execution:AB-id3d12lifetimetracker-destroyownedobject-contract:4:authored:migration-801717008a31c8e9-0 --></ins>
