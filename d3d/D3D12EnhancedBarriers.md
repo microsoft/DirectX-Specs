@@ -515,9 +515,9 @@ In addition to render target and depth/stencil resources, there are similar UAV 
 
 Barriers are queued in forward order (API-call order, barrier-group-index, barrier-array-index).  Multiple barriers on the same subresource must function as though the barriers complete in queued order.
 
-Queued barriers with matching `SyncAfter` scopes that potentially write to the same memory must complete all writes in queued order, including when the barriers are submitted by separate `Barrier` calls.  An earlier barrier must complete cache flushes, layout transitions, and other memory or metadata writes before a later barrier writes the same memory.  This includes ordering a barrier that 'deactivates' a resource before a barrier that 'activates' a different resource on the same memory using `D3D12_TEXTURE_BARRIER_FLAG_DISCARD`.
+Queued barriers with matching `SyncAfter` scopes that potentially write overlapping underlying memory must complete all writes in queued order, including when the barriers are submitted by separate `Barrier` calls.  An earlier barrier must complete cache flushes, layout transitions, and other memory or metadata writes before a later barrier writes overlapping underlying memory.  This includes ordering a barrier that 'deactivates' a resource before a barrier that 'activates' a different resource backed by overlapping memory using `D3D12_TEXTURE_BARRIER_FLAG_DISCARD`.
 
-Matching `SyncAfter` scopes do not otherwise require barriers to execute serially.  Barriers that do not potentially write to the same memory may execute concurrently.
+Matching `SyncAfter` scopes do not otherwise require barriers to execute serially.  Barriers that do not potentially write overlapping underlying memory may execute concurrently.
 
 ### New Resource Creation API's
 
@@ -702,7 +702,7 @@ For each "after resource":
 
 Note that each of these is tagged as 'If needed'.  There are aliasing scenarios where resource aliasing can be accomplished without any barriers at all.  For example: all "before" and "after" resources are buffers (thus no layout), and accesses to all "before" resources occurred in a separate `ExecuteCommandLists` scope than all "after" resources.
 
-Barriers on different subresources are not generally ordered.  Applications must use the matching-`SyncAfter` ordering defined by [Barrier Ordering](#barrier-ordering) when barriers potentially modify the same memory.  This includes layout transitions and barriers using `D3D12_TEXTURE_BARRIER_FLAG_DISCARD`.
+Barriers on different subresources are not generally ordered.  Applications must use the matching-`SyncAfter` ordering defined by [Barrier Ordering](#barrier-ordering) when barriers potentially modify overlapping underlying memory.  This includes layout transitions and barriers using `D3D12_TEXTURE_BARRIER_FLAG_DISCARD`.
 
 If the required barrier ordering cannot be established, use a separate Discard/Clear/Copy to initialize "after resource" memory rather than using the `D3D12_TEXTURE_BARRIER_FLAG_DISCARD` flag.
 
