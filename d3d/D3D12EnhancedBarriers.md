@@ -697,7 +697,7 @@ For each "after resource":
 - If needed: Specify desired layout.
   - Use `LayoutBefore` of `D3D12_BARRIER_LAYOUT_UNDEFINED` to avoid modifying memory as part of the barrier.
 - If needed: Perform a full-subresource discard using `D3D12_TEXTURE_BARRIER_FLAG_DISCARD`.
-  - If any "before resource" barrier transitions layout or flushes memory writes, each such barrier and the "after resource" barrier must use matching `SyncAfter` scopes so the writes complete in queued order as defined by [Barrier Ordering](#barrier-ordering).
+  - If any "before resource" barrier transitions layout or flushes writes, each such barrier and the "after resource" barrier must use matching `SyncAfter` scopes so the writes complete in queued order as defined by [Barrier Ordering](#barrier-ordering).
 - If needed: Set `AccessBefore` to `D3D12_BARRIER_ACCESS_NO_ACCESS` to 'activate' a subresource previously 'deactivated' in the same `ExecuteCommandLists` scope.
 
 Note that each of these is tagged as 'If needed'.  There are aliasing scenarios where resource aliasing can be accomplished without any barriers at all.  For example: all "before" and "after" resources are buffers (thus no layout), and accesses to all "before" resources occurred in a separate `ExecuteCommandLists` scope than all "after" resources.
