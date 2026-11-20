@@ -23,7 +23,9 @@ arbitrary combinations of individually reported features.<!-- d3d12-review-inlin
 
 <a id="process-model"></a>
 
-## Processing model and shared contracts
+## Processing model and common contracts
+
+<a id="processing-model-and-shared-contracts"></a>
 
 <ins><!-- d3d12-review-inline:begin:video-process:N-route:2:authored:migration-3146418e9760fe45-0 -->Processing uses a command list and allocator of type
 `D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS`, submitted to a queue of that type.
@@ -39,8 +41,8 @@ resources [alive](execution.md#lifetime) for every recorded use that will execut
 including uses in unsubmitted recordings, and until the corresponding GPU
 uses [finish](execution.md#completion-lifetime). Residency for GPU use follows
 the [video resource contract](video.md#video-resource-contract).
-CPU argument structures and arrays are recording inputs. The
-[nested CPU pointer qualification](#process-argument-rules) addresses their
+CPU argument structures and arrays are recording inputs. See the
+[nested CPU pointer qualification](#process-argument-rules) for their
 unresolved retention and null-array behavior.<!-- d3d12-review-inline:end:video-process:N-route:3:authored:migration-83b9de45b66c0c81-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-process:N-route:4:authored:migration-108a47f130dea34e-0 -->Processing reads current and reference pictures and writes output pictures.
@@ -74,12 +76,12 @@ input fields before the call. Inspect output fields only on success.
 creation take a `NodeMask`. A successful query does not itself mean that the
 requested processing operation is supported.<!-- d3d12-review-inline:end:video-process:N-query-protocol:0:authored:migration-4192c9f0f19ff45b-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-query-protocol:1:authored:migration-e172608621f040c0-0 -->These are fixed payloads, not capacity/MORE_DATA enumerations.
-`FilterRangeSupport` is an embedded 32-element array in PROCESS_SUPPORT,
-not a caller-allocated pointer. PROCESS_REFERENCE_INFO returns scalar counts;
+<ins><!-- d3d12-review-inline:begin:video-process:N-query-protocol:1:authored:migration-e172608621f040c0-0 -->These cases use fixed-size payloads.
+`FilterRangeSupport` is an embedded 32-element array in PROCESS_SUPPORT.
+PROCESS_REFERENCE_INFO returns scalar counts, and
 PROCESS_MAX_INPUT_STREAMS returns a scalar limit. PROCESSOR_SIZE takes an
 input array of exactly `NumInputStreamDescs` descriptions and reports
-allocation sizes. It does not allocate or return stream descriptions.<!-- d3d12-review-inline:end:video-process:N-query-protocol:1:authored:migration-e172608621f040c0-0 --></ins>
+allocation sizes.<!-- d3d12-review-inline:end:video-process:N-query-protocol:1:authored:migration-e172608621f040c0-0 --></ins>
 
 <!-- d3d12-review-alert:begin:video-process:N-query-table:0:authored:migration-4f285398b46bb8ad-0 -->
 
@@ -105,11 +107,11 @@ not a guarantee that every tuple or multi-stream feature combination works.
 PROCESS_REFERENCE_INFO counts determine the processor's
 past/future reference requirements.<!-- d3d12-review-inline:end:video-process:N-query-tuple:0:authored:migration-e0afe79f6d4d8cdd-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-query-tuple:1:authored:migration-db7b46a87cefd5f0-0 -->**Scoped runtime validation:** the inspected ordinary query path rejects an
-invalid node index or malformed input with `E_INVALIDARG`. An unsupported
-input/output format can instead complete with `S_OK` and no `SUPPORTED` bit.
-Creation validates each stream's conversion/scaling tuple and requested
-features and reference counts. These checks do not prove an adapter's
+<ins><!-- d3d12-review-inline:begin:video-process:N-query-tuple:1:authored:migration-db7b46a87cefd5f0-0 -->**Scoped runtime validation:** On the inspected ordinary query path, the
+runtime returns `E_INVALIDARG` for an invalid node index or malformed input. An
+unsupported input or output format can instead complete with `S_OK` and no
+`SUPPORTED` bit. On the inspected creation path, the runtime validates each
+stream's conversion and scaling tuple, requested features and reference counts. These checks do not prove an adapter's
 algorithms, support for an arbitrary combination of features, or a reservation
 of resources after a successful query.<!-- d3d12-review-inline:end:video-process:N-query-tuple:1:authored:migration-db7b46a87cefd5f0-0 --></ins>
 
@@ -180,12 +182,12 @@ The input/reference and output resources are supplied later, not allocated
 by this call. The runtime copies the creation descriptions. Their caller-owned
 storage is not retained as mutable processor state.<!-- d3d12-review-inline:end:video-process:N-creation-validation:0:authored:migration-dcf2f398041fcc23-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-creation-validation:2:authored:migration-d2c3e19059af4175-0 -->**Scoped runtime validation:** invalid node selection, zero input streams,
-invalid size ranges, a failed/unsupported conversion query, unsupported
-requested options or mismatched required reference counts are rejected with
-`E_INVALIDARG` on the inspected ordinary creation path. Interface selection,
-allocation and device removal failures can propagate. The short public method
-page does not supply an exhaustive HRESULT catalog.<!-- d3d12-review-inline:end:video-process:N-creation-validation:2:authored:migration-d2c3e19059af4175-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-process:N-creation-validation:2:authored:migration-d2c3e19059af4175-0 -->**Scoped runtime validation:** On the inspected ordinary creation path, the
+runtime returns `E_INVALIDARG` for an invalid node selection, zero input
+streams, invalid size ranges, a failed or unsupported conversion query,
+unsupported requested options or reference counts that do not match the
+required counts. Interface selection, allocation and device removal failures
+can propagate. These results are not an exhaustive HRESULT catalog.<!-- d3d12-review-inline:end:video-process:N-creation-validation:2:authored:migration-d2c3e19059af4175-0 --></ins>
 
 <a id="protected-video-api-contracts"></a>
 
@@ -288,9 +290,9 @@ This method returns HRESULT.
 
 <ins><!-- d3d12-review-inline:begin:video-process:N-reflection-count:0:authored:migration-541cbf83912d3050-0 -->`NumInputStreamDescs` must equal the value returned by
 `GetNumInputStreamDescs`, and `pInputStreamDescs` must address that many writable
-descriptions. The inspected reflection path returns `E_INVALIDARG` for a mismatched
-count or null output pointer, otherwise `S_OK`. It returns copied creation
-descriptions; modifying the copies does not reconfigure the processor.<!-- d3d12-review-inline:end:video-process:N-reflection-count:0:authored:migration-541cbf83912d3050-0 --></ins>
+descriptions. On the inspected reflection path, the runtime returns
+`E_INVALIDARG` for a mismatched count or null output pointer. Otherwise it
+writes copies of the creation descriptions and returns `S_OK`.<!-- d3d12-review-inline:end:video-process:N-reflection-count:0:authored:migration-541cbf83912d3050-0 --></ins>
 
 <a id="video-processor-get-output-stream-desc"></a>
 
@@ -310,9 +312,7 @@ Gets the output stream description provided when the video processor was created
 
 This method returns [D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC](#d3d12-video-process-output-stream-desc).
 
-#### Reflection contract
-
-<ins><!-- d3d12-review-inline:begin:video-process:N-reflection-ownership:0:authored:migration-669c622f20b3db5e-0 -->The returned output description is a value copy of the creation description.<!-- d3d12-review-inline:end:video-process:N-reflection-ownership:0:authored:migration-669c622f20b3db5e-0 --></ins>
+<a id="reflection-contract-1"></a>
 
 <a id="api-id3d12videoprocessor1-getprotectedresourcesession"></a>
 
@@ -359,8 +359,8 @@ Both reset predication to disabled (null buffer, zero offset,
 <ins><!-- d3d12-review-inline:begin:video-process:N-recording:1:authored:migration-84fbe69c38d7f57b-0 -->See [Recording boundaries](command-list-state.md#recording-boundaries),
 [allocator storage](execution.md#command-storage) and
 [threading rules](execution.md#threading) for command recording requirements.
-The runtime close wrapper can perform queued
-query resolution work before reaching the close DDI.<!-- d3d12-review-inline:end:video-process:N-recording:1:authored:migration-84fbe69c38d7f57b-0 --></ins>
+During [Close](#process-close), the runtime can perform queued
+[query resolution](counters-queries-and-predication.md#videoprocess-resolvequerydata) work before it calls the close DDI.<!-- d3d12-review-inline:end:video-process:N-recording:1:authored:migration-84fbe69c38d7f57b-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-process:LA-video-annotation-owner:0:authored:migration-e3b1864c01851463-0 -->See [Command list annotations](diagnostics.md#command-list-annotations) for the internal
 BeginEvent, EndEvent and SetMarker support methods on `ID3D12VideoProcessCommandList`.
@@ -492,7 +492,7 @@ void ProcessFrames(
 
 Records a video processing operation to the command list, operating on one or more input samples and writing the result to an output surface.
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-process-forward:0:authored:migration-ff7cbe5647d14044-0 -->[Shared processing argument rules](#process-argument-rules).<!-- d3d12-review-inline:end:video-process:N-process-forward:0:authored:migration-ff7cbe5647d14044-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-process:N-process-forward:0:authored:migration-ff7cbe5647d14044-0 -->See [Common processing argument rules](#process-argument-rules) for stream correspondence, field type and validation.<!-- d3d12-review-inline:end:video-process:N-process-forward:0:authored:migration-ff7cbe5647d14044-0 --></ins>
 
 #### Parameters
 
@@ -559,15 +559,16 @@ None
 
 <a id="process-argument-rules"></a>
 
-### Shared processing argument rules
+### Common processing argument rules
+
+<a id="shared-processing-argument-rules"></a>
 
 <ins><!-- d3d12-review-inline:begin:video-process:N-call-contract:0:authored:migration-18b1e28eed2fbec5-0 -->`pVideoProcessor` supplies the immutable configuration.
-`NumInputStreams` must match its number of input stream descriptions;
+`NumInputStreams` must match its number of input stream descriptions.
 `pInputArguments[i]` corresponds to creation description `i`.
 `pOutputArguments` describes the output views and target rectangle.
-The current inputs and temporal references are Texture2D surfaces with
-subresources, not descriptor table bindings. Their formats must match the
-corresponding processor descriptions.<!-- d3d12-review-inline:end:video-process:N-call-contract:0:authored:migration-18b1e28eed2fbec5-0 --></ins>
+The current inputs and temporal references are Texture2D subresources.
+Their formats must match the corresponding processor descriptions.<!-- d3d12-review-inline:end:video-process:N-call-contract:0:authored:migration-18b1e28eed2fbec5-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-process:N-call-contract:1:authored:migration-4183ebb01566d73b-0 -->`ProcessFrames` uses each creation description's `FieldType`.
 `ProcessFrames1` uses the `FieldType` in each
@@ -576,24 +577,26 @@ progressive/interlaced content without recreating the processor merely to
 change field type. It does not remove capability requirements for the actual
 field type and processing tuple.<!-- d3d12-review-inline:end:video-process:N-call-contract:1:authored:migration-4183ebb01566d73b-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-call-contract:2:authored:migration-c0e671d3b65a0130-0 -->**Scoped validation:** the inspected path checks stream count equality,
-current/reference/output Texture2D dimensions and formats, subresource bounds,
-single mip level and plane-zero selection of planar pictures. It rejects
-reserved pictures and applies the shared video architecture/heap restrictions.
-The path checks nonnegative, non-inverted rectangles, configured source and
-nonempty destination size ranges, enabled orientation/blending, and known
-input flags. These observations are not an exhaustive error table or a
-hardware layout guarantee. A missing retail check is not permission.
+<ins><!-- d3d12-review-inline:begin:video-process:N-call-contract:2:authored:migration-c0e671d3b65a0130-0 -->**Scoped validation:** The inspected runtime path checks stream count
+equality, current, reference and output Texture2D dimensions and formats,
+subresource bounds, a single mip level and plane-zero selection of planar
+pictures. It rejects reserved pictures and applies the common video
+architecture and heap restrictions. The path checks nonnegative, non-inverted
+rectangles, the configured source and nonempty destination size ranges, enabled
+orientation and blending, and known input flags. These checks are not an
+exhaustive error table or a hardware layout guarantee. An argument that the
+retail runtime does not check is not thereby valid.
 The void recording methods report recording failure through command list
-error handling and `Close`, not a per-frame HRESULT.<!-- d3d12-review-inline:end:video-process:N-call-contract:2:authored:migration-c0e671d3b65a0130-0 --></ins>
+error handling and [Close](#process-close), not a per-frame HRESULT.<!-- d3d12-review-inline:end:video-process:N-call-contract:2:authored:migration-c0e671d3b65a0130-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-call-contract:3:authored:migration-136f732ed0d47197-0 -->**Nested CPU pointer qualification:** the retained public reference-set contract
-allows null subresource arrays to mean subresource zero. The inspected
-validation path directly indexes these arrays, while recording forwards some
-subresource pointers to the driver. This draft retains the published default
-but does not claim that every implementation honors it, or establish a
-universal post-call release point for every nested CPU array. Resource/object
-lifetime through GPU completion is a separate shared contract.<!-- d3d12-review-inline:end:video-process:N-call-contract:3:authored:migration-136f732ed0d47197-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-process:N-call-contract:3:authored:migration-136f732ed0d47197-0 -->**Nested CPU pointer qualification:** The published reference-set contract
+allows null subresource arrays to mean subresource zero. The inspected runtime
+validation path indexes these arrays directly, and recording forwards some
+subresource pointers to the driver. It is not established that every
+implementation honors the published default. No universal post-call release
+point is established for every nested CPU array. See
+[Processing model and common contracts](#process-model) for resource and object
+lifetime through GPU completion.<!-- d3d12-review-inline:end:video-process:N-call-contract:3:authored:migration-136f732ed0d47197-0 --></ins>
 
 <a id="process-query-payloads"></a>
 
@@ -686,7 +689,7 @@ A bitwise OR combination of values from the [D3D12_VIDEO_PROCESS_FILTER_FLAGS](#
 
 `FilterRangeSupport[32]`
 
-An array of [D3D12_VIDEO_PROCESS_FILTER_RANGE](#d3d12-video-process-filter-range) structures representing the filter range values. This value is populated by the call to <ins><!-- d3d12-review-inline:begin:video-process:P-d3d12_feature_data_video_process_support-members:29 -->**ID3D12VideoDevice::CheckFeatureSupport**<!-- d3d12-review-inline:end:video-process:P-d3d12_feature_data_video_process_support-members:29 --></ins>.<ins><!-- d3d12-review-inline:begin:video-process:P-d3d12_feature_data_video_process_support-members:29 --> The filter range list is embedded in this structure.<!-- d3d12-review-inline:end:video-process:P-d3d12_feature_data_video_process_support-members:29 --></ins>
+An array of [D3D12_VIDEO_PROCESS_FILTER_RANGE](#d3d12-video-process-filter-range) structures representing the filter range values. This value is populated by the call to <ins><!-- d3d12-review-inline:begin:video-process:P-d3d12_feature_data_video_process_support-members:29:occurrence:87bfe6dec30f-0 -->**ID3D12VideoDevice::CheckFeatureSupport**<!-- d3d12-review-inline:end:video-process:P-d3d12_feature_data_video_process_support-members:29:occurrence:87bfe6dec30f-0 --></ins>.<ins><!-- d3d12-review-inline:begin:video-process:P-d3d12_feature_data_video_process_support-members:29:occurrence:60c2706a67fd-1 --> The filter range list is embedded in this structure.<!-- d3d12-review-inline:end:video-process:P-d3d12_feature_data_video_process_support-members:29:occurrence:60c2706a67fd-1 --></ins>
 
 <a id="d3d12-feature-data-video-process-max-input-streams"></a>
 
@@ -819,10 +822,10 @@ The allocation size of the video processor in the L1 memory pool. L1 is typicall
 
 ## Stream descriptions and operation arguments
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-array-constants:0:authored:migration-c35064a66af9dabe-0 -->`D3D12_VIDEO_PROCESS_STEREO_VIEWS` is 2;
-`D3D12_VIDEO_PROCESS_MAX_FILTERS` is 32. The 32-element arrays reserve positions
-beyond the eight defined filter indices. Disabled/reserved filter levels
-are zero, not the device's reported active-filter default.<!-- d3d12-review-inline:end:video-process:N-array-constants:0:authored:migration-c35064a66af9dabe-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-process:N-array-constants:0:authored:migration-c35064a66af9dabe-0 -->`D3D12_VIDEO_PROCESS_STEREO_VIEWS` is 2 and
+`D3D12_VIDEO_PROCESS_MAX_FILTERS` is 32. The 32-element filter arrays reserve
+positions beyond the eight defined filter indices. A disabled or reserved
+filter's level is zero, not the device's reported `Default` value.<!-- d3d12-review-inline:end:video-process:N-array-constants:0:authored:migration-c35064a66af9dabe-0 --></ins>
 
 <a id="d3d12-video-process-input-stream-desc"></a>
 
@@ -1085,14 +1088,11 @@ The rotation and flip operation to apply to the source. Source and Destination r
 
 For stereo formats, the orientation is applied before the stereo format is applied.
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-rect-qualification:0:authored:migration-dfb1f428e9d44e96-0 -->**Coordinate qualification:** the published transform contract states that
-source and destination rectangles use post-orientation coordinates and that
-orientation precedes stereo format application. This draft retains those
-statements without inventing chroma-edge alignment, clipping, interpolation,
-sample positions or a vendor-independent coordinate/precision algorithm.
-The per-stream destination rectangle places that stream. The output target
-rectangle bounds the drawn/background-filled region. They are distinct roles,
-not interchangeable descriptions of one rectangle.<!-- d3d12-review-inline:end:video-process:N-rect-qualification:0:authored:migration-dfb1f428e9d44e96-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-process:N-rect-qualification:0:authored:migration-dfb1f428e9d44e96-0 -->**Coordinate qualification:** This reference does not define chroma-edge
+alignment, clipping, interpolation, sample positions or a vendor-independent
+coordinate or precision algorithm. The per-stream `DestinationRectangle`
+positions that stream. The output `TargetRectangle` bounds the region that is
+drawn or background-filled.<!-- d3d12-review-inline:end:video-process:N-rect-qualification:0:authored:migration-dfb1f428e9d44e96-0 --></ins>
 
 <a id="d3d12-video-process-input-stream-rate"></a>
 
@@ -1209,7 +1209,7 @@ typedef struct D3D12_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS1
 
 `FieldType`
 
-A value from the [D3D12_VIDEO_FIELD_TYPE](#d3d12-video-field-type) enumeration <ins><!-- d3d12-review-inline:begin:video-process:P-d3d12_video_process_input_stream_arguments1-members:1 -->specifying<!-- d3d12-review-inline:end:video-process:P-d3d12_video_process_input_stream_arguments1-members:1 --></ins> the interlaced field type of the input source. When working with mixed content, use [ID3D12VideoProcessCommandList1::ProcessFrames1](#process-frames1) which supports changing the field type for each call.
+A value from the [D3D12_VIDEO_FIELD_TYPE](#d3d12-video-field-type) enumeration <ins><!-- d3d12-review-inline:begin:video-process:P-d3d12_video_process_input_stream_arguments1-members:1 -->specifying<!-- d3d12-review-inline:end:video-process:P-d3d12_video_process_input_stream_arguments1-members:1 --></ins> the interlaced field type of the input source.
 
 <a id="d3d12-video-process-output-stream"></a>
 
@@ -1297,12 +1297,12 @@ where:
 - Ap = The planar alpha value
 - Ae = The palette-entry alpha value, or 1.0 (palette-entry alpha values apply only to palettized color formats)
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-blend-qualification:0:authored:migration-3f4d89dda8f3eb4b-0 -->**Numeric qualification:** the published expression describes color blending;
-it is not a complete precision, rounding, saturation or color space conversion
+<ins><!-- d3d12-review-inline:begin:video-process:N-blend-qualification:0:authored:migration-3f4d89dda8f3eb4b-0 -->**Numeric qualification:** The expression describes color blending. It is not
+a complete precision, rounding, saturation or color space conversion
 specification. The palette entry term does not establish support for any
-palettized resource format. No universal linear-light conversion sequence,
-interpolation kernel or implementation-specific automatic-processing algorithm
-is inferred here.<!-- d3d12-review-inline:end:video-process:N-blend-qualification:0:authored:migration-3f4d89dda8f3eb4b-0 --></ins>
+palettized resource format. This reference does not define a universal
+linear-light conversion sequence, interpolation kernel or
+implementation-specific automatic-processing algorithm.<!-- d3d12-review-inline:end:video-process:N-blend-qualification:0:authored:migration-3f4d89dda8f3eb4b-0 --></ins>
 
 <a id="d3d12-video-process-luma-key"></a>
 
@@ -1535,12 +1535,11 @@ typedef enum D3D12_VIDEO_PROCESS_FEATURE_FLAGS
 
 <!-- d3d12-review-alert:end:video-process:P-d3d12_video_process_feature_flags-constants:0:modified:migration-498c93df80bd98de-0 -->
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-feature-qualification:0:authored:migration-d641ac09f5e282e5-0 -->**Aspect-ratio qualification:** the published 1:1 restriction above is retained.
-The inspected creation validation compares the source and destination rational
-fields for equality when PIXEL_ASPECT_RATIO is unavailable. That does not
-establish that arbitrary equal non-unit ratios are universally legal. The exact
-meaning of 1:1 and rational equivalence remains qualified rather than replaced
-with an implementation-derived policy. Feature flags describe support. They
+<ins><!-- d3d12-review-inline:begin:video-process:N-feature-qualification:0:authored:migration-d641ac09f5e282e5-0 -->**Aspect-ratio qualification:** When PIXEL_ASPECT_RATIO is unavailable, the
+inspected creation validation compares the source and destination rational
+fields for equality. That check does not establish that arbitrary equal
+non-unit ratios are universally legal. The published 1:1 restriction does not
+further define 1:1 or rational equivalence. Feature flags describe support. They
 do not make every enabled option or combination universally available.<!-- d3d12-review-inline:end:video-process:N-feature-qualification:0:authored:migration-d641ac09f5e282e5-0 --></ins>
 
 <a id="d3d12-video-process-deinterlace-flags"></a>
@@ -1574,13 +1573,11 @@ typedef enum D3D12_VIDEO_PROCESS_DEINTERLACE_FLAGS
 
 <!-- d3d12-review-alert:end:video-process:P-d3d12_video_process_deinterlace_flags-constants:0:modified:migration-91c935abe8c66fc5-0 -->
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-deinterlace-qualification:0:authored:migration-349d211313fdc75f-0 -->**Reference qualification:** the published CUSTOM description above specifies
-bob fallback when the necessary references are unavailable. Processor creation
-still declares the queried required counts. The selected public material does
-not completely define short/null per-call reference arrays, temporal array
-ordering, stream start/end padding or the boundary between fallback and invalid
-usage. This draft does not turn the fallback sentence into permission to pass
-arbitrary missing or malformed references.<!-- d3d12-review-inline:end:video-process:N-deinterlace-qualification:0:authored:migration-349d211313fdc75f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-process:N-deinterlace-qualification:0:authored:migration-349d211313fdc75f-0 -->**Reference qualification:** Processor creation declares the queried required
+counts. The selected public material does not completely define short or null
+per-call reference arrays, temporal array ordering, stream start and end
+padding or the boundary between bob fallback and invalid usage. The bob
+fallback is not permission to pass arbitrary missing or malformed references.<!-- d3d12-review-inline:end:video-process:N-deinterlace-qualification:0:authored:migration-349d211313fdc75f-0 --></ins>
 
 <a id="d3d12-video-process-filter"></a>
 
@@ -1808,11 +1805,13 @@ typedef enum D3D12_VIDEO_PROCESS_ALPHA_FILL_MODE
 
 <a id="process-driver"></a>
 
-## Published driver contracts
+<a id="published-driver-contracts"></a>
+
+## Driver reference
 
 <ins><!-- d3d12-review-inline:begin:video-process:N-ddi-intro:0:authored:migration-ad1a931abe7f5c5d-0 -->Private processor sizing reports CPU object storage. The separate processor size capability query reports memory pool requirements.<!-- d3d12-review-inline:end:video-process:N-ddi-intro:0:authored:migration-ad1a931abe7f5c5d-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-process:N-ddi-intro:1:authored:migration-c1f1f52f0aa8afac-0 -->Current creation supplies counted input stream descriptions, the output description and protected session association. Per-frame `FieldType` is supplied in recording arguments. The output stream description and recording output layout retain `_0032`.<!-- d3d12-review-inline:end:video-process:N-ddi-intro:1:authored:migration-c1f1f52f0aa8afac-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-process:N-ddi-intro:1:authored:migration-c1f1f52f0aa8afac-0 -->Processor creation (`_0106`) supplies counted input stream descriptions, the output description and the protected session association. Recording arguments supply the per-frame `FieldType`. The output stream description and recording output arguments use the `_0032` layouts.<!-- d3d12-review-inline:end:video-process:N-ddi-intro:1:authored:migration-c1f1f52f0aa8afac-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-process:N-ddi-shared:0:authored:migration-01c75846824167a7-0 -->DDI stereo uses `MONO = 0`, whereas the API distinguishes `NONE = 0` and `MONO = 1`. The DDI automatic-processing `CUSTOM` bit is `0x100`, not API `0x80000000`. DDI orientation names the value-5 180-degree/horizontal-flip alias. `D3D12DDI_VIDEO_PROCESS_MAX_FILTERS_0020` is 32.<!-- d3d12-review-inline:end:video-process:N-ddi-shared:0:authored:migration-01c75846824167a7-0 --></ins>
 
@@ -2323,7 +2322,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYVIDEOPROCESSOR_0021 )( D3D12DDI_HDEV
 
 #### Driver processor sizing
 
-This method is used to calculate the driver object size. The Direct3D runtime allocates memory for storing the <ins><!-- d3d12-review-inline:begin:video-process:P-ddi-size-summary:0:modified:source-07fb10e0933b44e4-0-0 -->driver's<!-- d3d12-review-inline:end:video-process:P-ddi-size-summary:0:modified:source-07fb10e0933b44e4-0-0 --></ins> CPU object that represents the video processor.
+<ins><!-- d3d12-review-inline:begin:video-process:P-ddi-size-summary:0:modified:source-07fb10e0933b44e4-0-0 -->The *pfnCalcPrivateVideoProcessorSize* function calculates the driver object size. The Direct3D runtime allocates memory for storing the driver's<!-- d3d12-review-inline:end:video-process:P-ddi-size-summary:0:modified:source-07fb10e0933b44e4-0-0 --></ins> CPU object that represents the video processor.
 
 ##### Parameters
 
@@ -2570,7 +2569,7 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEOPROCESSOR_0106 )( D3D12DDI_HD
 <!-- d3d12-review-alert:end:video-process:N-ddi-table:0:authored:migration-ef56a55287b7ff2b-0 -->
 
 <ins><!-- d3d12-review-inline:begin:video-process:N-ddi-table:1:authored:migration-9434527b82b2ce92-0 -->`D3D12DDICAPS_TYPE_VIDEO_0020_PROCESS_SUPPORT` uses
-`D3D12DDI_VIDEO_PROCESS_SUPPORT_DATA_0032` for the selected support layout;
+`D3D12DDI_VIDEO_PROCESS_SUPPORT_DATA_0032` for the selected support layout.
 `D3D12DDICAPS_TYPE_VIDEO_0020_PROCESS_REFERENCE_INFO` uses
 `D3D12DDI_VIDEO_PROCESS_REFERENCE_INFO_DATA_0020`.
 `D3D12DDICAPS_TYPE_VIDEO_0020_PROCESS_MAX_INPUT_STREAMS` uses
@@ -2578,5 +2577,5 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEOPROCESSOR_0106 )( D3D12DDI_HD
 and output simultaneous stream limit.
 `D3D12DDICAPS_TYPE_VIDEO_0032_PROCESSOR_SIZE` uses the processor size layout
 appropriate to the selected DDI version, with input creation description and
-output L0/L1 sizes. The device table's `pfnGetCaps` owns these capability
-exchanges. The create DDI returns `HRESULT`.<!-- d3d12-review-inline:end:video-process:N-ddi-table:1:authored:migration-9434527b82b2ce92-0 --></ins>
+output L0 and L1 sizes. The runtime performs these capability exchanges through
+the device table's `pfnGetCaps` function.<!-- d3d12-review-inline:end:video-process:N-ddi-table:1:authored:migration-9434527b82b2ce92-0 --></ins>

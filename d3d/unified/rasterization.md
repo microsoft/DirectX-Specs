@@ -17,34 +17,11 @@
 
 <ins><!-- d3d12-review-inline:begin:rasterization:N-stage:0:authored:migration-ee1d6d28de65a1e1-0 -->Rasterization takes the positions and attributes from the last active vertex processing stage or a mesh shader and determines covered pixels/samples.<!-- d3d12-review-inline:end:rasterization:N-stage:0:authored:migration-ee1d6d28de65a1e1-0 --></ins>
 
-<a id="rasterizer-state"></a>
-<a id="state-and-capabilities"></a>
-
-## Capabilities
-
-<!-- d3d12-review-alert:begin:rasterization:N-capabilities:1:authored:migration-a76e281e52f43a5a-0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> | Contribution | Capability |
-> |---|---|
-> | Inverted viewport height / depth | `OPTIONS13.InvertedViewportHeightFlipsYSupported` / `InvertedViewportDepthFlipsZSupported` |
-> | Dynamic depth bias | `OPTIONS16.DynamicDepthBiasSupported` |
-> | Revised line mode description / narrow quadrilateral lines | `OPTIONS19.RasterizerDesc2Supported` / `NarrowQuadrilateralLinesSupported` |
-> | Conservative rasterization | `OPTIONS.ConservativeRasterizationTier` |
-> | Programmable sample positions | `OPTIONS2.ProgrammableSamplePositionsTier` |
-> | Mismatched output dimensions / no-output sample counts | `OPTIONS19.MismatchingOutputDimensionsSupported` / `SupportedSampleCountsWithNoOutputs` |
-
-<!-- d3d12-review-alert:end:rasterization:N-capabilities:1:authored:migration-a76e281e52f43a5a-0 -->
-
-<ins><!-- d3d12-review-inline:begin:rasterization:N-capabilities:2:authored:migration-b08992cec43e93c7-0 -->These are [CheckFeatureSupport](devices-and-capabilities.md#id3d12device-checkfeaturesupport) results in the corresponding `D3D12_FEATURE_DATA_D3D12_OPTIONS*` structures.<!-- d3d12-review-inline:end:rasterization:N-capabilities:2:authored:migration-b08992cec43e93c7-0 --></ins>
-
 <a id="rasterization-enable"></a>
 
 ## Rasterization enablement
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-disable:0 -->Rasterization is disabled when the following are all true:<!-- d3d12-review-inline:end:rasterization:A-disable:0 --></ins>
+Rasterization is disabled when the following are all true:
 
 - <ins><!-- d3d12-review-inline:begin:rasterization:A-disable:1:modified:section-20261117-1 -->[The graphics pipeline has no pixel shader](pixel-shaders.md#output-writes)<!-- d3d12-review-inline:end:rasterization:A-disable:1:modified:section-20261117-1 --></ins>
 
@@ -56,10 +33,10 @@
 
 ## Pixel coordinates
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-pixel-coordinates:0 -->The Pixel Coordinate System defines the origin as the upper-left corner of the RenderTarget.
+The Pixel Coordinate System defines the origin as the upper-left corner of the RenderTarget.
 Pixel centers are therefore offset by (0.5f,0.5f) from integer locations on the RenderTarget. This choice
 of origin makes rendering screen-aligned textures trivial, as the pixel coordinate system is
-aligned with the texel coordinate system.<!-- d3d12-review-inline:end:rasterization:A-pixel-coordinates:0 --></ins>
+aligned with the texel coordinate system.
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-pixel-coordinates:1 -->![CoordSystem](../archive/images/d3d11/D3D11_3_CoordSystem.png)<!-- d3d12-review-inline:end:rasterization:A-pixel-coordinates:1 --></ins>
 
@@ -79,7 +56,7 @@ to map to specific pixel locations.<!-- d3d12-review-inline:end:rasterization:A-
 
 ### Clip volume
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-clipping:0 -->In clip space primitives are clipped to the following volume:<!-- d3d12-review-inline:end:rasterization:A-clipping:0 --></ins>
+In clip space primitives are clipped to the following volume:
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-clipping:1 -->0 < w<!-- d3d12-review-inline:end:rasterization:A-clipping:1 --></ins>
 
@@ -89,29 +66,29 @@ to map to specific pixel locations.<!-- d3d12-review-inline:end:rasterization:A-
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-clipping:4 -->0 <= z <= w<!-- d3d12-review-inline:end:rasterization:A-clipping:4 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-clipping:5 -->By default primitives are clipped to a volume that includes a 0 <= z <= w depth range clip.
+By default primitives are clipped to a volume that includes a 0 <= z <= w depth range clip.
 Clipping of the Z coordinates can be disabled by setting the DepthClipEnable [Rasterizer State](pipeline-state.md#rasterizer) to FALSE.
 Primitives that fall outside of the depth range are thus still rendered, but are given the value of the nearest limit of the viewport depth range.
 Even when Z clipping is disabled, primitives must be clipped such that only w > 0 vertices result.
 Coordinates coming in to clipping with infinities at x,y,z may or may not result in a discarded primitive.
-Coordinates with NaN at x,y,z or w coming out of clipping are discarded.<!-- d3d12-review-inline:end:rasterization:A-clipping:5 --></ins>
+Coordinates with NaN at x,y,z or w coming out of clipping are discarded.
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-clipping:6 -->The reason to allow disabling depth clip is that it causes problems for applications such as stencil shadows,
 necessitating complex code to draw end-caps on geometry that exceeds the depth range. When Z clipping is disabled, primitives may not be
 correctly depth-sorted at the pixel level, but this is unimportant for some applications (and can be dealt with via painter's algorithm).<!-- d3d12-review-inline:end:rasterization:A-clipping:6 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-clipping:7 -->There are no restrictions to the range of input vertex coordinates to clipping. Clipping operations are performed using at
-least float32 precision, and accordingly NaNs and infinities are processed using the floating point rules.<!-- d3d12-review-inline:end:rasterization:A-clipping:7 --></ins>
+There are no restrictions to the range of input vertex coordinates to clipping. Clipping operations are performed using at
+least float32 precision, and accordingly NaNs and infinities are processed using the floating point rules.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-clipping:8 -->Two additional mechanisms for slicing geometry against application defined planes are provided, similar to each other
-in programming method but different in behavior:<!-- d3d12-review-inline:end:rasterization:A-clipping:8 --></ins>
+Two additional mechanisms for slicing geometry against application defined planes are provided, similar to each other
+in programming method but different in behavior:
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-clipping:9 -->(a) A method for clipping primitives against a plane at the rasterization level (i.e. allowing for
-intersection within an individual primitive)<!-- d3d12-review-inline:end:rasterization:A-clipping:9 --></ins>
+(a) A method for clipping primitives against a plane at the rasterization level (i.e. allowing for
+intersection within an individual primitive)
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-clipping:10 -->(b) A method for culling primitives if all vertices are on the "out" side of a plane.<!-- d3d12-review-inline:end:rasterization:A-clipping:10 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-clipping:11 -->These mechanisms, dubbed "Clip Distances" and "Cull Distances" respectively, are described below.<!-- d3d12-review-inline:end:rasterization:A-clipping:11 --></ins>
+These mechanisms, dubbed "Clip Distances" and "Cull Distances" respectively, are described below.
 
 <a id="clip-distances"></a>
 
@@ -152,7 +129,7 @@ component(s) of one or more vertex elements as the System Interpreted Value `SV_
 be more efficient (though more coarse) than using clipDistances, which must be able to operate at rasterization level,
 without having to enable a path in the Rasterizer for clipping within primitives.<!-- d3d12-review-inline:end:rasterization:A-cull-distances:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-cull-distances:3 -->If a vertex has a cull distance of NaN, that vertex counts as "out" (as if it is < 0).<!-- d3d12-review-inline:end:rasterization:A-cull-distances:3 --></ins>
+If a vertex has a cull distance of NaN, that vertex counts as "out" (as if it is < 0).
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-cull-distances:4 -->For further information about `SV_CullDistance`, see its [listing](../archive/D3D11_3_FunctionalSpec.htm#interpretedvalue_CULL_DISTANCE) in the System Interpreted Values reference.<!-- d3d12-review-inline:end:rasterization:A-cull-distances:4 --></ins>
 
@@ -160,34 +137,34 @@ without having to enable a path in the Rasterizer for clipping within primitives
 
 ### Combined clip/cull distances
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-clip-cull-budget:0 -->At most 8 components in at most 2 vertex elements may be defined as System
-Interpreted Values "clipDistance" or "cullDistance".<!-- d3d12-review-inline:end:rasterization:A-clip-cull-budget:0 --></ins>
+At most 8 components in at most 2 vertex elements may be defined as System
+Interpreted Values "clipDistance" or "cullDistance".
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-clip-cull-budget:1 -->For a given primitive with one or multiple components labeled as System Interpreted Value "cullDistance", the
+For a given primitive with one or multiple components labeled as System Interpreted Value "cullDistance", the
 rejection test (primitive rejected if all distances < 0) is applied using all vertices for each
 cullDistance component, and if the primitive is rejected by any one or more
-of the tests it is discarded.<!-- d3d12-review-inline:end:rasterization:A-clip-cull-budget:1 --></ins>
+of the tests it is discarded.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-clip-cull-budget:2 -->After cullDistance processing is complete, for remaining primitives going into rasterization setup,
+After cullDistance processing is complete, for remaining primitives going into rasterization setup,
 if there are one or multiple components labeled as System Interpreted Value "clipDistance", any region(s) of a primitive that result
-in one or more of the clipDistances being < 0 after interpolation are not rasterized.<!-- d3d12-review-inline:end:rasterization:A-clip-cull-budget:2 --></ins>
+in one or more of the clipDistances being < 0 after interpolation are not rasterized.
 
 Inside the Pixel Shader it is valid to declare input Element(s) labeled as System Interpreted Values "clipDistance" and
 "cullDistance", in which case the appropriately interpolated clip distances or cull distances show up,
 as expected.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-clip-cull-budget:4 -->The interpolation mode [declared](../archive/D3D11_3_FunctionalSpec.htm#inst_vDCL) by the Pixel Shader on any input v# register labeled as
+The interpolation mode [declared](../archive/D3D11_3_FunctionalSpec.htm#inst_vDCL) by the Pixel Shader on any input v# register labeled as
 System Interpreted Value "clipDistance" must be D3DINTERPOLATION_LINEAR. No such limitation exists for input v# registers
-labeled as System Interpreted Value "cullDistance"; these can be interpolated any way into the Pixel Shader.<!-- d3d12-review-inline:end:rasterization:A-clip-cull-budget:4 --></ins>
+labeled as System Interpreted Value "cullDistance"; these can be interpolated any way into the Pixel Shader.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-clip-cull-budget:5 -->Note that clip/cull distances have no effect on GS stream output if it is active. The clip/cull can be thought of
-as appearing after the stream output in the Pipeline.<!-- d3d12-review-inline:end:rasterization:A-clip-cull-budget:5 --></ins>
+Note that clip/cull distances have no effect on GS stream output if it is active. The clip/cull can be thought of
+as appearing after the stream output in the Pipeline.
 
 <a id="perspective-divide"></a>
 
 ## Perspective divide
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-perspective:0 -->After clipping, position X,Y,Z coordinates and non-constant vertex attributes with interpolation mode linear (meaning with perspective), are divided by the position W value.<!-- d3d12-review-inline:end:rasterization:A-perspective:0 --></ins>
+After clipping, position X,Y,Z coordinates and non-constant vertex attributes with interpolation mode linear (meaning with perspective), are divided by the position W value.
 
 <a id="viewport-transform"></a>
 
@@ -198,16 +175,16 @@ so the Y coordinates are flipped during the viewport scale. Multiple Viewports c
 primitives can choose their one (see [Viewport Index](#viewport-selection)),
 however the basic case is to simply use a single Viewport for all rendering in a particular scene. Only one Viewport can ever apply to an individual primitive being rasterized.<!-- d3d12-review-inline:end:rasterization:A-viewport:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-viewport:1 -->Viewport extents and depth endpoints are float32 values; the viewport transform uses float32 arithmetic.<!-- d3d12-review-inline:end:rasterization:A-viewport:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:A-viewport:1 -->Viewport extents and depth endpoints are float32 values.<!-- d3d12-review-inline:end:rasterization:A-viewport:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-viewport:2 -->There is always an implicit scissoring by the Viewport x/y extents, orthogonal to other [Scissor](#scissor) state. In other words,
+There is always an implicit scissoring by the Viewport x/y extents, orthogonal to other [Scissor](#scissor) state. In other words,
 regardless of whether or not an implementation has a guard band in its clipper or not, rendering will never touch any area outside the
 Viewport's x/y extents (except a small nondeterministic region that appears if the viewport left and top extents have fractional coordinates, discussed in the
-[Viewport Range](#viewport-range) section).<!-- d3d12-review-inline:end:rasterization:A-viewport:2 --></ins>
+[Viewport Range](#viewport-range) section).
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-viewport:3 -->Changing render targets does not automatically update viewports. See [Base graphics state](command-list-state.md#base-graphics) for initial/reset values and bundle inheritance.<!-- d3d12-review-inline:end:rasterization:A-viewport:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-viewport:4 -->Viewport scale is performed using float32 arithmetic according to the following formulas:<!-- d3d12-review-inline:end:rasterization:A-viewport:4 --></ins>
+Viewport scale is performed using float32 arithmetic according to the following formulas:
 
 ```text
 X_rt = (X + 1) * Viewport.Width * 0.5 + Viewport.TopLeftX
@@ -231,22 +208,22 @@ and MinDepth must be less than or equal to MaxDepth unless inverted viewport dep
 <ins><!-- d3d12-review-inline:begin:rasterization:A-viewport-range:1 -->The Rasterizer must [support](#rasterizer-precision) fixed-point x,y positions after Viewport
 scale with 16.8 precision (approximately
 [-32768…32767] range).
-The baseline defines the following constraints on the float Viewport Width, Height, TopLeftX and TopLeftY parameters:<!-- d3d12-review-inline:end:rasterization:A-viewport-range:1 --></ins>
+The following constraints apply to the float Viewport Width, Height, TopLeftX and TopLeftY parameters:<!-- d3d12-review-inline:end:rasterization:A-viewport-range:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-viewport-range:2 -->-32768 <= Viewport.TopLeftX <= 32767<!-- d3d12-review-inline:end:rasterization:A-viewport-range:2 --></ins>
+-32768 <= Viewport.TopLeftX <= 32767
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-viewport-range:3 -->-32768 <= Viewport.Width + Viewport.TopLeftX <= 32767<!-- d3d12-review-inline:end:rasterization:A-viewport-range:3 --></ins>
+-32768 <= Viewport.Width + Viewport.TopLeftX <= 32767
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-viewport-range:4 -->-32768 <= Viewport.TopLeftY <= 32767<!-- d3d12-review-inline:end:rasterization:A-viewport-range:4 --></ins>
+-32768 <= Viewport.TopLeftY <= 32767
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-viewport-range:5 -->-32768 <= Viewport.Height + Viewport.TopLeftY <= 32767<!-- d3d12-review-inline:end:rasterization:A-viewport-range:5 --></ins>
+-32768 <= Viewport.Height + Viewport.TopLeftY <= 32767
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-viewport-range:6 -->The behavior of the implicit scissor to the viewport with fractional viewport extents is described in the [Scissor](#scissor) section (basically rounding X and Y to negative infinity to get integers).<!-- d3d12-review-inline:end:rasterization:A-viewport-range:6 --></ins>
+The behavior of the implicit scissor to the viewport with fractional viewport extents is described in the [Scissor](#scissor) section (basically rounding X and Y to negative infinity to get integers).
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-viewport-range:7 -->Observe that when the viewport location is fractional, which results in rounding to determine the implicit scissor, there is effectively a non-deterministic zone of up to
+Observe that when the viewport location is fractional, which results in rounding to determine the implicit scissor, there is effectively a non-deterministic zone of up to
 1/2 pixel wide along the left and top edges within the scissor area, not covered by the viewport. Because it is optional for implementations to perform guard-band clipping to viewport extents,
 and even if they do, implementations of it could vary, this means that rendering results in the non-deterministic zone will be some undefined combination of
-background values and primitives that may or may not have been clipped off the zone.<!-- d3d12-review-inline:end:rasterization:A-viewport-range:7 --></ins>
+background values and primitives that may or may not have been clipped off the zone.
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-viewport-range:8 -->If an application needs to avoid artifacts from this non-deterministic zone, one approach is to simply never use fractional viewport extents.
 Another approach, if fractional viewports are needed, is to always subtract 1 from the intended viewport TopLeftX and TopLeftY,
@@ -254,7 +231,7 @@ while adding 1 to the intended Viewport Width and Height, then defining the Scis
 This will crop out the non-deterministic zone and allow fractional viewports that, for example, smoothly move the inside contents
 (even thought the extents are rounded), without any non-deterministic rendering.<!-- d3d12-review-inline:end:rasterization:A-viewport-range:8 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-viewport-dimensions:0:authored:migration-72791218e30f1ece-0 -->Viewport Width must be nonnegative. Height must be nonnegative unless `InvertedViewportHeightFlipsYSupported` permits a negative value. Both depth endpoints must be in `[0,1]`. Reversed ordering requires `InvertedViewportDepthFlipsZSupported`. The bounds above constrain both transformed X/Y endpoints, including an inverted height's second endpoint.<!-- d3d12-review-inline:end:rasterization:N-viewport-dimensions:0:authored:migration-72791218e30f1ece-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-viewport-dimensions:0:authored:migration-72791218e30f1ece-0 -->Viewport Width must be nonnegative. Height must be nonnegative unless `InvertedViewportHeightFlipsYSupported` permits a negative value. Reversed depth endpoint ordering requires `InvertedViewportDepthFlipsZSupported`. The bounds above constrain both transformed X/Y endpoints, including an inverted height's second endpoint.<!-- d3d12-review-inline:end:rasterization:N-viewport-dimensions:0:authored:migration-72791218e30f1ece-0 --></ins>
 
 <a id="inverted-viewports"></a>
 
@@ -270,19 +247,19 @@ This will crop out the non-deterministic zone and allow fractional viewports tha
 
 ## Scissor test
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-scissor:0 -->Scissor cuts out a rectangle in RenderTarget space where pixels are permitted to appear. Any pixel outside these extents is discarded. Multiple Scissor rectangles can be active simultaneously,
+Scissor cuts out a rectangle in RenderTarget space where pixels are permitted to appear. Any pixel outside these extents is discarded. Multiple Scissor rectangles can be active simultaneously,
 from which individual primitives can choose one (see [Selecting Viewport/Scissor](#viewport-selection) below). Only one scissor rectangle can
 ever apply to an individual primitive being rasterized, though this does not count the implied scissoring that is always applied to the [Viewport](#viewport-transform)'s
-x/y extents.<!-- d3d12-review-inline:end:rasterization:A-scissor:0 --></ins>
+x/y extents.
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-scissor:1 -->Scissor extents are signed `LONG` coordinates in `D3D12_RECT`, with right/bottom excluded. With equal-sized output views, the effective region is intersected with their dimensions. The [mismatched-output rules](#output-dimensions) instead require the application to stay within the smallest output. Scissor testing cannot be disabled. See [Base graphics state](command-list-state.md#base-graphics) for initial/reset values and bundle inheritance.<!-- d3d12-review-inline:end:rasterization:A-scissor:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-scissor:2 -->The implicit scissor to the viewport (mentioned in the [Viewport](#viewport-transform) section) rounds the viewport X and Y extents to negative infinity.
+The implicit scissor to the viewport (mentioned in the [Viewport](#viewport-transform) section) rounds the viewport X and Y extents to negative infinity.
 This way the scissor extents are always integers. The rounding to derive scissor extents applies to the locations where the fractional
 left/right/top/bottom edges would be after the float viewport transform. E.g. the viewport width and height cannot be rounded;
-they must be added to unrounded TopLeftX and TopLeftY to determine the right and bottom extents, which then get rounded to determine the scissor extents.<!-- d3d12-review-inline:end:rasterization:A-scissor:2 --></ins>
+they must be added to unrounded TopLeftX and TopLeftY to determine the right and bottom extents, which then get rounded to determine the scissor extents.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-inverted-intervals:0:authored:migration-865a1d1f528ba2fb-0 -->For a negative viewport height, the implicit vertical scissor is formed from the ordered Y endpoints: `floor(min(TopLeftY,TopLeftY+Height))` through `floor(max(TopLeftY,TopLeftY+Height))`, with the upper bound excluded. Depth is clamped between the ordered minimum and maximum of the two viewport depth endpoints. The transform still uses the signed height and signed `MaxDepth-MinDepth` scale; ordering the clipping interval does not undo the inversion.<!-- d3d12-review-inline:end:rasterization:N-inverted-intervals:0:authored:migration-865a1d1f528ba2fb-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-inverted-intervals:0:authored:migration-865a1d1f528ba2fb-0 -->For a negative viewport height, the implicit vertical scissor is formed from the ordered Y endpoints: `floor(min(TopLeftY,TopLeftY+Height))` through `floor(max(TopLeftY,TopLeftY+Height))`, with the upper bound excluded. Depth is clamped between the ordered minimum and maximum of the two viewport depth endpoints. The viewport transform uses the signed height and the signed `MaxDepth-MinDepth` scale, so the inversion is preserved.<!-- d3d12-review-inline:end:rasterization:N-inverted-intervals:0:authored:migration-865a1d1f528ba2fb-0 --></ins>
 
 <a id="viewport-selection"></a>
 
@@ -290,9 +267,9 @@ they must be added to unrounded TopLeftX and TopLeftY to determine the right and
 
 <ins><!-- d3d12-review-inline:begin:rasterization:N-view-selection:0:authored:migration-af5d268c1d94c187-0 -->There are at most 16 viewport/scissor slots. `SV_ViewportArrayIndex` selects a viewport and its paired scissor for a primitive; absence of the semantic selects zero. Values outside the supported 16-slot range select slot zero for rasterization. A pixel shader receiving the semantic sees its original, unclamped value. Slots not supplied by the current viewport/scissor array setting call are disabled.<!-- d3d12-review-inline:end:rasterization:N-view-selection:0:authored:migration-af5d268c1d94c187-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-view-selection:1:authored:migration-748b6ad1d4836fcd-0 -->Geometry shaders can supply these primitive indices. Drivers must also support `SV_ViewportArrayIndex` and `SV_RenderTargetArrayIndex` output from a vertex shader feeding the rasterizer. `OPTIONS.VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation` reports whether the hardware supports these values natively. When FALSE, an implicit geometry shader inserted into the PSO provides emulation. It is not a prerequisite for vertex shader output of these values. Mesh output instead uses its [per-primitive attributes](amplification-and-mesh-shaders.md#primitive-attributes). The ordinary leading-vertex rule applies to vertex-produced primitive data; mesh output uses its per-primitive definition.<!-- d3d12-review-inline:end:rasterization:N-view-selection:1:authored:migration-748b6ad1d4836fcd-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-view-selection:1:authored:migration-748b6ad1d4836fcd-0 -->Geometry shaders can supply these primitive indices. Drivers must also support `SV_ViewportArrayIndex` and `SV_RenderTargetArrayIndex` output from a vertex shader feeding the rasterizer. `OPTIONS.VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation` reports whether the hardware supports these values natively. When FALSE, an implicit geometry shader inserted into the PSO provides emulation. Mesh shaders instead supply these values as [per-primitive attributes](amplification-and-mesh-shaders.md#primitive-attributes). For other shaders, the values come from the [leading vertex](vertex-processing.md#leading-vertex).<!-- d3d12-review-inline:end:rasterization:N-view-selection:1:authored:migration-748b6ad1d4836fcd-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-view-selection:2:authored:migration-d1dc978e2c9a7fb5-0 -->Per-primitive VRS combined with multiple viewports or `SV_ViewportArrayIndex` also requires `OPTIONS6.PerPrimitiveShadingRateSupportedWithViewportIndexing`. The [VRS viewport qualification](pixel-shaders.md#vrs-tiering) applies. Every supported view instancing tier permits these shader outputs, independently of the native or emulated implementation path. View counts and declarations follow the [PSO view contract](pipeline-state.md#view-instancing).<!-- d3d12-review-inline:end:rasterization:N-view-selection:2:authored:migration-d1dc978e2c9a7fb5-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-view-selection:2:authored:migration-d1dc978e2c9a7fb5-0 -->Per-primitive VRS combined with multiple viewports or `SV_ViewportArrayIndex` also requires `OPTIONS6.PerPrimitiveShadingRateSupportedWithViewportIndexing`. See [VRS tiering](pixel-shaders.md#vrs-tiering) for this viewport qualification. Every supported view instancing tier permits these shader outputs, whether the implementation is native or emulated. See [View instancing](pipeline-state.md#view-instancing) for view counts and declarations.<!-- d3d12-review-inline:end:rasterization:N-view-selection:2:authored:migration-d1dc978e2c9a7fb5-0 --></ins>
 
 <a id="render-target-selection"></a>
 
@@ -310,9 +287,9 @@ Texture1D/2D array or Texture3D view exposing multiple layers/slices, including 
 particular resource array that is set as a RenderTarget, the 0-th RenderTarget is used. If the
 renderTargetArrayIndex value is input to the Pixel Shader, it arrives unmodified, not incorporating any clamping that occurred in selecting which of the available Array slices as the RenderTarget.<!-- d3d12-review-inline:end:rasterization:A-rt-selection:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-rt-selection:3 -->For further information about "renderTargetArrayIndex", see its [listing](../archive/D3D11_3_FunctionalSpec.htm#interpretedvalue_RENDER_TARGET_ARRAY_INDEX) in the System Interpreted Values reference.<!-- d3d12-review-inline:end:rasterization:A-rt-selection:3 --></ins>
+For further information about "renderTargetArrayIndex", see its [listing](../archive/D3D11_3_FunctionalSpec.htm#interpretedvalue_RENDER_TARGET_ARRAY_INDEX) in the System Interpreted Values reference.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-layer-scope:0:authored:migration-2eff3cb606e771bb-0 -->Layer selection is relative to the bound render target/depth-stencil views, not a cube SRV binding. Cube faces are rendered through the applicable array views. A mesh shader additionally follows its [render target array index range](amplification-and-mesh-shaders.md#render-target-array-index). The view instance location arithmetic below produces the indices used by these rasterizer lookups.<!-- d3d12-review-inline:end:rasterization:N-layer-scope:0:authored:migration-2eff3cb606e771bb-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-layer-scope:0:authored:migration-2eff3cb606e771bb-0 -->Layer selection is relative to the bound render target and depth stencil views. A mesh shader additionally follows its [render target array index range](amplification-and-mesh-shaders.md#render-target-array-index). The view instance location arithmetic below produces the indices used by these rasterizer lookups.<!-- d3d12-review-inline:end:rasterization:N-layer-scope:0:authored:migration-2eff3cb606e771bb-0 --></ins>
 
 <a id="view-locations"></a>
 
@@ -328,7 +305,7 @@ view.
 and/or ViewportArrayIndex if desired (may or may not be dependent on
 SV_ViewID). These get added to the view instance locations in the PSO's
 view instancing declaration via 32 bit UINT arithmetic (which can wrap)
-to determine the final location to send primitives. Out-of-range viewport indices select slot zero. Render target array fallback applies only to matching output array sizes; the [mismatched-output rules](#output-dimensions) apply otherwise.<!-- d3d12-review-inline:end:rasterization:V-view-locations:1 --></ins>
+to determine the final location to send primitives. The resulting indices select viewports and render target array slices as described in [Viewport and render target selection](#viewport-selection).<!-- d3d12-review-inline:end:rasterization:V-view-locations:1 --></ins>
 
 If the shader will be dynamically selecting render target or viewport
 array index, a scenario that can make sense for an application is to set
@@ -346,8 +323,8 @@ all the view instance locations in the PSO to the same values (such as
 * Rendering to buffers cannot be mixed with 1D/2D/3D render targets, nor depth buffers which are inherently 2D, nor buffer views of differing sizes.
 * When rendering to 1D textures, the effective render target dimensionality should be treated as 2D with a height of 1.
 * When rendering to 3D textures, the effective render target dimensionality should be treated as 2D. The `WSize` field of `D3D12_TEX3D_RTV` is used to determine the equivalent `ArraySize` for interpretation as a 2D render target.
-* When all render target and depth buffer dimensions (width/height) are the same, the scissor definition remains the same: there is an implicit intersection that occurs with the region of {0, 0, width, height}.
-* When the width and height of the render targets and/or depth buffers mismatch, this implicit intersection no longer applies. The application is responsible for ensuring that the region defined by the combination of viewport and scissor does not exceed the dimensions of the *smallest* output view. Behavior is undefined if it exceeds this size.
+* When all render target and depth buffer dimensions (width/height) are the same, <ins><!-- d3d12-review-inline:begin:rasterization:V-output-dimensions:1:modified:present-state-1 -->the scissor region is implicitly intersected with<!-- d3d12-review-inline:end:rasterization:V-output-dimensions:1:modified:present-state-1 --></ins> the region of {0, 0, width, height}.
+* When the width and height of the render targets and/or depth buffers mismatch, this implicit intersection <ins><!-- d3d12-review-inline:begin:rasterization:V-output-dimensions:1:modified:present-state-2 -->does not occur<!-- d3d12-review-inline:end:rasterization:V-output-dimensions:1:modified:present-state-2 --></ins>. The application is responsible for ensuring that the region defined by the combination of viewport and scissor does not exceed the dimensions of the *smallest* output view. Behavior is undefined if it exceeds this size.
   * Possible results include intersecting with the smallest output, intersecting with the largest, or GPU hangs/faults.
 * <ins><!-- d3d12-review-inline:begin:rasterization:V-output-dimensions:1 -->Array size for render targets and depth stencil is allowed to be different. The index-zero fallback for out-of-bounds index values only applies when array size dimensionality matches for all outputs. When they are different, a value that is out-of-bounds for any of them will produce undefined results.<!-- d3d12-review-inline:end:rasterization:V-output-dimensions:1 --></ins>
 
@@ -355,23 +332,23 @@ all the view instance locations in the PSO to the same values (such as
 
 ## Coordinate snapping and precision
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-snapping:0:modified:migration-a9448e09a743eb6e-0 -->Consider a set of vertices going through the Rasterizer, after having gone through clipping, perspective divide and viewport scale.
+Consider a set of vertices going through the Rasterizer, after having gone through clipping, perspective divide and viewport scale.
 Suppose that any further primitive expansion has been done (e.g. rectangular lines can be drawn
 by implementations as 2 triangles, described later). After the final primitives to be rasterized have
 been obtained, the x and y positions of the vertices are snapped to exactly n.8 fixed point integers. Any
 front/back culling is applied (if applicable) after vertices have been snapped. Interpolation of pixel attributes is set up based on
-the snapped vertex positions of primitives being rasterized.<!-- d3d12-review-inline:end:rasterization:A-snapping:0:modified:migration-a9448e09a743eb6e-0 --></ins>
+the snapped vertex positions of primitives being rasterized.
 
 <a id="rasterizer-precision"></a>
 
 ### Addressability and fractional precision
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-precision:0 -->After [Viewport](#viewport-transform) scale has been applied (but before Scissor Test), positions are
+After [Viewport](#viewport-transform) scale has been applied (but before Scissor Test), positions are
 converted to fixed-point, to evenly distribute precision across the RenderTarget range and to enable face
 culling. The [Rasterizer](rasterization.md#rasterization) must support
 16.8
 (integer.fraction) fixed point precision for x and y. Particularly for the fractional part, the requirement is EXACTLY 8 bits.
-This conversion is also subject to the rules specified in [float-to-fixed](numeric-and-data-rules.md#numeric-3-2-4-1), including round-to-nearest.<!-- d3d12-review-inline:end:rasterization:A-precision:0 --></ins>
+This conversion is also subject to the rules specified in [float-to-fixed](numeric-and-data-rules.md#numeric-3-2-4-1), including round-to-nearest.
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-precision:1 -->After the [Scissor Test](#scissor) has been applied, the number of pixels along a given RenderTarget axis (x or y) that must be addressable starting from
 a base location is at least `2^15`.<!-- d3d12-review-inline:end:rasterization:A-precision:1 --></ins>
@@ -400,28 +377,28 @@ produce INF.<!-- d3d12-review-inline:end:rasterization:A-position-range:2 --></i
 
 ### Interpolator setup
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-interpolator:0 -->Attribute Interpolators follow the [Floating Point Rules](numeric-and-data-rules.md#numeric-3-1), including propagation of
+Attribute Interpolators follow the [Floating Point Rules](numeric-and-data-rules.md#numeric-3-1), including propagation of
 NaN and handling of +/-INF. Interpolator setup is done based on vertex positions that have already been
 converted (snapped) to whatever [fixed-point](#rasterizer-precision) representation is supported by the Rasterizer
 (this is also stated in the [Coordinate Snapping](#coordinate-snapping) section).
 This does mean that attributes are slightly moved, but avoids extrapolating attributes off the intended "gamut" of the primitive that
 would happen if interpolators were set up before snapping positions for rasterization. Other than that, the input Z must exactly
-match the fixed function interpolated Z (they are one and the same).<!-- d3d12-review-inline:end:rasterization:A-interpolator:0 --></ins>
+match the fixed function interpolated Z (they are one and the same).
 
 <a id="culling"></a>
 
 ## Culling and facing
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-cull:0:modified:migration-bf114c4fc25ca717-0 -->The [Rasterizer State](pipeline-state.md#rasterizer) FrontCounterClockwise governs whether clockwise primitives
+The [Rasterizer State](pipeline-state.md#rasterizer) FrontCounterClockwise governs whether clockwise primitives
 are considered front- or back- facing, and the [Rasterizer State](pipeline-state.md#rasterizer) CullMode chooses
 which primitives to cull, front, back or none. Culling of primitives is done after they are [snapped](#rasterizer-precision)
-to fixed point during rasterization.<!-- d3d12-review-inline:end:rasterization:A-cull:0:modified:migration-bf114c4fc25ca717-0 --></ins>
+to fixed point during rasterization.
 
 <a id="degenerate-primitives"></a>
 
 ### Degenerate primitives
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-degenerate:0 -->Zero area geometry is considered back facing.<!-- d3d12-review-inline:end:rasterization:A-degenerate:0 --></ins>
+Zero area geometry is considered back facing.
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-degenerate:1 -->e.g. This affects what gets output when a zero area triangle is rendered in wireframe mode.<!-- d3d12-review-inline:end:rasterization:A-degenerate:1 --></ins>
 
@@ -436,14 +413,13 @@ value 0xFFFFFFFF, and for backfacing primitives, IsFrontFace has the value 0x000
 IsFrontFace has the value 0xFFFFFFFF. The exception is lines drawn out of triangles ([wireframe mode](#fill-modes)),
 which sets IsFrontFace the same way as rasterizing the triangle in solid mode.<!-- d3d12-review-inline:end:rasterization:A-frontface:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-frontface:1 -->IsFrontFace can be input by the Pixel Shader by declaring a scalar component of one of its inputs as the [System Generated Value](../archive/D3D11_3_FunctionalSpec.htm#SystemGeneratedValues) "IsFrontFace".<!-- d3d12-review-inline:end:rasterization:A-frontface:1 --></ins>
+IsFrontFace can be input by the Pixel Shader by declaring a scalar component of one of its inputs as the [System Generated Value](../archive/D3D11_3_FunctionalSpec.htm#SystemGeneratedValues) "IsFrontFace".
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-frontface:2 -->The mere presence of IsFrontFace in the Pixel Shader's input declarations activates the feature (there is no other control outside the shader).<!-- d3d12-review-inline:end:rasterization:A-frontface:2 --></ins>
+The mere presence of IsFrontFace in the Pixel Shader's input declarations activates the feature (there is no other control outside the shader).
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-frontface:3 -->See the general discussion of [System Generated Values](../archive/D3D11_3_FunctionalSpec.htm#SystemGeneratedValues) for more information, the reference for IsFrontFace
-[here](../archive/D3D11_3_FunctionalSpec.htm#generatedvalue_IS_FRONT_FACE), and the System Interpreted/Generated Value [input](../archive/D3D11_3_FunctionalSpec.htm#inst_vDCL_SV) declaration for Shaders.<!-- d3d12-review-inline:end:rasterization:A-frontface:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:A-frontface:3 -->See the general discussion of [System Generated Values](../archive/D3D11_3_FunctionalSpec.htm#SystemGeneratedValues) for more information, the [IsFrontFace reference](../archive/D3D11_3_FunctionalSpec.htm#generatedvalue_IS_FRONT_FACE), and the System Interpreted/Generated Value [input](../archive/D3D11_3_FunctionalSpec.htm#inst_vDCL_SV) declaration for Shaders.<!-- d3d12-review-inline:end:rasterization:A-frontface:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-frontface-representations:0:authored:migration-536bd9c2bf2f5e67-0 -->The HLSL semantic is `SV_IsFrontFace` (`bool`). The raw all-ones/zero encoding above describes the DXBC logical input representation. DXIL also requires a scalar 32-bit integer signature element for IsFrontFace. The HLSL Boolean does not imply an `i1` signature element. Point/line front-facing defaults and wireframe inheritance are the same stage behavior for both shader representations.<!-- d3d12-review-inline:end:rasterization:N-frontface-representations:0:authored:migration-536bd9c2bf2f5e67-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-frontface-representations:0:authored:migration-536bd9c2bf2f5e67-0 -->The HLSL semantic is `SV_IsFrontFace` (`bool`). The raw all-ones/zero encoding above describes the DXBC logical input representation. DXIL also requires a scalar 32-bit integer signature element for IsFrontFace. Point/line front-facing defaults and wireframe inheritance are the same stage behavior for both shader representations.<!-- d3d12-review-inline:end:rasterization:N-frontface-representations:0:authored:migration-536bd9c2bf2f5e67-0 --></ins>
 
 <a id="fill-modes"></a>
 
@@ -456,20 +432,20 @@ as solid or wireframe.<!-- d3d12-review-inline:end:rasterization:A-fill:0 --></i
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-fill:1 -->In solid mode, triangles are rasterized using the triangle rasterization rules below.<!-- d3d12-review-inline:end:rasterization:A-fill:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-fill:2 -->In wireframe mode, triangles are drawn using a line for each clipped original triangle edge reaching
+In wireframe mode, triangles are drawn using a line for each clipped original triangle edge reaching
 the rasterizer, but drawing nothing for new edges introduced by the clipper. If [Depth Bias](#depth-bias) is
 being performed, it is calculated once for each post-clip triangle (as in SOLID mode), added to each
 vertex to be drawn as a line for the surviving clipped edges of the original triangle. The lines
 are drawn using line rasterization rules for whatever line mode is currently set, be it aliased
 lines, antialiased lines, or multisample antialiased lines. Wireframe rendering of triangle strips
-is no different than drawing each triangle independently in wireframe mode.<!-- d3d12-review-inline:end:rasterization:A-fill:2 --></ins>
+is no different than drawing each triangle independently in wireframe mode.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-fill:3 -->The IsFrontFace input to the Pixel Shader is set the same way for triangles drawn in wireframe mode
+The IsFrontFace input to the Pixel Shader is set the same way for triangles drawn in wireframe mode
 as it is for triangles drawn in solid mode (unlike normal lines, which set IsFrontFace to 0xFFFFFFFF).
-This is also discussed in the [IsFrontFace](#front-face) section.<!-- d3d12-review-inline:end:rasterization:A-fill:3 --></ins>
+This is also discussed in the [IsFrontFace](#front-face) section.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-fill:4 -->Only triangles reaching the rasterizer are affected by fill mode; line and point primitives reaching the
-rasterizer are not affected at all.<!-- d3d12-review-inline:end:rasterization:A-fill:4 --></ins>
+Only triangles reaching the rasterizer are affected by fill mode; line and point primitives reaching the
+rasterizer are not affected at all.
 
 <a id="depth-bias"></a>
 
@@ -516,17 +492,17 @@ if ( (DepthBias != 0) || (SlopeScaledDepthBias != 0.) )
     z = z + Bias
 ```
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-depth-bias:1 -->Biasing is constant for a given primitive, with the same value added to the z
-for each vertex before interpolator setup.<!-- d3d12-review-inline:end:rasterization:A-depth-bias:1 --></ins>
+Biasing is constant for a given primitive, with the same value added to the z
+for each vertex before interpolator setup.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-depth-bias:2 -->The biasing formulas are performed with float32 arithmetic.<!-- d3d12-review-inline:end:rasterization:A-depth-bias:2 --></ins>
+The biasing formulas are performed with float32 arithmetic.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-depth-bias:3 -->Depth Bias is not applied to any point or line primitives, except for lines drawn in wireframe mode
-as described in the [Fill Modes](#fill-modes) section.<!-- d3d12-review-inline:end:rasterization:A-depth-bias:3 --></ins>
+Depth Bias is not applied to any point or line primitives, except for lines drawn in wireframe mode
+as described in the [Fill Modes](#fill-modes) section.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-depth-bias:4 -->Depth Bias is disabled by setting both DepthBias and SlopeScaledDepthBias to zero, in which case the
+Depth Bias is disabled by setting both DepthBias and SlopeScaledDepthBias to zero, in which case the
 depth value is unmodified. Note that this disables propagation of IEEE specials that may be generated
-if the operation is performed even with zero DepthBias and SlopeScaledDepthBias values.<!-- d3d12-review-inline:end:rasterization:A-depth-bias:4 --></ins>
+if the operation is performed even with zero DepthBias and SlopeScaledDepthBias values.
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-depth-bias:5 -->Comments on one of the usage scenarios for Depth Biasing:<!-- d3d12-review-inline:end:rasterization:A-depth-bias:5 --></ins>
 
@@ -562,7 +538,7 @@ which provides API settable upper bound (positive or negative) on the magnitude 
 
 <ins><!-- d3d12-review-inline:begin:rasterization:V-float-bias:0:modified:GRI14 -->The driver rasterizer description uses `FLOAT DepthBias`. Legacy integer input is converted to `FLOAT` before the same [depth bias equation](#depth-bias).<!-- d3d12-review-inline:end:rasterization:V-float-bias:0:modified:GRI14 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-bias-state:0:authored:migration-c4479fa372a7dbf1-0 -->The revised float description and dynamic setter use the same equation without requiring an integral input. Unsupported non-integral legacy-driver handling follows the [versioned rasterizer payload](pipeline-state.md#versioned-rasterizer).<!-- d3d12-review-inline:end:rasterization:N-bias-state:0:authored:migration-c4479fa372a7dbf1-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-bias-state:0:authored:migration-c4479fa372a7dbf1-0 -->API rasterizer descriptions with a `FLOAT` `DepthBias` and [RSSetDepthBias](#rssetdepthbias) use the same equation without requiring an integral value. See [Versioned rasterizer descriptions](pipeline-state.md#versioned-rasterizer) for handling of non-integral values when the driver does not support them.<!-- d3d12-review-inline:end:rasterization:N-bias-state:0:authored:migration-c4479fa372a7dbf1-0 --></ins>
 
 <a id="primitive-coverage"></a>
 
@@ -572,22 +548,22 @@ which provides API settable upper bound (positive or negative) on the magnitude 
 
 ### Triangles
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-triangles:0:modified:migration-6f47aac0cfd402db-0 -->Any pixel sample locations which fall inside the triangle are drawn. An example with a single sample per pixel (at the center) is shown below.
+Any pixel sample locations which fall inside the triangle are drawn. An example with a single sample per pixel (at the center) is shown below.
 If a sample location falls exactly on the edge of the triangle, the Top-Left Rule applies,
-to ensure that adjacent triangles do not overdraw. The Top-Left rule is described below.<!-- d3d12-review-inline:end:rasterization:A-triangles:0:modified:migration-6f47aac0cfd402db-0 --></ins>
+to ensure that adjacent triangles do not overdraw. The Top-Left rule is described below.
 
 <a id="top-left-rule"></a>
 
 #### Top-left rule
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-top-left:0 -->Top edge: If an edge is exactly horizontal, and it is above the other edges of the triangle in pixel space, then it is a "top" edge.<!-- d3d12-review-inline:end:rasterization:A-top-left:0 --></ins>
+Top edge: If an edge is exactly horizontal, and it is above the other edges of the triangle in pixel space, then it is a "top" edge.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-top-left:1 -->Left edge: If an edge is not exactly horizontal, and it is on the left side of the triangle in pixel space, then it is a "left" edge.
-A triangle can have one or two left edges.<!-- d3d12-review-inline:end:rasterization:A-top-left:1 --></ins>
+Left edge: If an edge is not exactly horizontal, and it is on the left side of the triangle in pixel space, then it is a "left" edge.
+A triangle can have one or two left edges.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-top-left:2 -->Top-Left Rule: If a sample location falls exactly on the edge of a triangle, the sample is inside the triangle if the edge is a
+Top-Left Rule: If a sample location falls exactly on the edge of a triangle, the sample is inside the triangle if the edge is a
 "top" edge or a "left" edge. If two edges from the same triangle touch the pixel center, then if both edges are "top" or "left"
-then the sample is inside the triangle.<!-- d3d12-review-inline:end:rasterization:A-top-left:2 --></ins>
+then the sample is inside the triangle.
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-top-left:3 -->![TriRast](../archive/images/d3d11/D3D11_3_TriRast.png)<!-- d3d12-review-inline:end:rasterization:A-top-left:3 --></ins>
 
@@ -595,7 +571,7 @@ then the sample is inside the triangle.<!-- d3d12-review-inline:end:rasterizatio
 
 ### Aliased lines
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-aliased:0 -->Rasterization rules for infinitely-thin lines, with no antialiasing, are described below.<!-- d3d12-review-inline:end:rasterization:A-aliased:0 --></ins>
+Rasterization rules for infinitely-thin lines, with no antialiasing, are described below.
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-aliased:1 -->![LineRast](../archive/images/d3d11/D3D11_3_LineRast.png)<!-- d3d12-review-inline:end:rasterization:A-aliased:1 --></ins>
 
@@ -613,8 +589,8 @@ then the sample is inside the triangle.<!-- d3d12-review-inline:end:rasterizatio
 the viewport extent may set one less pixel than lines that are rendered to a larger 2D extent
 with the pixels outside the viewport discarded. (This is due to the handling of the line endpoints.)<!-- d3d12-review-inline:end:rasterization:A-line-clipping:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-line-clipping:1 -->Since geometric clip to the viewport is neither required nor disallowed, aliased line
-rendering is allowed to differ in viewport-edge pixels due to geometric clipping.<!-- d3d12-review-inline:end:rasterization:A-line-clipping:1 --></ins>
+Since geometric clip to the viewport is neither required nor disallowed, aliased line
+rendering is allowed to differ in viewport-edge pixels due to geometric clipping.
 
 <a id="alpha-lines"></a>
 
@@ -664,7 +640,7 @@ at 3x3 pixel units about each pixel.<!-- d3d12-review-inline:end:rasterization:A
 The attributes at each end of the line are duplicated for the 2 vertices at each end of the rectangle.<!-- d3d12-review-inline:end:rasterization:A-quad-lines:0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-quad-lines:1 -->This mode is not supported with center sample patterns (D3D12_CENTER_MULTISAMPLE_PATTERN)
-where there is more than one sample overlapping the center of the pixel, in which case results of drawing this style of line are undefined. See [here](#center-patterns).<!-- d3d12-review-inline:end:rasterization:A-quad-lines:1 --></ins>
+where there is more than one sample overlapping the center of the pixel, in which case results of drawing this style of line are undefined. See [Overlapping center samples](#center-patterns).<!-- d3d12-review-inline:end:rasterization:A-quad-lines:1 --></ins>
 
 <a id="narrow-quadrilateral"></a>
 
@@ -726,7 +702,7 @@ duplicated at the 4 vertices. Cull modes do not apply to points.<!-- d3d12-revie
 <ins><!-- d3d12-review-inline:begin:rasterization:A-point-state:0 -->The legacy MultisampleEnable state does not affect point rasterization.<!-- d3d12-review-inline:end:rasterization:A-point-state:0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-point-state:1 -->The coverage rules for a point are like drawing a unit area square out of 2 triangles,
-and attributes are all constant over the area. This behavior holds regardless of the legacy MultisampleEnable state. Furthermore, these rasterization and attribute evaluation behaviors continue to apply
+and attributes are all constant over the area. Furthermore, these rasterization and attribute evaluation behaviors continue to apply
 during sample-frequency evaluation, except that each shader invocation is uniquely aware of its sample position (and sample index) if
 the shader requests it.<!-- d3d12-review-inline:end:rasterization:A-point-state:1 --></ins>
 
@@ -756,12 +732,12 @@ occur at sample-frequency rather than at pixel-frequency.<!-- d3d12-review-inlin
 
 ### Covered samples
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-msaa-effects:0 -->Rasterization behavior when sample count is greater than 1 is simply that primitive coverage tests are done for each sample
+Rasterization behavior when sample count is greater than 1 is simply that primitive coverage tests are done for each sample
 location within a pixel. If one or more sample locations in a pixel are covered, the Pixel Shader is run once for the pixel in Pixel-Frequency
 mode, or in Sample-Frequency mode once for each covered sample that is also in the Rasterizer SampleMask. Pixel-frequency execution produces a single set of Pixel
 Shader output data that is replicated to all covered samples that pass their individual depth/stencil tests and blended to the
 RenderTarget per-sample. Sample-frequency execution produces a unique set of Pixel Shader output data per covered sample (and in SampleMask),
-each output getting blended 1:1 to the corresponding RenderTarget sample if its depth/stencil test passes.<!-- d3d12-review-inline:end:rasterization:A-msaa-effects:0 --></ins>
+each output getting blended 1:1 to the corresponding RenderTarget sample if its depth/stencil test passes.
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-msaa-effects:1 -->![MSAARast](../archive/images/d3d11/D3D11_3_MSAARast.png)<!-- d3d12-review-inline:end:rasterization:A-msaa-effects:1 --></ins>
 
@@ -769,17 +745,17 @@ each output getting blended 1:1 to the corresponding RenderTarget sample if its 
 
 ### Sample-frequency rasterization
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-sample-frequency:0 -->Note that [points](#point-coverage) and [quadrilateral lines](#quadrilateral-lines) are functionally equivalent to drawing
+Note that [points](#point-coverage) and [quadrilateral lines](#quadrilateral-lines) are functionally equivalent to drawing
 their area with triangles. So Sample-Frequency execution is easily defined for all of these primitives. For points, the samples
 covered by the point area (and in the RasterizerState's SampleMask) each get Pixel Shader invocations with attributes replicated from its single vertex (except one parameter
 is available that is varying - an ID identifying each sample from the total set of samples in the pixel). For quadrilateral lines,
 the two end vertices define how attributes interpolate along the length, staying constant across the perpendicular. Again, the samples covered by
 the area of the primitive (and in the SampleMask) each get a Pixel Shader invocations in Sample-Frequency execution mode, with unique input attributes per sample, including
-an ID identifying which sample it is.<!-- d3d12-review-inline:end:rasterization:A-sample-frequency:0 --></ins>
+an ID identifying which sample it is.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-sample-frequency:1 -->[Alpha-Antialiased Lines](#alpha-lines) and [Aliased Lines](#aliased-lines) are algorithms that inherently do not
+[Alpha-Antialiased Lines](#alpha-lines) and [Aliased Lines](#aliased-lines) are algorithms that inherently do not
 deal with discrete sample locations within a pixel's area, and thus it is illegal/undefined to request Sample-Frequency
-execution for these primitives, unless the sample count is 1, which is identical to Pixel-Frequency execution.<!-- d3d12-review-inline:end:rasterization:A-sample-frequency:1 --></ins>
+execution for these primitives, unless the sample count is 1, which is identical to Pixel-Frequency execution.
 
 <a id="sample-patterns"></a>
 
@@ -802,7 +778,7 @@ at the center of the pixel have a couple of usage restrictions:<!-- d3d12-review
 
 - (1) Sample-frequency Pixel Shader execution is undefined.
 
-- <ins><!-- d3d12-review-inline:begin:rasterization:A-center-restrictions:1 -->(2) MSAA lines (lines drawn as quadrilaterals / 2 triangles) are undefined.<!-- d3d12-review-inline:end:rasterization:A-center-restrictions:1 --></ins>
+- (2) MSAA lines (lines drawn as quadrilaterals / 2 triangles) are undefined.
 
 <a id="target-independent"></a>
 
@@ -812,8 +788,8 @@ at the center of the pixel have a couple of usage restrictions:<!-- d3d12-review
 
 ### Forced sample count
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-forced-count:0 -->Overriding the Rasterizer sample count means defining the multisample pattern at the Rasterizer
-independent of what [RenderTargetViews](binding.md#view-descriptions) (or [UnorderedAccessView](binding.md#buffer-uav)s) may be bound at the Output Merger (and their associated sample count / Quality Level).<!-- d3d12-review-inline:end:rasterization:A-forced-count:0 --></ins>
+Overriding the Rasterizer sample count means defining the multisample pattern at the Rasterizer
+independent of what [RenderTargetViews](binding.md#view-descriptions) (or [UnorderedAccessView](binding.md#buffer-uav)s) may be bound at the Output Merger (and their associated sample count / Quality Level).
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-forced-count:1 -->The ForcedSampleCount state setting is part of the [rasterizer description](pipeline-state.md#rasterizer).<!-- d3d12-review-inline:end:rasterization:A-forced-count:1 --></ins>
 
@@ -830,11 +806,11 @@ This is even if the device does not support that many samples in RenderTarget / 
 
 ### Forced-pattern behavior
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-forced-behavior:0 -->With a forced sample count/pattern selected at the rasterizer (ForcedSampleCount > 0), pixels are candidates for shader invocation based on the selected sample pattern,
+With a forced sample count/pattern selected at the rasterizer (ForcedSampleCount > 0), pixels are candidates for shader invocation based on the selected sample pattern,
 independent of the RTV ("output") sample count. The burden is then on shader code to make sense of the possible mismatch between rasterizer and output storage sample count,
-given the defined semantics.<!-- d3d12-review-inline:end:rasterization:A-forced-behavior:0 --></ins>
+given the defined semantics.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:A-forced-behavior:1 -->Here are the behaviors with ForcedSampleCount > 0.<!-- d3d12-review-inline:end:rasterization:A-forced-behavior:1 --></ins>
+Here are the behaviors with ForcedSampleCount > 0.
 
 - <ins><!-- d3d12-review-inline:begin:rasterization:A-forced-behavior:2:modified:section-20261117-1 -->In the absence of a programmable position override, ForcedSampleCount identifies a D3D standard sample pattern of 1, 4, 8 or 16 samples (0 means no override). A matching [programmable sample pattern](#programmable-samples) replaces those default positions.<!-- d3d12-review-inline:end:rasterization:A-forced-behavior:2:modified:section-20261117-1 --></ins>
 
@@ -881,7 +857,7 @@ for selecting line rendering mode.<!-- d3d12-review-inline:end:rasterization:A-f
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-uav-only:0 -->[UAV](binding.md#buffer-uav)-only rendering with multisampling at the rasterizer is possible by keying off the
 ForcedSampleCount state described earlier, with the sample patterns limited to 0, 1, 4, 8 and 16. (The UAVs themselves are not multisampled in terms of allocation.)
-On the legacy forced-count path with ordinary PSO SampleDesc.Count at most 1, a ForcedSampleCount of 0 is equivalent to 1: single-sample rasterization. The [newer no-output PSO sample count path](#no-output-samples) is separate.<!-- d3d12-review-inline:end:rasterization:A-uav-only:0 --></ins>
+On the legacy forced-count path with ordinary PSO SampleDesc.Count at most 1, a ForcedSampleCount of 0 is equivalent to 1: single-sample rasterization.<!-- d3d12-review-inline:end:rasterization:A-uav-only:0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:rasterization:A-uav-only:1 -->On this forced-count path, shaders can request pixel-frequency invocation, but requesting sample-frequency invocation is invalid (produces undefined shading results). The [no-output PSO sample count path](#no-output-samples) permits sample-frequency execution.<!-- d3d12-review-inline:end:rasterization:A-uav-only:1 --></ins>
 
@@ -898,13 +874,13 @@ the rasterizer description is invalid at pipeline creation.<!-- d3d12-review-inl
 
 <ins><!-- d3d12-review-inline:begin:rasterization:V-no-output-samples:0:modified:source-f7be39c5867e94fa-0-0 -->D3D12 allows<!-- d3d12-review-inline:end:rasterization:V-no-output-samples:0:modified:source-f7be39c5867e94fa-0-0 --></ins> `DXGI_SAMPLE_DESC::Count` to be > 1 when no render targets or depth stencil are bound. When this is the case, behavior is expected to be basically identical to setting `ForcedSampleCount` > 1, except that sample-frequency pixel shader execution is allowed and well-defined. `DXGI_SAMPLE_DESC::Quality` must be 0 or `D3D12_STANDARD_MULTISAMPLE_PATTERN`. When programmable sample positions are set on the command list, those sample positions are used by this type of rendering as well.
 
-Existing interactions with `ForcedSampleCount` remain:
+<ins><!-- d3d12-review-inline:begin:rasterization:V-no-output-samples:1:modified:present-state-1 -->The following interactions with `ForcedSampleCount` apply:<!-- d3d12-review-inline:end:rasterization:V-no-output-samples:1:modified:present-state-1 --></ins>
 * If `DXGI_SAMPLE_DESC::Count` > 1, `ForcedSampleCount` must be 0 or 1. 0 indicates multisample rasterization, while 1 indicates single-sample rasterization. If there are render targets or depth stencil bound, the results of rasterization and pixel shading are broadcast to all samples for the pixel.
-* If `DXGI_SAMPLE_DESC::Count` == 1, `ForcedSampleCount` may be larger, but all existing rules around TIR remain.
+* If `DXGI_SAMPLE_DESC::Count` == 1, `ForcedSampleCount` may be larger, <ins><!-- d3d12-review-inline:begin:rasterization:V-no-output-samples:1:modified:present-state-2 -->and the [target-independent rasterization](#target-independent) rules apply<!-- d3d12-review-inline:end:rasterization:V-no-output-samples:1:modified:present-state-2 --></ins>.
 
 <ins><!-- d3d12-review-inline:begin:rasterization:V-no-output-samples:2 -->`OPTIONS19.SupportedSampleCountsWithNoOutputs` supplies the supported counts, using the [pipeline no-output sample count encoding](pipeline-state.md#no-output-samples).<!-- d3d12-review-inline:end:rasterization:V-no-output-samples:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-no-output-scope:0:authored:migration-ab22a8670b5ee9f6-0 -->The no-output sample-frequency path has `NumRenderTargets == 0`, `DSVFormat == DXGI_FORMAT_UNKNOWN`, a reported `SampleDesc.Count > 1` and `ForcedSampleCount == 0`. It is distinct from forced-count rasterization, whose sample-frequency prohibition remains. Target-independent rasterization is [not supported with coarse variable rate shading](pixel-shaders.md#vrs-raster-order-views).<!-- d3d12-review-inline:end:rasterization:N-no-output-scope:0:authored:migration-ab22a8670b5ee9f6-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-no-output-scope:0:authored:migration-ab22a8670b5ee9f6-0 -->The no-output sample-frequency path has `NumRenderTargets == 0`, `DSVFormat == DXGI_FORMAT_UNKNOWN`, a reported `SampleDesc.Count > 1` and `ForcedSampleCount == 0`. Target-independent rasterization is [not supported with coarse variable rate shading](pixel-shaders.md#vrs-raster-order-views).<!-- d3d12-review-inline:end:rasterization:N-no-output-scope:0:authored:migration-ab22a8670b5ee9f6-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:rasterization:N-no-output-floor:0:authored:migration-651a3ebcd5c8284c-0 -->For Feature Level 11_1 hardware using DDI version 0102 or later, `SupportedSampleCountsWithNoOutputs` must report at least mask `0b11101`, corresponding to 1, 4, 8 and 16 samples. This is a no-output rasterization reporting requirement, not a requirement that every render target/depth format support those resource sample counts.<!-- d3d12-review-inline:end:rasterization:N-no-output-floor:0:authored:migration-651a3ebcd5c8284c-0 --></ins>
 
@@ -912,7 +888,7 @@ Existing interactions with `ForcedSampleCount` remain:
 
 ## Conservative rasterization
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-conservative-scope:0:authored:migration-50332ebfcda14899-0 -->The coverage/inner coverage interface below describes fine 1x1 shading. The [coarse shading contribution](#conservative-vrs) applies separately.<!-- d3d12-review-inline:end:rasterization:N-conservative-scope:0:authored:migration-50332ebfcda14899-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-conservative-scope:0:authored:migration-50332ebfcda14899-0 -->The coverage/inner coverage interface below describes fine 1x1 shading. See [Coarse shading interaction](#conservative-vrs) for coarse shading.<!-- d3d12-review-inline:end:rasterization:N-conservative-scope:0:authored:migration-50332ebfcda14899-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:rasterization:N-conservative-scope:1:authored:migration-2209c09c25469b99-0 -->InputCoverage and InnerCoverage denote the logical HLSL `SV_Coverage` and `SV_InnerCoverage` inputs. Output coverage (`oMask` in DXBC) is the pixel shader's `SV_Coverage` output; `oDepth` denotes its depth output. These feature interactions apply to DXBC and DXIL representations. `SV_InnerCoverage` requires a pixel shader of Shader Model 5.0 or later and Conservative Rasterization Tier 3.<!-- d3d12-review-inline:end:rasterization:N-conservative-scope:1:authored:migration-2209c09c25469b99-0 --></ins>
 
@@ -954,7 +930,7 @@ from floating point to the 16.8 fixed-point used in the Rasterizer), but
 honor the coverage produced by the original floating point vertex
 coordinates. Beyond that, implementations are encouraged to reduce the
 number of false positives as much as possible. Limits on false positives
-are detailed in Rasterization Rules interaction.
+are detailed in [Rasterization Rules interaction](#conservative-rasterization-rules-interaction).
 
 Conservative Rasterization implementations must never produce false
 negatives with respect to the floating-point vertex coordinates for
@@ -977,7 +953,7 @@ triangles must use the values assigned to Vertex 0 for all interpolated
 values.
 
 <ins><!-- d3d12-review-inline:begin:rasterization:C-overview:5 -->Conservative Rasterization support is defined by three tiers, as
-described in the Tiered Support section.<!-- d3d12-review-inline:end:rasterization:C-overview:5 --></ins>
+described in the [Tiered Support](#conservative-tiers) section.<!-- d3d12-review-inline:end:rasterization:C-overview:5 --></ins>
 
 <a id="conservative-rasterization-rules-interaction"></a>
 
@@ -996,7 +972,7 @@ triangles from extending further than necessary.<!-- d3d12-review-inline:end:ras
 
 A similar valid uncertainty region applies to InnerCoverage as well, but
 it is tighter since no implementations require a larger uncertainty
-region for this case. See InnerCoverage for more detail.
+region for this case. See [InnerCoverage](#conservative-innercoverage) for more detail.
 
 Inner and outer uncertainty regions must be greater than or equal to the
 size of half the subpixel grid, or 1/512 of a pixel, in the fixed point
@@ -1107,7 +1083,7 @@ rasterized pixel<ins><!-- d3d12-review-inline:begin:rasterization:C-inputcoverag
 Depth/Stencil buffer is bound at the Output Merger, or an n sample
 ForcedSampleCount. The rest of the bits are 0.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:C-inputcoverage-interaction:1 -->This input is available regardless of Conservative Rasterization. Conservative rasterization generates full geometric coverage for covered fine pixels and zero for noncovered helper pixels; it does not bypass the applicable mask. In ordinary fine pixel MSAA, the shader input is the geometric mask AND SampleMask. For example, four covered samples with SampleMask `0x5` produce input coverage `0x5`, not `0xf`. Forced-count and coarse shading paths retain their stated mask interactions.<!-- d3d12-review-inline:end:rasterization:C-inputcoverage-interaction:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:C-inputcoverage-interaction:1 -->This input is available regardless of Conservative Rasterization. Conservative rasterization generates full geometric coverage for covered fine pixels and zero for noncovered helper pixels; it does not bypass the applicable mask. In ordinary fine pixel MSAA, the shader input is the geometric mask AND SampleMask. For example, four covered samples with SampleMask `0x5` produce input coverage `0x5`, not `0xf`. See [Forced-pattern behavior](#forced-pattern-behavior) and [VRS coverage](pixel-shaders.md#vrs-sv_coverage) for coverage masking on forced-count and coarse shading paths.<!-- d3d12-review-inline:end:rasterization:C-inputcoverage-interaction:1 --></ins>
 
 <a id="conservative-innercoverage"></a>
 
@@ -1302,7 +1278,7 @@ The IsFrontFace System Generated Value is valid to use in Conservative
 Rasterization mode, and follows the behavior defined when Conservative
 Rasterization is not enabled.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:C-isfrontface-interaction:1 -->Note: see [cull state interaction](#conservative-cull-state-interaction).<!-- d3d12-review-inline:end:rasterization:C-isfrontface-interaction:1 --></ins>
+Note: see [cull state interaction](#conservative-cull-state-interaction).
 
 <a id="conservative-fill-modes-interaction"></a>
 
@@ -1614,7 +1590,30 @@ separate explicitly decompressed resource (which may be a smaller size)
 can then be transitioned to the desired state (such as
 SHADER_RESOURCE).
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-enhanced-patterns:0:authored:migration-3dc60422ef31d04d-0 -->These pattern requirements apply to depth content and decompression, not only to the spelling of a legacy state transition. Enhanced barrier layouts/accesses follow [Synchronization](synchronization.md#layout-transitions); using that model does not erase the sample pattern identity required by the operation. The current depth data retains its pattern requirement through subsequent transitions. With coarse shading, programmed positions remain positions of fine pixels, as defined by [VRS](pixel-shaders.md#vrs-sv_coverage).<!-- d3d12-review-inline:end:rasterization:N-enhanced-patterns:0:authored:migration-3dc60422ef31d04d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-enhanced-patterns:0:authored:migration-3dc60422ef31d04d-0 -->The [depth sample position requirements](#sample-transitioning-out-of-depth_read-or-depth_write-state), including those for decompression and subsequent transitions, also apply to enhanced barrier layout transitions. See [Layout transitions](synchronization.md#layout-transitions) for enhanced barrier layouts and accesses. With coarse shading, programmed positions are positions of fine pixels, as defined by [VRS](pixel-shaders.md#vrs-sv_coverage).<!-- d3d12-review-inline:end:rasterization:N-enhanced-patterns:0:authored:migration-3dc60422ef31d04d-0 --></ins>
+
+<a id="rasterizer-state"></a>
+<a id="state-and-capabilities"></a>
+
+## Capabilities
+
+<!-- d3d12-review-alert:begin:rasterization:N-capabilities:1:authored:migration-a76e281e52f43a5a-0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Contribution | Capability |
+> |---|---|
+> | Inverted viewport height / depth | `OPTIONS13.InvertedViewportHeightFlipsYSupported` / `InvertedViewportDepthFlipsZSupported` |
+> | Dynamic depth bias | `OPTIONS16.DynamicDepthBiasSupported` |
+> | Revised line mode description / narrow quadrilateral lines | `OPTIONS19.RasterizerDesc2Supported` / `NarrowQuadrilateralLinesSupported` |
+> | Conservative rasterization | `OPTIONS.ConservativeRasterizationTier` |
+> | Programmable sample positions | `OPTIONS2.ProgrammableSamplePositionsTier` |
+> | Mismatched output dimensions / no-output sample counts | `OPTIONS19.MismatchingOutputDimensionsSupported` / `SupportedSampleCountsWithNoOutputs` |
+
+<!-- d3d12-review-alert:end:rasterization:N-capabilities:1:authored:migration-a76e281e52f43a5a-0 -->
+
+<ins><!-- d3d12-review-inline:begin:rasterization:N-capabilities:2:authored:migration-b08992cec43e93c7-0 -->These are [CheckFeatureSupport](devices-and-capabilities.md#id3d12device-checkfeaturesupport) results in the corresponding `D3D12_FEATURE_DATA_D3D12_OPTIONS*` structures.<!-- d3d12-review-inline:end:rasterization:N-capabilities:2:authored:migration-b08992cec43e93c7-0 --></ins>
 
 <a id="rasterizer-apis"></a>
 
@@ -1748,7 +1747,7 @@ void SetSamplePositions(
 
 This method configures the sample positions used by subsequent draw, copy, resolve, and similar operations.
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-sample-availability:0:authored:migration-0cfe85050aa78658-0 -->The setter requires programmable sample position Tier 1 or Tier 2 support. Calling it on a device without Tier 1 support causes device removal; resetting the position pattern does not bypass feature availability.<!-- d3d12-review-inline:end:rasterization:N-sample-availability:0:authored:migration-0cfe85050aa78658-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-sample-availability:0:authored:migration-0cfe85050aa78658-0 -->The setter requires programmable sample position Tier 1 or Tier 2 support, including for the `SetSamplePositions(0,0,NULL)` reset. Calling it on a device without Tier 1 support causes device removal.<!-- d3d12-review-inline:end:rasterization:N-sample-availability:0:authored:migration-0cfe85050aa78658-0 --></ins>
 
 #### Parameters
 
@@ -1778,7 +1777,7 @@ Specifies an array of D3D12\_SAMPLE\_POSITION elements. The size of the array is
 
 #### Recording, reset and operation constraints
 
-<ins><!-- d3d12-review-inline:begin:rasterization:N-sample-recording:0:authored:migration-9528765fd370b587-0 -->`SetSamplePositions(0,0,NULL)` restores default positions. This explicit reset is the exception to the nonzero custom-pattern parameter combinations above. The operation otherwise obeys its reported [tier and pattern shape](#programmable-samples).<!-- d3d12-review-inline:end:rasterization:N-sample-recording:0:authored:migration-9528765fd370b587-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:rasterization:N-sample-recording:0:authored:migration-9528765fd370b587-0 -->`SetSamplePositions(0,0,NULL)` restores default positions. This explicit reset is the exception to the nonzero custom-pattern parameter combinations above. Other calls must use a sample count and pattern shape supported by the device's reported [programmable sample positions tier](#programmable-samples).<!-- d3d12-review-inline:end:rasterization:N-sample-recording:0:authored:migration-9528765fd370b587-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:rasterization:N-sample-recording:1:authored:migration-c5fd2da1bd43e2e5-0 -->DIRECT command lists and bundles may set sample positions. COMPUTE/COPY lists may not. Bundles inherit the pattern and changes persist on return. See [Sample positions](command-list-state.md#sample-positions) for initial/reset values and the ClearState exception.<!-- d3d12-review-inline:end:rasterization:N-sample-recording:1:authored:migration-c5fd2da1bd43e2e5-0 --></ins>
 
@@ -1836,8 +1835,9 @@ typedef RECT D3D12_RECT;
 ```
 
 <a id="driver"></a>
+<a id="driver-responsibilities-and-validation-boundaries"></a>
 
-## Driver responsibilities and validation boundaries
+## Driver responsibilities
 
 ```cpp
 typedef VOID(APIENTRY* PFND3D12DDI_SET_DEPTH_BIAS_STATE_0099)(

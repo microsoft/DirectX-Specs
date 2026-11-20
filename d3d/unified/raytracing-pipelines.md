@@ -44,7 +44,7 @@ operates independently of other invocations. So there is no defined
 order of execution of threads with respect to each
 other.
 
-HLSL details are [here](#ray-generation-shader).
+See [Ray generation shader](#ray-generation-shader) for HLSL details.
 
 <a id="raytracing-output"></a>
 
@@ -86,7 +86,7 @@ value.
 Using intersection shaders instead of the <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-intersection-shaders-%2D-procedural-primitive-geometry:1:modified:source-e9294c6493492d53-0-0 -->built<!-- d3d12-review-inline:end:raytracing-pipelines:R-intersection-shaders-%2D-procedural-primitive-geometry:1:modified:source-e9294c6493492d53-0-0 --></ins>-in ray-triangle
 intersection is less efficient but offers far more flexibility.
 
-HLSL details are [here](#intersection-shader).
+See [Intersection shader](#intersection-shader) for HLSL details.
 
 <a id="minor-intersection-shader-details"></a>
 
@@ -151,7 +151,7 @@ Unlike some of the other shader types to be described, any hit shaders
 cannot trace new rays, as doing so here would lead to an unreasonable
 explosion of work for the system.
 
-HLSL details are [here](#any-hit-shader).
+See [Any hit shader](#any-hit-shader) for HLSL details.
 
 <a id="closest-hit-shaders"></a>
 
@@ -170,7 +170,7 @@ closest hit shader (if any). In particular, if both shader types are
 defined for the geometry instance at the closest hit's T value, the any
 hit shader will always run before the closest hit shader.
 
-HLSL details are [here](#closest-hit-shader).
+See [Closest hit shader](#closest-hit-shader) for HLSL details.
 
 <a id="miss-shaders"></a>
 
@@ -181,7 +181,7 @@ specified. Miss shaders can modify ray payload and generate additional
 rays. Since there was no intersection, there are no intersection
 attributes available.
 
-HLSL details are [here](#miss-shader).
+See [Miss shader](#miss-shader) for HLSL details.
 
 <a id="hit-groups"></a>
 
@@ -300,7 +300,7 @@ the types of shaders it contains.
 
 An application might create the same shader multiple times. This could
 be the same code but with same or different export names, potentially
-across separate raytracing pipelines or collections of code (<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-shader-identifier:2:modified:source-0cdf7b6d8dee04da-0-0 -->[state-object types](state-objects.md#state-object-types)<!-- d3d12-review-inline:end:raytracing-pipelines:R-shader-identifier:2:modified:source-0cdf7b6d8dee04da-0-0 --></ins>).
+across separate raytracing pipelines or collections of code (<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-shader-identifier:2:modified:source-0cdf7b6d8dee04da-0-0 -->[state object types](state-objects.md#state-object-types)<!-- d3d12-review-inline:end:raytracing-pipelines:R-shader-identifier:2:modified:source-0cdf7b6d8dee04da-0-0 --></ins>).
 In this case the seemingly identical shaders may or may not return
 the same identifier depending on the implementation. Regardless, execution
 behavior will be consistent with the specified shader code.
@@ -404,7 +404,7 @@ In a given record in a shader table, the root arguments that follow the
 shader identifier must match the local root signature the specified
 shader was compiled with.
 
-<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:N-record-root-owner:0:authored:migration-8fac2cc27d4d0f22-0 -->The arguments following the 32-byte shader identifier use the shared [local root argument layout](binding.md#local-root-argument-layout).<!-- d3d12-review-inline:end:raytracing-pipelines:N-record-root-owner:0:authored:migration-8fac2cc27d4d0f22-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:N-record-root-owner:0:authored:migration-8fac2cc27d4d0f22-0 -->The arguments following the 32-byte shader identifier use the common [local root argument layout](binding.md#local-root-argument-layout).<!-- d3d12-review-inline:end:raytracing-pipelines:N-record-root-owner:0:authored:migration-8fac2cc27d4d0f22-0 --></ins>
 
 <a id="ranges-empty-tables-and-null-identifiers"></a>
 
@@ -461,7 +461,7 @@ uninitialized or contains stale data.
 
 ### Index widths and address bounds
 
-<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:N-index-widths:1:authored:migration-dbb3a454fa4492b3-0 -->For the hit group calculation, the [geometry count limit](acceleration-structures.md#geometry-limits) is 2^24 and the instance contribution has 24 bits. Therefore the greatest index from legal `TraceRay` contributions is `15 + 15 * (2^24 - 1) + (2^24 - 1) = 2^28 - 1`. The intermediate record index does not require unsigned 32-bit wraparound. This is distinct from multiplication by the byte stride and addition to the GPU virtual address. GPU address ranges and strides are 64-bit. The addressing formulas do not grant permission to wrap an overflowing address into an unrelated range: an accessed record outside the supplied table is governed by the undefined out-of-bounds rule.<!-- d3d12-review-inline:end:raytracing-pipelines:N-index-widths:1:authored:migration-dbb3a454fa4492b3-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:N-index-widths:1:authored:migration-dbb3a454fa4492b3-0 -->For the hit group calculation, the [geometry count limit](acceleration-structures.md#geometry-limits) is 2^24 and the instance contribution has 24 bits. Therefore the greatest index from legal `TraceRay` contributions is `15 + 15 * (2^24 - 1) + (2^24 - 1) = 2^28 - 1`. The intermediate record index does not require unsigned 32-bit wraparound. This index bound does not cover multiplication by the byte stride or addition to the GPU virtual address. GPU address ranges and strides are 64-bit. The addressing formulas do not permit an overflowing address to wrap into an unrelated range. Accessing a record outside the supplied table is undefined. See [Out of bounds shader table indexing](#out-of-bounds-shader-table-indexing).<!-- d3d12-review-inline:end:raytracing-pipelines:N-index-widths:1:authored:migration-dbb3a454fa4492b3-0 --></ins>
 
 <a id="ray-recursion-limit"></a>
 
@@ -622,7 +622,7 @@ of which could be invalid values.
 
 <a id="default-stack-boundary-cases-and-incremental-addition"></a>
 
-## Default-stack boundary cases and incremental addition
+### Default-stack boundary cases and incremental addition
 
 <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:N-stack-cases:0:authored:migration-4f1142f701b23d6c-0 -->The default-stack expression is mathematical: at recursion depth zero, `max(MaxTraceRecursionDepth - 1, 0)` is zero, not an unsigned underflow. Writing `H = max(CHSMax, MSMax, ISMax + AHSMax)` and `C = max(CHSMax, MSMax)`, the formula gives:<!-- d3d12-review-inline:end:raytracing-pipelines:N-stack-cases:0:authored:migration-4f1142f701b23d6c-0 --></ins>
 
@@ -642,7 +642,7 @@ of which could be invalid values.
 
 <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:N-stack-cases:2:authored:migration-778e183dfd9ef5ff-0 -->The `ISMax + AHSMax` contribution accounts for an intersection shader suspended while its any-hit shader runs. The [default calculation](#default-pipeline-stack-size) includes this contribution only once because neither shader type recursively traces rays. Callable nesting beyond the default assumption requires an adequate explicit budget even at ray recursion depth zero.<!-- d3d12-review-inline:end:raytracing-pipelines:N-stack-cases:2:authored:migration-778e183dfd9ef5ff-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:N-stack-cases:3:authored:migration-7f05747e730aa67b-0 -->The [incremental-addition contract](state-objects.md#id3d12device7addtostateobject) specifies that the new object inherits the previous object's stack setting, not a recomputed budget for its newly added shaders.<!-- d3d12-review-inline:end:raytracing-pipelines:N-stack-cases:3:authored:migration-7f05747e730aa67b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:N-stack-cases:3:authored:migration-7f05747e730aa67b-0 -->A state object created by [AddToStateObject](state-objects.md#id3d12device7addtostateobject) inherits the stack setting of the existing state object it extends. The stack size is not recomputed for the newly added shaders.<!-- d3d12-review-inline:end:raytracing-pipelines:N-stack-cases:3:authored:migration-7f05747e730aa67b-0 --></ins>
 
 <a id="shader-limitations-resulting-from-independence"></a>
 
@@ -746,7 +746,7 @@ Parameter                           | Definition
 
 ### Recording and validation
 
-<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:N-dispatch-context:0:authored:migration-f0044f87b3c7e356-0 -->Recording errors follow the [Close contract](execution.md#close). `DispatchRays` is forbidden inside an open render pass, whether direct or issued by `ExecuteIndirect`. See the [render pass operation surface](output-merger.md#render-pass-operation-surface).<!-- d3d12-review-inline:end:raytracing-pipelines:N-dispatch-context:0:authored:migration-f0044f87b3c7e356-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:N-dispatch-context:0:authored:migration-f0044f87b3c7e356-0 -->See [Close](execution.md#close) for how recording errors are reported. `DispatchRays` is forbidden inside an open render pass, whether direct or issued by `ExecuteIndirect`. See the [render pass operation surface](output-merger.md#render-pass-operation-surface).<!-- d3d12-review-inline:end:raytracing-pipelines:N-dispatch-context:0:authored:migration-f0044f87b3c7e356-0 --></ins>
 
 <a id="dispatchrays-debug-layer"></a>
 
@@ -760,7 +760,7 @@ Parameter                           | Definition
 
 <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:N-shader-table-access:0:authored:migration-94cb404b5450415c-0 -->Shader tables and the raygeneration record are buffer shader resource reads. With enhanced barriers, the consumer access is `D3D12_BARRIER_ACCESS_SHADER_RESOURCE` and the raytracing execution scope is `D3D12_BARRIER_SYNC_RAYTRACING`. See [barrier access](synchronization.md#barrier-access) and [synchronization scopes](synchronization.md#barrier-sync).<!-- d3d12-review-inline:end:raytracing-pipelines:N-shader-table-access:0:authored:migration-94cb404b5450415c-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:N-shader-table-access:1:authored:migration-3f1048c066e6fabe-0 -->With legacy barriers, shader table memory must be in `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`, as qualified in the member descriptions below. That legacy state is not an additional state assignment for an enhanced barrier consumer. Switching barrier models follows the [model-interoperation contract](synchronization.md#model-interoperation), including its COMMON and completion/flush requirements.<!-- d3d12-review-inline:end:raytracing-pipelines:N-shader-table-access:1:authored:migration-3f1048c066e6fabe-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:N-shader-table-access:1:authored:migration-3f1048c066e6fabe-0 -->With legacy barriers, shader table memory must be in `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE`, as qualified in the member descriptions below. See [Model interoperation](synchronization.md#model-interoperation) for the COMMON, completion and flush requirements that apply when switching barrier models.<!-- d3d12-review-inline:end:raytracing-pipelines:N-shader-table-access:1:authored:migration-3f1048c066e6fabe-0 --></ins>
 
 <a id="d3d12_dispatch_rays_desc"></a>
 
@@ -917,7 +917,7 @@ Current pipeline stack size in bytes.
 
 <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-api-GetPipelineStackSize:4:authored:migration-daa777b93872c494-0 -->Calling this method on a state object other than a raytracing pipeline is invalid, including collections and non-raytracing executable state objects. Such a call returns `UINT32_MAX` promoted to `UINT64`, namely `0x00000000ffffffff`; it does not return a valid zero budget or `UINT64_MAX`.<!-- d3d12-review-inline:end:raytracing-pipelines:R-api-GetPipelineStackSize:4:authored:migration-daa777b93872c494-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-api-GetPipelineStackSize:5 -->The 32-bit sentinel is intentional: in ordinary 64-bit stack budget arithmetic it makes the result too large for `SetPipelineStackSize`, which drops values at or above `0xffffffff`, rather than using `UINT64_MAX`, which can overflow back to an apparently valid small value when added. This is not a guarantee against application narrowing, arbitrary arithmetic or overflow of a 64-bit calculation. The invalid/unresolved-export result of `GetShaderStackSize` is a separate contract with the same poisoning purpose. Valid raytracing pipeline calls return the current pipeline budget, including its initialized default until changed.<!-- d3d12-review-inline:end:raytracing-pipelines:R-api-GetPipelineStackSize:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-api-GetPipelineStackSize:5 -->The 32-bit sentinel is intentional: in ordinary 64-bit stack budget arithmetic it makes the result too large for `SetPipelineStackSize`, which drops values at or above `0xffffffff`, rather than using `UINT64_MAX`, which can overflow back to an apparently valid small value when added. This is not a guarantee against application narrowing, arbitrary arithmetic or overflow of a 64-bit calculation. Valid raytracing pipeline calls return the current pipeline budget, including its initialized default until changed.<!-- d3d12-review-inline:end:raytracing-pipelines:R-api-GetPipelineStackSize:5 --></ins>
 
 <a id="id3d12stateobjectpropertiessetpipelinestacksize"></a>
 
@@ -1030,7 +1030,7 @@ supported in raytracing shader types. See
 
 shader type: `raygeneration`
 
-Overview is [here](#ray-generation-shaders).
+See [Ray generation shaders](#ray-generation-shaders) for an overview.
 
 Ray generation shaders call [TraceRay()](#traceray) to generate rays (aside: [RayQuery::TraceRayInline()](ray-traversal.md#rayquery-tracerayinline) works too, as it can be called from anywhere).
 The initial user-defined ray payload for each ray is provided to the
@@ -1079,7 +1079,7 @@ void raygen_main()
 
 shader type: `intersection`
 
-Overview is [here](#intersection-shaders---procedural-primitive-geometry).
+See [Intersection shaders - procedural primitive geometry](#intersection-shaders---procedural-primitive-geometry) for an overview.
 
 Used to implement custom intersection primitives, the intersection
 shader is invoked for rays intersecting an associated bounding volume
@@ -1143,7 +1143,7 @@ void intersection_main()
 
 shader type: `anyhit`
 
-Overview is [here](#any-hit-shaders).
+See [Any hit shaders](#any-hit-shaders) for an overview.
 
 The any hit shader is invoked when intersections are not opaque. The any
 hit shaders must declare a payload parameter, followed by an attributes
@@ -1208,7 +1208,7 @@ void anyhit_main( inout MyPayload payload, in MyAttributes attr )
 
 shader type: `closesthit`
 
-Overview is [here](#closest-hit-shaders).
+See [Closest hit shaders](#closest-hit-shaders) for an overview.
 
 When the closest hit has been determined or ray intersection search
 [ended](#accepthitandendsearch), the closest hit shader is invoked (if
@@ -1282,7 +1282,7 @@ critical.
 
 shader type: `miss`
 
-Overview is [here](#miss-shaders). The miss shader must include a user
+See [Miss shaders](#miss-shaders) for an overview. The miss shader must include a user
 defined structure typed payload parameter matching the one supplied to
 [TraceRay()](#traceray).
 
@@ -1315,7 +1315,7 @@ void miss_main(inout MyPayload payload)
 
 shader type: `callable`
 
-Overview is [here](#callable-shaders).
+See [Callable shaders](#callable-shaders) for an overview.
 
 The callable shader is invoked from another shader by using the
 [CallShader()](#callshader) intrinsic. There is a parameter structure
@@ -1396,7 +1396,7 @@ void TraceRay(RaytracingAccelerationStructure AccelerationStructure,
 >
 > Parameter                           | Definition
 > ---------                           | ----------
-> `RaytracingAccelerationStructure AccelerationStructure` | Top-level acceleration structure to use. Specifying a NULL acceleration structure forces a miss, see [Additional SRV type](binding.md#acceleration-structure-srvs) for what NULL means here.
+> `RaytracingAccelerationStructure AccelerationStructure` | Top-level acceleration structure to use. Specifying a NULL acceleration structure forces a miss. See [null acceleration structure bindings](binding.md#acceleration-structure-srvs) for what NULL means here.
 > `uint RayFlags` | Valid combination of [Ray flags](ray-traversal.md#ray-flags). Only defined ray flags are propagated by the system, e.g. visible to the [RayFlags()](#rayflags) shader intrinsic.  Presence of unknown flags results in undefined behavior.
 > `uint InstanceInclusionMask` |Bottom 8 bits of InstanceInclusionMask are used to include/reject geometry instances based on the InstanceMask in each [instance](acceleration-structures.md#d3d12_raytracing_instance_desc):<br><br>`if(!((InstanceInclusionMask & InstanceMask) & 0xff)) { ignore intersection }`
 > `uint RayContributionToHitGroupIndex` | Offset to add into [Addressing calculations within shader tables](#addressing-calculations-within-shader-tables) for hit group indexing. Only the bottom 4 bits of this value are used.
@@ -1498,7 +1498,7 @@ The following table shows where system value intrinsics<ins><!-- d3d12-review-in
 
 ### Ray dispatch system values
 
-Launch system values are inputs available to every raytracing shader
+Ray dispatch system values are inputs available to every raytracing shader
 type. They return the values at the ray generation shader instance that
 led to the current shader instance.
 
@@ -1794,9 +1794,9 @@ uint HitKind();
 
 > Motivation:
 >
-> Many raytracing workloads suffer from divergent shader execution and divergent data access because of their stochastic nature. Improving coherence with high-level application-side logic has many drawbacks, both in terms of achievable performance (compared to a hardware-assisted implementation) and developer effort. The DXR API already allows implementations to dynamically schedule shading work triggered by [TraceRay](#traceray) and [CallShader](#callshader), but does not offer a way for the application to control that scheduling in any way.
+> Many raytracing workloads suffer from divergent shader execution and divergent data access because of their stochastic nature. Improving coherence with high-level application-side logic has many drawbacks, both in terms of achievable performance (compared to a hardware-assisted implementation) and developer effort. Implementations can dynamically schedule shading work triggered by [TraceRay](#traceray) and [CallShader](#callshader), but these intrinsics do not let the application control that scheduling.
 >
->Furthermore, the current fused nature of `TraceRay` with its combined execution of traversal, intersection testing, anyhit shading and closesthit or miss shading imposes various restrictions on the programming model that, again, can increase the amount of developer effort and decrease performance. One aspect is that common code, e.g., vertex fetch and interpolation, must be duplicated in all closesthit shaders. This can cause more code to be generated, which is particularly problematic in a divergent execution environment. Furthermore, `TraceRay`'s nature requires that simple visibility rays unnecessarily execute hit shaders in order to access basic information about the hit which must be transferred back to the caller through the payload.
+>Furthermore, the fused nature of `TraceRay` with its combined execution of traversal, intersection testing, anyhit shading and closesthit or miss shading imposes various restrictions on the programming model that, again, can increase the amount of developer effort and decrease performance. One aspect is that common code, e.g., vertex fetch and interpolation, must be duplicated in all closesthit shaders. This can cause more code to be generated, which is particularly problematic in a divergent execution environment. Furthermore, `TraceRay`'s nature requires that simple visibility rays unnecessarily execute hit shaders in order to access basic information about the hit which must be transferred back to the caller through the payload.
 
 <!-- d3d12-review-context:end:raytracing-pipelines:R-shader-execution-reordering:0:modified:migration-6f077705894dc55d-0 -->
 
@@ -1816,16 +1816,16 @@ well as subsequent control flow and data access patterns inside the
 raygeneration shader.
 
 `HitObject` improves the flexibility of the ray tracing pipeline in general.
-First, common code, such as vertex fetch and interpolation, must no longer be
+<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:E-ser-flexibility:0:modified:opus-application -->First, common code, such as vertex fetch and interpolation, need not be
 duplicated in all closesthit shaders. Common code can simply be part of the
 raygeneration shader and execute before closesthit shading. Second, simple
-visibility rays no longer have to invoke hit shaders in order to access basic
-information about the hit, such as the distance to the closest hit. Finally,
+visibility rays need not invoke hit shaders in order to access basic
+information about the hit, such as the distance to the closest hit.<!-- d3d12-review-inline:end:raytracing-pipelines:E-ser-flexibility:0:modified:opus-application --></ins> Finally,
 `HitObject` can be constructed from a [RayQuery](ray-traversal.md#rayquery), which enables
 `MaybeReorderThread` and shader table-based closesthit and miss shading to be combined with
 `RayQuery`.
 
-This feature is a required part of Shader Model 6.9 for devices with raytracing support.  It is also a required part of [D3D12_RAYTRACING_TIER_1_2](devices-and-capabilities.md#raytracing-tiers), though even if a device doesn't support this tier it <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-shader-execution-reordering:5 -->must still support<!-- d3d12-review-inline:end:raytracing-pipelines:R-shader-execution-reordering:5 --></ins> SER if it supports Shader Model 6.9.
+<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-shader-execution-reordering:5 -->Devices that support raytracing and Shader Model 6.9 must support SER, whether or not they support [D3D12_RAYTRACING_TIER_1_2](devices-and-capabilities.md#raytracing-tiers). That tier also requires SER.<!-- d3d12-review-inline:end:raytracing-pipelines:R-shader-execution-reordering:5 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:W-SER-namespace:0:modified:current-namespace -->SER types and intrinsics are in `namespace dx`.<!-- d3d12-review-inline:end:raytracing-pipelines:W-SER-namespace:0:modified:current-namespace --></ins>
 For the sake of legibility, this document only qualifies the namespace
@@ -1999,13 +1999,11 @@ static dx::HitObject dx::HitObject::TraceRay(
 
 See [TraceRay](#traceray) for parameter definitions.
 
-The returned [HitObject](#hitobject) will always encode a hit or a miss, i.e. it will never be a NOP-Hitobject.
+The returned [HitObject](#hitobject) will always encode a hit or a miss, i.e. it will never be a NOP-HitObject.
 
 `HitObject::TraceRay` must not be invoked if the maximum trace recursion depth has been reached.
 
 This function introduces a [reorder point](#reorder-points).
-
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
 
 <a id="hitobject-fromrayquery"></a>
 
@@ -2042,8 +2040,6 @@ static dx::HitObject dx::HitObject::FromRayQuery(
 
 The size of `attr_t` must not exceed `MaxAttributeSizeInBytes` specified in the [D3D12_RAYTRACING_SHADER_CONFIG](state-objects.md#d3d12_raytracing_shader_config).
 
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
-
 <a id="hitobject-makemiss"></a>
 
 ### HitObject MakeMiss
@@ -2063,13 +2059,11 @@ Parameter                           | Definition
 `uint MissShaderIndex` | The miss shader index, used to calculate the address of the shader table record. The miss shader index must reference a valid shader table record. Only the least significant 16 bits of this value are used.
 `RayDesc Ray` | [Ray](ray-traversal.md#ray-description-structure) for the miss.
 
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
-
 <a id="hitobject-makenop"></a>
 
 ### HitObject MakeNop
 
-Construct a NOP-HitObject (no operation) that represents neither a hit nor a miss. This is the same as a default-initialized [HitObject](#hitobject). NOP-Hitobjects can be useful in certain scenarios when combined with [MaybeReorderThread](#maybereorderthread), e.g. when a thread wants to participate in reordering without executing a closesthit or miss shader.
+Construct a NOP-HitObject (no operation) that represents neither a hit nor a miss. This is the same as a default-initialized [HitObject](#hitobject). NOP-HitObjects can be useful in certain scenarios when combined with [MaybeReorderThread](#maybereorderthread), e.g. when a thread wants to participate in reordering without executing a closesthit or miss shader.
 
 ```hlsl
 static dx::HitObject dx::HitObject::MakeNop();
@@ -2078,8 +2072,6 @@ static dx::HitObject dx::HitObject::MakeNop();
 Parameter                           | Definition
 ---------                           | ----------
 `Return: HitObject` | The `HitObject` initialized to a NOP-HitObject.
-
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
 
 <a id="hitobject-invoke"></a>
 
@@ -2112,9 +2104,6 @@ Parameter                           | Definition
 
 <!-- d3d12-review-context:end:raytracing-pipelines:R-hitobject-invoke:4:modified:migration-1a8a91c732a7d6e5-0 -->
 
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
-
-
 <a id="hitobject-ismiss"></a>
 
 ### HitObject IsMiss
@@ -2123,9 +2112,7 @@ This is part of the [Shader Execution Reordering](#shader-execution-reordering) 
 bool dx::HitObject::IsMiss();
 ```
 
-Returns `true` if the [HitObject](#hitobject) encodes a miss. If the `HitObject` encodes a hit or is a NOP-Hitobject, returns `false`.
-
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+Returns `true` if the [HitObject](#hitobject) encodes a miss. If the `HitObject` encodes a hit or is a NOP-HitObject, returns `false`.
 
 <a id="hitobject-ishit"></a>
 
@@ -2135,9 +2122,7 @@ This is part of the [Shader Execution Reordering](#shader-execution-reordering) 
 bool dx::HitObject::IsHit();
 ```
 
-Returns `true` if the [HitObject](#hitobject) encodes a hit. If the `HitObject` encodes a miss or is a NOP-Hitobject, returns `false`.
-
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+Returns `true` if the [HitObject](#hitobject) encodes a hit. If the `HitObject` encodes a miss or is a NOP-HitObject, returns `false`.
 
 <a id="hitobject-isnop"></a>
 
@@ -2147,9 +2132,7 @@ This is part of the [Shader Execution Reordering](#shader-execution-reordering) 
 bool dx::HitObject::IsNop();
 ```
 
-Returns `true` if the [HitObject](#hitobject) is a NOP-Hitobject, otherwise returns `false`.
-
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
+Returns `true` if the [HitObject](#hitobject) is a NOP-HitObject, otherwise returns `false`.
 
 <a id="hitobject-getrayflags"></a>
 
@@ -2176,8 +2159,6 @@ object.
 
 Returns 0 if the [HitObject](#hitobject) is a NOP-HitObject.
 
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
-
 <a id="hitobject-getraytcurrent"></a>
 
 ### HitObject GetRayTCurrent
@@ -2190,8 +2171,6 @@ Returns the parametric ending point for the ray associated with the hit
 object. For a miss, the ending point indicates the maximum initially specified.
 
 Returns 0 if the [HitObject](#hitobject) is a NOP-HitObject.
-
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
 
 <a id="hitobject-getworldrayorigin"></a>
 
@@ -2206,8 +2185,6 @@ Returns the world-space origin for the ray associated with the hit object.
 If the [HitObject](#hitobject) is a NOP-HitObject, all components of the returned `float3`
 will be zero.
 
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
-
 <a id="hitobject-getworldraydirection"></a>
 
 ### HitObject GetWorldRayDirection
@@ -2220,8 +2197,6 @@ Returns the world-space direction for the ray associated with the hit object.
 
 If the [HitObject](#hitobject) is a NOP-HitObject, all components of the returned `float3`
 will be zero.
-
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
 
 <a id="hitobject-getobjectrayorigin"></a>
 
@@ -2238,8 +2213,6 @@ If the [HitObject](#hitobject) encodes a miss, returns the world ray origin.
 If the [HitObject](#hitobject) is a NOP-HitObject, all components of the returned `float3`
 will be zero.
 
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
-
 <a id="hitobject-getobjectraydirection"></a>
 
 ### HitObject GetObjectRayDirection
@@ -2254,8 +2227,6 @@ If the [HitObject](#hitobject) encodes a miss, returns the world ray direction.
 
 If the [HitObject](#hitobject) is a NOP-HitObject, all components of the returned `float3`
 will be zero.
-
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
 
 <a id="hitobject-getobjecttoworld3x4"></a>
 
@@ -2272,8 +2243,6 @@ Returns an identity matrix if the `HitObject` does not encode a hit.
 The only difference between this and [HitObject::GetObjectToWorld4x3](#hitobject-getobjecttoworld4x3) is the
 matrix is transposed – use whichever is convenient.
 
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
-
 <a id="hitobject-getobjecttoworld4x3"></a>
 
 ### HitObject GetObjectToWorld4x3
@@ -2288,8 +2257,6 @@ Returns an identity matrix if the `HitObject` does not encode a hit.
 
 The only difference between this and [HitObject::GetObjectToWorld3x4](#hitobject-getobjecttoworld3x4) is
 the matrix is transposed – use whichever is convenient.
-
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
 
 <a id="hitobject-getworldtoobject3x4"></a>
 
@@ -2306,8 +2273,6 @@ Returns an identity matrix if the `HitObject` does not encode a hit.
 The only difference between this and [HitObject::GetWorldToObject4x3](#hitobject-getworldtoobject4x3) is
 the matrix is transposed – use whichever is convenient.
 
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
-
 <a id="hitobject-getworldtoobject4x3"></a>
 
 ### HitObject GetWorldToObject4x3
@@ -2323,8 +2288,6 @@ Returns an identity matrix if the `HitObject` does not encode a hit.
 The only difference between this and <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-hitobject-getworldtoobject4x3:3:modified:source-a6890cb899d77136-0-0 -->[HitObject::GetWorldToObject3x4](#hitobject-getworldtoobject3x4)<!-- d3d12-review-inline:end:raytracing-pipelines:R-hitobject-getworldtoobject4x3:3:modified:source-a6890cb899d77136-0-0 --></ins> is
 the matrix is transposed – use whichever is convenient.
 
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
-
 <a id="hitobject-getinstanceindex"></a>
 
 ### HitObject GetInstanceIndex
@@ -2336,8 +2299,6 @@ uint dx::HitObject::GetInstanceIndex();
 Returns the instance index of a hit.
 
 Returns 0 if the [HitObject](#hitobject) does not encode a hit.
-
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
 
 <a id="hitobject-getinstanceid"></a>
 
@@ -2351,8 +2312,6 @@ Returns the instance ID of a hit.
 
 Returns 0 if the [HitObject](#hitobject) does not encode a hit.
 
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
-
 <a id="hitobject-getgeometryindex"></a>
 
 ### HitObject GetGeometryIndex
@@ -2364,8 +2323,6 @@ uint dx::HitObject::GetGeometryIndex();
 Returns the geometry index of a hit.
 
 Returns 0 if the [HitObject](#hitobject) does not encode a hit.
-
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
 
 <a id="hitobject-getprimitiveindex"></a>
 
@@ -2379,8 +2336,6 @@ Returns the primitive index of a hit.
 
 Returns 0 if the [HitObject](#hitobject) does not encode a hit.
 
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
-
 <a id="hitobject-gethitkind"></a>
 
 ### HitObject GetHitKind
@@ -2392,8 +2347,6 @@ uint dx::HitObject::GetHitKind();
 Returns the hit kind of a hit. <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-hitobject-gethitkind:2:modified:hit-kind-reference -->See [HitKind](#hitkind) for possible values.<!-- d3d12-review-inline:end:raytracing-pipelines:R-hitobject-gethitkind:2:modified:hit-kind-reference --></ins>
 
 Returns 0 if the [HitObject](#hitobject) does not encode a hit.
-
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
 
 <a id="hitobject-getattributes"></a>
 
@@ -2408,8 +2361,6 @@ void dx::HitObject::GetAttributes(out attr_t Attributes);
 
 If the `HitObject` does not encode a hit, <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-hitobject-getattributes:2 -->`Attributes` will be zero-initialized.<!-- d3d12-review-inline:end:raytracing-pipelines:R-hitobject-getattributes:2 --></ins> The size of `attr_t` must not exceed `MaxAttributeSizeInBytes` specified in the [D3D12_RAYTRACING_SHADER_CONFIG](state-objects.md#d3d12_raytracing_shader_config).
 
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
-
 <a id="hitobject-getshadertableindex"></a>
 
 ### HitObject GetShaderTableIndex
@@ -2418,10 +2369,8 @@ This is part of the [Shader Execution Reordering](#shader-execution-reordering) 
 uint dx::HitObject::GetShaderTableIndex();
 ```
 
-Returns the index used for shader table lookups. If the [HitObject](#hitobject) encodes a hit, the index relates to the hit group table. If the [HitObject](#hitobject) encodes a miss, the index relates to the miss table. If the [HitObject](#hitobject) is a NOP-Hitobject, or a `HitObject` constructed from a `RayQuery` without setting
+Returns the index used for shader table lookups. If the [HitObject](#hitobject) encodes a hit, the index relates to the hit group table. If the [HitObject](#hitobject) encodes a miss, the index relates to the miss table. If the [HitObject](#hitobject) is a NOP-HitObject, or a `HitObject` constructed from a `RayQuery` without setting
 a shader table index, the return value is zero.
-
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
 
 <a id="hitobject-setshadertableindex"></a>
 
@@ -2435,7 +2384,7 @@ Sets the index used for shader table lookups.
 
 Parameter                           | Definition
 ---------                           | ----------
-`uint RecordIndex` | The index into the hit or miss shader table. If the [HitObject](#hitobject) is a NOP-Hitobject, the value is ignored.
+`uint RecordIndex` | The index into the hit or miss shader table. If the [HitObject](#hitobject) is a NOP-HitObject, the value is ignored.
 
 If the `HitObject` encodes a hit, the index relates to the hit group table and only the bottom 28 bits are used:
 
@@ -2455,8 +2404,6 @@ MissRecordAddress =
     MissRecordIndex; // from shader: HitObject::SetShaderTableIndex(RecordIndex)
 ```
 
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
-
 <a id="hitobject-loadlocalroottableconstant"></a>
 
 ### HitObject LoadLocalRootTableConstant
@@ -2469,10 +2416,8 @@ Load a local root table constant from the shader table. The offset is specified 
 
 `RootConstantOffsetInBytes` must be a multiple of 4.
 
-If the [HitObject](#hitobject) is a NOP-Hitobject, or a `HitObject` constructed from a
+If the [HitObject](#hitobject) is a NOP-HitObject, or a `HitObject` constructed from a
 `RayQuery` without setting a shader table index, the return value is zero.
-
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
 
 <a id="maybereorderthread"></a>
 
@@ -2518,7 +2463,7 @@ offset contained in the [HitObject](#hitobject). The respective fields in the `H
 must therefore represent valid instances and shader table offsets.
 <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:R-maybereorderthread-with-hitobject:2:modified:migration-b16128d384badb0a-0 -->NOP-HitObjects are an exception; they do<!-- d3d12-review-inline:end:raytracing-pipelines:R-maybereorderthread-with-hitobject:2:modified:migration-b16128d384badb0a-0 --></ins> not contain information about a hit
 or a miss, but are still legal inputs to `MaybeReorderThread`. Similarly, a
-`HitObject` constructed from a [RayQuery](ray-traversal.md#rayquery) but did not set a shader table
+`HitObject` constructed from a [RayQuery](ray-traversal.md#rayquery) without setting a shader table
 index is exempt from having a valid shader table record.
 
 ```hlsl
@@ -2528,8 +2473,6 @@ void dx::MaybeReorderThread( dx::HitObject Hit );
 Parameter                           | Definition
 ---------                           | ----------
 `HitObject Hit` | [HitObject](#hitobject) that encapsulates the hit or miss according to which reordering should be performed.
-
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
 
 <a id="maybereorderthread-with-coherence-hint"></a>
 
@@ -2555,8 +2498,6 @@ Parameter                           | Definition
 `uint CoherenceHint` | User-defined value that determines the desired ordering of a thread relative to others.
 `uint NumCoherenceHintBitsFromLSB` | Indicates how many of the least significant bits in `CoherenceHint` the implementation should try to take into account. Applications should set this to the lowest value required to represent all possible values of `CoherenceHint` (at the given `MaybeReorderThread` call site). All threads should provide the same value at a given call site to achieve best performance.
 
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
-
 <a id="maybereorderthread-with-hitobject-and-coherence-hint"></a>
 
 ### MaybeReorderThread with HitObject and coherence hint
@@ -2581,8 +2522,6 @@ Parameter                           | Definition
 `HitObject Hit` | [HitObject](#hitobject) that encapsulates the hit or miss according to which reordering should be performed.
 `uint CoherenceHint` | User-defined value that determines the desired ordering of a thread relative to others.
 `uint NumCoherenceHintBitsFromLSB` | Indicates how many of the least significant bits in `CoherenceHint` the implementation should try to take into account. Applications should set this to the lowest value required to represent all possible values of `CoherenceHint` (at the given `MaybeReorderThread` call site). All threads should provide the same value at a given call site to achieve best performance.
-
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
 
 <a id="maybereorderthread-example-1"></a>
 
@@ -2645,7 +2584,7 @@ for( int bounceCount=0; ; bounceCount++ )
 
 ### MaybeReorderThread Example 3
 
-The following pseudocode shows another example of reordering used in the context of path tracing with a slightly different loop structure. In this case, NOP-Hitobject are used in reordering to ensure coherent execution not only of shaders, but also of the code after the loop.
+The following pseudocode shows another example of reordering used in the context of path tracing with a slightly different loop structure. In this case, NOP-HitObjects are used in reordering to ensure coherent execution not only of shaders, but also of the code after the loop.
 
 ```hlsl
 for( int bounceCount=0; ; bounceCount++ )
@@ -2740,7 +2679,7 @@ prioritize reordering through `MaybeReorderThread`.
 
 Some implementations may achieve best performance when `HitObject::TraceRay`,
 `MaybeReorderThread`, and `HitObject::Invoke` are called back-to-back.
-This case is semantically equivalent to DXR 1.0 `TraceRay` but with defined
+This case is semantically equivalent to [TraceRay](#traceray) but with defined
 reordering characteristics.
 The back-to-back combination of `MaybeReorderThread` and `HitObject::Invoke` may
 similarly see a performance benefit on some implementations.
@@ -2762,7 +2701,7 @@ an implementation to replace threads that were inactive at the start of the
 wave or those that exited the shader during execution, as long as any remaining
 thread reaches a reorder point. This may indirectly affect threads that
 conditionally did not invoke a reorder point, as illustrated in the following
-illustrative pseudocode (the scalar mask variables abbreviate the `uint4` result of `WaveActiveBallot`):<!-- d3d12-review-inline:end:raytracing-pipelines:R-reorder-points:11 --></ins>
+pseudocode (the scalar mask variables abbreviate the `uint4` result of `WaveActiveBallot`):<!-- d3d12-review-inline:end:raytracing-pipelines:R-reorder-points:11 --></ins>
 
 ```hlsl
 int MyFunc(int coherenceCoord)
@@ -2787,8 +2726,6 @@ a newly formed full wave, thereby obtaining `A <= B`.
 participating in the reorder may possibly be joined by more threads than were
 removed from the wave, again observing `A <= B`.
 
-This is part of the [Shader Execution Reordering](#shader-execution-reordering) feature.
-
 <a id="reorder-points---memory-coherence-and-visibility"></a>
 
 #### Reorder points - memory coherence and visibility
@@ -2798,8 +2735,8 @@ application must take special care when communicating information across
 reorder points through memory (UAVs). [Shader Execution Reordering](#shader-execution-reordering) adds a
 coherence scope for communication between reorder points within the same
 dispatch index, as follows:
-- A new `[reordercoherent]` storage class for UAVs.
-- A new `REORDER_SCOPE = 0x8` member in the `SEMANTIC_FLAG` enum for use in barriers.
+- A `[reordercoherent]` storage class for UAVs.
+- A `REORDER_SCOPE = 0x8` member in the `SEMANTIC_FLAG` enum for use in barriers.
 
 Specifically, if UAV stores or atomics are performed on one side of a
 reorder point, and on the other side the data is read via non-atomic
@@ -3038,7 +2975,7 @@ HitObject::Invoke( hit, payload );
 
 ## Payload access qualifiers
 
-Shader models 6.6 and 6.7 add payload access qualifiers (PAQs) to the [ray payload structure](#ray-payload-structure). PAQs are annotations which describe the read and write semantics of a payload field, that is, which shader stages read or write a given field. The added semantic information can help implementations reduce register pressure and can avoid spilling of payload state to memory. This incentivizes the use of the narrowest-possible qualifiers for each payload field.
+<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:E-paq-definition:0:modified:opus-application -->Payload access qualifiers (PAQs) are annotations on the [ray payload structure](#ray-payload-structure) which describe the read and write semantics of a payload field, that is, which shader stages read or write a given field.<!-- d3d12-review-inline:end:raytracing-pipelines:E-paq-definition:0:modified:opus-application --></ins> The added semantic information can help implementations reduce register pressure and can avoid spilling of payload state to memory. This incentivizes the use of the narrowest-possible qualifiers for each payload field.
 
 <a id="availability"></a>
 
@@ -3058,11 +2995,11 @@ It is legal to mix annotated and unannotated payloads within the same library / 
 
 ### Payload size
 
-With [payload access qualifiers](#payload-access-qualifiers) (PAQs), the `MaxPayloadSizeInBytes` property of [D3D12_RAYTRACING_SHADER_CONFIG](state-objects.md#d3d12_raytracing_shader_config) is no longer needed.  The field is ignored by drivers if PAQs are enabled (the default per above) in SM 6.7 or higher.
+<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:E-payload-size:0:modified:opus-application -->When [payload access qualifiers](#payload-access-qualifiers) (PAQs) are enabled in SM 6.7 or higher, the `MaxPayloadSizeInBytes` property of [D3D12_RAYTRACING_SHADER_CONFIG](state-objects.md#d3d12_raytracing_shader_config) is not needed. Drivers ignore the field in that case. PAQs are enabled by default in SM 6.7 and higher, as described in [Availability](#availability).<!-- d3d12-review-inline:end:raytracing-pipelines:E-payload-size:0:modified:opus-application --></ins>
 
-For SM 6.7 and higher but with PAQs disabled, `MaxPayloadSizeInBytes` is still used.
+<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:E-payload-size:1:modified:opus-application -->For SM 6.7 and higher with PAQs disabled, drivers use `MaxPayloadSizeInBytes`.<!-- d3d12-review-inline:end:raytracing-pipelines:E-payload-size:1:modified:opus-application --></ins>
 
-For SM 6.6, in order to ease the transition for driver implementers, applications must still set the `MaxPayloadSizeInBytes` regardless of whether PAQs are used or not.
+<ins><!-- d3d12-review-inline:begin:raytracing-pipelines:E-payload-size:2:modified:opus-application -->For SM 6.6, applications must set `MaxPayloadSizeInBytes` whether or not PAQs are used. This eases the transition for driver implementers.<!-- d3d12-review-inline:end:raytracing-pipelines:E-payload-size:2:modified:opus-application --></ins>
 
 <a id="syntax"></a>
 
@@ -3165,7 +3102,7 @@ caller -> anyhit -> (closesthit|miss) -> caller
 ```
 Because multiple [anyhit](#any-hit-shaders) shaders can be executed during the course of a [TraceRay](#traceray) operation, 'anyhit' both precedes and succeeds itself.
 
-A [TraceRay](#traceray) call may not invoke any shaders at all (e.g. a ray that hits triangle geometry marked as opaque, while also specifying the `SKIP_CLOSESTHIT` [ray flag](#rayflags)). In that case, [payload access qualifiers](#payload-access-qualifiers) still apply to the `caller -> caller` transition.
+A [TraceRay](#traceray) call may not invoke any shaders at all (e.g. a ray that hits triangle geometry marked as opaque, while also specifying the `SKIP_CLOSESTHIT` [ray flag](ray-traversal.md#ray-flags)). In that case, [payload access qualifiers](#payload-access-qualifiers) still apply to the `caller -> caller` transition.
 
 The following rules are enforced by the compiler at the payload declaration:
 
@@ -3215,7 +3152,7 @@ struct [raypayload] MyPayload
 
 Here are some guidelines to help developers specify [payload access qualifier](#payload-access-qualifiers) definitions correctly:
 
-1. Does the caller need to initialize the field before calling [TraceRay](#traceray) Add `caller` to `write`.
+1. Does the caller need to initialize the field before calling [TraceRay](#traceray)? Add `caller` to `write`.
 2. Does the caller use the returned field after calling [TraceRay](#traceray) (including in cases like loops)? Add `caller` to `read`.
 3. Does any shader of an [anyhit](#any-hit-shaders)/[closesthit](#closest-hit-shaders)/[miss](#miss-shaders) stage read the field, but no shader in the same stage ever writes it? Add the corresponding shader stage to `read` but not `write`.
 4. Do all shaders of an [anyhit](#any-hit-shaders)/[closesthit](#closest-hit-shaders)/[miss](#miss-shaders) stage write the field unconditionally and never read it? Add the corresponding shader stage to `write` but not `read`.

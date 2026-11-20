@@ -28,15 +28,16 @@ records conversion into an application texture.<!-- d3d12-review-inline:end:vide
 <ins><!-- d3d12-review-inline:begin:video-motion:N-search:0:authored:migration-f62d5465077ab172-0 -->The operation performs a luma-only motion search between the current input
 frame and a reference (past) frame. Microsoft does not specify the details
 of the search algorithm. Search block sizes are 8×8 or 16×16 pixels, as
-reported for the node and input format. The selected vector precision is
-quarter-pixel. The block size is not a search window radius. There is no
-published fixed search radius, tie-breaking rule or guaranteed VR quality
-in this contract. A prior heap may supply hints, not mandatory search results.<!-- d3d12-review-inline:end:video-motion:N-search:0:authored:migration-f62d5465077ab172-0 --></ins>
+reported for the node and input format. Vector precision is
+quarter-pixel. The block size is not a search window radius. This specification
+does not define a fixed search radius or tie-breaking rule, and does not
+guarantee VR quality. A prior heap may supply hints, not mandatory search results.<!-- d3d12-review-inline:end:video-motion:N-search:0:authored:migration-f62d5465077ab172-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-motion:N-search:2:authored:migration-f1a1df4ff9884832-0 -->Motion estimation uses a list and allocator of
 `D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE`, submitted to a VIDEO_ENCODE queue.
-The motion estimator's restriction on concurrent use on distinct queues
-is defined under [driver object lifetime](#motion-driver-objects).<!-- d3d12-review-inline:end:video-motion:N-search:2:authored:migration-f1a1df4ff9884832-0 --></ins>
+The application is responsible for synchronizing use of a motion estimator
+across multiple queue instances. See [driver object lifetime](#motion-driver-objects)
+for the restriction on concurrent execution.<!-- d3d12-review-inline:end:video-motion:N-search:2:authored:migration-f1a1df4ff9884832-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-motion:N-search:3:authored:migration-54e43a80756075ad-0 -->Both motion objects derive from `ID3D12Pageable`.
 The estimator, output and hint heaps, and input, reference and resolved output
@@ -53,8 +54,9 @@ and [Legacy encode barriers](synchronization.md#encode-resource-barrier)
 for transitions, [access](synchronization.md#barrier-access),
 [synchronization scopes](synchronization.md#barrier-sync), and
 [barrier model interoperation](synchronization.md#model-interoperation).
-Neither motion call inserts an application resource
-transition or a cross-queue fence wait.<!-- d3d12-review-inline:end:video-motion:N-search:4:authored:migration-eaccf3a92d4d05c5-0 --></ins>
+The application supplies any resource transitions and cross-queue fence waits
+required by `EstimateMotion` and `ResolveMotionVectorHeap`. Neither call
+inserts them.<!-- d3d12-review-inline:end:video-motion:N-search:4:authored:migration-eaccf3a92d4d05c5-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-motion:N-search:5:authored:migration-45077137965abf9d-0 -->Both `EstimateMotion` and `ResolveMotionVectorHeap` are predicated.
 See [Encode predication](counters-queries-and-predication.md#videoencode-setpredication)
@@ -62,8 +64,8 @@ and the [operation matrix](counters-queries-and-predication.md#predication-opera
 for conditional execution. See [Encode queries](counters-queries-and-predication.md#videoencode-beginquery),
 [timestamp ending](counters-queries-and-predication.md#videoencode-endquery), and
 [query resolution](counters-queries-and-predication.md#videoencode-resolvequerydata)
-for supported query/list/heap combinations and query recording. The encode route supports
-timestamp queries, not a motion estimation statistics or completion query.<!-- d3d12-review-inline:end:video-motion:N-search:5:authored:migration-45077137965abf9d-0 --></ins>
+for supported query/list/heap combinations and query recording. Video encode command lists support timestamp queries, not motion estimation
+statistics or completion queries.<!-- d3d12-review-inline:end:video-motion:N-search:5:authored:migration-45077137965abf9d-0 --></ins>
 
 <a id="motion-capabilities"></a>
 
@@ -88,24 +90,21 @@ uses a fixed payload and `FeatureSupportDataSize` equal to `sizeof` that payload
 
 <ins><!-- d3d12-review-inline:begin:video-motion:N-query:2:authored:migration-38abe344f65373da-0 -->The case names in this table have prefix `D3D12_FEATURE_VIDEO_`.
 `NodeIndex` is a zero-based index, not the creation `NodeMask`.
-The [shared feature area driver contract](#video-feature-area-support)
-defines the decode, process and encode command family obligations.
 Feature area encode support makes the queue/list family available. It is
 not itself support for every motion estimation format or block size.
 `MOTION_ESTIMATOR` establishes the supported tuple: at least one block size
 bit and precision bit must be set, and the size range must contain the inputs.
 For an unsupported format both flags are `NONE` and every size range field
 is zero. A successful query alone is not support.
-The selected baseline input/reference format is `DXGI_FORMAT_NV12`.<!-- d3d12-review-inline:end:video-motion:N-query:2:authored:migration-38abe344f65373da-0 --></ins>
+`DXGI_FORMAT_NV12` is the baseline input and reference format.<!-- d3d12-review-inline:end:video-motion:N-query:2:authored:migration-38abe344f65373da-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-motion:N-query:3:authored:migration-ed0bd3cf774f165b-0 -->The size query reports residency allocations for both the context and opaque
 output heap using the supplied creation parameters. It does not allocate
-either object. The heap and estimator size outputs have distinct names;
-their API field order is not the DDI field order.
+either object. The heap and estimator size outputs have distinct names.
 `Protected` is TRUE for protected input/output operation and FALSE otherwise.
-Narrow protected creation additionally requires motion estimator protected
-resource support on that node. A non-null creation session is not an ordinary
-unprotected object.<!-- d3d12-review-inline:end:video-motion:N-query:3:authored:migration-ed0bd3cf774f165b-0 --></ins>
+Creating an object with a non-null protected resource session also requires
+motion estimator protected resource support on that node. An object created
+with a non-null session is not an ordinary unprotected object.<!-- d3d12-review-inline:end:video-motion:N-query:3:authored:migration-ed0bd3cf774f165b-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-motion:N-query:4:authored:migration-402209c7ec8c8799-0 -->**Scoped runtime validation:** an out-of-range query node returns
 `E_INVALIDARG`. The inspected support path returns no-support outputs for
@@ -170,7 +169,7 @@ HRESULT CreateVideoMotionEstimator(
 
 #### Behavior
 
-Creates an <ins><!-- d3d12-review-inline:begin:video-motion:A1-behavior:0 -->[ID3D12VideoMotionEstimator](#motion-objects)<!-- d3d12-review-inline:end:video-motion:A1-behavior:0 --></ins>, which maintains context for video motion estimation operations.
+Creates an [ID3D12VideoMotionEstimator](#motion-objects), which maintains context for video motion estimation operations.
 
 #### Parameters
 
@@ -180,7 +179,7 @@ Creates an <ins><!-- d3d12-review-inline:begin:video-motion:A1-behavior:0 -->[ID
 
 `pProtectedResourceSession`
 
-<ins><!-- d3d12-review-inline:begin:video-motion:A1-parameters:3 -->A [ID3D12ProtectedResourceSession](resources.md#protected-resource-sessions) for managing access to protected resources.<!-- d3d12-review-inline:end:video-motion:A1-parameters:3 --></ins>
+A [ID3D12ProtectedResourceSession](resources.md#protected-resource-sessions) for managing access to protected resources.
 
 `riid`
 
@@ -221,7 +220,7 @@ Allocates <ins><!-- d3d12-review-inline:begin:video-motion:A2-behavior:0:authore
 
 `pProtectedResourceSession`
 
-<ins><!-- d3d12-review-inline:begin:video-motion:A2-parameters:3 -->A [ID3D12ProtectedResourceSession](resources.md#protected-resource-sessions) for managing access to protected resources.<!-- d3d12-review-inline:end:video-motion:A2-parameters:3 --></ins>
+A [ID3D12ProtectedResourceSession](resources.md#protected-resource-sessions) for managing access to protected resources.
 
 `riid`
 
@@ -247,7 +246,7 @@ D3D12_VIDEO_MOTION_ESTIMATOR_DESC GetDesc();
 
 #### Behavior
 
-Gets the <ins><!-- d3d12-review-inline:begin:video-motion:A3-behavior:0 -->[D3D12_VIDEO_MOTION_ESTIMATOR_DESC](#d3d12-video-motion-estimator-desc)<!-- d3d12-review-inline:end:video-motion:A3-behavior:0 --></ins> structure that was passed into <ins><!-- d3d12-review-inline:begin:video-motion:A3-behavior:0 -->[ID3D12VideoDevice1::CreateVideoMotionEstimator](#motion-create-estimator)<!-- d3d12-review-inline:end:video-motion:A3-behavior:0 --></ins> when the <ins><!-- d3d12-review-inline:begin:video-motion:A3-behavior:0 -->[ID3D12VideoMotionEstimator](#motion-objects)<!-- d3d12-review-inline:end:video-motion:A3-behavior:0 --></ins> was created.
+Gets the [D3D12_VIDEO_MOTION_ESTIMATOR_DESC](#d3d12-video-motion-estimator-desc) structure that was passed into [ID3D12VideoDevice1::CreateVideoMotionEstimator](#motion-create-estimator) when the [ID3D12VideoMotionEstimator](#motion-objects) was created.
 
 #### Return values
 
@@ -268,7 +267,7 @@ HRESULT GetProtectedResourceSession(
 
 #### Behavior
 
-Gets the <ins><!-- d3d12-review-inline:begin:video-motion:A4-behavior:0 -->[ID3D12ProtectedResourceSession](resources.md#protected-resource-sessions)<!-- d3d12-review-inline:end:video-motion:A4-behavior:0 --></ins> that was passed into <ins><!-- d3d12-review-inline:begin:video-motion:A4-behavior:0 -->[ID3D12VideoDevice1::CreateVideoMotionEstimator](#motion-create-estimator)<!-- d3d12-review-inline:end:video-motion:A4-behavior:0 --></ins> when the <ins><!-- d3d12-review-inline:begin:video-motion:A4-behavior:0 -->[ID3D12VideoMotionEstimator](#motion-objects)<!-- d3d12-review-inline:end:video-motion:A4-behavior:0 --></ins> was created.
+Gets the [ID3D12ProtectedResourceSession](resources.md#protected-resource-sessions) that was passed into [ID3D12VideoDevice1::CreateVideoMotionEstimator](#motion-create-estimator) when the [ID3D12VideoMotionEstimator](#motion-objects) was created.
 
 #### Parameters
 
@@ -296,7 +295,7 @@ D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC GetDesc();
 
 #### Behavior
 
-Gets the <ins><!-- d3d12-review-inline:begin:video-motion:A5-behavior:0 -->[D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC](#d3d12-video-motion-vector-heap-desc)<!-- d3d12-review-inline:end:video-motion:A5-behavior:0 --></ins> structure that was passed into <ins><!-- d3d12-review-inline:begin:video-motion:A5-behavior:0 -->[ID3D12VideoDevice1::CreateVideoMotionVectorHeap](#motion-create-heap)<!-- d3d12-review-inline:end:video-motion:A5-behavior:0 --></ins> when the <ins><!-- d3d12-review-inline:begin:video-motion:A5-behavior:0 -->[ID3D12VideoMotionVectorHeap](#motion-objects)<!-- d3d12-review-inline:end:video-motion:A5-behavior:0 --></ins> was created.
+Gets the <ins><!-- d3d12-review-inline:begin:video-motion:A5-behavior:0:occurrence:f71a531939e7-0 -->[D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC](#d3d12-video-motion-vector-heap-desc)<!-- d3d12-review-inline:end:video-motion:A5-behavior:0:occurrence:f71a531939e7-0 --></ins> structure that was passed into <ins><!-- d3d12-review-inline:begin:video-motion:A5-behavior:0:occurrence:f51f5778c5a6-1 -->[ID3D12VideoDevice1::CreateVideoMotionVectorHeap](#motion-create-heap)<!-- d3d12-review-inline:end:video-motion:A5-behavior:0:occurrence:f51f5778c5a6-1 --></ins> when the <ins><!-- d3d12-review-inline:begin:video-motion:A5-behavior:0:occurrence:e296dc6e81f3-2 -->[ID3D12VideoMotionVectorHeap](#motion-objects)<!-- d3d12-review-inline:end:video-motion:A5-behavior:0:occurrence:e296dc6e81f3-2 --></ins> was created.
 
 #### Return values
 
@@ -317,7 +316,7 @@ HRESULT GetProtectedResourceSession(
 
 #### Behavior
 
-Gets the <ins><!-- d3d12-review-inline:begin:video-motion:A6-behavior:0 -->[ID3D12ProtectedResourceSession](resources.md#protected-resource-sessions)<!-- d3d12-review-inline:end:video-motion:A6-behavior:0 --></ins> that was passed into <ins><!-- d3d12-review-inline:begin:video-motion:A6-behavior:0 -->[ID3D12VideoDevice1::CreateVideoMotionVectorHeap](#motion-create-heap)<!-- d3d12-review-inline:end:video-motion:A6-behavior:0 --></ins> when the <ins><!-- d3d12-review-inline:begin:video-motion:A6-behavior:0 -->[ID3D12VideoMotionVectorHeap](#motion-objects)<!-- d3d12-review-inline:end:video-motion:A6-behavior:0 --></ins> was created.
+Gets the <ins><!-- d3d12-review-inline:begin:video-motion:A6-behavior:0:occurrence:40802941a087-0 -->[ID3D12ProtectedResourceSession](resources.md#protected-resource-sessions)<!-- d3d12-review-inline:end:video-motion:A6-behavior:0:occurrence:40802941a087-0 --></ins> that was passed into <ins><!-- d3d12-review-inline:begin:video-motion:A6-behavior:0:occurrence:bd0146456050-1 -->[ID3D12VideoDevice1::CreateVideoMotionVectorHeap](#motion-create-heap)<!-- d3d12-review-inline:end:video-motion:A6-behavior:0:occurrence:bd0146456050-1 --></ins> when the <ins><!-- d3d12-review-inline:begin:video-motion:A6-behavior:0:occurrence:12e6d21afcac-2 -->[ID3D12VideoMotionVectorHeap](#motion-objects)<!-- d3d12-review-inline:end:video-motion:A6-behavior:0:occurrence:12e6d21afcac-2 --></ins> was created.
 
 #### Parameters
 
@@ -337,13 +336,13 @@ This method returns HRESULT.
 
 ## Encode list lifecycle and motion recording
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-recording:0:authored:migration-ddb90077b69dadb0-0 -->`ClearState` resets video recording state without beginning a new recording;
+<ins><!-- d3d12-review-inline:begin:video-motion:N-recording:0:authored:migration-ddb90077b69dadb0-0 -->`ClearState` resets video recording state without beginning a new recording.
 `Reset` starts recording with the supplied encode allocator after a successful
 close. Submission and allocator
 reuse follow [recording and storage](execution.md#command-storage) and
 [completion](execution.md#completion-lifetime).<!-- d3d12-review-inline:end:video-motion:N-recording:0:authored:migration-ddb90077b69dadb0-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-recording:1:authored:migration-1476d6876c765b11-0 -->**Scoped reset state evidence:** shared video list reset and clear state code
+<ins><!-- d3d12-review-inline:begin:video-motion:N-recording:1:authored:migration-1476d6876c765b11-0 -->**Scoped reset state evidence:** common video list reset and clear state code
 disable predication (null predicate, zero offset, `EQUAL_ZERO`) and clear the
 protected session binding on a protection-capable node. They do not clear
 motion vector heap contents or recreate a motion estimator.
@@ -383,7 +382,7 @@ Indicates that recording to the command list has finished.
 
 #### Return values
 
-Type: <ins><!-- d3d12-review-inline:begin:video-motion:A8-returns:0 -->**[HRESULT](devices-and-capabilities.md#api-result-codes)**<!-- d3d12-review-inline:end:video-motion:A8-returns:0 --></ins>
+Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 Returns **S\_OK** if successful; otherwise, returns one of the following values:
 
@@ -391,7 +390,7 @@ Returns **S\_OK** if successful; otherwise, returns one of the following values:
 - **E\_OUTOFMEMORY** if the operating system ran out of memory during recording.
 - **E\_INVALIDARG** if an invalid argument was passed to the command list API during recording.
 
-See <ins><!-- d3d12-review-inline:begin:video-motion:A8-returns:3 -->[Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes)<!-- d3d12-review-inline:end:video-motion:A8-returns:3 --></ins> for other possible return values.
+See [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes) for other possible return values.
 
 #### Runtime validation
 
@@ -419,15 +418,15 @@ Resets a command list back to its initial state as if a new command list was jus
 
 Type: **ID3D12CommandAllocator\***
 
-A pointer to the <ins><!-- d3d12-review-inline:begin:video-motion:A9-parameters:2 -->[ID3D12CommandAllocator](execution.md#command-storage)<!-- d3d12-review-inline:end:video-motion:A9-parameters:2 --></ins> object that the device creates command lists from.
+A pointer to the [ID3D12CommandAllocator](execution.md#command-storage) object that the device creates command lists from.
 
 #### Return values
 
-Type: <ins><!-- d3d12-review-inline:begin:video-motion:A9-returns:0 -->**[HRESULT](devices-and-capabilities.md#api-result-codes)**<!-- d3d12-review-inline:end:video-motion:A9-returns:0 --></ins>
+Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 Returns **S\_OK** if successful; otherwise, returns one of the following values:
 
-- <ins><!-- d3d12-review-inline:begin:video-motion:A9-returns:2 -->**E\_FAIL** if the command list was not in the "closed" state when the **Reset** call was made, or the per-device limit would have been exceeded.<!-- d3d12-review-inline:end:video-motion:A9-returns:2 --></ins>
+- **E\_FAIL** if the command list was not in the "closed" state when the **Reset** call was made, or the per-device limit would have been exceeded.
 - **E\_OUTOFMEMORY** if the operating system ran out of memory.
 - **E\_INVALIDARG** if the allocator is currently being used with another command list in the "recording" state or if the specified allocator was created with the wrong type.
 
@@ -438,8 +437,8 @@ Returns **S\_OK** if successful; otherwise, returns one of the following values:
 <ins><!-- d3d12-review-inline:begin:video-motion:A9-storage:0:authored:migration-1998e434580838e1-0 -->The allocator must have type `D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE`.
 The list can be reset while an earlier execution is in flight, but the
 allocator's memory cannot be reclaimed until its GPU uses finish. A recording
-error returned by `Close` is not repaired by `Reset`. The shared
-[recording lifecycle](execution.md#recording-lifecycle) owns failed-recording handling.<!-- d3d12-review-inline:end:video-motion:A9-storage:0:authored:migration-1998e434580838e1-0 --></ins>
+error returned by `Close` is not repaired by `Reset`. See
+[recording lifecycle](execution.md#recording-lifecycle) for handling failed recordings.<!-- d3d12-review-inline:end:video-motion:A9-storage:0:authored:migration-1998e434580838e1-0 --></ins>
 
 <a id="motion-estimate"></a>
 
@@ -463,15 +462,15 @@ Performs the motion estimation operation.
 
 `pMotionEstimator`
 
-An <ins><!-- d3d12-review-inline:begin:video-motion:A10-parameters:1 -->[ID3D12VideoMotionEstimator](#motion-objects)<!-- d3d12-review-inline:end:video-motion:A10-parameters:1 --></ins> representing the video motion estimator context object.
+An [ID3D12VideoMotionEstimator](#motion-objects) representing the video motion estimator context object.
 
 `pOutputArguments`
 
-A <ins><!-- d3d12-review-inline:begin:video-motion:A10-parameters:3 -->[D3D12_VIDEO_MOTION_ESTIMATOR_OUTPUT](#d3d12-video-motion-estimator-output)<!-- d3d12-review-inline:end:video-motion:A10-parameters:3 --></ins> structure representing the video motion estimation output arguments.
+A [D3D12_VIDEO_MOTION_ESTIMATOR_OUTPUT](#d3d12-video-motion-estimator-output) structure representing the video motion estimation output arguments.
 
 `pInputArguments`
 
-A <ins><!-- d3d12-review-inline:begin:video-motion:A10-parameters:5 -->[D3D12_VIDEO_MOTION_ESTIMATOR_INPUT](#d3d12-video-motion-estimator-input)<!-- d3d12-review-inline:end:video-motion:A10-parameters:5 --></ins> structure representing the video motion estimation input arguments.
+A [D3D12_VIDEO_MOTION_ESTIMATOR_INPUT](#d3d12-video-motion-estimator-input) structure representing the video motion estimation input arguments.
 
 #### Return values
 
@@ -495,7 +494,7 @@ heap's range. This does not independently establish a complete estimator range,
 reference format, hint-compatibility or aliasing validation contract.
 Estimator/output heap node mismatches emit validation diagnostics, but the
 selected function does not set a failure HRESULT in those branches.
-The caller still must satisfy the node associations and creation contracts.
+The caller must satisfy the node associations and creation contracts.
 Protected session compatibility is checked for the estimator, output heap,
 both pictures and a non-null hint heap.<!-- d3d12-review-inline:end:video-motion:A10-constraints:1:authored:migration-5d259e1bf62cd483-0 --></ins>
 
@@ -518,17 +517,17 @@ void ResolveMotionVectorHeap(
 
 #### Behavior
 
-Translates the motion vector output of the <ins><!-- d3d12-review-inline:begin:video-motion:A11-behavior:0 -->[EstimateMotion](#motion-estimate)<!-- d3d12-review-inline:end:video-motion:A11-behavior:0 --></ins> method from hardware-dependent formats into a consistent format defined by the video motion estimation APIs.
+Translates the motion vector output of the [EstimateMotion](#motion-estimate) method from hardware-dependent formats into a consistent format defined by the video motion estimation APIs.
 
 #### Parameters
 
 `pOutputArguments`
 
-A <ins><!-- d3d12-review-inline:begin:video-motion:A11-parameters:1 -->[D3D12_RESOLVE_VIDEO_MOTION_VECTOR_HEAP_OUTPUT](#d3d12-resolve-video-motion-vector-heap-output)<!-- d3d12-review-inline:end:video-motion:A11-parameters:1 --></ins> structure containing the translated motion vectors.
+A [D3D12_RESOLVE_VIDEO_MOTION_VECTOR_HEAP_OUTPUT](#d3d12-resolve-video-motion-vector-heap-output) structure containing the translated motion vectors.
 
 `pInputArguments`
 
-A <ins><!-- d3d12-review-inline:begin:video-motion:A11-parameters:3 -->[D3D12_RESOLVE_VIDEO_MOTION_VECTOR_HEAP_INPUT](#d3d12-resolve-video-motion-vector-heap-input)<!-- d3d12-review-inline:end:video-motion:A11-parameters:3 --></ins> structure containing the motion vectors to translate.
+A [D3D12_RESOLVE_VIDEO_MOTION_VECTOR_HEAP_INPUT](#d3d12-resolve-video-motion-vector-heap-input) structure containing the motion vectors to translate.
 
 #### Return values
 
@@ -544,14 +543,14 @@ The output is the application-provided 2D vector texture at
 selected search block.<!-- d3d12-review-inline:end:video-motion:A11-constraints:0:authored:migration-53d4051aded8f759-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-motion:A11-constraints:1:authored:migration-ed61ef558ad1fd9a-0 -->**Scoped recording validation:** the selected path checks the heap size range,
-a non-reserved 2D destination, one mip and a valid destination subresource;
-it checks protected session compatibility of the heap and texture.
+a non-reserved 2D destination, one mip and a valid destination subresource.
+It also checks protected session compatibility of the heap and texture.
 It diagnoses nonzero Z, an out-of-bounds destination region and an
 incompatible heap node, but the selected branches do not themselves set a
 failure HRESULT. The region check uses integer `PixelWidth / blockSize` and
 `PixelHeight / blockSize`. It is not evidence that partial edge blocks may
 be truncated. Non-block-aligned picture rounding and the treatment of such
-edges remain unestablished; no floor/ceil rule is asserted.<!-- d3d12-review-inline:end:video-motion:A11-constraints:1:authored:migration-ed61ef558ad1fd9a-0 --></ins>
+edges are not established. No floor or ceiling rule is asserted.<!-- d3d12-review-inline:end:video-motion:A11-constraints:1:authored:migration-ed61ef558ad1fd9a-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-motion:A11-constraints:2:authored:migration-88365442a14bda4b-0 -->**Format qualification:** the published resolve contract specifies
 `DXGI_FORMAT_R16G16_SINT`. The inspected validator also accepts
@@ -584,8 +583,8 @@ typedef enum D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE
 >
 > | Constant | Meaning |
 > |---|---|
-> | `D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE_8X8` | Value: *0*. The search block size is 8x8 pixels. |
-> | `D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE_16X16` | Value: *1*. The search block size is 16x16 pixels. |
+> | `D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE_8X8` | The search block size is 8x8 pixels. |
+> | `D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE_16X16` | The search block size is 16x16 pixels. |
 
 <!-- d3d12-review-alert:end:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE:0:modified:migration-dd0f4fc4ffc391ba-0 -->
 
@@ -610,7 +609,7 @@ typedef enum D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE_FLAGS
 >
 > | Constant | Meaning |
 > |---|---|
-> | `D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE_FLAG_NONE` | Value: *0*. Search block size is not supported by the encoder. |
+> | `D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE_FLAG_NONE` | Search block size is not supported by the encoder. |
 > | `D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE_FLAG_8X8` | The encoder supports a search block size of 8x8 pixels. |
 > | `D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE_FLAG_16X16` | The encoder supports a search block size of 16x16 pixels. |
 
@@ -634,7 +633,7 @@ typedef enum D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION
 >
 > | Constant | Meaning |
 > |---|---|
-> | `D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION_QUARTER_PEL` | Value: *0*. The vector precision is quarter-pixel motion. |
+> | `D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION_QUARTER_PEL` | The vector precision is quarter-pixel motion. |
 
 <!-- d3d12-review-alert:end:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION:0:modified:migration-d586d0591ade914d-0 -->
 
@@ -658,7 +657,7 @@ typedef enum D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION_FLAGS
 >
 > | Constant | Meaning |
 > |---|---|
-> | `D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION_FLAG_NONE` | Value: *0*. Vector precision is not supported by the encoder. |
+> | `D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION_FLAG_NONE` | Vector precision is not supported by the encoder. |
 > | `D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION_FLAG_QUARTER_PEL` | The vector precision is quarter-pixel motion. |
 
 <!-- d3d12-review-alert:end:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION_FLAGS:0:modified:migration-b3e250cb4fe185e9-0 -->
@@ -667,7 +666,7 @@ typedef enum D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION_FLAGS
 
 ### D3D12_FEATURE_DATA_VIDEO_FEATURE_AREA_SUPPORT
 
-<ins><!-- d3d12-review-inline:begin:video-motion:weekend-shared-area-api-route:0 -->The shared [command family availability payload](video.md#video-feature-area-support-api) defines this query. Motion estimation's operation-specific payloads follow.<!-- d3d12-review-inline:end:video-motion:weekend-shared-area-api-route:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-motion:weekend-shared-area-api-route:0 -->See [command family availability payload](video.md#video-feature-area-support-api) for this query.<!-- d3d12-review-inline:end:video-motion:weekend-shared-area-api-route:0 --></ins>
 
 <a id="d3d12-feature-data-video-motion-estimator"></a>
 
@@ -690,19 +689,19 @@ In multi-adapter operation, identifies the physical adapter of the device this o
 
 `InputFormat`
 
-A <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR:3 -->[DXGI_FORMAT](formats.md#dxgi-format)<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR:3 --></ins> structure specifying the format of the input resources.
+A [DXGI_FORMAT](formats.md#dxgi-format) structure specifying the format of the input resources.
 
 `BlockSizeFlags`
 
-A bitwise OR combination of values from the <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR:5 -->[D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE_FLAGS](#d3d12-video-motion-estimator-search-block-size-flags)<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR:5 --></ins> enumeration specifying the encoder's supported search block sizes for motion estimation.
+A bitwise OR combination of values from the [D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE_FLAGS](#d3d12-video-motion-estimator-search-block-size-flags) enumeration specifying the encoder's supported search block sizes for motion estimation.
 
 `PrecisionFlags`
 
-A bitwise OR combination of values from the <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR:7 -->[D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION_FLAGS](#d3d12-video-motion-estimator-vector-precision-flags)<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR:7 --></ins> enumeration specifying the encoder's supported vector precision for motion estimation.
+A bitwise OR combination of values from the [D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION_FLAGS](#d3d12-video-motion-estimator-vector-precision-flags) enumeration specifying the encoder's supported vector precision for motion estimation.
 
 `SizeRange`
 
-A <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR:9 -->[D3D12_VIDEO_SIZE_RANGE](video-decode.md#d3d12-video-size-range)<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR:9 --></ins> structure representing the minimum and maximum input size supported by the driver. The driver sets the fields of this structure to zero if motion estimation is unsupported.
+A [D3D12_VIDEO_SIZE_RANGE](video-decode.md#d3d12-video-size-range) structure representing the minimum and maximum input size supported by the driver. The driver sets the fields of this structure to zero if motion estimation is unsupported.
 
 <a id="d3d12-feature-data-video-motion-estimator-size"></a>
 
@@ -730,11 +729,11 @@ In multi-adapter operation, identifies the physical adapter of the device this o
 
 `InputFormat`
 
-A <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:3 -->[DXGI_FORMAT](formats.md#dxgi-format)<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:3 --></ins> structure specifying the format of the input and reference resources.
+A [DXGI_FORMAT](formats.md#dxgi-format) structure specifying the format of the input and reference resources.
 
 `BlockSize`
 
-A value from the <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:5 -->[D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE](#d3d12-video-motion-estimator-search-block-size)<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:5 --></ins> specifying the search block size for motion estimation.
+A value from the [D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE](#d3d12-video-motion-estimator-search-block-size) specifying the search block size for motion estimation.
 
 `Precision`
 
@@ -742,7 +741,7 @@ A value from the <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATUR
 
 `SizeRange`
 
-A <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:9 -->[D3D12_VIDEO_SIZE_RANGE](video-decode.md#d3d12-video-size-range)<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:9 --></ins> structure representing the minimum and maximum input and reference frame size, in pixels, used by the motion estimator.
+A [D3D12_VIDEO_SIZE_RANGE](video-decode.md#d3d12-video-size-range) structure representing the minimum and maximum input and reference frame size, in pixels, used by the motion estimator.
 
 `Protected`
 
@@ -750,19 +749,19 @@ TRUE if the motion estimator operates on protected resource input and produces p
 
 `MotionVectorHeapMemoryPoolL0Size`
 
-The allocation size of the motion vector heap in the L0 memory pool. L0 is the physical system memory pool. When the adapter is discrete/NUMA, this pool has greater bandwidth for the CPU and less bandwidth for the GPU. When the adapter is UMA, this pool is the only one which is valid. For more information, see <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:13 -->[Residency](resources.md#residency)<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:13 --></ins>.
+The allocation size of the motion vector heap in the L0 memory pool. L0 is the physical system memory pool. When the adapter is discrete/NUMA, this pool has greater bandwidth for the CPU and less bandwidth for the GPU. When the adapter is UMA, this pool is the only one which is valid. For more information, see [Residency](resources.md#residency).
 
 `MotionVectorHeapMemoryPoolL1Size`
 
-The allocation size of the motion vector heap in the L1 memory pool. L1 is typically known as the physical video memory pool. L1 is only available when the adapter is discrete/NUMA, and has greater bandwidth for the GPU and cannot even be accessed by the CPU. When the adapter is UMA, this pool is not available. For more information, see <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:15 -->[Residency](resources.md#residency)<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:15 --></ins>.
+The allocation size of the motion vector heap in the L1 memory pool. L1 is typically known as the physical video memory pool. L1 is only available when the adapter is discrete/NUMA, and has greater bandwidth for the GPU and cannot even be accessed by the CPU. When the adapter is UMA, this pool is not available. For more information, see [Residency](resources.md#residency).
 
 `MotionEstimatorMemoryPoolL0Size`
 
-<ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:17 -->The allocation size of the motion estimator<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:17 --></ins> in the L0 memory pool. L0 is the physical system memory pool. When the adapter is discrete/NUMA, this pool has greater bandwidth for the CPU and less bandwidth for the GPU. When the adapter is UMA, this pool is the only one which is valid. For more information, see <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:17 -->[Residency](resources.md#residency)<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:17 --></ins>.
+<ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:17:occurrence:e6eb43b67384-0 -->The allocation size of the motion estimator<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:17:occurrence:e6eb43b67384-0 --></ins> in the L0 memory pool. L0 is the physical system memory pool. When the adapter is discrete/NUMA, this pool has greater bandwidth for the CPU and less bandwidth for the GPU. When the adapter is UMA, this pool is the only one which is valid. For more information, see <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:17:occurrence:ddea3b339504-1 -->[Residency](resources.md#residency)<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:17:occurrence:ddea3b339504-1 --></ins>.
 
 `MotionEstimatorMemoryPoolL1Size`
 
-<ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:19 -->The allocation size of the motion estimator<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:19 --></ins> in the L1 memory pool. L1 is typically known as the physical video memory pool. L1 is only available when the adapter is discrete/NUMA, and has greater bandwidth for the GPU and cannot even be accessed by the CPU. When the adapter is UMA, this pool is not available. For more information, see <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:19 -->[Residency](resources.md#residency)<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:19 --></ins>.
+<ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:19:occurrence:d4287fceaa51-0 -->The allocation size of the motion estimator<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:19:occurrence:d4287fceaa51-0 --></ins> in the L1 memory pool. L1 is typically known as the physical video memory pool. L1 is only available when the adapter is discrete/NUMA, and has greater bandwidth for the GPU and cannot even be accessed by the CPU. When the adapter is UMA, this pool is not available. For more information, see <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:19:occurrence:bfeaf78bc0d8-1 -->[Residency](resources.md#residency)<!-- d3d12-review-inline:end:video-motion:M-D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_SIZE:19:occurrence:bfeaf78bc0d8-1 --></ins>.
 
 <a id="d3d12-video-protected-resource-support-flags"></a>
 
@@ -816,19 +815,19 @@ typedef struct D3D12_VIDEO_MOTION_ESTIMATOR_DESC
 
 `InputFormat`
 
-A value from the <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_DESC:3 -->[DXGI_FORMAT](formats.md#dxgi-format)<!-- d3d12-review-inline:end:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_DESC:3 --></ins> enumeration specifying the format of the input and reference frames.
+A value from the [DXGI_FORMAT](formats.md#dxgi-format) enumeration specifying the format of the input and reference frames.
 
 `BlockSize`
 
-A value from the <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_DESC:5 -->[D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE](#d3d12-video-motion-estimator-search-block-size)<!-- d3d12-review-inline:end:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_DESC:5 --></ins> enumeration specifying the search block size the video motion estimator will use.
+A value from the [D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE](#d3d12-video-motion-estimator-search-block-size) enumeration specifying the search block size the video motion estimator will use.
 
 `Precision`
 
-A value from the <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_DESC:7 -->[D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION](#d3d12-video-motion-estimator-vector-precision)<!-- d3d12-review-inline:end:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_DESC:7 --></ins> enumeration specifying the vector precision the video motion estimator will use.
+A value from the [D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION](#d3d12-video-motion-estimator-vector-precision) enumeration specifying the vector precision the video motion estimator will use.
 
 `SizeRange`
 
-A <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_DESC:9 -->[D3D12_VIDEO_SIZE_RANGE](video-decode.md#d3d12-video-size-range)<!-- d3d12-review-inline:end:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_DESC:9 --></ins> structure representing the minimum and maximum input and reference frame size, in pixels, that the motion estimator will accept.
+A [D3D12_VIDEO_SIZE_RANGE](video-decode.md#d3d12-video-size-range) structure representing the minimum and maximum input and reference frame size, in pixels, that the motion estimator will accept.
 
 <a id="d3d12-video-motion-vector-heap-desc"></a>
 
@@ -852,19 +851,19 @@ typedef struct D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC
 
 `InputFormat`
 
-A value from the <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC:3 -->[DXGI_FORMAT](formats.md#dxgi-format)<!-- d3d12-review-inline:end:video-motion:M-D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC:3 --></ins> enumeration specifying the format of the input and reference frames.
+A value from the [DXGI_FORMAT](formats.md#dxgi-format) enumeration specifying the format of the input and reference frames.
 
 `BlockSize`
 
-A value from the <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC:5 -->[D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE](#d3d12-video-motion-estimator-search-block-size)<!-- d3d12-review-inline:end:video-motion:M-D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC:5 --></ins> enumeration specifying the search block size the video motion estimator will use.
+A value from the [D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE](#d3d12-video-motion-estimator-search-block-size) enumeration specifying the search block size the video motion estimator will use.
 
 `Precision`
 
-A value from the <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC:7 -->[D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION](#d3d12-video-motion-estimator-vector-precision)<!-- d3d12-review-inline:end:video-motion:M-D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC:7 --></ins> enumeration specifying the vector precision the video motion estimator will use.
+A value from the [D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION](#d3d12-video-motion-estimator-vector-precision) enumeration specifying the vector precision the video motion estimator will use.
 
 `SizeRange`
 
-A <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC:9 -->[D3D12_VIDEO_SIZE_RANGE](video-decode.md#d3d12-video-size-range)<!-- d3d12-review-inline:end:video-motion:M-D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC:9 --></ins> structure representing the minimum and maximum input and reference frame size, in pixels, that the motion estimator will accept.
+A [D3D12_VIDEO_SIZE_RANGE](video-decode.md#d3d12-video-size-range) structure representing the minimum and maximum input and reference frame size, in pixels, that the motion estimator will accept.
 
 <a id="d3d12-resource-coordinate"></a>
 
@@ -912,7 +911,7 @@ typedef struct D3D12_VIDEO_MOTION_ESTIMATOR_OUTPUT
 
 An <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_OUTPUT:1 -->[ID3D12VideoMotionVectorHeap](#motion-objects)<!-- d3d12-review-inline:end:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_OUTPUT:1 --></ins> <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_OUTPUT:1:modified:migration-49b8bd67f417337a-1 -->containing the hardware-dependent motion estimation output.<!-- d3d12-review-inline:end:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_OUTPUT:1:modified:migration-49b8bd67f417337a-1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-heap-resolve-link:0:authored:migration-8c31f310b0903195-0 -->The resolved texture representation is defined by [resolve output](#d3d12-resolve-video-motion-vector-heap-output). It is not the opaque heap's layout.<!-- d3d12-review-inline:end:video-motion:N-heap-resolve-link:0:authored:migration-8c31f310b0903195-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-motion:N-heap-resolve-link:0:authored:migration-8c31f310b0903195-0 -->The resolved texture representation is defined by [resolve output](#d3d12-resolve-video-motion-vector-heap-output).<!-- d3d12-review-inline:end:video-motion:N-heap-resolve-link:0:authored:migration-8c31f310b0903195-0 --></ins>
 
 <a id="d3d12-video-motion-estimator-input"></a>
 
@@ -931,7 +930,7 @@ typedef struct D3D12_VIDEO_MOTION_ESTIMATOR_INPUT
 
 `pInputTexture2D`
 
-An <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_INPUT:1 -->[ID3D12Resource](resources.md#resource-storage)<!-- d3d12-review-inline:end:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_INPUT:1 --></ins> representing the current frame. The motion estimation operation applies to the entire frame.
+An [ID3D12Resource](resources.md#resource-storage) representing the current frame. The motion estimation operation applies to the entire frame.
 
 `InputSubresourceIndex`
 
@@ -939,7 +938,7 @@ The base plane of the MIP and array slice to use for the input.
 
 `pReferenceTexture2D`
 
-An <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_INPUT:5 -->[ID3D12Resource](resources.md#resource-storage)<!-- d3d12-review-inline:end:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_INPUT:5 --></ins> representing the reference frame, or past frame, used for motion estimation.
+An [ID3D12Resource](resources.md#resource-storage) representing the reference frame, or past frame, used for motion estimation.
 
 `ReferenceSubresourceIndex`
 
@@ -947,7 +946,7 @@ The base plane of the MIP and array slice to use for the reference.
 
 `pHintMotionVectorHeap`
 
-An <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_INPUT:9 -->[ID3D12VideoMotionVectorHeap](#motion-objects)<!-- d3d12-review-inline:end:video-motion:M-D3D12_VIDEO_MOTION_ESTIMATOR_INPUT:9 --></ins> representing the buffer containing the hardware-dependent output of the previous motion estimator operation which may be used for hinting the current operation. This parameter may be NULL, indicating that previous motion estimator output should not be considered for the current operation.
+An [ID3D12VideoMotionVectorHeap](#motion-objects) representing the buffer containing the hardware-dependent output of the previous motion estimator operation which may be used for hinting the current operation. This parameter may be NULL, indicating that previous motion estimator output should not be considered for the current operation.
 
 <a id="d3d12-resolve-video-motion-vector-heap-output"></a>
 
@@ -974,9 +973,9 @@ components −32768 through 32767, corresponding arithmetically to −8192
 through 8191.75 pixels at that scale. This is a representation range, not a
 guaranteed search displacement, clipping rule or algorithmic search window.
 The block grid corresponds spatially to the original input pictures.
-The sign convention for displacement direction and partial-block edge handling
-are not established by the selected source. They are not inferred from
-component width.<!-- d3d12-review-inline:end:video-motion:N-vector-limits:0:authored:migration-3372404872ac938e-0 --></ins>
+The selected source does not establish the sign convention for displacement
+direction or partial-block edge handling. This specification does not infer
+them from component width.<!-- d3d12-review-inline:end:video-motion:N-vector-limits:0:authored:migration-3372404872ac938e-0 --></ins>
 
 <a id="d3d12-resolve-video-motion-vector-heap-input"></a>
 
@@ -993,7 +992,7 @@ typedef struct D3D12_RESOLVE_VIDEO_MOTION_VECTOR_HEAP_INPUT
 
 `pMotionVectorHeap`
 
-The <ins><!-- d3d12-review-inline:begin:video-motion:M-D3D12_RESOLVE_VIDEO_MOTION_VECTOR_HEAP_INPUT:1 -->[ID3D12VideoMotionVectorHeap](#motion-objects)<!-- d3d12-review-inline:end:video-motion:M-D3D12_RESOLVE_VIDEO_MOTION_VECTOR_HEAP_INPUT:1 --></ins> containing the hardware-dependent data layout of the motion search.
+The [ID3D12VideoMotionVectorHeap](#motion-objects) containing the hardware-dependent data layout of the motion search.
 
 `PixelWidth`
 
@@ -1009,7 +1008,7 @@ The pixel height of the texture that the motion estimation operation was perform
 
 <ins><!-- d3d12-review-inline:begin:video-motion:N-driver-entry:0:authored:migration-2094359687dde675-0 -->The API size query uses NodeIndex and heap size fields first. The DDI uses NodeMask and estimator size fields first. API `pHintMotionVectorHeap` becomes driver `hDrvPreviousMotionVectorHeap`.<!-- d3d12-review-inline:end:video-motion:N-driver-entry:0:authored:migration-2094359687dde675-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-driver-entry:1:authored:migration-c23e49f2c1ce76a0-0 -->The selected _0060 device table slots are
+<ins><!-- d3d12-review-inline:begin:video-motion:N-driver-entry:1:authored:migration-c23e49f2c1ce76a0-0 -->The motion estimation slots in the _0060 device table are
 `pfnCalcPrivateVideoMotionEstimatorSize`, `pfnCreateVideoMotionEstimator`,
 `pfnDestroyVideoMotionEstimator`, `pfnCalcPrivateVideoMotionVectorHeapSize`,
 `pfnCreateVideoMotionVectorHeap`, and `pfnDestroyVideoMotionVectorHeap`.
@@ -1018,7 +1017,7 @@ The encode list _0060 table maps `pfnEstimateMotion` to
 `pfnResolveVideoMotionVectorHeap` to
 `PFND3D12DDI_RESOLVE_VIDEO_MOTION_VECTOR_HEAP_0060`.
 `pfnCloseCommandList` and `pfnResetCommandList` use the common
-`PFND3D12DDI_CLOSECOMMANDLIST` and `PFND3D12DDI_RESETCOMMANDLIST_0040`;
+`PFND3D12DDI_CLOSECOMMANDLIST` and `PFND3D12DDI_RESETCOMMANDLIST_0040`.
 `ClearState` is not a dedicated slot in this table.<!-- d3d12-review-inline:end:video-motion:N-driver-entry:1:authored:migration-c23e49f2c1ce76a0-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-motion:N-driver-entry:2:authored:migration-8820344bfea48710-0 -->Feature `D3D12DDI_FEATURE_VERSION_VIDEO_0060_0` is 14 and requires at least `D3D12DDI_SUPPORTED_0043`. Motion work uses the video encode queue table.<!-- d3d12-review-inline:end:video-motion:N-driver-entry:2:authored:migration-8820344bfea48710-0 --></ins>
@@ -1072,7 +1071,7 @@ typedef struct D3D12DDI_RESOURCE_COORDINATE_0053
 } D3D12DDI_RESOURCE_COORDINATE_0053;
 ```
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-driver-shared-range:0:authored:migration-0abd3bbe77fe9939-0 -->The shared [driver capability definitions](video-decode.md#ddi-capability-payloads) supply `D3D12DDI_VIDEO_SIZE_RANGE_0032`.<!-- d3d12-review-inline:end:video-motion:N-driver-shared-range:0:authored:migration-0abd3bbe77fe9939-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-motion:N-driver-shared-range:0:authored:migration-0abd3bbe77fe9939-0 -->The common [driver capability definitions](video-decode.md#ddi-capability-payloads) supply `D3D12DDI_VIDEO_SIZE_RANGE_0032`.<!-- d3d12-review-inline:end:video-motion:N-driver-shared-range:0:authored:migration-0abd3bbe77fe9939-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-motion:N-driver-protected-gate:0:authored:migration-81e1a08f3c439624-0 -->The protected motion capability case is `D3D12DDICAPS_TYPE_VIDEO_0072_MOTION_ESTIMATOR_PROTECTED_RESOURCES` (30).<!-- d3d12-review-inline:end:video-motion:N-driver-protected-gate:0:authored:migration-81e1a08f3c439624-0 --></ins>
 
@@ -1097,7 +1096,7 @@ typedef struct D3D12DDI_VIDEO_MOTION_ESTIMATOR_PROTECTED_RESOURCES_DATA_0072
 
 ### Driver capability payloads
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-driver-query-protocol:0:authored:migration-ccfcd5f868c7e317-0 -->The shared
+<ins><!-- d3d12-review-inline:begin:video-motion:N-driver-query-protocol:0:authored:migration-ccfcd5f868c7e317-0 -->The common
 [driver capability protocol](video-decode.md#ddi-capability-payloads) defines
 `D3D12DDIARG_VIDEO_GETCAPS_0020` and the
 [video driver entry](video-decode.md#decode-driver) defines
@@ -1113,13 +1112,13 @@ typedef struct D3D12DDI_VIDEO_MOTION_ESTIMATOR_PROTECTED_RESOURCES_DATA_0072
 * <ins><!-- d3d12-review-inline:begin:video-motion:N-driver-query-protocol:1:authored:migration-a3e31706eb380994-3 -->`D3D12DDICAPS_TYPE_VIDEO_0072_MOTION_ESTIMATOR_PROTECTED_RESOURCES` (30)<!-- d3d12-review-inline:end:video-motion:N-driver-query-protocol:1:authored:migration-a3e31706eb380994-3 --></ins>
   uses `D3D12DDI_VIDEO_MOTION_ESTIMATOR_PROTECTED_RESOURCES_DATA_0072`.
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-driver-query-protocol:2:authored:migration-e8d116fa3f0da856-0 -->The negotiated video DDI version selects the payload layout. A shared capability case number does not make `_0053` and `_0060` payloads interchangeable.<!-- d3d12-review-inline:end:video-motion:N-driver-query-protocol:2:authored:migration-e8d116fa3f0da856-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-motion:N-driver-query-protocol:2:authored:migration-e8d116fa3f0da856-0 -->The negotiated video DDI version selects the payload layout. A common capability case number does not make `_0053` and `_0060` payloads interchangeable.<!-- d3d12-review-inline:end:video-motion:N-driver-query-protocol:2:authored:migration-e8d116fa3f0da856-0 --></ins>
 
 The `D3D12DDICAPS_TYPE_VIDEO_0020` <ins><!-- d3d12-review-inline:begin:video-motion:R-69:0:modified:migration-ee20ff68ef58cc41-0 -->enum identifies capability checks for Motion Estimation.<!-- d3d12-review-inline:end:video-motion:R-69:0:modified:migration-ee20ff68ef58cc41-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-motion:R-73:0:modified:migration-3bcf9d40be5bfea9-0 -->`D3D12DDICAPS_TYPE_VIDEO_0053_FEATURE_AREA_SUPPORT`<!-- d3d12-review-inline:end:video-motion:R-73:0:modified:migration-3bcf9d40be5bfea9-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:video-motion:weekend-family-capability-route:0 -->The [shared command family capability contract](video.md#video-feature-area-support-driver) owns family availability, required table population and `pfnGetCaps` support.<!-- d3d12-review-inline:end:video-motion:weekend-family-capability-route:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-motion:weekend-family-capability-route:0 -->The [common command family capability contract](video.md#video-feature-area-support-driver) owns family availability, required table population and `pfnGetCaps` support.<!-- d3d12-review-inline:end:video-motion:weekend-family-capability-route:0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-motion:R-78:0:modified:migration-e4a26fdf99cc99b5-0 -->`D3D12DDICAPS_TYPE_VIDEO_0053_MOTION_ESTIMATOR`<!-- d3d12-review-inline:end:video-motion:R-78:0:modified:migration-e4a26fdf99cc99b5-0 --></ins>
 
@@ -1133,7 +1132,7 @@ Checks for Motion Estimator object sizes.  D3D12 applications are given a budget
 
 #### D3D12DDI_VIDEO_FEATURE_AREA_SUPPORT_DATA_0053
 
-<ins><!-- d3d12-review-inline:begin:video-motion:weekend-shared-area-ddi-route:0 -->The shared [driver command family capability contract](video.md#video-feature-area-support-driver) defines this payload and every decode/process/encode table, predication, timestamp and history-buffer obligation.<!-- d3d12-review-inline:end:video-motion:weekend-shared-area-ddi-route:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-motion:weekend-shared-area-ddi-route:0 -->The common [driver command family capability contract](video.md#video-feature-area-support-driver) defines this payload and every decode/process/encode table, predication, timestamp and history-buffer obligation.<!-- d3d12-review-inline:end:video-motion:weekend-shared-area-ddi-route:0 --></ins>
 
 #### D3D12DDI_VIDEO_MOTION_ESTIMATOR_DATA_0060
 
@@ -1242,21 +1241,19 @@ This object must support `PFND3D12DDI_MAKERESIDENT` and `PFND3D12DDI_EVICT`.
 
 #### Get Debug Allocation Info
 
-This object must support the `PFND3D12DDI_GET_DEBUG_ALLOCATION_INFO` DDI. This pre-existing DDI returns the associated kernel mode allocation handles and GPU Virtual Address ranges.
+This object must support the `PFND3D12DDI_GET_DEBUG_ALLOCATION_INFO` DDI. <ins><!-- d3d12-review-inline:begin:video-motion-estimation:E-estimator-debug:0:modified:opus-application -->This DDI returns the associated kernel mode allocation handles and GPU Virtual Address ranges.<!-- d3d12-review-inline:end:video-motion-estimation:E-estimator-debug:0:modified:opus-application --></ins>
 
 #### Query Size
 
 D3D12 applications manage a memory budget and may need to know the size of the motion estimator to do so. See the `D3D12DDICAPS_TYPE_VIDEO_0053_MOTION_ESTIMATOR_SIZE` caps check.
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-handle-266:0:authored:migration-b0e264bfa1ca0d96-0 -->`D3D12DDI_HVIDEOMOTIONESTIMATOR_0053` is the driver handle. Its `D3D12DDI_HANDLETYPE` value is `D3D12DDI_HT_0053_VIDEO_MOTION_ESTIMATOR = 45`.<!-- d3d12-review-inline:end:video-motion:N-handle-266:0:authored:migration-b0e264bfa1ca0d96-0 --></ins>
+#### Handle
 
-<ins><!-- d3d12-review-inline:begin:video-motion:R-279:0:modified:migration-596820b253781147-0 -->A handle and Handle Type are defined<!-- d3d12-review-inline:end:video-motion:R-279:0:modified:migration-596820b253781147-0 --></ins> for the motion estimator object.
+<ins><!-- d3d12-review-inline:begin:video-motion:N-handle-266:0:authored:migration-b0e264bfa1ca0d96-0 -->`D3D12DDI_HVIDEOMOTIONESTIMATOR_0053` is the driver handle. Its `D3D12DDI_HANDLETYPE` value is `D3D12DDI_HT_0053_VIDEO_MOTION_ESTIMATOR = 45`.<!-- d3d12-review-inline:end:video-motion:N-handle-266:0:authored:migration-b0e264bfa1ca0d96-0 --></ins>
 
 #### Creating the Motion Estimator
 
-These methods create a motion estimator instance.
-
-#### D3D12DDIARG_CREATE_VIDEO_MOTION_ESTIMATOR_0060
+##### D3D12DDIARG_CREATE_VIDEO_MOTION_ESTIMATOR_0060
 
 ```cpp
 typedef struct D3D12DDIARG_CREATE_VIDEO_MOTION_ESTIMATOR_0060
@@ -1296,7 +1293,7 @@ Indicates the minimum and maximum size of the inputs to the motion estimation op
 
 Indicates the protected resource session to use for the motion estimator. This can inform internal allocations for the motion estimator. This value is NULL if the motion estimator will operate on unprotected resources.
 
-#### PFND3D12DDI_CALCPRIVATEVIDEOMOTIONESTIMATORSIZE_0060
+##### PFND3D12DDI_CALCPRIVATEVIDEOMOTIONESTIMATORSIZE_0060
 
 ```cpp
 typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEVIDEOMOTIONESTIMATORSIZE_0060 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_MOTION_ESTIMATOR_0060* pArgs);
@@ -1304,7 +1301,7 @@ typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEVIDEOMOTIONESTIMATORSIZE_0060 
 
 The D3D runtime allocates memory for storing the <ins><!-- d3d12-review-inline:begin:video-motion:R-325:0:modified:source-972a2c14126e86d4-0-0 -->driver's CPU<!-- d3d12-review-inline:end:video-motion:R-325:0:modified:source-972a2c14126e86d4-0-0 --></ins> object representing the motion estimator. This method is used to calculate the driver object size.
 
-#### PFND3D12DDI_CREATEVIDEOMOTIONESTIMATOR_0060
+##### PFND3D12DDI_CREATEVIDEOMOTIONESTIMATOR_0060
 
 ```cpp
 typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEOMOTIONESTIMATOR_0060 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_MOTION_ESTIMATOR_0060* pArgs, D3D12DDI_HVIDEOMOTIONESTIMATOR_0053 hDrvMotionEstimator);
@@ -1314,7 +1311,7 @@ Creates the Motion Estimator.
 
 #### Destroy the Motion Estimator
 
-#### PFND3D12DDI_DESTROYVIDEOMOTIONESTIMATOR_0053
+##### PFND3D12DDI_DESTROYVIDEOMOTIONESTIMATOR_0053
 
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYVIDEOMOTIONESTIMATOR_0053 )( D3D12DDI_HDEVICE hDrvDevice, D3D12DDI_HVIDEOMOTIONESTIMATOR_0053 hDrvMotionEstimator );
@@ -1332,21 +1329,19 @@ This object must support `PFND3D12DDI_MAKERESIDENT` and `PFND3D12DDI_EVICT`.
 
 #### Get Debug Allocation Info
 
-This object must support the `PFND3D12DDI_GET_DEBUG_ALLOCATION_INFO` DDI. This pre-existing DDI returns the associated kernel mode allocation handles and GPU Virtual Address ranges.
+This object must support the `PFND3D12DDI_GET_DEBUG_ALLOCATION_INFO` DDI. <ins><!-- d3d12-review-inline:begin:video-motion-estimation:E-vector-heap-debug:0:modified:opus-application -->This DDI returns the associated kernel mode allocation handles and GPU Virtual Address ranges.<!-- d3d12-review-inline:end:video-motion-estimation:E-vector-heap-debug:0:modified:opus-application --></ins>
 
 #### Query Size
 
 D3D12 applications manage a memory budget and may need to know the size of the motion vector heap to do so. See the `D3D12DDICAPS_TYPE_VIDEO_0053_MOTION_ESTIMATOR_SIZE` caps check.
 
-<ins><!-- d3d12-review-inline:begin:video-motion:N-handle-359:0:authored:migration-011c47b68f9df794-0 -->`D3D12DDI_HVIDEOMOTIONVECTORHEAP_0053` is the driver handle. Its `D3D12DDI_HANDLETYPE` value is `D3D12DDI_HT_0053_VIDEO_MOTION_VECTOR_HEAP = 46`.<!-- d3d12-review-inline:end:video-motion:N-handle-359:0:authored:migration-011c47b68f9df794-0 --></ins>
+#### Handle
 
-<ins><!-- d3d12-review-inline:begin:video-motion:R-372:0:modified:migration-da5f6d148bfdaa9c-0 -->A handle and Handle Type are defined<!-- d3d12-review-inline:end:video-motion:R-372:0:modified:migration-da5f6d148bfdaa9c-0 --></ins> for the motion vector heap object.
+<ins><!-- d3d12-review-inline:begin:video-motion:N-handle-359:0:authored:migration-011c47b68f9df794-0 -->`D3D12DDI_HVIDEOMOTIONVECTORHEAP_0053` is the driver handle. Its `D3D12DDI_HANDLETYPE` value is `D3D12DDI_HT_0053_VIDEO_MOTION_VECTOR_HEAP = 46`.<!-- d3d12-review-inline:end:video-motion:N-handle-359:0:authored:migration-011c47b68f9df794-0 --></ins>
 
 #### Creating the Motion Vector Heap
 
-These methods create a motion <ins><!-- d3d12-review-inline:begin:video-motion:R-376:0:modified:source-151bf1899e63936e-0-0 -->vector heap<!-- d3d12-review-inline:end:video-motion:R-376:0:modified:source-151bf1899e63936e-0-0 --></ins> instance.
-
-#### D3D12DDIARG_CREATE_VIDEO_MOTION_VECTOR_HEAP_0060
+##### D3D12DDIARG_CREATE_VIDEO_MOTION_VECTOR_HEAP_0060
 
 ```cpp
 typedef struct D3D12DDIARG_CREATE_VIDEO_MOTION_VECTOR_HEAP_0060
@@ -1386,7 +1381,7 @@ Indicates the minimum and maximum size of the inputs to the motion estimation op
 
 Indicates the protected resource session to use for the motion vector heap. This can inform if internal allocations must be allocated as protected. This value is NULL if the motion estimation operation will operate on only unprotected resources.
 
-#### PFND3D12DDI_CALCPRIVATEVIDEOMOTIONVECTORHEAPSIZE_0060
+##### PFND3D12DDI_CALCPRIVATEVIDEOMOTIONVECTORHEAPSIZE_0060
 
 ```cpp
 typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEVIDEOMOTIONVECTORHEAPSIZE_0060 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_MOTION_VECTOR_HEAP_0060* pArgs);
@@ -1394,7 +1389,7 @@ typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEVIDEOMOTIONVECTORHEAPSIZE_0060
 
 The D3D runtime allocates memory for storing the <ins><!-- d3d12-review-inline:begin:video-motion:R-418:0:modified:source-6ecf5036c73e12ff-0-0 -->driver's CPU<!-- d3d12-review-inline:end:video-motion:R-418:0:modified:source-6ecf5036c73e12ff-0-0 --></ins> object representing the motion vector heap. This method is used to calculate the driver object size.
 
-#### PFND3D12DDI_CREATEVIDEOMOTIONVECTORHEAP_0060
+##### PFND3D12DDI_CREATEVIDEOMOTIONVECTORHEAP_0060
 
 ```cpp
 typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEOMOTIONVECTORHEAP_0060 )( D3D12DDI_HDEVICE hDrvDevice, _In_ CONST D3D12DDIARG_CREATE_VIDEO_MOTION_VECTOR_HEAP_0060* pArgs, D3D12DDI_HVIDEOMOTIONVECTORHEAP_0053 hDrvMotionEstimator);
@@ -1404,7 +1399,7 @@ Creates the Motion Vector Heap.  This object represents the hardware dependent o
 
 #### Destroy the Motion Vector Heap
 
-#### PFND3D12DDI_DESTROYVIDEOMOTIONVECTORHEAP_0053
+##### PFND3D12DDI_DESTROYVIDEOMOTIONVECTORHEAP_0053
 
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYVIDEOMOTIONVECTORHEAP_0053 )( D3D12DDI_HDEVICE hDrvDevice, D3D12DDI_HVIDEOMOTIONVECTORHEAP_0053 hDrvMotionEstimator );

@@ -15,15 +15,13 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:gs-so:PC-stage-creation-owner:0:authored:migration-a5c1f33ead582deb-0 -->[Geometry shader/stream output driver creation](pipeline-state.md#driver-shader-objects) · [Device slots](pipeline-state.md#driver-object-slots).<!-- d3d12-review-inline:end:gs-so:PC-stage-creation-owner:0:authored:migration-a5c1f33ead582deb-0 --></ins>
-
 <a id="geometry-shader"></a>
 
 ## Geometry shader
 
 <ins><!-- d3d12-review-inline:begin:gs-so:N-selection:0:authored:migration-cde579bc87317314-0 -->The graphics PSO selects the geometry shader and stream output declaration. Geometry input comes from vertex processing or the tessellator/domain shader path. Stream output can also capture the last active vertex processing stage when no GS is selected.<!-- d3d12-review-inline:end:gs-so:N-selection:0:authored:migration-cde579bc87317314-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-representation:0:authored:migration-34b559ea7afee7f1-0 -->The register names and legacy instruction spellings used in the inherited descriptions are DXBC notation. [DXIL geometry shader processing](#gs-dxil-model) defines its peer entry/signature model.<!-- d3d12-review-inline:end:gs-so:N-representation:0:authored:migration-34b559ea7afee7f1-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:N-representation:0:authored:migration-34b559ea7afee7f1-0 -->The register names and legacy instruction spellings in this chapter are DXBC notation. See [DXIL geometry shader processing](#gs-dxil-model) for the DXIL entry function, signatures and output operations.<!-- d3d12-review-inline:end:gs-so:N-representation:0:authored:migration-34b559ea7afee7f1-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:gs-so:O-instructions:0 -->The DXBC Geometry Shader instruction set is listed in the [instruction reference](../archive/D3D11_3_FunctionalSpec.htm#GSInstructionSet).<!-- d3d12-review-inline:end:gs-so:O-instructions:0 --></ins>
 
@@ -41,29 +39,29 @@
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-instancing:0 -->An alternate method of invoking the Geometry Shader is via instancing. A GS Instancing [declaration](../archive/D3D11_3_FunctionalSpec.htm#inst_vGSInstanceIDDCL) specifies a (fixed) number of times for the GS to be invoked for each primitive. Each instance that executes is identified by a GS instance ID value [0...n-1], and the outputs of each GS instance are appended to the end of the outputs of the previous invocation (with an implicit cut of the topology between instances - see the description of cutting further below). The maximum instance count that can be declared is 32, but for a full explanation of constraints of GS instancing, see the description of the GS instancing [declaration](../archive/D3D11_3_FunctionalSpec.htm#inst_vGSInstanceIDDCL).<!-- d3d12-review-inline:end:gs-so:H-instancing:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-instance-limits:0:authored:migration-75c79716b1b6eaef-0 -->The declared GS instance count is 1 through 32. Without instancing there is one logical invocation per input primitive. The declared maximum output vertex count applies per instance, and its product with the instance count must not exceed `D3D12_GS_MAX_OUTPUT_VERTEX_COUNT_ACROSS_INSTANCES` (1024). This vertex count restriction is separate from the output component budget. Instance outputs appear as if instance IDs ran from zero upward, with an implicit topology cut between instances. This does not require physical shader invocation serialization.<!-- d3d12-review-inline:end:gs-so:N-instance-limits:0:authored:migration-75c79716b1b6eaef-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:N-instance-limits:0:authored:migration-75c79716b1b6eaef-0 -->The declared GS instance count is 1 through 32. The declared maximum output vertex count applies per instance. Its product with the instance count must not exceed `D3D12_GS_MAX_OUTPUT_VERTEX_COUNT_ACROSS_INSTANCES` (1024). This limit is in addition to the output data limit in [Emission, cuts and output limits](#gs-output). Instance outputs appear as if instances ran in increasing instance ID order. Implementations need not execute instances serially.<!-- d3d12-review-inline:end:gs-so:N-instance-limits:0:authored:migration-75c79716b1b6eaef-0 --></ins>
 
 <a id="gs-statistics"></a>
 
 ### Invocation statistics
 
-<ins><!-- d3d12-review-inline:begin:gs-so:QF-gs-stats:0:authored:migration-5fa59fb0c69c533a-0 -->The [pipeline statistics contract](counters-queries-and-predication.md#pipeline-statistics) defines GSInvocations, including the GS instance multiplicity defined above.<!-- d3d12-review-inline:end:gs-so:QF-gs-stats:0:authored:migration-5fa59fb0c69c533a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:QF-gs-stats:0:authored:migration-5fa59fb0c69c533a-0 -->See [Pipeline statistics](counters-queries-and-predication.md#pipeline-statistics) for how GSInvocations counts GS instances.<!-- d3d12-review-inline:end:gs-so:QF-gs-stats:0:authored:migration-5fa59fb0c69c533a-0 --></ins>
 
 <a id="gs-output"></a>
 
 ### Emission, cuts and output limits
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-output:0 -->The Geometry Shader outputs data one vertex at a time using the ["emit"](../archive/D3D11_3_FunctionalSpec.htm#inst_EMIT) command. The topology of these vertices is determined by a fixed [declaration](../archive/D3D11_3_FunctionalSpec.htm#inst_outputTopologyDCL), choosing one of: pointlist, linestrip, or trianglestrip as the output for the GS. Strips can be restarted by using the ["cut"](../archive/D3D11_3_FunctionalSpec.htm#inst_CUT) command, which ends the current strip at the last emitted vertex, so that the next emitted vertex begins a new strip. The ["emitThenCut"](../archive/D3D11_3_FunctionalSpec.htm#inst_EMITTHENCUT) instruction both emits a vertex, and stops the current strip on this vertex, so that the next vertex that is emitted begins a new strip. For pointlist output, "cut" has no effect (including the "cut" part of "emitThenCut").<!-- d3d12-review-inline:end:gs-so:H-output:0 --></ins>
+The Geometry Shader outputs data one vertex at a time using the ["emit"](../archive/D3D11_3_FunctionalSpec.htm#inst_EMIT) command. The topology of these vertices is determined by a fixed [declaration](../archive/D3D11_3_FunctionalSpec.htm#inst_outputTopologyDCL), choosing one of: pointlist, linestrip, or trianglestrip as the output for the GS. Strips can be restarted by using the ["cut"](../archive/D3D11_3_FunctionalSpec.htm#inst_CUT) command, which ends the current strip at the last emitted vertex, so that the next emitted vertex begins a new strip. The ["emitThenCut"](../archive/D3D11_3_FunctionalSpec.htm#inst_EMITTHENCUT) instruction both emits a vertex, and stops the current strip on this vertex, so that the next vertex that is emitted begins a new strip. For pointlist output, "cut" has no effect (including the "cut" part of "emitThenCut").
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-output:1 -->The outputs of a given invocation of the Geometry Shader are independent of other invocations (though [ordering](../archive/D3D11_3_FunctionalSpec.htm#FixedOrder) is respected). A Geometry Shader emitting triangle strips will start a new strip on every invocation. In addition, as mentioned above, an invocation of the Geometry Shader can produce multiple separate strips using "cut"s.<!-- d3d12-review-inline:end:gs-so:H-output:1 --></ins>
+The outputs of a given invocation of the Geometry Shader are independent of other invocations (though [ordering](../archive/D3D11_3_FunctionalSpec.htm#FixedOrder) is respected). A Geometry Shader emitting triangle strips will start a new strip on every invocation. In addition, as mentioned above, an invocation of the Geometry Shader can produce multiple separate strips using "cut"s.
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-output:2 -->The Geometry Shader must declare the maximum number of vertices an invocation of the Shader will output. The total amount of data that a Geometry Shader invocation can produce is 1024 32-bit values. In the DXBC register model, the calculation of the output record with one or more streams is as follows: Given that each stream declares its outputs in its own clean slate view of the full output register set, the total output record size is the number of scalars in the union of all the stream declarations. This size multiplied by the max output vertex count must not exceed 1024. When Geometry Shader instancing is used, the Stream Output record size restriction applies to each instance individually.<!-- d3d12-review-inline:end:gs-so:H-output:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-output:3 -->The limit on Geometry Shader output is based on how many "emit" calls the Shader makes. The limit on Geometry Shader output is not affected in any way by the size of the output buffer(s) that are present or whether or not they have even been bound. Even if no output Buffers happen to be bound to a Stream and a vertex is output (and therefore dropped), it still counts against the limit.<!-- d3d12-review-inline:end:gs-so:H-output:3 --></ins>
+The limit on Geometry Shader output is based on how many "emit" calls the Shader makes. The limit on Geometry Shader output is not affected in any way by the size of the output buffer(s) that are present or whether or not they have even been bound. Even if no output Buffers happen to be bound to a Stream and a vertex is output (and therefore dropped), it still counts against the limit.
 
 Hardware must enforce the limit above by stopping writes if the Geometry Shader program continues after emitting the declared maximum number of vertices.
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-output:5 -->See the documentation of the GS maximum output vertex count [declaration](../archive/D3D11_3_FunctionalSpec.htm#inst_maxOutputVertexCount), as well as the GS Instancing [declaration](../archive/D3D11_3_FunctionalSpec.htm#inst_vGSInstanceIDDCL) for more details.<!-- d3d12-review-inline:end:gs-so:H-output:5 --></ins>
+See the documentation of the GS maximum output vertex count [declaration](../archive/D3D11_3_FunctionalSpec.htm#inst_maxOutputVertexCount), as well as the GS Instancing [declaration](../archive/D3D11_3_FunctionalSpec.htm#inst_vGSInstanceIDDCL) for more details.
 
 <a id="gs-output-data"></a>
 
@@ -71,11 +69,11 @@ Hardware must enforce the limit above by stopping writes if the Geometry Shader 
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-output-data:0 -->In DXBC, the o# registers to be written by the Geometry Shader must be declared (e.g. "dcl_output o[3].xyz"). The set of these declarations defines which registers are read when an ["emit"](../archive/D3D11_3_FunctionalSpec.htm#inst_EMIT) command is issued, defining a vertex. Therefore, all vertices emitted by the Geometry Shader have the same data layout.<!-- d3d12-review-inline:end:gs-so:H-output-data:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-output-data:1 -->When a Geometry Shader output is identified as a [System Interpreted Value](../archive/D3D11_3_FunctionalSpec.htm#SystemInterpretedValues) (e.g. "renderTargetArrayIndex" or "position"), hardware looks at this data and performs some behavior dependent on the value, in addition to being able to pass the data itself to the next Shader stage for input. When such data output from the Geometry Shader has meaning to the hardware on a per-primitive basis (such as "renderTargetArrayIndex" or "ViewportArrayIndex"), rather than on a per-vertex basis (such as "clipDistance" or "position"), the per-primitive data is taken from the [Leading Vertex](vertex-processing.md#leading-vertex) emitted for the primitive.<!-- d3d12-review-inline:end:gs-so:H-output-data:1 --></ins>
+When a Geometry Shader output is identified as a [System Interpreted Value](../archive/D3D11_3_FunctionalSpec.htm#SystemInterpretedValues) (e.g. "renderTargetArrayIndex" or "position"), hardware looks at this data and performs some behavior dependent on the value, in addition to being able to pass the data itself to the next Shader stage for input. When such data output from the Geometry Shader has meaning to the hardware on a per-primitive basis (such as "renderTargetArrayIndex" or "ViewportArrayIndex"), rather than on a per-vertex basis (such as "clipDistance" or "position"), the per-primitive data is taken from the [Leading Vertex](vertex-processing.md#leading-vertex) emitted for the primitive.
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-output-data:2:authored:migration-1aa52b2f5cdde0fb-0 -->Each time an ["emit"](../archive/D3D11_3_FunctionalSpec.htm#inst_EMIT) or ["emitThenCut"](../archive/D3D11_3_FunctionalSpec.htm#inst_EMITTHENCUT) is issued the contents of the declared DXBC Geometry Shader output registers are read to produce a vertex, and in addition the Geometry Shader outputs immediately become uninitialized. In other words, if any output data needs to be repeated for consecutive vertices, the Geometry Shader program must write the data over again to the output registers for each vertex.<!-- d3d12-review-inline:end:gs-so:H-output-data:2:authored:migration-1aa52b2f5cdde0fb-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-output-data:3 -->The Geometry Shader outputs have a close relationship to the Stream Output Stage/functionality, described [here](#so-declarations).<!-- d3d12-review-inline:end:gs-so:H-output-data:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:H-output-data:3 -->The Geometry Shader outputs have a close relationship to the Stream Output Stage/functionality, described in [Stream output declaration](#so-declarations).<!-- d3d12-review-inline:end:gs-so:H-output-data:3 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-output-data:4 -->![GS output primitive ordering](../archive/images/d3d11/D3D11_3_GSOutputs.png)<!-- d3d12-review-inline:end:gs-so:H-output-data:4 --></ins>
 
@@ -83,7 +81,7 @@ Hardware must enforce the limit above by stopping writes if the Geometry Shader 
 
 ### Streams and buffers
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-streams-buffers:0 -->**STREAM:** For the discussion here, let us define a stream as a sequence of writes of a structure of data out of a shader. A Geometry Shader can output up to 4 streams, each at different rates, with independent data going to each stream. The utility of this is in conjunction with [Stream Output](#stream-output).<!-- d3d12-review-inline:end:gs-so:H-streams-buffers:0 --></ins>
+**STREAM:** For the discussion here, let us define a stream as a sequence of writes of a structure of data out of a shader. A Geometry Shader can output up to 4 streams, each at different rates, with independent data going to each stream. The utility of this is in conjunction with [Stream Output](#stream-output).
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-streams-buffers:1 -->**BUFFER:** For the discussion in this section, in the context of [Stream Output](#stream-output), a Buffer denotes one bound target view that can receive any subset of the data from one stream. A stream can have its data split out (not replicated) across multiple buffers, and this mapping is defined by a Stream Output declaration (which is not visible in the Geometry Shader code). A Buffer cannot receive data from multiple streams at once.<!-- d3d12-review-inline:end:gs-so:H-streams-buffers:1 --></ins>
 
@@ -91,13 +89,13 @@ Hardware must enforce the limit above by stopping writes if the Geometry Shader 
 
 ### Multiple streams and rasterizer selection
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-multiple-streams:0 -->4 streams can be [declared](../archive/D3D11_3_FunctionalSpec.htm#inst_DCL_STREAM) by the GS. Without the GS present, all vertex data is a single stream.<!-- d3d12-review-inline:end:gs-so:H-multiple-streams:0 --></ins>
+4 streams can be [declared](../archive/D3D11_3_FunctionalSpec.htm#inst_DCL_STREAM) by the GS. Without the GS present, all vertex data is a single stream.
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-multiple-streams:1 -->When the GS defines multiple streams, variants of the ["emit"](../archive/D3D11_3_FunctionalSpec.htm#inst_EMIT), [cut](../archive/D3D11_3_FunctionalSpec.htm#inst_CUT) or ["emitThenCut"](../archive/D3D11_3_FunctionalSpec.htm#inst_EMITTHENCUT) instructions which take an immediate stream # [0..4-1] parameter must be used by the GS to indicate which stream is being output. These instructions are ["emit_stream"](../archive/D3D11_3_FunctionalSpec.htm#inst_EMIT_STREAM), [cut_stream](../archive/D3D11_3_FunctionalSpec.htm#inst_CUT_STREAM) and ["emitThenCut_stream"](../archive/D3D11_3_FunctionalSpec.htm#inst_EMITTHENCUT_STREAM), respectively.<!-- d3d12-review-inline:end:gs-so:H-multiple-streams:1 --></ins>
+When the GS defines multiple streams, variants of the ["emit"](../archive/D3D11_3_FunctionalSpec.htm#inst_EMIT), [cut](../archive/D3D11_3_FunctionalSpec.htm#inst_CUT) or ["emitThenCut"](../archive/D3D11_3_FunctionalSpec.htm#inst_EMITTHENCUT) instructions which take an immediate stream # [0..4-1] parameter must be used by the GS to indicate which stream is being output. These instructions are ["emit_stream"](../archive/D3D11_3_FunctionalSpec.htm#inst_EMIT_STREAM), [cut_stream](../archive/D3D11_3_FunctionalSpec.htm#inst_CUT_STREAM) and ["emitThenCut_stream"](../archive/D3D11_3_FunctionalSpec.htm#inst_EMITTHENCUT_STREAM), respectively.
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-multiple-streams:2 -->In DXBC, all the declarations of its output registers appear multiple times independently, once per stream. A statement appears in the bytecode setting the current output stream being declared, and subsequent declarations of output registers define what data gets latched when vertex data is emitted to each stream. The set of output registers available to the GS program during execution is the union of all output registers declared for each stream (individual streams can use the same output registers). When a vertex is emitted to a given stream, only the output registers declared for that stream feed the output to the stream, however ALL declared output registers for all streams become uninitialized.<!-- d3d12-review-inline:end:gs-so:H-multiple-streams:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-multiple-streams:3 -->If output register indexing is [declared](../archive/D3D11_3_FunctionalSpec.htm#inst_indexRange), specifying a range of output registers that can be dynamically indexed, the register space that can be declared for indexing is the union of all stream output register declarations.<!-- d3d12-review-inline:end:gs-so:H-multiple-streams:3 --></ins>
+If output register indexing is [declared](../archive/D3D11_3_FunctionalSpec.htm#inst_indexRange), specifying a range of output registers that can be dynamically indexed, the register space that can be declared for indexing is the union of all stream output register declarations.
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-multiple-streams:4 -->When outputting to multiple streams, the GS output topology [declaration](../archive/D3D11_3_FunctionalSpec.htm#inst_outputTopologyDCL) must appear for each stream, and must be set to "point". In other words, multiple streams means that non-point output is unavailable.<!-- d3d12-review-inline:end:gs-so:H-multiple-streams:4 --></ins>
 
@@ -105,11 +103,11 @@ Hardware must enforce the limit above by stopping writes if the Geometry Shader 
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-multiple-streams:6 -->When outputting to multiple streams, one of them can be sent to the rasterizer (independently of whether it is also streaming to memory). The Stream Output declaration specifies this (outside the shader code, but appearing to the driver side by side). Interpolation modes, System Interpreted Values and System Generated Values can be declared on any combination of Streams in the Shader, but the only ones that have any meaning are the ones corresponding to the Stream (if any) declared (outside the shader) as going to the rasterizer (if any). For Streams that are not going to the Rasterizer, the names are ignored. Notice that the same shader bytecode can be used by different graphics PSOs with different Stream Output declarations, each time selecting a different Stream to go to Rasterization.<!-- d3d12-review-inline:end:gs-so:H-multiple-streams:6 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-multiple-streams:7 -->If no stream output capture declaration or explicit rasterizer stream selection is supplied in the PSO, the active stream defaults to 0. So stream 0 goes to rasterization if rasterization is enabled, and the absence of a Stream Output declaration means nothing is streamed out to memory. A rasterized stream must be declared by the GS and provide the position required for active rasterization; an invalid selection fails PSO creation. Depth/stencil rasterization can be active without a pixel shader.<!-- d3d12-review-inline:end:gs-so:H-multiple-streams:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:H-multiple-streams:7 -->If no stream output capture declaration or explicit rasterizer stream selection is supplied in the PSO, the active stream defaults to 0. So stream 0 goes to rasterization if rasterization is enabled, and the absence of a Stream Output declaration means nothing is streamed out to memory. A rasterized stream must be declared by the GS and provide the position required for active rasterization, including depth/stencil rasterization without a pixel shader. An invalid selection fails PSO creation.<!-- d3d12-review-inline:end:gs-so:H-multiple-streams:7 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-multiple-streams:8 -->Interpolation modes declared for the outputs on one Stream don’t have to match those on another Stream. Note that when the graphics PSO is created, a choice of which stream (if any) is going to rasterization is made, so the driver shader compiler only needs to pay attention to interpolation modes and System Interpreted Values (such as "position") only on at most a single Stream’s declarations.<!-- d3d12-review-inline:end:gs-so:H-multiple-streams:8 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-multiple-streams:9:authored:migration-df2876ffe73e54ff-0 -->The rasterizer-specific interpretation of system values does not remove the signature names and indices used to select capture data.<!-- d3d12-review-inline:end:gs-so:H-multiple-streams:9:authored:migration-df2876ffe73e54ff-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:H-multiple-streams:9:authored:migration-df2876ffe73e54ff-0 -->Stream output declarations use semantic names and indices to select data, including system values whose rasterizer-specific interpretation is ignored on a non-rasterized stream.<!-- d3d12-review-inline:end:gs-so:H-multiple-streams:9:authored:migration-df2876ffe73e54ff-0 --></ins>
 
 <a id="gs-attribute-initialization"></a>
 
@@ -129,7 +127,7 @@ Hardware must enforce the limit above by stopping writes if the Geometry Shader 
 
 ### Consistent edge evaluation
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-consistent-edges:0 -->To ensure consistent order of operations on an edge and primitive level for primitives that show up in multiple invocations of the Geometry Shader (as an adjacent primitive in some invocations, or the root primitive for one invocation), it is up to the application to write Shader code that traverses vertices in a consistent manner. This ordering can be obtained by a variety of methods, including simply sorting of vertices based on position in Shader code. A more robust ordering can be achieved by providing a vertex "coloring" (a number) as vertex attribute, such that for any primitive, the coloring is guaranteed to be unique for each vertex in the primitive. This method has the benefit that the sorting operation in the Geometry Shader is more efficient (and robust) than sorting xyz vertex positions. Colorings can be generated offline by an authoring tool.<!-- d3d12-review-inline:end:gs-so:H-consistent-edges:0 --></ins>
+To ensure consistent order of operations on an edge and primitive level for primitives that show up in multiple invocations of the Geometry Shader (as an adjacent primitive in some invocations, or the root primitive for one invocation), it is up to the application to write Shader code that traverses vertices in a consistent manner. This ordering can be obtained by a variety of methods, including simply sorting of vertices based on position in Shader code. A more robust ordering can be achieved by providing a vertex "coloring" (a number) as vertex attribute, such that for any primitive, the coloring is guaranteed to be unique for each vertex in the primitive. This method has the benefit that the sorting operation in the Geometry Shader is more efficient (and robust) than sorting xyz vertex positions. Colorings can be generated offline by an authoring tool.
 
 <a id="gs-dxbc-interface"></a>
 
@@ -155,7 +153,7 @@ Hardware must enforce the limit above by stopping writes if the Geometry Shader 
 
 ### DXBC primitive input layouts
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-input-layout:0 -->The Geometry Shader must declare which type of primitive it expects as input, out of the set of choices: {point,line,triangle,line_adj,triangle_adj,1-32 control point patch list}. The input primitive type specifies the number of vertices that are present, and the vertices are always fully indexed (there is no declaration for vertex indexing range). Even if strips are being used earlier in the Pipeline, individual primitives cause Geometry Shader Invocations. See the [GS Input Primitive Declaration Statement](../archive/D3D11_3_FunctionalSpec.htm#inst_inputPrimitiveDCL) in the instruction reference.<!-- d3d12-review-inline:end:gs-so:H-input-layout:0 --></ins>
+The Geometry Shader must declare which type of primitive it expects as input, out of the set of choices: {point,line,triangle,line_adj,triangle_adj,1-32 control point patch list}. The input primitive type specifies the number of vertices that are present, and the vertices are always fully indexed (there is no declaration for vertex indexing range). Even if strips are being used earlier in the Pipeline, individual primitives cause Geometry Shader Invocations. See the [GS Input Primitive Declaration Statement](../archive/D3D11_3_FunctionalSpec.htm#inst_inputPrimitiveDCL) in the instruction reference.
 
 The following diagrams depict the layout of Geometry Shader Input Primitives into the input v# registers:
 
@@ -169,7 +167,7 @@ The following diagrams depict the layout of Geometry Shader Input Primitives int
 
 ### DXIL geometry shader processing
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-dxil-model:0:authored:migration-1c9956c881c50f0d-0 -->A DXIL geometry shader has a shader entry function with input/output signatures and geometry stage properties. Its vertex inputs are addressed by input element, row/component and vertex within the declared input primitive. `SV_PrimitiveID` and `SV_GSInstanceID` use the identifier provenance defined above. These system values are supplied through DXIL operations rather than ordinary input signature elements. Output signature elements identify their output stream. The function stores output attributes with `StoreOutput` and uses `EmitStream`, `CutStream` and `EmitThenCutStream` to produce vertices and terminate strips. Every emitted vertex must define the components later consumed. A previous vertex's attributes are not a promise of initialized data for a later vertex. The logical invocation, output topology and stream rules above apply, with the representation-specific output budgets below.<!-- d3d12-review-inline:end:gs-so:N-dxil-model:0:authored:migration-1c9956c881c50f0d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:N-dxil-model:0:authored:migration-1c9956c881c50f0d-0 -->A DXIL geometry shader has a shader entry function with input/output signatures and geometry stage properties. Its vertex inputs are addressed by input element, row/component and vertex within the declared input primitive. `SV_PrimitiveID` and `SV_GSInstanceID` have the meanings described in [Invocation and primitive inputs](#gs-invocation). These system values are supplied through DXIL operations rather than ordinary input signature elements. Output signature elements identify their output stream. The function stores output attributes with `StoreOutput` and uses `EmitStream`, `CutStream` and `EmitThenCutStream` to produce vertices and terminate strips. Every emitted vertex must define the components later consumed. Attributes stored for a previous vertex are not guaranteed to initialize a later vertex. The logical invocation, output topology and stream rules in the preceding sections apply to DXIL geometry shaders.<!-- d3d12-review-inline:end:gs-so:N-dxil-model:0:authored:migration-1c9956c881c50f0d-0 --></ins>
 
 <!-- d3d12-review-alert:begin:gs-so:N-dxil-properties:1:authored:migration-9399444bc4bac539-0 -->
 
@@ -196,9 +194,9 @@ The following diagrams depict the layout of Geometry Shader Input Primitives int
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-so-overview:1 -->Just before Streaming Out, all topologies are always expanded to lists (i.e. if the topology is a triangle strip, it is expanded to a triangle list, having 3 vertices per primitive).<!-- d3d12-review-inline:end:gs-so:H-so-overview:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-so-overview:2 -->If the Geometry Shader is active, it is capable of producing outputs with up to 32 Elements per-vertex (each Element up to 4 components) for the Rasterizer, any subset of which can be routed to Stream Output. The presence of the GS allows multiple streams to be generated as well, as described [here](#output-streams).<!-- d3d12-review-inline:end:gs-so:H-so-overview:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:H-so-overview:2 -->If the Geometry Shader is active, it is capable of producing outputs with up to 32 Elements per-vertex (each Element up to 4 components) for the Rasterizer, any subset of which can be routed to Stream Output. The presence of the GS allows multiple streams to be generated as well, as described in [Streams and buffers](#output-streams).<!-- d3d12-review-inline:end:gs-so:H-so-overview:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-so-overview:3 -->If the Geometry Shader is not active, whatever data arrives at the point in the pipeline where Stream Output appears (just before clipping and rasterization) can be Streamed Out (after expansion to a list topology as described above). Topologies with adjacency discard the "adjacent" vertices and only Stream Out the "interior" vertices. For untessellated patch capture, the rasterizer must be disabled. [Untessellated-patch routing](tessellation.md#untessellated-patches-rasterizer) defines the invalid active-rasterization configuration and its contingent undefined behavior.<!-- d3d12-review-inline:end:gs-so:H-so-overview:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:H-so-overview:3 -->If the Geometry Shader is not active, whatever data arrives at the point in the pipeline where Stream Output appears (just before clipping and rasterization) can be Streamed Out (after expansion to a list topology as described above). Topologies with adjacency discard the "adjacent" vertices and only Stream Out the "interior" vertices. For untessellated patch capture, the rasterizer must be disabled. See [Untessellated patch routing](tessellation.md#untessellated-patches-rasterizer) for the invalid rasterization configuration and when it causes undefined behavior.<!-- d3d12-review-inline:end:gs-so:H-so-overview:3 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-so-overview:4 -->In the expansion of strips to lists of primitives on Stream Output from the Geometry Shader, there is no notion of any data being able to be treated as "constant"; for each Geometry Shader output primitive (after expansion from a strip to a list), the vertices each originate from separate ["emit"](../archive/D3D11_3_FunctionalSpec.htm#inst_EMIT) instructions. Applications can still take advantage of this behavior to store primitive data, simply by relying on the fact that if streamed out geometry is recirculated back into the Pipeline in another pass, the Rasterizer will treat the [Leading Vertex](vertex-processing.md#leading-vertex) in each primitive as the source for attributes that are declared as constant by the Pixel Shader.<!-- d3d12-review-inline:end:gs-so:H-so-overview:4 --></ins>
 
@@ -206,11 +204,11 @@ The following diagrams depict the layout of Geometry Shader Input Primitives int
 
 ### Mapping streams to buffers
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-mapping:0 -->A description of the distinction between a Stream and Buffer is given [here](#output-streams). Up to 4 Streams can be present when the GS is used, otherwise there is a single Stream, Stream 0.<!-- d3d12-review-inline:end:gs-so:H-mapping:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:H-mapping:0 -->See [Streams and buffers](#output-streams) for the distinction between a Stream and a Buffer. Up to 4 Streams can be present when the GS is used, otherwise there is a single Stream, Stream 0.<!-- d3d12-review-inline:end:gs-so:H-mapping:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-mapping:1 -->Stream Output can send data from any Stream to up to 4 Buffers simultaneously. The total number of output Buffers across all Streams is also constrained to 4. Data from multiple Streams cannot go to a single Buffer, but each Stream can send its output to multiple Buffers. Stream data cannot be replicated across multiple buffers.<!-- d3d12-review-inline:end:gs-so:H-mapping:1 --></ins>
+Stream Output can send data from any Stream to up to 4 Buffers simultaneously. The total number of output Buffers across all Streams is also constrained to 4. Data from multiple Streams cannot go to a single Buffer, but each Stream can send its output to multiple Buffers. Stream data cannot be replicated across multiple buffers.
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-mapping:2 -->Up to 128 scalar components of data per-vertex can be streamed out across the output Buffers, as long as the total window of data being output per-vertex to any one Buffer is 512 bytes or less. Vertex stride to a given Buffer can be up to 2048 bytes.<!-- d3d12-review-inline:end:gs-so:H-mapping:2 --></ins>
+Up to 128 scalar components of data per-vertex can be streamed out across the output Buffers, as long as the total window of data being output per-vertex to any one Buffer is 512 bytes or less. Vertex stride to a given Buffer can be up to 2048 bytes.
 
 <a id="so-format"></a>
 
@@ -287,7 +285,7 @@ typedef struct D3D12_STREAM_OUTPUT_DESC
 
 `pSODeclaration`
 
-<ins><!-- d3d12-review-inline:begin:gs-so:P-D3D12_STREAM_OUTPUT_DESC:1 -->An array of [`D3D12_SO_DECLARATION_ENTRY`](#d3d12-so-declaration-entry) structures. Can't be **NULL** if **NumEntries** &gt; 0.<!-- d3d12-review-inline:end:gs-so:P-D3D12_STREAM_OUTPUT_DESC:1 --></ins>
+An array of [`D3D12_SO_DECLARATION_ENTRY`](#d3d12-so-declaration-entry) structures. Can't be **NULL** if **NumEntries** &gt; 0.
 
 `NumEntries`
 
@@ -378,7 +376,7 @@ None
 
 <ins><!-- d3d12-review-inline:begin:gs-so:N-binding:0:authored:migration-22252d4679fbf0ef-0 -->`StartSlot` must be less than four and `NumViews` must not exceed `4 - StartSlot`. A null `pViews` clears the specified range. A valid zero count changes no slots. Slots outside the range are unchanged. This is a DIRECT recording command, not a COMPUTE, COPY or BUNDLE command. Bundle draws can use inherited targets. See [Input and output buffer bindings](command-list-state.md#buffer-bindings) for initial/reset values and bundle inheritance, and [Recording and execution lifetime](execution.md#lifetime) for resource lifetime requirements.<!-- d3d12-review-inline:end:gs-so:N-binding:0:authored:migration-22252d4679fbf0ef-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-view-validity:0:authored:migration-257e79ed8539f31f-0 -->For a nonempty view, data and filled size GPU addresses must be valid, nonzero, four-byte-aligned addresses in buffer resources, with their referenced ranges contained in the allocations. The application-managed filled size value is a 32-bit quantity. The 64-bit GPU address that points to it does not make the value 64-bit. Data and counter storage may occupy the same resource, as specified by the counter contract, but the counter must not lie in the target data range. The zero-size exceptions in the member descriptions above apply to empty views.<!-- d3d12-review-inline:end:gs-so:N-view-validity:0:authored:migration-257e79ed8539f31f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:N-view-validity:0:authored:migration-257e79ed8539f31f-0 -->For a nonempty view, data and filled size GPU addresses must be valid, nonzero, four-byte-aligned addresses in buffer resources, with their referenced ranges contained in the allocations. The application-managed filled size value is a 32-bit quantity. Data and filled size storage may be in the same resource (see [Filled size storage and append](#filled-size)), but the filled size storage must not lie in the target data range.<!-- d3d12-review-inline:end:gs-so:N-view-validity:0:authored:migration-257e79ed8539f31f-0 --></ins>
 
 <a id="filled-size"></a>
 
@@ -390,13 +388,16 @@ The application is responsible for allocating storage for a 32-bit quantity call
 
 With the legacy resource state model, when a resource is used as a <ins><!-- d3d12-review-inline:begin:gs-so:P-counter-state:0:modified:SG2 -->stream output target<!-- d3d12-review-inline:end:gs-so:P-counter-state:0:modified:SG2 --></ins>, the resources used must be in the D3D12\_RESOURCE\_STATE\_STREAM\_OUT state. This applies to both the vertex data and the *BufferFilledSize* (which can be in the same or separate resources).
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-counter-protocol:0:authored:migration-dee1dc9e316b9227-0 -->The application initializes the filled size value to the byte offset at which capture should begin; initializing it to zero starts at the beginning of the target view. Successive draws append according to that value. Rebinding does not reset the filled size value. The selected `BufferFilledSizeLocation` identifies the application-managed state.<!-- d3d12-review-inline:end:gs-so:N-counter-protocol:0:authored:migration-dee1dc9e316b9227-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:N-counter-protocol:0:authored:migration-dee1dc9e316b9227-0 -->The application initializes the filled size value to the byte offset at which capture should begin; initializing it to zero starts at the beginning of the target view. Successive draws append according to that value. Rebinding does not reset the filled size value.<!-- d3d12-review-inline:end:gs-so:N-counter-protocol:0:authored:migration-dee1dc9e316b9227-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:gs-so:N-access:0:authored:migration-11f5bcafdd9db1a2-0 -->With enhanced barriers, target data and filled size storage use the [stream output access and synchronization scopes](synchronization.md#barrier-access). Changing the filled size value with CPU/GPU work must be ordered before the capture that consumes it; later consumers likewise require the appropriate access synchronization.<!-- d3d12-review-inline:end:gs-so:N-access:0:authored:migration-11f5bcafdd9db1a2-0 --></ins>
 
 <a id="overflow-and-statistics"></a>
 
 ### Overflow and statistics
+
+<a id="so-statistics-payload"></a>
+<a id="d3d12_query_data_so_statistics"></a>
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-overflow:0 -->The [SO statistics query](counters-queries-and-predication.md#stream-output-statistics) measures the overflow behavior below.<!-- d3d12-review-inline:end:gs-so:H-overflow:0 --></ins>
 
@@ -406,31 +407,25 @@ With the legacy resource state model, when a resource is used as a <ins><!-- d3d
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-overflow:3 -->If multiple Buffers are being written by a given Stream, as soon as one of the Buffers can no longer hold any more complete primitives, writes to ALL Buffers for that Stream are stopped, while as mentioned above, Shader execution continues, and the PrimitivesStorageNeeded counter continues to tally for that Stream. Other Streams operate independently.<!-- d3d12-review-inline:end:gs-so:H-overflow:3 --></ins>
 
-<a id="so-statistics-payload"></a>
-
-#### D3D12_QUERY_DATA_SO_STATISTICS
-
-<ins><!-- d3d12-review-inline:begin:gs-so:QF-so-stats:0:authored:migration-80728302ae95ad87-0 -->[D3D12_QUERY_DATA_SO_STATISTICS](counters-queries-and-predication.md#stream-output-statistics).<!-- d3d12-review-inline:end:gs-so:QF-so-stats:0:authored:migration-80728302ae95ad87-0 --></ins>
-
 <a id="so-slot-behavior"></a>
 
 ### Bound and unused slots
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-slot-behavior:0 -->If an output buffer slot (0..3) has data streamed out to it (as indicated by the stream output declaration), but no buffer is attached, then that output buffer slot is treated as if a full buffer is attached, resulting in the overflow behavior described [here](#overflow-and-statistics).<!-- d3d12-review-inline:end:gs-so:H-slot-behavior:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:H-slot-behavior:0 -->If an output buffer slot (0..3) has data streamed out to it (as indicated by the stream output declaration), but no buffer is attached, then that output buffer slot is treated as if a full buffer is attached, resulting in the overflow behavior described in [Overflow and statistics](#overflow-and-statistics).<!-- d3d12-review-inline:end:gs-so:H-slot-behavior:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-slot-behavior:1 -->If an output buffer slot does not have data being streamed out to it, and a buffer is attached, then that buffer is fully ignored, including having no impact on overflow and output tracking.<!-- d3d12-review-inline:end:gs-so:H-slot-behavior:1 --></ins>
+If an output buffer slot does not have data being streamed out to it, and a buffer is attached, then that buffer is fully ignored, including having no impact on overflow and output tracking.
 
 <a id="so-rasterization"></a>
 
 ### Capture and rasterization
 
-<ins><!-- d3d12-review-inline:begin:gs-so:H-orthogonal:0:modified:migration-6d88dc680d07f0f4-0 -->The path through Rasterizer output is always available, even if Stream Output is active. When the Stream Output declaration is provided (created), the application selects the rasterized stream or `D3D12_SO_NO_RASTERIZED_STREAM`. The [`D3D12_STREAM_OUTPUT_DESC`](#stream-output-desc) declaration defines this selection.<!-- d3d12-review-inline:end:gs-so:H-orthogonal:0:modified:migration-6d88dc680d07f0f4-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:H-orthogonal:0:modified:migration-6d88dc680d07f0f4-0 -->The path through Rasterizer output is always available, even if Stream Output is active. When the Stream Output declaration is provided (created), the application selects the rasterized stream or `D3D12_SO_NO_RASTERIZED_STREAM` in the `RasterizedStream` member of [`D3D12_STREAM_OUTPUT_DESC`](#stream-output-desc).<!-- d3d12-review-inline:end:gs-so:H-orthogonal:0:modified:migration-6d88dc680d07f0f4-0 --></ins>
 
 <a id="so-example"></a>
 
 ### DXBC multi-stream output budget example
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-example-scope:0:authored:migration-cf60b07d293f8e1d-0 -->This is a DXBC register allocation and emission budget illustration, not a complete shader/PSO declaration. Rasterization still requires the selected stream's position and the other stage/linkage conditions. It is not a validity proof for a DXIL signature with the same source level attributes.<!-- d3d12-review-inline:end:gs-so:N-example-scope:0:authored:migration-cf60b07d293f8e1d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:N-example-scope:0:authored:migration-cf60b07d293f8e1d-0 -->This example illustrates DXBC output register allocation and the emitted vertex budget. It is not a complete shader or PSO declaration. Rasterization also requires the selected stream's position and the other stage and linkage conditions.<!-- d3d12-review-inline:end:gs-so:N-example-scope:0:authored:migration-cf60b07d293f8e1d-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-example:0 -->Below is a very rough example (using pseudocode) of the sequence of operations an application might perform and how to calculate vertex counts.<!-- d3d12-review-inline:end:gs-so:H-example:0 --></ins>
 
@@ -479,13 +474,15 @@ Vertices can be emitted to either stream in any order.
 
 <ins><!-- d3d12-review-inline:begin:gs-so:N-driver:0:authored:migration-edc4adca7ee8940b-0 -->The runtime resolves semantic stream output selections against the last active shader's output signature before driver PSO creation.<!-- d3d12-review-inline:end:gs-so:N-driver:0:authored:migration-edc4adca7ee8940b-0 --></ins>
 
-```cpp
-PFND3D12DDI_SO_SET_TARGETS_0003                                        pfnSOSetTargets;
-```
+<ins><!-- d3d12-review-inline:begin:gs-so:PC-stage-creation-owner:0:authored:migration-a5c1f33ead582deb-0 -->See [Geometry shader and stream output driver creation](pipeline-state.md#driver-shader-objects) and [Device slots](pipeline-state.md#driver-object-slots) for driver shader object creation.<!-- d3d12-review-inline:end:gs-so:PC-stage-creation-owner:0:authored:migration-a5c1f33ead582deb-0 --></ins>
 
 <a id="driver-so-binding"></a>
 
 ### Stream output target binding
+
+```cpp
+PFND3D12DDI_SO_SET_TARGETS_0003                                        pfnSOSetTargets;
+```
 
 <ins><!-- d3d12-review-inline:begin:gs-so:SF-current-roles:0:authored:migration-d506ec952855b0e5-0 -->The `_0114` form of [SOSetTargets](#sosettargets) participates in [runtime bypass](execution.md#work-command-handles).<!-- d3d12-review-inline:end:gs-so:SF-current-roles:0:authored:migration-d506ec952855b0e5-0 --></ins>
 

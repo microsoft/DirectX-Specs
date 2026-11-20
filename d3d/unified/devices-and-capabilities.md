@@ -13,15 +13,15 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:foundation:0:authored:migration-36d4c47a36dd3eea-0 -->A device represents an adapter and exposes its supported Direct3D 12 functionality. Adapter identity, device object identity and the device's linked node topology are distinct. An adapter LUID identifies the adapter, not a particular independent device. A node index selects a physical adapter within a device. It is not a device identifier.<!-- d3d12-review-inline:end:devices-capabilities:foundation:0:authored:migration-36d4c47a36dd3eea-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:foundation:0:authored:migration-36d4c47a36dd3eea-0 -->A device represents an adapter and exposes its supported Direct3D 12 functionality. An adapter LUID identifies the adapter rather than a particular device, because [independent devices](#independent-devices) can represent the same adapter. A device can contain several linked physical adapters, called nodes. A node index selects one of these nodes within the device.<!-- d3d12-review-inline:end:devices-capabilities:foundation:0:authored:migration-36d4c47a36dd3eea-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:foundation:1:authored:migration-8ff00446cd4a7556-0 -->Device creation selects a minimum feature level. Feature levels group required functionality. Independently queried capabilities describe additional support and tiers. Interface availability, runtime recognition of a query or version, driver reporting, shader model support and feature level support are separate conditions.<!-- d3d12-review-inline:end:devices-capabilities:foundation:1:authored:migration-8ff00446cd4a7556-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:D157-video-device-reference:0:authored:migration-745ab22ab60b4568-0 -->Video interface discovery and the separate `ID3D12VideoDevice::CheckFeatureSupport` protocol are defined in [Video](video.md#video-device-model).<!-- d3d12-review-inline:end:devices-capabilities:D157-video-device-reference:0:authored:migration-745ab22ab60b4568-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:foundation:1:authored:migration-8ff00446cd4a7556-0 -->Device creation selects a minimum feature level. Feature levels group required functionality. Independently queried capabilities describe additional support and tiers.<!-- d3d12-review-inline:end:devices-capabilities:foundation:1:authored:migration-8ff00446cd4a7556-0 --></ins>
 
 <a id="api-result-codes"></a>
 
-## Shared API result codes
+## Common API result codes
+
+<a id="shared-api-result-codes"></a>
 
 <!-- d3d12-review-alert:begin:devices-capabilities:N-api-result-codes:0:authored:migration-ea89d0dac5832677-0 -->
 
@@ -64,13 +64,15 @@
 > | `D3D12_ERROR_DRIVER_VERSION_MISMATCH` | Serialized pipeline data was produced by an incompatible driver or runtime version. |
 > | `D3D12_ERROR_INVALID_REDIST` | The SDK/runtime configuration is invalid or incompatible with the requested operation. See [runtime selection and configuration](#runtime-selection). |
 >
-> [Device removal reporting](diagnostics.md#device-removal) defines the distinction between an API failure and the device's removal reason. [Deferred recording errors](execution.md#lifecycle-driver-errors) define how errors from command list recording are reported by `Close` and subsequent `Reset` calls.
+> See [device removal reporting](diagnostics.md#device-removal) for the distinction between an API failure and the device's removal reason. See [deferred recording errors](execution.md#lifecycle-driver-errors) for how command list recording errors are reported by `Close` and subsequent `Reset` calls.
 
 <!-- d3d12-review-alert:end:devices-capabilities:N-api-result-codes:0:authored:migration-ea89d0dac5832677-0 -->
 
 <a id="identity"></a>
 
 ## Adapter identity and linked nodes
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:node-conventions:0:authored:migration-85f0eb552ea7d089-0 -->A node index is zero-based and is less than [`GetNodeCount()`](#id3d12device-getnodecount). On a single-node device the index is zero. A node mask instead selects nodes by bit position.<!-- d3d12-review-inline:end:devices-capabilities:node-conventions:0:authored:migration-85f0eb552ea7d089-0 --></ins>
 
 <a id="id3d12device-getadapterluid"></a>
 
@@ -118,8 +120,6 @@ Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows
 
 The number of physical adapters (nodes) that this device has.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:node-conventions:0:authored:migration-85f0eb552ea7d089-0 -->A node index is zero-based and is less than `GetNodeCount()`. On a single-node device the index is zero. An index is not a bit mask: a node mask uses bit positions to select nodes. The `QUERY_META_COMMAND` payload uses its own `NodeMask` convention, including zero for single-GPU operation, rather than the `NodeIndex` convention used by architecture and protected session queries.<!-- d3d12-review-inline:end:devices-capabilities:node-conventions:0:authored:migration-85f0eb552ea7d089-0 --></ins>
-
 <a id="common-object-interfaces"></a>
 
 ## Common object interfaces
@@ -156,8 +156,7 @@ For example, `__uuidof(ID3D12Device)` will get the `GUID` of the interface to a 
 the [COM QueryInterface contract](https://learn.microsoft.com/en-us/windows/win32/api/unknwn/nf-unknwn-iunknown-queryinterface(refiid_void)).
 A supported IID returns `S_OK` and the requested interface;
 an unsupported IID returns `E_NOINTERFACE` and a null output interface.
-A null output address returns `E_POINTER`. It is not the null output
-`S_FALSE` device creation probe defined by [D3D12CreateDevice](#d3d12createdevice).<!-- d3d12-review-inline:end:devices-capabilities:OF-get-device-results:0:authored:migration-3796570c43db5e5a-0 --></ins>
+A null output address returns `E_POINTER`.<!-- d3d12-review-inline:end:devices-capabilities:OF-get-device-results:0:authored:migration-3796570c43db5e5a-0 --></ins>
 
 #### Reference ownership
 
@@ -171,11 +170,9 @@ A null output address returns `E_POINTER`. It is not the null output
 object. Application-defined keys select either copied bytes or an owned COM
 interface association. The same key is replaced, not appended.<!-- d3d12-review-inline:end:devices-capabilities:PD-model:0:authored:migration-f86358d77afd2fe4-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:PD-model:1:authored:migration-60ab4b26cb3685db-0 -->The generic key/size rules below describe application-defined keys.
-The [diagnostic naming GUIDs](diagnostics.md#object-names) have their
-separate string/name behavior. Do not treat a named feature key as an
-arbitrary application blob or assume all such keys have identical
-short-buffer behavior.<!-- d3d12-review-inline:end:devices-capabilities:PD-model:1:authored:migration-60ab4b26cb3685db-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:PD-model:1:authored:migration-60ab4b26cb3685db-0 -->The key and size rules below apply to application-defined keys.
+See [diagnostic object names](diagnostics.md#object-names) for the string
+behavior of the diagnostic naming GUIDs.<!-- d3d12-review-inline:end:devices-capabilities:PD-model:1:authored:migration-60ab4b26cb3685db-0 --></ins>
 
 <a id="id3d12object-getprivatedata"></a>
 
@@ -255,15 +252,14 @@ The size in bytes of the data.
 #### Return values
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:PD-set-results:0:authored:migration-efd5bd6e8e137d58-0 -->Successful storage returns `S_OK`. The bytes are copied during the
-call; caller storage can be reused afterward. `pData == nullptr`
+call, so caller storage can be reused afterward. `pData == nullptr`
 requires `DataSize == 0` and removes the application key, releasing
 any previously owned interface. Removing an absent application key
-returns `S_FALSE`. A non-null pointer with zero size instead stores
-an existing zero-length value. It is not the null pointer removal case.<!-- d3d12-review-inline:end:devices-capabilities:PD-set-results:0:authored:migration-efd5bd6e8e137d58-0 --></ins>
+returns `S_FALSE`. A non-null pointer with zero size stores a
+zero-length value under the key rather than removing it.<!-- d3d12-review-inline:end:devices-capabilities:PD-set-results:0:authored:migration-efd5bd6e8e137d58-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:PD-set-results:1:authored:migration-30dcc57af4ee2ae8-0 -->Allocation and other failures are reported through HRESULT. A raw
-byte value does not AddRef embedded interface pointers or establish
-their lifetime. See [SetName](diagnostics.md#id3d12object-setname) for
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:PD-set-results:1:authored:migration-30dcc57af4ee2ae8-0 -->A raw byte value does not AddRef embedded interface pointers or
+establish their lifetime. See [SetName](diagnostics.md#id3d12object-setname) for
 diagnostic string naming.<!-- d3d12-review-inline:end:devices-capabilities:PD-set-results:1:authored:migration-30dcc57af4ee2ae8-0 --></ins>
 
 <a id="id3d12object-setprivatedatainterface"></a>
@@ -292,9 +288,8 @@ A pointer to the [IUnknown](https://learn.microsoft.com/en-us/windows/win32/api/
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:PD-interface-results:0:authored:migration-53e151cd51d9b2c4-0 -->Successful association returns `S_OK`; allocation/other failures use
-HRESULT.
-Retrieving it through GetPrivateData acquires a separate caller
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:PD-interface-results:0:authored:migration-53e151cd51d9b2c4-0 -->Successful association returns `S_OK`.
+Retrieving the interface through GetPrivateData acquires a separate caller
 reference. A size-only query does not.<!-- d3d12-review-inline:end:devices-capabilities:PD-interface-results:0:authored:migration-53e151cd51d9b2c4-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:PD-interface-results:1:authored:migration-4f4ea9cc64d1795c-0 -->A null `pData` stores a null interface value under the key, with the
@@ -317,15 +312,13 @@ stronger guarantees about the order of destruction. With **ID3DDestructionNotifi
 
 It isn't safe to access the object being destructed during the callback.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-ownership:0:authored:migration-14b3032da944976e-0 -->ID3DDestructionNotifier is an IUnknown-derived interface queried on the
-object being monitored, not a separately created D3D12 device child.
-Retaining an interface on the monitored object can itself postpone destruction.<!-- d3d12-review-inline:end:devices-capabilities:DN-ownership:0:authored:migration-14b3032da944976e-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-ownership:0:authored:migration-14b3032da944976e-0 -->Retaining an interface on the monitored object, including this notifier,
+can postpone the object's destruction.<!-- d3d12-review-inline:end:devices-capabilities:DN-ownership:0:authored:migration-14b3032da944976e-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-ownership:1:authored:migration-30719f9cc2223b7f-0 -->Applications must satisfy the
-[recorded use and GPU lifetime requirements](execution.md#lifetime)
-before releasing objects used by pending work. The implicit reference
-guarantee concerns those relationships, not every object once used
-with the monitored object or every child of a device.<!-- d3d12-review-inline:end:devices-capabilities:DN-ownership:1:authored:migration-30719f9cc2223b7f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-ownership:1:authored:migration-30719f9cc2223b7f-0 -->The guarantee that implicit relationships are valid when the destruction
+callback is invoked does not cover every object once used with the monitored
+object or every child of a device. See [object lifetime](execution.md#lifetime) for the
+requirements on releasing objects used by pending GPU work.<!-- d3d12-review-inline:end:devices-capabilities:DN-ownership:1:authored:migration-30719f9cc2223b7f-0 --></ins>
 
 <a id="pfn-destruction-callback"></a>
 
@@ -342,8 +335,7 @@ function and any context it will access valid until the registration
 is removed or its destruction callback has returned.<!-- d3d12-review-inline:end:devices-capabilities:DN-callback-ownership:0:authored:migration-14bc38c983cefd51-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-callback-ownership:1:authored:migration-abe60c7323a9d719-0 -->The runtime invokes remaining callbacks inline during destruction,
-passing each registration's stored context. This is not a request for
-dispatch to an application-selected thread. The prohibition on accessing
+passing each registration's stored context. The prohibition on accessing
 the object being destroyed also excludes registering/unregistering on
 that object, querying it, or trying to resurrect it from its callback.<!-- d3d12-review-inline:end:devices-capabilities:DN-callback-ownership:1:authored:migration-abe60c7323a9d719-0 --></ins>
 
@@ -359,7 +351,7 @@ HRESULT RegisterDestructionCallback( PFN_DESTRUCTION_CALLBACK callbackFn, void* 
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-RegisterDestructionCallback-behavior:0 -->Registers a user-defined callback to be invoked on destruction of the object from which this [ID3DDestructionNotifier](#destruction-notifications) was created.<!-- d3d12-review-inline:end:devices-capabilities:DN-RegisterDestructionCallback-behavior:0 --></ins>
+Registers a user-defined callback to be invoked on destruction of the object from which this [ID3DDestructionNotifier](#destruction-notifications) was created.
 
 #### Parameters
 
@@ -377,18 +369,18 @@ The data to pass to *callbackFn* when invoked
 
 ##### `pCallbackID`
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-RegisterDestructionCallback-pCallbackID:0 -->Type: **[UINT](https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types)\***<!-- d3d12-review-inline:end:devices-capabilities:DN-RegisterDestructionCallback-pCallbackID:0 --></ins>
+Type: **[UINT](https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types)\***
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-RegisterDestructionCallback-pCallbackID:1 -->Pointer to a **UINT** used to identify the callback, and to pass to [UnregisterDestructionCallback](#id3ddestructionnotifier-unregisterdestructioncallback) to unregister the callback.<!-- d3d12-review-inline:end:devices-capabilities:DN-RegisterDestructionCallback-pCallbackID:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-registration-context:0:authored:migration-f2b9f04f5935206c-0 -->Use a writable `pCallbackID` for the cancellable registration form.
-The returned ID identifies that registration on this object. Use it only
-after successful registration. Holding the copied ID does not
-retain the object or take ownership of its context.<!-- d3d12-review-inline:end:devices-capabilities:DN-registration-context:0:authored:migration-f2b9f04f5935206c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-registration-context:0:authored:migration-f2b9f04f5935206c-0 -->Supply a writable `pCallbackID` when the registration must be cancellable.
+The returned ID identifies the registration on this object and is valid
+only after successful registration. Holding the ID does not keep the
+object alive or take ownership of the callback context.<!-- d3d12-review-inline:end:devices-capabilities:DN-registration-context:0:authored:migration-f2b9f04f5935206c-0 --></ins>
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-RegisterDestructionCallback-return:0 -->Type: **[HRESULT](#api-result-codes)**<!-- d3d12-review-inline:end:devices-capabilities:DN-RegisterDestructionCallback-return:0 --></ins>
+Type: **[HRESULT](#api-result-codes)**
 
 If this function succeeds, it returns **S_OK**.
 
@@ -409,27 +401,27 @@ HRESULT UnregisterDestructionCallback( UINT callbackID );
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-UnregisterDestructionCallback-behavior:0 -->Unregisters a callback that was registered with [RegisterDestructionCallback](#id3ddestructionnotifier-registerdestructioncallback).<!-- d3d12-review-inline:end:devices-capabilities:DN-UnregisterDestructionCallback-behavior:0 --></ins>
+Unregisters a callback that was registered with [RegisterDestructionCallback](#id3ddestructionnotifier-registerdestructioncallback).
 
 #### Parameters
 
 ##### `callbackID`
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-UnregisterDestructionCallback-callbackID:0 -->Type: **[UINT](https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types)**<!-- d3d12-review-inline:end:devices-capabilities:DN-UnregisterDestructionCallback-callbackID:0 --></ins>
+Type: **[UINT](https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types)**
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-UnregisterDestructionCallback-callbackID:1 -->The **UINT** that was created by the *pCallbackID* argument to **[ID3DDestructionNotifier::RegisterDestructionCallback](#id3ddestructionnotifier-registerdestructioncallback)**.<!-- d3d12-review-inline:end:devices-capabilities:DN-UnregisterDestructionCallback-callbackID:1 --></ins>
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-UnregisterDestructionCallback-return:0 -->Type: **[HRESULT](#api-result-codes)**<!-- d3d12-review-inline:end:devices-capabilities:DN-UnregisterDestructionCallback-return:0 --></ins>
+Type: **[HRESULT](#api-result-codes)**
 
 If this function succeeds, it returns **S_OK**.
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-unregistration-context:0:authored:migration-ee661cb4c6e2597d-0 -->Successful removal prevents that registration's later destruction
-notification. It neither destroys the object nor frees the
+notification. Removal does not destroy the object or free the
 application's context. Zero, an unknown ID or an already removed
-ID returns `DXGI_ERROR_NOT_FOUND`. IDs belong to the same object's
-notifier.<!-- d3d12-review-inline:end:devices-capabilities:DN-unregistration-context:0:authored:migration-ee661cb4c6e2597d-0 --></ins>
+ID returns `DXGI_ERROR_NOT_FOUND`. An ID is valid only with the
+notifier of the object on which the callback was registered.<!-- d3d12-review-inline:end:devices-capabilities:DN-unregistration-context:0:authored:migration-ee661cb4c6e2597d-0 --></ins>
 
 <a id="binary-data-blobs"></a>
 
@@ -465,8 +457,8 @@ Gets a pointer to the data.
 
 Returns a pointer.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:OF-blob-pointer-role:0:authored:migration-f4c3052b8bb84fe4-0 -->The pointer is borrowed under the
-[common blob ownership and extent contract](#binary-data-blobs).<!-- d3d12-review-inline:end:devices-capabilities:OF-blob-pointer-role:0:authored:migration-f4c3052b8bb84fe4-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:OF-blob-pointer-role:0:authored:migration-f4c3052b8bb84fe4-0 -->See [Binary-data blob objects](#binary-data-blobs) for pointer ownership
+and extent.<!-- d3d12-review-inline:end:devices-capabilities:OF-blob-pointer-role:0:authored:migration-f4c3052b8bb84fe4-0 --></ins>
 
 <a id="id3d10blob-getbuffersize"></a>
 
@@ -485,10 +477,6 @@ Gets the size.
 #### Return values
 
 The size of the data, in bytes.
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:OF-blob-size-role:0:authored:migration-2fbdda18b1f6ddc5-0 -->Do not truncate the byte count to a 32-bit count.
-[GetBufferPointer](#id3d10blob-getbufferpointer) accesses the corresponding
-byte span under the [common blob ownership and extent contract](#binary-data-blobs).<!-- d3d12-review-inline:end:devices-capabilities:OF-blob-size-role:0:authored:migration-2fbdda18b1f6ddc5-0 --></ins>
 
 <a id="ordinary-creation"></a>
 
@@ -549,6 +537,10 @@ If **ppDevice** is **NULL** and the function succeeds, **S\_FALSE** is returned,
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:remarks-D3D12CreateDevice:1:modified:migration-a98271806821a588-0 -->`D3D12CreateDevice` provides a singleton per adapter.<!-- d3d12-review-inline:end:devices-capabilities:remarks-D3D12CreateDevice:1:modified:migration-a98271806821a588-0 --></ins> <ins><!-- d3d12-review-inline:begin:devices-capabilities:remarks-D3D12CreateDevice:1:modified:migration-cc123228712b62d0-1 -->If a Direct3D 12 singleton device already exists in the current process for a given adapter,<!-- d3d12-review-inline:end:devices-capabilities:remarks-D3D12CreateDevice:1:modified:migration-cc123228712b62d0-1 --></ins> then a subsequent call to **D3D12CreateDevice** returns the existing device. If the current Direct3D 12 device is in a removed state (that is, [ID3D12Device::GetDeviceRemovedReason](diagnostics.md#id3d12device-getdeviceremovedreason) returns a failing HRESULT), then **D3D12CreateDevice** fails instead of returning the existing device. The sameness of two adapters (that is, they have the same identity) is determined by comparing their LUIDs, not their pointers.
 
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:singleton-lifetime:0:authored:migration-c0ce72cd08e2cb6a-0 -->A removed singleton cannot be replaced through `D3D12CreateDevice` while references keep it alive. Releasing the singleton and its device children permits a subsequent creation. Creating a device through a [device factory](#independent-devices) provides a separate configuration and recovery boundary.<!-- d3d12-review-inline:end:devices-capabilities:singleton-lifetime:0:authored:migration-c0ce72cd08e2cb6a-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:singleton-lifetime:1:authored:migration-1cd8d2126a4ca250-0 -->Historical context: driver upgrade recovery also requires allowing the old user-mode driver and its dependent modules to unload. Sharing a singleton couples components' recovery to the lifetime of that singleton.<!-- d3d12-review-inline:end:devices-capabilities:singleton-lifetime:1:authored:migration-1cd8d2126a4ca250-0 --></ins>
+
 In order to be sure to pick up the first adapter that supports D3D12, use the following code.
 
 ```cpp
@@ -589,7 +581,7 @@ HRESULT GetHardwareAdapter(IDXGIFactory4* pFactory, IDXGIAdapter1** ppAdapter)
 
 The function signature PFN\_D3D12\_CREATE\_DEVICE is provided as a typedef, so that you can use dynamic linking techniques ([GetProcAddress](https://learn.microsoft.com/en-us/windows/desktop/api/libloaderapi/nf-libloaderapi-getprocaddress)) instead of statically linking.
 
-The **REFIID**, or **GUID**, of the interface to a device can be obtained by <ins><!-- d3d12-review-inline:begin:devices-capabilities:remarks-D3D12CreateDevice:5 -->using the `__uuidof()`<!-- d3d12-review-inline:end:devices-capabilities:remarks-D3D12CreateDevice:5 --></ins> macro. For example, `__uuidof`([ID3D12Device](#ordinary-creation)) will get the **GUID** of the interface to a device.
+The **REFIID**, or **GUID**, of the interface to a device can be obtained by using the `__uuidof()` macro. For example, `__uuidof`([ID3D12Device](#ordinary-creation)) will get the **GUID** of the interface to a device.
 
 #### Examples
 
@@ -626,10 +618,6 @@ else
 
 Refer to the [Example Code in the D3D12 Reference](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/notes-on-example-code).
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:singleton-lifetime:0:authored:migration-c0ce72cd08e2cb6a-0 -->The ordinary entry point's singleton is per adapter LUID within the process. Independent devices created by a factory do not make all device objects for the same LUID identical. A removed singleton cannot be replaced through `D3D12CreateDevice` while references keep it alive. Releasing the singleton and its device children permits a subsequent creation; independent creation provides a separate configuration and recovery boundary.<!-- d3d12-review-inline:end:devices-capabilities:singleton-lifetime:0:authored:migration-c0ce72cd08e2cb6a-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:singleton-lifetime:1:authored:migration-1cd8d2126a4ca250-0 -->Historical context: driver upgrade recovery also requires allowing the old user-mode driver and its dependent modules to unload. Sharing a singleton couples components' recovery to the lifetime of that singleton.<!-- d3d12-review-inline:end:devices-capabilities:singleton-lifetime:1:authored:migration-1cd8d2126a4ca250-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:D144-runtime-discovery:0:authored:migration-12dad967be18eba1-0 -->See [runtime cache discovery](runtime-cache-discovery.md#effective-identity) for effective application identity and registered default-PSDB initialization.<!-- d3d12-review-inline:end:devices-capabilities:D144-runtime-discovery:0:authored:migration-12dad967be18eba1-0 --></ins>
 
 <a id="runtime-selection"></a>
@@ -651,7 +639,7 @@ This version policy:
 
 ### No requested redistributable
 
-Applications that don't target a redist continue to get the inbox OS version as before.
+Applications that don't target a redist <ins><!-- d3d12-review-inline:begin:devices-capabilities:redist-none:0:modified:opus-present-state-inbox -->use the inbox OS version.<!-- d3d12-review-inline:end:devices-capabilities:redist-none:0:modified:opus-present-state-inbox --></ins>
 
 <a id="sdk-selection-exports"></a>
 
@@ -699,11 +687,11 @@ c:\Game\D3D12\D3D12Core.dll
 
 Configure the application installer to install the D3D12Core.dll in the folder specified in D3D12SDKPath.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:redist-exports:13:modified:migration-8d7fbb179e1f3901-0 -->Applications call<!-- d3d12-review-inline:end:devices-capabilities:redist-exports:13:modified:migration-8d7fbb179e1f3901-0 --></ins> D3D12CreateDevice on the OS inbox D3D12.dll as they always have.  <ins><!-- d3d12-review-inline:begin:devices-capabilities:redist-exports:13:modified:migration-d96656d67e1eddc9-1 -->This runtime checks if the requested version is the same or older than the inbox version.<!-- d3d12-review-inline:end:devices-capabilities:redist-exports:13:modified:migration-d96656d67e1eddc9-1 --></ins>  If it is, the inbox version of D3D12.dll, D3D12SDKLayers.dll, etc. are used.
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:redist-exports:13:modified:opus-present-state-inbox-call -->Applications call D3D12CreateDevice on the OS inbox D3D12.dll.<!-- d3d12-review-inline:end:devices-capabilities:redist-exports:13:modified:opus-present-state-inbox-call --></ins>  <ins><!-- d3d12-review-inline:begin:devices-capabilities:redist-exports:13:modified:migration-d96656d67e1eddc9-1 -->This runtime checks if the requested version is the same or older than the inbox version.<!-- d3d12-review-inline:end:devices-capabilities:redist-exports:13:modified:migration-d96656d67e1eddc9-1 --></ins>  If it is, the inbox version of D3D12.dll, D3D12SDKLayers.dll, etc. are used.
 
 If the requested version is newer, the runtime will load D3D12Core.dll from D3D12SDKPath, ensure that it matches the declared version, and use it instead.
 
-The interfaces and feature checks of the requested SDK version are now available.
+The interfaces and feature checks of the requested SDK version are <ins><!-- d3d12-review-inline:begin:devices-capabilities:redist-available:0:modified:opus-present-state-available -->then<!-- d3d12-review-inline:end:devices-capabilities:redist-available:0:modified:opus-present-state-available --></ins> available.
 
 <a id="d3d12getinterface"></a>
 
@@ -741,6 +729,12 @@ They correspond, respectively, to the following interfaces.
 - [ID3D12DeviceRemovedExtendedDataSettings interface](diagnostics.md#dred-settings)
 - [ID3D12SDKConfiguration interface](#runtime-selection)
 
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:getinterface-factory:0:authored:migration-a01cff61ae6b305e-0 -->`CLSID_D3D12DeviceFactory` retrieves a factory from the globally selected runtime. `ID3D12SDKConfiguration1::CreateDeviceFactory` additionally selects a side-by-side runtime for that factory. Factory configuration interfaces refer to the factory's state, not automatically to the process-global state.<!-- d3d12-review-inline:end:devices-capabilities:getinterface-factory:0:authored:migration-a01cff61ae6b305e-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:D121-global-factory-contributors:0:authored:migration-93d8835dfc64fe73-0 -->The [state object database factory](state-object-databases-and-identity.md#database-factory) is retrieved with `CLSID_D3D12StateObjectFactory` and its database factory interface. The application identity configuration interface uses `CLSID_D3D12ApplicationIdentity`. See [application identity configuration](state-object-databases-and-identity.md#id3d12applicationidentity-setapplicationidentity) for the configuration and snapshot rules for global retrieval through this function and factory-scoped retrieval through [GetConfigurationInterface](#id3d12devicefactory-getconfigurationinterface).<!-- d3d12-review-inline:end:devices-capabilities:D121-global-factory-contributors:0:authored:migration-93d8835dfc64fe73-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:D138-registration-factory:0:authored:migration-97e2a06d52ea8547-0 -->The [shader cache registration factory](shader-cache-registration.md#factory-bootstrap) is retrieved using `CLSID_D3DShaderCacheInstallerFactory` and `IID_ID3DShaderCacheInstallerFactory`. It creates installers and read-only explorers. See that section for its client, catalog and object lifetime contracts.<!-- d3d12-review-inline:end:devices-capabilities:D138-registration-factory:0:authored:migration-97e2a06d52ea8547-0 --></ins>
+
 `riid`
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:Parameters-D3D12GetInterface:9 -->Type: **[REFIID](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-oaut/bbde795f-5398-42d8-9f59-3613da03c318)**<!-- d3d12-review-inline:end:devices-capabilities:Parameters-D3D12GetInterface:9 --></ins>
@@ -753,17 +747,11 @@ The globally unique identifier (**GUID**) for the SDK configuration interface. T
 
 The `out` parameter that contains the requested interface on return (for example, the SDK configuration interface), as a pointer to pointer to void. See [ID3D12SDKConfiguration](#runtime-selection).
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:D121-global-factory-contributors:0:authored:migration-93d8835dfc64fe73-0 -->The [state object database factory](state-object-databases-and-identity.md#database-factory) is retrieved with `CLSID_D3D12StateObjectFactory` and its database factory interface. The application identity configuration interface uses `CLSID_D3D12ApplicationIdentity`. See [application identity configuration](state-object-databases-and-identity.md#id3d12applicationidentity-setapplicationidentity) for the configuration and snapshot rules for global retrieval through this function and factory-scoped retrieval through [GetConfigurationInterface](#id3d12devicefactory-getconfigurationinterface).<!-- d3d12-review-inline:end:devices-capabilities:D121-global-factory-contributors:0:authored:migration-93d8835dfc64fe73-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:D138-registration-factory:0:authored:migration-97e2a06d52ea8547-0 -->The [shader cache registration factory](shader-cache-registration.md#factory-bootstrap) is retrieved using `CLSID_D3DShaderCacheInstallerFactory` and `IID_ID3DShaderCacheInstallerFactory`. It creates installers and read-only explorers. It is not an `ID3D12DeviceFactory` or a compiler factory. Its client, catalog and object lifetime contracts are defined there.<!-- d3d12-review-inline:end:devices-capabilities:D138-registration-factory:0:authored:migration-97e2a06d52ea8547-0 --></ins>
-
 #### Return values
 
 Type: **[HRESULT](#api-result-codes)**
 
 If the function succeeds, then it returns **S\_OK**. Otherwise, it returns one of the [Direct3D 12 return codes](#api-result-codes).
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:getinterface-factory:0:authored:migration-a01cff61ae6b305e-0 -->`CLSID_D3D12DeviceFactory` retrieves a factory from the globally selected runtime. `ID3D12SDKConfiguration1::CreateDeviceFactory` additionally selects a side-by-side runtime for that factory. The SDK configuration object is obtained using `CLSID_D3D12SDKConfiguration`. Factory configuration interfaces refer to the factory's state, not automatically to the process-global state.<!-- d3d12-review-inline:end:devices-capabilities:getinterface-factory:0:authored:migration-a01cff61ae6b305e-0 --></ins>
 
 <a id="id3d12sdkconfiguration-setsdkversion"></a>
 
@@ -809,521 +797,7 @@ If the `d3d12core.dll` installed with the OS is newer than the SDK version speci
 
 You can retrieve the version of a particular `D3D12Core.dll` from the exported symbol [**D3D12SDKVersion**](https://learn.microsoft.com/en-us/windows/win32/direct3d12/nf-d3d12-d3d12sdkversion), which is a variable of type **UINT**, just like the variables exported from applications to enable use of the Agility SDK.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:selection-boundary:0:authored:migration-9d25fe7a83d0d298-0 -->`SetSDKVersion` changes the global selection and requires Developer Mode. Factory creation does not require Developer Mode and can select its own SDK without replacing the global selection. Selecting a newer runtime does not itself establish hardware or driver support for an optional feature.<!-- d3d12-review-inline:end:devices-capabilities:selection-boundary:0:authored:migration-9d25fe7a83d0d298-0 --></ins>
-
-<a id="runtime-driver-initialization"></a>
-
-## Runtime and driver initialization
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B001:0:authored:migration-96593c3f26efae1e-0 -->The runtime opens a UMD adapter, negotiates a DDI version, and creates the driver device in runtime-provided private storage.<!-- d3d12-review-inline:end:devices-capabilities:B001:0:authored:migration-96593c3f26efae1e-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B002:0:authored:migration-45a36840171319b2-0 -->One DDI device is associated with each opened UMD adapter object. This does not restrict the number of application devices associated with a physical adapter.<!-- d3d12-review-inline:end:devices-capabilities:B002:0:authored:migration-45a36840171319b2-0 --></ins>
-
-The Direct3D runtime can open multiple graphics adapter objects from a single graphics adapter.
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B004:0:authored:migration-c72b37d761083a97-0 -->Driver handles identify driver objects or their supplied private storage. Runtime handles identify objects used for callbacks into the runtime.<!-- d3d12-review-inline:end:devices-capabilities:B004:0:authored:migration-c72b37d761083a97-0 --></ins>
-
-<a id="driver-entry"></a>
-
-### Driver entry and adapter objects
-
-<a id="pfnd3d12ddi_openadapter"></a>
-
-#### PFND3D12DDI_OPENADAPTER
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B005:0:authored:migration-bf8bb2d4d3621300-0 -->The UMD exports `OpenAdapter12` with this function type:<!-- d3d12-review-inline:end:devices-capabilities:B005:0:authored:migration-bf8bb2d4d3621300-0 --></ins>
-
-```cpp
-typedef HRESULT (APIENTRY *PFND3D12DDI_OPENADAPTER)(
-    _Inout_ D3D12DDIARG_OPENADAPTER* pArgs);
-
-typedef struct D3D12DDIARG_OPENADAPTER
-{
-    D3D12DDI_HRTADAPTER hRTAdapter;
-    D3D12DDI_HADAPTER hAdapter;
-    CONST D3DDDI_ADAPTERCALLBACKS* pAdapterCallbacks;
-    D3D12DDI_ADAPTERFUNCS* pAdapterFuncs;
-} D3D12DDIARG_OPENADAPTER;
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B007:0:authored:migration-4fa019255fccea8b-0 -->The runtime supplies `hRTAdapter`, its adapter callback table and writable adapter function table storage. On success, the driver returns `hAdapter` and fills the adapter function table. `hRTAdapter` is used with the runtime's adapter callbacks; `hAdapter` identifies the opened driver object in subsequent adapter DDIs.<!-- d3d12-review-inline:end:devices-capabilities:B007:0:authored:migration-4fa019255fccea8b-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B008:0:authored:migration-0fa075657e8a7b8f-0 -->The adapter callback table includes `pfnQueryAdapterInfoCb`, which the driver can use with `hRTAdapter` to query adapter information from the display miniport driver.<!-- d3d12-review-inline:end:devices-capabilities:B008:0:authored:migration-0fa075657e8a7b8f-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B009:0:authored:migration-fc34ea45913b31b2-0 -->OpenAdapter12 precedes selection of the device DDI version.<!-- d3d12-review-inline:end:devices-capabilities:B009:0:authored:migration-fc34ea45913b31b2-0 --></ins>
-
-```cpp
-
-typedef struct D3D12DDI_ADAPTERFUNCS_0109
-{
-    PFND3D12DDI_CALCPRIVATEDEVICESIZE pfnCalcPrivateDeviceSize;
-    PFND3D12DDI_CREATEDEVICE_0109 pfnCreateDevice;
-    PFND3D12DDI_CLOSEADAPTER pfnCloseAdapter;
-    PFND3D12DDI_GETSUPPORTEDVERSIONS pfnGetSupportedVersions;
-    PFND3D12DDI_GETCAPS pfnGetCaps;
-    PFND3D12DDI_GETOPTIONALDDITTABLES pfnGetOptionalDDITables;
-    PFND3D12DDI_FILLDDITTABLE pfnFillDDITable;
-    PFND3D12DDI_DESTROYDEVICE pfnDestroyDevice;
-} D3D12DDI_ADAPTERFUNCS_0109;
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B011:0:authored:migration-f87fd91734b07b21-0 -->The table's create-device function type does not establish the extent of every creation argument the runtime will supply. The driver must use the creation arguments' negotiated `Interface`/`Version` pair before accessing the [extended creation fields](#creation-tail).<!-- d3d12-review-inline:end:devices-capabilities:B011:0:authored:migration-f87fd91734b07b21-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B012:0:authored:migration-1839bb2874d80d0b-0 -->`OpenAdapter12` returns an `HRESULT` indicating whether adapter opening succeeded. Required allocation failure can be reported as `E_OUTOFMEMORY`. The driver owns the adapter object and its allocations. The runtime uses `CloseAdapter` to end its successful opened lifetime.<!-- d3d12-review-inline:end:devices-capabilities:B012:0:authored:migration-1839bb2874d80d0b-0 --></ins>
-
-<a id="pfnd3d12ddi_closeadapter"></a>
-
-#### PFND3D12DDI_CLOSEADAPTER
-
-```cpp
-typedef HRESULT (APIENTRY *PFND3D12DDI_CLOSEADAPTER)(
-    D3D12DDI_HADAPTER hAdapter);
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B014:0:authored:migration-4131cd7d2015811d-0 -->CloseAdapter releases the driver adapter and its allocations after its device is no longer in use.<!-- d3d12-review-inline:end:devices-capabilities:B014:0:authored:migration-4131cd7d2015811d-0 --></ins>
-
-<a id="interface-versions"></a>
-
-### Supported interface versions
-
-<a id="pfnd3d12ddi_getsupportedversions"></a>
-
-#### PFND3D12DDI_GETSUPPORTEDVERSIONS
-
-```cpp
-typedef HRESULT (APIENTRY *PFND3D12DDI_GETSUPPORTEDVERSIONS)(
-    D3D12DDI_HADAPTER hAdapter,
-    _Inout_ UINT32* puEntries,
-    _Out_writes_opt_(*puEntries) UINT64* pSupportedDDIInterfaceVersions);
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B016:0:authored:migration-7c0a667dd751ef13-0 -->Each returned `UINT64` is one exact supported DDI version, not a ceiling that implicitly advertises every lower build. A selected version must appear in the driver's returned list and be supported by the runtime. Runtime and driver are independently versioned.<!-- d3d12-review-inline:end:devices-capabilities:B016:0:authored:migration-7c0a667dd751ef13-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B017:0:authored:migration-1cd20010f553367e-0 -->Runtime selection normally prefers the highest mutually supported version. Compatibility exclusions, including runtime or driver bugs, can require a shared version to be skipped. The driver must not rely on unconditional selection of the numerically highest advertised value.<!-- d3d12-review-inline:end:devices-capabilities:B017:0:authored:migration-1cd20010f553367e-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B018:0:authored:migration-e9a88601cd6c7d57-0 -->A null version array pointer queries the number of entries through `puEntries`. For retrieval, `*puEntries` supplies array capacity in `UINT64` elements; on successful retrieval it reports the actual returned count, which does not exceed that capacity. The runtime can accept fewer entries than the preceding size query reported. Returned order does not establish version preference.<!-- d3d12-review-inline:end:devices-capabilities:B018:0:authored:migration-e9a88601cd6c7d57-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B020:0:authored:migration-7eb0bb8983a55a9a-0 -->The selected value is communicated for device sizing and creation through the `Interface` and `Version` fields. Together they represent the selected 64-bit DDI version. They are not the API SDK version, feature level or shader model version. If no version is supported by both sides, a device cannot be created for that runtime/driver pair.<!-- d3d12-review-inline:end:devices-capabilities:B020:0:authored:migration-7eb0bb8983a55a9a-0 --></ins>
-
-<a id="device-storage"></a>
-
-### Private device storage
-
-<a id="pfnd3d12ddi_calcprivatedevicesize"></a>
-
-#### PFND3D12DDI_CALCPRIVATEDEVICESIZE
-
-```cpp
-typedef SIZE_T (APIENTRY *PFND3D12DDI_CALCPRIVATEDEVICESIZE)(
-    D3D12DDI_HADAPTER hAdapter,
-    _In_ CONST D3D12DDIARG_CALCPRIVATEDEVICESIZE* pArgs);
-
-typedef struct D3D12DDIARG_CALCPRIVATEDEVICESIZE
-{
-    UINT Interface;
-    UINT Version;
-    D3D12DDI_CREATE_DEVICE_FLAGS Flags;
-} D3D12DDIARG_CALCPRIVATEDEVICESIZE;
-
-typedef enum D3D12DDI_CREATE_DEVICE_FLAGS
-{
-    D3D12DDI_CREATE_DEVICE_FLAG_NONE = 0x0,
-    D3D12DDI_CREATE_DEVICE_FLAG_DISABLE_IMPLICIT_MGPU = 0x1,
-    D3D12DDI_CREATE_DEVICE_FLAG_DEBUGGABLE = 0x2,
-} D3D12DDI_CREATE_DEVICE_FLAGS;
-```
-
-The CalcPrivateDeviceSize function determines the size of a memory region that the user-mode display driver requires from the Microsoft Direct3D runtime to store frequently-accessed data.
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B023:0:authored:migration-f47b6f58d1ba3a67-0 -->The size query describes the selected DDI version and creation flags. Its flags request disabling implicit multi-GPU operation or creating a debuggable driver device.<!-- d3d12-review-inline:end:devices-capabilities:B023:0:authored:migration-f47b6f58d1ba3a67-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B024:0:authored:migration-4950fc8da9d021eb-0 -->The runtime allocates and frees the reported private device region. The driver initializes that storage through `hDrvDevice` and owns any auxiliary allocations it makes. The storage supplied for creation must satisfy the size requirement for the actual creation parameters.<!-- d3d12-review-inline:end:devices-capabilities:B024:0:authored:migration-4950fc8da9d021eb-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B025:0:authored:migration-18fba0b0db450ddf-0 -->Private device storage is aligned to `MEMORY_ALLOCATION_ALIGNMENT`, which is 16 bytes on Win64 and 8 bytes on Win32.<!-- d3d12-review-inline:end:devices-capabilities:B025:0:authored:migration-18fba0b0db450ddf-0 --></ins>
-
-<a id="device-creation"></a>
-
-### Driver device creation and destruction
-
-<a id="pfnd3d12ddi_createdevice_0003-and-pfnd3d12ddi_createdevice_0109"></a>
-
-### PFND3D12DDI_CREATEDEVICE_0109
-
-```cpp
-
-typedef HRESULT (APIENTRY *PFND3D12DDI_CREATEDEVICE_0109)(
-    D3D12DDI_HADAPTER hAdapter,
-    _In_ CONST D3D12DDIARG_CREATEDEVICE_0109* pArgs);
-
-typedef struct D3D12DDIARG_CREATEDEVICE_0109
-{
-    D3D12DDI_HRTDEVICE hRTDevice;
-    UINT Interface;
-    UINT Version;
-    CONST D3DDDI_DEVICECALLBACKS* pKTCallbacks;
-    D3D12DDI_HDEVICE hDrvDevice;
-    union
-    {
-        CONST D3D12DDI_CORELAYER_DEVICECALLBACKS_0003* p12UMCallbacks;
-        CONST struct D3D12DDI_CORELAYER_DEVICECALLBACKS_0022* p12UMCallbacks_0022;
-        CONST struct D3D12DDI_CORELAYER_DEVICECALLBACKS_0050* p12UMCallbacks_0050;
-        CONST struct D3D12DDI_CORELAYER_DEVICECALLBACKS_0062* p12UMCallbacks_0062;
-        CONST struct D3D12DDI_CORELAYER_DEVICECALLBACKS_0112* p12UMCallbacks_0112;
-        CONST struct D3D12DDI_CORELAYER_DEVICECALLBACKS_0116* p12UMCallbacks_0116;
-    };
-    D3D12DDI_CREATE_DEVICE_FLAGS Flags;
-    D3D12DDI_GPU_VIRTUAL_ADDRESS_RANGE* pReserveRanges;
-    UINT NumReserveRanges;
-} D3D12DDIARG_CREATEDEVICE_0109;
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B027:0:authored:migration-c331c34e45c18700-0 -->`hRTDevice` identifies the runtime device for callbacks. `hDrvDevice` identifies the supplied driver-private storage.<!-- d3d12-review-inline:end:devices-capabilities:B027:0:authored:migration-c331c34e45c18700-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B028:0:authored:migration-e5b78d3d5df13ce5-0 -->`pKTCallbacks` supplies runtime callbacks that access kernel services. The `p12UMCallbacks` union supplies the applicable versioned core user-mode callback table. The union members are alternative views of one callback table pointer, not independently supplied tables. The driver uses the layout applicable to the negotiated interface.<!-- d3d12-review-inline:end:devices-capabilities:B028:0:authored:migration-e5b78d3d5df13ce5-0 --></ins>
-
-<a id="creation-tail"></a>
-
-#### Creation tail availability and reserved GPUVAs
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B030:0:authored:migration-5d7c23b36c7c6050-0 -->The two fields after `Flags` are `pReserveRanges` and `NumReserveRanges`. Their presence is guaranteed only when the creation `Interface`/`Version` pair indicates `D3D12DDI_SUPPORTED_0111` or later. A driver must establish that field-availability guarantee before reading them, including before reading the count. Accessing absent fields is undefined behavior.<!-- d3d12-review-inline:end:devices-capabilities:B030:0:authored:migration-5d7c23b36c7c6050-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B031:0:authored:migration-a3be3b39453150e0-0 -->**History:** The `_0109` type name predates the 0111 field presence guarantee. Earlier versions do not guarantee that the tail exists. The type name is not an availability test.<!-- d3d12-review-inline:end:devices-capabilities:B031:0:authored:migration-a3be3b39453150e0-0 --></ins>
-
-```cpp
-typedef struct D3D12DDI_GPU_VIRTUAL_ADDRESS_RANGE
-{
-    D3D12DDI_GPU_VIRTUAL_ADDRESS StartAddress;
-    UINT64 SizeInBytes;
-} D3D12DDI_GPU_VIRTUAL_ADDRESS_RANGE;
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B033:0:authored:migration-a517a87146ad6f49-0 -->For a creation payload that includes the tail, `pReserveRanges` supplies `NumReserveRanges` GPU virtual address ranges. `StartAddress` is a GPU virtual address and `SizeInBytes` is the extent in bytes. The driver must immediately reserve the supplied ranges during creation, before its initialization allocations can consume addresses needed for replay.<!-- d3d12-review-inline:end:devices-capabilities:B033:0:authored:migration-a517a87146ad6f49-0 --></ins>
-
-Ranges provided to `CreateDevice` are not processed in any way and may or may not be aligned in offset or size and may or may not overlap, depending on driver behavior during record.
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B035:0:authored:migration-3e81b88110304771-0 -->The driver reports creation completion through the `HRESULT`. A failing creation must clean up the driver's partial work and auxiliary allocations. It cannot depend on `DestroyDevice` being called to finish a failed creation.<!-- d3d12-review-inline:end:devices-capabilities:B035:0:authored:migration-3e81b88110304771-0 --></ins>
-
-<a id="pfnd3d12ddi_destroydevice"></a>
-
-#### PFND3D12DDI_DESTROYDEVICE
-
-```cpp
-typedef VOID (APIENTRY *PFND3D12DDI_DESTROYDEVICE)(
-    D3D12DDI_HDEVICE hDevice);
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B037:0:authored:migration-42428f2626d690bb-0 -->Destroys the successfully created driver device and releases its driver-owned auxiliary allocations. The runtime retains ownership of the supplied private device region and frees that region after its use ends.<!-- d3d12-review-inline:end:devices-capabilities:B037:0:authored:migration-42428f2626d690bb-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B038:0:authored:migration-183dc92301c7d53d-0 -->Successful DDI device creation establishes a destruction obligation even if the application device is not yet complete. If a subsequent initialization DDI fails and initial creation is abandoned, the runtime calls `DestroyDevice` before closing the adapter. This does not make a later failure of a delay-loaded feature a device creation failure.<!-- d3d12-review-inline:end:devices-capabilities:B038:0:authored:migration-183dc92301c7d53d-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B039:0:authored:migration-0aaf39dd4ac0e2e5-0 -->DestroyDevice is an adapter table entry, so cleanup does not require successful device table initialization.<!-- d3d12-review-inline:end:devices-capabilities:B039:0:authored:migration-0aaf39dd4ac0e2e5-0 --></ins>
-
-<a id="capability-queries"></a>
-
-### Adapter capability queries
-
-<a id="pfnd3d12ddi_getcaps"></a>
-
-#### PFND3D12DDI_GETCAPS
-
-```cpp
-typedef HRESULT (APIENTRY *PFND3D12DDI_GETCAPS)(
-    D3D12DDI_HADAPTER hAdapter,
-    _In_ CONST D3D12DDIARG_GETCAPS* pArgs);
-
-typedef struct D3D12DDIARG_GETCAPS
-{
-    D3D12DDICAPS_TYPE Type;
-    VOID* pInfo;
-    VOID* pData;
-    UINT DataSize;
-} D3D12DDIARG_GETCAPS;
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B041:0:authored:migration-146082d7888ade3a-0 -->`Type` selects the driver capability query. `pInfo` and `pData` carry its query-specific information and payload. Their inputs, outputs and permitted null values are defined by that query. `DataSize` describes the `pData` payload size in bytes. The function returns an `HRESULT` reporting the query result.<!-- d3d12-review-inline:end:devices-capabilities:B041:0:authored:migration-146082d7888ade3a-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B042:0:authored:migration-9e0e5144443fd147-0 -->This is an adapter level interface, not a one-to-one dispatch of an application `CheckFeatureSupport` call. Runtime capability results can be cached, combined or translated. [Feature level reporting](devices-and-capabilities.md#driver-responsibilities) defines concrete query/result mappings, including the input and output fields of the 3D-pipeline support query.<!-- d3d12-review-inline:end:devices-capabilities:B042:0:authored:migration-9e0e5144443fd147-0 --></ins>
-
-<a id="shared-driver-options"></a>
-
-#### Shared driver options payloads
-
-<a id="d3d12ddi_d3d12_options_data_0003"></a>
-
-##### D3D12DDI_D3D12_OPTIONS_DATA_0003
-
-```cpp
-typedef struct D3D12DDI_D3D12_OPTIONS_DATA_0003
-{
-    D3D12DDI_RESOURCE_BINDING_TIER ResourceBindingTier;
-    D3D12DDI_CONSERVATIVE_RASTERIZATION_TIER ConservativeRasterizationTier;
-    D3D12DDI_TILED_RESOURCES_TIER TiledResourcesTier;
-    D3D12DDI_CROSS_NODE_SHARING_TIER CrossNodeSharingTier;
-    BOOL VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation;
-    BOOL OutputMergerLogicOp;
-    D3D12DDI_RESOURCE_HEAP_TIER ResourceHeapTier;
-} D3D12DDI_D3D12_OPTIONS_DATA_0003;
-```
-
-<!-- d3d12-review-alert:begin:devices-capabilities:IF01-options0003-field-owners:0:authored:migration-e5aff0552327e8e6-0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> | Driver report | Canonical feature contract |
-> |---|---|
-> | `ResourceBindingTier` | [Resource binding tiers and limits](binding.md#binding-capabilities) |
-> | `ConservativeRasterizationTier` | [Conservative rasterization tiers](rasterization.md#conservative) |
-> | `TiledResourcesTier` | [Tiled resource tiers](resources.md#d3d12-tiled-resources-tier) |
-> | `CrossNodeSharingTier` | [Cross-node sharing tiers](sharing-and-interoperability.md#cross-node-sharing-tier) |
-> | `VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation` | [Native viewport/render-target array indexing and geometry shader emulation](rasterization.md#viewport-selection) |
-> | `OutputMergerLogicOp` | [Output merger logic operations](output-merger.md#logic-operations) |
-> | `ResourceHeapTier` | [Resource-type heap attribution](resources.md#resource-heap-tiers) |
-
-<!-- d3d12-review-alert:end:devices-capabilities:IF01-options0003-field-owners:0:authored:migration-e5aff0552327e8e6-0 -->
-
-<a id="d3d12ddi_options_data_0122"></a>
-
-##### D3D12DDI_OPTIONS_DATA_0122
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:options-0122-selection:0:authored:migration-fb9e13b81b987ec8-0 -->Byte-offset view support requires negotiated DDI revision 122 or later and the driver's `ViewCreationByteOffsetSupported` report through `D3D12DDICAPS_TYPE_OPTIONS_0122` (1105). The runtime reports the resulting capability through `CreateByteOffsetViewsSupported`.<!-- d3d12-review-inline:end:devices-capabilities:options-0122-selection:0:authored:migration-fb9e13b81b987ec8-0 --></ins>
-
-```cpp
-typedef struct D3D12DDI_OPTIONS_DATA_0122
-{
-    UINT Max1DDispatchSize;
-    UINT Max1DDispatchMeshSize;
-    BOOL ViewCreationByteOffsetSupported;
-} D3D12DDI_OPTIONS_DATA_0122;
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:options-0122-fields:0:authored:migration-d1b046a63f22f0a6-0 -->See [compute and mesh dispatch limits](#d3d12_feature_data_d3d12_options22) for the dispatch-size fields. `ViewCreationByteOffsetSupported` reports support for the byte-offset resource dimension and both byte-offset view representations.<!-- d3d12-review-inline:end:devices-capabilities:options-0122-fields:0:authored:migration-d1b046a63f22f0a6-0 --></ins>
-
-<!-- d3d12-review-alert:begin:compute:D-driver-capability-reporting:0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> **Capability Reporting:**
-> - Reported values must be at least 65,535 (D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION)
-> - `Max1DDispatchMeshSize` must not exceed 4,194,303 (D3D12_MS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID)
-> - Drivers may report different values for Compute and Mesh dispatches based on hardware capabilities
-
-<!-- d3d12-review-alert:end:compute:D-driver-capability-reporting:0 -->
-
-<a id="driver-tight-alignment-support"></a>
-
-#### Tight alignment capability reporting
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:IF04-tight-driver-discovery:0:authored:migration-bf16827f9692fc53-0 -->`D3D12DDICAPS_TYPE_TIGHT_ALIGNMENT_TIER_0111` (1089) uses
-[`D3D12DDI_TIGHT_ALIGNMENT_TIER_DATA_0111`](resources.md#tight-alignment-driver-support).
-The [tight alignment driver contract](resources.md#tight-alignment-driver-support)
-defines the support report required before the runtime forwards the resource flag.<!-- d3d12-review-inline:end:devices-capabilities:IF04-tight-driver-discovery:0:authored:migration-bf16827f9692fc53-0 --></ins>
-
-<a id="table-discovery"></a>
-
-### Required and additional function tables
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B043:0:authored:migration-d333e133f340f833-0 -->Core DDI table families are `D3D12DDI_TABLE_TYPE_DEVICE_CORE`, `D3D12DDI_TABLE_TYPE_COMMAND_LIST_3D`, `D3D12DDI_TABLE_TYPE_COMMAND_QUEUE_3D` and, from core version 0020, the [applicable extended feature table](#extended-features). The selected core version determines which layout of each family applies. The `_0096` extended feature table replaces the older selector at that version. Both are not required simultaneously.<!-- d3d12-review-inline:end:devices-capabilities:B043:0:authored:migration-d333e133f340f833-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B044:0:authored:migration-7b9d7928910046e2-0 -->Most required families have one copy. A graphics-capable device has two baseline 3D command list copies, for DIRECT and BUNDLE recordings. A device without graphics pipeline support has one baseline 3D command list copy. These counts do not establish a contractual numeric DIRECT/BUNDLE assignment for `tableNum`.<!-- d3d12-review-inline:end:devices-capabilities:B044:0:authored:migration-7b9d7928910046e2-0 --></ins>
-
-<a id="pfnd3d12ddi_getoptionalddittables"></a>
-
-#### PFND3D12DDI_GETOPTIONALDDITTABLES
-
-```cpp
-typedef HRESULT (APIENTRY *PFND3D12DDI_GETOPTIONALDDITTABLES)(
-    D3D12DDI_HADAPTER hAdapter,
-    _Inout_ UINT32* puEntries,
-    _Out_writes_opt_(*puEntries) D3D12DDI_TABLE_REQUEST* pRequests);
-
-typedef struct D3D12DDI_TABLE_REQUEST
-{
-    D3D12DDI_TABLE_TYPE tableType;
-    UINT numTables;
-} D3D12DDI_TABLE_REQUEST;
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B046:0:authored:migration-0dc67b8543fea703-0 -->This query describes additional table instances requested by the driver. Only `D3D12DDI_TABLE_TYPE_COMMAND_LIST_3D` participates in this optional-table mechanism. Command list tables belonging to separately negotiated extended features do not use it.<!-- d3d12-review-inline:end:devices-capabilities:B046:0:authored:migration-0dc67b8543fea703-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B047:0:authored:migration-35acc8c47e10ce7a-0 -->`puEntries` counts request records, not table copies. A null request array pointer queries that count. A corresponding retrieval supplies storage for the reported records, with `puEntries` identifying the returned record count. The function returns an `HRESULT`. An empty request list requests no additional tables.<!-- d3d12-review-inline:end:devices-capabilities:B047:0:authored:migration-35acc8c47e10ce7a-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B048:0:authored:migration-4ac395080c54f78e-0 -->Within each record, `numTables` is the number of additional copies of `tableType`, not the total including required copies. Thus a graphics-capable device's two required 3D copies plus an optional request for three copies produces five. A zero-copy request adds no copies.<!-- d3d12-review-inline:end:devices-capabilities:B048:0:authored:migration-4ac395080c54f78e-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B049:0:authored:migration-00bf91ccd041ad5e-0 -->These are alternative dispatch table instances, not additional advertised DDI versions. The driver can select an appropriate instance for a command list through the [table selection callback](#table-selection).<!-- d3d12-review-inline:end:devices-capabilities:B049:0:authored:migration-00bf91ccd041ad5e-0 --></ins>
-
-<a id="pfnd3d12ddi_fillddittable"></a>
-
-#### PFND3D12DDI_FILLDDITTABLE
-
-```cpp
-typedef HRESULT (APIENTRY *PFND3D12DDI_FILLDDITTABLE)(
-    D3D12DDI_HADAPTER hAdapter,
-    D3D12DDI_TABLE_TYPE tableType,
-    _Inout_ VOID* pTable,
-    SIZE_T tableSize,
-    UINT tableNum,
-    _In_opt_ D3D12DDI_HRTTABLE hRTTable);
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B051:0:authored:migration-1c34135cb2ba9452-0 -->The driver fills the requested table instance. `tableType` identifies the table family, `tableSize` is the output buffer size in bytes, and `tableNum` identifies the requested instance of that family. The index is not a DDI version number.<!-- d3d12-review-inline:end:devices-capabilities:B051:0:authored:migration-1c34135cb2ba9452-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B052:0:authored:migration-7a8e58f09f5ae0c0-0 -->For core tables, the device creation `Interface`/`Version` context determines the applicable versioned layout. For an extended feature, the enabled feature version determines that feature's layout. The driver writes within the supplied table extent.<!-- d3d12-review-inline:end:devices-capabilities:B052:0:authored:migration-7a8e58f09f5ae0c0-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B053:0:authored:migration-55f587e93900ef3a-0 -->`pTable` is caller-owned writable storage for the call, not storage owned by the driver and not the stable runtime table handle. The driver provides function pointers according to each entry's contract. Presence of an entry in the layout does not itself require a non-null value: per-entry optionality rules apply.<!-- d3d12-review-inline:end:devices-capabilities:B053:0:authored:migration-55f587e93900ef3a-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B054:0:authored:migration-bed4474d1eb7aa78-0 -->For 3D command list tables, `hRTTable` is the opaque runtime identity used for table selection. Its validity lasts until device destruction. It must not be interpreted as ownership of, or a right to retain or modify, the output buffer.<!-- d3d12-review-inline:end:devices-capabilities:B054:0:authored:migration-bed4474d1eb7aa78-0 --></ins>
-
-<a id="table-selection"></a>
-
-#### PFND3D12DDI_SETCOMMANDLISTDDITABLE_CB
-
-```cpp
-typedef VOID (APIENTRY CALLBACK *PFND3D12DDI_SETCOMMANDLISTDDITABLE_CB)(
-    D3D12DDI_HRTCOMMANDLIST hRTCommandList,
-    D3D12DDI_HRTTABLE hRTTable);
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B056:0:authored:migration-68e53dc41cc0916c-0 -->The driver calls this runtime callback to select which populated 3D command list table is used for the specified runtime command list object. That selection may change during the command list's lifetime.<!-- d3d12-review-inline:end:devices-capabilities:B056:0:authored:migration-68e53dc41cc0916c-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B057:0:authored:migration-1677428e99dd28c2-0 -->Table selection does not renegotiate the core DDI version. The stable identity is the supplied runtime handle, not the transient table population buffer.<!-- d3d12-review-inline:end:devices-capabilities:B057:0:authored:migration-1677428e99dd28c2-0 --></ins>
-
-<a id="extended-features"></a>
-
-### Extended feature negotiation
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B058:0:authored:migration-c5a766745553b5a2-0 -->Extended features have their own `UINT32` version values in addition to the selected core DDI version. A version returned by the driver is an exact supported version; activation selects a value supported by both runtime and driver. Highest compatible is the normal intention, subject to compatibility exclusions as for the core interface.<!-- d3d12-review-inline:end:devices-capabilities:B058:0:authored:migration-c5a766745553b5a2-0 --></ins>
-
-<!-- d3d12-review-alert:begin:devices-capabilities:B060:0:authored:migration-afb07666d10cfc95-0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> | Table selector | Current layout |
-> |---|---|
-> | `D3D12DDI_TABLE_TYPE_0096_EXTENDED_FEATURES` | `D3D12DDI_EXTENDED_FEATURES_FUNCS_0096` |
-
-<!-- d3d12-review-alert:end:devices-capabilities:B060:0:authored:migration-afb07666d10cfc95-0 -->
-
-```cpp
-
-typedef struct D3D12DDI_EXTENDED_FEATURES_FUNCS_0096
-{
-    PFND3D12DDI_GET_SUPPORTED_EXTENDED_FEATURES_0096 pfnGetSupportedExtendedFeatures;
-    PFND3D12DDI_GET_SUPPORTED_EXTENDED_FEATURE_VERSIONS_0020 pfnGetSupportedExtendedFeatureVersions;
-    PFND3D12DDI_ENABLE_EXTENDED_FEATURE_0020 pfnEnableExtendedFeature;
-    PFND3D12DDI_SET_EXTENDED_FEATURE_CALLBACKS_0021 pfnSetExtendedFeatureCallbacks;
-} D3D12DDI_EXTENDED_FEATURES_FUNCS_0096;
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B062:0:authored:migration-6763dc7c67c4b580-0 -->`D3D12DDI_FEATURE_0020` identifies a feature family, not a feature version.<!-- d3d12-review-inline:end:devices-capabilities:B062:0:authored:migration-6763dc7c67c4b580-0 --></ins>
-
-```cpp
-typedef enum D3D12DDI_FEATURE_0020
-{
-    D3D12DDI_FEATURE_0020_VIDEO = 2,
-    D3D12DDI_FEATURE_0021_SHADERCACHING = 4,
-    D3D12DDI_FEATURE_0030_CONTENT_PROTECTION_RESOURCES = 5,
-    D3D12DDI_FEATURE_0030_CONTENT_PROTECTION_STREAMING = 6,
-    D3D12DDI_FEATURE_0033_METACOMMAND = 9,
-    D3D12DDI_FEATURE_0043_RENDER_PASS = 10,
-    D3D12DDI_FEATURE_0054_DOWNLEVEL_SUPPORT = 11,
-    D3D12DDI_FEATURE_0076_PIN_RESOURCES = 12,
-} D3D12DDI_FEATURE_0020;
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B064:0:authored:migration-698cdb953e5ecc0d-0 -->An identifier's presence in this enumeration is not an advertisement of device support or an enabled feature. Support and versions are obtained through the queries below.<!-- d3d12-review-inline:end:devices-capabilities:B064:0:authored:migration-698cdb953e5ecc0d-0 --></ins>
-
-<a id="pfnd3d12ddi_get_supported_extended_features_0020-and-_0096"></a>
-
-### PFND3D12DDI_GET_SUPPORTED_EXTENDED_FEATURES_0096
-
-```cpp
-
-typedef HRESULT (APIENTRY *PFND3D12DDI_GET_SUPPORTED_EXTENDED_FEATURES_0096)(
-    D3D12DDI_HDEVICE hDevice,
-    D3D12DDI_FEATURE_0020 HighestAllowedFeatureNumber,
-    _Inout_ UINT32* puFeatures,
-    _Out_writes_opt_(*puFeatures) D3D12DDI_FEATURE_0020* pFeatures);
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B066:0:authored:migration-4631b66c8764f086-0 -->Returns the supported extended feature identifiers for the device. A null array queries the number of feature identifiers. A corresponding fetch supplies that reported element count for the same query inputs. The count must remain consistent between that query and fetch. A zero feature count means that no extended features are advertised.<!-- d3d12-review-inline:end:devices-capabilities:B066:0:authored:migration-4631b66c8764f086-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B067:0:authored:migration-c243f526d390a2c6-0 -->Returned feature identifiers must not exceed the caller's inclusive
-`HighestAllowedFeatureNumber`. This is a bound on feature identifiers, not
-on their version numbers.<!-- d3d12-review-inline:end:devices-capabilities:B067:0:authored:migration-c243f526d390a2c6-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B068:0:authored:migration-cca843ade8385354-0 -->Feature retrieval requires storage for the complete reported list.<!-- d3d12-review-inline:end:devices-capabilities:B068:0:authored:migration-cca843ade8385354-0 --></ins>
-
-<a id="pfnd3d12ddi_get_supported_extended_feature_versions_0020"></a>
-
-#### PFND3D12DDI_GET_SUPPORTED_EXTENDED_FEATURE_VERSIONS_0020
-
-```cpp
-typedef HRESULT (APIENTRY *PFND3D12DDI_GET_SUPPORTED_EXTENDED_FEATURE_VERSIONS_0020)(
-    D3D12DDI_HDEVICE hDevice,
-    D3D12DDI_FEATURE_0020 Feature,
-    _Inout_ UINT32* puFeatureVersions,
-    _Out_writes_opt_(*puFeatureVersions) UINT32* pFeatureVersions);
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B070:0:authored:migration-3e40a17f27248027-0 -->For an advertised `Feature`, queries its supported exact version values. A null version array obtains the element count. A corresponding fetch supplies that count for the same device and feature. The reported count must remain consistent. An advertised feature has at least one supported version.<!-- d3d12-review-inline:end:devices-capabilities:B070:0:authored:migration-3e40a17f27248027-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B071:0:authored:migration-9ad4a0d8b9c38a75-0 -->The returned `UINT32` values are the feature's versions, not core DDI version values or feature IDs. A selected version must be explicitly advertised and recognized by the runtime. If no version is supported by both sides, that feature cannot be activated through this protocol.<!-- d3d12-review-inline:end:devices-capabilities:B071:0:authored:migration-9ad4a0d8b9c38a75-0 --></ins>
-
-<a id="pfnd3d12ddi_enable_extended_feature_0020"></a>
-
-#### PFND3D12DDI_ENABLE_EXTENDED_FEATURE_0020
-
-```cpp
-typedef HRESULT (APIENTRY *PFND3D12DDI_ENABLE_EXTENDED_FEATURE_0020)(
-    D3D12DDI_HDEVICE hDevice,
-    D3D12DDI_FEATURE_0020 Feature,
-    UINT32 FeatureVersion);
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B074:0:authored:migration-0be6d76ea84f80b2-0 -->Enables `Feature` at the selected exact `FeatureVersion` and establishes its version context for subsequent table population.<!-- d3d12-review-inline:end:devices-capabilities:B074:0:authored:migration-0be6d76ea84f80b2-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B075:0:authored:migration-676ca9df3aca9d4d-0 -->Successful enablement precedes requesting that feature's driver tables or supplying its callback tables. Those tables and callbacks must be ready before the feature is used. This defines prerequisites, not a fixed sequence between driver table retrieval and callback installation.<!-- d3d12-review-inline:end:devices-capabilities:B075:0:authored:migration-676ca9df3aca9d4d-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B076:0:authored:migration-50cc5ae4187a4436-0 -->Some feature table initialization is delayed until the feature is used through the API. It need not occur before application device creation completes. Failure of eager feature initialization fails device creation and follows the [creation cleanup obligation](#device-creation). Failure of deferred initialization is handled by the triggering operation's API/feature error contract.<!-- d3d12-review-inline:end:devices-capabilities:B076:0:authored:migration-50cc5ae4187a4436-0 --></ins>
-
-<a id="pfnd3d12ddi_set_extended_feature_callbacks_0021"></a>
-
-#### PFND3D12DDI_SET_EXTENDED_FEATURE_CALLBACKS_0021
-
-```cpp
-typedef HRESULT (APIENTRY *PFND3D12DDI_SET_EXTENDED_FEATURE_CALLBACKS_0021)(
-    D3D12DDI_HDEVICE hDevice,
-    D3D12DDI_TABLE_TYPE Table,
-    _In_reads_(TableSize) const void* pTable,
-    SIZE_T TableSize);
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B078:0:authored:migration-cb92fd66cc41759e-0 -->Installs the runtime callback table identified by `Table` for an enabled feature. `pTable` supplies that feature/version's callback layout. `TableSize` is its size in bytes. It is not limited to video callbacks.<!-- d3d12-review-inline:end:devices-capabilities:B078:0:authored:migration-cb92fd66cc41759e-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B079:0:authored:migration-7b2e5e60694fad85-0 -->The driver may retain the runtime callback table pointer for its [specified lifetime](#callback-storage). FillDDITable's output buffer is instead borrowed for the call.<!-- d3d12-review-inline:end:devices-capabilities:B079:0:authored:migration-7b2e5e60694fad85-0 --></ins>
-
-<a id="callback-storage"></a>
-
-### Runtime callback storage
-
-<!-- d3d12-review-alert:begin:devices-capabilities:B080:0:authored:migration-8b3b818ca68b01af-0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> | Supplied table | Storage lifetime guaranteed to the driver |
-> | --- | --- |
-> | Adapter `pAdapterCallbacks` | Through adapter close |
-> | Device `pKTCallbacks` | Through device destruction |
-> | Applicable versioned device `p12UMCallbacks` | Through device destruction |
-> | Extended feature table supplied by `SetExtendedFeatureCallbacks` | Through device destruction |
-
-<!-- d3d12-review-alert:end:devices-capabilities:B080:0:authored:migration-8b3b818ca68b01af-0 -->
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:B081:0:authored:migration-e3baf7363393ac9e-0 -->The runtime owns callback table storage. The driver may retain its read-only pointer for the stated lifetime and must not free or modify it.<!-- d3d12-review-inline:end:devices-capabilities:B081:0:authored:migration-e3baf7363393ac9e-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:selection-boundary:0:authored:migration-9d25fe7a83d0d298-0 -->[CreateDeviceFactory](#id3d12sdkconfiguration1-createdevicefactory) does not require Developer Mode. It selects an SDK for its factory without replacing the global selection.<!-- d3d12-review-inline:end:devices-capabilities:selection-boundary:0:authored:migration-9d25fe7a83d0d298-0 --></ins>
 
 <a id="independent-devices"></a>
 
@@ -1416,7 +890,7 @@ HRESULT ApplyToGlobalState();
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:factory-results-ApplyToGlobalState:0:authored:migration-b7c0378bb8a151d9-0 -->`S_OK` indicates success. `D3D12_ERROR_INVALID_REDIST` reports a prohibited global SDK change. The global SDK version cannot be downgraded. An existing singleton from a different runtime prevents replacement.<!-- d3d12-review-inline:end:devices-capabilities:factory-results-ApplyToGlobalState:0:authored:migration-b7c0378bb8a151d9-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:factory-results-ApplyToGlobalState:0:authored:migration-b7c0378bb8a151d9-0 -->`S_OK` indicates success. `D3D12_ERROR_INVALID_REDIST` reports a prohibited global SDK change.<!-- d3d12-review-inline:end:devices-capabilities:factory-results-ApplyToGlobalState:0:authored:migration-b7c0378bb8a151d9-0 --></ins>
 
 <a id="id3d12devicefactory-setflags"></a>
 
@@ -1434,7 +908,7 @@ HRESULT SetFlags(D3D12_DEVICE_FACTORY_FLAGS flags);
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:factory-parameters-SetFlags:0:authored:migration-c5d3809bc108841f-0 -->`flags` supplies the complete factory flag value used for future `CreateDevice` calls. The initial value is `D3D12_DEVICE_FACTORY_FLAG_NONE`. This setting is distinct from the device configuration's diagnostic flags.<!-- d3d12-review-inline:end:devices-capabilities:factory-parameters-SetFlags:0:authored:migration-c5d3809bc108841f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:factory-parameters-SetFlags:0:authored:migration-c5d3809bc108841f-0 -->`flags` supplies the complete factory flag value used for future `CreateDevice` calls. The initial value is `D3D12_DEVICE_FACTORY_FLAG_NONE`.<!-- d3d12-review-inline:end:devices-capabilities:factory-parameters-SetFlags:0:authored:migration-c5d3809bc108841f-0 --></ins>
 
 #### Return values
 
@@ -1456,7 +930,7 @@ D3D12_DEVICE_FACTORY_FLAGS GetFlags();
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:factory-results-GetFlags:0:authored:migration-6d56cc238a482d88-0 -->Returns the currently selected `D3D12_DEVICE_FACTORY_FLAGS`, not `D3D12_DEVICE_FLAGS`.<!-- d3d12-review-inline:end:devices-capabilities:factory-results-GetFlags:0:authored:migration-6d56cc238a482d88-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:factory-results-GetFlags:0:authored:migration-6d56cc238a482d88-0 -->Returns the factory flags currently selected through [SetFlags](#id3d12devicefactory-setflags).<!-- d3d12-review-inline:end:devices-capabilities:factory-results-GetFlags:0:authored:migration-6d56cc238a482d88-0 --></ins>
 
 <a id="id3d12devicefactory-getconfigurationinterface"></a>
 
@@ -1498,11 +972,11 @@ HRESULT EnableExperimentalFeatures(UINT NumFeatures, const IID *pIIDs,
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:factory-parameters-EnableExperimentalFeatures:0:authored:migration-167067f09b82e571-0 -->`NumFeatures` is the number of IIDs in `pIIDs`. `pConfigurationStructs` and `pConfigurationStructSizes` provide feature-specific configuration with the same ordering. The [experimental feature mechanism](#experimental-features) defines the pointer/count and result conventions. This method stores the selection on the factory rather than in global state.<!-- d3d12-review-inline:end:devices-capabilities:factory-parameters-EnableExperimentalFeatures:0:authored:migration-167067f09b82e571-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:factory-parameters-EnableExperimentalFeatures:0:authored:migration-167067f09b82e571-0 -->`NumFeatures` is the number of IIDs in `pIIDs`. `pConfigurationStructs` and `pConfigurationStructSizes` provide feature-specific configuration with the same ordering. See the [experimental feature mechanism](#experimental-features) for the pointer and count conventions.<!-- d3d12-review-inline:end:devices-capabilities:factory-parameters-EnableExperimentalFeatures:0:authored:migration-167067f09b82e571-0 --></ins>
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:factory-results-EnableExperimentalFeatures:0:authored:migration-459320d3d4d39aa3-0 -->`S_OK` indicates success. The feature recognition, configuration and compatibility errors follow the experimental feature mechanism.<!-- d3d12-review-inline:end:devices-capabilities:factory-results-EnableExperimentalFeatures:0:authored:migration-459320d3d4d39aa3-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:factory-results-EnableExperimentalFeatures:0:authored:migration-459320d3d4d39aa3-0 -->`S_OK` indicates success. See [D3D12EnableExperimentalFeatures](#d3d12enableexperimentalfeatures) for feature recognition, configuration and compatibility errors.<!-- d3d12-review-inline:end:devices-capabilities:factory-results-EnableExperimentalFeatures:0:authored:migration-459320d3d4d39aa3-0 --></ins>
 
 <a id="id3d12devicefactory-createdevice"></a>
 
@@ -1523,7 +997,7 @@ HRESULT CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL FeatureLevel,
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:factory-parameters-CreateDevice:0:authored:migration-e679ce263b29aff1-0 -->`adapter` selects the adapter; null selects the default adapter. `FeatureLevel` is the minimum required feature level. `riid` identifies the device interface. `ppvDevice` receives that interface. A null output is the support-only creation test. The factory flags, compatibility predicates and older-driver rules apply to this call, rather than the ordinary export's singleton-per-adapter policy.<!-- d3d12-review-inline:end:devices-capabilities:factory-parameters-CreateDevice:0:authored:migration-e679ce263b29aff1-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:factory-parameters-CreateDevice:0:authored:migration-e679ce263b29aff1-0 -->`adapter` selects the adapter; null selects the default adapter. `FeatureLevel` is the minimum required feature level. `riid` identifies the device interface. `ppvDevice` receives that interface. A null output is the support-only creation test.<!-- d3d12-review-inline:end:devices-capabilities:factory-parameters-CreateDevice:0:authored:migration-e679ce263b29aff1-0 --></ins>
 
 #### Return values
 
@@ -1618,7 +1092,7 @@ struct D3D12_DEVICE_CONFIGURATION_DESC
 };
 ```
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:configuration-fields:0:authored:migration-f0a8d50a20b3ecca-0 -->`Flags` reflects enabled diagnostic/configuration properties through `D3D12_DEVICE_FLAGS`. It is not the factory reuse policy mask. `GpuBasedValidationFlags` uses `D3D12_GPU_BASED_VALIDATION_FLAGS` from `d3d12sdklayers.h`. `SDKVersion` identifies the selected runtime SDK. `NumEnabledExperimentalFeatures` is the number of enabled feature GUIDs available through `GetEnabledExperimentalFeatures`. A device exposes its creation snapshot. A factory exposes its current configuration for a subsequent creation.<!-- d3d12-review-inline:end:devices-capabilities:configuration-fields:0:authored:migration-f0a8d50a20b3ecca-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:configuration-fields:0:authored:migration-f0a8d50a20b3ecca-0 -->`Flags` reflects enabled diagnostic/configuration properties through `D3D12_DEVICE_FLAGS`. `GpuBasedValidationFlags` uses `D3D12_GPU_BASED_VALIDATION_FLAGS` from `d3d12sdklayers.h`. `SDKVersion` identifies the selected runtime SDK. `NumEnabledExperimentalFeatures` is the number of enabled feature GUIDs available through `GetEnabledExperimentalFeatures`. A device exposes its creation snapshot. A factory exposes its current configuration for a subsequent creation.<!-- d3d12-review-inline:end:devices-capabilities:configuration-fields:0:authored:migration-f0a8d50a20b3ecca-0 --></ins>
 
 <a id="id3d12deviceconfiguration-getdesc"></a>
 
@@ -1669,7 +1143,7 @@ HRESULT SerializeVersionedRootSignature(const D3D12_VERSIONED_ROOT_SIGNATURE_DES
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:behavior-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:0:authored:migration-403f5ab5f6e1a32d-0 -->Serializes the versioned root signature description using the SDK runtime owned by this configuration object. A device configuration uses that device's runtime. A factory configuration uses the factory's selected runtime. This routing does not depend on the process-global SDK selection. [Binding](binding.md#d3d12serializeversionedrootsignature) defines the root signature data, validation, serialization and subsequent CreateRootSignature contract.<!-- d3d12-review-inline:end:devices-capabilities:behavior-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:0:authored:migration-403f5ab5f6e1a32d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:behavior-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:0:authored:migration-403f5ab5f6e1a32d-0 -->Serializes the versioned root signature description using the SDK runtime owned by this configuration object. A device configuration uses that device's runtime. A factory configuration uses the factory's selected runtime. See [D3D12SerializeVersionedRootSignature](binding.md#d3d12serializeversionedrootsignature) for root signature data, validation, serialization and use with `CreateRootSignature`.<!-- d3d12-review-inline:end:devices-capabilities:behavior-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:0:authored:migration-403f5ab5f6e1a32d-0 --></ins>
 
 #### Parameters
 
@@ -1710,7 +1184,7 @@ HRESULT CreateVersionedRootSignatureDeserializer(const void *pBlob, SIZE_T Size,
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:behavior-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:0:authored:migration-68951ceca0d58ae1-0 -->Creates a versioned root signature deserializer using the SDK runtime owned by this configuration object, not the process-global SDK selection. A device configuration routes through the device's runtime, and a factory configuration routes through the factory's selected runtime. The input may be a serialized root signature or a compiled shader containing one. [Binding](binding.md#d3d12createversionedrootsignaturedeserializer) defines deserialization and the returned interface's representation/conversion contract. The deserializer owns the lifetime of its deserialized description storage.<!-- d3d12-review-inline:end:devices-capabilities:behavior-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:0:authored:migration-68951ceca0d58ae1-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:behavior-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:0:authored:migration-68951ceca0d58ae1-0 -->Creates a versioned root signature deserializer using the SDK runtime owned by this configuration object, not the process-global SDK selection. A device configuration routes through the device's runtime, and a factory configuration routes through the factory's selected runtime. The input may be a serialized root signature or a compiled shader containing one. See [D3D12CreateVersionedRootSignatureDeserializer](binding.md#d3d12createversionedrootsignaturedeserializer) for deserialization and the returned interface's representation and conversion behavior. The deserializer owns the lifetime of its deserialized description storage.<!-- d3d12-review-inline:end:devices-capabilities:behavior-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:0:authored:migration-68951ceca0d58ae1-0 --></ins>
 
 #### Parameters
 
@@ -1804,7 +1278,7 @@ If this function is called again with a different list of features to enable, <i
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:experimental-packing:0:authored:migration-d91a30465db56125-0 -->The feature IIDs identify the requested set. The configuration size array associates each feature with its configuration data in the same order. The representation of `pConfigurationStructs` is feature-defined: it is not a universal byte-packed or pointer array ABI. The feature identified by each IID defines its configuration schema and the interpretation of its associated size. Features requiring no configuration use no configuration data. The factory form stores the requested set for future creations rather than changing global state or existing independent-device snapshots.<!-- d3d12-review-inline:end:devices-capabilities:experimental-packing:0:authored:migration-d91a30465db56125-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:experimental-zero:0:authored:migration-8c87468caefe19be-0 -->`NumFeatures == 0` requests an empty enabled-feature set; no IID elements are read. A changed global set removes existing singleton devices, whereas a factory's changed set applies to future creations. For nonzero counts the caller supplies the corresponding IID elements. The configuration schema belongs to the feature identified by each IID.<!-- d3d12-review-inline:end:devices-capabilities:experimental-zero:0:authored:migration-8c87468caefe19be-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:experimental-zero:0:authored:migration-8c87468caefe19be-0 -->`NumFeatures == 0` requests an empty enabled-feature set. No IID elements are read.<!-- d3d12-review-inline:end:devices-capabilities:experimental-zero:0:authored:migration-8c87468caefe19be-0 --></ins>
 
 <a id="feature-discovery"></a>
 
@@ -1851,53 +1325,15 @@ Type: **[HRESULT](#api-result-codes)**
 
 Returns **S\_OK** if successful. Returns **E\_INVALIDARG** if an unsupported data type is passed to the *pFeatureSupportData* parameter or if a size mismatch is detected for the *FeatureSupportDataSize* parameter.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:dispatch-rules:0:authored:migration-4a74ba5475e3b5ae-0 -->`Feature` selects a payload type, not a variable-length prefix of an arbitrary options structure. `pFeatureSupportData` supplies writable storage for that selected type. `FeatureSupportDataSize` is `sizeof` that type. Indirect arrays and buffers named by the payload are separate storage and are not added to this size.<!-- d3d12-review-inline:end:devices-capabilities:dispatch-rules:0:authored:migration-4a74ba5475e3b5ae-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:dispatch-rules:0:authored:migration-4a74ba5475e3b5ae-0 -->`Feature` selects a payload type, not a variable-length prefix of an arbitrary options structure. `pFeatureSupportData` supplies writable storage for that selected type. It is not optional, and the call has no size-only form. `FeatureSupportDataSize` is `sizeof` that type. The caller also supplies valid storage for indirect arrays and buffers named by the payload. That storage is separate and is not added to this size.<!-- d3d12-review-inline:end:devices-capabilities:dispatch-rules:0:authored:migration-4a74ba5475e3b5ae-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:dispatch-rules:1:authored:migration-2be00217ef8ce90f-0 -->The caller initializes every input member before the call. Output-only fields are results; input/output fields such as `HighestShaderModel` and `HighestVersion` are request ceilings replaced by the negotiated result on success. For structures containing a node index, the caller selects an existing node before querying.<!-- d3d12-review-inline:end:devices-capabilities:dispatch-rules:1:authored:migration-2be00217ef8ce90f-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:dispatch-rules:2:authored:migration-4b9771f4ba875c0b-0 -->An unrecognized selector, a mismatched payload size or invalid query input is an error, distinct from a successful query reporting `FALSE`, no support bits or a not-supported tier. A successful capability query does not create a device object or enable a feature. Failure does not establish a general zero-output guarantee: result validity follows the selected query's contract.<!-- d3d12-review-inline:end:devices-capabilities:dispatch-rules:2:authored:migration-4b9771f4ba875c0b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:dispatch-rules:2:authored:migration-4b9771f4ba875c0b-0 -->An unrecognized selector, a mismatched payload size or invalid query input is an error, distinct from a successful query reporting `FALSE`, no support bits or a not-supported tier. Failure does not establish a general zero-output guarantee: result validity follows the selected query's contract.<!-- d3d12-review-inline:end:devices-capabilities:dispatch-rules:2:authored:migration-4b9771f4ba875c0b-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:dispatch-rules:3:authored:migration-566162fe98cc2e7d-0 -->The [selector catalog](#selector-catalog) gives the payload, size and input convention for each selected query. See [Formats and MSAA](formats.md#format-query-cases) for format-specific parameters, results and diagnostics.<!-- d3d12-review-inline:end:devices-capabilities:dispatch-rules:3:authored:migration-566162fe98cc2e7d-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:query-valid-storage:0:authored:migration-97977d926ed89678-0 -->The payload pointer is not an optional size discovery parameter. The caller supplies valid storage for the payload and for every input/output extent it names; passing null does not select an alternate query overload. A node index outside the device's node count does not identify a valid query target.<!-- d3d12-review-inline:end:devices-capabilities:query-valid-storage:0:authored:migration-97977d926ed89678-0 --></ins>
-
-<a id="raytracing-tiers"></a>
-
-### Raytracing support tiers
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:CAP-raytracing-tier-scope:0:authored:migration-169e235d45bdf39c-0 -->`D3D12_FEATURE_DATA_D3D12_OPTIONS5::RaytracingTier` reports the overall raytracing tier through [`ID3D12Device::CheckFeatureSupport`](#id3d12device-checkfeaturesupport). The tier's workload contracts are defined in [Acceleration structures](acceleration-structures.md#availability), [Ray traversal](ray-traversal.md#inline-raytracing), [Raytracing shader pipelines](raytracing-pipelines.md#availability-and-driver-responsibilities), and [raytracing state object availability](state-objects.md#availability).<!-- d3d12-review-inline:end:devices-capabilities:CAP-raytracing-tier-scope:0:authored:migration-169e235d45bdf39c-0 --></ins>
-
-<a id="d3d12_raytracing_tier"></a>
-
-#### D3D12_RAYTRACING_TIER
-
-```cpp
-typedef enum D3D12_RAYTRACING_TIER
-{
-    D3D12_RAYTRACING_TIER_NOT_SUPPORTED = 0,
-    D3D12_RAYTRACING_TIER_1_0 = 10,
-    D3D12_RAYTRACING_TIER_1_1 = 11,
-    D3D12_RAYTRACING_TIER_1_2 = 12,
-} D3D12_RAYTRACING_TIER;
-```
-
-Level of raytracing support on the device. Queried via
-[CheckFeatureSupport()](#id3d12device-checkfeaturesupport).
-
-<!-- d3d12-review-alert:begin:devices-capabilities:CAP-raytracing-tier-definitions:2:modified:migration-3445426130ba5167-0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> Value                               | Definition
-> -----                               | ----------
-> `D3D12_RAYTRACING_TIER_NOT_SUPPORTED` | No support for raytracing on the device. Attempts to create any raytracing related object will fail and using raytracing related APIs on command lists results in undefined behavior.
-> `D3D12_RAYTRACING_TIER_1_0` | The device supports the full raytracing functionality described in the unified raytracing chapters, except features added in higher tiers listed below.
-> `D3D12_RAYTRACING_TIER_1_1` | Adds: <li>Support for indirect DispatchRays() calls (ray generation shader invocation) via [ExecuteIndirect()](indirect-execution.md#executeindirect).</li><li>Support for [incremental additions to existing state objects](state-objects.md#addtostateobject) via [AddToStateObject()](state-objects.md#addtostateobject).</li><li>Support for [inline raytracing](ray-traversal.md#inline-raytracing) via [RayQuery](ray-traversal.md#rayquery) objects declarable in any shader stage.</li><li>[GeometryIndex()](raytracing-pipelines.md#geometryindex) intrinsic added to relevant raytracing shaders, for applications that wish to distinguish geometries manually in shaders in addition to or instead of by burning shader table slots.</li><li>Additional [ray flags](ray-traversal.md#ray-flags), `RAY_FLAG_SKIP_TRIANGLES` and `RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES`.</li><li>New version of raytracing pipeline config subobject, [D3D12_RAYTRACING_PIPELINE_CONFIG1](state-objects.md#d3d12_raytracing_pipeline_config1), adding a flags field, [D3D12_RAYTRACING_PIPELINE_FLAGS](state-objects.md#d3d12_raytracing_pipeline_flags). The equivalent subobject in HLSL is [RaytracingPipelineConfig1](state-objects.md#dxil-raytracing-pipeline-config1).  The available flags, `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_TRIANGLES` and `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_PROCEDURAL_PRIMITIVES` (minus `D3D12_` when defined in HLSL) behave like OR'ing the equivalent RAY_FLAGS above into any [TraceRay()](raytracing-pipelines.md#traceray) call in a raytracing pipeline, except that these do not show up in a [RayFlags()](raytracing-pipelines.md#rayflags) call from a shader. Implementations may be able to make pipeline optimizations knowing that one of the primitive types can be skipped.</li><li>Additional vertex formats supported for acceleration structure build input as part of [D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC](acceleration-structures.md#d3d12_raytracing_geometry_triangles_desc).</li>
-> `D3D12_RAYTRACING_TIER_1_2` |Adds:<li>[Opacity Micromaps](acceleration-structures.md#opacity-micromaps)</li><li>[Shader Execution Reordering](raytracing-pipelines.md#shader-execution-reordering)</li><li>The parts of these features involving shader code, which would be all of Shader Execution Reordering, as well as a small portion of Opacity Micromaps, exist in Shader Model 6.9.  All the non-HLSL parts of Opacity Micromaps are available in release (non-preview).</li><li>All devices that support raytracing at all (`D3D12_RAYTRACING_TIER_1_0`+) and support Shader Model 6.9 must support [Shader Execution Reordering](raytracing-pipelines.md#shader-execution-reordering).  `D3D12_RAYTRACING_TIER_1_2` simply means the device supports all of the features listed here.</li>
-
-<!-- d3d12-review-alert:end:devices-capabilities:CAP-raytracing-tier-definitions:2:modified:migration-3445426130ba5167-0 -->
-
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:D157-video-device-reference:0:authored:migration-745ab22ab60b4568-0 -->See [Video](video.md#video-device-model) for video interface discovery and the separate `ID3D12VideoDevice::CheckFeatureSupport` protocol.<!-- d3d12-review-inline:end:devices-capabilities:D157-video-device-reference:0:authored:migration-745ab22ab60b4568-0 --></ins>
 
 <a id="feature-level-requests"></a>
 
@@ -1961,9 +1397,9 @@ Note
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:shader-model-payload:9:modified:migration-15072e127a8e1c06-0 -->**ID3D12Device::CheckFeatureSupport** returns **E\_INVALIDARG** if *HighestShaderModel* isn't known by the current runtime.<!-- d3d12-review-inline:end:devices-capabilities:shader-model-payload:9:modified:migration-15072e127a8e1c06-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:shader-model-algorithm:0:authored:migration-a9dc6000025a5950-0 -->Shader model negotiation has two separate ceilings: the model understood by the querying application and the models understood by the runtime. On a recognized request the successful output is the lower of the requested model and the device's supported model. An older runtime can reject a newer model value with `E_INVALIDARG`. This is not a successful result saying the device has no shader support. Retrying with a lower recognized model is a separate query. Other errors are not evidence that the requested model is unsupported.<!-- d3d12-review-inline:end:devices-capabilities:shader-model-algorithm:0:authored:migration-a9dc6000025a5950-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:shader-model-algorithm:0:authored:migration-a9dc6000025a5950-0 -->This `E_INVALIDARG` result reports an unrecognized request, not the device's shader model support. The application can query again with a lower model. Other errors are not evidence that the requested model is unsupported.<!-- d3d12-review-inline:end:devices-capabilities:shader-model-algorithm:0:authored:migration-a9dc6000025a5950-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:shader-model-algorithm:1:authored:migration-1658556ae762fd52-0 -->Shader model support does not by itself establish every optional feature used by a shader. The feature level and feature-specific capability requirements remain separate from compiler target selection and serialized shader representation.<!-- d3d12-review-inline:end:devices-capabilities:shader-model-algorithm:1:authored:migration-1658556ae762fd52-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:shader-model-algorithm:1:authored:migration-1658556ae762fd52-0 -->Shader model support does not by itself establish every optional feature used by a shader.<!-- d3d12-review-inline:end:devices-capabilities:shader-model-algorithm:1:authored:migration-1658556ae762fd52-0 --></ins>
 
 ### Root signature version negotiation
 
@@ -1992,7 +1428,7 @@ typedef struct D3D12_FEATURE_DATA_ARCHITECTURE {
 
 `NodeIndex`
 
-In multi-adapter operation, this indicates which physical adapter of the device is relevant. See [Multi-adapter systems](#identity). **NodeIndex** is filled out by the application before calling [CheckFeatureSupport](#id3d12device-checkfeaturesupport), as the application can retrieve details about the architecture of each adapter.
+In multi-adapter operation, this indicates which physical adapter of the device is relevant. See <ins><!-- d3d12-review-inline:begin:devices-capabilities:architecture-nodeindex-link:0:modified:opus-identity-label -->[adapter identity and linked nodes](#identity)<!-- d3d12-review-inline:end:devices-capabilities:architecture-nodeindex-link:0:modified:opus-identity-label --></ins>. **NodeIndex** is filled out by the application before calling [CheckFeatureSupport](#id3d12device-checkfeaturesupport), as the application can retrieve details about the architecture of each adapter.
 
 `TileBasedRenderer`
 
@@ -2006,7 +1442,7 @@ Specifies whether the hardware and driver support UMA. The runtime sets this mem
 
 Specifies whether the hardware and driver support cache-coherent UMA. The runtime sets this member to **TRUE** if the hardware and driver support cache-coherent UMA.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:architecture-version:0:authored:migration-f96891dc5de684ae-0 -->`D3D12_FEATURE_DATA_ARCHITECTURE1` adds `IsolatedMMU` to the original architecture query and supersedes it starting with Windows 10, version 1703. The original selector and payload remain a distinct supported query. The shared UMA and cache-coherent UMA explanation follows the extended payload.<!-- d3d12-review-inline:end:devices-capabilities:architecture-version:0:authored:migration-f96891dc5de684ae-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:architecture-version:0:authored:migration-f96891dc5de684ae-0 -->`D3D12_FEATURE_DATA_ARCHITECTURE1` adds `IsolatedMMU` to the original architecture query and supersedes it starting with Windows 10, version 1703. The original selector and payload are a distinct supported query.<!-- d3d12-review-inline:end:devices-capabilities:architecture-version:0:authored:migration-f96891dc5de684ae-0 --></ins>
 
 <a id="d3d12_feature_data_architecture1"></a>
 
@@ -2028,7 +1464,7 @@ typedef struct D3D12_FEATURE_DATA_ARCHITECTURE1 {
 
 `NodeIndex`
 
-In multi-adapter operation, this indicates which physical adapter of the device is relevant. See [Multi-adapter systems](#identity). **NodeIndex** is filled out by the application before calling [CheckFeatureSupport](#id3d12device-checkfeaturesupport), as the application can retrieve details about the architecture of each adapter.
+In multi-adapter operation, this indicates which physical adapter of the device is relevant. See <ins><!-- d3d12-review-inline:begin:devices-capabilities:architecture1-nodeindex-link:0:modified:opus-identity-label -->[adapter identity and linked nodes](#identity)<!-- d3d12-review-inline:end:devices-capabilities:architecture1-nodeindex-link:0:modified:opus-identity-label --></ins>. **NodeIndex** is filled out by the application before calling [CheckFeatureSupport](#id3d12device-checkfeaturesupport), as the application can retrieve details about the architecture of each adapter.
 
 `TileBasedRenderer`
 
@@ -2147,7 +1583,7 @@ The headings across the top row are Direct3D feature levels. The headings in the
 <!-- d3d12-review-alert:end:devices-capabilities:earlier-feature-levels:2:modified:migration-7db5d1d1d9b44379-0 -->
 
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:D095-shader-baseline:0:authored:migration-9a7d58f4e9a52aef-0 -->Feature levels `12_0` and `12_1` do not require Shader Model 6 support. Shader model support is reported independently by `D3D12_FEATURE_SHADER_MODEL` using the [shader model negotiation contract](#shader-model-negotiation). This does not change feature level `12_2`'s separate Shader Model 6.5 requirement.<!-- d3d12-review-inline:end:devices-capabilities:D095-shader-baseline:0:authored:migration-9a7d58f4e9a52aef-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:D095-shader-baseline:0:authored:migration-9a7d58f4e9a52aef-0 -->Feature levels `12_0` and `12_1` do not require Shader Model 6 support. Shader model support is reported independently by `D3D12_FEATURE_SHADER_MODEL`. See [shader model negotiation](#shader-model-negotiation).<!-- d3d12-review-inline:end:devices-capabilities:D095-shader-baseline:0:authored:migration-9a7d58f4e9a52aef-0 --></ins>
 
 <a id="feature-level-12-2"></a>
 
@@ -2233,61 +1669,6 @@ Additionally, it has the following flags set
 > |Int64ShaderOps	                                                          | TRUE
 
 <!-- d3d12-review-alert:end:devices-capabilities:12-2-matrix:6 -->
-
-
-
-<a id="driver-responsibilities"></a>
-
-## Driver and runtime responsibilities
-
-The Direct3D 12 UMD DDI has an enumeration, D3D12DDI_3DPIPELINELEVEL, for describing feature levels. This enumeration has a value for feature level 12.2:
-
-```cpp
-typedef enum D3D12DDI_3DPIPELINELEVEL
-{
-    // ...
-    D3D12DDI_3DPIPELINELEVEL_12_2 = 14,
-} D3D12DDI_3DPIPELINELEVEL;
-```
-
-To find out which feature levels a driver supports, the runtime calls PFND3D12DDI_GETCAPS with
-* D3D12DDICAPS_TYPE_3DPIPELINESUPPORT, or
-* D3D12DDICAPS_TYPE_3DPIPELINESUPPORT1
-
-The difference between these two usages of GetCaps is as follows
-
-<!-- d3d12-review-alert:begin:devices-capabilities:12-2-ddi:4:modified:migration-b7e4da2ced4dc05c-0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> | Selector            | Data interpretation                                                              | Valid returnable feature levels
-> | :--- | --- | --- |
-> |3DPIPELINESUPPORT    | D3D12DDI_3DPIPELINELEVEL, simple output value                                    | 12.1 and earlier
-> |3DPIPELINESUPPORT1   | D3D12DDI_3DPIPELINESUPPORT1_DATA_0081, structure with an input and output field  | any, including 12.2 and later
-
-<!-- d3d12-review-alert:end:devices-capabilities:12-2-ddi:4:modified:migration-b7e4da2ced4dc05c-0 -->
-
-The definition of D3D12DDI_3DPIPELINESUPPORT1_DATA_0081 is as follows
-
-```cpp
-typedef struct D3D12DDI_3DPIPELINESUPPORT1_DATA_0081
-{
-    D3D12DDI_3DPIPELINELEVEL HighestRuntimeSupportedFeatureLevel; // input
-    D3D12DDI_3DPIPELINELEVEL MaximumDriverSupportedFeatureLevel;  // output
-} D3D12DDI_3DPIPELINESUPPORT1_DATA_0081;
-```
-
-For 3DPIPELINESUPPORT1, the runtime sets the value of HighestRuntimeSupportedFeatureLevel.
-The driver returns a value for MaximumDriverSupportedFeatureLevel which does not exceed HighestRuntimeSupportedFeatureLevel.
-
->#### Remark
-> In practice:
-> * Versions of Direct3D built into the operating system at or before Manganese (20H2) use 3DPIPELINESUPPORT.
-> * Versions of Direct3D built into Iron operating system, or organized as a re-distributable use 3DPIPELINESUPPORT1, and fall back to 3DPIPELINESUPPORT if it fails.
-
-### API level and DDI level reported capabilities
-The WriteBufferImmediateSupportFlags capability D3D12_COMMAND_LIST_SUPPORT_FLAG_BUNDLE is switched on at the API level for drivers which report D3D12DDI_COMMAND_QUEUE_FLAG_3D at the DDI level.
 
 <a id="selector-catalog"></a>
 
@@ -2600,7 +1981,7 @@ Type: **[BOOL](https://learn.microsoft.com/en-us/windows/desktop/winprog/windows
 
 Indicates native 16-bit shader operations are supported. These operations require shader model 6\_2. For more information, see the [16-Bit Scalar Types](https://github.com/microsoft/DirectXShaderCompiler/wiki/16-Bit-Scalar-Types) HLSL reference.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:D111-sharing-capability-domains:0:authored:migration-c292f27b5f74a947-0 -->The complete [sharing capability domain definitions](sharing-and-interoperability.md#adapter-domains) distinguish linked node sharing, unlinked cross-adapter sharing and cross-API resource compatibility. The [cross-API format tier table](sharing-and-interoperability.md#cross-api-compatibility) remains qualified pending feature owner clarification. It does not settle the separate DISPLAYABLE query's scope.<!-- d3d12-review-inline:end:devices-capabilities:D111-sharing-capability-domains:0:authored:migration-c292f27b5f74a947-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:D111-sharing-capability-domains:0:authored:migration-c292f27b5f74a947-0 -->See [sharing capability domains](sharing-and-interoperability.md#adapter-domains) for how linked node sharing, unlinked cross-adapter sharing and cross-API resource compatibility differ.<!-- d3d12-review-inline:end:devices-capabilities:D111-sharing-capability-domains:0:authored:migration-c292f27b5f74a947-0 --></ins>
 
 <a id="d3d12_feature_data_d3d12_options5"></a>
 
@@ -2618,6 +1999,43 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS5
 * <ins><!-- d3d12-review-inline:begin:devices-capabilities:options5-field-owners:0 -->`SRVOnlyTiledResourceTier3`: [read-only volume tiled resources](resources.md#tiled-tiers).<!-- d3d12-review-inline:end:devices-capabilities:options5-field-owners:0 --></ins>
 * <ins><!-- d3d12-review-inline:begin:devices-capabilities:options5-field-owners:1 -->`RenderPassesTier`: [render pass support tiers](output-merger.md#render-pass-support).<!-- d3d12-review-inline:end:devices-capabilities:options5-field-owners:1 --></ins>
 * <ins><!-- d3d12-review-inline:begin:devices-capabilities:options5-field-owners:2 -->`RaytracingTier`: [raytracing support tiers](#raytracing-tiers).<!-- d3d12-review-inline:end:devices-capabilities:options5-field-owners:2 --></ins>
+
+<a id="raytracing-tiers"></a>
+
+##### Raytracing support tiers
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:CAP-raytracing-tier-scope:0:authored:migration-169e235d45bdf39c-0 -->`RaytracingTier` reports the device's overall raytracing tier. See [Acceleration structures](acceleration-structures.md#availability), [Ray traversal](ray-traversal.md#inline-raytracing), [Raytracing shader pipelines](raytracing-pipelines.md#availability-and-driver-responsibilities) and [raytracing state object availability](state-objects.md#availability) for the behavior each tier enables.<!-- d3d12-review-inline:end:devices-capabilities:CAP-raytracing-tier-scope:0:authored:migration-169e235d45bdf39c-0 --></ins>
+
+<a id="d3d12_raytracing_tier"></a>
+
+###### D3D12_RAYTRACING_TIER
+
+```cpp
+typedef enum D3D12_RAYTRACING_TIER
+{
+    D3D12_RAYTRACING_TIER_NOT_SUPPORTED = 0,
+    D3D12_RAYTRACING_TIER_1_0 = 10,
+    D3D12_RAYTRACING_TIER_1_1 = 11,
+    D3D12_RAYTRACING_TIER_1_2 = 12,
+} D3D12_RAYTRACING_TIER;
+```
+
+Level of raytracing support on the device. Queried via
+[CheckFeatureSupport()](#id3d12device-checkfeaturesupport).
+
+<!-- d3d12-review-alert:begin:devices-capabilities:CAP-raytracing-tier-definitions:2:modified:migration-3445426130ba5167-0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> Value                               | Definition
+> -----                               | ----------
+> `D3D12_RAYTRACING_TIER_NOT_SUPPORTED` | No support for raytracing on the device. Attempts to create any raytracing related object will fail and using raytracing related APIs on command lists results in undefined behavior.
+> `D3D12_RAYTRACING_TIER_1_0` | The device supports the full raytracing functionality described in the unified raytracing chapters, except features added in higher tiers listed below.
+> `D3D12_RAYTRACING_TIER_1_1` | Adds: <li>Support for indirect DispatchRays() calls (ray generation shader invocation) via [ExecuteIndirect()](indirect-execution.md#executeindirect).</li><li>Support for [incremental additions to existing state objects](state-objects.md#addtostateobject) via [AddToStateObject()](state-objects.md#addtostateobject).</li><li>Support for [inline raytracing](ray-traversal.md#inline-raytracing) via [RayQuery](ray-traversal.md#rayquery) objects declarable in any shader stage.</li><li>[GeometryIndex()](raytracing-pipelines.md#geometryindex) intrinsic added to relevant raytracing shaders, for applications that wish to distinguish geometries manually in shaders in addition to or instead of by burning shader table slots.</li><li>Additional [ray flags](ray-traversal.md#ray-flags), `RAY_FLAG_SKIP_TRIANGLES` and `RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES`.</li><li>New version of raytracing pipeline config subobject, [D3D12_RAYTRACING_PIPELINE_CONFIG1](state-objects.md#d3d12_raytracing_pipeline_config1), adding a flags field, [D3D12_RAYTRACING_PIPELINE_FLAGS](state-objects.md#d3d12_raytracing_pipeline_flags). The equivalent subobject in HLSL is [RaytracingPipelineConfig1](state-objects.md#dxil-raytracing-pipeline-config1).  The available flags, `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_TRIANGLES` and `D3D12_RAYTRACING_PIPELINE_FLAG_SKIP_PROCEDURAL_PRIMITIVES` (minus `D3D12_` when defined in HLSL) behave like OR'ing the equivalent RAY_FLAGS above into any [TraceRay()](raytracing-pipelines.md#traceray) call in a raytracing pipeline, except that these do not show up in a [RayFlags()](raytracing-pipelines.md#rayflags) call from a shader. Implementations may be able to make pipeline optimizations knowing that one of the primitive types can be skipped.</li><li>Additional vertex formats supported for acceleration structure build input as part of [D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC](acceleration-structures.md#d3d12_raytracing_geometry_triangles_desc).</li>
+> `D3D12_RAYTRACING_TIER_1_2` |Adds:<li>[Opacity Micromaps](acceleration-structures.md#opacity-micromaps)</li><li>[Shader Execution Reordering](raytracing-pipelines.md#shader-execution-reordering)</li><li>The parts of these features involving shader code, which would be all of Shader Execution Reordering, as well as a small portion of Opacity Micromaps, exist in Shader Model 6.9.</li><li>All devices that support raytracing at all (`D3D12_RAYTRACING_TIER_1_0`+) and support Shader Model 6.9 must support [Shader Execution Reordering](raytracing-pipelines.md#shader-execution-reordering).  `D3D12_RAYTRACING_TIER_1_2` simply means the device supports all of the features listed here.</li>
+
+<!-- d3d12-review-alert:end:devices-capabilities:CAP-raytracing-tier-definitions:2:modified:migration-3445426130ba5167-0 -->
 
 <a id="d3d12_feature_data_d3d12_options6"></a>
 
@@ -2643,6 +2061,17 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS6
 <a id="d3d12_feature_data_d3d12_options7"></a>
 
 #### D3D12_FEATURE_DATA_D3D12_OPTIONS7
+
+<a id="d3d12-sampler-feedback-tier"></a>
+
+```cpp
+enum D3D12_SAMPLER_FEEDBACK_TIER
+{
+    D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED = 0,
+    D3D12_SAMPLER_FEEDBACK_TIER_0_9 = 90,
+    D3D12_SAMPLER_FEEDBACK_TIER_1_0 = 100
+};
+```
 
 ```cpp
 typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS7
@@ -2679,8 +2108,8 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS9
 * <ins><!-- d3d12-review-inline:begin:devices-capabilities:options9-field-owners:2 -->`DerivativesInMeshAndAmplificationShadersSupported`: [mesh and amplification shader derivatives](amplification-and-mesh-shaders.md#derivatives).<!-- d3d12-review-inline:end:devices-capabilities:options9-field-owners:2 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:IF01-options9-atomic-availability:0:authored:migration-bd78f9319cc95fe1-0 -->These two atomic capabilities are optional in Shader Model 6.6.
-The [64-bit integer atomic capability contract](../HLSL_SM_6_6_Int64_and_Float_Atomics.md#capability-queries)
-defines their operation and resource scope.<!-- d3d12-review-inline:end:devices-capabilities:IF01-options9-atomic-availability:0:authored:migration-bd78f9319cc95fe1-0 --></ins>
+See [64-bit integer atomic capabilities](../HLSL_SM_6_6_Int64_and_Float_Atomics.md#capability-queries)
+for their operations and resource scope.<!-- d3d12-review-inline:end:devices-capabilities:IF01-options9-atomic-availability:0:authored:migration-bd78f9319cc95fe1-0 --></ins>
 
 <a id="d3d12_feature_data_d3d12_options11"></a>
 
@@ -2819,7 +2248,7 @@ An input field, indicating the adapter index to query.
 
 `Support`
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:protected-session-support:0:authored:migration-d036df74d072d99f-0 -->`Support` is an output mask of [D3D12_PROTECTED_RESOURCE_SESSION_SUPPORT_FLAGS](resources.md#d3d12-protected-resource-session-support-flags): `NONE` reports no support, and `SUPPORTED` reports support on the selected node. The [protected resource contract](../ProtectedResources.md) owns session creation and protected operations.<!-- d3d12-review-inline:end:devices-capabilities:protected-session-support:0:authored:migration-d036df74d072d99f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:protected-session-support:0:authored:migration-d036df74d072d99f-0 -->`Support` is an output mask of [D3D12_PROTECTED_RESOURCE_SESSION_SUPPORT_FLAGS](resources.md#d3d12-protected-resource-session-support-flags): `NONE` reports no support, and `SUPPORTED` reports support on the selected node. See the [protected resource contract](../ProtectedResources.md) for session creation and protected operations.<!-- d3d12-review-inline:end:devices-capabilities:protected-session-support:0:authored:migration-d036df74d072d99f-0 --></ins>
 
 <a id="d3d12_feature_data_shader_cache"></a>
 
@@ -2943,7 +2372,7 @@ typedef struct D3D12_FEATURE_DATA_DISPLAYABLE {
 } D3D12_FEATURE_DATA_DISPLAYABLE;
 ```
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:displayable-fields:0:authored:migration-90513d8c13c4b4e7-0 -->`DisplayableTexture` is the output flag for displayable-texture support. `SharedResourceCompatibilityTier` uses [D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER](sharing-and-interoperability.md#cross-api-compatibility). The owning table's format tier coverage remains visibly qualified pending feature owner clarification. Both fields are outputs. Neither is a request to create, share or present a resource.<!-- d3d12-review-inline:end:devices-capabilities:displayable-fields:0:authored:migration-90513d8c13c4b4e7-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:displayable-fields:0:authored:migration-90513d8c13c4b4e7-0 -->`DisplayableTexture` is the output flag for displayable-texture support. `SharedResourceCompatibilityTier` uses [D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER](sharing-and-interoperability.md#cross-api-compatibility). The owning table's format tier coverage remains visibly qualified pending feature owner clarification.<!-- d3d12-review-inline:end:devices-capabilities:displayable-fields:0:authored:migration-90513d8c13c4b4e7-0 --></ins>
 
 <!-- d3d12-review-context:begin:devices-capabilities:displayable-fields:1:authored:migration-efc90209bfa9074d-0 -->
 
@@ -2983,7 +2412,7 @@ The fixed GUID that identifies the metacommand to query about.
 
 Type: **[UINT](https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types)**
 
-For single GPU operation, this is zero. If there are multiple GPU nodes, a bit is set to identify a node (the device's physical adapter). Each bit in the mask corresponds to a single node. Only 1 bit must be set. Refer to [Multi-adapter systems](#identity).
+For single GPU operation, this is zero. If there are multiple GPU nodes, a bit is set to identify a node (the device's physical adapter). Each bit in the mask corresponds to a single node. Only 1 bit must be set. Refer to <ins><!-- d3d12-review-inline:begin:devices-capabilities:query-meta-command-nodemask-link:0:modified:opus-identity-label -->[adapter identity and linked nodes](#identity)<!-- d3d12-review-inline:end:devices-capabilities:query-meta-command-nodemask-link:0:modified:opus-identity-label --></ins>.
 
 `pQueryInputData`
 
@@ -3009,7 +2438,7 @@ Type: **[SIZE_T](https://learn.microsoft.com/en-us/windows/win32/winprog/windows
 
 The size of the buffer pointed to by *pQueryOutputData*, in bytes.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:D151-meta-command-query-reference:0:authored:migration-72e407083beda36e-0 -->Generic meta command discovery, stage parameter reflection and instance use are defined in [Meta commands](meta-commands.md#meta-commands).<!-- d3d12-review-inline:end:devices-capabilities:D151-meta-command-query-reference:0:authored:migration-72e407083beda36e-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:D151-meta-command-query-reference:0:authored:migration-72e407083beda36e-0 -->See [Meta commands](meta-commands.md#meta-commands) for meta command discovery, stage parameter reflection and instance use.<!-- d3d12-review-inline:end:devices-capabilities:D151-meta-command-query-reference:0:authored:migration-72e407083beda36e-0 --></ins>
 
 <a id="d3d12_feature_data_protected_resource_session_type_count"></a>
 
@@ -3085,11 +2514,11 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS14
 } D3D12_FEATURE_DATA_D3D12_OPTIONS14;
 ```
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS14:1:authored:migration-1264b5676e6ea49f-0 -->`AdvancedTextureOpsSupported`: [capability contract](common-shader-internals.md#advanced-texture-operations).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS14:1:authored:migration-1264b5676e6ea49f-0 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS14:1:authored:migration-1264b5676e6ea49f-0 -->`AdvancedTextureOpsSupported`: [unsigned integer sampling](common-shader-internals.md#integer-sampling), including [integer border colors](common-shader-internals.md#integer-border-colors); [raw gathers](common-shader-internals.md#raw-gather); [programmable load/sample offsets](common-shader-internals.md#programmable-offsets); and [explicit-LOD comparison sampling](common-shader-internals.md#sample-cmp-level).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS14:1:authored:migration-1264b5676e6ea49f-0 --></ins>
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS14:1:authored:migration-c4e9a8626897683c-1 -->`WriteableMSAATexturesSupported`: [capability contract](common-shader-internals.md#writable-msaa).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS14:1:authored:migration-c4e9a8626897683c-1 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS14:1:authored:migration-c4e9a8626897683c-1 -->`WriteableMSAATexturesSupported`: [multisampled texture UAVs](binding.md#multisampled-texture-uavs) and their [resource creation requirements](resources.md#writable-msaa).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS14:1:authored:migration-c4e9a8626897683c-1 --></ins>
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS14:1:authored:migration-3513a7a7177342d5-2 -->`IndependentFrontAndBackStencilRefMaskSupported`: [capability contract](output-merger.md#independent-stencil).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS14:1:authored:migration-3513a7a7177342d5-2 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS14:1:authored:migration-3513a7a7177342d5-2 -->`IndependentFrontAndBackStencilRefMaskSupported`: [independent front and back stencil](output-merger.md#independent-stencil).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS14:1:authored:migration-3513a7a7177342d5-2 --></ins>
 
 <a id="d3d12_feature_data_d3d12_options15"></a>
 
@@ -3103,9 +2532,9 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS15
 } D3D12_FEATURE_DATA_D3D12_OPTIONS15;
 ```
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS15:1:authored:migration-4c9013aea57cc7dd-0 -->`TriangleFanSupported`: [capability contract](../VulkanOn12.md#triangle-fan).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS15:1:authored:migration-4c9013aea57cc7dd-0 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS15:1:authored:migration-4c9013aea57cc7dd-0 -->`TriangleFanSupported`: [triangle fans](../VulkanOn12.md#triangle-fan).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS15:1:authored:migration-4c9013aea57cc7dd-0 --></ins>
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS15:1:authored:migration-a7e1cf70eb6a1334-1 -->`DynamicIndexBufferStripCutSupported`: [capability contract](vertex-processing.md#strip-cuts).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS15:1:authored:migration-a7e1cf70eb6a1334-1 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS15:1:authored:migration-a7e1cf70eb6a1334-1 -->`DynamicIndexBufferStripCutSupported`: [dynamic index buffer strip cuts](vertex-processing.md#strip-cuts).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS15:1:authored:migration-a7e1cf70eb6a1334-1 --></ins>
 
 <a id="d3d12_feature_data_d3d12_options16"></a>
 
@@ -3119,9 +2548,9 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS16
 } D3D12_FEATURE_DATA_D3D12_OPTIONS16;
 ```
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS16:1:authored:migration-b52beee10a02ef63-0 -->`DynamicDepthBiasSupported`: [capability contract](rasterization.md#depth-bias).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS16:1:authored:migration-b52beee10a02ef63-0 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS16:1:authored:migration-b52beee10a02ef63-0 -->`DynamicDepthBiasSupported`: [dynamic depth bias](rasterization.md#depth-bias).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS16:1:authored:migration-b52beee10a02ef63-0 --></ins>
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS16:1:authored:migration-94a9a34b7c1ee417-1 -->`GPUUploadHeapSupported`: [capability contract](resources.md#gpu-upload).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS16:1:authored:migration-94a9a34b7c1ee417-1 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS16:1:authored:migration-94a9a34b7c1ee417-1 -->`GPUUploadHeapSupported`: [GPU upload heaps](resources.md#gpu-upload).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS16:1:authored:migration-94a9a34b7c1ee417-1 --></ins>
 
 <a id="d3d12_feature_data_d3d12_options17"></a>
 
@@ -3135,9 +2564,9 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS17
 } D3D12_FEATURE_DATA_D3D12_OPTIONS17;
 ```
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS17:1:authored:migration-79db947efa999ddb-0 -->`NonNormalizedCoordinateSamplersSupported`: [capability contract](common-shader-internals.md#non-normalized-coordinates).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS17:1:authored:migration-79db947efa999ddb-0 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS17:1:authored:migration-79db947efa999ddb-0 -->`NonNormalizedCoordinateSamplersSupported`: [non-normalized coordinate samplers](common-shader-internals.md#non-normalized-coordinates).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS17:1:authored:migration-79db947efa999ddb-0 --></ins>
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS17:1:authored:migration-63e48d96b7298028-1 -->`ManualWriteTrackingResourceSupported`: [capability contract](resources.md#manual-write-tracking).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS17:1:authored:migration-63e48d96b7298028-1 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS17:1:authored:migration-63e48d96b7298028-1 -->`ManualWriteTrackingResourceSupported`: [manual write tracking resources](resources.md#manual-write-tracking).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS17:1:authored:migration-63e48d96b7298028-1 --></ins>
 
 <a id="d3d12_feature_data_d3d12_options18"></a>
 
@@ -3150,7 +2579,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS18
 } D3D12_FEATURE_DATA_D3D12_OPTIONS18;
 ```
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS18:1:authored:migration-401c4d8423bfb3f9-0 -->`RenderPassesValid` reports whether the render pass API is valid for use. [Output merger's render pass support contract](output-merger.md#render-pass-support) defines the older unrecognized-query failure, the newer `TRUE` result and the separate driver optimization tiers.<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS18:1:authored:migration-401c4d8423bfb3f9-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS18:1:authored:migration-401c4d8423bfb3f9-0 -->`RenderPassesValid` reports whether the render pass API is valid for use. See [render pass support](output-merger.md#render-pass-support) for the unrecognized-query failure on older runtimes, the `TRUE` result on newer runtimes and the separate driver optimization tiers.<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS18:1:authored:migration-401c4d8423bfb3f9-0 --></ins>
 
 <a id="d3d12_feature_data_d3d12_options19"></a>
 
@@ -3172,23 +2601,23 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS19
 } D3D12_FEATURE_DATA_D3D12_OPTIONS19;
 ```
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-6a328fef5b7b0ebd-0 -->`MismatchingOutputDimensionsSupported`: [capability contract](output-merger.md#mismatching-output-dimensions).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-6a328fef5b7b0ebd-0 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-6a328fef5b7b0ebd-0 -->`MismatchingOutputDimensionsSupported`: [mismatching output dimensions](output-merger.md#mismatching-output-dimensions).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-6a328fef5b7b0ebd-0 --></ins>
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-219a2777243b1e70-1 -->`SupportedSampleCountsWithNoOutputs`: [capability contract](pipeline-state.md#no-output-samples).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-219a2777243b1e70-1 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-219a2777243b1e70-1 -->`SupportedSampleCountsWithNoOutputs`: [sample counts with no outputs](pipeline-state.md#no-output-samples).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-219a2777243b1e70-1 --></ins>
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-ab4835369f227434-2 -->`PointSamplingAddressesNeverRoundUp`: [capability contract](common-shader-internals.md#point-address-rounding).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-ab4835369f227434-2 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-ab4835369f227434-2 -->`PointSamplingAddressesNeverRoundUp`: [point sampling address rounding](common-shader-internals.md#point-address-rounding).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-ab4835369f227434-2 --></ins>
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-469d1f31a6e7c02a-3 -->`RasterizerDesc2Supported`: [capability contract](rasterization.md#line-mode-selection).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-469d1f31a6e7c02a-3 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-469d1f31a6e7c02a-3 -->`RasterizerDesc2Supported`: [line rasterization mode selection](rasterization.md#line-mode-selection).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-469d1f31a6e7c02a-3 --></ins>
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-2a152b4d7ada3510-4 -->`NarrowQuadrilateralLinesSupported`: [capability contract](rasterization.md#line-mode-selection).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-2a152b4d7ada3510-4 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-2a152b4d7ada3510-4 -->`NarrowQuadrilateralLinesSupported`: [line rasterization mode selection](rasterization.md#line-mode-selection).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-2a152b4d7ada3510-4 --></ins>
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-69d9bd7ca58323f7-5 -->`AnisoFilterWithPointMipSupported`: [capability contract](binding.md#anisotropic-point-mip).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-69d9bd7ca58323f7-5 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-69d9bd7ca58323f7-5 -->`AnisoFilterWithPointMipSupported`: [anisotropic filtering with point mip filtering](binding.md#anisotropic-point-mip).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-69d9bd7ca58323f7-5 --></ins>
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-6ec7679d579ab2f1-6 -->`MaxSamplerDescriptorHeapSize`: [capability contract](binding.md#binding-capabilities).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-6ec7679d579ab2f1-6 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-6ec7679d579ab2f1-6 -->`MaxSamplerDescriptorHeapSize`: [binding capabilities and limits](binding.md#binding-capabilities).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-6ec7679d579ab2f1-6 --></ins>
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-80fce2d22d0e3ee5-7 -->`MaxSamplerDescriptorHeapSizeWithStaticSamplers`: [capability contract](binding.md#binding-capabilities).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-80fce2d22d0e3ee5-7 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-80fce2d22d0e3ee5-7 -->`MaxSamplerDescriptorHeapSizeWithStaticSamplers`: [binding capabilities and limits](binding.md#binding-capabilities).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-80fce2d22d0e3ee5-7 --></ins>
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-2e25538f276b8d02-8 -->`MaxViewDescriptorHeapSize`: [capability contract](binding.md#binding-capabilities).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-2e25538f276b8d02-8 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-2e25538f276b8d02-8 -->`MaxViewDescriptorHeapSize`: [binding capabilities and limits](binding.md#binding-capabilities).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-2e25538f276b8d02-8 --></ins>
 
 * <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-c4ecda47b7cf7ba9-9 -->`ComputeOnlyCustomHeapSupported` reports custom-heap support only for devices whose actual maximum supported feature level is `D3D_FEATURE_LEVEL_1_0_CORE`. The option is irrelevant on devices with a higher maximum supported feature level, even when device creation requested a `1_0_CORE` minimum. [Resources](resources.md#compute-only-heap-support) defines the resulting prohibition on all `D3D12_HEAP_TYPE_CUSTOM` heap creation when this field is `FALSE` in the applicable device class.<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS19:1:authored:migration-c4ecda47b7cf7ba9-9 --></ins>
 
@@ -3204,7 +2633,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS20
 } D3D12_FEATURE_DATA_D3D12_OPTIONS20;
 ```
 
-* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS20:1:authored:migration-ef97cc23ce9c3bc9-0 -->`RecreateAtTier`: [capability contract](../RecreateAtGpuva-public.md#check-for-support).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS20:1:authored:migration-ef97cc23ce9c3bc9-0 --></ins>
+* <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS20:1:authored:migration-ef97cc23ce9c3bc9-0 -->`RecreateAtTier`: [RecreateAt GPU virtual address support](../RecreateAtGpuva-public.md#check-for-support).<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS20:1:authored:migration-ef97cc23ce9c3bc9-0 --></ins>
 
 * <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS20:1:authored:migration-ea2df5c9237f4bcc-1 -->`ComputeOnlyWriteWatchSupported` reports write-watch support only for devices whose actual maximum supported feature level is `D3D_FEATURE_LEVEL_1_0_CORE`. The option is irrelevant on devices with a higher maximum supported feature level, even when device creation requested a `1_0_CORE` minimum. [Resources](resources.md#compute-only-heap-support) defines the resulting prohibition on all `D3D12_HEAP_FLAG_ALLOW_WRITE_WATCH` uses when this field is `FALSE` in the applicable device class.<!-- d3d12-review-inline:end:devices-capabilities:standalone-fields-D3D12_FEATURE_DATA_D3D12_OPTIONS20:1:authored:migration-ea2df5c9237f4bcc-1 --></ins>
 
@@ -3249,7 +2678,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22
 
 When queried on an existing driver which <ins><!-- d3d12-review-inline:begin:compute:D-older-driver-fallback:0:modified:source-533ade68123ce14b-0-0 -->does not provide the expanded dispatch capabilities the<!-- d3d12-review-inline:end:compute:D-older-driver-fallback:0:modified:source-533ade68123ce14b-0-0 --></ins> D3D runtime will automatically return 65535 for both `Max1DDispatchSize` and `Max1DDispatchMeshSize` as defined by `D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION`<ins><!-- d3d12-review-inline:begin:compute:D-older-driver-fallback:0:modified:source-533ade68123ce14b-0-1 -->.<!-- d3d12-review-inline:end:compute:D-older-driver-fallback:0:modified:source-533ade68123ce14b-0-1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compute:N-mesh-support:0:authored:migration-7c70a4e1044ae881-0 -->A mesh dispatch still requires the [mesh shader capability and pipeline](amplification-and-mesh-shaders.md#availability).<!-- d3d12-review-inline:end:compute:N-mesh-support:0:authored:migration-7c70a4e1044ae881-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compute:N-mesh-support:0:authored:migration-7c70a4e1044ae881-0 -->`DispatchMesh` also requires the [mesh shader capability and pipeline](amplification-and-mesh-shaders.md#availability).<!-- d3d12-review-inline:end:compute:N-mesh-support:0:authored:migration-7c70a4e1044ae881-0 --></ins>
 
 <a id="d3d12_feature_data_predication"></a>
 
@@ -3340,8 +2769,6 @@ typedef struct D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT
 } D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT;
 ```
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:D121-version-number-forward:0:authored:migration-493f47b067cdd6ab-0 -->The shared [D3D12_VERSION_NUMBER declaration and encoding](state-object-databases-and-identity.md#d3d12_version_number) define the version fields below. Compiler/profile versions and the inclusive ABI range retain the distinct query meanings defined here.<!-- d3d12-review-inline:end:devices-capabilities:D121-version-number-forward:0:authored:migration-493f47b067cdd6ab-0 --></ins>
-
 <!-- d3d12-review-alert:begin:devices-capabilities:query-abi-members:0:modified:migration-d9d13d5233904c82-0 -->
 
 > [!WARNING]
@@ -3357,15 +2784,13 @@ typedef struct D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT
 
 <!-- d3d12-review-alert:end:devices-capabilities:query-abi-members:0:modified:migration-d9d13d5233904c82-0 -->
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:query-contract-D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT:0:authored:migration-44fcf7c351df8168-0 -->The caller does not pass an ABI request ceiling.<!-- d3d12-review-inline:end:devices-capabilities:query-contract-D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT:0:authored:migration-44fcf7c351df8168-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:query-contract-D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT:1:authored:migration-82efddbef2e40b87-0 -->`MinimumABISupportVersion` through `MaximumABISupportVersion` is an inclusive supported ABI range. `CompilerVersion` and `ApplicationProfileVersion` use [D3D12_VERSION_NUMBER](state-object-databases-and-identity.md#d3d12_version_number), whose `Version` member and four `VersionParts` elements are alternative representations of the same 64-bit value. These values describe compiler/cache compatibility, not shader model support or feature levels. See the [compiler/driver ABI contract](../ShaderCompilerPlugin.md#struct-d3d12ddi_shadercache_abi_support_data) for adapter family, ABI range and compiler/profile matching, and [cache registration](../ShaderCacheRegistrationAPI.md) for precompiled database selection. Query failure does not establish a default ABI range or a universally valid zeroed output.<!-- d3d12-review-inline:end:devices-capabilities:query-contract-D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT:1:authored:migration-82efddbef2e40b87-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:query-contract-D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT:1:authored:migration-82efddbef2e40b87-0 -->`MinimumABISupportVersion` through `MaximumABISupportVersion` is an inclusive supported ABI range. `CompilerVersion` and `ApplicationProfileVersion` use [D3D12_VERSION_NUMBER](state-object-databases-and-identity.md#d3d12_version_number), whose `Version` member and four `VersionParts` elements are alternative representations of the same 64-bit value. These values describe compiler/cache compatibility, not shader model support or feature levels. The [compiler/driver ABI contract](../ShaderCompilerPlugin.md#struct-d3d12ddi_shadercache_abi_support_data) defines adapter family, ABI range and compiler/profile matching. [Cache registration](../ShaderCacheRegistrationAPI.md) retains precompiled database selection. Query failure does not establish a default ABI range or a universally valid zeroed output.<!-- d3d12-review-inline:end:devices-capabilities:query-contract-D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT:1:authored:migration-82efddbef2e40b87-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:D126-compiler-target-forward:0:authored:migration-78b72de9f5dc7fe4-0 -->See the offline compiler's [family enumeration](offline-compilation.md#id3d12compilerfactory-enumerateadapterfamilies), [ABI enumeration](offline-compilation.md#id3d12compilerfactory-enumerateadapterfamilyabiversions) and [compiler/profile version domains](offline-compilation.md#version-domains) for compiler-side target discovery. The plugin's enumerated ABI set is distinct from the installed driver's inclusive range reported by this query.<!-- d3d12-review-inline:end:devices-capabilities:D126-compiler-target-forward:0:authored:migration-78b72de9f5dc7fe4-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:D126-compiler-target-forward:0:authored:migration-78b72de9f5dc7fe4-0 -->The offline compiler's [family enumeration](offline-compilation.md#id3d12compilerfactory-enumerateadapterfamilies), [ABI enumeration](offline-compilation.md#id3d12compilerfactory-enumerateadapterfamilyabiversions) and [compiler/profile version domains](offline-compilation.md#version-domains) define compiler-side target discovery. The installed-driver inclusive range above and the plugin's enumerated ABI set have distinct query contracts.<!-- d3d12-review-inline:end:devices-capabilities:D126-compiler-target-forward:0:authored:migration-78b72de9f5dc7fe4-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:D138-registration-targets:0:authored:migration-46a59b1c8605af41-0 -->See [registration target discovery](shader-cache-registration.md#target-discovery) for the installer/application catalog's adapter compatibility records, application-dependent preference/profile behavior and count/array protocols. That discovery is separate from this device payload and from the offline compiler's enumerated ABI set.<!-- d3d12-review-inline:end:devices-capabilities:D138-registration-targets:0:authored:migration-46a59b1c8605af41-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:D138-registration-targets:0:authored:migration-46a59b1c8605af41-0 -->[Registration target discovery](shader-cache-registration.md#target-discovery) defines the installer/application catalog's adapter compatibility records, application-dependent preference/profile behavior and distinct count/array protocols. That discovery is separate from this device payload and from the offline compiler's enumerated ABI set.<!-- d3d12-review-inline:end:devices-capabilities:D138-registration-targets:0:authored:migration-46a59b1c8605af41-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:RC-driver-abi-owner:0:authored:migration-264aaf1ba0c382e1-0 -->The [current driver ABI capability query](runtime-cache-discovery.md#runtime-cache-driver-caps) defines `pfnShaderCacheGetCaps`, its fixed output payload and mandatory-query failure contract.<!-- d3d12-review-inline:end:devices-capabilities:RC-driver-abi-owner:0:authored:migration-264aaf1ba0c382e1-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:RC-driver-abi-owner:0:authored:migration-264aaf1ba0c382e1-0 -->See the [driver ABI capability query](runtime-cache-discovery.md#runtime-cache-driver-caps) for `pfnShaderCacheGetCaps`, its fixed output payload and mandatory-query failure contract.<!-- d3d12-review-inline:end:devices-capabilities:RC-driver-abi-owner:0:authored:migration-264aaf1ba0c382e1-0 --></ins>
 
 <a id="d3d12_feature_data_barrier_layout"></a>
 
@@ -3384,47 +2809,12 @@ typedef struct D3D12_FEATURE_DATA_BARRIER_LAYOUT
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:query-contract-D3D12_FEATURE_DATA_BARRIER_LAYOUT:0:authored:migration-092fcc0c6ddb44da-0 -->`D3D12_FEATURE_BARRIER_LAYOUT` takes `CommandListType` and `Layout` as inputs and writes `Supported` for that command list type/[layout](synchronization.md#barrier-layout) combination.<!-- d3d12-review-inline:end:devices-capabilities:query-contract-D3D12_FEATURE_DATA_BARRIER_LAYOUT:0:authored:migration-092fcc0c6ddb44da-0 --></ins>
 
-<a id="driver-node-application-state"></a>
+## Application-specific driver state
 
-## Driver node mapping and application-specific state
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:CS-application-state-intro:0:authored:migration-aa4b5249b15f7760-0 -->Application-specific driver state captures driver application detection workarounds in an opaque adapter/driver-specific blob for replay tools.<!-- d3d12-review-inline:end:devices-capabilities:CS-application-state-intro:0:authored:migration-aa4b5249b15f7760-0 --></ins>
 
-```cpp
-#define D3D12DDI_NODE_MAP_HIDE_NODE 0xffffffff
-
-typedef VOID ( APIENTRY* PFND3D12DDI_QUERY_NODE_MAP )(D3D12DDI_HDEVICE, UINT NumPhysicalAdapters, _Out_writes_( NumPhysicalAdapters) UINT* pMap);
-
-typedef UINT ( APIENTRY* PFND3D12DDI_GETIMPLICITPHYSICALADAPTERMASK )( D3D12DDI_HDEVICE );
-
-typedef enum D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS
-{
-  D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_UNKNOWN       = 1,
-  D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_USED          = 2,
-  D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_IGNORED       = 3,
-  D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_NOT_SPECIFIED = 4,
-} D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS;
-
-typedef UINT ( APIENTRY* PFND3D12DDI_GET_APPLICATION_SPECIFIC_DRIVER_STATE_BLOB_SIZE_0113 )(
-    D3D12DDI_HDEVICE hDrvDevice);
-
-typedef HRESULT ( APIENTRY* PFND3D12DDI_GET_APPLICATION_SPECIFIC_DRIVER_STATE_0113 )(
-    D3D12DDI_HDEVICE hDrvDevice,
-    _Out_writes_bytes_(ApplicationSpecificDriverBlobSizeInBytes) void *pApplicationSpecificDriverBlob,
-    UINT ApplicationSpecificDriverBlobSizeInBytes);
-
-typedef D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS ( APIENTRY* PFND3D12DDI_GET_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS_0113 )(
-    D3D12DDI_HDEVICE hDrvDevice);
-```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:CS-node-mapping:0:authored:migration-3f20603f397da879-0 -->`QueryNodeMap` writes `NumPhysicalAdapters` UINT entries. Entry `pMap[i]`
-is the API-exposed node index for physical driver node `i`, or
-`D3D12DDI_NODE_MAP_HIDE_NODE` (`0xffffffff`) when that physical node is hidden.
-Visible API indices are unique and dense from zero; at least one node must
-be exposed. The current mapping contract accepts identity mapping or one
-API-visible node with the other physical nodes hidden. An all-hidden map,
-duplicate/out-of-range visible index or nonidentity multi-visible-node map
-is invalid.<!-- d3d12-review-inline:end:devices-capabilities:CS-node-mapping:0:authored:migration-3f20603f397da879-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:CS-node-mapping:1:authored:migration-2629ff847ac71073-0 -->GetImplicitPhysicalAdapterMask returns a bit mask of physical adapters participating in the driver's implicit multi-adapter operation.<!-- d3d12-review-inline:end:devices-capabilities:CS-node-mapping:1:authored:migration-2629ff847ac71073-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:WEF-application-state-query-ownership:0:authored:migration-8a05ed7ed5a93a9a-0 -->[`D3D12_FEATURE_DATA_APPLICATION_SPECIFIC_DRIVER_STATE`](#d3d12_feature_data_application_specific_driver_state)
+reports support for the application-specific driver state operations.<!-- d3d12-review-inline:end:devices-capabilities:WEF-application-state-query-ownership:0:authored:migration-8a05ed7ed5a93a9a-0 --></ins>
 
 ```cpp
 typedef
@@ -3437,11 +2827,6 @@ enum D3D12_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS
     } 	D3D12_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS;
 
 ```
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:WEF-application-state-query-ownership:0:authored:migration-8a05ed7ed5a93a9a-0 -->[`D3D12_FEATURE_DATA_APPLICATION_SPECIFIC_DRIVER_STATE`](#d3d12_feature_data_application_specific_driver_state)
-reports support for the application-specific driver state operations.<!-- d3d12-review-inline:end:devices-capabilities:WEF-application-state-query-ownership:0:authored:migration-8a05ed7ed5a93a9a-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:CS-application-state-intro:0:authored:migration-aa4b5249b15f7760-0 -->Application-specific driver state captures driver application detection workarounds in an opaque adapter/driver-specific blob for replay tools.<!-- d3d12-review-inline:end:devices-capabilities:CS-application-state-intro:0:authored:migration-aa4b5249b15f7760-0 --></ins>
 
 <a id="id3d12devicetools1-getapplicationspecificdriverstate"></a>
 
@@ -3459,10 +2844,9 @@ HRESULT GetApplicationSpecificDriverState(ID3DBlob** ppBlob);
 
 #### Parameters
 
-`ppBlob` is the required CPU output for a reference-counted blob. On a
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:app-state-get-parameters:0:authored:opus-remove-gpu-work-rebuttal -->`ppBlob` is the required CPU output for a reference-counted blob. On a
 supported driver the runtime obtains its byte size, allocates the blob and
-asks the driver to fill it. Zero bytes returns `S_OK` with a null blob.
-Querying state does not execute GPU work.
+asks the driver to fill it. Zero bytes returns `S_OK` with a null blob.<!-- d3d12-review-inline:end:devices-capabilities:app-state-get-parameters:0:authored:opus-remove-gpu-work-rebuttal --></ins>
 
 #### Return values
 
@@ -3487,9 +2871,8 @@ D3D12_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS GetApplicationSpecificDriverBlobSt
 
 #### Return values
 
-Reports `UNKNOWN`, `USED`, `IGNORED` or `NOT_SPECIFIED` (values 1 through 4).
-Unsupported reporting yields `UNKNOWN`; this is not an HRESULT or GPU
-completion result.
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:app-state-blob-status-results:0:authored:opus-remove-hresult-rebuttal -->Reports `UNKNOWN`, `USED`, `IGNORED` or `NOT_SPECIFIED` (values 1 through 4).
+Unsupported reporting yields `UNKNOWN`.<!-- d3d12-review-inline:end:devices-capabilities:app-state-blob-status-results:0:authored:opus-remove-hresult-rebuttal --></ins>
 
 <a id="id3d12tools2-setapplicationspecificdriverstate"></a>
 
@@ -3520,43 +2903,29 @@ Returns an HRESULT indicating success or failure, including failure when
 developer mode is not enabled. Supplying state does not guarantee that the
 driver used it; the blob-status query distinguishes that result.
 
-### Capability and blob representation
+<a id="capability-and-blob-representation"></a>
 
-`D3D12_FEATURE_APPLICATION_SPECIFIC_DRIVER_STATE` queries the `Supported`
-BOOL in `D3D12_FEATURE_DATA_APPLICATION_SPECIFIC_DRIVER_STATE`. This
-capability and blob status answer different questions.
+### Blob representation
 
 The outputted blob will be a ```D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER``` header followed by a driver-specific opaque blob of bytes that represents its internal application specific state. Both the header and the opaque blob are generated by the driver.
 
-Please see the [DirectX Raytracing functional](acceleration-structures.md#d3d12_serialized_data_driver_matching_identifier) spec for more information about driver matching identifiers.
+Please see <ins><!-- d3d12-review-inline:begin:devices-capabilities:app-state-matching-identifier-link:0:modified:opus-link-label -->[serialized data driver matching identifiers](acceleration-structures.md#d3d12_serialized_data_driver_matching_identifier)<!-- d3d12-review-inline:end:devices-capabilities:app-state-matching-identifier-link:0:modified:opus-link-label --></ins> for more information about driver matching identifiers.
 
 The size and layout of the opaque blob is determined by the driver.
 
 This allows an application to call ```ID3D12Device5::CheckDriverMatchingIdentifier()``` to validate that a blob previously retrieved via ```GetApplicationSpecificDriverState()``` is compatible with the current device/driver. This can be used to determine if the driver ignored the set application specific driver state blob due to incompatibility issues.
 
-<a id="driver-state-callbacks"></a>
-
-### Driver state DDIs
-
-The three current core-device DDIs separate byte-size query, blob retrieval
-and status reporting. The size is UINT bytes, not WCHAR count. Retrieval
-receives caller-owned CPU output storage and its size and returns HRESULT;
-the driver fills it during the call and does not return an ID3DBlob interface
-or retain the caller's storage. The runtime constructs the API blob.
-Status returns the driver enum's defined values, not a success/failure flag.
-The existing device-creation path passes supplied application-specific state
-to the driver; retrieval is not a new way to mutate a live device's state.
-
 <a id="capture-replay-address-control"></a>
 
 ## Capture/replay GPU-address configuration
 
-Recreate-at support is reported by OPTIONS20.RecreateAtTier. Capture/replay
-address control applies to buffers/heaps, not arbitrary texture allocations.
-Startup reservations and a subsequent exact-address allocation request are
-different operations. The corresponding driver creation fields must honor
-a valid requested address or fail recoverably, not silently choose another
-address or fault the GPU.
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:capture-replay-intro:0:authored:opus-feature-introduction -->Capture/replay tools use these controls to place buffers and heaps, not arbitrary
+texture allocations, at the GPU virtual addresses recorded during capture.
+[`D3D12_FEATURE_DATA_D3D12_OPTIONS20::RecreateAtTier`](#d3d12_feature_data_d3d12_options20)
+reports support. Reserving address ranges at device creation and requesting an
+exact address for a later allocation are separate operations. When a creation
+carries a requested address, the driver must honor a valid requested address or
+fail recoverably. It must not silently choose another address or fault the GPU.<!-- d3d12-review-inline:end:devices-capabilities:capture-replay-intro:0:authored:opus-feature-introduction --></ins>
 
 <a id="api-id3d12devicetools-setnextallocationaddress"></a>
 
@@ -3571,15 +2940,15 @@ void SetNextAllocationAddress(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:AB-id3d12devicetools-setnextallocationaddress-contract:0:authored:migration-708fbb7fabd7a7d8-0 -->Sets the next allocation-address request on the calling thread. This is
-thread-local state shared by the creation path, not a device-wide mutable
-binding or a reservation. The creation path consumes/clears the pending
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:AB-id3d12devicetools-setnextallocationaddress-contract:0:authored:migration-708fbb7fabd7a7d8-0 -->Sets the next allocation-address request on the calling thread. The request
+is thread-local state read by the creation path on that thread. It is not
+device-wide state and does not reserve the address. The creation path consumes/clears the pending
 value when it reaches resource allocation, including an unsuccessful
 allocation attempt; earlier rejected calls need not have consumed it.<!-- d3d12-review-inline:end:devices-capabilities:AB-id3d12devicetools-setnextallocationaddress-contract:0:authored:migration-708fbb7fabd7a7d8-0 --></ins>
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:AB-id3d12devicetools-setnextallocationaddress-contract:2:authored:migration-b0b2383a100aab8c-0 -->`nextAllocationVirtualAddress` is the desired GPU address; zero selects ordinary address choice. Required ranges must already be reserved and eligible creation/support constraints still apply.<!-- d3d12-review-inline:end:devices-capabilities:AB-id3d12devicetools-setnextallocationaddress-contract:2:authored:migration-b0b2383a100aab8c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:AB-id3d12devicetools-setnextallocationaddress-contract:2:authored:migration-b0b2383a100aab8c-0 -->`nextAllocationVirtualAddress` is the desired GPU address. Zero selects ordinary address choice. Required ranges must already be reserved, and the consuming creation must be eligible and supported.<!-- d3d12-review-inline:end:devices-capabilities:AB-id3d12devicetools-setnextallocationaddress-contract:2:authored:migration-b0b2383a100aab8c-0 --></ins>
 
 #### Return values
 
@@ -3607,7 +2976,7 @@ call is not successful reservation on an already-existing device.<!-- d3d12-revi
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:AB-id3d12tools1-reservegpuvarangesatcreate-contract:2:authored:migration-44b59796355c43b4-0 -->`pRanges` supplies uiNumRanges D3D12_GPU_VIRTUAL_ADDRESS_RANGE elements; each carries a 64-bit address and byte size. Zero count adds none. Synchronize configuration changes with device creation.<!-- d3d12-review-inline:end:devices-capabilities:AB-id3d12tools1-reservegpuvarangesatcreate-contract:2:authored:migration-44b59796355c43b4-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:AB-id3d12tools1-reservegpuvarangesatcreate-contract:2:authored:migration-44b59796355c43b4-0 -->`pRanges` supplies `uiNumRanges` `D3D12_GPU_VIRTUAL_ADDRESS_RANGE` elements. Each carries a 64-bit address and byte size. Zero count adds none. Synchronize configuration changes with device creation.<!-- d3d12-review-inline:end:devices-capabilities:AB-id3d12tools1-reservegpuvarangesatcreate-contract:2:authored:migration-44b59796355c43b4-0 --></ins>
 
 #### Return values
 
@@ -3628,3 +2997,677 @@ void ClearReservedGPUVARangesList();
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:AB-id3d12tools1-clearreservedgpuvarangeslist-contract:0:authored:migration-2dabee576fa609b7-0 -->Clears the factory configuration's accumulated startup range list. It does
 not release reservations belonging to devices already created from that
 configuration or destroy resources placed in those ranges.<!-- d3d12-review-inline:end:devices-capabilities:AB-id3d12tools1-clearreservedgpuvarangeslist-contract:0:authored:migration-2dabee576fa609b7-0 --></ins>
+
+## Driver interfaces and responsibilities
+
+<a id="runtime-driver-initialization"></a>
+
+### Runtime and driver initialization
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B001:0:authored:migration-96593c3f26efae1e-0 -->The runtime opens a UMD adapter, negotiates a DDI version, and creates the driver device in runtime-provided private storage.<!-- d3d12-review-inline:end:devices-capabilities:B001:0:authored:migration-96593c3f26efae1e-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B002:0:authored:migration-45a36840171319b2-0 -->One DDI device is associated with each opened UMD adapter object. This does not restrict the number of application devices associated with a physical adapter.<!-- d3d12-review-inline:end:devices-capabilities:B002:0:authored:migration-45a36840171319b2-0 --></ins>
+
+The Direct3D runtime can open multiple graphics adapter objects from a single graphics adapter.
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B004:0:authored:migration-c72b37d761083a97-0 -->Driver handles identify driver objects or their supplied private storage. Runtime handles identify objects used for callbacks into the runtime.<!-- d3d12-review-inline:end:devices-capabilities:B004:0:authored:migration-c72b37d761083a97-0 --></ins>
+
+<a id="driver-entry"></a>
+
+#### Driver entry and adapter objects
+
+<a id="pfnd3d12ddi_openadapter"></a>
+
+##### PFND3D12DDI_OPENADAPTER
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B005:0:authored:migration-bf8bb2d4d3621300-0 -->The UMD exports `OpenAdapter12` with this function type:<!-- d3d12-review-inline:end:devices-capabilities:B005:0:authored:migration-bf8bb2d4d3621300-0 --></ins>
+
+```cpp
+typedef HRESULT (APIENTRY *PFND3D12DDI_OPENADAPTER)(
+    _Inout_ D3D12DDIARG_OPENADAPTER* pArgs);
+
+typedef struct D3D12DDIARG_OPENADAPTER
+{
+    D3D12DDI_HRTADAPTER hRTAdapter;
+    D3D12DDI_HADAPTER hAdapter;
+    CONST D3DDDI_ADAPTERCALLBACKS* pAdapterCallbacks;
+    D3D12DDI_ADAPTERFUNCS* pAdapterFuncs;
+} D3D12DDIARG_OPENADAPTER;
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B007:0:authored:migration-4fa019255fccea8b-0 -->The runtime supplies `hRTAdapter`, its adapter callback table and writable adapter function table storage. On success, the driver returns `hAdapter` and fills the adapter function table. `hRTAdapter` is used with the runtime's adapter callbacks; `hAdapter` identifies the opened driver object in subsequent adapter DDIs.<!-- d3d12-review-inline:end:devices-capabilities:B007:0:authored:migration-4fa019255fccea8b-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B008:0:authored:migration-0fa075657e8a7b8f-0 -->The adapter callback table includes `pfnQueryAdapterInfoCb`, which the driver can use with `hRTAdapter` to query adapter information from the display miniport driver.<!-- d3d12-review-inline:end:devices-capabilities:B008:0:authored:migration-0fa075657e8a7b8f-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B009:0:authored:migration-fc34ea45913b31b2-0 -->OpenAdapter12 precedes selection of the device DDI version.<!-- d3d12-review-inline:end:devices-capabilities:B009:0:authored:migration-fc34ea45913b31b2-0 --></ins>
+
+```cpp
+
+typedef struct D3D12DDI_ADAPTERFUNCS_0109
+{
+    PFND3D12DDI_CALCPRIVATEDEVICESIZE pfnCalcPrivateDeviceSize;
+    PFND3D12DDI_CREATEDEVICE_0109 pfnCreateDevice;
+    PFND3D12DDI_CLOSEADAPTER pfnCloseAdapter;
+    PFND3D12DDI_GETSUPPORTEDVERSIONS pfnGetSupportedVersions;
+    PFND3D12DDI_GETCAPS pfnGetCaps;
+    PFND3D12DDI_GETOPTIONALDDITTABLES pfnGetOptionalDDITables;
+    PFND3D12DDI_FILLDDITTABLE pfnFillDDITable;
+    PFND3D12DDI_DESTROYDEVICE pfnDestroyDevice;
+} D3D12DDI_ADAPTERFUNCS_0109;
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B012:0:authored:migration-1839bb2874d80d0b-0 -->`OpenAdapter12` returns an `HRESULT` indicating whether adapter opening succeeded. Required allocation failure can be reported as `E_OUTOFMEMORY`. The driver owns the adapter object and its allocations. The runtime uses `CloseAdapter` to end its successful opened lifetime.<!-- d3d12-review-inline:end:devices-capabilities:B012:0:authored:migration-1839bb2874d80d0b-0 --></ins>
+
+<a id="pfnd3d12ddi_closeadapter"></a>
+
+##### PFND3D12DDI_CLOSEADAPTER
+
+```cpp
+typedef HRESULT (APIENTRY *PFND3D12DDI_CLOSEADAPTER)(
+    D3D12DDI_HADAPTER hAdapter);
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B014:0:authored:migration-4131cd7d2015811d-0 -->CloseAdapter releases the driver adapter and its allocations after its device is no longer in use.<!-- d3d12-review-inline:end:devices-capabilities:B014:0:authored:migration-4131cd7d2015811d-0 --></ins>
+
+<a id="interface-versions"></a>
+
+#### Supported interface versions
+
+<a id="pfnd3d12ddi_getsupportedversions"></a>
+
+##### PFND3D12DDI_GETSUPPORTEDVERSIONS
+
+```cpp
+typedef HRESULT (APIENTRY *PFND3D12DDI_GETSUPPORTEDVERSIONS)(
+    D3D12DDI_HADAPTER hAdapter,
+    _Inout_ UINT32* puEntries,
+    _Out_writes_opt_(*puEntries) UINT64* pSupportedDDIInterfaceVersions);
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B016:0:authored:migration-7c0a667dd751ef13-0 -->Each returned `UINT64` is one exact supported DDI version, not a ceiling that implicitly advertises every lower build. A selected version must appear in the driver's returned list and be supported by the runtime. Runtime and driver are independently versioned.<!-- d3d12-review-inline:end:devices-capabilities:B016:0:authored:migration-7c0a667dd751ef13-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B017:0:authored:migration-1cd20010f553367e-0 -->Runtime selection normally prefers the highest mutually supported version. Compatibility exclusions, including runtime or driver bugs, can require a common version to be skipped. The driver must not rely on unconditional selection of the numerically highest advertised value.<!-- d3d12-review-inline:end:devices-capabilities:B017:0:authored:migration-1cd20010f553367e-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B018:0:authored:migration-e9a88601cd6c7d57-0 -->A null version array pointer queries the number of entries through `puEntries`. For retrieval, `*puEntries` supplies array capacity in `UINT64` elements; on successful retrieval it reports the actual returned count, which does not exceed that capacity. The runtime can accept fewer entries than the preceding size query reported. Returned order does not establish version preference.<!-- d3d12-review-inline:end:devices-capabilities:B018:0:authored:migration-e9a88601cd6c7d57-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B020:0:authored:migration-7eb0bb8983a55a9a-0 -->The selected value is communicated for device sizing and creation through the `Interface` and `Version` fields. Together they represent the selected 64-bit DDI version. If no version is supported by both sides, a device cannot be created for that runtime/driver pair.<!-- d3d12-review-inline:end:devices-capabilities:B020:0:authored:migration-7eb0bb8983a55a9a-0 --></ins>
+
+<a id="device-storage"></a>
+
+#### Private device storage
+
+<a id="pfnd3d12ddi_calcprivatedevicesize"></a>
+
+##### PFND3D12DDI_CALCPRIVATEDEVICESIZE
+
+```cpp
+typedef SIZE_T (APIENTRY *PFND3D12DDI_CALCPRIVATEDEVICESIZE)(
+    D3D12DDI_HADAPTER hAdapter,
+    _In_ CONST D3D12DDIARG_CALCPRIVATEDEVICESIZE* pArgs);
+
+typedef struct D3D12DDIARG_CALCPRIVATEDEVICESIZE
+{
+    UINT Interface;
+    UINT Version;
+    D3D12DDI_CREATE_DEVICE_FLAGS Flags;
+} D3D12DDIARG_CALCPRIVATEDEVICESIZE;
+
+typedef enum D3D12DDI_CREATE_DEVICE_FLAGS
+{
+    D3D12DDI_CREATE_DEVICE_FLAG_NONE = 0x0,
+    D3D12DDI_CREATE_DEVICE_FLAG_DISABLE_IMPLICIT_MGPU = 0x1,
+    D3D12DDI_CREATE_DEVICE_FLAG_DEBUGGABLE = 0x2,
+} D3D12DDI_CREATE_DEVICE_FLAGS;
+```
+
+The CalcPrivateDeviceSize function determines the size of a memory region that the user-mode display driver requires from the Microsoft Direct3D runtime to store frequently-accessed data.
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B023:0:authored:migration-f47b6f58d1ba3a67-0 -->The size query describes the selected DDI version and creation flags. Its flags request disabling implicit multi-GPU operation or creating a debuggable driver device.<!-- d3d12-review-inline:end:devices-capabilities:B023:0:authored:migration-f47b6f58d1ba3a67-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B024:0:authored:migration-4950fc8da9d021eb-0 -->The runtime allocates and frees the reported private device region. The driver initializes that storage through `hDrvDevice` and owns any auxiliary allocations it makes. The storage supplied for creation must satisfy the size requirement for the actual creation parameters.<!-- d3d12-review-inline:end:devices-capabilities:B024:0:authored:migration-4950fc8da9d021eb-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B025:0:authored:migration-18fba0b0db450ddf-0 -->Private device storage is aligned to `MEMORY_ALLOCATION_ALIGNMENT`, which is 16 bytes on Win64 and 8 bytes on Win32.<!-- d3d12-review-inline:end:devices-capabilities:B025:0:authored:migration-18fba0b0db450ddf-0 --></ins>
+
+<a id="device-creation"></a>
+
+#### Driver device creation and destruction
+
+<a id="pfnd3d12ddi_createdevice_0003-and-pfnd3d12ddi_createdevice_0109"></a>
+
+##### PFND3D12DDI_CREATEDEVICE_0109
+
+```cpp
+
+typedef HRESULT (APIENTRY *PFND3D12DDI_CREATEDEVICE_0109)(
+    D3D12DDI_HADAPTER hAdapter,
+    _In_ CONST D3D12DDIARG_CREATEDEVICE_0109* pArgs);
+
+typedef struct D3D12DDIARG_CREATEDEVICE_0109
+{
+    D3D12DDI_HRTDEVICE hRTDevice;
+    UINT Interface;
+    UINT Version;
+    CONST D3DDDI_DEVICECALLBACKS* pKTCallbacks;
+    D3D12DDI_HDEVICE hDrvDevice;
+    union
+    {
+        CONST D3D12DDI_CORELAYER_DEVICECALLBACKS_0003* p12UMCallbacks;
+        CONST struct D3D12DDI_CORELAYER_DEVICECALLBACKS_0022* p12UMCallbacks_0022;
+        CONST struct D3D12DDI_CORELAYER_DEVICECALLBACKS_0050* p12UMCallbacks_0050;
+        CONST struct D3D12DDI_CORELAYER_DEVICECALLBACKS_0062* p12UMCallbacks_0062;
+        CONST struct D3D12DDI_CORELAYER_DEVICECALLBACKS_0112* p12UMCallbacks_0112;
+        CONST struct D3D12DDI_CORELAYER_DEVICECALLBACKS_0116* p12UMCallbacks_0116;
+    };
+    D3D12DDI_CREATE_DEVICE_FLAGS Flags;
+    D3D12DDI_GPU_VIRTUAL_ADDRESS_RANGE* pReserveRanges;
+    UINT NumReserveRanges;
+} D3D12DDIARG_CREATEDEVICE_0109;
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B027:0:authored:migration-c331c34e45c18700-0 -->`hRTDevice` identifies the runtime device for callbacks. `hDrvDevice` identifies the supplied driver-private storage.<!-- d3d12-review-inline:end:devices-capabilities:B027:0:authored:migration-c331c34e45c18700-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B028:0:authored:migration-e5b78d3d5df13ce5-0 -->`pKTCallbacks` supplies runtime callbacks that access kernel services. The `p12UMCallbacks` union supplies the applicable versioned core user-mode callback table. The union members are alternative views of one callback table pointer, not independently supplied tables. The driver uses the layout applicable to the negotiated interface.<!-- d3d12-review-inline:end:devices-capabilities:B028:0:authored:migration-e5b78d3d5df13ce5-0 --></ins>
+
+<a id="creation-tail"></a>
+
+###### Creation tail availability and reserved GPUVAs
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B030:0:authored:migration-5d7c23b36c7c6050-0 -->The two fields after `Flags` are `pReserveRanges` and `NumReserveRanges`. Their presence is guaranteed only when the creation `Interface`/`Version` pair indicates `D3D12DDI_SUPPORTED_0111` or later. A driver must establish that field-availability guarantee before reading them, including before reading the count. Accessing absent fields is undefined behavior.<!-- d3d12-review-inline:end:devices-capabilities:B030:0:authored:migration-5d7c23b36c7c6050-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B031:0:authored:migration-a3be3b39453150e0-0 -->**History:** The `_0109` type name predates the 0111 field presence guarantee. Earlier versions do not guarantee that the tail exists. The type name is not an availability test.<!-- d3d12-review-inline:end:devices-capabilities:B031:0:authored:migration-a3be3b39453150e0-0 --></ins>
+
+```cpp
+typedef struct D3D12DDI_GPU_VIRTUAL_ADDRESS_RANGE
+{
+    D3D12DDI_GPU_VIRTUAL_ADDRESS StartAddress;
+    UINT64 SizeInBytes;
+} D3D12DDI_GPU_VIRTUAL_ADDRESS_RANGE;
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B033:0:authored:migration-a517a87146ad6f49-0 -->For a creation payload that includes the tail, `pReserveRanges` supplies `NumReserveRanges` GPU virtual address ranges. `StartAddress` is a GPU virtual address and `SizeInBytes` is the extent in bytes. The driver must immediately reserve the supplied ranges during creation, before its initialization allocations can consume addresses needed for replay.<!-- d3d12-review-inline:end:devices-capabilities:B033:0:authored:migration-a517a87146ad6f49-0 --></ins>
+
+Ranges provided to `CreateDevice` are not processed in any way and may or may not be aligned in offset or size and may or may not overlap, depending on driver behavior during record.
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B035:0:authored:migration-3e81b88110304771-0 -->The driver reports creation completion through the `HRESULT`. A failing creation must clean up the driver's partial work and auxiliary allocations. It cannot depend on `DestroyDevice` being called to finish a failed creation.<!-- d3d12-review-inline:end:devices-capabilities:B035:0:authored:migration-3e81b88110304771-0 --></ins>
+
+<a id="pfnd3d12ddi_destroydevice"></a>
+
+##### PFND3D12DDI_DESTROYDEVICE
+
+```cpp
+typedef VOID (APIENTRY *PFND3D12DDI_DESTROYDEVICE)(
+    D3D12DDI_HDEVICE hDevice);
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B037:0:authored:migration-42428f2626d690bb-0 -->Destroys the successfully created driver device and releases its driver-owned auxiliary allocations. The runtime retains ownership of the supplied private device region and frees that region after its use ends.<!-- d3d12-review-inline:end:devices-capabilities:B037:0:authored:migration-42428f2626d690bb-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B038:0:authored:migration-183dc92301c7d53d-0 -->Successful DDI device creation establishes a destruction obligation even if the application device is not yet complete. If a subsequent initialization DDI fails and initial creation is abandoned, the runtime calls `DestroyDevice` before closing the adapter. This does not make a later failure of a delay-loaded feature a device creation failure.<!-- d3d12-review-inline:end:devices-capabilities:B038:0:authored:migration-183dc92301c7d53d-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B039:0:authored:migration-0aaf39dd4ac0e2e5-0 -->DestroyDevice is an adapter table entry, so cleanup does not require successful device table initialization.<!-- d3d12-review-inline:end:devices-capabilities:B039:0:authored:migration-0aaf39dd4ac0e2e5-0 --></ins>
+
+<a id="capability-queries"></a>
+
+#### Adapter capability queries
+
+<a id="pfnd3d12ddi_getcaps"></a>
+
+##### PFND3D12DDI_GETCAPS
+
+```cpp
+typedef HRESULT (APIENTRY *PFND3D12DDI_GETCAPS)(
+    D3D12DDI_HADAPTER hAdapter,
+    _In_ CONST D3D12DDIARG_GETCAPS* pArgs);
+
+typedef struct D3D12DDIARG_GETCAPS
+{
+    D3D12DDICAPS_TYPE Type;
+    VOID* pInfo;
+    VOID* pData;
+    UINT DataSize;
+} D3D12DDIARG_GETCAPS;
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B041:0:authored:migration-146082d7888ade3a-0 -->`Type` selects the driver capability query. `pInfo` and `pData` carry its query-specific information and payload. Their inputs, outputs and permitted null values are defined by that query. `DataSize` describes the `pData` payload size in bytes. The function returns an `HRESULT` reporting the query result.<!-- d3d12-review-inline:end:devices-capabilities:B041:0:authored:migration-146082d7888ade3a-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B042:0:authored:migration-9e0e5144443fd147-0 -->This is an adapter level interface, not a one-to-one dispatch of an application `CheckFeatureSupport` call. Runtime capability results can be cached, combined or translated. [Feature level reporting](devices-and-capabilities.md#driver-responsibilities) defines concrete query/result mappings, including the input and output fields of the 3D-pipeline support query.<!-- d3d12-review-inline:end:devices-capabilities:B042:0:authored:migration-9e0e5144443fd147-0 --></ins>
+
+<a id="shared-driver-options"></a>
+
+##### Common driver options payloads
+
+<a id="shared-driver-options-payloads"></a>
+
+<a id="d3d12ddi_d3d12_options_data_0003"></a>
+
+###### D3D12DDI_D3D12_OPTIONS_DATA_0003
+
+```cpp
+typedef struct D3D12DDI_D3D12_OPTIONS_DATA_0003
+{
+    D3D12DDI_RESOURCE_BINDING_TIER ResourceBindingTier;
+    D3D12DDI_CONSERVATIVE_RASTERIZATION_TIER ConservativeRasterizationTier;
+    D3D12DDI_TILED_RESOURCES_TIER TiledResourcesTier;
+    D3D12DDI_CROSS_NODE_SHARING_TIER CrossNodeSharingTier;
+    BOOL VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation;
+    BOOL OutputMergerLogicOp;
+    D3D12DDI_RESOURCE_HEAP_TIER ResourceHeapTier;
+} D3D12DDI_D3D12_OPTIONS_DATA_0003;
+```
+
+<!-- d3d12-review-alert:begin:devices-capabilities:IF01-options0003-field-owners:0:authored:migration-e5aff0552327e8e6-0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Driver report | Canonical feature contract |
+> |---|---|
+> | `ResourceBindingTier` | [Resource binding tiers and limits](binding.md#binding-capabilities) |
+> | `ConservativeRasterizationTier` | [Conservative rasterization tiers](rasterization.md#conservative) |
+> | `TiledResourcesTier` | [Tiled resource tiers](resources.md#d3d12-tiled-resources-tier) |
+> | `CrossNodeSharingTier` | [Cross-node sharing tiers](sharing-and-interoperability.md#cross-node-sharing-tier) |
+> | `VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation` | [Native viewport/render-target array indexing and geometry shader emulation](rasterization.md#viewport-selection) |
+> | `OutputMergerLogicOp` | [Output merger logic operations](output-merger.md#logic-operations) |
+> | `ResourceHeapTier` | [Resource-type heap attribution](resources.md#resource-heap-tiers) |
+
+<!-- d3d12-review-alert:end:devices-capabilities:IF01-options0003-field-owners:0:authored:migration-e5aff0552327e8e6-0 -->
+
+<a id="d3d12ddi-options-data-0073"></a>
+
+<a id="driver-sampler-feedback-capability"></a>
+
+###### Sampler feedback capability reporting
+
+```cpp
+typedef enum D3D12DDI_SAMPLER_FEEDBACK_TIER
+{
+    D3D12DDI_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED = 0,
+    D3D12DDI_SAMPLER_FEEDBACK_TIER_0_9 = 90,
+    D3D12DDI_SAMPLER_FEEDBACK_TIER_1_0 = 100,
+} D3D12DDI_SAMPLER_FEEDBACK_TIER;
+
+typedef struct D3D12DDI_D3D12_OPTIONS_DATA_0073
+{
+    D3D12DDI_RESOURCE_BINDING_TIER ResourceBindingTier;
+    D3D12DDI_CONSERVATIVE_RASTERIZATION_TIER ConservativeRasterizationTier;
+    D3D12DDI_TILED_RESOURCES_TIER TiledResourcesTier;
+    D3D12DDI_CROSS_NODE_SHARING_TIER CrossNodeSharingTier;
+    BOOL VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation;
+    BOOL OutputMergerLogicOp;
+    D3D12DDI_RESOURCE_HEAP_TIER ResourceHeapTier;
+    BOOL DepthBoundsTestSupported;
+    D3D12DDI_PROGRAMMABLE_SAMPLE_POSITIONS_TIER ProgrammableSamplePositionsTier;
+    BOOL CopyQueueTimestampQueriesSupported;
+    D3D12DDI_COMMAND_QUEUE_FLAGS WriteBufferImmediateQueueFlags;
+    D3D12DDI_VIEW_INSTANCING_TIER ViewInstancingTier;
+    BOOL BarycentricsSupported;
+    BOOL ReservedBufferPlacementSupported;
+    BOOL Deterministic64KBUndefinedSwizzle;
+    BOOL SRVOnlyTiledResourceTier3;
+    D3D12DDI_RENDER_PASS_TIER RenderPassTier;
+    D3D12DDI_RAYTRACING_TIER RaytracingTier;
+    D3D12DDI_VARIABLE_SHADING_RATE_TIER VariableShadingRateTier;
+    BOOL PerPrimitiveShadingRateSupportedWithViewportIndexing;
+    BOOL AdditionalShadingRatesSupported;
+    UINT ShadingRateImageTileSize;
+    BOOL BackgroundProcessingSupported;
+    D3D12DDI_MESH_SHADER_TIER MeshShaderTier;
+    D3D12DDI_SAMPLER_FEEDBACK_TIER SamplerFeedbackTier;
+} D3D12DDI_D3D12_OPTIONS_DATA_0073;
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:sf-driver-tier:0:authored:capability-owner -->The driver reports `SamplerFeedbackTier` through the common [capability query interface](#pfnd3d12ddi_getcaps). Its tier values describe the [sampler feedback support contract](common-shader-internals.md#feedback-capability-tiers); the corresponding API query is [`D3D12_FEATURE_DATA_D3D12_OPTIONS7`](#d3d12_feature_data_d3d12_options7).<!-- d3d12-review-inline:end:devices-capabilities:sf-driver-tier:0:authored:capability-owner --></ins>
+
+<a id="d3d12ddi_options_data_0122"></a>
+
+###### D3D12DDI_OPTIONS_DATA_0122
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:options-0122-selection:0:authored:migration-fb9e13b81b987ec8-0 -->Byte-offset view support requires negotiated DDI revision 122 or later and the driver's `ViewCreationByteOffsetSupported` report through `D3D12DDICAPS_TYPE_OPTIONS_0122` (1105). The runtime reports the resulting capability through `CreateByteOffsetViewsSupported`.<!-- d3d12-review-inline:end:devices-capabilities:options-0122-selection:0:authored:migration-fb9e13b81b987ec8-0 --></ins>
+
+```cpp
+typedef struct D3D12DDI_OPTIONS_DATA_0122
+{
+    UINT Max1DDispatchSize;
+    UINT Max1DDispatchMeshSize;
+    BOOL ViewCreationByteOffsetSupported;
+} D3D12DDI_OPTIONS_DATA_0122;
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:options-0122-fields:0:authored:migration-d1b046a63f22f0a6-0 -->See [compute and mesh dispatch limits](#d3d12_feature_data_d3d12_options22) for the dispatch-size fields. `ViewCreationByteOffsetSupported` reports support for the byte-offset resource dimension and both byte-offset view representations.<!-- d3d12-review-inline:end:devices-capabilities:options-0122-fields:0:authored:migration-d1b046a63f22f0a6-0 --></ins>
+
+<!-- d3d12-review-alert:begin:compute:D-driver-capability-reporting:0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> **Capability Reporting:**
+> - Reported values must be at least 65,535 (D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION)
+> - `Max1DDispatchMeshSize` must not exceed 4,194,303 (D3D12_MS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID)
+> - Drivers may report different values for Compute and Mesh dispatches based on hardware capabilities
+
+<!-- d3d12-review-alert:end:compute:D-driver-capability-reporting:0 -->
+
+<a id="driver-tight-alignment-support"></a>
+
+##### Tight alignment capability reporting
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:IF04-tight-driver-discovery:0:authored:migration-bf16827f9692fc53-0 -->`D3D12DDICAPS_TYPE_TIGHT_ALIGNMENT_TIER_0111` (1089) uses
+[`D3D12DDI_TIGHT_ALIGNMENT_TIER_DATA_0111`](resources.md#tight-alignment-driver-support).
+The [tight alignment driver contract](resources.md#tight-alignment-driver-support)
+defines the support report required before the runtime forwards the resource flag.<!-- d3d12-review-inline:end:devices-capabilities:IF04-tight-driver-discovery:0:authored:migration-bf16827f9692fc53-0 --></ins>
+
+<a id="table-discovery"></a>
+
+#### Required and additional function tables
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B043:0:authored:migration-d333e133f340f833-0 -->Core DDI table families are `D3D12DDI_TABLE_TYPE_DEVICE_CORE`, `D3D12DDI_TABLE_TYPE_COMMAND_LIST_3D`, `D3D12DDI_TABLE_TYPE_COMMAND_QUEUE_3D` and, from core version 0020, the [applicable extended feature table](#extended-features). The selected core version determines which layout of each family applies. The `_0096` extended feature table replaces the older selector at that version, so only one of them is required.<!-- d3d12-review-inline:end:devices-capabilities:B043:0:authored:migration-d333e133f340f833-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B044:0:authored:migration-7b9d7928910046e2-0 -->Most required families have one copy. A graphics-capable device has two baseline 3D command list copies, for DIRECT and BUNDLE recordings. A device without graphics pipeline support has one baseline 3D command list copy. These counts do not establish a contractual numeric DIRECT/BUNDLE assignment for `tableNum`.<!-- d3d12-review-inline:end:devices-capabilities:B044:0:authored:migration-7b9d7928910046e2-0 --></ins>
+
+<a id="pfnd3d12ddi_getoptionalddittables"></a>
+
+##### PFND3D12DDI_GETOPTIONALDDITTABLES
+
+```cpp
+typedef HRESULT (APIENTRY *PFND3D12DDI_GETOPTIONALDDITTABLES)(
+    D3D12DDI_HADAPTER hAdapter,
+    _Inout_ UINT32* puEntries,
+    _Out_writes_opt_(*puEntries) D3D12DDI_TABLE_REQUEST* pRequests);
+
+typedef struct D3D12DDI_TABLE_REQUEST
+{
+    D3D12DDI_TABLE_TYPE tableType;
+    UINT numTables;
+} D3D12DDI_TABLE_REQUEST;
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B046:0:authored:migration-0dc67b8543fea703-0 -->This query describes additional table instances requested by the driver. Only `D3D12DDI_TABLE_TYPE_COMMAND_LIST_3D` participates in this optional-table mechanism. Command list tables belonging to separately negotiated extended features do not use it.<!-- d3d12-review-inline:end:devices-capabilities:B046:0:authored:migration-0dc67b8543fea703-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B047:0:authored:migration-35acc8c47e10ce7a-0 -->`puEntries` counts request records, not table copies. A null request array pointer queries that count. A corresponding retrieval supplies storage for the reported records, with `puEntries` identifying the returned record count. The function returns an `HRESULT`. An empty request list requests no additional tables.<!-- d3d12-review-inline:end:devices-capabilities:B047:0:authored:migration-35acc8c47e10ce7a-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B048:0:authored:migration-4ac395080c54f78e-0 -->Within each record, `numTables` is the number of additional copies of `tableType`, not the total including required copies. Thus a graphics-capable device's two required 3D copies plus an optional request for three copies produces five. A zero-copy request adds no copies.<!-- d3d12-review-inline:end:devices-capabilities:B048:0:authored:migration-4ac395080c54f78e-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B049:0:authored:migration-00bf91ccd041ad5e-0 -->These are alternative dispatch table instances. The driver can select an appropriate instance for a command list through the [table selection callback](#table-selection).<!-- d3d12-review-inline:end:devices-capabilities:B049:0:authored:migration-00bf91ccd041ad5e-0 --></ins>
+
+<a id="pfnd3d12ddi_fillddittable"></a>
+
+##### PFND3D12DDI_FILLDDITTABLE
+
+```cpp
+typedef HRESULT (APIENTRY *PFND3D12DDI_FILLDDITTABLE)(
+    D3D12DDI_HADAPTER hAdapter,
+    D3D12DDI_TABLE_TYPE tableType,
+    _Inout_ VOID* pTable,
+    SIZE_T tableSize,
+    UINT tableNum,
+    _In_opt_ D3D12DDI_HRTTABLE hRTTable);
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B051:0:authored:migration-1c34135cb2ba9452-0 -->The driver fills the requested table instance. `tableType` identifies the table family, `tableSize` is the output buffer size in bytes, and `tableNum` identifies the requested instance of that family.<!-- d3d12-review-inline:end:devices-capabilities:B051:0:authored:migration-1c34135cb2ba9452-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B052:0:authored:migration-7a8e58f09f5ae0c0-0 -->For core tables, the device creation `Interface`/`Version` context determines the applicable versioned layout. For an extended feature, the enabled feature version determines that feature's layout. The driver writes within the supplied table extent.<!-- d3d12-review-inline:end:devices-capabilities:B052:0:authored:migration-7a8e58f09f5ae0c0-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B053:0:authored:migration-55f587e93900ef3a-0 -->`pTable` is caller-owned writable storage for the call, not storage owned by the driver and not the stable runtime table handle. The driver provides function pointers according to each entry's contract. Presence of an entry in the layout does not itself require a non-null value: per-entry optionality rules apply.<!-- d3d12-review-inline:end:devices-capabilities:B053:0:authored:migration-55f587e93900ef3a-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B054:0:authored:migration-bed4474d1eb7aa78-0 -->For 3D command list tables, `hRTTable` is the opaque runtime identity used for table selection. Its validity lasts until device destruction. It must not be interpreted as ownership of, or a right to retain or modify, the output buffer.<!-- d3d12-review-inline:end:devices-capabilities:B054:0:authored:migration-bed4474d1eb7aa78-0 --></ins>
+
+<a id="table-selection"></a>
+
+##### PFND3D12DDI_SETCOMMANDLISTDDITABLE_CB
+
+```cpp
+typedef VOID (APIENTRY CALLBACK *PFND3D12DDI_SETCOMMANDLISTDDITABLE_CB)(
+    D3D12DDI_HRTCOMMANDLIST hRTCommandList,
+    D3D12DDI_HRTTABLE hRTTable);
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B056:0:authored:migration-68e53dc41cc0916c-0 -->The driver calls this runtime callback to select which populated 3D command list table is used for the specified runtime command list object. That selection may change during the command list's lifetime.<!-- d3d12-review-inline:end:devices-capabilities:B056:0:authored:migration-68e53dc41cc0916c-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B057:0:authored:migration-1677428e99dd28c2-0 -->The stable identity is the supplied runtime handle, not the transient table population buffer.<!-- d3d12-review-inline:end:devices-capabilities:B057:0:authored:migration-1677428e99dd28c2-0 --></ins>
+
+<a id="extended-features"></a>
+
+#### Extended feature negotiation
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B058:0:authored:migration-c5a766745553b5a2-0 -->Extended features have their own `UINT32` version values in addition to the selected core DDI version. A version returned by the driver is an exact supported version; activation selects a value supported by both runtime and driver. Highest compatible is the normal intention, subject to compatibility exclusions as for the core interface.<!-- d3d12-review-inline:end:devices-capabilities:B058:0:authored:migration-c5a766745553b5a2-0 --></ins>
+
+<!-- d3d12-review-alert:begin:devices-capabilities:B060:0:authored:migration-afb07666d10cfc95-0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Table selector | Current layout |
+> |---|---|
+> | `D3D12DDI_TABLE_TYPE_0096_EXTENDED_FEATURES` | `D3D12DDI_EXTENDED_FEATURES_FUNCS_0096` |
+
+<!-- d3d12-review-alert:end:devices-capabilities:B060:0:authored:migration-afb07666d10cfc95-0 -->
+
+```cpp
+
+typedef struct D3D12DDI_EXTENDED_FEATURES_FUNCS_0096
+{
+    PFND3D12DDI_GET_SUPPORTED_EXTENDED_FEATURES_0096 pfnGetSupportedExtendedFeatures;
+    PFND3D12DDI_GET_SUPPORTED_EXTENDED_FEATURE_VERSIONS_0020 pfnGetSupportedExtendedFeatureVersions;
+    PFND3D12DDI_ENABLE_EXTENDED_FEATURE_0020 pfnEnableExtendedFeature;
+    PFND3D12DDI_SET_EXTENDED_FEATURE_CALLBACKS_0021 pfnSetExtendedFeatureCallbacks;
+} D3D12DDI_EXTENDED_FEATURES_FUNCS_0096;
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B062:0:authored:migration-6763dc7c67c4b580-0 -->`D3D12DDI_FEATURE_0020` identifies a feature family, not a feature version.<!-- d3d12-review-inline:end:devices-capabilities:B062:0:authored:migration-6763dc7c67c4b580-0 --></ins>
+
+```cpp
+typedef enum D3D12DDI_FEATURE_0020
+{
+    D3D12DDI_FEATURE_0020_VIDEO = 2,
+    D3D12DDI_FEATURE_0021_SHADERCACHING = 4,
+    D3D12DDI_FEATURE_0030_CONTENT_PROTECTION_RESOURCES = 5,
+    D3D12DDI_FEATURE_0030_CONTENT_PROTECTION_STREAMING = 6,
+    D3D12DDI_FEATURE_0033_METACOMMAND = 9,
+    D3D12DDI_FEATURE_0043_RENDER_PASS = 10,
+    D3D12DDI_FEATURE_0054_DOWNLEVEL_SUPPORT = 11,
+    D3D12DDI_FEATURE_0076_PIN_RESOURCES = 12,
+} D3D12DDI_FEATURE_0020;
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B064:0:authored:migration-698cdb953e5ecc0d-0 -->An identifier's presence in this enumeration is not an advertisement of device support or an enabled feature. Support and versions are obtained through the queries below.<!-- d3d12-review-inline:end:devices-capabilities:B064:0:authored:migration-698cdb953e5ecc0d-0 --></ins>
+
+<a id="pfnd3d12ddi_get_supported_extended_features_0020-and-_0096"></a>
+
+##### PFND3D12DDI_GET_SUPPORTED_EXTENDED_FEATURES_0096
+
+```cpp
+
+typedef HRESULT (APIENTRY *PFND3D12DDI_GET_SUPPORTED_EXTENDED_FEATURES_0096)(
+    D3D12DDI_HDEVICE hDevice,
+    D3D12DDI_FEATURE_0020 HighestAllowedFeatureNumber,
+    _Inout_ UINT32* puFeatures,
+    _Out_writes_opt_(*puFeatures) D3D12DDI_FEATURE_0020* pFeatures);
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B066:0:authored:migration-4631b66c8764f086-0 -->Returns the supported extended feature identifiers for the device. A null array queries the number of feature identifiers. A corresponding fetch supplies that reported element count for the same query inputs. The count must remain consistent between that query and fetch. A zero feature count means that no extended features are advertised.<!-- d3d12-review-inline:end:devices-capabilities:B066:0:authored:migration-4631b66c8764f086-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B067:0:authored:migration-c243f526d390a2c6-0 -->Returned feature identifiers must not exceed the caller's inclusive
+`HighestAllowedFeatureNumber`. This is a bound on feature identifiers, not
+on their version numbers.<!-- d3d12-review-inline:end:devices-capabilities:B067:0:authored:migration-c243f526d390a2c6-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B068:0:authored:migration-cca843ade8385354-0 -->Feature retrieval requires storage for the complete reported list.<!-- d3d12-review-inline:end:devices-capabilities:B068:0:authored:migration-cca843ade8385354-0 --></ins>
+
+<a id="pfnd3d12ddi_get_supported_extended_feature_versions_0020"></a>
+
+##### PFND3D12DDI_GET_SUPPORTED_EXTENDED_FEATURE_VERSIONS_0020
+
+```cpp
+typedef HRESULT (APIENTRY *PFND3D12DDI_GET_SUPPORTED_EXTENDED_FEATURE_VERSIONS_0020)(
+    D3D12DDI_HDEVICE hDevice,
+    D3D12DDI_FEATURE_0020 Feature,
+    _Inout_ UINT32* puFeatureVersions,
+    _Out_writes_opt_(*puFeatureVersions) UINT32* pFeatureVersions);
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B070:0:authored:migration-3e40a17f27248027-0 -->For an advertised `Feature`, queries its supported exact version values. A null version array obtains the element count. A corresponding fetch supplies that count for the same device and feature. The reported count must remain consistent. An advertised feature has at least one supported version.<!-- d3d12-review-inline:end:devices-capabilities:B070:0:authored:migration-3e40a17f27248027-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B071:0:authored:migration-9ad4a0d8b9c38a75-0 -->The returned `UINT32` values are the feature's versions, not core DDI version values or feature IDs. A selected version must be explicitly advertised and recognized by the runtime. If no version is supported by both sides, that feature cannot be activated through this protocol.<!-- d3d12-review-inline:end:devices-capabilities:B071:0:authored:migration-9ad4a0d8b9c38a75-0 --></ins>
+
+<a id="pfnd3d12ddi_enable_extended_feature_0020"></a>
+
+##### PFND3D12DDI_ENABLE_EXTENDED_FEATURE_0020
+
+```cpp
+typedef HRESULT (APIENTRY *PFND3D12DDI_ENABLE_EXTENDED_FEATURE_0020)(
+    D3D12DDI_HDEVICE hDevice,
+    D3D12DDI_FEATURE_0020 Feature,
+    UINT32 FeatureVersion);
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B074:0:authored:migration-0be6d76ea84f80b2-0 -->Enables `Feature` at the selected exact `FeatureVersion` and establishes its version context for subsequent table population.<!-- d3d12-review-inline:end:devices-capabilities:B074:0:authored:migration-0be6d76ea84f80b2-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B075:0:authored:migration-676ca9df3aca9d4d-0 -->Successful enablement precedes requesting that feature's driver tables or supplying its callback tables. Those tables and callbacks must be ready before the feature is used. This defines prerequisites, not a fixed sequence between driver table retrieval and callback installation.<!-- d3d12-review-inline:end:devices-capabilities:B075:0:authored:migration-676ca9df3aca9d4d-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B076:0:authored:migration-50cc5ae4187a4436-0 -->Some feature table initialization is delayed until the feature is used through the API. It need not occur before application device creation completes. Failure of eager feature initialization fails device creation and follows the [creation cleanup obligation](#device-creation). Failure of deferred initialization is handled by the triggering operation's API/feature error contract.<!-- d3d12-review-inline:end:devices-capabilities:B076:0:authored:migration-50cc5ae4187a4436-0 --></ins>
+
+<a id="pfnd3d12ddi_set_extended_feature_callbacks_0021"></a>
+
+##### PFND3D12DDI_SET_EXTENDED_FEATURE_CALLBACKS_0021
+
+```cpp
+typedef HRESULT (APIENTRY *PFND3D12DDI_SET_EXTENDED_FEATURE_CALLBACKS_0021)(
+    D3D12DDI_HDEVICE hDevice,
+    D3D12DDI_TABLE_TYPE Table,
+    _In_reads_(TableSize) const void* pTable,
+    SIZE_T TableSize);
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B078:0:authored:migration-cb92fd66cc41759e-0 -->Installs the runtime callback table identified by `Table` for an enabled feature. `pTable` supplies that feature/version's callback layout. `TableSize` is its size in bytes.<!-- d3d12-review-inline:end:devices-capabilities:B078:0:authored:migration-cb92fd66cc41759e-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B079:0:authored:migration-7b2e5e60694fad85-0 -->The driver may retain the runtime callback table pointer for its [specified lifetime](#callback-storage). FillDDITable's output buffer is instead borrowed for the call.<!-- d3d12-review-inline:end:devices-capabilities:B079:0:authored:migration-7b2e5e60694fad85-0 --></ins>
+
+<a id="callback-storage"></a>
+
+#### Runtime callback storage
+
+<!-- d3d12-review-alert:begin:devices-capabilities:B080:0:authored:migration-8b3b818ca68b01af-0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Supplied table | Storage lifetime guaranteed to the driver |
+> | --- | --- |
+> | Adapter `pAdapterCallbacks` | Through adapter close |
+> | Device `pKTCallbacks` | Through device destruction |
+> | Applicable versioned device `p12UMCallbacks` | Through device destruction |
+> | Extended feature table supplied by `SetExtendedFeatureCallbacks` | Through device destruction |
+
+<!-- d3d12-review-alert:end:devices-capabilities:B080:0:authored:migration-8b3b818ca68b01af-0 -->
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:B081:0:authored:migration-e3baf7363393ac9e-0 -->The runtime owns callback table storage. The driver may retain its read-only pointer for the stated lifetime and must not free or modify it.<!-- d3d12-review-inline:end:devices-capabilities:B081:0:authored:migration-e3baf7363393ac9e-0 --></ins>
+
+<a id="driver-responsibilities"></a>
+
+### Driver and runtime responsibilities
+
+The Direct3D 12 UMD DDI has an enumeration, D3D12DDI_3DPIPELINELEVEL, for describing feature levels. This enumeration has a value for <ins><!-- d3d12-review-inline:begin:devices-capabilities:12-2-ddi:1:modified:opus-feature-level-numbering -->feature level 12_2<!-- d3d12-review-inline:end:devices-capabilities:12-2-ddi:1:modified:opus-feature-level-numbering --></ins>:
+
+```cpp
+typedef enum D3D12DDI_3DPIPELINELEVEL
+{
+    // ...
+    D3D12DDI_3DPIPELINELEVEL_12_2 = 14,
+} D3D12DDI_3DPIPELINELEVEL;
+```
+
+To find out which feature levels a driver supports, the runtime calls PFND3D12DDI_GETCAPS with
+* D3D12DDICAPS_TYPE_3DPIPELINESUPPORT, or
+* D3D12DDICAPS_TYPE_3DPIPELINESUPPORT1
+
+The difference between these two usages of GetCaps is as follows
+
+<!-- d3d12-review-alert:begin:devices-capabilities:12-2-ddi:4:modified:migration-b7e4da2ced4dc05c-0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> | Selector            | Data interpretation                                                              | Valid returnable feature levels
+> | :--- | --- | --- |
+> |3DPIPELINESUPPORT    | D3D12DDI_3DPIPELINELEVEL, simple output value                                    | 12_1 and earlier
+> |3DPIPELINESUPPORT1   | D3D12DDI_3DPIPELINESUPPORT1_DATA_0081, structure with an input and output field  | any, including 12_2 and later
+
+<!-- d3d12-review-alert:end:devices-capabilities:12-2-ddi:4:modified:migration-b7e4da2ced4dc05c-0 -->
+
+The definition of D3D12DDI_3DPIPELINESUPPORT1_DATA_0081 is as follows
+
+```cpp
+typedef struct D3D12DDI_3DPIPELINESUPPORT1_DATA_0081
+{
+    D3D12DDI_3DPIPELINELEVEL HighestRuntimeSupportedFeatureLevel; // input
+    D3D12DDI_3DPIPELINELEVEL MaximumDriverSupportedFeatureLevel;  // output
+} D3D12DDI_3DPIPELINESUPPORT1_DATA_0081;
+```
+
+For 3DPIPELINESUPPORT1, the runtime sets the value of HighestRuntimeSupportedFeatureLevel.
+The driver returns a value for MaximumDriverSupportedFeatureLevel which does not exceed HighestRuntimeSupportedFeatureLevel.
+
+>#### Remark
+> In practice:
+> * Versions of Direct3D built into the operating system at or before Manganese (20H2) use 3DPIPELINESUPPORT.
+> * Versions of Direct3D built into Iron operating system, or organized as a re-distributable use 3DPIPELINESUPPORT1, and fall back to 3DPIPELINESUPPORT if it fails.
+
+#### API level and DDI level reported capabilities
+The WriteBufferImmediateSupportFlags capability D3D12_COMMAND_LIST_SUPPORT_FLAG_BUNDLE is switched on at the API level for drivers which report D3D12DDI_COMMAND_QUEUE_FLAG_3D at the DDI level.
+
+<a id="driver-node-application-state"></a>
+
+### Driver node mapping and application-specific state
+
+#### Driver node mapping
+
+```cpp
+#define D3D12DDI_NODE_MAP_HIDE_NODE 0xffffffff
+
+typedef VOID ( APIENTRY* PFND3D12DDI_QUERY_NODE_MAP )(D3D12DDI_HDEVICE, UINT NumPhysicalAdapters, _Out_writes_( NumPhysicalAdapters) UINT* pMap);
+
+typedef UINT ( APIENTRY* PFND3D12DDI_GETIMPLICITPHYSICALADAPTERMASK )( D3D12DDI_HDEVICE );
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:CS-node-mapping:0:authored:migration-3f20603f397da879-0 -->`QueryNodeMap` writes `NumPhysicalAdapters` UINT entries. Entry `pMap[i]`
+is the API-exposed node index for physical driver node `i`, or
+`D3D12DDI_NODE_MAP_HIDE_NODE` (`0xffffffff`) when that physical node is hidden.
+Visible API indices are unique and dense from zero; at least one node must
+be exposed. The current mapping contract accepts identity mapping or one
+API-visible node with the other physical nodes hidden. An all-hidden map,
+duplicate/out-of-range visible index or nonidentity multi-visible-node map
+is invalid.<!-- d3d12-review-inline:end:devices-capabilities:CS-node-mapping:0:authored:migration-3f20603f397da879-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:CS-node-mapping:1:authored:migration-2629ff847ac71073-0 -->GetImplicitPhysicalAdapterMask returns a bit mask of physical adapters participating in the driver's implicit multi-adapter operation.<!-- d3d12-review-inline:end:devices-capabilities:CS-node-mapping:1:authored:migration-2629ff847ac71073-0 --></ins>
+
+<a id="driver-state-callbacks"></a>
+
+#### Driver state DDIs
+
+```cpp
+typedef enum D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS
+{
+  D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_UNKNOWN       = 1,
+  D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_USED          = 2,
+  D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_IGNORED       = 3,
+  D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_NOT_SPECIFIED = 4,
+} D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS;
+
+typedef UINT ( APIENTRY* PFND3D12DDI_GET_APPLICATION_SPECIFIC_DRIVER_STATE_BLOB_SIZE_0113 )(
+    D3D12DDI_HDEVICE hDrvDevice);
+
+typedef HRESULT ( APIENTRY* PFND3D12DDI_GET_APPLICATION_SPECIFIC_DRIVER_STATE_0113 )(
+    D3D12DDI_HDEVICE hDrvDevice,
+    _Out_writes_bytes_(ApplicationSpecificDriverBlobSizeInBytes) void *pApplicationSpecificDriverBlob,
+    UINT ApplicationSpecificDriverBlobSizeInBytes);
+
+typedef D3D12DDI_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS ( APIENTRY* PFND3D12DDI_GET_APPLICATION_SPECIFIC_DRIVER_BLOB_STATUS_0113 )(
+    D3D12DDI_HDEVICE hDrvDevice);
+```
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:driver-state-ddis:0:authored:opus-remove-rebuttals -->The three core-device DDIs separate byte-size query, blob retrieval
+and status reporting. The size is in bytes. Retrieval receives
+caller-owned CPU output storage and its size and returns HRESULT.
+The driver fills that storage during the call and does not return an ID3DBlob interface
+or retain the caller's storage. The runtime constructs the API blob.
+Status returns the driver enum's defined values, not a success/failure flag.
+The runtime passes supplied application-specific state to the driver
+during device creation.<!-- d3d12-review-inline:end:devices-capabilities:driver-state-ddis:0:authored:opus-remove-rebuttals --></ins>

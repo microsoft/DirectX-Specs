@@ -15,7 +15,7 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:queries:N-overview:0:authored:migration-0d3a2220c5cb6256-0 -->Queries measure GPU work and expose typed results through query heaps. Predication consumes an application-selected 64-bit buffer value to condition eligible GPU operations. It is not a query object binding.<!-- d3d12-review-inline:end:queries:N-overview:0:authored:migration-0d3a2220c5cb6256-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:N-overview:0:authored:migration-0d3a2220c5cb6256-0 -->Stream output filled sizes and UAV counters use application-allocated buffer storage. Queries measure GPU work and expose typed results through query heaps. Predication uses an application-selected 64-bit buffer value to decide whether eligible GPU operations are skipped.<!-- d3d12-review-inline:end:queries:N-overview:0:authored:migration-0d3a2220c5cb6256-0 --></ins>
 
 <a id="application-counters"></a>
 
@@ -32,9 +32,7 @@ The application is responsible for allocating 32-bits of storage for UAV
 counters. This storage can be allocated in a different resource <ins><!-- d3d12-review-inline:begin:queries:CQ-uav-counter-concept:0:modified:source-39cedf7afe362e11-0-0 -->from<!-- d3d12-review-inline:end:queries:CQ-uav-counter-concept:0:modified:source-39cedf7afe362e11-0-0 --></ins> the
 one that contains data accessible via the UAV.
 
-<ins><!-- d3d12-review-inline:begin:queries:N-resource-operations-counter-consumer:0:authored:migration-a04cc6b70bc49917-0 -->Ordinary [counter backing byte copy/clear interactions](resource-operations.md#counter-interactions) do not implicitly operate on a separately associated counter resource.<!-- d3d12-review-inline:end:queries:N-resource-operations-counter-consumer:0:authored:migration-a04cc6b70bc49917-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:queries:N-counter-owners:0:authored:migration-e2ece0e54a6dc33e-0 -->Command list reset does not initialize [SO filled size storage](geometry-shaders-and-stream-output.md#filled-size) or [UAV counter storage](binding.md#buffer-uav). A 32-bit counter is not automatically a valid zero-extended 64-bit predicate: the predicate consumes all eight selected bytes.<!-- d3d12-review-inline:end:queries:N-counter-owners:0:authored:migration-e2ece0e54a6dc33e-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:N-resource-operations-counter-consumer:0:authored:migration-a04cc6b70bc49917-0 -->See [filled size storage and append](geometry-shaders-and-stream-output.md#filled-size) and [counter interactions](resource-operations.md#counter-interactions) for initializing, copying and clearing counter storage.<!-- d3d12-review-inline:end:queries:N-resource-operations-counter-consumer:0:authored:migration-a04cc6b70bc49917-0 --></ins>
 
 <a id="query-heaps"></a>
 
@@ -142,7 +140,7 @@ typedef enum D3D12_QUERY_HEAP_FLAGS
 
 <!-- d3d12-review-alert:end:queries:N-support-table:0:authored:migration-b0e5d81287117c91-0 -->
 
-<ins><!-- d3d12-review-inline:begin:queries:N-support-table:1:authored:migration-e41ea359c8fde806-0 -->No query type is supported in BUNDLE recordings. Timestamp and video decode statistics are both End-only. Video BeginQuery declarations do not introduce a supported interval query type.<!-- d3d12-review-inline:end:queries:N-support-table:1:authored:migration-e41ea359c8fde806-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:N-support-table:1:authored:migration-e41ea359c8fde806-0 -->No query type is supported in BUNDLE recordings.<!-- d3d12-review-inline:end:queries:N-support-table:1:authored:migration-e41ea359c8fde806-0 --></ins>
 
 <a id="result-layout"></a>
 
@@ -204,11 +202,11 @@ typedef enum D3D12_QUERY_HEAP_FLAGS
 Each individual element within a query heap can be start/stopped
 separately.
 
-<ins><!-- d3d12-review-inline:begin:queries:N-lifecycle:0:authored:migration-53a80be2a779f109-0 -->An interval query begins and ends at the same heap/index with the same query type. Its result is the measured interval, not a pair of already-resolved cumulative samples for the application to subtract. An active element cannot be begun again; different elements may be active concurrently without a global LIFO nesting requirement. Intervals do not span command list boundaries or Reset, and outstanding intervals must end before Close or a protected session change. End-only queries do not use BeginQuery.<!-- d3d12-review-inline:end:queries:N-lifecycle:0:authored:migration-53a80be2a779f109-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:N-lifecycle:0:authored:migration-53a80be2a779f109-0 -->An interval query begins and ends at the same heap/index with the same query type. Its result measures the work between BeginQuery and EndQuery. An active element cannot be begun again; different elements may be active concurrently without a global LIFO nesting requirement. Intervals do not span command list boundaries or Reset, and outstanding intervals must end before Close or a protected session change. End-only queries do not use BeginQuery.<!-- d3d12-review-inline:end:queries:N-lifecycle:0:authored:migration-53a80be2a779f109-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:queries:N-lifecycle:1:authored:migration-21284217300583e1-0 -->The corresponding EndQuery must execute before a GPU resolve consumes that element. Resolving an incomplete or never-performed element is undefined and may hang or remove the device. An application must order reuse and resolution so it consumes the intended result rather than a later overwrite. Cross-queue dependencies and CPU consumption require the normal [fence/completion contract](execution.md#fence-operations). Heap and result buffer [lifetime](execution.md#lifetime) and [residency](resources.md#residency) remain application obligations.<!-- d3d12-review-inline:end:queries:N-lifecycle:1:authored:migration-21284217300583e1-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:N-lifecycle:1:authored:migration-21284217300583e1-0 -->The corresponding EndQuery must execute before a GPU resolve consumes that element. Resolving an incomplete or never-performed element is undefined and may hang or remove the device. An application must order reuse and resolution so it consumes the intended result rather than a later overwrite. Cross-queue dependencies and CPU consumption require [fence synchronization](execution.md#fence-operations). The application is responsible for heap and result buffer [lifetime](execution.md#lifetime) and [residency](resources.md#residency).<!-- d3d12-review-inline:end:queries:N-lifecycle:1:authored:migration-21284217300583e1-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:queries:N-query-access:0:authored:migration-b4eb9dfec2f8c6cb-0 -->With legacy resource states, GPU query result destinations require `D3D12_RESOURCE_STATE_COPY_DEST`; predicate reads require `D3D12_RESOURCE_STATE_PREDICATION`, an alias of `D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT`. Enhanced barriers use the corresponding [COPY_DEST and PREDICATION access scopes](synchronization.md#barrier-access) and [synchronization scopes](synchronization.md#barrier-sync). Normal heap restrictions still apply. An UPLOAD heap is not a valid GPU resolve destination. Opaque query production followed by resolution on the same queue is ordered by the query commands themselves; no application resource barrier on the opaque query heap is required.<!-- d3d12-review-inline:end:queries:N-query-access:0:authored:migration-b4eb9dfec2f8c6cb-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:N-query-access:0:authored:migration-b4eb9dfec2f8c6cb-0 -->With legacy resource states, GPU query result destinations require `D3D12_RESOURCE_STATE_COPY_DEST`; predicate reads require `D3D12_RESOURCE_STATE_PREDICATION`, an alias of `D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT`. Enhanced barriers use the corresponding [COPY_DEST and PREDICATION access scopes](synchronization.md#barrier-access) and [synchronization scopes](synchronization.md#barrier-sync). A GPU resolve destination cannot be in an UPLOAD heap. Opaque query production followed by resolution on the same queue is ordered by the query commands themselves; no application resource barrier on the opaque query heap is required.<!-- d3d12-review-inline:end:queries:N-query-access:0:authored:migration-b4eb9dfec2f8c6cb-0 --></ins>
 
 <a id="occlusion"></a>
 
@@ -218,7 +216,7 @@ separately.
 
 <ins><!-- d3d12-review-inline:begin:queries:A-occlusion:1 -->For the purposes of calculating visible multisamples, disabled depth tests or stencil tests should behave as if the multisamples "passes" the disabled test. This produces equivalent results as if the test units were enabled with the test function set to "always". In addition, these values should be tabulated as normal even if there are no render targets bound. Since the Depth and Stencil tests logically occur in the Output Merger stage of the pipeline, pixels which are discarded during Pixel Shader execution, naturally, do not increment this counter. Discarded pixels, logically, do not even reach the Output Merger. There are pipeline configurations where the only effective results that are produced from the pipeline is the tabulation of the occlusion counter. This is intentional.<!-- d3d12-review-inline:end:queries:A-occlusion:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:queries:A-occlusion:2 -->If [ForcedSampleCount](../archive/D3D11_3_FunctionalSpec.htm#ForcedSampleCount) is used (> 0) recall that the pass count reflects how many rasterizer samples are covered (independent of the output sample count). If SampleMask (which applies to the output) is configured to turn off output writes (or pixel discard, output coverage mask or alpha-to-coverage turns off all output samples), the count of samples recorded into the query may be either 0 or the number of rasterizer samples covered, as the specific behavior was never tightly specified. It is recommended for implementations to count 0 in this case for consistency with known implementations.<!-- d3d12-review-inline:end:queries:A-occlusion:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:A-occlusion:2 -->If [ForcedSampleCount](rasterization.md#forced-sample-count) is used (> 0) recall that the pass count reflects how many rasterizer samples are covered (independent of the output sample count). If SampleMask (which applies to the output) is configured to turn off output writes (or pixel discard, output coverage mask or alpha-to-coverage turns off all output samples), the count of samples recorded into the query may be either 0 or the number of rasterizer samples covered, as the specific behavior was never tightly specified. It is recommended for implementations to count 0 in this case for consistency with known implementations.<!-- d3d12-review-inline:end:queries:A-occlusion:2 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:queries:N-occlusion-interval:0:authored:migration-232904a5bd2e0556-0 -->Binary occlusion returns zero if no sample passed and one if any sample passed. Its upper 63 bits are zero.<!-- d3d12-review-inline:end:queries:N-occlusion-interval:0:authored:migration-232904a5bd2e0556-0 --></ins>
 
@@ -251,14 +249,14 @@ typedef struct D3D12_QUERY_DATA_PIPELINE_STATISTICS
 
 <ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:2 -->The following examples illustrate the interaction between the IAVertices, IAPrimitives, and VSInvocations with respect to Post-VS caching<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:2 --></ins>
 
-- <ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:3 -->Draw Indexed Tri Strip of 4 prims (with all indices the same value): valid IAVertices only 6, valid IAPrimitives only 4, valid VSInvocations 1 - 12.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:3 --></ins>
-- <ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:3 -->Draw Indexed Tri List of 4 prims (with all indices the same value): valid IAVertices only 12, valid IAPrimitives only 4, valid VSInvocations 1 - 12.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:3 --></ins>
-- <ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:3 -->Draw Tri Strip of 4 prims: valid IAVertices only 6, valid IAPrimitives only 4, valid VSInvocations 6 - 12<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:3 --></ins>
-- <ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:3 -->Draw Tri List of 4 prims: valid IAVertices only 12, valid IAPrimitives only 4, valid VSInvocations only 12<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:3 --></ins>
+- Draw Indexed Tri Strip of 4 prims (with all indices the same value): valid IAVertices only 6, valid IAPrimitives only 4, valid VSInvocations 1 - 12.
+- Draw Indexed Tri List of 4 prims (with all indices the same value): valid IAVertices only 12, valid IAPrimitives only 4, valid VSInvocations 1 - 12.
+- Draw Tri Strip of 4 prims: valid IAVertices only 6, valid IAPrimitives only 4, valid VSInvocations 6 - 12
+- Draw Tri List of 4 prims: valid IAVertices only 12, valid IAPrimitives only 4, valid VSInvocations only 12
 
-<ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:4 -->Partial primitives will be allowed to fall within range of values, similar to the way vertex caching behaves. So, when partial primitives are possible, statistics should fall between a pipeline that clips them as soon as possible (before even the IA counts them), or as late as possible (post clipper/ pre-PS). Stream Output and a NULL GS is flexible as to whether it actually causes GS invocations to occur or not.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:4 --></ins>
+Partial primitives will be allowed to fall within range of values, similar to the way vertex caching behaves. So, when partial primitives are possible, statistics should fall between a pipeline that clips them as soon as possible (before even the IA counts them), or as late as possible (post clipper/ pre-PS). Stream Output and a NULL GS is flexible as to whether it actually causes GS invocations to occur or not.
 
-<ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:5 -->The value of PSInvocations may include or exclude [helper pixels](../archive/D3D11_3_FunctionalSpec.htm#PixelShaderDerivatives) for 2x2 stamps.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:5 --></ins>
+The value of PSInvocations may include or exclude [helper pixels](pixel-shaders.md#derivative-flow) for 2x2 stamps.
 
 <ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:6 -->With respect to PSInvocations, early Depth/ Stencil optimizations may or may not prevent the work from the pixel shader from being realized. So, when pixels fail the depth tests, PSInvocations may or may not be incremented depending on where the Depth test is actually occurring in the pipeline. If the Pixel Shader outputs depth, then PSInvocations must increment as expected, even if the output depth fails.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:6 --></ins>
 
@@ -266,9 +264,9 @@ typedef struct D3D12_QUERY_DATA_PIPELINE_STATISTICS
 
 <ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:8:authored:migration-6cd14866ed2138b9-0 -->HSInvocations increments once per patch that causes the Hull Shader to run.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:8:authored:migration-6cd14866ed2138b9-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:9 -->For the DSInvocations statistic, note that hardware may generate identical points in a patch multiple times in the course of tessellating the domain, and each repeated point counts as an additional DSInvocation. If the Tessellator's output primitive is points (as opposed to triangles or lines), that scenario requires only unique points within a patch to be generated, so the DSInvocations count will increment by exactly the number of unique points tessellated for the patch. The one exception is points that are on the threshold of merging, if TessFactors were to incrementally decrease, may appear in the system as duplicated points (with the same U/V coords) in an implementation dependent way.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:9 --></ins>
+For the DSInvocations statistic, note that hardware may generate identical points in a patch multiple times in the course of tessellating the domain, and each repeated point counts as an additional DSInvocation. If the Tessellator's output primitive is points (as opposed to triangles or lines), that scenario requires only unique points within a patch to be generated, so the DSInvocations count will increment by exactly the number of unique points tessellated for the patch. The one exception is points that are on the threshold of merging, if TessFactors were to incrementally decrease, may appear in the system as duplicated points (with the same U/V coords) in an implementation dependent way.
 
-<ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:10 -->CSInvocations: For example, if a Compute Shader is declared with a thread group size of (3,4,5), a Dispatch(2,1,1) call would increment the CSInvocations value by 3*4*5*2*1*1=120.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:10 --></ins>
+CSInvocations: For example, if a Compute Shader is declared with a thread group size of (3,4,5), a Dispatch(2,1,1) call would increment the CSInvocations value by 3*4*5*2*1*1=120.
 
 <ins><!-- d3d12-review-inline:begin:queries:A-pipeline-statistics:11 -->CSInvocations must honor Compute Shader invocations from Dispatch and from compute dispatch actions executed by ExecuteIndirect.<!-- d3d12-review-inline:end:queries:A-pipeline-statistics:11 --></ins>
 
@@ -278,7 +276,7 @@ typedef struct D3D12_QUERY_DATA_PIPELINE_STATISTICS
 
 <ins><!-- d3d12-review-inline:begin:queries:W-graph-statistics:0 -->Pipeline statistics report invocations of nodes against the corresponding shader type.  So compute-based node shader invocations increment `CSInvocations`.<!-- d3d12-review-inline:end:queries:W-graph-statistics:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:queries:G-gs-invocation-statistics:0:modified:migration-636f2fd8ec06886c-0 -->The GSInvocations [Pipeline Statistics counter](#pipeline-statistics) reports the number of primitives input to the GS multiplied by the instance count per primitive. That is, each "instance" counts as a GSInvocation.<!-- d3d12-review-inline:end:queries:G-gs-invocation-statistics:0:modified:migration-636f2fd8ec06886c-0 --></ins>
+The GSInvocations [Pipeline Statistics counter](#pipeline-statistics) reports the number of primitives input to the GS multiplied by the instance count per primitive. That is, each "instance" counts as a GSInvocation.
 
 <a id="mesh-statistics"></a>
 
@@ -307,13 +305,13 @@ typedef struct D3D12_QUERY_DATA_PIPELINE_STATISTICS1
 } D3D12_QUERY_DATA_PIPELINE_STATISTICS1;
 ```
 
-<ins><!-- d3d12-review-inline:begin:queries:M-statistics-contract:0:authored:migration-bdb1d826752d0817-0 -->`D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1` and `D3D12_QUERY_TYPE_PIPELINE_STATISTICS1` select this result. `ASInvocations` and `MSInvocations` count individual shader thread invocations, not thread groups. `MSPrimitives` counts mesh output primitives with the view/culling qualifications below. Creating this statistics heap requires `OPTIONS9.MeshShaderPipelineStatsSupported`. The older fields retain their existing meanings.<!-- d3d12-review-inline:end:queries:M-statistics-contract:0:authored:migration-bdb1d826752d0817-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:M-statistics-contract:0:authored:migration-bdb1d826752d0817-0 -->`D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1` and `D3D12_QUERY_TYPE_PIPELINE_STATISTICS1` select this result. `ASInvocations` and `MSInvocations` count individual shader thread invocations, not thread groups. `MSPrimitives` counts mesh output primitives with the view/culling qualifications below. Creating this statistics heap requires `OPTIONS9.MeshShaderPipelineStatsSupported`. The remaining fields have the same meanings as in `D3D12_QUERY_DATA_PIPELINE_STATISTICS`.<!-- d3d12-review-inline:end:queries:M-statistics-contract:0:authored:migration-bdb1d826752d0817-0 --></ins>
 
 <a id="msprimitives-and-view-instancing"></a>
 
 #### MSPrimitives and view instancing
 
-<ins><!-- d3d12-review-inline:begin:queries:M-msprimitives-view:0 -->The interaction between the MSPrimitives pipeline statistic and [view instancing](vertex-processing.md#geometry-view-instancing) depends on the view instancing tier (D3D12_VIEW_INSTANCING_TIER) of the device.<!-- d3d12-review-inline:end:queries:M-msprimitives-view:0 --></ins>
+The interaction between the MSPrimitives pipeline statistic and [view instancing](vertex-processing.md#geometry-view-instancing) depends on the view instancing tier (D3D12_VIEW_INSTANCING_TIER) of the device.
 
 On D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED devices, view instancing doesn't affect MSPrimitives.
 
@@ -384,7 +382,7 @@ If the stream output resource is large enough, then *PrimitivesStorageNeeded* re
 
 <ins><!-- d3d12-review-inline:begin:queries:G-so-statistics-contract:0:authored:migration-777df26a537db373-0 -->`D3D12_QUERY_TYPE_SO_STATISTICS_STREAM0` through `D3D12_QUERY_TYPE_SO_STATISTICS_STREAM3` select per-stream statistics from a `D3D12_QUERY_HEAP_TYPE_SO_STATISTICS` heap.<!-- d3d12-review-inline:end:queries:G-so-statistics-contract:0:authored:migration-777df26a537db373-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:queries:N-so-owner:0:authored:migration-8a9521525d9e8e5a-0 -->These counters measure complete primitives per stream, not filled size bytes. Stream overflow, whole-primitive write suppression and independence between streams are defined by [SO capture behavior](geometry-shaders-and-stream-output.md#overflow-and-statistics). A comparison of the two interval results can detect insufficient storage. There is no separate D3D12 SO overflow predicate query object.<!-- d3d12-review-inline:end:queries:N-so-owner:0:authored:migration-8a9521525d9e8e5a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:N-so-owner:0:authored:migration-8a9521525d9e8e5a-0 -->These counters measure complete primitives per stream, not filled size bytes. A comparison of the two interval results can detect insufficient storage. See [overflow and statistics](geometry-shaders-and-stream-output.md#overflow-and-statistics) for stream overflow, whole-primitive write suppression and independence between streams.<!-- d3d12-review-inline:end:queries:N-so-owner:0:authored:migration-8a9521525d9e8e5a-0 --></ins>
 
 <a id="video-decode-statistics"></a>
 
@@ -648,7 +646,7 @@ void BeginQuery(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:queries:B-ID3D12VideoDecodeCommandList%3A%3ABeginQuery:0 -->No currently supported video query type uses this interval-query entry point.<!-- d3d12-review-inline:end:queries:B-ID3D12VideoDecodeCommandList%3A%3ABeginQuery:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:B-ID3D12VideoDecodeCommandList%3A%3ABeginQuery:0 -->No query type supported on video command lists uses this method.<!-- d3d12-review-inline:end:queries:B-ID3D12VideoDecodeCommandList%3A%3ABeginQuery:0 --></ins>
 
 #### Parameters
 
@@ -775,7 +773,7 @@ void BeginQuery(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:queries:B-ID3D12VideoProcessCommandList%3A%3ABeginQuery:0 -->No currently supported video query type uses this interval-query entry point.<!-- d3d12-review-inline:end:queries:B-ID3D12VideoProcessCommandList%3A%3ABeginQuery:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:B-ID3D12VideoProcessCommandList%3A%3ABeginQuery:0 -->No query type supported on video command lists uses this method.<!-- d3d12-review-inline:end:queries:B-ID3D12VideoProcessCommandList%3A%3ABeginQuery:0 --></ins>
 
 #### Parameters
 
@@ -898,7 +896,7 @@ void BeginQuery(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:queries:B-ID3D12VideoEncodeCommandList%3A%3ABeginQuery:0 -->No currently supported video query type uses this interval-query entry point.<!-- d3d12-review-inline:end:queries:B-ID3D12VideoEncodeCommandList%3A%3ABeginQuery:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:B-ID3D12VideoEncodeCommandList%3A%3ABeginQuery:0 -->No query type supported on video command lists uses this method.<!-- d3d12-review-inline:end:queries:B-ID3D12VideoEncodeCommandList%3A%3ABeginQuery:0 --></ins>
 
 #### Parameters
 
@@ -1016,9 +1014,9 @@ None
 
 **Members:**
 
-- <ins><!-- d3d12-review-inline:begin:queries:CPU-flag-contract:1 -->**D3D12_QUERY_HEAP_FLAG_NONE** - No special flags. The query heap can only be resolved using the [appropriate command list GPU `ResolveQueryData` method](#gpu-resolve-support).<!-- d3d12-review-inline:end:queries:CPU-flag-contract:1 --></ins>
+- <ins><!-- d3d12-review-inline:begin:queries:CPU-flag-contract:1:occurrence:ffa23448b81c-0 -->**D3D12_QUERY_HEAP_FLAG_NONE** - No special flags. The query heap can only be resolved using the [appropriate command list GPU `ResolveQueryData` method](#gpu-resolve-support).<!-- d3d12-review-inline:end:queries:CPU-flag-contract:1:occurrence:ffa23448b81c-0 --></ins>
 
-- <ins><!-- d3d12-review-inline:begin:queries:CPU-flag-contract:1 -->**D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE** - Enables CPU-based query resolution for this query heap. When this flag is set, applications can use the `ID3D12Device15::ResolveQueryData()` method to resolve query data directly on the CPU timeline after GPU execution completes.<!-- d3d12-review-inline:end:queries:CPU-flag-contract:1 --></ins>
+- <ins><!-- d3d12-review-inline:begin:queries:CPU-flag-contract:1:occurrence:ffb44d409148-1 -->**D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE** - Enables CPU-based query resolution for this query heap. When this flag is set, applications can use the `ID3D12Device15::ResolveQueryData()` method to resolve query data directly on the CPU timeline after GPU execution completes.<!-- d3d12-review-inline:end:queries:CPU-flag-contract:1:occurrence:ffb44d409148-1 --></ins>
 
 **Remarks:**
 
@@ -1111,7 +1109,7 @@ When a query heap is created with the `D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE` flag o
 
 ### Timestamp queries, units and clock domains
 
-A timestamp is sampled by the GPU at the moment that the GPU is finished with all of the preceding workload. It's the same behavior adopted by Direct3D 11 (see [D3D11_QUERY_TIMESTAMP](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#20.4.3%20D3D11_QUERY_TIMESTAMP) in the Direct3D 11.3 Functional Specification on GitHub). That means that timestamp queries are a bottom-of-pipe (BOP) operation in Direct3D 12.
+<ins><!-- d3d12-review-inline:begin:queries:P-timestamp-calibration:0:modified:opus-d3d11-comparison-removed -->A timestamp is sampled by the GPU at the moment that the GPU is finished with all of the preceding workload. That means that timestamp queries are a bottom-of-pipe (BOP) operation in Direct3D 12.<!-- d3d12-review-inline:end:queries:P-timestamp-calibration:0:modified:opus-d3d11-comparison-removed --></ins>
 
 Note that GPU and CPU timestamp counters are not necessarily directly related to the clock speed of these processors, but instead work from timestamp ticks.
 
@@ -1199,25 +1197,7 @@ This method returns one of the [Direct3D 12 Return Codes](devices-and-capabiliti
 
 #### Constraints
 
-[**GetClockCalibration**](#getclockcalibration) samples the GPU timestamp counter for a given command queue and samples the CPU counter via `QueryPerformanceCounter` at nearly the same time. Again this API fails (returning E\_FAIL) if the specified command queue does not support timestamps (see the table in the [Queries](#query-heaps) topic).
-
-<a id="ddi-clock-calibration"></a>
-
-### Driver clock calibration
-
-```cpp
-typedef void (APIENTRY* PFND3D12DDI_QUERY_CLOCK_CALIBRATION_0054)(
-    D3D12DDI_HDEVICE, D3D12DDI_HCOMMANDQUEUE, _Out_ D3D12DDI_GPUCLOCKDATA_0054* pClockData);
-
-typedef struct D3D12DDI_GPUCLOCKDATA_0054
-{
-    ULONGLONG               GpuFrequency;
-    ULONGLONG               GpuClockCounter;
-    ULONGLONG               CpuClockCounter;
-} D3D12DDI_GPUCLOCKDATA_0054;
-```
-
-<ins><!-- d3d12-review-inline:begin:execution:CS-presentation-services:3:authored:migration-30f25e84526e45a8-0 -->The downlevel [QueryClockCalibration](#getclockcalibration) entry writes GPU frequency and correlated GPU/CPU counters for the specified driver queue.<!-- d3d12-review-inline:end:execution:CS-presentation-services:3:authored:migration-30f25e84526e45a8-0 --></ins>
+[**GetClockCalibration**](#getclockcalibration) samples the GPU timestamp counter for a given command queue and samples the CPU counter via `QueryPerformanceCounter` at nearly the same time. <ins><!-- d3d12-review-inline:begin:queries:P-timestamp-calibration:1:modified:opus-clock-failure-route -->This API fails (returning E\_FAIL) if the specified command queue does not support timestamps (see the table in [Query issuance and completion](#query-support)).<!-- d3d12-review-inline:end:queries:P-timestamp-calibration:1:modified:opus-clock-failure-route --></ins>
 
 <a id="setstablepowerstate"></a>
 
@@ -1248,8 +1228,6 @@ Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
 #### Constraints
-
-<ins><!-- d3d12-review-inline:begin:queries:C-ID3D12Device%3A%3ASetStablePowerState:0:authored:migration-714c80ab46eae359-0 -->This is a development-time profiling control, not a requirement to issue timestamp queries. Developer Mode is required.<!-- d3d12-review-inline:end:queries:C-ID3D12Device%3A%3ASetStablePowerState:0:authored:migration-714c80ab46eae359-0 --></ins>
 
 This method is only useful during the development of applications. It enables developers to profile GPU usage of multiple algorithms without experiencing artifacts from [dynamic frequency scaling](https://en.wikipedia.org/wiki/Dynamic_frequency_scaling).
 
@@ -1298,7 +1276,7 @@ typedef enum D3D12_PREDICATION_OP
 
 <ins><!-- d3d12-review-inline:begin:queries:N-predicate-state:0:authored:migration-d937382b167d7279-0 -->DIRECT, COMPUTE and video command lists support `SetPredication`. COPY and BUNDLE command lists do not. Direct/compute/video recordings begin with predication disabled. Reset/ClearState restore disabled state. Bundles inherit the direct list predicate but cannot set it. Executing the bundle is not itself skipped, and its state changes still occur. See [command list state](command-list-state.md#queries) for graphics initialization, reset and bundle boundaries.<!-- d3d12-review-inline:end:queries:N-predicate-state:0:authored:migration-d937382b167d7279-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:queries:N-predicate-state:1:authored:migration-b4f6a516ad159992-0 -->When `pBuffer` is null, `AlignedBufferOffset` must be zero and `Operation` must be `D3D12_PREDICATION_OP_EQUAL_ZERO`. A non-null predicate source is an unprotected buffer with an eight-byte-aligned, in-bounds eight-byte range. All 64 bits participate. Its production and subsequent sampling require the normal [resource access and synchronization contract](synchronization.md#barrier-access), with lifetime and residency preserved through execution. Predication does not legalize invalid commands or skip CPU-side recording/state validation. [Protected resource operations](../ProtectedResources.md#predication-not-supported) have their additional restriction.<!-- d3d12-review-inline:end:queries:N-predicate-state:1:authored:migration-b4f6a516ad159992-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:N-predicate-state:1:authored:migration-b4f6a516ad159992-0 -->When `pBuffer` is null, `AlignedBufferOffset` must be zero and `Operation` must be `D3D12_PREDICATION_OP_EQUAL_ZERO`. A non-null predicate source is an unprotected buffer with an eight-byte-aligned, in-bounds eight-byte range. All 64 bits participate. Writing the predicate value and sampling it require [resource access synchronization](synchronization.md#barrier-access). The application must keep the predicate buffer alive and resident through execution. Commands subject to predication must be valid and receive the same recording validation as other commands. Predication is not supported with operations on [protected resources](../ProtectedResources.md#predication-not-supported).<!-- d3d12-review-inline:end:queries:N-predicate-state:1:authored:migration-b4f6a516ad159992-0 --></ins>
 
 <a id="graphics-setpredication"></a>
 
@@ -1454,6 +1432,8 @@ None
 
 ### Operation matrix
 
+<ins><!-- d3d12-review-inline:begin:queries:N-operation-matrix-categories:0:authored:opus-category-definitions -->A predicated method's work is skipped when the sampled predicate selects SKIP. An unpredicated method is not skipped by the predicate. A wrapper method is not skipped as a whole. Its qualification identifies how the work it contains or generates interacts with the predicate. For a conditional method, the selected algorithm or extension defines the predicate behavior. An unsupported method has no supported use on its command list type.<!-- d3d12-review-inline:end:queries:N-operation-matrix-categories:0:authored:opus-category-definitions --></ins>
+
 <!-- d3d12-review-alert:begin:queries:N-operation-matrix:0:authored:migration-cdd0ec395055d67c-0 -->
 
 > [!WARNING]
@@ -1499,7 +1479,7 @@ None
 > | [`ID3D12GraphicsCommandList::ResolveQueryData`](#graphics-resolvequerydata) | unpredicated | Only the query/list/heap combinations in the GPU resolution support table. |
 > | [`ID3D12GraphicsCommandList::ResolveSubresource`](resource-operations.md#resolvesubresource) | predicated | DIRECT. |
 > | [`ID3D12GraphicsCommandList::ResourceBarrier`](synchronization.md#legacy-resource-barrier) | unpredicated | On the independently supported list types. |
-> | [`ID3D12VideoDecodeCommandList1::DecodeFrame1`](video-decode.md#decode-frame1) | predicated | VIDEO_DECODE; versioned shared decode operation. |
+> | [`ID3D12VideoDecodeCommandList1::DecodeFrame1`](video-decode.md#decode-frame1) | predicated | VIDEO_DECODE; versioned decode operation. |
 > | [`ID3D12VideoDecodeCommandList2::ExecuteExtensionCommand`](video-extension-commands.md#videodecodecommandlist2-executeextensioncommand) | conditional | VIDEO_DECODE. Predicate behavior is defined by the extension; no API-wide guarantee. |
 > | [`ID3D12VideoDecodeCommandList2::InitializeExtensionCommand`](video-extension-commands.md#videodecodecommandlist2-initializeextensioncommand) | conditional | VIDEO_DECODE. Predicate behavior is defined by the extension; no API-wide guarantee. |
 > | [`ID3D12VideoDecodeCommandList3::Barrier`](synchronization.md#decode-enhanced-barrier) | unpredicated | video decode. |
@@ -1528,7 +1508,7 @@ None
 > | [`ID3D12VideoEncodeCommandList::ResolveQueryData`](#videoencode-resolvequerydata) | unpredicated | Only the query/list/heap combinations in the GPU resolution support table. |
 > | [`ID3D12VideoEncodeCommandList::ResourceBarrier`](synchronization.md#encode-resource-barrier) | unpredicated | video encode. |
 > | [`ID3D12VideoEncodeCommandList::WriteBufferImmediate`](resource-operations.md#id3d12videoencodecommandlist-writebufferimmediate) | predicated | On permitted list types. COPY has no supported predicate selection. |
-> | [`ID3D12VideoProcessCommandList1::ProcessFrames1`](video-processing.md#process-frames1) | predicated | VIDEO_PROCESS; versioned shared process operation. |
+> | [`ID3D12VideoProcessCommandList1::ProcessFrames1`](video-processing.md#process-frames1) | predicated | VIDEO_PROCESS; versioned process operation. |
 > | [`ID3D12VideoProcessCommandList2::ExecuteExtensionCommand`](video-extension-commands.md#videoprocesscommandlist2-executeextensioncommand) | conditional | VIDEO_PROCESS. Predicate behavior is defined by the extension; no API-wide guarantee. |
 > | [`ID3D12VideoProcessCommandList2::InitializeExtensionCommand`](video-extension-commands.md#videoprocesscommandlist2-initializeextensioncommand) | conditional | VIDEO_PROCESS. Predicate behavior is defined by the extension; no API-wide guarantee. |
 > | [`ID3D12VideoProcessCommandList3::Barrier`](synchronization.md#process-enhanced-barrier) | unpredicated | video process. |
@@ -1543,7 +1523,7 @@ None
 
 <!-- d3d12-review-alert:end:queries:N-operation-matrix:0:authored:migration-cdd0ec395055d67c-0 -->
 
-<ins><!-- d3d12-review-inline:begin:queries:N-operation-boundaries:0:authored:migration-778aaabdb5d7e944-0 -->State/recording/annotation methods do not acquire a blanket skip condition from an active predicate. Some state methods also schedule maintenance work, which is separately qualified above. Query Begin/End and result resolution are not predicated. Wrappers and their generated work must be distinguished: ExecuteBundle preserves state execution while eligible bundle work uses the inherited predicate. ExecuteIndirect-generated eligible actions honor predication while required state cleanup remains independent.<!-- d3d12-review-inline:end:queries:N-operation-boundaries:0:authored:migration-778aaabdb5d7e944-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:queries:N-operation-boundaries:0:authored:migration-778aaabdb5d7e944-0 -->State/recording/annotation methods do not acquire a blanket skip condition from an active predicate. State methods that also schedule maintenance work are classified in the table. Query Begin/End and result resolution are not predicated. Wrappers and their generated work must be distinguished: ExecuteBundle preserves state execution while eligible bundle work uses the inherited predicate. ExecuteIndirect-generated eligible actions honor predication while required state cleanup remains independent.<!-- d3d12-review-inline:end:queries:N-operation-boundaries:0:authored:migration-778aaabdb5d7e944-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:queries:N-operation-boundaries:1:authored:migration-2118a710cf143e18-0 -->For render passes translated into ordinary clear/resolve operations, beginning access CLEAR and ending access RESOLVE honor the predicate through those operations. Bindings, barriers and pass boundaries are not themselves skipped. Resuming does not repeat the beginning clear; suspending does not perform ending resolves. See [render pass access declarations](output-merger.md#render-pass-access) for native pass execution. The CLEAR/RESOLVE rule does not assign a blanket conditional behavior to every implicit load, store or discard.<!-- d3d12-review-inline:end:queries:N-operation-boundaries:1:authored:migration-2118a710cf143e18-0 --></ins>
 
@@ -1644,7 +1624,9 @@ A query heap handle.
 
 <a id="ddi-recording-contracts"></a>
 
-### Recording API associations and shared rules
+### Recording API associations and common rules
+
+<a id="recording-api-associations-and-shared-rules"></a>
 
 <!-- d3d12-review-alert:begin:queries:N-ddi-parameter-bridge:0:authored:oi6-association-relocation -->
 
@@ -1715,3 +1697,21 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_PREDICATION )( D3D12DDI_HCOMMANDLIST, D
 #### Driver behavior
 
 <ins><!-- d3d12-review-inline:begin:queries:QD-predicate-roles:1:authored:migration-8f5413eb6da793d8-0 -->The driver comparison enum names specify when to skip work. Use the [predicate truth table](#predication) when translating the API operation.<!-- d3d12-review-inline:end:queries:QD-predicate-roles:1:authored:migration-8f5413eb6da793d8-0 --></ins>
+
+<a id="ddi-clock-calibration"></a>
+
+### Driver clock calibration
+
+```cpp
+typedef void (APIENTRY* PFND3D12DDI_QUERY_CLOCK_CALIBRATION_0054)(
+    D3D12DDI_HDEVICE, D3D12DDI_HCOMMANDQUEUE, _Out_ D3D12DDI_GPUCLOCKDATA_0054* pClockData);
+
+typedef struct D3D12DDI_GPUCLOCKDATA_0054
+{
+    ULONGLONG               GpuFrequency;
+    ULONGLONG               GpuClockCounter;
+    ULONGLONG               CpuClockCounter;
+} D3D12DDI_GPUCLOCKDATA_0054;
+```
+
+<ins><!-- d3d12-review-inline:begin:execution:CS-presentation-services:3:authored:migration-30f25e84526e45a8-0 -->The downlevel [QueryClockCalibration](#getclockcalibration) entry writes GPU frequency and correlated GPU/CPU counters for the specified driver queue.<!-- d3d12-review-inline:end:execution:CS-presentation-services:3:authored:migration-30f25e84526e45a8-0 --></ins>

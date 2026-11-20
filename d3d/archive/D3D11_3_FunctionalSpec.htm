@@ -7892,11 +7892,11 @@ It is important to note that range reduction is a separate step from applying Te
 (although the particular Texture Address mode affects what type of reduction gets used).</p>
 </DIV>
 <p>Using range reduction to decouple texture coordinate magnitude from supportable texture size has the following implication:  The
-maximum texture dimension possible to be sampled in D3D<a href="#D3D11_MAJOR_VERSION" title="D3D11_MAJOR_VERSION"><font color=black style="text-decoration:none">11</font></a>.<a href="#D3D11_MINOR_VERSION" title="D3D11_MINOR_VERSION"><font color=black style="text-decoration:none">3</font></a> is 2^<a href="#D3D11_MAX_TEXTURE_DIMENSION_2_TO_EXP" title="D3D11_MAX_TEXTURE_DIMENSION_2_TO_EXP"><font color=black style="text-decoration:none">17</font></a>.  This limit is
+theoretical maximum texture dimension permitted by the addressing precision in D3D<a href="#D3D11_MAJOR_VERSION" title="D3D11_MAJOR_VERSION"><font color=black style="text-decoration:none">11</font></a>.<a href="#D3D11_MINOR_VERSION" title="D3D11_MINOR_VERSION"><font color=black style="text-decoration:none">3</font></a> is 2^<a href="#D3D11_MAX_TEXTURE_DIMENSION_2_TO_EXP" title="D3D11_MAX_TEXTURE_DIMENSION_2_TO_EXP"><font color=black style="text-decoration:none">15</font></a>.  This limit is
 derived starting with 24 bits of float32 fractional precision for the original texture coordinate, subtracting required subtexel precision
 (<a href="#D3D11_SUBTEXEL_FRACTIONAL_BIT_COUNT" title="D3D11_SUBTEXEL_FRACTIONAL_BIT_COUNT"><font color=black style="text-decoration:none">8</font></a> bits), and subtracting 1 more bit due to the factor of 2 scaling in the reduced range.
-Of course, the <b>minimum</b> upper limit for filterable texture dimension required to be exposed by all D3D<a href="#D3D11_MAJOR_VERSION" title="D3D11_MAJOR_VERSION"><font color=black style="text-decoration:none">11</font></a>.<a href="#D3D11_MINOR_VERSION" title="D3D11_MINOR_VERSION"><font color=black style="text-decoration:none">3</font></a> implementations is far smaller, at only
-<a href="#D3D11_REQ_FILTERING_HW_ADDRESSABLE_RESOURCE_DIMENSION" title="D3D11_REQ_FILTERING_HW_ADDRESSABLE_RESOURCE_DIMENSION"><font color=black style="text-decoration:none">16384</font></a> (see <a href="#SystemLimits">System Limits</a><a style="color: Gray"><small><sup>(21)</sup></small></a>).</p>
+The maximum dimension of Texture1D and Texture2D resources is fixed at
+<a href="#D3D11_REQ_FILTERING_HW_ADDRESSABLE_RESOURCE_DIMENSION" title="D3D11_REQ_FILTERING_HW_ADDRESSABLE_RESOURCE_DIMENSION"><font color=black style="text-decoration:none">16384</font></a> texels. Implementations must support this limit and may not expose larger dimensions (see <a href="#SystemLimits">System Limits</a><a style="color: Gray"><small><sup>(21)</sup></small></a>).</p>
 
 <H3 id="ProcessingNormalizedTextureCoordinates"></h3><A id="7.18.5 Processing Normalized Texture Coordinates"></A>
 <H3>7.18.5 Processing Normalized Texture Coordinates</H3>
@@ -29960,7 +29960,7 @@ a cross-endianness solution.</p>
 <tr><td>D3D11_MAX_MAXANISOTROPY<td><a id="D3D11_MAX_MAXANISOTROPY">16</a></td>
 <tr><td>D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT<td><a id="D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT">32</a></td>
 <tr><td>D3D11_MAX_POSITION_VALUE<td><a id="D3D11_MAX_POSITION_VALUE">3.402823466e+34f</a></td>
-<tr><td>D3D11_MAX_TEXTURE_DIMENSION_2_TO_EXP<td><a id="D3D11_MAX_TEXTURE_DIMENSION_2_TO_EXP">17</a></td>
+<tr><td>D3D11_MAX_TEXTURE_DIMENSION_2_TO_EXP<td><a id="D3D11_MAX_TEXTURE_DIMENSION_2_TO_EXP">15</a></td>
 <tr><td>D3D11_MINOR_VERSION<td><a id="D3D11_MINOR_VERSION">3</a></td>
 <tr><td>D3D11_MIN_BORDER_COLOR_COMPONENT<td><a id="D3D11_MIN_BORDER_COLOR_COMPONENT">0.0f</a></td>
 <tr><td>D3D11_MIN_DEPTH<td><a id="D3D11_MIN_DEPTH">0.0f</a></td>

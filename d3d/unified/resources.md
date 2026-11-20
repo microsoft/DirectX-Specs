@@ -21,7 +21,7 @@
 
 <ins><!-- d3d12-review-inline:begin:resources:RH-model:0 -->Resources are associated with virtual memory functionality, while heaps are associated with physical memory functionality. These associations are honored more at the DDI, to encourage driver simplification and ease DDI evolution. But, the associations are more loosely honored at the API, to simplify application concepts and avoid leveraging the available orthogonality implied by the DDI design.<!-- d3d12-review-inline:end:resources:RH-model:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-no-physical-addresses:0:modified:source-dd473173b71af70c-0-0 -->Physical address (PA) control<!-- d3d12-review-inline:end:resources:RH-no-physical-addresses:0:modified:source-dd473173b71af70c-0-0 --></ins> <ins><!-- d3d12-review-inline:begin:resources:RH-no-physical-addresses:0:modified:migration-940b128e74b819fc-1 -->does not mean<!-- d3d12-review-inline:end:resources:RH-no-physical-addresses:0:modified:migration-940b128e74b819fc-1 --></ins> that a game can reference actual physical addresses directly. For the most part, it refers to the fact that the game has control over how much physical memory is available (assuming it is under budget) and how it has the ability to explicitly map GPU VA (in the form of DX12 resources) to it.
+<ins><!-- d3d12-review-inline:begin:resources:RH-no-physical-addresses:0:modified:source-dd473173b71af70c-0-0 -->Physical address (PA) control through heaps<!-- d3d12-review-inline:end:resources:RH-no-physical-addresses:0:modified:source-dd473173b71af70c-0-0 --></ins> <ins><!-- d3d12-review-inline:begin:resources:RH-no-physical-addresses:0:modified:migration-940b128e74b819fc-1 -->does not mean<!-- d3d12-review-inline:end:resources:RH-no-physical-addresses:0:modified:migration-940b128e74b819fc-1 --></ins> that a game can reference actual physical addresses directly. For the most part, it refers to the fact that the game has control over how much physical memory is available (assuming it is under budget) and how it has the ability to explicitly map GPU VA (in the form of DX12 resources) to it.
 
 The concept of "Heaps" in "Resource Heaps" is not to be confused with the other DX12 concepts of "Heaps" in the "Descriptor Heaps" or "Query Heaps" features.
 
@@ -45,8 +45,6 @@ typedef enum D3D12_RESOURCE_DIMENSION
 ### Buffers
 
 <ins><!-- d3d12-review-inline:begin:resources:R-buffer:0 -->Buffers are a contiguous memory region. Exhaustion of GPU virtual address space, memory residency budget (see [IDXGIAdapter3::QueryVideoMemoryInfo](https://learn.microsoft.com/en-us/windows/desktop/api/dxgi1_4/nf-dxgi1_4-idxgiadapter3-queryvideomemoryinfo)), and/or system memory may occur.<!-- d3d12-review-inline:end:resources:R-buffer:0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:R-dimension-units:0:authored:migration-e855cbf27de57ebe-0 -->For buffers, `D3D12_RESOURCE_DESC::Width` is a nonzero size in bytes. For textures it is a size in texels; block-compressed texture dimensions are logical texel dimensions rather than compressed block counts. GPU virtual address capability fields report address bit counts, not byte sizes or guarantees that an allocation will succeed.<!-- d3d12-review-inline:end:resources:R-dimension-units:0:authored:migration-e855cbf27de57ebe-0 --></ins>
 
 ### Texture1D
 
@@ -113,21 +111,21 @@ UINT D3D12CalcSubresource(
 
 ### Committed resources
 
-<ins><!-- d3d12-review-inline:begin:resources:R-committed:0:modified:source-df68c26e639d62b0-0-0 -->Creating such a resource allocates virtual address range, an implicit heap large enough to fit the whole resource, and commits the<!-- d3d12-review-inline:end:resources:R-committed:0:modified:source-df68c26e639d62b0-0-0 --></ins> virtual address range<ins><!-- d3d12-review-inline:begin:resources:R-committed:0:modified:source-df68c26e639d62b0-0-1 --> to the physical memory encapsulated by the heap<!-- d3d12-review-inline:end:resources:R-committed:0:modified:source-df68c26e639d62b0-0-1 --></ins>.
+<ins><!-- d3d12-review-inline:begin:resources:R-committed:0:modified:source-df68c26e639d62b0-0-0 -->Creating a committed resource allocates virtual address range, an implicit heap large enough to fit the whole resource, and commits the<!-- d3d12-review-inline:end:resources:R-committed:0:modified:source-df68c26e639d62b0-0-0 --></ins> virtual address range<ins><!-- d3d12-review-inline:begin:resources:R-committed:0:modified:source-df68c26e639d62b0-0-1 --> to the physical memory encapsulated by the heap<!-- d3d12-review-inline:end:resources:R-committed:0:modified:source-df68c26e639d62b0-0-1 --></ins>.
 
 <a id="placed-resources"></a>
 
 ### Placed resources
 
-<ins><!-- d3d12-review-inline:begin:resources:R-placed:0:modified:migration-2159762b94824311-0 -->Applications may<!-- d3d12-review-inline:end:resources:R-placed:0:modified:migration-2159762b94824311-0 --></ins> create heaps separate from resources. Afterward, the application may locate multiple resources within a single heap. This can be done without creating tiled or reserved resources, enabling the capabilities for all resource types able to be created directly by applications. <ins><!-- d3d12-review-inline:begin:resources:R-placed:0:modified:migration-159b699465a9e227-1 -->Multiple resources may overlap; their reuse is subject to the applicable aliasing and initialization requirements.<!-- d3d12-review-inline:end:resources:R-placed:0:modified:migration-159b699465a9e227-1 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:R-placed:0:modified:migration-2159762b94824311-0 -->Applications may<!-- d3d12-review-inline:end:resources:R-placed:0:modified:migration-2159762b94824311-0 --></ins> create heaps separate from resources. Afterward, the application may locate multiple resources within a single heap. This can be done without creating tiled or reserved resources, enabling the capabilities for all resource types able to be created directly by applications. <ins><!-- d3d12-review-inline:begin:resources:R-placed:0:modified:migration-159b699465a9e227-1 -->Multiple resources may overlap.<!-- d3d12-review-inline:end:resources:R-placed:0:modified:migration-159b699465a9e227-1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:R-placement-links:0:authored:migration-8bd8b3f8a3c88069-0 -->Placement requirements are defined by [`CreatePlacedResource`](resources.md#create-placed-resource). Overlapping allocations do not by themselves establish synchronization or initialize texture metadata. The [legacy and enhanced metadata initialization requirements](synchronization.md#enhanced-aliasing) apply.<!-- d3d12-review-inline:end:resources:R-placement-links:0:authored:migration-8bd8b3f8a3c88069-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:R-placement-links:0:authored:migration-8bd8b3f8a3c88069-0 -->Overlapping placement does not synchronize accesses or initialize texture metadata. See [aliasing and metadata initialization](synchronization.md#enhanced-aliasing) for reusing overlapping memory, and [`CreatePlacedResource`](resources.md#create-placed-resource) for placement requirements.<!-- d3d12-review-inline:end:resources:R-placement-links:0:authored:migration-8bd8b3f8a3c88069-0 --></ins>
 
 <a id="reserved-resources"></a>
 
 ### Reserved resources
 
-<ins><!-- d3d12-review-inline:begin:resources:R-reserved:0:modified:source-eaf2bd0f61611743-0-0 -->On their creation, only a virtual address range is allocated and not mapped to any heap. The application will map such resources to heaps later. Such resources<!-- d3d12-review-inline:end:resources:R-reserved:0:modified:source-eaf2bd0f61611743-0-0 --></ins> can be mapped to a heap at a 64KB tile granularity with `UpdateTileMappings`.
+<ins><!-- d3d12-review-inline:begin:resources:R-reserved:0:modified:source-eaf2bd0f61611743-0-0 -->When a reserved resource is created, only a virtual address range is allocated, and it is not mapped to any heap. The application will map such resources to heaps later. Such resources<!-- d3d12-review-inline:end:resources:R-reserved:0:modified:source-eaf2bd0f61611743-0-0 --></ins> can be mapped to a heap at a 64KB tile granularity with `UpdateTileMappings`.
 
 <a id="resource-heap-allocation"></a>
 
@@ -167,17 +165,15 @@ Without going into too much detail, when using committed and placed resources, t
 
 In the case of reserved resources however, since there is no heap space actually associated with the resource during resource creation, a driver may decide to allocate space elsewhere for the compression metadata. Although the space required for this metadata is not directly known by the game, the developer can use the budget querying APIs to check their before and after memory footprint.
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-va-overhead:0 -->It's also important to note that currently, in DX12, creating a new heap (even if it does not contain a resource) can allocate VA. For example, creating a reserved resource of 32MiB and a heap of 32MiB can consume 64MiB of virtual address space.<!-- d3d12-review-inline:end:resources:RH-va-overhead:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:RH-va-overhead:0 -->Creating a new heap (even if it does not contain a resource) can allocate VA. For example, creating a reserved resource of 32MiB and a heap of 32MiB can consume 64MiB of virtual address space.<!-- d3d12-review-inline:end:resources:RH-va-overhead:0 --></ins>
 
 <a id="resource-binding-declarations"></a>
 
 ### Resource creation and pipeline bindings
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-buffer-bindings:0 -->`VERTEX_BUFFER`, `INDEX_BUFFER`, `STREAM_OUTPUT`, and `CONSTANT_BUFFER` bind flags are no longer declared at resource creation in D3D12. Instead, D3D12 buffers can be used by the GPU for all these purposes without declaration.<!-- d3d12-review-inline:end:resources:RH-buffer-bindings:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:RH-buffer-bindings:0 -->Buffer creation does not declare vertex buffer, index buffer, stream output, constant buffer or indirect argument usage. Buffers can be used by the GPU for all these purposes without declaration.<!-- d3d12-review-inline:end:resources:RH-buffer-bindings:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-indirect-bindings:0 -->`DRAWINDIRECT_ARGS` is no longer required to be declared during resource creation in D3D12. Instead, D3D12 buffers can be used by the GPU for this purpose without declaration.<!-- d3d12-review-inline:end:resources:RH-indirect-bindings:0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:RH-raw-structured-bindings:0 -->`ALLOW_RAW_VIEWS` and `BUFFER_STRUCTURED` are no longer required to be declared in D3D12. Instead, D3D12 buffers can be used as RAW Buffer SRVs without such up-front declaration. The structured buffer stride and the flags related to these features are specified by the view descriptor.<!-- d3d12-review-inline:end:resources:RH-raw-structured-bindings:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:RH-raw-structured-bindings:0 -->Buffer creation does not declare raw or structured buffer usage. Buffers can be used as raw buffer SRVs without such up-front declaration. The structured buffer stride and the flags related to these features are specified by the view descriptor.<!-- d3d12-review-inline:end:resources:RH-raw-structured-bindings:0 --></ins>
 
 <a id="tiled-resources"></a>
 
@@ -186,8 +182,6 @@ In the case of reserved resources however, since there is no heap space actually
 <ins><!-- d3d12-review-inline:begin:resources:TILED-scope:0:authored:migration-4db0dec6ec45e1f7-0 -->Reserved resources separate a resource's virtual address range from its physical backing. Tile mappings select 64-KB pages in heaps. They do not copy resource contents. A resource can simultaneously map tiles from multiple heaps. Changing the heap used for one mapping does not clear unrelated mappings.<!-- d3d12-review-inline:end:resources:TILED-scope:0:authored:migration-4db0dec6ec45e1f7-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-scope:1:authored:migration-18cffef8f8210d64-0 -->Heap memory must be [resident](#residency) when the GPU accesses it. Mapping a page is not a residency operation or a texture metadata initialization.<!-- d3d12-review-inline:end:resources:TILED-scope:1:authored:migration-18cffef8f8210d64-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:TILED-scope:2:authored:migration-dd81e889573b7f3f-0 -->The [layout definition](#texture-layout), [resource description](#resource-description), [format support](formats.md#support) and [resource flags](#resource-flags) constrain reserved resource creation. Texture1D reserved resources are not supported. Textures created by `CreateReservedResource`, `CreateReservedResource1` or `CreateReservedResource2` must use `D3D12_TEXTURE_LAYOUT_64KB_UNDEFINED_SWIZZLE`. Tier 3 adds full Texture3D support. The [read-only volume capability](#tiled-tiers) is a separate contribution. Tier 4's arrayed packed mip contribution is defined in [arrayed packed mips](#arrayed-packed-mips). Buffers use row-major layout. The tile shape is 65536 bytes.<!-- d3d12-review-inline:end:resources:TILED-scope:2:authored:migration-dd81e889573b7f3f-0 --></ins>
 
 <a id="tiled-sparse-storage"></a>
 
@@ -225,10 +219,10 @@ would require roughly 85.3 MiB to fully populate this memory in a page table. Th
 a heap, however, applications could choose to reuse tiles (as a simple example, reusing a "black" colored tile for large black regions in an image) - effectively using the heap
 (i.e. page table mappings) as a tool for memory compression.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.2.2:7 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.2.2:8 -->The initial contents of the page table are NULL for all entries. Applications also can't pass initial
-data for the memory contents of the surface since it starts off with no memory backing.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.2.2:8 --></ins>
+The initial contents of the page table are NULL for all entries. Applications also can't pass initial
+data for the memory contents of the surface since it starts off with no memory backing.
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-storage-example-scope:0:authored:migration-d40d510aa6f1f7c4-0 -->The page table examples assume 64-bit entries and a full mip chain where stated. They do not require a particular hardware page table implementation. Resource dimensions, virtual address limits and residency budgets remain independent restrictions. Heaps are not resizable; additional heaps and mapping changes provide independently allocated backing.<!-- d3d12-review-inline:end:resources:TILED-storage-example-scope:0:authored:migration-d40d510aa6f1f7c4-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-storage-example-scope:0:authored:migration-d40d510aa6f1f7c4-0 -->Heaps are not resizable. Additional heaps and mapping changes provide independently allocated backing.<!-- d3d12-review-inline:end:resources:TILED-storage-example-scope:0:authored:migration-d40d510aa6f1f7c4-0 --></ins>
 
 <a id="standard-tile-shapes"></a>
 
@@ -240,13 +234,13 @@ the number of tiles that would be required to back the entire surface area. For 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.2.8:1 -->This means that the number of tiles that will be used by a given surface size and format element width is well defined/predictable based on the following tables.
 For Resources that contain mipmaps, or cases where surface dimensions don't fill a tile, however, there are some constraints, discussed in [mipmap packing](#tiled-mipmap-packing).<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.2.8:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.2.8:2 -->The complete [shared tile data compatibility and inheritance contract](#tiled-data-compatibility) defines compatible format/dimension cases, packed/nonpacked solid-color sharing, zero-filled inheritance and mapping-local metadata requirements.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.2.8:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.2.8:2 -->See [shared tiles and compatible data inheritance](#tiled-data-compatibility) for sharing tile data between resources with different formats, dimensions or flags.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.2.8:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.2.8:3 -->The layout of data within a tile does not depend on where the tile is mapped in a resource overall. So, for example, a tile can be reused in different locations of a surface at once with consistent behavior in all locations.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.2.8:3 --></ins>
+The layout of data within a tile does not depend on where the tile is mapped in a resource overall. So, for example, a tile can be reused in different locations of a surface at once with consistent behavior in all locations.
 
 #### Texture2D and texture arrays
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.2.8.2:0 -->(not counting tail mip packing)<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.2.8.2:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.2.8.2:0 -->Texture2D tile shapes, not counting [packed tail mips](#tiled-mipmap-packing), are:<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.2.8.2:0 --></ins>
 
 <!-- d3d12-review-alert:begin:resources:TILED-archive-5.9.2.8.2:1:modified:migration-5f215b18a302e532-0 -->
 
@@ -313,13 +307,6 @@ For Resources that contain mipmaps, or cases where surface dimensions don't fill
 
 In the diagrams below, dark gray represents NULL tiles.
 
-- Texture 3D Tiled Resource default mapping (most detailed mip)
-- Texture 3D Tiled Resource default mapping (second most detailed mip)
-- Texture 3D Tiled Resource (most detailed mip)
-- Texture 3D Tiled Resource (second most detailed mip)
-- Texture 3D Tiled Resource (<ins><!-- d3d12-review-inline:begin:resources:TILED-volume-examples:1:modified:source-1b773fe68e1e661d-0-0 -->Offset Box<!-- d3d12-review-inline:end:resources:TILED-volume-examples:1:modified:source-1b773fe68e1e661d-0-0 --></ins>)
-- Texture 3D Tiled Resource (Uniform Box)
-
 ##### Texture 3D tiled resource default mapping (most-detailed mip)
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-volume-examples:3 -->![default mapping of a tiled 3-dimensional resource](images/tiled-vtr-tex3d-default-1.png)<!-- d3d12-review-inline:end:resources:TILED-volume-examples:3 --></ins>
@@ -330,7 +317,7 @@ In the diagrams below, dark gray represents NULL tiles.
 
 ##### Texture 3D tiled resource (most-detailed mip)
 
-The following code sets up a 3D tiled resource at the most-detailed mip.
+<ins><!-- d3d12-review-inline:begin:resources:TILED-volume-examples:7:modified:opus-selects-tiles -->The following code selects tiles in the most-detailed mip of a 3D tiled resource.<!-- d3d12-review-inline:end:resources:TILED-volume-examples:7:modified:opus-selects-tiles --></ins>
 
 ```cpp
 D3D12_TILED_RESOURCE_COORDINATE trCoord{};
@@ -348,7 +335,7 @@ trSize.NumTiles = 63;
 
 ##### Texture 3D tiled resource (second-most-detailed mip)
 
-The following code sets up a 3D tiled resource, and the second most detailed mip.
+<ins><!-- d3d12-review-inline:begin:resources:TILED-volume-examples:11:modified:opus-selects-tiles -->The following code selects tiles in the second-most-detailed mip of a 3D tiled resource.<!-- d3d12-review-inline:end:resources:TILED-volume-examples:11:modified:opus-selects-tiles --></ins>
 
 ```cpp
 D3D12_TILED_RESOURCE_COORDINATE trCoord{};
@@ -387,7 +374,7 @@ trSize.Depth = 3;
 
 ##### Texture 3D tiled resource (uniform box)
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-volume-examples:19 -->The following code sets up a uniform box tiled resource.<!-- d3d12-review-inline:end:resources:TILED-volume-examples:19 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-volume-examples:19 -->The following code selects a uniform box of tiles.<!-- d3d12-review-inline:end:resources:TILED-volume-examples:19 --></ins>
 
 ```cpp
 D3D12_TILED_RESOURCE_COORDINATE trCoord{};
@@ -408,12 +395,12 @@ trSize.Depth = 3;
 
 #### Buffers
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.2.8.4:0 -->A Buffer Resource is trivially divided into 64KB tiles, with some empty space in the last tile if the size is not a multiple of 64KB.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.2.8.4:0 --></ins>
+A Buffer Resource is trivially divided into 64KB tiles, with some empty space in the last tile if the size is not a multiple of 64KB.
 
-Structured Buffers must have no constraint on the Stride to be Tiled, however possible performance optimizations in hardware
+<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.2.8.4:1:modified:opus-stride-unconstrained -->Tiling places no constraint on Structured Buffer stride. However,<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.2.8.4:1:modified:opus-stride-unconstrained --></ins> possible performance optimizations in hardware
 for using Structured Buffers may be sacrificed by making them Tiled in the first place.
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.2.8.4:2 -->Typed buffer views on a tiled resource don't support 96bpp formats, video formats, R1_UNORM, R8G8_B8G8_UNORM, G8R8_G8B8_UNORM.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.2.8.4:2 --></ins>
+Typed buffer views on a tiled resource don't support 96bpp formats, video formats, R1_UNORM, R8G8_B8G8_UNORM, G8R8_G8B8_UNORM.
 
 <a id="tiled-mipmap-packing"></a>
 
@@ -745,9 +732,9 @@ typedef enum D3D12_TILED_RESOURCES_TIER {
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-tier-contract:1:authored:migration-2c5e8b79cd612f63-0 -->On Tier 1, only mips whose dimensions are integer multiples of the standard tile shape are guaranteed nonpacked. The first mip not satisfying that condition and all coarser mips may form an opaque packed tail. Such a resource cannot have more than one array slice. Tier 1 does not expose the tiled shader status/LOD clamp instructions. Heap buffer versus texture restrictions are defined by [heap flags](#heap-flags); updating mappings does not change heap flags.<!-- d3d12-review-inline:end:resources:TILED-tier-contract:1:authored:migration-2c5e8b79cd612f63-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-tier-contract:2:authored:migration-9d637d1f13db79fd-0 -->On Tier 2 and higher, mips at least one standard tile in every dimension are guaranteed nonpacked. Smaller mips may be packed, and once one mip is packed all coarser mips in that array slice are packed. Tiers 2 and 3 do not permit arrayed packed tails; Tier 4 removes that restriction for the selected undefined swizzle layout.<!-- d3d12-review-inline:end:resources:TILED-tier-contract:2:authored:migration-9d637d1f13db79fd-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-tier-contract:2:authored:migration-9d637d1f13db79fd-0 -->On Tier 2 and higher, mips at least one standard tile in every dimension are guaranteed nonpacked. Smaller mips may be packed, and once one mip is packed all coarser mips in that array slice are packed. Tiers 2 and 3 do not permit arrayed packed tails. Tier 4 removes that restriction for `64KB_UNDEFINED_SWIZZLE`.<!-- d3d12-review-inline:end:resources:TILED-tier-contract:2:authored:migration-9d637d1f13db79fd-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-tier-contract:3:authored:migration-7f1f729f80123a5d-0 -->Format support is reported by `D3D12_FORMAT_SUPPORT2_TILED`. Tiled MSAA quality levels use `D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS` with `D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_TILED_RESOURCE`; support and quality levels need not equal the non-tiled case. The ordinary [format support owner](formats.md#support) retains the whole feature query API.<!-- d3d12-review-inline:end:resources:TILED-tier-contract:3:authored:migration-7f1f729f80123a5d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-tier-contract:3:authored:migration-7f1f729f80123a5d-0 -->Format support is reported by `D3D12_FORMAT_SUPPORT2_TILED` through the [format support query](formats.md#support). Tiled MSAA quality levels use `D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS` with `D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_TILED_RESOURCE`. Support and quality levels need not equal the non-tiled case.<!-- d3d12-review-inline:end:resources:TILED-tier-contract:3:authored:migration-7f1f729f80123a5d-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-tier-contract:4:authored:migration-a5b6694c2f4f7f14-0 -->`D3D12_FEATURE_DATA_D3D12_OPTIONS5::SRVOnlyTiledResourceTier3` independently permits read-only volume tiled resources without full Tier 3 support. This does not permit render target, depth-stencil or unordered access flags on those volumes. Those uses require full Tier 3.<!-- d3d12-review-inline:end:resources:TILED-tier-contract:4:authored:migration-a5b6694c2f4f7f14-0 --></ins>
 
@@ -758,8 +745,6 @@ typedef enum D3D12_TILED_RESOURCES_TIER {
 <ins><!-- d3d12-review-inline:begin:resources:TR4-arrayed-packed-mips:0 -->Tiers 2 and 3 support arrayed, mipped tiled resources, but not resources combining more than one array slice with any mipmap having a dimension smaller than the corresponding standard tile extent for its format. Such small levels require packed mips.<!-- d3d12-review-inline:end:resources:TR4-arrayed-packed-mips:0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TR4-arrayed-packed-mips:1 -->Tiled resources Tier 4 includes Tier 3 behavior and permits `64KB_UNDEFINED_SWIZZLE` texture arrays with a full mip chain, including packed levels. This contribution does not apply to `64KB_STANDARD_SWIZZLE`.<!-- d3d12-review-inline:end:resources:TR4-arrayed-packed-mips:1 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:TR4-arrayed-packed-mips:2 -->`D3D12_TILED_RESOURCES_TIER_4` reports support. Drivers report the tier through `D3D12DDI_TILED_RESOURCES_TIER_0117_4` starting at DDI version 0117; reporting the tier requires supporting and testing this resource shape.<!-- d3d12-review-inline:end:resources:TR4-arrayed-packed-mips:2 --></ins>
 
 <a id="tiled-virtual-address"></a>
 
@@ -775,6 +760,8 @@ typedef struct D3D12_FEATURE_DATA_GPU_VIRTUAL_ADDRESS_SUPPORT {
   UINT MaxGPUVirtualAddressBitsPerProcess;
 } D3D12_FEATURE_DATA_GPU_VIRTUAL_ADDRESS_SUPPORT;
 ```
+
+<ins><!-- d3d12-review-inline:begin:resources:R-dimension-units:0:authored:opus-va-bit-counts -->These capability fields report address bit counts, not byte sizes or guarantees that an allocation will succeed.<!-- d3d12-review-inline:end:resources:R-dimension-units:0:authored:opus-va-bit-counts --></ins>
 
 ##### Members
 
@@ -796,7 +783,7 @@ See the enumeration constant D3D12\_FEATURE\_GPU\_VIRTUAL\_ADDRESS\_SUPPORT in t
 
 #### Stencil-containing formats
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.2.5.1:0 -->Formats containing stencil are not supported with Tiled Resources.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.2.5.1:0 --></ins>
+Formats containing stencil are not supported with Tiled Resources.
 
 This includes DXGI_FORMAT_D24_UNORM_S8_UINT (and related formats in the R24G8 family) and DXGI_FORMAT_D32_FLOAT_S8X24_UINT (and related formats in the R32G8X24 family).
 
@@ -810,7 +797,7 @@ as some bindpoints where Views aren't used, such as Vertex Buffer bindings. See 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.4:1 -->If multiple tile coordinates in one or more views are bound to the same memory location, reads and writes from different paths to the same memory will occur in
 a nondeterministic/nonrepeatable order of memory accesses.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.4:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.4:2 -->If all tiles behind a memory access footprint from a shader are mapped to unique tiles, behavior is identical on all implementations to the surface having the same memory contents in a non-tiled fashion.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.4:2 --></ins>
+If all tiles behind a memory access footprint from a shader are mapped to unique tiles, behavior is identical on all implementations to the surface having the same memory contents in a non-tiled fashion.
 
 #### Shader resource views
 
@@ -818,11 +805,13 @@ a nondeterministic/nonrepeatable order of memory accesses.<!-- d3d12-review-inli
 for a breakdown of requirements. The following summarizes Tier 2 and higher read behavior.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.4.1:0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.4.1:1 -->Consider a texture filter operation that reads from a set of texels in an SRV. Texels that fall on non-mapped tiles contribute 0 in all non-missing components of the format, and the
-[default for missing components](formats.md#missing-components)(19.1.3.3), into the overall filter operation
+[default for missing components](formats.md#missing-components), into the overall filter operation
 alongside contributions from mapped texels. The texels are all weighted and combined together independent of whether the data came from mapped or non-mapped tiles.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.4.1:1 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.4.1:2 -->**Compatibility:** Some first generation Tier 2 level hardware does not meet this spec requirement and returns the 0 with defaults described above as the overall filter result if ANY texels (with nonzero weight) fall on non-mapped tiles.
 Other hardware must include all nonzero-weight texels in the filter.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.4.1:2 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:TILED-feedback-owners:0:authored:migration-4a12df88eae9c786-0 -->See [shader mapping status feedback](common-shader-internals.md#mapping-feedback) for the opaque access status, Fully Mapped Check (including zero-weight texels and missing components) and per-sample MinLOD clamp, [min/max reduction filtering](common-shader-internals.md#minmax-filtering) for the reduction rules, and [sampler feedback](common-shader-internals.md#sampler-feedback) for recording sampling usage.<!-- d3d12-review-inline:end:resources:TILED-feedback-owners:0:authored:migration-4a12df88eae9c786-0 --></ins>
 
 #### Unordered access views
 
@@ -831,8 +820,8 @@ for a breakdown of requirements.<!-- d3d12-review-inline:end:resources:TILED-arc
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.4.2:1 -->For accesses to unmapped tiles on Tier 2 and higher (subject to the cache qualification below):<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.4.2:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.4.2:2 -->Shader operations that read from a non-mapped tile in a UAV return 0 in all non-missing components of the format, and the
-[default for missing components](formats.md#missing-components)(19.1.3.3).<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.4.2:2 --></ins>
+Shader operations that read from a non-mapped tile in a UAV return 0 in all non-missing components of the format, and the
+[default for missing components](formats.md#missing-components).
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.4.2:3 -->Shader operations that attempt to write to a non-mapped tile cause nothing to be written to the non-mapped area (while writes to mapped area
 proceed). This ideal definition for write handling is not required by Tier 2 - writes to non-mapped tiles may end up in a cache that subsequent reads could pick up.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.4.2:3 --></ins>
@@ -856,10 +845,8 @@ for a breakdown of requirements.<!-- d3d12-review-inline:end:resources:TILED-arc
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.4.3.2:2 -->For accesses to unmapped tiles on Tier 2 and higher (subject to the cache qualification below):<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.4.3.2:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.4.3.2:3 -->Reads from unmapped tiles in RenderTargetViews return 0 in all non-missing components of the format, and the [default for missing components](formats.md#missing-components)(19.1.3.3).
+<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.4.3.2:3 -->Reads from unmapped tiles in RenderTargetViews return 0 in all non-missing components of the format, and the [default for missing components](formats.md#missing-components).
 Writes to unmapped tiles in RenderTargetViews are dropped. This ideal definition for write handling is not required - writes to non-mapped tiles may end up in a cache that subsequent reads could pick up.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.4.3.2:3 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:TILED-feedback-owners:0:authored:migration-4a12df88eae9c786-0 -->[Shader mapping status feedback](common-shader-internals.md#mapping-feedback) defines the opaque access status, Fully Mapped Check (including zero-weight texels and missing components), and per-sample MinLOD clamp. [Min/max reduction filtering](common-shader-internals.md#minmax-filtering) owns the reduction rules. [Sampler feedback](common-shader-internals.md#sampler-feedback) records sampling usage and is not a tile mapping operation.<!-- d3d12-review-inline:end:resources:TILED-feedback-owners:0:authored:migration-4a12df88eae9c786-0 --></ins>
 
 <a id="tiled-data-compatibility"></a>
 
@@ -875,7 +862,7 @@ unless the formats are in the same format family (have the same typeless parent 
 where bleeding data from one format aliasing to another is well defined: A tile that completely contains 0 for all its bits can be used with any format that interprets those memory contents as 0 (regardless of memory
 layout). So a tile could be cleared to 0x00 with the format R8_UNORM and then used with a format like R32G32_FLOAT and it would appear the contents are still (0.0f,0.0f).<!-- d3d12-review-inline:end:resources:TILED-shared-format-family-baseline:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-shared-format-family-baseline:1 -->The format family and all-zero cases above are supplemented by the specific BC/uncompressed and packed/nonpacked solid-color compatibility cases below. All data inheritance remains subject to the mapping-local metadata and aliasing requirements in this section.<!-- d3d12-review-inline:end:resources:TILED-shared-format-family-baseline:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-shared-format-family-baseline:1 -->The format family and all-zero cases above, and the BC/uncompressed and packed/nonpacked solid-color compatibility cases below, are all subject to the mapping-local metadata and aliasing requirements in this section.<!-- d3d12-review-inline:end:resources:TILED-shared-format-family-baseline:1 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.4.4.7:0 -->Suppose multiple Tiled Resources have mappings to the same heap locations and each resource is used to access the same data. This is only valid if problems with hardware
 optimization structures are avoided, the applicable D3D12 aliasing synchronization is performed and the Tiled Resources are compatible with each other. The latter is described here (in terms of what it means
@@ -895,8 +882,8 @@ Sharing between packed and non-packed tiles is fine if the formats are compatibl
 <ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.4.4.7:3 -->Finally, if nothing is common about the Resources sharing tile mappings except that none have RenderTarget/DepthStencil resource flags, then only memory filled with 0 can
 be shared safely - it will appear as whatever 0 decodes to for the definition of the given Resource format (typically just 0).<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.4.4.7:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.4.4.3:0 -->Suppose an Unordered Access View on a Tiled Resource has duplicate tile mappings in its area or with other resources bound to the pipeline. Ordering of accesses to these duplicated tiles is
-undefined if performed by different threads, just as any ordering of memory access to UAVs in general is unordered.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.4.4.3:0 --></ins>
+Suppose an Unordered Access View on a Tiled Resource has duplicate tile mappings in its area or with other resources bound to the pipeline. Ordering of accesses to these duplicated tiles is
+undefined if performed by different threads, just as any ordering of memory access to UAVs in general is unordered.
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.4.4.4:0 -->If a Tiled Resource's tile mappings have changed or content in mapped heap tiles have changed via another Tiled Resource's mappings,
 and the Tiled Resource is going to be rendered via RenderTargetView or DepthStencilView, the application must initialize the affected mapping-local metadata before rendering, using the applicable [enhanced aliasing and initialization contract](synchronization.md#enhanced-aliasing) or [legacy aliasing path](synchronization.md#legacy-aliasing). The enhanced contract permits the specified full-subresource discard path, as well as the applicable clear/copy initialization paths, subject to that owner's synchronization and discard conditions. Failure to perform the required initialization results in hardware optimization structures for the given
@@ -923,9 +910,9 @@ the [D3D12 aliasing synchronization](synchronization.md#enhanced-aliasing) must 
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.4.4.6:0 -->If an area in a Tiled Resource is being rendered to and within the render area multiple tiles are mapped to the same heap location, rendering results are undefined on those tiles.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.4.4.6:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-sharing-synchronization:1:authored:migration-931075b2e81f1332-0 -->For reserved textures, the legacy state compatibility requirement for data inheritance is `COMMON`. Per-tile inheritance through either `64KB_UNDEFINED_SWIZZLE` or `64KB_STANDARD_SWIZZLE` also requires `COMMON`. The standard swizzle inheritance case does not extend the permitted layouts of reserved texture creation; tiled layout and reserved creation are distinct properties. Render target/depth-stencil textures cannot use ordinary per-tile aliasing to inherit their optimization metadata. These restrictions are additional to format/dimension compatibility, not overridden by it.<!-- d3d12-review-inline:end:resources:TILED-sharing-synchronization:1:authored:migration-931075b2e81f1332-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-sharing-synchronization:1:authored:migration-931075b2e81f1332-0 -->For reserved textures, the legacy state compatibility requirement for data inheritance is `COMMON`. Per-tile inheritance through either `64KB_UNDEFINED_SWIZZLE` or `64KB_STANDARD_SWIZZLE` also requires `COMMON`. Render target/depth-stencil textures cannot use ordinary per-tile aliasing to inherit their optimization metadata. These requirements apply in addition to format and dimension compatibility.<!-- d3d12-review-inline:end:resources:TILED-sharing-synchronization:1:authored:migration-931075b2e81f1332-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-sharing-synchronization:2:authored:migration-cc9fbc87d6488b55-0 -->[Copy overlap and duplicate-destination rules](resource-operations.md#copy-self-and-alias) apply to content copies. The temporary source guarantee for overlapping `CopyTileMappings` copies mappings, not bytes, and grants no overlapping-content-copy permission.<!-- d3d12-review-inline:end:resources:TILED-sharing-synchronization:2:authored:migration-cc9fbc87d6488b55-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-sharing-synchronization:2:authored:migration-cc9fbc87d6488b55-0 -->See [copy overlap and duplicate-destination rules](resource-operations.md#copy-self-and-alias) for content copies. The overlapping-region guarantee of [`CopyTileMappings`](#copy-tile-mappings) applies to copied mappings, not tile contents, and does not permit overlapping content copies.<!-- d3d12-review-inline:end:resources:TILED-sharing-synchronization:2:authored:migration-cc9fbc87d6488b55-0 --></ins>
 
 <a id="reserved-resource-apis"></a>
 
@@ -979,7 +966,7 @@ When you use [D3D12_RESOURCE_DIMENSION_BUFFER](resources.md#resource-dimensions)
 
 Type: **REFIID**
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource-contract:14 -->A reference to the globally unique identifier (**GUID**) of the resource interface to return in *ppvResource*. See the operation requirements.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource-contract:14 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource-contract:14 -->A reference to the globally unique identifier (**GUID**) of the resource interface to return in *ppvResource*.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource-contract:14 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource-contract:15 -->While *riid* is most commonly the **GUID** of [ID3D12Resource](#resource-storage), it may be the **GUID** of any interface. If the resource object doesn't support the interface for this **GUID**, then creation fails with **E\_NOINTERFACE**.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource-contract:15 --></ins>
 
@@ -1011,7 +998,9 @@ You need to map the resource to physical memory (that is, to a heap) using [Copy
 
 These resource types can only be created when the adapter supports tiled resource tier 1 or greater. The tiled resource tier defines the behavior of accessing a resource that is not mapped to a heap.
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-reserved-creation-validation:0:authored:migration-ee1db96a87a0bf2e-0 -->The [shared creation validation](#creation-contracts), [optimized clear value rules](#optimized-clear-value), [initial state/layout rules](#initial-layout-and-format-lists) and [protected creation requirements](#protected-creation) also apply to the versioned reserved resource methods. The resource must satisfy its dimension, format, layout, sample and tier restrictions. Creation does not initialize texture contents or establish physical backing.<!-- d3d12-review-inline:end:resources:TILED-reserved-creation-validation:0:authored:migration-ee1db96a87a0bf2e-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-reserved-creation-validation:0:authored:migration-ee1db96a87a0bf2e-0 -->Reserved textures, including those created by `CreateReservedResource1` and `CreateReservedResource2`, must use `D3D12_TEXTURE_LAYOUT_64KB_UNDEFINED_SWIZZLE`. Texture1D reserved resources are not supported. Creation does not initialize texture contents.<!-- d3d12-review-inline:end:resources:TILED-reserved-creation-validation:0:authored:migration-ee1db96a87a0bf2e-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:TILED-reserved-creation-validation:1:authored:opus-reserved-routes -->See [texture layouts](#texture-layout), [resource descriptions](#resource-description), [tiled format support](formats.md#support), [resource flags](#resource-flags) and [tiers](#tiled-tiers) for the other restrictions on reserved resources. See [creation contracts](#creation-contracts), [optimized clear values](#optimized-clear-value), [initial state/layout rules](#initial-layout-and-format-lists) and [protected creation](#protected-creation) for the common creation requirements of all three reserved resource methods.<!-- d3d12-review-inline:end:resources:TILED-reserved-creation-validation:1:authored:opus-reserved-routes --></ins>
 
 <a id="create-reserved-resource1"></a>
 
@@ -1070,7 +1059,7 @@ An optional pointer to an object that represents a session for content protectio
 
 Type: **REFIID**
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource1-contract:17 -->A reference to the globally unique identifier (**GUID**) of the resource interface to return in *ppvResource*. See the operation requirements.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource1-contract:17 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource1-contract:17 -->A reference to the globally unique identifier (**GUID**) of the resource interface to return in *ppvResource*.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource1-contract:17 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource1-contract:18 -->While *riid* is most commonly the **GUID** of [ID3D12Resource](#resource-storage), it may be the **GUID** of any interface. If the resource object doesn't support the interface for this **GUID**, then creation fails with **E\_NOINTERFACE**.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource1-contract:18 --></ins>
 
@@ -1165,7 +1154,7 @@ A contiguous array of [DXGI_FORMAT](formats.md#dxgi-format) structures that this
 
 Type: **REFIID**
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource2-contract:20 -->A reference to the globally unique identifier (**GUID**) of the resource interface to return in *ppvResource*. See the operation requirements.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource2-contract:20 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource2-contract:20 -->A reference to the globally unique identifier (**GUID**) of the resource interface to return in *ppvResource*.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource2-contract:20 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource2-contract:21 -->While *riid* is most commonly the **GUID** of [ID3D12Resource](#resource-storage), it may be the **GUID** of any interface. If the resource object doesn't support the interface for this **GUID**, then creation fails with **E\_NOINTERFACE**.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource2-contract:21 --></ins>
 
@@ -1191,7 +1180,7 @@ See [Direct3D 12 return codes](devices-and-capabilities.md#api-result-codes) for
 
 #### Operation requirements
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource2-contract:32 -->The [CreateReservedResource](resources.md#create-reserved-resource) backing and tier requirements also apply.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource2-contract:32 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource2-contract:32 -->See [CreateReservedResource](resources.md#create-reserved-resource) for the backing, layout and tier requirements.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource2-contract:32 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-reserved2-context:0:authored:migration-643dd2066874abe3-0 -->It uses the [enhanced barrier creation layout](#initial-layout-and-format-lists); buffers use `D3D12_BARRIER_LAYOUT_UNDEFINED`. Enhanced barriers must be supported. The [castable format creation contract](formats.md#casting) defines `NumCastableFormats`, `pCastableFormats`, relaxed casting support and validation. A protected reserved resource can map only heap tiles created with the same protected resource session, as for `CreateReservedResource1`.<!-- d3d12-review-inline:end:resources:TILED-reserved2-context:0:authored:migration-643dd2066874abe3-0 --></ins>
 
@@ -1269,13 +1258,13 @@ None
 
 To estimate the total resource size of textures needed when calculating heap sizes and calling [CreatePlacedResource](resources.md#create-placed-resource), use [GetResourceAllocationInfo](resources.md#allocation-info) instead of **GetResourceTiling**. **GetResourceTiling** cannot be used for this.
 
-For more information on tiled resources, refer to [Volume Tiled Resources](#tiled-resources).
+For more information on tiled resources, refer to <ins><!-- d3d12-review-inline:begin:resources:TILED-GetResourceTiling-contract:22:modified:opus-tiled-label -->[reserved resource tile organization](#tiled-resources)<!-- d3d12-review-inline:end:resources:TILED-GetResourceTiling-contract:22:modified:opus-tiled-label --></ins>.
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-tiling-counts:0:authored:migration-8859dc1d83bc0aee-0 -->The independent summary outputs may be omitted. If `pNumSubresourceTilings` is null, no subresource tiling array is requested. Otherwise the input count is the capacity of `pSubresourceTilingsForNonPackedMips`. The returned count is clamped to the subresources available starting at `FirstSubresourceTilingToGet`. With an input count of zero, the first-subresource parameter is ignored and no array entries are written. A nonzero request requires a valid first subresource and sufficient output storage.<!-- d3d12-review-inline:end:resources:TILED-tiling-counts:0:authored:migration-8859dc1d83bc0aee-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-tiling-counts:1:authored:migration-b7ad3429b6ce439a-0 -->Tile shape dimensions are independent of resource dimensions: even if a nonpacked subresource is smaller than a tile, the full tile shape is reported. For MSAA surfaces, those dimensions count pixels, not individual samples. For untyped buffers, one texel in the shape description is one byte.<!-- d3d12-review-inline:end:resources:TILED-tiling-counts:1:authored:migration-b7ad3429b6ce439a-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-tiling-counts:2:authored:migration-fce94d1b9bf0e105-0 -->The per-array-slice tile stride is the total resource tile count divided by the array size. `NumStandardMips` and `NumPackedMips` describe one slice. `NumTilesForPackedMips` is also per slice. The first slice's `StartTileIndexInOverallResource` locates the packed tail; add the slice tile stride for later slices. Packed subresource entries use zero dimensions and `D3D12_PACKED_TILE` (`0xffffffff`), not an ordinary start index.<!-- d3d12-review-inline:end:resources:TILED-tiling-counts:2:authored:migration-fce94d1b9bf0e105-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-tiling-counts:2:authored:migration-fce94d1b9bf0e105-0 -->For arrays, `NumStandardMips` describes one array slice, as do the [packed mip counts](#d3d12-packed-mip-info).<!-- d3d12-review-inline:end:resources:TILED-tiling-counts:2:authored:migration-fce94d1b9bf0e105-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-tiling-counts:3:authored:migration-0480516084204a82-0 -->This method reports tile organization, not the current physical page mappings. Applications track those mappings themselves; no mapping readback operation is defined by this query.<!-- d3d12-review-inline:end:resources:TILED-tiling-counts:3:authored:migration-0480516084204a82-0 --></ins>
 
@@ -1359,14 +1348,14 @@ In a single call to **UpdateTileMappings**, you can map one or more ranges of re
 You can organize the parameters of **UpdateTileMappings** in these ways to perform an update:
 
 - **Reserved resource whose mappings are updated.** Mappings start off all NULL when a resource is initially created.
-- <ins><!-- d3d12-review-inline:begin:resources:TILED-UpdateTileMappings-contract:27 -->**Set of tile regions on the reserved resource whose mappings are updated.** You can make one **UpdateTileMappings** call to update many mappings or multiple calls with a bit more API call overhead as well if that is more convenient.<!-- d3d12-review-inline:end:resources:TILED-UpdateTileMappings-contract:27 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:TILED-UpdateTileMappings-contract:27:occurrence:d09935a8ea3b-0 -->**Set of tile regions on the reserved resource whose mappings are updated.** You can make one **UpdateTileMappings** call to update many mappings or multiple calls with a bit more API call overhead as well if that is more convenient.<!-- d3d12-review-inline:end:resources:TILED-UpdateTileMappings-contract:27:occurrence:d09935a8ea3b-0 --></ins>
     - *NumResourceRegions* specifies how many regions there are.
     - *pResourceRegionStartCoordinates* and *pResourceRegionSizes* are each arrays that identify the start location and extent of each region. If *NumResourceRegions* is 1, for convenience either or both of the arrays that describe the regions can be NULL. NULL for *pResourceRegionStartCoordinates* means the start coordinate is all 0s, and NULL for both arrays identifies a default region that is the full set of tiles for the entire reserved resource, including all mipmaps, array slices, or both.
     - If *pResourceRegionStartCoordinates* isn't NULL and *pResourceRegionSizes* is NULL, the region size defaults to 1 tile for all regions. This makes it easy to define mappings for a set of individual tiles each at disparate locations by providing an array of locations in *pResourceRegionStartCoordinates* without having to send an array of *pResourceRegionSizes* all set to 1.
 
-The updates are applied from first region to last; so, if regions overlap in a single call, the updates later in the list overwrite the areas that overlap with previous updates.
+    The updates are applied from first region to last; so, if regions overlap in a single call, the updates later in the list overwrite the areas that overlap with previous updates.
 - **Heap that provides memory where tile mappings can go.** If **UpdateTileMappings** only defines NULL mappings, you don't need to specify a heap.
-- <ins><!-- d3d12-review-inline:begin:resources:TILED-UpdateTileMappings-contract:27 -->**Set of tile ranges where mappings are going.** Each given tile range can specify one of a few types of ranges: a range of tiles in a heap (default), a count of tiles in the reserved resource to map to a single tile in a heap (sharing the tile), a count of tile mappings in the reserved resource to skip and leave as they are, or a count of tiles in the heap to map to NULL. *NumRanges* specifies the number of tile ranges, where the total tiles identified across all ranges must match the total number of tiles in the tile regions from the previously described reserved resource. Mappings are defined by iterating through the tiles in the tile regions in sequential order - x then y then z order for box regions - while walking through the set of tile ranges in sequential order. The breakdown of tile regions doesn't have to line up with the breakdown of tile ranges, but the total number of tiles on both sides must be equal so that each reserved resource tile specified has a mapping specified.<!-- d3d12-review-inline:end:resources:TILED-UpdateTileMappings-contract:27 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:TILED-UpdateTileMappings-contract:27:occurrence:271477707924-1 -->**Set of tile ranges where mappings are going.** Each given tile range can specify one of a few types of ranges: a range of tiles in a heap (default), a count of tiles in the reserved resource to map to a single tile in a heap (sharing the tile), a count of tile mappings in the reserved resource to skip and leave as they are, or a count of tiles in the heap to map to NULL. *NumRanges* specifies the number of tile ranges, where the total tiles identified across all ranges must match the total number of tiles in the tile regions from the previously described reserved resource. Mappings are defined by iterating through the tiles in the tile regions in sequential order - x then y then z order for box regions - while walking through the set of tile ranges in sequential order. The breakdown of tile regions doesn't have to line up with the breakdown of tile ranges, but the total number of tiles on both sides must be equal so that each reserved resource tile specified has a mapping specified.<!-- d3d12-review-inline:end:resources:TILED-UpdateTileMappings-contract:27:occurrence:271477707924-1 --></ins>
     *pRangeFlags*, *pHeapRangeStartOffsets*, and *pRangeTileCounts* are all arrays, of size *NumRanges*, that describe the tile ranges. If *pRangeFlags* is NULL, all ranges are sequential tiles in the heap; otherwise, for each range i, *pRangeFlags[i]* identifies how the mappings in that range of tiles work:
 
     - If *pRangeFlags[i]* is **D3D12\_TILE\_RANGE\_FLAG\_NONE**, that range defines sequential tiles in the heap, with the number of tiles being *pRangeTileCounts[i]* and the starting location *pHeapRangeStartOffsets[i]*. If *NumRanges* is 1, *pRangeTileCounts* can be NULL and defaults to the total number of tiles specified by all the tile regions.
@@ -1374,18 +1363,11 @@ The updates are applied from first region to last; so, if regions overlap in a s
     - If *pRangeFlags[i]* is **D3D12\_TILE\_RANGE\_FLAG\_NULL**, *pRangeTileCounts[i]* specifies how many tiles from the tile regions to map to NULL. If *NumRanges* is 1, *pRangeTileCounts* can be NULL and defaults to the total number of tiles specified by all the tile regions. *pHeapRangeStartOffsets[i]* is ignored for NULL mappings.
     - If *pRangeFlags[i]* is **D3D12\_TILE\_RANGE\_FLAG\_SKIP**, *pRangeTileCounts[i]* specifies how many tiles from the tile regions to skip over and leave existing mappings unchanged for. This can be useful if a tile region conveniently bounds an area of tile mappings to update except with some exceptions that need to be left the same as whatever they were mapped to before. *pHeapRangeStartOffsets[i]* is ignored for SKIP mappings.
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-UpdateTileMappings-contract:28 -->Reserved resources must follow the same rules for tile aliasing, initialization, and data inheritance as placed resources. See [CreatePlacedResource](resources.md#create-placed-resource) for more details.
-Here are some examples of common **UpdateTileMappings** cases:<!-- d3d12-review-inline:end:resources:TILED-UpdateTileMappings-contract:28 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-UpdateTileMappings-contract:28 -->Reserved resources must follow the same rules for tile aliasing, initialization, and data inheritance as placed resources. See [CreatePlacedResource](resources.md#create-placed-resource) for more details.<!-- d3d12-review-inline:end:resources:TILED-UpdateTileMappings-contract:28 --></ins>
 
 #### Examples
 
-The examples reference the following structures and enums:
-
-- <ins><!-- d3d12-review-inline:begin:resources:TILED-UpdateTileMappings-contract:31 -->[D3D12_TILED_RESOURCE_COORDINATE](resources.md#d3d12-tiled-resource-coordinate)<!-- d3d12-review-inline:end:resources:TILED-UpdateTileMappings-contract:31 --></ins>
-- [D3D12_TILE_REGION_SIZE](resources.md#d3d12-tile-region-size)
-- [D3D12_TILE_RANGE_FLAGS](resources.md#d3d12-tile-range-flags)
-
- Clearing an entire surface's mappings to NULL
+Clearing an entire surface's mappings to NULL:
 
 ```cpp
 // - NULL for pResourceRegionStartCoordinates and pResourceRegionSizes defaults to the entire resource
@@ -1551,13 +1533,13 @@ HeapRangeStartOffsets,RangeTileCounts,D3D12_TILE_MAPPING_FLAG_NONE);
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-mapping-runtime:2:authored:migration-f101d4b15f01e85f-0 -->The runtime consumes the CPU coordinate, region, flag, offset and count arrays during the call. Their storage need not remain valid until GPU execution. Resource and heap object lifetimes and residency extend through the GPU work that references them under the [execution lifetime contract](execution.md#lifetime).<!-- d3d12-review-inline:end:resources:TILED-mapping-runtime:2:authored:migration-f101d4b15f01e85f-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-mapping-runtime:3:authored:migration-499c7bd43c172ef6-0 -->`UpdateTileMappings` and `CopyTileMappings` are supported on `D3D12_COMMAND_LIST_TYPE_DIRECT`, `D3D12_COMMAND_LIST_TYPE_COMPUTE` and `D3D12_COMMAND_LIST_TYPE_COPY` queues. They are not supported on video queues. Mapping changes are queue operations, not command list recordings. They are ordered with operations submitted to the same queue. Other queues require the [common queue synchronization contract](synchronization.md#queue-compatibility). [CPU free-threading](execution.md#threading) and [runtime/DDI queue lock serialization](execution.md#driver-responsibilities) do not imply GPU completion.<!-- d3d12-review-inline:end:resources:TILED-mapping-runtime:3:authored:migration-499c7bd43c172ef6-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-mapping-runtime:3:authored:migration-499c7bd43c172ef6-0 -->`UpdateTileMappings` and `CopyTileMappings` are supported on `D3D12_COMMAND_LIST_TYPE_DIRECT`, `D3D12_COMMAND_LIST_TYPE_COMPUTE` and `D3D12_COMMAND_LIST_TYPE_COPY` queues. They are not supported on video queues. Mapping changes are queue operations, not command list recordings. They are ordered with operations submitted to the same queue. Access from other queues requires [queue synchronization](synchronization.md#queue-compatibility).<!-- d3d12-review-inline:end:resources:TILED-mapping-runtime:3:authored:migration-499c7bd43c172ef6-0 --></ins>
 
 #### Debug layer
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-mapping-runtime:5:authored:migration-8aecd354815bfa61-0 -->The checked layer diagnoses zero `NumResourceRegions`, zero `NumRanges`, zero `NumTiles` in an explicitly supplied region, mismatched stream totals, invalid range flags and out-of-bounds resource/heap ranges. This is not a promise that every retail call is sanitized or returns an error result.<!-- d3d12-review-inline:end:resources:TILED-mapping-runtime:5:authored:migration-8aecd354815bfa61-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-mapping-runtime:5:authored:migration-8aecd354815bfa61-0 -->The debug layer diagnoses zero `NumResourceRegions`, zero `NumRanges`, zero `NumTiles` in an explicitly supplied region, mismatched stream totals, invalid range flags and out-of-bounds resource/heap ranges.<!-- d3d12-review-inline:end:resources:TILED-mapping-runtime:5:authored:migration-8aecd354815bfa61-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-mapping-runtime:6:authored:migration-e5609449534abdeb-0 -->**Diagnostic compatibility note:** The selected checked-layer implementation rejects a null `pRangeTileCounts` when `NumRanges` is greater than one. That diagnostic is stricter than the supported one-tile-per-range default and does not make this usage invalid.<!-- d3d12-review-inline:end:resources:TILED-mapping-runtime:6:authored:migration-e5609449534abdeb-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-mapping-runtime:6:authored:migration-e5609449534abdeb-0 -->**Diagnostic compatibility note:** The selected debug layer implementation rejects a null `pRangeTileCounts` when `NumRanges` is greater than one. That diagnostic is stricter than the supported one-tile-per-range default and does not make this usage invalid.<!-- d3d12-review-inline:end:resources:TILED-mapping-runtime:6:authored:migration-e5609449534abdeb-0 --></ins>
 
 <a id="copy-tile-mappings"></a>
 
@@ -1618,202 +1600,10 @@ Use **CopyTileMappings** to copy the tile mappings from one reserved resource to
 
 The destination and the source regions must each entirely fit in their resource or behavior is undefined and the debug layer will emit an error.
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-mapping-copy-context:0:authored:migration-46d20d2e90bfff19-0 -->`pRegionSize` describes both regions using the [shared traversal rules](#tile-types). NULL mappings are copied as mappings; no tile contents are transferred. Existing destination mappings outside the region are unchanged, even when source mappings refer to a different heap. The supported flags and CPU/GPU lifetime/queue order requirements are the same as for [UpdateTileMappings](#update-tile-mappings).<!-- d3d12-review-inline:end:resources:TILED-mapping-copy-context:0:authored:migration-46d20d2e90bfff19-0 --></ins>
-
-<a id="tiled-driver"></a>
-
-## Tiled resource driver contract
-
-<ins><!-- d3d12-review-inline:begin:resources:TILED-ddi-introduction:0:authored:migration-29da2cfefc9db32d-0 -->`GetMipPacking` reports the packed mip count and packed tile count. The runtime combines them with standard tile shapes and subresource traversal to answer GetResourceTiling.<!-- d3d12-review-inline:end:resources:TILED-ddi-introduction:0:authored:migration-29da2cfefc9db32d-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:TILED-ddi-introduction:1:authored:migration-cb89ff87ea0de2dd-0 -->Reserved creation uses the common heap/resource DDIs without allocating physical heap storage.<!-- d3d12-review-inline:end:resources:TILED-ddi-introduction:1:authored:migration-cb89ff87ea0de2dd-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:TILED-ddi-introduction:2:authored:migration-72cc9109249fd04b-0 -->For UpdateTileMappings, the runtime resolves a missing API coordinate to the origin and the both-arrays-null whole-resource default to an explicit region size. A null DDI region size array means single-tile regions. For one heap range, the runtime resolves a null API range count to the total selected resource tile count. For multiple ranges, a null DDI range count array means one tile per range.<!-- d3d12-review-inline:end:resources:TILED-ddi-introduction:2:authored:migration-72cc9109249fd04b-0 --></ins>
-
-<a id="tile-driver-roles"></a>
-
-### Logical API associations and driver parameters
-
-<!-- d3d12-review-alert:begin:resources:TD-associations:0:authored:migration-a8acec70c0564b85-0 -->
-
-> [!WARNING]
-> **Authored synthesis - human review pending.**
->
-> | Driver entry | API operation / query use |
-> |---|---|
-> | `PFND3D12DDI_UPDATETILEMAPPINGS` | [UpdateTileMappings](#update-tile-mappings) |
-> | `PFND3D12DDI_COPYTILEMAPPINGS` | [CopyTileMappings](#copy-tile-mappings) |
-> | `PFND3D12DDI_GETMIPPACKING` | Packed mip and tile counts used by [GetResourceTiling](#get-resource-tiling) |
-
-<!-- d3d12-review-alert:end:resources:TD-associations:0:authored:migration-a8acec70c0564b85-0 -->
-
-<ins><!-- d3d12-review-inline:begin:resources:TD-associations:1:authored:migration-b22edc3d3e8e42c4-0 -->The video queue table contains mapping slots, but this does not add application tile mapping support on video queues.<!-- d3d12-review-inline:end:resources:TD-associations:1:authored:migration-b22edc3d3e8e42c4-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:TD-lifetime-errors:0:authored:migration-f003bf3727096fe9-0 -->The driver captures the CPU coordinate, region and range arrays needed for later queue processing before returning.<!-- d3d12-review-inline:end:resources:TD-lifetime-errors:0:authored:migration-f003bf3727096fe9-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:TD-mip-query:1:authored:migration-12d44220fb5a8dfe-0 -->The runtime can cache GetMipPacking results. GetResourceTiling need not issue this DDI on every call.<!-- d3d12-review-inline:end:resources:TD-mip-query:1:authored:migration-12d44220fb5a8dfe-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.5.4:0 -->The mapping update and mapping copy driver DDIs use the following error reporting:<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.5.4:0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.5.4:1 -->Errors are reported via the call back `pfnSetErrorCb`.  Valid errors are out of memory and device removed.  On out of memory
-(possible if memory allocation for page table storage fails), tile mappings are left in their original state before the call.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.5.4:1 --></ins>
-
-
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.5.4:2 -->For a given tiled resource, `PFND3D12DDI_GETMIPPACKING` returns how many mips
-are packed and how many tiles are needed to store all the packed mips.
-Packed mips include cases where multiple small mips share tile(s) and
-also mips for which a given device cannot use standard tile shapes.  It is possible
-for an entire resource to be considered packed.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.5.4:2 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.5.4:3 -->Applications are not told the tile shapes/layout for packed mips and must simply map
-all or none of the packed tiles if any of the mipmaps are to be accessed.
-Otherwise the observed mapping of individual pixels accessed will be undefined - IHV specific.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.5.4:3 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.5.4:4 -->For array surfaces, the returned values are the counts for a single array slice,
-given the tile breakdown is identical for the mipmaps of each array slice.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.5.4:4 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.5.4:5 -->On Tier 2 and higher, mipmaps whose pixel dimensions fully fill at least one standard shaped tile in all
-dimensions are not allowed to be considered part of the set of packed mips, otherwise
-the runtime will remove the device on an invalid driver.
-One example of dimensions that a device can validly lump into
-the packed tiles (meaning the IHV can use its own custom tile breakdown) is
-a mip that is at least one tile wide but less than a tile high.  Ideally though,
-a device would stick with the standard tile breakdown for this case (so the application can
-manage the tiles in a standard way).  If a device does need to use a custom tiling,
-the application is not told what the tile breakdown is (only how many tiles are involved
-in the packing overall), and thus loses some freedom.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.5.4:5 --></ins>
-
-<a id="tiled-driver-types"></a>
-
-### Shared driver tile coordinates and regions
-
-```cpp
-typedef struct D3D12DDI_TILED_RESOURCE_COORDINATE
-{
-    // Coordinate values below index tiles (not pixels or bytes).
-    UINT X; // Used for buffer, 1D, 2D, 3D
-    UINT Y; // Used for 2D, 3D
-    UINT Z; // Used for 3D
-    UINT Subresource; // indexes into mips, arrays. Used for 1D, 2D, 3D
-    // For mipmaps that are packed into a single tile, any subresource
-    // value that indicates any of the packed mips all refer to the same tile.
-} D3D12DDI_TILED_RESOURCE_COORDINATE;
-```
-
-```cpp
-typedef struct D3D12DDI_TILE_REGION_SIZE
-{
-    UINT NumTiles;
-    BOOL UseBox;  // TRUE: Uses width/height/depth parameters below to define the region.
-                  //   Width*Height*Depth must match NumTiles above.  (While
-                  //   this looks like redundant information, the application likely has to know
-                  //   how many tiles are involved anyway.)
-                  //   The downside to using the box parameters is that one update region cannot
-                  //   span mipmaps (though it can span array slices via the depth parameter).
-                  //
-                  // FALSE: Ignores width/height/depth parameters - NumTiles just traverses tiles in
-                  //   the resource linearly across x, then y, then z (as applicable) then spilling over
-                  //   mips/arrays in subresource order.  Useful for just mapping an entire resource
-                  //   at once.
-                  //
-                  // In either case, the starting location for the region within the resource
-                  // is specified as a separate parameter outside this struct.
-
-    UINT Width;   // Used for buffer, 1D, 2D, 3D
-    UINT16 Height; // Used for 2D, 3D
-    UINT16 Depth; // For 3D or arrays.  For arrays, advancing in depth skips to next slice of same mip size.
-} D3D12DDI_TILE_REGION_SIZE;
-```
-
-<a id="tiled-driver-callbacks"></a>
-
-### Mapping, mip packing and capability DDIs
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_UPDATETILEMAPPINGS )( D3D12DDI_HCOMMANDQUEUE, D3D12DDI_HRESOURCE,
-    UINT NumTiledResourceRegions,
-    _In_reads_(NumTiledResourceRegions) const D3D12DDI_TILED_RESOURCE_COORDINATE* pResourceRegionStartCoords,
-    _In_reads_opt_(NumTiledResourceRegions) const D3D12DDI_TILE_REGION_SIZE* pResourceRegionSizes,
-    D3D12DDI_HHEAP, UINT NumRanges,
-    _In_reads_opt_(NumRanges) const D3D12DDI_TILE_RANGE_FLAGS*,
-    _In_reads_opt_(NumRanges) const UINT* pHeapStartOffsets,
-    _In_reads_opt_(NumRanges) const UINT* pRangeTileCounts,
-    D3D12DDI_TILE_MAPPING_FLAGS );
-```
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_COPYTILEMAPPINGS )( D3D12DDI_HCOMMANDQUEUE,
-    D3D12DDI_HRESOURCE hDstResource, _In_ const D3D12DDI_TILED_RESOURCE_COORDINATE* pDstRegionStartCoord,
-    D3D12DDI_HRESOURCE hSrcResource, _In_ const D3D12DDI_TILED_RESOURCE_COORDINATE* pSrcRegionStartCoord,
-    _In_ const D3D12DDI_TILE_REGION_SIZE*, D3D12DDI_TILE_MAPPING_FLAGS );
-```
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_GETMIPPACKING )(
-    D3D12DDI_HDEVICE hDevice,
-    D3D12DDI_HRESOURCE hTiledResource,
-    _Out_ UINT* pNumPackedMips,
-    _Out_ UINT* pNumTilesForPackedMips
-);
-```
-
-```cpp
-typedef enum D3D12DDI_TILED_RESOURCES_TIER
-{
-    D3D12DDI_TILED_RESOURCES_TIER_NOT_SUPPORTED  = 0,
-    D3D12DDI_TILED_RESOURCES_TIER_1              = 1,
-    D3D12DDI_TILED_RESOURCES_TIER_2              = 2,
-    D3D12DDI_TILED_RESOURCES_TIER_3              = 3,
-    D3D12DDI_TILED_RESOURCES_TIER_0117_4         = 4,
-} D3D12DDI_TILED_RESOURCES_TIER;
-```
-
-```cpp
-typedef enum D3D12DDI_TILE_MAPPING_FLAGS
-{
-    D3D12DDI_TILE_MAPPING_FLAG_NONE = 0x0, // Constant for no flags
-    D3D12DDI_TILE_MAPPING_FLAG_NO_HAZARD = 0x1,
-} D3D12DDI_TILE_MAPPING_FLAGS;
-```
-
-```cpp
-typedef enum D3D12DDI_TILE_RANGE_FLAGS
-{
-    D3D12DDI_TILE_RANGE_FLAG_NONE = 0x0, // Constant for no flags
-    D3D12DDI_TILE_RANGE_FLAG_NULL = 0x1,
-    D3D12DDI_TILE_RANGE_FLAG_SKIP = 0x2,
-    D3D12DDI_TILE_RANGE_FLAG_REUSE_SINGLE_TILE = 0x4,
-} D3D12DDI_TILE_RANGE_FLAGS;
-```
-
-<ins><!-- d3d12-review-inline:begin:resources:N-shared-driver-options:0:authored:migration-b17d56898e960c5c-0 -->The shared driver options payload, including `TiledResourcesTier`, is [`D3D12DDI_D3D12_OPTIONS_DATA_0003`](devices-and-capabilities.md#d3d12ddi_d3d12_options_data_0003).<!-- d3d12-review-inline:end:resources:N-shared-driver-options:0:authored:migration-b17d56898e960c5c-0 --></ins>
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
-    D3D12DDI_HDEVICE hDevice,
-    DXGI_FORMAT Format,
-    UINT SampleCount,
-    D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAGS Flags,
-    _Out_ UINT* pNumQualityLevels
-);
-```
-
-```cpp
-typedef enum D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAGS
-{
-    D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAG_NONE            = 0,
-    D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAG_TILED_RESOURCE  = 0x1
-} D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAGS;
-```
-
-<ins><!-- d3d12-review-inline:begin:resources:RL-tiled-creation-forward:0:authored:migration-a5c3aa286bfeeed7-0 -->Tiled resource creation uses the common [creation payload](#heap-resource-driver-types), [lifecycle](#heap-resource-lifecycle-ddis) and [allocation query](#resource-query-ddis).<!-- d3d12-review-inline:end:resources:RL-tiled-creation-forward:0:authored:migration-a5c3aa286bfeeed7-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:TILED-mapping-copy-context:0:authored:migration-46d20d2e90bfff19-0 -->`pRegionSize` describes both regions using the [common traversal rules](#tile-types). NULL mappings are copied as mappings; no tile contents are transferred. Existing destination mappings outside the region are unchanged, even when source mappings refer to a different heap. The supported flags and CPU/GPU lifetime/queue order requirements are the same as for [UpdateTileMappings](#update-tile-mappings).<!-- d3d12-review-inline:end:resources:TILED-mapping-copy-context:0:authored:migration-46d20d2e90bfff19-0 --></ins>
 
 <a id="resource-contracts"></a>
-
-## Descriptions, creation and synchronization
-
-<ins><!-- d3d12-review-inline:begin:resources:R-navigation:1:authored:migration-ec42a27b86dae5b4-0 -->A resource's storage layout is distinct from its current [legacy state](synchronization.md#legacy-states) or [enhanced barrier layout](synchronization.md#layout-transitions).<!-- d3d12-review-inline:end:resources:R-navigation:1:authored:migration-ec42a27b86dae5b4-0 --></ins>
-
+<a id="descriptions-creation-and-synchronization"></a>
 <a id="resource-description"></a>
 
 ## D3D12_RESOURCE_DESC
@@ -1880,24 +1670,24 @@ Bitwise-OR'd flags, as [`D3D12_RESOURCE_FLAGS`](resources.md#resource-flags) enu
 
 *Height*, *DepthOrArraySize*, and *MipLevels* must be 1.
 
-*Format* must be <ins><!-- d3d12-review-inline:begin:resources:P-buffer-fields:1 -->`DXGI_FORMAT_UNKNOWN`<!-- d3d12-review-inline:end:resources:P-buffer-fields:1 --></ins>.
+*Format* must be `DXGI_FORMAT_UNKNOWN`.
 
 *SampleDesc.Count* must be 1 and *Quality* must be 0.
 
-*Layout* must be <ins><!-- d3d12-review-inline:begin:resources:P-buffer-fields:3 -->`D3D12_TEXTURE_LAYOUT_ROW_MAJOR`<!-- d3d12-review-inline:end:resources:P-buffer-fields:3 --></ins>, as buffer memory layouts are understood by applications and row-major texture data is commonly marshaled through buffers.
+*Layout* must be `D3D12_TEXTURE_LAYOUT_ROW_MAJOR`, as buffer memory layouts are understood by applications and row-major texture data is commonly marshaled through buffers.
 
 *Flags* must still be accurately filled out by applications for buffers, with minor exceptions. However, applications can use the most amount of capability support without concern about the efficiency impact on buffers. The flags field is meant to control properties related to textures.
 
-<ins><!-- d3d12-review-inline:begin:resources:P-buffer-alignment:0 -->Without `D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT`, *Alignment* must be<!-- d3d12-review-inline:end:resources:P-buffer-alignment:0 --></ins> 64KB (<ins><!-- d3d12-review-inline:begin:resources:P-buffer-alignment:0 -->`D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT`<!-- d3d12-review-inline:end:resources:P-buffer-alignment:0 --></ins>) or 0, which is effectively 64KB.
+<ins><!-- d3d12-review-inline:begin:resources:P-buffer-alignment:0:occurrence:66a38004fa5b-0 -->Without `D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT`, *Alignment* must be<!-- d3d12-review-inline:end:resources:P-buffer-alignment:0:occurrence:66a38004fa5b-0 --></ins> 64KB (<ins><!-- d3d12-review-inline:begin:resources:P-buffer-alignment:0:occurrence:14571f24de39-1 -->`D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT`<!-- d3d12-review-inline:end:resources:P-buffer-alignment:0:occurrence:14571f24de39-1 --></ins>) or 0, which is effectively 64KB.
 
 <a id="texture-description"></a>
 
 ### Texture descriptions
 
-<ins><!-- d3d12-review-inline:begin:resources:P-texture-fields:0 -->Textures are a multi-dimensional arrangement of texels in a contiguous region of memory, heavily optimized to maximize bandwidth for rendering and sampling. Texture sizes are hard to predict and vary from adapter to adapter. Applications must use [ID3D12Device::GetResourceAllocationInfo](resources.md#allocation-info) to accurately understand their size.
-TEXTURE1D, TEXTURE2D, and TEXTURE3D are not supported orthogonally on every format. See the use of `D3D12_FORMAT_SUPPORT1_TEXTURE1D`, `D3D12_FORMAT_SUPPORT1_TEXTURE2D`, and `D3D12_FORMAT_SUPPORT1_TEXTURE3D` in [`D3D12_FORMAT_SUPPORT1`](formats.md#d3d12-format-support1).<!-- d3d12-review-inline:end:resources:P-texture-fields:0 --></ins>
+Textures are a multi-dimensional arrangement of texels in a contiguous region of memory, heavily optimized to maximize bandwidth for rendering and sampling. Texture sizes are hard to predict and vary from adapter to adapter. Applications must use [ID3D12Device::GetResourceAllocationInfo](resources.md#allocation-info) to accurately understand their size.
+TEXTURE1D, TEXTURE2D, and TEXTURE3D are not supported orthogonally on every format. See the use of `D3D12_FORMAT_SUPPORT1_TEXTURE1D`, `D3D12_FORMAT_SUPPORT1_TEXTURE2D`, and `D3D12_FORMAT_SUPPORT1_TEXTURE3D` in [`D3D12_FORMAT_SUPPORT1`](formats.md#d3d12-format-support1).
 
-<ins><!-- d3d12-review-inline:begin:resources:P-texture-fields:1 -->*Width*, *Height*, and *DepthOrArraySize* must be between 1 and the maximum dimension supported for the particular feature level and texture dimension. However, exhaustion of GPU virtual address space, memory residency budget (see [IDXGIAdapter3::QueryVideoMemoryInfo](https://learn.microsoft.com/en-us/windows/desktop/api/dxgi1_4/nf-dxgi1_4-idxgiadapter3-queryvideomemoryinfo)), and/or system memory may easily occur first. For compressed formats, these dimensions are logical. For example:<!-- d3d12-review-inline:end:resources:P-texture-fields:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:P-texture-fields:1 -->*Width*, *Height*, and *DepthOrArraySize* must be between 1 and the maximum dimension supported for the particular feature level and texture dimension. However, exhaustion of GPU virtual address space, memory residency budget (see [IDXGIAdapter3::QueryVideoMemoryInfo](https://learn.microsoft.com/en-us/windows/desktop/api/dxgi1_4/nf-dxgi1_4-idxgiadapter3-queryvideomemoryinfo)), and/or system memory may easily occur first. For compressed formats, these dimensions are logical texel dimensions rather than compressed block counts. The limits for each texture dimension are:<!-- d3d12-review-inline:end:resources:P-texture-fields:1 --></ins>
 
 - <ins><!-- d3d12-review-inline:begin:resources:P-texture-fields:2 -->For TEXTURE1D:<!-- d3d12-review-inline:end:resources:P-texture-fields:2 --></ins>
     - *Width* must be less than or equal to `D3D12_REQ_TEXTURE1D_U_DIMENSION`.
@@ -1934,19 +1724,19 @@ Applications can create smaller aligned resources when the estimated size of the
 ### Mip levels
 
 *MipLevels* may be 0, or 1 to the maximum mip levels supported by <ins><!-- d3d12-review-inline:begin:resources:P-mips:0:modified:migration-2f955e72607b7b58-0 -->the spatial dimensions (*Width*, *Height*, and, for 3D textures, *DepthOrArraySize*)<!-- d3d12-review-inline:end:resources:P-mips:0:modified:migration-2f955e72607b7b58-0 --></ins>. When 0 is used, the API will automatically calculate the maximum mip levels supported and use that. But, some resource and heap properties preclude mip levels, so the app must specify the value as 1.
-Refer to the <ins><!-- d3d12-review-inline:begin:resources:P-mips:0 -->`D3D12_FORMAT_SUPPORT1_MIP`<!-- d3d12-review-inline:end:resources:P-mips:0 --></ins> field of [`D3D12_FORMAT_SUPPORT1`](formats.md#d3d12-format-support1) for per-format restrictions. MSAA resources, textures with <ins><!-- d3d12-review-inline:begin:resources:P-mips:0 -->`D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER`<!-- d3d12-review-inline:end:resources:P-mips:0 --></ins>, and heaps with <ins><!-- d3d12-review-inline:begin:resources:P-mips:0 -->`D3D12_HEAP_FLAG_ALLOW_DISPLAY`<!-- d3d12-review-inline:end:resources:P-mips:0 --></ins> <ins><!-- d3d12-review-inline:begin:resources:P-mips:0:modified:migration-9ec5aa6bdce879ed-4 -->all require *MipLevels* to be 1<!-- d3d12-review-inline:end:resources:P-mips:0:modified:migration-9ec5aa6bdce879ed-4 --></ins>.
+Refer to the <ins><!-- d3d12-review-inline:begin:resources:P-mips:0:occurrence:0ef4d4acb773-0 -->`D3D12_FORMAT_SUPPORT1_MIP`<!-- d3d12-review-inline:end:resources:P-mips:0:occurrence:0ef4d4acb773-0 --></ins> field of [`D3D12_FORMAT_SUPPORT1`](formats.md#d3d12-format-support1) for per-format restrictions. MSAA resources, textures with <ins><!-- d3d12-review-inline:begin:resources:P-mips:0:occurrence:8a95e8790c0f-1 -->`D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER`<!-- d3d12-review-inline:end:resources:P-mips:0:occurrence:8a95e8790c0f-1 --></ins>, and heaps with <ins><!-- d3d12-review-inline:begin:resources:P-mips:0:occurrence:c63ba8baaf90-2 -->`D3D12_HEAP_FLAG_ALLOW_DISPLAY`<!-- d3d12-review-inline:end:resources:P-mips:0:occurrence:c63ba8baaf90-2 --></ins> <ins><!-- d3d12-review-inline:begin:resources:P-mips:0:modified:migration-9ec5aa6bdce879ed-4 -->all require *MipLevels* to be 1<!-- d3d12-review-inline:end:resources:P-mips:0:modified:migration-9ec5aa6bdce879ed-4 --></ins>.
 
 ### Format and multisampling
 
 *Format* must be a valid format supported at the feature level of the device.
 
-A *SampleDesc.Count* greater than 1 and/ or non-zero *Quality* are only supported for TEXTURE2D and when either <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:1 -->`D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET`<!-- d3d12-review-inline:end:resources:P-format-samples:1 --></ins> or <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:1 -->`D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL`<!-- d3d12-review-inline:end:resources:P-format-samples:1 --></ins> are set.
-<ins><!-- d3d12-review-inline:begin:resources:P-format-samples:1 -->For these multisampled resources, the following are unsupported:<!-- d3d12-review-inline:end:resources:P-format-samples:1 --></ins>
+A *SampleDesc.Count* greater than 1 and/ or non-zero *Quality* are only supported for TEXTURE2D and when either <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:1:occurrence:84f82a1a1f45-0 -->`D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET`<!-- d3d12-review-inline:end:resources:P-format-samples:1:occurrence:84f82a1a1f45-0 --></ins> or <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:1:occurrence:f108e0450f2f-1 -->`D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL`<!-- d3d12-review-inline:end:resources:P-format-samples:1:occurrence:f108e0450f2f-1 --></ins> are set.
+<ins><!-- d3d12-review-inline:begin:resources:P-format-samples:1:occurrence:2d20f0640bab-2 -->For these multisampled resources, the following are unsupported:<!-- d3d12-review-inline:end:resources:P-format-samples:1:occurrence:2d20f0640bab-2 --></ins>
 
-- <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:2 -->`D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE`,<!-- d3d12-review-inline:end:resources:P-format-samples:2 --></ins>
-- <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:2 -->`D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS` without [writable-MSAA texture support](#writable-msaa),<!-- d3d12-review-inline:end:resources:P-format-samples:2 --></ins>
-- <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:2 -->`D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS`,<!-- d3d12-review-inline:end:resources:P-format-samples:2 --></ins>
-- <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:2 -->`D3D12_HEAP_FLAG_ALLOW_DISPLAY`<!-- d3d12-review-inline:end:resources:P-format-samples:2 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:2:occurrence:d1c17bf498ce-0 -->`D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE`,<!-- d3d12-review-inline:end:resources:P-format-samples:2:occurrence:d1c17bf498ce-0 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:2:occurrence:9766f7978557-1 -->`D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS` without [writable-MSAA texture support](#writable-msaa),<!-- d3d12-review-inline:end:resources:P-format-samples:2:occurrence:9766f7978557-1 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:2:occurrence:8c74138f9f00-2 -->`D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS`,<!-- d3d12-review-inline:end:resources:P-format-samples:2:occurrence:8c74138f9f00-2 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:P-format-samples:2:occurrence:5fbea469b2b7-3 -->`D3D12_HEAP_FLAG_ALLOW_DISPLAY`<!-- d3d12-review-inline:end:resources:P-format-samples:2:occurrence:5fbea469b2b7-3 --></ins>
 
 See [`D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS`](formats.md#d3d12-feature-data-multisample-quality-levels) for determining valid *Count* and *Quality* values.
 
@@ -1982,6 +1772,10 @@ typedef struct D3D12_RESOURCE_DESC1
 
 <ins><!-- d3d12-review-inline:begin:resources:P-desc1:0:authored:migration-4c46d556e8b714bc-0 -->`D3D12_RESOURCE_DESC1` retains the fields and constraints of [`D3D12_RESOURCE_DESC`](#resource-description) and adds `SamplerFeedbackMipRegion`. The `Width`, `Height`, and `Depth` of `D3D12_MIP_REGION` describe the sampler feedback mip region, not the resource's dimensions.<!-- d3d12-review-inline:end:resources:P-desc1:0:authored:migration-4c46d556e8b714bc-0 --></ins>
 
+<a id="sampler-feedback-resources"></a>
+
+Each texel of a feedback map corresponds to a **mip region** of the paired texture.
+
 Each <ins><!-- d3d12-review-inline:begin:resources:P-feedback-region-dimensions:0:modified:source-65a3a613e2c43f4e-0-0 -->of the Width and Height fields of a 2D sampler feedback<!-- d3d12-review-inline:end:resources:P-feedback-region-dimensions:0:modified:source-65a3a613e2c43f4e-0-0 --></ins> mip region is
 * a power-of-two number
 * greater than or equal to 4
@@ -2011,7 +1805,9 @@ Their layout is `D3D12_TEXTURE_LAYOUT_UNKNOWN`. The hardware implementation deci
 
 They are created with the flag `D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS`.
 
-<ins><!-- d3d12-review-inline:begin:resources:P-feedback-link:0:authored:migration-d1c77d27f7f16797-0 -->The [mip region constraints](../SamplerFeedback.md#mip-region-constraints) and [feedback map creation contract](../SamplerFeedback.md#resource-properties) define the feature-specific dimensions and format restrictions. These requirements apply to opaque sampler feedback maps, not ordinary textures.<!-- d3d12-review-inline:end:resources:P-feedback-link:0:authored:migration-d1c77d27f7f16797-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:sf-simultaneous-access:0:modified:flag-name -->They may also use `D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS`; their [legacy resource states and promotion/decay](synchronization.md#sampler-feedback-states) follow the ordinary rules.<!-- d3d12-review-inline:end:resources:sf-simultaneous-access:0:modified:flag-name --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:P-feedback-link:0:authored:migration-d1c77d27f7f16797-0 -->See [feedback map interpretation and updating](common-shader-internals.md#feedback-map-interpretation) for logical entries and the values recorded for each mip region, [feedback UAV creation](binding.md#create-sampler-feedback-uav) for pairing, and [copy, clear and transcoding](resource-operations.md#feedback-transcoding) for data transfer.<!-- d3d12-review-inline:end:resources:P-feedback-link:0:authored:migration-d1c77d27f7f16797-0 --></ins>
 
 <a id="resource-flags"></a>
 
@@ -2070,7 +1866,7 @@ typedef enum D3D12_RESOURCE_FLAGS
 > - Either the texture format must support depth stencil capabilities at the current feature level. Or, when the format is a typeless format, a format within the same typeless group must support depth stencil capabilities at the current feature level.
 > - Can't be used with [`D3D12_RESOURCE_DIMENSION_BUFFER`](resources.md#resource-dimensions), 4KB alignment without `D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT`, `D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET`, `D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS`, `D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS`, [`D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE`](resources.md#texture-layout), `D3D12_TEXTURE_LAYOUT_ROW_MAJOR`, nor used with heaps that have [`D3D12_HEAP_FLAG_DENY_RT_DS_TEXTURES`](resources.md#heap-flags) or `D3D12_HEAP_FLAG_ALLOW_DISPLAY`.
 > - Precludes usage of [WriteToSubresource](#resource-write-to-subresource) and [ReadFromSubresource](#resource-read-from-subresource).
-> - Region copies follow the [CopyTextureRegion depth/stencil requirements](resource-operations.md#copytextureregion), including the capability-qualified exceptions to baseline whole-subresource copying. The [full/partial depth pattern consistency rules](rasterization.md#sample-copy-depthstencil-full-subresource) also apply.
+> - See the [CopyTextureRegion depth/stencil requirements](resource-operations.md#copytextureregion) for region copies, including the capability-qualified exceptions to baseline whole-subresource copying, and the [full/partial depth pattern consistency rules](rasterization.md#sample-copy-depthstencil-full-subresource).
 
 <!-- d3d12-review-alert:end:resources:CONST-D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL:1:modified:migration-22a874c6e3dff3b6-0 -->
 
@@ -2085,7 +1881,7 @@ typedef enum D3D12_RESOURCE_FLAGS
 >
 > The following restrictions and interactions apply:
 > - Either the texture format must support unordered access capabilities at the current feature level. Or, when the format is a typeless format, a format within the same typeless group must support unordered access capabilities at the current feature level.
-> - Can't be set in conjunction with textures that have [`D3D12_TEXTURE_LAYOUT_ROW_MAJOR`](resources.md#texture-layout) when [`D3D12_FEATURE_DATA_D3D12_OPTIONS::CrossAdapterRowMajorTextureSupported`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options) is `FALSE`, nor in conjunction with textures that have [`D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE`](resources.md#texture-layout) when [`D3D12_FEATURE_DATA_D3D12_OPTIONS::StandardSwizzle64KBSupported`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options) is `FALSE`, nor when the feature level is less than 11.0.
+> - Can't be set in conjunction with textures that have [`D3D12_TEXTURE_LAYOUT_ROW_MAJOR`](resources.md#texture-layout) when [`D3D12_FEATURE_DATA_D3D12_OPTIONS::CrossAdapterRowMajorTextureSupported`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options) is `FALSE`, nor in conjunction with textures that have [`D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE`](resources.md#texture-layout) when [`D3D12_FEATURE_DATA_D3D12_OPTIONS::StandardSwizzle64KBSupported`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options) is `FALSE`, nor when the feature level is less than 11_0.
 > - Use with MSAA textures requires [writable-MSAA texture support](#writable-msaa).
 
 <!-- d3d12-review-alert:end:resources:CONST-D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS:1:modified:migration-82b05324f79b37e5-0 -->
@@ -2151,7 +1947,7 @@ However, your application should avoid setting this flag when multiple readers a
 
 <ins><!-- d3d12-review-inline:begin:resources:CONST-D3D12_RESOURCE_FLAG_VIDEO_ENCODE_REFERENCE_ONLY:0 -->Specifies that this resource may be used only as an encode reference frame. It may be written to or read only by the video encode operation.<!-- d3d12-review-inline:end:resources:CONST-D3D12_RESOURCE_FLAG_VIDEO_ENCODE_REFERENCE_ONLY:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:D162-encoding-resources-forward:0:authored:migration-ea0052c74ba29839-0 -->Encoding's [readable reconstructed-picture contract](video-encoding-controls.md#control-readable-reconstruction) permits ordinary reconstructed/DPB textures when the supported encoding tuple reports readable-layout support. The reference-only path is also supported. The driver must not hide a layout conversion/performance hit when reporting readable support. The ordinary input picture is not reference-only. See [full/downscaled DPB allocations](video-encoding-controls.md#family-lowerresolution-2pass) for their allocation requirements.<!-- d3d12-review-inline:end:resources:D162-encoding-resources-forward:0:authored:migration-ea0052c74ba29839-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:D162-encoding-resources-forward:0:authored:migration-ea0052c74ba29839-0 -->Encoding's [readable reconstructed-picture contract](video-encoding-controls.md#control-readable-reconstruction) permits ordinary reconstructed/DPB textures when the supported encoding tuple reports readable-layout support. The reference-only path is also supported. See [full/downscaled DPB allocations](video-encoding-controls.md#family-lowerresolution-2pass) for their allocation requirements.<!-- d3d12-review-inline:end:resources:D162-encoding-resources-forward:0:authored:migration-ea0052c74ba29839-0 --></ins>
 
 ### D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE
 
@@ -2165,10 +1961,7 @@ However, your application should avoid setting this flag when multiple readers a
 
 ### Writable multisampled textures
 
-Support for writable MSAA textures is determined by
-the <ins><!-- d3d12-review-inline:begin:resources:WEF-writable-msaa-spelling:0 -->`WriteableMSAATexturesSupported`<!-- d3d12-review-inline:end:resources:WEF-writable-msaa-spelling:0 --></ins> field of `D3D12_FEATURE_DATA_D3D12_OPTIONS14`.
-
-<ins><!-- d3d12-review-inline:begin:resources:P-writable-msaa-creation:0:authored:migration-7da67e4fdf66e258-0 -->When `WriteableMSAATexturesSupported` is true, multisampled resources can be created with `D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS`. This does not permit combining unordered access with `D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL`.<!-- d3d12-review-inline:end:resources:P-writable-msaa-creation:0:authored:migration-7da67e4fdf66e258-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:P-writable-msaa-creation:0:authored:migration-7da67e4fdf66e258-0 -->When [`WriteableMSAATexturesSupported`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options14) is true, multisampled resources can be created with `D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS`. Such resources also require `D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET`.<!-- d3d12-review-inline:end:resources:P-writable-msaa-creation:0:authored:migration-7da67e4fdf66e258-0 --></ins>
 
 <a id="texture-layout"></a>
 
@@ -2185,6 +1978,8 @@ typedef enum D3D12_TEXTURE_LAYOUT
     D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE = 3,
 } D3D12_TEXTURE_LAYOUT;
 ```
+
+<ins><!-- d3d12-review-inline:begin:resources:R-navigation:1:authored:migration-ec42a27b86dae5b4-0 -->A resource's storage layout is distinct from its current [legacy state](synchronization.md#legacy-states) or [enhanced barrier layout](synchronization.md#layout-transitions).<!-- d3d12-review-inline:end:resources:R-navigation:1:authored:migration-ec42a27b86dae5b4-0 --></ins>
 
 ### D3D12_TEXTURE_LAYOUT_UNKNOWN
 
@@ -2337,11 +2132,11 @@ This *Format* must match the format of the view used during the clear operation.
 
 ### `Color[4]`
 
-<ins><!-- d3d12-review-inline:begin:resources:P-clear-members:5 -->Specifies a 4-entry array of float values, determining the RGBA value. The order of RGBA matches the order used with [ClearRenderTargetView](resource-operations.md#clearrendertargetview).<!-- d3d12-review-inline:end:resources:P-clear-members:5 --></ins>
+Specifies a 4-entry array of float values, determining the RGBA value. The order of RGBA matches the order used with [ClearRenderTargetView](resource-operations.md#clearrendertargetview).
 
 ### `DepthStencil`
 
-<ins><!-- d3d12-review-inline:begin:resources:P-clear-members:7 -->Specifies one member of [`D3D12_DEPTH_STENCIL_VALUE`](#d3d12-depth-stencil-value). These values match the semantics of *Depth* and *Stencil* in [ClearDepthStencilView](resource-operations.md#cleardepthstencilview).<!-- d3d12-review-inline:end:resources:P-clear-members:7 --></ins>
+Specifies one member of [`D3D12_DEPTH_STENCIL_VALUE`](#d3d12-depth-stencil-value). These values match the semantics of *Depth* and *Stencil* in [ClearDepthStencilView](resource-operations.md#cleardepthstencilview).
 
 <ins><!-- d3d12-review-inline:begin:resources:P-clear-validation:0:authored:migration-89f5064ccdb9f946-0 -->`pOptimizedClearValue` must be null for buffers and for textures without either `D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET` or `D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL`. For a non-null value, `Format` must be a fully typed, compatible render target or depth-stencil view format, as appropriate for the resource. For a depth-stencil clear value, `DepthStencil.Depth` must lie in the inclusive range [0, 1].<!-- d3d12-review-inline:end:resources:P-clear-validation:0:authored:migration-89f5064ccdb9f946-0 --></ins>
 
@@ -2477,14 +2272,6 @@ typedef enum D3D12_HEAP_TYPE
 
 Note that textures (unlike buffers) can't be heap type UPLOAD or READBACK.
 
-<a id="compute-only-heap-support"></a>
-
-### Compute-only heap support
-
-<ins><!-- d3d12-review-inline:begin:resources:N-compute-only-heap-support:0:authored:migration-27cf9ef4428a2ab2-0 -->For a device whose maximum supported feature level is `D3D_FEATURE_LEVEL_1_0_CORE`, a `FALSE` value of `D3D12_FEATURE_DATA_D3D12_OPTIONS19::ComputeOnlyCustomHeapSupported` prohibits all `D3D12_HEAP_TYPE_CUSTOM` creation, including implicit heaps for committed resources. A `FALSE` value of `D3D12_FEATURE_DATA_D3D12_OPTIONS20::ComputeOnlyWriteWatchSupported` prohibits all uses of `D3D12_HEAP_FLAG_ALLOW_WRITE_WATCH` on that device class. A `TRUE` result does not waive the other heap type, flag, resource or creation requirements.<!-- d3d12-review-inline:end:resources:N-compute-only-heap-support:0:authored:migration-27cf9ef4428a2ab2-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:N-compute-only-heap-support:1:authored:migration-6eefdfe8d4255d08-0 -->These two options are irrelevant for devices whose maximum supported feature level is higher. Classification uses the device's maximum supported feature level, not the minimum requested when creating it: requesting `1_0_CORE` on a more capable adapter does not make these restrictions apply. [Feature discovery](devices-and-capabilities.md#feature-discovery) defines the query mechanism.<!-- d3d12-review-inline:end:resources:N-compute-only-heap-support:1:authored:migration-6eefdfe8d4255d08-0 --></ins>
-
 ### D3D12_HEAP_TYPE_DEFAULT
 
 <ins><!-- d3d12-review-inline:begin:resources:CONST-D3D12_HEAP_TYPE_DEFAULT:0:modified:migration-16d76c232daf6b32-0 -->Specifies the default heap. This heap type experiences the most bandwidth for the GPU, but cannot provide CPU access. The GPU can read and write to the memory from this pool, and resource transition barriers may be changed. The majority of heaps and resources are expected to be located here, and are typically populated through resources in upload heaps.<!-- d3d12-review-inline:end:resources:CONST-D3D12_HEAP_TYPE_DEFAULT:0:modified:migration-16d76c232daf6b32-0 --></ins>
@@ -2544,6 +2331,14 @@ D3D12_HEAP_FLAG_SHARED
 D3D12_HEAP_FLAG_SHARED_CROSS_ADAPTER
 D3D12_HEAP_FLAG_ALLOW_DISPLAY
 ```
+
+<a id="compute-only-heap-support"></a>
+
+### Compute-only heap support
+
+<ins><!-- d3d12-review-inline:begin:resources:N-compute-only-heap-support:0:authored:migration-27cf9ef4428a2ab2-0 -->For a device whose maximum supported feature level is `D3D_FEATURE_LEVEL_1_0_CORE`, a `FALSE` value of `D3D12_FEATURE_DATA_D3D12_OPTIONS19::ComputeOnlyCustomHeapSupported` prohibits all `D3D12_HEAP_TYPE_CUSTOM` creation, including implicit heaps for committed resources. A `FALSE` value of `D3D12_FEATURE_DATA_D3D12_OPTIONS20::ComputeOnlyWriteWatchSupported` prohibits all uses of `D3D12_HEAP_FLAG_ALLOW_WRITE_WATCH` on that device class.<!-- d3d12-review-inline:end:resources:N-compute-only-heap-support:0:authored:migration-27cf9ef4428a2ab2-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:N-compute-only-heap-support:1:authored:migration-6eefdfe8d4255d08-0 -->These restrictions use the device's maximum supported feature level, not the minimum requested when creating it. See [`D3D12_FEATURE_DATA_D3D12_OPTIONS19`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options19) and [`D3D12_FEATURE_DATA_D3D12_OPTIONS20`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options20) for these capability fields.<!-- d3d12-review-inline:end:resources:N-compute-only-heap-support:1:authored:migration-6eefdfe8d4255d08-0 --></ins>
 
 <a id="heap-description"></a>
 
@@ -2661,8 +2456,8 @@ typedef enum D3D12_HEAP_FLAGS
 
 <ins><!-- d3d12-review-inline:begin:resources:CONST-D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS:1 -->Creating a heap with this flag will fail under either of these conditions:<!-- d3d12-review-inline:end:resources:CONST-D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS:1 --></ins>
 
-- <ins><!-- d3d12-review-inline:begin:resources:CONST-D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS:2 -->The heap type is `D3D12_HEAP_TYPE_DEFAULT`, and the heap can be visible on multiple nodes, but the device does *not* support [`D3D12_CROSS_NODE_SHARING_TIER_3`](sharing-and-interoperability.md#cross-node-sharing-tier).<!-- d3d12-review-inline:end:resources:CONST-D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS:2 --></ins>
-- <ins><!-- d3d12-review-inline:begin:resources:CONST-D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS:2 -->The heap is CPU-visible, but the heap type is *not* `D3D12_HEAP_TYPE_CUSTOM`.<!-- d3d12-review-inline:end:resources:CONST-D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS:2 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:CONST-D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS:2:occurrence:ed6da3c9155a-0 -->The heap type is `D3D12_HEAP_TYPE_DEFAULT`, and the heap can be visible on multiple nodes, but the device does *not* support [`D3D12_CROSS_NODE_SHARING_TIER_3`](sharing-and-interoperability.md#cross-node-sharing-tier).<!-- d3d12-review-inline:end:resources:CONST-D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS:2:occurrence:ed6da3c9155a-0 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:CONST-D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS:2:occurrence:5d74ed49feae-1 -->The heap is CPU-visible, but the heap type is *not* `D3D12_HEAP_TYPE_CUSTOM`.<!-- d3d12-review-inline:end:resources:CONST-D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS:2:occurrence:5d74ed49feae-1 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:CONST-D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS:3 -->Note that heaps with this flag might be a limited resource on some systems.<!-- d3d12-review-inline:end:resources:CONST-D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS:3 --></ins>
 
@@ -2715,30 +2510,30 @@ The following heap flags must be used with <ins><!-- d3d12-review-inline:begin:r
  Adapters that support [heap tier 2](#resource-heap-tiers) or greater are additionally allowed to set none of the above flags. Aliases for these flags are available for applications that prefer thinking only of which resources are supported.
 The following aliases exist, so be careful when doing bit-manipulations:
 
-- <ins><!-- d3d12-review-inline:begin:resources:P-heap-tiers:4 -->`D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES` = 0 and is supported for ordinary heaps on [heap tier 2](#resource-heap-tiers) and greater; shared cross-adapter heaps also use this zero category mask.<!-- d3d12-review-inline:end:resources:P-heap-tiers:4 --></ins>
-- <ins><!-- d3d12-review-inline:begin:resources:P-heap-tiers:4 -->`D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS` = `D3D12_HEAP_FLAG_DENY_RT_DS_TEXTURES` | `D3D12_HEAP_FLAG_DENY_NON_RT_DS_TEXTURES`<!-- d3d12-review-inline:end:resources:P-heap-tiers:4 --></ins>
-- <ins><!-- d3d12-review-inline:begin:resources:P-heap-tiers:4 -->`D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES` = `D3D12_HEAP_FLAG_DENY_BUFFERS` | `D3D12_HEAP_FLAG_DENY_RT_DS_TEXTURES`<!-- d3d12-review-inline:end:resources:P-heap-tiers:4 --></ins>
-- <ins><!-- d3d12-review-inline:begin:resources:P-heap-tiers:4 -->`D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES` = `D3D12_HEAP_FLAG_DENY_BUFFERS` | `D3D12_HEAP_FLAG_DENY_NON_RT_DS_TEXTURES`<!-- d3d12-review-inline:end:resources:P-heap-tiers:4 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:P-heap-tiers:4:occurrence:e9fc060659f8-0 -->`D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES` = 0 and is supported for ordinary heaps on [heap tier 2](#resource-heap-tiers) and greater; shared cross-adapter heaps also use this zero category mask.<!-- d3d12-review-inline:end:resources:P-heap-tiers:4:occurrence:e9fc060659f8-0 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:P-heap-tiers:4:occurrence:f9b40a8465df-1 -->`D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS` = `D3D12_HEAP_FLAG_DENY_RT_DS_TEXTURES` | `D3D12_HEAP_FLAG_DENY_NON_RT_DS_TEXTURES`<!-- d3d12-review-inline:end:resources:P-heap-tiers:4:occurrence:f9b40a8465df-1 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:P-heap-tiers:4:occurrence:b9976c1c785e-2 -->`D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES` = `D3D12_HEAP_FLAG_DENY_BUFFERS` | `D3D12_HEAP_FLAG_DENY_RT_DS_TEXTURES`<!-- d3d12-review-inline:end:resources:P-heap-tiers:4:occurrence:b9976c1c785e-2 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:P-heap-tiers:4:occurrence:da0477b68ff7-3 -->`D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES` = `D3D12_HEAP_FLAG_DENY_BUFFERS` | `D3D12_HEAP_FLAG_DENY_NON_RT_DS_TEXTURES`<!-- d3d12-review-inline:end:resources:P-heap-tiers:4:occurrence:da0477b68ff7-3 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:P-cross-adapter-categories:0:authored:migration-5c68db14aa7a8571-0 -->Heaps with `D3D12_HEAP_FLAG_SHARED_CROSS_ADAPTER` must leave `D3D12_HEAP_FLAG_DENY_BUFFERS`, `D3D12_HEAP_FLAG_DENY_RT_DS_TEXTURES` and `D3D12_HEAP_FLAG_DENY_NON_RT_DS_TEXTURES` clear. This category mask exception does not remove the [cross-adapter resource restrictions](sharing-and-interoperability.md#cross-adapter-heaps).<!-- d3d12-review-inline:end:resources:P-cross-adapter-categories:0:authored:migration-5c68db14aa7a8571-0 --></ins>
 
 ### Displayable heaps
 
 Displayable heaps are most commonly created by the swapchain for presentation, to enable scanning out to a monitor.
-Displayable heaps are specified with the <ins><!-- d3d12-review-inline:begin:resources:P-displayable:0 -->`D3D12_HEAP_FLAG_ALLOW_DISPLAY`<!-- d3d12-review-inline:end:resources:P-displayable:0 --></ins> member of the <ins><!-- d3d12-review-inline:begin:resources:P-displayable:0 -->`D3D12_HEAP_FLAGS`<!-- d3d12-review-inline:end:resources:P-displayable:0 --></ins> enum.
+Displayable heaps are specified with the `D3D12_HEAP_FLAG_ALLOW_DISPLAY` member of the `D3D12_HEAP_FLAGS` enum.
 
-Applications may create displayable heaps outside of a swapchain; but cannot actually present with them. This flag is not supported by [CreateHeap](resources.md#create-heap) and can only be used with [CreateCommittedResource](resources.md#create-committed-resource) with <ins><!-- d3d12-review-inline:begin:resources:P-displayable:1 -->`D3D12_HEAP_TYPE_DEFAULT`<!-- d3d12-review-inline:end:resources:P-displayable:1 --></ins>.
+Applications may create displayable heaps outside of a swapchain; but cannot actually present with them. This flag is not supported by [CreateHeap](resources.md#create-heap) and can only be used with [CreateCommittedResource](resources.md#create-committed-resource) with `D3D12_HEAP_TYPE_DEFAULT`.
 
 Additional restrictions to the [`D3D12_RESOURCE_DESC`](resources.md#resource-description) apply to the resource created with displayable heaps.
 
-- <ins><!-- d3d12-review-inline:begin:resources:P-displayable:3 -->The format must not only be supported by the device, but must be supported for scan-out. Refer to the use of the `D3D12_FORMAT_SUPPORT1_DISPLAY` member of [`D3D12_FORMAT_SUPPORT1`](formats.md#d3d12-format-support1).<!-- d3d12-review-inline:end:resources:P-displayable:3 --></ins>
-- <ins><!-- d3d12-review-inline:begin:resources:P-displayable:3 -->*Dimension* must be `D3D12_RESOURCE_DIMENSION_TEXTURE2D`.<!-- d3d12-review-inline:end:resources:P-displayable:3 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:P-displayable:3:occurrence:ce78e0f57fcd-0 -->The format must not only be supported by the device, but must be supported for scan-out. Refer to the use of the `D3D12_FORMAT_SUPPORT1_DISPLAY` member of [`D3D12_FORMAT_SUPPORT1`](formats.md#d3d12-format-support1).<!-- d3d12-review-inline:end:resources:P-displayable:3:occurrence:ce78e0f57fcd-0 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:P-displayable:3:occurrence:391aa1c015ee-1 -->*Dimension* must be `D3D12_RESOURCE_DIMENSION_TEXTURE2D`.<!-- d3d12-review-inline:end:resources:P-displayable:3:occurrence:391aa1c015ee-1 --></ins>
 - *Alignment* must be 0.
-- <ins><!-- d3d12-review-inline:begin:resources:P-displayable:3 -->*DepthOrArraySize* may be either 1 or 2.<!-- d3d12-review-inline:end:resources:P-displayable:3 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:P-displayable:3:occurrence:2a013a74d7ac-2 -->*DepthOrArraySize* may be either 1 or 2.<!-- d3d12-review-inline:end:resources:P-displayable:3:occurrence:2a013a74d7ac-2 --></ins>
 - *MipLevels* must be 1.
 - *SampleDesc* must have *Count* set to 1 and *Quality* set to 0.
-- <ins><!-- d3d12-review-inline:begin:resources:P-displayable:3 -->*Layout* must be `D3D12_TEXTURE_LAYOUT_UNKNOWN`.<!-- d3d12-review-inline:end:resources:P-displayable:3 --></ins>
-- <ins><!-- d3d12-review-inline:begin:resources:P-displayable:3 -->`D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL` and `D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER` are invalid flags.<!-- d3d12-review-inline:end:resources:P-displayable:3 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:P-displayable:3:occurrence:6fbdfa0ff350-3 -->*Layout* must be `D3D12_TEXTURE_LAYOUT_UNKNOWN`.<!-- d3d12-review-inline:end:resources:P-displayable:3:occurrence:6fbdfa0ff350-3 --></ins>
+- <ins><!-- d3d12-review-inline:begin:resources:P-displayable:3:occurrence:1b526b491abe-4 -->`D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL` and `D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER` are invalid flags.<!-- d3d12-review-inline:end:resources:P-displayable:3:occurrence:1b526b491abe-4 --></ins>
 
 <a id="manual-write-tracking"></a>
 
@@ -2824,7 +2619,7 @@ typedef struct DXGI_QUERY_VIDEO_MEMORY_INFO
 
 <ins><!-- d3d12-review-inline:begin:resources:RH-resident-objects:2:authored:migration-277e92a7659cb264-0 -->A placed resource borrows its heap's memory. A reserved resource's tile mappings refer to heaps. Residency of that backing memory is managed through its owning heap rather than by treating each mapping as an independent allocation. Inheritance from `ID3D12Pageable` is not by itself permission to call application residency methods: command allocators, command queues, pipeline state objects, meta commands and state objects are not direct application residency targets.<!-- d3d12-review-inline:end:resources:RH-resident-objects:2:authored:migration-277e92a7659cb264-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:D160-motion-residency-forward:0:authored:migration-f983a78927a8f7b5-0 -->Motion estimator and opaque vector heap [allocation and residency](video-motion-estimation.md#motion-driver-objects) distinguish driver-private CPU object bytes from [GPU memory pool sizes](video-motion-estimation.md#d3d12-feature-data-video-motion-estimator-size). The vector heap is not an application picture texture or an ID3D12Heap allocation.<!-- d3d12-review-inline:end:resources:D160-motion-residency-forward:0:authored:migration-f983a78927a8f7b5-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:D160-motion-residency-forward:0:authored:migration-f983a78927a8f7b5-0 -->See [motion estimator allocation and residency](video-motion-estimation.md#motion-driver-objects) for the distinction between driver-private CPU object bytes and [GPU memory pool sizes](video-motion-estimation.md#d3d12-feature-data-video-motion-estimator-size) for motion estimators and motion vector heaps.<!-- d3d12-review-inline:end:resources:D160-motion-residency-forward:0:authored:migration-f983a78927a8f7b5-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:D161-extension-residency-forward:0:authored:migration-3c00749494296170-0 -->See [video extension command objects](video-extension-commands.md#extension-objects) for allocation and resource parameters, and [allocation size qualifications](video-extension-commands.md#extension-qualifications) for creation-dependent sizes.<!-- d3d12-review-inline:end:resources:D161-extension-residency-forward:0:authored:migration-3c00749494296170-0 --></ins>
 
@@ -2971,7 +2766,7 @@ This method returns one of the [Direct3D 12 Return Codes](devices-and-capabiliti
 
 #### Completion fence eligibility
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-enqueue-fence-kinds:0:authored:migration-99b4ff6c7757f024-0 -->`pFenceToSignal` must be a writable fence that supports queue/CPU synchronization. Ordinary fences and supported [non-monitored fences](execution.md#fence-flags) are eligible. [Command list scoped fences](execution.md#command-list-scoped-fences) and [read-only protected session status fences](execution.md#status-fences) are not eligible. Non-monitored fences retain their CPU observation restrictions. The residency signal does not turn them into monitored fences.<!-- d3d12-review-inline:end:resources:RH-enqueue-fence-kinds:0:authored:migration-99b4ff6c7757f024-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:RH-enqueue-fence-kinds:0:authored:migration-99b4ff6c7757f024-0 -->`pFenceToSignal` must be a writable fence that supports queue/CPU synchronization. Ordinary fences and supported [non-monitored fences](execution.md#fence-flags) are eligible. [Command list scoped fences](execution.md#command-list-scoped-fences) and [read-only protected session status fences](execution.md#status-fences) are not eligible.<!-- d3d12-review-inline:end:resources:RH-enqueue-fence-kinds:0:authored:migration-99b4ff6c7757f024-0 --></ins>
 
 ### Residency flags
 
@@ -2983,7 +2778,7 @@ typedef enum D3D12_RESIDENCY_FLAGS
 } D3D12_RESIDENCY_FLAGS;
 ```
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-deny-overbudget:0:authored:migration-10c13a2af696eeff-0 -->`D3D12_RESIDENCY_FLAG_NONE` permits the normal over-budget behavior. `D3D12_RESIDENCY_FLAG_DENY_OVERBUDGET` causes an over-budget residency request to fail with `E_OUTOFMEMORY` rather than proceeding with that policy.<!-- d3d12-review-inline:end:resources:RH-deny-overbudget:0:authored:migration-10c13a2af696eeff-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:RH-deny-overbudget:0:authored:migration-10c13a2af696eeff-0 -->`D3D12_RESIDENCY_FLAG_NONE` permits the normal over-budget behavior. `D3D12_RESIDENCY_FLAG_DENY_OVERBUDGET` causes an over-budget residency request to fail with `E_OUTOFMEMORY` rather than proceeding with the normal over-budget behavior.<!-- d3d12-review-inline:end:resources:RH-deny-overbudget:0:authored:migration-10c13a2af696eeff-0 --></ins>
 
 <a id="residency-priorities"></a>
 
@@ -3070,14 +2865,12 @@ priority request.<!-- d3d12-review-inline:end:resources:RM-priority-errors:1:aut
 
 ## CPU access and mapping
 
-The runtime ref-counts the driver's `pfnMapHeap` / `pfnUnmapHeap` (DDI) calls internally and serializes them across multiple application threads. This avoids redundant calls into the driver. (No equivalent `Map` exists on `ID3D12Heap` at the API level — only on `ID3D12Resource`.)
+<ins><!-- d3d12-review-inline:begin:resources:RH-map-api-model:0:modified:opus-api-map-model -->Applications map resources, not heaps: `ID3D12Resource` has a `Map` method, but `ID3D12Heap` does not.<!-- d3d12-review-inline:end:resources:RH-map-api-model:0:modified:opus-api-map-model --></ins>
 
-1. <ins><!-- d3d12-review-inline:begin:resources:RH-mapping-no-discard:0 -->`Map` has no discard mode in D3D12. Applications must implement resource renaming themselves.<!-- d3d12-review-inline:end:resources:RH-mapping-no-discard:0 --></ins>
-2. <ins><!-- d3d12-review-inline:begin:resources:RH-mapping-no-discard:0 -->Map calls are implicitly `NO_OVERWRITE` and multi-threaded. There is no `DO_NOT_WAIT` Map flag.<!-- d3d12-review-inline:end:resources:RH-mapping-no-discard:0 --></ins>
+1. <ins><!-- d3d12-review-inline:begin:resources:RH-mapping-no-discard:0:modified:opus-no-discard -->`Map` has no discard mode. Applications must implement resource renaming themselves.<!-- d3d12-review-inline:end:resources:RH-mapping-no-discard:0:modified:opus-no-discard --></ins>
+2. <ins><!-- d3d12-review-inline:begin:resources:RH-mapping-no-discard:0:modified:opus-no-gpu-sync -->`Map` calls are implicitly `NO_OVERWRITE`, can be called from multiple threads and do not synchronize with the GPU.<!-- d3d12-review-inline:end:resources:RH-mapping-no-discard:0:modified:opus-no-gpu-sync --></ins>
     1. The driver does not implicitly flush any command buffers when map is called. It is the application's responsibility to ensure that any relevant work contained in command lists is submitted to the appropriate command queue before relying on completion of that work.
     2. Map does not block waiting for the GPU to finish work. It is the application's responsibility to ensure that the GPU has finished any relevant work before conflicting CPU access to that data.
-
-<ins><!-- d3d12-review-inline:begin:resources:RH-map-busy-heap:0:modified:source-84c44bd8c813a5a7-0-0 -->CPU-accessible heaps can<!-- d3d12-review-inline:end:resources:RH-map-busy-heap:0:modified:source-84c44bd8c813a5a7-0-0 --></ins> be mapped at the DDI level, even while the GPU is busy reading or writing to the resource. The runtime will understand how to handle the lack of I/O coherence.
 
 <a id="cpu-texture-state"></a>
 
@@ -3085,7 +2878,7 @@ The runtime ref-counts the driver's `pfnMapHeap` / `pfnUnmapHeap` (DDI) calls in
 
 <ins><!-- d3d12-review-inline:begin:resources:RH-cpu-texture-common:0:modified:source-b9e8f714fcee9055-0-0 -->With the legacy state model, CPU-<!-- d3d12-review-inline:end:resources:RH-cpu-texture-common:0:modified:source-b9e8f714fcee9055-0-0 --></ins>accessible *textures* must be in the <ins><!-- d3d12-review-inline:begin:resources:RH-cpu-texture-common:0:modified:source-b9e8f714fcee9055-1-0 -->`D3D12_RESOURCE_STATE_COMMON`<!-- d3d12-review-inline:end:resources:RH-cpu-texture-common:0:modified:source-b9e8f714fcee9055-1-0 --></ins> state in order to be accessed for read or write from the CPU.
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-cpu-buffer-state:0:authored:migration-4e4c68fbaed0344c-0 -->The legacy COMMON state restriction for CPU texture access does not impose a COMMON state on buffers. Buffer access still requires synchronization of conflicting CPU/GPU accesses. For texture access with enhanced barriers, the corresponding common layout and CPU visibility requirements apply.<!-- d3d12-review-inline:end:resources:RH-cpu-buffer-state:0:authored:migration-4e4c68fbaed0344c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:RH-cpu-buffer-state:0:authored:migration-4e4c68fbaed0344c-0 -->This legacy `COMMON` state requirement does not apply to buffers, but conflicting CPU and GPU buffer accesses must be synchronized. With enhanced barriers, CPU texture access is subject to the corresponding common layout and CPU visibility requirements.<!-- d3d12-review-inline:end:resources:RH-cpu-buffer-state:0:authored:migration-4e4c68fbaed0344c-0 --></ins>
 
 <a id="cpu-range"></a>
 
@@ -3109,7 +2902,7 @@ The offset, in bytes, denoting the end of a memory range. **End** is one-past-th
 
 ### Mapping, ranges and synchronization
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-mapping-not-sync:0:authored:migration-a91275a75fc89ef9-0 -->Read/write ranges describe CPU access for cache management and tooling. They are not permissions or synchronization barriers. Mapping or unmapping does not authorize races with GPU accesses. Resource [state and barrier requirements](synchronization.md) and [completion dependencies](execution.md#completion) remain distinct.<!-- d3d12-review-inline:end:resources:RH-mapping-not-sync:0:authored:migration-a91275a75fc89ef9-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:RH-mapping-not-sync:0:authored:migration-a91275a75fc89ef9-0 -->Read/write ranges describe CPU access for cache management and tooling. They are not permissions or synchronization barriers. Mapping or unmapping does not permit races with GPU accesses. See [state and barrier requirements](synchronization.md) and [completion dependencies](execution.md#completion) for synchronizing those accesses.<!-- d3d12-review-inline:end:resources:RH-mapping-not-sync:0:authored:migration-a91275a75fc89ef9-0 --></ins>
 
 <a id="resource-map"></a>
 
@@ -3136,7 +2929,7 @@ Specifies the index number of the subresource.
 
 ##### `pReadRange`
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-map-parameters:3 -->A pointer to a [`D3D12_RANGE`](#cpu-range) structure that describes the range of memory to access.<!-- d3d12-review-inline:end:resources:RH-API-map-parameters:3 --></ins>
+A pointer to a [`D3D12_RANGE`](#cpu-range) structure that describes the range of memory to access.
 
 This indicates the region the CPU might read, and the coordinates are subresource-relative. A null pointer indicates the entire subresource might be read by the CPU. It is valid to specify the CPU won't read any data by passing a range where **End** is less than or equal to **Begin**.
 
@@ -3196,7 +2989,7 @@ Specifies the index of the subresource.
 
 ##### `pWrittenRange`
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-API-unmap-parameters:3 -->A pointer to a [`D3D12_RANGE`](#cpu-range) structure that describes the range of memory to unmap.<!-- d3d12-review-inline:end:resources:RH-API-unmap-parameters:3 --></ins>
+A pointer to a [`D3D12_RANGE`](#cpu-range) structure that describes the range of memory to unmap.
 
 This indicates the region the CPU might have modified, and the coordinates are subresource-relative. A null pointer indicates the entire subresource might have been modified by the CPU. It is valid to specify the CPU didn't write any data by passing a range where **End** is less than or equal to **Begin**.
 
@@ -3205,22 +2998,6 @@ This parameter is only used by tooling, and not for correctness of the actual un
 #### Return values
 
 None
-
-<a id="heap-mapping-ddis"></a>
-
-### Heap mapping driver interfaces
-
-```cpp
-typedef HRESULT ( APIENTRY* PFND3D12DDI_MAPHEAP )( D3D12DDI_HDEVICE, D3D12DDI_HHEAP, _Out_ VOID** );
-```
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_UNMAPHEAP )( D3D12DDI_HDEVICE, D3D12DDI_HHEAP );
-```
-
-<ins><!-- d3d12-review-inline:begin:resources:RM-map-roles:1:authored:migration-8d1a19a10d6f3875-0 -->The runtime caches the successful heap mapping and serializes/ref counts mapping references. Nested resource Maps need not produce repeated MapHeap calls. The final reference causes UnmapHeap.<!-- d3d12-review-inline:end:resources:RM-map-roles:1:authored:migration-8d1a19a10d6f3875-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:RM-map-roles:2:authored:migration-385ea3711ad0434e-0 -->MapHeap receives no application read/write range, subresource index or discard/DO_NOT_WAIT mode.<!-- d3d12-review-inline:end:resources:RM-map-roles:2:authored:migration-385ea3711ad0434e-0 --></ins>
 
 <a id="allocation-info"></a>
 
@@ -3271,7 +3048,7 @@ The number of resource descriptors in the *pResourceDescs* array.
 
 A [`D3D12_RESOURCE_ALLOCATION_INFO`](#d3d12-resource-allocation-info) structure that provides info about video memory allocated for the specified array of resources.
 
-<ins><!-- d3d12-review-inline:begin:resources:A-allocation-return:1 -->If an error occurs, then **`D3D12_RESOURCE_ALLOCATION_INFO::SizeInBytes`** equals `UINT64_MAX`.<!-- d3d12-review-inline:end:resources:A-allocation-return:1 --></ins>
+If an error occurs, then **`D3D12_RESOURCE_ALLOCATION_INFO::SizeInBytes`** equals `UINT64_MAX`.
 
 #### Allocation rules
 
@@ -3284,16 +3061,6 @@ Texture resource sizes significantly differ from the information returned by **G
 Your application can forgo using **GetResourceAllocationInfo** for buffer resources ([`D3D12_RESOURCE_DIMENSION_BUFFER`](resources.md#resource-dimensions)) when not using [Tight Alignment](resources.md#tight-alignment). Buffers that are not tightly aligned have the same size on all adapters, which is merely the smallest multiple of 64KB that's greater or equal to [`D3D12_RESOURCE_DESC::Width`](resources.md#resource-description).
 
 When multiple resource descriptions are passed in, the C++ algorithm for calculating a structure size and alignment are used. For example, a three-element array with two tiny 64KB-aligned resources and a tiny 4MB-aligned resource, reports differing sizes based on the order of the array. If the 4MB aligned resource is in the middle, then the resulting **<ins><!-- d3d12-review-inline:begin:resources:A-allocation-rules:4:modified:source-8161d53d67c8ebbf-0-0 -->SizeInBytes<!-- d3d12-review-inline:end:resources:A-allocation-rules:4:modified:source-8161d53d67c8ebbf-0-0 --></ins>** is 12MB. Otherwise, the resulting **<ins><!-- d3d12-review-inline:begin:resources:A-allocation-rules:4:modified:source-8161d53d67c8ebbf-1-0 -->SizeInBytes<!-- d3d12-review-inline:end:resources:A-allocation-rules:4:modified:source-8161d53d67c8ebbf-1-0 --></ins>** is 8MB. The **Alignment** returned would always be 4MB, because it's the superset of all alignments in the resource array.
-
-<a id="resource-query-helpers"></a>
-
-## Resource query and CPU transfer helpers
-
-<ins><!-- d3d12-review-inline:begin:resources:RQ-N001:0:authored:migration-9da7e178971714da-0 -->Allocation reflection, copyable layouts and public descriptor reflection answer
-different questions. Allocation queries use the adapter/driver's resource layout;
-copyable footprints describe an adapter-independent transfer layout. Descriptor
-and heap property queries return public runtime metadata. CPU subresource
-transfers copy bytes synchronously rather than submitting a GPU copy command.<!-- d3d12-review-inline:end:resources:RQ-N001:0:authored:migration-9da7e178971714da-0 --></ins>
 
 <a id="allocation-info-variants"></a>
 
@@ -3308,11 +3075,12 @@ typedef struct D3D12_RESOURCE_ALLOCATION_INFO1
 } D3D12_RESOURCE_ALLOCATION_INFO1;
 ```
 
-<ins><!-- d3d12-review-inline:begin:resources:RQ-N003:0:authored:migration-2495c72f17337f23-0 -->The extended methods retain the [base allocation query](#get-resource-allocation-info)
-and its ordered aggregate size/alignment rules. When supplied,
+<ins><!-- d3d12-review-inline:begin:resources:RQ-N003:0:authored:migration-2495c72f17337f23-0 -->The extended methods return the same aggregate result as the
+[base allocation query](#get-resource-allocation-info), using its ordered
+aggregate size/alignment rules. When supplied,
 `pResourceAllocationInfo1` has `numResourceDescs` entries. Each entry describes
 that resource's aligned offset in the aggregate, required alignment and size.
-The output is optional. It is not a copyable-subresource footprint.<!-- d3d12-review-inline:end:resources:RQ-N003:0:authored:migration-2495c72f17337f23-0 --></ins>
+The output is optional.<!-- d3d12-review-inline:end:resources:RQ-N003:0:authored:migration-2495c72f17337f23-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:RQ-N004:0:authored:migration-4d3d8080da87f6be-0 -->The returned aggregate uses `SizeInBytes == UINT64_MAX` to report an error.
 Only a successful query establishes usable aggregate and per-resource results;
@@ -3345,8 +3113,8 @@ D3D12_RESOURCE_ALLOCATION_INFO GetResourceAllocationInfo1(
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:resources:RQ-N007:0:authored:migration-93e408cd1cf71d58-0 -->Returns the aggregate `D3D12_RESOURCE_ALLOCATION_INFO`. The
-[shared allocation result rules](#allocation-info-variants) apply.<!-- d3d12-review-inline:end:resources:RQ-N007:0:authored:migration-93e408cd1cf71d58-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:RQ-N007:0:authored:migration-93e408cd1cf71d58-0 -->Returns the aggregate `D3D12_RESOURCE_ALLOCATION_INFO`. See
+[extended allocation information](#allocation-info-variants) for the result rules.<!-- d3d12-review-inline:end:resources:RQ-N007:0:authored:migration-93e408cd1cf71d58-0 --></ins>
 
 <a id="get-resource-allocation-info2"></a>
 
@@ -3378,8 +3146,8 @@ mip region fields.<!-- d3d12-review-inline:end:resources:RQ-N009:0:authored:migr
 #### Return values
 
 <ins><!-- d3d12-review-inline:begin:resources:RQ-N011:0:authored:migration-c2936e8e926a06df-0 -->Returns the aggregate `D3D12_RESOURCE_ALLOCATION_INFO`, with optional
-`D3D12_RESOURCE_ALLOCATION_INFO1` results under the
-[shared result rules](#allocation-info-variants).<!-- d3d12-review-inline:end:resources:RQ-N011:0:authored:migration-c2936e8e926a06df-0 --></ins>
+`D3D12_RESOURCE_ALLOCATION_INFO1` results. See
+[extended allocation information](#allocation-info-variants) for the result rules.<!-- d3d12-review-inline:end:resources:RQ-N011:0:authored:migration-c2936e8e926a06df-0 --></ins>
 
 <a id="get-resource-allocation-info3"></a>
 
@@ -3415,8 +3183,18 @@ Omitted lists use the ordinary no-explicit-list rules.<!-- d3d12-review-inline:e
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:resources:RQ-N015:0:authored:migration-3838746e8785c224-0 -->Returns the aggregate allocation information and optional per-resource results
-under the [shared result rules](#allocation-info-variants).<!-- d3d12-review-inline:end:resources:RQ-N015:0:authored:migration-3838746e8785c224-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:RQ-N015:0:authored:migration-3838746e8785c224-0 -->Returns the aggregate allocation information and optional per-resource results.
+See [extended allocation information](#allocation-info-variants) for the result rules.<!-- d3d12-review-inline:end:resources:RQ-N015:0:authored:migration-3838746e8785c224-0 --></ins>
+
+<a id="resource-query-helpers"></a>
+
+## Resource query and CPU transfer helpers
+
+<ins><!-- d3d12-review-inline:begin:resources:RQ-N001:0:authored:migration-9da7e178971714da-0 -->Allocation reflection, copyable layouts and public description reflection answer
+different questions. Allocation queries use the adapter/driver's resource layout;
+copyable footprints describe an adapter-independent transfer layout. Description
+and heap property queries return public runtime metadata. CPU subresource
+transfers copy bytes synchronously rather than submitting a GPU copy command.<!-- d3d12-review-inline:end:resources:RQ-N001:0:authored:migration-9da7e178971714da-0 --></ins>
 
 <a id="copyable-footprints"></a>
 
@@ -3441,11 +3219,9 @@ typedef struct D3D12_PLACED_SUBRESOURCE_FOOTPRINT
 
 <ins><!-- d3d12-review-inline:begin:resources:RQ-N017:0:authored:migration-b5fdc260886e4367-0 -->`Format`, `Width`, `Height` and `Depth` describe the copied subresource or
 format plane. `RowPitch` is its padded byte stride. `Offset` places that
-footprint in the transfer buffer. These results do not describe the
-adapter-specific physical resource layout.<!-- d3d12-review-inline:end:resources:RQ-N017:0:authored:migration-b5fdc260886e4367-0 --></ins>
+footprint in the transfer buffer.<!-- d3d12-review-inline:end:resources:RQ-N017:0:authored:migration-b5fdc260886e4367-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:RQ-N018:0:authored:migration-d094cb311c7efd1d-0 -->The helpers calculate these results in the runtime, without an allocation query
-DDI. Row pitch is aligned to `D3D12_TEXTURE_DATA_PITCH_ALIGNMENT`; planar formats
+<ins><!-- d3d12-review-inline:begin:resources:RQ-N018:0:authored:migration-d094cb311c7efd1d-0 -->Row pitch is aligned to `D3D12_TEXTURE_DATA_PITCH_ALIGNMENT`; planar formats
 can require the larger placement-aligned pitch. Subresource placements are
 computed using `D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT` before adding
 `BaseOffset`. The returned total span excludes that added base offset.<!-- d3d12-review-inline:end:resources:RQ-N018:0:authored:migration-d094cb311c7efd1d-0 --></ins>
@@ -3472,8 +3248,7 @@ void GetCopyableFootprints(
 
 <ins><!-- d3d12-review-inline:begin:resources:RQ-I07:0:modified:migration-e9575d5fbe04b8ae-0 -->Gets a resource layout that can be copied.<!-- d3d12-review-inline:end:resources:RQ-I07:0:modified:migration-e9575d5fbe04b8ae-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:RQ-N020:0:authored:migration-6625d2208973b303-0 -->The results are adapter-independent transfer layouts, unlike
-[allocation reflection](#allocation-info). The helper supports size-only
+<ins><!-- d3d12-review-inline:begin:resources:RQ-N020:0:authored:migration-6625d2208973b303-0 -->The helper supports size-only
 queries by allowing each output pointer to be omitted independently.<!-- d3d12-review-inline:end:resources:RQ-N020:0:authored:migration-6625d2208973b303-0 --></ins>
 
 #### Parameters
@@ -3554,7 +3329,7 @@ Divulges the equivalent custom heap properties that are used for non-custom heap
 <ins><!-- d3d12-review-inline:begin:resources:RQ-N030:0:authored:migration-e38759969eb30c75-0 -->`nodeMask` selects one API-visible node; zero selects node zero.
 `heapType` must be a recognized non-custom type, not
 `D3D12_HEAP_TYPE_CUSTOM`. The method derives properties from the selected
-node's architecture rather than issuing a new UMD heap query.<!-- d3d12-review-inline:end:resources:RQ-N030:0:authored:migration-e38759969eb30c75-0 --></ins>
+node's architecture.<!-- d3d12-review-inline:end:resources:RQ-N030:0:authored:migration-e38759969eb30c75-0 --></ins>
 
 #### Return values
 
@@ -3602,8 +3377,7 @@ Gets the heap description.
 #### Return values
 
 <ins><!-- d3d12-review-inline:begin:resources:RQ-N035:0:authored:migration-7d9a028957a3e3c1-0 -->Returns its public `D3D12_HEAP_DESC`: size, public heap properties, alignment
-and flags. This is runtime reflection, not a UMD query or a byte-identical
-echo of unnormalized creation input. For non-custom heap types it does not
+and flags. The result can differ from unnormalized creation input. For non-custom heap types it does not
 expose hidden effective custom properties. Use
 [GetCustomHeapProperties](#get-custom-heap-properties) for that translation.<!-- d3d12-review-inline:end:resources:RQ-N035:0:authored:migration-7d9a028957a3e3c1-0 --></ins>
 
@@ -3625,9 +3399,10 @@ Gets the resource description.
 
 A Direct3D 12 resource description structure.
 
-<ins><!-- d3d12-review-inline:begin:resources:RQ-R04:0:authored:migration-36ece8192a83baf2-0 -->The [legacy initial state flag-reflection rule](#resource-get-desc1) also
-applies to this method: `GetDesc` and `GetDesc1` expose the same flags under
-that compatibility rule.<!-- d3d12-review-inline:end:resources:RQ-R04:0:authored:migration-36ece8192a83baf2-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:RQ-R04:0:authored:migration-36ece8192a83baf2-0 -->For resources created through the legacy initial state path, the returned
+`Flags` omit `D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE`. This
+preserves the legacy API-visible flags rather than exposing the runtime's
+internal acceleration structure usage flag.<!-- d3d12-review-inline:end:resources:RQ-R04:0:authored:migration-36ece8192a83baf2-0 --></ins>
 
 <a id="resource-get-desc1"></a>
 
@@ -3652,9 +3427,7 @@ normalization and compatibility rules.<!-- d3d12-review-inline:end:resources:RQ-
 
 <ins><!-- d3d12-review-inline:begin:resources:RQ-R02:0:authored:migration-467a9ef1fa3bbe9e-0 -->Like `GetDesc`, this method omits
 `D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE` from the returned
-`Flags` for resources created through the legacy initial state path. This
-preserves the legacy API-visible flags rather than exposing the runtime's
-internal acceleration structure usage flag.<!-- d3d12-review-inline:end:resources:RQ-R02:0:authored:migration-467a9ef1fa3bbe9e-0 --></ins>
+`Flags` for resources created through the legacy initial state path.<!-- d3d12-review-inline:end:resources:RQ-R02:0:authored:migration-467a9ef1fa3bbe9e-0 --></ins>
 
 <a id="resource-get-heap-properties"></a>
 
@@ -3687,11 +3460,13 @@ outputs are omitted. Its tile mappings do not identify one backing heap.<!-- d3d
 
 <a id="cpu-subresource-transfers"></a>
 
-### Shared CPU subresource transfer contract
+### Common CPU subresource transfer contract
+
+<a id="shared-cpu-subresource-transfer-contract"></a>
 
 <ins><!-- d3d12-review-inline:begin:resources:RQ-N042:0:authored:migration-2c39b1073702b653-0 -->ReadFromSubresource and WriteToSubresource use the CPU to copy between linear
-application memory and a texture subresource. They obey the existing
-[CPU access, opaque layout and synchronization requirements](#cpu-access).
+application memory and a texture subresource. See [CPU access and mapping](#cpu-access)
+for CPU access, opaque layout and synchronization requirements.
 Buffers, reserved resources and heaps without CPU access are not supported.<!-- d3d12-review-inline:end:resources:RQ-N042:0:authored:migration-2c39b1073702b653-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:RQ-N043:0:authored:migration-33319e6f9650346d-0 -->CPU transfers exclude multisampled, depth/stencil, video-reference-only and
@@ -3699,15 +3474,12 @@ sampler feedback resources. The format must support CPU layout conversion.
 Opaque volume textures must have only one mip level.<!-- d3d12-review-inline:end:resources:RQ-N043:0:authored:migration-33319e6f9650346d-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:RQ-R03:0:authored:migration-9f686ea4c3a212c4-0 -->A texture in a custom, CPU-accessible `D3D12_MEMORY_POOL_L1` heap is also
-excluded on Resource Heap Tier 1 when GPU upload heaps are not supported.
-This is a CPU transfer eligibility restriction, not a restriction on
-querying equivalent heap properties.<!-- d3d12-review-inline:end:resources:RQ-R03:0:authored:migration-9f686ea4c3a212c4-0 --></ins>
+excluded on Resource Heap Tier 1 when GPU upload heaps are not supported.<!-- d3d12-review-inline:end:resources:RQ-R03:0:authored:migration-9f686ea4c3a212c4-0 --></ins>
 
 These routines will rearrange texture data between a row-major layout and an undefined resource layout. The operation is synchronous, <ins><!-- d3d12-review-inline:begin:resources:RQ-I08:0:modified:source-59b7c6004a2f2fba-0-0 -->meaning that<!-- d3d12-review-inline:end:resources:RQ-I08:0:modified:source-59b7c6004a2f2fba-0-0 --></ins> the memory is copied by the time the function <ins><!-- d3d12-review-inline:begin:resources:RQ-I08:0:modified:source-59b7c6004a2f2fba-1-0 -->returns<!-- d3d12-review-inline:end:resources:RQ-I08:0:modified:source-59b7c6004a2f2fba-1-0 --></ins>. So, the application should keep CPU scheduling in mind. The application can always break up the copying into smaller regions or schedule this operation in another task.
 
 <ins><!-- d3d12-review-inline:begin:resources:RQ-N044:0:authored:migration-3fac3a4db27d95af-0 -->Under legacy state tracking, textures must be in `D3D12_RESOURCE_STATE_COMMON`
-for these CPU operations. The [applicable synchronization model](synchronization.md)
-also governs resource access.
+for these CPU operations.
 The resource should first be mapped using Map. Mapping with a null output
 pointer can cache information across repeated transfers. The copy helpers
 also perform their own internal mapping work. They do not enqueue a GPU copy
@@ -3716,10 +3488,7 @@ or establish completion of outstanding GPU uses.<!-- d3d12-review-inline:end:res
 <ins><!-- d3d12-review-inline:begin:resources:RQ-N045:0:authored:migration-d87ad449a4e3c8cc-0 -->An otherwise valid empty box is a no-op. Null box pointers select the entire
 source or destination subresource. Nonempty boxes must fit that subresource
 and meet its format's coordinate alignment. Application memory and byte
-pitches must describe the copied region. The runtime can obtain its actual
-layout through [CheckSubresourceInfo](#subresource-info-ddi) and performs the
-CPU layout conversion itself. There is no corresponding one-to-one UMD
-ReadFromSubresource or WriteToSubresource copy DDI.<!-- d3d12-review-inline:end:resources:RQ-N045:0:authored:migration-d87ad449a4e3c8cc-0 --></ins>
+pitches must describe the copied region.<!-- d3d12-review-inline:end:resources:RQ-N045:0:authored:migration-d87ad449a4e3c8cc-0 --></ins>
 
 <a id="resource-write-to-subresource"></a>
 
@@ -3746,13 +3515,12 @@ Uses the CPU to copy data into a subresource, enabling the CPU to modify the con
 selects its destination region, or null for the full subresource.
 `pSrcData` points to the linear source data; `SrcRowPitch` and
 `SrcDepthPitch` are byte distances between successive rows and depth slices.
-The [shared CPU copy requirements](#cpu-subresource-transfers) apply.<!-- d3d12-review-inline:end:resources:RQ-N047:0:authored:migration-62d74a21b807dd3a-0 --></ins>
+The [common CPU copy requirements](#cpu-subresource-transfers) apply.<!-- d3d12-review-inline:end:resources:RQ-N047:0:authored:migration-62d74a21b807dd3a-0 --></ins>
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:resources:RQ-N048:0:authored:migration-dd82c8568ef01407-0 -->Returns `S_OK` after a successful synchronous copy or valid no-op. Validation
-failures, allocation/mapping failures and device errors use the ordinary
-`HRESULT` path.<!-- d3d12-review-inline:end:resources:RQ-N048:0:authored:migration-dd82c8568ef01407-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:RQ-N048:0:authored:migration-dd82c8568ef01407-0 -->Returns `S_OK` after a successful synchronous copy or valid no-op. Otherwise,
+it returns an error [`HRESULT`](devices-and-capabilities.md#api-result-codes).<!-- d3d12-review-inline:end:resources:RQ-N048:0:authored:migration-dd82c8568ef01407-0 --></ins>
 
 <a id="resource-read-from-subresource"></a>
 
@@ -3779,80 +3547,18 @@ Uses the CPU to copy data from a subresource, enabling the CPU to read the conte
 and source region. Null selects the full source subresource, not a destination
 region. `pDstData` points to the linear destination; `DstRowPitch` and
 `DstDepthPitch` are its byte distances between rows and depth slices.
-The [shared CPU copy requirements](#cpu-subresource-transfers) apply.<!-- d3d12-review-inline:end:resources:RQ-N050:0:authored:migration-76edd8c404f633ee-0 --></ins>
+The [common CPU copy requirements](#cpu-subresource-transfers) apply.<!-- d3d12-review-inline:end:resources:RQ-N050:0:authored:migration-76edd8c404f633ee-0 --></ins>
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:resources:RQ-N051:0:authored:migration-cd9426e17e787c71-0 -->Returns `S_OK` after a successful synchronous copy or valid no-op.
-Validation/allocation/mapping/device failures use the ordinary `HRESULT`
-path.<!-- d3d12-review-inline:end:resources:RQ-N051:0:authored:migration-cd9426e17e787c71-0 --></ins>
-
-<a id="resource-query-ddis"></a>
-
-### Allocation query driver interface
-
-<ins><!-- d3d12-review-inline:begin:resources:RQ-N052:0:authored:migration-07830c675689e890-0 -->The runtime queries per-resource driver information and combines it into the API's aggregate size, alignment and placement offset results.<!-- d3d12-review-inline:end:resources:RQ-N052:0:authored:migration-07830c675689e890-0 --></ins>
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_CHECKRESOURCEALLOCATIONINFO_0111)(
-    D3D12DDI_HDEVICE,
-    _In_ CONST D3D12DDIARG_CREATERESOURCE_0111*,
-    D3D12DDI_RESOURCE_OPTIMIZATION_FLAGS,
-    UINT32 AlignmentRestriction,
-    UINT VisibleNodeMask,
-    _Out_ D3D12DDI_RESOURCE_ALLOCATION_INFO_0022*
-);
-```
-
-<ins><!-- d3d12-review-inline:begin:resources:RQ-N054:0:authored:migration-dbd6ee03be91f7b1-0 -->This query also prepares resource creation. Its output describes resource storage and optional additional-data regions, including resolved layout and swizzle transitions.<!-- d3d12-review-inline:end:resources:RQ-N054:0:authored:migration-dbd6ee03be91f7b1-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:RQ-N055:0:authored:migration-d2a28bbc73c67ce3-0 -->The query shares `D3D12DDIARG_CREATERESOURCE_0111` with creation and receives a 32-bit alignment restriction.<!-- d3d12-review-inline:end:resources:RQ-N055:0:authored:migration-d2a28bbc73c67ce3-0 --></ins>
-
-<a id="subresource-info-ddi"></a>
-
-### PFND3D12DDI_CHECKSUBRESOURCEINFO
-
-```cpp
-typedef struct D3D12DDI_SUBRESOURCE_INFO
-{
-    UINT64 Offset;
-    UINT64 RowStride;
-    UINT64 DepthStride;
-    UINT16 RowBytePreSwizzleOffset;
-    UINT16 ColumnPreSwizzleOffset;
-    UINT16 DepthPreSwizzleOffset;
-} D3D12DDI_SUBRESOURCE_INFO;
-
-typedef VOID ( APIENTRY* PFND3D12DDI_CHECKSUBRESOURCEINFO )( D3D12DDI_HDEVICE, D3D12DDI_HRESOURCE, UINT Subresource, _Out_ D3D12DDI_SUBRESOURCE_INFO* );
-```
-
-<ins><!-- d3d12-review-inline:begin:resources:RQ-N057:0:authored:migration-b0dd290d3295c75c-0 -->The runtime supplies the UMD device, an existing driver resource handle and
-the subresource index. The UMD returns its actual resource-relative offset,
-row/depth strides and pre-swizzle offsets, consistent with the resource's
-chosen layout. These are backing layout facts, not an adapter-independent
-copyable footprint. The runtime uses them for mapping and CPU re-layout;
-the DDI does not perform the CPU transfer and returns no `HRESULT`.<!-- d3d12-review-inline:end:resources:RQ-N057:0:authored:migration-b0dd290d3295c75c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:RQ-N051:0:authored:migration-cd9426e17e787c71-0 -->Returns `S_OK` after a successful synchronous copy or valid no-op. Otherwise,
+it returns an error [`HRESULT`](devices-and-capabilities.md#api-result-codes).<!-- d3d12-review-inline:end:resources:RQ-N051:0:authored:migration-cd9426e17e787c71-0 --></ins>
 
 <a id="tight-alignment"></a>
 
 ## Tight resource alignment
 
-<!-- d3d12-review-alert:begin:resources:A-tight-small:0:modified:migration-1ea0bf0eceacbd99-0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> For alignment selection, a "Small resource" is defined as:
-> 1. MUST have UNKNOWN layout.
-> 1. A non-MSAA texture MUST NOT be RENDER_TARGET or DEPTH_STENCIL.
-> 1. The estimated size of the most-detailed mip level MUST be a total of the larger alignment restriction or less.
-
-<!-- d3d12-review-alert:end:resources:A-tight-small:0:modified:migration-1ea0bf0eceacbd99-0 -->
-
-<ins><!-- d3d12-review-inline:begin:resources:A-tight-small:1 -->The runtime will use an architecture-independent mechanism of size-estimation, that mimics the way standard swizzle and D3D11 tiled resources are sized.
-However, the tile sizes will be of the smaller alignment restriction for such calculations. Additional data associated with resources, which is typically associated with compression, will not be added into this size.
-For a non-MSAA texture, when this calculated size is <= 64 KiB, the alignment of 4 KiB is permitted.
-For an MSAA texture, when this calculated size is <= 4 MiB, the alignment of 64 KiB is permitted.<!-- d3d12-review-inline:end:resources:A-tight-small:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:A-tight-intro:0:authored:opus-tight-intro -->With `D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT`, the driver can select a smaller resource alignment than the ordinary [buffer](#buffer-description) and [texture](#texture-description) alignment rules allow.<!-- d3d12-review-inline:end:resources:A-tight-intro:0:authored:opus-tight-intro --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:A-tight-gate:0:authored:migration-070ab9023bbca3a8-0 -->`D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT` is valid only when `D3D12_FEATURE_DATA_TIGHT_ALIGNMENT::SupportTier` reports `D3D12_TIGHT_ALIGNMENT_TIER_1`. The query uses `D3D12_FEATURE_D3D12_TIGHT_ALIGNMENT`.<!-- d3d12-review-inline:end:resources:A-tight-gate:0:authored:migration-070ab9023bbca3a8-0 --></ins>
 
@@ -3871,9 +3577,28 @@ typedef struct D3D12_FEATURE_DATA_TIGHT_ALIGNMENT
 } D3D12_FEATURE_DATA_TIGHT_ALIGNMENT;
 ```
 
+<!-- d3d12-review-alert:begin:resources:A-tight-small:0:modified:migration-1ea0bf0eceacbd99-0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+>
+> For alignment selection, a "Small resource" is defined as:
+> 1. MUST have UNKNOWN layout.
+> 1. A non-MSAA texture MUST NOT be RENDER_TARGET or DEPTH_STENCIL.
+> 1. The estimated size of the most-detailed mip level MUST be a total of the larger alignment restriction or less.
+
+<!-- d3d12-review-alert:end:resources:A-tight-small:0:modified:migration-1ea0bf0eceacbd99-0 -->
+
+<ins><!-- d3d12-review-inline:begin:resources:A-tight-small:1 -->The runtime will use an architecture-independent mechanism of size-estimation, that mimics the way standard swizzle and D3D12 tiled resources are sized.
+However, the tile sizes will be of the smaller alignment restriction for such calculations. Additional data associated with resources, which is typically associated with compression, will not be added into this size.
+For a non-MSAA texture, when this calculated size is <= 64 KiB, the alignment of 4 KiB is permitted.
+For an MSAA texture, when this calculated size is <= 4 MiB, the alignment of 64 KiB is permitted.<!-- d3d12-review-inline:end:resources:A-tight-small:1 --></ins>
+
 <ins><!-- d3d12-review-inline:begin:resources:A-tight-range-context:0:authored:migration-da68aeeca5828722-0 -->The placed and committed tables below describe tight driver-selected alignment ranges without an application-requested higher floor. [Nonzero alignment floors](#tight-input-floors) have separate input validation.<!-- d3d12-review-inline:end:resources:A-tight-range-context:0:authored:migration-da68aeeca5828722-0 --></ins>
 
-### Placed resources
+<a id="placed-resources-1"></a>
+
+### Tight alignment for placed resources
 
 |       Type        | MIN | MAX                                                            |
 |-------------------|-----|----------------------------------------------------------------|
@@ -3881,15 +3606,14 @@ typedef struct D3D12_FEATURE_DATA_TIGHT_ALIGNMENT
 |      Textures     | 8B  | 64KiB (4KiB when it meets the definition of a Small Resource)  |
 |        MSAA       | 8B  | 4MiB (64KiB when it meets the definition of a Small Resource)  |
 
-### Committed resources
+<a id="committed-resources-1"></a>
+
+### Tight alignment for committed resources
 
 Committed resources can also benefit from having their minimum alignment reduced, specifically committed buffers.
 There is some nuance here though due to the fact that a heap is implicitly created for each committed resource, and <ins><!-- d3d12-review-inline:begin:resources:A-tight-committed:0:modified:migration-80fcb7d552c97386-0 -->the Windows video memory manager's (VidMM's) minimum alignment<!-- d3d12-review-inline:end:resources:A-tight-committed:0:modified:migration-80fcb7d552c97386-0 --></ins> and size granularity for managing memory is 4KiB.
 <ins><!-- d3d12-review-inline:begin:resources:A-tight-committed:0:modified:migration-2e15abd140a2a7a5-1 -->Each committed resource creation call results in 1 allocation.<!-- d3d12-review-inline:end:resources:A-tight-committed:0:modified:migration-2e15abd140a2a7a5-1 --></ins>
-<ins><!-- d3d12-review-inline:begin:resources:A-tight-committed:0:modified:migration-7d6fdb8426c65a6a-2 -->Drivers do not need to manage suballocations; the minimum alignment for committed resources is 4KiB or larger.<!-- d3d12-review-inline:end:resources:A-tight-committed:0:modified:migration-7d6fdb8426c65a6a-2 --></ins>
-
-**Note: For drivers that report LargePageSupport for VidMM allocations, it is acceptable and optimal for allocations that are a multiple of the LargePage size to be aligned to the large page size instead of using the 4KiB alignment.**
-
+<ins><!-- d3d12-review-inline:begin:resources:A-tight-committed:0:modified:migration-7d6fdb8426c65a6a-2 -->The minimum alignment for committed resources is 4KiB or larger.<!-- d3d12-review-inline:end:resources:A-tight-committed:0:modified:migration-7d6fdb8426c65a6a-2 --></ins>
 
 
 |      Type        | MIN  | MAX                                                            |
@@ -3915,7 +3639,7 @@ The runtime honors the app-supplied floor when it is a valid value (i.e. a power
 
 When the runtime has to clamp up, a debug-layer INFO message `D3D12_MESSAGE_ID_CREATERESOURCE_ALIGNMENT_OVERRIDDEN` is emitted so the override is discoverable without the app having to compare `Alignment` against `GetDesc()` afterwards.
 
-Because a non-zero `Alignment` is now legal, applications can round-trip a desc through `ID3D12Resource::GetDesc` and pass it back into `CreateCommittedResource*`, `CreatePlacedResource*`, `GetResourceAllocationInfo`, or `GetCopyableFootprints` without needing to reset `Alignment` to `0` first.
+<ins><!-- d3d12-review-inline:begin:resources:A-tight-floors:0:modified:opus-present-state -->Because a nonzero `Alignment` is valid with tight alignment,<!-- d3d12-review-inline:end:resources:A-tight-floors:0:modified:opus-present-state --></ins> applications can round-trip a desc through `ID3D12Resource::GetDesc` and pass it back into `CreateCommittedResource*`, `CreatePlacedResource*`, `GetResourceAllocationInfo`, or `GetCopyableFootprints` without needing to reset `Alignment` to `0` first.
 
 <a id="tight-input-floors"></a>
 
@@ -3949,9 +3673,7 @@ Resource creation is free-threaded. The initial resource state must be valid for
 
 <ins><!-- d3d12-review-inline:begin:resources:A-initial-state-link:0:authored:migration-dd7d0fb3c32faacf-0 -->The legacy creation methods specify an initial state valid for the resource description. The [legacy state model](synchronization.md#legacy-resource-states) and [common state promotion/decay](synchronization.md#legacy-promotion-and-decay) define subsequent state behavior. The [enhanced layout creation alternatives](#versioned-creation) specify `InitialLayout` instead.<!-- d3d12-review-inline:end:resources:A-initial-state-link:0:authored:migration-dd7d0fb3c32faacf-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:A-enhanced-upload-uses:0:authored:migration-8f6695bf283c7f6c-0 -->Writable multisampled UAV resources also require `D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET`. `D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL` cannot be combined with unordered access.<!-- d3d12-review-inline:end:resources:A-enhanced-upload-uses:0:authored:migration-8f6695bf283c7f6c-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:A-null-validation:0:authored:migration-b398b45eb7ccd764-0 -->For these creation methods, a null output pointer selects parameter validation without object creation. `S_FALSE` does not establish successful backing allocation or support for the requested `riid`/`riidResource`. `CreatePlacedResource` has the same validation-only contract.<!-- d3d12-review-inline:end:resources:A-null-validation:0:authored:migration-b398b45eb7ccd764-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:A-null-validation:0:authored:migration-b398b45eb7ccd764-0 -->For `CreateHeap`, `CreateCommittedResource` and `CreatePlacedResource`, a null output pointer selects parameter validation without object creation. `S_FALSE` does not establish successful backing allocation or support for the requested `riid`/`riidResource`.<!-- d3d12-review-inline:end:resources:A-null-validation:0:authored:migration-b398b45eb7ccd764-0 --></ins>
 
 <a id="shared-cross-adapter-creation"></a>
 
@@ -3961,13 +3683,13 @@ Resource creation is free-threaded. The initial resource state must be valid for
 
 <ins><!-- d3d12-review-inline:begin:resources:D113-shared-cross-adapter-creation:1:authored:migration-5c48557bcc0c4397-0 -->Use [CreatePlacedResource](#create-placed-resource) on a shared cross-adapter heap for other supported formats or layouts, subject to the [complete cross-adapter sharing restrictions](sharing-and-interoperability.md#cross-adapter-heaps), [resource flags](#resource-flags) and [texture layout requirements](#texture-layout). The [format support query](formats.md#d3d12-feature-data-format-support) defines the format result bits.<!-- d3d12-review-inline:end:resources:D113-shared-cross-adapter-creation:1:authored:migration-5c48557bcc0c4397-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:D113-shared-cross-adapter-creation:2:authored:migration-16eb2dd26c60ef0f-0 -->This committed creation condition does not settle the separate [DISPLAYABLE query's operational domain](devices-and-capabilities.md#d3d12_feature_data_displayable). See [Shared backing and resource descriptions](sharing-and-interoperability.md#shared-backing) for heap backing and resource descriptions shared between devices.<!-- d3d12-review-inline:end:resources:D113-shared-cross-adapter-creation:2:authored:migration-16eb2dd26c60ef0f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:D113-shared-cross-adapter-creation:2:authored:migration-16eb2dd26c60ef0f-0 -->The [displayable feature query](devices-and-capabilities.md#d3d12_feature_data_displayable) is separate from these format support bits. See [Shared backing and resource descriptions](sharing-and-interoperability.md#shared-backing) for heap backing and resource descriptions shared between devices.<!-- d3d12-review-inline:end:resources:D113-shared-cross-adapter-creation:2:authored:migration-16eb2dd26c60ef0f-0 --></ins>
 
 <a id="create-heap"></a>
 
-## ID3D12Device::CreateHeap
+### ID3D12Device::CreateHeap
 
-### Declaration
+#### Declaration
 
 ```cpp
 HRESULT CreateHeap(
@@ -3976,46 +3698,39 @@ HRESULT CreateHeap(
     void** ppvHeap);
 ```
 
-### Behavior
+#### Behavior
 
 Creates a heap that can be used with placed resources and reserved resources.
 
-### Parameters
+#### Parameters
 
-#### `pDesc`
+##### `pDesc`
 
-<ins><!-- d3d12-review-inline:begin:resources:API-heap-parameters:1 -->A pointer to a constant `D3D12_HEAP_DESC` structure that describes the heap.<!-- d3d12-review-inline:end:resources:API-heap-parameters:1 --></ins>
+A pointer to a constant `D3D12_HEAP_DESC` structure that describes the heap.
 
-#### `riid`
+##### `riid`
 
 A reference to the globally unique identifier (**GUID**) of the heap interface to return in *ppvHeap*.
 
 <ins><!-- d3d12-review-inline:begin:resources:API-heap-parameters:4 -->While *riid* is most commonly the **GUID** of [ID3D12Heap](#heap-description), it may be the **GUID** of any interface. If the heap object doesn't support the interface for this **GUID**, then creation fails with `E_NOINTERFACE`.<!-- d3d12-review-inline:end:resources:API-heap-parameters:4 --></ins>
 
-#### `ppvHeap`
+##### `ppvHeap`
 
 An optional pointer to a memory block that receives the requested interface pointer to the created heap object.
 
 <ins><!-- d3d12-review-inline:begin:resources:API-heap-parameters:7 -->*ppvHeap* can be `nullptr`, for parameter validation. When *ppvHeap* is `nullptr`, no object is created, and `S_FALSE` is returned when the parameters are valid.<!-- d3d12-review-inline:end:resources:API-heap-parameters:7 --></ins>
 
-### Return values
+#### Return values
 
 <ins><!-- d3d12-review-inline:begin:resources:API-heap-returns:0 -->If an object is created successfully, the method returns `S_OK`; successful validation with a null output pointer returns `S_FALSE`. Otherwise, it returns an [**HRESULT**](devices-and-capabilities.md#api-result-codes)[error code](devices-and-capabilities.md#api-result-codes).<!-- d3d12-review-inline:end:resources:API-heap-returns:0 --></ins>
 
-<!-- d3d12-review-alert:begin:resources:API-heap-returns:1:modified:migration-c31fa6783c0b0fb0-0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> | Return value | Description |
-> | --- | --- |
-> | `E_OUTOFMEMORY` | There is insufficient memory to create the heap. |
-
-<!-- d3d12-review-alert:end:resources:API-heap-returns:1:modified:migration-c31fa6783c0b0fb0-0 -->
+| Return value | Description |
+| --- | --- |
+| `E_OUTOFMEMORY` | There is insufficient memory to create the heap. |
 
 See [Direct3D 12 return codes](devices-and-capabilities.md#api-result-codes) for other possible return values.
 
-### Lifetime
+#### Lifetime
 
 Before releasing the final reference on the heap, your application must ensure that the GPU will no longer read or write to this heap.
 
@@ -4023,9 +3738,9 @@ A placed resource object holds a reference on the heap it is created on; but a r
 
 <a id="create-committed-resource"></a>
 
-## ID3D12Device::CreateCommittedResource
+### ID3D12Device::CreateCommittedResource
 
-### Declaration
+#### Declaration
 
 ```cpp
 HRESULT CreateCommittedResource(
@@ -4038,84 +3753,77 @@ HRESULT CreateCommittedResource(
     void** ppvResource);
 ```
 
-### Behavior
+#### Behavior
 
 Creates both a resource and an implicit heap, such that the heap is big enough to contain the entire resource, and the resource is mapped to the heap.
 
-### Parameters
+#### Parameters
 
-#### `pHeapProperties`
+##### `pHeapProperties`
 
-<ins><!-- d3d12-review-inline:begin:resources:API-committed-parameters:1 -->A pointer to a `D3D12_HEAP_PROPERTIES` structure that provides properties for the resource's heap.<!-- d3d12-review-inline:end:resources:API-committed-parameters:1 --></ins>
+A pointer to a `D3D12_HEAP_PROPERTIES` structure that provides properties for the resource's heap.
 
-#### `HeapFlags`
+##### `HeapFlags`
 
-<ins><!-- d3d12-review-inline:begin:resources:API-committed-parameters:3 -->Heap options, as a bitwise-OR'd combination of `D3D12_HEAP_FLAGS` enumeration constants.<!-- d3d12-review-inline:end:resources:API-committed-parameters:3 --></ins>
+Heap options, as a bitwise-OR'd combination of `D3D12_HEAP_FLAGS` enumeration constants.
 
-#### `pDesc`
+##### `pDesc`
 
-<ins><!-- d3d12-review-inline:begin:resources:API-committed-parameters:5 -->A pointer to a `D3D12_RESOURCE_DESC` structure that describes the resource.<!-- d3d12-review-inline:end:resources:API-committed-parameters:5 --></ins>
+A pointer to a `D3D12_RESOURCE_DESC` structure that describes the resource.
 
-#### `InitialResourceState`
+##### `InitialResourceState`
 
-<ins><!-- d3d12-review-inline:begin:resources:API-committed-parameters:7 -->The initial state of the resource, as a bitwise-OR'd combination of `D3D12_RESOURCE_STATES` enumeration constants.<!-- d3d12-review-inline:end:resources:API-committed-parameters:7 --></ins>
+The initial state of the resource, as a bitwise-OR'd combination of `D3D12_RESOURCE_STATES` enumeration constants.
 
 When you create a resource together with a [`D3D12_HEAP_TYPE_UPLOAD`](resources.md#heap-types) heap, you must set *InitialResourceState* to [`D3D12_RESOURCE_STATE_GENERIC_READ`](synchronization.md#d3d12-resource-states).
 
 When you create a resource together with a [`D3D12_HEAP_TYPE_READBACK`](resources.md#heap-types) heap, you must set *InitialResourceState* to [`D3D12_RESOURCE_STATE_COPY_DEST`](synchronization.md#d3d12-resource-states).
 
-#### `pOptimizedClearValue`
+##### `pOptimizedClearValue`
 
-<ins><!-- d3d12-review-inline:begin:resources:API-committed-parameters:11 -->Specifies a [`D3D12_CLEAR_VALUE`](resources.md#optimized-clear-value) structure that describes the default value for a clear color.<!-- d3d12-review-inline:end:resources:API-committed-parameters:11 --></ins>
+Specifies a [`D3D12_CLEAR_VALUE`](resources.md#optimized-clear-value) structure that describes the default value for a clear color.
 
-<ins><!-- d3d12-review-inline:begin:resources:API-committed-parameters:12 -->*pOptimizedClearValue* specifies a value for which clear operations are most optimal. When the created resource is a texture with either the [`D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET`](resources.md#resource-flags) or `D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL` flags, you should choose the value with which the clear operation will most commonly be called. You can call the clear operation with other values, but those operations won't be as efficient as when the value matches the one passed in to resource creation.<!-- d3d12-review-inline:end:resources:API-committed-parameters:12 --></ins>
+*pOptimizedClearValue* specifies a value for which clear operations are most optimal. When the created resource is a texture with either the [`D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET`](resources.md#resource-flags) or `D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL` flags, you should choose the value with which the clear operation will most commonly be called. You can call the clear operation with other values, but those operations won't be as efficient as when the value matches the one passed in to resource creation.
 
 When you use [`D3D12_RESOURCE_DIMENSION_BUFFER`](resources.md#resource-dimensions), you must set *pOptimizedClearValue* to `nullptr`.
 
-#### `riidResource`
+##### `riidResource`
 
 A reference to the globally unique identifier (**GUID**) of the resource interface to return in *ppvResource*.
 
-<ins><!-- d3d12-review-inline:begin:resources:API-committed-parameters:16 -->While *riidResource* is most commonly the **GUID** of [ID3D12Resource](#resource-storage), it may be the **GUID** of any interface. If the resource object doesn't support the interface for this **GUID**, then creation fails with `E_NOINTERFACE`.<!-- d3d12-review-inline:end:resources:API-committed-parameters:16 --></ins>
+While *riidResource* is most commonly the **GUID** of [ID3D12Resource](#resource-storage), it may be the **GUID** of any interface. If the resource object doesn't support the interface for this **GUID**, then creation fails with `E_NOINTERFACE`.
 
-#### `ppvResource`
+##### `ppvResource`
 
 An optional pointer to a memory block that receives the requested interface pointer to the created resource object.
 
 <ins><!-- d3d12-review-inline:begin:resources:API-committed-parameters:19 -->*ppvResource* can be `nullptr`, for parameter validation. When *ppvResource* is `nullptr`, no object is created, and `S_FALSE` is returned when the parameters are valid.<!-- d3d12-review-inline:end:resources:API-committed-parameters:19 --></ins>
 
-### Return values
+#### Return values
 
 <ins><!-- d3d12-review-inline:begin:resources:API-committed-returns:0 -->If an object is created successfully, the method returns `S_OK`; successful validation with a null output pointer returns `S_FALSE`. Otherwise, it returns an [**HRESULT**](devices-and-capabilities.md#api-result-codes)[error code](devices-and-capabilities.md#api-result-codes).<!-- d3d12-review-inline:end:resources:API-committed-returns:0 --></ins>
 
-<!-- d3d12-review-alert:begin:resources:API-committed-returns:1:modified:migration-e7b7b2ba026926f1-0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> | Return value | Description |
-> | --- | --- |
-> | `E_OUTOFMEMORY` | There is insufficient memory to create the resource. |
-
-<!-- d3d12-review-alert:end:resources:API-committed-returns:1:modified:migration-e7b7b2ba026926f1-0 -->
+| Return value | Description |
+| --- | --- |
+| `E_OUTOFMEMORY` | There is insufficient memory to create the resource. |
 
 See [Direct3D 12 return codes](devices-and-capabilities.md#api-result-codes) for other possible return values.
 
-### Storage, residency and lifetime
+#### Storage, residency and lifetime
 
 This method creates both a resource and a heap, such that the heap is big enough to contain the entire resource, and the resource is mapped to the heap. The created heap is known as an implicit heap, because the heap object can't be obtained by the application. Before releasing the final reference on the resource, your application must ensure that the GPU will no longer read nor write to this resource.
 
 <ins><!-- d3d12-review-inline:begin:resources:A-committed-storage:1 -->Unless `D3D12_HEAP_FLAG_CREATE_NOT_RESIDENT` is specified, the implicit heap is made resident<!-- d3d12-review-inline:end:resources:A-committed-storage:1 --></ins> for GPU access before the method returns control to your application. Also see [Residency](#residency).
 
-The resource GPU VA mapping can't be changed. See [ID3D12CommandQueue::UpdateTileMappings](#update-tile-mappings) and [Volume tiled resources](#tiled-resources).
+The resource GPU VA mapping can't be changed. See [ID3D12CommandQueue::UpdateTileMappings](#update-tile-mappings) and <ins><!-- d3d12-review-inline:begin:resources:A-committed-storage:2:modified:opus-tiled-label -->[reserved resource tile organization](#tiled-resources)<!-- d3d12-review-inline:end:resources:A-committed-storage:2:modified:opus-tiled-label --></ins>.
 
 This method may be called by multiple threads concurrently.
 
 <a id="create-placed-resource"></a>
 
-## ID3D12Device::CreatePlacedResource
+### ID3D12Device::CreatePlacedResource
 
-### Declaration
+#### Declaration
 
 ```cpp
 HRESULT CreatePlacedResource(
@@ -4128,69 +3836,70 @@ HRESULT CreatePlacedResource(
     void** ppvResource);
 ```
 
-### Behavior
+#### Behavior
 
 <ins><!-- d3d12-review-inline:begin:resources:API-placed-behavior:0 -->Creates a resource that is placed in a specific heap.<!-- d3d12-review-inline:end:resources:API-placed-behavior:0 --></ins>
 
-### Parameters
+#### Parameters
 
-#### `pHeap`
+##### `pHeap`
 
 A pointer to the **ID3D12Heap** interface that represents the heap in which the resource is placed.
 
-#### `HeapOffset`
+##### `HeapOffset`
 
 The offset, in bytes, to the resource. The *HeapOffset* must be a multiple of the resource's alignment, and *HeapOffset* plus the resource size must be smaller than or equal to the heap size. [**GetResourceAllocationInfo**](resources.md#allocation-info) must be used to understand the sizes of texture resources.
 
-#### `pDesc`
+##### `pDesc`
 
-<ins><!-- d3d12-review-inline:begin:resources:API-placed-parameters:5 -->A pointer to a `D3D12_RESOURCE_DESC` structure that describes the resource.<!-- d3d12-review-inline:end:resources:API-placed-parameters:5 --></ins>
+A pointer to a `D3D12_RESOURCE_DESC` structure that describes the resource.
 
-#### `InitialState`
+##### `InitialState`
 
-<ins><!-- d3d12-review-inline:begin:resources:API-placed-parameters:7 -->The initial state of the resource, as a bitwise-OR'd combination of `D3D12_RESOURCE_STATES` enumeration constants.<!-- d3d12-review-inline:end:resources:API-placed-parameters:7 --></ins>
+The initial state of the resource, as a bitwise-OR'd combination of `D3D12_RESOURCE_STATES` enumeration constants.
 
-<ins><!-- d3d12-review-inline:begin:resources:API-placed-parameters:8 -->When a resource is created together with a `D3D12_HEAP_TYPE_UPLOAD` heap, *InitialState* must be `D3D12_RESOURCE_STATE_GENERIC_READ`. When a resource is created together with a `D3D12_HEAP_TYPE_READBACK` heap, *InitialState* must be `D3D12_RESOURCE_STATE_COPY_DEST`.<!-- d3d12-review-inline:end:resources:API-placed-parameters:8 --></ins>
+When a resource is created together with a `D3D12_HEAP_TYPE_UPLOAD` heap, *InitialState* must be `D3D12_RESOURCE_STATE_GENERIC_READ`. When a resource is created together with a `D3D12_HEAP_TYPE_READBACK` heap, *InitialState* must be `D3D12_RESOURCE_STATE_COPY_DEST`.
 
-#### `pOptimizedClearValue`
+##### `pOptimizedClearValue`
 
-<ins><!-- d3d12-review-inline:begin:resources:API-placed-parameters:10 -->Specifies a [`D3D12_CLEAR_VALUE`](resources.md#optimized-clear-value) that describes the default value for a clear color.<!-- d3d12-review-inline:end:resources:API-placed-parameters:10 --></ins>
+Specifies a [`D3D12_CLEAR_VALUE`](resources.md#optimized-clear-value) that describes the default value for a clear color.
 
-<ins><!-- d3d12-review-inline:begin:resources:API-placed-parameters:11 -->*pOptimizedClearValue* specifies a value for which clear operations are most optimal. When the created resource is a texture with either the `D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET` or `D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL` flags, your application should choose the value that the clear operation will most commonly be called with.<!-- d3d12-review-inline:end:resources:API-placed-parameters:11 --></ins>
+*pOptimizedClearValue* specifies a value for which clear operations are most optimal. When the created resource is a texture with either the `D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET` or `D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL` flags, your application should choose the value that the clear operation will most commonly be called with.
 
 Clear operations can be called with other values, but those operations will not be as efficient as when the value matches the one passed into resource creation.
 
-<ins><!-- d3d12-review-inline:begin:resources:API-placed-parameters:13 -->*pOptimizedClearValue* must be NULL when used with `D3D12_RESOURCE_DIMENSION_BUFFER`.<!-- d3d12-review-inline:end:resources:API-placed-parameters:13 --></ins>
+*pOptimizedClearValue* must be NULL when used with `D3D12_RESOURCE_DIMENSION_BUFFER`.
 
-#### `riid`
+##### `riid`
 
 The globally unique identifier (**GUID**) for the resource interface. This is an input parameter.
 
-<ins><!-- d3d12-review-inline:begin:resources:API-placed-parameters:16 -->The **REFIID**, or **GUID**, of the interface to the resource can be obtained by using the `__uuidof` macro. For example, `__uuidof(ID3D12Resource)` gets the **GUID** of the interface to a resource. Although **riid** is, most commonly, the GUID for [**ID3D12Resource**](#resource-storage), it may be any **GUID** for any interface. If the resource object doesn't support the interface for this **GUID**, then creation fails with `E_NOINTERFACE`.<!-- d3d12-review-inline:end:resources:API-placed-parameters:16 --></ins>
+The **REFIID**, or **GUID**, of the interface to the resource can be obtained by using the `__uuidof` macro. For example, `__uuidof(ID3D12Resource)` gets the **GUID** of the interface to a resource. Although **riid** is, most commonly, the GUID for [**ID3D12Resource**](#resource-storage), it may be any **GUID** for any interface. If the resource object doesn't support the interface for this **GUID**, then creation fails with `E_NOINTERFACE`.
 
-#### `ppvResource`
+##### `ppvResource`
 
 <ins><!-- d3d12-review-inline:begin:resources:API-placed-parameters:18 -->A pointer to a memory block that receives a pointer to the resource. *ppvResource* can be NULL, for parameter validation. When *ppvResource* is NULL, no object will be created and `S_FALSE` will be returned when *pDesc* and other parameters are valid.<!-- d3d12-review-inline:end:resources:API-placed-parameters:18 --></ins>
 
-### Return values
+#### Return values
 
-<ins><!-- d3d12-review-inline:begin:resources:API-placed-returns:0 -->This method returns `E_OUTOFMEMORY` if there is insufficient memory to create the resource. See [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes) for other possible return values.<!-- d3d12-review-inline:end:resources:API-placed-returns:0 --></ins>
+This method returns `E_OUTOFMEMORY` if there is insufficient memory to create the resource. See [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes) for other possible return values.
 
-### Storage and initialization
+#### Storage and initialization
 
 **CreatePlacedResource** is similar to fully mapping a reserved resource to an offset within a heap; but the virtual address space associated with a heap may be reused as well.
 
-<ins><!-- d3d12-review-inline:begin:resources:A-placed-aliasing:0:authored:migration-ff51a85da8cae4ec-0 -->A placed resource holds a reference to its heap. The resource's placement does not clear its contents or replace the [metadata initialization and aliasing requirements](synchronization.md#enhanced-aliasing). These obligations are distinct from the optimized clear value supplied at creation and from heap zeroing.<!-- d3d12-review-inline:end:resources:A-placed-aliasing:0:authored:migration-ff51a85da8cae4ec-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:A-placed-aliasing:0:authored:migration-ff51a85da8cae4ec-0 -->Placement does not clear the resource's contents. Neither heap zeroing nor an optimized clear value replaces the [metadata initialization and aliasing requirements](synchronization.md#enhanced-aliasing).<!-- d3d12-review-inline:end:resources:A-placed-aliasing:0:authored:migration-ff51a85da8cae4ec-0 --></ins>
 
 <a id="versioned-creation"></a>
+<a id="versioned-creation-contributions"></a>
 
-## Versioned creation contributions
+### Versioned creation methods
 
 <a id="create-heap1"></a>
 
-### ID3D12Device4::CreateHeap1
+#### ID3D12Device4::CreateHeap1
 
-#### Declaration
+##### Declaration
 
 ```cpp
 HRESULT CreateHeap1(
@@ -4200,15 +3909,15 @@ HRESULT CreateHeap1(
     void** ppvHeap);
 ```
 
-#### Behavior
+##### Behavior
 
 <ins><!-- d3d12-review-inline:begin:resources:CONTRIB-ID3D12Device4-CreateHeap1:0:authored:migration-64c45999cca9dc86-0 -->Adds `pProtectedSession` to [`CreateHeap`](#create-heap). A null session creates an unprotected heap.<!-- d3d12-review-inline:end:resources:CONTRIB-ID3D12Device4-CreateHeap1:0:authored:migration-64c45999cca9dc86-0 --></ins>
 
 <a id="create-committed-resource1"></a>
 
-### ID3D12Device4::CreateCommittedResource1
+#### ID3D12Device4::CreateCommittedResource1
 
-#### Declaration
+##### Declaration
 
 ```cpp
 HRESULT CreateCommittedResource1(
@@ -4222,15 +3931,15 @@ HRESULT CreateCommittedResource1(
     void** ppvResource);
 ```
 
-#### Behavior
+##### Behavior
 
 <ins><!-- d3d12-review-inline:begin:resources:CONTRIB-ID3D12Device4-CreateCommittedResource1:0:authored:migration-ec664f6743ce17aa-0 -->Adds `pProtectedSession` to [`CreateCommittedResource`](#create-committed-resource). A null session creates an unprotected resource.<!-- d3d12-review-inline:end:resources:CONTRIB-ID3D12Device4-CreateCommittedResource1:0:authored:migration-ec664f6743ce17aa-0 --></ins>
 
 <a id="create-committed-resource2"></a>
 
-### ID3D12Device8::CreateCommittedResource2
+#### ID3D12Device8::CreateCommittedResource2
 
-#### Declaration
+##### Declaration
 
 ```cpp
 HRESULT CreateCommittedResource2(
@@ -4244,15 +3953,15 @@ HRESULT CreateCommittedResource2(
     void** ppvResource);
 ```
 
-#### Behavior
+##### Behavior
 
 <ins><!-- d3d12-review-inline:begin:resources:CONTRIB-ID3D12Device8-CreateCommittedResource2:0:authored:migration-b1fa8c95405e436a-0 -->Uses [`D3D12_RESOURCE_DESC1`](resources.md#extended-description) and retains the protected session parameter and legacy initial resource state. The heap, clear value, interface and output parameter contracts are those of [`CreateCommittedResource`](#create-committed-resource); protection is specified by `pProtectedSession` as in [`CreateCommittedResource1`](#create-committed-resource1).<!-- d3d12-review-inline:end:resources:CONTRIB-ID3D12Device8-CreateCommittedResource2:0:authored:migration-b1fa8c95405e436a-0 --></ins>
 
 <a id="create-placed-resource1"></a>
 
-### ID3D12Device8::CreatePlacedResource1
+#### ID3D12Device8::CreatePlacedResource1
 
-#### Declaration
+##### Declaration
 
 ```cpp
 HRESULT CreatePlacedResource1(
@@ -4265,15 +3974,15 @@ HRESULT CreatePlacedResource1(
     void** ppvResource);
 ```
 
-#### Behavior
+##### Behavior
 
 <ins><!-- d3d12-review-inline:begin:resources:CONTRIB-ID3D12Device8-CreatePlacedResource1:0:authored:migration-a9f5d740ca23818e-0 -->Uses [`D3D12_RESOURCE_DESC1`](resources.md#extended-description) and retains `InitialState`. Placed resources inherit protection from their heap. The heap, offset, clear value, interface and output parameter contracts are those of [`CreatePlacedResource`](#create-placed-resource).<!-- d3d12-review-inline:end:resources:CONTRIB-ID3D12Device8-CreatePlacedResource1:0:authored:migration-a9f5d740ca23818e-0 --></ins>
 
 <a id="create-committed-resource3"></a>
 
-### ID3D12Device10::CreateCommittedResource3
+#### ID3D12Device10::CreateCommittedResource3
 
-#### Declaration
+##### Declaration
 
 ```cpp
 HRESULT CreateCommittedResource3(
@@ -4289,15 +3998,15 @@ HRESULT CreateCommittedResource3(
     void** ppvResource);
 ```
 
-#### Behavior
+##### Behavior
 
 <ins><!-- d3d12-review-inline:begin:resources:CONTRIB-ID3D12Device10-CreateCommittedResource3:0:authored:migration-5fc780c94bb86f76-0 -->Uses [`D3D12_RESOURCE_DESC1`](resources.md#extended-description), retains `pProtectedSession`, and replaces the legacy initial state with `InitialLayout`. Adds `NumCastableFormats` and `pCastableFormats`. The heap, clear value, interface and output parameter contracts are those of [`CreateCommittedResource`](#create-committed-resource). `pProtectedSession` specifies protection as in [`CreateCommittedResource1`](#create-committed-resource1). The initial layout and format list constraints are defined [below](#initial-layout-and-format-lists).<!-- d3d12-review-inline:end:resources:CONTRIB-ID3D12Device10-CreateCommittedResource3:0:authored:migration-5fc780c94bb86f76-0 --></ins>
 
 <a id="create-placed-resource2"></a>
 
-### ID3D12Device10::CreatePlacedResource2
+#### ID3D12Device10::CreatePlacedResource2
 
-#### Declaration
+##### Declaration
 
 ```cpp
 HRESULT CreatePlacedResource2(
@@ -4312,7 +4021,7 @@ HRESULT CreatePlacedResource2(
     void** ppvResource);
 ```
 
-#### Behavior
+##### Behavior
 
 <ins><!-- d3d12-review-inline:begin:resources:CONTRIB-ID3D12Device10-CreatePlacedResource2:0:authored:migration-7fe474b12f196594-0 -->Uses [`D3D12_RESOURCE_DESC1`](resources.md#extended-description) and replaces the legacy initial state with `InitialLayout`. Adds `NumCastableFormats` and `pCastableFormats`. Protection is inherited from the heap. The heap, offset, clear value, interface and output parameter contracts are those of [`CreatePlacedResource`](#create-placed-resource). The initial layout and format list constraints are defined [below](#initial-layout-and-format-lists).<!-- d3d12-review-inline:end:resources:CONTRIB-ID3D12Device10-CreatePlacedResource2:0:authored:migration-7fe474b12f196594-0 --></ins>
 
@@ -4344,9 +4053,8 @@ HRESULT CreatePlacedResource2(
 
 ## Existing system memory diagnostic heaps
 
-<ins><!-- d3d12-review-inline:begin:resources:HI-model:0:authored:migration-abff0917d3f29d1d-0 -->These methods wrap existing system memory backing as a D3D12 heap;
-they do not allocate an unrelated replacement byte buffer or import a
-D3D12 shared resource NT handle. Support requires
+<ins><!-- d3d12-review-inline:begin:resources:HI-model:0:authored:migration-abff0917d3f29d1d-0 -->These methods wrap existing system memory backing as a D3D12 heap.
+Support requires
 [D3D12_FEATURE_DATA_EXISTING_HEAPS::Supported](devices-and-capabilities.md#d3d12_feature_data_existing_heaps).
 The address method consumes a complete allocation region. The mapping
 method consumes a file mapping section. Neither base API takes a
@@ -4387,20 +4095,18 @@ ALLOW_SHADER_ATOMICS. The address route can also reflect WRITE_WATCH
 backing. These imported properties do not legalize CPU-accessible
 [shared flag heap creation](sharing-and-interoperability.md#shared-heaps)
 or grant arbitrary resource types, casting, atomics or cross-adapter
-usage. Existing resource/heap compatibility and mapping requirements
-remain required. Placed and reserved resource use is conditional on those
-effective flags and capabilities.<!-- d3d12-review-inline:end:resources:HI-properties:1:authored:migration-4a2e0b0b39d5c664-0 --></ins>
+usage. Placed and reserved resources in these heaps must meet the ordinary
+resource/heap compatibility and mapping requirements for those effective
+flags and capabilities.<!-- d3d12-review-inline:end:resources:HI-properties:1:authored:migration-4a2e0b0b39d5c664-0 --></ins>
 
 <a id="existing-heap-lifetime"></a>
 
 ### Ownership, validation-only results and driver opening
 
-<ins><!-- d3d12-review-inline:begin:resources:HI-lifetime:0:authored:migration-110763b8873b6862-0 -->The original address allocation and input file mapping handle remain
-caller-owned; ownership is not transferred by opening the heap.
+<ins><!-- d3d12-review-inline:begin:resources:HI-lifetime:0:authored:migration-110763b8873b6862-0 -->The caller retains ownership of the original address allocation and input
+file mapping handle.
 Windows backing/view lifetimes and [GPU object/backing lifetime](execution.md#lifetime)
-must cover the actual accesses. The method does not create an
-application MapViewOfFile view or execute a resource Map for the caller.
-Returned heap interfaces are caller-owned COM references.<!-- d3d12-review-inline:end:resources:HI-lifetime:0:authored:migration-110763b8873b6862-0 --></ins>
+must cover the actual accesses. Returned heap interfaces are caller-owned COM references.<!-- d3d12-review-inline:end:resources:HI-lifetime:0:authored:migration-110763b8873b6862-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:HI-lifetime:1:authored:migration-396178a64a5a9628-0 -->A null `ppvHeap` performs description validation only. A valid
 description returns `S_FALSE` without an object. Failure returns its
@@ -4408,12 +4114,12 @@ validation HRESULT. This does not test the requested IID, successful
 kernel allocation/open, or memory availability. It is not a guarantee
 that a subsequent non-null output call will succeed.<!-- d3d12-review-inline:end:resources:HI-lifetime:1:authored:migration-396178a64a5a9628-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:HI-lifetime:2:authored:migration-eb4794d547efb1e2-0 -->With a non-null output location, failure leaves a null heap pointer.
-Actual success creates a local heap interface; interface/allocation/
-OS failures use HRESULT. The runtime can construct an internal buffer
-and kernel allocation before using the common
-[heap/resource open lifecycle](#open-heap-resource-ddi); no separate
-application buffer is returned and no one-to-one call count is implied.<!-- d3d12-review-inline:end:resources:HI-lifetime:2:authored:migration-eb4794d547efb1e2-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:HI-lifetime:2:authored:migration-eb4794d547efb1e2-0 -->With a non-null output location, failure leaves a null heap pointer,
+and success creates a local heap interface. The runtime can construct an
+internal buffer and kernel allocation before using the common
+[heap/resource open lifecycle](#open-heap-resource-ddi), so API calls need
+not correspond one-to-one with DDI calls. No separate application buffer
+is returned.<!-- d3d12-review-inline:end:resources:HI-lifetime:2:authored:migration-eb4794d547efb1e2-0 --></ins>
 
 <a id="id3d12device3-openexistingheapfromaddress"></a>
 
@@ -4429,8 +4135,8 @@ HRESULT OpenExistingHeapFromAddress( const void* pAddress, REFIID riid, void** p
 
 Creates a special-purpose diagnostic heap in system memory from an address. The created heap can persist even in the event of a GPU-fault or device-removed scenario.
 
-<ins><!-- d3d12-review-inline:begin:resources:HI-OpenExistingHeapFromAddress-shared:0:authored:migration-ed4e3b9d6483e154-0 -->The [shared validation/effective-property contract](#existing-heap-properties)
-and [ownership/probe/opening contract](#existing-heap-lifetime) apply.<!-- d3d12-review-inline:end:resources:HI-OpenExistingHeapFromAddress-shared:0:authored:migration-ed4e3b9d6483e154-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:HI-OpenExistingHeapFromAddress-shared:0:authored:migration-ed4e3b9d6483e154-0 -->See [backing validation and effective properties](#existing-heap-properties)
+and [ownership, validation-only results and driver opening](#existing-heap-lifetime).<!-- d3d12-review-inline:end:resources:HI-OpenExistingHeapFromAddress-shared:0:authored:migration-ed4e3b9d6483e154-0 --></ins>
 
 #### Parameters
 
@@ -4476,24 +4182,24 @@ HRESULT OpenExistingHeapFromAddress1(
 #### Behavior
 
 <ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device13-openexistingheapfromaddress1-contract:0:authored:migration-2bc6001b2af9fdd7-0 -->Extends [the address-backed heap model](#id3d12device3-openexistingheapfromaddress)
-to a nonzero explicit byte range rather than the older entire-allocation
-selection. `pAddress` is a committed readable/writable region base and the
+to a nonzero explicit byte range rather than the entire allocation selected
+by `OpenExistingHeapFromAddress`. `pAddress` is a committed readable/writable region base and the
 requested size is rounded to the applicable 4096-byte page granularity.
 The rounded range must be representable and satisfy the existing backing/
-attribute checks. This does not transfer ownership of the caller's memory;
-the [imported-memory lifetime](#existing-heap-lifetime) still applies.
-The rounded range cannot span multiple VirtualAlloc allocations. Unlike the
-older whole-allocation overload, this explicit size path does not infer
-`D3D12_HEAP_FLAG_ALLOW_WRITE_WATCH` from write-watch backing. This is not a
-rejection of otherwise valid write-watch memory.<!-- d3d12-review-inline:end:resources:AB-id3d12device13-openexistingheapfromaddress1-contract:0:authored:migration-2bc6001b2af9fdd7-0 --></ins>
+attribute checks. The caller retains ownership of its memory, as described in
+[imported-memory lifetime](#existing-heap-lifetime).
+The rounded range cannot span multiple VirtualAlloc allocations. Unlike
+`OpenExistingHeapFromAddress`, this method does not infer
+`D3D12_HEAP_FLAG_ALLOW_WRITE_WATCH` from write-watch backing. This difference
+does not reject otherwise valid write-watch memory.<!-- d3d12-review-inline:end:resources:AB-id3d12device13-openexistingheapfromaddress1-contract:0:authored:migration-2bc6001b2af9fdd7-0 --></ins>
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device13-openexistingheapfromaddress1-contract:2:authored:migration-c058a3d3f7212504-0 -->`pAddress` supplies the page/region-aligned address, not necessarily the VirtualAlloc allocation base required by the older overload. `size` is nonzero bytes. `riid` selects the heap interface and `ppvHeap` receives it. A null output supports validation-only.<!-- d3d12-review-inline:end:resources:AB-id3d12device13-openexistingheapfromaddress1-contract:2:authored:migration-c058a3d3f7212504-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device13-openexistingheapfromaddress1-contract:2:authored:migration-c058a3d3f7212504-0 -->`pAddress` supplies the page/region-aligned address, not necessarily the VirtualAlloc allocation base required by `OpenExistingHeapFromAddress`. `size` is nonzero bytes. `riid` selects the heap interface and `ppvHeap` receives it. A null output supports validation-only.<!-- d3d12-review-inline:end:resources:AB-id3d12device13-openexistingheapfromaddress1-contract:2:authored:migration-c058a3d3f7212504-0 --></ins>
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device13-openexistingheapfromaddress1-contract:4:authored:migration-300439fd686d4063-0 -->Zero size returns `E_INVALIDARG`. Invalid backing/range returns failure; successful validation-only returns `S_FALSE` without an object. Successful opening returns the requested heap reference; allocation/interface/OS failures remain HRESULT failures.<!-- d3d12-review-inline:end:resources:AB-id3d12device13-openexistingheapfromaddress1-contract:4:authored:migration-300439fd686d4063-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device13-openexistingheapfromaddress1-contract:4:authored:migration-300439fd686d4063-0 -->Zero size returns `E_INVALIDARG`. Invalid backing or range returns a failure `HRESULT`. Successful validation-only returns `S_FALSE` without an object. Successful opening returns the requested heap reference.<!-- d3d12-review-inline:end:resources:AB-id3d12device13-openexistingheapfromaddress1-contract:4:authored:migration-300439fd686d4063-0 --></ins>
 
 <a id="id3d12device3-openexistingheapfromfilemapping"></a>
 
@@ -4509,8 +4215,8 @@ HRESULT OpenExistingHeapFromFileMapping( HANDLE hFileMapping, REFIID riid, void*
 
 Creates a special-purpose diagnostic heap in system memory from a file mapping object. The created heap can persist even in the event of a GPU-fault or device-removed scenario.
 
-<ins><!-- d3d12-review-inline:begin:resources:HI-OpenExistingHeapFromFileMapping-shared:0:authored:migration-1ebde0ec4c943eee-0 -->The [shared validation/effective-property contract](#existing-heap-properties)
-and [ownership/probe/opening contract](#existing-heap-lifetime) apply.<!-- d3d12-review-inline:end:resources:HI-OpenExistingHeapFromFileMapping-shared:0:authored:migration-1ebde0ec4c943eee-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:HI-OpenExistingHeapFromFileMapping-shared:0:authored:migration-1ebde0ec4c943eee-0 -->See [backing validation and effective properties](#existing-heap-properties)
+and [ownership, validation-only results and driver opening](#existing-heap-lifetime).<!-- d3d12-review-inline:end:resources:HI-OpenExistingHeapFromFileMapping-shared:0:authored:migration-1ebde0ec4c943eee-0 --></ins>
 
 #### Parameters
 
@@ -4560,13 +4266,418 @@ This method is only useful for buffer resources, it will return zero for all tex
 
 #### Return value
 
-This method returns the GPU virtual address. <ins><!-- d3d12-review-inline:begin:resources:A-get-va-return:0 -->`D3D12_GPU_VIRTUAL_ADDRESS`<!-- d3d12-review-inline:end:resources:A-get-va-return:0 --></ins> is a typedef'd synonym of UINT64.
+This method returns the GPU virtual address. `D3D12_GPU_VIRTUAL_ADDRESS` is a typedef'd synonym of UINT64.
 
 <ins><!-- d3d12-review-inline:begin:resources:A-gpu-va-not-completion:0:authored:migration-dd46c48ce33a79d6-0 -->Resource and backing storage lifetime must cover the GPU accesses that use the address under the [execution lifetime rules](execution.md#lifetime).<!-- d3d12-review-inline:end:resources:A-gpu-va-not-completion:0:authored:migration-dd46c48ce33a79d6-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:N-indirect-canonical-owner:0:authored:migration-79a983ff1ca84b85-0 -->For GPU virtual addresses stored in [indirect argument records](indirect-execution.md#argument-records), the application is responsible for the addressed resource's lifetime, residency, alignment and access requirements. [Argument/count buffer extent and storage](indirect-execution.md#execute-validation) and [argument initialization](indirect-execution.md#argument-initialization) are defined by Indirect execution.<!-- d3d12-review-inline:end:resources:N-indirect-canonical-owner:0:authored:migration-79a983ff1ca84b85-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:N-indirect-canonical-owner:0:authored:migration-79a983ff1ca84b85-0 -->For GPU virtual addresses stored in [indirect argument records](indirect-execution.md#argument-records), the application is responsible for the addressed resource's lifetime, residency, alignment and access requirements. See [acceleration structure storage and lifetime](acceleration-structures.md#storage-and-lifetime) and [state object lifetime](state-objects.md#object-model) for GPU resources referenced by acceleration structures and state objects.<!-- d3d12-review-inline:end:resources:N-indirect-canonical-owner:0:authored:migration-79a983ff1ca84b85-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:N-as-state-foundations:0:authored:migration-a5f6d76f65aa4dd1-0 -->[Acceleration structure storage and lifetime](acceleration-structures.md#storage-and-lifetime) defines opaque AS buffers, construction inputs and persistent BLAS/OMM references. [State object lifetime](state-objects.md#object-model) uses the distinction between runtime-managed object storage and application-resident GPU resources defined here.<!-- d3d12-review-inline:end:resources:N-as-state-foundations:0:authored:migration-a5f6d76f65aa4dd1-0 --></ins>
+<a id="protected-resource-sessions"></a>
+
+## Protected resources and sessions
+
+<a id="d3d12-protected-resource-session-support-flags"></a>
+
+```cpp
+typedef
+enum D3D12_PROTECTED_SESSION_STATUS
+    {
+        D3D12_PROTECTED_SESSION_STATUS_OK	= 0,
+        D3D12_PROTECTED_SESSION_STATUS_INVALID	= 1
+    } 	D3D12_PROTECTED_SESSION_STATUS;
+
+typedef
+enum D3D12_PROTECTED_RESOURCE_SESSION_FLAGS
+    {
+        D3D12_PROTECTED_RESOURCE_SESSION_FLAG_NONE	= 0
+    } 	D3D12_PROTECTED_RESOURCE_SESSION_FLAGS;
+
+typedef struct D3D12_PROTECTED_RESOURCE_SESSION_DESC
+    {
+    UINT NodeMask;
+    D3D12_PROTECTED_RESOURCE_SESSION_FLAGS Flags;
+    } 	D3D12_PROTECTED_RESOURCE_SESSION_DESC;
+
+typedef struct D3D12_PROTECTED_RESOURCE_SESSION_DESC1
+    {
+    UINT NodeMask;
+    D3D12_PROTECTED_RESOURCE_SESSION_FLAGS Flags;
+    GUID ProtectionType;
+    } 	D3D12_PROTECTED_RESOURCE_SESSION_DESC1;
+
+typedef
+enum D3D12_PROTECTED_RESOURCE_SESSION_SUPPORT_FLAGS
+    {
+        D3D12_PROTECTED_RESOURCE_SESSION_SUPPORT_FLAG_NONE	= 0,
+        D3D12_PROTECTED_RESOURCE_SESSION_SUPPORT_FLAG_SUPPORTED	= 0x1
+    } 	D3D12_PROTECTED_RESOURCE_SESSION_SUPPORT_FLAGS;
+
+```
+
+<ins><!-- d3d12-review-inline:begin:resources:WEF-protected-query-ownership:0:authored:migration-9f73a77a92ee3ecf-0 -->The node-specific capability queries are
+[`D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_SUPPORT`](devices-and-capabilities.md#d3d12_feature_data_protected_resource_session_support),
+[`D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPE_COUNT`](devices-and-capabilities.md#d3d12_feature_data_protected_resource_session_type_count)
+and [`D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPES`](devices-and-capabilities.md#d3d12_feature_data_protected_resource_session_types).<!-- d3d12-review-inline:end:resources:WEF-protected-query-ownership:0:authored:migration-9f73a77a92ee3ecf-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-protection-model:0:authored:migration-0a8800fd16b763fb-0 -->A protected resource session identifies the protection domain used when
+creating protected heaps, resources and supported video objects. Hardware
+prevents CPU access to protected contents through protected or encrypted
+storage. Reads can combine protected and unprotected inputs, but an operation
+reading protected content must write protected outputs.
+Protection must apply from creation independently of whether a DRM system
+was initialized.<!-- d3d12-review-inline:end:resources:AB-protection-model:0:authored:migration-0a8800fd16b763fb-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-protection-model:1:authored:migration-534bad95cd0e4759-0 -->The standard `D3D12_PROTECTED_RESOURCES_SESSION_HARDWARE_PROTECTED` type
+matches the legacy protected resource session descriptor. Session support
+and type enumeration are node-specific CheckFeatureSupport queries. A reported
+type does not make every optional video operation available. Retail extension
+types require the approved type allow-list; developer mode extension bring-up
+does not waive actual hardware support or protection requirements.<!-- d3d12-review-inline:end:resources:AB-protection-model:1:authored:migration-534bad95cd0e4759-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-protection-model:2:authored:migration-cead3e7b01c76452-0 -->Protected content validity is observed through session status and its
+[read-only uniqueness fence](execution.md#status-fences). Invalid contents
+cannot be reused merely because a CPU getter returned or an unrelated
+application fence completed. For a resource session, wait for the uniqueness
+bump required for reuse and reestablish valid contents. Predication is not
+supported for protected operations. Protection context selection preserves
+ordinary bindings under [the canonical state rule](command-list-state.md#protection).
+Optional video support and its reference/output/selection rules are defined
+by the [protected-video model](video.md#protected-video-support).<!-- d3d12-review-inline:end:resources:AB-protection-model:2:authored:migration-cead3e7b01c76452-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-protection-model:3:authored:migration-6f039cc2175a4572-0 -->Protected resource storage/access does not define license negotiation or a
+generic bitstream decryption protocol. Protected resource/session handles do not grant
+permission to copy protected contents into unprotected destinations.<!-- d3d12-review-inline:end:resources:AB-protection-model:3:authored:migration-6f039cc2175a4572-0 --></ins>
+
+<a id="api-id3d12device4-createprotectedresourcesession"></a>
+
+### ID3D12Device4::CreateProtectedResourceSession
+
+#### Declaration
+
+```cpp
+HRESULT CreateProtectedResourceSession(
+    const D3D12_PROTECTED_RESOURCE_SESSION_DESC* pDesc,
+    REFIID riid,
+    void** ppSession);
+```
+
+#### Behavior
+
+Creates an object that represents a session for content protection. You can then provide that session when you're creating resource or heap objects, to indicate that they should be protected.
+
+<!-- d3d12-review-context:begin:resources:AB-primary-id3d12device4-createprotectedresourcesession:1:modified:migration-8d4b014e96eef63a-0 -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+
+> **Note:**
+> Memory contents can't be transferred from a protected resource to an unprotected resource.
+
+<!-- d3d12-review-context:end:resources:AB-primary-id3d12device4-createprotectedresourcesession:1:modified:migration-8d4b014e96eef63a-0 -->
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device4-createprotectedresourcesession-contract:0:authored:migration-1501b30904c69248-0 -->Creates the standard hardware-protected session described by `pDesc`.
+Repeated calls for a node can return the same session rather than a fresh
+independent hardware protection domain.<!-- d3d12-review-inline:end:resources:AB-id3d12device4-createprotectedresourcesession-contract:0:authored:migration-1501b30904c69248-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device4-createprotectedresourcesession-contract:2:authored:migration-706fc9c34bfba854-0 -->`pDesc` supplies a single-node API NodeMask and the defined flags (`NONE`). `riid` selects the session interface. `ppSession` receives the COM reference. The session can be used with the supported protected creation/sharing paths.<!-- d3d12-review-inline:end:resources:AB-id3d12device4-createprotectedresourcesession-contract:2:authored:migration-706fc9c34bfba854-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device4-createprotectedresourcesession-contract:4:authored:migration-b2728beaccbc0c66-0 -->Returns the creation/interface HRESULT, including unsupported device/type/node configurations and allocation/interface failures.<!-- d3d12-review-inline:end:resources:AB-id3d12device4-createprotectedresourcesession-contract:4:authored:migration-b2728beaccbc0c66-0 --></ins>
+
+<a id="api-id3d12device7-createprotectedresourcesession1"></a>
+
+### ID3D12Device7::CreateProtectedResourceSession1
+
+#### Declaration
+
+```cpp
+HRESULT CreateProtectedResourceSession1(
+    const D3D12_PROTECTED_RESOURCE_SESSION_DESC1* pDesc,
+    REFIID riid,
+    void** ppSession);
+```
+
+#### Behavior
+
+**CreateProtectedResourceSession1** revises the [**ID3D12Device4::CreateProtectedResourceSession**](#api-id3d12device4-createprotectedresourcesession) method with provision (in the structure passed via the *pDesc* parameter) for a globally unique identifier (**GUID**) that indicates the type of protected resource session.
+
+Calling **ID3D12Device4::CreateProtectedResourceSession** is equivalent to calling **ID3D12Device7::CreateProtectedResourceSession1** with the **D3D12_PROTECTED_RESOURCES_SESSION_HARDWARE_PROTECTED** GUID.
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device7-createprotectedresourcesession1-contract:0:authored:migration-3ce4797fcf38f70c-0 -->Creates a session for the requested node and protection type GUID.
+Other reported/approved types retain their own support requirements. The output is
+a session association, not allocation of application picture resources.<!-- d3d12-review-inline:end:resources:AB-id3d12device7-createprotectedresourcesession1-contract:0:authored:migration-3ce4797fcf38f70c-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device7-createprotectedresourcesession1-contract:2:authored:migration-44d5530c3ef56a72-0 -->`pDesc` is `D3D12_PROTECTED_RESOURCE_SESSION_DESC1` (NodeMask, Flags, ProtectionType). `riid` requests the interface and `ppSession` receives its reference. A zero API NodeMask denotes the single-node/default node convention. Otherwise exactly one applicable node bit is selected.<!-- d3d12-review-inline:end:resources:AB-id3d12device7-createprotectedresourcesession1-contract:2:authored:migration-44d5530c3ef56a72-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device7-createprotectedresourcesession1-contract:4:authored:migration-2e5c526e2a7fed56-0 -->Returns an HRESULT for creation/interface retrieval. `E_NOINTERFACE` means the requested interface is not supported. No universal mapping from other failure causes to particular HRESULT values is established.<!-- d3d12-review-inline:end:resources:AB-id3d12device7-createprotectedresourcesession1-contract:4:authored:migration-2e5c526e2a7fed56-0 --></ins>
+
+<a id="api-id3d12protectedresourcesession-getdesc"></a>
+
+### ID3D12ProtectedResourceSession::GetDesc
+
+#### Declaration
+
+```cpp
+D3D12_PROTECTED_RESOURCE_SESSION_DESC GetDesc();
+```
+
+#### Behavior
+
+Retrieves a description of the protected resource session.
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12protectedresourcesession-getdesc-contract:0:authored:migration-ddc3f863fbc1bc92-0 -->Returns the session's immutable creation properties by value.<!-- d3d12-review-inline:end:resources:AB-id3d12protectedresourcesession-getdesc-contract:0:authored:migration-ddc3f863fbc1bc92-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12protectedresourcesession-getdesc-contract:2:authored:migration-d56ffce8c8d952a5-0 -->Returns `D3D12_PROTECTED_RESOURCE_SESSION_DESC`.<!-- d3d12-review-inline:end:resources:AB-id3d12protectedresourcesession-getdesc-contract:2:authored:migration-d56ffce8c8d952a5-0 --></ins>
+
+<a id="api-id3d12protectedresourcesession1-getdesc1"></a>
+
+### ID3D12ProtectedResourceSession1::GetDesc1
+
+#### Declaration
+
+```cpp
+D3D12_PROTECTED_RESOURCE_SESSION_DESC1 GetDesc1();
+```
+
+#### Behavior
+
+Retrieves a description of the protected resource session.
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12protectedresourcesession1-getdesc1-contract:0:authored:migration-0f76d8e435529ae5-0 -->Returns the session's immutable creation properties by value.<!-- d3d12-review-inline:end:resources:AB-id3d12protectedresourcesession1-getdesc1-contract:0:authored:migration-0f76d8e435529ae5-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12protectedresourcesession1-getdesc1-contract:2:authored:migration-20b10a61d8ab8332-0 -->Returns `D3D12_PROTECTED_RESOURCE_SESSION_DESC1`.<!-- d3d12-review-inline:end:resources:AB-id3d12protectedresourcesession1-getdesc1-contract:2:authored:migration-20b10a61d8ab8332-0 --></ins>
+
+<a id="api-id3d12protectedsession-getsessionstatus"></a>
+
+### ID3D12ProtectedSession::GetSessionStatus
+
+#### Declaration
+
+```cpp
+D3D12_PROTECTED_SESSION_STATUS GetSessionStatus();
+```
+
+#### Behavior
+
+Gets the status of the protected session.
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12protectedsession-getsessionstatus-contract:0:authored:migration-c655bd18a926929b-0 -->Queries the current validity status. `OK` indicates the session is currently
+valid; `INVALID` indicates invalidation or inability to establish validity.
+For a protected resource session, the uniqueness fence bump is required before
+reuse under the protected resource validity protocol. An invalid status is
+not an HRESULT and does not by itself require creating a new session object.<!-- d3d12-review-inline:end:resources:AB-id3d12protectedsession-getsessionstatus-contract:0:authored:migration-c655bd18a926929b-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12protectedsession-getsessionstatus-contract:2:authored:migration-6b894ce3a41064d0-0 -->Returns `D3D12_PROTECTED_SESSION_STATUS_OK` or `INVALID`. The current query path reports invalid status when its underlying status query fails.<!-- d3d12-review-inline:end:resources:AB-id3d12protectedsession-getsessionstatus-contract:2:authored:migration-6b894ce3a41064d0-0 --></ins>
+
+<a id="api-id3d12resource1-getprotectedresourcesession"></a>
+
+### ID3D12Resource1::GetProtectedResourceSession
+
+#### Declaration
+
+```cpp
+HRESULT GetProtectedResourceSession(
+    REFIID riid,
+    void** ppProtectedSession);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12resource1-getprotectedresourcesession-contract:0:authored:migration-4829de75a5c1bc8a-0 -->Retrieves the session associated with this object's creation, not the current
+command list session. Association does not change when a command list selects
+a different protection context.<!-- d3d12-review-inline:end:resources:AB-id3d12resource1-getprotectedresourcesession-contract:0:authored:migration-4829de75a5c1bc8a-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12resource1-getprotectedresourcesession-contract:2:authored:migration-c4b921662e7e55ec-0 -->`riid` selects an interface on the associated protected resource session.
+`ppProtectedSession` receives that interface with a caller-owned COM reference.<!-- d3d12-review-inline:end:resources:AB-id3d12resource1-getprotectedresourcesession-contract:2:authored:migration-c4b921662e7e55ec-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12resource1-getprotectedresourcesession-contract:4:authored:migration-fe4d54a6108679e0-0 -->Returns the interface query's HRESULT. With no associated session it returns
+`DXGI_ERROR_NOT_FOUND` and a null output. An unsupported requested interface
+returns `E_NOINTERFACE`.<!-- d3d12-review-inline:end:resources:AB-id3d12resource1-getprotectedresourcesession-contract:4:authored:migration-fe4d54a6108679e0-0 --></ins>
+
+<a id="api-id3d12heap1-getprotectedresourcesession"></a>
+
+### ID3D12Heap1::GetProtectedResourceSession
+
+#### Declaration
+
+```cpp
+HRESULT GetProtectedResourceSession(
+    REFIID riid,
+    void** ppProtectedSession);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12heap1-getprotectedresourcesession-contract:0:authored:migration-e09fc265c880d0d3-0 -->Retrieves the session associated with this object's creation, not the current
+command list session. Association does not change when a command list selects
+a different protection context.<!-- d3d12-review-inline:end:resources:AB-id3d12heap1-getprotectedresourcesession-contract:0:authored:migration-e09fc265c880d0d3-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12heap1-getprotectedresourcesession-contract:2:authored:migration-62184f5bc4d043dd-0 -->`riid` selects an interface on the associated protected resource session.
+`ppProtectedSession` receives that interface with a caller-owned COM reference.<!-- d3d12-review-inline:end:resources:AB-id3d12heap1-getprotectedresourcesession-contract:2:authored:migration-62184f5bc4d043dd-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12heap1-getprotectedresourcesession-contract:4:authored:migration-71843d3b1678e3ed-0 -->Returns the interface query's HRESULT. With no associated session it returns
+`DXGI_ERROR_NOT_FOUND` and a null output. An unsupported requested interface
+returns `E_NOINTERFACE`.<!-- d3d12-review-inline:end:resources:AB-id3d12heap1-getprotectedresourcesession-contract:4:authored:migration-71843d3b1678e3ed-0 --></ins>
+
+<a id="capture-allocation-range"></a>
+
+## Capture/replay allocation range query
+
+<a id="api-id3d12pageabletools-getallocation"></a>
+
+### ID3D12PageableTools::GetAllocation
+
+#### Declaration
+
+```cpp
+HRESULT GetAllocation(
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE* pAllocation);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12pageabletools-getallocation-contract:0:authored:migration-a98057fb1d3a7c47-0 -->Retrieves the GPU virtual address range associated with an eligible buffer
+or explicit heap for capture/replay. It is not a texture layout query or
+allocation operation. The range identifies the actual allocation, not an
+application promise that any arbitrary address can be used for replay.<!-- d3d12-review-inline:end:resources:AB-id3d12pageabletools-getallocation-contract:0:authored:migration-a98057fb1d3a7c47-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12pageabletools-getallocation-contract:2:authored:migration-5ced831c80daa68e-0 -->`pAllocation` receives the StartAddress and byte SizeInBytes of `D3D12_GPU_VIRTUAL_ADDRESS_RANGE`.<!-- d3d12-review-inline:end:resources:AB-id3d12pageabletools-getallocation-contract:2:authored:migration-5ced831c80daa68e-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12pageabletools-getallocation-contract:4:authored:migration-3fe3481d1cc0e585-0 -->Returns `S_OK` on retrieval. Non-buffer resource queries fail (`E_FAIL` in the current validation path). The heap wrapper does not expose implicit heaps through this query.<!-- d3d12-review-inline:end:resources:AB-id3d12pageabletools-getallocation-contract:4:authored:migration-3fe3481d1cc0e585-0 --></ins>
+
+<a id="periodic-trim-notifications"></a>
+
+## Periodic residency trim notifications
+
+```cpp
+typedef
+enum D3D12_TRIM_NOTIFICATION_FLAGS
+    {
+        D3D12_TRIM_NOTIFICATION_FLAG_NONE	= 0,
+        D3D12_TRIM_NOTIFICATION_FLAG_PERIODIC_TRIM	= 0x1,
+        D3D12_TRIM_NOTIFICATION_FLAG_RESTART_PERIODIC_TRIM	= 0x2,
+        D3D12_TRIM_NOTIFICATION_FLAG_TRIM_TO_BUDGET	= 0x4
+    } 	D3D12_TRIM_NOTIFICATION_FLAGS;
+
+typedef struct D3D12_TRIM_NOTIFICATION
+    {
+    void *pContext;
+    D3D12_TRIM_NOTIFICATION_FLAGS Flags;
+    UINT64 NumBytesToTrim;
+    } 	D3D12_TRIM_NOTIFICATION;
+
+typedef void ( __stdcall *D3D12_PFN_TRIM_NOTIFICATION_CALLBACK )(
+    _In_  const D3D12_TRIM_NOTIFICATION *__MIDL____MIDL_itf_d3d12_0000_00640000);
+
+typedef struct D3D12_REGISTER_TRIM_NOTIFICATION
+    {
+    D3D12_PFN_TRIM_NOTIFICATION_CALLBACK pfnCallback;
+    void *pContext;
+    DWORD CallbackCookie;
+    } 	D3D12_REGISTER_TRIM_NOTIFICATION;
+```
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-trim-model:0:authored:migration-afd1f442c1a34187-0 -->Periodic trim notifications advise an application/residency layer to reduce
+unused or over-budget storage. They do not automatically evict resources or
+replace application residency and GPU completion tracking.<!-- d3d12-review-inline:end:resources:AB-trim-model:0:authored:migration-afd1f442c1a34187-0 --></ins>
+
+*D3D12_TRIM_NOTIFICATION_FLAG_PERIODIC_TRIM*
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-trim-periodic:0:modified:opus-flag-heading -->When this flag is set,<!-- d3d12-review-inline:end:resources:AB-trim-periodic:0:modified:opus-flag-heading --></ins> the application is advised to perform the following operations:
+- Trim all allocations that were not referenced since the previous periodic trim request by comparing the allocation last referenced fence with the last periodic trim context fence
+- Refresh the last periodic trim context fence with the last completed context fence
+
+> Note: "context fence" refers to fence values associated with D3D12 Command Queue contexts, not the callback `pContext` parameter.
+
+*D3D12_TRIM_NOTIFICATION_FLAG_RESTART_PERIODIC_TRIM*
+
+May not be set together with `D3D12_TRIM_NOTIFICATION_FLAG_PERIODIC_TRIM` flag. When this flag is set, the application must reset the last periodic trim context fence to the last completed context fence.
+
+*D3D12_TRIM_NOTIFICATION_FLAG_TRIM_TO_BUDGET*
+
+Indicates that the application usage is over the memory budget, and `NumBytesToTrim` bytes should be trimmed to fit in the new memory budget.
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-trim-callback-lifetime:0:authored:migration-77b3d6d3d4b41fb8-0 -->Callbacks can run on a system thread and registered callbacks are invoked
+sequentially. A registration's caller-owned context must survive its possible
+invocations. Neither registration nor unregistration may be called from a trim
+callback. Notifications carry borrowed callback data; retaining that pointer
+does not preserve its stack storage.<!-- d3d12-review-inline:end:resources:AB-trim-callback-lifetime:0:authored:migration-77b3d6d3d4b41fb8-0 --></ins>
+
+<a id="api-id3d12device15-registertrimnotificationcallback"></a>
+
+### ID3D12Device15::RegisterTrimNotificationCallback
+
+#### Declaration
+
+```cpp
+HRESULT RegisterTrimNotificationCallback(
+    D3D12_REGISTER_TRIM_NOTIFICATION* pData);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device15-registertrimnotificationcallback-contract:0:authored:migration-b819e32c0406df41-0 -->Registers a callback/context and writes its device-local cookie. Multiple
+registrations are supported; registering the same callback function twice
+without unregistering it returns `DXGI_ERROR_ALREADY_EXISTS`, even if the
+context differs.<!-- d3d12-review-inline:end:resources:AB-id3d12device15-registertrimnotificationcallback-contract:0:authored:migration-b819e32c0406df41-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device15-registertrimnotificationcallback-contract:2:authored:migration-ad9123f04135403a-0 -->`pData` points to D3D12_REGISTER_TRIM_NOTIFICATION. pfnCallback is required; pContext is opaque caller data. CallbackCookie is output. Valid successful cookies include zero and other values below `DWORD_MAX`.<!-- d3d12-review-inline:end:resources:AB-id3d12device15-registertrimnotificationcallback-contract:2:authored:migration-ad9123f04135403a-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device15-registertrimnotificationcallback-contract:4:authored:migration-b4d79dfc64499958-0 -->Returns `S_OK`, `E_INVALIDARG`, `E_OUTOFMEMORY`, `DXGI_ERROR_ALREADY_EXISTS`, `E_NOTIMPL` when unavailable, or the applicable OS failure. On failure with valid pData, CallbackCookie is zero. Use HRESULT, not cookie zero alone, to distinguish success.<!-- d3d12-review-inline:end:resources:AB-id3d12device15-registertrimnotificationcallback-contract:4:authored:migration-b4d79dfc64499958-0 --></ins>
+
+<a id="api-id3d12device15-unregistertrimnotificationcallback"></a>
+
+### ID3D12Device15::UnregisterTrimNotificationCallback
+
+#### Declaration
+
+```cpp
+HRESULT UnregisterTrimNotificationCallback(
+    DWORD CallbackCookie);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device15-unregistertrimnotificationcallback-contract:0:authored:migration-b43172e526de9628-0 -->Removes the registration identified by its cookie. Successful removal prevents
+later invocations for that registration; synchronize its context lifetime
+with outstanding callback activity. Do not call this method inside a callback.<!-- d3d12-review-inline:end:resources:AB-id3d12device15-unregistertrimnotificationcallback-contract:0:authored:migration-b43172e526de9628-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device15-unregistertrimnotificationcallback-contract:2:authored:migration-bfc3876f067ae98a-0 -->`CallbackCookie` identifies the device's registration; zero is a valid cookie if registration succeeded.<!-- d3d12-review-inline:end:resources:AB-id3d12device15-unregistertrimnotificationcallback-contract:2:authored:migration-bfc3876f067ae98a-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device15-unregistertrimnotificationcallback-contract:4:authored:migration-7a2c32f54b38ac0f-0 -->Returns `S_OK`, `DXGI_ERROR_NOT_FOUND` for a missing registration, or an applicable failure including unavailable-platform `E_NOTIMPL`. Failure is not a guarantee that every intermediate unregistration action was rolled back.<!-- d3d12-review-inline:end:resources:AB-id3d12device15-unregistertrimnotificationcallback-contract:4:authored:migration-7a2c32f54b38ac0f-0 --></ins>
 
 <a id="allocation-driver"></a>
 
@@ -4576,7 +4687,7 @@ This method returns the GPU virtual address. <ins><!-- d3d12-review-inline:begin
 
 ### Heap/resource driver creation model
 
-<ins><!-- d3d12-review-inline:begin:resources:RH-ddi-creation-surface:0:authored:migration-88671a781c80abeb-0 -->Heap/resource creation accepts either or both descriptions. Its separate handles identify the driver heap, runtime resource, protected session and driver resource.<!-- d3d12-review-inline:end:resources:RH-ddi-creation-surface:0:authored:migration-88671a781c80abeb-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:RH-ddi-creation-surface:0:authored:migration-88671a781c80abeb-0 -->[`PFND3D12DDI_CREATEHEAPANDRESOURCE_0111`](#create-heap-resource-ddi) accepts a heap description, a resource description or both. Its separate handles identify the driver heap, runtime resource, protected session and driver resource.<!-- d3d12-review-inline:end:resources:RH-ddi-creation-surface:0:authored:migration-88671a781c80abeb-0 --></ins>
 
 The resource and heap creation & destruction methods are able to be called by multiple threads concurrently.
 
@@ -4903,7 +5014,7 @@ typedef struct D3D12DDIARG_CREATERESOURCE_0111
 
 ### Allocation reflection and resolved layouts
 
-Creation of a resource still goes through two steps in D3D12. These steps are most obviously needed for textures, but buffers must be supported for orthogonality.
+<ins><!-- d3d12-review-inline:begin:resources:RH-ddi-two-stage:0:modified:opus-present-state -->Creation of a resource goes through two steps.<!-- d3d12-review-inline:end:resources:RH-ddi-two-stage:0:modified:opus-present-state --></ins> These steps are most obviously needed for textures, but buffers must be supported for orthogonality.
 
 1. <ins><!-- d3d12-review-inline:begin:resources:RH-ddi-two-stage:1 -->First, the sizes and alignments of the resource data, additional data header, and additional data are determined along with the parameterized swizzle patterns, using [`CheckResourceAllocationInfo`](#resource-query-ddis). When the resource description is passed into `CheckResourceAllocationInfo`, the `Layout` of the resource description may be set to `_UNDEFINED`. When the `Layout` of the resource description is `STANDARD_SWIZZLE` or `ROW_MAJOR`, the driver must return the corresponding layout.<!-- d3d12-review-inline:end:resources:RH-ddi-two-stage:1 --></ins>
 2. Second, the resource is created using the properties derived from this method. During resource creation, the `Layout` will never be set to `_UNDEFINED`, since the driver will have returned a resolved swizzle pattern.
@@ -4944,13 +5055,17 @@ typedef struct D3D12DDI_TIGHT_ALIGNMENT_TIER_DATA_0111
 tight alignment support through `D3D12DDICAPS_TYPE_TIGHT_ALIGNMENT_TIER_0111`
 (1089), using `D3D12DDI_TIGHT_ALIGNMENT_TIER_DATA_0111`.<!-- d3d12-review-inline:end:resources:IF04-tight-driver-gate:0:authored:migration-a83a48018c74db3d-0 --></ins>
 
-The `AlignmentRestriction` parameter of the DDI <ins><!-- d3d12-review-inline:begin:resources:A-tight-ddi:0:modified:migration-e8316ed009a04eba-0 -->is set<!-- d3d12-review-inline:end:resources:A-tight-ddi:0:modified:migration-e8316ed009a04eba-0 --></ins> to the minimum acceptable alignment value based on <ins><!-- d3d12-review-inline:begin:resources:A-tight-ddi:0 -->the [tight alignment tables](#tight-alignment)<!-- d3d12-review-inline:end:resources:A-tight-ddi:0 --></ins> during resource creation (varies based on placed vs committed resource requirements, which can't be inferred in the `CheckResourceAllocationInfo` call the way it can in `CreateHeapAndResource`).
-<ins><!-- d3d12-review-inline:begin:resources:A-tight-ddi:0 -->Drivers must return an alignment between the `AlignmentRestriction` and the max alignment value in the [tight alignment tables](#tight-alignment), subject to a valid requested alignment floor.<!-- d3d12-review-inline:end:resources:A-tight-ddi:0 --></ins>
+The `AlignmentRestriction` parameter of the DDI <ins><!-- d3d12-review-inline:begin:resources:A-tight-ddi:0:modified:migration-e8316ed009a04eba-0 -->is set<!-- d3d12-review-inline:end:resources:A-tight-ddi:0:modified:migration-e8316ed009a04eba-0 --></ins> to the minimum acceptable alignment value based on <ins><!-- d3d12-review-inline:begin:resources:A-tight-ddi:0:occurrence:95122b9a3aa0-0 -->the [tight alignment tables](#tight-alignment)<!-- d3d12-review-inline:end:resources:A-tight-ddi:0:occurrence:95122b9a3aa0-0 --></ins> during resource creation (varies based on placed vs committed resource requirements, which can't be inferred in the `CheckResourceAllocationInfo` call the way it can in `CreateHeapAndResource`).
+<ins><!-- d3d12-review-inline:begin:resources:A-tight-ddi:0:occurrence:d34125704401-1 -->Drivers must return an alignment between the `AlignmentRestriction` and the max alignment value in the [tight alignment tables](#tight-alignment), subject to a valid requested alignment floor.<!-- d3d12-review-inline:end:resources:A-tight-ddi:0:occurrence:d34125704401-1 --></ins>
 
 IMPORTANT: Drivers should size buffers appropriately (`desc.width`) rather than assume 64KiB size when `D3D12DDI_RESOURCE_FLAG_0111_USE_TIGHT_ALIGNMENT` is set.
 `CheckExistingResourceAllocationInfo_*` should also return appropriate values for resources that were created with tight alignment.
 
-Starting in DDI 0115, the runtime <ins><!-- d3d12-review-inline:begin:resources:A-tight-implicit-ddi:0:modified:migration-c9bd38dc8f9446cd-0 -->sets<!-- d3d12-review-inline:end:resources:A-tight-implicit-ddi:0:modified:migration-c9bd38dc8f9446cd-0 --></ins> the `D3D12DDI_HEAP_FLAG_0115_IMPLICIT` bit to true in the `D3D12DDIARG_CREATEHEAP_0001::Flags` parameter of `CreateHeapAndResource` calls for committed resources. <ins><!-- d3d12-review-inline:begin:resources:IF04-implicit-heap-enum:0 -->The complete [`D3D12DDI_HEAP_FLAGS` declaration](#heap-resource-driver-types) defines this bit.<!-- d3d12-review-inline:end:resources:IF04-implicit-heap-enum:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:A-tight-committed:0:modified:opus-driver-suballocation -->Drivers do not need to manage suballocations for committed resources.<!-- d3d12-review-inline:end:resources:A-tight-committed:0:modified:opus-driver-suballocation --></ins>
+
+**Note: For drivers that report LargePageSupport for VidMM allocations, it is acceptable and optimal for allocations that are a multiple of the LargePage size to be aligned to the large page size instead of using the 4KiB alignment.**
+
+Starting in DDI 0115, the runtime <ins><!-- d3d12-review-inline:begin:resources:A-tight-implicit-ddi:0:modified:migration-c9bd38dc8f9446cd-0 -->sets<!-- d3d12-review-inline:end:resources:A-tight-implicit-ddi:0:modified:migration-c9bd38dc8f9446cd-0 --></ins> the `D3D12DDI_HEAP_FLAG_0115_IMPLICIT` bit to true in the `D3D12DDIARG_CREATEHEAP_0001::Flags` parameter of `CreateHeapAndResource` calls for committed resources.
 
 <a id="residency-driver"></a>
 
@@ -5104,8 +5219,6 @@ The application expects the residency budget to be immediately affected by the d
 
 ### Hardware memory access requirements
 
-<ins><!-- d3d12-review-inline:begin:resources:N-resource-operations-memory-boundary:0:authored:migration-37bd2589abb94598-0 -->The [ordinary resource operations](resource-operations.md#resource-operations) define their copy/clear/resolve/discard regions, [formatted transfer footprints](resource-operations.md#copy-representation), [pitch/dimension capabilities](resource-operations.md#copy-pitch) and destination selection. Those operations retain the physical write boundaries here; transfer footprints do not expose opaque texture allocation layout.<!-- d3d12-review-inline:end:resources:N-resource-operations-memory-boundary:0:authored:migration-37bd2589abb94598-0 --></ins>
-
 1. <ins><!-- d3d12-review-inline:begin:resources:RH-hardware-page-access:0 -->The GPU must read and write data to and from memory pages. When such pages are accessible by the CPU, they must be able to be marked as write-back or write-combine for the CPU.<!-- d3d12-review-inline:end:resources:RH-hardware-page-access:0 --></ins>
     1. The GPU must be able to read and write single-dimensional buffer data & multi-dimensional texture data to and from such pages for all GPU operations, like copying, constant reads, vertex reads, index reads, indirect draw reads, buffer & texture loading and sampling, buffer & texture rendering, UAV processing, and even depth-stencil. Resource restrictions and undefined behavior still apply.
 
@@ -5120,13 +5233,272 @@ The application expects the residency budget to be immediately affected by the d
 
 <!-- d3d12-review-alert:end:resources:RH-hardware-write-bytes:0:modified:migration-ad71b87c2b63d2cd-0 -->
 
+<ins><!-- d3d12-review-inline:begin:resources:N-resource-operations-memory-boundary:0:authored:migration-37bd2589abb94598-0 -->These write boundaries apply to the [ordinary resource operations](resource-operations.md#resource-operations), including their copy, clear, resolve and discard regions. See [formatted transfer footprints](resource-operations.md#copy-representation) and [pitch/dimension capabilities](resource-operations.md#copy-pitch) for those operations' transfer layouts. Transfer footprints do not expose opaque texture allocation layout.<!-- d3d12-review-inline:end:resources:N-resource-operations-memory-boundary:0:authored:migration-37bd2589abb94598-0 --></ins>
+
 <ins><!-- d3d12-review-inline:begin:resources:RH-hardware-io-coherence:0 -->GPUs capable of I/O coherence must use it when write-back is required or chosen for pages that reside in physical system memory.<!-- d3d12-review-inline:end:resources:RH-hardware-io-coherence:0 --></ins>
 
 D3D12 allows metadata on all textures, not just those with `RENDER_TARGET` or `DEPTH_STENCIL` flags. However, any metadata on non-RT/DS textures must not require full subresource copies for initialization. Instead, the metadata must be robust enough to honor the app initializing each texel, discretely, from all possible initial physical memory values.
 
+<a id="tiled-driver"></a>
+
+### Tiled resource driver contract
+
+<ins><!-- d3d12-review-inline:begin:resources:TILED-ddi-introduction:0:authored:migration-29da2cfefc9db32d-0 -->`GetMipPacking` reports the packed mip count and packed tile count. The runtime combines them with standard tile shapes and subresource traversal to answer GetResourceTiling.<!-- d3d12-review-inline:end:resources:TILED-ddi-introduction:0:authored:migration-29da2cfefc9db32d-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:TILED-ddi-introduction:1:authored:migration-cb89ff87ea0de2dd-0 -->Reserved creation uses the common heap/resource DDIs without allocating physical heap storage.<!-- d3d12-review-inline:end:resources:TILED-ddi-introduction:1:authored:migration-cb89ff87ea0de2dd-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:TILED-ddi-introduction:2:authored:migration-72cc9109249fd04b-0 -->For UpdateTileMappings, the runtime resolves a missing API coordinate to the origin and the both-arrays-null whole-resource default to an explicit region size. A null DDI region size array means single-tile regions. For one heap range, the runtime resolves a null API range count to the total selected resource tile count. For multiple ranges, a null DDI range count array means one tile per range.<!-- d3d12-review-inline:end:resources:TILED-ddi-introduction:2:authored:migration-72cc9109249fd04b-0 --></ins>
+
+<a id="tile-driver-roles"></a>
+
+#### Logical API associations and driver parameters
+
+<!-- d3d12-review-alert:begin:resources:TD-associations:0:authored:migration-a8acec70c0564b85-0 -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+>
+> | Driver entry | API operation / query use |
+> |---|---|
+> | `PFND3D12DDI_UPDATETILEMAPPINGS` | [UpdateTileMappings](#update-tile-mappings) |
+> | `PFND3D12DDI_COPYTILEMAPPINGS` | [CopyTileMappings](#copy-tile-mappings) |
+> | `PFND3D12DDI_GETMIPPACKING` | Packed mip and tile counts used by [GetResourceTiling](#get-resource-tiling) |
+
+<!-- d3d12-review-alert:end:resources:TD-associations:0:authored:migration-a8acec70c0564b85-0 -->
+
+<ins><!-- d3d12-review-inline:begin:resources:TD-associations:1:authored:migration-b22edc3d3e8e42c4-0 -->The video queue table contains mapping slots, but this does not add application tile mapping support on video queues.<!-- d3d12-review-inline:end:resources:TD-associations:1:authored:migration-b22edc3d3e8e42c4-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:TD-lifetime-errors:0:authored:migration-f003bf3727096fe9-0 -->The driver captures the CPU coordinate, region and range arrays needed for later queue processing before returning.<!-- d3d12-review-inline:end:resources:TD-lifetime-errors:0:authored:migration-f003bf3727096fe9-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:TD-mip-query:1:authored:migration-12d44220fb5a8dfe-0 -->The runtime can cache GetMipPacking results. GetResourceTiling need not issue this DDI on every call.<!-- d3d12-review-inline:end:resources:TD-mip-query:1:authored:migration-12d44220fb5a8dfe-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.5.4:0 -->The mapping update and mapping copy driver DDIs use the following error reporting:<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.5.4:0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.5.4:1 -->Errors are reported via the call back `pfnSetErrorCb`.  Valid errors are out of memory and device removed.  On out of memory
+(possible if memory allocation for page table storage fails), tile mappings are left in their original state before the call.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.5.4:1 --></ins>
+
+
+<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.5.4:2 -->For a given tiled resource, `PFND3D12DDI_GETMIPPACKING` returns how many mips
+are packed and how many tiles are needed to store all the packed mips.
+Packed mips include cases where multiple small mips share tile(s) and
+also mips for which a given device cannot use standard tile shapes.  It is possible
+for an entire resource to be considered packed.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.5.4:2 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.5.4:3 -->Applications are not told the tile shapes/layout for packed mips and must simply map
+all or none of the packed tiles if any of the mipmaps are to be accessed.
+Otherwise the observed mapping of individual pixels accessed will be undefined - IHV specific.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.5.4:3 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.5.4:4 -->For array surfaces, the returned values are the counts for a single array slice,
+given the tile breakdown is identical for the mipmaps of each array slice.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.5.4:4 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:TILED-archive-5.9.5.4:5 -->On Tier 2 and higher, mipmaps whose pixel dimensions fully fill at least one standard shaped tile in all
+dimensions are not allowed to be considered part of the set of packed mips, otherwise
+the runtime will remove the device on an invalid driver.
+One example of dimensions that a device can validly lump into
+the packed tiles (meaning the IHV can use its own custom tile breakdown) is
+a mip that is at least one tile wide but less than a tile high.  Ideally though,
+a device would stick with the standard tile breakdown for this case (so the application can
+manage the tiles in a standard way).  If a device does need to use a custom tiling,
+the application is not told what the tile breakdown is (only how many tiles are involved
+in the packing overall), and thus loses some freedom.<!-- d3d12-review-inline:end:resources:TILED-archive-5.9.5.4:5 --></ins>
+
+<a id="tiled-driver-types"></a>
+
+#### Common driver tile coordinates and regions
+
+<a id="shared-driver-tile-coordinates-and-regions"></a>
+
+```cpp
+typedef struct D3D12DDI_TILED_RESOURCE_COORDINATE
+{
+    // Coordinate values below index tiles (not pixels or bytes).
+    UINT X; // Used for buffer, 1D, 2D, 3D
+    UINT Y; // Used for 2D, 3D
+    UINT Z; // Used for 3D
+    UINT Subresource; // indexes into mips, arrays. Used for 1D, 2D, 3D
+    // For mipmaps that are packed into a single tile, any subresource
+    // value that indicates any of the packed mips all refer to the same tile.
+} D3D12DDI_TILED_RESOURCE_COORDINATE;
+```
+
+```cpp
+typedef struct D3D12DDI_TILE_REGION_SIZE
+{
+    UINT NumTiles;
+    BOOL UseBox;  // TRUE: Uses width/height/depth parameters below to define the region.
+                  //   Width*Height*Depth must match NumTiles above.  (While
+                  //   this looks like redundant information, the application likely has to know
+                  //   how many tiles are involved anyway.)
+                  //   The downside to using the box parameters is that one update region cannot
+                  //   span mipmaps (though it can span array slices via the depth parameter).
+                  //
+                  // FALSE: Ignores width/height/depth parameters - NumTiles just traverses tiles in
+                  //   the resource linearly across x, then y, then z (as applicable) then spilling over
+                  //   mips/arrays in subresource order.  Useful for just mapping an entire resource
+                  //   at once.
+                  //
+                  // In either case, the starting location for the region within the resource
+                  // is specified as a separate parameter outside this struct.
+
+    UINT Width;   // Used for buffer, 1D, 2D, 3D
+    UINT16 Height; // Used for 2D, 3D
+    UINT16 Depth; // For 3D or arrays.  For arrays, advancing in depth skips to next slice of same mip size.
+} D3D12DDI_TILE_REGION_SIZE;
+```
+
+<a id="tiled-driver-callbacks"></a>
+
+#### Mapping, mip packing and capability DDIs
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_UPDATETILEMAPPINGS )( D3D12DDI_HCOMMANDQUEUE, D3D12DDI_HRESOURCE,
+    UINT NumTiledResourceRegions,
+    _In_reads_(NumTiledResourceRegions) const D3D12DDI_TILED_RESOURCE_COORDINATE* pResourceRegionStartCoords,
+    _In_reads_opt_(NumTiledResourceRegions) const D3D12DDI_TILE_REGION_SIZE* pResourceRegionSizes,
+    D3D12DDI_HHEAP, UINT NumRanges,
+    _In_reads_opt_(NumRanges) const D3D12DDI_TILE_RANGE_FLAGS*,
+    _In_reads_opt_(NumRanges) const UINT* pHeapStartOffsets,
+    _In_reads_opt_(NumRanges) const UINT* pRangeTileCounts,
+    D3D12DDI_TILE_MAPPING_FLAGS );
+```
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_COPYTILEMAPPINGS )( D3D12DDI_HCOMMANDQUEUE,
+    D3D12DDI_HRESOURCE hDstResource, _In_ const D3D12DDI_TILED_RESOURCE_COORDINATE* pDstRegionStartCoord,
+    D3D12DDI_HRESOURCE hSrcResource, _In_ const D3D12DDI_TILED_RESOURCE_COORDINATE* pSrcRegionStartCoord,
+    _In_ const D3D12DDI_TILE_REGION_SIZE*, D3D12DDI_TILE_MAPPING_FLAGS );
+```
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_GETMIPPACKING )(
+    D3D12DDI_HDEVICE hDevice,
+    D3D12DDI_HRESOURCE hTiledResource,
+    _Out_ UINT* pNumPackedMips,
+    _Out_ UINT* pNumTilesForPackedMips
+);
+```
+
+```cpp
+typedef enum D3D12DDI_TILED_RESOURCES_TIER
+{
+    D3D12DDI_TILED_RESOURCES_TIER_NOT_SUPPORTED  = 0,
+    D3D12DDI_TILED_RESOURCES_TIER_1              = 1,
+    D3D12DDI_TILED_RESOURCES_TIER_2              = 2,
+    D3D12DDI_TILED_RESOURCES_TIER_3              = 3,
+    D3D12DDI_TILED_RESOURCES_TIER_0117_4         = 4,
+} D3D12DDI_TILED_RESOURCES_TIER;
+```
+
+<ins><!-- d3d12-review-inline:begin:resources:TR4-arrayed-packed-mips:2:modified:opus-driver-tier-report -->Drivers report Tier 4 through `D3D12DDI_TILED_RESOURCES_TIER_0117_4` starting at DDI version 0117. Reporting Tier 4 requires supporting and testing the [arrayed packed mip](#arrayed-packed-mips) resource shape.<!-- d3d12-review-inline:end:resources:TR4-arrayed-packed-mips:2:modified:opus-driver-tier-report --></ins>
+
+```cpp
+typedef enum D3D12DDI_TILE_MAPPING_FLAGS
+{
+    D3D12DDI_TILE_MAPPING_FLAG_NONE = 0x0, // Constant for no flags
+    D3D12DDI_TILE_MAPPING_FLAG_NO_HAZARD = 0x1,
+} D3D12DDI_TILE_MAPPING_FLAGS;
+```
+
+```cpp
+typedef enum D3D12DDI_TILE_RANGE_FLAGS
+{
+    D3D12DDI_TILE_RANGE_FLAG_NONE = 0x0, // Constant for no flags
+    D3D12DDI_TILE_RANGE_FLAG_NULL = 0x1,
+    D3D12DDI_TILE_RANGE_FLAG_SKIP = 0x2,
+    D3D12DDI_TILE_RANGE_FLAG_REUSE_SINGLE_TILE = 0x4,
+} D3D12DDI_TILE_RANGE_FLAGS;
+```
+
+<ins><!-- d3d12-review-inline:begin:resources:N-shared-driver-options:0:authored:migration-b17d56898e960c5c-0 -->The common driver options payload, including `TiledResourcesTier`, is [`D3D12DDI_D3D12_OPTIONS_DATA_0003`](devices-and-capabilities.md#d3d12ddi_d3d12_options_data_0003).<!-- d3d12-review-inline:end:resources:N-shared-driver-options:0:authored:migration-b17d56898e960c5c-0 --></ins>
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_CHECKMULTISAMPLEQUALITYLEVELS )(
+    D3D12DDI_HDEVICE hDevice,
+    DXGI_FORMAT Format,
+    UINT SampleCount,
+    D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAGS Flags,
+    _Out_ UINT* pNumQualityLevels
+);
+```
+
+```cpp
+typedef enum D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAGS
+{
+    D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAG_NONE            = 0,
+    D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAG_TILED_RESOURCE  = 0x1
+} D3D12DDI_MULTISAMPLE_QUALITY_LEVEL_FLAGS;
+```
+
+<ins><!-- d3d12-review-inline:begin:resources:RL-tiled-creation-forward:0:authored:migration-a5c3aa286bfeeed7-0 -->Tiled resource creation uses the common [creation payload](#heap-resource-driver-types), [lifecycle](#heap-resource-lifecycle-ddis) and [allocation query](#resource-query-ddis).<!-- d3d12-review-inline:end:resources:RL-tiled-creation-forward:0:authored:migration-a5c3aa286bfeeed7-0 --></ins>
+
+<a id="heap-mapping-ddis"></a>
+
+### Heap mapping driver interfaces
+
+```cpp
+typedef HRESULT ( APIENTRY* PFND3D12DDI_MAPHEAP )( D3D12DDI_HDEVICE, D3D12DDI_HHEAP, _Out_ VOID** );
+```
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_UNMAPHEAP )( D3D12DDI_HDEVICE, D3D12DDI_HHEAP );
+```
+
+<ins><!-- d3d12-review-inline:begin:resources:RM-map-roles:1:authored:migration-8d1a19a10d6f3875-0 -->The runtime caches the successful heap mapping and serializes/ref counts mapping references. Nested resource Maps need not produce repeated MapHeap calls. The final reference causes UnmapHeap.<!-- d3d12-review-inline:end:resources:RM-map-roles:1:authored:migration-8d1a19a10d6f3875-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:RM-map-roles:2:authored:migration-385ea3711ad0434e-0 -->MapHeap receives no application read/write range, subresource index or discard/DO_NOT_WAIT mode.<!-- d3d12-review-inline:end:resources:RM-map-roles:2:authored:migration-385ea3711ad0434e-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:RH-map-busy-heap:0:modified:source-84c44bd8c813a5a7-0-0 -->CPU-accessible heaps can<!-- d3d12-review-inline:end:resources:RH-map-busy-heap:0:modified:source-84c44bd8c813a5a7-0-0 --></ins> be mapped at the DDI level, even while the GPU is busy reading or writing to the resource. The runtime will understand how to handle the lack of I/O coherence.
+
+<a id="resource-query-ddis"></a>
+
+### Allocation query driver interface
+
+<ins><!-- d3d12-review-inline:begin:resources:RQ-N052:0:authored:migration-07830c675689e890-0 -->The runtime queries per-resource driver information and combines it into the API's aggregate size, alignment and placement offset results.<!-- d3d12-review-inline:end:resources:RQ-N052:0:authored:migration-07830c675689e890-0 --></ins>
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_CHECKRESOURCEALLOCATIONINFO_0111)(
+    D3D12DDI_HDEVICE,
+    _In_ CONST D3D12DDIARG_CREATERESOURCE_0111*,
+    D3D12DDI_RESOURCE_OPTIMIZATION_FLAGS,
+    UINT32 AlignmentRestriction,
+    UINT VisibleNodeMask,
+    _Out_ D3D12DDI_RESOURCE_ALLOCATION_INFO_0022*
+);
+```
+
+<ins><!-- d3d12-review-inline:begin:resources:RQ-N054:0:authored:migration-dbd6ee03be91f7b1-0 -->This query also prepares resource creation. Its output describes resource storage and optional additional-data regions, including resolved layout and swizzle transitions.<!-- d3d12-review-inline:end:resources:RQ-N054:0:authored:migration-dbd6ee03be91f7b1-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:resources:RQ-N055:0:authored:migration-d2a28bbc73c67ce3-0 -->The query shares `D3D12DDIARG_CREATERESOURCE_0111` with creation and receives a 32-bit alignment restriction.<!-- d3d12-review-inline:end:resources:RQ-N055:0:authored:migration-d2a28bbc73c67ce3-0 --></ins>
+
+<a id="subresource-info-ddi"></a>
+
+### PFND3D12DDI_CHECKSUBRESOURCEINFO
+
+```cpp
+typedef struct D3D12DDI_SUBRESOURCE_INFO
+{
+    UINT64 Offset;
+    UINT64 RowStride;
+    UINT64 DepthStride;
+    UINT16 RowBytePreSwizzleOffset;
+    UINT16 ColumnPreSwizzleOffset;
+    UINT16 DepthPreSwizzleOffset;
+} D3D12DDI_SUBRESOURCE_INFO;
+
+typedef VOID ( APIENTRY* PFND3D12DDI_CHECKSUBRESOURCEINFO )( D3D12DDI_HDEVICE, D3D12DDI_HRESOURCE, UINT Subresource, _Out_ D3D12DDI_SUBRESOURCE_INFO* );
+```
+
+<ins><!-- d3d12-review-inline:begin:resources:RQ-N057:0:authored:migration-b0dd290d3295c75c-0 -->The runtime supplies the UMD device, an existing driver resource handle and
+the subresource index. The UMD returns its actual resource-relative offset,
+row/depth strides and pre-swizzle offsets, consistent with the resource's
+chosen layout. These are backing layout facts, not an adapter-independent
+copyable footprint. The runtime uses them for mapping and CPU re-layout;
+the DDI does not perform the CPU transfer and returns no `HRESULT`. There is
+no corresponding one-to-one ReadFromSubresource or WriteToSubresource copy DDI.<!-- d3d12-review-inline:end:resources:RQ-N057:0:authored:migration-b0dd290d3295c75c-0 --></ins>
+
 <a id="driver-allocation-services"></a>
 
-## Driver allocation, offer/reclaim and allocation queries
+### Driver allocation, offer/reclaim and allocation queries
 
 ```cpp
 typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_ALLOCATE_CB_0022)(
@@ -5279,7 +5651,7 @@ typedef enum D3D12DDI_MEMORY_SEGMENT_GROUP_0054
 
 <ins><!-- d3d12-review-inline:begin:resources:CS-allocation-boundary:1:authored:migration-86363fa8eb66f22d-0 -->`AllocateCb` uses `NumAllocations` and the allocation info array, with
 driver-private byte payloads, optional supplied system memory and per-allocation
-outputs. Reserved fields do not become application inputs. Deallocation
+outputs. Deallocation
 identifies the runtime resource/allocation handle list and flags. Packet/private metadata consumption is separate from the
 lifetime of backing system memory and the resulting allocation objects.<!-- d3d12-review-inline:end:resources:CS-allocation-boundary:1:authored:migration-86363fa8eb66f22d-0 --></ins>
 
@@ -5291,8 +5663,8 @@ data. Before subsequent use, discarded contents must be reestablished.
 The reclaim resource packet associates paging queues/fence values with
 adapter entries and reports valid waits through its mask; paging counters
 from different queues are not one globally ordered sequence.
-Existing [residency](#residency-driver-interfaces) ordering/lifetime rules
-remain distinct from whether contents survived an offer.<!-- d3d12-review-inline:end:resources:CS-allocation-boundary:2:authored:migration-fe3a506f2d57b63b-0 --></ins>
+[Residency](#residency-driver-interfaces) ordering and lifetime rules
+are separate from whether contents survived an offer.<!-- d3d12-review-inline:end:resources:CS-allocation-boundary:2:authored:migration-fe3a506f2d57b63b-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:CS-allocation-queries:0:authored:migration-c6edcf181d6b5ca1-0 -->CheckResourceVirtualAddress returns a driver resource's GPU address. CheckExistingResourceAllocationInfo reports the existing allocation's resolved sizes, alignments, layout and swizzle transitions.<!-- d3d12-review-inline:end:resources:CS-allocation-queries:0:authored:migration-c6edcf181d6b5ca1-0 --></ins>
 
@@ -5300,420 +5672,9 @@ remain distinct from whether contents survived an offer.<!-- d3d12-review-inline
 
 <ins><!-- d3d12-review-inline:begin:resources:CS-allocation-queries:2:authored:migration-457c0892bf74c268-0 -->The downlevel QueryVideoMemoryInfo output consists of `Budget` and `CurrentUsage` byte counts, rather than the larger DXGI result structure.<!-- d3d12-review-inline:end:resources:CS-allocation-queries:2:authored:migration-457c0892bf74c268-0 --></ins>
 
-<a id="protected-resource-sessions"></a>
-
-## Protected resources and sessions
-
-<a id="d3d12-protected-resource-session-support-flags"></a>
-
-```cpp
-typedef
-enum D3D12_PROTECTED_SESSION_STATUS
-    {
-        D3D12_PROTECTED_SESSION_STATUS_OK	= 0,
-        D3D12_PROTECTED_SESSION_STATUS_INVALID	= 1
-    } 	D3D12_PROTECTED_SESSION_STATUS;
-
-typedef
-enum D3D12_PROTECTED_RESOURCE_SESSION_FLAGS
-    {
-        D3D12_PROTECTED_RESOURCE_SESSION_FLAG_NONE	= 0
-    } 	D3D12_PROTECTED_RESOURCE_SESSION_FLAGS;
-
-typedef struct D3D12_PROTECTED_RESOURCE_SESSION_DESC
-    {
-    UINT NodeMask;
-    D3D12_PROTECTED_RESOURCE_SESSION_FLAGS Flags;
-    } 	D3D12_PROTECTED_RESOURCE_SESSION_DESC;
-
-typedef struct D3D12_PROTECTED_RESOURCE_SESSION_DESC1
-    {
-    UINT NodeMask;
-    D3D12_PROTECTED_RESOURCE_SESSION_FLAGS Flags;
-    GUID ProtectionType;
-    } 	D3D12_PROTECTED_RESOURCE_SESSION_DESC1;
-
-typedef
-enum D3D12_PROTECTED_RESOURCE_SESSION_SUPPORT_FLAGS
-    {
-        D3D12_PROTECTED_RESOURCE_SESSION_SUPPORT_FLAG_NONE	= 0,
-        D3D12_PROTECTED_RESOURCE_SESSION_SUPPORT_FLAG_SUPPORTED	= 0x1
-    } 	D3D12_PROTECTED_RESOURCE_SESSION_SUPPORT_FLAGS;
-
-```
-
-<ins><!-- d3d12-review-inline:begin:resources:WEF-protected-query-ownership:0:authored:migration-9f73a77a92ee3ecf-0 -->The node-specific capability queries are
-[`D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_SUPPORT`](devices-and-capabilities.md#d3d12_feature_data_protected_resource_session_support),
-[`D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPE_COUNT`](devices-and-capabilities.md#d3d12_feature_data_protected_resource_session_type_count)
-and [`D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPES`](devices-and-capabilities.md#d3d12_feature_data_protected_resource_session_types).<!-- d3d12-review-inline:end:resources:WEF-protected-query-ownership:0:authored:migration-9f73a77a92ee3ecf-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-protection-model:0:authored:migration-0a8800fd16b763fb-0 -->A protected resource session identifies the protection domain used when
-creating protected heaps, resources and supported video objects. Hardware
-prevents CPU access to protected contents through protected or encrypted
-storage. Reads can combine protected and unprotected inputs, but an operation
-reading protected content must write protected outputs.
-Protection must apply from creation independently of whether a DRM system
-was initialized. A protected allocation is not permission to ignore hardware
-protection until later initialization.<!-- d3d12-review-inline:end:resources:AB-protection-model:0:authored:migration-0a8800fd16b763fb-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-protection-model:1:authored:migration-534bad95cd0e4759-0 -->The standard `D3D12_PROTECTED_RESOURCES_SESSION_HARDWARE_PROTECTED` type
-matches the legacy protected resource session descriptor. Session support
-and type enumeration are node-specific CheckFeatureSupport queries. A reported
-type does not make every optional video operation available. Retail extension
-types require the approved type allow-list; developer mode extension bring-up
-does not waive actual hardware support or protection requirements.<!-- d3d12-review-inline:end:resources:AB-protection-model:1:authored:migration-534bad95cd0e4759-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-protection-model:2:authored:migration-cead3e7b01c76452-0 -->Protected content validity is observed through session status and its
-[read-only uniqueness fence](execution.md#status-fences). Invalid contents
-cannot be reused merely because a CPU getter returned or an unrelated
-application fence completed. For a resource session, wait for the uniqueness
-bump required for reuse and reestablish valid contents. Predication is not
-supported for protected operations. Protection context selection preserves
-ordinary bindings under [the canonical state rule](command-list-state.md#protection).
-Optional video support and its reference/output/selection rules are defined
-by the [protected-video model](video.md#protected-video-support).<!-- d3d12-review-inline:end:resources:AB-protection-model:2:authored:migration-cead3e7b01c76452-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-protection-model:3:authored:migration-6f039cc2175a4572-0 -->Protected resource storage/access does not define license negotiation or a
-generic bitstream decryption protocol. Protected resource/session handles do not grant
-permission to copy protected contents into unprotected destinations.<!-- d3d12-review-inline:end:resources:AB-protection-model:3:authored:migration-6f039cc2175a4572-0 --></ins>
-
-<a id="api-id3d12device4-createprotectedresourcesession"></a>
-
-### ID3D12Device4::CreateProtectedResourceSession
-
-#### Declaration
-
-```cpp
-HRESULT CreateProtectedResourceSession(
-    const D3D12_PROTECTED_RESOURCE_SESSION_DESC* pDesc,
-    REFIID riid,
-    void** ppSession);
-```
-
-#### Behavior
-
-Creates an object that represents a session for content protection. You can then provide that session when you're creating resource or heap objects, to indicate that they should be protected.
-
-<!-- d3d12-review-context:begin:resources:AB-primary-id3d12device4-createprotectedresourcesession:1:modified:migration-8d4b014e96eef63a-0 -->
-
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
-
-> **Note:**
-> Memory contents can't be transferred from a protected resource to an unprotected resource.
-
-<!-- d3d12-review-context:end:resources:AB-primary-id3d12device4-createprotectedresourcesession:1:modified:migration-8d4b014e96eef63a-0 -->
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device4-createprotectedresourcesession-contract:0:authored:migration-1501b30904c69248-0 -->Creates the standard hardware-protected session described by `pDesc`.
-This is equivalent to the version-1 creation method with protection type
-`D3D12_PROTECTED_RESOURCES_SESSION_HARDWARE_PROTECTED`. The runtime can
-return the common session for the node rather than guaranteeing a fresh
-independent hardware domain on every call.<!-- d3d12-review-inline:end:resources:AB-id3d12device4-createprotectedresourcesession-contract:0:authored:migration-1501b30904c69248-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device4-createprotectedresourcesession-contract:2:authored:migration-706fc9c34bfba854-0 -->`pDesc` supplies a single-node API NodeMask and the defined flags (`NONE`). `riid` selects the session interface. `ppSession` receives the COM reference. The session can be used with the supported protected creation/sharing paths.<!-- d3d12-review-inline:end:resources:AB-id3d12device4-createprotectedresourcesession-contract:2:authored:migration-706fc9c34bfba854-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device4-createprotectedresourcesession-contract:4:authored:migration-b2728beaccbc0c66-0 -->Returns the creation/interface HRESULT, including unsupported device/type/node configurations and allocation/interface failures.<!-- d3d12-review-inline:end:resources:AB-id3d12device4-createprotectedresourcesession-contract:4:authored:migration-b2728beaccbc0c66-0 --></ins>
-
-<a id="api-id3d12device7-createprotectedresourcesession1"></a>
-
-### ID3D12Device7::CreateProtectedResourceSession1
-
-#### Declaration
-
-```cpp
-HRESULT CreateProtectedResourceSession1(
-    const D3D12_PROTECTED_RESOURCE_SESSION_DESC1* pDesc,
-    REFIID riid,
-    void** ppSession);
-```
-
-#### Behavior
-
-**CreateProtectedResourceSession1** revises the [**ID3D12Device4::CreateProtectedResourceSession**](#api-id3d12device4-createprotectedresourcesession) method with provision (in the structure passed via the *pDesc* parameter) for a globally unique identifier (**GUID**) that indicates the type of protected resource session.
-
-Calling **ID3D12Device4::CreateProtectedResourceSession** is equivalent to calling **ID3D12Device7::CreateProtectedResourceSession1** with the **D3D12_PROTECTED_RESOURCES_SESSION_HARDWARE_PROTECTED** GUID.
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device7-createprotectedresourcesession1-contract:0:authored:migration-3ce4797fcf38f70c-0 -->Creates a session for the requested node and protection type GUID.
-The standard GUID is equivalent to CreateProtectedResourceSession. Other
-reported/approved types retain their own support requirements. The output is
-a session association, not allocation of application picture resources.<!-- d3d12-review-inline:end:resources:AB-id3d12device7-createprotectedresourcesession1-contract:0:authored:migration-3ce4797fcf38f70c-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device7-createprotectedresourcesession1-contract:2:authored:migration-44d5530c3ef56a72-0 -->`pDesc` is `D3D12_PROTECTED_RESOURCE_SESSION_DESC1` (NodeMask, Flags, ProtectionType). `riid` requests the interface and `ppSession` receives its reference. A zero API NodeMask denotes the single-node/default node convention. Otherwise exactly one applicable node bit is selected.<!-- d3d12-review-inline:end:resources:AB-id3d12device7-createprotectedresourcesession1-contract:2:authored:migration-44d5530c3ef56a72-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device7-createprotectedresourcesession1-contract:4:authored:migration-2e5c526e2a7fed56-0 -->Returns an HRESULT for creation/interface retrieval. `E_NOINTERFACE` means the requested interface is not supported; no universal per-cause driver HRESULT mapping is inferred.<!-- d3d12-review-inline:end:resources:AB-id3d12device7-createprotectedresourcesession1-contract:4:authored:migration-2e5c526e2a7fed56-0 --></ins>
-
-<a id="api-id3d12protectedresourcesession-getdesc"></a>
-
-### ID3D12ProtectedResourceSession::GetDesc
-
-#### Declaration
-
-```cpp
-D3D12_PROTECTED_RESOURCE_SESSION_DESC GetDesc();
-```
-
-#### Behavior
-
-Retrieves a description of the protected resource session.
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12protectedresourcesession-getdesc-contract:0:authored:migration-ddc3f863fbc1bc92-0 -->Returns the session's immutable creation properties by value.<!-- d3d12-review-inline:end:resources:AB-id3d12protectedresourcesession-getdesc-contract:0:authored:migration-ddc3f863fbc1bc92-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12protectedresourcesession-getdesc-contract:2:authored:migration-d56ffce8c8d952a5-0 -->Returns `D3D12_PROTECTED_RESOURCE_SESSION_DESC`.<!-- d3d12-review-inline:end:resources:AB-id3d12protectedresourcesession-getdesc-contract:2:authored:migration-d56ffce8c8d952a5-0 --></ins>
-
-<a id="api-id3d12protectedresourcesession1-getdesc1"></a>
-
-### ID3D12ProtectedResourceSession1::GetDesc1
-
-#### Declaration
-
-```cpp
-D3D12_PROTECTED_RESOURCE_SESSION_DESC1 GetDesc1();
-```
-
-#### Behavior
-
-Retrieves a description of the protected resource session.
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12protectedresourcesession1-getdesc1-contract:0:authored:migration-0f76d8e435529ae5-0 -->Returns the session's immutable creation properties by value.<!-- d3d12-review-inline:end:resources:AB-id3d12protectedresourcesession1-getdesc1-contract:0:authored:migration-0f76d8e435529ae5-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12protectedresourcesession1-getdesc1-contract:2:authored:migration-20b10a61d8ab8332-0 -->Returns `D3D12_PROTECTED_RESOURCE_SESSION_DESC1`.<!-- d3d12-review-inline:end:resources:AB-id3d12protectedresourcesession1-getdesc1-contract:2:authored:migration-20b10a61d8ab8332-0 --></ins>
-
-<a id="api-id3d12protectedsession-getsessionstatus"></a>
-
-### ID3D12ProtectedSession::GetSessionStatus
-
-#### Declaration
-
-```cpp
-D3D12_PROTECTED_SESSION_STATUS GetSessionStatus();
-```
-
-#### Behavior
-
-Gets the status of the protected session.
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12protectedsession-getsessionstatus-contract:0:authored:migration-c655bd18a926929b-0 -->Queries the current validity status. `OK` indicates the session is currently
-valid; `INVALID` indicates invalidation or inability to establish validity.
-For a protected resource session, the uniqueness fence bump is required before
-reuse under the protected resource validity protocol. An invalid status is
-not an HRESULT and does not by itself require inventing a new session object.<!-- d3d12-review-inline:end:resources:AB-id3d12protectedsession-getsessionstatus-contract:0:authored:migration-c655bd18a926929b-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12protectedsession-getsessionstatus-contract:2:authored:migration-6b894ce3a41064d0-0 -->Returns `D3D12_PROTECTED_SESSION_STATUS_OK` or `INVALID`. The current query path reports invalid status when its underlying status query fails.<!-- d3d12-review-inline:end:resources:AB-id3d12protectedsession-getsessionstatus-contract:2:authored:migration-6b894ce3a41064d0-0 --></ins>
-
-<a id="api-id3d12resource1-getprotectedresourcesession"></a>
-
-### ID3D12Resource1::GetProtectedResourceSession
-
-#### Declaration
-
-```cpp
-HRESULT GetProtectedResourceSession(
-    REFIID riid,
-    void** ppProtectedSession);
-```
-
-#### Behavior
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12resource1-getprotectedresourcesession-contract:0:authored:migration-4829de75a5c1bc8a-0 -->Retrieves the session associated with this object's creation, not the current
-command list session. Association does not change when a command list selects
-a different protection context.<!-- d3d12-review-inline:end:resources:AB-id3d12resource1-getprotectedresourcesession-contract:0:authored:migration-4829de75a5c1bc8a-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12resource1-getprotectedresourcesession-contract:2:authored:migration-c4b921662e7e55ec-0 -->`riid` selects an interface on the associated protected resource session.
-`ppProtectedSession` receives that interface with a caller-owned COM reference.<!-- d3d12-review-inline:end:resources:AB-id3d12resource1-getprotectedresourcesession-contract:2:authored:migration-c4b921662e7e55ec-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12resource1-getprotectedresourcesession-contract:4:authored:migration-fe4d54a6108679e0-0 -->Returns the interface query's HRESULT. With no associated session it returns
-`DXGI_ERROR_NOT_FOUND` and a null output. An unsupported requested interface
-returns `E_NOINTERFACE`.<!-- d3d12-review-inline:end:resources:AB-id3d12resource1-getprotectedresourcesession-contract:4:authored:migration-fe4d54a6108679e0-0 --></ins>
-
-<a id="api-id3d12heap1-getprotectedresourcesession"></a>
-
-### ID3D12Heap1::GetProtectedResourceSession
-
-#### Declaration
-
-```cpp
-HRESULT GetProtectedResourceSession(
-    REFIID riid,
-    void** ppProtectedSession);
-```
-
-#### Behavior
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12heap1-getprotectedresourcesession-contract:0:authored:migration-e09fc265c880d0d3-0 -->Retrieves the session associated with this object's creation, not the current
-command list session. Association does not change when a command list selects
-a different protection context.<!-- d3d12-review-inline:end:resources:AB-id3d12heap1-getprotectedresourcesession-contract:0:authored:migration-e09fc265c880d0d3-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12heap1-getprotectedresourcesession-contract:2:authored:migration-62184f5bc4d043dd-0 -->`riid` selects an interface on the associated protected resource session.
-`ppProtectedSession` receives that interface with a caller-owned COM reference.<!-- d3d12-review-inline:end:resources:AB-id3d12heap1-getprotectedresourcesession-contract:2:authored:migration-62184f5bc4d043dd-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12heap1-getprotectedresourcesession-contract:4:authored:migration-71843d3b1678e3ed-0 -->Returns the interface query's HRESULT. With no associated session it returns
-`DXGI_ERROR_NOT_FOUND` and a null output. An unsupported requested interface
-returns `E_NOINTERFACE`.<!-- d3d12-review-inline:end:resources:AB-id3d12heap1-getprotectedresourcesession-contract:4:authored:migration-71843d3b1678e3ed-0 --></ins>
-
-<a id="capture-allocation-range"></a>
-
-## Capture/replay allocation range query
-
-<a id="api-id3d12pageabletools-getallocation"></a>
-
-### ID3D12PageableTools::GetAllocation
-
-#### Declaration
-
-```cpp
-HRESULT GetAllocation(
-    D3D12_GPU_VIRTUAL_ADDRESS_RANGE* pAllocation);
-```
-
-#### Behavior
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12pageabletools-getallocation-contract:0:authored:migration-a98057fb1d3a7c47-0 -->Retrieves the GPU virtual address range associated with an eligible buffer
-or explicit heap for capture/replay. It is not a texture layout query or
-allocation operation. The range identifies the actual allocation, not an
-application promise that any arbitrary address can be used for replay.<!-- d3d12-review-inline:end:resources:AB-id3d12pageabletools-getallocation-contract:0:authored:migration-a98057fb1d3a7c47-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12pageabletools-getallocation-contract:2:authored:migration-5ced831c80daa68e-0 -->`pAllocation` receives the StartAddress and byte SizeInBytes of `D3D12_GPU_VIRTUAL_ADDRESS_RANGE`.<!-- d3d12-review-inline:end:resources:AB-id3d12pageabletools-getallocation-contract:2:authored:migration-5ced831c80daa68e-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12pageabletools-getallocation-contract:4:authored:migration-3fe3481d1cc0e585-0 -->Returns `S_OK` on retrieval. Non-buffer resource queries fail (`E_FAIL` in the current validation path). The heap wrapper does not expose implicit heaps through this query.<!-- d3d12-review-inline:end:resources:AB-id3d12pageabletools-getallocation-contract:4:authored:migration-3fe3481d1cc0e585-0 --></ins>
-
-<a id="periodic-trim-notifications"></a>
-
-## Periodic residency trim notifications
-
-```cpp
-typedef
-enum D3D12_TRIM_NOTIFICATION_FLAGS
-    {
-        D3D12_TRIM_NOTIFICATION_FLAG_NONE	= 0,
-        D3D12_TRIM_NOTIFICATION_FLAG_PERIODIC_TRIM	= 0x1,
-        D3D12_TRIM_NOTIFICATION_FLAG_RESTART_PERIODIC_TRIM	= 0x2,
-        D3D12_TRIM_NOTIFICATION_FLAG_TRIM_TO_BUDGET	= 0x4
-    } 	D3D12_TRIM_NOTIFICATION_FLAGS;
-
-typedef struct D3D12_TRIM_NOTIFICATION
-    {
-    void *pContext;
-    D3D12_TRIM_NOTIFICATION_FLAGS Flags;
-    UINT64 NumBytesToTrim;
-    } 	D3D12_TRIM_NOTIFICATION;
-
-typedef void ( __stdcall *D3D12_PFN_TRIM_NOTIFICATION_CALLBACK )(
-    _In_  const D3D12_TRIM_NOTIFICATION *__MIDL____MIDL_itf_d3d12_0000_00640000);
-
-typedef struct D3D12_REGISTER_TRIM_NOTIFICATION
-    {
-    D3D12_PFN_TRIM_NOTIFICATION_CALLBACK pfnCallback;
-    void *pContext;
-    DWORD CallbackCookie;
-    } 	D3D12_REGISTER_TRIM_NOTIFICATION;
-```
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-trim-model:0:authored:migration-afd1f442c1a34187-0 -->Periodic trim notifications advise an application/residency layer to reduce
-unused or over-budget storage. They do not automatically evict resources or
-replace application residency and GPU completion tracking.<!-- d3d12-review-inline:end:resources:AB-trim-model:0:authored:migration-afd1f442c1a34187-0 --></ins>
-
-When `D3D12_TRIM_NOTIFICATION_FLAG_PERIODIC_TRIM` flag is set, the application is advised to perform the following operations:
-- Trim all allocations that were not referenced since the previous periodic trim request by comparing the allocation last referenced fence with the last periodic trim context fence
-- Refresh the last periodic trim context fence with the last completed context fence
-
-> Note: "context fence" refers to fence values associated with D3D12 Command Queue contexts, not the callback `pContext` parameter.
-
-*D3D12_TRIM_NOTIFICATION_FLAG_RESTART_PERIODIC_TRIM*
-
-May not be set together with `D3D12_TRIM_NOTIFICATION_FLAG_PERIODIC_TRIM` flag. When this flag is set, the application must reset the last periodic trim context fence to the last completed context fence.
-
-> Note: "context fence" refers to fence values associated with D3D12 Command Queue contexts, not the callback `pContext` parameter.
-
-*D3D12_TRIM_NOTIFICATION_FLAG_TRIM_TO_BUDGET*
-
-Indicates that the application usage is over the memory budget, and `NumBytesToTrim` bytes should be trimmed to fit in the new memory budget.
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-trim-callback-lifetime:0:authored:migration-77b3d6d3d4b41fb8-0 -->Callbacks can run on a system thread and registered callbacks are invoked
-sequentially. A registration's caller-owned context must survive its possible
-invocations. Neither registration nor unregistration may be called from a trim
-callback. Notifications carry borrowed callback data; retaining that pointer
-does not preserve its stack storage.<!-- d3d12-review-inline:end:resources:AB-trim-callback-lifetime:0:authored:migration-77b3d6d3d4b41fb8-0 --></ins>
-
-<a id="api-id3d12device15-registertrimnotificationcallback"></a>
-
-### ID3D12Device15::RegisterTrimNotificationCallback
-
-#### Declaration
-
-```cpp
-HRESULT RegisterTrimNotificationCallback(
-    D3D12_REGISTER_TRIM_NOTIFICATION* pData);
-```
-
-#### Behavior
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device15-registertrimnotificationcallback-contract:0:authored:migration-b819e32c0406df41-0 -->Registers a callback/context and writes its device-local cookie. Multiple
-registrations are supported; registering the same callback function twice
-without unregistering it returns `DXGI_ERROR_ALREADY_EXISTS`, even if the
-context differs. This does not start automatic resource trimming.<!-- d3d12-review-inline:end:resources:AB-id3d12device15-registertrimnotificationcallback-contract:0:authored:migration-b819e32c0406df41-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device15-registertrimnotificationcallback-contract:2:authored:migration-ad9123f04135403a-0 -->`pData` points to D3D12_REGISTER_TRIM_NOTIFICATION. pfnCallback is required; pContext is opaque caller data. CallbackCookie is output. Valid successful cookies include zero and range below DWORD_MAX.<!-- d3d12-review-inline:end:resources:AB-id3d12device15-registertrimnotificationcallback-contract:2:authored:migration-ad9123f04135403a-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device15-registertrimnotificationcallback-contract:4:authored:migration-b4d79dfc64499958-0 -->Returns `S_OK`, `E_INVALIDARG`, `E_OUTOFMEMORY`, `DXGI_ERROR_ALREADY_EXISTS`, `E_NOTIMPL` when unavailable, or the applicable OS failure. On failure with valid pData, CallbackCookie is zero (D272). Use HRESULT, not cookie zero alone, to distinguish success.<!-- d3d12-review-inline:end:resources:AB-id3d12device15-registertrimnotificationcallback-contract:4:authored:migration-b4d79dfc64499958-0 --></ins>
-
-<a id="api-id3d12device15-unregistertrimnotificationcallback"></a>
-
-### ID3D12Device15::UnregisterTrimNotificationCallback
-
-#### Declaration
-
-```cpp
-HRESULT UnregisterTrimNotificationCallback(
-    DWORD CallbackCookie);
-```
-
-#### Behavior
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device15-unregistertrimnotificationcallback-contract:0:authored:migration-b43172e526de9628-0 -->Removes the registration identified by its cookie. Successful removal prevents
-later invocations for that registration; synchronize its context lifetime
-with outstanding callback activity. Do not call this method inside a callback.<!-- d3d12-review-inline:end:resources:AB-id3d12device15-unregistertrimnotificationcallback-contract:0:authored:migration-b43172e526de9628-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device15-unregistertrimnotificationcallback-contract:2:authored:migration-bfc3876f067ae98a-0 -->`CallbackCookie` identifies the device's registration; zero is a valid cookie if registration succeeded.<!-- d3d12-review-inline:end:resources:AB-id3d12device15-unregistertrimnotificationcallback-contract:2:authored:migration-bfc3876f067ae98a-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:resources:AB-id3d12device15-unregistertrimnotificationcallback-contract:4:authored:migration-7a2c32f54b38ac0f-0 -->Returns `S_OK`, `DXGI_ERROR_NOT_FOUND` for a missing registration, or an applicable failure including unavailable-platform `E_NOTIMPL`. Failure is not a guarantee that every intermediate unregistration action was rolled back.<!-- d3d12-review-inline:end:resources:AB-id3d12device15-unregistertrimnotificationcallback-contract:4:authored:migration-7a2c32f54b38ac0f-0 --></ins>
-
 <a id="protected-session-driver-lifecycle"></a>
 
-## Protected session driver capability and lifecycle contracts
+### Protected session driver capability and lifecycle contracts
 
 ```cpp
 typedef enum D3D12DDI_PROTECTED_RESOURCE_SESSION_SUPPORT_FLAGS_0030
@@ -5796,8 +5757,7 @@ typedef HRESULT(APIENTRY CALLBACK* PFND3D12DDI_CREATE_PROTECTED_SESSION_CB_0030)
 <ins><!-- d3d12-review-inline:begin:resources:AB-protected-driver-roles:0:authored:migration-24867d39d81819d8-0 -->The effective resource protection table is
 `D3D12DDI_DEVICE_FUNCS_CONTENT_PROTECTION_RESOURCES_0074`. Its size/create
 entries use the `_0074` creation arguments; opened-size, open and destruction
-retain their `_0030` declarations. This selection follows the owning
-protection feature's explicit revision rule, not numerical suffix alone.
+retain their `_0030` declarations.
 The separate `D3D12DDI_CONTENT_PROTECTION_CALLBACKS_0030` table supplies
 `pfnCreateProtectedSessionCB` in the opposite direction.<!-- d3d12-review-inline:end:resources:AB-protected-driver-roles:0:authored:migration-24867d39d81819d8-0 --></ins>
 

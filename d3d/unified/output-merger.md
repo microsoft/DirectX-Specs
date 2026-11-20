@@ -37,7 +37,7 @@
 > | Independent front/back stencil references and masks | `D3D12_FEATURE_DATA_D3D12_OPTIONS14::IndependentFrontAndBackStencilRefMaskSupported`; `ID3D12GraphicsCommandList8::OMSetFrontAndBackStencilRef` and `D3D12_DEPTH_STENCIL_DESC2` |
 > | Render passes | `D3D12_FEATURE_DATA_D3D12_OPTIONS18::RenderPassesValid`; [tiers and driver handling](#render-pass-support) |
 > | Mismatching attachment dimensions | `D3D12_FEATURE_DATA_D3D12_OPTIONS19::MismatchingOutputDimensionsSupported` |
-> | Multisampling with no attachments | `D3D12_FEATURE_DATA_D3D12_OPTIONS19::SupportedSampleCountsWithNoOutputs`; [canonical PSO/rasterization contract](pipeline-state.md#no-output-samples) |
+> | Multisampling with no attachments | `D3D12_FEATURE_DATA_D3D12_OPTIONS19::SupportedSampleCountsWithNoOutputs`; [sample configuration without output attachments](pipeline-state.md#no-output-samples) |
 > | Output formats and multisampling | Per-format `D3D12_FEATURE_FORMAT_SUPPORT` and `D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS`; [format capabilities](formats.md#support) |
 
 <!-- d3d12-review-alert:end:output-merger:N-configuration:1:authored:migration-ccded22e2f6bf33e-0 -->
@@ -46,7 +46,7 @@
 
 ## Depth and stencil tests and updates
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-depth-stencil-state:0:authored:migration-39a60140336a6569-0 -->`D3D12_DEPTH_STENCIL_DESC` and `DESC1` use shared front/back read and write masks; `DESC2` places `StencilReadMask` and `StencilWriteMask` in each `D3D12_DEPTH_STENCILOP_DESC1`. Face selection follows [rasterization orientation](rasterization.md#front-face).<!-- d3d12-review-inline:end:output-merger:N-depth-stencil-state:0:authored:migration-39a60140336a6569-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-depth-stencil-state:0:authored:migration-39a60140336a6569-0 -->`D3D12_DEPTH_STENCIL_DESC` and `DESC1` use the same read and write masks for both faces; `DESC2` places `StencilReadMask` and `StencilWriteMask` in each `D3D12_DEPTH_STENCILOP_DESC1`. Face selection follows [rasterization orientation](rasterization.md#front-face).<!-- d3d12-review-inline:end:output-merger:N-depth-stencil-state:0:authored:migration-39a60140336a6569-0 --></ins>
 
 <a id="depth-stencil-enable"></a>
 
@@ -73,10 +73,10 @@ min/max.  The MinDepth and MaxDepth values are defined by the [Viewport](rasteri
 
 ### Depth comparison
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-11:0 -->When the DepthEnable state is true and a Depth Buffer is bound at the Output Merger, the [clamped](#depth-clamp) z value
+When the DepthEnable state is true and a Depth Buffer is bound at the Output Merger, the [clamped](#depth-clamp) z value
 gets converted to the format/precision of the Depth Buffer (nop if the Depth Buffer format is float32), and is then compared using
 DepthFunc against the corresponding Depth Buffer value.  The conversion of z to Depth Buffer precision uses round to nearest (+0.5 and truncate).
-If no Depth Buffer is bound, the depth test always passes.<!-- d3d12-review-inline:end:output-merger:A17-11:0 --></ins>
+If no Depth Buffer is bound, the depth test always passes.
 
 <ins><!-- d3d12-review-inline:begin:output-merger:N-comparison-scope:0:authored:migration-af49997649095f8f-0 -->For depth, the source operand of `DepthFunc` is the incoming converted depth and the destination operand is the stored depth. For stencil, the source and destination operands are the masked reference and masked stored stencil respectively. Passing both enabled tests permits the applicable depth/color updates; stencil fail/depth-fail/pass operations have the separate update selection below.<!-- d3d12-review-inline:end:output-merger:N-comparison-scope:0:authored:migration-af49997649095f8f-0 --></ins>
 
@@ -106,7 +106,7 @@ If no Depth Buffer is bound, the depth test always passes.<!-- d3d12-review-inli
 of states is used to drive stencil testing (the ones with 'Stencil' in the name in the depth/stencil PSO description).  If there is no stencil component in the
 Depth Buffer format, or no Depth Buffer bound, then the stencil test always passes.<!-- d3d12-review-inline:end:output-merger:A17-12:0:modified:migration-749ff10eff71c0af-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-stencil-face:0:authored:migration-397ef36a143632a2-0 -->Stencil storage is eight bits in the supported depth/stencil formats. The selected reference is the face's dynamic reference, except where the [pixel shader stencil reference interface](pixel-shaders.md#stencil-reference) replaces it. The shader replacement affects both testing and `REPLACE`, not a separate unmasked store. [Forced-early tests](pixel-shaders.md#early-depth-stencil) use the early interface instead of late depth/stencil exports.<!-- d3d12-review-inline:end:output-merger:N-stencil-face:0:authored:migration-397ef36a143632a2-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-stencil-face:0:authored:migration-397ef36a143632a2-0 -->Stencil storage is eight bits in the supported depth/stencil formats. The selected reference is the face's dynamic reference, except where the [pixel shader stencil reference interface](pixel-shaders.md#stencil-reference) replaces it. The shader-supplied reference is used for both the test and `REPLACE`. `StencilWriteMask` applies to the resulting store. [Forced-early tests](pixel-shaders.md#early-depth-stencil) use the early interface instead of late depth/stencil exports.<!-- d3d12-review-inline:end:output-merger:N-stencil-face:0:authored:migration-397ef36a143632a2-0 --></ins>
 
 For each <ins><!-- d3d12-review-inline:begin:output-merger:P-stencil-test:0:modified:source-7b00c94118896964-0-0 -->covered sample, the output merger<!-- d3d12-review-inline:end:output-merger:P-stencil-test:0:modified:source-7b00c94118896964-0-0 --></ins> performs a test using the corresponding value in the stencil buffer, a stencil reference value, and a stencil mask value. If the test passes, Direct3D performs an action. The test is performed using the following steps.
 
@@ -183,9 +183,7 @@ values are relevant.
 
 <ins><!-- d3d12-review-inline:begin:output-merger:D-depth-bounds:1 -->`DepthBoundsTestEnable` is selected by the PSO; `OMSetDepthBounds` sets the minimum and maximum floating-point depth bounds. The runtime will not clamp or validate the input, but
 implementations may clamp to the range \[0,1\] if necessary. NaNs must
-be treated as 0. When the runtime interposes, it converts NaNs to 0 on
-behalf of the implementation. A direct [API handle driver entry](#driver-depth-bounds-forms)
-must perform that conversion itself. If the range is inverted (i.e. min > max), then
+be treated as 0. If the range is inverted (i.e. min > max), then
 implementations must treat the Depth Bounds Test as always failing.<!-- d3d12-review-inline:end:output-merger:D-depth-bounds:1 --></ins>
 
 Any Pixel Shader invocation that fails the Depth Bounds Test (i.e.
@@ -211,7 +209,7 @@ When a depth buffer is not bound (e.g. <ins><!-- d3d12-review-inline:begin:outpu
 Bounds Test must always pass. This is consistent with the behavior of
 the Depth Test in this configuration.
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-depth-bounds-queries:0:authored:migration-8b7dc5375f3d3e82-0 -->Depth bounds range initialization, reset and bundle inheritance are defined in [command list state](command-list-state.md#depth-bounds). The [occlusion](counters-queries-and-predication.md#occlusion) and [pipeline statistics](counters-queries-and-predication.md#pipeline-statistics) definitions govern query counting, including their depth bounds/early-test interactions; depth bounds rejection is not a blanket rule that a shader invocation or its UAV side effects never occurred.<!-- d3d12-review-inline:end:output-merger:N-depth-bounds-queries:0:authored:migration-8b7dc5375f3d3e82-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-depth-bounds-queries:0:authored:migration-8b7dc5375f3d3e82-0 -->See [depth bounds range](command-list-state.md#depth-bounds) for initialization, reset and bundle inheritance. See the [occlusion](counters-queries-and-predication.md#occlusion) and [pipeline statistics](counters-queries-and-predication.md#pipeline-statistics) query definitions for how depth bounds and early tests affect their counts.<!-- d3d12-review-inline:end:output-merger:N-depth-bounds-queries:0:authored:migration-8b7dc5375f3d3e82-0 --></ins>
 
 <a id="read-only-depth-stencil"></a>
 
@@ -221,7 +219,7 @@ the Depth Test in this configuration.
 
 #### Read-only write controls
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-13:0 -->Applications can indicate to the system that a depth and/or stencil buffer bound at the Output Merger (OM) is read-only, via flags in the DepthStencilView (DSV).<!-- d3d12-review-inline:end:output-merger:A17-13:0 --></ins>
+Applications can indicate to the system that a depth and/or stencil buffer bound at the Output Merger (OM) is read-only, via flags in the DepthStencilView (DSV).
 
 <ins><!-- d3d12-review-inline:begin:output-merger:A17-13:1 -->Having a read-only DSV bound at the OM enables ShaderResourceViews (SRVs) of the same depth/stencil buffer memory to be bound as shader input simultaneously,
 without risk of a read/write hazard on the memory.   Further, this mechanism can be made to cooperate with existing mechanisms for controlling OM depth buffer read/write behavior,
@@ -243,7 +241,7 @@ while enabling the system to efficiently notice there is no read/write hazard to
 
 <ins><!-- d3d12-review-inline:begin:output-merger:A17-13:7 -->(2)    The D3D12_DSV_FLAG_READ_ONLY_STENCIL flag must NOT be set in the currently bound DSV.<!-- d3d12-review-inline:end:output-merger:A17-13:7 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-read-only-resources:0:authored:migration-ebc53ddf27b304c3-0 -->The descriptor flags are `D3D12_DSV_FLAG_READ_ONLY_DEPTH = 0x1` and `D3D12_DSV_FLAG_READ_ONLY_STENCIL = 0x2`. They control the corresponding aspect independently. A zero PSO write mask alone does not replace a read-only view flag for simultaneous shader resource/depth-stencil binding. The [DSV definition](binding.md#dsv-types), [depth/stencil view compatibility](formats.md#depth-stencil-views), [legacy depth read/write states](synchronization.md#legacy-resource-states) and [enhanced access/layout rules](synchronization.md#barrier-access) apply; D3D12 does not insert D3D11-style automatic hazard unbinding. Render pass read-only binding adds the [pass flags and access conditions](#read-only-depth-stencil-pass).<!-- d3d12-review-inline:end:output-merger:N-read-only-resources:0:authored:migration-ebc53ddf27b304c3-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-read-only-resources:0:authored:migration-ebc53ddf27b304c3-0 -->The descriptor flags are `D3D12_DSV_FLAG_READ_ONLY_DEPTH = 0x1` and `D3D12_DSV_FLAG_READ_ONLY_STENCIL = 0x2`. They control the corresponding aspect independently. A zero PSO write mask alone does not replace a read-only view flag for simultaneous shader resource and depth/stencil binding. D3D12 does not automatically unbind views to avoid read/write hazards. See [DSV flags](binding.md#dsv-types), [depth/stencil view compatibility](formats.md#depth-stencil-views), [legacy resource states](synchronization.md#legacy-resource-states) and [barrier access](synchronization.md#barrier-access) for the view and state requirements. See [Read Only Depth Stencil](#read-only-depth-stencil-pass) for the pass flags and access conditions of read-only binding in render passes.<!-- d3d12-review-inline:end:output-merger:N-read-only-resources:0:authored:migration-ebc53ddf27b304c3-0 --></ins>
 
 <a id="blending"></a>
 
@@ -284,7 +282,7 @@ while enabling the system to efficiently notice there is no read/write hazard to
 
 <!-- d3d12-review-alert:end:output-merger:P-blend-factors:0:modified:migration-ac4cc33a61425f52-0 -->
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-blend-equations:0:authored:migration-ae8a97747f7cea15-0 -->For each color component, `S` denotes the pixel shader output and `D` the existing render target value. `SrcBlend` and `DestBlend` select the factors for RGB; `SrcBlendAlpha` and `DestBlendAlpha` select the factors for alpha. `ADD` computes `S*SrcFactor + D*DestFactor`, `SUBTRACT` computes `S*SrcFactor - D*DestFactor`, and `REV_SUBTRACT` computes `D*DestFactor - S*SrcFactor`. `MIN` and `MAX` operate directly on `S` and `D`, ignoring the four factor selections; precision and exceptional-value behavior follow the [blending-specific requirements](#blending-precision). These equations do not override the blender's NaN and signed-zero requirements, including the stated zero-weight cases.<!-- d3d12-review-inline:end:output-merger:N-blend-equations:0:authored:migration-ae8a97747f7cea15-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-blend-equations:0:authored:migration-ae8a97747f7cea15-0 -->For each color component, `S` denotes the pixel shader output and `D` the existing render target value. `SrcBlend` and `DestBlend` select the factors for RGB; `SrcBlendAlpha` and `DestBlendAlpha` select the factors for alpha. `ADD` computes `S*SrcFactor + D*DestFactor`, `SUBTRACT` computes `S*SrcFactor - D*DestFactor`, and `REV_SUBTRACT` computes `D*DestFactor - S*SrcFactor`. `MIN` and `MAX` operate directly on `S` and `D`, ignoring the four factor selections. See [Blending precision](#blending-precision) for precision and for NaN and signed-zero propagation, including 0.0 blend weights.<!-- d3d12-review-inline:end:output-merger:N-blend-equations:0:authored:migration-ae8a97747f7cea15-0 --></ins>
 
 <a id="alpha-factors"></a>
 
@@ -323,16 +321,16 @@ Support for the alpha blend factor <ins><!-- d3d12-review-inline:begin:output-me
 
 ### Multiple render targets
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-3:0 -->Fixed-function blend can be enabled and configured independently for each RenderTarget.<!-- d3d12-review-inline:end:output-merger:A17-3:0 --></ins>
+Fixed-function blend can be enabled and configured independently for each RenderTarget.
 
 <a id="srgb-blending"></a>
 
 ### sRGB blending
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-4:0:modified:migration-45e71eeab5fb2555-0 -->The blender must be able to write in accordance with sRGB rules for formats which include _SRGB in the name,
-for example: R8G8B8A8_UNORM_SRGB.<!-- d3d12-review-inline:end:output-merger:A17-4:0:modified:migration-45e71eeab5fb2555-0 --></ins>
+The blender must be able to write in accordance with sRGB rules for formats which include _SRGB in the name,
+for example: R8G8B8A8_UNORM_SRGB.
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-srgb-owner:0:authored:migration-c05facc1d6b013b7-0 -->The [format conversion rules](formats.md#modifiers) define sRGB decoding and encoding: color blending uses linear values, with conversion back to the sRGB render target representation on output. Alpha is not sRGB encoded.<!-- d3d12-review-inline:end:output-merger:N-srgb-owner:0:authored:migration-c05facc1d6b013b7-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-srgb-owner:0:authored:migration-c05facc1d6b013b7-0 -->Color blending uses linear values, with conversion back to the sRGB render target representation on output. Alpha is not sRGB encoded. See [format modifiers](formats.md#modifiers) for sRGB decoding and encoding.<!-- d3d12-review-inline:end:output-merger:N-srgb-owner:0:authored:migration-c05facc1d6b013b7-0 --></ins>
 
 <a id="blending-precision"></a>
 
@@ -366,19 +364,19 @@ the output format.  For SNORM data, intermediate operations such as (1-x) are pe
 at equal or more precision than the output format applies even if blending is disabled.  That is, the hardware may or may not upconvert to some intermediate precision level,
 say 8 bit, even if blending is off, before converting down to the final output format precision (say 5 bit).<!-- d3d12-review-inline:end:output-merger:A17-5:6 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-5:7 -->For all formats, there is a clamp to the RenderTarget range after blend, before writing values out to memory.<!-- d3d12-review-inline:end:output-merger:A17-5:7 --></ins>
+For all formats, there is a clamp to the RenderTarget range after blend, before writing values out to memory.
 
 <a id="dual-source-blending"></a>
 
 ### Dual source blending
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-6:0 -->This feature enables Output Merger to use both the Pixel Shader
+This feature enables Output Merger to use both the Pixel Shader
 outputs o0 and o1 simultaneously as input sources to a blending operation
-with the single RenderTarget at slot 0.<!-- d3d12-review-inline:end:output-merger:A17-6:0 --></ins>
+with the single RenderTarget at slot 0.
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-6:1 -->Additional options are available for the SrcBlend, DestBlend, SrcBlendAlpha or DestBlendAlpha
+Additional options are available for the SrcBlend, DestBlend, SrcBlendAlpha or DestBlendAlpha
 terms in the Blend equation.  The presence of any of the following choices in the Blend equation
-means that Dual Source Color Blending is enabled:<!-- d3d12-review-inline:end:output-merger:A17-6:1 --></ins>
+means that Dual Source Color Blending is enabled:
 
 ```cpp
 
@@ -389,17 +387,17 @@ means that Dual Source Color Blending is enabled:<!-- d3d12-review-inline:end:ou
 
 ```
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-6:3 -->When Dual Source Color Blending is enabled, the Pixel Shader must have only
+When Dual Source Color Blending is enabled, the Pixel Shader must have only
 a single RenderTarget bound, at slot 0, and must output both o0 and o1.  Writing
 to other outputs (o2, o3 etc.) produces undefined results for the corresponding RenderTargets, if bound
-illegally. Writing oDepth is valid when performing Dual Source Color Blending.<!-- d3d12-review-inline:end:output-merger:A17-6:3 --></ins>
+illegally. Writing oDepth is valid when performing Dual Source Color Blending.
 
 The only valid blend ops with Dual Source Color Blending are: add, subtract and revsubtract.  Others are undefined.
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-6:5 -->The configured blend equation and the
+The configured blend equation and the
 [Output Write Mask](#write-masks) at slot 0 imply exactly which
 components from Pixel Shader outputs o0 and o1 must be present. If expected output components are not present,
-results are undefined. If extra components in o0 or o1 are output, they are ignored.<!-- d3d12-review-inline:end:output-merger:A17-6:5 --></ins>
+results are undefined. If extra components in o0 or o1 are output, they are ignored.
 
 <ins><!-- d3d12-review-inline:begin:output-merger:A17-6:6 -->Examples:<!-- d3d12-review-inline:end:output-merger:A17-6:6 --></ins>
 
@@ -470,17 +468,17 @@ typedef enum D3D12_LOGIC_OP
 };
 ```
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-7:0 -->Logic ops are supported only on renderable UINT formats.  Implementations that expose Logic Ops support must support them for all renderable UINT formats.<!-- d3d12-review-inline:end:output-merger:A17-7:0 --></ins>
+Logic ops are supported only on renderable UINT formats.  Implementations that expose Logic Ops support must support them for all renderable UINT formats.
 
 Ideally, the number of bits per component in the output format indicates how many bits from the corresponding Pixel Shader
 output component are used, starting from the LSB of the PS output (e.g. 8 bits per component from LSB used for R8G8B8A8).
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-7:2 -->For now, it is allowed for hardware to clamp the shader output as a UINT to the number of bits in the format, e.g. for an 8-bit output format
+For now, it is allowed for hardware to clamp the shader output as a UINT to the number of bits in the format, e.g. for an 8-bit output format
 component, the value 0x100 coming out of the shader turns into 0xff going into the Logic Op.  Ideal hardware would just take the
-bottom 8 bits, 0x00.<!-- d3d12-review-inline:end:output-merger:A17-7:2 --></ins>
+bottom 8 bits, 0x00.
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-7:3 -->So applications using Logic Op must zero out bits above the number of bits in the output format to guarantee consistent behavior
-across all hardware.<!-- d3d12-review-inline:end:output-merger:A17-7:3 --></ins>
+So applications using Logic Op must zero out bits above the number of bits in the output format to guarantee consistent behavior
+across all hardware.
 
 <ins><!-- d3d12-review-inline:begin:output-merger:N-logic-evidence:0:authored:migration-2a7b996f72d6e313-0 -->**Draft qualification — logic input narrowing:** the retained low-bit-versus-clamp allowance describes the inherited hardware contract. It has not been independently established for every currently supported device. No stronger truncation-only guarantee is inferred from the API enum declaration.<!-- d3d12-review-inline:end:output-merger:N-logic-evidence:0:authored:migration-2a7b996f72d6e313-0 --></ins>
 
@@ -499,20 +497,20 @@ the same form of Multisample Resources (i.e.  the sample counts must be the same
 Each RenderTarget may have a different data format; there are no requirements that the
 formats have identical bit-per-Element counts.<!-- d3d12-review-inline:end:output-merger:A17-14:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-14:1 -->Any combination of the 8 slots for
-RenderTargets can have a RenderTarget set or not set.<!-- d3d12-review-inline:end:output-merger:A17-14:1 --></ins>
+Any combination of the 8 slots for
+RenderTargets can have a RenderTarget set or not set.
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-14:2 -->The same resource view cannot be bound to multiple simultaneous RenderTarget slots
+The same resource view cannot be bound to multiple simultaneous RenderTarget slots
 simultaneously.  Note that setting multiple non-overlapping resource views of a single
-resource as simultaneous multiple rendertargets is supported.<!-- d3d12-review-inline:end:output-merger:A17-14:2 --></ins>
+resource as simultaneous multiple rendertargets is supported.
 
 <a id="mismatching-output-dimensions"></a>
 
 ### Mismatching output dimensions
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-mixed-dimensions-link:0:authored:migration-f5c9ed4f759f030e-0 -->The [mixed-output dimension rules](rasterization.md#output-dimensions) apply to the bound attachments.<!-- d3d12-review-inline:end:output-merger:N-mixed-dimensions-link:0:authored:migration-f5c9ed4f759f030e-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-mixed-dimensions-link:0:authored:migration-f5c9ed4f759f030e-0 -->When `MismatchingOutputDimensionsSupported` is `TRUE`, the [mixed output dimension rules](rasterization.md#output-dimensions) replace the dimensional restrictions in [Attachment compatibility](#multiple-render-targets).<!-- d3d12-review-inline:end:output-merger:N-mixed-dimensions-link:0:authored:migration-f5c9ed4f759f030e-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-mixed-gate:0:authored:migration-d7b35a8f87270b02-0 -->The linked dimensional relaxations require `MismatchingOutputDimensionsSupported`. The public driver contract requires this feature for DDI version 0102 or greater. `SupportedSampleCountsWithNoOutputs` separately controls [sample-frequency rendering without attachments](rasterization.md#no-output-samples). It does not waive the matching sample count requirement when attachments are bound. PSO formats/sample configuration must be compatible with the views actually bound for rasterization.<!-- d3d12-review-inline:end:output-merger:N-mixed-gate:0:authored:migration-d7b35a8f87270b02-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-mixed-gate:0:authored:migration-d7b35a8f87270b02-0 -->Drivers that report DDI version 0102 or greater must support `MismatchingOutputDimensionsSupported`. `SupportedSampleCountsWithNoOutputs` separately controls [sample-frequency rendering without attachments](rasterization.md#no-output-samples). It does not waive the matching sample count requirement when attachments are bound. PSO formats/sample configuration must be compatible with the views actually bound for rasterization.<!-- d3d12-review-inline:end:output-merger:N-mixed-gate:0:authored:migration-d7b35a8f87270b02-0 --></ins>
 
 <a id="write-masks"></a>
 
@@ -527,9 +525,9 @@ RenderTarget(s)/component(s) enabled with the write masks results in undefined v
 written out.  See the discussion of [Output Writes](pixel-shaders.md#output-writes) for
 further detail on the interaction between Pixel Shader outputs and the Output Write masks.<!-- d3d12-review-inline:end:output-merger:A17-15:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-15:2 -->Note that the Output Write Masks do not affect what data may get read from the RenderTarget(s)
+Note that the Output Write Masks do not affect what data may get read from the RenderTarget(s)
 in the process of performing Blend operations specified in the Output Merger, depending on the operation
-specified.  The masks simply limit writes.<!-- d3d12-review-inline:end:output-merger:A17-15:2 --></ins>
+specified.  The masks simply limit writes.
 
 <ins><!-- d3d12-review-inline:begin:output-merger:N-mask-types:0:authored:migration-deaf0d8ab848d53e-0-color -->`DXGI_FORMAT_R9G9B9E5_SHAREDEXP` has the [shared exponent format's all-or-none color write mask requirement](formats.md#shared-exponent-support). Its render target/blend availability is separately format-gated.<!-- d3d12-review-inline:end:output-merger:N-mask-types:0:authored:migration-deaf0d8ab848d53e-0-color --></ins>
 
@@ -568,18 +566,18 @@ Multisample rendertargets are bound or not.  For n-sample rendering, the
 first n bits of SampleMask from the LSB are used to mask the coverage.  n can be from 1 to 32,
 depending on the multisample mode used (out of the selection of modes offered by the individual hardware implementation).<!-- d3d12-review-inline:end:output-merger:A17-17:0:modified:migration-11d78e4d98f3f948-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-sample-order:0:authored:migration-1eb43271511ac71c-0 -->`SampleMask` is PSO state, not a dynamic `OMSetBlendState` parameter. The [rasterization sample index/pattern contract](rasterization.md#sample-patterns) defines the spatial interpretation, including standard/center and [programmable patterns](rasterization.md#programmable-samples). Pixel shader [input/output coverage](pixel-shaders.md#output-coverage) and [early/late testing](pixel-shaders.md#execution-control) determine when a candidate survives; final color updates require the corresponding coverage, mask and tests. Forced-early depth/stencil updates have the separately defined pre-shader timing and are not undone by later shader discard/coverage.<!-- d3d12-review-inline:end:output-merger:N-sample-order:0:authored:migration-1eb43271511ac71c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-sample-order:0:authored:migration-1eb43271511ac71c-0 -->`SampleMask` is graphics PSO state and has no dynamic command list setter. See [sample patterns](rasterization.md#sample-patterns) and [programmable sample positions](rasterization.md#programmable-samples) for the sample that each mask bit selects, including standard and center patterns. See [output coverage](pixel-shaders.md#output-coverage) and [early and late depth/stencil testing](pixel-shaders.md#execution-control) for how shader coverage and testing combine with the mask. Forced-early depth/stencil updates occur before the pixel shader and are not undone by a later shader discard or coverage output.<!-- d3d12-review-inline:end:output-merger:N-sample-order:0:authored:migration-1eb43271511ac71c-0 --></ins>
 
 <a id="alpha-to-coverage"></a>
 
 ### Alpha-to-coverage
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-18:0 -->The [Blend State](#blending) bool AlphaToCoverageEnable toggles whether the .a component of output register o0 from the Pixel Shader
+The [Blend State](#blending) bool AlphaToCoverageEnable toggles whether the .a component of output register o0 from the Pixel Shader
 is converted to an n-step coverage mask (given an n-sample RenderTarget).  This mask is ANDed with the
 usual sample coverage for the pixel in the primitive (in addition to SampleMask) to determine which samples get updated in all the active
-RenderTarget(s).<!-- d3d12-review-inline:end:output-merger:A17-18:0 --></ins>
+RenderTarget(s).
 
-<ins><!-- d3d12-review-inline:begin:output-merger:A17-18:1 -->If the Pixel Shader outputs [oMask (output coverage)](../archive/D3D11_3_FunctionalSpec.htm#oMask), Alpha-to-Coverage is disabled.<!-- d3d12-review-inline:end:output-merger:A17-18:1 --></ins>
+If the Pixel Shader outputs [oMask (output coverage)](../archive/D3D11_3_FunctionalSpec.htm#oMask), Alpha-to-Coverage is disabled.
 
 <ins><!-- d3d12-review-inline:begin:output-merger:A17-18:2 -->Note that there is only one coverage shared for all RenderTargets in Multisampling.  The fact that .a
 from output o0 is read and converted to coverage when AlphaToCoverageEnable is true does not change the .a value going to
@@ -601,29 +599,29 @@ for otherwise opaque sprites.<!-- d3d12-review-inline:end:output-merger:A17-18:4
 
 ### Output ordering
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-ordering:0:authored:migration-e01a1d9aa3832674-0 -->Output merger tests, blending/logic operations and attachment updates preserve the ordering of overlapping primitives established by [primitive retirement](vertex-processing.md#geometry-view-ordering) and [mesh rasterization order](amplification-and-mesh-shaders.md#rasterization-order). This is not a requirement that pixel shaders execute in primitive order. Ordinary UAV side effects do not obtain framebuffer ordering merely because they are issued by a pixel shader. [ROV overlap ordering](pixel-shaders.md#rov-ordering) has its own precise shader contract.<!-- d3d12-review-inline:end:output-merger:N-ordering:0:authored:migration-e01a1d9aa3832674-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-ordering:0:authored:migration-e01a1d9aa3832674-0 -->Output merger tests, blending/logic operations and attachment updates preserve the ordering of overlapping primitives established by [primitive retirement](vertex-processing.md#geometry-view-ordering) and [mesh rasterization order](amplification-and-mesh-shaders.md#rasterization-order). This is not a requirement that pixel shaders execute in primitive order. Ordinary UAV side effects do not obtain framebuffer ordering merely because they are issued by a pixel shader. See [rasterizer ordered views](pixel-shaders.md#rov-ordering) for ordered access between overlapping pixel shader invocations.<!-- d3d12-review-inline:end:output-merger:N-ordering:0:authored:migration-e01a1d9aa3832674-0 --></ins>
 
 <a id="clear-copy-resolve-interactions"></a>
 
 ### Clear, copy and resolve interactions
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-transfer-boundary:0:authored:migration-dd63d44be0af5478-0 -->`ClearRenderTargetView` and `ClearDepthStencilView` are descriptor-addressed clear operations, not draws. They are not controlled by the currently bound PSO color/depth/stencil write masks, blend state or sample mask. Depth/stencil clear aspect selection comes from the clear flags. Scissor state does not replace the clear rectangles. This does not legalize a clear during an active render pass: [pass recording restrictions](#render-pass-recording) apply, and pass `CLEAR` accesses are specified [below](#d3d12_render_pass_beginning_access_clear).<!-- d3d12-review-inline:end:output-merger:N-transfer-boundary:0:authored:migration-dd63d44be0af5478-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-transfer-boundary:0:authored:migration-dd63d44be0af5478-0 -->`ClearRenderTargetView` and `ClearDepthStencilView` are descriptor-addressed clear operations, not draws. They are not controlled by the currently bound PSO color/depth/stencil write masks, blend state or sample mask. Depth/stencil clear aspect selection comes from the clear flags. Scissor state does not replace the clear rectangles. Both clear methods are forbidden inside an active render pass. See [Binding and recording](#render-pass-recording) for the render pass restrictions and [D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_CLEAR](#d3d12_render_pass_beginning_access_clear) for clearing a surface at the start of a pass.<!-- d3d12-review-inline:end:output-merger:N-transfer-boundary:0:authored:migration-dd63d44be0af5478-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:output-merger:N-transfer-boundary:1:authored:migration-31d397078aaceb98-0 -->Copies/resolves address their own resources/subresources, not the currently bound RTV/DSV set. A read-only output view is not a resource-wide prohibition on a later write through another valid operation/view.<!-- d3d12-review-inline:end:output-merger:N-transfer-boundary:1:authored:migration-31d397078aaceb98-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:output-merger:N-transfer-boundary:2:authored:migration-fbd7e6deec1b7c84-0 -->The programmed-pattern interactions are [render target clear](rasterization.md#sample-clear-rendertarget), [depth/stencil clear](rasterization.md#sample-clear-depthstencil), [render target draw](rasterization.md#sample-draw-using-rendertarget), [depth/stencil draw](rasterization.md#sample-draw-using-depthstencil), [color resolve](rasterization.md#sample-resolve-rendertarget), [depth/stencil resolve](rasterization.md#sample-resolve-depthstencil), [color copy](rasterization.md#sample-copy-rendertarget), [full depth/stencil copy](rasterization.md#sample-copy-depthstencil-full-subresource), [partial depth/stencil copy](rasterization.md#sample-copy-depthstencil-partial-subresource), and [depth state transitions](rasterization.md#sample-transitioning-out-of-depth_read-or-depth_write-state). Color clears, copies and resolves ignore programmed sample positions. See the linked depth/stencil operation rules for sample position matching and stencil-only exceptions.<!-- d3d12-review-inline:end:output-merger:N-transfer-boundary:2:authored:migration-fbd7e6deec1b7c84-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-transfer-boundary:3:authored:migration-bfc4e6973edbb84b-0 -->`ClearDepthStencilView` must not clear an aspect marked read-only in the descriptor passed to that call. In particular, `D3D12_CLEAR_FLAG_DEPTH` is invalid when that DSV has `D3D12_DSV_FLAG_READ_ONLY_DEPTH`, and `D3D12_CLEAR_FLAG_STENCIL` is invalid when it has `D3D12_DSV_FLAG_READ_ONLY_STENCIL`. This is invalid usage, not a request to silently suppress the clear.<!-- d3d12-review-inline:end:output-merger:N-transfer-boundary:3:authored:migration-bfc4e6973edbb84b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-transfer-boundary:3:authored:migration-bfc4e6973edbb84b-0 -->`ClearDepthStencilView` must not clear an aspect marked read-only in the descriptor passed to that call. In particular, `D3D12_CLEAR_FLAG_DEPTH` is invalid when that DSV has `D3D12_DSV_FLAG_READ_ONLY_DEPTH`, and `D3D12_CLEAR_FLAG_STENCIL` is invalid when it has `D3D12_DSV_FLAG_READ_ONLY_STENCIL`.<!-- d3d12-review-inline:end:output-merger:N-transfer-boundary:3:authored:migration-bfc4e6973edbb84b-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-transfer-boundary:4:authored:migration-f858fd30914b8a42-0 -->The runtime cannot enforce this restriction. The debug layer must report an error for a violating clear. A missing diagnostic is a validation defect, not permission to clear through the read-only view.<!-- d3d12-review-inline:end:output-merger:N-transfer-boundary:4:authored:migration-f858fd30914b8a42-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-transfer-boundary:4:authored:migration-f858fd30914b8a42-0 -->The runtime cannot enforce this restriction. The debug layer must report an error for a violating clear.<!-- d3d12-review-inline:end:output-merger:N-transfer-boundary:4:authored:migration-f858fd30914b8a42-0 --></ins>
 
 <a id="output-apis"></a>
 
 ## Attachment binding and dynamic output APIs
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-api-shared:0:authored:migration-e4474c39eea483cf-0 -->`OMSetRenderTargets` is supported on direct command lists, not bundles. The dynamic blend factor, stencil reference and depth bounds setters are supported on direct command lists and bundles, subject to the exact [state inheritance/reset rules](command-list-state.md#recording-boundaries). Render pass begin/end are direct list recording operations, not bundle setters. State setters and render pass wrapper/work effects retain the [predication operation matrix](counters-queries-and-predication.md#predication-operation-matrix).<!-- d3d12-review-inline:end:output-merger:N-api-shared:0:authored:migration-e4474c39eea483cf-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-api-shared:0:authored:migration-e4474c39eea483cf-0 -->`OMSetRenderTargets` is supported on direct command lists, not bundles. The dynamic blend factor, stencil reference and depth bounds setters are supported on direct command lists and bundles. See [recording boundaries](command-list-state.md#recording-boundaries) for their inheritance and reset. Render pass begin/end are direct list recording operations, not bundle setters. See the [predication operation matrix](counters-queries-and-predication.md#predication-operation-matrix) for predication of these state setters and of render pass wrapper and work effects.<!-- d3d12-review-inline:end:output-merger:N-api-shared:0:authored:migration-e4474c39eea483cf-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-api-shared:1:authored:migration-f0f2e0028ba9f483-0 -->The [recording error/Close contract](execution.md#close) applies to invalid command recording. The pass-specific runtime removals are specified [below](#render-pass-validation).<!-- d3d12-review-inline:end:output-merger:N-api-shared:1:authored:migration-f0f2e0028ba9f483-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-api-shared:1:authored:migration-f0f2e0028ba9f483-0 -->See [Close](execution.md#close) for how invalid command recording is reported, and [Recording validation](#render-pass-validation) for render pass validation and command list removal on forbidden calls.<!-- d3d12-review-inline:end:output-merger:N-api-shared:1:authored:migration-f0f2e0028ba9f483-0 --></ins>
 
 <a id="omsetrendertargets"></a>
 
@@ -644,7 +642,7 @@ void OMSetRenderTargets(
 
 Sets CPU descriptor handles for the render targets and depth stencil.
 
-<ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetRenderTargets-contract:0:authored:migration-2e928df6dd9f872b-0 -->Descriptors are consumed when the call is recorded. The CPU descriptor memory can subsequently be reused under the [CPU descriptor lifetime contract](binding.md#descriptor-heaps). The bound resources themselves retain the [execution lifetime](execution.md#lifetime) requirements. The [attachment compatibility rules](#attachments) apply at rendering, including PSO/output format and multisample compatibility. The method cannot be called inside an active render pass.<!-- d3d12-review-inline:end:output-merger:API-OMSetRenderTargets-contract:0:authored:migration-2e928df6dd9f872b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetRenderTargets-contract:0:authored:migration-2e928df6dd9f872b-0 -->Descriptors are consumed when the call is recorded. The application can then reuse the CPU descriptor memory as described in [descriptor heaps](binding.md#descriptor-heaps). The [bound resources must outlive their GPU use](execution.md#lifetime). At rendering, the bound views must meet the [attachment compatibility rules](#attachments), including PSO and output format and multisample compatibility. The method cannot be called inside an active render pass.<!-- d3d12-review-inline:end:output-merger:API-OMSetRenderTargets-contract:0:authored:migration-2e928df6dd9f872b-0 --></ins>
 
 #### Parameters
 
@@ -700,7 +698,7 @@ If the PSO selects [D3D12_BLEND_BLEND_FACTOR](pipeline-state.md#d3d12-blend)<ins
 
 If you pass NULL, then the runtime uses or stores a blend factor equal to `{ 1, 1, 1, 1 }`.
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-factor-alpha:0:authored:migration-c695f307ce305093-0 -->All targets share the constant but perform their own format range clamping as defined in [blending precision](#blending-precision). [Default/reset/bundle behavior](command-list-state.md#base-graphics) is defined by command list state.<!-- d3d12-review-inline:end:output-merger:N-factor-alpha:0:authored:migration-c695f307ce305093-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-factor-alpha:0:authored:migration-c695f307ce305093-0 -->All targets share the constant but perform their own format range clamping as defined in [blending precision](#blending-precision). See [base graphics state](command-list-state.md#base-graphics) for the default value, reset and bundle behavior.<!-- d3d12-review-inline:end:output-merger:N-factor-alpha:0:authored:migration-c695f307ce305093-0 --></ins>
 
 #### Parameters
 
@@ -730,7 +728,7 @@ void OMSetStencilRef(
 
 Sets the reference value for depth stencil tests.
 
-<ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetStencilRef-contract:0:authored:migration-e07a55eba3e10037-0 -->This sets the reference for both front-facing and back-facing stencil operations. Testing, `REPLACE`, masks and shader override follow the [stencil algorithm](#stencil). [Initialization and bundle persistence](command-list-state.md#stencil-references) are defined by command list state.<!-- d3d12-review-inline:end:output-merger:API-OMSetStencilRef-contract:0:authored:migration-e07a55eba3e10037-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetStencilRef-contract:0:authored:migration-e07a55eba3e10037-0 -->This sets the reference for both front-facing and back-facing stencil operations. See [Stencil](#stencil) for how the reference, masks and shader override combine in testing and `REPLACE`, and [Stencil references](command-list-state.md#stencil-references) for initialization and bundle persistence.<!-- d3d12-review-inline:end:output-merger:API-OMSetStencilRef-contract:0:authored:migration-e07a55eba3e10037-0 --></ins>
 
 #### Parameters
 
@@ -796,7 +794,7 @@ void OMSetDepthBounds(
 
 <ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetDepthBounds-behavior:0:modified:source-97512d0893d6cc28-0-0 -->Changes<!-- d3d12-review-inline:end:output-merger:API-OMSetDepthBounds-behavior:0:modified:source-97512d0893d6cc28-0-0 --></ins> the depth bounds dynamically.
 
-<ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetDepthBounds-contract:0:authored:migration-c233f70487d41ef9-0 -->Sets the dynamic range used by the [depth bounds test](#depth-bounds) when the PSO enables it. `DepthBoundsTestSupported` must be supported. [Initialization/reset and bundles](command-list-state.md#depth-bounds) are defined by command list state.<!-- d3d12-review-inline:end:output-merger:API-OMSetDepthBounds-contract:0:authored:migration-c233f70487d41ef9-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetDepthBounds-contract:0:authored:migration-c233f70487d41ef9-0 -->Sets the dynamic range used by the [depth bounds test](#depth-bounds) when the PSO enables it. `DepthBoundsTestSupported` must be supported. See [depth bounds range](command-list-state.md#depth-bounds) for initialization, reset and bundle behavior.<!-- d3d12-review-inline:end:output-merger:API-OMSetDepthBounds-contract:0:authored:migration-c233f70487d41ef9-0 --></ins>
 
 #### Parameters
 
@@ -826,11 +824,14 @@ present.<!-- d3d12-review-inline:end:output-merger:D-depth-bounds-debug:0:modifi
 
 ## Render passes
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-pass-model:0:authored:migration-6751a9f273f97969-0 -->A render pass fixes its attachment bindings and beginning/ending access declarations for a sequence of graphics commands. Render passes do not replace explicit synchronization or permit a shader to consume arbitrary writes made earlier in the same pass.<!-- d3d12-review-inline:end:output-merger:N-pass-model:0:authored:migration-6751a9f273f97969-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-pass-model:0:authored:migration-6751a9f273f97969-0 -->A render pass fixes its attachment bindings and beginning/ending access declarations for a sequence of graphics commands. Render passes do not replace explicit synchronization. See [Binding and recording](#render-pass-recording) for restrictions on reading data written earlier in the pass.<!-- d3d12-review-inline:end:output-merger:N-pass-model:0:authored:migration-6751a9f273f97969-0 --></ins>
 
 <a id="render-pass-support"></a>
 
-### Availability, tiers and driver responsibilities
+### Availability and tiers
+
+<a id="availability-tiers-and-driver-responsibilities"></a>
+
 
 <ins><!-- d3d12-review-inline:begin:output-merger:R-support:0 -->Render passes require `CheckFeatureSupport` to report `RenderPassesValid` in `D3D12_FEATURE_DATA_D3D12_OPTIONS18`.<!-- d3d12-review-inline:end:output-merger:R-support:0 --></ins>
 
@@ -855,20 +856,6 @@ There are three tiers of support:
     efficiently supported (more efficient than issuing the same work
     without a Render Pass).
 
-The driver <ins><!-- d3d12-review-inline:begin:output-merger:R-support:5:authored:source-a790565e72b0267f-0-0 -->reports<!-- d3d12-review-inline:end:output-merger:R-support:5:authored:source-a790565e72b0267f-0-0 --></ins> back these tiers to the runtime. The runtime will
-validate that drivers which fill out the DDI table at least report back
-TIER_1, and at the same time will validate that drivers which do not fill
-out the DDI table do not claim anything other than TIER_0 support (the
-runtime will fail device creation in this case).
-
-This requirement <ins><!-- d3d12-review-inline:begin:output-merger:R-support:6:modified:source-6657251fbb7187d6-0-0 -->applies only<!-- d3d12-review-inline:end:output-merger:R-support:6:modified:source-6657251fbb7187d6-0-0 --></ins> for drivers supporting the minimum
-DDI version described in [Minimum Driver DDI version](#minimum-driver-ddi-version).
-
----
-
-#### Minimum driver DDI version
-
-Even if drivers report support for `TIER_1+`, if the device doesn't support DDI revision `D3D12DDI_SUPPORTED_0101` or greater, the runtime maps all uses of RenderPasses to non-renderpass DDIs (and <ins><!-- d3d12-review-inline:begin:output-merger:R-support:9:modified:source-781dd1eb87f93b98-0-0 -->reports<!-- d3d12-review-inline:end:output-merger:R-support:9:modified:source-781dd1eb87f93b98-0-0 --></ins> `TIER_0` at the API).  This is the DDI revision where the `*PRESERVE_LOCAL*` flags were introduced, and it is deemed simpler to only support these features going forward, all or none.
 
 <a id="render-pass-recording"></a>
 
@@ -909,7 +896,7 @@ The sole exception to the 'no reads on writes that occurred within the
 render pass' are the implicit reads that occur as part of depth-testing
 and render target blending.
 
-Thus, the list of disallowed APIs within a Render Pass is:
+<ins><!-- d3d12-review-inline:begin:output-merger:R-recording:9:modified:nonexhaustive-intro -->Thus, the disallowed APIs within a Render Pass include the following (see [Current recording surface](#render-pass-operation-surface) for every forbidden method):<!-- d3d12-review-inline:end:output-merger:R-recording:9:modified:nonexhaustive-intro --></ins>
 
 - AtomicCopyBuffer*
 
@@ -935,7 +922,7 @@ Thus, the list of disallowed APIs within a Render Pass is:
 
 - DiscardResource
 
-- <ins><!-- d3d12-review-inline:begin:output-merger:R-recording:10 -->Dispatch (the current operation-specific recording table below distinguishes mesh, ray and work graph dispatches)<!-- d3d12-review-inline:end:output-merger:R-recording:10 --></ins>
+- <ins><!-- d3d12-review-inline:begin:output-merger:R-recording:10 -->Dispatch<!-- d3d12-review-inline:end:output-merger:R-recording:10 --></ins>
 
 - OMSetRenderTargets
 
@@ -953,7 +940,7 @@ will never be called during a render pass).
 
 #### Current recording surface
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-pass-operation-surface:0:authored:migration-30ce483e6a8c1d9a-0 -->For an **open direct list pass**, “Recording-admitted” means that the command is not rejected merely because the pass is open. Forbidden calls remove the command list under the recording validation contract.<!-- d3d12-review-inline:end:output-merger:N-pass-operation-surface:0:authored:migration-30ce483e6a8c1d9a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-pass-operation-surface:0:authored:migration-30ce483e6a8c1d9a-0 -->For an **open direct list pass**, “Recording-admitted” means that the runtime does not reject the command merely because the pass is open. The runtime removes the command list if a forbidden method is called during the pass, as described in [Recording validation](#render-pass-validation).<!-- d3d12-review-inline:end:output-merger:N-pass-operation-surface:0:authored:migration-30ce483e6a8c1d9a-0 --></ins>
 
 <!-- d3d12-review-alert:begin:output-merger:N-pass-operation-surface:2:authored:migration-9fef9d712bed4279-0 -->
 
@@ -972,9 +959,9 @@ will never be called during a render pass).
 > | Conditional; contents | `ID3D12GraphicsCommandList::ExecuteBundle` | Executed contents must be pass-conformant. Work graph program selection/dispatch is not supported in bundles. |
 > | Conditional; qualified below | `ID3D12GraphicsCommandList10::DispatchGraph`, [`ID3D12GraphicsCommandList10::SetProgram`](state-objects.md#setprogram) | Graph-internal UAV communication/program initialization and pass-local preservation remain qualified below. |
 > | Conditional | `ID3D12GraphicsCommandList2::WriteBufferImmediate` | Immediate writes are admitted while the pass is open, subject to `D3D12_FEATURE_DATA_D3D12_OPTIONS3::WriteBufferImmediateSupportFlags`, 4-byte-aligned destination addresses, `COPY_DEST` buffer access and the [mode/ordering contract](resource-operations.md#writebufferimmediate-modes). |
-> | Conditional; dependency scope | `ID3D12GraphicsCommandList::ResourceBarrier`, `ID3D12GraphicsCommandList7::Barrier` | Only the conformant [render pass barrier/dependency cases](synchronization.md#render-pass-barriers) are permitted. Admission is not permission for an aliasing/UAV barrier or a transition that consumes current-pass attachment writes. |
-> | Conditional; shared fence contract | `ID3D12CommandListFenceBarriers::SignalBarrier`, `ID3D12CommandListFenceBarriers::WaitBarrier` | The [signal](fence-barriers.md#signal-barrier) and [wait](fence-barriers.md#wait-barrier) requirements and pass dependency promises apply. Recording admission does not create an exception for consuming writes from the current pass. |
-> | Conditional | `ID3D12GraphicsCommandList::BeginQuery`, `ID3D12GraphicsCommandList::EndQuery`, `ID3D12GraphicsCommandList::SetPredication` | The [query/predication requirements](counters-queries-and-predication.md#predication-operation-matrix) apply. Query resolves remain prohibited. |
+> | Conditional; dependency scope | `ID3D12GraphicsCommandList::ResourceBarrier`, `ID3D12GraphicsCommandList7::Barrier` | Only the conformant [render pass barrier/dependency cases](synchronization.md#render-pass-barriers) are permitted. Recording admission alone does not authorize an aliasing barrier, UAV barrier or transition that consumes current-pass attachment writes. |
+> | Conditional; common fence requirements | `ID3D12CommandListFenceBarriers::SignalBarrier`, `ID3D12CommandListFenceBarriers::WaitBarrier` | The [signal](fence-barriers.md#signal-barrier) and [wait](fence-barriers.md#wait-barrier) requirements and pass dependency promises apply. |
+> | Conditional | `ID3D12GraphicsCommandList::BeginQuery`, `ID3D12GraphicsCommandList::EndQuery`, `ID3D12GraphicsCommandList::SetPredication` | See the [predication operation matrix](counters-queries-and-predication.md#predication-operation-matrix) for query and predication behavior. Query resolves are forbidden. |
 > | Recording-admitted | `ID3D12GraphicsCommandList::SetPipelineState` | — |
 > | Recording-admitted | `ID3D12GraphicsCommandList::SetDescriptorHeaps`, `ID3D12GraphicsCommandList::SetComputeRootSignature`, `ID3D12GraphicsCommandList::SetGraphicsRootSignature`, `ID3D12GraphicsCommandList::SetComputeRootDescriptorTable`, `ID3D12GraphicsCommandList::SetGraphicsRootDescriptorTable`, `ID3D12GraphicsCommandList::SetComputeRoot32BitConstant`, `ID3D12GraphicsCommandList::SetGraphicsRoot32BitConstant`, `ID3D12GraphicsCommandList::SetComputeRoot32BitConstants`, `ID3D12GraphicsCommandList::SetGraphicsRoot32BitConstants`, `ID3D12GraphicsCommandList::SetComputeRootConstantBufferView`, `ID3D12GraphicsCommandList::SetGraphicsRootConstantBufferView`, `ID3D12GraphicsCommandList::SetComputeRootShaderResourceView`, `ID3D12GraphicsCommandList::SetGraphicsRootShaderResourceView`, `ID3D12GraphicsCommandList::SetComputeRootUnorderedAccessView`, `ID3D12GraphicsCommandList::SetGraphicsRootUnorderedAccessView` | — |
 > | Recording-admitted | `ID3D12GraphicsCommandList::IASetPrimitiveTopology`, `ID3D12GraphicsCommandList::IASetIndexBuffer`, `ID3D12GraphicsCommandList::IASetVertexBuffers`, `ID3D12GraphicsCommandList9::IASetIndexBufferStripCutValue`, `ID3D12GraphicsCommandList::RSSetViewports`, `ID3D12GraphicsCommandList::RSSetScissorRects`, `ID3D12GraphicsCommandList9::RSSetDepthBias`, `ID3D12GraphicsCommandList::SOSetTargets` | — |
@@ -986,7 +973,7 @@ will never be called during a render pass).
 
 <ins><!-- d3d12-review-inline:begin:output-merger:N-pass-operation-surface:3:authored:migration-44b3a7f71106eb4c-0 -->**Typed indirect work restriction:** signatures ending in `DISPATCH` or `DISPATCH_RAYS` must not be executed inside an open render pass, just as their direct forms are forbidden. `DispatchGraph` is not an indirect command signature operation.<!-- d3d12-review-inline:end:output-merger:N-pass-operation-surface:3:authored:migration-44b3a7f71106eb4c-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-pass-operation-surface:4:authored:migration-3a59b7490c7c4bba-0 -->**Work graph qualification:** current recording admission permits `DispatchGraph` and `SetProgram`. The [work graph operation and backing memory contract](work-graphs.md#dispatchgraph), [program selection](command-list-state.md#pipeline-selection), `ALLOW_UAV_WRITES`/local access flags and pass dependency promises remain required. The selected sources do not independently establish every interaction of graph-internal UAV communication/program initialization with pass-local preservation.<!-- d3d12-review-inline:end:output-merger:N-pass-operation-surface:4:authored:migration-3a59b7490c7c4bba-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-pass-operation-surface:4:authored:migration-3a59b7490c7c4bba-0 -->**Work graph qualification:** `DispatchGraph` and `SetProgram` are recording-admitted. Applications must satisfy the [work graph operation and backing memory](work-graphs.md#dispatchgraph) and [program selection](command-list-state.md#pipeline-selection) requirements, the applicable `ALLOW_UAV_WRITES` and local access conditions, and the pass dependency promises. **Open question:** some interactions of graph-internal UAV communication and program initialization with pass-local preservation need confirmation.<!-- d3d12-review-inline:end:output-merger:N-pass-operation-surface:4:authored:migration-3a59b7490c7c4bba-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:output-merger:N-pass-operation-surface:5:authored:migration-3e288214de52872e-0 -->Between a suspending pass and its resuming pass, the **no intervening GPU work** rule applies, including graph dispatch, immediate writes and indirect/bundle work. Program selection that initializes GPU backing memory is work.<!-- d3d12-review-inline:end:output-merger:N-pass-operation-surface:5:authored:migration-3e288214de52872e-0 --></ins>
 
@@ -994,7 +981,7 @@ will never be called during a render pass).
 
 ### Access declarations
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-pass-types:1:authored:migration-a5647c9f82ae91e5-0 -->[Clear value representation](resources.md#optimized-clear-value) is shared with resources, but an actual pass clear is an operation, not the resource creation optimization hint. Access names in the prose may abbreviate the `D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_` or `D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_` prefix. All local access modes use the [shared preserve-local descriptor identity](#preserve-local-descriptors), with the [read-only depth/stencil exception](#read-only-depth-stencil-pass).<!-- d3d12-review-inline:end:output-merger:N-pass-types:1:authored:migration-a5647c9f82ae91e5-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-pass-types:1:authored:migration-a5647c9f82ae91e5-0 -->[Clear value representation](resources.md#optimized-clear-value) is the same as for resource creation, but an actual pass clear is an operation, not the resource creation optimization hint. Access names in the prose may abbreviate the `D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_` or `D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_` prefix. All local access modes use the [common preserve-local descriptor identity](#preserve-local-descriptors), with the [read-only depth/stencil exception](#read-only-depth-stencil-pass).<!-- d3d12-review-inline:end:output-merger:N-pass-types:1:authored:migration-a5647c9f82ae91e5-0 --></ins>
 
 #### D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE
 
@@ -1396,7 +1383,7 @@ A [D3D12_RESOLVE_MODE](resource-operations.md#d3d12-resolve-mode). The resolve o
 
 A **BOOL**. **TRUE** to preserve the resolve source, otherwise **FALSE**.
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-resolve-invariants:0:authored:migration-9c14060b9c62aa26-0 -->The source resource/subresources identify the corresponding RTV/DSV attachment being resolved. The [format capabilities](formats.md#support) and [sample pattern resolve rules](rasterization.md#sample-resolve-depthstencil) apply.<!-- d3d12-review-inline:end:output-merger:N-resolve-invariants:0:authored:migration-9c14060b9c62aa26-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-resolve-invariants:0:authored:migration-9c14060b9c62aa26-0 -->The source resource/subresources identify the corresponding RTV/DSV attachment being resolved. See [format capabilities](formats.md#support) for resolve format support and [depth/stencil resolve](rasterization.md#sample-resolve-depthstencil) for sample position requirements.<!-- d3d12-review-inline:end:output-merger:N-resolve-invariants:0:authored:migration-9c14060b9c62aa26-0 --></ins>
 
 <a id="render-pass-resolve-modes"></a>
 
@@ -1414,7 +1401,7 @@ following D3D arithmetic precision rules):<!-- d3d12-review-inline:end:output-me
 
 <ins><!-- d3d12-review-inline:begin:output-merger:S-pass-resolve-modes:2 -->MIN, MAX and AVERAGE require the destination to have a sample count of 1.<!-- d3d12-review-inline:end:output-merger:S-pass-resolve-modes:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-resolve-mode-capability:0:authored:migration-f0de998249e8d3f6-0 -->`ResolveSubresourceRegion` is supported at programmable sample position Tier 1 or greater. The [sample position capability and operation contract](rasterization.md#programmable-samples) still applies to depth access. In runtime translation, full-resource color `AVERAGE` may use the base resolve path; regional, depth/stencil and other resolve mode requirements must not be inferred from `RenderPassesValid` or render pass tier alone. The zero `SrcRect` sentinel selects the entire source subresource.<!-- d3d12-review-inline:end:output-merger:N-resolve-mode-capability:0:authored:migration-f0de998249e8d3f6-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-resolve-mode-capability:0:authored:migration-f0de998249e8d3f6-0 -->`ResolveSubresourceRegion` is supported at programmable sample position Tier 1 or greater. See [programmable sample positions](rasterization.md#programmable-samples) for the capability and operation requirements of depth access. In runtime translation, full-resource color `AVERAGE` may use the base resolve path; regional, depth/stencil and other resolve mode requirements must not be inferred from `RenderPassesValid` or render pass tier alone. The zero `SrcRect` sentinel selects the entire source subresource.<!-- d3d12-review-inline:end:output-merger:N-resolve-mode-capability:0:authored:migration-f0de998249e8d3f6-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:output-merger:N-resolve-mode-capability:1:authored:migration-930390574448dd64-0 -->An [ending `RESOLVE`](#d3d12_render_pass_ending_access_resolve) requires a separate destination resource in `RESOLVE_DEST` state, even where a general regional resolve permits an in-place operation.<!-- d3d12-review-inline:end:output-merger:N-resolve-mode-capability:1:authored:migration-930390574448dd64-0 --></ins>
 
@@ -1449,7 +1436,7 @@ tiling if necessary.
 the end of the Render Pass. Relatedly, UAV barriers are not permitted
 within a Render Pass.<!-- d3d12-review-inline:end:output-merger:R-uav-writes-within-a-render-pass:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:R-uav-writes-within-a-render-pass:2 -->UAV root binding inheritance and pass exit effects follow [command list state](command-list-state.md#render-pass).<!-- d3d12-review-inline:end:output-merger:R-uav-writes-within-a-render-pass:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:R-uav-writes-within-a-render-pass:2 -->See [render pass state](command-list-state.md#render-pass) for UAV root binding inheritance and pass exit effects.<!-- d3d12-review-inline:end:output-merger:R-uav-writes-within-a-render-pass:2 --></ins>
 
 This flag is not necessary/ignored for passes with `BEGINNING_ACCESS_TYPE`/`ENDING_ACCESS_TYPE` `_PRESERVE_LOCAL_*` flags.  In these passes, if the application wants to do UAV accesses it must ensure that the memory access pattern is such that if an implementation breaks up passes into tiles, the UAV accesses will behave identically as if the implementation didn't do so and executed each GPU command fully before moving to the next. `ALLOW_UAV_WRITES` refers to UAVs other than the pass surface, so is independent of the `_PRESERVE_LOCAL_UAV` flag, which is specifically calling out the pass surface for UAV access with a local access pattern.
 
@@ -1465,8 +1452,6 @@ the intended order in an execute command lists call.
 
 A render pass can be both resuming and suspending if it is the only thing in a command list, connecting a prior command list that suspends
 and a subsequent command list that resumes.
-
-<ins><!-- d3d12-review-inline:begin:output-merger:R-suspend-and-resume:3 -->Suspended/resumed segments are subject to the provisional identical-declaration rule for this section, rather than an inferred permission to vary declarations using the ordinary inter-pass flow table.<!-- d3d12-review-inline:end:output-merger:R-suspend-and-resume:3 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:output-merger:R-suspend-and-resume:4:modified:source-b2c5d3236215569d-0-0 -->There<!-- d3d12-review-inline:end:output-merger:R-suspend-and-resume:4:modified:source-b2c5d3236215569d-0-0 --></ins> cannot be intervening GPU ops (draws,
 dispatches, discards, clears, copies, updatetilemappings,
@@ -1554,9 +1539,9 @@ Therefore, any PSOs used in the pass must specify descriptions of at least 2 RTV
 
 ### Surface flow between passes
 
-<ins><!-- d3d12-review-inline:begin:output-merger:R-surface-flow:0 -->The [same-pass NO_ACCESS pairing rule](#d3d12_render_pass_beginning_access_no_access) applies in addition to the ordinary requirements of each declared access. The inter-pass flow below does not waive that pairing.<!-- d3d12-review-inline:end:output-merger:R-surface-flow:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:R-surface-flow:0 -->Within each pass, beginning and ending `NO_ACCESS` must be paired as described in [D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_NO_ACCESS](#d3d12_render_pass_beginning_access_no_access).<!-- d3d12-review-inline:end:output-merger:R-surface-flow:0 --></ins>
 
-Conversely, when a pass ends with a surface in a given ending access type, here is a summary of options for the next pass beginning access type:
+<ins><!-- d3d12-review-inline:begin:output-merger:R-surface-flow:1:preserved-repair:drop-conversely -->When a pass ends with a surface in a given ending access type, here is a summary of options for the next pass beginning access type:<!-- d3d12-review-inline:end:output-merger:R-surface-flow:1:preserved-repair:drop-conversely --></ins>
 
 <!-- d3d12-review-alert:begin:output-merger:R-surface-flow:2:modified:migration-ca4bcf93ec5507f2-0 -->
 
@@ -1580,7 +1565,7 @@ These rules <ins><!-- d3d12-review-inline:begin:output-merger:R-surface-flow:4:m
 
 #### State at end of command list
 
-<ins><!-- d3d12-review-inline:begin:output-merger:R-surface-flow:7 -->A command list cannot end with any surface in `PRESERVE_LOCAL_RENDER / PRESERVE_LOCAL_SRV / PRESERVE_LOCAL_UAV` states.  It is also invalid to end a command list with a surface in `NO_ACCESS` if it was in any other state earlier in the sequence of passes. For a previously accessed surface, `NO_ACCESS` is an intermediate-pass declaration within the larger flow, not a terminal declaration; drop that surface from the final pass rather than leave it declared `NO_ACCESS`. Dropping the surface here means omitting its pass declaration, not releasing its resource before execution completes.<!-- d3d12-review-inline:end:output-merger:R-surface-flow:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:R-surface-flow:7 -->A command list cannot end with any surface in `PRESERVE_LOCAL_RENDER / PRESERVE_LOCAL_SRV / PRESERVE_LOCAL_UAV` states.  It is also invalid to end a command list with a surface in `NO_ACCESS` if it was in any other state earlier in the sequence of passes. For a previously accessed surface, `NO_ACCESS` is an intermediate-pass declaration within the larger flow, not a terminal declaration; omit that surface from the final pass's declarations rather than declare it `NO_ACCESS`.<!-- d3d12-review-inline:end:output-merger:R-surface-flow:7 --></ins>
 
 The exception is if the last pass in a command list uses flag `D3D12_RENDER_PASS_FLAG_SUSPENDING_PASS`, indicating a subsequent command list in the same ExecuteCommandLists call will have a pass starting with `D3D12_RENDER_PASS_FLAG_RESUMING_PASS`. See [Suspend/Resume](#suspend-and-resume)
 
@@ -1733,7 +1718,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_OM_SETFRONTANDBACKSTENCILREF_0114 )(D3D12DD
 typedef VOID ( APIENTRY* PFND3D12DDI_OM_SET_RENDER_TARGETS_0114 )(D3D12DDI_API_HCOMMANDLIST, _In_ UINT NumRenderTargetDescriptors, _In_ CONST D3D12DDI_CPU_DESCRIPTOR_HANDLE* pRenderTargetDescriptors, _In_ BOOL RTsSingleHandleToDescriptorRange, _In_opt_ CONST D3D12DDI_CPU_DESCRIPTOR_HANDLE* pDepthStencilDescriptor);
 ```
 
-<ins><!-- d3d12-review-inline:begin:output-merger:OB-blend-values:0:authored:migration-7c402fab6650739f-0 -->The driver must accept a null blend factor pointer, which selects `{1,1,1,1}`. It cannot assume the runtime materializes the default array. The driver captures non-null array values during the call.<!-- d3d12-review-inline:end:output-merger:OB-blend-values:0:authored:migration-7c402fab6650739f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:OB-blend-values:0:authored:migration-7c402fab6650739f-0 -->The driver must accept a null blend factor pointer, which selects `{1,1,1,1}`. The driver captures non-null array values during the call.<!-- d3d12-review-inline:end:output-merger:OB-blend-values:0:authored:migration-7c402fab6650739f-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:output-merger:OB-stencil-values:0:authored:migration-a44f79a3fbdb0570-0 -->Stencil reference DDIs receive `UINT` values. The driver must not assume the runtime truncated them to eight bits.<!-- d3d12-review-inline:end:output-merger:OB-stencil-values:0:authored:migration-a44f79a3fbdb0570-0 --></ins>
 
@@ -1762,7 +1747,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_OM_SET_RENDER_TARGETS_0114 )(D3D12DDI_API_H
 typedef VOID ( APIENTRY* PFND3D12DDI_OM_SETDEPTHBOUNDS_0114 )(D3D12DDI_API_HCOMMANDLIST, FLOAT Min, FLOAT Max);
 ```
 
-<ins><!-- d3d12-review-inline:begin:output-merger:FC-depth-values:1:authored:migration-d41896635ff7174c-0 -->The `_0114` depth bounds DDI must replace each NaN `Min` or `Max` with zero itself. A bypassed call does not execute the runtime's conversion. This does not require clamping other values.<!-- d3d12-review-inline:end:output-merger:FC-depth-values:1:authored:migration-d41896635ff7174c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:FC-depth-values:1:authored:migration-d41896635ff7174c-0 -->The `_0114` depth bounds DDI must replace each NaN `Min` or `Max` with zero itself, because the runtime does not convert values for bypassed calls.<!-- d3d12-review-inline:end:output-merger:FC-depth-values:1:authored:migration-d41896635ff7174c-0 --></ins>
 
 Support for independent front-face and back-face <ins><!-- d3d12-review-inline:begin:output-merger:V-independent-ddi-version:0:modified:source-ac13e34f6bde72f1-0-0 -->references and masks is<!-- d3d12-review-inline:end:output-merger:V-independent-ddi-version:0:modified:source-ac13e34f6bde72f1-0-0 --></ins> implied by, and must be supported on, drivers that report their DDI version to be `e_DDI_12_8_0095` or greater.
 
@@ -1770,8 +1755,6 @@ Support for independent front-face and back-face <ins><!-- d3d12-review-inline:b
 typedef VOID ( APIENTRY* PFND3D12DDI_OM_SETFRONTANDBACKSTENCILREF_0095 )(
       D3D12DDI_HCOMMANDLIST, /*FrontStencilRef*/ UINT, /*BackStencilRef*/ UINT );
 ```
-
-<ins><!-- d3d12-review-inline:begin:output-merger:N-ddi-depth-bounds-history:1:authored:migration-189931019041d771-0 -->The `_0053` render pass table and signatures also carry the `_0101` local-preservation and read-only extensions.<!-- d3d12-review-inline:end:output-merger:N-ddi-depth-bounds-history:1:authored:migration-189931019041d771-0 --></ins>
 
 <a id="render-pass-driver-declarations"></a>
 
@@ -1781,6 +1764,8 @@ typedef VOID ( APIENTRY* PFND3D12DDI_OM_SETFRONTANDBACKSTENCILREF_0095 )(
 
     - [**pfnBeginRenderPass**](#current-render-pass-callback-contracts)
     - [**pfnEndRenderPass**](#current-render-pass-callback-contracts)
+
+<ins><!-- d3d12-review-inline:begin:output-merger:N-ddi-depth-bounds-history:1:authored:migration-189931019041d771-0 -->The `_0053` render pass table and signatures include the `_0101` local-preservation and read-only depth/stencil extensions.<!-- d3d12-review-inline:end:output-merger:N-ddi-depth-bounds-history:1:authored:migration-189931019041d771-0 --></ins>
 
 #### D3D12DDI_RENDER_PASS_BEGINNING_ACCESS_TYPE_0053
 
@@ -1966,7 +1951,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_END_RENDER_PASS_0053 ) (
 
 <ins><!-- d3d12-review-inline:begin:output-merger:RP-current-role-contract:1:authored:migration-cdc1db3b4ed08e70-0 -->The runtime may emulate [BeginRenderPass](#beginrenderpass) and [EndRenderPass](#endrenderpass) using ordinary binding/access DDIs instead of the native pair.<!-- d3d12-review-inline:end:output-merger:RP-current-role-contract:1:authored:migration-cdc1db3b4ed08e70-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:RP-current-role-contract:2:authored:migration-c0ed906dd337de11-0 -->A recording failure or abandoned recording does not guarantee a matching EndRenderPass DDI. Cleanup follows the [recording lifecycle](execution.md#failed-recording).<!-- d3d12-review-inline:end:output-merger:RP-current-role-contract:2:authored:migration-c0ed906dd337de11-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:RP-current-role-contract:2:authored:migration-c0ed906dd337de11-0 -->A recording failure or abandoned recording does not guarantee a matching EndRenderPass DDI. See [failed recording](execution.md#failed-recording) for cleanup.<!-- d3d12-review-inline:end:output-merger:RP-current-role-contract:2:authored:migration-c0ed906dd337de11-0 --></ins>
 
 ### PFND3D12DDI_BEGIN_RENDER_PASS_0053
 
@@ -2060,3 +2045,20 @@ None
 #### Current recording contract
 
 <ins><!-- d3d12-review-inline:begin:output-merger:RP-end-recording-contract:1:authored:migration-ccc791bf6a01d23d-0 -->After End returns, the driver cannot rely on the nested resolve array storage. A failed or abandoned recording does not extend that lifetime while waiting for an End call.<!-- d3d12-review-inline:end:output-merger:RP-end-recording-contract:1:authored:migration-ccc791bf6a01d23d-0 --></ins>
+
+### Render pass capability reporting
+
+The driver <ins><!-- d3d12-review-inline:begin:output-merger:R-support:5:authored:source-a790565e72b0267f-0-0 -->reports<!-- d3d12-review-inline:end:output-merger:R-support:5:authored:source-a790565e72b0267f-0-0 --></ins> back these tiers to the runtime. The runtime will
+validate that drivers which fill out the DDI table at least report back
+TIER_1, and at the same time will validate that drivers which do not fill
+out the DDI table do not claim anything other than TIER_0 support (the
+runtime will fail device creation in this case).
+
+This requirement <ins><!-- d3d12-review-inline:begin:output-merger:R-support:6:modified:source-6657251fbb7187d6-0-0 -->applies only<!-- d3d12-review-inline:end:output-merger:R-support:6:modified:source-6657251fbb7187d6-0-0 --></ins> for drivers supporting the minimum
+DDI version described in [Minimum Driver DDI version](#minimum-driver-ddi-version).
+
+---
+
+#### Minimum driver DDI version
+
+Even if drivers report support for `TIER_1+`, if the device doesn't support DDI revision `D3D12DDI_SUPPORTED_0101` or greater, the runtime maps all uses of RenderPasses to non-renderpass DDIs (and <ins><!-- d3d12-review-inline:begin:output-merger:R-support:9:modified:source-781dd1eb87f93b98-0-0 -->reports<!-- d3d12-review-inline:end:output-merger:R-support:9:modified:source-781dd1eb87f93b98-0-0 --></ins> `TIER_0` at the API).  This is the DDI revision where the `*PRESERVE_LOCAL*` flags were introduced, and it is deemed simpler to only support these features going forward, all or none.

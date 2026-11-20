@@ -26,7 +26,7 @@ An example of a partially typeless format is `DXGI_FORMAT_R8G8B8A8_TYPELESS`.  T
 interpretation of the data, including `DXGI_FORMAT_R8G8B8A8_UNORM`, `DXGI_FORMAT_R8G8B8A8_UNORM_SRGB`, among others.<!-- d3d12-review-inline:end:formats:L-format-baseline:1 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:formats:L-format-baseline:2 -->When a resource with a partially typeless format is bound to a Shader for output or input, it must be fully qualified as one of the subformats which
-in ordinary within-family casting has the same bit counts for each component but now defines a specific type for each component.<!-- d3d12-review-inline:end:formats:L-format-baseline:2 --></ins>
+has the same bit counts for each component but now defines a specific type for each component.<!-- d3d12-review-inline:end:formats:L-format-baseline:2 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:formats:L-typeless:0 -->A texture resource may be created with a typeless format. Its format supplies component bit widths without component types, and its description supplies dimensions in format elements. This is unlike a structured buffer view, which specifies a
 structure size/stride without defining the structure's members. Before the Resource is bound to the
@@ -45,15 +45,15 @@ within the original Resource. View descriptions are defined in [Resource binding
 
 <ins><!-- d3d12-review-inline:begin:formats:L-typeless:1 -->The benefit of typeless resources is that memory may be used
 as weakly typed storage, enabling limited reuse or reinterpretation of the memory,
-for ordinary within-family casting, where the component bit counts remain the same.
+as long as the component bit counts remain the same.
 The same typeless resource may be bound to multiple slots
 in the graphics pipeline with Views of different fully qualified formats at
 each location. This forces bit representations of formats to be well-defined
 with respect to each other.<!-- d3d12-review-inline:end:formats:L-typeless:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:formats:L-typeless:2 -->For example, a Resource created with the format R32G32B32A32_TYPELESS may be
+For example, a Resource created with the format R32G32B32A32_TYPELESS may be
 used as R32G32B32A32_FLOAT and R32G32B32A32_UINT at different locations in the
-pipeline simultaneously.<!-- d3d12-review-inline:end:formats:L-typeless:2 --></ins>
+pipeline simultaneously.
 
 <ins><!-- d3d12-review-inline:begin:formats:N-family:0:authored:migration-6cc12d32255e4e4a-0 -->A name containing TYPELESS only for padding does not make the view's accessed components untyped: for example, `DXGI_FORMAT_R24_UNORM_X8_TYPELESS` is a depth plane SRV format. Buffer resources use `DXGI_FORMAT_UNKNOWN`. Typed, raw, and structured buffer views supply their respective interpretations.<!-- d3d12-review-inline:end:formats:N-family:0:authored:migration-6cc12d32255e4e4a-0 --></ins>
 
@@ -255,7 +255,7 @@ BE R32 =>                  MSb                 LSb
 ( ComponentAddress + 3 ) = 07:06:05:04:03:02:01:00
 ```
 
-Naturally, such a specification only works well for certain formats. As long as
+Naturally, such a specification only works well for certain <ins><!-- d3d12-review-inline:begin:formats:L-components:7:modified:opus-fragment-join -->formats, as long as<!-- d3d12-review-inline:end:formats:L-components:7:modified:opus-fragment-join --></ins>
 the format components are uniform (all have the same size), the component size
 is a power of two, and the component size is a multiple of 8 bits. When such
 conditions are not met, the memory layout specification must resort to a least
@@ -311,7 +311,7 @@ adapt the overall element endianness to match the host CPU.<!-- d3d12-review-inl
 
 #### `_TYPELESS`
 
-<ins><!-- d3d12-review-inline:begin:formats:L-modifiers:13 -->Typeless format with the component bit counts specified.  When the resource is bound to a Shader, the application's view description must resolve what format to interpret the data as (ordinary family casting preserves the component bit distribution; [named casting exceptions](#casting) are defined separately).<!-- d3d12-review-inline:end:formats:L-modifiers:13 --></ins>
+<ins><!-- d3d12-review-inline:begin:formats:L-modifiers:13 -->Typeless format with the component bit counts specified.  When the resource is bound to a Shader, the application's view description must resolve what format to interpret the data as (format must have same bits per component distribution).<!-- d3d12-review-inline:end:formats:L-modifiers:13 --></ins>
 
 <a id="missing-components"></a>
 
@@ -364,7 +364,7 @@ for G and B are 0, and A is 1.0f.  For `DXGI_FORMAT_R16G16_UINT`, the B gets 0 a
 >
 > If `false`, then Direct3D 12 requires that the dimensions of the top-level mip of a block-compressed texture are aligned to multiples of 4 (such alignment requirements do not apply to less-detailed mips). If `true`, then no such alignment requirement applies to any mip level of a block-compressed texture.
 >
-> BC format surfaces are stored as full blocks, each block representing 4x4 pixels. The sizes for the lower level maps are computed as they are for all mipmapped surfaces, and thus may not be a multiple of 4, for example a top level map of 20 results in a second level map size of 10. For these cases, there is a differing 'physical' size and a 'virtual' size. The virtual size is that computed for each mip level without adjustment, which is 10 for the example. The physical size is the virtual size rounded up to the next multiple of 4, which is 12 for the example, and describes the texels covered by the stored blocks. The sampling hardware will apply texture address processing based on the virtual size (using, for example, border color if specified for accesses beyond 10), and thus for the example case will not access the 11th and 12th row of the resource. So for mipmap chains when an axis becomes < 4 in size, only texels 'a','b','e','f' (see diagram below) are used for a 2x2 map, and texel 'a' is used for 1x1. Note that this is similar to, but distinct from, the surface pitch, which can encompass additional padding beyond the physical surface size.
+> BC format surfaces are stored as full blocks, each block representing 4x4 pixels. The sizes for the lower level maps are computed as they are for all mipmapped surfaces, and thus may not be a multiple of 4, for example a top level map of 20 results in a second level map size of 10. For these cases, there is a differing 'physical' size and a 'virtual' size. The virtual size is that computed for each mip level without adjustment, which is 10 for the example. The physical size is the virtual size rounded up to the next multiple of 4, which is 12 for the example, and describes the texels covered by the stored blocks. The sampling hardware will apply texture address processing based on the virtual size (using, for example, border color if specified for accesses beyond 10), and thus for the example case will not access the 11th and 12th row of the resource. So for mipmap chains when an axis becomes < 4 in size, only texels 'a','b','e','f' (see the [memory layout diagram](#bc-memory-layout)) are used for a 2x2 map, and texel 'a' is used for 1x1. Note that this is similar to, but distinct from, the surface pitch, which can encompass additional padding beyond the physical surface size.
 >
 > The [BC copy bounds and alignment requirements](resource-operations.md#bc-copy-edges) define the transfer geometry for these formats.
 >
@@ -1570,6 +1570,12 @@ for G and B are 0, and A is 1.0f.  For `DXGI_FORMAT_R16G16_UINT`, the B gets 0 a
 
 <!-- d3d12-review-alert:end:formats:N-bc-19-5-14-6:0 -->
 
+<a id="sampler-feedback-formats"></a>
+
+## Sampler feedback formats
+
+<ins><!-- d3d12-review-inline:begin:formats:sf-opaque-formats:0:authored:representation -->`DXGI_FORMAT_SAMPLER_FEEDBACK_MIN_MIP_OPAQUE` and `DXGI_FORMAT_SAMPLER_FEEDBACK_MIP_REGION_USED_OPAQUE` select the [MinMip and MipRegionUsed feedback semantics](common-shader-internals.md#feedback-map-interpretation). Their storage encoding is implementation-defined and opaque to applications. [Transcoding](resource-operations.md#feedback-transcoding) produces or consumes the standardized decoded representation: an `R8_UINT` texture, or a byte-per-region buffer for non-arrayed MinMip feedback. [Resource creation](resources.md#sampler-feedback-resources) defines the logical dimensions and mip-region constraints.<!-- d3d12-review-inline:end:formats:sf-opaque-formats:0:authored:representation --></ins>
+
 <a id="casting"></a>
 
 ## Format casting
@@ -1583,10 +1589,8 @@ example a resource created with format R8G8B8A8_UNORM can have an
 R8G8B8A8_UNORM_SRGB SRV created and the SRV just interprets the data
 as if it is UNORM_SRGB.<!-- d3d12-review-inline:end:formats:C-typed:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:formats:C-typed:1 -->Support is reported by `ID3D12Device::CheckFeatureSupport` with
-`D3D12_FEATURE_D3D12_OPTIONS3`. The associated struct,
-`D3D12_FEATURE_DATA_D3D12_OPTIONS3` has a member BOOL
-CastingFullyTypedFormatSupported. The runtime reports this capability for drivers supporting the corresponding casting contract.<!-- d3d12-review-inline:end:formats:C-typed:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:formats:C-typed:1 -->Support is reported by [`ID3D12Device::CheckFeatureSupport`](devices-and-capabilities.md#id3d12device-checkfeaturesupport) with
+`D3D12_FEATURE_D3D12_OPTIONS3`.<!-- d3d12-review-inline:end:formats:C-typed:1 --></ins>
 
 Two exceptions to this relaxed casting are:
 
@@ -1602,15 +1606,17 @@ Some hardware uses different memory compression techniques and/or clear
 behaviors across these that could appear as corruption as opposed to the
 expected reinterpret-cast.
 
-<ins><!-- d3d12-review-inline:begin:formats:C-clear:0:modified:migration-00c1859187d27662-0 -->In the ordinary fully typed casting case described here, the fast-clear behavior follows the resource's created format. [Optimized clear values](resources.md#optimized-clear-value) retain their separately typed `Format` definition; this observation does not define a clear operation for typeless resources.
+<ins><!-- d3d12-review-inline:begin:formats:C-clear:0:modified:migration-00c1859187d27662-0 -->In the ordinary fully typed casting case described here, the fast-clear behavior follows the resource's created format. [Optimized clear values](resources.md#optimized-clear-value) have a separately typed `Format` definition.
 Views that do format casting will just reinterpret the data as if it is
 the view format.<!-- d3d12-review-inline:end:formats:C-clear:0:modified:migration-00c1859187d27662-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:formats:N-legacy-cast:0:authored:migration-d482296fb14b5397-0 -->For ordinary format family casting without the fully typed casting capability, a fully typed resource retains its own view format. A typeless resource can use compatible typed members of its family.<!-- d3d12-review-inline:end:formats:N-legacy-cast:0:authored:migration-d482296fb14b5397-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:formats:N-legacy-cast:0:authored:migration-d482296fb14b5397-0 -->For ordinary format family casting without the fully typed casting capability, views of a fully typed resource use the resource's own format. A typeless resource can use compatible typed members of its family.<!-- d3d12-review-inline:end:formats:N-legacy-cast:0:authored:migration-d482296fb14b5397-0 --></ins>
 
 <a id="r32-uav-casting"></a>
 
-### Ordinary R32_UINT UAV casting
+<a id="ordinary-r32_uint-uav-casting"></a>
+
+### R32_UINT UAV casting
 
 <ins><!-- d3d12-review-inline:begin:formats:N-r32-casting:0:authored:migration-0be0afbcf09d5c2f-0 -->An `R32_UINT` UAV can reinterpret a UAV-eligible texture created with `R10G10B10A2_TYPELESS`, `R8G8B8A8_TYPELESS`, `B8G8R8A8_TYPELESS`, `B8G8R8X8_TYPELESS`, `R16G16_TYPELESS`, or `R32_TYPELESS`. This is a special UAV interpretation, not permission for arbitrary cross-family SRVs/RTVs or arbitrary equal-byte-size casts. A nonempty explicit cast list takes precedence.<!-- d3d12-review-inline:end:formats:N-r32-casting:0:authored:migration-0be0afbcf09d5c2f-0 --></ins>
 
@@ -1632,9 +1638,9 @@ The list
 
 Formats "casted" in this way are _reinterpreted_ as the target format for consumption in shaders.
 
-<ins><!-- d3d12-review-inline:begin:formats:C-list:5 -->The [resource creation contract](resources.md#initial-layout-and-format-lists) defines `NumCastableFormats`, `pCastableFormats`, and their creation-method applicability.<!-- d3d12-review-inline:end:formats:C-list:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:formats:C-list:5:authored:opus-format-list-route -->See [Initial layout and format list parameters](resources.md#initial-layout-and-format-lists) for `NumCastableFormats`, `pCastableFormats` and the resource creation methods that accept them.<!-- d3d12-review-inline:end:formats:C-list:5:authored:opus-format-list-route --></ins>
 
-<ins><!-- d3d12-review-inline:begin:formats:N-list-cap:0:authored:migration-1597d287f1ff4adc-0 -->A zero-count, null castable format list retains ordinary format-casting rules. The resource's own format need not be repeated in a nonempty list. Explicit format list casting requires `D3D12_FEATURE_DATA_D3D12_OPTIONS12.RelaxedFormatCastingSupported`. This is distinct from OPTIONS3's fully typed family casting capability.<!-- d3d12-review-inline:end:formats:N-list-cap:0:authored:migration-1597d287f1ff4adc-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:formats:N-list-cap:0:authored:migration-1597d287f1ff4adc-0 -->A zero-count, null castable format list uses ordinary format-casting rules. The resource's own format need not be repeated in a nonempty list. Explicit format list casting requires `D3D12_FEATURE_DATA_D3D12_OPTIONS12.RelaxedFormatCastingSupported`.<!-- d3d12-review-inline:end:formats:N-list-cap:0:authored:migration-1597d287f1ff4adc-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:formats:C-integer:0 -->To enable retrieval of elements into raw integers,
 single-channel unsigned integer resource views can be created
@@ -1712,7 +1718,7 @@ Each format has a depth plane as plane 0, and a stencil plane as plane 1. <ins><
 
 #### Depth Plane
 
-<ins><!-- d3d12-review-inline:begin:formats:P-layouts:3 -->The depth plane placed texture data for this format is 32 bits per element, but only 24 bits are used to express a 24 bit normalized unsigned integer. A format from the `DXGI_FORMAT_R32_TYPELESS` family is used to specify planar depth placed texture data when copying to or from the depth plane of a `DXGI_FORMAT_R24G8_TYPELESS` texture.<!-- d3d12-review-inline:end:formats:P-layouts:3 --></ins>
+The depth plane placed texture data for this format is 32 bits per element, but only 24 bits are used to express a 24 bit normalized unsigned integer. A format from the `DXGI_FORMAT_R32_TYPELESS` family is used to specify planar depth placed texture data when copying to or from the depth plane of a `DXGI_FORMAT_R24G8_TYPELESS` texture.
 
 ( ElementAddress + 0 ) : D24X8
 
@@ -1726,11 +1732,11 @@ X8: bits 24-31 (unused\*)
 
 #### Stencil Plane
 
-<ins><!-- d3d12-review-inline:begin:formats:P-layouts:10 -->The stencil plane placed texture data for this format is 8 bits per
+The stencil plane placed texture data for this format is 8 bits per
 element used to express an 8 bit unsigned integer. A format from the
 `DXGI_FORMAT_R8_TYPELESS` family is used to specify planar stencil placed
 texture data when copying to or from the stencil plane of a
-`DXGI_FORMAT_R24G8_TYPELESS` texture.<!-- d3d12-review-inline:end:formats:P-layouts:10 --></ins>
+`DXGI_FORMAT_R24G8_TYPELESS` texture.
 
 ( ElementAddress + 0 ) : S8
 
@@ -1834,13 +1840,17 @@ YUV 4:2:0 formats are listed in [DXGI_FORMAT](#dxgi-format).<!-- d3d12-review-in
 
 <a id="check-feature-support"></a>
 
-### Feature query dispatch and selected diagnostics
+<a id="feature-query-dispatch-and-selected-diagnostics"></a>
+
+### Feature query dispatch and errors
 
 <a id="id3d12devicecheckfeaturesupport"></a>
 
 <ins><!-- d3d12-review-inline:begin:formats:N-device-query-owner:0:authored:section-query-route -->See [`ID3D12Device::CheckFeatureSupport`](devices-and-capabilities.md#id3d12device-checkfeaturesupport) for query dispatch and payload size requirements.<!-- d3d12-review-inline:end:formats:N-device-query-owner:0:authored:section-query-route --></ins>
 
-#### Runtime validation for the selected query cases
+<a id="runtime-validation-for-the-selected-query-cases"></a>
+
+#### Runtime validation for format queries
 
 <ins><!-- d3d12-review-inline:begin:formats:N-query-errors:0:authored:migration-d416afaf6603b789-0 -->For the format-specific cases below, a payload size mismatch returns `E_INVALIDARG`. `D3D12_FEATURE_FORMAT_INFO` rejects nonexistent API format values with `E_INVALIDARG`. `D3D12_FEATURE_FORMAT_SUPPORT` initializes its output masks to NONE and returns `E_FAIL` when format support cannot be computed or no support is reported.<!-- d3d12-review-inline:end:formats:N-query-errors:0:authored:migration-d416afaf6603b789-0 --></ins>
 
@@ -1848,7 +1858,9 @@ YUV 4:2:0 formats are listed in [DXGI_FORMAT](#dxgi-format).<!-- d3d12-review-in
 
 <a id="format-query-cases"></a>
 
-### Selected format queries
+<a id="selected-format-queries"></a>
+
+### Format queries
 
 <!-- d3d12-review-alert:begin:formats:N-query-cases:0:authored:migration-a87bc213cf61f03b-0 -->
 
@@ -1862,8 +1874,6 @@ YUV 4:2:0 formats are listed in [DXGI_FORMAT](#dxgi-format).<!-- d3d12-review-in
 > | `D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS` | `D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS` | Input `Format`, `SampleCount`, `Flags`; output `NumQualityLevels` |
 
 <!-- d3d12-review-alert:end:formats:N-query-cases:0:authored:migration-a87bc213cf61f03b-0 -->
-
-<ins><!-- d3d12-review-inline:begin:formats:N-query-cases:1:authored:migration-27771715f9b2b958-0 -->`NumQualityLevels` describes quality indices from zero through `NumQualityLevels - 1` when nonzero.<!-- d3d12-review-inline:end:formats:N-query-cases:1:authored:migration-27771715f9b2b958-0 --></ins>
 
 #### D3D12_FORMAT_SUPPORT1
 
@@ -1929,6 +1939,10 @@ typedef enum D3D12_FORMAT_SUPPORT2
 } D3D12_FORMAT_SUPPORT2;
 ```
 
+<a id="d3d12-feature-data-format-support"></a>
+
+<a id="d3d12_feature_data_format_support-1"></a>
+
 #### D3D12_FEATURE_DATA_FORMAT_SUPPORT
 
 ```cpp
@@ -1940,6 +1954,22 @@ typedef struct D3D12_FEATURE_DATA_FORMAT_SUPPORT
 } D3D12_FEATURE_DATA_FORMAT_SUPPORT;
 ```
 
+`Format`
+
+A [DXGI_FORMAT](#dxgi-format)-typed value for the format to return info about.
+
+`Support1`
+
+A combination of [`D3D12_FORMAT_SUPPORT1`](#d3d12-format-support1)-typed values that are combined by using a bitwise OR operation. The resulting value specifies which resources are supported.
+
+`Support2`
+
+A combination of [`D3D12_FORMAT_SUPPORT2`](#d3d12-format-support2)-typed values that are combined by using a bitwise OR operation. The resulting value specifies which unordered resource options are supported.
+
+<a id="d3d12-feature-data-format-info"></a>
+
+<a id="d3d12_feature_data_format_info-1"></a>
+
 #### D3D12_FEATURE_DATA_FORMAT_INFO
 
 ```cpp
@@ -1949,6 +1979,14 @@ typedef struct D3D12_FEATURE_DATA_FORMAT_INFO
     UINT8 PlaneCount;
 } D3D12_FEATURE_DATA_FORMAT_INFO;
 ```
+
+`Format`
+
+A [DXGI_FORMAT](#dxgi-format)-typed value for the format to return info about.
+
+`PlaneCount`
+
+The number of <ins><!-- d3d12-review-inline:begin:formats:S-D3D12_FEATURE_DATA_FORMAT_INFO:3:modified:source-a9e90b5e05e1a745-0-0 -->logical planes in the specified format<!-- d3d12-review-inline:end:formats:S-D3D12_FEATURE_DATA_FORMAT_INFO:3:modified:source-a9e90b5e05e1a745-0-0 --></ins>.
 
 #### D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS
 
@@ -1962,6 +2000,10 @@ typedef enum D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS
 } D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS;
 ```
 
+<a id="d3d12-feature-data-multisample-quality-levels"></a>
+
+<a id="d3d12_feature_data_multisample_quality_levels-1"></a>
+
 #### D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS
 
 ```cpp
@@ -1974,38 +2016,6 @@ typedef struct D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS
 } D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS;
 ```
 
-<a id="d3d12-feature-data-format-support"></a>
-
-### D3D12_FEATURE_DATA_FORMAT_SUPPORT
-
-`Format`
-
-A [DXGI_FORMAT](#dxgi-format)-typed value for the format to return info about.
-
-`Support1`
-
-<ins><!-- d3d12-review-inline:begin:formats:S-D3D12_FEATURE_DATA_FORMAT_SUPPORT:3 -->A combination of [`D3D12_FORMAT_SUPPORT1`](#d3d12-format-support1)-typed values that are combined by using a bitwise OR operation. The resulting value specifies which resources are supported.<!-- d3d12-review-inline:end:formats:S-D3D12_FEATURE_DATA_FORMAT_SUPPORT:3 --></ins>
-
-`Support2`
-
-<ins><!-- d3d12-review-inline:begin:formats:S-D3D12_FEATURE_DATA_FORMAT_SUPPORT:5 -->A combination of [`D3D12_FORMAT_SUPPORT2`](#d3d12-format-support2)-typed values that are combined by using a bitwise OR operation. The resulting value specifies which unordered resource options are supported.<!-- d3d12-review-inline:end:formats:S-D3D12_FEATURE_DATA_FORMAT_SUPPORT:5 --></ins>
-
-<a id="d3d12-feature-data-format-info"></a>
-
-### D3D12_FEATURE_DATA_FORMAT_INFO
-
-`Format`
-
-A [DXGI_FORMAT](#dxgi-format)-typed value for the format to return info about.
-
-`PlaneCount`
-
-The number of <ins><!-- d3d12-review-inline:begin:formats:S-D3D12_FEATURE_DATA_FORMAT_INFO:3:modified:source-a9e90b5e05e1a745-0-0 -->logical planes in the specified format<!-- d3d12-review-inline:end:formats:S-D3D12_FEATURE_DATA_FORMAT_INFO:3:modified:source-a9e90b5e05e1a745-0-0 --></ins>.
-
-<a id="d3d12-feature-data-multisample-quality-levels"></a>
-
-### D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS
-
 `Format`
 
 A [DXGI_FORMAT](#dxgi-format)-typed value for the format to return info about.
@@ -2016,11 +2026,13 @@ The number of multi-samples per pixel to return info about.
 
 `Flags`
 
-<ins><!-- d3d12-review-inline:begin:formats:S-D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS:5 -->Flags to control quality levels, as a bitwise-OR'd combination of [`D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS`](#d3d12-multisample-quality-level-flags) enumeration constants. The resulting value specifies options for determining quality levels.<!-- d3d12-review-inline:end:formats:S-D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS:5 --></ins>
+Flags to control quality levels, as a bitwise-OR'd combination of [`D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS`](#d3d12-multisample-quality-level-flags) enumeration constants. The resulting value specifies options for determining quality levels.
 
 `NumQualityLevels`
 
 The number of quality levels.
+
+<ins><!-- d3d12-review-inline:begin:formats:N-query-cases:1:authored:migration-27771715f9b2b958-0 -->`NumQualityLevels` describes quality indices from zero through `NumQualityLevels - 1` when nonzero.<!-- d3d12-review-inline:end:formats:N-query-cases:1:authored:migration-27771715f9b2b958-0 --></ins>
 
 <a id="typed-uav-loads"></a>
 
@@ -2078,15 +2090,15 @@ The number of quality levels.
 - B5G5R5A1\_UNORM
 - B4G4R4A4\_UNORM
 
-<ins><!-- d3d12-review-inline:begin:formats:N-typed-cap:0:authored:migration-314c1e98c39ed580-0 -->`D3D12_FEATURE_DATA_D3D12_OPTIONS.TypedUAVLoadAdditionalFormats` identifies support for the additional all-or-nothing set. Individually optional formats require their `D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD` result. Additional typed load support also requires typed store support. The reverse implication does not hold, and atomic support remains separately specified. Typed view access uses the bound format's interpretation, not a reinterpretation inferred from the shader's integer or floating-point spelling.<!-- d3d12-review-inline:end:formats:N-typed-cap:0:authored:migration-314c1e98c39ed580-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:formats:N-typed-cap:0:authored:migration-314c1e98c39ed580-0 -->`D3D12_FEATURE_DATA_D3D12_OPTIONS.TypedUAVLoadAdditionalFormats` identifies support for the additional all-or-nothing set. Individually optional formats require their `D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD` result. Additional typed load support also requires typed store support, but typed store support does not imply typed load support. Atomic support is specified separately. Typed view access uses the bound format's interpretation, not a reinterpretation inferred from the shader's integer or floating-point spelling.<!-- d3d12-review-inline:end:formats:N-typed-cap:0:authored:migration-314c1e98c39ed580-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:formats:S-bgra:0 -->BGRA UAV support can be
 exposed by drivers (including typed UAV load). This is optional. This capability is independent of format casting
-(though relaxed format casting described above applies to BGRA too).<!-- d3d12-review-inline:end:formats:S-bgra:0 --></ins>
+(though the relaxed format casting of fully typed formats described in [Format casting](#casting) applies to BGRA too).<!-- d3d12-review-inline:end:formats:S-bgra:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:formats:S-bgra:1 -->Applications can discover support for BGRA UAV store (and separately,
+Applications can discover support for BGRA UAV store (and separately,
 load) via the usual mechanism -- CheckFeatureSupport() with
-`D3D12_FEATURE_FORMAT_SUPPORT`.<!-- d3d12-review-inline:end:formats:S-bgra:1 --></ins>
+`D3D12_FEATURE_FORMAT_SUPPORT`.
 
 <a id="shared-exponent-support"></a>
 
@@ -2101,20 +2113,18 @@ load) via the usual mechanism -- CheckFeatureSupport() with
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
 >
-> | **D3D12** |
-> | --------------------------------------------------- |
-> | `D3D12_FORMAT_SUPPORT1_RENDER_TARGET` |
-> | `D3D12_FORMAT_SUPPORT1_MULTISAMPLE_RENDERTARGET` |
-> | `D3D12_FORMAT_SUPPORT1_MULTISAMPLE_RESOLVE` |
-> | `D3D12_FORMAT_SUPPORT1_MULTISAMPLE_LOAD` |
-> | `D3D12_FORMAT_SUPPORT1_TYPED_UNORDERED_ACCESS_VIEW` |
-> | `D3D12_FORMAT_SUPPORT1_BLENDABLE` |
-> | `D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD` |
-> | `D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE` |
+> - `D3D12_FORMAT_SUPPORT1_RENDER_TARGET`
+> - `D3D12_FORMAT_SUPPORT1_MULTISAMPLE_RENDERTARGET`
+> - `D3D12_FORMAT_SUPPORT1_MULTISAMPLE_RESOLVE`
+> - `D3D12_FORMAT_SUPPORT1_MULTISAMPLE_LOAD`
+> - `D3D12_FORMAT_SUPPORT1_TYPED_UNORDERED_ACCESS_VIEW`
+> - `D3D12_FORMAT_SUPPORT1_BLENDABLE`
+> - `D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD`
+> - `D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE`
 
 <!-- d3d12-review-alert:end:formats:S-999:2:modified:migration-8bdbb92ad9bf5ad2-0 -->
 
-As each support group is **all-or-nothing**, applications need only check one of these bits to assume if all the above bits are set.
+As each support group is **all-or-nothing**, applications need only check one of these bits <ins><!-- d3d12-review-inline:begin:formats:S-999:3:modified:opus-determine-whether -->to determine whether<!-- d3d12-review-inline:end:formats:S-999:3:modified:opus-determine-whether --></ins> all the above bits are set.
 
 <ins><!-- d3d12-review-inline:begin:formats:S-999:4 -->Multisample quality is queried separately with `D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS`.<!-- d3d12-review-inline:end:formats:S-999:4 --></ins>
 
@@ -2130,7 +2140,9 @@ Driver support for format list casting is reported via `RelaxedFormatCastingSupp
 
 <a id="current-driver-format-query-callbacks"></a>
 
-### Current driver format query DDIs
+<a id="current-driver-format-query-ddis"></a>
+
+### Driver format query DDIs
 
 ```cpp
 #define D3D12DDI_FORMAT_SUPPORT_SHADER_SAMPLE            0x00000001 // format can be sampled with any filter in shaders
@@ -2219,16 +2231,18 @@ Implemented by the client driver to check the format support.
 > | `MULTIPLANE_OVERLAY` | Multiplane-overlay reporting -> `Support2.MULTIPLANE_OVERLAY`. |
 > | `TILED` | Published tiled 1D/2D/cube/array report, excluding 3D in this bit's definition; API `Support2.TILED` is derived from format requirements and tiled resource capability, not a raw copy. |
 > | `UAV_READS` | Optional typed UAV load -> `Support2.UAV_TYPED_LOAD`, additionally gated by the [typed UAV load format group](#typed-uav-loads) and typed UAV store eligibility. |
-> | `DISPLAY` | Required for optional scanout reporting as `Support1.DISPLAY` under the current separate-display-bit interface; eligible displayable formats also use it for `Support2.DISPLAYABLE`. The two API uses remain distinct. |
+> | `DISPLAY` | Required for optional scanout reporting as `Support1.DISPLAY` under the DDI revision rule below; eligible displayable formats also use it for `Support2.DISPLAYABLE`. |
 > | `NOT_SUPPORTED` | Whole-format rejection under the restricted format rule above; not an API support bit. |
 
 <!-- d3d12-review-alert:end:formats:FQ-driver-bit-mapping:1:authored:migration-f8feeda756e6a443-0 -->
 
 <ins><!-- d3d12-review-inline:begin:formats:FQ-driver-bit-mapping:3:authored:migration-6b102ef1cefc301c-0 -->Logic-op, tiled and sampler feedback support are derived from their format/device requirements, not additional optional driver mask bits.<!-- d3d12-review-inline:end:formats:FQ-driver-bit-mapping:3:authored:migration-6b102ef1cefc301c-0 --></ins>
 
+<ins><!-- d3d12-review-inline:begin:formats:FQ-driver-bit-mapping:5:authored:opus-nv12-shader-load -->`NV12` shader load reporting follows shader sample support because this DDI has no independent shader load flag.<!-- d3d12-review-inline:end:formats:FQ-driver-bit-mapping:5:authored:opus-nv12-shader-load --></ins>
+
 <ins><!-- d3d12-review-inline:begin:formats:FQ-driver-bit-mapping:4:authored:migration-21b4448c4d1b8d18-0 -->From DDI revision `_0107`, optional scanout requires the driver's `DISPLAY` bit.<!-- d3d12-review-inline:end:formats:FQ-driver-bit-mapping:4:authored:migration-21b4448c4d1b8d18-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:formats:FQ-driver-bit-mapping:5:authored:migration-7e943320565b4170-0 -->Below DDI revision `_0107`, optional render target/UAV support for `DXGI_FORMAT_R9G9B9E5_SHAREDEXP` is not reported regardless of the driver bits. Its shader resource support is unchanged. For eligible drivers, see [R9G9B9E5 optional view support](#shared-exponent-support) for all-or-nothing and derived-resolve rules. `NV12` shader load reporting follows shader sample support because this DDI has no independent shader load flag.<!-- d3d12-review-inline:end:formats:FQ-driver-bit-mapping:5:authored:migration-7e943320565b4170-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:formats:FQ-driver-bit-mapping:5:authored:migration-7e943320565b4170-0 -->Below DDI revision `_0107`, optional render target/UAV support for `DXGI_FORMAT_R9G9B9E5_SHAREDEXP` is not reported regardless of the driver bits. Its shader resource support is unchanged. For eligible drivers, see [R9G9B9E5 optional view support](#shared-exponent-support) for all-or-nothing and derived-resolve rules.<!-- d3d12-review-inline:end:formats:FQ-driver-bit-mapping:5:authored:migration-7e943320565b4170-0 --></ins>
 
 <a id="driver-multisample-quality"></a>
 

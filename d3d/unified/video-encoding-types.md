@@ -15,7 +15,7 @@
 
 <!-- d3d12-review-legend:end -->
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-types:type-intro:0:authored:migration-89a2ba12e95ce43b-0 -->`DataSize` describes the selected pointed-to payload, not the wrapper itself.
+<ins><!-- d3d12-review-inline:begin:video-encoding-types:type-intro:0:authored:migration-89a2ba12e95ce43b-0 -->In structures that pair a `DataSize` member with a union of pointers, `DataSize` describes the selected pointed-to payload, not the containing structure.
 See [Capabilities and controls](video-encoding-controls.md) for query inputs and outputs,
 units and parameter restrictions. See [Codec contracts](video-encoding-codecs.md)
 for codec-specific member meanings and bitstream syntax.
@@ -558,7 +558,7 @@ typedef struct D3D12_VIDEO_ENCODER_AV1_CODEC_CONFIGURATION {
 } D3D12_VIDEO_ENCODER_AV1_CODEC_CONFIGURATION;
 ```
 
-<ins><!-- d3d12-review-inline:begin:video-encoding-types:weekend-vi07-codec-members:0:authored:owner -->[AV1 codec configuration member contracts](video-encoding-codecs.md#source-s02-039).<!-- d3d12-review-inline:end:video-encoding-types:weekend-vi07-codec-members:0:authored:owner --></ins>
+<ins><!-- d3d12-review-inline:begin:video-encoding-types:weekend-vi07-codec-members:0:authored:owner -->See [AV1 codec configuration member contracts](video-encoding-codecs.md#source-s02-039) for the meanings of these members.<!-- d3d12-review-inline:end:video-encoding-types:weekend-vi07-codec-members:0:authored:owner --></ins>
 
 <a id="d3d12-video-encoder-av1-codec-configuration-support"></a>
 

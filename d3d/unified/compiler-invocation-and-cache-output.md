@@ -24,12 +24,11 @@ and subsequent additions. It is not an `ID3D12StateObject` created by a device.<
 
 ## Output storage and object subdivision
 
-Each compiler exposes <ins><!-- d3d12-review-inline:begin:compiler-output:output-storage-grammar:0:modified:weekend-api-plural -->APIs<!-- d3d12-review-inline:end:compiler-output:output-storage-grammar:0:modified:weekend-api-plural --></ins> to compile a PSO or SO that take arguments that are similar to the object creation counterparts in the D3D12 runtime.  The <ins><!-- d3d12-review-inline:begin:compiler-output:output-storage-actor:0:modified:weekend-description-input -->compiler runtime validates descriptions<!-- d3d12-review-inline:end:compiler-output:output-storage-actor:0:modified:weekend-description-input --></ins> and translates them into DDI representations for calling the IHV plugin.  The implementation for performing this validation and translation is shared with the D3D12 runtime.  <ins><!-- d3d12-review-inline:begin:compiler-output:output-storage-call:0:modified:weekend-runtime-actor -->The compiler runtime calls the plugin with DDI arguments to compile.<!-- d3d12-review-inline:end:compiler-output:output-storage-call:0:modified:weekend-runtime-actor --></ins>  The plugin is expected to decompose this object, compile, and store each compiled object as a value via callbacks to the runtime.  The plugin finally sets the list of values associated with the input object via a callback to the runtime.  The runtime stores this list of values as a value group in the cache session using the group key supplied by the caller during the compile operation.
+Each compiler exposes <ins><!-- d3d12-review-inline:begin:compiler-output:output-storage-grammar:0:modified:weekend-api-plural -->APIs<!-- d3d12-review-inline:end:compiler-output:output-storage-grammar:0:modified:weekend-api-plural --></ins> to compile a PSO or SO that take arguments that are similar to the object creation counterparts in the D3D12 runtime.  The <ins><!-- d3d12-review-inline:begin:compiler-output:output-storage-actor:0:modified:weekend-description-input -->compiler runtime validates descriptions<!-- d3d12-review-inline:end:compiler-output:output-storage-actor:0:modified:weekend-description-input --></ins> and translates them into DDI representations for calling the IHV plugin.  The implementation for performing this validation and translation is also used by the D3D12 runtime.  <ins><!-- d3d12-review-inline:begin:compiler-output:output-storage-call:0:modified:weekend-runtime-actor -->The compiler runtime calls the plugin with DDI arguments to compile.<!-- d3d12-review-inline:end:compiler-output:output-storage-call:0:modified:weekend-runtime-actor --></ins>  The plugin is expected to decompose this object, compile, and store each compiled object as a value via callbacks to the runtime.  The plugin finally sets the list of values associated with the input object via a callback to the runtime.  The runtime stores this list of values as a value group in the cache session using the group key supplied by the caller during the compile operation.
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:collection-output-overview:0:authored:migration-d8d02567a98d9e03-0 -->A collection compilation that produces no compiled output may omit the
-output key callback and have no output group. This exception is specific to
-[`CompileStateObject`](#id3d12compiler-compilestateobject). It does not apply
-to PSO/executable compilation or additions.<!-- d3d12-review-inline:end:compiler-output:collection-output-overview:0:authored:migration-d8d02567a98d9e03-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:collection-output-overview:0:authored:migration-d8d02567a98d9e03-0 -->Only a collection compiled with
+[`CompileStateObject`](#id3d12compiler-compilestateobject) that produces no
+compiled output may omit the output key callback and have no output group.<!-- d3d12-review-inline:end:compiler-output:collection-output-overview:0:authored:migration-d8d02567a98d9e03-0 --></ins>
 
 The Precompiled Shader Database(PSDB) is implemented as Sqlite3 databases for storage.  The compiler runtime API wraps the database as an ID3D12CompilerCacheSession.
 
@@ -46,18 +45,17 @@ Stored values in cache sessions may be directly compared with previous compiler 
 <ins><!-- d3d12-review-inline:begin:compiler-output:version-domains:0:authored:migration-d0346859057b7da7-0 -->Application group keys and group versions identify source object revisions.
 Vendor-generated value keys identify reusable compiled parts. A group can
 reference several keys, and a value can belong to several groups. The
-`GroupVersion` argument is not a member of
-`D3D12_COMPILER_CACHE_GROUP_KEY`. A change to a source object definition
-requires the corresponding group version to be revised.<!-- d3d12-review-inline:end:compiler-output:version-domains:0:authored:migration-d0346859057b7da7-0 --></ins>
+database author must revise the group version whenever the source object
+definition changes.<!-- d3d12-review-inline:end:compiler-output:version-domains:0:authored:migration-d0346859057b7da7-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:version-domains:1:authored:migration-a460098bd8a851c0-0 -->The target's adapter family index is local to its factory. The stored identity
 uses the family identifier, ABI and compiler version. The
-[compiler, ABI and application profile version domains](offline-compilation.md#version-domains)
-are distinct from application and engine versions in the
+[compiler, ABI and application profile version domains](offline-compilation.md#version-domains),
+the application and engine versions in the
 [application descriptor](state-object-databases-and-identity.md#d3d12_application_desc),
-group versions, value type flags and database format versions.<!-- d3d12-review-inline:end:compiler-output:version-domains:1:authored:migration-a460098bd8a851c0-0 --></ins>
+group versions and database format versions are separate version domains.<!-- d3d12-review-inline:end:compiler-output:version-domains:1:authored:migration-a460098bd8a851c0-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:D144-readonly-consumer:0:authored:migration-d3f0fbefb10c160e-0 -->[Read-only runtime PSDB eligibility](runtime-cache-discovery.md#compatibility) and [implicit open/failure policy](runtime-cache-discovery.md#failure-and-lifetime) define consumption of registered output. Passing those checks is not a group/value hit and does not authorize writable cache maintenance, metadata replacement or the [producer's full-identity reopening rules](#id3d12compilerfactory-createcompilercachesession).<!-- d3d12-review-inline:end:compiler-output:D144-readonly-consumer:0:authored:migration-d3f0fbefb10c160e-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:D144-readonly-consumer:0:authored:migration-d3f0fbefb10c160e-0 -->See [Compatibility](runtime-cache-discovery.md#compatibility) and [Failure and lifetime](runtime-cache-discovery.md#failure-and-lifetime) for how the D3D12 runtime selects and opens registered output for read-only use. An eligible PSDB need not contain a matching group or value. Runtime eligibility does not permit writable cache maintenance or metadata replacement. A producer that reopens a database for writing uses [CreateCompilerCacheSession](#id3d12compilerfactory-createcompilercachesession), which applies its own full identity checks.<!-- d3d12-review-inline:end:compiler-output:D144-readonly-consumer:0:authored:migration-d3f0fbefb10c160e-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:opaque-key-buffers:0:authored:migration-6192729c1df1b890-0 -->Group keys and value keys are opaque byte sequences, not necessarily text
 or null-terminated strings. `KeySize` counts bytes. Each `pKey` must address
@@ -142,7 +140,7 @@ Specifies that the operation <ins><!-- d3d12-review-inline:begin:compiler-output
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:type-prose-d3d12_compiler_value_type_flags:6:authored:migration-cbdad1e3eb0a96e2-0 -->*D3D12_COMPILER_VALUE_TYPE_FLAGS_METADATA*<!-- d3d12-review-inline:end:compiler-output:type-prose-d3d12_compiler_value_type_flags:6:authored:migration-cbdad1e3eb0a96e2-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:type-prose-d3d12_compiler_value_type_flags:7:authored:migration-1c0711270227a1eb-0 -->Selects compiler metadata.<!-- d3d12-review-inline:end:compiler-output:type-prose-d3d12_compiler_value_type_flags:7:authored:migration-1c0711270227a1eb-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:type-prose-d3d12_compiler_value_type_flags:7:authored:migration-1c0711270227a1eb-0 -->Specifies that the operation applies to compiler metadata.<!-- d3d12-review-inline:end:compiler-output:type-prose-d3d12_compiler_value_type_flags:7:authored:migration-1c0711270227a1eb-0 --></ins>
 
 *D3D12_COMPILER_VALUE_TYPE_FLAGS_DEBUG_PDB*
 
@@ -284,7 +282,7 @@ Specifies a value and its type, such as object code, metadata etc.
 
 *Type*
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:type-prose-d3d12_compiler_cache_typed_value:3 -->The type of the value, such as object code, metadata, etc.  See [D3D12_COMPILER_VALUE_TYPE](#d3d12_compiler_value_type) for more information on types.<!-- d3d12-review-inline:end:compiler-output:type-prose-d3d12_compiler_cache_typed_value:3 --></ins>
+The type of the value, such as object code, metadata, etc.  See [D3D12_COMPILER_VALUE_TYPE](#d3d12_compiler_value_type) for more information on types.
 
 *Value*
 
@@ -411,10 +409,9 @@ Returns nullptr on allocation failure.
 
 This function must not throw uncaught exceptions.
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:callback-borrowing:1:authored:migration-56b8654f369133b5-0 -->The allocation callback supplies application-owned storage. The caller
-must release successful allocations with the matching deallocator, including
-allocations returned before a later failure. The cache session does not take
-ownership of those allocations.<!-- d3d12-review-inline:end:compiler-output:callback-borrowing:1:authored:migration-56b8654f369133b5-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:callback-borrowing:1:authored:migration-56b8654f369133b5-0 -->Allocations returned by this callback belong to the application. The
+application must release each successful allocation with the matching
+deallocator, including allocations returned before a later failure.<!-- d3d12-review-inline:end:compiler-output:callback-borrowing:1:authored:migration-56b8654f369133b5-0 --></ins>
 
 <a id="d3d12compilercachesessiongroupvaluekeysfunc"></a>
 
@@ -482,10 +479,11 @@ An application defined context pointer.
 
 This function must not throw uncaught exceptions.
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:callback-borrowing:0:authored:migration-8769311dbaa7ea68-0 -->`pTypedValue` and its value buffer passed to a group value callback are borrowed
-for that callback invocation. Copy any data needed afterward. Do not free the
-borrowed storage. The application owns `pContext`. The lookup passes it through.
-The callbacks execute as part of the lookup before that lookup returns.<!-- d3d12-review-inline:end:compiler-output:callback-borrowing:0:authored:migration-8769311dbaa7ea68-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:callback-borrowing:0:authored:migration-8769311dbaa7ea68-0 -->`pTypedValue` and its value buffer are borrowed for the callback invocation
+that receives them. The application must copy any data it needs beyond that invocation and
+must not free the borrowed storage. The application owns `pContext`, and the
+lookup passes it through unchanged. The callbacks run during the lookup,
+before it returns.<!-- d3d12-review-inline:end:compiler-output:callback-borrowing:0:authored:migration-8769311dbaa7ea68-0 --></ins>
 
 <a id="id3d12compilerfactory-createcompilercachesession"></a>
 
@@ -521,19 +519,16 @@ independently.<!-- d3d12-review-inline:end:compiler-output:session-routing-and-f
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:session-routing-and-files:1:authored:migration-c95c46183f7a963f-0 -->Each `pPath` names a Windows file, using a filename, local path or UNC path;
 the containing directory must exist. A null path selects a session-local
-in-memory database. It is not the filename `:memory:`; SQLite URI filenames
-and that special filename are not accepted by this API. The path descriptor
-contains no filename-extension inference and no access mode flag.
-Existing files are opened for modification and missing files are created;
-this is not a read-only open API. Read-only files or inaccessible paths can
-fail to open. SODB's
-[read-only flag](state-object-databases-and-identity.md#d3d12_state_object_database_flags)
-does not apply to this call.<!-- d3d12-review-inline:end:compiler-output:session-routing-and-files:1:authored:migration-c95c46183f7a963f-0 --></ins>
+in-memory database. It is not the filename `:memory:`. This API does not accept
+that special filename or SQLite URI filenames. The API does not infer anything
+from a filename extension and has no read-only mode. Read-only files or
+inaccessible paths can fail to open.<!-- d3d12-review-inline:end:compiler-output:session-routing-and-files:1:authored:migration-c95c46183f7a963f-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:session-routing-and-files:2:authored:migration-b34bd204a3e09fa3-0 -->Disjoint masks route types; distinct path strings can still identify the
-same physical file. Group writes are made to every database entry. Physical file
-deduplication and an all-files transaction are not guaranteed, so aliased
-entries must not be treated as independent storage.<!-- d3d12-review-inline:end:compiler-output:session-routing-and-files:2:authored:migration-b34bd204a3e09fa3-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:session-routing-and-files:2:authored:migration-b34bd204a3e09fa3-0 -->Disjoint masks route value types, but distinct path strings can name the
+same physical file. The cache session writes group mappings to every database
+entry. Physical file deduplication and an all-files transaction are not
+guaranteed, so the application must not rely on aliased entries as
+independent storage.<!-- d3d12-review-inline:end:compiler-output:session-routing-and-files:2:authored:migration-b34bd204a3e09fa3-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:session-metadata:0:authored:migration-eb1264c834eb85f5-0 -->`pTarget` and `pApplicationDesc` are optional only when the database metadata
 supplies the corresponding identity. If no opened database supplies an
@@ -562,7 +557,7 @@ identity/version mismatches return `E_INVALIDARG`.<!-- d3d12-review-inline:end:c
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:session-metadata:3:authored:migration-f2952ac62deac7c3-0 -->Path strings and application strings are consumed or copied during creation;
 the caller retains their ownership. `ppCompilerCacheSession` is required
-writable interface pointer storage, not a null output availability probe.
+writable interface pointer storage.
 On success it receives an owned reference selected by `riid`. Failures before
 the interface query do not promise to clear an existing output value. Opening
 and initializing earlier files may already have happened when a later file or
@@ -575,11 +570,6 @@ version. `pEngineName` is optional. If supplied it must be null-terminated and
 `EngineVersion` must be provided. These are the
 [application metadata requirements](state-object-databases-and-identity.md#d3d12_application_desc),
 not a fallback to the compiler-hosting process's identity.<!-- d3d12-review-inline:end:compiler-output:explicit-application-input:0:authored:migration-53d6e15f1856c4d0-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:compiler-output:explicit-application-input:1:authored:migration-ae5c8d24f0edd174-0 -->The optional descriptor pointer used to resolve existing database metadata is
-a separate condition. Comparison or copying of null string members as empty
-strings does not waive the required fields of an explicitly supplied
-descriptor.<!-- d3d12-review-inline:end:compiler-output:explicit-application-input:1:authored:migration-ae5c8d24f0edd174-0 --></ins>
 
 ### Parameters
 
@@ -641,12 +631,10 @@ inherits its target, application descriptor and selected value types.
 The caller owns the returned compiler reference and releases it when no
 longer needed. The retained session keeps its application strings alive.<!-- d3d12-review-inline:end:compiler-output:compiler-creation-lifetime:0:authored:migration-be3a1afa655bf4e1-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:compiler-creation-lifetime:1:authored:migration-dabcf08befc98421-0 -->The cache session need not have been created by this factory, but its target
-index and metadata must be meaningful to this factory. No cross-factory index
-translation is performed. See [input ownership](#input-ownership).
-`ppCompiler` is not a null output validation probe. Failure before the final
-interface query need not initialize it. Plugin creation and allocation failures
-fail this call.<!-- d3d12-review-inline:end:compiler-output:compiler-creation-lifetime:1:authored:migration-dabcf08befc98421-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:compiler-creation-lifetime:1:authored:migration-dabcf08befc98421-0 -->See [Compilation inputs and ownership](#input-ownership) for using a cache
+session created by another factory. Failure before the final interface query
+need not initialize `ppCompiler`. Plugin creation and allocation failures fail
+this call.<!-- d3d12-review-inline:end:compiler-output:compiler-creation-lifetime:1:authored:migration-dabcf08befc98421-0 --></ins>
 
 ### Parameters
 
@@ -677,12 +665,10 @@ Allocation and plugin compiler creation failures propagate.<!-- d3d12-review-inl
 derives from `IUnknown` and exposes
 [`GetCompiler`](#id3d12compilerstateobject-getcompiler).<!-- d3d12-review-inline:end:compiler-output:synchronization-and-lifetime:0:authored:migration-1355896c1604b200-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:synchronization-and-lifetime:1:authored:migration-cfc942f99117f597-0 -->The compiler plugin is responsible for synchronization as necessary,
-applications do not need to add external synchronization. Caller-owned
+<ins><!-- d3d12-review-inline:begin:compiler-output:synchronization-and-lifetime:1:authored:migration-cfc942f99117f597-0 -->The compiler plugin is responsible for synchronization as necessary.
+Applications do not need to add external synchronization. Caller-owned
 descriptions, arrays, keys, strings, callback functions and context storage must
-remain valid while the receiving call uses them. That synchronization contract
-does not remove the object reference or structural dependency requirements
-below.<!-- d3d12-review-inline:end:compiler-output:synchronization-and-lifetime:1:authored:migration-cfc942f99117f597-0 --></ins>
+remain valid while the receiving call uses them.<!-- d3d12-review-inline:end:compiler-output:synchronization-and-lifetime:1:authored:migration-cfc942f99117f597-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:compilation-inputs:0:authored:migration-43747a46ac297034-0 -->Pipeline descriptions use
 [`D3D12_PIPELINE_STATE_STREAM_DESC`](pipeline-state.md#streams).
@@ -710,7 +696,7 @@ dependency as a live compiler collection. A parent key from an SODB similarly
 identifies a dependency to supply as a live parent to the addition call.<!-- d3d12-review-inline:end:compiler-output:compilation-inputs:1:authored:migration-0308a8661a98c81a-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:compilation-inputs:2:authored:migration-5bbe2adee09c15a2-0 -->The compiler runtime validates descriptions and translates them to DDI
-representations using shared runtime validation. See
+representations using common runtime validation. See
 [Pipeline state](pipeline-state.md#streams) for stream parsing, stage composition,
 input/stream output layouts, render target and depth/stencil formats, samples,
 rasterization and linkage. See [Root signatures](binding.md#root-signatures)
@@ -728,7 +714,8 @@ including applicable feature level, shader model, shader features, formats,
 multisampling, raytracing/state object or work graph requirements. Serializing
 or storing a description does not establish that the target can compile it.
 Invalid descriptions and unsupported target capabilities are distinct from
-an IHV compiler failure.<!-- d3d12-review-inline:end:compiler-output:compilation-inputs:3:authored:migration-84514c16299e9615-0 --></ins>
+IHV compiler failures. See the [compiler error protocol](#compile-error-protocol)
+for plugin and cache callback failures.<!-- d3d12-review-inline:end:compiler-output:compilation-inputs:3:authored:migration-84514c16299e9615-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:compilation-inputs:4:authored:migration-4af06947470dfc12-0 -->Descriptions, their reachable arrays, bytecode and serialized roots must be
 readable for the call. The compiler retains the internal descriptions and
@@ -747,19 +734,15 @@ The compiler retains its cache session, and a compiler state object retains
 the compiler that created it.<!-- d3d12-review-inline:end:compiler-output:factory-and-parent-consistency:1:authored:migration-3b766eff6002ff42-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:factory-and-parent-consistency:2:authored:migration-53351641ea526eee-0 -->Applications must retain compiler collections while their dependents need them.
-Compilation does not automatically retain a collection API reference.
-Retaining a compiler or copying description data is not a substitute for
-keeping the referenced collection alive.<!-- d3d12-review-inline:end:compiler-output:factory-and-parent-consistency:2:authored:migration-53351641ea526eee-0 --></ins>
+Compilation does not automatically retain a collection API reference.<!-- d3d12-review-inline:end:compiler-output:factory-and-parent-consistency:2:authored:migration-53351641ea526eee-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:factory-and-parent-consistency:3:authored:migration-0be680f0426a7043-0 -->An addition retains the parent's description data, not the parent's API
 reference or plugin handle. After the addition succeeds, the application need
 not retain the addition-parent API reference for the child's lifetime.
 Releasing the last parent reference destroys the parent's plugin handle;
 the plugin must retain whatever dependency state it needs for the child.
-This is the description/handle distinction in
-[state object driver lifetime](state-objects.md#driver-lifetime), not the
-collection retention rule above. Original caller-owned description allocations
-can be released after successful compilation.<!-- d3d12-review-inline:end:compiler-output:factory-and-parent-consistency:3:authored:migration-0be680f0426a7043-0 --></ins>
+See [state object driver lifetime](state-objects.md#driver-lifetime) for the
+distinction between descriptions and handles.<!-- d3d12-review-inline:end:compiler-output:factory-and-parent-consistency:3:authored:migration-0be680f0426a7043-0 --></ins>
 
 <a id="id3d12compiler-compilepipelinestate"></a>
 
@@ -779,21 +762,20 @@ HRESULT CompilePipelineState(
 
 Compile a graphics or compute pipeline state.
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:DEL-I02-pipeline-output-route:0:authored:migration-37f2258d0b613971-0 -->[Output storage](#output-storage) defines subdivision into compiled values,
-their storage and the group mapping for this operation.<!-- d3d12-review-inline:end:compiler-output:DEL-I02-pipeline-output-route:0:authored:migration-37f2258d0b613971-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:DEL-I02-pipeline-output-route:0:authored:migration-37f2258d0b613971-0 -->See [Output storage](#output-storage) for how compiled output is divided into
+values, stored and recorded as a group.<!-- d3d12-review-inline:end:compiler-output:DEL-I02-pipeline-output-route:0:authored:migration-37f2258d0b613971-0 --></ins>
 
 <a id="compile-completion"></a>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:compilepipelinestate-completion:0:authored:migration-055704e76a235891-0 -->The cache session's `GetValueTypes()` mask selects the output types. There is
-no value type flags argument on this API. The group key is required.
+<ins><!-- d3d12-review-inline:begin:compiler-output:compilepipelinestate-completion:0:authored:migration-055704e76a235891-0 -->The cache session's `GetValueTypes()` mask selects the output types. The group key is required.
 On success, this method returns synchronously only after all compiled output
 is stored and the plugin's cache callbacks have completed.
 Completion does not imply a cross-file atomic commit, crash
 durability, or rollback of values stored before an error.<!-- d3d12-review-inline:end:compiler-output:compilepipelinestate-completion:0:authored:migration-055704e76a235891-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:compilepipelinestate-validation-input:0:authored:migration-4227a368f3f86204-0 -->A null `pGroupKey` returns `E_INVALIDARG`. The
-[compilation input and target validation contract](#input-ownership)
-defines the required description forms and shared construction rules.<!-- d3d12-review-inline:end:compiler-output:compilepipelinestate-validation-input:0:authored:migration-4227a368f3f86204-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:compilepipelinestate-validation-input:0:authored:migration-4227a368f3f86204-0 -->A null `pGroupKey` returns `E_INVALIDARG`. See
+[Compilation inputs and ownership](#input-ownership) for the required
+description forms, target validation and common construction rules.<!-- d3d12-review-inline:end:compiler-output:compilepipelinestate-validation-input:0:authored:migration-4227a368f3f86204-0 --></ins>
 
 ### Parameters
 
@@ -846,14 +828,14 @@ HRESULT CompileStateObject(
 
 This method creates an object that implements [ID3D12CompilerStateObject](#id3d12compiler-compilestateobject) to support using it as a base object when deriving new state objects with [ID3D12Compiler::CompileAddToStateObject](#id3d12compiler-compileaddtostateobject).
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:compilestateobject-completion:0:authored:migration-4d6122a4ec6c7c68-0 -->[Output storage](#output-storage) defines the compiled values and group mapping.
-Output selection and synchronous completion follow the
-[compiler completion contract](#compile-completion).<!-- d3d12-review-inline:end:compiler-output:compilestateobject-completion:0:authored:migration-4d6122a4ec6c7c68-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:compilestateobject-completion:0:authored:migration-4d6122a4ec6c7c68-0 -->See [Output storage](#output-storage) for the compiled values and group mapping.
+Output selection and synchronous completion are the same as for
+[CompilePipelineState](#compile-completion).<!-- d3d12-review-inline:end:compiler-output:compilestateobject-completion:0:authored:migration-4d6122a4ec6c7c68-0 --></ins>
 
 <a id="compiler-state-object-results"></a>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:compilestateobject-completion:1:authored:migration-585a8ba1e2248e2c-0 -->`riid` selects `ID3D12CompilerStateObject` or a supported base interface.
-The output pointer is required writable storage, not a validation-only probe.
+The output pointer is required writable storage.
 The returned interface is an owned reference. Release it when finished.
 An error before the final interface query need not clear the caller's output.
 The handle retains the compiler and internal construction data needed by
@@ -862,12 +844,11 @@ negotiated build-2 compiler DDI support. Otherwise they return `E_NOTIMPL`.<!-- 
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:compilestateobject-completion:2:authored:migration-e6b68d1cdecc4ef2-0 -->A collection that produces no compiled output can return its compiler state
 object without registering output keys or creating a group. The input group
-key remains required. This exception does not apply to executable state object
-compilation or incremental additions.<!-- d3d12-review-inline:end:compiler-output:compilestateobject-completion:2:authored:migration-e6b68d1cdecc4ef2-0 --></ins>
+key is required.<!-- d3d12-review-inline:end:compiler-output:compilestateobject-completion:2:authored:migration-e6b68d1cdecc4ef2-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:compilestateobject-validation-input:0:authored:migration-2e53b222bf3c2aed-0 -->A null `pGroupKey`, `pDesc` or `ppCompilerStateObject` returns `E_INVALIDARG`. The
-[compilation input and target validation contract](#input-ownership)
-defines the required description forms and shared construction rules.<!-- d3d12-review-inline:end:compiler-output:compilestateobject-validation-input:0:authored:migration-2e53b222bf3c2aed-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:compilestateobject-validation-input:0:authored:migration-2e53b222bf3c2aed-0 -->A null `pGroupKey`, `pDesc` or `ppCompilerStateObject` returns `E_INVALIDARG`. See
+[Compilation inputs and ownership](#input-ownership) for the required
+description forms, target validation and common construction rules.<!-- d3d12-review-inline:end:compiler-output:compilestateobject-validation-input:0:authored:migration-2e53b222bf3c2aed-0 --></ins>
 
 ### Parameters
 
@@ -900,9 +881,8 @@ validation failures return `E_INVALIDARG`; unsupported target capabilities can r
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compilestateobject-returns:1:authored:migration-e1b98008655bdbd2-0 -->An unsupported requested interface returns `E_NOINTERFACE`. The output pointer
 is required. That interface failure can occur after compilation and storage.<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compilestateobject-returns:1:authored:migration-e1b98008655bdbd2-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compilestateobject-returns:2:authored:migration-cc7a8beb197bc83f-0 -->Plugin and cache callback failures follow the
-[compiler error protocol](#compile-error-protocol).
-A collection with no compiled output may omit registration and have no group.<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compilestateobject-returns:2:authored:migration-cc7a8beb197bc83f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compilestateobject-returns:2:authored:migration-cc7a8beb197bc83f-0 -->See the [compiler error protocol](#compile-error-protocol) for plugin and
+cache callback failures.<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compilestateobject-returns:2:authored:migration-cc7a8beb197bc83f-0 --></ins>
 
 <a id="id3d12compiler-compileaddtostateobject"></a>
 
@@ -925,25 +905,21 @@ HRESULT CompileAddToStateObject(
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:DEL-I02-addition-operation:0:modified:operation-purpose -->Compiles an addition to an existing compiler state object.<!-- d3d12-review-inline:end:compiler-output:DEL-I02-addition-operation:0:modified:operation-purpose --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:compileaddtostateobject-completion:0:authored:migration-a457f19603c0b0cb-0 -->[Output storage](#output-storage) defines the compiled values and group mapping.
-Output selection and synchronous completion follow the
-[compiler completion contract](#compile-completion).<!-- d3d12-review-inline:end:compiler-output:compileaddtostateobject-completion:0:authored:migration-a457f19603c0b0cb-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:compileaddtostateobject-completion:0:authored:migration-a457f19603c0b0cb-0 -->See [Output storage](#output-storage) for the compiled values and group mapping.
+Output selection and synchronous completion are the same as for
+[CompilePipelineState](#compile-completion).<!-- d3d12-review-inline:end:compiler-output:compileaddtostateobject-completion:0:authored:migration-a457f19603c0b0cb-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:compileaddtostateobject-completion:1:authored:migration-e07c0c2eed202572-0 -->The returned interface and build-2 requirements follow
-[Compiler state object results](#compiler-state-object-results).<!-- d3d12-review-inline:end:compiler-output:compileaddtostateobject-completion:1:authored:migration-e07c0c2eed202572-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:compileaddtostateobject-completion:1:authored:migration-e07c0c2eed202572-0 -->See [Compiler state object results](#compiler-state-object-results) for the
+returned interface and the build-2 requirement.<!-- d3d12-review-inline:end:compiler-output:compileaddtostateobject-completion:1:authored:migration-e07c0c2eed202572-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:compileaddtostateobject-validation-input:0:authored:migration-be4b6f0c21e5194c-0 -->A null `pGroupKey`, `pAddition`, `pCompilerStateObjectToGrowFrom` or `ppNewCompilerStateObject` returns `E_INVALIDARG`. The
-[compilation input and target validation contract](#input-ownership)
-defines the required description forms and shared construction rules.<!-- d3d12-review-inline:end:compiler-output:compileaddtostateobject-validation-input:0:authored:migration-be4b6f0c21e5194c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:compileaddtostateobject-validation-input:0:authored:migration-be4b6f0c21e5194c-0 -->A null `pGroupKey`, `pAddition`, `pCompilerStateObjectToGrowFrom` or `ppNewCompilerStateObject` returns `E_INVALIDARG`. See
+[Compilation inputs and ownership](#input-ownership) for the required
+description forms, target validation and common construction rules.<!-- d3d12-review-inline:end:compiler-output:compileaddtostateobject-validation-input:0:authored:migration-be4b6f0c21e5194c-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:addition-parent:0:authored:migration-eb7112499080ad54-0 -->`pCompilerStateObjectToGrowFrom` is required and must have been created by this
 compiler. The result is a new compiler state object, not a replacement of the
-parent. Its description storage retains the parent description data. It does
-not retain the parent's API reference or guarantee the parent's plugin handle
-remains alive. The plugin retains the dependency state it needs.
-The application need not hold an addition-parent reference until the child is
-destroyed. Collections remain subject to their distinct application retention
-rule.<!-- d3d12-review-inline:end:compiler-output:addition-parent:0:authored:migration-eb7112499080ad54-0 --></ins>
+parent. See [Compilation inputs and ownership](#input-ownership) for parent
+and collection lifetimes.<!-- d3d12-review-inline:end:compiler-output:addition-parent:0:authored:migration-eb7112499080ad54-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:addition-parent:1:authored:migration-e5a2bd83817f1eaa-0 -->The base must permit additions under
 [`ALLOW_STATE_OBJECT_ADDITIONS`](state-objects.md#d3d12_state_object_flags),
@@ -952,7 +928,7 @@ and the new description must satisfy the
 
 ID3D12Device7::AddToStateObject allows an application developer to incrementally add to an existing state object during game runtime.
 
-During offline compilation, <ins><!-- d3d12-review-inline:begin:compiler-output:offline-addition-rationale:1:modified:source-46439b844e3e4190-0-0 -->CPU<!-- d3d12-review-inline:end:compiler-output:offline-addition-rationale:1:modified:source-46439b844e3e4190-0-0 --></ins> overhead during compile is much less of an issue, so these incremental additions to a base state object instead could be factored as independent state objects.  However, this may result in higher runtime memory usage than the original extended state objects that may share state, so the compiler API and state object database <ins><!-- d3d12-review-inline:begin:compiler-output:offline-addition-rationale:1:modified:source-46439b844e3e4190-1-0 -->continue<!-- d3d12-review-inline:end:compiler-output:offline-addition-rationale:1:modified:source-46439b844e3e4190-1-0 --></ins> to support both.
+During offline compilation, <ins><!-- d3d12-review-inline:begin:compiler-output:offline-addition-rationale:1:modified:source-46439b844e3e4190-0-0 -->CPU<!-- d3d12-review-inline:end:compiler-output:offline-addition-rationale:1:modified:source-46439b844e3e4190-0-0 --></ins> overhead during compile is much less of an issue, so these incremental additions to a base state object instead could be factored as independent state objects.  However, this may result in higher runtime memory usage than the original extended state objects that may share state, so the compiler API and state object database <ins><!-- d3d12-review-inline:begin:compiler-output:offline-addition-rationale:1:modified:source-46439b844e3e4190-1-0 -->support<!-- d3d12-review-inline:end:compiler-output:offline-addition-rationale:1:modified:source-46439b844e3e4190-1-0 --></ins> both.
 
 ### Parameters
 
@@ -989,8 +965,8 @@ validation failures return `E_INVALIDARG`; unsupported target capabilities can r
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compileaddtostateobject-returns:1:authored:migration-847c821ac6d6275a-0 -->An unsupported requested interface returns `E_NOINTERFACE`. The output pointer
 is required. That interface failure can occur after compilation and storage.<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compileaddtostateobject-returns:1:authored:migration-847c821ac6d6275a-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compileaddtostateobject-returns:2:authored:migration-3782a76c1037d14d-0 -->Plugin and cache callback failures follow the
-[compiler error protocol](#compile-error-protocol).<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compileaddtostateobject-returns:2:authored:migration-3782a76c1037d14d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-compileaddtostateobject-returns:2:authored:migration-3782a76c1037d14d-0 -->See the [compiler error protocol](#compile-error-protocol) for plugin and
+cache callback failures.<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-compileaddtostateobject-returns:2:authored:migration-3782a76c1037d14d-0 --></ins>
 
 <a id="id3d12compiler-getcachesession"></a>
 
@@ -1022,8 +998,8 @@ HRESULT GetCacheSession(
 ### Return values
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compiler-getcachesession-returns:0:authored:migration-903faec61fe69809-0 -->`S_OK` returns an owned reference to the requested session interface;
-`E_NOINTERFACE` reports an unsupported `riid`. A null output pointer is not a
-probe and returns `E_POINTER` at the interface query. That query clears a
+`E_NOINTERFACE` reports an unsupported `riid`. A null output pointer returns
+`E_POINTER` at the interface query. That query clears a
 valid output slot on unsupported-interface failure.<!-- d3d12-review-inline:end:compiler-output:id3d12compiler-getcachesession-returns:0:authored:migration-903faec61fe69809-0 --></ins>
 
 <a id="id3d12compilerstateobject-getcompiler"></a>
@@ -1056,8 +1032,8 @@ HRESULT GetCompiler(
 ### Return values
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilerstateobject-getcompiler-returns:0:authored:migration-58816e22ba5ea2c5-0 -->`S_OK` returns an owned reference to the compiler selected by `riid`;
-`E_NOINTERFACE` reports an unsupported interface. A null output pointer is not
-a probe and returns `E_POINTER` at the interface query. That query clears a
+`E_NOINTERFACE` reports an unsupported interface. A null output pointer returns
+`E_POINTER` at the interface query. That query clears a
 valid output slot on unsupported-interface failure.<!-- d3d12-review-inline:end:compiler-output:id3d12compilerstateobject-getcompiler-returns:0:authored:migration-58816e22ba5ea2c5-0 --></ins>
 
 <a id="id3d12compilercachesession-findgroup"></a>
@@ -1083,7 +1059,7 @@ GroupVersion is used to match State Object definitions in an SODB with a group o
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:findgroup-output:0:authored:migration-1ec38eed2ddb5e23-0 -->`pGroupKey` is required. A null `pGroupVersion` is a valid existence-only
 query. On a successful version query the output receives the stored group
-version. Failure does not promise a zero-initialized version output.
+version.
 Finding the group entry does not prove its referenced typed values exist.
 The group lookup uses the common mapping represented by the session's first
 database; callers combining existing files must supply consistent mappings.<!-- d3d12-review-inline:end:compiler-output:findgroup-output:0:authored:migration-1ec38eed2ddb5e23-0 --></ins>
@@ -1101,8 +1077,8 @@ Specify a non-null pointer to receive the version number of the group.  See <ins
 ### Return values
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findgroup-returns:0:authored:migration-0f91d40a2d288d1b-0 -->`S_OK` means the group entry exists. `DXGI_ERROR_NOT_FOUND` means it was not
-found. Database failures can also be returned. A failure does not initialize
-`pGroupVersion` to zero.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findgroup-returns:0:authored:migration-0f91d40a2d288d1b-0 --></ins>
+found. Database failures can also be returned. Failure does not guarantee that
+`pGroupVersion` is initialized to zero.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findgroup-returns:0:authored:migration-0f91d40a2d288d1b-0 --></ins>
 
 <a id="id3d12compilercachesession-findgroupvaluekeys"></a>
 
@@ -1128,9 +1104,7 @@ DXGI_ERROR_NOT_FOUND is returned if <ins><!-- d3d12-review-inline:begin:compiler
 Use a nullptr callback to determine if the group is present in the cache without actually retrieving the group keys.  This does not guarantee that the value keys are present in the cache, see [ID3D12CompilerCacheSession::FindGroupValues](#id3d12compilercachesession-findgroupvalues).
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:group-key-probe-frontier:1:authored:migration-1fe4aa2913c8269b-0 -->With a callback, each key is borrowed only until that invocation returns.
-No stable enumeration order across separate calls is specified.
-`pExpectedGroupVersion` may be null to omit the version test. Otherwise it
-supplies the expected `UINT` version, not a field embedded in `pGroupKey`.<!-- d3d12-review-inline:end:compiler-output:group-key-probe-frontier:1:authored:migration-1fe4aa2913c8269b-0 --></ins>
+No stable enumeration order across separate calls is specified.<!-- d3d12-review-inline:end:compiler-output:group-key-probe-frontier:1:authored:migration-1fe4aa2913c8269b-0 --></ins>
 
 ### Parameters
 
@@ -1185,22 +1159,13 @@ Use a nullptr callback to determine <ins><!-- d3d12-review-inline:begin:compiler
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:group-values-frontier:0:authored:migration-0a52dc0ce9988334-0 -->`ValueTypeFlags` must be nonzero, contain only declared value type bits, and
 select only types assigned to this session. Invalid masks return
-`E_INVALIDARG`. `CallbackFunc` may be null to probe without retrieving value
-buffers. The same group/version and selected-row tests apply.<!-- d3d12-review-inline:end:compiler-output:group-values-frontier:0:authored:migration-0a52dc0ce9988334-0 --></ins>
+`E_INVALIDARG`.<!-- d3d12-review-inline:end:compiler-output:group-values-frontier:0:authored:migration-0a52dc0ce9988334-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:group-values-frontier:1:authored:migration-b9c520dd698f6baa-0 -->This is a sparse enumeration of stored selected typed values. A group can
 reference keys A and B while only A has selected stored values. A query of
 that backing database can return `S_OK` and enumerate A without reporting B.
 An absent selected type does not receive a synthetic callback. Neither a null
 callback probe nor `S_OK` certifies every group key or every requested type.<!-- d3d12-review-inline:end:compiler-output:group-values-frontier:1:authored:migration-b9c520dd698f6baa-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:compiler-output:group-values-frontier:2:authored:migration-4f9f7549bfe6cf02-0 -->The lookup queries each backing database assigned at least one selected type.
-Each backing query returns `S_OK` when it finds at least one matching selected
-row, or `DXGI_ERROR_NOT_FOUND` when it finds none, including when the group or
-expected version does not match. The overall call fails if any queried backing
-database fails. Other backing queries can already have delivered callbacks.
-Success in one database does not override a failure in another, and no generic
-error priority or rollback guarantee is established.<!-- d3d12-review-inline:end:compiler-output:group-values-frontier:2:authored:migration-4f9f7549bfe6cf02-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:group-values-frontier:3:authored:migration-1dfc3c64bcc8070e-0 -->`ValueKeyIndex` is a dense rank over the value keys represented by the filtered
 selected rows of that backing query, starting at zero. A key with no selected
@@ -1233,12 +1198,14 @@ An application specified context pointer that is passed to the callback.  Use th
 
 ### Return values
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:id3d12compilercachesession-findgroupvalues-returns:0:authored:migration-b01f8a19a7c5cf8b-0 -->Each queried backing database returns `S_OK` if it has matching selected rows,
-or `DXGI_ERROR_NOT_FOUND` if it has none. The overall call succeeds only if
-all queried databases succeed. A failing query does not undo callbacks from
-other databases. Invalid masks return `E_INVALIDARG`. Other database failures
-can propagate. `S_OK` is sparse-enumeration success, not complete-group
-certification. A null callback is a legal probe with the same result rules.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-findgroupvalues-returns:0:authored:migration-b01f8a19a7c5cf8b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:group-values-frontier:2:authored:migration-4f9f7549bfe6cf02-0 -->The lookup queries each backing database assigned at least one selected type.
+Each backing query returns `S_OK` when it finds at least one matching selected
+row, or `DXGI_ERROR_NOT_FOUND` when it finds none, including when the group or
+expected version does not match. The overall call fails if any queried backing
+database fails. Other backing queries can already have delivered callbacks.
+Success in one database does not override a failure in another, and no generic
+error priority or rollback guarantee is established. Invalid masks return
+`E_INVALIDARG`. Other database failures can propagate.<!-- d3d12-review-inline:end:compiler-output:group-values-frontier:2:authored:migration-4f9f7549bfe6cf02-0 --></ins>
 
 <a id="id3d12compilercachesession-findvalue"></a>
 
@@ -1299,12 +1266,11 @@ free(values[0].Value.pValue);
 free(values[1].Value.pValue);
 ```
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:typed-value-results:0:authored:migration-2f118333d33bc07f-0 -->`pValueKey` and the typed value array must be valid for the call;
-`NumTypedValues` counts entries, not bytes. Each requested type must be a
-declared type assigned to a database in this session and may occur only once.
-Invalid, duplicate or unmapped types return `E_INVALIDARG`. Public API value
-sizes are byte counts of type `UINT`. An empty typed list is not a key-existence
-probe; request at least one named type to determine whether it is stored.<!-- d3d12-review-inline:end:compiler-output:typed-value-results:0:authored:migration-2f118333d33bc07f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:typed-value-results:0:authored:migration-2f118333d33bc07f-0 -->`pValueKey` and the typed value array must be valid for the call.
+Each requested type must be a declared type assigned to a database in this
+session and may occur only once. Invalid, duplicate or unmapped types return
+`E_INVALIDARG`. An empty typed list is not a key-existence probe; request at
+least one named type to determine whether it is stored.<!-- d3d12-review-inline:end:compiler-output:typed-value-results:0:authored:migration-2f118333d33bc07f-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:typed-value-results:1:authored:migration-53c97f9e69e0f345-0 -->A nonzero input capacity requires a non-null writable `pValue`. Zero capacity
 with no allocator requests only the size. Zero capacity with an allocator
@@ -1321,9 +1287,8 @@ is absent. Finding none of that query's requested types gives
 <ins><!-- d3d12-review-inline:begin:compiler-output:typed-value-results:3:authored:migration-5a0bfb0e4024dcdb-0 -->The session queries only databases assigned requested types. The overall call
 fails if any queried database fails, including a database with none of its
 requested types. Other databases can still supply sizes, copied bytes or
-allocations. An overall failure does not discard those outputs. There is no
-global any-type-anywhere success rule, generic error priority rule or atomic
-all-types output guarantee.<!-- d3d12-review-inline:end:compiler-output:typed-value-results:3:authored:migration-5a0bfb0e4024dcdb-0 --></ins>
+allocations. An overall failure does not discard those outputs. No generic error
+priority among databases is guaranteed.<!-- d3d12-review-inline:end:compiler-output:typed-value-results:3:authored:migration-5a0bfb0e4024dcdb-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:typed-value-results:4:authored:migration-bfb83e04044e295a-0 -->An undersized nonzero buffer returns `DXGI_ERROR_MORE_DATA` for that lookup and
 receives the required size without copying that value. Other typed values can
@@ -1464,7 +1429,7 @@ The buffers remain caller-owned and are borrowed during the call.<!-- d3d12-revi
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:storevalue-routing-failure:1:authored:migration-3430b5280ee67086-0 -->An existing key with a previously absent type can receive that type. An
 already stored `(key, type)` conflicts with a repeated store even when its
-bytes match. This is not an overwrite or success-by-equality operation.
+bytes match.
 Typed entries are routed to their assigned databases. Failure or duplication
 in one database does not roll back stores completed in another.<!-- d3d12-review-inline:end:compiler-output:storevalue-routing-failure:1:authored:migration-3430b5280ee67086-0 --></ins>
 
@@ -1514,16 +1479,12 @@ This method does not check if the value keys in the group are present in the dat
 
 Only one group with this key may be stored.  You cannot store multiple versions of a group in a single PSDB.
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:storegroup-mapping:0:authored:migration-4a51d9ae3fee4753-0 -->`pGroupKey` is required and supplies the application's group key bytes.
-`GroupVersion` is a separate `UINT`. `pValueKeys` supplies `NumValueKeys`
-entries, each with its own key byte count. A valid group store requires a
-nonempty key list. The buffers remain caller-owned and readable for the call.
-The same group key cannot be inserted again with a new version or a different
-list. A duplicate returns `DXGI_ERROR_ALREADY_EXISTS`. This call does not
-replace existing mappings.<!-- d3d12-review-inline:end:compiler-output:storegroup-mapping:0:authored:migration-4a51d9ae3fee4753-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:storegroup-mapping:0:authored:migration-4a51d9ae3fee4753-0 -->`pGroupKey` is required. A valid group store requires a nonempty value key
+list. The buffers remain caller-owned and readable for the call. The same
+group key cannot be inserted again with a new version or a different list.<!-- d3d12-review-inline:end:compiler-output:storegroup-mapping:0:authored:migration-4a51d9ae3fee4753-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:storegroup-mapping:1:authored:migration-fb93abe2f6990301-0 -->The group mapping is stored in each database entry, including entries storing
-different value types. Mapping existence does not validate referenced values.
+different value types.
 Failure after writing one database can leave other mappings unchanged;
 the call does not establish an all-files transaction or repair mismatched
 mappings across existing files.<!-- d3d12-review-inline:end:compiler-output:storegroup-mapping:1:authored:migration-fb93abe2f6990301-0 --></ins>
@@ -1553,11 +1514,145 @@ The number of value keys in the group.
 Invalid lists or database failures can fail the call. Values need not exist,
 and failure does not imply a rollback of other databases.<!-- d3d12-review-inline:end:compiler-output:id3d12compilercachesession-storegroupvaluekeys-returns:0:authored:migration-e13fa4312074065f-0 --></ins>
 
+<a id="compilation-example"></a>
+
+## Compilation example
+
+This example demonstrates how to compile a Pipeline State Object (PSO) and store it in a Precompiled Shader Database (PSDB) using the State Object Compiler API.
+
+```cpp
+    //
+    // Create the factory
+    //
+
+    Microsoft::WRL::ComPtr<ID3D12CompilerFactory> spFactory;
+    VERIFY_SUCCEEDED(D3D12CompilerCreateFactory(CompilerPluginDll, IID_PPV_ARGS(&spFactory)));
+
+    //
+    // Cache output path and type
+    //
+
+    D3D12_COMPILER_VALUE_TYPE_FLAGS compileValues =
+        D3D12_COMPILER_VALUE_TYPE_FLAGS_OBJECT_CODE | D3D12_COMPILER_VALUE_TYPE_FLAGS_METADATA;
+
+    D3D12_COMPILER_DATABASE_PATH databasePath = { compileValues, L"out.psdb" };
+
+    //
+    // Target adapter family and ABI
+    //
+
+    // Use the first available adapter family.
+    UINT AdapterFamilyIndex = 0;
+
+    // Zero targets the latest available ABI version for this adapter family.
+    UINT64 ABIVersion = 0;
+
+    const D3D12_COMPILER_TARGET target =
+    {
+        AdapterFamilyIndex,
+        ABIVersion
+    };
+
+    //
+    //  Application metadata
+    //
+
+    constexpr D3D12_APPLICATION_DESC applicationDesc =
+    {
+        L"Sample.exe",                                  // pExeFilename
+        L"Sample Application Title",                    // pName
+        {1},                                            // Version
+        L"Sample Engine Name",                          // pEngineName
+        {7}                                             // EngineVersion
+    };
+
+    //
+    // Create the Cache Session and Compiler
+    //
+
+    Microsoft::WRL::ComPtr<ID3D12CompilerCacheSession> spCompilerCacheSession;
+    VERIFY_SUCCEEDED(spFactory->CreateCompilerCacheSession(
+        &databasePath,
+        1u, // NumPaths
+        &target,
+        &applicationDesc,
+        IID_PPV_ARGS(&spCompilerCacheSession)
+    ));
+
+    Microsoft::WRL::ComPtr<ID3D12Compiler> spCompiler;
+    VERIFY_SUCCEEDED(spFactory->CreateCompiler(
+        spCompilerCacheSession.Get(),
+        IID_PPV_ARGS(&spCompiler)));
+
+    //
+    // Prepare the PSO arguments.
+    //
+
+    const D3D12_INPUT_ELEMENT_DESC DefaultILDescs[1] =
+    {
+        { "POS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+    };
+
+    const D3D12_INPUT_LAYOUT_DESC DefaultIL = { DefaultILDescs, _countof(DefaultILDescs) };
+
+    CD3DX12_DESCRIPTOR_RANGE1 DescRange[] =
+    {
+        {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0},    // t0
+        {D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0},    // u0-u1
+        {D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 2, 0} // s0-s1
+    };
+
+    CD3DX12_ROOT_PARAMETER1 rootParameters[_countof(DescRange)];
+
+    for (UINT i = 0; i < _countof(rootParameters); ++i)
+    {
+        rootParameters[i].InitAsDescriptorTable(1u, &DescRange[i], D3D12_SHADER_VISIBILITY_ALL);
+    }
+
+    CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc(_countof(rootParameters), rootParameters, 0, nullptr,
+        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT);
+
+    Microsoft::WRL::ComPtr <ID3DBlob> signature;
+    Microsoft::WRL::ComPtr <ID3DBlob> error;
+    VERIFY_SUCCEEDED(D3D12CompilerSerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error));
+
+    D3D12_SERIALIZED_ROOT_SIGNATURE_DESC serializedRootSignatureDesc = {};
+    serializedRootSignatureDesc.pSerializedBlob = signature->GetBufferPointer();
+    serializedRootSignatureDesc.SerializedBlobSizeInBytes = signature->GetBufferSize();
+
+    struct PSO_STREAM
+    {
+        CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY PrimitiveTopologyType;
+        CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT InputLayout;
+        CD3DX12_PIPELINE_STATE_STREAM_VS VS;
+        CD3DX12_PIPELINE_STATE_STREAM_PS PS;
+        CD3DX12_PIPELINE_STATE_STREAM_SERIALIZED_ROOT_SIGNATURE RootSigDesc;
+    } PSOStream =
+    {
+        D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+        DefaultIL,
+        AssignShaderBytecode(pVS),
+        AssignShaderBytecode(pPS),
+        CD3DX12_SERIALIZED_ROOT_SIGNATURE_DESC{signature->GetBufferPointer(), signature->GetBufferSize()}
+    };
+
+    D3D12_PIPELINE_STATE_STREAM_DESC StreamDesc{ sizeof(PSOStream), &PSOStream };
+
+    //
+    //  Compile the PSO and store the results with the cache session.
+    //
+
+    const UINT groupVersion = 1u;
+    const UINT keySize = static_cast<UINT>(strlen(pGroupName) + 1u);
+    D3D12_COMPILER_CACHE_GROUP_KEY groupKey = { pGroupName, keySize };
+    VERIFY_SUCCEEDED(spCompiler->CompilePipelineState(&groupKey, groupVersion, &StreamDesc));
+```
+
 <a id="invoked-ddi"></a>
 
 ## Compiler and cache DDI behavior
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-ownership:0:authored:migration-ed0f56277556ae4d-0 -->Build 2 additions use `D3D12DDIARG_ADD_TO_STATE_OBJECT_0072`, without an extra parent handle parameter.<!-- d3d12-review-inline:end:compiler-output:ddi-ownership:0:authored:migration-ed0f56277556ae4d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-ownership:0:authored:migration-ed0f56277556ae4d-0 -->The runtime calls the plugin functions in this section to create compilers and compile objects. The plugin calls the cache callbacks to find and store values and to register value keys. Build 2 additions pass `D3D12DDIARG_ADD_TO_STATE_OBJECT_0072`, which carries the parent handle.<!-- d3d12-review-inline:end:compiler-output:ddi-ownership:0:authored:migration-ed0f56277556ae4d-0 --></ins>
 
 <a id="d3d12ddi_compiler_cache_value_type"></a>
 
@@ -1654,7 +1749,7 @@ A handle type representing the plugin's compiler object.
 
 ### D3D12DDI_HRTCOMPILER
 
-A handle type representing the runtime compiler object.  <ins><!-- d3d12-review-inline:begin:compiler-output:ddi-handle-runtime-prose:0:modified:migration-2e4159a3062a2dd5-0 -->Allows compiler plugins<!-- d3d12-review-inline:end:compiler-output:ddi-handle-runtime-prose:0:modified:migration-2e4159a3062a2dd5-0 --></ins> to call back into runtime.
+A handle type representing the runtime compiler object.  Allows compiler plugins to call back into runtime.
 
 <a id="d3d12ddi_hcompilerstateobject"></a>
 
@@ -1710,8 +1805,8 @@ Handle for plugin compiler object.  Memory is allocated by the caller, and plugi
 The size query and create/destroy entries also receive the owning
 `hCompilerDDI` in the published ABI. The runtime allocates private object
 storage using the reported byte size; destruction ends the placed plugin
-object before that storage is reclaimed. The DDI create operation returns
-an `HRESULT`. A failed plugin creation fails compiler creation.<!-- d3d12-review-inline:end:compiler-output:ddi-create-runtime-handle:0:authored:migration-9c093c2102dca824-0 --></ins>
+object before that storage is reclaimed. A failing `HRESULT` from plugin
+creation fails compiler creation.<!-- d3d12-review-inline:end:compiler-output:ddi-create-runtime-handle:0:authored:migration-9c093c2102dca824-0 --></ins>
 
 <a id="pfnd3d12ddi_compiler_destroy_compiler"></a>
 
@@ -1729,7 +1824,9 @@ Handle for plugin compiler object.
 
 <a id="compiler-ddi-operation-contract"></a>
 
-### Shared compile DDI contract
+### Common compile DDI contract
+
+<a id="shared-compile-ddi-contract"></a>
 
 <!-- d3d12-review-alert:begin:compiler-output:DEL-I02-ddi-operation-association:0:authored:migration-e1bddccd4c87a3f5-0 -->
 
@@ -1742,8 +1839,8 @@ Handle for plugin compiler object.
 > | `PFND3D12DDI_COMPILER_COMPILE_CREATE_STATE_OBJECT` | [CompileStateObject](#id3d12compiler-compilestateobject) |
 > | `PFND3D12DDI_COMPILER_COMPILE_ADD_TO_STATE_OBJECT` | [CompileAddToStateObject](#id3d12compiler-compileaddtostateobject) |
 >
-> [Output storage](#output-storage), [completion](#compile-completion) and
-> [the compiler error protocol](#compile-error-protocol) define their common
+> See [Output storage](#output-storage), [completion](#compile-completion) and
+> [the compiler error protocol](#compile-error-protocol) for their common
 > operation semantics. The plugin uses [store](#pfnd3d12ddi_compiler_cache_store_value_cb)
 > and [find](#pfnd3d12ddi_compiler_cache_find_value_cb) callbacks for compiled values.
 > The [cache callback table](compiler-plugin-foundation.md#callback-table-type)
@@ -1944,7 +2041,7 @@ A compiler plugin specified context pointer that is passed to the callback.  Use
 
 **Remarks**
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-find-results:0:authored:migration-a6d6233b9c4dacb2-0 -->The callback uses the [FindValue result and buffer protocol](#id3d12compilercachesession-findvalue). Its allocator must return suitably aligned storage or null and must not let exceptions escape. The plugin frees successful allocations, including those made before a later lookup failure.<!-- d3d12-review-inline:end:compiler-output:ddi-find-results:0:authored:migration-a6d6233b9c4dacb2-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-find-results:0:authored:migration-a6d6233b9c4dacb2-0 -->See [FindValue](#id3d12compilercachesession-findvalue) for the result and buffer protocol. Its allocator must return suitably aligned storage or null and must not let exceptions escape. The plugin frees successful allocations, including those made before a later lookup failure.<!-- d3d12-review-inline:end:compiler-output:ddi-find-results:0:authored:migration-a6d6233b9c4dacb2-0 --></ins>
 
 <a id="pfnd3d12ddi_compiler_cache_store_value_cb"></a>
 
@@ -1976,11 +2073,11 @@ The number of values in the pValues array.
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:ddi-pfnd3d12ddi_compiler_cache_store_value_cb:13 -->Flags during the compile operation indicate which values must be stored.  See [D3D12DDI_COMPILER_VALUE_TYPE_FLAGS](compiler-plugin-foundation.md#callback-dependencies).  Values are optionally stored to accommodate various scenarios such as generating PDB for existing object code with a matching compiler and source or Shader Explorer only needing the performance data output.<!-- d3d12-review-inline:end:compiler-output:ddi-pfnd3d12ddi_compiler_cache_store_value_cb:13 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-store-results:0:authored:migration-7f73583285286bb5-0 -->[StoreValue](#id3d12compilercachesession-storevalue) defines the nonempty typed
+<ins><!-- d3d12-review-inline:begin:compiler-output:ddi-store-results:0:authored:migration-7f73583285286bb5-0 -->See [StoreValue](#id3d12compilercachesession-storevalue) for the nonempty typed
 input, duplicate-store and per-database result protocol. The DDI uses its
 [const value buffer layout](#d3d12ddi_compiler_cache_const_value). Input buffers
 remain plugin-owned and are consumed during the callback.
-Before successful compilation, requested value kinds must be available through the cache callbacks. The plugin may store types separately or reuse stored values. It handles store failures and need not undo earlier successful stores.<!-- d3d12-review-inline:end:compiler-output:ddi-store-results:0:authored:migration-7f73583285286bb5-0 --></ins>
+Before a compile function returns success, the plugin must make every requested value type available through the cache callbacks, by storing it or by reusing a stored value. The plugin may store types separately. It handles store failures and need not undo earlier successful stores.<!-- d3d12-review-inline:end:compiler-output:ddi-store-results:0:authored:migration-7f73583285286bb5-0 --></ins>
 
 <a id="pfnd3d12ddi_compiler_cache_set_object_value_keys_cb"></a>
 
@@ -2011,137 +2108,3 @@ This stored list specifies the values that the driver receives during title coop
 <ins><!-- d3d12-review-inline:begin:compiler-output:ddi-group-completion:0:authored:migration-b8bb25b5a6e20cb7-0 -->The callback associates vendor-generated `pValueKeys` with the API application key and GroupVersion. Registration does not verify that all requested value kinds exist.<!-- d3d12-review-inline:end:compiler-output:ddi-group-completion:0:authored:migration-b8bb25b5a6e20cb7-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-output:ddi-group-completion:1:authored:migration-c91c85cd5c203a0e-0 -->The host accepts an already-existing-group result from this callback and returns other group store failures to the plugin.<!-- d3d12-review-inline:end:compiler-output:ddi-group-completion:1:authored:migration-c91c85cd5c203a0e-0 --></ins>
-
-<a id="compilation-example"></a>
-
-## Compilation example
-
-This example demonstrates how to compile a Pipeline State Object (PSO) and store it in a Precompiled Shader Database (PSDB) using the State Object Compiler API.
-
-```cpp
-    //
-    // Create the factory
-    //
-
-    Microsoft::WRL::ComPtr<ID3D12CompilerFactory> spFactory;
-    VERIFY_SUCCEEDED(D3D12CompilerCreateFactory(CompilerPluginDll, IID_PPV_ARGS(&spFactory)));
-
-    //
-    // Cache output path and type
-    //
-
-    D3D12_COMPILER_VALUE_TYPE_FLAGS compileValues =
-        D3D12_COMPILER_VALUE_TYPE_FLAGS_OBJECT_CODE | D3D12_COMPILER_VALUE_TYPE_FLAGS_METADATA;
-
-    D3D12_COMPILER_DATABASE_PATH databasePath = { compileValues, L"out.psdb" };
-
-    //
-    // Target adapter family and ABI
-    //
-
-    // Use the first available adapter family.
-    UINT AdapterFamilyIndex = 0;
-
-    // Zero targets the latest available ABI version for this adapter family.
-    UINT64 ABIVersion = 0;
-
-    const D3D12_COMPILER_TARGET target =
-    {
-        AdapterFamilyIndex,
-        ABIVersion
-    };
-
-    //
-    //  Application metadata
-    //
-
-    constexpr D3D12_APPLICATION_DESC applicationDesc =
-    {
-        L"Sample.exe",                                  // pExeFilename
-        L"Sample Application Title",                    // pName
-        {1},                                            // Version
-        L"Sample Engine Name",                          // pEngineName
-        {7}                                             // EngineVersion
-    };
-
-    //
-    // Create the Cache Session and Compiler
-    //
-
-    Microsoft::WRL::ComPtr<ID3D12CompilerCacheSession> spCompilerCacheSession;
-    VERIFY_SUCCEEDED(spFactory->CreateCompilerCacheSession(
-        &databasePath,
-        1u, // NumPaths
-        &target,
-        &applicationDesc,
-        IID_PPV_ARGS(&spCompilerCacheSession)
-    ));
-
-    Microsoft::WRL::ComPtr<ID3D12Compiler> spCompiler;
-    VERIFY_SUCCEEDED(spFactory->CreateCompiler(
-        spCompilerCacheSession.Get(),
-        IID_PPV_ARGS(&spCompiler)));
-
-    //
-    // Prepare the PSO arguments.
-    //
-
-    const D3D12_INPUT_ELEMENT_DESC DefaultILDescs[1] =
-    {
-        { "POS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-    };
-
-    const D3D12_INPUT_LAYOUT_DESC DefaultIL = { DefaultILDescs, _countof(DefaultILDescs) };
-
-    CD3DX12_DESCRIPTOR_RANGE1 DescRange[] =
-    {
-        {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0},    // t0
-        {D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0},    // u0-u1
-        {D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 2, 0} // s0-s1
-    };
-
-    CD3DX12_ROOT_PARAMETER1 rootParameters[_countof(DescRange)];
-
-    for (UINT i = 0; i < _countof(rootParameters); ++i)
-    {
-        rootParameters[i].InitAsDescriptorTable(1u, &DescRange[i], D3D12_SHADER_VISIBILITY_ALL);
-    }
-
-    CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc(_countof(rootParameters), rootParameters, 0, nullptr,
-        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT);
-
-    Microsoft::WRL::ComPtr <ID3DBlob> signature;
-    Microsoft::WRL::ComPtr <ID3DBlob> error;
-    VERIFY_SUCCEEDED(D3D12CompilerSerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error));
-
-    D3D12_SERIALIZED_ROOT_SIGNATURE_DESC serializedRootSignatureDesc = {};
-    serializedRootSignatureDesc.pSerializedBlob = signature->GetBufferPointer();
-    serializedRootSignatureDesc.SerializedBlobSizeInBytes = signature->GetBufferSize();
-
-    struct PSO_STREAM
-    {
-        CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY PrimitiveTopologyType;
-        CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT InputLayout;
-        CD3DX12_PIPELINE_STATE_STREAM_VS VS;
-        CD3DX12_PIPELINE_STATE_STREAM_PS PS;
-        CD3DX12_PIPELINE_STATE_STREAM_SERIALIZED_ROOT_SIGNATURE RootSigDesc;
-    } PSOStream =
-    {
-        D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-        DefaultIL,
-        AssignShaderBytecode(pVS),
-        AssignShaderBytecode(pPS),
-        CD3DX12_SERIALIZED_ROOT_SIGNATURE_DESC{signature->GetBufferPointer(), signature->GetBufferSize()}
-    };
-
-    D3D12_PIPELINE_STATE_STREAM_DESC StreamDesc{ sizeof(PSOStream), &PSOStream };
-
-    //
-    //  Compile the PSO and store the results with the cache session.
-    //
-
-    const UINT groupVersion = 1u;
-    const UINT keySize = static_cast<UINT>(strlen(pGroupName) + 1u);
-    D3D12_COMPILER_CACHE_GROUP_KEY groupKey = { pGroupName, keySize };
-    VERIFY_SUCCEEDED(spCompiler->CompilePipelineState(&groupKey, groupVersion, &StreamDesc));
-```

@@ -2091,7 +2091,9 @@ Returns the GPU descriptor handle that represents the start of the heap. The hea
 
 <a id="copy-behavior"></a>
 
-### Shared copy behavior
+### Common copy behavior
+
+<a id="shared-copy-behavior"></a>
 
 CopyDescriptors on the device interface uses the CPU to immediately copy
 descriptors. This can be called free threaded as long as multiple
@@ -2153,7 +2155,7 @@ void CopyDescriptors(
 
 Copies descriptors from a source to a destination.
 
-The [shared copy rules](#copy-behavior) apply. This is an immediate CPU operation, not a queued GPU resource copy.
+The [common copy rules](#copy-behavior) apply. This is an immediate CPU operation, not a queued GPU resource copy.
 
 #### Parameters
 
@@ -2215,7 +2217,7 @@ void CopyDescriptorsSimple(
 
 Copies descriptors from a source to a destination.
 
-The [shared copy rules](#copy-behavior) apply. This is an immediate CPU operation, not a queued GPU resource copy.
+The [common copy rules](#copy-behavior) apply. This is an immediate CPU operation, not a queued GPU resource copy.
 
 #### Parameters
 
@@ -2869,7 +2871,19 @@ typedef struct D3D12_TEX2D_ARRAY_UAV
 } D3D12_TEX2D_ARRAY_UAV;
 ```
 
-#### D3D12_TEX2DMS_UAV
+<a id="multisampled-texture-uavs"></a>
+
+#### Multisampled texture UAVs
+
+Shader access through `RWTexture2DMS<Type, Samples>` and `RWTexture2DMSArray<Type, Samples>` requires Shader Model 6.7 or later and [`D3D12_FEATURE_DATA_D3D12_OPTIONS14::WriteableMSAATexturesSupported`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options14).
+
+`Type` specifies the HLSL resource element type and `Samples` specifies the sample count. Both template arguments are required.
+
+These shader objects have the methods of `Texture2DMS` and `Texture2DMSArray`, respectively, but their subscript operations return writable resource variables. `texture[pos]` selects sample zero. `texture.sample[sampleIndex][pos]` selects the given sample index. `sampleIndex` is `uint`. `pos` is `uint2` for `RWTexture2DMS` and `uint3` for `RWTexture2DMSArray`.
+
+See [writable multisampled resource creation](resources.md#writable-msaa) for resource flag requirements.
+
+##### D3D12_TEX2DMS_UAV
 
 ```cpp
 typedef struct D3D12_TEX2DMS_UAV
@@ -2878,7 +2892,7 @@ typedef struct D3D12_TEX2DMS_UAV
 } D3D12_TEX2DMS_UAV;
 ```
 
-#### D3D12_TEX2DMS_ARRAY_UAV
+##### D3D12_TEX2DMS_ARRAY_UAV
 
 ```cpp
 typedef struct D3D12_TEX2DMS_ARRAY_UAV
@@ -2914,7 +2928,7 @@ typedef struct D3D12_BUFFER_UAV_BYTE_OFFSET
 } D3D12_BUFFER_UAV_BYTE_OFFSET;
 ```
 
-The byte range, structure stride and flags follow the [byte-offset buffer view contract](#byte-offset-buffer-views). `CounterOffsetInBytes` follows the [shared counter requirements](#uav-counter-offset).
+The byte range, structure stride and flags follow the [byte-offset buffer view contract](#byte-offset-buffer-views). `CounterOffsetInBytes` follows the [common counter requirements](#uav-counter-offset).
 
 #### D3D12_UNORDERED_ACCESS_VIEW_DESC
 
@@ -3124,6 +3138,8 @@ For purposes of sampler feedback, creates a descriptor suitable for binding.
 At least one of `pTargetedResource` and `pFeedbackResource` must be non-null. When both are present, their logical width, height, mip count and array size must match the feedback pairing requirements. The feedback resource uses one of the opaque sampler feedback formats, see [feedback resource creation](resources.md#extended-description). `D3D12_FEATURE_DATA_D3D12_OPTIONS7.SamplerFeedbackTier` must report sampler feedback support, as defined by the [feature capability](common-shader-internals.md#feedback-capability-tiers). A permitted null resource parameter is not an uninitialized descriptor binding.
 
 Feedback map UAVs may be created against a NULL paired texture. Writes through a feedback UAV descriptor created with a NULL paired texture have no effect.
+
+A feedback map cannot be bound as a typical UAV; it is not eligible for the general-purpose reads and writes normally available with typical UAVs. Instead, it is bound as a special-purpose UAV with a special-purpose API.
 
 #### Parameters
 
@@ -3624,7 +3640,7 @@ Creates a sampler at `DestDescriptor` from `pDesc`, using `D3D12_SAMPLER_DESC2` 
 
 #### Parameters
 
-`pDesc` points to the sampler description. Its fields and flags follow the [sampler contract](#samplers). `DestDescriptor` selects a slot in a sampler heap as defined by the [shared destination requirements](#descriptor-creation).
+`pDesc` points to the sampler description. Its fields and flags follow the [sampler contract](#samplers). `DestDescriptor` selects a slot in a sampler heap as defined by the [common destination requirements](#descriptor-creation).
 
 #### Return values
 

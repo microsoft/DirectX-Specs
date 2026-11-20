@@ -84,14 +84,11 @@ CREATE TABLE app_id (id INTEGER NOT NULL PRIMARY KEY , exe TEXT NOT NULL ,app_na
 ## Tables and relationships
 
 <ins><!-- d3d12-review-inline:begin:sodb-input-format:schema-mapping:0:authored:migration-a4331bfaaf35a380-0 -->`groups` maps an application-selected object key to an object version and the
-pipeline state (`PSOKey`) or state object (`SOKey`) record. The `Key` primary key
-is shared across those object kinds. It is not a composite of key and version.
-The API's single stored version is represented by the group's `Version`, not
-by `PRAGMA user_version`.<!-- d3d12-review-inline:end:sodb-input-format:schema-mapping:0:authored:migration-a4331bfaaf35a380-0 --></ins>
+pipeline state (`PSOKey`) or state object (`SOKey`) record. The `Key` primary key uses one namespace for those object kinds. It is not a composite of key and version.
+The API's single stored version is represented by the group's `Version`.<!-- d3d12-review-inline:end:sodb-input-format:schema-mapping:0:authored:migration-a4331bfaaf35a380-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sodb-input-format:schema-mapping:1:authored:migration-de4d0b45e5107d3b-0 -->Export selection and association records are part of the
-[stored dependency graph](state-object-databases-and-identity.md#keys-and-versions),
-not incidental ordering to be discarded.<!-- d3d12-review-inline:end:sodb-input-format:schema-mapping:1:authored:migration-de4d0b45e5107d3b-0 --></ins>
+[stored dependency graph](state-object-databases-and-identity.md#keys-and-versions).<!-- d3d12-review-inline:end:sodb-input-format:schema-mapping:1:authored:migration-de4d0b45e5107d3b-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sodb-input-format:schema-mapping:2:authored:migration-922b0eaf17d927c8-0 -->`shader_bytecode.Bytecode` and `root_signatures.value` are
 [opaque input blobs](state-object-databases-and-identity.md#database-inputs).<!-- d3d12-review-inline:end:sodb-input-format:schema-mapping:2:authored:migration-922b0eaf17d927c8-0 --></ins>

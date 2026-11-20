@@ -2,7 +2,7 @@
 
 # Amplification and mesh shaders
 
-A mesh graphics pipeline executes a mesh shader (MS), optionally preceded by an amplification shader (AS), instead of the traditional VS-based geometry path. The mesh stage supplies vertices and primitives to the rasterizer. It does not use fixed-function input assembly and does not support stream output. [Mesh pipeline creation](pipeline-state.md#mesh-pipelines), [graphics root-signature compatibility](binding.md#pipeline-compatibility) and [initial/reset/bundle pipeline selection](command-list-state.md#pipeline-selection) define the shared selection and binding contracts.
+A mesh graphics pipeline executes a mesh shader (MS), optionally preceded by an amplification shader (AS), instead of the traditional VS-based geometry path. The mesh stage supplies vertices and primitives to the rasterizer. It does not use fixed-function input assembly and does not support stream output. [Mesh pipeline creation](pipeline-state.md#mesh-pipelines), [graphics root-signature compatibility](binding.md#pipeline-compatibility) and [initial/reset/bundle pipeline selection](command-list-state.md#pipeline-selection) define the common selection and binding contracts.
 
 The current amplification/mesh driver object creation/sizing/destruction contracts
 are defined with [pipeline component creation](pipeline-state.md#driver-shader-objects)
@@ -144,7 +144,7 @@ typedef enum D3D12_MESH_SHADER_TIER
 
 `D3D12_TRI_STATE` and its culled-primitive capability interpretation are defined in [Counters, queries, and predication](counters-queries-and-predication.md#d3d12_tri_state).
 
-The complete [`D3D12_FEATURE_DATA_D3D12_OPTIONS12` declaration](devices-and-capabilities.md#d3d12_feature_data_d3d12_options12) is shared with enhanced barrier support. Its `MSPrimitivesPipelineStatisticIncludesCulledPrimitives` member uses `D3D12_TRI_STATE` and has the mesh-specific meaning defined [by the query contract](counters-queries-and-predication.md#culled-primitives).
+The complete [`D3D12_FEATURE_DATA_D3D12_OPTIONS12` declaration](devices-and-capabilities.md#d3d12_feature_data_d3d12_options12) also includes enhanced barrier capability reporting. Its `MSPrimitivesPipelineStatisticIncludesCulledPrimitives` member uses `D3D12_TRI_STATE` and has the mesh-specific meaning defined [by the query contract](counters-queries-and-predication.md#culled-primitives).
 
 `MeshShaderTier` other than `D3D12_MESH_SHADER_TIER_NOT_SUPPORTED` advertises AS/MS support. The shader stages begin with `as_6_5` and `ms_6_5` or newer, and they use DXIL. `OPTIONS9.MeshShaderPipelineStatsSupported` indicates whether [AS/MS statistics fields](counters-queries-and-predication.md#mesh-statistics) are supported. `MeshShaderSupportsFullRangeRenderTargetArrayIndex` indicates whether [render target array index](#render-target-array-index) has full or limited range. `MSPrimitivesPipelineStatisticIncludesCulledPrimitives` describes the [culled-primitive statistic](counters-queries-and-predication.md#culled-primitives). `DerivativesInMeshAndAmplificationShadersSupported` gates [derivative-dependent operations](#derivatives). `OPTIONS10.MeshShaderPerPrimitiveShadingRateSupported` gates mesh output of `SV_ShadingRate`.
 
@@ -208,7 +208,7 @@ void DispatchMesh(
 ### Behavior
 
 DispatchMesh launches the threadgroups for the amplification shader or the mesh shader in a case where no amplification shader is attached.
-The API group counts follow the [shared mesh grid limits](compute.md#shared-grid-limits), including the capability-conditioned one-dimensional X limit and independent 22-bit total.
+The API group counts follow the [common mesh grid limits](compute.md#shared-grid-limits), including the capability-conditioned one-dimensional X limit and independent 22-bit total.
 
 If there is an amplification shader, it will internally use an HLSL version of DispatchMesh to launch child mesh groups. The separate [grid limits](compute.md#shared-grid-limits) apply.
 
@@ -797,7 +797,7 @@ The intended use is to have the whole group of threads cooperate on constructing
 It also means that you cannot amplify the number of unique MeshPayload contents
 beyond the number of Amplification shader groups launched by the API.
 
-The child group counts follow the [shared mesh grid limits](compute.md#shared-grid-limits), including the expanded one-dimensional X capability and independent 22-bit total. Violating those constraints produces undefined behavior.
+The child group counts follow the [common mesh grid limits](compute.md#shared-grid-limits), including the expanded one-dimensional X capability and independent 22-bit total. Violating those constraints produces undefined behavior.
 
 A payload of data passed to all instances of Mesh shaders invoked by this
 call is passed through the MeshPayload parameter.
@@ -910,7 +910,7 @@ for each primitive. So this behaves no differently than any other mesh shader pr
 without a special name. The basic purpose here is to allow pixel shaders
 that were written to work with other shaders like geometry shaders,
 where SV_PrimitiveID does exist, or vertex shaders, where the PrimitiveID is auto-generated,
-to be shared with the mesh shader as well.
+to be used with the mesh shader as well.
 
 <a id="derivatives"></a>
 

@@ -20,7 +20,7 @@ paths, capability-dependent behavior, and relevant compatibility history.
 Shader model availability and D3D12 applicability are distinct.
 
 The DXIL specification and its shader model 6.x contracts are also in scope as
-a supporting appendix. Shared API, DDI, and hardware requirements have canonical
+a supporting appendix. Common API, DDI, and hardware requirements have canonical
 definitions in the main chapters, referenced by the shader appendices.
 Main stage chapters describe overall behavior for both shader representations;
 the DXIL appendix supplies the complete behavior reference for every intrinsic.
@@ -31,9 +31,9 @@ the DXIL appendix supplies the complete behavior reference for every intrinsic.
 
 | Chapter | Current coverage |
 |---|---|
-| [Devices, feature levels and capabilities](devices-and-capabilities.md) | Shared API result codes; adapter/device/node identity; ordinary and independent creation/configuration; runtime selection and SDK lifetime; feature queries, capability catalog and driver reporting; integrated [runtime and driver initialization](devices-and-capabilities.md#runtime-driver-initialization) |
+| [Devices, feature levels and capabilities](devices-and-capabilities.md) | Common API result codes; adapter/device/node identity; ordinary and independent creation/configuration; runtime selection and SDK lifetime; feature queries, capability catalog and driver reporting; integrated [runtime and driver initialization](devices-and-capabilities.md#runtime-driver-initialization) |
 | [Resources and memory](resources.md) | Resource/heap ownership, creation/allocation and residency; reserved/tiled resource shapes, packed mips, tier access, tiling queries and queue mappings; CPU mapping and current driver sizing/create/open/destroy contracts |
-| [Formats](formats.md) | Format interpretation/casting and BC1-BC7 layout/decoding; logical planes and staging representations; format support queries and selected driver reporting contracts |
+| [Formats](formats.md) | Format interpretation/casting and BC1-BC7 layout/decoding; opaque sampler feedback formats; logical planes and staging representations; format support queries and selected driver reporting contracts |
 | [Resource binding and root signatures](binding.md) | Descriptor heaps/tables/handles, view descriptions and creation, root arguments and signature versions, static/data promises, direct indexing, sampler extensions, APIs and selected driver contracts |
 | [Command queues](command-queues.md) | <ins><!-- d3d12-review-inline:begin:index:command-queue-route:0:authored:coverage -->Queue creation, grouping and dynamic priorities; runtime and driver queue lifetimes<!-- d3d12-review-inline:end:index:command-queue-route:0:authored:coverage --></ins> |
 | [Command recording and execution](execution.md) | Application and driver recording/storage lifecycle, submission transport and fence contracts, completion/lifetime and barrier interactions; [command queues](command-queues.md) and [meta commands](meta-commands.md) retain their conceptual references |
@@ -41,13 +41,15 @@ the DXIL appendix supplies the complete behavior reference for every intrinsic.
 | [Synchronization and barriers](synchronization.md) | Common foundations; enhanced barriers first; legacy states/barriers and promotion/decay; model interoperation and driver translation |
 | [Fence barriers](fence-barriers.md) | Barrier signals, scoped waits, capability and cache-coherency requirements, with common fence kinds defined in execution |
 
-### Shared shader rules and compute
+### Common shader rules and compute
+
+<a id="shared-shader-rules-and-compute"></a>
 
 | Chapter | Current coverage |
 |---|---|
 | [Numeric and data rules](numeric-and-data-rules.md) | Inherited floating-point representations/arithmetic, ULP/tolerances, normalized/integer/fixed-point/sRGB and packed-float conversions; native FP16 and scoped shader FP32 denormal control |
-| [Common shader internals](common-shader-internals.md) | Shared execution and DXBC/DXIL program/storage/resource models; texture addressing/filtering/LOD/anisotropy/comparison/gather, precision and shader-visible feedback; stage-specific groups/quads/helpers retain their owners |
-| [Compute execution](compute.md) | Thread groups and IDs, DXBC/DXIL models, per-group TGSM allocation/lifetime, waves and quad derivatives; full Dispatch API and shared grid limits |
+| [Common shader internals](common-shader-internals.md) | Common execution and DXBC/DXIL program/storage/resource models; texture addressing/filtering/LOD/anisotropy/comparison/gather, precision and shader-visible feedback; stage-specific groups/quads/helpers retain their owners |
+| [Compute execution](compute.md) | Thread groups and IDs, DXBC/DXIL models, per-group TGSM allocation/lifetime, waves and quad derivatives; full Dispatch API and common grid limits |
 | [Memory model](memory-model.md) | **Provisional; substantial revision required.** Relocated shader memory consistency, atomics/coherency, shader barriers and shared-access rules; not a complete general model |
 
 ### Graphics pipeline
@@ -55,7 +57,7 @@ the DXIL appendix supplies the complete behavior reference for every intrinsic.
 | Chapter | Current coverage |
 |---|---|
 | [Pipeline state and shader linkage](pipeline-state.md) | Ordinary graphics/compute PSO descriptions and streams, supporting state, shader/root compatibility, cache blobs, selection and selected driver contracts |
-| [Input assembly and vertex processing](vertex-processing.md) | IA/direct draws, fetching and primitive assembly, generated IDs, VS, shared interface capacities and view instancing rules, and selected driver responsibilities |
+| [Input assembly and vertex processing](vertex-processing.md) | IA/direct draws, fetching and primitive assembly, generated IDs, VS, common interface capacities and view instancing rules, and selected driver responsibilities |
 | [Tessellation: hull and domain processing](tessellation.md) | DXIL/DXBC HS models, fixed-function patterns and factor processing, precision/watertightness, patch routing, DS and selected driver responsibilities |
 | [Geometry shaders and stream output](geometry-shaders-and-stream-output.md) | Invocation/streams/emission and output budgets, DXBC/DXIL models, PSO capture declarations, SO target/counter binding, whole-primitive overflow, canonical query links and selected driver responsibilities |
 | [Amplification and mesh shaders](amplification-and-mesh-shaders.md) | AS/MS groups, payloads, output/connectivity/attribute/storage rules, DXIL model, DispatchMesh, view/culling/order, canonical statistics links and selected driver responsibilities |
@@ -75,9 +77,9 @@ the DXIL appendix supplies the complete behavior reference for every intrinsic.
 
 | Chapter | Current coverage |
 |---|---|
-| [State objects](state-objects.md) | Shared collections/libraries/exports, subobjects and association/link rules; raytracing, work graph and generic program construction, incremental addition, selected properties/program identifiers, selection and published driver contracts |
+| [State objects](state-objects.md) | Common collections/libraries/exports, subobjects and association/link rules; raytracing, work graph and generic program construction, incremental addition, selected properties/program identifiers, selection and published driver contracts |
 | [Acceleration structures](acceleration-structures.md) | BLAS/TLAS geometry and instances, representation/determinism, build/update/sizing, opaque storage and specialized copy/postbuild/serialization/matching; opacity-micromap construction/encoding/linkage, five APIs and published driver contracts |
-| [Ray traversal and inline raytracing](ray-traversal.md) | Ray descriptions/extents, fixed-function intersection/watertightness, mask/flag/opacity/OMM behavior, complete RayQuery state/operation model and shared stored-result concepts |
+| [Ray traversal and inline raytracing](ray-traversal.md) | Ray descriptions/extents, fixed-function intersection/watertightness, mask/flag/opacity/OMM behavior, complete RayQuery state/operation model and common stored-result concepts |
 | [Raytracing shader pipelines, tables and execution reordering](raytracing-pipelines.md) | Six shader stages, dynamic calls/payload qualifiers, identifiers/records/table indexing, DispatchRays, recursion/stack properties and full shipped HitObject/SER behavior, with published driver responsibilities |
 | [Work graph execution](work-graphs.md) | Compute node launch modes, typed/empty records, allocation/completion/sharing, graph budgets, CPU/GPU dispatch inputs, node/entrypoint reflection, published handoff and driver scheduling |
 
@@ -100,3 +102,10 @@ the DXIL appendix supplies the complete behavior reference for every intrinsic.
 |---|---|
 | [Diagnostics](diagnostics.md) | Device removal reporting/recovery and DRED settings/records; debug controller configuration, object names, InfoQueue/messages; object-scoped feature/parameter controls, live object reports and resource assertions |
 | [Sharing and interoperability](sharing-and-interoperability.md) | Shared backing and NT handles; process/device/adapter and cross-API compatibility; shared resource/heap metadata creation and reflection; canonical resource/fence/state forwards and published open ABI |
+
+### Shader appendices
+
+| Appendix | Current coverage |
+|---|---|
+| [DXBC reference](dxbc.md) | Rounding instruction mappings, sampling operand layouts, LOD control forms, mapping status and clamp encodings, gather selectors and programmable gather offsets |
+| [DXIL reference](dxil.md) | Fixed/ranged wave size properties and helper participation feature flag; floating-point classification overload availability; sampler feedback intrinsics and metadata; native vector buffer intrinsics, generic intrinsic forms, supported overloads, vector reductions and dot products |

@@ -35,26 +35,25 @@ BUNDLE is not a queue creation type. NONE selects the
 [synchronization-only queue](execution.md#synchronization-only-queues),
 not a command list execution queue.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-004:0:authored:migration-8549109e9cdfadda-0 -->`Priority` selects one of the three named `D3D12_COMMAND_QUEUE_PRIORITY`
+`Priority` selects one of the three named `D3D12_COMMAND_QUEUE_PRIORITY`
 values. NORMAL and HIGH describe process-relative priority; GLOBAL_REALTIME
-requests global realtime priority. The [compatibility grouped-queue
-omission and separate UMD request](execution.md#queue-creation-priority)
-and the [opt-in group override](execution.md#dynamic-queue-priority)
-qualify how creation priority is applied. The INT field does not admit
-arbitrary unnamed priority values.<!-- d3d12-review-inline:end:command-queues:QA-004:0:authored:migration-8549109e9cdfadda-0 --></ins>
+requests global realtime priority. See [Creation priority for grouped queues](execution.md#queue-creation-priority)
+and [Dynamic queue priority](execution.md#dynamic-queue-priority)
+for how grouping affects creation priority. The INT field does not admit
+arbitrary unnamed priority values.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-005:0:authored:migration-40184d39b792c273-0 -->`D3D12_COMMAND_QUEUE_FLAG_NONE` indicates a default command queue.
+`D3D12_COMMAND_QUEUE_FLAG_NONE` indicates a default command queue.
 `D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT` indicates that the GPU
 timeout should be disabled for this command queue.
 `D3D12_COMMAND_QUEUE_FLAG_ALLOW_DYNAMIC_PRIORITY` permits the priority
 setters and selects the [opt-in grouping/priority contract](execution.md#dynamic-queue-priority).
-Unrecognized flag bits are invalid.<!-- d3d12-review-inline:end:command-queues:QA-005:0:authored:migration-40184d39b792c273-0 --></ins>
+Unrecognized flag bits are invalid.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-006:0:authored:migration-e4f090c9958cefc3-0 -->`NodeMask` selects one API-visible node. Zero selects node zero and is
+`NodeMask` selects one API-visible node. Zero selects node zero and is
 normalized to its one-bit mask. A nonzero mask must contain exactly one
 valid node bit. API node selection and the driver's implicit physical adapter
 broadcast mask are distinct. See [device nodes](devices-and-capabilities.md#identity)
-and [queue fence operation broadcast](execution.md#queue-signal-wait).<!-- d3d12-review-inline:end:command-queues:QA-006:0:authored:migration-e4f090c9958cefc3-0 --></ins>
+and [queue fence operation broadcast](execution.md#queue-signal-wait).
 
 <a id="creator-ids"></a>
 
@@ -62,43 +61,43 @@ and [queue fence operation broadcast](execution.md#queue-signal-wait).<!-- d3d12
 
 When multiple components in the same process are sharing a single Direct3D 12 device, often they will end up with separate workloads on independent command queues. In some hardware implementations, independent queues can run in parallel only with specific other command queues.
 
-Direct3D 12 applies a first-come, first-serve grouping for queues, which might not work well for all application or component designs. To help inform Direct3D 12's grouping of queues, you can specify a *creator ID* (which is unique per component) that restricts the grouping to other queues with the same ID. When possible, a component should choose the same unique ID for all of its queues. Microsoft has reserved a few well-known creator IDs for use by Microsoft-developed implementations of APIs on top of Direct3D 12.
+Direct3D 12 applies a first-come, first-serve grouping for queues, which might not work well for all application or component designs. To help inform Direct3D 12's grouping of queues, applications can specify a *creator ID* (which is unique per component) that restricts the grouping to other queues with the same ID. When possible, a component should choose the same unique ID for all of its queues. Microsoft has reserved a few well-known creator IDs for use by Microsoft-developed implementations of APIs on top of Direct3D 12.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-009:0:authored:migration-1224410d4fe00d3a-0 -->[`CreateCommandQueue`](#id3d12device-createcommandqueue) uses the zero creator GUID.
-[`CreateCommandQueue1`](#id3d12device9-createcommandqueue1) supplies the component's chosen creator GUID.<!-- d3d12-review-inline:end:command-queues:QA-009:0:authored:migration-1224410d4fe00d3a-0 --></ins>
+[`CreateCommandQueue`](#id3d12device-createcommandqueue) uses the zero creator GUID.
+[`CreateCommandQueue1`](#id3d12device9-createcommandqueue1) supplies the component's chosen creator GUID.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-010:0:authored:migration-41260c3036140203-0 -->Hardware scheduling groups for DIRECT/COMPUTE queues are partitioned by
-node and creator ID. Opt-in dynamic priority queues do not share a group
-with queues lacking the flag.<!-- d3d12-review-inline:end:command-queues:QA-010:0:authored:migration-41260c3036140203-0 --></ins>
+Hardware scheduling groups for DIRECT/COMPUTE queues are partitioned by
+node, creator ID, and the presence/absence of the dynamic priority flag.
 
 The scheduling groups can hold up to 1 `DIRECT` queue and up to `ComputeQueuesPer3DQueue` compute queues, before they become full. Once they are full, a new scheduling group is created as the next queue of these types is created.
 
 At queue creation, the runtime looks for a non-full scheduling group from the first to the last existing scheduling groups in creation order to associate the new queue with, or creates a new one if no suitable scheduling group was found.
 
-Deleting a command queue <ins><!-- d3d12-review-inline:begin:command-queues:QA-013:0:modified:source-43e245a0aaa3a32d-0-0 -->in<!-- d3d12-review-inline:end:command-queues:QA-013:0:modified:source-43e245a0aaa3a32d-0-0 --></ins> a scheduling group<ins><!-- d3d12-review-inline:begin:command-queues:QA-013:0:modified:source-43e245a0aaa3a32d-0-1 --> with surviving queues<!-- d3d12-review-inline:end:command-queues:QA-013:0:modified:source-43e245a0aaa3a32d-0-1 --></ins> will open up a spot in an otherwise possibly full scheduling group, and the next queue created will be able to take up this spot and prevent creation of a new scheduling group if no other spots were available.
+Deleting a command queue in a scheduling group with surviving queues will open up a spot in an otherwise possibly full scheduling group, and the next queue created will be able to take up this spot and prevent creation of a new scheduling group if no other spots were available.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-014:0:authored:migration-b6be82989a9aa2a6-0 -->See the [grouping query](execution.md#hardware-scheduling-queue-groupings)
+See the [grouping query](execution.md#hardware-scheduling-queue-groupings)
 for the reported COMPUTE capacity and [dynamic queue priority](execution.md#dynamic-queue-priority)
-for the priority override when an opt-in queue joins an existing group.<!-- d3d12-review-inline:end:command-queues:QA-014:0:authored:migration-b6be82989a9aa2a6-0 --></ins>
+for the priority override when an opt-in queue joins an existing group.
 
 <a id="queue-creation-results"></a>
 
-## Shared creation requirements and results
+## Common creation requirements and results
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-015:0:authored:migration-19cb3a3d82c1c5b4-0 -->Both creation methods require a valid `pDesc` and a writable
-`ppCommandQueue`. They create an interface selected by `riid`, normally
-`ID3D12CommandQueue`. A null output pointer is not a specified
-validation-only `S_FALSE` operation.<!-- d3d12-review-inline:end:command-queues:QA-015:0:authored:migration-19cb3a3d82c1c5b4-0 --></ins>
+<a id="shared-creation-requirements-and-results"></a>
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-016:0:authored:migration-7e9afe3d37c66fba-0 -->Successful object creation returns `S_OK`. A null description pointer or
-invalid queue types, priorities, flag bits or node masks return `E_INVALIDARG`;
-an unsupported video queue type also fails validation. Insufficient
-global realtime privilege returns `DXGI_ERROR_ACCESS_DENIED`; absence of
+Both creation methods require a valid `pDesc`. `ppCommandQueue` is optional.
+When non-NULL, it must point to writable storage that receives the interface
+selected by `riid`, normally `ID3D12CommandQueue`. Passing NULL for
+`ppCommandQueue` requests validation-only creation. Successful validation
+returns `S_FALSE`.
+
+Successful object creation returns `S_OK`. A null or invalid description returns `E_INVALIDARG`. An unsupported queue type also fails validation. Insufficient
+global realtime privilege returns `DXGI_ERROR_ACCESS_DENIED`. Absence of
 the required global realtime support returns `DXGI_ERROR_UNSUPPORTED`.
 Interface, allocation and OS priority operation failures are returned as
-the corresponding creation `HRESULT`.<!-- d3d12-review-inline:end:command-queues:QA-016:0:authored:migration-7e9afe3d37c66fba-0 --></ins>
+the corresponding creation `HRESULT`.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-017:0:authored:migration-844b16904c3c31b6-0 -->Both queue creation methods are [free-threaded](execution.md#threading).<!-- d3d12-review-inline:end:command-queues:QA-017:0:authored:migration-844b16904c3c31b6-0 --></ins>
+Both queue creation methods are [free-threaded](execution.md#threading).
 
 <a id="id3d12device-createcommandqueue"></a>
 
@@ -120,23 +119,21 @@ Creates a command queue.
 
 ### Parameters
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-021:0:authored:migration-f0c97b15c623d0b1-0 -->**pDesc**<!-- d3d12-review-inline:end:command-queues:QA-021:0:authored:migration-f0c97b15c623d0b1-0 --></ins>
+**pDesc**
 
 Specifies a **D3D12_COMMAND_QUEUE_DESC** that describes the command queue.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-024:0:authored:migration-f4a320b61d11e524-0 -->**riid**<!-- d3d12-review-inline:end:command-queues:QA-024:0:authored:migration-f4a320b61d11e524-0 --></ins>
+**riid**
 
 The globally unique identifier (GUID) for the command queue interface.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-026:0:authored:migration-ec36f4d231df86fd-0 -->**ppCommandQueue**<!-- d3d12-review-inline:end:command-queues:QA-026:0:authored:migration-ec36f4d231df86fd-0 --></ins>
+**ppCommandQueue**
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-027:0 -->A pointer to a memory block that receives a pointer to the `ID3D12CommandQueue` interface for the command queue.<!-- d3d12-review-inline:end:command-queues:QA-027:0 --></ins>
+A pointer to a memory block that receives a pointer to the `ID3D12CommandQueue` interface for the command queue.
 
 ### Return values
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-029:0:authored:migration-56e0741c6a4b6cdd-0 -->[Shared creation results](#queue-creation-results).<!-- d3d12-review-inline:end:command-queues:QA-029:0:authored:migration-56e0741c6a4b6cdd-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-030:0:modified:migration-db928b378270eb61-0 -->This method returns `E_OUTOFMEMORY` if there is insufficient memory to create the command queue.<!-- d3d12-review-inline:end:command-queues:QA-030:0:modified:migration-db928b378270eb61-0 --></ins>
+[Common creation results](#queue-creation-results).
 
 <a id="id3d12device9-createcommandqueue1"></a>
 
@@ -157,32 +154,32 @@ HRESULT CreateCommandQueue1(
 
 Creates a command queue with a creator ID.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-033:0:authored:migration-43433c90e6cc5585-0 -->The method follows the same description, validation, output and lifetime
+The method follows the same description, validation, output and lifetime
 rules as [`CreateCommandQueue`](#id3d12device-createcommandqueue), with [creator-ID grouping](#creator-ids)
-instead of the ordinary zero creator GUID.<!-- d3d12-review-inline:end:command-queues:QA-033:0:authored:migration-43433c90e6cc5585-0 --></ins>
+instead of the zero creator GUID.
 
 ### Parameters
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-034:0:authored:migration-128175c48a44ef44-0 -->**pDesc**<!-- d3d12-review-inline:end:command-queues:QA-034:0:authored:migration-128175c48a44ef44-0 --></ins>
+**pDesc**
 
 Specifies a **D3D12_COMMAND_QUEUE_DESC** that describes the command queue.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-036:0:authored:migration-28f13436c71f8d18-0 -->**CreatorID**<!-- d3d12-review-inline:end:command-queues:QA-036:0:authored:migration-28f13436c71f8d18-0 --></ins>
+**CreatorID**
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-037:0:authored:migration-bbefa27e3fb89c4e-0 -->The component's creator GUID restricts eligible scheduling group peers as
-defined in [Creator IDs and grouping](#creator-ids).<!-- d3d12-review-inline:end:command-queues:QA-037:0:authored:migration-bbefa27e3fb89c4e-0 --></ins>
+The component's creator GUID restricts eligible scheduling group peers as
+defined in [Creator IDs and grouping](#creator-ids).
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-038:0:authored:migration-e3a75b4bfc0edad2-0 -->**riid**<!-- d3d12-review-inline:end:command-queues:QA-038:0:authored:migration-e3a75b4bfc0edad2-0 --></ins>
+**riid**
 
 The globally unique identifier (GUID) for the command queue interface.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-040:0:authored:migration-273b92f1576bfc00-0 -->**ppCommandQueue**<!-- d3d12-review-inline:end:command-queues:QA-040:0:authored:migration-273b92f1576bfc00-0 --></ins>
+**ppCommandQueue**
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-041:0 -->A pointer to a memory block that receives a pointer to the `ID3D12CommandQueue` interface for the command queue.<!-- d3d12-review-inline:end:command-queues:QA-041:0 --></ins>
+A pointer to a memory block that receives a pointer to the `ID3D12CommandQueue` interface for the command queue.
 
 ### Return values
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-042:0:authored:migration-595d4cbc6b7cac40-0 -->[Shared creation results](#queue-creation-results).<!-- d3d12-review-inline:end:command-queues:QA-042:0:authored:migration-595d4cbc6b7cac40-0 --></ins>
+[Common creation results](#queue-creation-results).
 
 <a id="id3d12commandqueue-getdesc"></a>
 
@@ -200,281 +197,21 @@ Gets the description of the command queue.
 
 ### Return values
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-045:0:authored:migration-9554ad9e583e07ce-0 -->The returned `D3D12_COMMAND_QUEUE_DESC` contains the queue's type, stored
+The returned `D3D12_COMMAND_QUEUE_DESC` contains the queue's type, stored
 creation priority, creation flags and normalized API-visible node mask.
 It is not a byte-for-byte echo of unnormalized input: an input zero node mask
-selects node zero, whose returned mask has that bit set.<!-- d3d12-review-inline:end:command-queues:QA-045:0:authored:migration-9554ad9e583e07ce-0 --></ins>
+selects node zero, whose returned mask has that bit set.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-046:0:authored:migration-e1f7d6d291adba11-0 -->The result is a creation description, not a current OS priority readback or
+The result is a creation description, not a current OS priority readback or
 the mutable cached values returned by
 [`GetProcessPriority`](#id3d12commandqueue1-getprocesspriority) and
-[`GetGlobalPriority`](#id3d12commandqueue1-getglobalpriority).<!-- d3d12-review-inline:end:command-queues:QA-046:0:authored:migration-e1f7d6d291adba11-0 --></ins>
-
-<a id="queue-driver-objects"></a>
-
-## Queue and scheduling group driver contracts
-
-<a id="queue-group-private-storage"></a>
-
-### Queue and scheduling group private storage
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-LN01:0:authored:migration-30ba0653400f7226-0 -->[Synchronization-only queues](execution.md#synchronization-only-queues) have no UMD queue object.<!-- d3d12-review-inline:end:command-queues:QF-LN01:0:authored:migration-30ba0653400f7226-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-LN02:0:authored:migration-7881089c222d56b5-0 -->The runtime allocates the private bytes reported by the size DDIs, aligned to 16 bytes on Win64 and 8 bytes on Win32. The driver initializes that storage and must not free it.<!-- d3d12-review-inline:end:command-queues:QF-LN02:0:authored:migration-7881089c222d56b5-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-LN03:0:authored:migration-6d3895ba1b791f2d-0 -->For these objects, a failed UMD creation DDI receives no matching Destroy DDI.
-The UMD must unwind its own partial state and auxiliary allocations before
-returning failure. Runtime-managed contexts and hardware queues remain subject
-to the [managed object cleanup contract](#context-hardware-queue-lifetime);
-their successful creation callbacks do not commit the owning DDI to success.<!-- d3d12-review-inline:end:command-queues:QF-LN03:0:authored:migration-6d3895ba1b791f2d-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-LN04:0:authored:migration-c055033e5908476b-0 -->After a successful UMD creation DDI, the runtime calls the corresponding
-Destroy DDI when retiring or abandoning the driver object, including if later
-application object initialization fails. Success of the UMD creation DDI
-is therefore not a guarantee of application creation success. The private
-region remains available through the Destroy DDI. The runtime releases its
-storage, while the UMD releases its own auxiliary state.<!-- d3d12-review-inline:end:command-queues:QF-LN04:0:authored:migration-c055033e5908476b-0 --></ins>
-
-<a id="queue-creation-descriptions"></a>
-
-### Queue creation descriptions
-
-```cpp
-
-typedef enum D3D12DDI_COMMAND_QUEUE_CREATION_FLAGS
-{
-    D3D12DDI_COMMAND_QUEUE_CREATION_FLAG_NONE                     = 0x00000000,
-    D3D12DDI_COMMAND_QUEUE_CREATION_FLAG_GLOBAL_REALTIME_PRIORITY = 0x00000001
-} D3D12DDI_COMMAND_QUEUE_CREATION_FLAGS;
-
-typedef struct D3D12DDIARG_CREATECOMMANDQUEUE_0050
-{
-    D3D12DDI_COMMAND_QUEUE_FLAGS          QueueFlags;
-    UINT                                  NodeMask;
-    D3D12DDI_COMMAND_QUEUE_CREATION_FLAGS QueueCreationFlags;
-    D3D12DDI_HSCHEDULINGGROUP_0050        SchedulingGroup; // May be NULL
-} D3D12DDIARG_CREATECOMMANDQUEUE_0050;
-```
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-LN06:0:authored:migration-ec867e508bdb13b1-0 -->`QueueFlags` uses the driver
-[workload flags](execution.md#recording-descriptions), not a
-cast of the application command list type or queue flags.
-`NodeMask` selects the runtime's DDI-visible node for this queue. The runtime
-normalizes API node selection and translates it into the DDI node space before
-supplying this description. It is distinct from the kernel execution node `NodeOrdinal` supplied
-when creating a context.<!-- d3d12-review-inline:end:command-queues:QF-LN06:0:authored:migration-ec867e508bdb13b1-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-LN07:0:authored:migration-c34ecce1fe949e77-0 -->`QueueCreationFlags` carries creation requests separately from the workload
-flags. The global realtime bit is subject to the negotiated field/support
-conditions and the [kernel-versus-UMD priority contract](execution.md#queue-creation-priority).
-It is not proof that a kernel scheduling priority was applied.
-`SchedulingGroup` is a UMD scheduling group handle, or null for a queue
-without an associated group. It is not the runtime callback handle.<!-- d3d12-review-inline:end:command-queues:QF-LN07:0:authored:migration-c34ecce1fe949e77-0 --></ins>
-
-<a id="queue-size-create-ddis"></a>
-
-### Queue sizing and creation DDIs
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-LI01:0 -->The `pfnCalcPrivateCommandQueueSize` DDI is used to calculate the size of a private command queue.<!-- d3d12-review-inline:end:command-queues:QF-LI01:0 --></ins>
-
-```cpp
-
-typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATECOMMANDQUEUESIZE_0050 )( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATECOMMANDQUEUE_0050* );
-typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATECOMMANDQUEUE_0050 )( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATECOMMANDQUEUE_0050*, D3D12DDI_HCOMMANDQUEUE, D3D12DDI_HRTCOMMANDQUEUE);
-```
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-LN11:0:authored:migration-fcb01508d99535fb-0 -->Creation receives the driver-private queue handle as the third argument
-and the runtime queue handle as the fourth argument. Neither is an output
-parameter. The runtime handle is used for
-[queue-associated context and hardware queue callbacks](#context-creation-callbacks),
-not as driver-private storage. The nullable scheduling group association is
-supplied in the description during sizing as well as creation.<!-- d3d12-review-inline:end:command-queues:QF-LN11:0:authored:migration-fcb01508d99535fb-0 --></ins>
-
-If <ins><!-- d3d12-review-inline:begin:command-queues:QF-LI02:0 -->a queue creation DDI<!-- d3d12-review-inline:end:command-queues:QF-LI02:0 --></ins> succeeds, it returns <ins><!-- d3d12-review-inline:begin:command-queues:QF-LI02:0:modified:migration-52042e877e24d043-1 -->`S_OK`<!-- d3d12-review-inline:end:command-queues:QF-LI02:0:modified:migration-52042e877e24d043-1 --></ins>. Otherwise, it returns an <ins><!-- d3d12-review-inline:begin:command-queues:QF-LI02:0:modified:migration-41574699a5c78a68-2 -->`HRESULT`<!-- d3d12-review-inline:end:command-queues:QF-LI02:0:modified:migration-41574699a5c78a68-2 --></ins> error code.
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-LN12:0:authored:migration-6f298dc55e3c602d-0 -->During creation, the UMD creates the contexts and hardware queues required
-for its queue's transport using the applicable runtime callbacks and their
-[synchronous creation window](#context-creation-window).
-The [Signal/Wait transport split](execution.md#queue-signal-wait) does not require every
-queue to use the same context or hardware queue submission path.<!-- d3d12-review-inline:end:command-queues:QF-LN12:0:authored:migration-6f298dc55e3c602d-0 --></ins>
-
-<a id="queue-destruction-ddi"></a>
-
-#### PFND3D12DDI_DESTROYCOMMANDQUEUE
-
-Destroys a command queue.
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYCOMMANDQUEUE )( D3D12DDI_HDEVICE, D3D12DDI_HCOMMANDQUEUE );
-```
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-LN14:0:authored:migration-7ce1c2078dcc45e0-0 -->DestroyCommandQueue releases driver-owned queue state before the runtime tears down its managed contexts and group association. It must not free runtime-provided private storage or destroy a group still used by other queues.<!-- d3d12-review-inline:end:command-queues:QF-LN14:0:authored:migration-7ce1c2078dcc45e0-0 --></ins>
-
-<a id="scheduling-group-lifecycle"></a>
-
-### Scheduling group sizing and creation
-
-```cpp
-typedef struct D3D12DDIARG_CREATESCHEDULINGGROUP_0050
-{
-    UINT                         NodeMask;
-} D3D12DDIARG_CREATESCHEDULINGGROUP_0050;
-
-typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATESCHEDULINGGROUPSIZE_0050 )( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATESCHEDULINGGROUP_0050* );
-typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATESCHEDULINGGROUP_0050 )( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATESCHEDULINGGROUP_0050*, D3D12DDI_HSCHEDULINGGROUP_0050, D3D12DDI_HRTSCHEDULINGGROUP_0050 );
-```
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-LN16:0:authored:migration-e96e305c1561ec3c-0 -->Scheduling group creation receives driver and runtime group handles. The driver uses the runtime handle for [group-associated context creation](#context-creation-callbacks).<!-- d3d12-review-inline:end:command-queues:QF-LN16:0:authored:migration-e96e305c1561ec3c-0 --></ins>
-
-A scheduling group is a driver object that the runtime <ins><!-- d3d12-review-inline:begin:command-queues:QF-LI04:0:modified:source-a8317c3e93a611da-0-0 -->creates<!-- d3d12-review-inline:end:command-queues:QF-LI04:0:modified:source-a8317c3e93a611da-0-0 --></ins>, and which must have at least one 3D/compute context created during its construction. The runtime <ins><!-- d3d12-review-inline:begin:command-queues:QF-LI04:0:modified:source-a8317c3e93a611da-1-0 -->allows<!-- d3d12-review-inline:end:command-queues:QF-LI04:0:modified:source-a8317c3e93a611da-1-0 --></ins> multiple contexts to be constructed. Once the driver returns from CreateSchedulingGroup, no more contexts may be added.
-
-The scheduling group should contain all contexts which target shared hardware or resources that will be leveraged by any child command queues. It does not need to contain all contexts for all child queues.
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-LN17:0:authored:migration-1143e7e09f44faea-0 -->The runtime establishes a group's driver object before supplying its handle
-to a member queue's `_0050` sizing or creation DDI. A queue may use contexts
-owned by itself, by its associated group, or both, subject to the
-[hardware queue context restrictions](#hardware-queue-creation).
-Runtime selection of member queues follows the
-[application grouping contract](command-queues.md#creator-ids);
-the UMD must not reinterpret a borrowed group handle as ownership of the
-group's lifetime.<!-- d3d12-review-inline:end:command-queues:QF-LN17:0:authored:migration-1143e7e09f44faea-0 --></ins>
-
-<a id="scheduling-group-destruction"></a>
-
-#### PFND3D12DDI_DESTROYSCHEDULINGGROUP_0050
-
-Destroys a hardware scheduling group.
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYSCHEDULINGGROUP_0050 )( D3D12DDI_HDEVICE, D3D12DDI_HSCHEDULINGGROUP_0050 );
-```
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-LN19:0:authored:migration-0467c7bfd1d75f43-0 -->DestroySchedulingGroup is called after successful creation and after member queues no longer need the group. The driver releases group state before the runtime reclaims associated contexts and private storage.<!-- d3d12-review-inline:end:command-queues:QF-LN19:0:authored:migration-0467c7bfd1d75f43-0 --></ins>
-
-<a id="context-creation-callbacks"></a>
-
-### Context creation callbacks
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-X01:0:authored:migration-f8ed21d76a42e02a-0 -->The UMD uses `PFND3D12DDI_CREATECONTEXT_CB` and
-`PFND3D12DDI_CREATECONTEXTVIRTUAL_CB` to create contexts associated with a
-runtime command queue. The `_0050` scheduling group forms instead associate
-the context with the runtime scheduling group. Their first argument is the
-owning runtime handle, not a UMD private object handle or an OS device handle.<!-- d3d12-review-inline:end:command-queues:QF-X01:0:authored:migration-f8ed21d76a42e02a-0 --></ins>
-
-```cpp
-typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_CREATECONTEXT_CB)(
-    _In_    D3D12DDI_HRTCOMMANDQUEUE hRTCommandQueue,
-    _Inout_ D3DDDICB_CREATECONTEXT*
-    );
-
-typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_CREATECONTEXTVIRTUAL_CB)(
-    _In_    D3D12DDI_HRTCOMMANDQUEUE hRTCommandQueue,
-    _Inout_ D3DDDICB_CREATECONTEXTVIRTUAL*
-    );
-
-typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_CREATESCHEDULINGGROUPCONTEXT_CB_0050)(
-    _In_    D3D12DDI_HRTSCHEDULINGGROUP_0050 hRTSchedulingGroup,
-    _Inout_ D3DDDICB_CREATECONTEXT*
-    );
-
-typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_CREATESCHEDULINGGROUPCONTEXTVIRTUAL_CB_0050)(
-    _In_    D3D12DDI_HRTSCHEDULINGGROUP_0050 hRTSchedulingGroup,
-    _Inout_ D3DDDICB_CREATECONTEXTVIRTUAL*
-    );
-```
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-X03:0:authored:migration-460566a13dba4cbd-0 -->Both context descriptions supply `NodeOrdinal`, `EngineAffinity`, `Flags`,
-`pPrivateDriverData` and `PrivateDriverDataSize`. The ordinal and affinity
-select the execution node and engine; private driver data is passed to the
-kernel-mode driver, with its size in bytes. Reserved flag bits must be zero.
-Scheduling group context creation requires `Flags.HwQueueSupported`.<!-- d3d12-review-inline:end:command-queues:QF-X03:0:authored:migration-460566a13dba4cbd-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-X04:0:authored:migration-0ee273a539b6fc04-0 -->On success, `hContext` is an opaque runtime context handle. It is not the raw
-kernel context handle and must not be substituted for one in a direct OS call.
-The non-virtual description also returns command buffer, allocation list and
-patch location list information where applicable to that transport.
-Command buffer sizes are in bytes; allocation list and patch location list
-sizes are element counts. The virtual context form is for contexts supporting
-GPU virtual addressing and does not return those software submission buffers.<!-- d3d12-review-inline:end:command-queues:QF-X04:0:authored:migration-0ee273a539b6fc04-0 --></ins>
-
-<a id="context-creation-window"></a>
-
-#### Creation window
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-X05:0:authored:migration-e36d30ba369834f0-0 -->Queue context creation callbacks must execute synchronously on the thread
-performing the owning CreateCommandQueue DDI, before that DDI returns.
-Scheduling group context creation callbacks have the corresponding requirement
-for the owning CreateSchedulingGroup DDI. Worker thread calls and calls after
-the owning creation DDI has returned are not permitted. This is a requirement
-of these D3D12 object-associated callbacks, not a general threading rule for
-all shared device callbacks.<!-- d3d12-review-inline:end:command-queues:QF-X05:0:authored:migration-e36d30ba369834f0-0 --></ins>
-
-<a id="hardware-queue-creation"></a>
-
-### Hardware queue creation callback
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-X06:0:authored:migration-3b4a922999de2cd4-0 -->`PFND3D12DDI_CREATEHWQUEUE_CB_0050` creates a hardware queue associated with
-the runtime command queue identified by `hRTCommandQueue`. It must execute
-synchronously on the thread performing that queue's CreateCommandQueue DDI,
-before the DDI returns, with the same restriction on worker thread or later
-calls as the [context creation window](#context-creation-window).<!-- d3d12-review-inline:end:command-queues:QF-X06:0:authored:migration-3b4a922999de2cd4-0 --></ins>
-
-```cpp
-typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_CREATEHWQUEUE_CB_0050)(
-    _In_    D3D12DDI_HRTCOMMANDQUEUE hRTCommandQueue,
-    _Inout_ D3DDDICB_CREATEHWQUEUE*
-    );
-```
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-X08:0:modified:migration-49f5e1e9ef1e9992-0 -->Hardware<!-- d3d12-review-inline:end:command-queues:QF-X08:0:modified:migration-49f5e1e9ef1e9992-0 --></ins> queue creation must be done against a context either associated with the same command queue, or with a parent scheduling group. The driver is allowed to create hardware queues which reference both types of contexts for a single [CreateCommandQueue](#queue-driver-objects).
-
-The driver is allowed to have a command queue which owns both software-scheduled contexts, and hardware queues, if and only if the command queue also owns the contexts for those hardware queues. Each command queue must be capable of performing broadcast synchronization across only contexts for mixed hardware and software, or only hardware queues.
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-X09:0:authored:migration-30d3d266116ba097-0 -->`D3DDDICB_CREATEHWQUEUE::hHwContext` supplies that runtime context handle.
-`Flags` supplies hardware queue creation flags, with reserved bits zero.
-`pPrivateDriverData` and its byte size describe the in/out private data
-exchange with the kernel-mode driver. On success, `hHwQueue` is an opaque
-runtime hardware queue handle, not the raw OS hardware queue handle.
-The payload also returns `hHwQueueProgressFence` and the progress fence's CPU
-and GPU virtual addresses. That OS fence handle is a different handle domain
-from `hHwQueue`.<!-- d3d12-review-inline:end:command-queues:QF-X09:0:authored:migration-30d3d266116ba097-0 --></ins>
-
-<a id="context-hardware-queue-lifetime"></a>
-
-### Managed context and hardware queue lifetime
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-X10:0:modified:source-a2c8689d1ee2cdeb-0-0 -->Individual destruction operations<!-- d3d12-review-inline:end:command-queues:QF-X10:0:modified:source-a2c8689d1ee2cdeb-0-0 --></ins> are not provided for these objects, as their lifetime is completely managed by the owning runtime object.
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-X11:0:authored:migration-b29ccd959844069f-0 -->The creation callbacks' `HRESULT` reports the callback operation, not success
-of the enclosing UMD owner creation DDI. Successful callback creation does not
-commit that enclosing DDI to success. The runtime manages reclamation of its
-associated contexts and hardware queues through owning object teardown or
-creation failure cleanup. The UMD remains responsible for its own partial
-driver state and auxiliary allocations. Runtime ownership does not promise
-an exact physical reclamation time.<!-- d3d12-review-inline:end:command-queues:QF-X11:0:authored:migration-b29ccd959844069f-0 --></ins>
-
-<a id="legacy-destroy-context"></a>
-
-#### Legacy D3D12 DestroyContext callback
-
-```cpp
-typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_DESTROYCONTEXT_CB)(
-    _In_    D3D12DDI_HRTCOMMANDQUEUE hRTCommandQueue,
-    _In_ const D3DDDICB_DESTROYCONTEXT*
-    );
-```
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QF-X13:0:authored:migration-ed34214854c94496-0 -->For a valid invocation, `PFND3D12DDI_DESTROYCONTEXT_CB` is a compatibility
-no-op that returns `S_OK`. `hRTCommandQueue` identifies the runtime queue and
-the description's `hContext` identifies the context. This callback does not
-destroy or invalidate that context or transfer cleanup responsibility to the
-UMD. Its success is not evidence that resources were released. This behavior
-is specific to the D3D12 callback above, not a contract for the similarly
-named shared device destruction callbacks.<!-- d3d12-review-inline:end:command-queues:QF-X13:0:authored:migration-ed34214854c94496-0 --></ins>
+[`GetGlobalPriority`](#id3d12commandqueue1-getglobalpriority).
 
 <a id="dynamic-priority-values"></a>
 
-## Dynamic priority values and shared behavior
+## Dynamic priority values and common behavior
+
+<a id="dynamic-priority-values-and-shared-behavior"></a>
 
 ```cpp
 typedef enum D3D12_COMMAND_QUEUE_PROCESS_PRIORITY
@@ -506,33 +243,32 @@ typedef enum D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY
 } D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY;
 ```
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-048:0:authored:migration-8e8bc2ce81da0240-0 -->`D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY` specifies priority relative to other
+`D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY` specifies priority relative to other
 applications. `D3D12_COMMAND_QUEUE_PROCESS_PRIORITY` specifies the
 process-relative non-yielding boost. Only the declared values are accepted;
 the numeric gaps in the global enum are not additional supported priorities,
-and D3D12 values must not be cast to OS scheduling priority encodings.<!-- d3d12-review-inline:end:command-queues:QA-048:0:authored:migration-8e8bc2ce81da0240-0 --></ins>
+and D3D12 values must not be cast to OS scheduling priority encodings.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-049:0:authored:migration-8969978e6c162fcc-0 -->The setters require `D3D12_COMMAND_QUEUE_FLAG_ALLOW_DYNAMIC_PRIORITY`.
+The setters require `D3D12_COMMAND_QUEUE_FLAG_ALLOW_DYNAMIC_PRIORITY`.
 They affect the queue's context owner: all queues in its scheduling group,
 or the standalone queue when not grouped. The
 [creation mapping, group override and ignored-request policy](execution.md#dynamic-queue-priority)
 define the shared state. An ignored setter returns `S_FALSE` and leaves
-the prior cached setting intact.<!-- d3d12-review-inline:end:command-queues:QA-049:0:authored:migration-8969978e6c162fcc-0 --></ins>
+the prior cached setting intact.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-050:0:authored:migration-103553004bdfecd6-0 -->The getters return runtime-maintained cached state for that same owner.
+The getters return runtime-maintained cached state for that same owner.
 They require a valid output pointer but do not require the opt-in flag.
 The cached initial state and accepted updates are distinct from `GetDesc`'s
-creation request and are not an OS state query. In particular, the
-[compatibility grouped-queue omission](execution.md#queue-creation-priority)
-does not establish that a requested creation priority was applied.<!-- d3d12-review-inline:end:command-queues:QA-050:0:authored:migration-103553004bdfecd6-0 --></ins>
+creation request and are not an OS state query. In particular, when queues
+are grouped, the creation priority may be ignored. See [queue creation priority](execution.md#queue-creation-priority).
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-R01:0:authored:migration-51eb24068fde6a13-0 -->The cached baseline is `D3D12_COMMAND_QUEUE_PROCESS_PRIORITY_NORMAL` and
+The cached baseline is `D3D12_COMMAND_QUEUE_PROCESS_PRIORITY_NORMAL` and
 `D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY_DEFAULT`. Successful creation time
 priority application updates the cache using the
-[creation mapping](execution.md#dynamic-queue-priority); accepted setters
+[creation mapping](execution.md#dynamic-queue-priority). Accepted setters
 update the corresponding setting. On the compatibility grouped path that
 omits creation priority application, the baseline values are the initial
-getter settings, not the queue's ignored creation priority request.<!-- d3d12-review-inline:end:command-queues:QA-R01:0:authored:migration-51eb24068fde6a13-0 --></ins>
+getter settings, not the queue's ignored creation priority request.
 
 <a id="id3d12commandqueue1-setprocesspriority"></a>
 
@@ -548,32 +284,25 @@ HRESULT SetProcessPriority(D3D12_COMMAND_QUEUE_PROCESS_PRIORITY Priority);
 
 Requires a queue created with `D3D12_COMMAND_QUEUE_FLAG_ALLOW_DYNAMIC_PRIORITY`.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-053:0:modified:migration-fb65dadf321f91df-0 -->Sets a [`Priority`](#dynamic-priority-values) for this queue for the current process. On `S_OK`, the priority is applied immediately. All the work scheduled with calls to `ID3D12CommandQueue::ExecuteCommandLists` that is still pending execution before the call to `SetProcessPriority` is executed with the new priority set. All the new work submitted with `ID3D12CommandQueue::ExecuteCommandLists` after the call to `SetProcessPriority` also is executed with the new priority.<!-- d3d12-review-inline:end:command-queues:QA-053:0:modified:migration-fb65dadf321f91df-0 --></ins>
+Sets a [`Priority`](#dynamic-priority-values) for this queue for the current process. On `S_OK`, the priority is applied immediately. All the work scheduled with calls to `ID3D12CommandQueue::ExecuteCommandLists` that is still pending execution before the call to `SetProcessPriority` is executed with the new priority set. All the new work submitted with `ID3D12CommandQueue::ExecuteCommandLists` after the call to `SetProcessPriority` also is executed with the new priority.
 
 ### Parameters
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-055:0:authored:migration-61212537b45407ac-0 -->`Priority` is one of the two declared `D3D12_COMMAND_QUEUE_PROCESS_PRIORITY`
+`Priority` is one of the two declared `D3D12_COMMAND_QUEUE_PROCESS_PRIORITY`
 values. It is not a `D3D12_COMMAND_QUEUE_PRIORITY` creation value or an
-arbitrary OS priority integer.<!-- d3d12-review-inline:end:command-queues:QA-055:0:authored:migration-61212537b45407ac-0 --></ins>
+arbitrary OS priority integer.
 
 ### Return values
 
-<!-- d3d12-review-alert:begin:command-queues:QA-056:0 -->
+| HRESULT | Meaning |
+|---|---|
+| `S_OK` | The priority was set correctly |
+| `S_FALSE` | The priority request for this adapter couldn't be applied and the request was ignored |
+| `E_INVALIDARG` | Invalid parameter |
+| `DXGI_ERROR_UNSUPPORTED` | `D3D12_COMMAND_QUEUE_FLAG_ALLOW_DYNAMIC_PRIORITY` not present in this queue |
+| `E_ACCESSDENIED` | Not enough permissions to set this priority |
 
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> | HRESULT | Meaning |
-> |---|---|
-> | `S_OK` | The priority was set correctly |
-> | `S_FALSE` | The priority request for this adapter couldn't be applied and the request was ignored |
-> | `E_INVALIDARG` | Invalid parameter |
-> | `DXGI_ERROR_UNSUPPORTED` | `D3D12_COMMAND_QUEUE_FLAG_ALLOW_DYNAMIC_PRIORITY` not present in this queue |
-> | `E_ACCESSDENIED` | Not enough permissions to set this priority |
-
-<!-- d3d12-review-alert:end:command-queues:QA-056:0 -->
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-058:0 -->Elevation is required to configure some priorities.<!-- d3d12-review-inline:end:command-queues:QA-058:0 --></ins>
+Elevation is required to configure some priorities.
 
 <a id="id3d12commandqueue1-getprocesspriority"></a>
 
@@ -587,17 +316,17 @@ HRESULT GetProcessPriority(D3D12_COMMAND_QUEUE_PROCESS_PRIORITY* pOutValue);
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-060:0:authored:migration-72ad1639f4ddae38-0 -->Returns the [cached process priority setting](#dynamic-priority-values) for
-the queue's context owner.<!-- d3d12-review-inline:end:command-queues:QA-060:0:authored:migration-72ad1639f4ddae38-0 --></ins>
+Returns the [cached process priority setting](#dynamic-priority-values) for
+the queue's context owner.
 
 ### Parameters
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-061:0:authored:migration-fb404b7e3f6edead-0 -->`pOutValue` is a required writable pointer that receives the cached
-`D3D12_COMMAND_QUEUE_PROCESS_PRIORITY`.<!-- d3d12-review-inline:end:command-queues:QA-061:0:authored:migration-fb404b7e3f6edead-0 --></ins>
+`pOutValue` is a required writable pointer that receives the cached
+`D3D12_COMMAND_QUEUE_PROCESS_PRIORITY`.
 
 ### Return values
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-062:0:authored:migration-799385018edf36e1-0 -->Returns `S_OK` after writing the result. A null `pOutValue` returns `E_INVALIDARG`.<!-- d3d12-review-inline:end:command-queues:QA-062:0:authored:migration-799385018edf36e1-0 --></ins>
+Returns `S_OK` after writing the result. A null `pOutValue` returns `E_INVALIDARG`.
 
 <a id="id3d12commandqueue1-setglobalpriority"></a>
 
@@ -613,32 +342,25 @@ HRESULT SetGlobalPriority(D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY Priority);
 
 Requires a queue created with `D3D12_COMMAND_QUEUE_FLAG_ALLOW_DYNAMIC_PRIORITY`.
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-065:0:modified:migration-66a30d08567736f6-0 -->Sets a global [`Priority`](#dynamic-priority-values) for this queue. On `S_OK`, the priority is applied immediately. All the work scheduled with calls to `ID3D12CommandQueue::ExecuteCommandLists` that is still pending execution before the call to `SetGlobalPriority` is executed with the new priority set. All the new work submitted with `ID3D12CommandQueue::ExecuteCommandLists` after the call to `SetGlobalPriority` also is executed with the new priority.<!-- d3d12-review-inline:end:command-queues:QA-065:0:modified:migration-66a30d08567736f6-0 --></ins>
+Sets a global [`Priority`](#dynamic-priority-values) for this queue. On `S_OK`, the priority is applied immediately. All the work scheduled with calls to `ID3D12CommandQueue::ExecuteCommandLists` that is still pending execution before the call to `SetGlobalPriority` is executed with the new priority set. All the new work submitted with `ID3D12CommandQueue::ExecuteCommandLists` after the call to `SetGlobalPriority` also is executed with the new priority.
 
 ### Parameters
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-067:0:authored:migration-7d1e72839f5a22a4-0 -->`Priority` is a declared `D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY` value.
+`Priority` is a declared `D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY` value.
 Unnamed integers, including numeric gaps between declared values, are invalid.
-These D3D12 enum values are not OS priority encodings.<!-- d3d12-review-inline:end:command-queues:QA-067:0:authored:migration-7d1e72839f5a22a4-0 --></ins>
+These D3D12 enum values are not OS priority encodings.
 
 ### Return values
 
-<!-- d3d12-review-alert:begin:command-queues:QA-068:0 -->
+| HRESULT | Meaning |
+|---|---|
+| `S_OK` | The priority was set correctly |
+| `S_FALSE` | The priority request for this adapter couldn't be applied and the request was ignored |
+| `E_INVALIDARG` | Invalid parameter |
+| `DXGI_ERROR_UNSUPPORTED` | `D3D12_COMMAND_QUEUE_FLAG_ALLOW_DYNAMIC_PRIORITY` not present in this queue |
+| `E_ACCESSDENIED` | Not enough permissions to set this priority |
 
-> [!WARNING]
-> **Mixed source and authored adaptation - human review pending.**
->
-> | HRESULT | Meaning |
-> |---|---|
-> | `S_OK` | The priority was set correctly |
-> | `S_FALSE` | The priority request for this adapter couldn't be applied and the request was ignored |
-> | `E_INVALIDARG` | Invalid parameter |
-> | `DXGI_ERROR_UNSUPPORTED` | `D3D12_COMMAND_QUEUE_FLAG_ALLOW_DYNAMIC_PRIORITY` not present in this queue |
-> | `E_ACCESSDENIED` | Not enough permissions to set this priority |
-
-<!-- d3d12-review-alert:end:command-queues:QA-068:0 -->
-
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-070:0 -->Elevation is required to configure some priorities.<!-- d3d12-review-inline:end:command-queues:QA-070:0 --></ins>
+Elevation is required to configure some priorities.
 
 <a id="id3d12commandqueue1-getglobalpriority"></a>
 
@@ -652,14 +374,276 @@ HRESULT GetGlobalPriority(D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY* pOutValue);
 
 ### Behavior
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-072:0:authored:migration-15af8527be09b156-0 -->Returns the [cached global priority setting](#dynamic-priority-values) for
-the queue's context owner.<!-- d3d12-review-inline:end:command-queues:QA-072:0:authored:migration-15af8527be09b156-0 --></ins>
+Returns the [cached global priority setting](#dynamic-priority-values) for
+the queue's context owner.
 
 ### Parameters
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-073:0:authored:migration-1ab9545a99814205-0 -->`pOutValue` is a required writable pointer that receives the cached
-`D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY`.<!-- d3d12-review-inline:end:command-queues:QA-073:0:authored:migration-1ab9545a99814205-0 --></ins>
+`pOutValue` is a required writable pointer that receives the cached
+`D3D12_COMMAND_QUEUE_GLOBAL_PRIORITY`.
 
 ### Return values
 
-<ins><!-- d3d12-review-inline:begin:command-queues:QA-074:0:authored:migration-a0ec5f7c412af333-0 -->Returns `S_OK` after writing the result. A null `pOutValue` returns `E_INVALIDARG`.<!-- d3d12-review-inline:end:command-queues:QA-074:0:authored:migration-a0ec5f7c412af333-0 --></ins>
+Returns `S_OK` after writing the result. A null `pOutValue` returns `E_INVALIDARG`.
+
+<a id="queue-driver-objects"></a>
+
+## Queue and scheduling group driver contracts
+
+<a id="queue-group-private-storage"></a>
+
+### Queue and scheduling group private storage
+
+[Synchronization-only queues](execution.md#synchronization-only-queues) have no UMD queue object.
+
+The runtime allocates the private bytes reported by the size DDIs, aligned to 16 bytes on Win64 and 8 bytes on Win32. The driver initializes that storage and must not free it.
+
+For these objects, a failed UMD creation DDI receives no matching Destroy DDI.
+The UMD must unwind its own partial state and auxiliary allocations before
+returning failure. Runtime-managed contexts and hardware queues remain subject
+to the [managed object cleanup contract](#context-hardware-queue-lifetime);
+their successful creation callbacks do not commit the owning DDI to success.
+
+After a successful UMD creation DDI, the runtime calls the corresponding
+Destroy DDI when retiring or abandoning the driver object, including if later
+application object initialization fails. Success of the UMD creation DDI
+is therefore not a guarantee of application creation success. The private
+region remains available through the Destroy DDI. The runtime releases its
+storage, while the UMD releases its own auxiliary state.
+
+<a id="queue-creation-descriptions"></a>
+
+### Queue creation descriptions
+
+```cpp
+
+typedef enum D3D12DDI_COMMAND_QUEUE_CREATION_FLAGS
+{
+    D3D12DDI_COMMAND_QUEUE_CREATION_FLAG_NONE                     = 0x00000000,
+    D3D12DDI_COMMAND_QUEUE_CREATION_FLAG_GLOBAL_REALTIME_PRIORITY = 0x00000001
+} D3D12DDI_COMMAND_QUEUE_CREATION_FLAGS;
+
+typedef struct D3D12DDIARG_CREATECOMMANDQUEUE_0050
+{
+    D3D12DDI_COMMAND_QUEUE_FLAGS          QueueFlags;
+    UINT                                  NodeMask;
+    D3D12DDI_COMMAND_QUEUE_CREATION_FLAGS QueueCreationFlags;
+    D3D12DDI_HSCHEDULINGGROUP_0050        SchedulingGroup; // May be NULL
+} D3D12DDIARG_CREATECOMMANDQUEUE_0050;
+```
+
+`QueueFlags` uses the driver
+[workload flags](execution.md#recording-descriptions), not a
+cast of the application command list type or queue flags.
+`NodeMask` selects the runtime's DDI-visible node for this queue. The runtime
+normalizes API node selection and translates it into the DDI node space before
+supplying this description. It is distinct from the kernel execution node `NodeOrdinal` supplied
+when creating a context.
+
+`QueueCreationFlags` carries creation requests separately from the workload
+flags. The global realtime bit is subject to the negotiated field/support
+conditions and the [kernel-versus-UMD priority contract](execution.md#queue-creation-priority).
+It is not proof that a kernel scheduling priority was applied.
+`SchedulingGroup` is a UMD scheduling group handle, or null for a queue
+without an associated group. It is not the runtime callback handle.
+
+<a id="queue-size-create-ddis"></a>
+
+### Queue sizing and creation DDIs
+
+The `pfnCalcPrivateCommandQueueSize` DDI is used to calculate the size of a private command queue.
+
+```cpp
+
+typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATECOMMANDQUEUESIZE_0050 )( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATECOMMANDQUEUE_0050* );
+typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATECOMMANDQUEUE_0050 )( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATECOMMANDQUEUE_0050*, D3D12DDI_HCOMMANDQUEUE, D3D12DDI_HRTCOMMANDQUEUE);
+```
+
+Creation receives the driver-private queue handle as the third argument
+and the runtime queue handle as the fourth argument. Neither is an output
+parameter. The runtime handle is used for
+[queue-associated context and hardware queue callbacks](#context-creation-callbacks),
+not as driver-private storage. The nullable scheduling group association is
+supplied in the description during sizing as well as creation.
+
+If a queue creation DDI succeeds, it returns `S_OK`. Otherwise, it returns an `HRESULT` error code.
+
+During creation, the UMD creates the contexts and hardware queues required
+for its queue's transport using the applicable runtime callbacks and their
+[synchronous creation window](#context-creation-window).
+The [Signal/Wait transport split](execution.md#queue-signal-wait) does not require every
+queue to use the same context or hardware queue submission path.
+
+<a id="queue-destruction-ddi"></a>
+
+#### PFND3D12DDI_DESTROYCOMMANDQUEUE
+
+Destroys a command queue.
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYCOMMANDQUEUE )( D3D12DDI_HDEVICE, D3D12DDI_HCOMMANDQUEUE );
+```
+
+DestroyCommandQueue releases driver-owned queue state before the runtime tears down its managed contexts and group association. It must not free runtime-provided private storage or destroy a group still used by other queues.
+
+<a id="scheduling-group-lifecycle"></a>
+
+### Scheduling group sizing and creation
+
+```cpp
+typedef struct D3D12DDIARG_CREATESCHEDULINGGROUP_0050
+{
+    UINT                         NodeMask;
+} D3D12DDIARG_CREATESCHEDULINGGROUP_0050;
+
+typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATESCHEDULINGGROUPSIZE_0050 )( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATESCHEDULINGGROUP_0050* );
+typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATESCHEDULINGGROUP_0050 )( D3D12DDI_HDEVICE, _In_ CONST D3D12DDIARG_CREATESCHEDULINGGROUP_0050*, D3D12DDI_HSCHEDULINGGROUP_0050, D3D12DDI_HRTSCHEDULINGGROUP_0050 );
+```
+
+Scheduling group creation receives driver and runtime group handles. The driver uses the runtime handle for [group-associated context creation](#context-creation-callbacks).
+
+A scheduling group is a driver object that the runtime creates, and which must have at least one 3D/compute context created during its construction. The runtime allows multiple contexts to be constructed. Once the driver returns from CreateSchedulingGroup, no more contexts may be added.
+
+The scheduling group should contain all contexts which target shared hardware or resources that will be leveraged by any child command queues. It does not need to contain all contexts for all child queues.
+
+The runtime establishes a group's driver object before supplying its handle
+to a member queue's `_0050` sizing or creation DDI. A queue may use contexts
+owned by itself, by its associated group, or both, subject to the
+[hardware queue context restrictions](#hardware-queue-creation).
+Runtime selection of member queues follows the
+[application grouping contract](command-queues.md#creator-ids);
+the UMD must not reinterpret a borrowed group handle as ownership of the
+group's lifetime.
+
+<a id="scheduling-group-destruction"></a>
+
+#### PFND3D12DDI_DESTROYSCHEDULINGGROUP_0050
+
+Destroys a hardware scheduling group.
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYSCHEDULINGGROUP_0050 )( D3D12DDI_HDEVICE, D3D12DDI_HSCHEDULINGGROUP_0050 );
+```
+
+DestroySchedulingGroup is called after successful creation and after member queues no longer need the group. The driver releases group state before the runtime reclaims associated contexts and private storage.
+
+<a id="context-creation-callbacks"></a>
+
+### Context creation callbacks
+
+The UMD uses `PFND3D12DDI_CREATECONTEXT_CB` and
+`PFND3D12DDI_CREATECONTEXTVIRTUAL_CB` to create contexts associated with a
+runtime command queue. The `_0050` scheduling group forms instead associate
+the context with the runtime scheduling group. Their first argument is the
+owning runtime handle, not a UMD private object handle or an OS device handle.
+
+```cpp
+typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_CREATECONTEXT_CB)(
+    _In_    D3D12DDI_HRTCOMMANDQUEUE hRTCommandQueue,
+    _Inout_ D3DDDICB_CREATECONTEXT*
+    );
+
+typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_CREATECONTEXTVIRTUAL_CB)(
+    _In_    D3D12DDI_HRTCOMMANDQUEUE hRTCommandQueue,
+    _Inout_ D3DDDICB_CREATECONTEXTVIRTUAL*
+    );
+
+typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_CREATESCHEDULINGGROUPCONTEXT_CB_0050)(
+    _In_    D3D12DDI_HRTSCHEDULINGGROUP_0050 hRTSchedulingGroup,
+    _Inout_ D3DDDICB_CREATECONTEXT*
+    );
+
+typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_CREATESCHEDULINGGROUPCONTEXTVIRTUAL_CB_0050)(
+    _In_    D3D12DDI_HRTSCHEDULINGGROUP_0050 hRTSchedulingGroup,
+    _Inout_ D3DDDICB_CREATECONTEXTVIRTUAL*
+    );
+```
+
+Both context descriptions supply `NodeOrdinal`, `EngineAffinity`, `Flags`,
+`pPrivateDriverData` and `PrivateDriverDataSize`. The ordinal and affinity
+select the execution node and engine. Private driver data is passed to the
+kernel-mode driver, with its size in bytes. Reserved flag bits must be zero.
+Scheduling group context creation requires `Flags.HwQueueSupported`.
+
+On success, `hContext` is an opaque runtime context handle. It is not the raw
+kernel context handle and must not be substituted for one in a direct OS call.
+The non-virtual description also returns command buffer, allocation list and
+patch location list information where applicable to that transport.
+Command buffer sizes are in bytes. Allocation list and patch location list
+sizes are element counts. The virtual context form is for contexts supporting
+GPU virtual addressing and does not return those software submission buffers.
+
+<a id="context-creation-window"></a>
+
+#### Creation window
+
+Queue context creation callbacks must execute synchronously on the thread
+performing the owning CreateCommandQueue DDI, before that DDI returns.
+Scheduling group context creation callbacks have the corresponding requirement
+for the owning CreateSchedulingGroup DDI. Worker thread calls and calls after
+the owning creation DDI has returned are not permitted. This is a requirement
+of these D3D12 object-associated callbacks, not a general threading rule for
+all common device callbacks.
+
+<a id="hardware-queue-creation"></a>
+
+### Hardware queue creation callback
+
+`PFND3D12DDI_CREATEHWQUEUE_CB_0050` creates a hardware queue associated with
+the runtime command queue identified by `hRTCommandQueue`. It must execute
+synchronously on the thread performing that queue's CreateCommandQueue DDI,
+before the DDI returns, with the same restriction on worker thread or later
+calls as the [context creation window](#context-creation-window).
+
+```cpp
+typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_CREATEHWQUEUE_CB_0050)(
+    _In_    D3D12DDI_HRTCOMMANDQUEUE hRTCommandQueue,
+    _Inout_ D3DDDICB_CREATEHWQUEUE*
+    );
+```
+
+Hardware queue creation must be done against a context either associated with the same command queue, or with a parent scheduling group. The driver is allowed to create hardware queues which reference both types of contexts for a single [CreateCommandQueue](#queue-driver-objects).
+
+The driver is allowed to have a command queue which owns both software-scheduled contexts, and hardware queues, if and only if the command queue also owns the contexts for those hardware queues. Each command queue must be capable of performing broadcast synchronization across only contexts for mixed hardware and software, or only hardware queues.
+
+`D3DDDICB_CREATEHWQUEUE::hHwContext` supplies that runtime context handle.
+`Flags` supplies hardware queue creation flags, with reserved bits zero.
+`pPrivateDriverData` and its byte size describe the in/out private data
+exchange with the kernel-mode driver. On success, `hHwQueue` is an opaque
+runtime hardware queue handle, not the raw OS hardware queue handle.
+The payload also returns `hHwQueueProgressFence` and the progress fence's CPU
+and GPU virtual addresses. That OS fence handle is a different handle domain
+from `hHwQueue`.
+
+<a id="context-hardware-queue-lifetime"></a>
+
+### Managed context and hardware queue lifetime
+
+Individual destruction operations are not provided for these objects, as their lifetime is completely managed by the owning runtime object.
+
+The creation callbacks' `HRESULT` reports the callback operation, not success
+of the enclosing UMD owner creation DDI. Successful callback creation does not
+commit that enclosing DDI to success. The runtime manages reclamation of its
+associated contexts and hardware queues through owning object teardown or
+creation failure cleanup. The UMD remains responsible for its own partial
+driver state and auxiliary allocations. Runtime ownership does not promise
+an exact physical reclamation time.
+
+<a id="legacy-destroy-context"></a>
+
+#### Legacy D3D12 DestroyContext callback
+
+```cpp
+typedef _Check_return_ HRESULT(APIENTRY CALLBACK *PFND3D12DDI_DESTROYCONTEXT_CB)(
+    _In_    D3D12DDI_HRTCOMMANDQUEUE hRTCommandQueue,
+    _In_ const D3DDDICB_DESTROYCONTEXT*
+    );
+```
+
+For a valid invocation, `PFND3D12DDI_DESTROYCONTEXT_CB` is a compatibility
+no-op that returns `S_OK`. `hRTCommandQueue` identifies the runtime queue and
+the description's `hContext` identifies the context. This callback does not
+destroy or invalidate that context or transfer cleanup responsibility to the
+UMD. Its success is not evidence that resources were released. This behavior
+is specific to the D3D12 callback above, not a contract for the similarly
+named common device destruction callbacks.

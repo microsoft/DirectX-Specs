@@ -39,7 +39,7 @@ This method returns the reason that the device was removed.
 
 #### Context
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:removed-reason-context:0:authored:migration-4e8846ccd8d27d3c-0 -->The return value is the device's removal status, not a new command submission result. A failure does not identify the exact offending GPU operation. DRED's breadcrumbs and allocation matches provide diagnostic correlations, not causal proof.<!-- d3d12-review-inline:end:diagnostics:removed-reason-context:0:authored:migration-4e8846ccd8d27d3c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:removed-reason-context:0:authored:migration-4e8846ccd8d27d3c-0 -->The removal reason does not identify the GPU operation that caused the removal. [DRED](#dred) breadcrumbs and page-fault allocation matches provide diagnostic correlations, not proof of cause.<!-- d3d12-review-inline:end:diagnostics:removed-reason-context:0:authored:migration-4e8846ccd8d27d3c-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:removed-reason-context:1:authored:migration-a2ba3c0f38a8a7e0-0 -->See [completion and device removal](execution.md#completion-lifetime) for removal notifications, CPU fence observations and the distinction between notification and successful completion. See [device creation and recovery](devices-and-capabilities.md#d3d12createdevice) for device replacement.<!-- d3d12-review-inline:end:diagnostics:removed-reason-context:1:authored:migration-a2ba3c0f38a8a7e0-0 --></ins>
 
@@ -55,7 +55,7 @@ void RemoveDevice();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12Device5-RemoveDevice-behavior:0:authored:migration-96b8f9bdce9e7fcf-0 -->Indicates to the Direct3D 12 runtime that this device encountered a problem and can no longer be used. The method forces removal of this device. It does not intentionally remove unrelated devices on the adapter or select a new adapter. It returns no `HRESULT`.<!-- d3d12-review-inline:end:diagnostics:ID3D12Device5-RemoveDevice-behavior:0:authored:migration-96b8f9bdce9e7fcf-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12Device5-RemoveDevice-behavior:0:authored:migration-96b8f9bdce9e7fcf-0 -->Indicates to the Direct3D 12 runtime that this device encountered a problem and can no longer be used. The method forces removal of this device. It does not intentionally remove unrelated devices on the adapter.<!-- d3d12-review-inline:end:diagnostics:ID3D12Device5-RemoveDevice-behavior:0:authored:migration-96b8f9bdce9e7fcf-0 --></ins>
 
 #### Return values
 
@@ -63,21 +63,21 @@ None
 
 #### Context
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:remove-scope:0:authored:migration-8a764eb8ba215b18-0 -->Removal wakes the removed device's monitored fence waiters. This is notification of removal, not proof that pending GPU work completed successfully. The [common removal notification contract](execution.md#completion-lifetime) owns the `UINT64_MAX` event mechanism. The application typically does not need to call `RemoveDevice` explicitly. This method neither diagnoses the original fault nor performs recovery.<!-- d3d12-review-inline:end:diagnostics:remove-scope:0:authored:migration-8a764eb8ba215b18-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:remove-scope:0:authored:migration-8a764eb8ba215b18-0 -->Removal wakes the removed device's monitored fence waiters. This is notification of removal, not proof that pending GPU work completed successfully. See [completion and device removal](execution.md#completion-lifetime) for the `UINT64_MAX` fence value and events that report removal. The application typically does not need to call `RemoveDevice` explicitly. This method neither diagnoses the original fault nor performs recovery.<!-- d3d12-review-inline:end:diagnostics:remove-scope:0:authored:migration-8a764eb8ba215b18-0 --></ins>
 
 <a id="debug-configuration"></a>
 
 ## Debug configuration
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:configuration-scope:0:authored:migration-87966899fa8658ba-0 -->The debug controller and DRED settings obtained through the global entry points configure subsequent device creation. A configuration interface obtained from a device factory belongs to that factory's configuration, not automatically to process-global state. The [factory configuration and snapshot rules](devices-and-capabilities.md#id3d12devicefactory-getconfigurationinterface) define when configuration is copied or applied. A device retains its creation snapshot.<!-- d3d12-review-inline:end:diagnostics:configuration-scope:0:authored:migration-87966899fa8658ba-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:configuration-scope:0:authored:migration-87966899fa8658ba-0 -->The debug controller (the `ID3D12Debug` interfaces) and the [DRED settings](#dred-settings) obtained through global entry points such as [D3D12GetDebugInterface](#d3d12getdebuginterface) configure subsequent device creation. A configuration interface obtained from a device factory belongs to that factory's configuration, not automatically to process-global state. The [factory configuration and snapshot rules](devices-and-capabilities.md#id3d12devicefactory-getconfigurationinterface) define when configuration is copied or applied. A device retains its creation snapshot.<!-- d3d12-review-inline:end:diagnostics:configuration-scope:0:authored:migration-87966899fa8658ba-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:configuration-scope:1:authored:migration-ac46267d0aa695f0-0 -->Interface availability does not itself establish that debug components are installed, or that the debug layer or GPU-based validation is enabled.<!-- d3d12-review-inline:end:diagnostics:configuration-scope:1:authored:migration-ac46267d0aa695f0-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:configuration-scope:2:authored:migration-92824ac0d01d24bb-0 -->A debug controller startup-option change through a global configuration interface has the global singleton removal scope described below. A factory-local controller change affects subsequent creation from that factory. It does not remove or retrofit already-created independent devices. Applying factory state globally is the separate [ApplyToGlobalState operation](devices-and-capabilities.md#id3d12devicefactory-applytoglobalstate).<!-- d3d12-review-inline:end:diagnostics:configuration-scope:2:authored:migration-92824ac0d01d24bb-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:configuration-scope:2:authored:migration-92824ac0d01d24bb-0 -->A debug controller startup-option change through a global configuration interface removes the affected global singleton devices. See [D3D12CreateDevice](devices-and-capabilities.md#d3d12createdevice) for singleton release and recreation. A factory-local controller change affects subsequent creation from that factory. It does not remove or retrofit already-created independent devices. Applying factory state globally is the separate [ApplyToGlobalState operation](devices-and-capabilities.md#id3d12devicefactory-applytoglobalstate).<!-- d3d12-review-inline:end:diagnostics:configuration-scope:2:authored:migration-92824ac0d01d24bb-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:debug-startup-defaults:0:authored:migration-43cc1688f784903f-0 -->The debug layer is disabled by default. GPU-based validation is disabled by default, synchronized-queue validation is enabled by default when using the debug layer, GPU-based validation flags default to `D3D12_GPU_BASED_VALIDATION_FLAGS_NONE`, automatic naming is disabled by default, and forcing legacy barrier validation is disabled by default. System/tool overrides can affect the effective creation configuration.<!-- d3d12-review-inline:end:diagnostics:debug-startup-defaults:0:authored:migration-43cc1688f784903f-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:debug-startup-defaults:1:authored:migration-66a2422207f78de2-0 -->Configure these startup options before device creation. They do not retrofit a different validation mode into a device's creation snapshot. The individual enable/disable methods below specify removal and release requirements. Debug controller retrieval can fail with `DXGI_ERROR_SDK_COMPONENT_MISSING` if the matching debug layer component is unavailable; DRED settings and DRED data do not require the debug layer to be enabled.<!-- d3d12-review-inline:end:diagnostics:debug-startup-defaults:1:authored:migration-66a2422207f78de2-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:debug-startup-defaults:1:authored:migration-66a2422207f78de2-0 -->Configure these startup options before device creation. Debug controller retrieval can fail with `DXGI_ERROR_SDK_COMPONENT_MISSING` if the matching debug layer component is unavailable; DRED settings and DRED data do not require the debug layer to be enabled.<!-- d3d12-review-inline:end:diagnostics:debug-startup-defaults:1:authored:migration-66a2422207f78de2-0 --></ins>
 
 <a id="d3d12getdebuginterface"></a>
 
@@ -227,7 +227,7 @@ None
 
 #### Context
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12Debug1-SetEnableGPUBasedValidation-Remarks:1 -->GPU-based validation is a device creation option and is disabled by default. An existing device keeps its creation time validation mode; using a different mode requires a device created with that mode. Changing the global GPU-based-validation startup setting removes affected global singleton devices. A factory-local controller change affects subsequent factory creation and does not remove or reconfigure existing independent devices.<!-- d3d12-review-inline:end:diagnostics:ID3D12Debug1-SetEnableGPUBasedValidation-Remarks:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12Debug1-SetEnableGPUBasedValidation-Remarks:1 -->GPU-based validation is a device creation option and is disabled by default. See [Debug configuration](#debug-configuration) for when a change takes effect and which existing devices it removes.<!-- d3d12-review-inline:end:diagnostics:ID3D12Debug1-SetEnableGPUBasedValidation-Remarks:1 --></ins>
 
 For more information, see [Using D3D12 Debug Layer GPU-Based Validation](#gpu-based-validation).
 
@@ -295,7 +295,7 @@ None
 
 #### Context
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12Debug2-SetGPUBasedValidationFlags-Remarks:1 -->This method overrides the default behavior of GPU-based validation for devices subsequently created from the controller's configuration. These settings do not change the creation snapshot of an existing device. To use different validation flags, create a device with those flags; a factory-local change does not remove previously created independent devices. Global startup-option changes retain the global singleton removal scope.<!-- d3d12-review-inline:end:diagnostics:ID3D12Debug2-SetGPUBasedValidationFlags-Remarks:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12Debug2-SetGPUBasedValidationFlags-Remarks:1 -->This method overrides the default behavior of GPU-based validation for devices subsequently created from the controller's configuration. See [Debug configuration](#debug-configuration) for how a change affects existing devices.<!-- d3d12-review-inline:end:diagnostics:ID3D12Debug2-SetGPUBasedValidationFlags-Remarks:1 --></ins>
 
 <a id="id3d12debug3-setenablegpubasedvalidation"></a>
 
@@ -325,7 +325,7 @@ None
 
 #### Context
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12Debug3-SetEnableGPUBasedValidation-Remarks:1 -->GPU-based validation is a device creation option and is disabled by default. An existing device keeps its creation time validation mode; using a different mode requires a device created with that mode. Changing the global GPU-based-validation startup setting removes affected global singleton devices. A factory-local controller change affects subsequent factory creation and does not remove or reconfigure existing independent devices.<!-- d3d12-review-inline:end:diagnostics:ID3D12Debug3-SetEnableGPUBasedValidation-Remarks:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12Debug3-SetEnableGPUBasedValidation-Remarks:1 -->GPU-based validation is a device creation option and is disabled by default. See [Debug configuration](#debug-configuration) for when a change takes effect and which existing devices it removes.<!-- d3d12-review-inline:end:diagnostics:ID3D12Debug3-SetEnableGPUBasedValidation-Remarks:1 --></ins>
 
 For more information, see [Using D3D12 Debug Layer GPU-based validation](#gpu-based-validation).
 
@@ -393,7 +393,7 @@ None
 
 #### Context
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12Debug3-SetGPUBasedValidationFlags-Remarks:1 -->This method overrides the default behavior of GPU-based validation for devices subsequently created from the controller's configuration. These settings do not change the creation snapshot of an existing device. To use different validation flags, create a device with those flags; a factory-local change does not remove previously created independent devices. Global startup-option changes retain the global singleton removal scope.<!-- d3d12-review-inline:end:diagnostics:ID3D12Debug3-SetGPUBasedValidationFlags-Remarks:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12Debug3-SetGPUBasedValidationFlags-Remarks:1 -->This method overrides the default behavior of GPU-based validation for devices subsequently created from the controller's configuration. See [Debug configuration](#debug-configuration) for how a change affects existing devices.<!-- d3d12-review-inline:end:diagnostics:ID3D12Debug3-SetGPUBasedValidationFlags-Remarks:1 --></ins>
 
 <a id="id3d12debug4-disabledebuglayer"></a>
 
@@ -407,7 +407,7 @@ void DisableDebugLayer();
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12Debug4-DisableDebugLayer-summary:0 -->Disables the debug layer in the controller's device creation configuration. An existing device's debug layer is not detached by changing the setting. Global creation follows the affected singleton removal and release/recreation rules of [D3D12CreateDevice](devices-and-capabilities.md#d3d12createdevice). A factory-local change affects subsequent factory creation and does not remove already-created independent devices.<!-- d3d12-review-inline:end:diagnostics:ID3D12Debug4-DisableDebugLayer-summary:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12Debug4-DisableDebugLayer-summary:0 -->Disables the debug layer in the controller's device creation configuration. See [Debug configuration](#debug-configuration) for how a change affects existing devices.<!-- d3d12-review-inline:end:diagnostics:ID3D12Debug4-DisableDebugLayer-summary:0 --></ins>
 
 #### Return values
 
@@ -575,33 +575,19 @@ Note that this is simply a convenience wrapper around [ID3D12Object::SetPrivateD
 
 ## Command list instrumentation annotations
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-context:0:authored:migration-bbfbb9da7af95630-0 -->Command list annotations require an open recording under the
-[common list lifecycle/error contract](execution.md#recording-lifecycle).<!-- d3d12-review-inline:end:diagnostics:LA-context:0:authored:migration-bbfbb9da7af95630-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:LA-context:0:authored:migration-bbfbb9da7af95630-0 -->Instrumentation annotations record markers and begin/end event regions into a command list for tools such as PIX. Annotation methods require an open command list. See [recording lifecycle](execution.md#recording-lifecycle) for open and closed list rules.<!-- d3d12-review-inline:end:diagnostics:LA-context:0:authored:migration-bbfbb9da7af95630-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-context:1:authored:migration-8f92b0d5b3c5551b-0 -->Graphics clients use the PIX event runtime helpers. The video methods
-are internal-only support interfaces. They do not define a direct
-application encoding or a matching PIX helper overload for every
-video interface.<!-- d3d12-review-inline:end:diagnostics:LA-context:1:authored:migration-8f92b0d5b3c5551b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:LA-context:1:authored:migration-8f92b0d5b3c5551b-0 -->Applications record graphics command list annotations with the PIX event runtime helpers. The video command list annotation methods are for internal use. They do not define an application payload encoding, and the PIX helpers do not provide a matching overload for every video interface.<!-- d3d12-review-inline:end:diagnostics:LA-context:1:authored:migration-8f92b0d5b3c5551b-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-lifetime:0:authored:migration-9cbbedd6ef10b8a0-0 -->Metadata/payload storage is consumed or captured during the API call.
-Caller ownership is not transferred. Runtime-owned list marker data
-follows the [allocator/recording annotation lifetime](command-list-state.md#annotations):
-a fresh recording does not inherit an earlier open event region,
-device annotation mode is not reset, and resetting the list is not
-reclaiming allocator-backed annotation storage.<!-- d3d12-review-inline:end:diagnostics:LA-lifetime:0:authored:migration-9cbbedd6ef10b8a0-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:LA-lifetime:0:authored:migration-9cbbedd6ef10b8a0-0 -->Runtime-owned marker data follows the [annotation lifetime](command-list-state.md#annotations) of its command allocator. A new recording does not inherit an earlier open event region and does not reset the device annotation mode. Resetting the command list does not reclaim allocator-backed annotation storage.<!-- d3d12-review-inline:end:diagnostics:LA-lifetime:0:authored:migration-9cbbedd6ef10b8a0-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-lifetime:1:authored:migration-248b4812b9fdffe7-0 -->[DRED collection](#dred-settings) is configured separately from recording
-instrumentation annotations.<!-- d3d12-review-inline:end:diagnostics:LA-lifetime:1:authored:migration-248b4812b9fdffe7-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:LA-lifetime:1:authored:migration-248b4812b9fdffe7-0 -->DRED breadcrumbs can record these annotations. [DRED settings](#dred-settings) configure that collection separately.<!-- d3d12-review-inline:end:diagnostics:LA-lifetime:1:authored:migration-248b4812b9fdffe7-0 --></ins>
 
 <a id="list-annotation-payload"></a>
 
 ### Internal list annotation parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:LA-payload:0:authored:migration-2dcb1e61a685a081-0 -->`Metadata`, optional input `pData` and `Size` are internal support arguments.
-When supplied, `pData` identifies the payload bytes described by `Size`.
-`Size` describes the payload byte span, not a string or element count;
-no text terminator or ownership transfer follows. The producing
-instrumentation runtime defines the valid encoding.<!-- d3d12-review-inline:end:diagnostics:LA-payload:0:authored:migration-2dcb1e61a685a081-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:LA-payload:0:authored:migration-2dcb1e61a685a081-0 -->`Metadata`, optional input `pData` and `Size` are internal arguments. The instrumentation runtime that produces them, such as the PIX event runtime, defines their encoding. When supplied, `pData` identifies the payload bytes, and `Size` is the payload size in bytes. The runtime consumes or copies the payload during the call. The caller keeps ownership of its storage, which need not remain valid until GPU completion.<!-- d3d12-review-inline:end:diagnostics:LA-payload:0:authored:migration-2dcb1e61a685a081-0 --></ins>
 
 <a id="id3d12graphicscommandlist-setmarker"></a>
 
@@ -866,23 +852,13 @@ For internal use only. Not intended to be called directly.
 <ins><!-- d3d12-review-inline:begin:diagnostics:QA-purpose:0:modified:migration-7279ee7edee7ff4a-0 -->Not intended to be called directly.  Use the
 [PIX event runtime](https://devblogs.microsoft.com/pix/winpixeventruntime/) to insert events into a command queue.<!-- d3d12-review-inline:end:diagnostics:QA-purpose:0:modified:migration-7279ee7edee7ff4a-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:QA-context:1:authored:migration-0697ff34058bd26f-0 -->[Synchronization-only queues](execution.md#synchronization-only-queues)
-support synchronization rather than these annotation methods. An
-unsupported annotation call is invalid usage and can invalidate the
-device.<!-- d3d12-review-inline:end:diagnostics:QA-context:1:authored:migration-0697ff34058bd26f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:QA-context:1:authored:migration-0697ff34058bd26f-0 -->[Synchronization-only queues](execution.md#synchronization-only-queues) do not support these annotation methods. Calling one on such a queue is invalid usage and can invalidate the device.<!-- d3d12-review-inline:end:diagnostics:QA-context:1:authored:migration-0697ff34058bd26f-0 --></ins>
 
 <a id="queue-annotation-payload"></a>
 
 ### Internal annotation arguments
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:QA-payload:0:authored:migration-9e95f7a1b69ff151-0 -->`Metadata`, `pData` and `Size` are internal support arguments, not an
-application-defined public serialization format. The event runtime
-supplies the compatible metadata tag and optional input payload;
-`Size` is its byte count, not a string or element count.<!-- d3d12-review-inline:end:diagnostics:QA-payload:0:authored:migration-9e95f7a1b69ff151-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:QA-payload:1:authored:migration-e984c3b21e6e071b-0 -->Payload bytes are consumed or captured during the API call; caller
-storage ownership is not transferred and need not extend to later GPU
-completion.<!-- d3d12-review-inline:end:diagnostics:QA-payload:1:authored:migration-e984c3b21e6e071b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:QA-payload:0:authored:migration-9e95f7a1b69ff151-0 -->Queue annotation methods use the same [internal annotation arguments](#list-annotation-payload) as command list annotation methods, including their encoding, byte size and payload ownership rules.<!-- d3d12-review-inline:end:diagnostics:QA-payload:0:authored:migration-9e95f7a1b69ff151-0 --></ins>
 
 <a id="id3d12commandqueue-setmarker"></a>
 
@@ -952,8 +928,6 @@ void EndEvent();
 
 ## Device Removed Extended Data
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:diagnostics-responsibilities:0:authored:migration-33eb6355639069c6-0 -->The runtime controls DRED collection and assembles its diagnostic records.<!-- d3d12-review-inline:end:diagnostics:diagnostics-responsibilities:0:authored:migration-33eb6355639069c6-0 --></ins>
-
 DRED extends the debugging toolset by <ins><!-- d3d12-review-inline:begin:diagnostics:dred-introduction:0:modified:source-07c1aeda5c19139d-0-0 -->providing<!-- d3d12-review-inline:end:diagnostics:dred-introduction:0:modified:source-07c1aeda5c19139d-0-0 --></ins> additional data about the state of GPU workload execution at (or near) the time of the GPU error.  DRED data includes automatic breadcrumbs (with optional PIX event/marker context) and GPU Page Fault analysis. DRED data can be examined in a user-mode debugger or with the use of the DRED interface <ins><!-- d3d12-review-inline:begin:diagnostics:dred-introduction:0:modified:source-07c1aeda5c19139d-0-1 -->APIs<!-- d3d12-review-inline:end:diagnostics:dred-introduction:0:modified:source-07c1aeda5c19139d-0-1 --></ins>.
 
 ### Automatic breadcrumbs
@@ -962,10 +936,6 @@ DRED extends the debugging toolset by <ins><!-- d3d12-review-inline:begin:diagno
 <ins><!-- d3d12-review-inline:begin:diagnostics:dred-auto-breadcrumbs:2 -->DRED Auto-Breadcrumbs also uses WriteBufferImmediate to place progress counters in the GPU command stream.  DRED inserts a breadcrumb after each "render op" - meaning, after every operation that results in GPU work (e.g. Draw, Dispatch, Copy, Resolve, etc...).  If the device is removed in the middle of a GPU workload, the reported breadcrumb completion count is rebased to the retained history window described below.<!-- d3d12-review-inline:end:diagnostics:dred-auto-breadcrumbs:2 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:dred-auto-breadcrumbs:3 -->Returned breadcrumb history is normalized into chronological retained-window order. `BreadcrumbCount` is the number of retained operations. When `BreadcrumbCount` is nonzero, `pCommandHistory[0]` is the oldest retained operation. `pLastBreadcrumbValue` points to the completed-operation count rebased to that window. If GPU completion has not reached the retained window, that count is pinned to zero. Thus zero means no completed operation is represented **in the retained window**, not that no GPU work has completed overall.<!-- d3d12-review-inline:end:diagnostics:dred-auto-breadcrumbs:3 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:dred-auto-breadcrumbs:4:authored:migration-f50f72414059506a-0 -->Use the returned counts as array bounds. For a completed count satisfying `0 < completedCount <= BreadcrumbCount`, its last completed retained operation is at index `completedCount - 1`; a zero completed count has no last-completed retained index. A count equal to `BreadcrumbCount` means all represented operations completed. A value outside the stated index bounds does not supply a valid retained-array index. No modulo by a fixed ring size applies to these returned indices. These positions remain diagnostic observations, not proof of which operation caused a fault.<!-- d3d12-review-inline:end:diagnostics:dred-auto-breadcrumbs:4:authored:migration-f50f72414059506a-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:dred-auto-breadcrumbs:5:authored:migration-197274556745bc3b-0 -->Context records for dropped operations are removed. Surviving `BreadcrumbIndex` values are rebased to the retained history, and `BreadcrumbContextsCount` bounds the returned context array. A surviving `BreadcrumbIndex` addresses history and is bounded by `BreadcrumbCount`, not by the number of context records. Their recorded ordering remains sorted by associated retained-operation index.<!-- d3d12-review-inline:end:diagnostics:dred-auto-breadcrumbs:5:authored:migration-197274556745bc3b-0 --></ins>
 
 <!-- d3d12-review-context:begin:diagnostics:dred-auto-breadcrumbs:6 -->
 
@@ -977,7 +947,7 @@ DRED extends the debugging toolset by <ins><!-- d3d12-review-inline:begin:diagno
 <!-- d3d12-review-context:end:diagnostics:dred-auto-breadcrumbs:6 -->
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:dred-auto-breadcrumbs:7 -->**Performance**
-Although Auto-Breadcrumbs are designed to be low-overhead, they are far from free. The enablement default is system-controlled; the system can enable collection.<!-- d3d12-review-inline:end:diagnostics:dred-auto-breadcrumbs:7 --></ins>
+Although Auto-Breadcrumbs are designed to be low-overhead, they are far from free.<!-- d3d12-review-inline:end:diagnostics:dred-auto-breadcrumbs:7 --></ins>
 
 <!-- d3d12-review-context:begin:diagnostics:dred-auto-breadcrumbs:8:modified:migration-5cb599c2e0016e9c-0 -->
 
@@ -1023,7 +993,7 @@ DRED attempts to address some of these scenarios by reporting the names and type
 <ins><!-- d3d12-review-inline:begin:diagnostics:dred-pagefault:3 -->Premature release of objects in-flight is one of the top causes for unexpected device removals.  DRED retains a bounded history of recently freed objects. The historical source's 65,000-object figure is not established as a universal retention limit.  DRED reports when any of these objects correlate to the faulting VA.<!-- d3d12-review-inline:end:diagnostics:dred-pagefault:3 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:dred-pagefault:4 -->**Performance**
-The D3D12 runtime must actively curate a collection of existing and recently-deleted API objects indexable by VA.  This increases the system memory overhead and introduces a small performance hit to object creation and destruction.  The enablement default is system-controlled; the system can enable collection.<!-- d3d12-review-inline:end:diagnostics:dred-pagefault:4 --></ins>
+The D3D12 runtime must actively curate a collection of existing and recently-deleted API objects indexable by VA.  This increases the system memory overhead and introduces a small performance hit to object creation and destruction.<!-- d3d12-review-inline:end:diagnostics:dred-pagefault:4 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:dred-pagefault:5 -->**Hardware Requirements**
 Many, but not all, GPUs currently support GPU page faults.  Hardware that doesn't support page faulting can still benefit from Auto-Breadcrumbs.<!-- d3d12-review-inline:end:diagnostics:dred-pagefault:5 --></ins>
@@ -1064,7 +1034,7 @@ The following is an example of DRED auto-breadcrumb data with context strings:
 
 ### Settings and collection lifetime
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:dred-settings-snapshot:0:authored:migration-f3c5c2248729ba0e-0 -->Configure DRED settings before creating a device. Changes do not affect devices already created. Global entry point settings affect subsequent global creation. A factory's settings affect devices created from that factory's configuration snapshot. [Devices and capabilities](devices-and-capabilities.md#id3d12devicefactory-getconfigurationinterface) defines retrieval, compatibility and snapshot transfer.<!-- d3d12-review-inline:end:diagnostics:dred-settings-snapshot:0:authored:migration-f3c5c2248729ba0e-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:dred-settings-snapshot:0:authored:migration-f3c5c2248729ba0e-0 -->Configure DRED settings before creating a device. Changes do not affect devices already created. Global entry point settings affect subsequent global creation. A factory's settings affect devices created from that factory's configuration snapshot. See [factory configuration](devices-and-capabilities.md#id3d12devicefactory-getconfigurationinterface) for settings retrieval, compatibility and snapshot transfer.<!-- d3d12-review-inline:end:diagnostics:dred-settings-snapshot:0:authored:migration-f3c5c2248729ba0e-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:dred-settings-snapshot:1:authored:migration-ea65746f59b568dd-0 -->Each `D3D12_DRED_ENABLEMENT` setting defaults to `D3D12_DRED_ENABLEMENT_SYSTEM_CONTROLLED`: the system policy determines whether collection is enabled. `FORCED_OFF` disables the selected feature regardless of system state; `FORCED_ON` enables it regardless of system state. These controls do not supply absent hardware capabilities. Context collection and markers-only selection do not themselves enable automatic breadcrumbs.<!-- d3d12-review-inline:end:diagnostics:dred-settings-snapshot:1:authored:migration-ea65746f59b568dd-0 --></ins>
 
@@ -1192,97 +1162,11 @@ void UseMarkersOnlyAutoBreadcrumbs(BOOL MarkersOnly);
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:dred-output-lifetime:1:authored:migration-697f6d87ad491401-0 -->A node's `pCommandList`, `pCommandQueue` or allocation `pObject` records an object address. It is not an owning COM reference and does not make a destroyed object callable. Names can be absent, and the ANSI and wide name pointers are independent. Non-null name pointers denote null-terminated strings: narrow/ANSI for `A`, UTF-16 for `W`. A null list head denotes no records. A null `pNext` terminates a list. A successful output call can contain no breadcrumbs or no matching allocations.<!-- d3d12-review-inline:end:diagnostics:dred-output-lifetime:1:authored:migration-697f6d87ad491401-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:dred-output-lifetime:2:authored:migration-3125d612bd7422b5-0 -->For each breadcrumb node, `BreadcrumbCount` is the number of chronological retained operation entries in `pCommandHistory`. `pLastBreadcrumbValue` points to a completed-operation count rebased to this retained window, not an operation identifier or the total amount of GPU work ever completed. Zero means no completed operation is represented in this retained window, including when completion precedes its oldest operation. Use `BreadcrumbCount` to bound history accesses and `BreadcrumbContextsCount` to bound `pBreadcrumbContexts`; zero elements require no array access. Only nonnull pointers provide data to dereference: an absent completed-value pointer provides no completed count, and an absent history pointer provides no operation array. Contexts for dropped history are absent. Each surviving `BreadcrumbIndex` is a zero-based index into retained `pCommandHistory`, and `pContextString` is a null-terminated UTF-16 string. Multiple surviving context records may identify the same retained operation.<!-- d3d12-review-inline:end:diagnostics:dred-output-lifetime:2:authored:migration-3125d612bd7422b5-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:dred-output-lifetime:2:authored:migration-3125d612bd7422b5-0 -->For each breadcrumb node, `BreadcrumbCount` is the number of retained operations in `pCommandHistory`, ordered oldest first. `pLastBreadcrumbValue` points to the completed-operation count rebased to that retained window. It is not an operation identifier or the total amount of GPU work ever completed. Zero means no completed operation is represented in this retained window, including when completion precedes its oldest operation. For a completed count satisfying `0 < completedCount <= BreadcrumbCount`, the last completed retained operation is `pCommandHistory[completedCount - 1]`. A count equal to `BreadcrumbCount` means all retained operations completed. These indices are not reduced modulo a fixed ring size. Use `BreadcrumbCount` to bound history accesses. A null `pLastBreadcrumbValue` supplies no completed count, and a null `pCommandHistory` supplies no operation array.<!-- d3d12-review-inline:end:diagnostics:dred-output-lifetime:2:authored:migration-3125d612bd7422b5-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:dred-output-lifetime:2:authored:opus-breadcrumb-contexts -->`BreadcrumbContextsCount` is the number of elements in `pBreadcrumbContexts`. Contexts for dropped operations are removed. Each remaining `BreadcrumbIndex` is a zero-based index into the retained `pCommandHistory`. It is bounded by `BreadcrumbCount`, not by the number of contexts. Contexts are sorted by that index, and several contexts may identify the same retained operation. `pContextString` is a null-terminated UTF-16 string.<!-- d3d12-review-inline:end:diagnostics:dred-output-lifetime:2:authored:opus-breadcrumb-contexts --></ins>
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:dred-output-lifetime:3:authored:migration-a4f21c140b438d83-0 -->Allocation lists contain existing and recently freed objects whose tracked VA ranges match the fault address. Multiple matches are possible. A matching name/address is not proof of fault responsibility. Finite retention and incomplete tracking can omit a relevant allocation. A missing match does not establish that the memory access was valid.<!-- d3d12-review-inline:end:diagnostics:dred-output-lifetime:3:authored:migration-a4f21c140b438d83-0 --></ins>
-
-<a id="id3d12deviceremovedextendeddata1-getautobreadcrumbsoutput1"></a>
-
-### ID3D12DeviceRemovedExtendedData1::GetAutoBreadcrumbsOutput1
-
-#### Declaration
-
-```cpp
-HRESULT GetAutoBreadcrumbsOutput1(D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 *pOutput);
-```
-
-#### Behavior
-
-Gets the DRED v1.2 auto-breadcrumbs output.
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData1-GetAutoBreadcrumbsOutput1-parameters:0:authored:migration-9638bc25b4e7059d-0 -->`pOutput` points to a caller-provided `D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1` output structure. This is not a byte buffer size query interface. On success the structure receives runtime-owned data pointers governed by [output lifetime](#dred-output-lifetime).<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData1-GetAutoBreadcrumbsOutput1-parameters:0:authored:migration-9638bc25b4e7059d-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData1-GetAutoBreadcrumbsOutput1-results:0:authored:migration-941bfa28f366bf0d-0 -->`S_OK` on success. `DXGI_ERROR_UNSUPPORTED` if the corresponding DRED collection feature was not enabled for the device; `DXGI_ERROR_NOT_CURRENTLY_AVAILABLE` if that feature is enabled but the device is not removed. Do not read an output structure as successful data after a failing call.<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData1-GetAutoBreadcrumbsOutput1-results:0:authored:migration-941bfa28f366bf0d-0 --></ins>
-
-<a id="id3d12deviceremovedextendeddata1-getpagefaultallocationoutput1"></a>
-
-### ID3D12DeviceRemovedExtendedData1::GetPageFaultAllocationOutput1
-
-#### Declaration
-
-```cpp
-HRESULT GetPageFaultAllocationOutput1(D3D12_DRED_PAGE_FAULT_OUTPUT1 *pOutput);
-```
-
-#### Behavior
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData1-GetPageFaultAllocationOutput1-behavior:0:modified:migration-26315084505be6d7-0 -->Gets the DRED page fault data, including matching allocation for both living and recently-deleted runtime objects.<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData1-GetPageFaultAllocationOutput1-behavior:0:modified:migration-26315084505be6d7-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData1-GetPageFaultAllocationOutput1-parameters:0:authored:migration-acb366ad490c0c43-0 -->`pOutput` points to a caller-provided `D3D12_DRED_PAGE_FAULT_OUTPUT1` output structure. This is not a byte buffer size query interface. On success the structure receives runtime-owned data pointers governed by [output lifetime](#dred-output-lifetime).<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData1-GetPageFaultAllocationOutput1-parameters:0:authored:migration-acb366ad490c0c43-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData1-GetPageFaultAllocationOutput1-results:0:authored:migration-225158766d9a3de6-0 -->`S_OK` on success. `DXGI_ERROR_UNSUPPORTED` if the corresponding DRED collection feature was not enabled for the device; `DXGI_ERROR_NOT_CURRENTLY_AVAILABLE` if that feature is enabled but the device is not removed. Do not read an output structure as successful data after a failing call.<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData1-GetPageFaultAllocationOutput1-results:0:authored:migration-225158766d9a3de6-0 --></ins>
-
-<a id="id3d12deviceremovedextendeddata2-getdevicestate"></a>
-
-### ID3D12DeviceRemovedExtendedData2::GetDeviceState
-
-#### Declaration
-
-```cpp
-D3D12_DRED_DEVICE_STATE GetDeviceState();
-```
-
-#### Behavior
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData2-GetDeviceState-behavior:0:authored:migration-0a77cdc74b94b77e-0 -->Returns the DRED device state classification as a `D3D12_DRED_DEVICE_STATE`, not an `HRESULT`.<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData2-GetDeviceState-behavior:0:authored:migration-0a77cdc74b94b77e-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:device-state-result:0:authored:migration-597d67622c4f95af-0 -->`UNKNOWN` means that DRED has no known device state classification. It is not proof that the device is healthy. `HUNG`, `FAULT` and `PAGEFAULT` distinguish the recorded device states. `GetDeviceRemovedReason` supplies the separate removal `HRESULT`.<!-- d3d12-review-inline:end:diagnostics:device-state-result:0:authored:migration-597d67622c4f95af-0 --></ins>
-
-#### Context
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:device-state-access:0:authored:migration-afcf7ebbc907fe9c-0 -->`GetDeviceState` can be called before device removal. It has no `DXGI_ERROR_NOT_CURRENTLY_AVAILABLE` return path. An unknown recorded state can remain `D3D12_DRED_DEVICE_STATE_UNKNOWN` after removal as well. The breadcrumb/page-fault output getters have their separate collection enablement and removed-state requirements.<!-- d3d12-review-inline:end:diagnostics:device-state-access:0:authored:migration-afcf7ebbc907fe9c-0 --></ins>
-
-<a id="id3d12deviceremovedextendeddata2-getpagefaultallocationoutput2"></a>
-
-### ID3D12DeviceRemovedExtendedData2::GetPageFaultAllocationOutput2
-
-#### Declaration
-
-```cpp
-HRESULT GetPageFaultAllocationOutput2(D3D12_DRED_PAGE_FAULT_OUTPUT2 *pOutput);
-```
-
-#### Behavior
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData2-GetPageFaultAllocationOutput2-behavior:0:authored:migration-b27b8d6f0eacfeae-0 -->Retrieves page-fault allocation output in a `D3D12_DRED_PAGE_FAULT_OUTPUT2` structure. The versioned record layout is defined below.<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData2-GetPageFaultAllocationOutput2-behavior:0:authored:migration-b27b8d6f0eacfeae-0 --></ins>
-
-#### Parameters
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData2-GetPageFaultAllocationOutput2-parameters:0:authored:migration-5a0dcbed7c8b2536-0 -->`pOutput` points to a caller-provided `D3D12_DRED_PAGE_FAULT_OUTPUT2` output structure. This is not a byte buffer size query interface. On success the structure receives runtime-owned data pointers governed by [output lifetime](#dred-output-lifetime).<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData2-GetPageFaultAllocationOutput2-parameters:0:authored:migration-5a0dcbed7c8b2536-0 --></ins>
-
-#### Return values
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData2-GetPageFaultAllocationOutput2-results:0:authored:migration-a95670a3cec9e5ec-0 -->`S_OK` on success. `DXGI_ERROR_UNSUPPORTED` if the corresponding DRED collection feature was not enabled for the device; `DXGI_ERROR_NOT_CURRENTLY_AVAILABLE` if that feature is enabled but the device is not removed. Do not read an output structure as successful data after a failing call.<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData2-GetPageFaultAllocationOutput2-results:0:authored:migration-a95670a3cec9e5ec-0 --></ins>
 
 <a id="id3d12deviceremovedextendeddata-getautobreadcrumbsoutput"></a>
 
@@ -1300,7 +1184,7 @@ Retrieves the Device Removed Extended Data (DRED) auto-breadcrumbs output after 
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData-GetAutoBreadcrumbsOutput-parameters:0:authored:migration-5c3f0a436776b072-0 -->`pOutput` points to a caller-provided `D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT` output structure. This is not a byte buffer size query interface. On success the structure receives runtime-owned data pointers governed by [output lifetime](#dred-output-lifetime).<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData-GetAutoBreadcrumbsOutput-parameters:0:authored:migration-5c3f0a436776b072-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData-GetAutoBreadcrumbsOutput-parameters:0:authored:migration-5c3f0a436776b072-0 -->`pOutput` points to a caller-provided `D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT` output structure. On success the structure receives runtime-owned data pointers governed by [output lifetime](#dred-output-lifetime).<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData-GetAutoBreadcrumbsOutput-parameters:0:authored:migration-5c3f0a436776b072-0 --></ins>
 
 #### Return values
 
@@ -1322,11 +1206,99 @@ Retrieves the Device Removed Extended Data (DRED) page fault data, including mat
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData-GetPageFaultAllocationOutput-parameters:0:authored:migration-5193c6265e5f91ac-0 -->`pOutput` points to a caller-provided `D3D12_DRED_PAGE_FAULT_OUTPUT` output structure. This is not a byte buffer size query interface. On success the structure receives runtime-owned data pointers governed by [output lifetime](#dred-output-lifetime).<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData-GetPageFaultAllocationOutput-parameters:0:authored:migration-5193c6265e5f91ac-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData-GetPageFaultAllocationOutput-parameters:0:authored:migration-5193c6265e5f91ac-0 -->`pOutput` points to a caller-provided `D3D12_DRED_PAGE_FAULT_OUTPUT` output structure. On success the structure receives runtime-owned data pointers governed by [output lifetime](#dred-output-lifetime).<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData-GetPageFaultAllocationOutput-parameters:0:authored:migration-5193c6265e5f91ac-0 --></ins>
 
 #### Return values
 
 If the function succeeds, it returns **S\_OK**. Otherwise, it returns an <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData-GetPageFaultAllocationOutput-Return-value:1:modified:source-c3b5222e33c5d26a-0-0 -->[HRESULT](devices-and-capabilities.md#api-result-codes) [error code](devices-and-capabilities.md#api-result-codes)<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData-GetPageFaultAllocationOutput-Return-value:1:modified:source-c3b5222e33c5d26a-0-0 --></ins>. Returns **DXGI\_ERROR\_NOT\_CURRENTLY\_AVAILABLE** if the device is *not* in a removed state. Returns **DXGI\_ERROR\_UNSUPPORTED** if page fault reporting has not been enabled with <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData-GetPageFaultAllocationOutput-Return-value:1:modified:source-c3b5222e33c5d26a-0-1 -->[ID3D12DeviceRemovedExtendedDataSettings::SetPageFaultEnablement](#id3d12deviceremovedextendeddatasettings-setpagefaultenablement)<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData-GetPageFaultAllocationOutput-Return-value:1:modified:source-c3b5222e33c5d26a-0-1 --></ins>.
+
+<a id="id3d12deviceremovedextendeddata1-getautobreadcrumbsoutput1"></a>
+
+### ID3D12DeviceRemovedExtendedData1::GetAutoBreadcrumbsOutput1
+
+#### Declaration
+
+```cpp
+HRESULT GetAutoBreadcrumbsOutput1(D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 *pOutput);
+```
+
+#### Behavior
+
+Gets the DRED v1.2 auto-breadcrumbs output.
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData1-GetAutoBreadcrumbsOutput1-parameters:0:authored:migration-9638bc25b4e7059d-0 -->`pOutput` points to a caller-provided `D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1` output structure. On success the structure receives runtime-owned data pointers governed by [output lifetime](#dred-output-lifetime).<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData1-GetAutoBreadcrumbsOutput1-parameters:0:authored:migration-9638bc25b4e7059d-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData1-GetAutoBreadcrumbsOutput1-results:0:authored:migration-941bfa28f366bf0d-0 -->`S_OK` on success. `DXGI_ERROR_UNSUPPORTED` if the corresponding DRED collection feature was not enabled for the device; `DXGI_ERROR_NOT_CURRENTLY_AVAILABLE` if that feature is enabled but the device is not removed. Do not read an output structure as successful data after a failing call.<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData1-GetAutoBreadcrumbsOutput1-results:0:authored:migration-941bfa28f366bf0d-0 --></ins>
+
+<a id="id3d12deviceremovedextendeddata1-getpagefaultallocationoutput1"></a>
+
+### ID3D12DeviceRemovedExtendedData1::GetPageFaultAllocationOutput1
+
+#### Declaration
+
+```cpp
+HRESULT GetPageFaultAllocationOutput1(D3D12_DRED_PAGE_FAULT_OUTPUT1 *pOutput);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData1-GetPageFaultAllocationOutput1-behavior:0:modified:migration-26315084505be6d7-0 -->Gets the DRED page fault data, including matching allocation for both living and recently-deleted runtime objects.<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData1-GetPageFaultAllocationOutput1-behavior:0:modified:migration-26315084505be6d7-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData1-GetPageFaultAllocationOutput1-parameters:0:authored:migration-acb366ad490c0c43-0 -->`pOutput` points to a caller-provided `D3D12_DRED_PAGE_FAULT_OUTPUT1` output structure. On success the structure receives runtime-owned data pointers governed by [output lifetime](#dred-output-lifetime).<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData1-GetPageFaultAllocationOutput1-parameters:0:authored:migration-acb366ad490c0c43-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData1-GetPageFaultAllocationOutput1-results:0:authored:migration-225158766d9a3de6-0 -->`S_OK` on success. `DXGI_ERROR_UNSUPPORTED` if the corresponding DRED collection feature was not enabled for the device; `DXGI_ERROR_NOT_CURRENTLY_AVAILABLE` if that feature is enabled but the device is not removed. Do not read an output structure as successful data after a failing call.<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData1-GetPageFaultAllocationOutput1-results:0:authored:migration-225158766d9a3de6-0 --></ins>
+
+<a id="id3d12deviceremovedextendeddata2-getdevicestate"></a>
+
+### ID3D12DeviceRemovedExtendedData2::GetDeviceState
+
+#### Declaration
+
+```cpp
+D3D12_DRED_DEVICE_STATE GetDeviceState();
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData2-GetDeviceState-behavior:0:authored:migration-0a77cdc74b94b77e-0 -->Returns the DRED device state classification.<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData2-GetDeviceState-behavior:0:authored:migration-0a77cdc74b94b77e-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:device-state-result:0:authored:migration-597d67622c4f95af-0 -->`UNKNOWN` means that DRED has no known device state classification. It is not proof that the device is healthy. `HUNG`, `FAULT` and `PAGEFAULT` distinguish the recorded device states. `GetDeviceRemovedReason` supplies the separate removal `HRESULT`.<!-- d3d12-review-inline:end:diagnostics:device-state-result:0:authored:migration-597d67622c4f95af-0 --></ins>
+
+#### Context
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:device-state-access:0:authored:migration-afcf7ebbc907fe9c-0 -->`GetDeviceState` can be called before device removal. The state can be `D3D12_DRED_DEVICE_STATE_UNKNOWN` after removal as well as before.<!-- d3d12-review-inline:end:diagnostics:device-state-access:0:authored:migration-afcf7ebbc907fe9c-0 --></ins>
+
+<a id="id3d12deviceremovedextendeddata2-getpagefaultallocationoutput2"></a>
+
+### ID3D12DeviceRemovedExtendedData2::GetPageFaultAllocationOutput2
+
+#### Declaration
+
+```cpp
+HRESULT GetPageFaultAllocationOutput2(D3D12_DRED_PAGE_FAULT_OUTPUT2 *pOutput);
+```
+
+#### Behavior
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData2-GetPageFaultAllocationOutput2-behavior:0:authored:migration-b27b8d6f0eacfeae-0 -->Retrieves page-fault allocation output in a [`D3D12_DRED_PAGE_FAULT_OUTPUT2`](#d3d12-dred-page-fault-output2) structure.<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData2-GetPageFaultAllocationOutput2-behavior:0:authored:migration-b27b8d6f0eacfeae-0 --></ins>
+
+#### Parameters
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData2-GetPageFaultAllocationOutput2-parameters:0:authored:migration-5a0dcbed7c8b2536-0 -->`pOutput` points to a caller-provided `D3D12_DRED_PAGE_FAULT_OUTPUT2` output structure. On success the structure receives runtime-owned data pointers governed by [output lifetime](#dred-output-lifetime).<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData2-GetPageFaultAllocationOutput2-parameters:0:authored:migration-5a0dcbed7c8b2536-0 --></ins>
+
+#### Return values
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12DeviceRemovedExtendedData2-GetPageFaultAllocationOutput2-results:0:authored:migration-a95670a3cec9e5ec-0 -->`S_OK` on success. `DXGI_ERROR_UNSUPPORTED` if the corresponding DRED collection feature was not enabled for the device; `DXGI_ERROR_NOT_CURRENTLY_AVAILABLE` if that feature is enabled but the device is not removed. Do not read an output structure as successful data after a failing call.<!-- d3d12-review-inline:end:diagnostics:ID3D12DeviceRemovedExtendedData2-GetPageFaultAllocationOutput2-results:0:authored:migration-a95670a3cec9e5ec-0 --></ins>
 
 <a id="dred-examples"></a>
 
@@ -1848,6 +1820,8 @@ typedef enum D3D12_DRED_DEVICE_STATE
 } D3D12_DRED_DEVICE_STATE;
 ```
 
+<a id="d3d12-dred-page-fault-output2"></a>
+
 #### D3D12_DRED_PAGE_FAULT_OUTPUT2
 
 ```cpp
@@ -1860,6 +1834,8 @@ typedef struct D3D12_DRED_PAGE_FAULT_OUTPUT2
 
 } D3D12_DRED_PAGE_FAULT_OUTPUT2;
 ```
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:dred-v13-fields:0:authored:migration-c7c599e6d9711505-0 -->`D3D12_DRED_PAGE_FAULT_OUTPUT2` retains the fault VA and both allocation lists from output version 1, and adds `PageFaultFlags`. The declared flags value is `D3D12_DRED_PAGE_FAULT_FLAGS_NONE` (0); no additional flag behavior is defined here. `PageFaultVA` describes a reported GPU page fault, not a valid fault address for every kind of removal.<!-- d3d12-review-inline:end:diagnostics:dred-v13-fields:0:authored:migration-c7c599e6d9711505-0 --></ins>
 
 #### D3D12_DEVICE_REMOVED_EXTENDED_DATA3
 
@@ -1904,25 +1880,23 @@ struct D3D12_VERSIONED_DEVICE_REMOVED_EXTENDED_DATA
 
 <!-- d3d12-review-alert:end:diagnostics:dred-versioned-type:3:modified:migration-7b6dc8d9c6c5f063-0 -->
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:dred-v13-fields:0:authored:migration-c7c599e6d9711505-0 -->`D3D12_DRED_PAGE_FAULT_OUTPUT2` retains the fault VA and both allocation lists from output version 1, and adds `PageFaultFlags`. The declared flags value is `D3D12_DRED_PAGE_FAULT_FLAGS_NONE` (0); no additional flag behavior is defined here. `PageFaultVA` describes a reported GPU page fault, not a valid fault address for every kind of removal.<!-- d3d12-review-inline:end:diagnostics:dred-v13-fields:0:authored:migration-c7c599e6d9711505-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:diagnostics:dred-v13-fields:1:authored:migration-54917d7c45f72f46-0 -->`D3D12_DEVICE_REMOVED_EXTENDED_DATA3` combines the removal reason, breadcrumb output version 1, page-fault output version 2 and device state. `D3D12_VERSIONED_DEVICE_REMOVED_EXTENDED_DATA::Version` selects the matching union member. The members are not interchangeable. The legacy `D3D12_DEVICE_REMOVED_EXTENDED_DATA` stores the legacy flags and breadcrumb head. None of these layouts transfers ownership of its pointed-to data to the caller.<!-- d3d12-review-inline:end:diagnostics:dred-v13-fields:1:authored:migration-54917d7c45f72f46-0 --></ins>
 
 <a id="debug-messages"></a>
 
 ## Debug message handling
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-summary:0 -->An information queue interface stores, retrieves, and filters debug messages. The queue consists of a message queue, an optional storage filter stack, and an optional retrieval filter stack.<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-summary:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-summary:0 -->`ID3D12InfoQueue` stores, retrieves, and filters debug messages. The queue consists of a message queue, an optional storage filter stack, and an optional retrieval filter stack.<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-summary:0 --></ins>
 
 ### Context
 
-This interface is obtained by querying it from the [ID3D12Device](devices-and-capabilities.md#ordinary-creation) using `IUnknown::QueryInterface`. The `ID3D12Debug` layer must be enabled through `ID3D12Debug::EnableDebugLayer` for that operation to succeed.
+This interface is obtained by querying it from the [ID3D12Device](devices-and-capabilities.md#ordinary-creation) using `IUnknown::QueryInterface`. The <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-summary:1:modified:opus-debug-layer-name -->debug layer<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-summary:1:modified:opus-debug-layer-name --></ins> must be enabled through <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-summary:1:modified:opus-enable-link -->[`ID3D12Debug::EnableDebugLayer`](#id3d12debug-enabledebuglayer)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-summary:1:modified:opus-enable-link --></ins> for that operation to succeed.
 
 <a id="infoqueue-scope"></a>
 
 ### Scope of the information queue
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:infoqueue-scope:0:authored:migration-140b04b1f37deb05-0 -->The device's `ID3D12InfoQueue` controls messages associated with that device/producer. Storage, counters, filter stacks and callback delivery must not be assumed to be one process-global setting merely because infrastructure is shared. The callback mechanism supports multiple registrations without replacing another component's callback.<!-- d3d12-review-inline:end:diagnostics:infoqueue-scope:0:authored:migration-140b04b1f37deb05-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:infoqueue-scope:0:authored:migration-140b04b1f37deb05-0 -->The device's `ID3D12InfoQueue` controls messages associated with that device/producer. Applications must not assume that storage, counters, filter stacks or callback delivery are process-wide settings. The callback mechanism supports multiple registrations without replacing another component's callback.<!-- d3d12-review-inline:end:diagnostics:infoqueue-scope:0:authored:migration-140b04b1f37deb05-0 --></ins>
 
 <a id="infoqueue-filtering"></a>
 
@@ -1932,11 +1906,13 @@ This interface is obtained by querying it from the [ID3D12Device](devices-and-ca
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:filtering-rules:1:authored:migration-46326fcc3238f9d7-0 -->For a filter descriptor, an empty allow list accepts all messages. A nonempty allow list accepts a message matching any listed category, severity or ID (OR, not AND). A match in any deny list rejects the message even if an allow entry matches. Thus an entirely empty filter permits all messages. Each nonzero `NumCategories`, `NumSeverities` or `NumIDs` requires an array of at least that many elements. Zero-count arrays are not read.<!-- d3d12-review-inline:end:diagnostics:filtering-rules:1:authored:migration-46326fcc3238f9d7-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:filtering-rules:2:authored:migration-1178f52fdaff2dca-0 -->`AddStorageFilterEntries` and `AddRetrievalFilterEntries` merge entries into the top filter. They do not push a new stack element when a top already exists. If the stack is empty, adding entries first creates a top filter. Push-empty creates a new permissive top. Push copy duplicates the current top. Push filter copies the supplied descriptor and arrays. The caller retains its input storage. Clear empties the top filter without popping it. Pop restores the preceding top. Popping an empty stack has no effect. An empty stack has no filtering restriction of its own. Stack size getters count filters, not bytes. The ordinary debug layer default suppresses `INFO` messages. Preexisting system/tool filters can change the effective initial filtering. Without such preexisting filters, storage starts with that one default filter and retrieval starts with an empty stack. Break conditions start disabled and debug output starts unmuted. Tool/system overrides can alter effective diagnostic behavior.<!-- d3d12-review-inline:end:diagnostics:filtering-rules:2:authored:migration-1178f52fdaff2dca-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:filtering-rules:2:authored:migration-1178f52fdaff2dca-0 -->`AddStorageFilterEntries` and `AddRetrievalFilterEntries` merge entries into the top filter. They do not push a new stack element when a top already exists. If the stack is empty, adding entries first creates a top filter. Push-empty creates a new permissive top. Push copy duplicates the current top. Push filter copies the supplied descriptor and arrays. The caller retains its input storage. Clear empties the top filter without popping it. Pop restores the preceding top. Popping an empty stack has no effect. An empty stack has no filtering restriction of its own. Stack size getters count filters, not bytes.<!-- d3d12-review-inline:end:diagnostics:filtering-rules:2:authored:migration-1178f52fdaff2dca-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:filtering-rules:3:authored:migration-92af910fd8967ee1-0 -->A filter update call takes one `D3D12_INFO_QUEUE_FILTER`, not an array of filter structures. The update's descriptor pointer is required. A null descriptor, or a null list pointer with a nonzero list count, is invalid and returns `E_INVALIDARG`. A failed push does not establish a new top filter.<!-- d3d12-review-inline:end:diagnostics:filtering-rules:3:authored:migration-92af910fd8967ee1-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:filtering-rules:2:authored:opus-initial-state -->By default, the debug layer's storage filter suppresses `INFO` messages. Without preexisting system or tool filters, the storage stack starts with that one default filter and the retrieval stack starts empty. Break conditions start disabled and debug output starts unmuted. System or tool settings can change these initial filters and the effective diagnostic behavior.<!-- d3d12-review-inline:end:diagnostics:filtering-rules:2:authored:opus-initial-state --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:filtering-rules:4:authored:migration-f8950e45b144f835-0 -->Debug output muting suppresses debug text, not configured breaks or storage/retrieval, nor callbacks registered with `IGNORE_FILTERS`. A callback registered with `NONE` is filtered like debug text, including this output path suppression.<!-- d3d12-review-inline:end:diagnostics:filtering-rules:4:authored:migration-f8950e45b144f835-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:filtering-rules:3:authored:migration-92af910fd8967ee1-0 -->For the methods that add filter entries or push a supplied filter, a null descriptor, or a null list pointer with a nonzero list count, is invalid and returns `E_INVALIDARG`. A failed push does not establish a new top filter.<!-- d3d12-review-inline:end:diagnostics:filtering-rules:3:authored:migration-92af910fd8967ee1-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:filtering-rules:4:authored:migration-f8950e45b144f835-0 -->Muting debug output suppresses debug text and callbacks registered with `NONE`, which are filtered like debug text. It does not affect configured breaks, storage, retrieval or callbacks registered with `IGNORE_FILTERS`.<!-- d3d12-review-inline:end:diagnostics:filtering-rules:4:authored:migration-f8950e45b144f835-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:injected-message-text:0:authored:migration-dff15e7aa1721d40-0 -->`AddMessage` and `AddApplicationMessage` take a readable null-terminated narrow description. The queue copies the message text. The application retains ownership of its input string. These messages follow storage filtering, count limits, break settings and output muting just as messages produced by the debug layer do. Injection does not force a filtered-out message into storage or the retrieval view.<!-- d3d12-review-inline:end:diagnostics:injected-message-text:0:authored:migration-dff15e7aa1721d40-0 --></ins>
 
@@ -2066,7 +2042,7 @@ This method returns one of the [Direct3D 12 Return Codes](devices-and-capabiliti
 
 #### Context
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-AddRetrievalFilterEntries-Remarks:1 -->The following schematic fragment shows how to use this method. The ellipses stand for application-selected enum values, not literal C++ initializers; the fragment appears in an `HRESULT`-returning function:<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-AddRetrievalFilterEntries-Remarks:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-AddRetrievalFilterEntries-Remarks:1 -->The following fragment shows how to use this method. The ellipses stand for application-selected enum values:<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-AddRetrievalFilterEntries-Remarks:1 --></ins>
 
 ```cpp
 
@@ -2316,7 +2292,7 @@ Size of *pMessage* in bytes.
 
 <!-- d3d12-review-alert:end:diagnostics:ID3D12InfoQueue-GetMessage-Return-value:2:modified:migration-7e65ef73c8266db7-0 -->
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Return-value:3 -->With a nonnull `pMessage`, a null length pointer violates the required pointer precondition and is not covered by a guaranteed error-`HRESULT` path. No failing call establishes a valid message or guarantees zeroed output fields. A prior size query does not reserve a message or its size: the later read can fail, and the caller must check its result independently.<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Return-value:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Return-value:3 -->With a nonnull `pMessage`, a null length pointer violates the required pointer precondition and is not covered by a guaranteed error-`HRESULT` path. A prior size query does not reserve a message or its size: the later read can fail, and the caller must check its result independently.<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Return-value:3 --></ins>
 
 #### Context
 
@@ -2351,8 +2327,6 @@ HRESULT ReadFirstMessage(ID3D12InfoQueue* pInfoQueue)
     return hr;
 }
 ```
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Remarks:5:authored:migration-443971a32be5de72-0 -->The example requires a valid `pInfoQueue`. If the retrieval view is empty or a subsequent change makes the read invalid or its buffer too small, the corresponding failure is returned, not hidden by an automatic retry. A changed message that still fits the buffer can be read successfully. `S_FALSE` from the size query is a successful size-only result. The allocation is released on both success and every later failure, and the returned description pointer must not outlive that allocation.<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Remarks:5:authored:migration-443971a32be5de72-0 --></ins>
 
 <a id="id3d12infoqueue-getmessagecountlimit"></a>
 
@@ -2547,7 +2521,7 @@ Size of the retrieval filter in bytes. If *pFilter* is NULL, the size of the ret
 
 <!-- d3d12-review-alert:end:diagnostics:ID3D12InfoQueue-GetRetrievalFilter-Return-value:2 -->
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetRetrievalFilter-Return-value:3 -->An empty top filter, including an empty stack viewed as an empty filter, still requires the filter structure's bytes, but has zero counted list elements. A size query does not freeze the filter before the later read. Do not read failed output as a valid filter or assume failed output fields are zero.<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetRetrievalFilter-Return-value:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetRetrievalFilter-Return-value:3 -->An empty top filter, including an empty stack viewed as an empty filter, still requires the filter structure's bytes, but has zero counted list elements. A size query does not freeze the filter before the later read.<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetRetrievalFilter-Return-value:3 --></ins>
 
 <a id="id3d12infoqueue-getretrievalfilterstacksize"></a>
 
@@ -2616,7 +2590,7 @@ Size of the storage filter in bytes. If *pFilter* is NULL, the size of the stora
 
 <!-- d3d12-review-alert:end:diagnostics:ID3D12InfoQueue-GetStorageFilter-Return-value:2 -->
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetStorageFilter-Return-value:3 -->An empty top filter, including an empty stack viewed as an empty filter, still requires the filter structure's bytes, but has zero counted list elements. A size query does not freeze the filter before the later read. Do not read failed output as a valid filter or assume failed output fields are zero.<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetStorageFilter-Return-value:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetStorageFilter-Return-value:3 -->An empty top filter, including an empty stack viewed as an empty filter, still requires the filter structure's bytes, but has zero counted list elements. A size query does not freeze the filter before the later read.<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetStorageFilter-Return-value:3 --></ins>
 
 <a id="id3d12infoqueue-getstoragefilterstacksize"></a>
 
@@ -3180,7 +3154,7 @@ typedef enum D3D12_MESSAGE_SEVERITY {
 
 #### D3D12_MESSAGE_ID
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:message-id:0:authored:migration-0c4587b31063f15a-0 -->`D3D12_MESSAGE_ID` is the typed numeric identifier namespace declared in [d3d12sdklayers.idl](https://raw.githubusercontent.com/microsoft/DirectX-Headers/461ef5138bd30922b44fbad77c4e47662812d2d5/include/directx/d3d12sdklayers.idl). IDs distinguish individual debug diagnostics. `D3D12_MESSAGE_ID_UNKNOWN` is 0 and `D3D12_MESSAGE_ID_STRING_FROM_APPLICATION` is 1. The enumeration is not a guarantee that every declared message is emitted, or that a diagnostic is produced without the applicable validation enabled. `AddApplicationMessage` uses category `APPLICATION_DEFINED` and `STRING_FROM_APPLICATION`; `AddMessage` accepts the supplied category, severity and ID.<!-- d3d12-review-inline:end:diagnostics:message-id:0:authored:migration-0c4587b31063f15a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:message-id:0:authored:migration-0c4587b31063f15a-0 -->`D3D12_MESSAGE_ID` identifies an individual debug diagnostic. Its values are declared in [d3d12sdklayers.idl](https://raw.githubusercontent.com/microsoft/DirectX-Headers/461ef5138bd30922b44fbad77c4e47662812d2d5/include/directx/d3d12sdklayers.idl). `D3D12_MESSAGE_ID_UNKNOWN` is 0 and `D3D12_MESSAGE_ID_STRING_FROM_APPLICATION` is 1. `AddApplicationMessage` uses category `APPLICATION_DEFINED` and `STRING_FROM_APPLICATION`; `AddMessage` accepts the supplied category, severity and ID.<!-- d3d12-review-inline:end:diagnostics:message-id:0:authored:migration-0c4587b31063f15a-0 --></ins>
 
 <a id="message-callbacks"></a>
 
@@ -3232,7 +3206,7 @@ Apps should not rely on callbacks being invoked on the same thread that the API 
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:callback-registration-validation:1:authored:migration-dbc06d2f376478bc-0 -->`CallbackFunc` and `pCallbackCookie` are required nonnull pointers. `pContext` may be null. It is passed through unchanged. `CallbackFilterFlags` must use only the declared bits (0 or 1). A null required pointer or an unknown flag bit is invalid and returns `E_INVALIDARG`. `S_OK` establishes the registration and its output cookie; `E_OUTOFMEMORY` reports allocation failure.<!-- d3d12-review-inline:end:diagnostics:callback-registration-validation:1:authored:migration-dbc06d2f376478bc-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:cookie-dispute:0:authored:migration-ee55095cf6e59387-0 -->`RegisterMessageCallback` must write zero through a valid `pCallbackCookie` output on any registration failure. An invalid output pointer cannot be written. The cookie is usable only after a successful registration `HRESULT`. Its value alone does not establish success.<!-- d3d12-review-inline:end:diagnostics:cookie-dispute:0:authored:migration-ee55095cf6e59387-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:cookie-dispute:0:authored:migration-ee55095cf6e59387-0 -->`RegisterMessageCallback` must write zero through a valid `pCallbackCookie` output on any registration failure. The cookie is usable only after a successful registration `HRESULT`. Its value alone does not establish success.<!-- d3d12-review-inline:end:diagnostics:cookie-dispute:0:authored:migration-ee55095cf6e59387-0 --></ins>
 
 <a id="id3d12infoqueue1-unregistermessagecallback"></a>
 
@@ -3294,13 +3268,13 @@ typedef enum D3D12_MESSAGE_CALLBACK_FLAGS
 | `pDescription` | Debug message description. |
 | `pContext` | Pointer to user-supplied data that will be passed into each callback invocation. The memory pointed to by pContext must remain valid until the callback has been unregistered. |
 
+<ins><!-- d3d12-review-inline:begin:diagnostics:callback-flags-and-lifetime:1:authored:migration-3227b89fa91e47ca-0 -->The application must copy the description if it needs it after the callback returns. Before freeing `pContext` or unloading the callback code, the application must successfully unregister the callback by calling `UnregisterMessageCallback` from outside a callback.<!-- d3d12-review-inline:end:diagnostics:callback-flags-and-lifetime:1:authored:migration-3227b89fa91e47ca-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:callback-flags-and-lifetime:2:authored:migration-7070244cfb2a2cc6-0 -->Callbacks for one message are invoked sequentially in registration order. That order does not establish an ordering of messages produced on different application or internal validation threads.<!-- d3d12-review-inline:end:diagnostics:callback-flags-and-lifetime:2:authored:migration-7070244cfb2a2cc6-0 --></ins>
+
 ### Reentrancy restrictions
 
 Callbacks may be invoked with the internal runtimes in states which are unsafe to make other D3D calls. Any D3D API calls from a callback implementation could result in deadlocks and crashes.
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:callback-flags-and-lifetime:1:authored:migration-3227b89fa91e47ca-0 -->The callback receives the category, severity, ID and a narrow message description, and the application-supplied `pContext`. The application must not retain the description pointer beyond that invocation without copying its contents. `pContext` memory must remain valid until the callback is successfully unregistered. `UnregisterMessageCallback` waits for outstanding invocations. The application must call it outside callbacks before freeing the context or unloading callback code.<!-- d3d12-review-inline:end:diagnostics:callback-flags-and-lifetime:1:authored:migration-3227b89fa91e47ca-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:callback-flags-and-lifetime:2:authored:migration-7070244cfb2a2cc6-0 -->For a message delivered to multiple active callbacks, those callbacks are invoked sequentially in registration order. This does not establish a global ordering of messages from all application and internal validation threads. Internal threads, including GPU-based validation and queue-virtualization threads, can deliver callbacks.<!-- d3d12-review-inline:end:diagnostics:callback-flags-and-lifetime:2:authored:migration-7070244cfb2a2cc6-0 --></ins>
 
 <a id="object-scoped-validation"></a>
 
@@ -3377,9 +3351,9 @@ typedef enum D3D12_DEBUG_FEATURE
 
 <!-- d3d12-review-alert:end:diagnostics:D107-D3D12_DEBUG_FEATURE-meanings:0:modified:migration-476c5b0b488ee1ac-0 -->
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-feature-mask-boundaries:0:authored:migration-ee0f29da4752d4d6-0 -->The ordinary device feature mask default is `D3D12_DEBUG_FEATURE_NONE`. The active optional flags occupy bits `0x01`, `0x02` and `0x04`. The historical `EMULATE_WINDOWS7` bit remains declared, but setting it through the device feature flags parameter is rejected with `E_INVALIDARG`. Bits outside the active mask are discarded by that parameter setter rather than enabling additional features.<!-- d3d12-review-inline:end:diagnostics:D107-feature-mask-boundaries:0:authored:migration-ee0f29da4752d4d6-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-feature-mask-boundaries:0:authored:migration-ee0f29da4752d4d6-0 -->The ordinary device feature mask default is `D3D12_DEBUG_FEATURE_NONE`. The active optional flags occupy bits `0x01`, `0x02` and `0x04`. The historical `EMULATE_WINDOWS7` bit is declared, but setting it through the device feature flags parameter is rejected with `E_INVALIDARG`. Bits outside the active mask are discarded by that parameter setter rather than enabling additional features.<!-- d3d12-review-inline:end:diagnostics:D107-feature-mask-boundaries:0:authored:migration-ee0f29da4752d4d6-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-feature-mask-boundaries:1:authored:migration-6abfbe4a6ae269f6-0 -->GPU-based validation requires virtualized-bundle validation: attempting to set `DISABLE_VIRTUALIZED_BUNDLES_VALIDATION` while GPU-based validation is enabled produces a diagnostic and leaves that bit clear. Read back the effective mask with the feature flags parameter getter. Conservative descriptor validation may report false errors for descriptor changes that are properly synchronized. It does not change the underlying binding or synchronization contract.<!-- d3d12-review-inline:end:diagnostics:D107-feature-mask-boundaries:1:authored:migration-6abfbe4a6ae269f6-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-feature-mask-boundaries:1:authored:migration-6abfbe4a6ae269f6-0 -->GPU-based validation requires virtualized-bundle validation: attempting to set `DISABLE_VIRTUALIZED_BUNDLES_VALIDATION` while GPU-based validation is enabled produces a diagnostic and leaves that bit clear. Read back the effective mask with the feature flags parameter getter.<!-- d3d12-review-inline:end:diagnostics:D107-feature-mask-boundaries:1:authored:migration-6abfbe4a6ae269f6-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-feature-mask-boundaries:2:authored:migration-63e2068d7e2d4745-0 -->The deprecated device/list feature mask methods below do not set or query these typed settings. Their current behavior is a no-op setter and a `NONE` getter; earlier mutating descriptions are retained only as history.<!-- d3d12-review-inline:end:diagnostics:D107-feature-mask-boundaries:2:authored:migration-63e2068d7e2d4745-0 --></ins>
 
@@ -3448,9 +3422,9 @@ typedef enum D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE
 
 <!-- d3d12-review-alert:end:diagnostics:D107-parameter-selector-table:0:authored:migration-d9b0d81eb76360c0-0 -->
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-parameter-selector-table:1:authored:migration-2d6ddb2d9c53880a-0 -->All four device selectors and the command list selector support both setting and getting: the setter copies the complete input payload and the getter must copy the complete current payload to application memory. In particular, the device bytecode validation mode getter must return the current `D3D12_DEBUG_DEVICE_BYTECODE_VALIDATION_MODE` value. `pData` must point to readable input storage for a setter or writable output storage for a getter, for the duration of the call. The layer does not retain the application's payload pointer. `DataSize` must equal the selected payload size, not merely be large enough.<!-- d3d12-review-inline:end:diagnostics:D107-parameter-selector-table:1:authored:migration-2d6ddb2d9c53880a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-parameter-selector-table:1:authored:migration-2d6ddb2d9c53880a-0 -->All four device selectors and the command list selector support both setting and getting: the setter copies the complete input payload and the getter must copy the complete current payload to application memory. `pData` must point to readable input storage for a setter or writable output storage for a getter, for the duration of the call. The layer does not retain the application's payload pointer. `DataSize` must equal the selected payload size, not merely be large enough.<!-- d3d12-review-inline:end:diagnostics:D107-parameter-selector-table:1:authored:migration-2d6ddb2d9c53880a-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-parameter-selector-table:2:authored:migration-73b554371e9a96cb-0 -->These are fixed-size operations, not variable buffer sizing queries. A null output/zero-size call is not a supported size query. An unrecognized selector or an incorrect `DataSize`, whether too small or too large, returns `E_INVALIDARG`. A successful operation returns `S_OK`. No failure-output initialization is promised. Device settings affect the associated device, not other devices or process-global startup configuration. Command list settings affect the associated recording and are restored to defaults by `Reset`.<!-- d3d12-review-inline:end:diagnostics:D107-parameter-selector-table:2:authored:migration-73b554371e9a96cb-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-parameter-selector-table:2:authored:migration-73b554371e9a96cb-0 -->A null output/zero-size call is not a supported size query. An unrecognized selector or an incorrect `DataSize`, whether too small or too large, returns `E_INVALIDARG`. A successful operation returns `S_OK`. No failure-output initialization is promised. Device settings affect the associated device, not other devices or process-global startup configuration. Command list settings affect the associated recording and are restored to defaults by `Reset`.<!-- d3d12-review-inline:end:diagnostics:D107-parameter-selector-table:2:authored:migration-73b554371e9a96cb-0 --></ins>
 
 <a id="object-gbv-settings"></a>
 
@@ -3473,7 +3447,7 @@ typedef enum D3D12_DEBUG_DEVICE_BYTECODE_VALIDATION_MODE
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-bytecode-validation-policy:0:authored:migration-d286112101174084-0 -->`D3D12_DEBUG_DEVICE_BYTECODE_VALIDATION_MODE` is a 4-byte enum payload. `DISABLED` (0) disables the layer's bytecode validation policy; `WHEN_HASH_BYPASSED` (1) selects validation when the normal bytecode hash check is bypassed; `ALL_BYTECODE` (2) requests validation for all bytecode reaching that policy. `MODE_DEFAULT` aliases `WHEN_HASH_BYPASSED`. The device default is `MODE_DEFAULT`.<!-- d3d12-review-inline:end:diagnostics:D107-bytecode-validation-policy:0:authored:migration-d286112101174084-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-bytecode-validation-policy:1:authored:migration-f316408dce34bc98-0 -->The setter accepts those three mode values. Other mode values return `E_INVALIDARG`. This changes the associated device's validation policy for subsequent validation calls, not previously created shader objects or the underlying shader format/acceptance contract. This typed control does not enable GPU-based validation.<!-- d3d12-review-inline:end:diagnostics:D107-bytecode-validation-policy:1:authored:migration-f316408dce34bc98-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-bytecode-validation-policy:1:authored:migration-f316408dce34bc98-0 -->The setter accepts those three mode values. Other mode values return `E_INVALIDARG`. This changes the associated device's validation policy for subsequent validation calls, not previously created shader objects or the underlying shader format/acceptance contract.<!-- d3d12-review-inline:end:diagnostics:D107-bytecode-validation-policy:1:authored:migration-f316408dce34bc98-0 --></ins>
 
 #### D3D12_DEBUG_DEVICE_GPU_BASED_VALIDATION_SETTINGS
 
@@ -3504,7 +3478,7 @@ Point to an object using this structure with the *pData* member of [ID3D12DebugD
 
 Individual command lists can override the default shader patch mode using [ID3D12DebugCommandList1::SetDebugParameter](#id3d12debugcommandlist1-setdebugparameter).
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-gbv-default-dispute:0:authored:migration-0e69242f155eb187-0 -->**History — earlier documentation:** The public member reference previously described a default of 256 messages per command list. The current default is 1024 messages per command list. This setting limits the GPU-based validation log for each command list, not the independent [InfoQueue message count limit](#id3d12infoqueue-setmessagecountlimit).<!-- d3d12-review-inline:end:diagnostics:D107-gbv-default-dispute:0:authored:migration-0e69242f155eb187-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-gbv-default-dispute:0:authored:migration-0e69242f155eb187-0 -->`MaxMessagesPerCommandList` limits the GPU-based validation log for each command list. It is independent of the [information queue message count limit](#id3d12infoqueue-setmessagecountlimit). **History:** Earlier public documentation gave a default of 256 messages per command list.<!-- d3d12-review-inline:end:diagnostics:D107-gbv-default-dispute:0:authored:migration-0e69242f155eb187-0 --></ins>
 
 #### D3D12_DEBUG_COMMAND_LIST_GPU_BASED_VALIDATION_SETTINGS
 
@@ -3540,13 +3514,13 @@ Specifies the amount of slowdown artificially applied, as a factor of the nomina
 
 The SlowdownFactor is applied by artificially delaying the time it takes for a fence to signal. When SlowdownFactor is non-zero, the time taken for a fence to signal is approximately 1.0 + SlowdownFactor times the length of the nominal timing.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-slowdown-validation:0:authored:migration-caa9fcbe39009c77-0 -->`SlowdownFactor` is a dimensionless factor, not a number of milliseconds. Negative values, including negative infinity, are invalid and return `E_INVALIDARG`. Zero, including negative zero, disables artificial slowdown; one requests approximately twice the nominal fence signal time. This does not establish a precise timer, GPU clock rate, completion deadline or ordering guarantee. The contract does not specify the result for NaN or positive infinity.<!-- d3d12-review-inline:end:diagnostics:D107-slowdown-validation:0:authored:migration-caa9fcbe39009c77-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-slowdown-validation:0:authored:migration-caa9fcbe39009c77-0 -->Negative values, including negative infinity, are invalid and return `E_INVALIDARG`. Zero, including negative zero, disables artificial slowdown; one requests approximately twice the nominal fence signal time. The contract does not specify the result for NaN or positive infinity.<!-- d3d12-review-inline:end:diagnostics:D107-slowdown-validation:0:authored:migration-caa9fcbe39009c77-0 --></ins>
 
 #### Shader patch selection and pipeline state creation
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-payload-layout-and-timing:1:authored:migration-ea4409d2c8f8c77c-0 -->Device GPU-based validation settings supply the default shader patch mode for command list creation and reset. A list override changes that list's patch mode. It does not replace the device default or change other lists. A [command list reset](execution.md#list-reset) resamples the device default. Use [ID3D12DebugCommandList1::SetDebugParameter](#id3d12debugcommandlist1-setdebugparameter) or [ID3D12DebugCommandList2::SetDebugParameter](#id3d12debugcommandlist2-setdebugparameter) to set a per-list override before recording the draw or dispatch operations to which it is intended to apply. A setting change does not retroactively patch previously recorded operations.<!-- d3d12-review-inline:end:diagnostics:D107-payload-layout-and-timing:1:authored:migration-ea4409d2c8f8c77c-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-payload-layout-and-timing:2:authored:migration-b24f55feb6b0690a-0 -->`PipelineStateCreateFlags` control work performed when pipeline state objects are created, rather than retroactively recreating existing objects. The per-list mode selects the corresponding patched variant used for subsequent recording. When GPU-based validation state tracking is disabled, a device request for `STATE_TRACKING_ONLY` is diagnosed and normalized to `NONE`. Changing these payloads does not turn on the startup GPU-based validation infrastructure.<!-- d3d12-review-inline:end:diagnostics:D107-payload-layout-and-timing:2:authored:migration-b24f55feb6b0690a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-payload-layout-and-timing:2:authored:migration-b24f55feb6b0690a-0 -->`PipelineStateCreateFlags` control work performed when pipeline state objects are created, rather than retroactively recreating existing objects. The per-list mode selects the corresponding patched variant used for subsequent recording. When GPU-based validation state tracking is disabled, a device request for `STATE_TRACKING_ONLY` is diagnosed and normalized to `NONE`.<!-- d3d12-review-inline:end:diagnostics:D107-payload-layout-and-timing:2:authored:migration-b24f55feb6b0690a-0 --></ins>
 
 #### D3D12_GPU_BASED_VALIDATION_SHADER_PATCH_MODE
 
@@ -3614,13 +3588,12 @@ This enum is used by the [D3D12_DEBUG_DEVICE_GPU_BASED_VALIDATION_SETTINGS](#d3d
 
 Generally speaking most application developers are likely to leave this parameter unchanged. However, if the overhead of deferring patched PSO creation is suspected to be too much of a performance problem, then developers should consider changing this setting.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-patch-validity:0:authored:migration-51985be574cdaf37-0 -->The front-load flags can be combined. Applications must not use undeclared patch modes or reserved pipeline create bits. The parameter entry points do not promise rejection of every invalid payload field merely because the selector and payload size are checked.<!-- d3d12-review-inline:end:diagnostics:D107-patch-validity:0:authored:migration-51985be574cdaf37-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-patch-validity:0:authored:migration-51985be574cdaf37-0 -->The front-load flags can be combined. Applications must not use undeclared patch modes or reserved pipeline create bits. The parameter methods check the selector and payload size, but need not reject every invalid payload field.<!-- d3d12-review-inline:end:diagnostics:D107-patch-validity:0:authored:migration-51985be574cdaf37-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-patch-validity:1:authored:migration-00ef02ecff992dc1-0 -->Guarded validation changes execution of erroneous instructions. It is not a guarantee that invalid work cannot remove the device. `NONE` and `STATE_TRACKING_ONLY` reduce or omit shader validation, and do not establish correctness of unreported work.<!-- d3d12-review-inline:end:diagnostics:D107-patch-validity:1:authored:migration-00ef02ecff992dc1-0 --></ins>
 
 <a id="object-device-controls"></a>
-
-### Object debug control methods
+<a id="object-debug-control-methods"></a>
 
 <a id="id3d12debugdevice-getfeaturemask"></a>
 
@@ -3642,7 +3615,7 @@ D3D12_DEBUG_FEATURE GetFeatureMask();
 
 #### History
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice-GetFeatureMask-history-context:0:authored:migration-a7320150e9b0dcba-0 -->**Earlier public documentation** described a mutating feature mask and corresponding readback as follows. These paragraphs are retained only as history. They do not describe the current deprecated method. No release transition is established here.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice-GetFeatureMask-history-context:0:authored:migration-a7320150e9b0dcba-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice-GetFeatureMask-history-context:0:authored:migration-a7320150e9b0dcba-0 -->Earlier public documentation described this method as follows.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice-GetFeatureMask-history-context:0:authored:migration-a7320150e9b0dcba-0 --></ins>
 
 Gets a bit field of flags that indicates which debug features are on or off.
 
@@ -3680,7 +3653,7 @@ Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice-ReportLiveDeviceObjects-Return-value:1 -->This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice-ReportLiveDeviceObjects-Return-value:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice-ReportLiveDeviceObjects-report-contract:0:authored:migration-a0f31d896a6a35c5-0 -->[Live object report options and results](#live-object-report-options).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice-ReportLiveDeviceObjects-report-contract:0:authored:migration-a0f31d896a6a35c5-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice-ReportLiveDeviceObjects-report-contract:0:authored:migration-a0f31d896a6a35c5-0 -->See [live object report options](#live-object-report-options) for flag validation and results.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice-ReportLiveDeviceObjects-report-contract:0:authored:migration-a0f31d896a6a35c5-0 --></ins>
 
 <a id="id3d12debugdevice-setfeaturemask"></a>
 
@@ -3698,7 +3671,7 @@ HRESULT SetFeatureMask(D3D12_DEBUG_FEATURE Mask);
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice-SetFeatureMask-current-parameters:0:authored:migration-ce54588c5f0c2afe-0 -->`Mask` is ignored. It does not enable or disable any feature.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice-SetFeatureMask-current-parameters:0:authored:migration-ce54588c5f0c2afe-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice-SetFeatureMask-current-parameters:0:authored:migration-ce54588c5f0c2afe-0 -->`Mask` is ignored.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice-SetFeatureMask-current-parameters:0:authored:migration-ce54588c5f0c2afe-0 --></ins>
 
 #### Return values
 
@@ -3706,7 +3679,7 @@ HRESULT SetFeatureMask(D3D12_DEBUG_FEATURE Mask);
 
 #### History
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice-SetFeatureMask-history-context:0:authored:migration-defdd9abbec9e4c2-0 -->**Earlier public documentation** described a mutating feature mask and corresponding readback as follows. These paragraphs are retained only as history. They do not describe the current deprecated method. No release transition is established here.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice-SetFeatureMask-history-context:0:authored:migration-defdd9abbec9e4c2-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice-SetFeatureMask-history-context:0:authored:migration-defdd9abbec9e4c2-0 -->Earlier public documentation described this method as follows.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice-SetFeatureMask-history-context:0:authored:migration-defdd9abbec9e4c2-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice-SetFeatureMask-behavior:0:modified:source-b1c4da3a2b28c08e-0-0 -->Sets<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice-SetFeatureMask-behavior:0:modified:source-b1c4da3a2b28c08e-0-0 --></ins> a bit field of flags that will turn debug features on and off.
 
@@ -3764,7 +3737,7 @@ Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-GetDebugParameter-typed-contract:0:authored:migration-44eaee3d53619a81-0 -->[Fixed-size selector and payload contract](#object-debug-parameters).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-GetDebugParameter-typed-contract:0:authored:migration-44eaee3d53619a81-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-GetDebugParameter-typed-contract:0:authored:migration-44eaee3d53619a81-0 -->See [fixed-size debug parameters](#object-debug-parameters) for selectors, payload sizes and errors.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-GetDebugParameter-typed-contract:0:authored:migration-44eaee3d53619a81-0 --></ins>
 
 <a id="id3d12debugdevice1-reportlivedeviceobjects"></a>
 
@@ -3794,7 +3767,7 @@ Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-ReportLiveDeviceObjects-report-contract:0:authored:migration-d9d655415bb06be7-0 -->[Live object report options and results](#live-object-report-options).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-ReportLiveDeviceObjects-report-contract:0:authored:migration-d9d655415bb06be7-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-ReportLiveDeviceObjects-report-contract:0:authored:migration-d9d655415bb06be7-0 -->See [live object report options](#live-object-report-options) for flag validation and results.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-ReportLiveDeviceObjects-report-contract:0:authored:migration-d9d655415bb06be7-0 --></ins>
 
 <a id="id3d12debugdevice1-setdebugparameter"></a>
 
@@ -3836,7 +3809,7 @@ Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-SetDebugParameter-typed-contract:0:authored:migration-0f138ac7c9dad3cb-0 -->[Fixed-size selector and payload contract](#object-debug-parameters). [GPU-based validation settings and timing](#object-gbv-settings).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-SetDebugParameter-typed-contract:0:authored:migration-0f138ac7c9dad3cb-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-SetDebugParameter-typed-contract:0:authored:migration-0f138ac7c9dad3cb-0 -->See [fixed-size debug parameters](#object-debug-parameters) for selectors, payload sizes and errors, and [validation payloads and patch settings](#object-gbv-settings) for when GPU-based validation settings apply.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-SetDebugParameter-typed-contract:0:authored:migration-0f138ac7c9dad3cb-0 --></ins>
 
 <a id="id3d12debugdevice2-getdebugparameter"></a>
 
@@ -3878,7 +3851,7 @@ Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice2-GetDebugParameter-typed-contract:0:authored:migration-7e285d1e59a8edec-0 -->[Fixed-size selector and payload contract](#object-debug-parameters).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice2-GetDebugParameter-typed-contract:0:authored:migration-7e285d1e59a8edec-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice2-GetDebugParameter-typed-contract:0:authored:migration-7e285d1e59a8edec-0 -->See [fixed-size debug parameters](#object-debug-parameters) for selectors, payload sizes and errors.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice2-GetDebugParameter-typed-contract:0:authored:migration-7e285d1e59a8edec-0 --></ins>
 
 <a id="id3d12debugdevice2-setdebugparameter"></a>
 
@@ -3920,7 +3893,7 @@ Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
 This method returns one of the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes).
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice2-SetDebugParameter-typed-contract:0:authored:migration-25266b1b5a0aefdd-0 -->[Fixed-size selector and payload contract](#object-debug-parameters). [GPU-based validation settings and timing](#object-gbv-settings).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice2-SetDebugParameter-typed-contract:0:authored:migration-25266b1b5a0aefdd-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice2-SetDebugParameter-typed-contract:0:authored:migration-25266b1b5a0aefdd-0 -->See [fixed-size debug parameters](#object-debug-parameters) for selectors, payload sizes and errors, and [validation payloads and patch settings](#object-gbv-settings) for when GPU-based validation settings apply.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice2-SetDebugParameter-typed-contract:0:authored:migration-25266b1b5a0aefdd-0 --></ins>
 
 <a id="id3d12debugcommandlist1-getdebugparameter"></a>
 
@@ -3960,9 +3933,9 @@ Size in bytes of the memory buffer pointed to by *pData*.
 
 Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-GetDebugParameter-Return-value:1 -->Returns `S_OK` if successful, otherwise `E_INVALIDARG`.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-GetDebugParameter-Return-value:1 --></ins>
+Returns `S_OK` if successful, otherwise `E_INVALIDARG`.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-GetDebugParameter-typed-contract:0:authored:migration-cb124c5e721f6499-0 -->[Fixed-size selector and payload contract](#object-debug-parameters).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-GetDebugParameter-typed-contract:0:authored:migration-cb124c5e721f6499-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-GetDebugParameter-typed-contract:0:authored:migration-cb124c5e721f6499-0 -->See [fixed-size debug parameters](#object-debug-parameters) for selectors, payload sizes and errors.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-GetDebugParameter-typed-contract:0:authored:migration-cb124c5e721f6499-0 --></ins>
 
 <a id="id3d12debugcommandlist1-setdebugparameter"></a>
 
@@ -4012,7 +3985,7 @@ This method returns one of the [Direct3D 12 Return Codes](devices-and-capabiliti
 
 Resetting a command list restores the debug parameters to the default values. This is because a command list reset is treated as equivalent to creating a new command list.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-SetDebugParameter-typed-contract:0:authored:migration-0822e1157adf8965-0 -->[Fixed-size selector and payload contract](#object-debug-parameters). [GPU-based validation settings and timing](#object-gbv-settings).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-SetDebugParameter-typed-contract:0:authored:migration-0822e1157adf8965-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-SetDebugParameter-typed-contract:0:authored:migration-0822e1157adf8965-0 -->See [fixed-size debug parameters](#object-debug-parameters) for selectors, payload sizes and errors, and [validation payloads and patch settings](#object-gbv-settings) for when GPU-based validation settings apply.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-SetDebugParameter-typed-contract:0:authored:migration-0822e1157adf8965-0 --></ins>
 
 <a id="id3d12debugcommandlist2-getdebugparameter"></a>
 
@@ -4052,9 +4025,9 @@ Size in bytes of the memory buffer pointed to by *pData*.
 
 Type: **[HRESULT](devices-and-capabilities.md#api-result-codes)**
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList2-GetDebugParameter-Return-value:1 -->Returns `S_OK` if successful, otherwise `E_INVALIDARG`.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList2-GetDebugParameter-Return-value:1 --></ins>
+Returns `S_OK` if successful, otherwise `E_INVALIDARG`.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList2-GetDebugParameter-typed-contract:0:authored:migration-65f2ef73e68419e4-0 -->[Fixed-size selector and payload contract](#object-debug-parameters).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList2-GetDebugParameter-typed-contract:0:authored:migration-65f2ef73e68419e4-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList2-GetDebugParameter-typed-contract:0:authored:migration-65f2ef73e68419e4-0 -->See [fixed-size debug parameters](#object-debug-parameters) for selectors, payload sizes and errors.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList2-GetDebugParameter-typed-contract:0:authored:migration-65f2ef73e68419e4-0 --></ins>
 
 <a id="id3d12debugcommandlist2-setdebugparameter"></a>
 
@@ -4104,7 +4077,7 @@ Certain debug behaviors of D3D12 Debug Layer can be modified by setting debug pa
 
 Resetting a command list restores the debug parameters to the default values. This is because a command list reset is treated as equivalent to creating a new command list.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList2-SetDebugParameter-typed-contract:0:authored:migration-944a6f75fb838aeb-0 -->[Fixed-size selector and payload contract](#object-debug-parameters). [GPU-based validation settings and timing](#object-gbv-settings).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList2-SetDebugParameter-typed-contract:0:authored:migration-944a6f75fb838aeb-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList2-SetDebugParameter-typed-contract:0:authored:migration-944a6f75fb838aeb-0 -->See [fixed-size debug parameters](#object-debug-parameters) for selectors, payload sizes and errors, and [validation payloads and patch settings](#object-gbv-settings) for when GPU-based validation settings apply.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList2-SetDebugParameter-typed-contract:0:authored:migration-944a6f75fb838aeb-0 --></ins>
 
 <a id="id3d12debugcommandlist-getfeaturemask"></a>
 
@@ -4126,7 +4099,7 @@ D3D12_DEBUG_FEATURE GetFeatureMask();
 
 #### History
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList-GetFeatureMask-history-context:0:authored:migration-b33ad93b4fc20cc8-0 -->**Earlier public documentation** described a mutating feature mask and corresponding readback as follows. These paragraphs are retained only as history. They do not describe the current deprecated method. No release transition is established here.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList-GetFeatureMask-history-context:0:authored:migration-b33ad93b4fc20cc8-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList-GetFeatureMask-history-context:0:authored:migration-b33ad93b4fc20cc8-0 -->Earlier public documentation described this method as follows.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList-GetFeatureMask-history-context:0:authored:migration-b33ad93b4fc20cc8-0 --></ins>
 
 Returns the debug feature flags that have been set on a command list.
 
@@ -4152,7 +4125,7 @@ HRESULT SetFeatureMask(D3D12_DEBUG_FEATURE Mask);
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList-SetFeatureMask-current-parameters:0:authored:migration-2f7a3218413ee356-0 -->`Mask` is ignored. It does not enable or disable any feature.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList-SetFeatureMask-current-parameters:0:authored:migration-2f7a3218413ee356-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList-SetFeatureMask-current-parameters:0:authored:migration-2f7a3218413ee356-0 -->`Mask` is ignored.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList-SetFeatureMask-current-parameters:0:authored:migration-2f7a3218413ee356-0 --></ins>
 
 #### Return values
 
@@ -4160,7 +4133,7 @@ HRESULT SetFeatureMask(D3D12_DEBUG_FEATURE Mask);
 
 #### History
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList-SetFeatureMask-history-context:0:authored:migration-e1649a53bbf3afee-0 -->**Earlier public documentation** described a mutating feature mask and corresponding readback as follows. These paragraphs are retained only as history. They do not describe the current deprecated method. No release transition is established here.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList-SetFeatureMask-history-context:0:authored:migration-e1649a53bbf3afee-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList-SetFeatureMask-history-context:0:authored:migration-e1649a53bbf3afee-0 -->Earlier public documentation described this method as follows.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList-SetFeatureMask-history-context:0:authored:migration-e1649a53bbf3afee-0 --></ins>
 
 Turns the debug features for a command list on or off.
 
@@ -4182,11 +4155,11 @@ This method returns one of the [Direct3D 12 Return Codes](devices-and-capabiliti
 
 ### Resource assertions
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-assertion-common:0:authored:migration-3793e2c232cdabf6-0 -->Resource assertions inspect the debug layer's tracked or assumed model. They do not read GPU memory to discover an actual state, insert a transition, flush a cache, or prove successful GPU completion. An assertion may establish a previously unknown validation assumption for later checks.<!-- d3d12-review-inline:end:diagnostics:D107-assertion-common:0:authored:migration-3793e2c232cdabf6-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-assertion-common:0:authored:migration-3793e2c232cdabf6-0 -->Resource assertions check the debug layer's tracked or assumed state, not the actual state in GPU memory. An assertion may establish a previously unknown validation assumption for later checks. It does not insert a transition or flush a cache.<!-- d3d12-review-inline:end:diagnostics:D107-assertion-common:0:authored:migration-3793e2c232cdabf6-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-assertion-common:1:authored:migration-89eb18003b7364a6-0 -->`pResource` must identify a live resource belonging to the associated device. `Subresource` is a valid subresource index or `D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES` (`0xffffffff`) to assert all subresources. The application remains responsible for resource lifetime and required barriers. A null resource or out-of-range subresource is invalid. A successful assertion is not permission to destroy an in-use object.<!-- d3d12-review-inline:end:diagnostics:D107-assertion-common:1:authored:migration-89eb18003b7364a6-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-assertion-common:1:authored:migration-89eb18003b7364a6-0 -->`pResource` must identify a live resource belonging to the associated device. `Subresource` is a valid subresource index or `D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES` (`0xffffffff`) to assert all subresources. A null resource or out-of-range subresource is invalid. An assertion does not replace a required barrier, and a successful assertion does not make it safe to destroy an object that is still in use.<!-- d3d12-review-inline:end:diagnostics:D107-assertion-common:1:authored:migration-89eb18003b7364a6-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-assertion-common:2:authored:migration-db07a48749e421dc-0 -->List assertions occur at a recording position; queue assertions are ordered in the queue's diagnostic timeline. Their CPU call return does not wait for GPU completion. The exact state/access/layout expectations and limitations remain in the named Synchronization sections linked by each entry.<!-- d3d12-review-inline:end:diagnostics:D107-assertion-common:2:authored:migration-db07a48749e421dc-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-assertion-common:2:authored:migration-db07a48749e421dc-0 -->Command list assertions apply at their recording position. Queue assertions are ordered in the queue's diagnostic timeline. The CPU call does not wait for GPU completion. Each method links to the Synchronization section that defines the state, access or layout it checks and that section's limitations.<!-- d3d12-review-inline:end:diagnostics:D107-assertion-common:2:authored:migration-db07a48749e421dc-0 --></ins>
 
 <a id="id3d12debugcommandlist-assertresourcestate"></a>
 
@@ -4230,7 +4203,7 @@ This method returns true if the resource or subresource is in the specified stat
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList-AssertResourceState-model-qualification:0:authored:migration-db431e8b77abac28-0 -->`FALSE` also covers a null resource, invalid subresource index or unrecognized state bits.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList-AssertResourceState-model-qualification:0:authored:migration-db431e8b77abac28-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList-AssertResourceState-model-qualification:1:authored:migration-f7dd56a9e9d2c52a-0 -->The command list recording-point and assumed-state behavior described for [`ID3D12DebugCommandList1::AssertResourceState`](#id3d12debugcommandlist1-assertresourcestate) also applies to this entry point. [Legal legacy resource state combinations](synchronization.md#legacy-resource-states).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList-AssertResourceState-model-qualification:1:authored:migration-f7dd56a9e9d2c52a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList-AssertResourceState-model-qualification:1:authored:migration-f7dd56a9e9d2c52a-0 -->This method has the same recording-point and assumed-state behavior as [`ID3D12DebugCommandList1::AssertResourceState`](#id3d12debugcommandlist1-assertresourcestate). See [legacy resource states](synchronization.md#legacy-resource-states) for valid state combinations.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList-AssertResourceState-model-qualification:1:authored:migration-f7dd56a9e9d2c52a-0 --></ins>
 
 <a id="id3d12debugcommandlist1-assertresourcestate"></a>
 
@@ -4282,7 +4255,7 @@ This API is for debug validation only and does not affect the actual runtime or 
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-AssertResourceState-model-qualification:0:authored:migration-a051420ff1ef1092-0 -->`FALSE` also covers a null resource, invalid subresource index or unrecognized state bits.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-AssertResourceState-model-qualification:0:authored:migration-a051420ff1ef1092-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-AssertResourceState-model-qualification:1:authored:migration-718e82ea654e8b47-0 -->[Legal legacy resource state combinations](synchronization.md#legacy-resource-states).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-AssertResourceState-model-qualification:1:authored:migration-718e82ea654e8b47-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-AssertResourceState-model-qualification:1:authored:migration-718e82ea654e8b47-0 -->See [legacy resource states](synchronization.md#legacy-resource-states) for valid state combinations.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-AssertResourceState-model-qualification:1:authored:migration-718e82ea654e8b47-0 --></ins>
 
 <a id="id3d12debugcommandlist3-assertresourceaccess"></a>
 
@@ -4374,7 +4347,7 @@ This method is very similar to [ID3D12DebugCommandList::AssertResourceState](#id
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandQueue-AssertResourceState-model-qualification:0:authored:migration-3c60f52e58ce610e-0 -->`FALSE` also covers a null resource, invalid subresource index or unrecognized state bits.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandQueue-AssertResourceState-model-qualification:0:authored:migration-3c60f52e58ce610e-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandQueue-AssertResourceState-model-qualification:1:authored:migration-c048780c32097a0d-0 -->The assertion is ordered with queue operations in the queue's validation model, including resource uses performed directly by queue methods. [Legal legacy resource state combinations](synchronization.md#legacy-resource-states).<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandQueue-AssertResourceState-model-qualification:1:authored:migration-c048780c32097a0d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandQueue-AssertResourceState-model-qualification:1:authored:migration-c048780c32097a0d-0 -->The assertion is ordered with queue operations in the queue's validation model, including resource uses performed directly by queue methods. See [legacy resource states](synchronization.md#legacy-resource-states) for valid state combinations.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandQueue-AssertResourceState-model-qualification:1:authored:migration-c048780c32097a0d-0 --></ins>
 
 <a id="id3d12debugcommandqueue1-assertresourceaccess"></a>
 
@@ -4420,61 +4393,18 @@ void AssertTextureLayout(ID3D12Resource* pResource, UINT Subresource, D3D12_BARR
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandQueue1-AssertTextureLayout-returns:0:authored:migration-49420d7e263baf00-0 -->None.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandQueue1-AssertTextureLayout-returns:0:authored:migration-49420d7e263baf00-0 --></ins>
 
-<a id="driver-marker-allocation-comment"></a>
-
-## Driver marker, allocation and shader comment queries
-
-```cpp
-typedef VOID ( APIENTRY* PFND3D12DDI_SET_MARKER )( D3D12DDI_HCOMMANDLIST, UINT64 );
-
-typedef VOID ( APIENTRY* PFND3D12DDI_GET_DEBUG_ALLOCATION_INFO_0014 )(
-    D3D12DDI_HDEVICE hDevice,
-    D3D12DDI_HANDLE_AND_TYPE Object,
-    _Inout_ UINT* pNumVirtualAddressInfos,
-    _Out_writes_to_opt_(*pNumVirtualAddressInfos, *pNumVirtualAddressInfos) D3D12DDI_DEBUG_VIRTUAL_ADDRESS_ALLOCATION_INFO_0012* pVirtualAddressInfos,
-    _Inout_ UINT* pNumKMTInfos,
-    _Out_writes_to_opt_(*pNumKMTInfos, *pNumKMTInfos) D3D12DDI_DEBUG_KMT_ALLOCATION_INFO_0014* pKMTInfos
-    );
-
-typedef struct D3D12DDI_DEBUG_VIRTUAL_ADDRESS_ALLOCATION_INFO_0012
-{
-    UINT32 PhysicalAdapterIndex;
-    D3D12DDI_GPU_VIRTUAL_ADDRESS StartAddress;
-    D3D12DDI_GPU_VIRTUAL_ADDRESS EndAddress;
-} D3D12DDI_DEBUG_VIRTUAL_ADDRESS_ALLOCATION_INFO_0012;
-
-typedef struct D3D12DDI_DEBUG_KMT_ALLOCATION_INFO_0014
-{
-    UINT32 PhysicalAdapterIndex;
-    D3DKMT_HANDLE hAllocation;
-    UINT64 Offset;
-    UINT64 Size;
-} D3D12DDI_DEBUG_KMT_ALLOCATION_INFO_0014;
-
-typedef HRESULT ( APIENTRY* PFND3D12DDI_RETRIEVE_SHADER_COMMENT_0003 )(
-    D3D12DDI_HDEVICE, D3D12DDI_HPIPELINESTATE, _Out_writes_z_(*CharacterCountIncludingNullTerminator) WCHAR * pBuffer, _Inout_ SIZE_T * CharacterCountIncludingNullTerminator );
-```
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:CS-diagnostic-services:0:authored:migration-0f74eed9b78da542-0 -->SetMarker receives a `UINT64` runtime marker sequence number, not the application's metadata/pointer/byte count tuple. Its ordinary-handle signature is retained in both 3D layouts and the selected video tables.<!-- d3d12-review-inline:end:diagnostics:CS-diagnostic-services:0:authored:migration-0f74eed9b78da542-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:CS-diagnostic-services:1:authored:migration-945fba59a49b5dd1-0 -->GetDebugAllocationInfo reports per-physical-adapter GPU ranges and kernel allocation records through independent count/array pairs. Null arrays query sizes. The driver reports current counts even if they changed since an earlier query and must not exceed supplied capacities.<!-- d3d12-review-inline:end:diagnostics:CS-diagnostic-services:1:authored:migration-945fba59a49b5dd1-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:diagnostics:CS-diagnostic-services:2:authored:migration-a4f19dae2e35a219-0 -->RetrieveShaderComment counts `WCHAR` elements including the terminator. The runtime converts the byte count used by `WKPDID_CommentStringW`.<!-- d3d12-review-inline:end:diagnostics:CS-diagnostic-services:2:authored:migration-a4f19dae2e35a219-0 --></ins>
-
 <a id="gbv-diagnostic-snapshots"></a>
 
 ## GPU-based validation diagnostic snapshots
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-gbv-model:0:authored:migration-4f1bd3a1181b8435-0 -->These diagnostic queries require an available GBV diagnostic interface and
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-gbv-model:0:authored:migration-4f1bd3a1181b8435-0 -->The `ID3D12GBVDiagnostics` methods read the state that GPU-based validation tracks for a resource. They require an available GBV diagnostic interface and
 enabled, non-bypassed GPU-based validation. The three state queries also
 require state tracking. They can perform GPU readback and wait for that
 readback, but do not quiesce unrelated application producers automatically.
 Applications must establish the completion/synchronization needed for the
 data they intend to inspect.<!-- d3d12-review-inline:end:diagnostics:AB-gbv-model:0:authored:migration-4f1bd3a1181b8435-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-gbv-model:1:authored:migration-d7f6dc6e44ea2d6b-0 -->Returned state words are GBV diagnostic observations, not permission to
-ignore normative resource state/access/lifetime requirements. Internal hashes
-and database offsets are not persistent application identifiers or GPU
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-gbv-model:1:authored:migration-d7f6dc6e44ea2d6b-0 -->Returned hashes and state database offsets are internal to GPU-based validation. They are not persistent application identifiers or GPU
 virtual addresses.<!-- d3d12-review-inline:end:diagnostics:AB-gbv-model:1:authored:migration-d7f6dc6e44ea2d6b-0 --></ins>
 
 <a id="api-id3d12gbvdiagnostics-getgbventiresubresourcestatesdata"></a>
@@ -4596,9 +4526,7 @@ void EnableShaderInstrumentation(
 
 This method enables tools such as PIX to instrument shaders.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12tools-enableshaderinstrumentation-contract:0:authored:migration-910c9f142663a685-0 -->Configures shader instrumentation for the associated tool/runtime
-configuration. Device
-creation consumes the relevant startup configuration.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12tools-enableshaderinstrumentation-contract:0:authored:migration-910c9f142663a685-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12tools-enableshaderinstrumentation-contract:0:authored:migration-910c9f142663a685-0 -->The setting is part of the associated device creation configuration and applies to devices created after it changes.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12tools-enableshaderinstrumentation-contract:0:authored:migration-910c9f142663a685-0 --></ins>
 
 #### Parameters
 
@@ -4626,7 +4554,7 @@ Determines whether shader instrumentation is enabled.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12tools-shaderinstrumentationenabled-contract:2:authored:migration-e6ecf50f45f9ccff-0 -->Returns BOOL enabled/disabled under the documented tool/developer mode contract.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12tools-shaderinstrumentationenabled-contract:2:authored:migration-e6ecf50f45f9ccff-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12tools-shaderinstrumentationenabled-contract:2:authored:migration-e6ecf50f45f9ccff-0 -->Returns `TRUE` if shader instrumentation is enabled in the associated configuration, otherwise `FALSE`.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12tools-shaderinstrumentationenabled-contract:2:authored:migration-e6ecf50f45f9ccff-0 --></ins>
 
 <a id="api-id3d12runtimevalidationcontrol-disablefailuresfromstrictervalidationinapplocalruntime"></a>
 
@@ -4641,13 +4569,11 @@ void DisableFailuresFromStricterValidationInAppLocalRuntime(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12runtimevalidationcontrol-disablefailuresfromstrictervalidationinapplocalruntime-contract:0:authored:migration-5ff87f9b39dbc77f-0 -->Sets the configuration's compatibility control for newly stricter app-local
-runtime validation failures. It does not disable all validation.
-Existing device state is not retroactively rewritten by changing the setting.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12runtimevalidationcontrol-disablefailuresfromstrictervalidationinapplocalruntime-contract:0:authored:migration-5ff87f9b39dbc77f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12runtimevalidationcontrol-disablefailuresfromstrictervalidationinapplocalruntime-contract:0:authored:migration-5ff87f9b39dbc77f-0 -->Sets the configuration's compatibility control for failures caused by stricter validation in an app-local runtime. It does not disable all validation. Changing the setting does not change existing devices.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12runtimevalidationcontrol-disablefailuresfromstrictervalidationinapplocalruntime-contract:0:authored:migration-5ff87f9b39dbc77f-0 --></ins>
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12runtimevalidationcontrol-disablefailuresfromstrictervalidationinapplocalruntime-contract:2:authored:migration-7c6f25b77cd45a44-0 -->`bDisable` enables/disables this scoped suppression setting. Apply configuration before the device creations intended to consume it.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12runtimevalidationcontrol-disablefailuresfromstrictervalidationinapplocalruntime-contract:2:authored:migration-7c6f25b77cd45a44-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12runtimevalidationcontrol-disablefailuresfromstrictervalidationinapplocalruntime-contract:2:authored:migration-7c6f25b77cd45a44-0 -->`bDisable` is `TRUE` to disable these failures, or `FALSE` to leave them enabled. Set it before creating the devices that are intended to use it.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12runtimevalidationcontrol-disablefailuresfromstrictervalidationinapplocalruntime-contract:2:authored:migration-7c6f25b77cd45a44-0 --></ins>
 
 #### Return values
 
@@ -4735,9 +4661,7 @@ void BeginCapturableWork(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-begincapturablework-contract:0:authored:migration-0c816b4bf2fe8507-0 -->Delineates logical work for capture tools. The GUID differentiates categories
-of delineation. With no
-interested tool the selected runtime/layer can ignore the notification.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-begincapturablework-contract:0:authored:migration-0c816b4bf2fe8507-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-begincapturablework-contract:0:authored:migration-0c816b4bf2fe8507-0 -->Marks the start of a region of logical work for capture tools. The GUID identifies the category of work. When no interested tool is present, the selected runtime or layer can ignore the notification.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-begincapturablework-contract:0:authored:migration-0c816b4bf2fe8507-0 --></ins>
 
 #### Parameters
 
@@ -4760,10 +4684,49 @@ void EndCapturableWork(
 
 #### Behavior
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-endcapturablework-contract:0:authored:migration-8afad0df1ebc8091-0 -->Delineates logical work for capture tools. The GUID differentiates categories
-of delineation. With no
-interested tool the selected runtime/layer can ignore the notification.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-endcapturablework-contract:0:authored:migration-8afad0df1ebc8091-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-endcapturablework-contract:0:authored:migration-8afad0df1ebc8091-0 -->Marks the end of a region of logical work begun by [`BeginCapturableWork`](#api-id3d12sharingcontract-begincapturablework) with the same GUID. When no interested tool is present, the selected runtime or layer can ignore the notification.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-endcapturablework-contract:0:authored:migration-8afad0df1ebc8091-0 --></ins>
 
 #### Parameters
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:AB-id3d12sharingcontract-endcapturablework-contract:2:authored:migration-c5cdfa1cfe1a5619-0 -->`guid` identifies the capture work category; begin/end delimit that logical region.<!-- d3d12-review-inline:end:diagnostics:AB-id3d12sharingcontract-endcapturablework-contract:2:authored:migration-c5cdfa1cfe1a5619-0 --></ins>
+
+<a id="driver-marker-allocation-comment"></a>
+
+## Driver marker, allocation and shader comment queries
+
+```cpp
+typedef VOID ( APIENTRY* PFND3D12DDI_SET_MARKER )( D3D12DDI_HCOMMANDLIST, UINT64 );
+
+typedef VOID ( APIENTRY* PFND3D12DDI_GET_DEBUG_ALLOCATION_INFO_0014 )(
+    D3D12DDI_HDEVICE hDevice,
+    D3D12DDI_HANDLE_AND_TYPE Object,
+    _Inout_ UINT* pNumVirtualAddressInfos,
+    _Out_writes_to_opt_(*pNumVirtualAddressInfos, *pNumVirtualAddressInfos) D3D12DDI_DEBUG_VIRTUAL_ADDRESS_ALLOCATION_INFO_0012* pVirtualAddressInfos,
+    _Inout_ UINT* pNumKMTInfos,
+    _Out_writes_to_opt_(*pNumKMTInfos, *pNumKMTInfos) D3D12DDI_DEBUG_KMT_ALLOCATION_INFO_0014* pKMTInfos
+    );
+
+typedef struct D3D12DDI_DEBUG_VIRTUAL_ADDRESS_ALLOCATION_INFO_0012
+{
+    UINT32 PhysicalAdapterIndex;
+    D3D12DDI_GPU_VIRTUAL_ADDRESS StartAddress;
+    D3D12DDI_GPU_VIRTUAL_ADDRESS EndAddress;
+} D3D12DDI_DEBUG_VIRTUAL_ADDRESS_ALLOCATION_INFO_0012;
+
+typedef struct D3D12DDI_DEBUG_KMT_ALLOCATION_INFO_0014
+{
+    UINT32 PhysicalAdapterIndex;
+    D3DKMT_HANDLE hAllocation;
+    UINT64 Offset;
+    UINT64 Size;
+} D3D12DDI_DEBUG_KMT_ALLOCATION_INFO_0014;
+
+typedef HRESULT ( APIENTRY* PFND3D12DDI_RETRIEVE_SHADER_COMMENT_0003 )(
+    D3D12DDI_HDEVICE, D3D12DDI_HPIPELINESTATE, _Out_writes_z_(*CharacterCountIncludingNullTerminator) WCHAR * pBuffer, _Inout_ SIZE_T * CharacterCountIncludingNullTerminator );
+```
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:CS-diagnostic-services:0:authored:migration-0f74eed9b78da542-0 -->SetMarker receives a `UINT64` runtime marker sequence number, not the application's metadata/pointer/byte count tuple. Its ordinary-handle signature is retained in both 3D layouts and the selected video tables.<!-- d3d12-review-inline:end:diagnostics:CS-diagnostic-services:0:authored:migration-0f74eed9b78da542-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:CS-diagnostic-services:1:authored:migration-945fba59a49b5dd1-0 -->GetDebugAllocationInfo reports per-physical-adapter GPU ranges and kernel allocation records through independent count/array pairs. Null arrays query sizes. The driver reports current counts even if they changed since an earlier query and must not exceed supplied capacities.<!-- d3d12-review-inline:end:diagnostics:CS-diagnostic-services:1:authored:migration-945fba59a49b5dd1-0 --></ins>
+
+<ins><!-- d3d12-review-inline:begin:diagnostics:CS-diagnostic-services:2:authored:migration-a4f19dae2e35a219-0 -->RetrieveShaderComment counts `WCHAR` elements including the terminator. The runtime converts the byte count used by `WKPDID_CommentStringW`.<!-- d3d12-review-inline:end:diagnostics:CS-diagnostic-services:2:authored:migration-a4f19dae2e35a219-0 --></ins>
