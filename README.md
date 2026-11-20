@@ -57,6 +57,7 @@ Make sure that you visit the [DirectX Landing Page](https://devblogs.microsoft.c
       * [Application Identity](d3d/D3D12ApplicationIdentity.md)
       * [Partial Graphics Programs](d3d/PartialGraphicsPrograms.md)
       * [Driver Compiler Flags](d3d/DriverCompilerFlags.md)
+      * [State Object Compiler End-to-End Testing](d3d/D3D12StateObjectCompilerE2EValidation.md)
 
 * Performance
     * [CPU Efficiency](d3d/CPUEfficiency.md)
