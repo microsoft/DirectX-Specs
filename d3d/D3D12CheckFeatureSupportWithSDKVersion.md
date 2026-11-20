@@ -8,6 +8,7 @@
 - [Using CheckFeatureSupport1](#using-checkfeaturesupport1)
   - [New API Surface](#new-api-surface)
   - [Example Usage](#example-usage)
+  - [Components Sharing a Device](#components-sharing-a-device)
   - [Preview SDK Version Mapping](#preview-sdk-version-mapping)
   - [Error Handling](#error-handling)
   - [Backward Compatibility \& Breaking Changes](#backward-compatibility--breaking-changes)
@@ -39,13 +40,13 @@ Clamping affects only the value reported back to the caller, and the runtime ope
 - Retroactively remapping capabilities that already shipped to older SDK versions. The feature protects new capabilities going forward.
 - Changing actual runtime or hardware behavior. Only the reported capability value is affected, not the functionality the runtime provides. Clamping assumes new tiers are strict supersets of their predecessors (they add capability without changing existing behavior). If a change is behavioral rather than additive, clamping the reported value causes the report to no longer match the behavior the runtime is actually using, and clamping alone will not guarantee the safety of an app that cannot support the new behavior.
 - Fixing or replacing application capability checking logic. The feature only affects runtime reporting.
-- `ID3D12VideoDevice::CheckFeatureSupport` and other non-`ID3D12Device` feature query APIs. This behavior applies only to `ID3D12Device::CheckFeatureSupport` and `ID3D12Device17::CheckFeatureSupport1`.
+- `ID3D12VideoDevice::CheckFeatureSupport` and other non-`ID3D12Device` feature query APIs. This behavior applies only to `ID3D12Device::CheckFeatureSupport` and `ID3D12Device16::CheckFeatureSupport1`.
 - Input-keyed feature queries, whose output depends on caller-supplied inputs (for example `D3D12_FEATURE_DATA_FORMAT_SUPPORT` and `D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS`).
 
 ## Using CheckFeatureSupport1
 
 ### New API Surface
-The public `CheckFeatureSupport` API lives on the base `ID3D12Device` interface. `CheckFeatureSupport1` is exposed on `ID3D12Device17`. It is identical to `CheckFeatureSupport` with an additional `SDKVersion` parameter carrying the Agility SDK version the application was built against.
+The public `CheckFeatureSupport` API lives on the base `ID3D12Device` interface. `CheckFeatureSupport1` is exposed on `ID3D12Device16`. It is identical to `CheckFeatureSupport` with an additional `SDKVersion` parameter carrying the Agility SDK version the application was built against.
 
 ```cpp
 HRESULT CheckFeatureSupport1(
@@ -55,13 +56,13 @@ HRESULT CheckFeatureSupport1(
     UINT SDKVersion);
 ```
 
-Applications obtain `ID3D12Device17` by calling `QueryInterface` on their device and must handle `E_NOINTERFACE` on runtimes that do not expose it.
+Applications obtain `ID3D12Device16` by calling `QueryInterface` on their device and must handle `E_NOINTERFACE` on runtimes that do not expose it.
 
-`SDKVersion` uses the Agility SDK version number directly. Applications should pass the Agility SDK version they were built against.
+`SDKVersion` uses the Agility SDK version number directly. Applications should pass the Agility SDK version they were built against, limited to a version supported by the device runtime. See [Components Sharing a Device](#components-sharing-a-device).
 
 ### Example Usage
 
-The application queries its existing device for `ID3D12Device17`, passes the Agility SDK version it was built against, and checks the returned `HRESULT` before reading the feature data.
+This example assumes the device runtime accepts the application's SDK version. The application queries its existing device for `ID3D12Device16`, passes the Agility SDK version it was built against, and checks the returned `HRESULT` before reading the feature data.
 
 ```c++
 HRESULT CheckRaytracingSupport(
@@ -75,15 +76,15 @@ HRESULT CheckRaytracingSupport(
 
     *pRaytracingSupported = false;
 
-    Microsoft::WRL::ComPtr<ID3D12Device17> device17;
-    HRESULT hr = pDevice->QueryInterface(IID_PPV_ARGS(&device17));
+    Microsoft::WRL::ComPtr<ID3D12Device16> device16;
+    HRESULT hr = pDevice->QueryInterface(IID_PPV_ARGS(&device16));
     if (FAILED(hr))
     {
         return hr;
     }
 
     D3D12_FEATURE_DATA_D3D12_OPTIONS5 options5 = {};
-    hr = device17->CheckFeatureSupport1(
+    hr = device16->CheckFeatureSupport1(
         D3D12_FEATURE_D3D12_OPTIONS5,
         &options5,
         sizeof(options5),
@@ -106,6 +107,13 @@ If `QueryInterface` returns `E_NOINTERFACE`, the runtime does not support `Check
 Applications should continue testing tiers with `>=` rather than exact equality. Version-aware clamping protects applications from capability values introduced after their SDK, but does not replace correct capability checks.
 
 For example, if the runtime supports a newer raytracing tier but the application's SDK defines tiers only through `D3D12_RAYTRACING_TIER_1_2`, `CheckFeatureSupport1` reports no higher than `TIER_1_2`. The runtime continues to use the true hardware capability internally.
+
+### Components Sharing a Device
+A component may receive a device that uses an older runtime than the SDK the component was built against. Passing its own `D3D12_SDK_VERSION` directly can then cause `CheckFeatureSupport1` to return `E_INVALIDARG` before querying capabilities.
+
+For retail SDK versions, use `min(componentSDKVersion, deviceRuntimeSDKVersion)`. Query the device for `ID3D12DeviceConfiguration` and check the returned `HRESULT` before reading `GetDesc().SDKVersion`, rather than using the application's exported `D3D12SDKVersion`. This allows a newer component to query an older runtime while retaining clamping for an older component querying a newer runtime. Do not use the runtime version alone, since it may expose tiers newer than the component understands.
+
+Do not compare preview and retail SDK version numbers directly to determine compatibility. See [Preview SDK Version Mapping](#preview-sdk-version-mapping) for the runtime's specific mapping rule. If the device does not expose `ID3D12Device16`, use the compatibility fallback described in [Example Usage](#example-usage).
 
 ### Preview SDK Version Mapping
 Retail and preview builds use separate SDK versions. On a retail runtime, the exact current `D3D12_PREVIEW_SDK_VERSION` value is treated as `D3D12_SDK_VERSION`. Other preview version numbers are not remapped.
@@ -137,7 +145,7 @@ Not every application exports `D3D12SDKVersion` or requests an Agility SDK versi
 
 Using the application's version when available, with a default limit otherwise, would not solve every case. Components sharing a device may have been built against different SDK versions. An older component could receive a device from a newer application and see tiers it does not understand. Setting the version once during device creation would have the same problem.
 
-Passing the SDK version with each `CheckFeatureSupport1` call lets the component making the query specify the version it understands.
+Passing the SDK version with each `CheckFeatureSupport1` call lets the component making the query specify the version it understands, limited by the device runtime as described in [Components Sharing a Device](#components-sharing-a-device).
 
 ### 3. Can an application use CheckFeatureSupport1 without shipping an Agility SDK?
 
