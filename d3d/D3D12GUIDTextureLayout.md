@@ -279,13 +279,13 @@ Supports `D3D12_RESOURCE_DESC2` with layout GUIDs.
 | Params | |
 |-------------------|----------------------------|
 | `pResourceDesc`   | Pointer to a `D3D12_RESOURCE_DESC2` structure that describes the resource. The resource must use `D3D12_TEXTURE_LAYOUT_GUID` with a valid layout GUID. The resource must only have 1 mip level.|
-| `FirstSubresource`| Must be 0.|
-| `NumSubresources` | Must be 1 or 2.|
-| `pLayoutInfo`     | Required pointer to an array of `D3D12_ROW_MAJOR_TEXTURE_LAYOUT_INFO` structures that receives the layout information for each queried subresource/plane.|
+| `FirstSubresource`| The index of the first subresource to query. Must be 0.|
+| `NumSubresources` | The number of subresources to query. Must be 1 or 2.|
+| `pLayoutInfo`     | Pointer to an array of `D3D12_ROW_MAJOR_TEXTURE_LAYOUT_INFO` structures that receives the layout information for each queried subresource/plane.|
 
-This API returns the actual intrinsic layout properties of a row-major texture resource based on its resource descriptor and layout GUID. The runtime calculates the layout for public row-major GUIDs. Other GUIDs require GUID texture layout feature version `0118_1`, and the runtime returns the result from `PFND3D12DDI_GET_ROW_MAJOR_TEXTURE_LAYOUT_INFO_0118`.
+This API returns the actual intrinsic layout properties of a row-major texture resource based on its resource descriptor and layout GUID.
 
-The API returns `E_INVALIDARG` when `pResourceDesc` or `pLayoutInfo` is null, the subresource range does not meet the requirements above, the resource description is invalid, the driver does not support feature version `0118_1` for a private GUID query, or the GUID does not represent a supported row-major layout.
+The API returns `E_INVALIDARG` when `pResourceDesc` or `pLayoutInfo` is null, the subresource range does not meet the requirements above, the resource description is invalid, the driver does not support the private layout query, or the GUID does not represent a supported row-major layout.
 
 ### Resource Creation
 
@@ -1416,4 +1416,4 @@ On certain devices, private layouts can be used to optimize performance. Private
 | 1.0 | - | Initial spec version. |
 | 1.1 | April 27, 2026 | Added release staging section. Added `D3D12_GUID_TEXTURE_LAYOUT_ROW_MAJOR_WITH_RENDER_AND_VPBLT_CAPABILITY_8_ROW_ALIGNMENT` public GUID (experimental). Replaced video codec layout GUID support APIs with `D3D12_FEATURE_VIDEO_DECODE_SUPPORT1` and `D3D12_FEATURE_VIDEO_ENCODER_SUPPORT3` (experimental). Added dimension alignment validation at resource creation. Updated DDI to video DDI version 0119 (experimental). Clarified height alignment applies to all planes individually. |
 | 1.2 | May 22, 2026 | Relaxed dimension alignment validation: removed row-pitch alignment check. |
-| 1.3 | November 23, 2026 | Added a private-layout video decode flow, documented the experimental private row-major layout DDI, and corrected the API interface and query requirements. |
+| 1.3 | November 23, 2026 | Added a private-layout video decode flow, documented the experimental private row-major layout DDI, and corrected the API interface, query requirements, and reference-resource layout. |
