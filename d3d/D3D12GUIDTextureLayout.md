@@ -873,7 +873,7 @@ For these experimental GUIDs, resource creation validates only that `Height` is 
 
 For example, the 32-row GUID requires packed formats and the luma plane of 4:2:0 formats to use a resource height divisible by 32. The corresponding half-height chroma plane is therefore aligned to 16 rows. NV12 at height 1088 satisfies this requirement: the luma plane is 1088 rows and the chroma plane is 544 rows.
 
-The separate GUIDs allow drivers to advertise only the resource-height alignments supported by their hardware. Applications must enumerate and query support for a GUID before using it.
+The separate GUIDs allow drivers to advertise only the resource-height alignments supported by their hardware. Applications must query support for a GUID before using it.
 
 Alignment:
 
