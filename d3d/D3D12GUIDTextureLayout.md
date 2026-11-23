@@ -862,8 +862,6 @@ If any of these checks fail, resource creation returns `E_INVALIDARG` with `D3D1
 
 These layouts are identical to `D3D12_GUID_TEXTURE_LAYOUT_ROW_MAJOR_WITH_RENDER_AND_VPBLT_CAPABILITY` except that height alignment is defined against the resource descriptor's `Height`, rather than applying the same alignment independently to every plane.
 
-The earlier experimental `D3D12_GUID_TEXTURE_LAYOUT_ROW_MAJOR_WITH_RENDER_AND_VPBLT_CAPABILITY_8_ROW_ALIGNMENT` definition is replaced by this family and must not be advertised.
-
 For these experimental GUIDs, resource creation validates only that `Height` is a multiple of the GUID's declared alignment. Plane heights are derived from the format's vertical subsampling and are not independently required to be multiples of that same value. Row pitch is padded to 256 B, and planar subresource sizes are padded so that the following plane starts on a 4 KB boundary.
 
 | Public GUID | Resource-height alignment | Derived 4:2:0 chroma alignment |
@@ -1433,4 +1431,4 @@ On certain devices, private layouts can be used to optimize performance. Private
 | 1.1 | April 27, 2026 | Added release staging section. Added `D3D12_GUID_TEXTURE_LAYOUT_ROW_MAJOR_WITH_RENDER_AND_VPBLT_CAPABILITY_8_ROW_ALIGNMENT` public GUID (experimental). Replaced video codec layout GUID support APIs with `D3D12_FEATURE_VIDEO_DECODE_SUPPORT1` and `D3D12_FEATURE_VIDEO_ENCODER_SUPPORT3` (experimental). Added dimension alignment validation at resource creation. Updated DDI to video DDI version 0119 (experimental). Clarified height alignment applies to all planes individually. |
 | 1.2 | May 22, 2026 | Relaxed dimension alignment validation: removed row-pitch alignment check. |
 | 1.3 | November 23, 2026 | Added a private-layout video decode flow, documented the experimental private row-major layout DDI, and corrected the API interface, query requirements, and reference-resource layout. |
-| 1.4 | November 23, 2026 | Replaced the experimental per-plane 8-row GUID with experimental 4-, 8-, 16-, and 32-row resource-height-aligned public GUIDs. |
+| 1.4 | November 23, 2026 | Added experimental 4-, 8-, 16-, and 32-row resource-height-aligned public GUIDs. |
