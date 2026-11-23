@@ -19,6 +19,7 @@
   - [Example](#example-1)
   - [Video Codec Layout GUID Support (Experimental)](#video-codec-layout-guid-support-experimental)
     - [Example](#example-2)
+    - [Private Layout Decode Flow](#private-layout-decode-flow)
 - [Tier 1 Public GUIDs](#tier-1-public-guids)
   - [D3D12\_GUID\_TEXTURE\_LAYOUT\_NULL](#d3d12_guid_texture_layout_null)
   - [D3D12\_GUID\_TEXTURE\_LAYOUT\_ROW\_MAJOR\_WITH\_RENDER\_AND\_VPBLT\_CAPABILITY](#d3d12_guid_texture_layout_row_major_with_render_and_vpblt_capability)
@@ -777,6 +778,17 @@ else
 }
 ```
 
+#### Private Layout Decode Flow
+
+Private GUIDs are opaque and must be validated before use.
+
+1. Require `D3D12_GUID_TEXTURE_LAYOUT_TIER_1`.
+2. Describe the decode output with `D3D12_RESOURCE_DESC2` and obtain a private GUID through layout enumeration or an application and driver agreement.
+3. Query `D3D12_FEATURE_GUID_TEXTURE_LAYOUT` and `D3D12_FEATURE_VIDEO_DECODE_SUPPORT1` with that GUID. Verify the required format, decode, layout, and allocation capabilities.
+4. For a private row-major layout, call `GetRowMajorTextureLayoutInfo` to obtain driver-provided plane offsets, pitches, heights, and sizes. Optionally query allocation size and alignment with `GetResourceAllocationInfo4`.
+5. Create the private-layout decode output and any required decoded-picture/reference resources, using separate reference-only allocations when reported.
+6. Submit decode. If validation fails, use another supported private GUID, a public GUID, or `D3D12_TEXTURE_LAYOUT_UNKNOWN`.
+
 ## Tier 1 Public GUIDs
 
 ### D3D12_GUID_TEXTURE_LAYOUT_NULL
@@ -1367,3 +1379,4 @@ On certain devices, private layouts can be used to optimize performance. Private
 | 1.0 | - | Initial spec version. |
 | 1.1 | April 27, 2026 | Added release staging section. Added `D3D12_GUID_TEXTURE_LAYOUT_ROW_MAJOR_WITH_RENDER_AND_VPBLT_CAPABILITY_8_ROW_ALIGNMENT` public GUID (experimental). Replaced video codec layout GUID support APIs with `D3D12_FEATURE_VIDEO_DECODE_SUPPORT1` and `D3D12_FEATURE_VIDEO_ENCODER_SUPPORT3` (experimental). Added dimension alignment validation at resource creation. Updated DDI to video DDI version 0119 (experimental). Clarified height alignment applies to all planes individually. |
 | 1.2 | May 22, 2026 | Relaxed dimension alignment validation: removed row-pitch alignment check. |
+| 1.3 | November 23, 2026 | Added a private-layout video decode flow. |
