@@ -823,9 +823,7 @@ Alignment:
 * Height alignment: 4 rows (applies to **each plane individually**, not just the resource height)
 * Subresource alignment (for planar formats): 4 KB
 
-> **Important:** The height alignment requirement applies to all planes, not just the top-level resource dimensions. For planar formats, each plane's height must be divisible by the alignment value. For example, with NV12 at 1080p, the Y plane is 1080 rows (1080 ÷ 4 = 270, OK) and the UV plane is 540 rows (540 ÷ 4 = 135, OK). If the height alignment requirement cannot be satisfied for all planes, resource creation will fail with `E_INVALIDARG`. Row pitch and planar subresource size are padded by the runtime and driver.
-
-This original public GUID retains its per-plane height-alignment definition for compatibility. It is not part of the resource-height-aligned GUID family below. For 4:2:0 formats, its 4-row-per-plane rule results in an effective 8-row resource-height alignment; packed formats retain a 4-row resource-height alignment.
+> **Important:** The height alignment requirement applies to all planes, not just the top-level resource dimensions. For planar formats, each plane's height must be divisible by the alignment value. For example, with NV12 at 1080p, the Y plane is 1080 rows (1080 ÷ 4 = 270, OK) and the UV plane is 540 rows (540 ÷ 4 = 135, OK). If any alignment requirement (row pitch, height, or subresource) cannot be satisfied for all planes, resource creation will fail with `E_INVALIDARG`.
 
 This layout supports all the formats supported by `D3D12_TEXTURE_LAYOUT_ROW_MAJOR`.
 
@@ -849,16 +847,12 @@ The above formats are supported in D3D12_GUID_TEXTURE_LAYOUT_TIER_1, more format
 
 ### Dimension Alignment Validation
 
-Resource creation (`CreateCommittedResource4`/`CreatePlacedResource3`) validates height according to the selected public row-major GUID:
+Resource creation (`CreateCommittedResource4`/`CreatePlacedResource3`) validates that the resource dimensions satisfy the row-major GUID layout alignment requirements. The implementation rounds `PitchWidth * BytesPerUnit` up to the next `D3D12_GUID_TEXTURE_LAYOUT_ROW_MAJOR_PITCH_ALIGNMENT` (256 B) multiple, so the width does not need to be pitch-aligned at resource creation. The following checks are performed for each plane:
 
-* `D3D12_GUID_TEXTURE_LAYOUT_ROW_MAJOR_WITH_RENDER_AND_VPBLT_CAPABILITY` retains its original rule: each plane's height must be a multiple of 4 rows.
-* A resource-height-aligned GUID requires the resource descriptor's `Height` to be a multiple of the GUID's declared 4-, 8-, 16-, or 32-row alignment. Plane heights are derived from the format's vertical subsampling and are not independently required to be multiples of that same value.
+1. **Plane height**: Each plane's height must be a multiple of 4 rows for `D3D12_GUID_TEXTURE_LAYOUT_ROW_MAJOR_WITH_RENDER_AND_VPBLT_CAPABILITY`.
+2. **Plane size** (for planar formats, non-last planes): `AlignedPitch * PlaneHeight` must be a multiple of 4096 bytes, where `AlignedPitch` is `PitchWidth * BytesPerUnit` rounded up to the next 256 B multiple.
 
-For 4:2:0 formats such as NV12, P010, and P016, the chroma plane is half height. A resource-height alignment of 4, 8, 16, or 32 rows therefore corresponds to a chroma-plane alignment of 2, 4, 8, or 16 rows. Packed formats and formats without vertical subsampling use the full resource-height alignment.
-
-If the applicable height check fails, resource creation returns `E_INVALIDARG` with `D3D12_MESSAGE_ID_CREATERESOURCE_INVALIDDIMENSIONS`.
-
-Row pitch and per-plane byte size are not application dimension requirements. `PitchWidth * BytesPerUnit` is rounded up to the next 256 B multiple, and each planar subresource size is padded so that the following plane starts on a 4 KB boundary.
+If any of these checks fail, resource creation returns `E_INVALIDARG` with `D3D12_MESSAGE_ID_CREATERESOURCE_INVALIDDIMENSIONS`.
 
 ---
 
@@ -869,6 +863,8 @@ Row pitch and per-plane byte size are not application dimension requirements. `P
 These layouts are identical to `D3D12_GUID_TEXTURE_LAYOUT_ROW_MAJOR_WITH_RENDER_AND_VPBLT_CAPABILITY` except that height alignment is defined against the resource descriptor's `Height`, rather than applying the same alignment independently to every plane.
 
 The earlier experimental `D3D12_GUID_TEXTURE_LAYOUT_ROW_MAJOR_WITH_RENDER_AND_VPBLT_CAPABILITY_8_ROW_ALIGNMENT` definition is replaced by this family and must not be advertised.
+
+For these experimental GUIDs, resource creation validates only that `Height` is a multiple of the GUID's declared alignment. Plane heights are derived from the format's vertical subsampling and are not independently required to be multiples of that same value. Row pitch is padded to 256 B, and planar subresource sizes are padded so that the following plane starts on a 4 KB boundary.
 
 | Public GUID | Resource-height alignment | Derived 4:2:0 chroma alignment |
 |-------------|---------------------------|-------------------------|
@@ -889,10 +885,12 @@ Alignment:
 
 Supported formats: Same as `D3D12_GUID_TEXTURE_LAYOUT_ROW_MAJOR_WITH_RENDER_AND_VPBLT_CAPABILITY`.
 
+For planar formats using these experimental GUIDs, the starting address of plane 2 (chroma) = starting address of plane 1 (luma) + `align_up(AlignedPitch * Height, 4096)`, where `AlignedPitch` is the luma row pitch rounded up to 256 B and `Height` is the resource descriptor's height.
+
 ### Memory Layout Requirements for Planar Formats:
 
 For planar YUV formats, drivers must ensure that planes are stored in a single allocation with the following layout requirements:
-* The starting address of plane 2 (chroma) = starting address of plane 1 (luma) + `align_up(AlignedPitch * LumaPlaneHeight, 4096)`, where `AlignedPitch` is the luma row pitch rounded up to 256 B and `LumaPlaneHeight` is the resource height after satisfying the selected GUID's height requirement.
+* The starting address of plane 2 (chroma) = starting address of plane 1 (luma) + align_up(row pitch * align_up(height, H), 4096), where H is 4 for `D3D12_GUID_TEXTURE_LAYOUT_ROW_MAJOR_WITH_RENDER_AND_VPBLT_CAPABILITY`
 * A single allocation is required for both planes
 * This memory organization is required for compatibility with many software components (especially older ones or those from DX9/DX11 eras) that assume a single memory region with chroma planes following the luma plane
 * HLK tests will validate this behavior to ensure driver compliance
@@ -1327,7 +1325,7 @@ typedef struct D3D12DDI_GUID_TEXTURE_LAYOUT_FUNCS_0118_1
 
 - Creating a resource with `D3D12_GUID_TEXTURE_LAYOUT_NULL` is invalid.
 - Using a layout without corresponding feature support, for example, using a layout as UAV when this layout doesn't report UAV support.
-- Resource dimensions that do not satisfy the selected row-major GUID's height requirement will fail with `D3D12_MESSAGE_ID_CREATERESOURCE_INVALIDDIMENSIONS`. The original public GUID validates 4-row alignment for every plane. The experimental resource-height-aligned GUIDs validate the resource descriptor's `Height` against 4, 8, 16, or 32 rows. Row pitch and per-plane byte size are padded rather than validated.
+- Resource dimensions that do not satisfy the row-major GUID texture layout alignment requirements will fail with `D3D12_MESSAGE_ID_CREATERESOURCE_INVALIDDIMENSIONS`. This includes per-plane checks for 4-row height alignment and inter-plane size alignment (4 KB, using the padded pitch). Row-pitch alignment is not validated.
 
 
 ### Tests
@@ -1435,4 +1433,4 @@ On certain devices, private layouts can be used to optimize performance. Private
 | 1.1 | April 27, 2026 | Added release staging section. Added `D3D12_GUID_TEXTURE_LAYOUT_ROW_MAJOR_WITH_RENDER_AND_VPBLT_CAPABILITY_8_ROW_ALIGNMENT` public GUID (experimental). Replaced video codec layout GUID support APIs with `D3D12_FEATURE_VIDEO_DECODE_SUPPORT1` and `D3D12_FEATURE_VIDEO_ENCODER_SUPPORT3` (experimental). Added dimension alignment validation at resource creation. Updated DDI to video DDI version 0119 (experimental). Clarified height alignment applies to all planes individually. |
 | 1.2 | May 22, 2026 | Relaxed dimension alignment validation: removed row-pitch alignment check. |
 | 1.3 | November 23, 2026 | Added a private-layout video decode flow, documented the experimental private row-major layout DDI, and corrected the API interface, query requirements, and reference-resource layout. |
-| 1.4 | November 23, 2026 | Replaced the experimental per-plane 8-row GUID with experimental 4-, 8-, 16-, and 32-row resource-height-aligned public GUIDs. Clarified the legacy GUID's per-plane behavior and automatic row-pitch and plane-size padding. |
+| 1.4 | November 23, 2026 | Replaced the experimental per-plane 8-row GUID with experimental 4-, 8-, 16-, and 32-row resource-height-aligned public GUIDs. |
