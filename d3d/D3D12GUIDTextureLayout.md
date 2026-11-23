@@ -176,20 +176,20 @@ typedef struct D3D12_TEXTURE_LAYOUT_FILTER
     D3D12_TEXTURE_LAYOUT_FILTER_FLAGS   Flags;      // Reserved for future tier extensibility
 } D3D12_TEXTURE_LAYOUT_FILTER;
 
-// ID3D12Device15
+// ID3D12Device16
 HRESULT GetTextureLayoutCount
     ( _In_ const D3D12_TEXTURE_LAYOUT_FILTER* pFilter
     , _Out_ UINT* pNumGUIDs
     );
 
-// ID3D12Device15
+// ID3D12Device16
 HRESULT GetTextureLayouts
     ( _In_ const D3D12_TEXTURE_LAYOUT_FILTER* pFilter
     , _In_ UINT NumGUIDs
     , _Out_writes_(NumGUIDs) GUID* pGUIDs
     );
 
-// ID3D12Device15
+// ID3D12Device16
 D3D12_RESOURCE_ALLOCATION_INFO GetResourceAllocationInfo4(
     UINT visibleMask,
     UINT numResourceDescs,
@@ -201,7 +201,7 @@ D3D12_RESOURCE_ALLOCATION_INFO GetResourceAllocationInfo4(
 // ID3D12Resource3
 D3D12_RESOURCE_DESC2 GetDesc2();
 
-// ID3D12Device15
+// ID3D12Device16
 void GetCopyableFootprints2(
     _In_  const D3D12_RESOURCE_DESC2*,
     _In_range_(0, D3D12_REQ_SUBRESOURCES) UINT FirstSubresource,
@@ -212,7 +212,7 @@ void GetCopyableFootprints2(
     _Out_writes_opt_(NumSubresources) UINT64* pRowSizeInBytes,
     _Out_opt_ UINT64* pTotalBytes);
 
-// ID3D12Device15 - New API for querying texture layout information
+// ID3D12Device16 - New API for querying texture layout information
 HRESULT GetRowMajorTextureLayoutInfo(
     _In_ const D3D12_RESOURCE_DESC2* pResourceDesc,
     _In_range_(0, D3D12_REQ_SUBRESOURCES) UINT FirstSubresource,
@@ -248,14 +248,14 @@ In this filter, `D3D12_TEXTURE_LAYOUT_GUID` need be specified in the resource de
 The `Support1` and `Support2` fields specify the format support capabilities that are required for the returned layout GUIDs. Only GUIDs that can provide the specified support capabilities will be returned.
 
 
-**ID3D12Device15::GetTextureLayoutCount**
+**ID3D12Device16::GetTextureLayoutCount**
 
 | Params | |
 |-------------------|----------------------------|
 | `pFilter`         | The filter used to query the GUIDs that meet these requirements. If `pFilter` is nullptr, driver returns all supported layout GUIDs.|
 | `pNumGUIDs`       | This value will be updated to the actual number of GUIDs available.|
 
-**ID3D12Device15::GetTextureLayouts**
+**ID3D12Device16::GetTextureLayouts**
 
 | Params | |
 |-------------------|----------------------------|
@@ -270,25 +270,27 @@ Note: since the list of GUIDs returned is in decreasing priority order, the same
 Returns a `D3D12_RESOURCE_DESC2` in the resource. If the resource does not use a texture layout GUID, the GUID returned will be `D3D12_GUID_TEXTURE_LAYOUT_NULL`.
 
 
-**ID3D12Device15::GetCopyableFootprints2**
+**ID3D12Device16::GetCopyableFootprints2**
 
 Supports `D3D12_RESOURCE_DESC2` with layout GUIDs.
 
-**ID3D12Device15::GetRowMajorTextureLayoutInfo**
+**ID3D12Device16::GetRowMajorTextureLayoutInfo**
 
 | Params | |
 |-------------------|----------------------------|
 | `pResourceDesc`   | Pointer to a `D3D12_RESOURCE_DESC2` structure that describes the resource. The resource must use `D3D12_TEXTURE_LAYOUT_GUID` with a valid layout GUID. The resource must only have 1 mip level.|
-| `FirstSubresource`| The index of the first subresource to query.|
-| `NumSubresources` | The number of subresources to query.|
-| `pLayoutInfo`     | Pointer to an array of `D3D12_ROW_MAJOR_TEXTURE_LAYOUT_INFO` structures that will receive the layout information for each queried subresource/plane.|
+| `FirstSubresource`| Must be 0.|
+| `NumSubresources` | Must be 1 or 2.|
+| `pLayoutInfo`     | Required pointer to an array of `D3D12_ROW_MAJOR_TEXTURE_LAYOUT_INFO` structures that receives the layout information for each queried subresource/plane.|
 
-This API returns the actual intrinsic layout properties of a row-major texture resource based on its resource descriptor and layout GUID. If an invalid resource descriptor is provided, this API returns E_INVALIDARG. If the provided layout is non-row-major, this API returns a nullptr `pLayoutInfo`.
+This API returns the actual intrinsic layout properties of a row-major texture resource based on its resource descriptor and layout GUID. The runtime calculates the layout for public row-major GUIDs. Other GUIDs require GUID texture layout feature version `0118_1`, and the runtime returns the result from `PFND3D12DDI_GET_ROW_MAJOR_TEXTURE_LAYOUT_INFO_0118`.
+
+The API returns `E_INVALIDARG` when `pResourceDesc` or `pLayoutInfo` is null, the subresource range does not meet the requirements above, the resource description is invalid, the driver does not support feature version `0118_1` for a private GUID query, or the GUID does not represent a supported row-major layout.
 
 ### Resource Creation
 
 ```c++
-// ID3D12Device15
+// ID3D12Device16
 HRESULT CreateCommittedResource4(
         [annotation("_In_")] const D3D12_HEAP_PROPERTIES* pHeapProperties,
         D3D12_HEAP_FLAGS HeapFlags,
@@ -301,7 +303,7 @@ HRESULT CreateCommittedResource4(
         [in] REFIID riidResource,
         [out, iid_is(riidResource), annotation("_COM_Outptr_opt_")] void** ppvResource);
 
-// ID3D12Device15
+// ID3D12Device16
 HRESULT CreatePlacedResource3(
         [annotation("_In_")] ID3D12Heap* pHeap,
         UINT64 HeapOffset,
@@ -395,8 +397,8 @@ Applications can negotiate a common layout GUID between two adapters, create a c
 
 ```c++
 // Two D3D12 devices on different adapters
-ID3D12Device15* pDeviceA; // e.g., iGPU
-ID3D12Device15* pDeviceB; // e.g., dGPU
+ID3D12Device16* pDeviceA; // e.g., iGPU
+ID3D12Device16* pDeviceB; // e.g., dGPU
 
 // Define the resource description
 D3D12_RESOURCE_DESC2 resourceDesc = {};
@@ -788,7 +790,7 @@ Private GUIDs are opaque and must be validated before use.
 2. Describe the decode output with `D3D12_RESOURCE_DESC2` and obtain a private GUID through layout enumeration or an application and driver agreement.
 3. Query `D3D12_FEATURE_GUID_TEXTURE_LAYOUT` and `D3D12_FEATURE_VIDEO_DECODE_SUPPORT1` with that GUID. Verify the required format, decode, layout, and allocation capabilities.
 4. For a private row-major layout, call `GetRowMajorTextureLayoutInfo` to obtain driver-provided plane offsets, pitches, heights, and sizes. Optionally query allocation size and alignment with `GetResourceAllocationInfo4`.
-5. Create the private-layout decode output and any required decoded-picture/reference resources, using separate reference-only allocations when reported.
+5. Create the private-layout decode output. If separate reference-only allocations are required, create the decoded-picture/reference resources with `D3D12_TEXTURE_LAYOUT_UNKNOWN`.
 6. Submit decode. If validation fails, use another supported private GUID, a public GUID, or `D3D12_TEXTURE_LAYOUT_UNKNOWN`.
 
 ## Tier 1 Public GUIDs
@@ -1414,4 +1416,4 @@ On certain devices, private layouts can be used to optimize performance. Private
 | 1.0 | - | Initial spec version. |
 | 1.1 | April 27, 2026 | Added release staging section. Added `D3D12_GUID_TEXTURE_LAYOUT_ROW_MAJOR_WITH_RENDER_AND_VPBLT_CAPABILITY_8_ROW_ALIGNMENT` public GUID (experimental). Replaced video codec layout GUID support APIs with `D3D12_FEATURE_VIDEO_DECODE_SUPPORT1` and `D3D12_FEATURE_VIDEO_ENCODER_SUPPORT3` (experimental). Added dimension alignment validation at resource creation. Updated DDI to video DDI version 0119 (experimental). Clarified height alignment applies to all planes individually. |
 | 1.2 | May 22, 2026 | Relaxed dimension alignment validation: removed row-pitch alignment check. |
-| 1.3 | November 23, 2026 | Added a private-layout video decode flow and documented the experimental private row-major layout DDI. |
+| 1.3 | November 23, 2026 | Added a private-layout video decode flow, documented the experimental private row-major layout DDI, and corrected the API interface and query requirements. |
