@@ -412,8 +412,6 @@ If an output buffer slot does not have data being streamed out to it, and a buff
 
 ### DXBC multi-stream output budget example
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-example-scope:0:authored:migration-cf60b07d293f8e1d-0 -->This example illustrates DXBC output register allocation and the emitted vertex budget. It is not a complete shader or PSO declaration. Rasterization also requires the selected stream's position and the other stage and linkage conditions.<!-- d3d12-review-inline:end:gs-so:N-example-scope:0:authored:migration-cf60b07d293f8e1d-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:gs-so:H-example:0 -->Below is a very rough example (using pseudocode) of the sequence of operations an application might perform and how to calculate vertex counts.<!-- d3d12-review-inline:end:gs-so:H-example:0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:gs-so:H-example:1 -->**What the Shader wants to do:**

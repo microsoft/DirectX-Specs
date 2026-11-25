@@ -174,7 +174,7 @@ The handle to the live plugin compiler DDI object.
 
 `PluginDDIVersion`
 
-The plugin DDI version selected from the list reported by the plugin during [PFND3D12DDI_COMPILER_GET_SUPPORTED_VERSIONS](#negotiation).  This version number dictates which version of function tables and behaviors<ins><!-- d3d12-review-inline:begin:compiler-plugin-foundation:selected-version-behavior:5:modified:source-d5767a242c478597-0-1 --> are<!-- d3d12-review-inline:end:compiler-plugin-foundation:selected-version-behavior:5:modified:source-d5767a242c478597-0-1 --></ins> used.
+The plugin DDI version selected from the list reported by the plugin during [PFND3D12DDI_COMPILER_GET_SUPPORTED_VERSIONS](#negotiation).  This version number dictates which version of function tables and behaviors are used.
 
 `UsermodeDDIVersion`
 
@@ -512,7 +512,7 @@ On input, describes the capacity of pABIVersions in UINT64 elements.  `*pNumABIV
 
 `pABIVersions`
 
-<ins><!-- d3d12-review-inline:begin:compiler-plugin-foundation:abi-ddi-contract:9:modified:source-a0da1480336a72b6-0-0 -->Receives<!-- d3d12-review-inline:end:compiler-plugin-foundation:abi-ddi-contract:9:modified:source-a0da1480336a72b6-0-0 --></ins> the list of ABI Versions for <ins><!-- d3d12-review-inline:begin:compiler-plugin-foundation:abi-ddi-contract:9:modified:source-a0da1480336a72b6-0-1 -->the adapter family<!-- d3d12-review-inline:end:compiler-plugin-foundation:abi-ddi-contract:9:modified:source-a0da1480336a72b6-0-1 --></ins>.  May be nullptr when performing a size check.
+Receives the list of ABI Versions for the adapter family.  May be nullptr when performing a size check.
 
 #### Remarks
 

@@ -344,19 +344,13 @@ Registers a user-defined callback to be invoked on destruction of the object fro
 
 ##### `callbackFn`
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-RegisterDestructionCallback-callbackFn:0 -->Type: **PFN_DESTRUCTION_CALLBACK**<!-- d3d12-review-inline:end:devices-capabilities:DN-RegisterDestructionCallback-callbackFn:0 --></ins>
-
 A user-defined callback to be invoked when the object is destroyed.
 
 ##### `pData`
 
-Type: **void\***
-
 The data to pass to *callbackFn* when invoked
 
 ##### `pCallbackID`
-
-Type: **[UINT](https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types)\***
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-RegisterDestructionCallback-pCallbackID:1 -->Pointer to a **UINT** used to identify the callback, and to pass to [UnregisterDestructionCallback](#id3ddestructionnotifier-unregisterdestructioncallback) to unregister the callback.<!-- d3d12-review-inline:end:devices-capabilities:DN-RegisterDestructionCallback-pCallbackID:1 --></ins>
 
@@ -393,8 +387,6 @@ Unregisters a callback that was registered with [RegisterDestructionCallback](#i
 #### Parameters
 
 ##### `callbackID`
-
-Type: **[UINT](https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types)**
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:DN-UnregisterDestructionCallback-callbackID:1 -->The **UINT** that was created by the *pCallbackID* argument to **[ID3DDestructionNotifier::RegisterDestructionCallback](#id3ddestructionnotifier-registerdestructioncallback)**.<!-- d3d12-review-inline:end:devices-capabilities:DN-UnregisterDestructionCallback-callbackID:1 --></ins>
 
@@ -488,25 +480,17 @@ Creates a device that represents the display adapter.
 
 `pAdapter`
 
-Type: **IUnknown\***
-
 (input, optional) <ins><!-- d3d12-review-inline:begin:devices-capabilities:Parameters-D3D12CreateDevice:3 -->A pointer to the video adapter to use when creating a device. Pass **NULL** to use the default adapter, which is the first adapter that is enumerated by [IDXGIFactory1::EnumAdapters](https://learn.microsoft.com/en-us/windows/desktop/api/dxgi/nf-dxgi-idxgifactory-enumadapters).<!-- d3d12-review-inline:end:devices-capabilities:Parameters-D3D12CreateDevice:3 --></ins>
 
-`MinimumFeatureLevel`
-
-Type: **[D3D_FEATURE_LEVEL](#d3d-feature-level)**
+[`MinimumFeatureLevel`](#d3d-feature-level)
 
 The minimum [D3D_FEATURE_LEVEL](#d3d-feature-level) required for successful device creation.
 
 `riid`
 
-Type: **REFIID**
-
 (input) The globally unique identifier (**GUID**) for the device interface. This parameter, and *ppDevice*, can be addressed with the single macro [IID_PPV_ARGS](https://learn.microsoft.com/en-us/windows/desktop/api/combaseapi/nf-combaseapi-iid_ppv_args).
 
 `ppDevice`
-
-Type: **void\*\***
 
 (output, optional) A pointer to a memory block that receives a pointer to the device. Pass **NULL** to test if device creation would succeed, but to not actually create the device. If **NULL** is passed and device creation would succeed, **S\_FALSE** is returned.
 
@@ -696,9 +680,7 @@ HRESULT D3D12GetInterface(REFCLSID rclsid, REFIID riid, void **ppvDebug);
 
 #### Parameters
 
-`rclsid`
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:Parameters-D3D12GetInterface:2 -->Type: **[REFCLSID](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-oaut/bbde795f-5398-42d8-9f59-3613da03c318)**<!-- d3d12-review-inline:end:devices-capabilities:Parameters-D3D12GetInterface:2 --></ins>
+[`rclsid`](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-oaut/bbde795f-5398-42d8-9f59-3613da03c318)
 
 The CLSID associated with the data and code that will be used to create the object.
 
@@ -722,15 +704,11 @@ They correspond, respectively, to the following interfaces.
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:D138-registration-factory:0:authored:migration-97e2a06d52ea8547-0 -->The [shader cache registration factory](shader-cache-registration.md#factory-bootstrap) is retrieved using `CLSID_D3DShaderCacheInstallerFactory` and `IID_ID3DShaderCacheInstallerFactory`. It creates installers and read-only explorers. See that section for its client, catalog and object lifetime contracts.<!-- d3d12-review-inline:end:devices-capabilities:D138-registration-factory:0:authored:migration-97e2a06d52ea8547-0 --></ins>
 
-`riid`
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:Parameters-D3D12GetInterface:9 -->Type: **[REFIID](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-oaut/bbde795f-5398-42d8-9f59-3613da03c318)**<!-- d3d12-review-inline:end:devices-capabilities:Parameters-D3D12GetInterface:9 --></ins>
+[`riid`](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-oaut/bbde795f-5398-42d8-9f59-3613da03c318)
 
 The globally unique identifier (**GUID**) for the SDK configuration interface. The **REFIID**, or **GUID**, of the interface can be obtained by using the `__uuidof` macro. For example, `__uuidof(ID3D12SDKConfiguration)` will retrieve the **GUID** of the <ins><!-- d3d12-review-inline:begin:devices-capabilities:Parameters-D3D12GetInterface:10:modified:source-e2b9e9a32a89f6ad-0-0 -->SDK configuration<!-- d3d12-review-inline:end:devices-capabilities:Parameters-D3D12GetInterface:10:modified:source-e2b9e9a32a89f6ad-0-0 --></ins> interface.
 
 `ppvDebug`
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:Parameters-D3D12GetInterface:12 -->Type: **[void](https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types)\*\***<!-- d3d12-review-inline:end:devices-capabilities:Parameters-D3D12GetInterface:12 --></ins>
 
 The `out` parameter that contains the requested interface on return (for example, the SDK configuration interface), as a pointer to pointer to void. See [ID3D12SDKConfiguration](#runtime-selection).
 
@@ -758,13 +736,9 @@ Configures the SDK version to use.
 
 `SDKVersion`
 
-Type: **[UINT](https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types)**
-
 The SDK version to set.
 
 `SDKPath`
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:Parameters-ID3D12SDKConfiguration%3A%3ASetSDKVersion:5 -->Type: **[LPCSTR](https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types)**<!-- d3d12-review-inline:end:devices-capabilities:Parameters-ID3D12SDKConfiguration%3A%3ASetSDKVersion:5 --></ins>
 
 A NULL-terminated string that provides the relative path to `d3d12core.dll` at the specified *SDKVersion*. The path is relative to the process exe of the caller. If `d3d12core.dll` isn't found, or isn't of the specified *SDKVersion*, then Direct3D 12 device creation fails.
 
@@ -1134,21 +1108,15 @@ HRESULT SerializeVersionedRootSignature(const D3D12_VERSIONED_ROOT_SIGNATURE_DES
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:1:modified:source-16f4cfb7ad922254-0-0 -->`pDesc`<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:1:modified:source-16f4cfb7ad922254-0-0 --></ins>
-
-Type: **const [D3D12_VERSIONED_ROOT_SIGNATURE_DESC](binding.md#d3d12-versioned-root-signature-desc)\***
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:1:modified:source-16f4cfb7ad922254-0-0 -->[`pDesc`](binding.md#d3d12-versioned-root-signature-desc)<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:1:modified:source-16f4cfb7ad922254-0-0 --></ins>
 
 (input) Specifies a [D3D12_VERSIONED_ROOT_SIGNATURE_DESC](binding.md#d3d12-versioned-root-signature-desc) that contains a description of any version of a root signature.
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:4:modified:source-3c65e58745bfa22e-0-0 -->`ppResult`<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:4:modified:source-3c65e58745bfa22e-0-0 --></ins>
 
-Type: **ID3DBlob\*\***
-
 (output) A pointer to a memory block that receives a pointer to the [ID3DBlob](#binary-data-blobs) interface that you can use to access the serialized root signature.
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:7:modified:source-cf1b87158b09b441-0-0 -->`ppError`<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:7:modified:source-cf1b87158b09b441-0-0 --></ins>
-
-Type: **ID3DBlob\*\***
 
 (output, optional) A pointer to a memory block that receives a pointer to the [ID3DBlob](#binary-data-blobs) interface that you can use to access serializer error messages, or **NULL** if there are no errors.
 
@@ -1177,25 +1145,17 @@ HRESULT CreateVersionedRootSignatureDeserializer(const void *pBlob, SIZE_T Size,
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:1:modified:source-11da14ad7f14ec40-0-0 -->`pBlob`<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:1:modified:source-11da14ad7f14ec40-0-0 --></ins>
 
-Type: **LPCVOID**
-
 (input) A pointer to the source data for the serialized root signature.
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:4:modified:source-fdad3526ba034b73-0-0 -->`Size`<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:4:modified:source-fdad3526ba034b73-0-0 --></ins>
-
-Type: **SIZE\_T**
 
 (input) The size, in bytes, of the block of memory that *<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:6:modified:source-2bbb98b841658a1a-0-0 -->pBlob<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:6:modified:source-2bbb98b841658a1a-0-0 --></ins>* points to.
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:7 -->`riid`<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:7 --></ins>
 
-Type: **REFIID**
-
 (input) The globally unique identifier (**GUID**) for the root signature deserializer interface.
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:10:modified:source-91fa6a3edfdccaa5-0-0 -->`ppvDeserializer`<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:10:modified:source-91fa6a3edfdccaa5-0-0 --></ins>
-
-Type: **void\*\***
 
 (output) A pointer to a memory block that receives a pointer to the root signature deserializer.
 
@@ -1229,25 +1189,17 @@ Enables a list of experimental features.
 
 `NumFeatures`
 
-Type: **UINT**
-
 The number of experimental features to enable.
 
 `pIIDs`
-
-Type: **const IID\***
 
 (input) A pointer to an array of IDs that specify which of the available experimental features to enable.
 
 `pConfigurationStructs`
 
-Type: **void\***
-
 (input) Structures that contain additional configuration details that some experimental features might need to be enabled.
 
 `pConfigurationStructSizes`
-
-Type: **UINT\***
 
 (input) The sizes of any configuration structs passed in pConfigurationStructs parameter.
 
@@ -1288,21 +1240,15 @@ Gets information about the features that are supported by the current graphics d
 
 #### Parameters
 
-`Feature`
-
-Type: **[D3D12_FEATURE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_feature)**
+[`Feature`](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_feature)
 
 A constant from the [D3D12_FEATURE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_feature) enumeration describing the feature(s) that you want to query for support.
 
 `pFeatureSupportData`
 
-Type: **void\***
-
 (input, output) A pointer to a data structure that corresponds to the value of the *Feature* parameter. To determine the corresponding data structure for each constant, see [D3D12_FEATURE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_feature).
 
 `FeatureSupportDataSize`
-
-Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types)**
 
 The size of the structure pointed to by the *pFeatureSupportData* parameter.
 
@@ -1316,7 +1262,7 @@ Returns **S\_OK** if successful. Returns **E\_INVALIDARG** if an unsupported dat
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:dispatch-rules:1:authored:migration-2be00217ef8ce90f-0 -->The caller initializes every input member before the call. Output-only fields are results; input/output fields such as `HighestShaderModel` and `HighestVersion` are request ceilings replaced by the negotiated result on success. For structures containing a node index, the caller selects an existing node before querying.<!-- d3d12-review-inline:end:devices-capabilities:dispatch-rules:1:authored:migration-2be00217ef8ce90f-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:dispatch-rules:2:authored:migration-4b9771f4ba875c0b-0 -->An unrecognized selector, a mismatched payload size or invalid query input is an error, distinct from a successful query reporting `FALSE`, no support bits or a not-supported tier. Failure does not establish a general zero-output guarantee: result validity follows the selected query's contract.<!-- d3d12-review-inline:end:devices-capabilities:dispatch-rules:2:authored:migration-4b9771f4ba875c0b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:dispatch-rules:2:authored:migration-4b9771f4ba875c0b-0 -->An unrecognized selector, a mismatched payload size or invalid query input is an error, distinct from a successful query reporting `FALSE`, no support bits or a not-supported tier.<!-- d3d12-review-inline:end:devices-capabilities:dispatch-rules:2:authored:migration-4b9771f4ba875c0b-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:dispatch-rules:3:authored:migration-566162fe98cc2e7d-0 -->The [selector catalog](#selector-catalog) gives the payload, size and input convention for each selected query. See [Formats and MSAA](formats.md#format-query-cases) for format-specific parameters, results and diagnostics.<!-- d3d12-review-inline:end:devices-capabilities:dispatch-rules:3:authored:migration-566162fe98cc2e7d-0 --></ins>
 
@@ -1385,8 +1331,6 @@ Note
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:shader-model-payload:9:modified:migration-15072e127a8e1c06-0 -->**ID3D12Device::CheckFeatureSupport** returns **E\_INVALIDARG** if *HighestShaderModel* isn't known by the current runtime.<!-- d3d12-review-inline:end:devices-capabilities:shader-model-payload:9:modified:migration-15072e127a8e1c06-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:shader-model-algorithm:0:authored:migration-a9dc6000025a5950-0 -->This `E_INVALIDARG` result reports an unrecognized request, not the device's shader model support. The application can query again with a lower model. Other errors are not evidence that the requested model is unsupported.<!-- d3d12-review-inline:end:devices-capabilities:shader-model-algorithm:0:authored:migration-a9dc6000025a5950-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:shader-model-algorithm:1:authored:migration-1658556ae762fd52-0 -->Shader model support does not by itself establish every optional feature used by a shader.<!-- d3d12-review-inline:end:devices-capabilities:shader-model-algorithm:1:authored:migration-1658556ae762fd52-0 --></ins>
 
 ### Root signature version negotiation
 
@@ -1952,19 +1896,13 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS4 {
 
 `MSAA64KBAlignedTextureSupported`
 
-Type: **[BOOL](https://learn.microsoft.com/en-us/windows/desktop/winprog/windows-data-types)**
-
 Indicates whether 64KB-aligned MSAA textures are supported.
 
-`SharedResourceCompatibilityTier`
-
-Type: **[D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER](sharing-and-interoperability.md#cross-api-compatibility)**
+[`SharedResourceCompatibilityTier`](sharing-and-interoperability.md#cross-api-compatibility)
 
 Indicates the tier of cross-API sharing support.
 
 `Native16BitShaderOpsSupported`
-
-Type: **[BOOL](https://learn.microsoft.com/en-us/windows/desktop/winprog/windows-data-types)**
 
 Indicates native 16-bit shader operations are supported. These operations require shader model 6\_2. For more information, see the [16-Bit Scalar Types](https://github.com/microsoft/DirectXShaderCompiler/wiki/16-Bit-Scalar-Types) HLSL reference.
 
@@ -2114,8 +2052,6 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS11 {
 
 `AtomicInt64OnDescriptorHeapResourceSupported`
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-D3D12_FEATURE_DATA_D3D12_OPTIONS11:4 -->Type: **[BOOL](https://learn.microsoft.com/en-us/windows/desktop/winprog/windows-data-types)**<!-- d3d12-review-inline:end:devices-capabilities:standalone-D3D12_FEATURE_DATA_D3D12_OPTIONS11:4 --></ins>
-
 Indicates whether or not 64-bit integer atomics on resources in descriptor heaps are supported. `true` if supported, otherwise `false`.
 
 <a id="d3d12_feature_data_d3d12_options12"></a>
@@ -2200,13 +2136,9 @@ typedef struct D3D12_FEATURE_DATA_SERIALIZATION
 
 `NodeIndex`
 
-Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types)**
-
 An input field, indicating the adapter index to query.
 
-`HeapSerializationTier`
-
-Type: **[D3D12_HEAP_SERIALIZATION_TIER](#d3d12-heap-serialization-tier)**
+[`HeapSerializationTier`](#d3d12-heap-serialization-tier)
 
 An output field, indicating the tier of heap serialization support.
 
@@ -2229,8 +2161,6 @@ typedef struct D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_SUPPORT {
 
 `NodeIndex`
 
-Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types)**
-
 An input field, indicating the adapter index to query.
 
 `Support`
@@ -2251,9 +2181,7 @@ typedef struct D3D12_FEATURE_DATA_SHADER_CACHE {
 
 ##### Members
 
-`SupportFlags`
-
-Type: [**D3D12\_SHADER\_CACHE\_SUPPORT\_FLAGS**](shader-delivery-and-caching.md#d3d12-shader-cache-support-flags)
+[`SupportFlags`](shader-delivery-and-caching.md#d3d12-shader-cache-support-flags)
 
 Indicates the level of caching supported.
 
@@ -2334,15 +2262,11 @@ typedef struct D3D12_FEATURE_DATA_CROSS_NODE {
 
 ##### Members
 
-`SharingTier`
-
-Type: **[D3D12_CROSS_NODE_SHARING_TIER](sharing-and-interoperability.md#cross-node-sharing-tier)**
+[`SharingTier`](sharing-and-interoperability.md#cross-node-sharing-tier)
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-D3D12_FEATURE_DATA_CROSS_NODE:5 -->Indicates the tier of sharing across linked nodes of the adapter. Linked node sharing is distinct from unlinked cross-adapter sharing.<!-- d3d12-review-inline:end:devices-capabilities:standalone-D3D12_FEATURE_DATA_CROSS_NODE:5 --></ins>
 
 `AtomicShaderInstructions`
-
-Type: **[BOOL](https://learn.microsoft.com/en-us/windows/desktop/winprog/windows-data-types)**
 
 Indicates <ins><!-- d3d12-review-inline:begin:devices-capabilities:standalone-D3D12_FEATURE_DATA_CROSS_NODE:8:modified:source-30824cc75752d4e2-0-0 -->support for atomic shader instructions across linked nodes of the adapter<!-- d3d12-review-inline:end:devices-capabilities:standalone-D3D12_FEATURE_DATA_CROSS_NODE:8:modified:source-30824cc75752d4e2-0-0 --></ins>.
 
@@ -2389,39 +2313,27 @@ typedef struct D3D12_FEATURE_DATA_QUERY_META_COMMAND {
 
 ##### Members
 
-`CommandId`
-
-Type: **[GUID](https://learn.microsoft.com/en-us/windows/win32/api/guiddef/ns-guiddef-guid)**
+[`CommandId`](https://learn.microsoft.com/en-us/windows/win32/api/guiddef/ns-guiddef-guid)
 
 The fixed GUID that identifies the metacommand to query about.
 
 `NodeMask`
 
-Type: **[UINT](https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types)**
-
 For single GPU operation, this is zero. If there are multiple GPU nodes, a bit is set to identify a node (the device's physical adapter). Each bit in the mask corresponds to a single node. Only 1 bit must be set. Refer to <ins><!-- d3d12-review-inline:begin:devices-capabilities:query-meta-command-nodemask-link:0:modified:opus-identity-label -->[adapter identity and linked nodes](#identity)<!-- d3d12-review-inline:end:devices-capabilities:query-meta-command-nodemask-link:0:modified:opus-identity-label --></ins>.
 
 `pQueryInputData`
-
-Type: ** const [void](https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types)\***
 
 A pointer to a buffer containing the query input data. Allocate *QueryInputDataSizeInBytes* bytes.
 
 `QueryInputDataSizeInBytes`
 
-Type: **[SIZE_T](https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types)**
-
 The size of the buffer pointed to by *pQueryInputData*, in bytes.
 
 `pQueryOutputData`
 
-Type: **[void](https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types)\***
-
 A pointer to a buffer containing the query output data.
 
 `QueryOutputDataSizeInBytes`
-
-Type: **[SIZE_T](https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types)**
 
 The size of the buffer pointed to by *pQueryOutputData*, in bytes.
 
@@ -2444,13 +2356,9 @@ typedef struct D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPE_COUNT {
 
 `NodeIndex`
 
-Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/winprog/windows-data-types)**
-
 An input parameter which, in multi-adapter operation, indicates which physical adapter of the device this operation applies to.
 
 `Count`
-
-Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/winprog/windows-data-types)**
 
 An output parameter containing the number of protected resource session types supported by the driver.
 
@@ -2472,19 +2380,13 @@ typedef struct D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPES {
 
 `NodeIndex`
 
-Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/winprog/windows-data-types)**
-
 An input parameter which, in multi-adapter operation, indicates which physical adapter of the device this operation applies to.
 
 `Count`
 
-Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/winprog/windows-data-types)**
-
 An input parameter indicating the size of the *pTypes* array. This must match the count returned through the [D3D12_FEATURE_PROTECTED_RESOURCE_SESSION_TYPE_COUNT](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_feature) query.
 
 `pTypes`
-
-Type: **[GUID](https://learn.microsoft.com/en-us/windows/desktop/winprog/windows-data-types)\***
 
 An output parameter containing an array populated with the supported protected resource session types.
 
@@ -2771,7 +2673,7 @@ typedef struct D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT
 
 <!-- d3d12-review-alert:end:devices-capabilities:query-abi-members:0:modified:migration-d9d13d5233904c82-0 -->
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:query-contract-D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT:1:authored:migration-82efddbef2e40b87-0 -->`MinimumABISupportVersion` through `MaximumABISupportVersion` is an inclusive supported ABI range. `CompilerVersion` and `ApplicationProfileVersion` use [D3D12_VERSION_NUMBER](state-object-databases-and-identity.md#d3d12_version_number), whose `Version` member and four `VersionParts` elements are alternative representations of the same 64-bit value. These values describe compiler/cache compatibility, not shader model support or feature levels. See the [compiler/driver ABI contract](../ShaderCompilerPlugin.md#struct-d3d12ddi_shadercache_abi_support_data) for adapter family, ABI range and compiler/profile matching, and [cache registration](../ShaderCacheRegistrationAPI.md) for precompiled database selection. Query failure does not establish a default ABI range or a universally valid zeroed output.<!-- d3d12-review-inline:end:devices-capabilities:query-contract-D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT:1:authored:migration-82efddbef2e40b87-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:query-contract-D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT:1:authored:migration-82efddbef2e40b87-0 -->`MinimumABISupportVersion` through `MaximumABISupportVersion` is an inclusive supported ABI range. `CompilerVersion` and `ApplicationProfileVersion` use [D3D12_VERSION_NUMBER](state-object-databases-and-identity.md#d3d12_version_number), whose `Version` member and four `VersionParts` elements are alternative representations of the same 64-bit value. See the [compiler/driver ABI contract](../ShaderCompilerPlugin.md#struct-d3d12ddi_shadercache_abi_support_data) for adapter family, ABI range and compiler/profile matching, and [cache registration](../ShaderCacheRegistrationAPI.md) for precompiled database selection.<!-- d3d12-review-inline:end:devices-capabilities:query-contract-D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT:1:authored:migration-82efddbef2e40b87-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:D126-compiler-target-forward:0:authored:migration-78b72de9f5dc7fe4-0 -->See the offline compiler's [family enumeration](offline-compilation.md#id3d12compilerfactory-enumerateadapterfamilies), [ABI enumeration](offline-compilation.md#id3d12compilerfactory-enumerateadapterfamilyabiversions) and [compiler/profile version domains](offline-compilation.md#version-domains) for compiler-side target discovery. The plugin's enumerated ABI set is distinct from the installed driver's inclusive range reported by this query.<!-- d3d12-review-inline:end:devices-capabilities:D126-compiler-target-forward:0:authored:migration-78b72de9f5dc7fe4-0 --></ins>
 

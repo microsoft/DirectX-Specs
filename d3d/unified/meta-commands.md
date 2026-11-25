@@ -163,7 +163,7 @@ A [GUID](https://learn.microsoft.com/en-us/windows/win32/api/guiddef/ns-guiddef-
 
 The meta command name.
 
-<ins><!-- d3d12-review-inline:begin:meta-command:N-desc-state:0:authored:migration-a338b325ade16645-0 -->`InitializationDirtyState` and `ExecutionDirtyState` use [`D3D12_GRAPHICS_STATES`](#d3d12_graphics_states). See [meta command state effects](command-list-state.md#meta-commands) for reestablishing affected state. This specification does not establish whether setting every bit in a dirty state mask is equivalent to the effect of [`ClearState`](command-list-state.md#clear-state).<!-- d3d12-review-inline:end:meta-command:N-desc-state:0:authored:migration-a338b325ade16645-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:meta-command:N-desc-state:0:authored:migration-a338b325ade16645-0 -->`InitializationDirtyState` and `ExecutionDirtyState` use [`D3D12_GRAPHICS_STATES`](#d3d12_graphics_states). See [meta command state effects](command-list-state.md#meta-commands) for reestablishing affected state.<!-- d3d12-review-inline:end:meta-command:N-desc-state:0:authored:migration-a338b325ade16645-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:meta-command:N-reflection-storage:0:authored:migration-4c40407ed176f9ee-0 -->The application owns the descriptor array storage supplied to enumeration. Both command description `Name` strings and parameter description `Name` strings are borrowed device lifetime storage. The application must not free these strings.<!-- d3d12-review-inline:end:meta-command:N-reflection-storage:0:authored:migration-4c40407ed176f9ee-0 --></ins>
 

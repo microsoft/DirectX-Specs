@@ -137,9 +137,7 @@ Decoding a new stream requires instantiating a new decoder object.
 <ins><!-- d3d12-review-inline:begin:video-decode:N-create-decoder:1:authored:migration-6f327462d035e043-0 -->**Runtime validation:** on the inspected ordinary path, the runtime rejects an invalid
 node selection, an unsupported decode profile or encryption choice, or an
 invalid coded interlace value with `E_INVALIDARG`. Creation can also propagate
-allocation, interface selection or device removal failures. The public method
-documentation does not specify an exhaustive creation error table. This validation does not establish which
-profiles a hardware device implements.<!-- d3d12-review-inline:end:video-decode:N-create-decoder:1:authored:migration-6f327462d035e043-0 --></ins>
+allocation, interface selection or device removal failures.<!-- d3d12-review-inline:end:video-decode:N-create-decoder:1:authored:migration-6f327462d035e043-0 --></ins>
 
 <a id="protected-video-api-contracts"></a>
 
@@ -211,9 +209,7 @@ allocate the application's reference/output pictures.<!-- d3d12-review-inline:en
 <ins><!-- d3d12-review-inline:begin:video-decode:N-create-heap:1:authored:migration-da481eb078d1e341-0 -->**Runtime validation:** on the inspected ordinary path, the runtime returns
 `E_INVALIDARG` when the heap's DECODE_SUPPORT query fails or does not report
 the SUPPORTED flag. It also validates the descriptor's node mask. Allocation,
-interface selection and device removal failures can propagate. This is not an
-exhaustive HRESULT list. A successful capability query does not guarantee that
-memory is reserved.<!-- d3d12-review-inline:end:video-decode:N-create-heap:1:authored:migration-da481eb078d1e341-0 --></ins>
+interface selection and device removal failures can propagate.<!-- d3d12-review-inline:end:video-decode:N-create-heap:1:authored:migration-da481eb078d1e341-0 --></ins>
 
 <a id="api-id3d12videodevice2-createvideodecoderheap1"></a>
 
@@ -419,8 +415,6 @@ Resets a command list back to its initial state as if a new command list was jus
 
 `pAllocator`
 
-Type: **ID3D12CommandAllocator\***
-
 A pointer to the [ID3D12CommandAllocator](execution.md#command-storage) object that the device creates command lists from.
 
 #### Return values
@@ -546,9 +540,8 @@ None
 On the inspected ordinary path, the runtime validates frame argument types and picture
 parameter sizes, decoder and heap configuration compatibility, the bitstream
 resource and range, reference resources, and output, conversion and histogram
-arguments. This validation does not guarantee detection of every malformed
-codec bitstream or every invalid pointer. The debug layer also validates
-resource states. Debug layer checks are not evidence of hardware completion.<!-- d3d12-review-inline:end:video-decode:N-frame-validation:0:authored:migration-a7d3502bd656017a-0 --></ins>
+arguments. The debug layer also validates
+resource states.<!-- d3d12-review-inline:end:video-decode:N-frame-validation:0:authored:migration-a7d3502bd656017a-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-decode:N-resource-validation:0:authored:migration-3608c36c69fd41cf-0 -->**Runtime validation details:** on the inspected ordinary path, the runtime rejects
 reserved compressed bitstream, reference, output and histogram resources. The
@@ -559,13 +552,6 @@ subresource identifies plane 0 for the chosen array slice. The current heap
 configuration matches the decoder. Reference formats match the applicable
 heap. The native decode picture's format matches the heap's Format. An enabled
 conversion has a non-null native reference destination.<!-- d3d12-review-inline:end:video-decode:N-resource-validation:0:authored:migration-3608c36c69fd41cf-0 --></ins>
-
-<ins><!-- d3d12-review-inline:begin:video-decode:N-resource-validation:2:authored:migration-df8be2c0326a46ba-0 -->These checks are not a complete codec validity definition or a
-conformance claim for every runtime and driver. Mixed-resolution reference
-heap applicability, null or default arrays and some size and error paths have
-unresolved evidence limits. The type definitions keep their public meanings. This
-specification does not promise that every malformed description is rejected or
-that every documented default works on the inspected path.<!-- d3d12-review-inline:end:video-decode:N-resource-validation:2:authored:migration-df8be2c0326a46ba-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-decode:N-frame-validation:1:authored:migration-dffc350f030d4802-0 -->**Reference array qualification:** [`D3D12_VIDEO_DECODE_REFERENCE_FRAMES`](#d3d12-video-decode-reference-frames)
 allows `pSubresources == nullptr` to mean all-zero subresources. The inspected ordinary
@@ -1946,9 +1932,7 @@ In tier 1, the hardware decoder requires that the application allocate reference
 
 #### D3D12_VIDEO_DECODE_TIER_3
 
-<ins><!-- d3d12-review-inline:begin:video-decode:N-tier-qualification:0:authored:migration-f292ebc3a1545771-0 -->This reference does not establish a complete tier 3 layout, packing or
-support guarantee. The declared value does not by itself establish those
-capabilities. See the [reference-only resource restriction](resources.md#d3d12_resource_flag_video_decode_reference_only)
+<ins><!-- d3d12-review-inline:begin:video-decode:N-tier-qualification:0:authored:migration-f292ebc3a1545771-0 -->See the [reference-only resource restriction](resources.md#d3d12_resource_flag_video_decode_reference_only)
 for the resource flag's requirements.<!-- d3d12-review-inline:end:video-decode:N-tier-qualification:0:authored:migration-f292ebc3a1545771-0 --></ins>
 
 <a id="codec-input-boundary"></a>

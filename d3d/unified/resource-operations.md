@@ -395,33 +395,23 @@ Copies a region of a buffer from one resource to another.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:CopyBufferRegion-parameters:1 -->`pDstBuffer`<!-- d3d12-review-inline:end:resource-operations:CopyBufferRegion-parameters:1 --></ins>
-
-Type: **[ID3D12Resource](resources.md#resource-storage)\***
+<ins><!-- d3d12-review-inline:begin:resource-operations:CopyBufferRegion-parameters:1 -->[`pDstBuffer`](resources.md#resource-storage)<!-- d3d12-review-inline:end:resource-operations:CopyBufferRegion-parameters:1 --></ins>
 
 Specifies the destination [ID3D12Resource](resources.md#resource-storage).
 
 `DstOffset`
 
-Type: **UINT64**
-
 Specifies a UINT64 offset (in bytes) into the destination resource.
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:CopyBufferRegion-parameters:7 -->`pSrcBuffer`<!-- d3d12-review-inline:end:resource-operations:CopyBufferRegion-parameters:7 --></ins>
-
-Type: **[ID3D12Resource](resources.md#resource-storage)\***
+<ins><!-- d3d12-review-inline:begin:resource-operations:CopyBufferRegion-parameters:7 -->[`pSrcBuffer`](resources.md#resource-storage)<!-- d3d12-review-inline:end:resource-operations:CopyBufferRegion-parameters:7 --></ins>
 
 Specifies the source [ID3D12Resource](resources.md#resource-storage).
 
 `SrcOffset`
 
-Type: **UINT64**
-
 Specifies a UINT64 offset (in bytes) into the source resource, to start the copy from.
 
 `NumBytes`
-
-Type: **UINT64**
 
 Specifies the number of bytes to copy.
 
@@ -530,39 +520,27 @@ This method uses the GPU to copy texture data between two locations. Both the so
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-parameters:1 -->`pDst`<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-parameters:1 --></ins>
-
-Type: **const [D3D12_TEXTURE_COPY_LOCATION](#d3d12-texture-copy-location)\***
+<ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-parameters:1 -->[`pDst`](#d3d12-texture-copy-location)<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-parameters:1 --></ins>
 
 Specifies the destination [D3D12_TEXTURE_COPY_LOCATION](#d3d12-texture-copy-location). <ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-parameters:3 -->The destination requires [copy destination access](#recording-and-access), which is `D3D12_RESOURCE_STATE_COPY_DEST` in the legacy state model.<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-parameters:3 --></ins>
 
 `DstX`
 
-Type: **UINT**
-
 The x-coordinate of the upper left corner of the destination region.
 
 `DstY`
-
-Type: **UINT**
 
 The y-coordinate of the upper left corner of the destination region. For a 1D subresource, this must be zero.
 
 `DstZ`
 
-Type: **UINT**
-
 The z-coordinate of the upper left corner of the destination region. For a 1D or 2D subresource, this must be zero.
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-parameters:13 -->`pSrc`<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-parameters:13 --></ins>
-
-Type: **const [D3D12_TEXTURE_COPY_LOCATION](#d3d12-texture-copy-location)\***
+<ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-parameters:13 -->[`pSrc`](#d3d12-texture-copy-location)<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-parameters:13 --></ins>
 
 Specifies the source [D3D12_TEXTURE_COPY_LOCATION](#d3d12-texture-copy-location). <ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-parameters:15 -->The source requires [copy source access](#recording-and-access), which is `D3D12_RESOURCE_STATE_COPY_SOURCE` in the legacy state model.<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-parameters:15 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-parameters:16 -->`pSrcBox`<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-parameters:16 --></ins>
-
-Type: **const [D3D12_BOX](#d3d12-box)\***
+<ins><!-- d3d12-review-inline:begin:resource-operations:CopyTextureRegion-parameters:16 -->[`pSrcBox`](#d3d12-box)<!-- d3d12-review-inline:end:resource-operations:CopyTextureRegion-parameters:16 --></ins>
 
 Specifies an optional D3D12\_BOX that sets the size of the source texture to copy.
 
@@ -637,13 +615,9 @@ Copies the entire contents of the source resource to the destination resource.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:CopyResource-parameters:1 -->`pDstResource`<!-- d3d12-review-inline:end:resource-operations:CopyResource-parameters:1 --></ins>
 
-Type: **ID3D12Resource\***
-
 A pointer to the [ID3D12Resource](resources.md#resource-storage) interface that represents the destination resource.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:CopyResource-parameters:4 -->`pSrcResource`<!-- d3d12-review-inline:end:resource-operations:CopyResource-parameters:4 --></ins>
-
-Type: **ID3D12Resource\***
 
 A pointer to the [ID3D12Resource](resources.md#resource-storage) interface that represents the source resource.
 
@@ -784,37 +758,25 @@ Copies tiles from buffer to tiled resource or vice versa.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:CopyTiles-parameters:1 -->`pTiledResource`<!-- d3d12-review-inline:end:resource-operations:CopyTiles-parameters:1 --></ins>
 
-Type: **ID3D12Resource\***
-
 A pointer to a tiled resource.
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:CopyTiles-parameters:4 -->`pTileRegionStartCoordinate`<!-- d3d12-review-inline:end:resource-operations:CopyTiles-parameters:4 --></ins>
-
-Type: **const [D3D12_TILED_RESOURCE_COORDINATE](#d3d12-tiled-resource-coordinate)\***
+<ins><!-- d3d12-review-inline:begin:resource-operations:CopyTiles-parameters:4 -->[`pTileRegionStartCoordinate`](#d3d12-tiled-resource-coordinate)<!-- d3d12-review-inline:end:resource-operations:CopyTiles-parameters:4 --></ins>
 
 A pointer to a [D3D12_TILED_RESOURCE_COORDINATE](#d3d12-tiled-resource-coordinate) structure that describes the starting coordinates of the tiled resource.
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:CopyTiles-parameters:7 -->`pTileRegionSize`<!-- d3d12-review-inline:end:resource-operations:CopyTiles-parameters:7 --></ins>
-
-Type: **const [D3D12_TILE_REGION_SIZE](#d3d12-tile-region-size)\***
+<ins><!-- d3d12-review-inline:begin:resource-operations:CopyTiles-parameters:7 -->[`pTileRegionSize`](#d3d12-tile-region-size)<!-- d3d12-review-inline:end:resource-operations:CopyTiles-parameters:7 --></ins>
 
 A pointer to a [D3D12_TILE_REGION_SIZE](#d3d12-tile-region-size) structure that describes the size of the tiled region.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:CopyTiles-parameters:10 -->`pBuffer`<!-- d3d12-review-inline:end:resource-operations:CopyTiles-parameters:10 --></ins>
 
-Type: **ID3D12Resource\***
-
 A pointer to an [ID3D12Resource](resources.md#resource-storage) <ins><!-- d3d12-review-inline:begin:resource-operations:CopyTiles-parameters:12 -->that represents the linear buffer. Its permitted heap usage is defined by [heap types](resources.md#heap-types).<!-- d3d12-review-inline:end:resource-operations:CopyTiles-parameters:12 --></ins>
 
 `BufferStartOffsetInBytes`
 
-Type: **UINT64**
-
 The offset in bytes into the buffer at *pBuffer* to start the operation.
 
-`Flags`
-
-Type: **[D3D12_TILE_COPY_FLAGS](#d3d12-tile-copy-flags)**
+[`Flags`](#d3d12-tile-copy-flags)
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:CopyTiles-parameters:18:modified:migration-77a6a580baee3ddb-0 -->Specifies copy direction under the [exactly-one-direction rule](#tile-copy-combinations). The published bitwise-OR representation does not permit zero or both direction bits, and `NO_HAZARD` is deprecated.<!-- d3d12-review-inline:end:resource-operations:CopyTiles-parameters:18:modified:migration-77a6a580baee3ddb-0 --></ins>
 
@@ -1025,43 +987,29 @@ Atomically copies a primary data element of type UINT from one resource to anoth
 
 ##### `pDstBuffer`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT-parameters:1 -->Type: **ID3D12Resource***<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT-parameters:1 --></ins>
-
 The resource that the UINT primary data element is copied into.
 
 ##### `DstOffset`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT-parameters:4 -->Type: **UINT64**<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT-parameters:4 --></ins>
 
 An offset into the destination resource buffer that specifies where the primary data element is copied into, in bytes. This offset combined with the base address of the resource buffer must result in a memory address that's naturally aligned for UINT values.
 
 ##### `pSrcBuffer`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT-parameters:7 -->Type: **ID3D12Resource***<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT-parameters:7 --></ins>
-
 The resource that the UINT primary data element is copied from. This data is typically an address, index, or other handle that shader code can use to locate the most-recent version of latency-sensitive information.
 
 ##### `SrcOffset`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT-parameters:10 -->Type: **UINT64**<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT-parameters:10 --></ins>
 
 An offset into the source resource buffer that specifies where the primary data element is copied from, in bytes. This offset combined with the base address of the resource buffer must result in a memory address that's naturally aligned for UINT values.
 
 ##### `Dependencies`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT-parameters:13 -->Type: **UINT**<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT-parameters:13 --></ins>
-
 The number of dependent resources.
 
 ##### `ppDependentResources`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT-parameters:16 -->Type: `ID3D12Resource* const*`<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT-parameters:16 --></ins>
-
 An array of resources that contain the dependent elements of the data payload.
 
-##### `pDependentSubresourceRanges`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT-parameters:19 -->Type: **const [D3D12_SUBRESOURCE_RANGE_UINT64](#d3d12-subresource-range-uint64)***<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT-parameters:19 --></ins>
+##### [`pDependentSubresourceRanges`](#d3d12-subresource-range-uint64)
 
 An array of subresource ranges that specify the dependent elements of the data payload. These elements are completely updated before the primary data element is itself atomically copied. This ensures that the entire operation is logically atomic; that is, the primary data element never refers to an incomplete data payload.
 
@@ -1091,43 +1039,29 @@ Atomically copies a primary data element of type UINT64 from one resource to ano
 
 ##### `pDstBuffer`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT64-parameters:1 -->Type: **ID3D12Resource***<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT64-parameters:1 --></ins>
-
 The resource that the UINT64 primary data element is copied into.
 
 ##### `DstOffset`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT64-parameters:4 -->Type: **UINT64**<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT64-parameters:4 --></ins>
 
 An offset into the destination resource buffer that specifies where the primary data element is copied into, in bytes. This offset combined with the base address of the resource buffer must result in a memory address that's naturally aligned for UINT64 values.
 
 ##### `pSrcBuffer`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT64-parameters:7 -->Type: **ID3D12Resource***<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT64-parameters:7 --></ins>
-
 The resource that the UINT64 primary data element is copied from. This data is typically an address, index, or other handle that shader code can use to locate the most-recent version of latency-sensitive information.
 
 ##### `SrcOffset`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT64-parameters:10 -->Type: **UINT64**<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT64-parameters:10 --></ins>
 
 An offset into the source resource buffer that specifies where the primary data element is copied from, in bytes. This offset combined with the base address of the resource buffer must result in a memory address that's naturally aligned for UINT64 values.
 
 ##### `Dependencies`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT64-parameters:13 -->Type: **UINT**<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT64-parameters:13 --></ins>
-
 The number of dependent resources.
 
 ##### `ppDependentResources`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT64-parameters:16 -->Type: `ID3D12Resource* const*`<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT64-parameters:16 --></ins>
-
 An array of resources that contain the dependent elements of the data payload.
 
-##### `pDependentSubresourceRanges`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:AC-AtomicCopyBufferUINT64-parameters:19 -->Type: **const [D3D12_SUBRESOURCE_RANGE_UINT64](#d3d12-subresource-range-uint64)***<!-- d3d12-review-inline:end:resource-operations:AC-AtomicCopyBufferUINT64-parameters:19 --></ins>
+##### [`pDependentSubresourceRanges`](#d3d12-subresource-range-uint64)
 
 An array of subresource ranges that specify the dependent elements of the data payload. These elements are completely updated before the primary data element is itself atomically copied. This ensures that the entire operation is logically atomic; that is, the primary data element never refers to an incomplete data payload.
 
@@ -1462,27 +1396,19 @@ Sets all the elements in a render target to one value.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearRenderTargetView-parameters:1 -->`RenderTargetView`<!-- d3d12-review-inline:end:resource-operations:ClearRenderTargetView-parameters:1 --></ins>
-
-Type: **[D3D12_CPU_DESCRIPTOR_HANDLE](binding.md#descriptor-heaps)**
+<ins><!-- d3d12-review-inline:begin:resource-operations:ClearRenderTargetView-parameters:1 -->[`RenderTargetView`](binding.md#descriptor-heaps)<!-- d3d12-review-inline:end:resource-operations:ClearRenderTargetView-parameters:1 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearRenderTargetView-parameters:3 -->Specifies the CPU descriptor handle identifying the render target view to be cleared.<!-- d3d12-review-inline:end:resource-operations:ClearRenderTargetView-parameters:3 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearRenderTargetView-parameters:4 -->`ColorRGBA`<!-- d3d12-review-inline:end:resource-operations:ClearRenderTargetView-parameters:4 --></ins>
 
-Type: **const FLOAT[4]**
-
 A 4-component array that represents the color to fill the render target with.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearRenderTargetView-parameters:7 -->`NumRects`<!-- d3d12-review-inline:end:resource-operations:ClearRenderTargetView-parameters:7 --></ins>
 
-Type: **UINT**
-
 The number of rectangles in the array that the *pRects* parameter specifies.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearRenderTargetView-parameters:10 -->`pRects`<!-- d3d12-review-inline:end:resource-operations:ClearRenderTargetView-parameters:10 --></ins>
-
-Type: **const D3D12\_RECT\***
 
 An array of **D3D12\_RECT** structures for the rectangles in the resource view to clear. <ins><!-- d3d12-review-inline:begin:resource-operations:ClearRenderTargetView-parameters:12 -->If `NumRects` is zero, the entire resource view is cleared; otherwise `pRects` supplies the counted rectangle array.<!-- d3d12-review-inline:end:resource-operations:ClearRenderTargetView-parameters:12 --></ins>
 
@@ -1625,39 +1551,27 @@ Clears the depth-stencil resource.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearDepthStencilView-parameters:1 -->`DepthStencilView`<!-- d3d12-review-inline:end:resource-operations:ClearDepthStencilView-parameters:1 --></ins>
-
-Type: **[D3D12_CPU_DESCRIPTOR_HANDLE](binding.md#descriptor-heaps)**
+<ins><!-- d3d12-review-inline:begin:resource-operations:ClearDepthStencilView-parameters:1 -->[`DepthStencilView`](binding.md#descriptor-heaps)<!-- d3d12-review-inline:end:resource-operations:ClearDepthStencilView-parameters:1 --></ins>
 
 Describes the CPU descriptor handle <ins><!-- d3d12-review-inline:begin:resource-operations:ClearDepthStencilView-parameters:3:modified:source-89a2c93d45d47dc9-0-0 -->identifying the depth-stencil view<!-- d3d12-review-inline:end:resource-operations:ClearDepthStencilView-parameters:3:modified:source-89a2c93d45d47dc9-0-0 --></ins> to be cleared.
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearDepthStencilView-parameters:4 -->`ClearFlags`<!-- d3d12-review-inline:end:resource-operations:ClearDepthStencilView-parameters:4 --></ins>
-
-Type: **[D3D12_CLEAR_FLAGS](#d3d12-clear-flags)**
+<ins><!-- d3d12-review-inline:begin:resource-operations:ClearDepthStencilView-parameters:4 -->[`ClearFlags`](#d3d12-clear-flags)<!-- d3d12-review-inline:end:resource-operations:ClearDepthStencilView-parameters:4 --></ins>
 
 A combination of [D3D12_CLEAR_FLAGS](#d3d12-clear-flags) values that are combined by using a bitwise OR operation. The resulting value identifies the type of data to clear (depth buffer, stencil buffer, or both).
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearDepthStencilView-parameters:7 -->`Depth`<!-- d3d12-review-inline:end:resource-operations:ClearDepthStencilView-parameters:7 --></ins>
 
-Type: **[FLOAT](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types)**
-
 A value to clear the depth buffer with. This value will be clamped between 0 and 1.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearDepthStencilView-parameters:10 -->`Stencil`<!-- d3d12-review-inline:end:resource-operations:ClearDepthStencilView-parameters:10 --></ins>
-
-Type: **UINT8**
 
 A value to clear the stencil buffer with.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearDepthStencilView-parameters:13 -->`NumRects`<!-- d3d12-review-inline:end:resource-operations:ClearDepthStencilView-parameters:13 --></ins>
 
-Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types)**
-
 The number of rectangles in the array that the *pRects* parameter specifies.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearDepthStencilView-parameters:16 -->`pRects`<!-- d3d12-review-inline:end:resource-operations:ClearDepthStencilView-parameters:16 --></ins>
-
-Type: **const D3D12\_RECT\***
 
 An array of **D3D12\_RECT** structures for the rectangles in the resource view to clear. <ins><!-- d3d12-review-inline:begin:resource-operations:ClearDepthStencilView-parameters:18 -->If `NumRects` is zero, the entire resource view is cleared; otherwise `pRects` supplies the counted rectangle array.<!-- d3d12-review-inline:end:resource-operations:ClearDepthStencilView-parameters:18 --></ins>
 
@@ -1917,41 +1831,29 @@ Sets all the elements in <ins><!-- d3d12-review-inline:begin:resource-operations
 
 #### Parameters
 
-`ViewGPUHandleInCurrentHeap`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-parameters:2 -->Type: <!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-parameters:2 --></ins>**[D3D12_GPU_DESCRIPTOR_HANDLE](binding.md#descriptor-heaps)**
+[`ViewGPUHandleInCurrentHeap`](binding.md#descriptor-heaps)
 
 A [D3D12_GPU_DESCRIPTOR_HANDLE](binding.md#descriptor-heaps) that references an initialized descriptor for the <ins><!-- d3d12-review-inline:begin:resource-operations:STYLE-O1-uint:0:preserved-repair:gpu-view-name -->unordered access<!-- d3d12-review-inline:end:resource-operations:STYLE-O1-uint:0:preserved-repair:gpu-view-name --></ins> view (UAV) that is to be cleared. This descriptor must be in a shader-visible descriptor heap, which must be set on the command list via [SetDescriptorHeaps](binding.md#descriptor-heaps).
 
-`ViewCPUHandle`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-parameters:5 -->Type: <!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-parameters:5 --></ins>**[D3D12_CPU_DESCRIPTOR_HANDLE](binding.md#descriptor-heaps)**
+[`ViewCPUHandle`](binding.md#descriptor-heaps)
 
 A [D3D12_CPU_DESCRIPTOR_HANDLE](binding.md#descriptor-heaps) in a non-shader visible descriptor heap that references an initialized descriptor for the <ins><!-- d3d12-review-inline:begin:resource-operations:STYLE-O1-uint:1:preserved-repair:cpu-view-name -->unordered access<!-- d3d12-review-inline:end:resource-operations:STYLE-O1-uint:1:preserved-repair:cpu-view-name --></ins> view (UAV) that is to be cleared.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-parameters:7 -->**Important.** This descriptor must not be in a shader-visible descriptor heap. This is to allow drivers that implement the clear as a fixed-function hardware operation (rather than as a dispatch) to efficiently read from the descriptor, as shader-visible heaps may be created in **WRITE\_COMBINE** memory (similar to **D3D12\_HEAP\_TYPE\_UPLOAD** heap types), and CPU reads from this type of memory are prohibitively slow.<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-parameters:7 --></ins>
 
-`pResource`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-parameters:9 -->Type: <!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-parameters:9 --></ins>**[ID3D12Resource](resources.md#resource-storage)\***
+[`pResource`](resources.md#resource-storage)
 
 A pointer to the [ID3D12Resource](resources.md#resource-storage) interface that represents the <ins><!-- d3d12-review-inline:begin:resource-operations:STYLE-O1-uint:2:preserved-repair:resource-view-name -->unordered access view<!-- d3d12-review-inline:end:resource-operations:STYLE-O1-uint:2:preserved-repair:resource-view-name --></ins> (UAV) resource to clear.
 
 `Values`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-parameters:12:modified:migration-cad2687680f182a2-0 -->Type: <!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-parameters:12:modified:migration-cad2687680f182a2-0 --></ins>**const UINT[4]**
-
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-parameters:13 -->A 4-component array containing the values<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-parameters:13 --></ins> to fill the <ins><!-- d3d12-review-inline:begin:resource-operations:STYLE-O1-uint:3:preserved-repair:values-view-name -->unordered access view<!-- d3d12-review-inline:end:resource-operations:STYLE-O1-uint:3:preserved-repair:values-view-name --></ins> resource with.
 
 `NumRects`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-parameters:15 -->Type: <!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-parameters:15 --></ins>**UINT**
-
 The number of rectangles in the array that the *pRects* parameter specifies.
 
-`pRects`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-parameters:18 -->Type: <!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-parameters:18 --></ins>**const [D3D12_RECT](rasterization.md#d3d12-rect)\***
+[`pRects`](rasterization.md#d3d12-rect)
 
 An array of **D3D12\_RECT** structures for the rectangles in the resource view to clear. <ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewUint-parameters:19 -->If `NumRects` is zero, the entire resource view is cleared; otherwise `pRects` supplies the counted rectangle array.<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewUint-parameters:19 --></ins>
 
@@ -1992,41 +1894,29 @@ Sets all of the elements in an <ins><!-- d3d12-review-inline:begin:resource-oper
 
 #### Parameters
 
-`ViewGPUHandleInCurrentHeap`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-parameters:2 -->Type: <!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-parameters:2 --></ins>**[D3D12_GPU_DESCRIPTOR_HANDLE](binding.md#descriptor-heaps)**
+[`ViewGPUHandleInCurrentHeap`](binding.md#descriptor-heaps)
 
 A [D3D12_GPU_DESCRIPTOR_HANDLE](binding.md#descriptor-heaps) that references an initialized descriptor for the <ins><!-- d3d12-review-inline:begin:resource-operations:STYLE-O1-float:1:preserved-repair:gpu-view-name -->unordered access<!-- d3d12-review-inline:end:resource-operations:STYLE-O1-float:1:preserved-repair:gpu-view-name --></ins> view (UAV) that is to be cleared. This descriptor must be in a shader-visible descriptor heap, which must be set on the command list via [SetDescriptorHeaps](binding.md#descriptor-heaps).
 
-`ViewCPUHandle`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-parameters:5 -->Type: <!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-parameters:5 --></ins>**[D3D12_CPU_DESCRIPTOR_HANDLE](binding.md#descriptor-heaps)**
+[`ViewCPUHandle`](binding.md#descriptor-heaps)
 
 A [D3D12_CPU_DESCRIPTOR_HANDLE](binding.md#descriptor-heaps) in a non-shader visible descriptor heap that references an initialized descriptor for the <ins><!-- d3d12-review-inline:begin:resource-operations:STYLE-O1-float:2:preserved-repair:cpu-view-name -->unordered access<!-- d3d12-review-inline:end:resource-operations:STYLE-O1-float:2:preserved-repair:cpu-view-name --></ins> view (UAV) that is to be cleared.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-parameters:7 -->**Important.** This descriptor must not be in a shader-visible descriptor heap. This is to allow drivers that implement the clear as a fixed-function hardware operation (rather than as a dispatch) to efficiently read from the descriptor, as shader-visible heaps may be created in **WRITE\_COMBINE** memory (similar to **D3D12\_HEAP\_TYPE\_UPLOAD** heap types), and CPU reads from this type of memory are prohibitively slow.<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-parameters:7 --></ins>
 
-`pResource`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-parameters:9 -->Type: <!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-parameters:9 --></ins>**[ID3D12Resource](resources.md#resource-storage)\***
+[`pResource`](resources.md#resource-storage)
 
 A pointer to the [ID3D12Resource](resources.md#resource-storage) interface that represents the <ins><!-- d3d12-review-inline:begin:resource-operations:STYLE-O1-float:3:preserved-repair:resource-view-name -->unordered access view<!-- d3d12-review-inline:end:resource-operations:STYLE-O1-float:3:preserved-repair:resource-view-name --></ins> (UAV) resource to clear.
 
 `Values`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-parameters:12 -->Type: <!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-parameters:12 --></ins>**const FLOAT[4]**
-
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-parameters:13 -->A 4-component array containing the values<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-parameters:13 --></ins> to fill the <ins><!-- d3d12-review-inline:begin:resource-operations:STYLE-O1-float:4:preserved-repair:values-view-name -->unordered access view<!-- d3d12-review-inline:end:resource-operations:STYLE-O1-float:4:preserved-repair:values-view-name --></ins> resource with.
 
 `NumRects`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-parameters:15 -->Type: <!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-parameters:15 --></ins>**UINT**
-
 The number of rectangles in the array that the *pRects* parameter specifies.
 
-`pRects`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-parameters:18 -->Type: <!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-parameters:18 --></ins>**const [D3D12_RECT](rasterization.md#d3d12-rect)\***
+[`pRects`](rasterization.md#d3d12-rect)
 
 An array of **D3D12\_RECT** structures for the rectangles in the resource view to clear. <ins><!-- d3d12-review-inline:begin:resource-operations:ClearUnorderedAccessViewFloat-parameters:19 -->If `NumRects` is zero, the entire resource view is cleared; otherwise `pRects` supplies the counted rectangle array.<!-- d3d12-review-inline:end:resource-operations:ClearUnorderedAccessViewFloat-parameters:19 --></ins>
 
@@ -2088,31 +1978,21 @@ Copy a multi-sampled resource into a non-multi-sampled resource.
 
 `pDstResource`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresource-parameters:2 -->Type: <!-- d3d12-review-inline:end:resource-operations:ResolveSubresource-parameters:2 --></ins>**ID3D12Resource\***
-
 Destination resource. <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresource-parameters:3 -->Must be created on<!-- d3d12-review-inline:end:resource-operations:ResolveSubresource-parameters:3 --></ins> a [D3D12_HEAP_TYPE_DEFAULT](resources.md#d3d12-heap-type) heap and be single-sampled. See [ID3D12Resource](resources.md#resource-storage).
 
 `DstSubresource`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresource-parameters:5 -->Type: <!-- d3d12-review-inline:end:resource-operations:ResolveSubresource-parameters:5 --></ins>**UINT**
 
 A zero-based index, that identifies the destination subresource. Use [D3D12CalcSubresource](resources.md#subresources) to calculate the subresource index if the parent resource is complex.
 
 `pSrcResource`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresource-parameters:8 -->Type: <!-- d3d12-review-inline:end:resource-operations:ResolveSubresource-parameters:8 --></ins>**ID3D12Resource\***
-
 Source resource. Must be multisampled.
 
 `SrcSubresource`
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresource-parameters:11 -->Type: <!-- d3d12-review-inline:end:resource-operations:ResolveSubresource-parameters:11 --></ins>**UINT**
-
 The source subresource of the source resource.
 
 `Format`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresource-parameters:14 -->Type: <!-- d3d12-review-inline:end:resource-operations:ResolveSubresource-parameters:14 --></ins>**DXGI\_FORMAT**
 
 A [DXGI_FORMAT](formats.md#dxgi-format) that indicates how the multisampled resource will be resolved to a single-sampled resource. <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresource-parameters:15 -->See the [format requirements](#resolvesubresource).<!-- d3d12-review-inline:end:resource-operations:ResolveSubresource-parameters:15 --></ins>
 
@@ -2184,55 +2064,37 @@ Copy a region of a multisampled or compressed resource into a non-multisampled o
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:1 -->`pDstResource`<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:1 --></ins>
 
-Type: **ID3D12Resource\***
-
 Destination resource. <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:3:modified:migration-94d0cd48e99447d1-0 -->Must be created on a `D3D12_HEAP_TYPE_DEFAULT` heap for ordinary multisample resolve<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:3:modified:migration-94d0cd48e99447d1-0 --></ins> and must be single-sampled <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:3:modified:migration-91e334eea91687ab-1 -->unless it is to be<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:3:modified:migration-91e334eea91687ab-1 --></ins> resolved from a compressed resource (**D3D12\_RESOLVE\_MODE\_DECOMPRESS**); in this case it must have the same sample count as the compressed source.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:4 -->`DstSubresource`<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:4 --></ins>
-
-Type: **UINT**
 
 A zero-based index that identifies the destination subresource. Use [D3D12CalcSubresource](resources.md#subresources) to calculate the subresource index if the parent resource is complex.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:7 -->`DstX`<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:7 --></ins>
 
-Type: **UINT**
-
 The X coordinate of the left-most edge of the destination region. The width of the destination region is the same as the width of the source rect.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:10 -->`DstY`<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:10 --></ins>
-
-Type: **UINT**
 
 The Y coordinate of the top-most edge of the destination region. The height of the destination region is the same as the height of the source rect.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:13 -->`pSrcResource`<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:13 --></ins>
 
-Type: **ID3D12Resource\***
-
 Source resource. <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:15:modified:source-5867955982043c42-0-0 -->For ordinary resolve/decompression it must<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:15:modified:source-5867955982043c42-0-0 --></ins> be multisampled or <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:15:modified:source-5867955982043c42-0-1 -->metadata-compressed; [feedback transcoding](#feedback-transcoding) has its own opaque/decoded source requirements<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:15:modified:source-5867955982043c42-0-1 --></ins>.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:16 -->`SrcSubresource`<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:16 --></ins>
-
-Type: **UINT**
 
 A zero-based index that identifies the source subresource.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:19 -->`pSrcRect`<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:19 --></ins>
 
-Type: **D3D12\_RECT\***
-
 Specifies the rectangular region of the source resource to be resolved. Passing NULL for *pSrcRect* specifies that the entire subresource is to be resolved.
 
 <ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:22 -->`Format`<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:22 --></ins>
 
-Type: **DXGI\_FORMAT**
-
 A DXGI\_FORMAT that specifies how the source and destination resource formats are consolidated.
 
-<ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:25 -->`ResolveMode`<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:25 --></ins>
-
-Type: **[D3D12_RESOLVE_MODE](#d3d12-resolve-mode)**
+<ins><!-- d3d12-review-inline:begin:resource-operations:ResolveSubresourceRegion-parameters:25 -->[`ResolveMode`](#d3d12-resolve-mode)<!-- d3d12-review-inline:end:resource-operations:ResolveSubresourceRegion-parameters:25 --></ins>
 
 Specifies the operation used to resolve the source samples.
 
@@ -2558,15 +2420,11 @@ Indicates that the contents of a resource don't need to be preserved. The functi
 
 #### Parameters
 
-`pResource`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:DiscardResource-parameters:2 -->Type: **[ID3D12Resource](resources.md#resource-storage)\***<!-- d3d12-review-inline:end:resource-operations:DiscardResource-parameters:2 --></ins>
+[`pResource`](resources.md#resource-storage)
 
 A pointer to the [ID3D12Resource](resources.md#resource-storage) interface for the resource to discard.
 
-`pRegion`
-
-<ins><!-- d3d12-review-inline:begin:resource-operations:DiscardResource-parameters:5 -->Type: **const [D3D12_DISCARD_REGION](#d3d12-discard-region)\***<!-- d3d12-review-inline:end:resource-operations:DiscardResource-parameters:5 --></ins>
+[`pRegion`](#d3d12-discard-region)
 
 A pointer to a [D3D12_DISCARD_REGION](#d3d12-discard-region) structure that describes details for the discard-resource operation.
 

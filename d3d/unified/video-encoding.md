@@ -587,7 +587,7 @@ bitstream headers. See [Recording and lifetime](#encoding-recording) for recordi
 and [Capabilities and controls](video-encoding-controls.md) for sequence and picture parameters.
 This version uses HEVC2 through the version-1 picture control union, optional
 statistics, CPU/GPU map inputs, subregion notification and frame analysis
-parameters. Enabling one optional feature does not imply support for another.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-behavior:0:authored:migration-5d1e73fbb98b0853-0 --></ins>
+parameters.<!-- d3d12-review-inline:end:video-encoding:api-id3d12videoencodecommandlist4-%2Dencodeframe1-behavior:0:authored:migration-5d1e73fbb98b0853-0 --></ins>
 
 #### Parameters
 

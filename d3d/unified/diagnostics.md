@@ -86,13 +86,9 @@ Gets a debug interface.
 
 `riid`
 
-Type: **REFIID**
-
 (input) The globally unique identifier (**GUID**) for the debug interface. The **REFIID**, or **GUID**, of the debug interface can be obtained by using the \_\_uuidof() macro. For example, \_\_uuidof([ID3D12Debug](#debug-configuration)) will get the **GUID** of the debug interface.
 
 `ppvDebug`
-
-Type: **void\*\***
 
 (optional output) The debug interface, as a pointer to pointer to void. See [ID3D12Debug](#debug-configuration) and [ID3D12DebugDevice](#object-scoped-validation).
 
@@ -204,8 +200,6 @@ This method enables or disables GPU-Based Validation (GBV) before creating a dev
 
 `Enable`
 
-Type: **BOOL**
-
 TRUE to enable GPU-Based Validation, otherwise FALSE.
 
 #### Return values
@@ -235,8 +229,6 @@ Enables or disables dependent command queue synchronization when using a D3D12 d
 #### Parameters
 
 `Enable`
-
-Type: **BOOL**
 
 TRUE to enable Dependent Command Queue Synchronization, otherwise FALSE.
 
@@ -270,9 +262,7 @@ This method configures the level of GPU-based validation that the debug device i
 
 #### Parameters
 
-`Flags`
-
-Type: **[D3D12_GPU_BASED_VALIDATION_FLAGS](#d3d12-gpu-based-validation-flags)**
+[`Flags`](#d3d12-gpu-based-validation-flags)
 
 Specifies the level of GPU-based validation to perform at runtime.
 
@@ -301,8 +291,6 @@ This method enables or disables GPU-based validation (GBV) before creating a dev
 #### Parameters
 
 `Enable`
-
-Type: **BOOL**
 
 TRUE to enable GPU-based validation, otherwise FALSE.
 
@@ -333,8 +321,6 @@ Enables or disables dependent command queue synchronization when using a Direct3
 #### Parameters
 
 `Enable`
-
-Type: **BOOL**
 
 TRUE to enable Dependent Command Queue Synchronization, otherwise FALSE.
 
@@ -368,9 +354,7 @@ This method configures the level of GPU-based validation that the debug device i
 
 #### Parameters
 
-`Flags`
-
-Type: **[D3D12_GPU_BASED_VALIDATION_FLAGS](#d3d12-gpu-based-validation-flags)**
+[`Flags`](#d3d12-gpu-based-validation-flags)
 
 Specifies the level of GPU-based validation to perform at runtime.
 
@@ -535,8 +519,6 @@ Associates a name with the device object. This name is for use in debug diagnost
 #### Parameters
 
 `Name`
-
-Type: **LPCWSTR**
 
 (input) A **NULL**-terminated **UNICODE** string that contains the name to associate with the device object.
 
@@ -1931,15 +1913,11 @@ Adds a user-defined message to the message queue and sends that message to debug
 
 #### Parameters
 
-`Severity`
-
-Type: **[D3D12_MESSAGE_SEVERITY](#d3d12-message-severity)**
+[`Severity`](#d3d12-message-severity)
 
 (input) Severity of a message.
 
 `pDescription`
-
-Type: **LPCSTR**
 
 (input) Specifies the message string.
 
@@ -1965,27 +1943,19 @@ Adds a debug message to the message queue and sends that message to debug output
 
 #### Parameters
 
-`Category`
-
-Type: **[D3D12_MESSAGE_CATEGORY](#d3d12-message-category)**
+[`Category`](#d3d12-message-category)
 
 (input) Category of a message.
 
-`Severity`
-
-Type: **[D3D12_MESSAGE_SEVERITY](#d3d12-message-severity)**
+[`Severity`](#d3d12-message-severity)
 
 (input) Severity of a message.
 
-`ID`
-
-Type: **[D3D12_MESSAGE_ID](#d3d12-message-id)**
+[`ID`](#d3d12-message-id)
 
 (input) Unique identifier of a message.
 
 `pDescription`
-
-Type: **LPCSTR**
 
 (input) User-defined message.
 
@@ -2015,9 +1985,7 @@ HRESULT AddRetrievalFilterEntries(D3D12_INFO_QUEUE_FILTER* pFilter);
 
 #### Parameters
 
-`pFilter`
-
-Type: **[D3D12_INFO_QUEUE_FILTER](#d3d12-info-queue-filter)\***
+[`pFilter`](#d3d12-info-queue-filter)
 
 (input) <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-AddRetrievalFilterEntries-Parameters:3 -->Pointer to one filter descriptor; its counted member arrays specify the entries to add.<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-AddRetrievalFilterEntries-Parameters:3 --></ins>
 
@@ -2075,9 +2043,7 @@ HRESULT AddStorageFilterEntries(D3D12_INFO_QUEUE_FILTER* pFilter);
 
 #### Parameters
 
-`pFilter`
-
-Type: **[D3D12_INFO_QUEUE_FILTER](#d3d12-info-queue-filter)\***
+[`pFilter`](#d3d12-info-queue-filter)
 
 (input) <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-AddStorageFilterEntries-Parameters:3 -->Pointer to one filter descriptor; its counted member arrays specify the entries to add.<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-AddStorageFilterEntries-Parameters:3 --></ins>
 
@@ -2157,9 +2123,7 @@ BOOL GetBreakOnCategory(D3D12_MESSAGE_CATEGORY Category);
 
 #### Parameters
 
-`Category`
-
-Type: **[D3D12_MESSAGE_CATEGORY](#d3d12-message-category)**
+[`Category`](#d3d12-message-category)
 
 (input) Message category to break on.
 
@@ -2185,9 +2149,7 @@ BOOL GetBreakOnID(D3D12_MESSAGE_ID ID);
 
 #### Parameters
 
-`ID`
-
-Type: **[D3D12_MESSAGE_ID](#d3d12-message-id)**
+[`ID`](#d3d12-message-id)
 
 (input) Message identifier to break on.
 
@@ -2213,9 +2175,7 @@ BOOL GetBreakOnSeverity(D3D12_MESSAGE_SEVERITY Severity);
 
 #### Parameters
 
-`Severity`
-
-Type: **[D3D12_MESSAGE_SEVERITY](#d3d12-message-severity)**
+[`Severity`](#d3d12-message-severity)
 
 (input) Message severity level to break on.
 
@@ -2243,19 +2203,13 @@ Get a message from the message queue.
 
 `MessageIndex`
 
-Type: **UINT64**
-
 (input) Index into message queue after an optional retrieval filter has been applied. This can be between 0 <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:authored:source-f1aa2780791d1ab3-0-0 -->(inclusive) <!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:authored:source-f1aa2780791d1ab3-0-0 --></ins>and the number of messages in the message queue that pass through the retrieval filter (<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:authored:source-f1aa2780791d1ab3-0-1 -->exclusive) (<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:authored:source-f1aa2780791d1ab3-0-1 --></ins>which can be obtained with <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:modified:source-f1aa2780791d1ab3-0-2 -->[GetNumStoredMessagesAllowedByRetrievalFilter](#id3d12infoqueue-getnumstoredmessagesallowedbyretrievalfilter)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:modified:source-f1aa2780791d1ab3-0-2 --></ins>). 0 is the <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:modified:source-f1aa2780791d1ab3-0-3 -->first message in the retrieval-filtered sequence<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:modified:source-f1aa2780791d1ab3-0-3 --></ins>.
 
-`pMessage`
-
-Type: **[D3D12_MESSAGE](#d3d12-message)\***
+[`pMessage`](#d3d12-message)
 
 (optional output) Returned message.
 
 `pMessageByteLength`
-
-Type: **SIZE\_T\***
 
 (input/output) Size of *pMessage* in bytes.
 
@@ -2477,15 +2431,11 @@ Get the retrieval filter at the top of the <ins><!-- d3d12-review-inline:begin:d
 
 #### Parameters
 
-`pFilter`
-
-Type: **[D3D12_INFO_QUEUE_FILTER](#d3d12-info-queue-filter)\***
+[`pFilter`](#d3d12-info-queue-filter)
 
 (optional output) Retrieval filter at the top of the <ins><!-- d3d12-review-inline:begin:diagnostics:STYLE-GetRetrievalFilter:1:modified:filter-name -->retrieval filter<!-- d3d12-review-inline:end:diagnostics:STYLE-GetRetrievalFilter:1:modified:filter-name --></ins> stack.
 
 `pFilterByteLength`
-
-Type: **SIZE\_T\***
 
 (input/output) Size of the retrieval filter in bytes. If *pFilter* is NULL, the size of the retrieval filter will be output to this parameter.
 
@@ -2546,15 +2496,11 @@ Get the storage filter at the top of the <ins><!-- d3d12-review-inline:begin:dia
 
 #### Parameters
 
-`pFilter`
-
-Type: **[D3D12_INFO_QUEUE_FILTER](#d3d12-info-queue-filter)\***
+[`pFilter`](#d3d12-info-queue-filter)
 
 (optional output) Storage filter at the top of the <ins><!-- d3d12-review-inline:begin:diagnostics:STYLE-GetStorageFilter:1:modified:filter-name -->storage filter<!-- d3d12-review-inline:end:diagnostics:STYLE-GetStorageFilter:1:modified:filter-name --></ins> stack.
 
 `pFilterByteLength`
-
-Type: **SIZE\_T\***
 
 (input/output) Size of the storage filter in bytes. If *pFilter* is NULL, the size of the storage filter will be output to this parameter.
 
@@ -2739,9 +2685,7 @@ Push a retrieval filter onto the <ins><!-- d3d12-review-inline:begin:diagnostics
 
 #### Parameters
 
-`pFilter`
-
-Type: **[D3D12_INFO_QUEUE_FILTER](#d3d12-info-queue-filter)\***
+[`pFilter`](#d3d12-info-queue-filter)
 
 (input) Pointer to a retrieval filter.
 
@@ -2767,9 +2711,7 @@ Push a storage filter onto the <ins><!-- d3d12-review-inline:begin:diagnostics:S
 
 #### Parameters
 
-`pFilter`
-
-Type: **[D3D12_INFO_QUEUE_FILTER](#d3d12-info-queue-filter)\***
+[`pFilter`](#d3d12-info-queue-filter)
 
 (input) Pointer to a storage filter.
 
@@ -2795,15 +2737,11 @@ Set a message category to break on when a message with that category passes thro
 
 #### Parameters
 
-`Category`
-
-Type: **[D3D12_MESSAGE_CATEGORY](#d3d12-message-category)**
+[`Category`](#d3d12-message-category)
 
 (input) Message category to break on.
 
 `bEnable`
-
-Type: **BOOL**
 
 (input) Turns this breaking condition on or off (true for on, false for off).
 
@@ -2829,15 +2767,11 @@ Set a message identifier to break on when a message with that identifier passes 
 
 #### Parameters
 
-`ID`
-
-Type: **[D3D12_MESSAGE_ID](#d3d12-message-id)**
+[`ID`](#d3d12-message-id)
 
 (input) Message identifier to break on.
 
 `bEnable`
-
-Type: **BOOL**
 
 (input) Turns this breaking condition on or off (true for on, false for off).
 
@@ -2863,15 +2797,11 @@ Set a message severity level to break on when a message with that severity level
 
 #### Parameters
 
-`Severity`
-
-Type: **[D3D12_MESSAGE_SEVERITY](#d3d12-message-severity)**
+[`Severity`](#d3d12-message-severity)
 
 (input) A message severity level to break on.
 
 `bEnable`
-
-Type: **BOOL**
 
 (input) Turns this breaking condition on or off (true for on, false for off).
 
@@ -2898,8 +2828,6 @@ Set the maximum number of messages that can be added to the message queue.
 #### Parameters
 
 `MessageCountLimit`
-
-Type: **UINT64**
 
 (input) Maximum number of messages that can be added to the message queue. -1 means no limit.
 
@@ -2928,8 +2856,6 @@ Set a boolean that turns the debug output on or off.
 #### Parameters
 
 `bMute`
-
-Type: **BOOL**
 
 (input) Disable/Enable the debug output (true to disable or mute the output, false to enable the output).
 
@@ -3193,7 +3119,7 @@ Apps should not rely on callbacks being invoked on the same thread that the API 
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:callback-registration-validation:1:authored:migration-dbc06d2f376478bc-0 -->`CallbackFunc` and `pCallbackCookie` are required nonnull pointers. `pContext` may be null. It is passed through unchanged. `CallbackFilterFlags` must use only the declared bits (0 or 1). A null required pointer or an unknown flag bit is invalid and returns `E_INVALIDARG`. `S_OK` establishes the registration and its output cookie; `E_OUTOFMEMORY` reports allocation failure.<!-- d3d12-review-inline:end:diagnostics:callback-registration-validation:1:authored:migration-dbc06d2f376478bc-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:cookie-dispute:0:authored:migration-ee55095cf6e59387-0 -->`RegisterMessageCallback` must write zero through a valid `pCallbackCookie` output on any registration failure. The cookie is usable only after a successful registration `HRESULT`. Its value alone does not establish success.<!-- d3d12-review-inline:end:diagnostics:cookie-dispute:0:authored:migration-ee55095cf6e59387-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:cookie-dispute:0:authored:migration-ee55095cf6e59387-0 -->`RegisterMessageCallback` must write zero through a valid `pCallbackCookie` output on any registration failure. The cookie is usable only after a successful registration `HRESULT`.<!-- d3d12-review-inline:end:diagnostics:cookie-dispute:0:authored:migration-ee55095cf6e59387-0 --></ins>
 
 <a id="id3d12infoqueue1-unregistermessagecallback"></a>
 
@@ -3304,7 +3230,7 @@ typedef enum D3D12_RLDO_FLAGS
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-report-results:0:authored:migration-c04b44401f59a26d-0 -->`SUMMARY` and `DETAIL` can be combined; `IGNORE_INTERNAL` filters objects with zero external references rather than releasing them. Objects retained internally by pending work are not, solely for that reason, application leaks. The report concerns objects belonging to the device on which the method is called. It is not an adapter-wide or process-wide leak report.<!-- d3d12-review-inline:end:diagnostics:D107-report-results:0:authored:migration-c04b44401f59a26d-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-report-results:1:authored:migration-b3325be265097537-0 -->`D3D12_RLDO_NONE` requests no report and succeeds. Bits outside `0x07` are invalid and return `E_INVALIDARG`; accepted flag combinations return `S_OK`. `S_OK` describes the reporting operation, not the absence of live objects. Reporting neither releases objects nor waits for their GPU use to complete. Application-held references, including references held by the reporting code, affect the report.<!-- d3d12-review-inline:end:diagnostics:D107-report-results:1:authored:migration-b3325be265097537-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:diagnostics:D107-report-results:1:authored:migration-b3325be265097537-0 -->`D3D12_RLDO_NONE` requests no report and succeeds. Bits outside `0x07` are invalid and return `E_INVALIDARG`; accepted flag combinations return `S_OK`. Application-held references, including references held by the reporting code, affect the report.<!-- d3d12-review-inline:end:diagnostics:D107-report-results:1:authored:migration-b3325be265097537-0 --></ins>
 
 <a id="object-debug-features"></a>
 
@@ -3628,9 +3554,7 @@ Reports information about a device object's lifetime.
 
 #### Parameters
 
-`Flags`
-
-Type: **[D3D12_RLDO_FLAGS](#d3d12-rldo-flags)**
+[`Flags`](#d3d12-rldo-flags)
 
 A value from the [D3D12_RLDO_FLAGS](#d3d12-rldo-flags) enumeration. This method uses the value in *Flags* to determine the amount of information to report about a device object's lifetime.
 
@@ -3672,9 +3596,7 @@ HRESULT SetFeatureMask(D3D12_DEBUG_FEATURE Mask);
 
 ##### Historical parameter description
 
-`Mask`
-
-Type: **[D3D12_DEBUG_FEATURE](#d3d12-debug-feature)**
+[`Mask`](#d3d12-debug-feature)
 
 Feature-mask flags, as a bitwise-OR'd combination of [D3D12_DEBUG_FEATURE](#d3d12-debug-feature) enumeration constants. If a flag is present, that feature will be set to on; otherwise, the feature will be set to off.
 
@@ -3700,21 +3622,15 @@ Gets optional device-wide Debug Layer settings.
 
 #### Parameters
 
-`Type`
-
-Type: **[D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type)**
+[`Type`](#d3d12-debug-device-parameter-type)
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-GetDebugParameter-Parameters:2 -->Specifies a [D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type) value that indicates which debug parameter data to get.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-GetDebugParameter-Parameters:2 --></ins>
 
 `pData`
 
-Type: **void\***
-
 (output) Points to the memory that will be filled with a copy of the debug parameter data. The interpretation of this data depends on the [D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type) given in the *Type* parameter.
 
 `DataSize`
-
-Type: **UINT**
 
 Size in bytes of the memory buffer pointed to by *pData*.
 
@@ -3742,9 +3658,7 @@ HRESULT ReportLiveDeviceObjects(D3D12_RLDO_FLAGS Flags);
 
 #### Parameters
 
-`Flags`
-
-Type: **[D3D12_RLDO_FLAGS](#d3d12-rldo-flags)**
+[`Flags`](#d3d12-rldo-flags)
 
 A value from the [D3D12_RLDO_FLAGS](#d3d12-rldo-flags) enumeration. This method uses the value in *Flags* to determine the amount of information to report about a device object's lifetime.
 
@@ -3772,21 +3686,15 @@ Modifies the D3D12 optional device-wide Debug Layer settings.
 
 #### Parameters
 
-`Type`
-
-Type: **[D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type)**
+[`Type`](#d3d12-debug-device-parameter-type)
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-SetDebugParameter-Parameters:2 -->Specifies a [D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type) value that indicates which debug parameter data to set.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-SetDebugParameter-Parameters:2 --></ins>
 
 `pData`
 
-Type: **const void\***
-
 (input) Debug parameter data to set.
 
 `DataSize`
-
-Type: **UINT**
 
 Size in bytes of the data pointed to by *pData*.
 
@@ -3814,21 +3722,15 @@ Gets optional device-wide Debug Layer settings.
 
 #### Parameters
 
-`Type`
-
-Type: **[D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type)**
+[`Type`](#d3d12-debug-device-parameter-type)
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice2-GetDebugParameter-Parameters:2 -->Specifies a [D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type) value that indicates which debug parameter data to get.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice2-GetDebugParameter-Parameters:2 --></ins>
 
 `pData`
 
-Type: **void\***
-
 (output) Points to the memory that will be filled with a copy of the debug parameter data. The interpretation of this data depends on the [D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type) given in the *Type* parameter.
 
 `DataSize`
-
-Type: **UINT**
 
 Size in bytes of the memory buffer pointed to by *pData*.
 
@@ -3856,21 +3758,15 @@ Modifies the D3D12 optional device-wide Debug Layer settings.
 
 #### Parameters
 
-`Type`
-
-Type: **[D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type)**
+[`Type`](#d3d12-debug-device-parameter-type)
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice2-SetDebugParameter-Parameters:2 -->Specifies a [D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type) value that indicates which debug parameter data to set.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice2-SetDebugParameter-Parameters:2 --></ins>
 
 `pData`
 
-Type: **const void\***
-
 (input) Debug parameter data to set.
 
 `DataSize`
-
-Type: **UINT**
 
 Size in bytes of the data pointed to by *pData*.
 
@@ -3898,21 +3794,15 @@ Gets optional Command List Debug Layer settings.
 
 #### Parameters
 
-`Type`
-
-Type: **[D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type)**
+[`Type`](#d3d12-debug-command-list-parameter-type)
 
 Specifies a [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) value that determines which debug parameter data to copy to the memory pointed to by *pData*.
 
 `pData`
 
-Type: **void\***
-
 (output) Points to the memory that will be filled with a copy of the debug parameter data. The interpretation of this data depends on the [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) given in the *Type* parameter.
 
 `DataSize`
-
-Type: **UINT**
 
 Size in bytes of the memory buffer pointed to by *pData*.
 
@@ -3940,21 +3830,15 @@ Modifies optional Debug Layer settings of a command list.
 
 #### Parameters
 
-`Type`
-
-Type: **[D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type)**
+[`Type`](#d3d12-debug-command-list-parameter-type)
 
 Specifies a [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) value that indicates which debug parameter data to set.
 
 `pData`
 
-Type: **const void\***
-
 (input) Pointer to debug parameter data to set. The interpretation of this data depends on the [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) given in the *Type* parameter.
 
 `DataSize`
-
-Type: **UINT**
 
 Specifies the size in bytes of the debug parameter *pData*.
 
@@ -3990,21 +3874,15 @@ Gets optional Command List Debug Layer settings.
 
 #### Parameters
 
-`Type`
-
-Type: **[D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type)**
+[`Type`](#d3d12-debug-command-list-parameter-type)
 
 Specifies a [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) value that determines which debug parameter data to copy to the memory pointed to by *pData*.
 
 `pData`
 
-Type: **void\***
-
 (output) Points to the memory that will be filled with a copy of the debug parameter data. The interpretation of this data depends on the [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) given in the *Type* parameter.
 
 `DataSize`
-
-Type: **UINT**
 
 Size in bytes of the memory buffer pointed to by *pData*.
 
@@ -4032,21 +3910,15 @@ Modifies optional Debug Layer settings of a command list.
 
 #### Parameters
 
-`Type`
-
-Type: **[D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type)**
+[`Type`](#d3d12-debug-command-list-parameter-type)
 
 Specifies a [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) value that indicates which debug parameter data to set.
 
 `pData`
 
-Type: **const void\***
-
 (input) Pointer to debug parameter data to set. The interpretation of this data depends on the [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) given in the *Type* parameter.
 
 `DataSize`
-
-Type: **UINT**
 
 Specifies the size in bytes of the debug parameter *pData*.
 
@@ -4126,9 +3998,7 @@ Turns the debug features for a command list on or off.
 
 ##### Historical parameter description
 
-`Mask`
-
-Type: **[D3D12_DEBUG_FEATURE](#d3d12-debug-feature)**
+[`Mask`](#d3d12-debug-feature)
 
 A combination of feature-mask flags that are combined by using a bitwise OR operation. If a flag is present, that feature will be set to on, otherwise the feature will be set to off.
 
@@ -4166,19 +4036,13 @@ Checks whether a resource, or subresource, is in a specified state, or not.
 
 `pResource`
 
-Type: **ID3D12Resource\***
-
 (input) Specifies the [ID3D12Resource](resources.md#resource-storage) to check.
 
 `Subresource`
 
-Type: **UINT**
-
 The index of the subresource to check. This can be set to an index, or D3D12\_RESOURCE\_BARRIER\_ALL\_SUBRESOURCES.
 
 `State`
-
-Type: **UINT**
 
 Specifies the state to check for. This can be one or more D3D12\_RESOURCE\_STATES flags Or'ed together.
 
@@ -4210,19 +4074,13 @@ Validates that the given state matches the state of the subresource, assuming th
 
 `pResource`
 
-Type: **ID3D12Resource\***
-
 (input) Specifies the [ID3D12Resource](resources.md#resource-storage) to check.
 
 `Subresource`
 
-Type: **UINT**
-
 The index of the subresource to check. This can be set to an index, or D3D12\_RESOURCE\_BARRIER\_ALL\_SUBRESOURCES.
 
 `State`
-
-Type: **UINT**
 
 Specifies the state to check for. This can be one or more [D3D12_RESOURCE_STATES](synchronization.md#legacy-resource-states) flags Or'ed together.
 
@@ -4306,19 +4164,13 @@ Checks whether a resource, or subresource, is in a specified state, or not.
 
 `pResource`
 
-Type: **ID3D12Resource\***
-
 (input) Specifies the [ID3D12Resource](resources.md#resource-storage) to check.
 
 `Subresource`
 
-Type: **UINT**
-
 The index of the subresource to check. This can be set to an index, or D3D12\_RESOURCE\_BARRIER\_ALL\_SUBRESOURCES.
 
 `State`
-
-Type: **UINT**
 
 Specifies the state to check for. This can be one or more D3D12\_RESOURCE\_STATES flags Or'ed together.
 

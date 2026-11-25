@@ -422,8 +422,6 @@ Resets a command list back to its initial state as if a new command list was jus
 
 `pAllocator`
 
-Type: **ID3D12CommandAllocator\***
-
 A pointer to the [ID3D12CommandAllocator](execution.md#command-storage) object that the device creates command lists from.
 
 #### Return values

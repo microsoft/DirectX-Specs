@@ -442,23 +442,17 @@ Creates a query heap. A query heap contains an array of queries.
 
 #### Parameters
 
-`pDesc`
+[`pDesc`](#d3d12_query_heap_desc)
 
-[in] Type: **const [D3D12_QUERY_HEAP_DESC](#d3d12_query_heap_desc)\***
-
-Specifies the query heap in a [D3D12_QUERY_HEAP_DESC](#d3d12_query_heap_desc) structure.
+[in] Specifies the query heap in a [D3D12_QUERY_HEAP_DESC](#d3d12_query_heap_desc) structure.
 
 `riid`
-
-Type: **REFIID**
 
 <ins><!-- d3d12-review-inline:begin:queries:P-ID3D12Device%3A%3ACreateQueryHeap:5:modified:style-o2-query-heap -->Identifies the requested query heap interface, not an individual heap instance.<!-- d3d12-review-inline:end:queries:P-ID3D12Device%3A%3ACreateQueryHeap:5:modified:style-o2-query-heap --></ins>
 
 `ppvHeap`
 
-[out, optional] Type: **void\*\***
-
-Specifies a pointer to the heap, that will be returned on successful completion of the method. *ppvHeap* can be NULL, to enable capability testing. When *ppvHeap* is NULL, no object will be created and S\_FALSE will be returned when *pDesc* is valid.
+[out, optional] Specifies a pointer to the heap, that will be returned on successful completion of the method. *ppvHeap* can be NULL, to enable capability testing. When *ppvHeap* is NULL, no object will be created and S\_FALSE will be returned when *pDesc* is valid.
 
 #### Return values
 
@@ -490,23 +484,17 @@ Starts a query running.
 
 #### Parameters
 
-`pQueryHeap`
+[`pQueryHeap`](#query-heaps)
 
-[in] Type: **[ID3D12QueryHeap](#query-heaps)\***
+[in] Specifies the [ID3D12QueryHeap](#query-heaps) containing the query.
 
-Specifies the [ID3D12QueryHeap](#query-heaps) containing the query.
+[`Type`](#d3d12_query_type)
 
-`Type`
-
-[in] Type: **[D3D12_QUERY_TYPE](#d3d12_query_type)**
-
-Specifies one member of [D3D12_QUERY_TYPE](#d3d12_query_type).
+[in] Specifies one member of [D3D12_QUERY_TYPE](#d3d12_query_type).
 
 `Index`
 
-[in] Type: **UINT**
-
-Specifies the index of the query within the query heap.
+[in] Specifies the index of the query within the query heap.
 
 #### Return values
 
@@ -532,23 +520,17 @@ void EndQuery(
 
 #### Parameters
 
-`pQueryHeap`
+[`pQueryHeap`](#query-heaps)
 
-[in] Type: **[ID3D12QueryHeap](#query-heaps)\***
+[in] Specifies the [ID3D12QueryHeap](#query-heaps) containing the query.
 
-Specifies the [ID3D12QueryHeap](#query-heaps) containing the query.
+[`Type`](#d3d12_query_type)
 
-`Type`
-
-[in] Type: **[D3D12_QUERY_TYPE](#d3d12_query_type)**
-
-Specifies one member of [D3D12_QUERY_TYPE](#d3d12_query_type).
+[in] Specifies one member of [D3D12_QUERY_TYPE](#d3d12_query_type).
 
 `Index`
 
-[in] Type: **UINT**
-
-Specifies the index of the query in the query heap.
+[in] Specifies the index of the query in the query heap.
 
 #### Return values
 
@@ -577,41 +559,29 @@ Extracts data from a query.
 
 #### Parameters
 
-`pQueryHeap`
+[`pQueryHeap`](#query-heaps)
 
-[in] Type: **[ID3D12QueryHeap](#query-heaps)\***
+[in] Specifies the [ID3D12QueryHeap](#query-heaps) containing the queries to resolve.
 
-Specifies the [ID3D12QueryHeap](#query-heaps) containing the queries to resolve.
+[`Type`](#d3d12_query_type)
 
-`Type`
-
-[in] Type: **[D3D12_QUERY_TYPE](#d3d12_query_type)**
-
-Specifies the type of query, one member of [D3D12_QUERY_TYPE](#d3d12_query_type).
+[in] Specifies the type of query, one member of [D3D12_QUERY_TYPE](#d3d12_query_type).
 
 `StartIndex`
 
-[in] Type: **UINT**
-
-Specifies an index of the first query to resolve.
+[in] Specifies an index of the first query to resolve.
 
 `NumQueries`
 
-[in] Type: **UINT**
+[in] Specifies the number of queries to resolve.
 
-Specifies the number of queries to resolve.
+[`pDestinationBuffer`](resources.md#resource-storage)
 
-`pDestinationBuffer`
-
-[in] Type: **[ID3D12Resource](resources.md#resource-storage)\***
-
-Specifies an [ID3D12Resource](resources.md#resource-storage) destination buffer, which must be in the state [D3D12_RESOURCE_STATE_COPY_DEST](synchronization.md#d3d12-resource-states).
+[in] Specifies an [ID3D12Resource](resources.md#resource-storage) destination buffer, which must be in the state [D3D12_RESOURCE_STATE_COPY_DEST](synchronization.md#d3d12-resource-states).
 
 `AlignedDestinationBufferOffset`
 
-[in] Type: **UINT64**
-
-Specifies an alignment offset into the destination buffer. Must be a multiple of 8 bytes.
+[in] Specifies an alignment offset into the destination buffer. Must be a multiple of 8 bytes.
 
 #### Return values
 
@@ -1131,9 +1101,7 @@ This method is used to determine the rate at which the GPU timestamp counter inc
 
 `pFrequency`
 
-[out] Type: **UINT64\***
-
-The GPU timestamp counter frequency (in ticks/second).
+[out] The GPU timestamp counter frequency (in ticks/second).
 
 #### Return values
 
@@ -1166,15 +1134,11 @@ This method samples the CPU and GPU timestamp counters <ins><!-- d3d12-review-in
 
 `pGpuTimestamp`
 
-[out] Type: **UINT64\***
-
-The value of the GPU timestamp counter.
+[out] The value of the GPU timestamp counter.
 
 `pCpuTimestamp`
 
-[out] Type: **UINT64\***
-
-The value of the CPU timestamp counter.
+[out] The value of the CPU timestamp counter.
 
 #### Return values
 
@@ -1203,8 +1167,6 @@ A development-time aid for certain types of profiling and experimental prototypi
 #### Parameters
 
 `Enable`
-
-Type: **BOOL**
 
 Specifies a BOOL that turns the stable power state on or off.
 
@@ -1285,23 +1247,17 @@ Sets a rendering predicate.
 
 #### Parameters
 
-`pBuffer`
+[`pBuffer`](resources.md#resource-storage)
 
-[in, optional] Type: **[ID3D12Resource](resources.md#resource-storage)\***
-
-<ins><!-- d3d12-review-inline:begin:queries:P-ID3D12GraphicsCommandList%3A%3ASetPredication:2 -->The buffer, as an [ID3D12Resource](resources.md#resource-storage), which must be in the [**D3D12\_RESOURCE\_STATE\_PREDICATION**](synchronization.md#d3d12-resource-states) or [**D3D12\_RESOURCE\_STATE\_INDIRECT\_ARGUMENT**](synchronization.md#d3d12-resource-states) state (both values are identical, and provided as aliases for clarity), or **NULL** to disable predication.<!-- d3d12-review-inline:end:queries:P-ID3D12GraphicsCommandList%3A%3ASetPredication:2 --></ins>
+[in, optional] <ins><!-- d3d12-review-inline:begin:queries:P-ID3D12GraphicsCommandList%3A%3ASetPredication:2 -->The buffer, as an [ID3D12Resource](resources.md#resource-storage), which must be in the [**D3D12\_RESOURCE\_STATE\_PREDICATION**](synchronization.md#d3d12-resource-states) or [**D3D12\_RESOURCE\_STATE\_INDIRECT\_ARGUMENT**](synchronization.md#d3d12-resource-states) state (both values are identical, and provided as aliases for clarity), or **NULL** to disable predication.<!-- d3d12-review-inline:end:queries:P-ID3D12GraphicsCommandList%3A%3ASetPredication:2 --></ins>
 
 `AlignedBufferOffset`
 
-[in] Type: **UINT64**
+[in] The aligned buffer offset, as a UINT64.
 
-The aligned buffer offset, as a UINT64.
+[`Operation`](#d3d12-predication-op)
 
-`Operation`
-
-[in] Type: **[D3D12_PREDICATION_OP](#d3d12-predication-op)**
-
-Specifies a [D3D12_PREDICATION_OP](#d3d12-predication-op), such as D3D12\_PREDICATION\_OP\_EQUAL\_ZERO or D3D12\_PREDICATION\_OP\_NOT\_EQUAL\_ZERO.
+[in] Specifies a [D3D12_PREDICATION_OP](#d3d12-predication-op), such as D3D12\_PREDICATION\_OP\_EQUAL\_ZERO or D3D12\_PREDICATION\_OP\_NOT\_EQUAL\_ZERO.
 
 #### Return values
 

@@ -345,9 +345,7 @@ for G and B are 0, and A is 1.0f.  For `DXGI_FORMAT_R16G16_UINT`, the B gets 0 a
 >
 > `UnalignedBlockTexturesSupported`
 >
-> Type: \_Out\_ **[BOOL](https://learn.microsoft.com/en-us/windows/desktop/winprog/windows-data-types)**
->
-> Indicates whether or not unaligned block-compressed textures are supported.
+> [out] Indicates whether or not unaligned block-compressed textures are supported.
 >
 > If `false`, then Direct3D 12 requires that the dimensions of the top-level mip of a block-compressed texture are aligned to multiples of 4 (such alignment requirements do not apply to less-detailed mips). If `true`, then no such alignment requirement applies to any mip level of a block-compressed texture.
 >

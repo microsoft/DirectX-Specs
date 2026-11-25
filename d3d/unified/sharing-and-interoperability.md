@@ -212,7 +212,7 @@ typedef enum D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER {
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-sync:0:authored:migration-be8783564adae694-0 -->Exporting, opening, duplicating, naming, or closing a shared handle does not signal or wait for a fence, submit work, transfer resource ownership, perform a resource barrier, or acquire or release a keyed mutex.<!-- d3d12-review-inline:end:sharing-interop:SH-sync:0:authored:migration-be8783564adae694-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-sync:1:authored:migration-a94d884aadb77861-0 -->Applications must coordinate conflicting accesses with fences and barriers. See [queue signal](execution.md#queue-signal), [queue wait](execution.md#queue-waits), [completed-value observation](execution.md#id3d12fencegetcompletedvalue), and [event notification](execution.md#id3d12fenceseteventoncompletion) for fence operations. See [enhanced barriers](synchronization.md#enhanced-barriers), [legacy barriers](synchronization.md#legacy-barriers), and [aliasing](synchronization.md#enhanced-aliasing) for the applicable barrier and aliasing requirements. A fence value orders only the work established by its signal and wait. Sharing a fence does not automatically associate it with a particular resource. An unrelated signal is not proof that a resource is no longer in use.<!-- d3d12-review-inline:end:sharing-interop:SH-sync:1:authored:migration-a94d884aadb77861-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:SH-sync:1:authored:migration-a94d884aadb77861-0 -->Applications must coordinate conflicting accesses with fences and barriers. See [queue signal](execution.md#queue-signal), [queue wait](execution.md#queue-waits), [completed-value observation](execution.md#id3d12fencegetcompletedvalue), and [event notification](execution.md#id3d12fenceseteventoncompletion) for fence operations. See [enhanced barriers](synchronization.md#enhanced-barriers), [legacy barriers](synchronization.md#legacy-barriers), and [aliasing](synchronization.md#enhanced-aliasing) for the applicable barrier and aliasing requirements. A fence value orders only the work established by its signal and wait. Sharing a fence does not automatically associate it with a particular resource.<!-- d3d12-review-inline:end:sharing-interop:SH-sync:1:authored:migration-a94d884aadb77861-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-sync:2:authored:migration-d3d64815ccb31f3f-0 -->These queue and fence rules cover direct, compute, and copy queues. They also cover video decode, video process, and video encode queues where those queues use the common command queue contract. See [fence flag and observation requirements](execution.md#fence-observation-requirements) for cross-adapter, non-monitored, and command list barrier fence combinations. See [queue, layout, and access compatibility](synchronization.md#queue-compatibility) for the resource accesses each queue can perform.<!-- d3d12-review-inline:end:sharing-interop:SH-sync:2:authored:migration-d3d64815ccb31f3f-0 --></ins>
 
@@ -241,9 +241,7 @@ Creates a shared handle to a heap, resource, <ins><!-- d3d12-review-inline:begin
 
 ### Parameters
 
-#### pObject (input)
-
-Type: [`ID3D12DeviceChild*`](devices-and-capabilities.md#common-object-interfaces)
+#### [pObject](devices-and-capabilities.md#common-object-interfaces) (input)
 
 A pointer to the [ID3D12DeviceChild](devices-and-capabilities.md#common-object-interfaces) interface that represents <ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHandle-parameters:2 -->the heap, resource, fence, or protected resource session object for which to create a shared handle<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHandle-parameters:2 --></ins>. The following interfaces (derived from **ID3D12DeviceChild**) are supported:
 
@@ -252,9 +250,7 @@ A pointer to the [ID3D12DeviceChild](devices-and-capabilities.md#common-object-i
 - [ID3D12Fence](execution.md#fence-operations)
 - <ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHandle-parameters:3:authored:migration-6892af050c34b715-0 -->[ID3D12ProtectedResourceSession](../ProtectedResources.md#interface-id3d12protectedresourcesession)<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHandle-parameters:3:authored:migration-6892af050c34b715-0 --></ins>
 
-#### pAttributes (input, optional)
-
-Type: [`const SECURITY_ATTRIBUTES*`](https://learn.microsoft.com/en-us/windows/win32/api/wtypesbase/ns-wtypesbase-security_attributes)
+#### [pAttributes](https://learn.microsoft.com/en-us/windows/win32/api/wtypesbase/ns-wtypesbase-security_attributes) (input, optional)
 
 A pointer to a [SECURITY_ATTRIBUTES](https://learn.microsoft.com/en-us/windows/win32/api/wtypesbase/ns-wtypesbase-security_attributes) structure that contains two separate but related data members: an optional security descriptor, and a **Boolean** value that determines whether child processes can inherit the returned handle.
 
@@ -264,13 +260,9 @@ The **lpSecurityDescriptor** member of the structure specifies a [SECURITY_DESCR
 
 #### Access (input)
 
-Type: [`DWORD`](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types)
-
 Currently the only value this parameter accepts is `GENERIC_ALL`.
 
 #### Name (input, optional)
-
-Type: `LPCWSTR`
 
 A **NULL**-terminated **UNICODE** string that contains the name to associate with the <ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHandle-parameters:14:modified:migration-ef7551c97616bc7d-0 -->shared object<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHandle-parameters:14:modified:migration-ef7551c97616bc7d-0 --></ins>. The name is limited to <ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHandle-parameters:14:modified:migration-6d31d88e74f8dc4c-1 -->`MAX_PATH`<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHandle-parameters:14:modified:migration-6d31d88e74f8dc4c-1 --></ins> characters. Name comparison is case-sensitive.
 
@@ -281,8 +273,6 @@ The name can have a "Global" or "Local" prefix to explicitly create the object i
 The object can be created in a private namespace. For more information, see [Object Namespaces](https://learn.microsoft.com/en-us/windows/desktop/Sync/object-namespaces).
 
 #### pHandle (output)
-
-Type: [`HANDLE*`](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types)
 
 A pointer to a variable that receives the NT HANDLE value to the <ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHandle-parameters:20:modified:source-3b4cfe3120412d3f-0-0 -->object<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHandle-parameters:20:modified:source-3b4cfe3120412d3f-0-0 --></ins> to share. You can use this handle in calls to access the <ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHandle-parameters:20:modified:source-3b4cfe3120412d3f-1-0 -->object<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHandle-parameters:20:modified:source-3b4cfe3120412d3f-1-0 --></ins>.
 
@@ -297,8 +287,6 @@ Returns `S_OK` if successful; otherwise, returns one of the following values:
 - <ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHandle-returns:2:occurrence:cc97a7b42d48-1 -->`E_ACCESSDENIED` if the object is being created in a protected namespace.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHandle-returns:2:occurrence:cc97a7b42d48-1 --></ins>
 - <ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHandle-returns:2:occurrence:a069968a70b6-2 -->`E_OUTOFMEMORY` if sufficient memory is not available to create the handle.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHandle-returns:2:occurrence:a069968a70b6-2 --></ins>
 - Possibly other error codes that are described in the [Direct3D 12 Return Codes](devices-and-capabilities.md#api-result-codes) topic.
-
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-CreateSharedHandle-result-context:0:authored:migration-c9c8bbf7a5bd5742-0 -->A failure does not guarantee that `*pHandle` has been set to null. No handle has been returned to the application unless the call succeeds.<!-- d3d12-review-inline:end:sharing-interop:API-CreateSharedHandle-result-context:0:authored:migration-c9c8bbf7a5bd5742-0 --></ins>
 
 <a id="id3d12device-opensharedhandle"></a>
 
@@ -329,13 +317,9 @@ Opens a handle for <ins><!-- d3d12-review-inline:begin:sharing-interop:API-OpenS
 
 #### NTHandle (input)
 
-Type: `HANDLE`
-
 <ins><!-- d3d12-review-inline:begin:sharing-interop:API-OpenSharedHandle-parameters:2:modified:migration-04f8cf48f8796ecb-0 -->A compatible NT handle, such as one output by the call to<!-- d3d12-review-inline:end:sharing-interop:API-OpenSharedHandle-parameters:2:modified:migration-04f8cf48f8796ecb-0 --></ins> [ID3D12Device::CreateSharedHandle](#id3d12device-createsharedhandle).
 
 #### riid (input)
-
-Type: `REFIID`
 
 The globally unique identifier (**GUID**) for one of the following interfaces:
 
@@ -347,8 +331,6 @@ The globally unique identifier (**GUID**) for one of the following interfaces:
  The **REFIID**, or **GUID**, of the interface can be obtained by using the \_\_uuidof() macro. For example, \_\_uuidof(ID3D12Heap) will get the **GUID** of the interface to a heap.
 
 #### ppvObj (output, optional)
-
-Type: `void**`
 
 A pointer to a memory block that receives a pointer to one of the following interfaces:
 
@@ -394,19 +376,13 @@ Opens a handle for <ins><!-- d3d12-review-inline:begin:sharing-interop:API-OpenS
 
 #### Name (input)
 
-Type: `LPCWSTR`
-
 The name that was optionally passed as the *Name* parameter in the call to [ID3D12Device::CreateSharedHandle](#id3d12device-createsharedhandle).
 
 #### Access (input)
 
-Type: `DWORD`
-
 The access level that was specified in the *Access* parameter in the call to [ID3D12Device::CreateSharedHandle](#id3d12device-createsharedhandle).
 
 #### pNTHandle (output)
-
-Type: `HANDLE*`
 
 Pointer to the shared handle.
 
@@ -701,7 +677,7 @@ HRESULT ReflectSharedProperties(
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:API-ReflectSharedProperties-behavior:0:authored:migration-744d3323dff0ace5-0 -->Copies the selected [retained property](#reflection-selectors) into caller-owned storage.<!-- d3d12-review-inline:end:sharing-interop:API-ReflectSharedProperties-behavior:0:authored:migration-744d3323dff0ace5-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sharing-interop:API-ReflectSharedProperties-behavior:1:authored:migration-14e2fb80992ee4e0-0 -->The D3D11-flags selector requires a resource with stored D3D11 creation metadata. A shared D3D12 resource is not by itself proof that such metadata exists. Compatibility flags reflection requires shared backing; non-NT handle reflection additionally requires non-NT sharing mode.<!-- d3d12-review-inline:end:sharing-interop:API-ReflectSharedProperties-behavior:1:authored:migration-14e2fb80992ee4e0-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sharing-interop:API-ReflectSharedProperties-behavior:1:authored:migration-14e2fb80992ee4e0-0 -->The D3D11-flags selector requires a resource with stored D3D11 creation metadata. Compatibility flags reflection requires shared backing; non-NT handle reflection additionally requires non-NT sharing mode.<!-- d3d12-review-inline:end:sharing-interop:API-ReflectSharedProperties-behavior:1:authored:migration-14e2fb80992ee4e0-0 --></ins>
 
 ### Parameters
 

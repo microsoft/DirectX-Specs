@@ -430,31 +430,23 @@ HRESULT CreateCommandSignature(
 
 ### Parameters
 
-`pDesc`
+[`pDesc`](#command-signature-desc)
 
-[in] Type: **const [D3D12_COMMAND_SIGNATURE_DESC](#command-signature-desc)\***
+[in] Describes the command signature to be created with the [D3D12_COMMAND_SIGNATURE_DESC](#command-signature-desc) structure.
 
-Describes the command signature to be created with the [D3D12_COMMAND_SIGNATURE_DESC](#command-signature-desc) structure.
+[`pRootSignature`](binding.md#root-signatures)
 
-`pRootSignature`
-
-[in, optional] Type: **[ID3D12RootSignature](binding.md#root-signatures)\***
-
-Specifies the [ID3D12RootSignature](binding.md#root-signatures) that the command signature applies to.
+[in, optional] Specifies the [ID3D12RootSignature](binding.md#root-signatures) that the command signature applies to.
 
 <ins><!-- d3d12-review-inline:begin:indirect-execution:P-create-parameters:7 -->The root signature must be specified if and only if the command signature changes one of the root arguments. Vertex buffer or index buffer changes alone do not require a root signature.<!-- d3d12-review-inline:end:indirect-execution:P-create-parameters:7 --></ins>
 
 `riid`
 
-Type: **REFIID**
-
 The globally unique identifier (**GUID**) for the command signature interface ([ID3D12CommandSignature](#command-signatures)). The **REFIID**, or **GUID**, of the interface to the command signature can be obtained by using the \_\_uuidof() macro. For example, \_\_uuidof(**ID3D12CommandSignature**) will get the **GUID** of the interface to a command signature.
 
 `ppvCommandSignature`
 
-[out, optional] Type: **void\*\***
-
-Specifies a pointer, that on successful completion of the method will point to the created command signature ([ID3D12CommandSignature](#command-signatures)).
+[out, optional] Specifies a pointer, that on successful completion of the method will point to the created command signature ([ID3D12CommandSignature](#command-signatures)).
 
 ### Return values
 

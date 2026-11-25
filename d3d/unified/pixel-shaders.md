@@ -22,7 +22,7 @@
 > | Barycentric inputs and vertex-attribute access | SM6.1 and `OPTIONS3.BarycentricsSupported` |
 > | Shading rate semantic | SM6.4; PS input requires VRS Tier 2 |
 > | Helper query | SM6.6 native operation; earlier supported DXIL profiles use compiler fallback |
-> | Helper participation attribute / quad votes | SM6.7; wave/quad operation instructions retain `WaveOps` requirements |
+> | Helper participation attribute / native quad votes | SM6.7; wave/quad operation instructions retain `WaveOps` requirements |
 > | Variable rate shading | `OPTIONS6.VariableShadingRateTier`; additional/viewport-indexed rates have separate bits |
 > | SUM combiner / mesh rate output | `OPTIONS10.VariableRateShadingSumCombinerSupported` / `MeshShaderPerPrimitiveShadingRateSupported` |
 
@@ -691,45 +691,172 @@ The data in the current Pixel Shader invocation always participates in the calcu
 There is no specification dictating how the 2x2 quads will be aligned/tiled over a primitive.
 
 <a id="quad-votes"></a>
-
-### Quad vote interfaces
-
-#### QuadAny
-
-```C++
-bool QuadAny(bool expr)
-```
-
-Returns true if &lt;expr&gt; is `true` in any lane of the current quad.
-
-#### QuadAll
-
-```C++
-bool QuadAll(bool expr)
-```
-
-Returns true if &lt;expr&gt; is `true` in all lanes of the current quad.
-
+<a id="quad-vote-interfaces"></a>
+<a id="quadany"></a>
+<a id="quadall"></a>
 <a id="quad-uniformity"></a>
 
 ### Quad-uniform evaluation
 
-Intrinsics that calculate gradient values read texture coordinates
-from all four threads in a quad to calculate the gradients.
+<ins><!-- d3d12-review-inline:begin:pixel-shaders:quad-votes:0:authored:common-owner -->The [common quad vote definitions](common-shader-internals.md#quad-votes) and [quad-uniformity rules](common-shader-internals.md#quad-uniformity) govern the following pixel shader gradient examples.<!-- d3d12-review-inline:end:pixel-shaders:quad-votes:0:authored:common-owner --></ins>
 
-In *divergent control flow*, inactive lanes may use the same temporary registers to store different values on other code paths.
-Therefore, it is not well-defined to read a value from an inactive lane
-corresponding to a temporary value in an active lane.
+<a id="quad-gradient-examples"></a>
 
-For well-defined gradient calculations on temporary values,
-all lanes in the quad must be active.
-This is a weaker requirement than *uniform control flow* called *quad-uniform control flow*.
-Quad-uniform control flow may still be *divergent* across a wave,
-but it satisfies the requirements for well-defined gradient calculations on each active quad,
-since each gradient operation will only read from other lanes in the same quad.
-`QuadAny` makes it convenient to write code that preserves quad-uniform control flow.
+#### Pixel shader gradient examples
 
-<ins><!-- d3d12-review-inline:begin:pixel-shaders:N-quad-votes:0:authored:migration-c7b22c1c32c29064-0 -->SM6.7 `QuadAny` and `QuadAll` compare all four lanes, including helper lanes. Calls require quad-uniform flow and `WaveOps`.<!-- d3d12-review-inline:end:pixel-shaders:N-quad-votes:0:authored:migration-c7b22c1c32c29064-0 --></ins>
+<!-- d3d12-review-context:begin:pixel-shaders:quad-gradient-examples:0:modified:source-integration -->
+
+> [!WARNING]
+> **Mixed source and authored adaptation - human review pending.**
+
+The following examples demonstrate the utility of `QuadAny` by using `Sample`,
+which implies gradient operations on the coordinate argument,
+to affect only a portion of pixels not guaranteed to align to quad boundaries.
+
+##### Example 1 - Valid use of direct shader input in divergent control flow
+
+The coordinate used in `Sample(...)` is a direct shader input,
+rather than a shader-computed temporary value.
+The gradient operation is well-defined in this case,
+even though it is not performed under *quad-uniform control flow*.
+
+```hlsl
+SamplerState s0 : register(s0);
+Texture2D t0 : register(t0);
+
+float4 main(float2 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
+{
+    float4 ret = 0;
+    if (pos.x > SCREEN_X)
+    {
+        ret = t0.Sample(s0, uv);
+    }
+    return ret;
+}
+```
+
+##### Example 2 - Undefined use of shader computed value in divergent control flow
+
+This example is not technically well-defined because it is reading
+a shader-computed value in divergent control flow that is not *quad-uniform*.
+
+```hlsl
+SamplerState s0 : register(s0);
+Texture2D t0 : register(t0);
+
+float4 main(float2 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
+{
+    float4 ret = 0;
+    float2 temp_uv = modifyuv(uv);
+
+    if (pos.x > SCREEN_X)
+    {
+        ret = t0.Sample(s0, temp_uv);
+    }
+    return ret;
+}
+```
+
+However, the above example may be simple enough to work in practice,
+even though the basic rule has been broken.
+This modified version illustrates why the basic rule exists.
+
+```hlsl
+SamplerState s0 : register(s0);
+Texture2D t0 : register(t0);
+
+float4 do_work() { ... }
+
+float4 main(float2 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
+{
+    float4 ret = 0;
+    float2 temp_uv = modifyuv(uv);
+
+    if (pos.x <= SCREEN_X)
+    {
+        // the code in this branch may re-use the register used to store temp_uv
+        // because temp_uv is never used by a thread that takes this branch.
+        ret = do_work();
+    }
+    else
+    {
+        // Reading temp_uv from inactive lanes is thus undefined here.
+        // Sample uses gradient operations, which read across lanes,
+        // so those gradients may be undefined.
+        ret = t0.Sample(s0, temp_uv);
+    }
+    return ret;
+}
+```
+
+Even if the quad is operating in lock-step,
+the code path that takes the first branch of the `if` will never use `temp_uv`,
+making that register available to store other temporary values in `do_work()`.
+Once lock-step execution reaches the `Sample` operation in the second block,
+reading the `temp_uv` value from lanes that took a different branch
+could now result in undefined gradient values.
+
+##### Example 3 - Fixed by hoisting Sample to uniform control flow
+
+This example demonstrates the naive way to fix the problem, by pulling (hoisting) the `Sample` operation out of the non-uniform control flow
+to ensure well-defined gradients.
+This is an operation FXC would have performed automatically to make the code legal.
+But it is performing the `Sample` operation on every pixel,
+even when it may only contribute to the result on a few of them.
+This may result in extra memory bandwidth usage and worse performance.
+
+```hlsl
+SamplerState s0 : register(s0);
+Texture2D t0 : register(t0);
+
+float4 main(float2 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
+{
+    float4 ret = 0;
+    float2 temp_uv = modifyuv(uv);
+    float4 sampled = t0.Sample(s0, temp_uv);
+
+    if (pos.x > SCREEN_X)
+    {
+        ret = sampled;
+    }
+    return ret;
+}
+```
+
+A more efficient approach would be to only perform the work on lanes in quads
+where at least one lane in the quad will actually use the result.
+
+##### Example 4 - Fixed using QuadAny for efficiency
+
+This example uses QuadAny to ensure quad-uniform control flow
+when calculating the coordinate and performing the Sample operation,
+then assigns the result on just the pixels desired.
+Only lanes in quads that have at least one pixel active under the condition
+will perform the `Sample` operation and call `modifyuv`.
+
+```hlsl
+SamplerState s0 : register(s0);
+Texture2D t0 : register(t0);
+
+float4 main(float2 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
+{
+    float4 ret = 0;
+    bool cond = pos.x > SCREEN_X;
+
+    if (QuadAny(cond))
+    {
+        float2 temp_uv = modifyuv(uv);
+        float4 sampled_result = t0.Sample(s0, temp_uv);
+        if (cond)
+        {
+            ret = sampled_result;
+        }
+    }
+    return ret;
+}
+```
+
+<!-- d3d12-review-context:end:pixel-shaders:quad-gradient-examples:0:modified:source-integration -->
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:N-later-sampling:0:authored:migration-036ffc0093dd97fa-0 -->Sampling instructions that use implicit gradients, including `SampleCmpBias`, are subject to the quad-uniform source restrictions. SM6.7 `SampleCmpLevel` supplies an explicit LOD. SM6.8 `SampleCmpGrad` supplies explicit gradients.<!-- d3d12-review-inline:end:pixel-shaders:N-later-sampling:0:authored:migration-036ffc0093dd97fa-0 --></ins>
 
@@ -1022,7 +1149,7 @@ when depending on results from wave intrinsics. Compiler diagnostics warn about 
 IsHelperLane provides a way for the shader to explicitly vary behavior on helper lanes to guard against potential problems, for instance by
 explicitly excluding helper lanes from entering a loop which depends on a wave intrinsic for its exit condition.<!-- d3d12-review-inline:end:pixel-shaders:H-query:2:modified:chronology-omission --></ins>
 
-```cpp
+```hlsl
 bool IsHelperLane()
 ```
 
@@ -1072,7 +1199,7 @@ See the [compiled shader feature flag](dxil.md#helper-feature) for the DXIL enco
 
 The attribute can be specified on the shader entry point function. It applies to the whole shader module.
 
-```C++
+```hlsl
 [WaveOpsIncludeHelperLanes]
 void PSMain() { /* shader body */ }
 ```
@@ -1577,7 +1704,7 @@ Pull-model intrinsics are not compatible with coarse pixel shading on Tier 1. If
 
 The intrinsic EvaluateAttributeSnapped is allowed to be used with coarse pixel shading on Tier 2. <ins><!-- d3d12-review-inline:begin:pixel-shaders:vrs-snapped:0:modified:delta-framing -->Its syntax is:<!-- d3d12-review-inline:end:pixel-shaders:vrs-snapped:0:modified:delta-framing --></ins>
 
-```
+```hlsl
 numeric EvaluateAttributeSnapped(
     in numeric value,
     in int2 offset);

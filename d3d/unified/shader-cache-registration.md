@@ -8,7 +8,7 @@
 
 ## Availability
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:availability:0:authored:migration-6fef5ba54f8d1ad4-0 -->The registration API is part of the released D3D12 Agility SDK 1.619.5 package and its non-prerelease DirectX-Headers release. See [Devices and capabilities](devices-and-capabilities.md#d3d12getinterface) for runtime deployment and global interface retrieval. The catalog, listener and service-trigger operations also depend on the corresponding Windows facilities and caller permissions. API publication does not guarantee universal OS deployment or usable hardware or cache contents.<!-- d3d12-review-inline:end:cache-registration:availability:0:authored:migration-6fef5ba54f8d1ad4-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:availability:0:authored:migration-6fef5ba54f8d1ad4-0 -->The registration API is part of the released D3D12 Agility SDK 1.619.5 package and its non-prerelease DirectX-Headers release. See [Devices and capabilities](devices-and-capabilities.md#d3d12getinterface) for runtime deployment and global interface retrieval. The catalog, listener and service-trigger operations also depend on the corresponding Windows facilities and caller permissions.<!-- d3d12-review-inline:end:cache-registration:availability:0:authored:migration-6fef5ba54f8d1ad4-0 --></ins>
 
 <a id="installation-and-updates"></a>
 
@@ -37,7 +37,7 @@ A shader component represents the pairing of one State Object Database (SODB) to
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:catalog-lifecycle:0:authored:migration-d24f4a283b17ece3-0 -->Registration state is persistent catalog state, not the lifetime of a returned interface. User registrations are associated with the current user and system registrations are machine-wide. Write access is required for the selected scope. Explorer lookup considers system and current-user state. Scope selection does not grant elevation, and the API does not define a general conflict-precedence policy among scopes or installers.<!-- d3d12-review-inline:end:cache-registration:catalog-lifecycle:0:authored:migration-d24f4a283b17ece3-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:catalog-lifecycle:1:authored:migration-4ad15d1c14281126-0 -->Within an installer and its scope, application name registration is an upsert: reusing a registered application name updates its description and executable path while retaining its components. The full executable path is the explorer lookup key, not proof of a unique catalog entry across names or installers. `pExeFilename` instead supplies the game's stable identifying filename even when the on-disk file is renamed. Registration does not guarantee path canonicalization, hard-link equivalence, unique-executable ownership or case-distinct-name isolation.<!-- d3d12-review-inline:end:cache-registration:catalog-lifecycle:1:authored:migration-4ad15d1c14281126-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:catalog-lifecycle:1:authored:migration-4ad15d1c14281126-0 -->Within an installer and its scope, application name registration is an upsert: reusing a registered application name updates its description and executable path while retaining its components. The full executable path is the explorer lookup key, not proof of a unique catalog entry across names or installers. `pExeFilename` instead supplies the game's stable identifying filename even when the on-disk file is renamed.<!-- d3d12-review-inline:end:cache-registration:catalog-lifecycle:1:authored:migration-4ad15d1c14281126-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:catalog-lifecycle:2:authored:migration-4847c8bf0a239fec-0 -->Component registration updates the named SODB association and supplied adapter family mappings. Families not supplied by an update are retained; remove the component registration when the entire association must be removed. Registration removal and file deletion are different operations. Registering a path does not validate file contents or transfer file ownership.<!-- d3d12-review-inline:end:cache-registration:catalog-lifecycle:2:authored:migration-4847c8bf0a239fec-0 --></ins>
 
@@ -260,7 +260,7 @@ Creates a shader cache explorer.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:STYLE-D1:0:modified:CreateExplorer -->Returns `S_OK` on success. A null output or unsupported non-null context returns `E_INVALIDARG`. An unsupported requested output interface returns `E_NOINTERFACE`. Allocation failure returns `E_OUTOFMEMORY`.<!-- d3d12-review-inline:end:cache-registration:STYLE-D1:0:modified:CreateExplorer --></ins>
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createexplorer-returns:0:authored:migration-d19457f75558a299-0 -->Device feature query and adapter/context discovery failures propagate. Factory availability does not guarantee usable target metadata.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createexplorer-returns:0:authored:migration-d19457f75558a299-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createexplorer-returns:0:authored:migration-d19457f75558a299-0 -->Device feature query and adapter/context discovery failures propagate.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createexplorer-returns:0:authored:migration-d19457f75558a299-0 --></ins>
 
 <a id="id3dshadercacheinstallerclient"></a>
 
@@ -579,7 +579,7 @@ Retrieves the precompile targets.
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getprecompiletargets-returns:0:authored:migration-9a623693f0ae6b2b-0 -->`S_OK` when the available count fits the supplied capacity, including an empty result. `DXGI_ERROR_MORE_DATA` when the count exceeds capacity. The updated count describes available entries and a prefix may already have been written. `E_INVALIDARG` for nonzero reserved flags. `DXGI_ERROR_DRIVER_INTERNAL_ERROR` for an incompatible compiler family or no supported compiler ABI in the inclusive driver interval. Allocation and other discovery failures propagate. On such failure there is no general count reset or zeroing guarantee. A count query and a later fill are separate calls, not a transaction.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-returns:0:authored:migration-9a623693f0ae6b2b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getprecompiletargets-returns:0:authored:migration-9a623693f0ae6b2b-0 -->`S_OK` when the available count fits the supplied capacity, including an empty result. `DXGI_ERROR_MORE_DATA` when the count exceeds capacity. The updated count describes available entries and a prefix may already have been written. `E_INVALIDARG` for nonzero reserved flags. `DXGI_ERROR_DRIVER_INTERNAL_ERROR` for an incompatible compiler family or no supported compiler ABI in the inclusive driver interval. Allocation and other discovery failures propagate. A count query and a later fill are separate calls.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-returns:0:authored:migration-9a623693f0ae6b2b-0 --></ins>
 
 <a id="id3dshadercacheinstaller-registerdriverupdatelistener"></a>
 
@@ -1059,7 +1059,7 @@ HRESULT GetPrecompiledCachePath( const wchar_t* pAdapterFamily, const wchar_t** 
 
 Retrieves the path to the precompiled cache.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getprecompiledcachepath-behavior:0:authored:migration-c0f8f0724490d39f-0 -->Looks up the component object's retained PSDB path by exact, case-sensitive adapter family name comparison. This retained-map lookup does not establish independent persistent catalog slots for case variants; persistent family keys are case-insensitive. It is a registration mapping lookup, not a cache opening, compatibility test or runtime selection operation.<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getprecompiledcachepath-behavior:0:authored:migration-c0f8f0724490d39f-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getprecompiledcachepath-behavior:0:authored:migration-c0f8f0724490d39f-0 -->Looks up the component object's retained PSDB path by exact, case-sensitive adapter family name comparison. This retained-map lookup does not establish independent persistent catalog slots for case variants; persistent family keys are case-insensitive.<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getprecompiledcachepath-behavior:0:authored:migration-c0f8f0724490d39f-0 --></ins>
 
 #### Parameters
 

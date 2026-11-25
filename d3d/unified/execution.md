@@ -569,7 +569,7 @@ The driver is free to patch the submitted command lists. It is the calling appli
 
 Applications are encouraged to batch together command list executions to reduce fixed costs associated with submitted commands to the GPU.
 
-<ins><!-- d3d12-review-inline:begin:execution:SUB-recording:0:authored:migration-a693956154f7fca9-0 -->The application's responsibility for previous executions concerns each recorded command stream, not the command list object. See [recorded commands and allocator storage](#command-storage) for submitting a new recording while an older recording made through the same object executes. Returning from `ExecuteCommandLists` does not establish GPU completion or make allocator/resource storage reusable.<!-- d3d12-review-inline:end:execution:SUB-recording:0:authored:migration-a693956154f7fca9-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:SUB-recording:0:authored:migration-a693956154f7fca9-0 -->The application's responsibility for previous executions concerns each recorded command stream, not the command list object. See [recorded commands and allocator storage](#command-storage) for submitting a new recording while an older recording made through the same object executes.<!-- d3d12-review-inline:end:execution:SUB-recording:0:authored:migration-a693956154f7fca9-0 --></ins>
 
 <a id="validation"></a>
 
@@ -793,7 +793,7 @@ The globally unique identifier (**GUID**) for the fence interface ([ID3D12Fence]
 
 A pointer to a memory block that receives a pointer to the [ID3D12Fence](#completion) interface that is used to access the fence.
 
-<ins><!-- d3d12-review-inline:begin:execution:F-create-probe:0:authored:migration-c20303f49f952400-0 -->`ppFence` may be `NULL` to check the fence flags without creating a fence object. This path returns `S_FALSE` when flag validation succeeds. It does not establish that object allocation, GPU-accessible backing, or the requested interface would succeed.<!-- d3d12-review-inline:end:execution:F-create-probe:0:authored:migration-c20303f49f952400-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:F-create-probe:0:authored:migration-c20303f49f952400-0 -->`ppFence` may be `NULL` to check the fence flags without creating a fence object. This path returns `S_FALSE` when flag validation succeeds.<!-- d3d12-review-inline:end:execution:F-create-probe:0:authored:migration-c20303f49f952400-0 --></ins>
 
 #### Return values
 
@@ -908,7 +908,7 @@ HRESULT Signal(
 
 Use this method to set a fence value from the CPU side. Use [ID3D12CommandQueue::Signal](#queue-signal) to set a fence from the GPU side.
 
-<ins><!-- d3d12-review-inline:begin:execution:F-cpu-signal-completion:0:authored:migration-564976ee239c6b0b-0 -->CPU signaling does not wait for preceding GPU work. A CPU-written value is therefore not evidence that unrelated queued work has completed. This method must not be used on [read-only status fences](#status-fences). For command list scoped fences, CPU signaling is only an initialization before the relevant GPU use, not an in-flight signaling operation.<!-- d3d12-review-inline:end:execution:F-cpu-signal-completion:0:authored:migration-564976ee239c6b0b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:F-cpu-signal-completion:0:authored:migration-564976ee239c6b0b-0 -->CPU signaling does not wait for preceding GPU work. This method must not be used on [read-only status fences](#status-fences). For command list scoped fences, CPU signaling is only an initialization before the relevant GPU use, not an in-flight signaling operation.<!-- d3d12-review-inline:end:execution:F-cpu-signal-completion:0:authored:migration-564976ee239c6b0b-0 --></ins>
 
 #### Parameters
 
@@ -1737,9 +1737,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_EXECUTECOMMANDLISTS ) (
 
 <ins><!-- d3d12-review-inline:begin:execution:QT-N03:0:authored:migration-9d23c1699ce7216f-0 -->See [`ExecuteCommandLists`](execution.md#execute-command-lists) for the
 ordering and recording lifetime of the supplied recordings, and
-[driver recording objects](execution.md#object-model) for their storage.
-Runtime adaptation does not establish a universal one-to-one relationship
-between an application call, a DDI call and a kernel command buffer submission.<!-- d3d12-review-inline:end:execution:QT-N03:0:authored:migration-9d23c1699ce7216f-0 --></ins>
+[driver recording objects](execution.md#object-model) for their storage.<!-- d3d12-review-inline:end:execution:QT-N03:0:authored:migration-9d23c1699ce7216f-0 --></ins>
 
 Drivers must implement command list execution DDIs in a free threaded
 manner so that multiple queues can accept command lists for execution
@@ -1933,9 +1931,7 @@ typedef struct D3D12DDIARG_CREATE_FENCE_0116
 
 <ins><!-- d3d12-review-inline:begin:execution:QF-U05:0:authored:migration-d6e9ffb1e829d7d3-0 -->`FenceType` selects the active union member and the
 [creation protocol](#fence-creation-lifecycle). Command list scoped creation
-requires the applicable [fence barrier support and API flags](execution.md#fence-flags);
-the description's version suffix alone does not establish support for every
-fence kind. The [size query rules](#fence-private-sizing) determine which
+requires the applicable [fence barrier support and API flags](execution.md#fence-flags). The [size query rules](#fence-private-sizing) determine which
 description fields are valid during sizing, independently of creation.<!-- d3d12-review-inline:end:execution:QF-U05:0:authored:migration-d6e9ffb1e829d7d3-0 --></ins>
 
 <a id="fence-private-sizing"></a>
@@ -1982,8 +1978,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYFENCE )( D3D12DDI_HDEVICE, D3D12DDI_
 monitored fence creation path, `FenceValue.BaseAddress` supplies the available
 GPU address, `FenceMonitoredValue.BaseAddress` is zero and `Flags` is
 `D3D12DDI_FENCE_FLAG_BOTTOM_OF_PIPE`. A zero value address supplies no GPU
-backing location. Driver object creation alone does not establish that a
-fence can be used by a GPU fence barrier.<!-- d3d12-review-inline:end:execution:QF-FN06:0:authored:migration-3980bf27fea3264e-0 --></ins>
+backing location.<!-- d3d12-review-inline:end:execution:QF-FN06:0:authored:migration-3980bf27fea3264e-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:execution:QF-FN07:0:authored:migration-38ebe97c125051e9-0 -->Creation receives `D3D12DDI_HRTFENCE`, the runtime fence association used
 by the native callbacks. `FenceType` selects the creation payload.<!-- d3d12-review-inline:end:execution:QF-FN07:0:authored:migration-38ebe97c125051e9-0 --></ins>
@@ -2018,8 +2013,7 @@ apply. An opened-native failure and monitored retry must also satisfy the
 <ins><!-- d3d12-review-inline:begin:execution:QF-FN12:0:authored:migration-b801520f175964de-0 -->The runtime calls DestroyFence before releasing its associated OS object
 ownership. Monitored, native and command list scoped representations have
 driver-visible objects on these paths. A runtime-managed legacy non-monitored
-fence does not imply a UMD CreateFence/DestroyFence pair. A size query alone
-does not commit the runtime to subsequently creating a driver object.
+fence does not imply a UMD CreateFence/DestroyFence pair.
 See [fence completion](#completion) for application fence lifetimes and
 operation restrictions.<!-- d3d12-review-inline:end:execution:QF-FN12:0:authored:migration-b801520f175964de-0 --></ins>
 
@@ -2119,8 +2113,7 @@ using the appropriate runtime/OS handoff or driver-submitted GPU operation
 for the submission mode. The runtime does not append another kernel
 signal/wait operation after this DDI, and ignores `PhysicalAdapterMask` on
 this path. Before returning, the UMD must have queued the operation or
-arranged its submission without requiring another application call.
-Return does not establish GPU completion.<!-- d3d12-review-inline:end:execution:QF-T03:0:authored:migration-4190a55c3e135e65-0 --></ins>
+arranged its submission without requiring another application call.<!-- d3d12-review-inline:end:execution:QF-T03:0:authored:migration-4190a55c3e135e65-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:execution:QF-T04:0:authored:migration-b8b86a83569a0762-0 -->For non-native fences, implicit multi-GPU handling can invoke the same DDIs
 to obtain the physical adapter broadcast scope. The runtime then submits the
@@ -2155,12 +2148,10 @@ second is the reported failure `HRESULT`. The legacy device handle spelling
 in the released typedef does not change this callback's D3D12 runtime role.<!-- d3d12-review-inline:end:execution:QF-E03:0:authored:migration-691b6c4338db954e-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:execution:QF-E04:0:authored:migration-56ceba67010c0a99-0 -->A synchronous device failure report does not guarantee that the original
-application Signal/Wait call returns a failing `HRESULT`. It does not
-guarantee `S_OK` either. Device removal is observed through
+application Signal/Wait call returns a failing `HRESULT`. Device removal is observed through
 [GetDeviceRemovedReason](diagnostics.md#id3d12device-getdeviceremovedreason)
 and the established [completion/removal notification rules](execution.md#completion-lifetime),
-independently of that return. A successful return is not proof of a healthy
-device or successful GPU execution.<!-- d3d12-review-inline:end:execution:QF-E04:0:authored:migration-56ceba67010c0a99-0 --></ins>
+independently of that return.<!-- d3d12-review-inline:end:execution:QF-E04:0:authored:migration-56ceba67010c0a99-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:execution:QF-E05:0:authored:migration-890f8c01500d0674-0 -->The runtime's own validation and non-native transport work can return
 their normal `HRESULT` failures, including recoverable allocation failures.<!-- d3d12-review-inline:end:execution:QF-E05:0:authored:migration-890f8c01500d0674-0 --></ins>
@@ -2294,8 +2285,7 @@ common callback types.<!-- d3d12-review-inline:end:execution:QT-N26:0:authored:m
 `hContext`, an object array/count and `FenceValue` for a context stream wait.
 Signal supplies context/object arrays, broadcast contexts and flags selecting
 a fence value or CPU event. The callbacks return an `HRESULT` for the
-requested operation. Their separate table ownership
-does not imply that every D3D12 device supplies downlevel support.<!-- d3d12-review-inline:end:execution:QT-N27:0:authored:migration-75cd42cb943a8fa0-0 --></ins>
+requested operation.<!-- d3d12-review-inline:end:execution:QT-N27:0:authored:migration-75cd42cb943a8fa0-0 --></ins>
 
 <a id="driver-runtime-services"></a>
 

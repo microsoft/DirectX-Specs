@@ -228,7 +228,7 @@ while enabling the system to efficiently notice there is no read/write hazard to
 
 <ins><!-- d3d12-review-inline:begin:output-merger:A17-13:7 -->(2)    The D3D12_DSV_FLAG_READ_ONLY_STENCIL flag must NOT be set in the currently bound DSV.<!-- d3d12-review-inline:end:output-merger:A17-13:7 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:N-read-only-resources:0:authored:migration-ebc53ddf27b304c3-0 -->The descriptor flags are `D3D12_DSV_FLAG_READ_ONLY_DEPTH = 0x1` and `D3D12_DSV_FLAG_READ_ONLY_STENCIL = 0x2`. They control the corresponding aspect independently. A zero PSO write mask alone does not replace a read-only view flag for simultaneous shader resource and depth/stencil binding. D3D12 does not automatically unbind views to avoid read/write hazards. See [DSV flags](binding.md#dsv-types), [depth/stencil view compatibility](formats.md#depth-stencil-views), [legacy resource states](synchronization.md#legacy-resource-states) and [barrier access](synchronization.md#barrier-access) for the view and state requirements. See [Read Only Depth Stencil](#read-only-depth-stencil-pass) for the pass flags and access conditions of read-only binding in render passes.<!-- d3d12-review-inline:end:output-merger:N-read-only-resources:0:authored:migration-ebc53ddf27b304c3-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:output-merger:N-read-only-resources:0:authored:migration-ebc53ddf27b304c3-0 -->The descriptor flags are `D3D12_DSV_FLAG_READ_ONLY_DEPTH = 0x1` and `D3D12_DSV_FLAG_READ_ONLY_STENCIL = 0x2`. They control the corresponding aspect independently. A zero PSO write mask alone does not replace a read-only view flag for simultaneous shader resource and depth/stencil binding. See [DSV flags](binding.md#dsv-types), [depth/stencil view compatibility](formats.md#depth-stencil-views), [legacy resource states](synchronization.md#legacy-resource-states) and [barrier access](synchronization.md#barrier-access) for the view and state requirements. See [Read Only Depth Stencil](#read-only-depth-stencil-pass) for the pass flags and access conditions of read-only binding in render passes.<!-- d3d12-review-inline:end:output-merger:N-read-only-resources:0:authored:migration-ebc53ddf27b304c3-0 --></ins>
 
 <a id="blending"></a>
 
@@ -635,19 +635,13 @@ Sets CPU descriptor handles for the render targets and depth stencil.
 
 <ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetRenderTargets-parameters:0 -->`NumRenderTargetDescriptors`<!-- d3d12-review-inline:end:output-merger:API-OMSetRenderTargets-parameters:0 --></ins>
 
-Type: **UINT**
-
 <ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetRenderTargets-parameters:2 -->The number of render target descriptors to bind (ranges between 0 and **D3D12\_SIMULTANEOUS\_RENDER\_TARGET\_COUNT**). If this parameter is nonzero and RTsSingleHandleToDescriptorRange is FALSE, the number of entries in the array to which pRenderTargetDescriptors points must equal the number in this parameter. If RTsSingleHandleToDescriptorRange is TRUE, pRenderTargetDescriptors points to one handle identifying a contiguous range of this many descriptors.<!-- d3d12-review-inline:end:output-merger:API-OMSetRenderTargets-parameters:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetRenderTargets-parameters:3 -->`pRenderTargetDescriptors`<!-- d3d12-review-inline:end:output-merger:API-OMSetRenderTargets-parameters:3 --></ins>
-
-Type: **const [D3D12_CPU_DESCRIPTOR_HANDLE](binding.md#d3d12-cpu-descriptor-handle)\***
+<ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetRenderTargets-parameters:3 -->[`pRenderTargetDescriptors`](binding.md#d3d12-cpu-descriptor-handle)<!-- d3d12-review-inline:end:output-merger:API-OMSetRenderTargets-parameters:3 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetRenderTargets-parameters:5 -->Specifies an array of [D3D12_CPU_DESCRIPTOR_HANDLE](binding.md#d3d12-cpu-descriptor-handle) structures that describe the CPU descriptor handles for the render target descriptors to bind. If this parameter is NULL and NumRenderTargetDescriptors is 0, no render targets are bound.<!-- d3d12-review-inline:end:output-merger:API-OMSetRenderTargets-parameters:5 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetRenderTargets-parameters:6 -->`RTsSingleHandleToDescriptorRange`<!-- d3d12-review-inline:end:output-merger:API-OMSetRenderTargets-parameters:6 --></ins>
-
-Type: **BOOL**
 
 **True** means the handle passed in is the pointer to a contiguous range of *NumRenderTargetDescriptors* descriptors. This case is useful if the set of descriptors to bind already happens to be contiguous in memory (so all that’s needed is a handle to the first one). For example, if *NumRenderTargetDescriptors* is 3 then the memory layout is taken as follows:
 ![Memory layout with parameter set to true](../images/output-merger/oms_true.png)
@@ -655,9 +649,7 @@ Type: **BOOL**
 **False** means that the handle is the first of an array of *NumRenderTargetDescriptors* handles. The false case allows an application to bind a set of descriptors from different locations at once. Again assuming that *NumRenderTargetDescriptors* is 3, the memory layout is taken as follows:
 ![Memory layout with parameter set to false](../images/output-merger/oms_false.png)
 
-<ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetRenderTargets-parameters:12 -->`pDepthStencilDescriptor`<!-- d3d12-review-inline:end:output-merger:API-OMSetRenderTargets-parameters:12 --></ins>
-
-Type: **const [D3D12_CPU_DESCRIPTOR_HANDLE](binding.md#d3d12-cpu-descriptor-handle)\***
+<ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetRenderTargets-parameters:12 -->[`pDepthStencilDescriptor`](binding.md#d3d12-cpu-descriptor-handle)<!-- d3d12-review-inline:end:output-merger:API-OMSetRenderTargets-parameters:12 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetRenderTargets-parameters:14 -->A pointer to a [D3D12_CPU_DESCRIPTOR_HANDLE](binding.md#d3d12-cpu-descriptor-handle) structure that describes the CPU descriptor handle of the depth stencil descriptor. If this parameter is NULL, no depth stencil descriptor is bound.<!-- d3d12-review-inline:end:output-merger:API-OMSetRenderTargets-parameters:14 --></ins>
 
@@ -691,8 +683,6 @@ If you pass NULL, then the runtime uses or stores a blend factor equal to `{ 1, 
 
 <ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetBlendFactor-parameters:0 -->`BlendFactor`<!-- d3d12-review-inline:end:output-merger:API-OMSetBlendFactor-parameters:0 --></ins>
 
-Type: **const FLOAT[4]**
-
 Array of blend factors, one for each RGBA component.
 
 #### Return values
@@ -721,8 +711,6 @@ Sets the reference value for depth stencil tests.
 
 <ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetStencilRef-parameters:0 -->`StencilRef`<!-- d3d12-review-inline:end:output-merger:API-OMSetStencilRef-parameters:0 --></ins>
 
-Type: **UINT**
-
 Reference value to perform against when doing a depth-stencil test.
 
 #### Return values
@@ -750,13 +738,9 @@ void OMSetFrontAndBackStencilRef(
 
 `FrontStencilRef`
 
-<ins><!-- d3d12-review-inline:begin:output-merger:API-front-back-parameters:1:authored:migration-32710f96aaec3426-0 -->Type: **UINT**<!-- d3d12-review-inline:end:output-merger:API-front-back-parameters:1:authored:migration-32710f96aaec3426-0 --></ins>
-
 <ins><!-- d3d12-review-inline:begin:output-merger:API-front-back-parameters:2:authored:migration-bcc39043f6b12122-0 -->The reference value for front-facing stencil operations.<!-- d3d12-review-inline:end:output-merger:API-front-back-parameters:2:authored:migration-bcc39043f6b12122-0 --></ins>
 
 `BackStencilRef`
-
-<ins><!-- d3d12-review-inline:begin:output-merger:API-front-back-parameters:4:authored:migration-8cfdaf99e41114b2-0 -->Type: **UINT**<!-- d3d12-review-inline:end:output-merger:API-front-back-parameters:4:authored:migration-8cfdaf99e41114b2-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:output-merger:API-front-back-parameters:5:authored:migration-3db1662f90c01090-0 -->The reference value for back-facing stencil operations.<!-- d3d12-review-inline:end:output-merger:API-front-back-parameters:5:authored:migration-3db1662f90c01090-0 --></ins>
 
@@ -787,13 +771,9 @@ void OMSetDepthBounds(
 
 <ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetDepthBounds-parameters:0 -->`Min`<!-- d3d12-review-inline:end:output-merger:API-OMSetDepthBounds-parameters:0 --></ins>
 
-Type: **FLOAT**
-
 <ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetDepthBounds-parameters:2 -->Specifies the minimum depth bounds. NaN values silently convert to 0.<!-- d3d12-review-inline:end:output-merger:API-OMSetDepthBounds-parameters:2 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetDepthBounds-parameters:3 -->`Max`<!-- d3d12-review-inline:end:output-merger:API-OMSetDepthBounds-parameters:3 --></ins>
-
-Type: **FLOAT**
 
 <ins><!-- d3d12-review-inline:begin:output-merger:API-OMSetDepthBounds-parameters:5 -->Specifies the maximum depth bounds. NaN values silently convert to 0.<!-- d3d12-review-inline:end:output-merger:API-OMSetDepthBounds-parameters:5 --></ins>
 

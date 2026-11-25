@@ -534,7 +534,7 @@ user constants to give them types.
 For example if the root signature defines a set of 4 root constants,
 HLSL can overlay the following struct on them.
 
-```C++
+```hlsl
 struct DrawConstants
 {
     uint foo;
@@ -605,7 +605,7 @@ work fine overall except the mapped status return is undefined.
 Descriptors in the root arguments appear each as individual separate
 descriptors -- they cannot be dynamically indexed.
 
-```C++
+```hlsl
 struct SceneData
 {
     uint foo;
@@ -1089,13 +1089,13 @@ namespace.
 
 E.g. a VS may declare
 
-```C++
+```hlsl
 Texture2D foo : register(t0);
 ```
 
 and the PS may also declare:
 
-```C++
+```hlsl
 Texture2D bar : register(t0);
 ```
 

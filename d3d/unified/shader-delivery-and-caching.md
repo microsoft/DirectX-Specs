@@ -1061,7 +1061,7 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 
 <ins><!-- d3d12-review-inline:begin:shader-cache:PL-serialization:1:authored:migration-5fd0f66830cce737-0 -->SerializeLibrary receives no capacity argument. The runtime supplies storage of the size reported for the same library contents. The driver writes only its private byte stream.<!-- d3d12-review-inline:end:shader-cache:PL-serialization:1:authored:migration-5fd0f66830cce737-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:PL-serialization:2:authored:migration-b101deb88ce0e307-0 -->The output buffer is borrowed for the call. A failed serialization does not guarantee that the buffer is unchanged or zeroed.<!-- d3d12-review-inline:end:shader-cache:PL-serialization:2:authored:migration-b101deb88ce0e307-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:PL-serialization:2:authored:migration-b101deb88ce0e307-0 -->The output buffer is borrowed for the call.<!-- d3d12-review-inline:end:shader-cache:PL-serialization:2:authored:migration-b101deb88ce0e307-0 --></ins>
 
 <a id="pipeline-library-driver-errors"></a>
 

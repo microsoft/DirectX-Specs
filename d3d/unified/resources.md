@@ -927,21 +927,15 @@ Creates a resource that is reserved, and not yet mapped to any pages in a heap.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource-contract:1 -->`pDesc`<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource-contract:1 --></ins>
-
-Type: **const [D3D12_RESOURCE_DESC](resources.md#resource-description)\***
+<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource-contract:1 -->[`pDesc`](resources.md#resource-description)<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource-contract:1 --></ins>
 
 A pointer to a **D3D12\_RESOURCE\_DESC** structure that describes the resource.
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource-contract:4 -->`InitialState`<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource-contract:4 --></ins>
-
-Type: **[D3D12_RESOURCE_STATES](synchronization.md#legacy-states)**
+<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource-contract:4 -->[`InitialState`](synchronization.md#legacy-states)<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource-contract:4 --></ins>
 
 The initial state of the resource, as a bitwise-OR'd combination of **D3D12\_RESOURCE\_STATES** enumeration constants.
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource-contract:7 -->`pOptimizedClearValue`<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource-contract:7 --></ins>
-
-Type: **const [D3D12_CLEAR_VALUE](resources.md#optimized-clear-value)\***
+<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource-contract:7 -->[`pOptimizedClearValue`](resources.md#optimized-clear-value)<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource-contract:7 --></ins>
 
 Specifies a **D3D12\_CLEAR\_VALUE** structure that describes the default value for a clear color.
 
@@ -951,15 +945,11 @@ When you use [D3D12_RESOURCE_DIMENSION_BUFFER](resources.md#resource-dimensions)
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource-contract:12 -->`riid`<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource-contract:12 --></ins>
 
-Type: **REFIID**
-
 <ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource-contract:14 -->A reference to the globally unique identifier (**GUID**) of the resource interface to return in *ppvResource*.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource-contract:14 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource-contract:15 -->While *riid* is most commonly the **GUID** of [ID3D12Resource](#resource-storage), it may be the **GUID** of any interface. If the resource object doesn't support the interface for this **GUID**, then creation fails with **E\_NOINTERFACE**.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource-contract:15 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource-contract:16 -->`ppvResource`<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource-contract:16 --></ins>
-
-Type: **void\*\***
 
 An optional pointer to a memory block that receives the requested interface pointer to the created resource object.
 
@@ -1014,21 +1004,15 @@ Only tiles from heaps created with the same protected resource session can be ma
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource1-contract:1 -->`pDesc`<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource1-contract:1 --></ins>
-
-Type: **const [D3D12_RESOURCE_DESC](resources.md#resource-description)\***
+<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource1-contract:1 -->[`pDesc`](resources.md#resource-description)<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource1-contract:1 --></ins>
 
 A pointer to a **D3D12\_RESOURCE\_DESC** structure that describes the resource.
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource1-contract:4 -->`InitialState`<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource1-contract:4 --></ins>
-
-Type: **[D3D12_RESOURCE_STATES](synchronization.md#legacy-states)**
+<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource1-contract:4 -->[`InitialState`](synchronization.md#legacy-states)<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource1-contract:4 --></ins>
 
 The initial state of the resource, as a bitwise-OR'd combination of **D3D12\_RESOURCE\_STATES** enumeration constants.
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource1-contract:7 -->`pOptimizedClearValue`<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource1-contract:7 --></ins>
-
-Type: **const [D3D12_CLEAR_VALUE](resources.md#optimized-clear-value)\***
+<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource1-contract:7 -->[`pOptimizedClearValue`](resources.md#optimized-clear-value)<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource1-contract:7 --></ins>
 
 Specifies a **D3D12\_CLEAR\_VALUE** structure that describes the default value for a clear color.
 
@@ -1036,23 +1020,17 @@ Specifies a **D3D12\_CLEAR\_VALUE** structure that describes the default value f
 
 When you use [D3D12_RESOURCE_DIMENSION_BUFFER](resources.md#resource-dimensions), you must set *pOptimizedClearValue* to `nullptr`.
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource1-contract:12 -->`pProtectedSession`<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource1-contract:12 --></ins>
-
-Type: **[ID3D12ProtectedResourceSession](#protected-resource-sessions)\***
+<ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource1-contract:12 -->[`pProtectedSession`](#protected-resource-sessions)<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource1-contract:12 --></ins>
 
 An optional pointer to an object that represents a session for content protection. If provided, this session indicates that the resource should be protected. You can obtain an **ID3D12ProtectedResourceSession** by calling [ID3D12Device4::CreateProtectedResourceSession](#api-id3d12device4-createprotectedresourcesession).
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource1-contract:15 -->`riid`<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource1-contract:15 --></ins>
-
-Type: **REFIID**
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource1-contract:17 -->A reference to the globally unique identifier (**GUID**) of the resource interface to return in *ppvResource*.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource1-contract:17 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource1-contract:18 -->While *riid* is most commonly the **GUID** of [ID3D12Resource](#resource-storage), it may be the **GUID** of any interface. If the resource object doesn't support the interface for this **GUID**, then creation fails with **E\_NOINTERFACE**.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource1-contract:18 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource1-contract:19 -->`ppvResource`<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource1-contract:19 --></ins>
-
-Type: **void\*\***
 
 An optional pointer to a memory block that receives the requested interface pointer to the created resource object.
 
@@ -1103,9 +1081,7 @@ Creates a resource that is reserved, and not yet mapped to any pages in a heap.
 
 #### Parameters
 
-`pDesc`
-
-Type: **const [D3D12_RESOURCE_DESC](resources.md#resource-description)\***
+[`pDesc`](resources.md#resource-description)
 
 A pointer to a **D3D12\_RESOURCE\_DESC** structure that describes the resource.
 
@@ -1113,9 +1089,7 @@ A pointer to a **D3D12\_RESOURCE\_DESC** structure that describes the resource.
 
 The initial layout of the texture resource; **D3D12\_BARRIER\_LAYOUT::D3D12\_BARRIER\_LAYOUT\_UNDEFINED** for buffers.
 
-`pOptimizedClearValue`
-
-Type: **const [D3D12_CLEAR_VALUE](resources.md#optimized-clear-value)\***
+[`pOptimizedClearValue`](resources.md#optimized-clear-value)
 
 Specifies a **D3D12\_CLEAR\_VALUE** structure that describes the default value for a clear color.
 
@@ -1123,9 +1097,7 @@ Specifies a **D3D12\_CLEAR\_VALUE** structure that describes the default value f
 
 When you use [D3D12_RESOURCE_DIMENSION_BUFFER](resources.md#resource-dimensions), you must set *pOptimizedClearValue* to `nullptr`.
 
-`pProtectedSession`
-
-Type: **[ID3D12ProtectedResourceSession](#protected-resource-sessions)\***
+[`pProtectedSession`](#protected-resource-sessions)
 
 An optional pointer to an object that represents a session for content protection. If provided, this session indicates that the resource should be protected. You can obtain an **ID3D12ProtectedResourceSession** by calling [ID3D12Device4::CreateProtectedResourceSession](#api-id3d12device4-createprotectedresourcesession).
 
@@ -1139,15 +1111,11 @@ A contiguous array of [DXGI_FORMAT](formats.md#dxgi-format) structures that this
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource2-contract:18 -->`riid`<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource2-contract:18 --></ins>
 
-Type: **REFIID**
-
 <ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource2-contract:20 -->A reference to the globally unique identifier (**GUID**) of the resource interface to return in *ppvResource*.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource2-contract:20 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-CreateReservedResource2-contract:21 -->While *riid* is most commonly the **GUID** of [ID3D12Resource](#resource-storage), it may be the **GUID** of any interface. If the resource object doesn't support the interface for this **GUID**, then creation fails with **E\_NOINTERFACE**.<!-- d3d12-review-inline:end:resources:TILED-CreateReservedResource2-contract:21 --></ins>
 
 `ppvResource`
-
-Type: **void\*\***
 
 An optional pointer to a memory block that receives the requested interface pointer to the created resource object.
 
@@ -1195,45 +1163,31 @@ Gets info about how a tiled resource is broken into tiles.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-GetResourceTiling-contract:1 -->`pTiledResource`<!-- d3d12-review-inline:end:resources:TILED-GetResourceTiling-contract:1 --></ins>
-
-Type: **[ID3D12Resource](#resource-storage)\***
+<ins><!-- d3d12-review-inline:begin:resources:TILED-GetResourceTiling-contract:1 -->[`pTiledResource`](#resource-storage)<!-- d3d12-review-inline:end:resources:TILED-GetResourceTiling-contract:1 --></ins>
 
 Specifies a tiled [ID3D12Resource](#resource-storage) to get info about.
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-GetResourceTiling-contract:4 -->`pNumTilesForEntireResource`<!-- d3d12-review-inline:end:resources:TILED-GetResourceTiling-contract:4 --></ins>
 
-Type: **UINT\***
-
 A pointer to a variable that receives the number of tiles needed to store the entire tiled resource.
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-GetResourceTiling-contract:7 -->`pPackedMipDesc`<!-- d3d12-review-inline:end:resources:TILED-GetResourceTiling-contract:7 --></ins>
-
-Type: **[D3D12_PACKED_MIP_INFO](resources.md#d3d12-packed-mip-info)\***
+<ins><!-- d3d12-review-inline:begin:resources:TILED-GetResourceTiling-contract:7 -->[`pPackedMipDesc`](resources.md#d3d12-packed-mip-info)<!-- d3d12-review-inline:end:resources:TILED-GetResourceTiling-contract:7 --></ins>
 
 A pointer to a [D3D12_PACKED_MIP_INFO](resources.md#d3d12-packed-mip-info) structure that **GetResourceTiling** fills with info about how the tiled resource's mipmaps are packed.
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-GetResourceTiling-contract:10 -->`pStandardTileShapeForNonPackedMips`<!-- d3d12-review-inline:end:resources:TILED-GetResourceTiling-contract:10 --></ins>
-
-Type: **[D3D12_TILE_SHAPE](resources.md#d3d12-tile-shape)\***
+<ins><!-- d3d12-review-inline:begin:resources:TILED-GetResourceTiling-contract:10 -->[`pStandardTileShapeForNonPackedMips`](resources.md#d3d12-tile-shape)<!-- d3d12-review-inline:end:resources:TILED-GetResourceTiling-contract:10 --></ins>
 
 Specifies a [D3D12_TILE_SHAPE](resources.md#d3d12-tile-shape) structure that **GetResourceTiling** fills with info about the tile shape. This is info about how pixels fit in the tiles, independent of tiled resource's dimensions, not including packed mipmaps. If the entire tiled resource is packed, this parameter is meaningless because the tiled resource has no defined layout for packed mipmaps. In this situation, **GetResourceTiling** sets the members of D3D12\_TILE\_SHAPE to zeros.
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-GetResourceTiling-contract:13 -->`pNumSubresourceTilings`<!-- d3d12-review-inline:end:resources:TILED-GetResourceTiling-contract:13 --></ins>
 
-Type: **UINT\***
-
 <ins><!-- d3d12-review-inline:begin:resources:TILED-GetResourceTiling-contract:15 -->A pointer to a subresource count variable. On input, this is the number of subresources to query tilings for; on output, this is the number that was actually retrieved at *pSubresourceTilingsForNonPackedMips* (clamped to what's available).<!-- d3d12-review-inline:end:resources:TILED-GetResourceTiling-contract:15 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:resources:TILED-GetResourceTiling-contract:16 -->`FirstSubresourceTilingToGet`<!-- d3d12-review-inline:end:resources:TILED-GetResourceTiling-contract:16 --></ins>
 
-Type: **UINT**
-
 The index of the first subresource <ins><!-- d3d12-review-inline:begin:resources:TILED-GetResourceTiling-contract:18:modified:source-cb055e85ad38d09c-0-0 -->whose tiling is requested<!-- d3d12-review-inline:end:resources:TILED-GetResourceTiling-contract:18:modified:source-cb055e85ad38d09c-0-0 --></ins>. **GetResourceTiling** ignores this parameter if the number that *pNumSubresourceTilings* points to is 0.
 
-<ins><!-- d3d12-review-inline:begin:resources:TILED-GetResourceTiling-contract:19 -->`pSubresourceTilingsForNonPackedMips`<!-- d3d12-review-inline:end:resources:TILED-GetResourceTiling-contract:19 --></ins>
-
-Type: **[D3D12_SUBRESOURCE_TILING](resources.md#d3d12-subresource-tiling)\***
+<ins><!-- d3d12-review-inline:begin:resources:TILED-GetResourceTiling-contract:19 -->[`pSubresourceTilingsForNonPackedMips`](resources.md#d3d12-subresource-tiling)<!-- d3d12-review-inline:end:resources:TILED-GetResourceTiling-contract:19 --></ins>
 
 Specifies a [D3D12_SUBRESOURCE_TILING](resources.md#d3d12-subresource-tiling) structure that **GetResourceTiling** fills with info about subresource tiles. If subresource tiles are part of packed mipmaps, **GetResourceTiling** sets the members of D3D12\_SUBRESOURCE\_TILING to zeros, except the *StartTileIndexInOverallResource* member, which **GetResourceTiling** sets to D3D12\_PACKED\_TILE (0xffffffff). The D3D12\_PACKED\_TILE constant indicates that the whole **D3D12\_SUBRESOURCE\_TILING** structure is meaningless for this situation, and the info that the *pPackedMipDesc* parameter points to applies.
 
@@ -3660,7 +3614,7 @@ Resource creation is free-threaded. The initial resource state must be valid for
 
 <ins><!-- d3d12-review-inline:begin:resources:A-initial-state-link:0:authored:migration-dd7d0fb3c32faacf-0 -->The legacy creation methods specify an initial state valid for the resource description. The [legacy state model](synchronization.md#legacy-resource-states) and [common state promotion/decay](synchronization.md#legacy-promotion-and-decay) define subsequent state behavior. The [enhanced layout creation alternatives](#versioned-creation) specify `InitialLayout` instead.<!-- d3d12-review-inline:end:resources:A-initial-state-link:0:authored:migration-dd7d0fb3c32faacf-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:resources:A-null-validation:0:authored:migration-b398b45eb7ccd764-0 -->For `CreateHeap`, `CreateCommittedResource` and `CreatePlacedResource`, a null output pointer selects parameter validation without object creation. `S_FALSE` does not establish successful backing allocation or support for the requested `riid`/`riidResource`.<!-- d3d12-review-inline:end:resources:A-null-validation:0:authored:migration-b398b45eb7ccd764-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:resources:A-null-validation:0:authored:migration-b398b45eb7ccd764-0 -->For `CreateHeap`, `CreateCommittedResource` and `CreatePlacedResource`, a null output pointer selects parameter validation without object creation.<!-- d3d12-review-inline:end:resources:A-null-validation:0:authored:migration-b398b45eb7ccd764-0 --></ins>
 
 <a id="shared-cross-adapter-creation"></a>
 

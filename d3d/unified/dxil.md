@@ -51,6 +51,32 @@ These opcodes select the floating-point classification predicates of the `IsSpec
 
 <ins><!-- d3d12-review-inline:begin:common-shader-internals:F-sm69-special-float:0 -->The `f16` overloads of `IsNaN`, `IsInf`, `IsFinite` and `IsNormal` require Shader Model 6.9 or later.<!-- d3d12-review-inline:end:common-shader-internals:F-sm69-special-float:0 --></ins>
 
+<a id="quad-vote"></a>
+
+## Quad vote instruction
+
+<!-- d3d12-review-context:begin:dxil:quad-vote:0:authored:instruction-contract -->
+
+> [!WARNING]
+> **Authored synthesis - human review pending.**
+
+`QuadVote` (opcode 222) implements the [common quad vote operations](common-shader-internals.md#quad-votes). Native support was introduced in Shader Model 6.7. Earlier Shader Model 6.0–6.6 profiles support [quad read lowering](common-shader-internals.md#quad-vote-lowering).
+
+```llvm
+declare i1 @dx.op.quadVote.i1(i32 %opcode, i1 %cond, i8 %op)
+```
+
+`opcode` is 222, and `cond` is the lane's Boolean predicate. The constant `op` operand selects `QuadVoteOpKind`:
+
+| `op` | Operation |
+| --- | --- |
+| 0 | `Any`, corresponding to `QuadAny` |
+| 1 | `All`, corresponding to `QuadAll` |
+
+Use of `QuadVote` sets bit 19 (wave level operations) of the `i64` shader-flags value carried by entry-function property tag `kDxilShaderFlagsTag` (0).
+
+<!-- d3d12-review-context:end:dxil:quad-vote:0:authored:instruction-contract -->
+
 <a id="sampler-feedback-instructions"></a>
 
 ## Sampler feedback instructions

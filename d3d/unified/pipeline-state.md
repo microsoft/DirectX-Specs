@@ -866,8 +866,6 @@ Specifies whether to enable clipping based on distance.
 
 `ForcedSampleCount`
 
-Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types)**
-
 <!-- d3d12-review-alert:begin:pipeline:P-D3D12_RASTERIZER_DESC:21:modified:migration-fe1bcfd8ab421e4b-0 -->
 
 > [!WARNING]

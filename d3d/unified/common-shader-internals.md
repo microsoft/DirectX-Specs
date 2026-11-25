@@ -4,7 +4,7 @@
 
 <a id="execution-terminology"></a>
 
-## Execution terminology
+## Execution model
 
 | Term | Definition |
 |---|---|
@@ -15,15 +15,530 @@
 | Quad | A set of 4 adjacent lanes corresponding, in pixel shaders, to pixels arranged in a 2x2 square at the applicable shading frequency. They are used to estimate gradients by differencing in either x or y. A wave may be comprised of multiple quads. All pixels in an active quad are executed (and may be "Active Lanes"), but those that do not produce visible results are termed "Helper Lanes". See [pixel quads](pixel-shaders.md#pixel-quads), [compute quads](compute.md#compute-quads), and [amplification/mesh derivatives](amplification-and-mesh-shaders.md#derivatives) for stage-specific formation. |
 | Helper Lane | A lane which is executed to support gradients or other quad operations in pixel shader quads, or a lane that has been demoted with `discard`. The output of such a lane will be discarded, and so not render to the destination surface. See [pixel shader helper invocations](pixel-shaders.md#helper-lanes) for helper generation and wave operation participation. |
 
-<a id="waves"></a>
+### Thread groups
 
-## Wave operations and participation
+A thread group is a set of shader invocations with a common group identity and thread group shared memory. Group launch and size contracts are defined for [compute shaders](compute.md#thread-groups), [amplification and mesh shaders](amplification-and-mesh-shaders.md#overview), and [work graph nodes](work-graphs.md#nodes-and-invocation).
 
-Wave operations include queries, votes, broadcasts, reductions, scans and quad shuffles. They are available in Shader Model 6.0 and later. [`D3D12_FEATURE_DATA_D3D12_OPTIONS1::WaveOps`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options1) reports wave operation support. `WaveLaneCountMin` and `WaveLaneCountMax` report the supported lane count range. Shader Model 6.9 requires wave operation support. `WaveGetLaneCount()` returns the current wave's lane count, including inactive lanes, while `WaveGetLaneIndex()` identifies the current lane.
+Hardware chooses the mapping of threads from thread groups into waves.
 
-Wave-wide votes/reductions operate on the active lanes at that operation. Divergent control flow can change this participating set. Reading a value from an inactive or nonexistent source lane is undefined. Floating-point reduction order is not defined. A program must not assume a fixed wave width or a stage-specific mapping not supplied by an explicit contract.
+<a id="control-flow-uniformity"></a>
+
+## Control flow and uniformity
+
+Uniformity is relative to a set of shader invocations. A uniform value has the same value across that set. Uniform control flow means that those invocations follow the same control-flow path. Values and control flow can be considered at group, wave or quad scope. For wave operations, result uniformity is over the participating lanes at that operation.
+
+### Group-uniform control flow
+
+All threads in the group pick the same path.
+
+### Wave-uniform control flow
+
+All shader invocations in the wave pick the same path.
+
+<a id="quad-uniformity"></a>
+
+### Quad-uniform control flow
+
+All four lanes of the quad follow the same path. Different quads in a wave can follow different paths.
+
+<a id="wave-participation"></a>
+
+### Wave operation participation
+
+These intrinsics are dependent on active lanes and therefore flow control. In
+the model of this document, implementations must enforce that the number of
+active lanes exactly corresponds to the programmer’s view of flow control.
+
+Wave-wide votes/reductions operate on the active lanes at that operation. Divergent control flow can change this participating set. Reading a value from an inactive or nonexistent source lane is undefined. A program must not assume a fixed wave width or a stage-specific mapping not supplied by an explicit contract.
 
 See [pixel shader helper participation](pixel-shaders.md#wave-helper-participation) for when helper lanes join wave operations.
+
+<a id="waves"></a>
+
+## Wave operations
+
+Wave operations include queries, votes, broadcasts, reductions, scans and quad shuffles. They are available in Shader Model 6.0 and later. [`D3D12_FEATURE_DATA_D3D12_OPTIONS1::WaveOps`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options1) reports wave operation support. `WaveLaneCountMin` and `WaveLaneCountMax` report the supported lane count range. Shader Model 6.9 requires wave operation support.
+
+The operation descriptions below use default helper-lane participation. [Pixel shader helper participation](pixel-shaders.md#wave-helper-participation) defines the `WaveOpsIncludeHelperLanes` override and helper lifetime.
+
+All wave operations with the exception of
+[Wave Query Intrinsics](#wave-query-intrinsics),
+[Quad-Wide Shuffle Operations](#quad-wide-shuffle-operations) and
+[quad votes](#quad-votes) are disabled by default on helper lanes.
+They are treated as if flow control excludes these operations on helper lanes,
+therefore values read from or returned to helper lanes by these operations are undefined.
+
+In the reference signatures, `<type>` and `<int_type>` stand for operand types supported by the operation and target shader model. Bitwise operations use integer types.
+
+<a id="wave-query-intrinsics"></a>
+
+### Wave queries
+
+#### WaveIsFirstLane
+
+```hlsl
+bool WaveIsFirstLane()
+```
+
+This result returns true only for the active lane in the current wave with the
+smallest index among the participating lanes. It can be used to identify operations that are to be executed
+only once per wave.
+
+#### WaveGetLaneCount
+
+```hlsl
+uint WaveGetLaneCount()
+```
+
+Returns the number of lanes in a wave on this architecture. The result will be
+between 4 and 128. Includes all lanes (active, inactive and/or helper lanes).
+
+#### WaveGetLaneIndex
+
+```hlsl
+uint WaveGetLaneIndex()
+```
+
+Returns the index of the current lane within the current wave. The result must
+be in the [0, WaveGetLaneCount) range.
+
+<a id="wave-votes"></a>
+
+### Wave votes
+
+This set of intrinsics compare values across threads currently active from the
+current wave.
+
+#### WaveActiveAnyTrue
+
+```hlsl
+bool WaveActiveAnyTrue( bool expr )
+```
+
+Returns true if \<expr\> is true in any participating lane in the current wave.
+
+#### WaveActiveAllTrue
+
+```hlsl
+bool WaveActiveAllTrue( bool expr )
+```
+
+Returns true if \<expr\> is true in all participating lanes in the current wave.
+
+#### WaveActiveBallot
+
+```hlsl
+uint4 WaveActiveBallot( bool expr )
+```
+
+Returns a uint4 containing a bitmask of the evaluation of the Boolean \<expr\> for all
+participating lanes in the current wave. The least-significant bit corresponds to the
+lane with index zero. The bits corresponding to inactive or helper lanes will be zero. The
+bits that are greater than or equal to WaveGetLaneCount will be zero.
+
+<a id="wave-broadcasts"></a>
+
+### Wave broadcasts and shuffles
+
+The following routines enable all participating lanes in the current wave to receive
+the value(s) from the specified lane(s). The return value
+from an inactive lane or helper lane is undefined.
+
+#### WaveReadLaneFirst
+
+```hlsl
+<type> WaveReadLaneFirst( <type> expr )
+```
+
+Returns the value of expr for the participating lane of the current wave with the
+smallest index. The resulting value is thus uniform across the wave, making this effectively a broadcast operation.
+
+#### WaveReadLaneAt
+
+```hlsl
+<type> WaveReadLaneAt( <type> expr, uint laneIndex)
+```
+
+Returns the value of expr for the given lane index within the current wave.
+
+If laneIndex is uniform, this is effectively a broadcast operation, otherwise it is a shuffle operation.
+
+The result is undefined on a helper lane, or if the lane referred to by laneIndex is inactive or a helper lane.
+
+<a id="wave-reductions"></a>
+
+### Wave reductions
+
+These intrinsics compute the specified operation across all participating lanes in the
+wave and broadcast the final result to all participating lanes.
+Therefore, the final output is guaranteed uniform across the wave.
+
+#### WaveActiveAllEqual
+
+```hlsl
+bool<n> WaveActiveAllEqual(<type> expr )
+```
+
+Returns a scalar or vector of bools matching `<type>` where each bool element is true if `expr`
+is the same for every participating lane in the current wave
+(and thus uniform across it).
+
+#### WaveActiveCountBits
+
+```hlsl
+uint WaveActiveCountBits( bool bBit )
+```
+
+Counts the number of Boolean variables (bBit) which evaluate to true across all
+participating lanes in the current wave, and replicates the result to all lanes in the
+wave. Providing an explicit `true` Boolean value returns the number of participating lanes.
+
+#### WaveActiveSum
+
+```hlsl
+<type> WaveActiveSum( <type> expr )
+```
+
+Sums up the value of \<expr\> across all participating lanes in the current wave, and
+replicates it to all lanes in said wave. The order of operations is undefined.
+
+#### WaveActiveProduct
+
+```hlsl
+<type> WaveActiveProduct( <type> expr)
+```
+
+Multiplies the values of \<expr\> together across all participating lanes in the
+current wave and replicates it back to all participating lanes. The order of operations
+is undefined.
+
+#### WaveActiveBitAnd
+
+```hlsl
+<int_type> WaveActiveBitAnd( <int_type> expr)
+```
+
+Returns the bitwise AND of all the values of \<expr\> across all participating lanes in
+the current wave and replicates it back to all participating lanes.
+
+#### WaveActiveBitOr
+
+```hlsl
+<int_type> WaveActiveBitOr( <int_type> expr )
+```
+
+Returns the bitwise OR of all the values of \<expr\> across all participating lanes in
+the current wave and replicates it back to all participating lanes.
+
+#### WaveActiveBitXor
+
+```hlsl
+<int_type> WaveActiveBitXor( <int_type> expr)
+```
+
+Returns the bitwise Exclusive OR of all the values of \<expr\> across all participating
+lanes in the current wave and replicates it back to all participating lanes.
+
+#### WaveActiveMin
+
+```hlsl
+<type> WaveActiveMin( <type> expr)
+```
+
+Computes minimum value of \<expr\> across all participating lanes in the current wave
+and replicates it back to all participating lanes. The order of operations is
+undefined.
+
+#### WaveActiveMax
+
+```hlsl
+<type> WaveActiveMax( <type> expr);
+```
+
+Computes maximum value of \<expr\> across all participating lanes in the current wave
+and replicates it back to all participating lanes. The order of operations is
+undefined.
+
+<a id="wave-prefixes"></a>
+
+### Wave scans and prefixes
+
+The following intrinsics apply the operation to each lane and leave each partial
+result of the computation in the corresponding lane, e.g. wavePrefixSum()
+returns for each lane the sum of elements up to but not including that lane.
+Note: Postfix versions of the Prefix routines can be implemented by adding in
+the current lane’s value.
+
+#### WavePrefixCountBits
+
+```hlsl
+uint WavePrefixCountBits( bool bBit )
+```
+
+Returns the sum of all the specified Boolean variables (bBit) set to true across
+all participating lanes with indices smaller than this lane’s. A postfix version is
+implemented by adding the current lane’s bit value.
+
+> The participating lane with the lowest index will always receive a 0.
+
+#### WavePrefixProduct
+
+```hlsl
+<type> WavePrefixProduct( <type> value )
+```
+
+Returns the product of all of the \<value\>s in the participating lanes in this wave with indices less than this lane.
+
+The order of operations on this routine cannot be guaranteed, so effectively the `precise` flag is ignored within it. A postfix product can be computed by multiplying the prefix product by the current lane’s value.
+
+> The participating lane with the lowest index will always receive a 1.
+
+#### WavePrefixSum
+
+```hlsl
+<type> WavePrefixSum( <type> value )
+```
+
+Returns the sum of all of the \<value\>s in the participating lanes of this wave having indices less than this one.
+
+The order of operations on this routine cannot be guaranteed, so effectively the
+`precise` flag is ignored within it. A postfix sum can be computed by adding the
+prefix sum to the current lane’s value.
+
+> The participating lane with the lowest index will always receive a 0.
+
+<a id="wave-matching"></a>
+
+### Matching and partitioned prefixes
+
+`WaveMatch()`, and a number of `WaveMultiPrefix*()` intrinsics,
+are available starting with shader model 6.5,
+when the optional Wave Intrinsics feature is supported.
+
+#### WaveMatch
+
+```hlsl
+uint4 WaveMatch( <type> val )
+```
+
+The `WaveMatch()` intrinsic compares the value of the expression in the current lane
+to its value in all other active lanes in the current wave and returns a
+bitmask representing the set of lanes matching current lane's value.
+
+`val` can be any expression which evaluates to any of the currently
+supported primitive data types (e.g. float4, uint2, etc.).
+
+The return value is a uint4 representing a 128b bit mask which
+identifies lanes in the current wave matching current lane's value of `val`.
+Bits in the mask corresponding to inactive lanes, or at positions
+beyond current implementation's wave width, will contribute 0's.
+Bits in the mask corresponding to active lanes
+which match the value of `val` in the current lane will be set to 1.
+The bit in the mask corresponding to the current lane will always be set to 1.
+
+In pixel shaders, bits corresponding to helper lanes are set to 0,
+and on helper lanes, the resulting bitmask is undefined.
+
+#### Partitioned prefix operations
+
+`WaveMultiPrefix*()` is a set of functions which implement
+*multi-prefix* operations among the set of active lanes in the current wave.
+
+A multi-prefix operation comprises a set of prefix operations, executed
+in parallel within subsets of lanes identified with the provided bitmasks.
+These bitmasks represent partitioning of the set of active
+lanes in the current wave into N groups
+(where N is the number of unique masks across all lanes in the wave).
+N prefix operations are then performed each within its corresponding group.
+The groups are assumed to be non-intersecting
+(that is, a given lane can be a member of one and only one group),
+and bitmasks in all lanes belonging to the same group are required to be the same after excluding inactive/helper lane in the bitmask.
+
+The following operations evaluates multiple prefix operations within groups of threads identified by `mask`:
+
+`<type>` can be any of the currently supported
+integer or floating point primitive types.
+
+`<int_type>` can be any of the currently supported
+integer primitive types.
+
+`val` is the value to perform the prefix operation on.
+
+`mask` is a 128b bitmask,
+representing the partitioning of the current wave into groups of lanes,
+as described above.
+Bits in the masks at positions beyond current implementation's wave width,
+or corresponding to inactive or helper lanes, are ignored (assumed to be 0).
+If the masks do not form non-intersecting subsets of lanes,
+then the values returned by this intrinsic are undefined.
+Bitmasks for all lanes belonging to the same group are required to match,
+otherwise the results returned by this intrinsic are undefined.
+
+Returned `<type>` is the same type as the input type for `val`.
+The result of the prefix operation is computed with
+values from prior lanes in the same group only;
+it does not include the value from the current lane.
+A postfix value would be computed by
+applying the corresponding operator between
+the result of the prefix operation
+and the value passed in to the prefix operation.
+
+##### WaveMultiPrefixSum
+
+```hlsl
+<type> WaveMultiPrefixSum( <type> val, uint4 mask )
+```
+
+val0 + val1 + val2 ...
+
+##### WaveMultiPrefixProduct
+
+```hlsl
+<type> WaveMultiPrefixProduct( <type> val, uint4 mask )
+```
+
+val0 \* val1 \* val2 ...
+
+##### WaveMultiPrefixCountBits
+
+```hlsl
+uint WaveMultiPrefixCountBits( bool val, uint4 mask )
+```
+
+(val0 ? 1 : 0) + (val1 ? 1 : 0) + (val2 ? 1 : 0) ...
+
+##### WaveMultiPrefixBitAnd
+
+```hlsl
+<int_type> WaveMultiPrefixBitAnd( <int_type> val, uint4 mask )
+```
+
+val0 & val1 & val2 ...
+
+##### WaveMultiPrefixBitOr
+
+```hlsl
+<int_type> WaveMultiPrefixBitOr( <int_type> val, uint4 mask )
+```
+
+val0 \| val1 \| val2 ...
+
+##### WaveMultiPrefixBitXor
+
+```hlsl
+<int_type>  WaveMultiPrefixBitXor( <int_type> val, uint4 mask )
+```
+
+val0 ^ val1 ^ val2 ...
+
+<a id="quad-operations"></a>
+
+## Quad operations
+
+Quad formation and lane mapping are defined for [pixel shaders](pixel-shaders.md#pixel-quads), [compute shaders](compute.md#compute-quads), [amplification and mesh shaders](amplification-and-mesh-shaders.md#derivatives), and [work graph nodes](work-graphs.md#quad-and-derivative-operation-semantics).
+
+<a id="quad-wide-shuffle-operations"></a>
+
+### Quad reads
+
+Since these routines rely on quad-level values, they assume that all lanes in
+the quad are active, including helper lanes (those that are masked from final
+writes). This means they should be treated like the existing DDX and DDY
+intrinsics in that sense.
+
+Unlike for most other wave intrinsics, for these routines,
+reading from active helper lanes is well defined,
+and the return value is also well-defined on helper lanes.
+
+These routines assume that flow control execution is uniform at least across the
+quad.
+
+#### QuadReadAcrossX
+
+```hlsl
+<type> QuadReadAcrossX( <type> localValue )
+```
+
+Returns the specified local value read from the other lane in this quad in the X
+direction.
+
+#### QuadReadAcrossY
+
+```hlsl
+<type> QuadReadAcrossY( <type> localValue )
+```
+
+Returns the specified local value read from the other lane in this quad in the Y
+direction.
+
+#### QuadReadAcrossDiagonal
+
+```hlsl
+<type> QuadReadAcrossDiagonal( <type> localValue )
+```
+
+Returns the specified local value which is read from the diagonally opposite
+lane in this quad.
+
+#### QuadReadLaneAt
+
+```hlsl
+<type> QuadReadLaneAt( <type> sourceValue, uint quadLaneID )
+```
+
+Returns the specified source value from the lane identified by quadLaneID within
+the current quad.
+
+`quadLaneID` is not required to be uniform, meaning this can be considered a broadcast if `quadLaneID` is uniform, or a shuffle if not.
+
+<a id="quad-votes"></a>
+
+### Quad votes
+
+Shader Model 6.7 provides native `QuadAny` and `QuadAll` operations in pixel, compute, mesh and amplification shaders. Quad vote instructions require [`WaveOps`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options1) support.
+
+`QuadAny` and `QuadAll` compare values from all four lanes of the quad. All four lanes, including helper lanes, must be active.
+
+The vote result is uniform across the quad. Reading active helper lanes and the result returned to those lanes are well-defined. Calling either intrinsic in non-quad-uniform control flow has undefined behavior.
+
+<a id="quadany"></a>
+
+#### QuadAny
+
+```hlsl
+bool QuadAny(bool expr)
+```
+
+Returns true if &lt;expr&gt; is `true` in any lane of the current quad.
+
+<a id="quadall"></a>
+
+#### QuadAll
+
+```hlsl
+bool QuadAll(bool expr)
+```
+
+Returns true if &lt;expr&gt; is `true` in all lanes of the current quad.
+
+<a id="quad-vote-lowering"></a>
+
+#### Earlier-profile quad vote implementations
+
+Shader Model 6.0–6.6 shaders can implement equivalent quad votes using the existing quad read operations. These shader-code implementations retain the quad-uniform participation and `WaveOps` requirements:
+
+```hlsl
+bool QuadAny(bool expr) {
+  expr |= QuadReadAcrossX(expr);
+  expr |= QuadReadAcrossY(expr);
+  expr |= QuadReadAcrossDiagonal(expr);
+  return expr;
+}
+
+bool QuadAll(bool expr) {
+  return !QuadAny(!expr);
+}
+```
 
 <a id="program-model"></a>
 
@@ -277,7 +792,7 @@ For DXIL, see [Control flow and functions](#dxil-control-flow).
 
 Shader Model 5.1 and later shaders can select resources and samplers with shader-computed indices. DXIL represents resources as handles. Shader Model 6.6 and later shaders can also select descriptors through [direct heap indexing](binding.md#direct-indexing).
 
-A potentially non-uniform resource or sampler index must carry the `NonUniformResourceIndex` indication. Omitting the required indication gives undefined results. For implicit derivatives, the selected resource and contributing coordinate values must satisfy the stage's derivative/quad rules. For these derivative operations, Shader Model 6.7 introduces [`QuadAny`](pixel-shaders.md#quadany) and [`QuadAll`](pixel-shaders.md#quadall), making it simpler to maintain quad-uniform control flow even if different quads of a wave diverge.
+A potentially non-uniform resource or sampler index must carry the `NonUniformResourceIndex` indication. Omitting the required indication gives undefined results. For implicit derivatives, the selected resource and contributing coordinate values must satisfy the stage's derivative/quad rules. For these derivative operations, Shader Model 6.7 provides native [`QuadAny`](#quadany) and [`QuadAll`](#quadall), making it simpler to maintain quad-uniform control flow even if different quads of a wave diverge.
 
 Typed accesses use the resource dimension's element coordinates. Raw accesses use byte offsets. Structured accesses use a structure index and byte offset within the structure. See [DXBC alignment](memory-model.md#shared-memory-alignment) and [resource/shared memory access bounds](memory-model.md#shared-memory-bounds) for their distinct invalid and out-of-bounds cases. DXIL raw buffer and native 16-bit access alignment depends on the operation and type rather than a universal four-byte rule. [Typed UAV load support](formats.md#typed-uav-loads) depends on the device and format, separately from ordinary SRV texture loads.
 
@@ -543,6 +1058,25 @@ values is an issue for an application, a workaround is to use
 a texture load instead, which
 guarantees 32-bit float
 values are read unmodified.
+
+<a id="quad-gradient-evaluation"></a>
+
+### Quad-uniform derivative evaluation
+
+Intrinsics that calculate gradient values read texture coordinates
+from all four threads in a quad to calculate the gradients.
+
+In *divergent control flow*, inactive lanes may use the same temporary registers to store different values on other code paths.
+Therefore, it is not well-defined to read a value from an inactive lane
+corresponding to a temporary value in an active lane.
+
+For well-defined gradient calculations on temporary values,
+all lanes in the quad must be active.
+This is a weaker requirement than *<ins><!-- d3d12-review-inline:begin:common-shader-internals:uniformity:3:modified:wave-scope -->wave-uniform control flow<!-- d3d12-review-inline:end:common-shader-internals:uniformity:3:modified:wave-scope --></ins>* called *quad-uniform control flow*.
+Quad-uniform control flow may still be *divergent* across a wave,
+but it satisfies the requirements for well-defined gradient calculations on each active quad,
+since each gradient operation will only read from other lanes in the same quad.
+`QuadAny` makes it convenient to write code that preserves quad-uniform control flow.
 
 <a id="implicit-lod-sharing"></a>
 
@@ -1498,7 +2032,7 @@ To access single-channel integer values from
  formats representing multichannel texture elements,
  the `GatherRaw` method is provided:
 
-```c++
+```hlsl
 uint<bits>_t4 <TexObject2D>.GatherRaw(SamplerState S, float<N> Location, [int2 Offset], [out uint Status]);
 ```
 

@@ -68,10 +68,7 @@ its scalar size (or pointer size for `RESOURCE`). In notation,
 `offset[i] = align_up(end[i-1], min(alignment[i], packing))` and
 `end[i] = offset[i] + size[i]`, with `end[-1] = 0`.
 The helper copies the supplied byte range, zeroes inter-member and remaining
-padding, and translates resource members. This inspected route does not
-establish that arbitrary extra bytes, undersized blobs, null pointers or
-unknown layouts are valid. It also does not establish a per-extension
-structure size or trailing padding requirement.<!-- d3d12-review-inline:end:video-extension:N-packing:1:authored:migration-bf2786b46148f377-0 --></ins>
+padding, and translates resource members.<!-- d3d12-review-inline:end:video-extension:N-packing:1:authored:migration-bf2786b46148f377-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-extension:N-packing:2:authored:migration-39b2520d0ad9568b-0 -->Simple data parameters use `FLAG_NONE`. Resource flags describe read and
 write usage. The inspected runtime metadata validation requires a nonzero read
@@ -166,14 +163,12 @@ invalid selection or an unsupported GUID produces `E_INVALIDARG`. Creation
 propagates validation and driver HRESULT failures. With a null result pointer,
 creation takes a validation-only path. It returns `S_FALSE` after successful
 description validation and creates no object. That path does not guarantee
-complete creation blob validation and does not change the required output
-annotation in the released declaration. The inspected CPU device execution
+complete creation blob validation. The inspected CPU device execution
 path rejects a negotiated video DDI older than `_0076_0` with `E_INVALIDARG`.
 The inspected creation parameter translation rejects swap chain resources in
 the creation blob with `E_INVALIDARG`. CPU device execution propagates driver
 and conversion HRESULT failures. In the inspected path, an allocation failure
-during CPU device execution returns `E_INVALIDARG`. That result is not a
-promise of `E_OUTOFMEMORY`.<!-- d3d12-review-inline:end:video-extension:N-lifetime:2:authored:migration-798e4f55ea36c090-0 --></ins>
+during CPU device execution returns `E_INVALIDARG`.<!-- d3d12-review-inline:end:video-extension:N-lifetime:2:authored:migration-798e4f55ea36c090-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:video-extension:N-lifetime:3:authored:migration-cdd6be3e5a8edec2-0 -->CPU device execution completes before `ExecuteExtensionCommand` returns.
 Scalar and blob storage and the resources named in it are distinct lifetime

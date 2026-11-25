@@ -1627,15 +1627,11 @@ Bind an array of viewports to the rasterizer stage of the pipeline.
 
 `NumViewports`
 
-[in] Type: **UINT**
+[in] Number of viewports to bind. The range of valid values is <ins><!-- d3d12-review-inline:begin:rasterization:P-RSSetViewports:2:modified:source-94383bfbd010b195-0-0 -->0 through 16 inclusive<!-- d3d12-review-inline:end:rasterization:P-RSSetViewports:2:modified:source-94383bfbd010b195-0-0 --></ins>.
 
-Number of viewports to bind. The range of valid values is <ins><!-- d3d12-review-inline:begin:rasterization:P-RSSetViewports:2:modified:source-94383bfbd010b195-0-0 -->0 through 16 inclusive<!-- d3d12-review-inline:end:rasterization:P-RSSetViewports:2:modified:source-94383bfbd010b195-0-0 --></ins>.
+[`pViewports`](#d3d12-viewport)
 
-`pViewports`
-
-[in] Type: **const [D3D12_VIEWPORT](#d3d12-viewport)\***
-
-An array of [D3D12_VIEWPORT](#d3d12-viewport) structures to bind to the device.
+[in] An array of [D3D12_VIEWPORT](#d3d12-viewport) structures to bind to the device.
 
 <a id="return-values"></a>
 
@@ -1666,15 +1662,11 @@ Binds an array of scissor rectangles to the rasterizer stage.
 
 `NumRects`
 
-[in] Type: **UINT**
-
-The number of scissor rectangles to bind<ins><!-- d3d12-review-inline:begin:rasterization:P-RSSetScissorRects:2:modified:source-8b8bd09b26574adb-0-0 -->, from 0 through 16 inclusive<!-- d3d12-review-inline:end:rasterization:P-RSSetScissorRects:2:modified:source-8b8bd09b26574adb-0-0 --></ins>.
+[in] The number of scissor rectangles to bind<ins><!-- d3d12-review-inline:begin:rasterization:P-RSSetScissorRects:2:modified:source-8b8bd09b26574adb-0-0 -->, from 0 through 16 inclusive<!-- d3d12-review-inline:end:rasterization:P-RSSetScissorRects:2:modified:source-8b8bd09b26574adb-0-0 --></ins>.
 
 `pRects`
 
-[in] Type: **const D3D12\_RECT\***
-
-An array of scissor rectangles.
+[in] An array of scissor rectangles.
 
 <a id="return-values-1"></a>
 
@@ -1740,23 +1732,17 @@ This method configures the sample positions used by subsequent draw, copy, resol
 
 `NumSamplesPerPixel`
 
-[in] Type: **UINT**
-
-Specifies the number of samples to take, per pixel. This value can be 1, 2, 4, 8, or 16, otherwise the custom-pattern arguments are invalid. The number of samples must match the <ins><!-- d3d12-review-inline:begin:rasterization:P-SetSamplePositions:2:modified:GRI12 -->effective PSO/forced sample count<!-- d3d12-review-inline:end:rasterization:P-SetSamplePositions:2:modified:GRI12 --></ins> at draw time, otherwise the behavior is undefined.
+[in] Specifies the number of samples to take, per pixel. This value can be 1, 2, 4, 8, or 16, otherwise the custom-pattern arguments are invalid. The number of samples must match the <ins><!-- d3d12-review-inline:begin:rasterization:P-SetSamplePositions:2:modified:GRI12 -->effective PSO/forced sample count<!-- d3d12-review-inline:end:rasterization:P-SetSamplePositions:2:modified:GRI12 --></ins> at draw time, otherwise the behavior is undefined.
 
 `NumPixels`
 
-[in] Type: **UINT**
-
-<ins><!-- d3d12-review-inline:begin:rasterization:P-SetSamplePositions:5 -->Specifies the number of pixels that sample patterns are being specified for. This value can be either 1 or 4, otherwise the custom-pattern arguments are invalid. A value of 1 configures a single sample pattern to be used for each pixel; a value of 4 configures separate sample patterns for each pixel in a 2x2 pixel grid which is repeated over the render-target or viewport space, aligned to even coordinates.<!-- d3d12-review-inline:end:rasterization:P-SetSamplePositions:5 --></ins>
+[in] <ins><!-- d3d12-review-inline:begin:rasterization:P-SetSamplePositions:5 -->Specifies the number of pixels that sample patterns are being specified for. This value can be either 1 or 4, otherwise the custom-pattern arguments are invalid. A value of 1 configures a single sample pattern to be used for each pixel; a value of 4 configures separate sample patterns for each pixel in a 2x2 pixel grid which is repeated over the render-target or viewport space, aligned to even coordinates.<!-- d3d12-review-inline:end:rasterization:P-SetSamplePositions:5 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:rasterization:P-SetSamplePositions:6 -->Note that the maximum number of combined samples can't exceed 16, otherwise the custom-pattern arguments are invalid. If NumPixels is set to 4, NumSamplesPerPixel can specify no more than 4 samples.<!-- d3d12-review-inline:end:rasterization:P-SetSamplePositions:6 --></ins>
 
-`pSamplePositions`
+[`pSamplePositions`](#d3d12-sample-position)
 
-[in] Type: **[D3D12_SAMPLE_POSITION](#d3d12-sample-position)\***
-
-Specifies an array of D3D12\_SAMPLE\_POSITION elements. The size of the array is NumPixels \* NumSamplesPerPixel. If NumPixels is set to 4, then the first group of sample positions corresponds to the upper-left pixel in the 2x2 grid of pixels; the next group of sample positions corresponds to the upper-right pixel, the next group to the lower-left pixel, and the final group to the lower-right pixel.
+[in] Specifies an array of D3D12\_SAMPLE\_POSITION elements. The size of the array is NumPixels \* NumSamplesPerPixel. If NumPixels is set to 4, then the first group of sample positions corresponds to the upper-left pixel in the 2x2 grid of pixels; the next group of sample positions corresponds to the upper-right pixel, the next group to the lower-left pixel, and the final group to the lower-right pixel.
 
 <ins><!-- d3d12-review-inline:begin:rasterization:P-SetSamplePositions:10 -->If centroid interpolation is used during rendering, the order of positions for each pixel determines centroid-sampling priority. When the centroid rule selects a covered sample, the first covered sample in the order specified is chosen. This priority does not replace the [full-coverage pixel center exception](pixel-shaders.md#centroid).<!-- d3d12-review-inline:end:rasterization:P-SetSamplePositions:10 --></ins>
 
