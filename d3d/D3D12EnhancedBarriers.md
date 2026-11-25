@@ -495,8 +495,9 @@ Buffers and Simultaneous-Access Textures (Textures created with the `D3D12_RESOU
 - `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE`
 - `D3D12_BARRIER_ACCESS_PREDICATION`
 
-These barrier-free access allowances do not authorize non-RTAS writes to
-acceleration structure buffers (ASBs), as defined in the
+These barrier-free access allowances, including the subsequent-access
+allowance below, do not authorize non-RTAS writes to acceleration
+structure buffers (ASBs), as defined in the
 [Raytracing specification](Raytracing.md#acceleration-structure-memory-restrictions);
 non-RTAS reads remain governed by the rules above.
 
@@ -713,7 +714,7 @@ Possible but not expected to be common: If aliased memory write flushes were nee
 
 Legacy D3D12 resource creation API's require an initial state.  For texture resources, this initial state implies an initial layout according to the table in [Equivalent `D3D12_BARRIER_LAYOUT` for each `D3D12_RESOURCE_STATES` bit](#equivalent-d3d12_barrier_layout-for-each-d3d12_resource_states-bit).
 
-Despite the fact that legacy resource creation API's have an Initial State, buffers do not have a layout, and thus are treated as though they have an initial state of `D3D12_RESOURCE_STATE_COMMON`.  This includes Upload Heap and Readback Heap buffers, despite being documented as requiring `D3D12_RESOURCE_STATE_GENERIC_READ` and `D3D12_RESOURCE_STATE_COPY_DEST` respectively.  The exception to this is buffers intended to be used as raytracing acceleration structures.  Creating such a buffer in `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE` imposes a requirement that any write to it be performed only by an RTAS operation.  A non-RTAS write has undefined behavior.  This requirement does not restrict read access.
+Despite the fact that legacy resource creation API's have an Initial State, buffers do not have a layout, and thus are treated as though they have an initial state of `D3D12_RESOURCE_STATE_COMMON`. This includes Upload Heap and Readback Heap buffers, despite being documented as requiring `D3D12_RESOURCE_STATE_GENERIC_READ` and `D3D12_RESOURCE_STATE_COPY_DEST` respectively. The exception is an ASB. A buffer created by a legacy resource-creation API in `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE` may be named directly by enhanced barriers without first being transitioned to `D3D12_RESOURCE_STATE_COMMON`; that transition is prohibited for ASBs. An ASB created by an enhanced-barrier resource-creation API is identified by `D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE` and may be created with initial layout `D3D12_BARRIER_LAYOUT_UNDEFINED`. The write restrictions and unchanged read behavior for ASBs are described in [Acceleration structure memory restrictions](Raytracing.md#acceleration-structure-memory-restrictions).
 
 Swap Chain textures are initially created in `D3D12_BARRIER_LAYOUT_COMMON`. This matches the initial state for swap chains documented in https://learn.microsoft.com/en-us/windows/win32/direct3d12/using-resource-barriers-to-synchronize-resource-states-in-direct3d-12#initial-states-for-resources.
 
@@ -2096,7 +2097,7 @@ Indicates a resource is accessible as a resolve source. Runtime barrier validati
 
 #### D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ
 
-Indicates a resource is accessible for read as a raytracing acceleration structure.  The resource MUST have been created using an initial state of `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE`. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ` is used with one or more of the following sync bits:
+Indicates a resource is accessible for read as a raytracing acceleration structure. The resource MUST be an ASB as defined in [Acceleration structure memory restrictions](Raytracing.md#acceleration-structure-memory-restrictions). Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ` is used with one or more of the following sync bits:
 
 - `D3D12_BARRIER_SYNC_ALL`
 - `D3D12_BARRIER_SYNC_COMPUTE_SHADING`
@@ -2108,7 +2109,7 @@ Indicates a resource is accessible for read as a raytracing acceleration structu
 
 #### D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE
 
-Indicates a resource is accessible for write as a raytracing acceleration structure.  The resource MUST have been created using an initial state of `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE`. Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE` is used with one or more of the following sync bits:
+Indicates a resource is accessible for write as a raytracing acceleration structure. The resource MUST be an ASB as defined in [Acceleration structure memory restrictions](Raytracing.md#acceleration-structure-memory-restrictions). Runtime barrier validation ensures that `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE` is used with one or more of the following sync bits:
 
 - `D3D12_BARRIER_SYNC_ALL`
 - `D3D12_BARRIER_SYNC_COMPUTE_SHADING`
