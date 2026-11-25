@@ -2,19 +2,6 @@
 
 # Meta commands
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:meta-command:P-overview:0:modified:migration-94c042c41c55986c-0 -->A meta command is a Direct3D 12 object representing an algorithm that is accelerated by independent hardware vendors (IHVs). It's an opaque reference to a command generator that is implemented by the driver.<!-- d3d12-review-inline:end:meta-command:P-overview:0:modified:migration-94c042c41c55986c-0 --></ins>
 
 A meta command can encapsulate a set of pipeline state objects (PSOs), bindings, intermediate resource states, and Draw/Dispatch calls. You can think of the signature of a meta command as being similar to a C-style function, with multiple in/out parameters, and no return value.

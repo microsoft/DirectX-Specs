@@ -1,18 +1,5 @@
 # Pipeline state and shader linkage
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <a id="ordinary-pipeline-state"></a>
 
 ## Ordinary pipeline state
@@ -384,7 +371,7 @@ typedef enum D3D12_PIPELINE_STATE_SUBOBJECT_TYPE
 
 <ins><!-- d3d12-review-inline:begin:pipeline:D121-stored-pipeline-inputs:0:authored:migration-01c815fad20e8275-0 -->For recorded offline-compilation inputs, see [database stream and root signature substitutions](state-object-databases-and-identity.md#storage-only-forms) for how a database stores and reconstructs a pipeline state stream independently of pipeline creation. A successful database store or find does not create a PSO or validate the input against driver capabilities.<!-- d3d12-review-inline:end:pipeline:D121-stored-pipeline-inputs:0:authored:migration-01c815fad20e8275-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:pipeline:D131-offline-pipeline-inputs:0:authored:migration-655dca21ee025aa9-0 -->[ID3D12Compiler::CompilePipelineState](compiler-invocation-and-cache-output.md#id3d12compiler-compilepipelinestate) uses [serialized roots rather than live device roots](compiler-invocation-and-cache-output.md#input-ownership) and does not produce a device PSO.<!-- d3d12-review-inline:end:pipeline:D131-offline-pipeline-inputs:0:authored:migration-655dca21ee025aa9-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:pipeline:D131-offline-pipeline-inputs:0:authored:migration-655dca21ee025aa9-0 -->[ID3D12Compiler::CompilePipelineState](compiler-invocation-and-cache-output.md#id3d12compiler-compilepipelinestate) uses [serialized root signatures rather than live device root signatures](compiler-invocation-and-cache-output.md#input-ownership) and does not produce a device PSO.<!-- d3d12-review-inline:end:pipeline:D131-offline-pipeline-inputs:0:authored:migration-655dca21ee025aa9-0 --></ins>
 
 <a id="supporting-state"></a>
 
@@ -1121,21 +1108,21 @@ Here are the default values for blend state.
 | IndependentBlendEnable | **FALSE** |
 | RenderTarget[0].BlendEnable | **FALSE** |
 | RenderTarget[0].LogicOpEnable | **FALSE** |
-| RenderTarget[0].SrcBlend | D3D12\_BLEND\_ONE |
-| RenderTarget[0].DestBlend | D3D12\_BLEND\_ZERO |
-| RenderTarget[0].BlendOp | D3D12\_BLEND\_OP\_ADD |
-| RenderTarget[0].SrcBlendAlpha | D3D12\_BLEND\_ONE |
-| RenderTarget[0].DestBlendAlpha | D3D12\_BLEND\_ZERO |
-| RenderTarget[0].BlendOpAlpha | D3D12\_BLEND\_OP\_ADD |
-| RenderTarget[0].LogicOp | D3D12\_LOGIC\_OP\_NOOP |
-| RenderTarget[0].RenderTargetWriteMask | D3D12\_COLOR\_WRITE\_ENABLE\_ALL |
+| RenderTarget[0].SrcBlend | `D3D12_BLEND_ONE` |
+| RenderTarget[0].DestBlend | `D3D12_BLEND_ZERO` |
+| RenderTarget[0].BlendOp | `D3D12_BLEND_OP_ADD` |
+| RenderTarget[0].SrcBlendAlpha | `D3D12_BLEND_ONE` |
+| RenderTarget[0].DestBlendAlpha | `D3D12_BLEND_ZERO` |
+| RenderTarget[0].BlendOpAlpha | `D3D12_BLEND_OP_ADD` |
+| RenderTarget[0].LogicOp | `D3D12_LOGIC_OP_NOOP` |
+| RenderTarget[0].RenderTargetWriteMask | `D3D12_COLOR_WRITE_ENABLE_ALL` |
 
 #### D3D12_RASTERIZER_DESC defaults
 
 | State | Default Value |
 | --- | --- |
-| **FillMode** | D3D12\_FILL\_MODE\_SOLID |
-| **CullMode** | D3D12\_CULL\_MODE\_BACK |
+| **FillMode** | `D3D12_FILL_MODE_SOLID` |
+| **CullMode** | `D3D12_CULL_MODE_BACK` |
 | **FrontCounterClockwise** | **FALSE** |
 | **DepthBias** | 0 |
 | **DepthBiasClamp** | 0.0f |
@@ -1144,7 +1131,7 @@ Here are the default values for blend state.
 | **MultisampleEnable** | **FALSE** |
 | **AntialiasedLineEnable** | **FALSE** |
 | **ForcedSampleCount** | 0 |
-| **ConservativeRaster** | **D3D12\_CONSERVATIVE\_RASTERIZATION\_MODE\_OFF** |
+| **ConservativeRaster** | `D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF` |
 
 #### D3D12_DEPTH_STENCIL_DESC defaults
 
@@ -1153,15 +1140,15 @@ This table shows the default values of depth-stencil states.
 | State | Default Value |
 | --- | --- |
 | DepthEnable | TRUE |
-| DepthWriteMask | D3D12\_DEPTH\_WRITE\_MASK\_ALL |
-| DepthFunc | D3D12\_COMPARISON\_FUNC\_LESS |
+| DepthWriteMask | `D3D12_DEPTH_WRITE_MASK_ALL` |
+| DepthFunc | `D3D12_COMPARISON_FUNC_LESS` |
 | StencilEnable | FALSE |
-| StencilReadMask | D3D12\_DEFAULT\_STENCIL\_READ\_MASK |
-| StencilWriteMask | D3D12\_DEFAULT\_STENCIL\_WRITE\_MASK |
-| FrontFace.StencilFailOp <br>and<br><br>BackFace.StencilFailOp | D3D12\_STENCIL\_OP\_KEEP |
-| FrontFace.StencilDepthFailOp <br>and<br><br>BackFace.StencilDepthFailOp | D3D12\_STENCIL\_OP\_KEEP |
-| FrontFace.StencilPassOp <br>and<br><br>BackFace.StencilPassOp | D3D12\_STENCIL\_OP\_KEEP |
-| FrontFace.StencilFunc <br>and<br><br>BackFace.StencilFunc | D3D12\_COMPARISON\_FUNC\_ALWAYS |
+| StencilReadMask | `D3D12_DEFAULT_STENCIL_READ_MASK` |
+| StencilWriteMask | `D3D12_DEFAULT_STENCIL_WRITE_MASK` |
+| FrontFace.StencilFailOp <br>and<br><br>BackFace.StencilFailOp | `D3D12_STENCIL_OP_KEEP` |
+| FrontFace.StencilDepthFailOp <br>and<br><br>BackFace.StencilDepthFailOp | `D3D12_STENCIL_OP_KEEP` |
+| FrontFace.StencilPassOp <br>and<br><br>BackFace.StencilPassOp | `D3D12_STENCIL_OP_KEEP` |
+| FrontFace.StencilFunc <br>and<br><br>BackFace.StencilFunc | `D3D12_COMPARISON_FUNC_ALWAYS` |
 
 <a id="contributions"></a>
 
@@ -1319,17 +1306,17 @@ Creates a graphics pipeline state object.
 
 #### Parameters
 
-`[in] pDesc`
+`pDesc`
 
-A pointer to a [`D3D12_GRAPHICS_PIPELINE_STATE_DESC`](#d3d12-graphics-pipeline-state-desc) structure that describes graphics pipeline state.
+[in] A pointer to a [`D3D12_GRAPHICS_PIPELINE_STATE_DESC`](#d3d12-graphics-pipeline-state-desc) structure that describes graphics pipeline state.
 
 `riid`
 
 The globally unique identifier (**GUID**) for the pipeline state interface ([ID3D12PipelineState](#ordinary-pipeline-state)). The **REFIID**, or **GUID**, of the interface to the pipeline state can be obtained by using the \_\_uuidof() macro. For example, \_\_uuidof(ID3D12PipelineState) will get the **GUID** of the interface to a pipeline state.
 
-`[out] ppPipelineState`
+`ppPipelineState`
 
-<ins><!-- d3d12-review-inline:begin:pipeline:Q-id3d12device-creategraphicspipelinestate:6 -->A pointer to a memory block that receives a pointer to the [ID3D12PipelineState](#ordinary-pipeline-state) interface for the pipeline state object. The pipeline state object is an immutable state object.<!-- d3d12-review-inline:end:pipeline:Q-id3d12device-creategraphicspipelinestate:6 --></ins>
+[out] <ins><!-- d3d12-review-inline:begin:pipeline:Q-id3d12device-creategraphicspipelinestate:6 -->A pointer to a memory block that receives a pointer to the [ID3D12PipelineState](#ordinary-pipeline-state) interface for the pipeline state object. The pipeline state object is an immutable state object.<!-- d3d12-review-inline:end:pipeline:Q-id3d12device-creategraphicspipelinestate:6 --></ins>
 
 #### Return values
 
@@ -1355,17 +1342,17 @@ Creates a compute pipeline state object.
 
 #### Parameters
 
-`[in] pDesc`
+`pDesc`
 
-A pointer to a [`D3D12_COMPUTE_PIPELINE_STATE_DESC`](#d3d12-compute-pipeline-state-desc) structure that describes compute pipeline state.
+[in] A pointer to a [`D3D12_COMPUTE_PIPELINE_STATE_DESC`](#d3d12-compute-pipeline-state-desc) structure that describes compute pipeline state.
 
 `riid`
 
 The globally unique identifier (**GUID**) for the pipeline state interface ([ID3D12PipelineState](#ordinary-pipeline-state)). The **REFIID**, or **GUID**, of the interface to the pipeline state can be obtained by using the \_\_uuidof() macro. For example, \_\_uuidof(ID3D12PipelineState) will get the **GUID** of the interface to a pipeline state.
 
-`[out] ppPipelineState`
+`ppPipelineState`
 
-<ins><!-- d3d12-review-inline:begin:pipeline:Q-id3d12device-createcomputepipelinestate:6 -->A pointer to a memory block that receives a pointer to the [ID3D12PipelineState](#ordinary-pipeline-state) interface for the pipeline state object. The pipeline state object is an immutable state object.<!-- d3d12-review-inline:end:pipeline:Q-id3d12device-createcomputepipelinestate:6 --></ins>
+[out] <ins><!-- d3d12-review-inline:begin:pipeline:Q-id3d12device-createcomputepipelinestate:6 -->A pointer to a memory block that receives a pointer to the [ID3D12PipelineState](#ordinary-pipeline-state) interface for the pipeline state object. The pipeline state object is an immutable state object.<!-- d3d12-review-inline:end:pipeline:Q-id3d12device-createcomputepipelinestate:6 --></ins>
 
 #### Return values
 
@@ -1401,9 +1388,9 @@ The globally unique identifier (**GUID**) for the pipeline state interface ([ID3
 
 The **REFIID**, or **GUID**, of the interface to the pipeline state can be obtained by using the \_\_uuidof() macro. For example, \_\_uuidof(ID3D12PipelineState) will get the **GUID** of the interface to a pipeline state.
 
-`[out] ppPipelineState`
+`ppPipelineState`
 
-A pointer to a memory block that receives a pointer to the [ID3D12PipelineState](#ordinary-pipeline-state) interface for the pipeline state object.
+[out] A pointer to a memory block that receives a pointer to the [ID3D12PipelineState](#ordinary-pipeline-state) interface for the pipeline state object.
 
 The pipeline state object is an immutable state object.
 
@@ -1464,9 +1451,9 @@ Sets all shaders and <ins><!-- d3d12-review-inline:begin:pipeline:GRI05:0:modifi
 
 #### Parameters
 
-`[in] pPipelineState`
+`pPipelineState`
 
-Pointer to the [ID3D12PipelineState](#ordinary-pipeline-state) containing the pipeline state data.
+[in] Pointer to the [ID3D12PipelineState](#ordinary-pipeline-state) containing the pipeline state data.
 
 #### Return values
 
@@ -1517,7 +1504,7 @@ The runtime validates:
 
 <ins><!-- d3d12-review-inline:begin:pipeline:N-compatibility:0:authored:migration-79b46b747dfcee09-0 -->The selected program's root signature must satisfy [shader/root signature compatibility](binding.md#pipeline-compatibility), and the selected PSO and command list root signature must match when work is executed. Attachment descriptions require [format/sample support](formats.md#support) and compatible active views.<!-- d3d12-review-inline:end:pipeline:N-compatibility:0:authored:migration-79b46b747dfcee09-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:pipeline:N-indirect-canonical-owner:0:authored:migration-7896600335a14011-0 -->See [Indirect work types](indirect-execution.md#work-types) for graphics or compute root argument bind point selection and workload pipeline requirements, and [Command signature root matching](indirect-execution.md#execute-debug) for signature/root compatibility.<!-- d3d12-review-inline:end:pipeline:N-indirect-canonical-owner:0:authored:migration-7896600335a14011-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:pipeline:N-indirect-canonical-owner:0:authored:migration-7896600335a14011-0 -->See [Indirect work types](indirect-execution.md#work-types) for graphics or compute root argument bind point selection and workload pipeline requirements, and [Command signature compatibility](indirect-execution.md#execute-debug) for root signature matching requirements.<!-- d3d12-review-inline:end:pipeline:N-indirect-canonical-owner:0:authored:migration-7896600335a14011-0 --></ins>
 
 <a id="cached-data"></a>
 
@@ -1678,7 +1665,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_SET_PIPELINE_STATE_0114 )(D3D12DDI_API_HCOM
 
 <ins><!-- d3d12-review-inline:begin:pipeline:PC-inputs:0:authored:migration-9691aa954dcc9f64-0 -->Creation descriptions and arrays are borrowed for the call unless a specific contract supplies a longer lifetime. The driver copies any data it needs afterward.<!-- d3d12-review-inline:end:pipeline:PC-inputs:0:authored:migration-9691aa954dcc9f64-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:pipeline:PC-inputs:1:authored:migration-d6e87ae6a49a0209-0 -->A driver PSO retains its shader/state/root dependencies until destruction. Components may be shared between PSOs and are destroyed separately. Runtime-held dependencies keep root objects alive through dependent shader destruction, but do not extend root creation input storage lifetime.<!-- d3d12-review-inline:end:pipeline:PC-inputs:1:authored:migration-d6e87ae6a49a0209-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:pipeline:PC-inputs:1:authored:migration-d6e87ae6a49a0209-0 -->A driver PSO retains its shader, state and root signature dependencies until destruction. Components may be shared between PSOs and are destroyed separately. Runtime-held dependencies keep root signature objects alive through dependent shader destruction, but do not extend root signature creation input storage lifetime.<!-- d3d12-review-inline:end:pipeline:PC-inputs:1:authored:migration-d6e87ae6a49a0209-0 --></ins>
 
 <a id="driver-creation-errors"></a>
 
@@ -1715,35 +1702,35 @@ removal can supersede an otherwise returned creation result.<!-- d3d12-review-in
 >
 > | Current slot | Published signature and contract |
 > |---|---|
-> | `pfnCalcPrivateBlendStateSize` | [PFND3D12DDI_CALCPRIVATEBLENDSTATESIZE_0010](#ddi-pfnd3d12ddi-calcprivateblendstatesize-0010) |
-> | `pfnCalcPrivateDepthStencilStateSize` | [PFND3D12DDI_CALCPRIVATEDEPTHSTENCILSTATESIZE_0095](#ddi-pfnd3d12ddi-calcprivatedepthstencilstatesize-0095) |
-> | `pfnCalcPrivateElementLayoutSize` | [PFND3D12DDI_CALCPRIVATEELEMENTLAYOUTSIZE_0010](#ddi-pfnd3d12ddi-calcprivateelementlayoutsize-0010) |
-> | `pfnCalcPrivateGeometryShaderWithStreamOutput` | [PFND3D12DDI_CALC_PRIVATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026](#ddi-pfnd3d12ddi-calc-private-geometry-shader-with-stream-output-0026) |
-> | `pfnCalcPrivateMeshShaderSize` | [PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026](#ddi-pfnd3d12ddi-calc-private-shader-size-0026) |
-> | `pfnCalcPrivatePipelineStateSize` | [PFND3D12DDI_CALC_PRIVATE_PIPELINE_STATE_SIZE_0119](#ddi-pfnd3d12ddi-calc-private-pipeline-state-size-0119) |
-> | `pfnCalcPrivateRasterizerStateSize` | [PFND3D12DDI_CALCPRIVATERASTERIZERSTATESIZE_0102](#ddi-pfnd3d12ddi-calcprivaterasterizerstatesize-0102) |
-> | `pfnCalcPrivateShaderSize` | [PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026](#ddi-pfnd3d12ddi-calc-private-shader-size-0026) |
-> | `pfnCalcPrivateTessellationShaderSize` | [PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026](#ddi-pfnd3d12ddi-calc-private-shader-size-0026) |
-> | `pfnCreateAmplificationShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
-> | `pfnCreateBlendState` | [PFND3D12DDI_CREATEBLENDSTATE_0010](#ddi-pfnd3d12ddi-createblendstate-0010) |
-> | `pfnCreateComputeShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
-> | `pfnCreateDepthStencilState` | [PFND3D12DDI_CREATEDEPTHSTENCILSTATE_0095](#ddi-pfnd3d12ddi-createdepthstencilstate-0095) |
-> | `pfnCreateDomainShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
-> | `pfnCreateElementLayout` | [PFND3D12DDI_CREATEELEMENTLAYOUT_0010](#ddi-pfnd3d12ddi-createelementlayout-0010) |
-> | `pfnCreateGeometryShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
-> | `pfnCreateGeometryShaderWithStreamOutput` | [PFND3D12DDI_CREATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026](#ddi-pfnd3d12ddi-create-geometry-shader-with-stream-output-0026) |
-> | `pfnCreateHullShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
-> | `pfnCreateMeshShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
-> | `pfnCreatePipelineState` | [PFND3D12DDI_CREATE_PIPELINE_STATE_0119](#ddi-pfnd3d12ddi-create-pipeline-state-0119) |
-> | `pfnCreatePixelShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
-> | `pfnCreateRasterizerState` | [PFND3D12DDI_CREATERASTERIZERSTATE_0102](#ddi-pfnd3d12ddi-createrasterizerstate-0102) |
-> | `pfnCreateVertexShader` | [PFND3D12DDI_CREATE_SHADER_0026](#ddi-pfnd3d12ddi-create-shader-0026) |
-> | `pfnDestroyBlendState` | [PFND3D12DDI_DESTROYBLENDSTATE](#ddi-pfnd3d12ddi-destroyblendstate) |
-> | `pfnDestroyDepthStencilState` | [PFND3D12DDI_DESTROYDEPTHSTENCILSTATE](#ddi-pfnd3d12ddi-destroydepthstencilstate) |
-> | `pfnDestroyElementLayout` | [PFND3D12DDI_DESTROYELEMENTLAYOUT](#ddi-pfnd3d12ddi-destroyelementlayout) |
-> | `pfnDestroyPipelineState` | [PFND3D12DDI_DESTROY_PIPELINE_STATE](#ddi-pfnd3d12ddi-destroy-pipeline-state) |
-> | `pfnDestroyRasterizerState` | [PFND3D12DDI_DESTROYRASTERIZERSTATE](#ddi-pfnd3d12ddi-destroyrasterizerstate) |
-> | `pfnDestroyShader` | [PFND3D12DDI_DESTROYSHADER](#ddi-pfnd3d12ddi-destroyshader) |
+> | `pfnCalcPrivateBlendStateSize` | [`PFND3D12DDI_CALCPRIVATEBLENDSTATESIZE_0010`](#ddi-pfnd3d12ddi-calcprivateblendstatesize-0010) |
+> | `pfnCalcPrivateDepthStencilStateSize` | [`PFND3D12DDI_CALCPRIVATEDEPTHSTENCILSTATESIZE_0095`](#ddi-pfnd3d12ddi-calcprivatedepthstencilstatesize-0095) |
+> | `pfnCalcPrivateElementLayoutSize` | [`PFND3D12DDI_CALCPRIVATEELEMENTLAYOUTSIZE_0010`](#ddi-pfnd3d12ddi-calcprivateelementlayoutsize-0010) |
+> | `pfnCalcPrivateGeometryShaderWithStreamOutput` | [`PFND3D12DDI_CALC_PRIVATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026`](#ddi-pfnd3d12ddi-calc-private-geometry-shader-with-stream-output-0026) |
+> | `pfnCalcPrivateMeshShaderSize` | [`PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026`](#ddi-pfnd3d12ddi-calc-private-shader-size-0026) |
+> | `pfnCalcPrivatePipelineStateSize` | [`PFND3D12DDI_CALC_PRIVATE_PIPELINE_STATE_SIZE_0119`](#ddi-pfnd3d12ddi-calc-private-pipeline-state-size-0119) |
+> | `pfnCalcPrivateRasterizerStateSize` | [`PFND3D12DDI_CALCPRIVATERASTERIZERSTATESIZE_0102`](#ddi-pfnd3d12ddi-calcprivaterasterizerstatesize-0102) |
+> | `pfnCalcPrivateShaderSize` | [`PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026`](#ddi-pfnd3d12ddi-calc-private-shader-size-0026) |
+> | `pfnCalcPrivateTessellationShaderSize` | [`PFND3D12DDI_CALC_PRIVATE_SHADER_SIZE_0026`](#ddi-pfnd3d12ddi-calc-private-shader-size-0026) |
+> | `pfnCreateAmplificationShader` | [`PFND3D12DDI_CREATE_SHADER_0026`](#ddi-pfnd3d12ddi-create-shader-0026) |
+> | `pfnCreateBlendState` | [`PFND3D12DDI_CREATEBLENDSTATE_0010`](#ddi-pfnd3d12ddi-createblendstate-0010) |
+> | `pfnCreateComputeShader` | [`PFND3D12DDI_CREATE_SHADER_0026`](#ddi-pfnd3d12ddi-create-shader-0026) |
+> | `pfnCreateDepthStencilState` | [`PFND3D12DDI_CREATEDEPTHSTENCILSTATE_0095`](#ddi-pfnd3d12ddi-createdepthstencilstate-0095) |
+> | `pfnCreateDomainShader` | [`PFND3D12DDI_CREATE_SHADER_0026`](#ddi-pfnd3d12ddi-create-shader-0026) |
+> | `pfnCreateElementLayout` | [`PFND3D12DDI_CREATEELEMENTLAYOUT_0010`](#ddi-pfnd3d12ddi-createelementlayout-0010) |
+> | `pfnCreateGeometryShader` | [`PFND3D12DDI_CREATE_SHADER_0026`](#ddi-pfnd3d12ddi-create-shader-0026) |
+> | `pfnCreateGeometryShaderWithStreamOutput` | [`PFND3D12DDI_CREATE_GEOMETRY_SHADER_WITH_STREAM_OUTPUT_0026`](#ddi-pfnd3d12ddi-create-geometry-shader-with-stream-output-0026) |
+> | `pfnCreateHullShader` | [`PFND3D12DDI_CREATE_SHADER_0026`](#ddi-pfnd3d12ddi-create-shader-0026) |
+> | `pfnCreateMeshShader` | [`PFND3D12DDI_CREATE_SHADER_0026`](#ddi-pfnd3d12ddi-create-shader-0026) |
+> | `pfnCreatePipelineState` | [`PFND3D12DDI_CREATE_PIPELINE_STATE_0119`](#ddi-pfnd3d12ddi-create-pipeline-state-0119) |
+> | `pfnCreatePixelShader` | [`PFND3D12DDI_CREATE_SHADER_0026`](#ddi-pfnd3d12ddi-create-shader-0026) |
+> | `pfnCreateRasterizerState` | [`PFND3D12DDI_CREATERASTERIZERSTATE_0102`](#ddi-pfnd3d12ddi-createrasterizerstate-0102) |
+> | `pfnCreateVertexShader` | [`PFND3D12DDI_CREATE_SHADER_0026`](#ddi-pfnd3d12ddi-create-shader-0026) |
+> | `pfnDestroyBlendState` | [`PFND3D12DDI_DESTROYBLENDSTATE`](#ddi-pfnd3d12ddi-destroyblendstate) |
+> | `pfnDestroyDepthStencilState` | [`PFND3D12DDI_DESTROYDEPTHSTENCILSTATE`](#ddi-pfnd3d12ddi-destroydepthstencilstate) |
+> | `pfnDestroyElementLayout` | [`PFND3D12DDI_DESTROYELEMENTLAYOUT`](#ddi-pfnd3d12ddi-destroyelementlayout) |
+> | `pfnDestroyPipelineState` | [`PFND3D12DDI_DESTROY_PIPELINE_STATE`](#ddi-pfnd3d12ddi-destroy-pipeline-state) |
+> | `pfnDestroyRasterizerState` | [`PFND3D12DDI_DESTROYRASTERIZERSTATE`](#ddi-pfnd3d12ddi-destroyrasterizerstate) |
+> | `pfnDestroyShader` | [`PFND3D12DDI_DESTROYSHADER`](#ddi-pfnd3d12ddi-destroyshader) |
 
 <!-- d3d12-review-alert:end:pipeline:PC-slots:0:authored:migration-b8eef73b7576f63f-0 -->
 

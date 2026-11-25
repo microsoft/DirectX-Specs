@@ -1,18 +1,5 @@
 # Fence barriers
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 Fence barriers allow app developers to perform GPU command execution timeline synchronization between command queues or with the CPU. This improves both GPU/CPU and GPU/GPU concurrency, and gives developers an alternative to split barriers.
 
 <a id="availability"></a>

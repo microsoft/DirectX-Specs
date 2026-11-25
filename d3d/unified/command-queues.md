@@ -119,15 +119,15 @@ Creates a command queue.
 
 ### Parameters
 
-**pDesc**
+`pDesc`
 
 Specifies a **D3D12_COMMAND_QUEUE_DESC** that describes the command queue.
 
-**riid**
+`riid`
 
 The globally unique identifier (GUID) for the command queue interface.
 
-**ppCommandQueue**
+`ppCommandQueue`
 
 A pointer to a memory block that receives a pointer to the `ID3D12CommandQueue` interface for the command queue.
 
@@ -160,20 +160,20 @@ instead of the zero creator GUID.
 
 ### Parameters
 
-**pDesc**
+`pDesc`
 
 Specifies a **D3D12_COMMAND_QUEUE_DESC** that describes the command queue.
 
-**CreatorID**
+`CreatorID`
 
 The component's creator GUID restricts eligible scheduling group peers as
 defined in [Creator IDs and grouping](#creator-ids).
 
-**riid**
+`riid`
 
 The globally unique identifier (GUID) for the command queue interface.
 
-**ppCommandQueue**
+`ppCommandQueue`
 
 A pointer to a memory block that receives a pointer to the `ID3D12CommandQueue` interface for the command queue.
 

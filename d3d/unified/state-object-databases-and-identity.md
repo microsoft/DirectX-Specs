@@ -2,19 +2,6 @@
 
 # State object databases and application identity
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:sodb-input:scope:0:authored:migration-9123cd8560e9027f-0 -->A state object database (SODB) stores pipeline state and state object creation
 inputs, including their shader bytecode. It is not a driver-compiled cache.<!-- d3d12-review-inline:end:sodb-input:scope:0:authored:migration-9123cd8560e9027f-0 --></ins>
 
@@ -54,7 +41,7 @@ The state object database <ins><!-- d3d12-review-inline:begin:sodb-input:overvie
 > | Graphics, compute and stream PSOs | [Pipeline state creation](pipeline-state.md#id3d12device-creategraphicspipelinestate), [compute creation](pipeline-state.md#id3d12device-createcomputepipelinestate), and [pipeline state streams](pipeline-state.md#streams) |
 > | State objects, collections and associations | [State object creation](state-objects.md#createstateobject) and [existing collections](state-objects.md#d3d12_existing_collection_desc) |
 > | State object additions and growth parent | [AddToStateObject](state-objects.md#addtostateobject) |
-> | Serialized root signature contents, creation and association | [Root signatures](binding.md#root-signatures), [serialization](binding.md#d3d12serializeversionedrootsignature), [root signature creation](binding.md#id3d12device-createrootsignature), and [state object root binding](state-objects.md#root-binding) |
+> | Serialized root signature contents, creation and association | [Root signatures](binding.md#root-signatures), [serialization](binding.md#d3d12serializeversionedrootsignature), [root signature creation](binding.md#id3d12device-createrootsignature), and [state object root signature associations](state-objects.md#root-binding) |
 
 <!-- d3d12-review-alert:end:sodb-input:creation-owners:1:authored:migration-0bed3f80f521e149-0 -->
 
@@ -240,17 +227,17 @@ The caller need not keep their buffers alive after the call returns.<!-- d3d12-r
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:identity-parameters:0 -->`pDesc` (`const D3D12_APPLICATION_DESC*`, input)<!-- d3d12-review-inline:end:sodb-input:identity-parameters:0 --></ins>
+`pDesc`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:identity-parameters:1 -->The application description to set. For a non-reset call this pointer and its
+(`const D3D12_APPLICATION_DESC*`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:identity-parameters:1 -->The application description to set. For a non-reset call this pointer and its
 referenced strings must be valid and readable for the duration of the call.
 The application must supply a nonempty application name. See
 [`D3D12_APPLICATION_DESC`](#d3d12_application_desc) for filename fallback and
 engine/version requirements. The configuration copies the input data.<!-- d3d12-review-inline:end:sodb-input:identity-parameters:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:identity-parameters:2 -->`AppId` (`REFGUID`, input)<!-- d3d12-review-inline:end:sodb-input:identity-parameters:2 --></ins>
+`AppId`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:identity-parameters:3 -->A version 4 universally unique identifier generated for the app that is
+(`REFGUID`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:identity-parameters:3 -->A version 4 universally unique identifier generated for the app that is
 self-identifying. It must not be `GUID_NULL` when `pDesc` is nonnull.<!-- d3d12-review-inline:end:sodb-input:identity-parameters:3 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sodb-input:identity-parameters:4:authored:migration-536d7fbceef4293c-0 -->To reset the configured identity, pass null `pDesc` together with `GUID_NULL`.
@@ -280,7 +267,7 @@ serialized data. Storage uses the following driver-independent forms; finding
 descriptions can return these forms again. A returned form is not implicitly
 converted to a live object. Acceptance is specific to the consuming API.
 The existing-collection-by-key form below is accepted only by the database.
-The serialized root forms are not limited to database use.<!-- d3d12-review-inline:end:sodb-input:substitution-context:0:authored:migration-db839e7a9353f7fb-0 --></ins>
+The serialized root signature forms are not limited to database use.<!-- d3d12-review-inline:end:sodb-input:substitution-context:0:authored:migration-db839e7a9353f7fb-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sodb-input:root-signature-versioned-input:0:authored:migration-c5b58ef9bece680a-0 -->The storage substitutions below define the portable representation. In release
 1.619.1, the database setters also accept root signature API objects.
@@ -290,7 +277,7 @@ In release 1.619.3, the database obtains the serialized container through
 the explicit driver-independent form.<!-- d3d12-review-inline:end:sodb-input:root-signature-versioned-input:0:authored:migration-c5b58ef9bece680a-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sodb-input:serialized-root-members:0:authored:migration-3dc7b2eb09794296-0 -->See [root signatures](binding.md#root-signatures) and
-[state object root binding](state-objects.md#root-binding) for the root signature
+[state object root signature associations](state-objects.md#root-binding) for the root signature
 binary format and its creation and association semantics.<!-- d3d12-review-inline:end:sodb-input:serialized-root-members:0:authored:migration-3dc7b2eb09794296-0 --></ins>
 
 <!-- d3d12-review-alert:begin:sodb-input:serialized-root-members:1:authored:migration-62e4c3ec87e5c69c-0 -->
@@ -413,7 +400,7 @@ its own `HRESULT`, validation and capability requirements. Failure in a
 creation failure: record it in caller-owned context and check it separately
 from the lookup result.<!-- d3d12-review-inline:end:sodb-input:restore-graph:2:authored:migration-fc401d8440e1a06c-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:D131-compiler-reconstruction-forward:0:authored:migration-83a582e32bf6f31a-0 -->For offline compilation, see the [compiler input and ownership contract](compiler-invocation-and-cache-output.md#input-ownership) for serialized roots, live compiler collections and live addition parents after restoring database key dependencies. See [Compiler output groups](compiler-invocation-and-cache-output.md#id3d12compilercachesession-storegroupvaluekeys) for their mapping and version rules. An SODB object mapping is not a PSDB group or compiled value.<!-- d3d12-review-inline:end:sodb-input:D131-compiler-reconstruction-forward:0:authored:migration-83a582e32bf6f31a-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sodb-input:D131-compiler-reconstruction-forward:0:authored:migration-83a582e32bf6f31a-0 -->For offline compilation, see the [compiler input and ownership contract](compiler-invocation-and-cache-output.md#input-ownership) for serialized root signatures, live compiler collections and live addition parents after restoring database key dependencies. See [Compiler output groups](compiler-invocation-and-cache-output.md#id3d12compilercachesession-storegroupvaluekeys) for their mapping and version rules. An SODB object mapping is not a PSDB group or compiled value.<!-- d3d12-review-inline:end:sodb-input:D131-compiler-reconstruction-forward:0:authored:migration-83a582e32bf6f31a-0 --></ins>
 
 <a id="reconstruction-callbacks"></a>
 
@@ -443,17 +430,17 @@ typedef void(__stdcall* D3D12ApplicationDescFunc) (
     );
 ```
 
-**Parameters**
+#### Parameters
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12ApplicationDescFunc:3 -->`pApplicationDesc` (`const D3D12_APPLICATION_DESC*`, input)<!-- d3d12-review-inline:end:sodb-input:callback-D3D12ApplicationDescFunc:3 --></ins>
+`pApplicationDesc`
 
-Describes the target application and version.  See [`D3D12_APPLICATION_DESC`](#d3d12_application_desc).
+(`const D3D12_APPLICATION_DESC*`, input) Describes the target application and version.  See [`D3D12_APPLICATION_DESC`](#d3d12_application_desc).
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12ApplicationDescFunc:5 -->`pContext` (`void*`, optional input/output, caller-owned)<!-- d3d12-review-inline:end:sodb-input:callback-D3D12ApplicationDescFunc:5 --></ins>
+`pContext`
 
-An application specified context pointer that is passed to the callback.  Use this to pass parameters to the callback function.
+(`void*`, optional input/output, caller-owned) An application specified context pointer that is passed to the callback.  Use this to pass parameters to the callback function.
 
-**Remarks**
+#### Remarks
 
 <ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12ApplicationDescFunc:8 -->Borrowed reconstruction data passed to this callback remains valid until the callback returns. See [`ID3D12StateObjectDatabase::GetApplicationDesc`](#id3d12stateobjectdatabase-getapplicationdesc).<!-- d3d12-review-inline:end:sodb-input:callback-D3D12ApplicationDescFunc:8 --></ins>
 
@@ -473,29 +460,29 @@ typedef void(__stdcall* D3D12PipelineStateFunc) (
     );
 ```
 
-**Parameters**
+#### Parameters
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12PipelineStateFunc:3 -->`pKey` (`const void*`, input)<!-- d3d12-review-inline:end:sodb-input:callback-D3D12PipelineStateFunc:3 --></ins>
+`pKey`
 
-A unique sequence of bytes that uniquely identifies an object in the database.
+(`const void*`, input) A unique sequence of bytes that uniquely identifies an object in the database.
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12PipelineStateFunc:5 -->`KeySize` (`UINT`, input)<!-- d3d12-review-inline:end:sodb-input:callback-D3D12PipelineStateFunc:5 --></ins>
+`KeySize`
 
-The size in bytes of `pKey`.
+(`UINT`, input) The size in bytes of `pKey`.
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12PipelineStateFunc:7 -->`Version` (`UINT`, input)<!-- d3d12-review-inline:end:sodb-input:callback-D3D12PipelineStateFunc:7 --></ins>
+`Version`
 
-The version of the Pipeline State Object.  See Remarks.
+(`UINT`, input) The version of the Pipeline State Object.  See Remarks.
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12PipelineStateFunc:9 -->`pDesc` (`const D3D12_PIPELINE_STATE_STREAM_DESC*`, input)<!-- d3d12-review-inline:end:sodb-input:callback-D3D12PipelineStateFunc:9 --></ins>
+`pDesc`
 
-The `D3D12_PIPELINE_STATE_STREAM_DESC` desc that describes the PSO.  See Remarks.
+(`const D3D12_PIPELINE_STATE_STREAM_DESC*`, input) The `D3D12_PIPELINE_STATE_STREAM_DESC` desc that describes the PSO.  See Remarks.
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12PipelineStateFunc:11 -->`pContext` (`void*`, optional input/output, caller-owned)<!-- d3d12-review-inline:end:sodb-input:callback-D3D12PipelineStateFunc:11 --></ins>
+`pContext`
 
-An application specified context pointer that is passed to the callback.  Use this to pass parameters to the callback function.
+(`void*`, optional input/output, caller-owned) An application specified context pointer that is passed to the callback.  Use this to pass parameters to the callback function.
 
-**Remarks**
+#### Remarks
 
 <ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12PipelineStateFunc:14 -->Borrowed reconstruction data passed to this callback remains valid until the callback returns. See [`ID3D12StateObjectDatabase::FindPipelineStateDesc`](#id3d12stateobjectdatabase-findpipelinestatedesc).<!-- d3d12-review-inline:end:sodb-input:callback-D3D12PipelineStateFunc:14 --></ins>
 
@@ -521,37 +508,37 @@ typedef void(__stdcall* D3D12StateObjectFunc) (
     );
 ```
 
-**Parameters**
+#### Parameters
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12StateObjectFunc:3 -->`pKey` (`const void*`, input)<!-- d3d12-review-inline:end:sodb-input:callback-D3D12StateObjectFunc:3 --></ins>
+`pKey`
 
-A unique sequence of bytes that uniquely identifies an object in the database.
+(`const void*`, input) A unique sequence of bytes that uniquely identifies an object in the database.
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12StateObjectFunc:5 -->`KeySize` (`UINT`, input)<!-- d3d12-review-inline:end:sodb-input:callback-D3D12StateObjectFunc:5 --></ins>
+`KeySize`
 
-The size in bytes of `pKey`.
+(`UINT`, input) The size in bytes of `pKey`.
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12StateObjectFunc:7 -->`Version` (`UINT`, input)<!-- d3d12-review-inline:end:sodb-input:callback-D3D12StateObjectFunc:7 --></ins>
+`Version`
 
-The version of the State Object.  See Remarks.
+(`UINT`, input) The version of the State Object.  See Remarks.
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12StateObjectFunc:9 -->`pDesc` (`const D3D12_STATE_OBJECT_DESC*`, input)<!-- d3d12-review-inline:end:sodb-input:callback-D3D12StateObjectFunc:9 --></ins>
+`pDesc`
 
-The `D3D12_STATE_OBJECT_DESC` that defines the state object.  See Remarks.
+(`const D3D12_STATE_OBJECT_DESC*`, input) The `D3D12_STATE_OBJECT_DESC` that defines the state object.  See Remarks.
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12StateObjectFunc:11 -->`pParentKey` (`const void*`, optional input)<!-- d3d12-review-inline:end:sodb-input:callback-D3D12StateObjectFunc:11 --></ins>
+`pParentKey`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12StateObjectFunc:12 -->A unique sequence of bytes that uniquely identifies the parent object in the database. For an ordinary creation description with no parent, `pParentKey` is null and `ParentKeySize` is zero.<!-- d3d12-review-inline:end:sodb-input:callback-D3D12StateObjectFunc:12 --></ins>
+(`const void*`, optional input) <ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12StateObjectFunc:12 -->A unique sequence of bytes that uniquely identifies the parent object in the database. For an ordinary creation description with no parent, `pParentKey` is null and `ParentKeySize` is zero.<!-- d3d12-review-inline:end:sodb-input:callback-D3D12StateObjectFunc:12 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12StateObjectFunc:13 -->`ParentKeySize` (`UINT`, input)<!-- d3d12-review-inline:end:sodb-input:callback-D3D12StateObjectFunc:13 --></ins>
+`ParentKeySize`
 
-The size in bytes of `pParentKey`.
+(`UINT`, input) The size in bytes of `pParentKey`.
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12StateObjectFunc:15 -->`pContext` (`void*`, optional input/output, caller-owned)<!-- d3d12-review-inline:end:sodb-input:callback-D3D12StateObjectFunc:15 --></ins>
+`pContext`
 
-An application specified context pointer that is passed to the callback.  Use this to pass parameters to the callback function.
+(`void*`, optional input/output, caller-owned) An application specified context pointer that is passed to the callback.  Use this to pass parameters to the callback function.
 
-**Remarks**
+#### Remarks
 
 <ins><!-- d3d12-review-inline:begin:sodb-input:callback-D3D12StateObjectFunc:18 -->Borrowed reconstruction data passed to this callback remains valid until the callback returns. See [`ID3D12StateObjectDatabase::FindStateObjectDesc`](#id3d12stateobjectdatabase-findstateobjectdesc).<!-- d3d12-review-inline:end:sodb-input:callback-D3D12StateObjectFunc:18 --></ins>
 
@@ -618,23 +605,23 @@ HRESULT CreateStateObjectDatabaseFromFile( LPCWSTR pDatabaseFile, D3D12_STATE_OB
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:parameters-CreateStateObjectDatabaseFromFile:0:authored:migration-6d37f432daee0cff-0 -->`pDatabaseFile` (`LPCWSTR`, input)<!-- d3d12-review-inline:end:sodb-input:parameters-CreateStateObjectDatabaseFromFile:0:authored:migration-6d37f432daee0cff-0 --></ins>
+`pDatabaseFile`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:parameters-CreateStateObjectDatabaseFromFile:1:authored:migration-f0c786496ffaf148-0 -->Required pointer to a valid null-terminated wide character database filename.
+(`LPCWSTR`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:parameters-CreateStateObjectDatabaseFromFile:1:authored:migration-f0c786496ffaf148-0 -->Required pointer to a valid null-terminated wide character database filename.
 The filename buffer must remain readable for the duration of the call.<!-- d3d12-review-inline:end:sodb-input:parameters-CreateStateObjectDatabaseFromFile:1:authored:migration-f0c786496ffaf148-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:parameters-CreateStateObjectDatabaseFromFile:2:authored:migration-4d4508be86411f8a-0 -->`flags` (`D3D12_STATE_OBJECT_DATABASE_FLAGS`, input)<!-- d3d12-review-inline:end:sodb-input:parameters-CreateStateObjectDatabaseFromFile:2:authored:migration-4d4508be86411f8a-0 --></ins>
+`flags`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:parameters-CreateStateObjectDatabaseFromFile:3:authored:migration-41c6d9efa4af5a50-0 -->Selects the [file access mode](#d3d12_state_object_database_flags). A read-only
+(`D3D12_STATE_OBJECT_DATABASE_FLAGS`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:parameters-CreateStateObjectDatabaseFromFile:3:authored:migration-41c6d9efa4af5a50-0 -->Selects the [file access mode](#d3d12_state_object_database_flags). A read-only
 open requires an existing valid database. It does not create one.<!-- d3d12-review-inline:end:sodb-input:parameters-CreateStateObjectDatabaseFromFile:3:authored:migration-41c6d9efa4af5a50-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:parameters-CreateStateObjectDatabaseFromFile:4:authored:migration-ba1be5d437d6c6e9-0 -->`riid` (`REFIID`, input)<!-- d3d12-review-inline:end:sodb-input:parameters-CreateStateObjectDatabaseFromFile:4:authored:migration-ba1be5d437d6c6e9-0 --></ins>
+`riid`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:parameters-CreateStateObjectDatabaseFromFile:5:authored:migration-89328d2dd19c9015-0 -->Identifies the requested supported interface on the returned database.<!-- d3d12-review-inline:end:sodb-input:parameters-CreateStateObjectDatabaseFromFile:5:authored:migration-89328d2dd19c9015-0 --></ins>
+(`REFIID`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:parameters-CreateStateObjectDatabaseFromFile:5:authored:migration-89328d2dd19c9015-0 -->Identifies the requested supported interface on the returned database.<!-- d3d12-review-inline:end:sodb-input:parameters-CreateStateObjectDatabaseFromFile:5:authored:migration-89328d2dd19c9015-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:parameters-CreateStateObjectDatabaseFromFile:6:authored:migration-059bf231eb53c35a-0 -->`ppvStateObjectDatabase` (`void**`, output)<!-- d3d12-review-inline:end:sodb-input:parameters-CreateStateObjectDatabaseFromFile:6:authored:migration-059bf231eb53c35a-0 --></ins>
+`ppvStateObjectDatabase`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:parameters-CreateStateObjectDatabaseFromFile:7:authored:migration-908826314b5a3a83-0 -->Required writable pointer to receive the requested COM interface. On success,
+(`void**`, output) <ins><!-- d3d12-review-inline:begin:sodb-input:parameters-CreateStateObjectDatabaseFromFile:7:authored:migration-908826314b5a3a83-0 -->Required writable pointer to receive the requested COM interface. On success,
 the caller owns that interface reference and releases it under the usual COM
 rules.<!-- d3d12-review-inline:end:sodb-input:parameters-CreateStateObjectDatabaseFromFile:7:authored:migration-908826314b5a3a83-0 --></ins>
 
@@ -667,9 +654,9 @@ Set or update the Application Desc stored in the database.  This should be updat
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:SetApplicationDesc-parameters:0 -->`pApplicationDesc` (`const D3D12_APPLICATION_DESC*`, input)<!-- d3d12-review-inline:end:sodb-input:SetApplicationDesc-parameters:0 --></ins>
+`pApplicationDesc`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:SetApplicationDesc-parameters:1 -->Required readable pointer to the application description to store in the
+(`const D3D12_APPLICATION_DESC*`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:SetApplicationDesc-parameters:1 -->Required readable pointer to the application description to store in the
 database. Its referenced strings must remain readable for the duration of the
 call. See [`D3D12_APPLICATION_DESC`](#d3d12_application_desc) for the required
 nonempty filename/application name and optional engine fields.<!-- d3d12-review-inline:end:sodb-input:SetApplicationDesc-parameters:1 --></ins>
@@ -697,14 +684,14 @@ Retrieves the `D3D12_APPLICATION_DESC` from the database.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:GetApplicationDesc-parameters:0 -->`CallbackFunc` (`D3D12ApplicationDescFunc`, input)<!-- d3d12-review-inline:end:sodb-input:GetApplicationDesc-parameters:0 --></ins>
+`CallbackFunc`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:GetApplicationDesc-parameters:1 -->Required nonnull callback function pointer that receives the stored application
+(`D3D12ApplicationDescFunc`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:GetApplicationDesc-parameters:1 -->Required nonnull callback function pointer that receives the stored application
 description. The callback must remain callable until this method returns.<!-- d3d12-review-inline:end:sodb-input:GetApplicationDesc-parameters:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:GetApplicationDesc-parameters:2 -->`pContext` (`void*`, optional input/output)<!-- d3d12-review-inline:end:sodb-input:GetApplicationDesc-parameters:2 --></ins>
+`pContext`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:GetApplicationDesc-parameters:3 -->An application specified context pointer passed unchanged to the callback.
+(`void*`, optional input/output) <ins><!-- d3d12-review-inline:begin:sodb-input:GetApplicationDesc-parameters:3 -->An application specified context pointer passed unchanged to the callback.
 The caller retains ownership and must keep any context used by the callback
 valid until this method returns.<!-- d3d12-review-inline:end:sodb-input:GetApplicationDesc-parameters:3 --></ins>
 
@@ -738,21 +725,21 @@ Stores a Pipeline State Desc in the database by key.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-parameters:0 -->`pKey` (`const void*`, input)<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-parameters:0 --></ins>
+`pKey`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-parameters:1 -->A required nonnull pointer to the object key bytes, readable for `KeySize` bytes during the call.<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-parameters:1 --></ins>
+(`const void*`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-parameters:1 -->A required nonnull pointer to the object key bytes, readable for `KeySize` bytes during the call.<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-parameters:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-parameters:2 -->`KeySize` (`UINT`, input)<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-parameters:2 --></ins>
+`KeySize`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-parameters:3 -->The nonzero size in bytes of `pKey`. Null or zero-size keys are invalid and do not enumerate objects.<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-parameters:3 --></ins>
+(`UINT`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-parameters:3 -->The nonzero size in bytes of `pKey`. Null or zero-size keys are invalid and do not enumerate objects.<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-parameters:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-parameters:4 -->`Version` (`UINT`, input)<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-parameters:4 --></ins>
+`Version`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-parameters:5 -->The 32-bit version of the object being stored. The database author is expected to rev this version whenever the object description changes across revised databases. A different version cannot overwrite an entry in the same database; see the [key and version contract](#keys-and-versions).<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-parameters:5 --></ins>
+(`UINT`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-parameters:5 -->The 32-bit version of the object being stored. The database author is expected to rev this version whenever the object description changes across revised databases. A different version cannot overwrite an entry in the same database; see the [key and version contract](#keys-and-versions).<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-parameters:5 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-parameters:6 -->`pDesc` (`const D3D12_PIPELINE_STATE_STREAM_DESC*`, input)<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-parameters:6 --></ins>
+`pDesc`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-parameters:7 -->Required readable pointer to the pipeline state stream description. The description and all referenced bytecode, strings, arrays, subobjects and serialized data must remain valid for the duration of the call.<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-parameters:7 --></ins>
+(`const D3D12_PIPELINE_STATE_STREAM_DESC*`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:StorePipelineStateDesc-parameters:7 -->Required readable pointer to the pipeline state stream description. The description and all referenced bytecode, strings, arrays, subobjects and serialized data must remain valid for the duration of the call.<!-- d3d12-review-inline:end:sodb-input:StorePipelineStateDesc-parameters:7 --></ins>
 
 #### Remarks
 
@@ -791,21 +778,21 @@ HRESULT FindPipelineStateDesc( const void* pKey, UINT KeySize, D3D12PipelineStat
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindPipelineStateDesc-parameters:0 -->`pKey` (`const void*`, input)<!-- d3d12-review-inline:end:sodb-input:FindPipelineStateDesc-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:sodb-input:FindPipelineStateDesc-parameters:0 -->`pKey`<!-- d3d12-review-inline:end:sodb-input:FindPipelineStateDesc-parameters:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindPipelineStateDesc-parameters:1 -->A required nonnull pointer to the object key bytes, readable for `KeySize` bytes during the call.<!-- d3d12-review-inline:end:sodb-input:FindPipelineStateDesc-parameters:1 --></ins>
+(`const void*`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:FindPipelineStateDesc-parameters:1 -->A required nonnull pointer to the object key bytes, readable for `KeySize` bytes during the call.<!-- d3d12-review-inline:end:sodb-input:FindPipelineStateDesc-parameters:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindPipelineStateDesc-parameters:2 -->`KeySize` (`UINT`, input)<!-- d3d12-review-inline:end:sodb-input:FindPipelineStateDesc-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:sodb-input:FindPipelineStateDesc-parameters:2 -->`KeySize`<!-- d3d12-review-inline:end:sodb-input:FindPipelineStateDesc-parameters:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindPipelineStateDesc-parameters:3 -->The nonzero size in bytes of `pKey`. Null or zero-size keys are invalid and do not enumerate objects.<!-- d3d12-review-inline:end:sodb-input:FindPipelineStateDesc-parameters:3 --></ins>
+(`UINT`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:FindPipelineStateDesc-parameters:3 -->The nonzero size in bytes of `pKey`. Null or zero-size keys are invalid and do not enumerate objects.<!-- d3d12-review-inline:end:sodb-input:FindPipelineStateDesc-parameters:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindPipelineStateDesc-parameters:4 -->`CallbackFunc` (`D3D12PipelineStateFunc`, input)<!-- d3d12-review-inline:end:sodb-input:FindPipelineStateDesc-parameters:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:sodb-input:FindPipelineStateDesc-parameters:4 -->`CallbackFunc`<!-- d3d12-review-inline:end:sodb-input:FindPipelineStateDesc-parameters:4 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindPipelineStateDesc-parameters:5 -->Required nonnull callback function pointer that receives the reconstructed description, key and stored object version. It must remain callable until this method returns.<!-- d3d12-review-inline:end:sodb-input:FindPipelineStateDesc-parameters:5 --></ins>
+(`D3D12PipelineStateFunc`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:FindPipelineStateDesc-parameters:5 -->Required nonnull callback function pointer that receives the reconstructed description, key and stored object version. It must remain callable until this method returns.<!-- d3d12-review-inline:end:sodb-input:FindPipelineStateDesc-parameters:5 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindPipelineStateDesc-parameters:6 -->`pContext` (`void*`, optional input/output)<!-- d3d12-review-inline:end:sodb-input:FindPipelineStateDesc-parameters:6 --></ins>
+`pContext`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindPipelineStateDesc-parameters:7 -->An application specified context pointer passed unchanged to the callback. The caller retains ownership and must keep any context used by the callback valid until this method returns.<!-- d3d12-review-inline:end:sodb-input:FindPipelineStateDesc-parameters:7 --></ins>
+(`void*`, optional input/output) <ins><!-- d3d12-review-inline:begin:sodb-input:FindPipelineStateDesc-parameters:7 -->An application specified context pointer passed unchanged to the callback. The caller retains ownership and must keep any context used by the callback valid until this method returns.<!-- d3d12-review-inline:end:sodb-input:FindPipelineStateDesc-parameters:7 --></ins>
 
 #### Remarks
 
@@ -842,29 +829,29 @@ Stores a State Object Desc in the database by key.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:0 -->`pKey` (`const void*`, input)<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:0 --></ins>
+`pKey`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:1 -->A required nonnull pointer to the object key bytes, readable for `KeySize` bytes during the call.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:1 --></ins>
+(`const void*`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:1 -->A required nonnull pointer to the object key bytes, readable for `KeySize` bytes during the call.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:2 -->`KeySize` (`UINT`, input)<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:2 --></ins>
+`KeySize`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:3 -->The nonzero size in bytes of `pKey`. Null or zero-size keys are invalid and do not enumerate objects.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:3 --></ins>
+(`UINT`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:3 -->The nonzero size in bytes of `pKey`. Null or zero-size keys are invalid and do not enumerate objects.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:4 -->`Version` (`UINT`, input)<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:4 --></ins>
+`Version`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:5 -->The 32-bit version of the object being stored. The database author is expected to rev this version whenever the object description changes across revised databases. A different version cannot overwrite an entry in the same database; see the [key and version contract](#keys-and-versions).<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:5 --></ins>
+(`UINT`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:5 -->The 32-bit version of the object being stored. The database author is expected to rev this version whenever the object description changes across revised databases. A different version cannot overwrite an entry in the same database; see the [key and version contract](#keys-and-versions).<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:5 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:6 -->`pDesc` (`const D3D12_STATE_OBJECT_DESC*`, input)<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:6 --></ins>
+`pDesc`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:7 -->Required readable pointer to the state object description or state object additions. The description and all referenced bytecode, strings, arrays, subobjects and serialized data must remain valid for the duration of the call.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:7 --></ins>
+(`const D3D12_STATE_OBJECT_DESC*`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:7 -->Required readable pointer to the state object description or state object additions. The description and all referenced bytecode, strings, arrays, subobjects and serialized data must remain valid for the duration of the call.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:7 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:8 -->`pStateObjectToGrowFromKey` (`const void*`, optional input)<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:8 --></ins>
+`pStateObjectToGrowFromKey`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:9 -->A key identifying the already stored base state object to which this description adds. Pass `nullptr` with size zero when there is no base object. Otherwise the key must be nonnull, nonempty and readable for the specified size during the call.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:9 --></ins>
+(`const void*`, optional input) <ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:9 -->A key identifying the already stored base state object to which this description adds. Pass `nullptr` with size zero when there is no base object. Otherwise the key must be nonnull, nonempty and readable for the specified size during the call.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:9 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:10 -->`StateObjectToGrowFromKeySize` (`UINT`, input)<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:10 --></ins>
+`StateObjectToGrowFromKeySize`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:11 -->The size in bytes of `pStateObjectToGrowFromKey`; zero for the no-parent case.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:11 --></ins>
+(`UINT`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:StoreStateObjectDesc-parameters:11 -->The size in bytes of `pStateObjectToGrowFromKey`; zero for the no-parent case.<!-- d3d12-review-inline:end:sodb-input:StoreStateObjectDesc-parameters:11 --></ins>
 
 #### Remarks
 
@@ -911,21 +898,21 @@ Calls a supplied callback function with the state object description for a speci
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindStateObjectDesc-parameters:0 -->`pKey` (`const void*`, input)<!-- d3d12-review-inline:end:sodb-input:FindStateObjectDesc-parameters:0 --></ins>
+`pKey`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindStateObjectDesc-parameters:1 -->A required nonnull pointer to the object key bytes, readable for `KeySize` bytes during the call.<!-- d3d12-review-inline:end:sodb-input:FindStateObjectDesc-parameters:1 --></ins>
+(`const void*`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:FindStateObjectDesc-parameters:1 -->A required nonnull pointer to the object key bytes, readable for `KeySize` bytes during the call.<!-- d3d12-review-inline:end:sodb-input:FindStateObjectDesc-parameters:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindStateObjectDesc-parameters:2 -->`KeySize` (`UINT`, input)<!-- d3d12-review-inline:end:sodb-input:FindStateObjectDesc-parameters:2 --></ins>
+`KeySize`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindStateObjectDesc-parameters:3 -->The nonzero size in bytes of `pKey`. Null or zero-size keys are invalid and do not enumerate objects.<!-- d3d12-review-inline:end:sodb-input:FindStateObjectDesc-parameters:3 --></ins>
+(`UINT`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:FindStateObjectDesc-parameters:3 -->The nonzero size in bytes of `pKey`. Null or zero-size keys are invalid and do not enumerate objects.<!-- d3d12-review-inline:end:sodb-input:FindStateObjectDesc-parameters:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindStateObjectDesc-parameters:4 -->`CallbackFunc` (`D3D12StateObjectFunc`, input)<!-- d3d12-review-inline:end:sodb-input:FindStateObjectDesc-parameters:4 --></ins>
+`CallbackFunc`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindStateObjectDesc-parameters:5 -->Required nonnull callback function pointer that receives the reconstructed description, key and stored object version. It must remain callable until this method returns.<!-- d3d12-review-inline:end:sodb-input:FindStateObjectDesc-parameters:5 --></ins>
+(`D3D12StateObjectFunc`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:FindStateObjectDesc-parameters:5 -->Required nonnull callback function pointer that receives the reconstructed description, key and stored object version. It must remain callable until this method returns.<!-- d3d12-review-inline:end:sodb-input:FindStateObjectDesc-parameters:5 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindStateObjectDesc-parameters:6 -->`pContext` (`void*`, optional input/output)<!-- d3d12-review-inline:end:sodb-input:FindStateObjectDesc-parameters:6 --></ins>
+`pContext`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindStateObjectDesc-parameters:7 -->An application specified context pointer passed unchanged to the callback. The caller retains ownership and must keep any context used by the callback valid until this method returns.<!-- d3d12-review-inline:end:sodb-input:FindStateObjectDesc-parameters:7 --></ins>
+(`void*`, optional input/output) <ins><!-- d3d12-review-inline:begin:sodb-input:FindStateObjectDesc-parameters:7 -->An application specified context pointer passed unchanged to the callback. The caller retains ownership and must keep any context used by the callback valid until this method returns.<!-- d3d12-review-inline:end:sodb-input:FindStateObjectDesc-parameters:7 --></ins>
 
 #### Remarks
 
@@ -960,17 +947,17 @@ object type stored.<!-- d3d12-review-inline:end:sodb-input:behavior-FindObjectVe
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindObjectVersion-arguments:0 -->`pKey` (`const void*`, input)<!-- d3d12-review-inline:end:sodb-input:FindObjectVersion-arguments:0 --></ins>
+`pKey`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindObjectVersion-arguments:1 -->A required nonnull pointer to the object key bytes, readable for `KeySize` bytes during the call.<!-- d3d12-review-inline:end:sodb-input:FindObjectVersion-arguments:1 --></ins>
+(`const void*`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:FindObjectVersion-arguments:1 -->A required nonnull pointer to the object key bytes, readable for `KeySize` bytes during the call.<!-- d3d12-review-inline:end:sodb-input:FindObjectVersion-arguments:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindObjectVersion-arguments:2 -->`KeySize` (`UINT`, input)<!-- d3d12-review-inline:end:sodb-input:FindObjectVersion-arguments:2 --></ins>
+`KeySize`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindObjectVersion-arguments:3 -->The nonzero size in bytes of `pKey`. Null or zero-size keys are invalid and do not enumerate objects.<!-- d3d12-review-inline:end:sodb-input:FindObjectVersion-arguments:3 --></ins>
+(`UINT`, input) <ins><!-- d3d12-review-inline:begin:sodb-input:FindObjectVersion-arguments:3 -->The nonzero size in bytes of `pKey`. Null or zero-size keys are invalid and do not enumerate objects.<!-- d3d12-review-inline:end:sodb-input:FindObjectVersion-arguments:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindObjectVersion-arguments:4 -->`pVersion` (`UINT*`, output)<!-- d3d12-review-inline:end:sodb-input:FindObjectVersion-arguments:4 --></ins>
+`pVersion`
 
-<ins><!-- d3d12-review-inline:begin:sodb-input:FindObjectVersion-arguments:5:modified:source-d979136e93b0b15b-0-0 -->Required writable pointer to caller-owned storage, valid for the duration of the call. On success it receives the stored object's 32-bit version. No value is specified on failure<!-- d3d12-review-inline:end:sodb-input:FindObjectVersion-arguments:5:modified:source-d979136e93b0b15b-0-0 --></ins>.
+(`UINT*`, output) <ins><!-- d3d12-review-inline:begin:sodb-input:FindObjectVersion-arguments:5:modified:source-d979136e93b0b15b-0-0 -->Required writable pointer to caller-owned storage, valid for the duration of the call. On success it receives the stored object's 32-bit version. No value is specified on failure<!-- d3d12-review-inline:end:sodb-input:FindObjectVersion-arguments:5:modified:source-d979136e93b0b15b-0-0 --></ins>.
 
 #### Remarks
 

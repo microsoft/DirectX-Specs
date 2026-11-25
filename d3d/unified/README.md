@@ -56,7 +56,7 @@ the DXIL appendix supplies the complete behavior reference for every intrinsic.
 
 | Chapter | Current coverage |
 |---|---|
-| [Pipeline state and shader linkage](pipeline-state.md) | Ordinary graphics/compute PSO descriptions and streams, supporting state, shader/root compatibility, cache blobs, selection and selected driver contracts |
+| [Pipeline state and shader linkage](pipeline-state.md) | Ordinary graphics/compute PSO descriptions and streams, supporting state, shader compatibility with root signatures, cache blobs, selection and selected driver contracts |
 | [Input assembly and vertex processing](vertex-processing.md) | IA/direct draws, fetching and primitive assembly, generated IDs, VS, common interface capacities and view instancing rules, and selected driver responsibilities |
 | [Tessellation: hull and domain processing](tessellation.md) | DXIL/DXBC HS models, fixed-function patterns and factor processing, precision/watertightness, patch routing, DS and selected driver responsibilities |
 | [Geometry shaders and stream output](geometry-shaders-and-stream-output.md) | Invocation/streams/emission and output budgets, DXBC/DXIL models, PSO capture declarations, SO target/counter binding, whole-primitive overflow, canonical query links and selected driver responsibilities |
@@ -71,7 +71,7 @@ the DXIL appendix supplies the complete behavior reference for every intrinsic.
 |---|---|
 | [Counters, queries, and predication](counters-queries-and-predication.md) | Query heaps/types/lifecycle and graphics/video APIs, canonical pipeline/SO statistics, GPU/CPU result resolution, queue clocks, buffer predicates and explicit current operation policies |
 | [Resource operations](resource-operations.md) | Buffer/texture/tile copies, immediate buffer writes, view clears, whole/regional resolves and graphics/video discard; eighteen API entries, formatted transfer regions, marker timing and clear/feedback conversion, with selected driver contracts |
-| [Indirect execution](indirect-execution.md) | Command signatures and ExecuteIndirect, inherited draw/indexed/dispatch argument behavior, tightly packed records/counts, root and typed-work constraints, incrementing constants, argument producers, state/context links and published driver contracts |
+| [Indirect execution](indirect-execution.md) | Command signatures and ExecuteIndirect, inherited draw/indexed/dispatch argument behavior, tightly packed records/counts, root binding and typed-work constraints, incrementing constants, argument producers, state/context links and published driver contracts |
 
 ### State objects, raytracing and work graphs
 

@@ -2,19 +2,6 @@
 
 # Video: processing reference
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:video-process:N-entry:0:authored:migration-05ae9c3d48234999-0 -->A processor fixes the input and output
 stream descriptions. Each processing call supplies the current surfaces,
 reference surfaces and operation arguments. Capability results apply to the

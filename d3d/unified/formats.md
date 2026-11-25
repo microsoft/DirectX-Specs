@@ -1,18 +1,5 @@
 # Formats
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <a id="interpretation"></a>
 
 ## Resource formats and view interpretation
@@ -1687,10 +1674,10 @@ Each format has a depth plane as plane 0, and a stencil plane as plane 1. <ins><
 >
 > | Planar Format                     | Logical plane / PlaneSlice where present | SRV Format                           |
 > | --------------------------------- | ---------- | ------------------------------------ |
-> | **`DXGI_FORMAT_R24G8_TYPELESS`**    | 0          | `DXGI_FORMAT_R24_UNORM_X8_TYPELESS`    |
-> | **`DXGI_FORMAT_R24G8_TYPELESS`**    | 1          | `DXGI_FORMAT_X24_TYPELESS_G8_UINT`     |
-> | **`DXGI_FORMAT_R32G8X24_TYPELESS`** | 0          | `DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS` |
-> | **`DXGI_FORMAT_R32G8X24_TYPELESS`** | 1          | `DXGI_FORMAT_X32_TYPELESS_G8X24_UINT`  |
+> | `DXGI_FORMAT_R24G8_TYPELESS`    | 0          | `DXGI_FORMAT_R24_UNORM_X8_TYPELESS`    |
+> | `DXGI_FORMAT_R24G8_TYPELESS`    | 1          | `DXGI_FORMAT_X24_TYPELESS_G8_UINT`     |
+> | `DXGI_FORMAT_R32G8X24_TYPELESS` | 0          | `DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS` |
+> | `DXGI_FORMAT_R32G8X24_TYPELESS` | 1          | `DXGI_FORMAT_X32_TYPELESS_G8X24_UINT`  |
 
 <!-- d3d12-review-alert:end:formats:P-srv-table:0:modified:migration-ac021e5f6e7f5a19-0 -->
 
@@ -1701,10 +1688,10 @@ Each format has a depth plane as plane 0, and a stencil plane as plane 1. <ins><
 >
 > | Planar Format                     | Plane covered | DSV Format                       |
 >   | --------------------------------- | ---------- | -------------------------------- |
->   | **`DXGI_FORMAT_R24G8_TYPELESS`**    | 0          | `DXGI_FORMAT_D24_UNORM_S8_UINT`    |
->   | **`DXGI_FORMAT_R24G8_TYPELESS`**    | 1          | `DXGI_FORMAT_D24_UNORM_S8_UINT`    |
->   | **`DXGI_FORMAT_R32G8X24_TYPELESS`** | 0          | `DXGI_FORMAT_D32_FLOAT_S8X24_UINT` |
->   | **`DXGI_FORMAT_R32G8X24_TYPELESS`** | 1          | `DXGI_FORMAT_D32_FLOAT_S8X24_UINT` |
+>   | `DXGI_FORMAT_R24G8_TYPELESS`    | 0          | `DXGI_FORMAT_D24_UNORM_S8_UINT`    |
+>   | `DXGI_FORMAT_R24G8_TYPELESS`    | 1          | `DXGI_FORMAT_D24_UNORM_S8_UINT`    |
+>   | `DXGI_FORMAT_R32G8X24_TYPELESS` | 0          | `DXGI_FORMAT_D32_FLOAT_S8X24_UINT` |
+>   | `DXGI_FORMAT_R32G8X24_TYPELESS` | 1          | `DXGI_FORMAT_D32_FLOAT_S8X24_UINT` |
 
 <!-- d3d12-review-alert:end:formats:P-dsv-table:0:modified:migration-615e310e36a9d83b-0 -->
 
@@ -2231,7 +2218,7 @@ Implemented by the client driver to check the format support.
 > | `MULTIPLANE_OVERLAY` | Multiplane-overlay reporting -> `Support2.MULTIPLANE_OVERLAY`. |
 > | `TILED` | Published tiled 1D/2D/cube/array report, excluding 3D in this bit's definition; API `Support2.TILED` is derived from format requirements and tiled resource capability, not a raw copy. |
 > | `UAV_READS` | Optional typed UAV load -> `Support2.UAV_TYPED_LOAD`, additionally gated by the [typed UAV load format group](#typed-uav-loads) and typed UAV store eligibility. |
-> | `DISPLAY` | Required for optional scanout reporting as `Support1.DISPLAY` under the DDI revision rule below; eligible displayable formats also use it for `Support2.DISPLAYABLE`. |
+> | `DISPLAY` | Required for optional scanout reporting as `Support2.DISPLAYABLE`, subject to format eligibility and the DDI revision rule below. |
 > | `NOT_SUPPORTED` | Whole-format rejection under the restricted format rule above; not an API support bit. |
 
 <!-- d3d12-review-alert:end:formats:FQ-driver-bit-mapping:1:authored:migration-f8feeda756e6a443-0 -->
@@ -2240,7 +2227,7 @@ Implemented by the client driver to check the format support.
 
 <ins><!-- d3d12-review-inline:begin:formats:FQ-driver-bit-mapping:5:authored:opus-nv12-shader-load -->`NV12` shader load reporting follows shader sample support because this DDI has no independent shader load flag.<!-- d3d12-review-inline:end:formats:FQ-driver-bit-mapping:5:authored:opus-nv12-shader-load --></ins>
 
-<ins><!-- d3d12-review-inline:begin:formats:FQ-driver-bit-mapping:4:authored:migration-21b4448c4d1b8d18-0 -->From DDI revision `_0107`, optional scanout requires the driver's `DISPLAY` bit.<!-- d3d12-review-inline:end:formats:FQ-driver-bit-mapping:4:authored:migration-21b4448c4d1b8d18-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:formats:FQ-driver-bit-mapping:4:authored:migration-21b4448c4d1b8d18-0 -->From DDI revision `_0107`, optional scanout reporting as `Support2.DISPLAYABLE` requires the driver's `DISPLAY` bit. Optional render target support can preserve `Support1.DISPLAY` for swap-chain use when that driver bit is clear.<!-- d3d12-review-inline:end:formats:FQ-driver-bit-mapping:4:authored:migration-21b4448c4d1b8d18-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:formats:FQ-driver-bit-mapping:5:authored:migration-7e943320565b4170-0 -->Below DDI revision `_0107`, optional render target/UAV support for `DXGI_FORMAT_R9G9B9E5_SHAREDEXP` is not reported regardless of the driver bits. Its shader resource support is unchanged. For eligible drivers, see [R9G9B9E5 optional view support](#shared-exponent-support) for all-or-nothing and derived-resolve rules.<!-- d3d12-review-inline:end:formats:FQ-driver-bit-mapping:5:authored:migration-7e943320565b4170-0 --></ins>
 

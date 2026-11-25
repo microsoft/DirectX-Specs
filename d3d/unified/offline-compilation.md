@@ -2,19 +2,6 @@
 
 # Offline compilation
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:scope:0:authored:migration-69efd42596151750-0 -->Offline driver/pipeline compilation produces vendor-dependent pipeline state
 and state object output from creation descriptions and shader bytecode. It is
 distinct from HLSL frontend compilation.<!-- d3d12-review-inline:end:compiler-foundation:scope:0:authored:migration-69efd42596151750-0 --></ins>
@@ -184,17 +171,17 @@ typedef struct D3D12_COMPILER_TARGET
 } D3D12_COMPILER_TARGET;
 ```
 
-**Members**
+#### Members
 
-*AdapterFamilyIndex*
+`AdapterFamilyIndex`
 
 The index of the adapter family to target.  See [D3D12_ADAPTER_FAMILY](#d3d12_adapter_family) and [ID3D12CompilerFactory::EnumerateAdapterFamilies](#id3d12compilerfactory-enumerateadapterfamilies).
 
-*ABIVersion*
+`ABIVersion`
 
 The target <ins><!-- d3d12-review-inline:begin:compiler-foundation:target:5:modified:source-e9b8f4cfd6bbb69e-0-0 -->ABI version for the adapter family<!-- d3d12-review-inline:end:compiler-foundation:target:5:modified:source-e9b8f4cfd6bbb69e-0-0 --></ins>.  See Remarks.
 
-**Remarks**
+#### Remarks
 
 An ABIVersion of zero targets the latest ABIVersion available.
 
@@ -226,17 +213,17 @@ HRESULT D3D12CompilerCreateFactory(
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:factory-params:0:modified:migration-02ca3b70b989f84d-0 -->`[in] pPluginCompilerDllPath`<!-- d3d12-review-inline:end:compiler-foundation:factory-params:0:modified:migration-02ca3b70b989f84d-0 --></ins>
+`pPluginCompilerDllPath`
 
-The path to the plugin compiler dll used for this instance of the factory.
+[in] The path to the plugin compiler dll used for this instance of the factory.
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:factory-params:2 -->`[in] riid`<!-- d3d12-review-inline:end:compiler-foundation:factory-params:2 --></ins>
+`riid`
 
-The globally unique identifier (GUID) for the compiler factory interface.
+[in] The globally unique identifier (GUID) for the compiler factory interface.
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:factory-params:4:modified:migration-3d78ffc99cdd2d50-0 -->`[out] ppFactory`<!-- d3d12-review-inline:end:compiler-foundation:factory-params:4:modified:migration-3d78ffc99cdd2d50-0 --></ins>
+`ppFactory`
 
-On <ins><!-- d3d12-review-inline:begin:compiler-foundation:factory-params:5:modified:source-374b15872d06b5d9-0-0 -->success, an owned pointer to<!-- d3d12-review-inline:end:compiler-foundation:factory-params:5:modified:source-374b15872d06b5d9-0-0 --></ins> the compiler factory interface specified by riid.
+[out] On <ins><!-- d3d12-review-inline:begin:compiler-foundation:factory-params:5:modified:source-374b15872d06b5d9-0-0 -->success, an owned pointer to<!-- d3d12-review-inline:end:compiler-foundation:factory-params:5:modified:source-374b15872d06b5d9-0-0 --></ins> the compiler factory interface specified by riid.
 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:factory-loading:0:authored:migration-01830daf83d1a6cd-0 -->`pPluginCompilerDllPath` must identify the plugin DLL with a readable,
 null-terminated wide string. Loading the module, locating its
@@ -306,22 +293,22 @@ compiler host context rather than against an instantiated physical device.<!-- d
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:serializer-params:0:authored:migration-a38cff830447feb3-0 -->`[in] pRootSignature`<!-- d3d12-review-inline:end:compiler-foundation:serializer-params:0:authored:migration-a38cff830447feb3-0 --></ins>
+`pRootSignature`
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:serializer-params:1:authored:migration-5a87945cc2c4b67d-0 -->A required pointer to `D3D12_VERSIONED_ROOT_SIGNATURE_DESC`. Its version selects
+[in] <ins><!-- d3d12-review-inline:begin:compiler-foundation:serializer-params:1:authored:migration-5a87945cc2c4b67d-0 -->A required pointer to `D3D12_VERSIONED_ROOT_SIGNATURE_DESC`. Its version selects
 the corresponding description; versions 1.0, 1.1 and 1.2 are supported. Its
 referenced arrays and strings must be readable for the call.<!-- d3d12-review-inline:end:compiler-foundation:serializer-params:1:authored:migration-5a87945cc2c4b67d-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:serializer-params:2:authored:migration-01d149e7ab9414fa-0 -->`[out] ppBlob`<!-- d3d12-review-inline:end:compiler-foundation:serializer-params:2:authored:migration-01d149e7ab9414fa-0 --></ins>
+`ppBlob`
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:serializer-params:3:authored:migration-6d60e193d75cdd2c-0 -->Required writable storage for the returned serialized blob interface.
+[out] <ins><!-- d3d12-review-inline:begin:compiler-foundation:serializer-params:3:authored:migration-6d60e193d75cdd2c-0 -->Required writable storage for the returned serialized blob interface.
 On success the caller owns the reference and releases it when no longer
 needed. Blob data is accessed with `GetBufferPointer` and `GetBufferSize`;
 the size is in bytes and the storage is valid while the blob remains alive.<!-- d3d12-review-inline:end:compiler-foundation:serializer-params:3:authored:migration-6d60e193d75cdd2c-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:serializer-params:4:authored:migration-cb4d1f61931512ac-0 -->`[out, optional] ppErrorBlob`<!-- d3d12-review-inline:end:compiler-foundation:serializer-params:4:authored:migration-cb4d1f61931512ac-0 --></ins>
+`ppErrorBlob`
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:serializer-params:5:authored:migration-c9207c690112a009-0 -->Optional writable storage for an error message blob. When supplied for a valid
+[out, optional] <ins><!-- d3d12-review-inline:begin:compiler-foundation:serializer-params:5:authored:migration-c9207c690112a009-0 -->Optional writable storage for an error message blob. When supplied for a valid
 serialization call, it receives an owned blob containing diagnostics or
 `nullptr` if there are none. Release any returned error blob even when
 serialization fails. `nullptr` suppresses this returned diagnostic object;
@@ -329,10 +316,11 @@ it does not suppress validation.<!-- d3d12-review-inline:end:compiler-foundation
 
 #### Return values
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:serializer-results:0:authored:migration-dfa521aee4085084-0 -->`S_OK` returns the serialized blob. A null description or null `ppBlob` returns
-`E_INVALIDARG`. Invalid descriptions, including unsupported root signature
-versions, fail. The compiler host wrapper maps the serializer's `E_FAIL`
-validation result to `E_INVALIDARG`. Allocation failures can return
+<ins><!-- d3d12-review-inline:begin:compiler-foundation:serializer-results:0:authored:migration-dfa521aee4085084-0 -->On success, the function returns `S_OK` and stores the serialized blob interface
+pointer in `*ppBlob`. The function returns `E_INVALIDARG` if `pRootSignature` or
+`ppBlob` is null. It rejects invalid descriptions, including unsupported root
+signature versions. The compiler host wrapper maps the serializer's `E_FAIL`
+validation result to `E_INVALIDARG`. If allocation fails, the function can return
 `E_OUTOFMEMORY`.<!-- d3d12-review-inline:end:compiler-foundation:serializer-results:0:authored:migration-dfa521aee4085084-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:serializer-results:1:authored:migration-59a7dae7acbe34ee-0 -->After valid required pointers have been checked, `*ppBlob` and, when supplied,
@@ -362,13 +350,13 @@ Retrieve <ins><!-- d3d12-review-inline:begin:compiler-foundation:enumerate-famil
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:enumerate-family-params:0 -->`[in] AdapterFamilyIndex`<!-- d3d12-review-inline:end:compiler-foundation:enumerate-family-params:0 --></ins>
+`AdapterFamilyIndex`
 
-The index of the adapter family to enumerate.
+[in] The index of the adapter family to enumerate.
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:enumerate-family-params:2:modified:migration-a9bad4b522eb5fae-0 -->`[out] pAdapterFamily`<!-- d3d12-review-inline:end:compiler-foundation:enumerate-family-params:2:modified:migration-a9bad4b522eb5fae-0 --></ins>
+`pAdapterFamily`
 
-The adapter family at Index.  See [D3D12_ADAPTER_FAMILY](#d3d12_adapter_family).
+[out] The adapter family at Index.  See [D3D12_ADAPTER_FAMILY](#d3d12_adapter_family).
 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:enumerate-family-contract:0:authored:migration-bcfb6db8b453e977-0 -->Indices are contiguous starting at zero. `pAdapterFamily` must point to writable
 storage for the complete fixed-size structure. A null output returns
@@ -417,17 +405,17 @@ Retrieve the list of ABI versions supported for an adapter family.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:0 -->`[in] AdapterFamilyIndex`<!-- d3d12-review-inline:end:compiler-foundation:abi-params:0 --></ins>
+`AdapterFamilyIndex`
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:1 -->The index of the adapter family to query for supported ABI versions.  See [D3D12_ADAPTER_FAMILY](#d3d12_adapter_family) and [ID3D12CompilerFactory::EnumerateAdapterFamilies](#id3d12compilerfactory-enumerateadapterfamilies).<!-- d3d12-review-inline:end:compiler-foundation:abi-params:1 --></ins>
+[in] <ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:1 -->The index of the adapter family to query for supported ABI versions.  See [D3D12_ADAPTER_FAMILY](#d3d12_adapter_family) and [ID3D12CompilerFactory::EnumerateAdapterFamilies](#id3d12compilerfactory-enumerateadapterfamilies).<!-- d3d12-review-inline:end:compiler-foundation:abi-params:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:2:modified:migration-6b4e9eda6a0ca2d5-0 -->`[in, out] pNumABIVersions`<!-- d3d12-review-inline:end:compiler-foundation:abi-params:2:modified:migration-6b4e9eda6a0ca2d5-0 --></ins>
+`pNumABIVersions`
 
-On input, <ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:3:modified:migration-93da7da73706d9f6-0 -->describes the capacity of pABIVersions in UINT64 elements<!-- d3d12-review-inline:end:compiler-foundation:abi-params:3:modified:migration-93da7da73706d9f6-0 --></ins>.  <ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:3:modified:migration-02e7a934c7ebd17a-1 -->`*pNumABIVersions` is zero<!-- d3d12-review-inline:end:compiler-foundation:abi-params:3:modified:migration-02e7a934c7ebd17a-1 --></ins> when pABIVersions is nullptr.  This may be used to retrieve a partial list, <ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:3:modified:migration-8c9e44232bc261dc-2 -->see the buffer rules below<!-- d3d12-review-inline:end:compiler-foundation:abi-params:3:modified:migration-8c9e44232bc261dc-2 --></ins>.  On output, returns the number of ABI Versions <ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:3:modified:migration-7e8d9107a77658b8-3 -->for the adapter family<!-- d3d12-review-inline:end:compiler-foundation:abi-params:3:modified:migration-7e8d9107a77658b8-3 --></ins>.
+[in, out] On input, <ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:3:modified:migration-93da7da73706d9f6-0 -->describes the capacity of pABIVersions in UINT64 elements<!-- d3d12-review-inline:end:compiler-foundation:abi-params:3:modified:migration-93da7da73706d9f6-0 --></ins>.  <ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:3:modified:migration-02e7a934c7ebd17a-1 -->`*pNumABIVersions` is zero<!-- d3d12-review-inline:end:compiler-foundation:abi-params:3:modified:migration-02e7a934c7ebd17a-1 --></ins> when pABIVersions is nullptr.  This may be used to retrieve a partial list, <ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:3:modified:migration-8c9e44232bc261dc-2 -->see the buffer rules below<!-- d3d12-review-inline:end:compiler-foundation:abi-params:3:modified:migration-8c9e44232bc261dc-2 --></ins>.  On output, returns the number of ABI Versions <ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:3:modified:migration-7e8d9107a77658b8-3 -->for the adapter family<!-- d3d12-review-inline:end:compiler-foundation:abi-params:3:modified:migration-7e8d9107a77658b8-3 --></ins>.
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:4:modified:migration-1b1a6034ca925089-0 -->`[out, optional] pABIVersions`<!-- d3d12-review-inline:end:compiler-foundation:abi-params:4:modified:migration-1b1a6034ca925089-0 --></ins>
+`pABIVersions`
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:5:modified:source-a0da1480336a72b6-0-0 -->Receives<!-- d3d12-review-inline:end:compiler-foundation:abi-params:5:modified:source-a0da1480336a72b6-0-0 --></ins> the list of ABI Versions for <ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:5:modified:source-a0da1480336a72b6-1-0 -->the adapter family<!-- d3d12-review-inline:end:compiler-foundation:abi-params:5:modified:source-a0da1480336a72b6-1-0 --></ins>.  May be nullptr when performing a size check.
+[out, optional] <ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:5:modified:source-a0da1480336a72b6-0-0 -->Receives<!-- d3d12-review-inline:end:compiler-foundation:abi-params:5:modified:source-a0da1480336a72b6-0-0 --></ins> the list of ABI Versions for <ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-params:5:modified:source-a0da1480336a72b6-1-0 -->the adapter family<!-- d3d12-review-inline:end:compiler-foundation:abi-params:5:modified:source-a0da1480336a72b6-1-0 --></ins>.  May be nullptr when performing a size check.
 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:abi-remarks:0:modified:migration-46c426343b556067-0 -->Returns the<!-- d3d12-review-inline:end:compiler-foundation:abi-remarks:0:modified:migration-46c426343b556067-0 --></ins> compiler ABI version supported by the compiled binaries produced by this compiler.  This is compared with the supported ABI range of a driver to understand if precompiled binaries are supported.
 
@@ -485,13 +473,13 @@ Describes the version of a compiler for an adapter family.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-params:0 -->`[in] AdapterFamilyIndex`<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-params:0 --></ins>
+`AdapterFamilyIndex`
 
-The index of the adapter family <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-params:1:modified:migration-ce60e4055f2bbdfc-0 -->to query for its compiler version<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-params:1:modified:migration-ce60e4055f2bbdfc-0 --></ins>.  See <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-params:1:modified:section-pass-family -->[D3D12_ADAPTER_FAMILY](#d3d12_adapter_family)<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-params:1:modified:section-pass-family --></ins> and <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-params:1:modified:section-pass-enumeration -->[ID3D12CompilerFactory::EnumerateAdapterFamilies](#id3d12compilerfactory-enumerateadapterfamilies)<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-params:1:modified:section-pass-enumeration --></ins>.
+[in] The index of the adapter family <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-params:1:modified:migration-ce60e4055f2bbdfc-0 -->to query for its compiler version<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-params:1:modified:migration-ce60e4055f2bbdfc-0 --></ins>.  See <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-params:1:modified:section-pass-family -->[D3D12_ADAPTER_FAMILY](#d3d12_adapter_family)<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-params:1:modified:section-pass-family --></ins> and <ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-params:1:modified:section-pass-enumeration -->[ID3D12CompilerFactory::EnumerateAdapterFamilies](#id3d12compilerfactory-enumerateadapterfamilies)<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-params:1:modified:section-pass-enumeration --></ins>.
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:compiler-version-params:2:modified:migration-66df29e996904281-0 -->`[out] pCompilerVersion`<!-- d3d12-review-inline:end:compiler-foundation:compiler-version-params:2:modified:migration-66df29e996904281-0 --></ins>
+`pCompilerVersion`
 
-Compiler version changes signify changes in code generation that potentially impact all applications for an adapter family.  See [D3D12_VERSION_NUMBER](state-object-databases-and-identity.md#d3d12_version_number).
+[out] Compiler version changes signify changes in code generation that potentially impact all applications for an adapter family.  See [D3D12_VERSION_NUMBER](state-object-databases-and-identity.md#d3d12_version_number).
 
 #### Versioning guidance
 
@@ -528,13 +516,13 @@ Compilers may have an application dependent profile or settings.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:profile-params:0:modified:migration-cb265ec45b596bc9-0 -->`[in] pTarget`<!-- d3d12-review-inline:end:compiler-foundation:profile-params:0:modified:migration-cb265ec45b596bc9-0 --></ins>
+`pTarget`
 
-Describes the adapter family and ABI version to target.  Specify zero for ABIVersion to default to the latest supported ABI Version.  See [D3D12_COMPILER_TARGET](#d3d12_compiler_target).
+[in] Describes the adapter family and ABI version to target.  Specify zero for ABIVersion to default to the latest supported ABI Version.  See [D3D12_COMPILER_TARGET](#d3d12_compiler_target).
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:profile-params:2:modified:migration-33d887a2e6a91639-0 -->`[in] pApplicationDesc`<!-- d3d12-review-inline:end:compiler-foundation:profile-params:2:modified:migration-33d887a2e6a91639-0 --></ins>
+`pApplicationDesc`
 
-Describes the target application and version.  See [D3D12_APPLICATION_DESC](state-object-databases-and-identity.md#d3d12_application_desc).
+[in] Describes the target application and version.  See [D3D12_APPLICATION_DESC](state-object-databases-and-identity.md#d3d12_application_desc).
 
 <ins><!-- d3d12-review-inline:begin:compiler-foundation:target-resolution:1:authored:migration-96bd5ad07fd031b3-0 -->Supply the target application's required null-terminated
 executable filename and title, application version, optional null-terminated
@@ -543,9 +531,9 @@ name is supplied. The process hosting the offline compiler does not supply an
 implicit executable name fallback. These inputs and all referenced strings must
 remain readable during the call. This query does not transfer their ownership.<!-- d3d12-review-inline:end:compiler-foundation:target-resolution:1:authored:migration-96bd5ad07fd031b3-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:profile-params:4:modified:migration-823590f5aeb9e3d1-0 -->`[out] pApplicationProfileVersion`<!-- d3d12-review-inline:end:compiler-foundation:profile-params:4:modified:migration-823590f5aeb9e3d1-0 --></ins>
+`pApplicationProfileVersion`
 
-Returns the profile version which describes the version of the compiler profile that targets a specific application.  See [D3D12_VERSION_NUMBER](state-object-databases-and-identity.md#d3d12_version_number).
+[out] Returns the profile version which describes the version of the compiler profile that targets a specific application.  See [D3D12_VERSION_NUMBER](state-object-databases-and-identity.md#d3d12_version_number).
 
 #### Profile changes
 
@@ -594,14 +582,14 @@ reference; releasing it does not detach the child from its owner.<!-- d3d12-revi
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:get-factory-params:0:authored:migration-498912c21ac699e8-0 -->`[in] riid`<!-- d3d12-review-inline:end:compiler-foundation:get-factory-params:0:authored:migration-498912c21ac699e8-0 --></ins>
+`riid`
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:get-factory-params:1:authored:migration-bd034505d4b0bf85-0 -->The requested compiler factory interface identifier, normally
+[in] <ins><!-- d3d12-review-inline:begin:compiler-foundation:get-factory-params:1:authored:migration-bd034505d4b0bf85-0 -->The requested compiler factory interface identifier, normally
 `IID_ID3D12CompilerFactory`.<!-- d3d12-review-inline:end:compiler-foundation:get-factory-params:1:authored:migration-bd034505d4b0bf85-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:get-factory-params:2:authored:migration-ed5e48fc5ccd7765-0 -->`[out] ppCompilerFactory`<!-- d3d12-review-inline:end:compiler-foundation:get-factory-params:2:authored:migration-ed5e48fc5ccd7765-0 --></ins>
+`ppCompilerFactory`
 
-<ins><!-- d3d12-review-inline:begin:compiler-foundation:get-factory-params:3:authored:migration-7b8497acde34c314-0 -->Required writable storage for an owned interface reference. On success the
+[out] <ins><!-- d3d12-review-inline:begin:compiler-foundation:get-factory-params:3:authored:migration-7b8497acde34c314-0 -->Required writable storage for an owned interface reference. On success the
 caller releases the returned reference.<!-- d3d12-review-inline:end:compiler-foundation:get-factory-params:3:authored:migration-7b8497acde34c314-0 --></ins>
 
 #### Return values

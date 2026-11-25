@@ -1,18 +1,5 @@
 # Resources and memory
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <a id="resource-storage"></a>
 
 ## Resource identity and storage
@@ -4606,7 +4593,7 @@ typedef struct D3D12_REGISTER_TRIM_NOTIFICATION
 unused or over-budget storage. They do not automatically evict resources or
 replace application residency and GPU completion tracking.<!-- d3d12-review-inline:end:resources:AB-trim-model:0:authored:migration-afd1f442c1a34187-0 --></ins>
 
-*D3D12_TRIM_NOTIFICATION_FLAG_PERIODIC_TRIM*
+`D3D12_TRIM_NOTIFICATION_FLAG_PERIODIC_TRIM`
 
 <ins><!-- d3d12-review-inline:begin:resources:AB-trim-periodic:0:modified:opus-flag-heading -->When this flag is set,<!-- d3d12-review-inline:end:resources:AB-trim-periodic:0:modified:opus-flag-heading --></ins> the application is advised to perform the following operations:
 - Trim all allocations that were not referenced since the previous periodic trim request by comparing the allocation last referenced fence with the last periodic trim context fence
@@ -4614,11 +4601,11 @@ replace application residency and GPU completion tracking.<!-- d3d12-review-inli
 
 > Note: "context fence" refers to fence values associated with D3D12 Command Queue contexts, not the callback `pContext` parameter.
 
-*D3D12_TRIM_NOTIFICATION_FLAG_RESTART_PERIODIC_TRIM*
+`D3D12_TRIM_NOTIFICATION_FLAG_RESTART_PERIODIC_TRIM`
 
 May not be set together with `D3D12_TRIM_NOTIFICATION_FLAG_PERIODIC_TRIM` flag. When this flag is set, the application must reset the last periodic trim context fence to the last completed context fence.
 
-*D3D12_TRIM_NOTIFICATION_FLAG_TRIM_TO_BUDGET*
+`D3D12_TRIM_NOTIFICATION_FLAG_TRIM_TO_BUDGET`
 
 Indicates that the application usage is over the memory budget, and `NumBytesToTrim` bytes should be trimmed to fit in the new memory budget.
 

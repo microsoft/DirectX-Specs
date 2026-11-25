@@ -1,18 +1,5 @@
 # Numeric and data rules
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <a id="numeric-3-1"></a>
 
 ## Floating Point Rules
@@ -54,17 +41,17 @@ of deviations or additions to IEEE-754 (some of which are significant). Refer to
   the same requirement: 32-bit floating point operations must produce a result that is within 0.5 [ULP](#numeric-3-1-2) of
   the infinitely precise result. This applies only to addition, subtraction and multiplication.
 - Divide by 0 produces +/- INF, except 0/0 which results in NaN.
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.1:1:occurrence:1727b8e77677-0 -->log of (+/-) 0 produces -INF. log of a negative value (other than -0) produces NaN.<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.1:1:occurrence:1727b8e77677-0 --></ins>
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.1:1:occurrence:c09e19f565bc-1 -->rsq or sqrt of a negative number produces NaN. The exception is -0; sqrt(-0) produces -0, and rsq(-0) produces -INF.<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.1:1:occurrence:c09e19f565bc-1 --></ins>
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.1:1:occurrence:8f12fef15ce4-2 -->INF - INF = NaN<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.1:1:occurrence:8f12fef15ce4-2 --></ins>
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.1:1:occurrence:13c7fca65c84-3 -->(+/-)INF / (+/-)INF = NaN<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.1:1:occurrence:13c7fca65c84-3 --></ins>
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.1:1:occurrence:79c5c39aa239-4 -->(+/-)INF \* 0 = NaN<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.1:1:occurrence:79c5c39aa239-4 --></ins>
+- log of (+/-) 0 produces -INF. log of a negative value (other than -0) produces NaN.
+- rsq or sqrt of a negative number produces NaN. The exception is -0; sqrt(-0) produces -0, and rsq(-0) produces -INF.
+- INF - INF = NaN
+- (+/-)INF / (+/-)INF = NaN
+- (+/-)INF \* 0 = NaN
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.1:1:modified:section-nan-default -->Unless otherwise specified for the operation, NaN (any OP) any-value = NaN<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.1:1:modified:section-nan-default --></ins>
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.1:1:occurrence:bc98277aa1e2-5 -->The comparisons EQ, GT, GE, LT, and LE, when either or both operands is NaN returns FALSE.<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.1:1:occurrence:bc98277aa1e2-5 --></ins>
+- The comparisons EQ, GT, GE, LT, and LE, when either or both operands is NaN returns FALSE.
 - Comparisons ignore the sign of 0 (so +0 equals -0).
 - The comparison NE, when either or both operands is NaN returns TRUE.
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.1:1:occurrence:44fada770c62-6 -->Comparisons of any non-NaN value against +/- INF return the correct result.<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.1:1:occurrence:44fada770c62-6 --></ins>
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.1:1:occurrence:2b57f5de9190-7 -->min(x,NaN) == min(NaN,x) == x (same for max). This used to be a deviation from IEEE 754 but now aligns with IEEE-754-2019's minimumNumber and maximumNumber operations.<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.1:1:occurrence:2b57f5de9190-7 --></ins>
+- Comparisons of any non-NaN value against +/- INF return the correct result.
+- min(x,NaN) == min(NaN,x) == x (same for max). This used to be a deviation from IEEE 754 but now aligns with IEEE-754-2019's minimumNumber and maximumNumber operations.
 
 <a id="numeric-3-1-3-2"></a>
 
@@ -72,31 +59,31 @@ of deviations or additions to IEEE-754 (some of which are significant). Refer to
 
 <ins><!-- d3d12-review-inline:begin:numeric-rules:N-denorm-scope:0:authored:migration-f12954750b58ff2b-0 -->For Shader Model 6.2 and later, the [shader denormal mode](#shader-denorm-mode) controls FP32 add, subtract, multiply and divide. For those four operations, the mode takes precedence over the flush-to-zero requirements in this list. Other operations, including data movement, min/max, fixed-function operations and format conversions, follow their separately specified rules.<!-- d3d12-review-inline:end:numeric-rules:N-denorm-scope:0:authored:migration-f12954750b58ff2b-0 --></ins>
 
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0:occurrence:432feeed2a49-0 -->There is no support for floating point exceptions, status bits or traps.<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0:occurrence:432feeed2a49-0 --></ins>
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0:occurrence:9e5c11d9174b-1 -->Denorms MUST be flushed to sign-preserved zero on input and output of any floating point mathematical operation.<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0:occurrence:9e5c11d9174b-1 --></ins>
+- There is no support for floating point exceptions, status bits or traps.
+- Denorms MUST be flushed to sign-preserved zero on input and output of any floating point mathematical operation.
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0:occurrence:6a0dc950085d-2 -->An exception to the requirement to flush denorms<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0:occurrence:6a0dc950085d-2 --></ins>
   is that any I/O or data movement operation that does not manipulate the data,
   such as using the [ld](../archive/D3D11_3_FunctionalSpec.htm#inst_LD) instruction to access Resource data, or executing mov instruction or
   conditional move/swap instruction (excluding min or max instructions), must not alter data at all (so a denorm remains denorm).
   Note that doing something that amounts to just moving data, but isn't explicitly doing so, such as multiplying a
   number by 1.0f is not detected as just a "mov", and in this case a denorm flush would happen.
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0:occurrence:b753ba7d8b5a-3 -->Floating point values provided to hardware through states, such as Viewport MinDepth/MaxDepth, BorderColor<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0:occurrence:b753ba7d8b5a-3 --></ins>
+- Floating point values provided to hardware through states, such as Viewport MinDepth/MaxDepth, BorderColor
   values etc., may be provided as denorm values and may or may not be flushed before use by the hardware.
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0:occurrence:e11cf7891eff-4 -->min or max operations must flush denorms for comparison, but the result may or may not be denorm flushed.<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0:occurrence:e11cf7891eff-4 --></ins>
+- min or max operations must flush denorms for comparison, but the result may or may not be denorm flushed.
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0:modified:section-nan-output -->Unless otherwise specified for the operation, a NaN input produces a NaN output. The exact bit pattern<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0:modified:section-nan-output --></ins>
   of the NaN is not required to stay the same (unless the operation is a raw "mov" instruction which
   does not alter data at all.)
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0:occurrence:58bce4023dc3-5 -->The arithmetic rules in D3D10+ do not make any distinctions between "quiet" and "signaling" NaN values (QNaN vs SNaN). All "NaN" values are handled the same way.<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0:occurrence:58bce4023dc3-5 --></ins>
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0:occurrence:bd2665ec818f-6 -->If both inputs to min() or max() are NaN, any NaN is returned.<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0:occurrence:bd2665ec818f-6 --></ins>
+- The arithmetic rules in D3D10+ do not make any distinctions between "quiet" and "signaling" NaN values (QNaN vs SNaN). All "NaN" values are handled the same way.
+- If both inputs to min() or max() are NaN, any NaN is returned.
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0:occurrence:f19af88b7eba-7 -->An IEEE 754R rule is that min(-0,+0) == min(+0,-0) == -0,<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0:occurrence:f19af88b7eba-7 --></ins>
   and max(-0,+0) == max(+0,-0) == +0, which honor the sign, in contrast
   to the comparison rules for signed zero (stated in [Honored IEEE-754 Rules](#numeric-3-1-3-1)). Direct3D recommends the
   IEEE 754R behavior here, but it will not be enforced; it is permissible
   for the result of comparing zeros to be dependent on the order of parameters,
   using a comparison that ignores the signs.
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0:occurrence:fe17506c4f99-8 -->x\*1.0f must always result in x (except denorm flushed).<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0:occurrence:fe17506c4f99-8 --></ins>
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0:occurrence:e5b48d6ca8b4-9 -->x/1.0f must always result in x (except denorm flushed).<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0:occurrence:e5b48d6ca8b4-9 --></ins>
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0:occurrence:9f43750002ce-10 -->x +/- 0.0f must always result in x (except denorm flushed). But -0 + 0 = +0.<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0:occurrence:9f43750002ce-10 --></ins>
+- x\*1.0f must always result in x (except denorm flushed).
+- x/1.0f must always result in x (except denorm flushed).
+- x +/- 0.0f must always result in x (except denorm flushed). But -0 + 0 = +0.
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.1.3.2:0:occurrence:143653da1541-11 -->Fused operations (such as mad, dp3) must produce results that are no less accurate<!-- d3d12-review-inline:end:numeric-rules:L-3.1.3.2:0:occurrence:143653da1541-11 --></ins>
   than the worst possible serial ordering of evaluation of the unfused expansion of the operation.
   Note that the definition of the worst possible ordering, for the purpose of tolerance,
@@ -285,7 +272,7 @@ output data must be identical in memory.<!-- d3d12-review-inline:end:numeric-rul
   contains two encodings for -1.0f when converting from SNORM to float32. When converting from float32 back to SNORM, only one of the -1.0f encodings is achievable.
   As long as SNORM data is originally encoded in a form that does not use the "extra" -1.0f encoding (the minimum integer), Data Invertability from SNORM to float32 and back
   is guaranteed.
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-19.1.2.1:0:occurrence:b8a0be5addc9-1 -->Data Invertability holds for NaN, except that the exact bit pattern of NaN is not required to be maintained when round-trip data conversions are involved.<!-- d3d12-review-inline:end:numeric-rules:L-19.1.2.1:0:occurrence:b8a0be5addc9-1 --></ins>
+- Data Invertability holds for NaN, except that the exact bit pattern of NaN is not required to be maintained when round-trip data conversions are involved.
 
 <a id="numeric-3-2-2"></a>
 
@@ -298,7 +285,7 @@ These are rules
 for converting from a higher range representation to a lower range
 representation:
 
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.2.2:2 -->Round-to-zero must be used during conversion to another float format. If the<!-- d3d12-review-inline:end:numeric-rules:L-3.2.2:2 --></ins>
+- Round-to-zero must be used during conversion to another float format. If the
   target is an integer or fixed point format, round-to-nearest-even must be used, unless
   the conversion is explicitly documented in the spec using another rounding behavior, such
   as round-to-nearest for [FLOAT->SNORM](#numeric-3-2-3-4), [FLOAT->UNORM](#numeric-3-2-3-6),
@@ -326,7 +313,7 @@ representation:
 These are rules for converting from a lower precision/range
 representation to a higher precision/range representation:
 
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.2.2:4 -->NaN in a lower range format must get converted to the NaN representation in<!-- d3d12-review-inline:end:numeric-rules:L-3.2.2:4 --></ins>
+- NaN in a lower range format must get converted to the NaN representation in
   the higher range format if available in the higher range
   format. If the higher range format does not have a NaN representation, it must be
   converted to 0.
@@ -393,7 +380,7 @@ which is stricter than the general Direct3D [Floating Point Rules](#numeric-3-1)
 Given an n-bit integer value representing the signed range [-1.0f to 1.0f],
 conversion to floating-point is as follows:
 
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.2.3.3:1 -->The most-negative value maps to -1.0f. e.g. the 5-bit value 10000 maps to -1.0f.<!-- d3d12-review-inline:end:numeric-rules:L-3.2.3.3:1 --></ins>
+- The most-negative value maps to -1.0f. e.g. the 5-bit value 10000 maps to -1.0f.
 - Every other value is converted to a float (call it c), and then result = c / (2<sup>(n-1)</sup>-1).
   e.g. the 5-bit value 10001 is converted to -15.0f, and then divided by 15.0f, yielding
   -1.0f.
@@ -407,11 +394,11 @@ Given a floating-point number, conversion to an n-bit integer value representing
 
 - Suppose the starting value is c
 - If c is NaN, the result is 0
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.2.3.4:1:occurrence:dc4b91246ee8-0 -->If c > 1.0f, including INF, it is clamped to 1.0f. If c < -1.0f, including -INF, it is clamped to -1.0f.<!-- d3d12-review-inline:end:numeric-rules:L-3.2.3.4:1:occurrence:dc4b91246ee8-0 --></ins>
+- If c > 1.0f, including INF, it is clamped to 1.0f. If c < -1.0f, including -INF, it is clamped to -1.0f.
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.2.3.4:1:occurrence:7363344bcbe6-1 -->Convert from float scale to integer scale: c = c \* (2<sup>n-1</sup>-1).<!-- d3d12-review-inline:end:numeric-rules:L-3.2.3.4:1:occurrence:7363344bcbe6-1 --></ins>
 - Convert to integer:
-  - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.2.3.4:1:occurrence:cc6c0ea327eb-2 -->If c >= 0, c = c + 0.5f, else, c = c - 0.5f.<!-- d3d12-review-inline:end:numeric-rules:L-3.2.3.4:1:occurrence:cc6c0ea327eb-2 --></ins>
-  - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.2.3.4:1:occurrence:87465eb94f38-3 -->Drop the decimal fraction, and the remaining floating point (integral) value is converted directly to an integer.<!-- d3d12-review-inline:end:numeric-rules:L-3.2.3.4:1:occurrence:87465eb94f38-3 --></ins>
+  - If c >= 0, c = c + 0.5f, else, c = c - 0.5f.
+  - Drop the decimal fraction, and the remaining floating point (integral) value is converted directly to an integer.
 
 This conversion is permitted tolerance of [0.6f](../archive/D3D11_3_FunctionalSpec.htm#D3D11_FLOAT32_TO_INTEGER_TOLERANCE_IN_ULP "D3D11_FLOAT32_TO_INTEGER_TOLERANCE_IN_ULP") [ULP](#numeric-3-1-2) (on the integer side).
 This means that after converting from float to integer scale, any value within [0.6f](../archive/D3D11_3_FunctionalSpec.htm#D3D11_FLOAT32_TO_INTEGER_TOLERANCE_IN_ULP "D3D11_FLOAT32_TO_INTEGER_TOLERANCE_IN_ULP") [ULP](#numeric-3-1-2)
@@ -430,13 +417,13 @@ ensures that the conversion is nondecreasing across the range and all output val
 
 #### FLOAT -> UNORM
 
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.2.3.6:0:occurrence:1fbd8a62a319-0 -->Suppose the starting value is c<!-- d3d12-review-inline:end:numeric-rules:L-3.2.3.6:0:occurrence:1fbd8a62a319-0 --></ins>
+- Suppose the starting value is c
 - If c is NaN, the result is 0
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.2.3.6:0:occurrence:8b7e2885a9bd-1 -->If c > 1.0f, including INF, it is clamped to 1.0f. If c < 0.0f, including -INF, it is clamped to 0.0f.<!-- d3d12-review-inline:end:numeric-rules:L-3.2.3.6:0:occurrence:8b7e2885a9bd-1 --></ins>
+- If c > 1.0f, including INF, it is clamped to 1.0f. If c < 0.0f, including -INF, it is clamped to 0.0f.
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.2.3.6:0:occurrence:fee8918e0541-2 -->Convert from float scale to integer scale: c = c \* (2<sup>n</sup>-1).<!-- d3d12-review-inline:end:numeric-rules:L-3.2.3.6:0:occurrence:fee8918e0541-2 --></ins>
 - Convert to integer:
   - c = c + 0.5f.
-  - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.2.3.6:0:occurrence:622ac23f95f9-3 -->Drop the decimal fraction, and the remaining floating point (integral) value is converted directly to an integer.<!-- d3d12-review-inline:end:numeric-rules:L-3.2.3.6:0:occurrence:622ac23f95f9-3 --></ins>
+  - Drop the decimal fraction, and the remaining floating point (integral) value is converted directly to an integer.
 
 This conversion is permitted tolerance of [0.6f](../archive/D3D11_3_FunctionalSpec.htm#D3D11_FLOAT32_TO_INTEGER_TOLERANCE_IN_ULP "D3D11_FLOAT32_TO_INTEGER_TOLERANCE_IN_ULP") [ULP](#numeric-3-1-2) (on the integer side).
 This means that after converting from float to integer scale, any value within [0.6f](../archive/D3D11_3_FunctionalSpec.htm#D3D11_FLOAT32_TO_INTEGER_TOLERANCE_IN_ULP "D3D11_FLOAT32_TO_INTEGER_TOLERANCE_IN_ULP") [ULP](#numeric-3-1-2)
@@ -476,7 +463,7 @@ Assuming the target SRGB color component has n bits:
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.2.3.8:2:occurrence:c0ec20266f22-1 -->Convert from float scale to integer scale: c = c \* (2<sup>n</sup>-1).<!-- d3d12-review-inline:end:numeric-rules:L-3.2.3.8:2:occurrence:c0ec20266f22-1 --></ins>
 - Convert to integer:
   - c = c + 0.5f.
-  - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-3.2.3.8:2:occurrence:74221242c4c5-2 -->Drop the decimal fraction, and the remaining floating point (integral) value is converted directly to an integer.<!-- d3d12-review-inline:end:numeric-rules:L-3.2.3.8:2:occurrence:74221242c4c5-2 --></ins>
+  - Drop the decimal fraction, and the remaining floating point (integral) value is converted directly to an integer.
 
 This conversion is permitted tolerance of [0.6f](../archive/D3D11_3_FunctionalSpec.htm#D3D11_FLOAT32_TO_INTEGER_TOLERANCE_IN_ULP "D3D11_FLOAT32_TO_INTEGER_TOLERANCE_IN_ULP") [ULP](#numeric-3-1-2) (on the integer side).
 This means that after converting from float to integer scale, any value within [0.6f](../archive/D3D11_3_FunctionalSpec.htm#D3D11_FLOAT32_TO_INTEGER_TOLERANCE_IN_ULP "D3D11_FLOAT32_TO_INTEGER_TOLERANCE_IN_ULP") [ULP](#numeric-3-1-2)
@@ -619,8 +606,8 @@ since floating point stores negative numbers in sign-magnitude form, instead of 
 A color is represented by 3 mantissas and an exponent as follows:
 
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-19.3.2:2:occurrence:82647e66bb72-0 -->Three 9-bit fields representing the fractional component (frac) of each channel, with no implied 1 before the decimal<!-- d3d12-review-inline:end:numeric-rules:L-19.3.2:2:occurrence:82647e66bb72-0 --></ins>
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-19.3.2:2:occurrence:283cb251f007-1 -->a 5-bit exponent (e), with bias 15, similar to the normalized exponent in [16-bit floating point](#numeric-3-1-5)<!-- d3d12-review-inline:end:numeric-rules:L-19.3.2:2:occurrence:283cb251f007-1 --></ins>
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-19.3.2:2:occurrence:46e0c846c9c9-2 -->There are no INF's or NAN's in this format.<!-- d3d12-review-inline:end:numeric-rules:L-19.3.2:2:occurrence:46e0c846c9c9-2 --></ins>
+- a 5-bit exponent (e), with bias 15, similar to the normalized exponent in [16-bit floating point](#numeric-3-1-5)
+- There are no INF's or NAN's in this format.
 
 For each component in {R,G,B}, the value "v" of the component is:
 
@@ -685,7 +672,7 @@ values with an encoded exponent of 31 may not be treated as INF or NAN.<!-- d3d1
 
   - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-19.3.2.2:3:occurrence:3b9a9023d0a4-3 -->0.111111111\*(2<sup>(31-15)</sup>) = 65408<!-- d3d12-review-inline:end:numeric-rules:L-19.3.2.2:3:occurrence:3b9a9023d0a4-3 --></ins>
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-19.3.2.2:3:occurrence:5b2444bae0e3-4 -->there are no NAN's or INF's in this format.<!-- d3d12-review-inline:end:numeric-rules:L-19.3.2.2:3:occurrence:5b2444bae0e3-4 --></ins>
-- <ins><!-- d3d12-review-inline:begin:numeric-rules:L-19.3.2.2:3:occurrence:d8bf939f8aeb-5 -->There is no sign bit. All negative numbers must clamp to zero.<!-- d3d12-review-inline:end:numeric-rules:L-19.3.2.2:3:occurrence:d8bf939f8aeb-5 --></ins>
+- There is no sign bit. All negative numbers must clamp to zero.
 - <ins><!-- d3d12-review-inline:begin:numeric-rules:L-19.3.2.2:3:occurrence:0cfd7fbd4fbd-6 -->values outside of the representable range (including INF) must saturate to RGBE range.<!-- d3d12-review-inline:end:numeric-rules:L-19.3.2.2:3:occurrence:0cfd7fbd4fbd-6 --></ins>
 
 <a id="numeric-19-3-3"></a>

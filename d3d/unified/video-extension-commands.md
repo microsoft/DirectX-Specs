@@ -2,19 +2,6 @@
 
 # Video extension commands
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:video-extension:N-route:0:authored:migration-2a0e5003d0a0d664-0 -->Opaque extension commands are identified by a command GUID. Each command defines its own parameter structure for each parameter stage. An application creates an `ID3D12VideoExtensionCommand` object for a command. It then records the command on a compatible video command list or executes it on the device.<!-- d3d12-review-inline:end:video-extension:N-route:0:authored:migration-2a0e5003d0a0d664-0 --></ins>
 
 <a id="extension-discovery"></a>
@@ -1500,9 +1487,9 @@ The byte size of the input data allocation.
 
 Output data for the capability query allocated by the caller with a size of OutputDataSizeInBytes. This struct is enumerable as the **D3D12DDI\_VIDEO\_EXTENSION\_COMMAND\_PARAMETER\_STAGE\_0063\_CAPS\_OUTPUT** parameter stage of the [D3D12DDI_VIDEO_EXTENSION_COMMAND_PARAMETER_STAGE_0063](#d3d12ddi-video-extension-command-parameter-stage-0063) enumeration.
 
-<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:12:modified:source-cdc5a61cc29aa1d2-0-0 -->`OutputDataSizeInBytes` (input)<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:12:modified:source-cdc5a61cc29aa1d2-0-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:12:modified:source-cdc5a61cc29aa1d2-0-0 -->`OutputDataSizeInBytes`<!-- d3d12-review-inline:end:video-extension:D-ns-d3d12umddi-d3d12ddi_video_extension_command_caps_data_0063:12:modified:source-cdc5a61cc29aa1d2-0-0 --></ins>
 
-The byte size of the output data allocation.
+(input) The byte size of the output data allocation.
 
 #### D3D12DDI_VIDEO_EXTENSION_COMMAND_SIZE_DATA_0063
 
@@ -1717,8 +1704,8 @@ The following error codes are allowed:
 | Return value | Description |
 | --- | --- |
 | S\_OK | Initialization succeeded. |
-| D3DDDIERR\_APPLICATIONERROR | The caller has attempted to initialize the command incorrectly. For example, provided an invalid argument. This error puts the command list in error and an error code is returned from the Close method on the API command list. |
-| D3DDDIERR\_DEVICEREMOVED | Cannot initialize the command because the device is in a device removed state. If the runtime has not already realized that the device was removed, this will set the device and command list in error. |
+| `D3DDDIERR_APPLICATIONERROR` | The caller has attempted to initialize the command incorrectly. For example, provided an invalid argument. This error puts the command list in error and an error code is returned from the Close method on the API command list. |
+| `D3DDDIERR_DEVICEREMOVED` | Cannot initialize the command because the device is in a device removed state. If the runtime has not already realized that the device was removed, this will set the device and command list in error. |
 
 #### PFND3D12DDI_EXECUTE_VIDEO_EXTENSION_COMMAND_0063
 
@@ -1754,8 +1741,8 @@ The following error codes are allowed:
 > | Return value | Description |
 > | --- | --- |
 > | S\_OK | Execution succeeded. |
-> | D3DDDIERR\_APPLICATIONERROR | The caller has attempted to execute the command incorrectly. For example, provided an invalid argument. This error puts the command list in error and an error code is returned from the Close method on the API command list. |
-> | D3DDDIERR\_DEVICEREMOVED | Cannot execute the command because the device is in a device removed state. If the runtime has not already realized that the device was removed, this will set the device and command list in error. |
+> | `D3DDDIERR_APPLICATIONERROR` | The caller has attempted to execute the command incorrectly. For example, provided an invalid argument. This error puts the command list in error and an error code is returned from the Close method on the API command list. |
+> | `D3DDDIERR_DEVICEREMOVED` | Cannot execute the command because the device is in a device removed state. If the runtime has not already realized that the device was removed, this will set the device and command list in error. |
 
 <!-- d3d12-review-alert:end:video-extension:D-nc-d3d12umddi-pfnd3d12ddi_execute_video_extension_command_0063:12:modified:migration-990275c41bef8569-0 -->
 

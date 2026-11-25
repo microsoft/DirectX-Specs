@@ -575,7 +575,7 @@ directly in the root arguments.
 
 The buffer descriptors supported in the root arguments are CBVs
 and SRV/UAVs of Buffer resources, where the SRV/UAV is either a raw or
-structured buffer. [Acceleration-structure SRVs](#acceleration-structure-srv) are also supported. They use the acceleration structure's GPUVA directly, with no additional root-descriptor type indication. UAVs in the root cannot have counters associated with
+structured buffer. [Acceleration-structure SRVs](#acceleration-structure-srv) are also supported. They use the acceleration structure's GPUVA directly, with no additional root-descriptor type indication. UAVs in the root signature cannot have counters associated with
 them.
 
 Unlike full descriptors in descriptor heaps, root descriptors are each
@@ -1220,7 +1220,7 @@ Root descriptors don't support any out of bounds checking. If
 applications depend on safe out of bounds memory access behavior when
 accessing descriptors, they need to use `DESCRIPTORS_VOLATILE` or `DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS`.
 
-**DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS:**
+`DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS`
 
 This flag indicates that descriptors should
 have all of the above static properties **except** that out-of-bounds Buffer view reads return zero and out-of-bounds writes are discarded.
@@ -1237,7 +1237,7 @@ have been submitted and have not finished executing. This is the only
 behavior that Root Signature version 1.0 supported (it didn't have a way
 to choose).
 
-**DATA_STATIC_WHILE_SET_AT_EXECUTE:**
+`DATA_STATIC_WHILE_SET_AT_EXECUTE`
 
 (This applies to both descriptor range flags and root descriptor flags.)
 
@@ -1272,7 +1272,7 @@ applies uniquely to each execution of the bundle.
 
 <a id="data-static"></a>
 
-**DATA_STATIC:**
+`DATA_STATIC`
 
 (This applies to both descriptor range flags and root descriptor flags.)
 
@@ -1284,7 +1284,7 @@ last time.
 
 The [static data bundle requirements](command-list-state.md#static-data) apply.
 
-**Remarks:**
+#### Remarks
 
 At most one of the `DATA_*` flags can be specified at a time. The
 exception is Sampler descriptor ranges which don't support `DATA_*`
@@ -1994,17 +1994,17 @@ Creates a descriptor heap object.
 
 #### Parameters
 
-`[in] pDescriptorHeapDesc`
+`pDescriptorHeapDesc`
 
-A pointer to a [`D3D12_DESCRIPTOR_HEAP_DESC`](#descriptor-heap-description) structure that describes the heap.
+[in] A pointer to a [`D3D12_DESCRIPTOR_HEAP_DESC`](#descriptor-heap-description) structure that describes the heap.
 
 `riid`
 
 The globally unique identifier (**GUID**) for the descriptor heap interface. An input parameter.
 
-`[out] ppvHeap`
+`ppvHeap`
 
-A pointer to a memory block that receives a pointer to the descriptor heap. *ppvHeap* can be NULL. When *ppvHeap* is NULL, no object will be created and S\_FALSE will be returned when *pDescriptorHeapDesc* is valid.
+[out] A pointer to a memory block that receives a pointer to the descriptor heap. *ppvHeap* can be NULL. When *ppvHeap* is NULL, no object will be created and S\_FALSE will be returned when *pDescriptorHeapDesc* is valid.
 
 #### Return values
 
@@ -2027,9 +2027,9 @@ Gets the size of the handle increment for the given type of descriptor heap. Thi
 
 #### Parameters
 
-`[in] DescriptorHeapType`
+`DescriptorHeapType`
 
-The [`D3D12_DESCRIPTOR_HEAP_TYPE`](#d3d12-descriptor-heap-type)-typed value that specifies the type of descriptor heap to get the size of the handle increment for.
+[in] The [`D3D12_DESCRIPTOR_HEAP_TYPE`](#d3d12-descriptor-heap-type)-typed value that specifies the type of descriptor heap to get the size of the handle increment for.
 
 #### Return values
 
@@ -2159,39 +2159,39 @@ The [common copy rules](#copy-behavior) apply. This is an immediate CPU operatio
 
 #### Parameters
 
-`[in] NumDestDescriptorRanges`
+`NumDestDescriptorRanges`
 
-The number of destination descriptor ranges to copy to.
+[in] The number of destination descriptor ranges to copy to.
 
-`[in] pDestDescriptorRangeStarts`
+`pDestDescriptorRangeStarts`
 
-An array of **[`D3D12_CPU_DESCRIPTOR_HANDLE`](#d3d12-cpu-descriptor-handle)** objects to copy to.
+[in] An array of **[`D3D12_CPU_DESCRIPTOR_HANDLE`](#d3d12-cpu-descriptor-handle)** objects to copy to.
 
 All the destination and source descriptors must be in heaps of the same [`D3D12_DESCRIPTOR_HEAP_TYPE`](#d3d12-descriptor-heap-type).
 
-`[in, optional] pDestDescriptorRangeSizes`
+`pDestDescriptorRangeSizes`
 
-An array of destination descriptor range sizes to copy to.
+[in, optional] An array of destination descriptor range sizes to copy to.
 
-`[in] NumSrcDescriptorRanges`
+`NumSrcDescriptorRanges`
 
-The number of source descriptor ranges to copy from.
+[in] The number of source descriptor ranges to copy from.
 
-`[in] pSrcDescriptorRangeStarts`
+`pSrcDescriptorRangeStarts`
 
-An array of **[`D3D12_CPU_DESCRIPTOR_HANDLE`](#d3d12-cpu-descriptor-handle)** objects to copy from.
+[in] An array of **[`D3D12_CPU_DESCRIPTOR_HANDLE`](#d3d12-cpu-descriptor-handle)** objects to copy from.
 
 Important
 
 All elements in the *pSrcDescriptorRangeStarts* parameter must be in a non shader-visible descriptor heap. This is because shader-visible descriptor heaps may be created in **WRITE\_COMBINE** memory or GPU local memory, which is prohibitively slow to read from. If your application manages descriptor heaps via copying the descriptors required for a given pass or frame from local "storage" descriptor heaps to the GPU-bound descriptor heap, use shader-opaque heaps for the storage heaps and copy into the GPU-visible heap as required.
 
-`[in, optional] pSrcDescriptorRangeSizes`
+`pSrcDescriptorRangeSizes`
 
-An array of source descriptor range sizes to copy from.
+[in, optional] An array of source descriptor range sizes to copy from.
 
-`[in] DescriptorHeapsType`
+`DescriptorHeapsType`
 
-The [`D3D12_DESCRIPTOR_HEAP_TYPE`](#d3d12-descriptor-heap-type)-typed value that specifies the type of descriptor heap to copy with. This is required as different descriptor types may have different sizes.
+[in] The [`D3D12_DESCRIPTOR_HEAP_TYPE`](#d3d12-descriptor-heap-type)-typed value that specifies the type of descriptor heap to copy with. This is required as different descriptor types may have different sizes.
 
 Both the source and destination descriptor heaps must have the same type, else the debug layer will emit an error.
 
@@ -2221,27 +2221,27 @@ The [common copy rules](#copy-behavior) apply. This is an immediate CPU operatio
 
 #### Parameters
 
-`[in] NumDescriptors`
+`NumDescriptors`
 
-The number of descriptors to copy.
+[in] The number of descriptors to copy.
 
-`[in] DestDescriptorRangeStart`
+`DestDescriptorRangeStart`
 
-A **[`D3D12_CPU_DESCRIPTOR_HANDLE`](#d3d12-cpu-descriptor-handle)** that describes the destination descriptors to start to copy to.
+[in] A **[`D3D12_CPU_DESCRIPTOR_HANDLE`](#d3d12-cpu-descriptor-handle)** that describes the destination descriptors to start to copy to.
 
 The destination and source descriptors must be in heaps of the same [`D3D12_DESCRIPTOR_HEAP_TYPE`](#d3d12-descriptor-heap-type).
 
-`[in] SrcDescriptorRangeStart`
+`SrcDescriptorRangeStart`
 
-A **[`D3D12_CPU_DESCRIPTOR_HANDLE`](#d3d12-cpu-descriptor-handle)** that describes the source descriptors to start to copy from.
+[in] A **[`D3D12_CPU_DESCRIPTOR_HANDLE`](#d3d12-cpu-descriptor-handle)** that describes the source descriptors to start to copy from.
 
 Important
 
 The *SrcDescriptorRangeStart* parameter must be in a non shader-visible descriptor heap. This is because shader-visible descriptor heaps may be created in **WRITE\_COMBINE** memory or GPU local memory, which is prohibitively slow to read from. If your application manages descriptor heaps via copying the descriptors required for a given pass or frame from local "storage" descriptor heaps to the GPU-bound descriptor heap, then use shader-opaque heaps for the storage heaps and copy into the GPU-visible heap as required.
 
-`[in] DescriptorHeapsType`
+`DescriptorHeapsType`
 
-The [`D3D12_DESCRIPTOR_HEAP_TYPE`](#d3d12-descriptor-heap-type)-typed value that specifies the type of descriptor heap to copy with. This is required as different descriptor types may have different sizes.
+[in] The [`D3D12_DESCRIPTOR_HEAP_TYPE`](#d3d12-descriptor-heap-type)-typed value that specifies the type of descriptor heap to copy with. This is required as different descriptor types may have different sizes.
 
 Both the source and destination descriptor heaps must have the same type, else the debug layer will emit an error.
 
@@ -2330,13 +2330,13 @@ Creates a constant-buffer view for accessing resource data.
 
 #### Parameters
 
-`[in, optional] pDesc`
+`pDesc`
 
-A pointer to a [`D3D12_CONSTANT_BUFFER_VIEW_DESC`](#d3d12-constant-buffer-view-desc) structure that describes the constant-buffer view.
+[in, optional] A pointer to a [`D3D12_CONSTANT_BUFFER_VIEW_DESC`](#d3d12-constant-buffer-view-desc) structure that describes the constant-buffer view.
 
-`[in] DestDescriptor`
+`DestDescriptor`
 
-Describes the CPU descriptor handle that represents the descriptor slot that holds the constant-buffer view.
+[in] Describes the CPU descriptor handle that represents the descriptor slot that holds the constant-buffer view.
 
 #### Return values
 
@@ -2745,23 +2745,23 @@ Creates a shader-resource view for accessing data in a resource.
 
 #### Parameters
 
-`[in, optional] pResource`
+`pResource`
 
-A pointer to the [ID3D12Resource](resources.md#resource-storage) object that represents the shader resource.
+[in, optional] A pointer to the [ID3D12Resource](resources.md#resource-storage) object that represents the shader resource.
 
 At least one of *pResource* or *pDesc* must be provided. Except for acceleration structure SRVs, a null *pResource* initializes a null descriptor with a valid *pDesc* defining its type; see [null descriptors](#null-descriptors) and [acceleration structure SRVs](#acceleration-structure-srv).
 
 For `D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE`, *pResource* must be NULL. The GPU virtual address is supplied in `pDesc->RaytracingAccelerationStructure.Location`.
 
-`[in, optional] pDesc`
+`pDesc`
 
-A pointer to a [`D3D12_SHADER_RESOURCE_VIEW_DESC`](#d3d12-shader-resource-view-desc) structure that describes the shader-resource view.
+[in, optional] A pointer to a [`D3D12_SHADER_RESOURCE_VIEW_DESC`](#d3d12-shader-resource-view-desc) structure that describes the shader-resource view.
 
 A null *pDesc* is used to initialize a default descriptor, if possible. This behavior inherits the resource format and dimension (if not typeless) and for textures SRVs target a full texture, all mips and all array slices. Buffer SRVs require an explicit description; their resource description does not supply a typed view format or structure stride. Not all texture resources support null description initialization.
 
-`[in] DestDescriptor`
+`DestDescriptor`
 
-Describes the CPU descriptor handle that represents the shader-resource view. This handle can be created in a shader-visible or non-shader-visible descriptor heap.
+[in] Describes the CPU descriptor handle that represents the shader-resource view. This handle can be created in a shader-visible or non-shader-visible descriptor heap.
 
 #### Return values
 
@@ -3087,9 +3087,9 @@ A pointer to a [`D3D12_UNORDERED_ACCESS_VIEW_DESC`](#d3d12-unordered-access-view
 
 A null *pDesc* is used to initialize a default descriptor, if possible. This behavior inherits the resource format and dimension (if not typeless) and for textures UAVs target the first mip and all array slices. Buffer UAVs require an explicit description; their resource description does not supply a typed view format or structure stride. Not all texture resources support null description initialization.
 
-`[in] DestDescriptor`
+`DestDescriptor`
 
-Describes the CPU descriptor handle that represents the descriptor slot that holds the unordered-access view.
+[in] Describes the CPU descriptor handle that represents the descriptor slot that holds the unordered-access view.
 
 #### Return values
 
@@ -3371,21 +3371,21 @@ Creates a render-target view for accessing resource data.
 
 #### Parameters
 
-`[in, optional] pResource`
+`pResource`
 
-A pointer to the [ID3D12Resource](resources.md#resource-storage) object that represents the render target.
+[in, optional] A pointer to the [ID3D12Resource](resources.md#resource-storage) object that represents the render target.
 
 At least one of *pResource* or *pDesc* must be provided. A null *pResource* is used to initialize a [null descriptor](#null-descriptors), which guarantees defined null binding behavior (reading 0s, writes are discarded), but must have a valid *pDesc* in order to determine the descriptor type.
 
-`[in, optional] pDesc`
+`pDesc`
 
-A pointer to a [`D3D12_RENDER_TARGET_VIEW_DESC`](#d3d12-render-target-view-desc) structure that describes the render-target view.
+[in, optional] A pointer to a [`D3D12_RENDER_TARGET_VIEW_DESC`](#d3d12-render-target-view-desc) structure that describes the render-target view.
 
 A null *pDesc* is used to initialize a default descriptor, if possible. This behavior inherits the resource format and dimension (if not typeless) and RTVs target the first mip and all array slices. Not all resources support null description initialization.
 
-`[in] DestDescriptor`
+`DestDescriptor`
 
-Describes the CPU descriptor handle that represents the destination where the newly-created render target view will reside.
+[in] Describes the CPU descriptor handle that represents the destination where the newly-created render target view will reside.
 
 #### Return values
 
@@ -3559,21 +3559,21 @@ Creates a depth-stencil view for accessing resource data.
 
 #### Parameters
 
-`[in, optional] pResource`
+`pResource`
 
-A pointer to the [ID3D12Resource](resources.md#resource-storage) object that represents the depth stencil.
+[in, optional] A pointer to the [ID3D12Resource](resources.md#resource-storage) object that represents the depth stencil.
 
 At least one of *pResource* or *pDesc* must be provided. A null *pResource* is used to initialize a [null descriptor](#null-descriptors), which guarantees defined null binding behavior (reading 0s, writes are discarded), but must have a valid *pDesc* in order to determine the descriptor type.
 
-`[in, optional] pDesc`
+`pDesc`
 
-A pointer to a [`D3D12_DEPTH_STENCIL_VIEW_DESC`](#d3d12-depth-stencil-view-desc) structure that describes the depth-stencil view.
+[in, optional] A pointer to a [`D3D12_DEPTH_STENCIL_VIEW_DESC`](#d3d12-depth-stencil-view-desc) structure that describes the depth-stencil view.
 
 A null *pDesc* is used to initialize a default descriptor, if possible. This behavior inherits the resource format and dimension (if not typeless) and DSVs target the first mip and all array slices. Not all resources support null description initialization.
 
-`[in] DestDescriptor`
+`DestDescriptor`
 
-Describes the CPU descriptor handle that represents the descriptor slot that holds the depth-stencil view.
+[in] Describes the CPU descriptor handle that represents the descriptor slot that holds the depth-stencil view.
 
 #### Return values
 
@@ -3610,13 +3610,13 @@ Create a sampler object that encapsulates sampling information for a texture.
 
 #### Parameters
 
-`[in] pDesc`
+`pDesc`
 
-A pointer to a [`D3D12_SAMPLER_DESC`](#d3d12-sampler-desc) structure that describes the sampler.
+[in] A pointer to a [`D3D12_SAMPLER_DESC`](#d3d12-sampler-desc) structure that describes the sampler.
 
-`[in] DestDescriptor`
+`DestDescriptor`
 
-Describes the CPU descriptor handle that represents the descriptor slot that holds the sampler.
+[in] Describes the CPU descriptor handle that represents the descriptor slot that holds the sampler.
 
 #### Return values
 
@@ -3698,25 +3698,25 @@ The serialized blob contains the versioned root signature definition. Shader blo
 
 #### Parameters
 
-`[in] nodeMask`
+`nodeMask`
 
-For single GPU operation, set this to zero. If there are multiple GPU nodes, set bits to identify the nodes (the device's physical adapters) to which the root signature is to apply. Each bit in the mask corresponds to a single node. Refer to [Adapter identity and linked nodes](devices-and-capabilities.md#identity).
+[in] For single GPU operation, set this to zero. If there are multiple GPU nodes, set bits to identify the nodes (the device's physical adapters) to which the root signature is to apply. Each bit in the mask corresponds to a single node. Refer to [Adapter identity and linked nodes](devices-and-capabilities.md#identity).
 
-`[in] pBlobWithRootSignature`
+`pBlobWithRootSignature`
 
-A pointer to the source data for the serialized signature.
+[in] A pointer to the source data for the serialized signature.
 
-`[in] blobLengthInBytes`
+`blobLengthInBytes`
 
-The size, in bytes, of the block of memory that *pBlobWithRootSignature* points to.
+[in] The size, in bytes, of the block of memory that *pBlobWithRootSignature* points to.
 
 `riid`
 
 The globally unique identifier (**GUID**) for the root signature interface. An input parameter.
 
-`[out] ppvRootSignature`
+`ppvRootSignature`
 
-A pointer to a memory block that receives a pointer to the root signature.
+[out] A pointer to a memory block that receives a pointer to the root signature.
 
 #### Return values
 
@@ -3788,21 +3788,21 @@ Serializes a root signature version 1.0 that can be passed to [ID3D12Device::Cre
 
 #### Parameters
 
-`[in] pRootSignature`
+`pRootSignature`
 
-The description of the root signature, as a pointer to a [`D3D12_ROOT_SIGNATURE_DESC`](#d3d12-root-signature-desc) structure.
+[in] The description of the root signature, as a pointer to a [`D3D12_ROOT_SIGNATURE_DESC`](#d3d12-root-signature-desc) structure.
 
-`[in] Version`
+`Version`
 
-A [`D3D_ROOT_SIGNATURE_VERSION`](#d3d-root-signature-version)-typed value that specifies the version of root signature.
+[in] A [`D3D_ROOT_SIGNATURE_VERSION`](#d3d-root-signature-version)-typed value that specifies the version of root signature.
 
-`[out] ppBlob`
+`ppBlob`
 
-A pointer to a memory block that receives a pointer to the [ID3DBlob](devices-and-capabilities.md#binary-data-blobs) interface that you can use to access the serialized root signature.
+[out] A pointer to a memory block that receives a pointer to the [ID3DBlob](devices-and-capabilities.md#binary-data-blobs) interface that you can use to access the serialized root signature.
 
-`[out, optional] ppErrorBlob`
+`ppErrorBlob`
 
-A pointer to a memory block that receives a pointer to the [ID3DBlob](devices-and-capabilities.md#binary-data-blobs) interface that you can use to access serializer error messages, or **NULL** if there are no errors.
+[out, optional] A pointer to a memory block that receives a pointer to the [ID3DBlob](devices-and-capabilities.md#binary-data-blobs) interface that you can use to access serializer error messages, or **NULL** if there are no errors.
 
 #### Return values
 
@@ -3833,17 +3833,17 @@ The separate compiler host export [D3D12CompilerSerializeVersionedRootSignature]
 
 #### Parameters
 
-`[in] pRootSignature`
+`pRootSignature`
 
-Specifies a [`D3D12_VERSIONED_ROOT_SIGNATURE_DESC`](#d3d12-versioned-root-signature-desc) that contains a description of any version of a root signature.
+[in] Specifies a [`D3D12_VERSIONED_ROOT_SIGNATURE_DESC`](#d3d12-versioned-root-signature-desc) that contains a description of any version of a root signature.
 
-`[out] ppBlob`
+`ppBlob`
 
-A pointer to a memory block that receives a pointer to the [ID3DBlob](devices-and-capabilities.md#binary-data-blobs) interface that you can use to access the serialized root signature.
+[out] A pointer to a memory block that receives a pointer to the [ID3DBlob](devices-and-capabilities.md#binary-data-blobs) interface that you can use to access the serialized root signature.
 
-`[out, optional] ppErrorBlob`
+`ppErrorBlob`
 
-A pointer to a memory block that receives a pointer to the [ID3DBlob](devices-and-capabilities.md#binary-data-blobs) interface that you can use to access serializer error messages, or **NULL** if there are no errors.
+[out, optional] A pointer to a memory block that receives a pointer to the [ID3DBlob](devices-and-capabilities.md#binary-data-blobs) interface that you can use to access serializer error messages, or **NULL** if there are no errors.
 
 #### Return values
 
@@ -3869,21 +3869,21 @@ Deserializes a root signature so you can determine the layout definition ([`D3D1
 
 #### Parameters
 
-`[in] pSrcData`
+`pSrcData`
 
-A pointer to the source data for the serialized root signature.
+[in] A pointer to the source data for the serialized root signature.
 
-`[in] SrcDataSizeInBytes`
+`SrcDataSizeInBytes`
 
-The size, in bytes, of the block of memory that *pSrcData* points to.
+[in] The size, in bytes, of the block of memory that *pSrcData* points to.
 
-`[in] pRootSignatureDeserializerInterface`
+`pRootSignatureDeserializerInterface`
 
-The globally unique identifier (**GUID**) for the root signature deserializer interface.
+[in] The globally unique identifier (**GUID**) for the root signature deserializer interface.
 
-`[out] ppRootSignatureDeserializer`
+`ppRootSignatureDeserializer`
 
-A pointer to a memory block that receives a pointer to the root signature deserializer.
+[out] A pointer to a memory block that receives a pointer to the root signature deserializer.
 
 #### Return values
 
@@ -3909,21 +3909,21 @@ Generates an interface that can return the deserialized data structure, via [Get
 
 #### Parameters
 
-`[in] pSrcData`
+`pSrcData`
 
-A pointer to the source data for the serialized root signature.
+[in] A pointer to the source data for the serialized root signature.
 
-`[in] SrcDataSizeInBytes`
+`SrcDataSizeInBytes`
 
-The size, in bytes, of the block of memory that *pSrcData* points to.
+[in] The size, in bytes, of the block of memory that *pSrcData* points to.
 
-`[in] pRootSignatureDeserializerInterface`
+`pRootSignatureDeserializerInterface`
 
-The globally unique identifier (**GUID**) for the root signature deserializer interface.
+[in] The globally unique identifier (**GUID**) for the root signature deserializer interface.
 
-`[out] ppRootSignatureDeserializer`
+`ppRootSignatureDeserializer`
 
-A pointer to a memory block that receives a pointer to the root signature deserializer.
+[out] A pointer to a memory block that receives a pointer to the root signature deserializer.
 
 #### Return values
 
@@ -3969,9 +3969,9 @@ Converts root signature description structures to a requested version.
 
 Specifies the required [`D3D_ROOT_SIGNATURE_VERSION`](#d3d-root-signature-version).
 
-`[out] ppDesc`
+`ppDesc`
 
-Contains the deserialized root signature in a [`D3D12_VERSIONED_ROOT_SIGNATURE_DESC`](#d3d12-versioned-root-signature-desc) structure.
+[out] Contains the deserialized root signature in a [`D3D12_VERSIONED_ROOT_SIGNATURE_DESC`](#d3d12-versioned-root-signature-desc) structure.
 
 #### Return values
 
@@ -4018,7 +4018,7 @@ Draw*()/Dispatch*() is invoked, the application must ensure that the
 current pipeline state matches the current root signature, otherwise
 behavior is undefined.
 
-Indirect root argument changes use [command signature parameter validation](indirect-execution.md#signature-validation). At execution, the selected root signature must [match the signature-associated root signature](indirect-execution.md#execute-debug). That requirement is distinct from pipeline/root compatibility.
+Indirect root argument changes use [command signature parameter validation](indirect-execution.md#signature-validation). At execution, the selected root signature must [match the signature-associated root signature](indirect-execution.md#execute-debug). That requirement is distinct from pipeline/root signature compatibility.
 
 <a id="binding-apis"></a>
 
@@ -4803,9 +4803,11 @@ DEFINE_ENUM_FLAG_OPERATORS( D3D12DDI_ROOT_DESCRIPTOR_FLAGS );
 
 <a id="driver-root-descriptions"></a>
 
-#### Driver root description types
+<a id="driver-root-description-types"></a>
 
-The driver root description representations are:
+#### Driver root signature description types
+
+The driver root signature description representations are:
 
 ```cpp
 typedef enum D3D12DDI_DESCRIPTOR_RANGE_TYPE
@@ -4980,7 +4982,9 @@ typedef HRESULT(APIENTRY* PFND3D12DDI_CREATE_ROOT_SIGNATURE_0100) (D3D12DDI_HDEV
 
 <a id="driver-root-lifecycle"></a>
 
-#### Root object lifecycle and ownership
+<a id="root-object-lifecycle-and-ownership"></a>
+
+#### Root signature object lifecycle and ownership
 
 ```cpp
 typedef VOID ( APIENTRY* PFND3D12DDI_DESTROY_ROOT_SIGNATURE ) ( D3D12DDI_HDEVICE, D3D12DDI_HROOTSIGNATURE );
@@ -5065,7 +5069,7 @@ The `_0114` root binding entries participate in [runtime bypass](execution.md#wo
 | `PFND3D12DDI_SET_ROOT_BUFFER_VIEW` / `PFND3D12DDI_SET_ROOT_BUFFER_VIEW_0114` | `pfnSetGraphicsRootShaderResourceView` / [SetGraphicsRootShaderResourceView](#id3d12graphicscommandlist-setgraphicsrootshaderresourceview) | `pfnSetComputeRootShaderResourceView` / [SetComputeRootShaderResourceView](#id3d12graphicscommandlist-setcomputerootshaderresourceview) |
 | `PFND3D12DDI_SET_ROOT_BUFFER_VIEW` / `PFND3D12DDI_SET_ROOT_BUFFER_VIEW_0114` | `pfnSetGraphicsRootUnorderedAccessView` / [SetGraphicsRootUnorderedAccessView](#id3d12graphicscommandlist-setgraphicsrootunorderedaccessview) | `pfnSetComputeRootUnorderedAccessView` / [SetComputeRootUnorderedAccessView](#id3d12graphicscommandlist-setcomputerootunorderedaccessview) |
 
-`D3D12DDI_API_HROOTSIGNATURE` uses the runtime bypass header. The helper below converts its `pDriverObject` to the ordinary driver root signature handle and maps a null API root handle to a null driver handle.
+`D3D12DDI_API_HROOTSIGNATURE` uses the runtime bypass header. The helper below converts its `pDriverObject` to the ordinary driver root signature handle and maps a null API root signature handle to a null driver handle.
 
 ```cpp
 D3D10DDI_H( D3D12DDI_API_HROOTSIGNATURE )

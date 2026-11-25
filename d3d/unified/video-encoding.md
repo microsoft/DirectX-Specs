@@ -2,19 +2,6 @@
 
 # Video encoding
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <a id="encoding-objects"></a>
 
 ## Encoder objects and heaps
@@ -1410,13 +1397,13 @@ typedef SIZE_T (APIENTRY* PFND3D12DDI_CALCPRIVATEVIDEOENCODERSIZE_0082_0)(
 
 This method is used to calculate the required driver object size. The D3D runtime allocates the memory for storing the driver's object representing the video encoder.
 
-**Parameters**
+##### Parameters
 
-*hDrvDevice*
+`hDrvDevice`
 
 Handle for the D3D12 device.
 
-*pCreationArgs*
+`pCreationArgs`
 
 Encoder creation parameters.
 
@@ -1437,17 +1424,17 @@ typedef HRESULT (APIENTRY* PFND3D12DDI_CREATEVIDEOENCODER_0082_0)(
 
 Creates a video encoder object.
 
-**Parameters**
+##### Parameters
 
-*hDrvDevice*
+`hDrvDevice`
 
 Handle for the D3D12 device.
 
-*pCreationArgs*
+`pCreationArgs`
 
 Encoder creation parameters.
 
-*hDrvVideoEncoder*
+`hDrvVideoEncoder`
 
 Handle to the hDrvVideoEncoder. Runtime has allocated space according to the result of <ins><!-- d3d12-review-inline:begin:video-encoding:S01-092:8:modified:source-6d94010630c5788e-0-0 -->PFND3D12DDI_CALCPRIVATEVIDEOENCODERSIZE_0082_0<!-- d3d12-review-inline:end:video-encoding:S01-092:8:modified:source-6d94010630c5788e-0-0 --></ins> for the driver to place its object.
 
@@ -1465,13 +1452,13 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYVIDEOENCODER_0080 )(
     D3D12DDI_HVIDEOENCODER_0080 hDrvVideoEncoder);
 ```
 
-**Parameters**
+##### Parameters
 
-*hDrvDevice*
+`hDrvDevice`
 
 Handle for the D3D12 device.
 
-*hDrvVideoEncoder*
+`hDrvVideoEncoder`
 
 Handle to the hDrvVideoEncoder.
 
@@ -1493,13 +1480,13 @@ typedef SIZE_T (APIENTRY* PFND3D12DDI_CALCPRIVATEVIDEOENCODERHEAPSIZE_0110_0)(
 
 This method is used to calculate the required driver object size. The D3D runtime allocates the memory for storing the driver's object representing the video encoder heap.
 
-**Parameters**
+##### Parameters
 
-*hDrvDevice*
+`hDrvDevice`
 
 Handle for the D3D12 device.
 
-*pCreationArgs*
+`pCreationArgs`
 
 Encoder heap creation parameters.
 
@@ -1522,17 +1509,17 @@ typedef HRESULT ( APIENTRY* PFND3D12DDI_CREATEVIDEOENCODERHEAP_0110_0 )(
 
 Creates a video encoder heap object.
 
-**Parameters**
+##### Parameters
 
-*hDrvDevice*
+`hDrvDevice`
 
 Handle for the D3D12 device.
 
-*pCreationArgs*
+`pCreationArgs`
 
 <ins><!-- d3d12-review-inline:begin:video-encoding:S01-096:6 -->Encoder heap creation parameters.<!-- d3d12-review-inline:end:video-encoding:S01-096:6 --></ins>
 
-*hDrvVideoEncoderHeap*
+`hDrvVideoEncoderHeap`
 
 Handle to the hDrvVideoEncoderHeap. Runtime has allocated space according to the result of <ins><!-- d3d12-review-inline:begin:video-encoding:S01-096:8:modified:source-2772df53b830d068-0-0 -->PFND3D12DDI_CALCPRIVATEVIDEOENCODERHEAPSIZE_0110_0<!-- d3d12-review-inline:end:video-encoding:S01-096:8:modified:source-2772df53b830d068-0-0 --></ins> for the driver to place its object.
 
@@ -1550,13 +1537,13 @@ typedef VOID ( APIENTRY* PFND3D12DDI_DESTROYVIDEOENCODERHEAP_0080 )(
     D3D12DDI_HVIDEOENCODERHEAP_0080 hDrvVideoEncoderHeap);
 ```
 
-**Parameters**
+##### Parameters
 
-*hDrvDevice*
+`hDrvDevice`
 
 Handle for the D3D12 device.
 
-*hDrvVideoEncoderHeap*
+`hDrvVideoEncoderHeap`
 
 Handle to the hDrvVideoEncoderHeap.
 

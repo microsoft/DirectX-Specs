@@ -2,19 +2,6 @@
 
 # Shader delivery and caching
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:shader-cache:framing:2:authored:opus-opening-model -->Application cache sessions store application-selected opaque key/value data
 in caches that the application creates and identifies. They are distinct from
 the implicit caches used for driver compilations or runtime shader conversions.
@@ -309,17 +296,17 @@ Creates an object that grants access to a shader cache, potentially opening an e
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device9-CreateShaderCacheSession-parameters:1 -->`pDesc` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12Device9-CreateShaderCacheSession-parameters:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device9-CreateShaderCacheSession-parameters:1 -->`pDesc`<!-- d3d12-review-inline:end:shader-cache:ID3D12Device9-CreateShaderCacheSession-parameters:1 --></ins>
 
-A `D3D12_SHADER_CACHE_SESSION_DESC` structure describing the shader cache session to create.
+(input) A `D3D12_SHADER_CACHE_SESSION_DESC` structure describing the shader cache session to create.
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device9-CreateShaderCacheSession-parameters:3 -->`riid` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12Device9-CreateShaderCacheSession-parameters:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device9-CreateShaderCacheSession-parameters:3 -->`riid`<!-- d3d12-review-inline:end:shader-cache:ID3D12Device9-CreateShaderCacheSession-parameters:3 --></ins>
 
-The globally unique identifier (`GUID`) for the shader cache session interface.
+(input) The globally unique identifier (`GUID`) for the shader cache session interface.
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device9-CreateShaderCacheSession-parameters:5 -->`ppvSession` (output, optional)<!-- d3d12-review-inline:end:shader-cache:ID3D12Device9-CreateShaderCacheSession-parameters:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device9-CreateShaderCacheSession-parameters:5 -->`ppvSession`<!-- d3d12-review-inline:end:shader-cache:ID3D12Device9-CreateShaderCacheSession-parameters:5 --></ins>
 
-A pointer to a memory block that receives a pointer to the [`ID3D12ShaderCacheSession`](#cache-sessions) interface for the shader cache session.
+(output, optional) A pointer to a memory block that receives a pointer to the [`ID3D12ShaderCacheSession`](#cache-sessions) interface for the shader cache session.
 
 #### Return values
 
@@ -368,21 +355,21 @@ Looks up an entry in the cache whose key exactly matches the provided key.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12ShaderCacheSession-FindValue-parameters:1 -->`pKey` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12ShaderCacheSession-FindValue-parameters:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12ShaderCacheSession-FindValue-parameters:1 -->`pKey`<!-- d3d12-review-inline:end:shader-cache:ID3D12ShaderCacheSession-FindValue-parameters:1 --></ins>
 
-The key of the entry to look up.
+(input) The key of the entry to look up.
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12ShaderCacheSession-FindValue-parameters:3 -->`KeySize` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12ShaderCacheSession-FindValue-parameters:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12ShaderCacheSession-FindValue-parameters:3 -->`KeySize`<!-- d3d12-review-inline:end:shader-cache:ID3D12ShaderCacheSession-FindValue-parameters:3 --></ins>
 
-The size of the key, in bytes.
+(input) The size of the key, in bytes.
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12ShaderCacheSession-FindValue-parameters:5 -->`pValue` (output, optional)<!-- d3d12-review-inline:end:shader-cache:ID3D12ShaderCacheSession-FindValue-parameters:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12ShaderCacheSession-FindValue-parameters:5 -->`pValue`<!-- d3d12-review-inline:end:shader-cache:ID3D12ShaderCacheSession-FindValue-parameters:5 --></ins>
 
-A pointer to a memory block that receives the cached entry.
+(output, optional) A pointer to a memory block that receives the cached entry.
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12ShaderCacheSession-FindValue-parameters:7 -->`pValueSize` (input, output)<!-- d3d12-review-inline:end:shader-cache:ID3D12ShaderCacheSession-FindValue-parameters:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12ShaderCacheSession-FindValue-parameters:7 -->`pValueSize`<!-- d3d12-review-inline:end:shader-cache:ID3D12ShaderCacheSession-FindValue-parameters:7 --></ins>
 
-A pointer to a `UINT` that receives the size of the cached entry, in bytes.
+(input, output) A pointer to a `UINT` that receives the size of the cached entry, in bytes.
 
 #### Return values
 
@@ -430,21 +417,21 @@ Adds an entry to the cache.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12ShaderCacheSession-StoreValue-parameters:1 -->`pKey` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12ShaderCacheSession-StoreValue-parameters:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12ShaderCacheSession-StoreValue-parameters:1 -->`pKey`<!-- d3d12-review-inline:end:shader-cache:ID3D12ShaderCacheSession-StoreValue-parameters:1 --></ins>
 
-The key of the entry to add.
+(input) The key of the entry to add.
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12ShaderCacheSession-StoreValue-parameters:3 -->`KeySize` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12ShaderCacheSession-StoreValue-parameters:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12ShaderCacheSession-StoreValue-parameters:3 -->`KeySize`<!-- d3d12-review-inline:end:shader-cache:ID3D12ShaderCacheSession-StoreValue-parameters:3 --></ins>
 
-The size of the key, in bytes.
+(input) The size of the key, in bytes.
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12ShaderCacheSession-StoreValue-parameters:5 -->`pValue` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12ShaderCacheSession-StoreValue-parameters:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12ShaderCacheSession-StoreValue-parameters:5 -->`pValue`<!-- d3d12-review-inline:end:shader-cache:ID3D12ShaderCacheSession-StoreValue-parameters:5 --></ins>
 
-A pointer to a memory block containing the entry to add.
+(input) A pointer to a memory block containing the entry to add.
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12ShaderCacheSession-StoreValue-parameters:7 -->`ValueSize` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12ShaderCacheSession-StoreValue-parameters:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12ShaderCacheSession-StoreValue-parameters:7 -->`ValueSize`<!-- d3d12-review-inline:end:shader-cache:ID3D12ShaderCacheSession-StoreValue-parameters:7 --></ins>
 
-The size of the entry to add, in bytes.
+(input) The size of the entry to add, in bytes.
 
 #### Return values
 
@@ -536,13 +523,13 @@ per-device enable/disable state and partial effects on failure.<!-- d3d12-review
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device9-ShaderCacheControl-parameters:1 -->`Kinds` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12Device9-ShaderCacheControl-parameters:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device9-ShaderCacheControl-parameters:1 -->`Kinds`<!-- d3d12-review-inline:end:shader-cache:ID3D12Device9-ShaderCacheControl-parameters:1 --></ins>
 
-The caches to modify. Any one of these caches may or may not exist.
+(input) The caches to modify. Any one of these caches may or may not exist.
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device9-ShaderCacheControl-parameters:3 -->`Control` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12Device9-ShaderCacheControl-parameters:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device9-ShaderCacheControl-parameters:3 -->`Control`<!-- d3d12-review-inline:end:shader-cache:ID3D12Device9-ShaderCacheControl-parameters:3 --></ins>
 
-The way in which to modify the caches. You can't pass both `DISABLE` and `ENABLE` at the same time; and you must pass at least one flag.
+(input) The way in which to modify the caches. You can't pass both `DISABLE` and `ENABLE` at the same time; and you must pass at least one flag.
 
 #### Return values
 
@@ -611,9 +598,9 @@ Creates a cached pipeline library. For pipeline state objects (PSOs) that are ex
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-parameters:1 -->`pLibraryBlob` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-parameters:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-parameters:1 -->`pLibraryBlob`<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-parameters:1 --></ins>
 
-If the input library blob is empty, then the initial content of the library is empty. If the input library blob is not empty, then it is validated for integrity, parsed, and the pointer is stored. The pointer provided as input to this method must remain valid for the lifetime of the object returned. For efficiency reasons, the data is not copied.
+(input) If the input library blob is empty, then the initial content of the library is empty. If the input library blob is not empty, then it is validated for integrity, parsed, and the pointer is stored. The pointer provided as input to this method must remain valid for the lifetime of the object returned. For efficiency reasons, the data is not copied.
 
 <ins><!-- d3d12-review-inline:begin:shader-cache:contract-CreatePipelineLibrary:0:authored:migration-270fa54fdc9d8411-0 -->With `BlobLength == 0`, no input bytes are consumed. For nonzero length,
 `pLibraryBlob` must point to that many readable, unchanging bytes.<!-- d3d12-review-inline:end:shader-cache:contract-CreatePipelineLibrary:0:authored:migration-270fa54fdc9d8411-0 --></ins>
@@ -621,17 +608,17 @@ If the input library blob is empty, then the initial content of the library is e
 <ins><!-- d3d12-review-inline:begin:shader-cache:contract-CreatePipelineLibrary:2:authored:migration-5daca4e7085387be-0 -->The serialized format is opaque, runtime/driver/hardware-specific and not a
 portable shader or standalone PSO description.<!-- d3d12-review-inline:end:shader-cache:contract-CreatePipelineLibrary:2:authored:migration-5daca4e7085387be-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-parameters:3 -->`BlobLength` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-parameters:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-parameters:3 -->`BlobLength`<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-parameters:3 --></ins>
 
-Specifies the length of `pLibraryBlob` in bytes.
+(input) Specifies the length of `pLibraryBlob` in bytes.
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-parameters:5 -->`riid` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-parameters:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-parameters:5 -->`riid`<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-parameters:5 --></ins>
 
-Specifies a unique `REFIID` for the [`ID3D12PipelineLibrary`](#pipeline-libraries) object. Typically set this and the following parameter with the macro `IID_PPV_ARGS(&Library)`, where **Library** is the name of the object.
+(input) Specifies a unique `REFIID` for the [`ID3D12PipelineLibrary`](#pipeline-libraries) object. Typically set this and the following parameter with the macro `IID_PPV_ARGS(&Library)`, where **Library** is the name of the object.
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-parameters:7 -->`ppPipelineLibrary` (output, optional)<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-parameters:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-parameters:7 -->`ppPipelineLibrary`<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-parameters:7 --></ins>
 
-Returns a pointer to the created library.
+(output, optional) Returns a pointer to the created library.
 
 #### Return values
 
@@ -659,7 +646,7 @@ At no point in the lifecycle of a pipeline library is there duplication between 
 
 <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:4 -->A recommended solution for managing the lifetime of the provided pointer while only having to ref-count the returned interface is to leverage [`ID3D12Object::SetPrivateDataInterface`](devices-and-capabilities.md#id3d12object-setprivatedatainterface), and use an object which implements `IUnknown`, and frees the memory when the ref-count reaches 0.<!-- d3d12-review-inline:end:shader-cache:ID3D12Device1-CreatePipelineLibrary-remarks:4 --></ins>
 
-##### Examples
+#### Examples
 
 See the [Direct3D 12 pipeline state cache sample](https://github.com/microsoft/DirectX-Graphics-Samples/tree/master/Samples/Desktop/D3D12PipelineStateCache).
 
@@ -679,13 +666,13 @@ Adds the input PSO to an internal database with the corresponding name.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-StorePipeline-parameters:1 -->`pName` (input, optional)<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-StorePipeline-parameters:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-StorePipeline-parameters:1 -->`pName`<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-StorePipeline-parameters:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-StorePipeline-parameters:2 -->Specifies a unique name for the PSO in the library. Overwriting is not supported.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-StorePipeline-parameters:2 --></ins>
+(input, optional) <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-StorePipeline-parameters:2 -->Specifies a unique name for the PSO in the library. Overwriting is not supported.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-StorePipeline-parameters:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-StorePipeline-parameters:3 -->`pPipeline` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-StorePipeline-parameters:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-StorePipeline-parameters:3 -->`pPipeline`<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-StorePipeline-parameters:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-StorePipeline-parameters:4 -->Specifies the [`ID3D12PipelineState`](pipeline-state.md#ordinary-pipeline-state) to add.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-StorePipeline-parameters:4 --></ins>
+(input) <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-StorePipeline-parameters:4 -->Specifies the [`ID3D12PipelineState`](pipeline-state.md#ordinary-pipeline-state) to add.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-StorePipeline-parameters:4 --></ins>
 
 #### Return values
 
@@ -725,21 +712,21 @@ Retrieves the requested PSO from the library.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:1 -->`pName` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:1 -->`pName`<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:1 --></ins>
 
-The unique name of the PSO.
+(input) The unique name of the PSO.
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:3 -->`pDesc` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:3 -->`pDesc`<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:4 -->Specifies a description of the required PSO in a [`D3D12_GRAPHICS_PIPELINE_STATE_DESC`](pipeline-state.md#graphics-description) structure. This input description is matched against the data in the current library database, and stored in order to prevent duplication of PSO contents.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:4 --></ins>
+(input) <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:4 -->Specifies a description of the required PSO in a [`D3D12_GRAPHICS_PIPELINE_STATE_DESC`](pipeline-state.md#graphics-description) structure. This input description is matched against the data in the current library database, and stored in order to prevent duplication of PSO contents.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:4 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:5 -->`riid` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:5 -->`riid`<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:5 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:6 -->Specifies a `REFIID` for the [`ID3D12PipelineState`](pipeline-state.md#ordinary-pipeline-state) object. Typically set this, and the following parameter, with the macro `IID_PPV_ARGS(&PSO1)`, where `PSO1` is the name of the object.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:6 --></ins>
+(input) <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:6 -->Specifies a `REFIID` for the [`ID3D12PipelineState`](pipeline-state.md#ordinary-pipeline-state) object. Typically set this, and the following parameter, with the macro `IID_PPV_ARGS(&PSO1)`, where `PSO1` is the name of the object.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:6 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:7 -->`ppPipelineState` (output)<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:7 -->`ppPipelineState`<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadGraphicsPipeline-parameters:7 --></ins>
 
-Specifies a pointer that will reference the returned PSO.
+(output) Specifies a pointer that will reference the returned PSO.
 
 #### Return values
 
@@ -775,21 +762,21 @@ Retrieves the requested PSO from the library.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:1 -->`pName` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:1 -->`pName`<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:1 --></ins>
 
-The unique name of the PSO.
+(input) The unique name of the PSO.
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:3 -->`pDesc` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:3 -->`pDesc`<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:4 -->Specifies a description of the required PSO in a [`D3D12_COMPUTE_PIPELINE_STATE_DESC`](pipeline-state.md#compute-description) structure. This input description is matched against the data in the current library database, and stored in order to prevent duplication of PSO contents.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:4 --></ins>
+(input) <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:4 -->Specifies a description of the required PSO in a [`D3D12_COMPUTE_PIPELINE_STATE_DESC`](pipeline-state.md#compute-description) structure. This input description is matched against the data in the current library database, and stored in order to prevent duplication of PSO contents.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:4 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:5 -->`riid` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:5 -->`riid`<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:5 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:6 -->Specifies a `REFIID` for the [`ID3D12PipelineState`](pipeline-state.md#ordinary-pipeline-state) object. Typically set this, and the following parameter, with the macro `IID_PPV_ARGS(&PSO1)`, where `PSO1` is the name of the object.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:6 --></ins>
+(input) <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:6 -->Specifies a `REFIID` for the [`ID3D12PipelineState`](pipeline-state.md#ordinary-pipeline-state) object. Typically set this, and the following parameter, with the macro `IID_PPV_ARGS(&PSO1)`, where `PSO1` is the name of the object.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:6 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:7 -->`ppPipelineState` (output)<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:7 -->`ppPipelineState`<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-LoadComputePipeline-parameters:7 --></ins>
 
-Specifies a pointer that will reference the returned PSO.
+(output) Specifies a pointer that will reference the returned PSO.
 
 #### Return values
 
@@ -825,23 +812,23 @@ Retrieves the requested PSO from the library.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:1 -->`pName` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:1 -->`pName`<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:1 --></ins>
 
-The unique name of the PSO.
+(input) The unique name of the PSO.
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:3 -->`pDesc` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:3 -->`pDesc`<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:4 -->Describes the required PSO using a [`D3D12_PIPELINE_STATE_STREAM_DESC`](pipeline-state.md#streams) structure. This description is matched against the library database, and stored in order to prevent duplication of PSO contents.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:4 --></ins>
+(input) <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:4 -->Describes the required PSO using a [`D3D12_PIPELINE_STATE_STREAM_DESC`](pipeline-state.md#streams) structure. This description is matched against the library database, and stored in order to prevent duplication of PSO contents.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:4 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:5 -->`riid` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:5 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:5 -->`riid`<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:5 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:6 -->Specifies a `REFIID` for the [`ID3D12PipelineState`](pipeline-state.md#ordinary-pipeline-state) object.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:6 --></ins>
+(input) <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:6 -->Specifies a `REFIID` for the [`ID3D12PipelineState`](pipeline-state.md#ordinary-pipeline-state) object.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:6 --></ins>
 
 Your app should typically set this argument and the following argument, `ppPipelineState`, by using the macro `IID_PPV_ARGS(&PSO1)`, where PSO1 is the name of the object.
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:8 -->`ppPipelineState` (output)<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:8 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:8 -->`ppPipelineState`<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary1-LoadPipeline-parameters:8 --></ins>
 
-Specifies the pointer that will reference the PSO after the function successfully returns.
+(output) Specifies the pointer that will reference the PSO after the function successfully returns.
 
 #### Return values
 
@@ -900,13 +887,13 @@ Writes the contents of the library to the provided memory, to be provided back t
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-Serialize-parameters:1 -->`pData` (output)<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-Serialize-parameters:1 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-Serialize-parameters:1 -->`pData`<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-Serialize-parameters:1 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-Serialize-parameters:2 -->Specifies a pointer to the data. This memory must be readable and writable up to the input size. This data can be saved and provided to [CreatePipelineLibrary](#id3d12device1-createpipelinelibrary) at a later time, including future instances of this or other processes. The data becomes invalidated if the runtime or driver is updated, and is not portable to other hardware or devices.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-Serialize-parameters:2 --></ins>
+(output) <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-Serialize-parameters:2 -->Specifies a pointer to the data. This memory must be readable and writable up to the input size. This data can be saved and provided to [CreatePipelineLibrary](#id3d12device1-createpipelinelibrary) at a later time, including future instances of this or other processes. The data becomes invalidated if the runtime or driver is updated, and is not portable to other hardware or devices.<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-Serialize-parameters:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-Serialize-parameters:3 -->`DataSizeInBytes` (input)<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-Serialize-parameters:3 --></ins>
+<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-Serialize-parameters:3 -->`DataSizeInBytes`<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-Serialize-parameters:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-Serialize-parameters:4 -->The size provided must be at least the size returned from [GetSerializedSize](#id3d12pipelinelibrary-getserializedsize).<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-Serialize-parameters:4 --></ins>
+(input) <ins><!-- d3d12-review-inline:begin:shader-cache:ID3D12PipelineLibrary-Serialize-parameters:4 -->The size provided must be at least the size returned from [GetSerializedSize](#id3d12pipelinelibrary-getserializedsize).<!-- d3d12-review-inline:end:shader-cache:ID3D12PipelineLibrary-Serialize-parameters:4 --></ins>
 
 #### Return values
 
@@ -954,9 +941,9 @@ Gets the cached blob representing the pipeline state.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:shader-cache:Q-id3d12pipelinestate-getcachedblob:1 -->`ppBlob` (output)<!-- d3d12-review-inline:end:shader-cache:Q-id3d12pipelinestate-getcachedblob:1 --></ins>
+`ppBlob`
 
-After this method returns, points to the cached blob representing the pipeline state.
+(output) After this method returns, points to the cached blob representing the pipeline state.
 
 #### Return values
 
@@ -1098,11 +1085,11 @@ The runtime calls **pfnImplicitShaderCacheControl** in response to an applicatio
 >
 > | Current core device slot | Published signature/contract |
 > |---|---|
-> | `pfnCalcPrivatePipelineLibrarySize` | [PFND3D12DDI_CALC_PRIVATE_PIPELINE_LIBRARY_SIZE_0010](#ddi-pfnd3d12ddi-calc-private-pipeline-library-size-0010) |
-> | `pfnCreatePipelineLibrary` | [PFND3D12DDI_CREATE_PIPELINE_LIBRARY_0010](#ddi-pfnd3d12ddi-create-pipeline-library-0010) |
-> | `pfnDestroyPipelineLibrary` | [PFND3D12DDI_DESTROY_PIPELINE_LIBRARY_0010](#ddi-pfnd3d12ddi-destroy-pipeline-library-0010) |
-> | `pfnAddPipelineStateToLibrary` | [PFND3D12DDI_ADD_PIPELINE_STATE_TO_LIBRARY_0010](#ddi-pfnd3d12ddi-add-pipeline-state-to-library-0010) |
-> | `pfnCalcSerializedLibrarySize` | [PFND3D12DDI_CALC_SERIALIZED_LIBRARY_SIZE_0010](#ddi-pfnd3d12ddi-calc-serialized-library-size-0010) |
-> | `pfnSerializeLibrary` | [PFND3D12DDI_SERIALIZE_LIBRARY_0010](#ddi-pfnd3d12ddi-serialize-library-0010) |
+> | `pfnCalcPrivatePipelineLibrarySize` | [`PFND3D12DDI_CALC_PRIVATE_PIPELINE_LIBRARY_SIZE_0010`](#ddi-pfnd3d12ddi-calc-private-pipeline-library-size-0010) |
+> | `pfnCreatePipelineLibrary` | [`PFND3D12DDI_CREATE_PIPELINE_LIBRARY_0010`](#ddi-pfnd3d12ddi-create-pipeline-library-0010) |
+> | `pfnDestroyPipelineLibrary` | [`PFND3D12DDI_DESTROY_PIPELINE_LIBRARY_0010`](#ddi-pfnd3d12ddi-destroy-pipeline-library-0010) |
+> | `pfnAddPipelineStateToLibrary` | [`PFND3D12DDI_ADD_PIPELINE_STATE_TO_LIBRARY_0010`](#ddi-pfnd3d12ddi-add-pipeline-state-to-library-0010) |
+> | `pfnCalcSerializedLibrarySize` | [`PFND3D12DDI_CALC_SERIALIZED_LIBRARY_SIZE_0010`](#ddi-pfnd3d12ddi-calc-serialized-library-size-0010) |
+> | `pfnSerializeLibrary` | [`PFND3D12DDI_SERIALIZE_LIBRARY_0010`](#ddi-pfnd3d12ddi-serialize-library-0010) |
 
 <!-- d3d12-review-alert:end:shader-cache:PL-slots:0:authored:migration-51ee512e81506a9f-0 -->

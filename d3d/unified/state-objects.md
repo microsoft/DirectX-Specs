@@ -1,18 +1,5 @@
 # State objects
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:state-objects:N-ownership:0:authored:migration-e9f8f99ff5599b2c-0 -->State objects package shaders and configuration for driver processing. Collections provide reusable compilation units. Executable state objects supply programs that can be selected for GPU work.<!-- d3d12-review-inline:end:state-objects:N-ownership:0:authored:migration-e9f8f99ff5599b2c-0 --></ins>
 
 <a id="availability"></a>
@@ -2198,7 +2185,7 @@ HRESULT GetGlobalRootSignatureForProgram(
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:state-objects:AB-id3d12stateobjectproperties2-getglobalrootsignatureforprogram-contract:2:authored:migration-a7f2d86b48b37c31-0 -->`pProgramName` is required. `riid` selects the root interface and `ppvRootSignature` is required output storage.<!-- d3d12-review-inline:end:state-objects:AB-id3d12stateobjectproperties2-getglobalrootsignatureforprogram-contract:2:authored:migration-a7f2d86b48b37c31-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:AB-id3d12stateobjectproperties2-getglobalrootsignatureforprogram-contract:2:authored:migration-a7f2d86b48b37c31-0 -->`pProgramName` is required. `riid` selects the root signature interface and `ppvRootSignature` is required output storage.<!-- d3d12-review-inline:end:state-objects:AB-id3d12stateobjectproperties2-getglobalrootsignatureforprogram-contract:2:authored:migration-a7f2d86b48b37c31-0 --></ins>
 
 #### Return values
 
@@ -2223,7 +2210,7 @@ HRESULT GetGlobalRootSignatureForShader(
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:state-objects:AB-id3d12stateobjectproperties2-getglobalrootsignatureforshader-contract:2:authored:migration-a446368d2f5ee27b-0 -->`pExportName` is required. `riid` selects the root interface and `ppvRootSignature` is required output storage.<!-- d3d12-review-inline:end:state-objects:AB-id3d12stateobjectproperties2-getglobalrootsignatureforshader-contract:2:authored:migration-a446368d2f5ee27b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:state-objects:AB-id3d12stateobjectproperties2-getglobalrootsignatureforshader-contract:2:authored:migration-a446368d2f5ee27b-0 -->`pExportName` is required. `riid` selects the root signature interface and `ppvRootSignature` is required output storage.<!-- d3d12-review-inline:end:state-objects:AB-id3d12stateobjectproperties2-getglobalrootsignatureforshader-contract:2:authored:migration-a446368d2f5ee27b-0 --></ins>
 
 #### Return values
 

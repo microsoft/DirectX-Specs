@@ -2,19 +2,6 @@
 
 # Tessellation: hull and domain processing
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <a id="tessellation"></a>
 
 ## Tessellation pipeline
@@ -559,7 +546,7 @@ The tessellator generates a couple of things:
 
 - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.5:2:modified:section-20261117-1 -->(1) A set of domain points - UV for isoLine or quad domains and UVW (barycentric) for a tri domain. Each of these domain points is input to its own Domain Shader invocation. Each Domain Shader invocation also sees shared input of all the [Hull Shader](#hull-shader) output data.<!-- d3d12-review-inline:end:tessellation:STAGES-11.5:2:modified:section-20261117-1 --></ins>
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.5:2:modified:section-20261117-2 -->(2) Topology connectivity - fed downstream past the [Domain Shader](#domain-shader). For tri and quad domains, the valid output topologies are points or triangles. For isoLines, the valid output topologies are points or lines.<!-- d3d12-review-inline:end:tessellation:STAGES-11.5:2:modified:section-20261117-2 --></ins>
+- (2) Topology connectivity - fed downstream past the [Domain Shader](#domain-shader). For tri and quad domains, the valid output topologies are points or triangles. For isoLines, the valid output topologies are points or lines.
 
 Note the domains are defined such that for isoLines and quads, the V direction is clockwise from the U direction. For tri domain, UVW are clockwise, in that order.
 
@@ -649,17 +636,17 @@ For pow2 partitioning, TessFactors are rounded to a power of 2, and tessellation
 
 #### Splitting Vertices on an Edge
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.4:0:modified:section-20261117-1 -->For even or odd partitioning, vertex splits always at mirrored pair of inside vertices<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.4:0:modified:section-20261117-1 --></ins>
+- For even or odd partitioning, vertex splits always at mirrored pair of inside vertices
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.4:0:modified:section-20261117-2 -->Never split at patch corners<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.4:0:modified:section-20261117-2 --></ins>
+  - Never split at patch corners
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.4:0:modified:section-20261117-3 -->Avoids degenerate transition area between neighboring patches<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.4:0:modified:section-20261117-3 --></ins>
+  - Avoids degenerate transition area between neighboring patches
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.4:0:modified:section-20261117-4 -->Exception: fractional odd partitioning at Tessellation Factor 1 only has 2 vertices per side – the corners<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.4:0:modified:section-20261117-4 --></ins>
+- Exception: fractional odd partitioning at Tessellation Factor 1 only has 2 vertices per side – the corners
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.4:0:modified:section-20261117-5 -->No choice but to split the edges<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.4:0:modified:section-20261117-5 --></ins>
+  - No choice but to split the edges
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.4:0:modified:section-20261117-6 -->Not a problem<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.4:0:modified:section-20261117-6 --></ins>
+  - Not a problem
 
 <a id="ruler-function"></a>
 
@@ -697,19 +684,19 @@ For pow2 partitioning, TessFactors are rounded to a power of 2, and tessellation
 
 #### Triangulation
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6:0:modified:section-20261117-1 -->Tri and Quad Domains are tiled with quads, each made of 2 triangles<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6:0:modified:section-20261117-1 --></ins>
+- Tri and Quad Domains are tiled with quads, each made of 2 triangles
 
 - Which way do the quad diagonals go?
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6:0:modified:section-20261117-2 -->Quads closer to one of the patch corners than the others have diagonal pointing towards that corner<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6:0:modified:section-20261117-2 --></ins>
+  - Quads closer to one of the patch corners than the others have diagonal pointing towards that corner
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6:0:modified:section-20261117-3 -->For fractional odd:<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6:0:modified:section-20261117-3 --></ins>
+- For fractional odd:
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6:0:modified:section-20261117-4 -->If quad is between 2 corners, diagonal is the direction a counter-clockwise spiral radiating out from center of patch would cross the quad<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6:0:modified:section-20261117-4 --></ins>
+  - If quad is between 2 corners, diagonal is the direction a counter-clockwise spiral radiating out from center of patch would cross the quad
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6:0:modified:section-20261117-5 -->Center of a quad patch is a Z: The diagonal of the Z is oriented such that the top edge of the patch is V==0 and the left edge of the patch is U==0.<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6:0:modified:section-20261117-5 --></ins>
+  - Center of a quad patch is a Z: The diagonal of the Z is oriented such that the top edge of the patch is V==0 and the left edge of the patch is U==0.
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6:0:modified:section-20261117-6 -->Center of tri patch is a lone triangle<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6:0:modified:section-20261117-6 --></ins>
+  - Center of tri patch is a lone triangle
 
 - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6:0:modified:section-20261117-7 -->This is as rotationally symmetric as possible<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6:0:modified:section-20261117-7 --></ins>
 
@@ -717,23 +704,23 @@ For pow2 partitioning, TessFactors are rounded to a power of 2, and tessellation
 
 #### Transitions
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6.1:0:modified:section-20261117-1 -->How can each edge and the inside of a patch all have different Tessellation Factors from each other?<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6.1:0:modified:section-20261117-1 --></ins>
+- How can each edge and the inside of a patch all have different Tessellation Factors from each other?
 
 - For a quad, imagine a picture with a frame
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6.1:0:modified:section-20261117-2 -->Each side of the frame is a trapezoid<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6.1:0:modified:section-20261117-2 --></ins>
+  - Each side of the frame is a trapezoid
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6.1:0:modified:section-20261117-3 -->The "picture" is tessellated regularly<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6.1:0:modified:section-20261117-3 --></ins>
+- The "picture" is tessellated regularly
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6.1:0:modified:section-20261117-4 -->Using two inside TessFactors, one for each of U and V axes<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6.1:0:modified:section-20261117-4 --></ins>
+  - Using two inside TessFactors, one for each of U and V axes
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6.1:0:modified:section-20261117-5 -->Can also just set these inside TessFactors equally to get uniform interior tessellation<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6.1:0:modified:section-20261117-5 --></ins>
+  - Can also just set these inside TessFactors equally to get uniform interior tessellation
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6.1:0:modified:section-20261117-6 -->Each of the "frame" sides is a row of triangles stitching the TessFactor on the outside edge to the inside TF<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6.1:0:modified:section-20261117-6 --></ins>
+- Each of the "frame" sides is a row of triangles stitching the TessFactor on the outside edge to the inside TF
 
 - A tri patch is just a picture+frame with only 3 sides
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6.1:0:modified:section-20261117-7 -->single inside TessFactor<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6.1:0:modified:section-20261117-7 --></ins>
+  - single inside TessFactor
 
 <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6.1:1 -->**Mapping Vertices to Texels 1:1 in an Application**<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6.1:1 --></ins>
 
@@ -769,55 +756,55 @@ For pow2 partitioning, TessFactors are rounded to a power of 2, and tessellation
 
 #### Triangulating Picture Frame Sides
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6.2:0:modified:section-20261117-1 -->Each trapezoid shaped picture frame side has:<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6.2:0:modified:section-20261117-1 --></ins>
+- Each trapezoid shaped picture frame side has:
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6.2:0:modified:section-20261117-2 -->an outside edge TessFactor<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6.2:0:modified:section-20261117-2 --></ins>
+  - an outside edge TessFactor
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6.2:0:modified:section-20261117-3 -->an inside edge TessFactor<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6.2:0:modified:section-20261117-3 --></ins>
+  - an inside edge TessFactor
 
     - where one segment on each end of the inside is not needed since the neighboring picture frame is there - thus trapezoid shape
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6.2:0:modified:section-20261117-4 -->Each vertex on the edge with the larger TessFactor connects to its "parent" vertex on the edge with the smaller TF, given the "ruler function" split history<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6.2:0:modified:section-20261117-4 --></ins>
+- Each vertex on the edge with the larger TessFactor connects to its "parent" vertex on the edge with the smaller TF, given the "ruler function" split history
 
 - This defines a row of quads
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6.2:0:modified:section-20261117-5 -->Plus a triangle at each end, making a trapezoid<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6.2:0:modified:section-20261117-5 --></ins>
+  - Plus a triangle at each end, making a trapezoid
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.6.2:0:modified:section-20261117-6 -->The quads are triangulated using previous diagonal rules<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.6.2:0:modified:section-20261117-6 --></ins>
+  - The quads are triangulated using previous diagonal rules
 
 <a id="integer-partitioning"></a>
 
 #### Integer Partitioning
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.7:0:modified:section-20261117-1 -->Given floating point edge TessFactors<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.7:0:modified:section-20261117-1 --></ins>
+- Given floating point edge TessFactors
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.7:0:modified:section-20261117-2 -->Application can, for example, determine the inside TF based on a min/max/avg reduction similar to fractional tessellation<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.7:0:modified:section-20261117-2 --></ins>
+  - Application can, for example, determine the inside TF based on a min/max/avg reduction similar to fractional tessellation
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.7:0:modified:section-20261117-3 -->HW then rounds each edge TF and inside TF up to next integer<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.7:0:modified:section-20261117-3 --></ins>
+  - HW then rounds each edge TF and inside TF up to next integer
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.7:0:modified:section-20261117-4 -->Rest of tessellation behavior same as fractional<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.7:0:modified:section-20261117-4 --></ins>
+- Rest of tessellation behavior same as fractional
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.7:0:modified:section-20261117-5 -->Including picture frame, allowing transitions<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.7:0:modified:section-20261117-5 --></ins>
+  - Including picture frame, allowing transitions
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.7:0:modified:section-20261117-6 -->Each edge and inside TF can independently be even or odd<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.7:0:modified:section-20261117-6 --></ins>
+- Each edge and inside TF can independently be even or odd
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.7:0:modified:section-20261117-7 -->Thus smaller jumps in vert/tri count vs fractional<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.7:0:modified:section-20261117-7 --></ins>
+  - Thus smaller jumps in vert/tri count vs fractional
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.7:0:modified:section-20261117-8 -->But vertex positions obviously don’t move smoothly<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.7:0:modified:section-20261117-8 --></ins>
+  - But vertex positions obviously don’t move smoothly
 
 <a id="pow2-partitioning"></a>
 
 #### Pow2 Partitioning
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.7.1:0:modified:section-20261117-1 -->Same as integer partitioning, except instead of rounding to integer, round to next power of 2<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.7.1:0:modified:section-20261117-1 --></ins>
+- Same as integer partitioning, except instead of rounding to integer, round to next power of 2
 
   - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.7.1:0:modified:section-20261117-2 -->Application (or HLSL compiler) is responsible for rounding to pow2, not hardware. Hardware just treats pow2 mode exactly like integer mode.<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.7.1:0:modified:section-20261117-2 --></ins>
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.7.1:0:modified:section-20261117-3 -->Pow2 isn’t just a subset of the integer mode, when the inside TessFactor reduction is "average"<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.7.1:0:modified:section-20261117-3 --></ins>
+  - Pow2 isn’t just a subset of the integer mode, when the inside TessFactor reduction is "average"
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.7.1:0:modified:section-20261117-4 -->Handy to call this mode out on its own anyway<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.7.1:0:modified:section-20261117-4 --></ins>
+  - Handy to call this mode out on its own anyway
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.7.1:0:modified:section-20261117-5 -->As TessFactors increase, once a point shows up on the domain, it stays there permanently<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.7.1:0:modified:section-20261117-5 --></ins>
+- As TessFactors increase, once a point shows up on the domain, it stays there permanently
 
 <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.7.1:1 -->**Example: Displacement Mapping**<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.7.1:1 --></ins>
 
@@ -847,29 +834,29 @@ For pow2 partitioning, TessFactors are rounded to a power of 2, and tessellation
 
 #### IsoLine Pattern Details
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.8:0:modified:section-20261117-1 -->A way to draw tessellated lines<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.8:0:modified:section-20261117-1 --></ins>
+- A way to draw tessellated lines
 
 - 2 Tessellation Factors
 
 - Line Detail TF
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.8:0:modified:section-20261117-2 -->Determines how to finely tessellate a line, with same controls (fractional, integer etc) as an edge has in tri or quad domains<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.8:0:modified:section-20261117-2 --></ins>
+  - Determines how to finely tessellate a line, with same controls (fractional, integer etc) as an edge has in tri or quad domains
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.8:0:modified:section-20261117-3 -->Line Density TF<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.8:0:modified:section-20261117-3 --></ins>
+- Line Density TF
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.8:0:modified:section-20261117-4 -->Determines how many parallel tessellated lines to draw<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.8:0:modified:section-20261117-4 --></ins>
+  - Determines how many parallel tessellated lines to draw
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.8:0:modified:section-20261117-5 -->Always rounded up to next integer<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.8:0:modified:section-20261117-5 --></ins>
+  - Always rounded up to next integer
 
-  - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.8:0:modified:section-20261117-6 -->Tessellated lines of constant V are drawn over a UV quad domain<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.8:0:modified:section-20261117-6 --></ins>
+  - Tessellated lines of constant V are drawn over a UV quad domain
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.8:0:modified:section-20261117-7 -->Line Density TF == 1 means: Draw a single tessellated line, where V==0 across U [0..1]<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.8:0:modified:section-20261117-7 --></ins>
+- Line Density TF == 1 means: Draw a single tessellated line, where V==0 across U [0..1]
 
 - Lines density TF == 2 means: Draw 2 tessellated lines, one having V==0, and the other having V== 0.5
 
 - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.8:0:modified:section-20261117-8 -->Line density TF == n means: Draws n tessellated lines<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.8:0:modified:section-20261117-8 --></ins>
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.8:0:modified:section-20261117-9 -->A tessellated line is never drawn at V==1<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.8:0:modified:section-20261117-9 --></ins>
+- A tessellated line is never drawn at V==1
 
 <a id="tessellation-ordering"></a>
 
@@ -1037,16 +1024,16 @@ Suppose a single patch is drawn 64 meters wide.
 
 - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.15:0:modified:section-20261117-2 -->[Output Control Point Count](../archive/D3D11_3_FunctionalSpec.htm#inst_DCL_OUTPUT_CONTROL_POINT_COUNT) (DXBC): {0...32}; DXIL output control point counts are 1 through 32<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.15:0:modified:section-20261117-2 --></ins>
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.15:0:modified:section-20261117-3 -->[Domain](../archive/D3D11_3_FunctionalSpec.htm#inst_DCL_TESSELLATOR_DOMAIN): {tri | quad | isoline}<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.15:0:modified:section-20261117-3 --></ins>
+- [Domain](../archive/D3D11_3_FunctionalSpec.htm#inst_DCL_TESSELLATOR_DOMAIN): {tri | quad | isoline}
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.15:0:modified:section-20261117-4 -->[Partitioning](../archive/D3D11_3_FunctionalSpec.htm#inst_DCL_TESSELLATOR_PARTITIONING): {integer | pow2 | fractional_odd | fractional_even}<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.15:0:modified:section-20261117-4 --></ins>
+- [Partitioning](../archive/D3D11_3_FunctionalSpec.htm#inst_DCL_TESSELLATOR_PARTITIONING): {integer | pow2 | fractional_odd | fractional_even}
 
 - <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.15:0:modified:section-20261117-5 -->[Output Primitive (Topology)](../archive/D3D11_3_FunctionalSpec.htm#inst_DCL_TESSELLATOR_OUTPUT_PRIMITIVE): {point | line | triangle_cw | triangle_ccw}<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.15:0:modified:section-20261117-5 --></ins>
  // Point can be used with any domain (IsoLine,Tri,Quad)
  // Line is only valid with the IsoLine domain
  // Triangle (CW or CCW) are only valid with Tri or Quad domains.
 
-- <ins><!-- d3d12-review-inline:begin:tessellation:STAGES-11.7.15:0:modified:section-20261117-6 -->[MaxTessFactor](../archive/D3D11_3_FunctionalSpec.htm#inst_DCL_MAX_TESSFACTOR): {1..64} // Clamp placed on all TessFactors coming out of the Hull Shader.<!-- d3d12-review-inline:end:tessellation:STAGES-11.7.15:0:modified:section-20261117-6 --></ins>
+- [MaxTessFactor](../archive/D3D11_3_FunctionalSpec.htm#inst_DCL_MAX_TESSFACTOR): {1..64} // Clamp placed on all TessFactors coming out of the Hull Shader.
 
 <a id="domain-shader"></a>
 

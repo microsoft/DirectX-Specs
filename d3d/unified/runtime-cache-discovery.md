@@ -2,19 +2,6 @@
 
 # Runtime cache discovery and compatibility selection
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:cache-discovery:subject:0:authored:migration-882ba59c3cdaf7a0-0 -->Runtime cache discovery uses the D3D Shader Cache Registration (D3DSCR) API to associate the current application and adapter with a registered precompiled shader database (PSDB). Registration of a path, opening a recognized database, compatibility of its metadata and finding a compiled value are distinct conditions. A compatible open is not a cache hit.<!-- d3d12-review-inline:end:cache-discovery:subject:0:authored:migration-882ba59c3cdaf7a0-0 --></ins>
 
 <a id="runtime-workflow"></a>
@@ -159,25 +146,25 @@ typedef struct D3D12_STATE_OBJECT_STATISTICS
     } 	D3D12_STATE_OBJECT_STATISTICS;
 ```
 
-**Members**
+### Members
 
-*NumCreated*
+`NumCreated`
 
 The total number of objects successfully created.
 
-*NumPSDBCacheMissed*
+`NumPSDBCacheMissed`
 
 <ins><!-- d3d12-review-inline:begin:cache-discovery:N-shipped-statistics:0 -->The subset of objects successfully created where all required lookups were satisfied by caches observed by the runtime, but not all by a Precompile Shader Database (PSDB). This excludes objects counted in `NumTotalCacheMissed` or `NumCacheUnknown`. Partial PSDB lookup success, such as one shader in a PSO being found in the PSDB, counts here only if the remaining lookups were satisfied by other observed caches.<!-- d3d12-review-inline:end:cache-discovery:N-shipped-statistics:0 --></ins>
 
-*NumTotalCacheMissed*
+`NumTotalCacheMissed`
 
 The subset of objects that were successfully created, but the object was not found in any type of cache, either precompiled or cached by driver from a previous creation. Note that a miss is still counted even if there was a partial lookup success.
 
-*<ins><!-- d3d12-review-inline:begin:cache-discovery:AB-primary-statistics-fields:7:modified:source-8c32d32ea604290f-0-0 -->NumCacheUnknown<!-- d3d12-review-inline:end:cache-discovery:AB-primary-statistics-fields:7:modified:source-8c32d32ea604290f-0-0 --></ins>*
+<ins><!-- d3d12-review-inline:begin:cache-discovery:AB-primary-statistics-fields:7:modified:source-8c32d32ea604290f-0-0 -->`NumCacheUnknown`<!-- d3d12-review-inline:end:cache-discovery:AB-primary-statistics-fields:7:modified:source-8c32d32ea604290f-0-0 --></ins>
 
 The subset of <ins><!-- d3d12-review-inline:begin:cache-discovery:AB-primary-statistics-fields:8:modified:source-73064286bf2b33ed-0-0 -->objects<!-- d3d12-review-inline:end:cache-discovery:AB-primary-statistics-fields:8:modified:source-73064286bf2b33ed-0-0 --></ins> successfully created where PSDB cache hit status is unknown, see remarks.
 
-**Remarks**
+### Remarks
 
 The number of PSDB cache hits in the PSDB can be determined by:
 
@@ -193,22 +180,22 @@ CacheUnknown indicates that the driver did not try to lookup the created object 
 
 ### D3D12_STATE_OBJECT_STATISTICS members
 
-*DefaultPSDBRegistered*
+`DefaultPSDBRegistered`
 
 <ins><!-- d3d12-review-inline:begin:cache-discovery:DEL-I01-default-availability:0:authored:migration-c303adb94c42f324-0 -->`DefaultPSDBRegistered` indicates whether the device has a default PSDB available.
 See [discovery](#default-discovery),
 [compatibility](#compatibility) and [opening requirements](#failure-and-lifetime)
 for when a default PSDB is available.<!-- d3d12-review-inline:end:cache-discovery:DEL-I01-default-availability:0:authored:migration-c303adb94c42f324-0 --></ins>
 
-*PipelineStateObjectStatistics*
+`PipelineStateObjectStatistics`
 
 <ins><!-- d3d12-review-inline:begin:cache-discovery:DEL-I01-statistics-groups:0:modified:primary-pipeline-group -->Statistics for Pipeline State Objects created by the device through API like ID3D12Device::CreateGraphicsPipelineState, ID3D12Device::CreateComputePipelineState, and ID3D12Device2::CreatePipelineState.<!-- d3d12-review-inline:end:cache-discovery:DEL-I01-statistics-groups:0:modified:primary-pipeline-group --></ins>
 
-*StateObjectStatistics*
+`StateObjectStatistics`
 
 <ins><!-- d3d12-review-inline:begin:cache-discovery:DEL-I01-statistics-groups:1:modified:primary-state-object-group -->Statistics for State Objects created by the device through API like ID3D12Device5::CreateStateObject and ID3D12Device7::AddToStateObject.<!-- d3d12-review-inline:end:cache-discovery:DEL-I01-statistics-groups:1:modified:primary-state-object-group --></ins>
 
-**Remarks**
+#### Remarks
 
 When DefaultPSDBRegistered is TRUE, a "default" component is registered for the application through the D3DShaderCacheRegistration API.  Additionally, the driver supports Advanced Shader Delivery, and the PSDB matches the adapter family and the supported ABI range of the driver.
 

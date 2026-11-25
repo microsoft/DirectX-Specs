@@ -2,19 +2,6 @@
 
 # Output merger
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:output-merger:N-scope:0:authored:migration-af0684db605d70d9-0 -->The output merger determines depth/stencil visibility and updates the bound depth/stencil and color attachments.<!-- d3d12-review-inline:end:output-merger:N-scope:0:authored:migration-af0684db605d70d9-0 --></ins>
 
 <a id="configuration"></a>
@@ -761,13 +748,13 @@ void OMSetFrontAndBackStencilRef(
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:output-merger:API-front-back-parameters:0:authored:migration-218774e0ffc0c0ff-0 -->`FrontStencilRef`<!-- d3d12-review-inline:end:output-merger:API-front-back-parameters:0:authored:migration-218774e0ffc0c0ff-0 --></ins>
+`FrontStencilRef`
 
 <ins><!-- d3d12-review-inline:begin:output-merger:API-front-back-parameters:1:authored:migration-32710f96aaec3426-0 -->Type: **UINT**<!-- d3d12-review-inline:end:output-merger:API-front-back-parameters:1:authored:migration-32710f96aaec3426-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:output-merger:API-front-back-parameters:2:authored:migration-bcc39043f6b12122-0 -->The reference value for front-facing stencil operations.<!-- d3d12-review-inline:end:output-merger:API-front-back-parameters:2:authored:migration-bcc39043f6b12122-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:output-merger:API-front-back-parameters:3:authored:migration-1c69143022f37154-0 -->`BackStencilRef`<!-- d3d12-review-inline:end:output-merger:API-front-back-parameters:3:authored:migration-1c69143022f37154-0 --></ins>
+`BackStencilRef`
 
 <ins><!-- d3d12-review-inline:begin:output-merger:API-front-back-parameters:4:authored:migration-8cfdaf99e41114b2-0 -->Type: **UINT**<!-- d3d12-review-inline:end:output-merger:API-front-back-parameters:4:authored:migration-8cfdaf99e41114b2-0 --></ins>
 

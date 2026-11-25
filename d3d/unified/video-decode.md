@@ -2,19 +2,6 @@
 
 # Video: decode reference
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <a id="decode-discovery"></a>
 
 ## Discovery and query protocol
@@ -1574,7 +1561,7 @@ Specifies a bitstream encryption type. This enumeration is used by the [D3D12_VI
 
 #### Constants
 
-##### D3D12_BITSTREAM_ENCRYPTION_TYPE_NONE
+##### `D3D12_BITSTREAM_ENCRYPTION_TYPE_NONE`
 
 <ins><!-- d3d12-review-inline:begin:video-decode:P-bitstream_encryption_type-members:2 -->The bitstream is not encrypted.<!-- d3d12-review-inline:end:video-decode:P-bitstream_encryption_type-members:2 --></ins>
 
@@ -1596,11 +1583,11 @@ Specifies the interlace type of coded video frames.
 
 #### Constants
 
-##### D3D12_VIDEO_FRAME_CODED_INTERLACE_TYPE_NONE
+##### `D3D12_VIDEO_FRAME_CODED_INTERLACE_TYPE_NONE`
 
 The coded frames are not interlaced, often referred to as "progressive".
 
-##### D3D12_VIDEO_FRAME_CODED_INTERLACE_TYPE_FIELD_BASED
+##### `D3D12_VIDEO_FRAME_CODED_INTERLACE_TYPE_FIELD_BASED`
 
 <ins><!-- d3d12-review-inline:begin:video-decode:P-video_frame_coded_interlace_type-members:4 -->The coded frames may be interlaced.<!-- d3d12-review-inline:end:video-decode:P-video_frame_coded_interlace_type-members:4 --></ins>
 
@@ -1623,11 +1610,11 @@ Specifies whether a video decoding operation is supported.
 
 #### Constants
 
-##### D3D12_VIDEO_DECODE_SUPPORT_FLAG_NONE
+##### `D3D12_VIDEO_DECODE_SUPPORT_FLAG_NONE`
 
 The video decoding operation isn't supported.
 
-##### D3D12_VIDEO_DECODE_SUPPORT_FLAG_SUPPORTED
+##### `D3D12_VIDEO_DECODE_SUPPORT_FLAG_SUPPORTED`
 
 <ins><!-- d3d12-review-inline:begin:video-decode:P-video_decode_support_flags-members:4 -->The video decoding operation is supported.<!-- d3d12-review-inline:end:video-decode:P-video_decode_support_flags-members:4 --></ins>
 
@@ -1657,23 +1644,23 @@ Specifies the configuration for video decoding.
 
 #### Constants
 
-##### D3D12_VIDEO_DECODE_CONFIGURATION_FLAG_NONE
+##### `D3D12_VIDEO_DECODE_CONFIGURATION_FLAG_NONE`
 
 No configuration flags.
 
-##### D3D12_VIDEO_DECODE_CONFIGURATION_FLAG_HEIGHT_ALIGNMENT_MULTIPLE_32_REQUIRED
+##### `D3D12_VIDEO_DECODE_CONFIGURATION_FLAG_HEIGHT_ALIGNMENT_MULTIPLE_32_REQUIRED`
 
 The height of the output decoded surfaces must be a multiple of 32.
 
-##### D3D12_VIDEO_DECODE_CONFIGURATION_FLAG_POST_PROCESSING_SUPPORTED
+##### `D3D12_VIDEO_DECODE_CONFIGURATION_FLAG_POST_PROCESSING_SUPPORTED`
 
 The driver supports post processing. If this flag is set, the host decoder can set up post-processing by using the conversion flags in the [D3D12_VIDEO_DECODE_CONVERSION_ARGUMENTS](#d3d12-video-decode-conversion-arguments).
 
-##### D3D12_VIDEO_DECODE_CONFIGURATION_FLAG_REFERENCE_ONLY_ALLOCATIONS_REQUIRED
+##### `D3D12_VIDEO_DECODE_CONFIGURATION_FLAG_REFERENCE_ONLY_ALLOCATIONS_REQUIRED`
 
 Reference resources must be allocated with the [D3D12_RESOURCE_FLAG_VIDEO_DECODE_REFERENCE_ONLY](resources.md#d3d12-resource-flags) resource flag. <ins><!-- d3d12-review-inline:begin:video-decode:P-video_decode_configuration_flags-members:8:modified:migration-b41a1e5c23b91c2a-0 -->Reference textures<!-- d3d12-review-inline:end:video-decode:P-video_decode_configuration_flags-members:8:modified:migration-b41a1e5c23b91c2a-0 --></ins> must be separate from output textures, similar to performing a format conversion or downscale. This flag must not be set for [D3D12_VIDEO_DECODE_TIER_3](#d3d12-video-decode-tier) or greater.
 
-##### D3D12_VIDEO_DECODE_CONFIGURATION_FLAG_ALLOW_RESOLUTION_CHANGE_ON_NON_KEY_FRAME
+##### `D3D12_VIDEO_DECODE_CONFIGURATION_FLAG_ALLOW_RESOLUTION_CHANGE_ON_NON_KEY_FRAME`
 
 <ins><!-- d3d12-review-inline:begin:video-decode:P-video_decode_configuration_flags-members:10 -->The decode resolution can be changed on a non-key frame.<!-- d3d12-review-inline:end:video-decode:P-video_decode_configuration_flags-members:10 --></ins>
 
@@ -1708,11 +1695,11 @@ Specifies whether a video decode conversion operation is supported.
 
 #### Constants
 
-##### D3D12_VIDEO_DECODE_CONVERSION_SUPPORT_FLAG_NONE
+##### `D3D12_VIDEO_DECODE_CONVERSION_SUPPORT_FLAG_NONE`
 
 The video decode conversion operation isn't supported.
 
-##### D3D12_VIDEO_DECODE_CONVERSION_SUPPORT_FLAG_SUPPORTED
+##### `D3D12_VIDEO_DECODE_CONVERSION_SUPPORT_FLAG_SUPPORTED`
 
 <ins><!-- d3d12-review-inline:begin:video-decode:P-video_decode_conversion_support_flags-members:4 -->The video decode conversion operation is supported.<!-- d3d12-review-inline:end:video-decode:P-video_decode_conversion_support_flags-members:4 --></ins>
 
@@ -1741,19 +1728,19 @@ Specifies the scaling capabilities of the video scaler.
 
 #### Constants
 
-##### D3D12_VIDEO_SCALE_SUPPORT_FLAG_NONE
+##### `D3D12_VIDEO_SCALE_SUPPORT_FLAG_NONE`
 
 All possible output size width/height combinations that exist between the maximum size and minimum size for the extent, inclusive, are supported.
 
-##### D3D12_VIDEO_SCALE_SUPPORT_FLAG_POW2_ONLY
+##### `D3D12_VIDEO_SCALE_SUPPORT_FLAG_POW2_ONLY`
 
 The scaler only supports output sizes at a power of two scale factors within the range. The x and y scale factors must be the same for both dimensions when this flag is set.
 
-##### D3D12_VIDEO_SCALE_SUPPORT_FLAG_EVEN_DIMENSIONS_ONLY
+##### `D3D12_VIDEO_SCALE_SUPPORT_FLAG_EVEN_DIMENSIONS_ONLY`
 
 <ins><!-- d3d12-review-inline:begin:video-decode:P-video_scale_support_flags-members:6 -->The scaler only supports output sizes with even output dimensions.<!-- d3d12-review-inline:end:video-decode:P-video_scale_support_flags-members:6 --></ins>
 
-##### D3D12_VIDEO_SCALE_SUPPORT_FLAG_DPB_ENCODER_RESOURCES
+##### `D3D12_VIDEO_SCALE_SUPPORT_FLAG_DPB_ENCODER_RESOURCES`
 
 <ins><!-- d3d12-review-inline:begin:video-decode:weekend-dpb-scale-route:0 -->The [reference-only DPB scaling contract](video-encoding-controls.md#source-s08-031) defines this capability and its [processing requirements](video-encoding-controls.md#source-s08-032).<!-- d3d12-review-inline:end:video-decode:weekend-dpb-scale-route:0 --></ins>
 
@@ -1777,15 +1764,15 @@ Specifies the argument type of a [D3D12_VIDEO_DECODE_FRAME_ARGUMENT](#d3d12-vide
 
 #### Constants
 
-##### D3D12_VIDEO_DECODE_ARGUMENT_TYPE_PICTURE_PARAMETERS
+##### `D3D12_VIDEO_DECODE_ARGUMENT_TYPE_PICTURE_PARAMETERS`
 
 The argument is a picture decoding parameter buffer.
 
-##### D3D12_VIDEO_DECODE_ARGUMENT_TYPE_INVERSE_QUANTIZATION_MATRIX
+##### `D3D12_VIDEO_DECODE_ARGUMENT_TYPE_INVERSE_QUANTIZATION_MATRIX`
 
 The argument is an inverse quantization matrix buffer.
 
-##### D3D12_VIDEO_DECODE_ARGUMENT_TYPE_SLICE_CONTROL
+##### `D3D12_VIDEO_DECODE_ARGUMENT_TYPE_SLICE_CONTROL`
 
 <ins><!-- d3d12-review-inline:begin:video-decode:P-video_decode_argument_type-members:6 -->The argument is a slice control buffer.<!-- d3d12-review-inline:end:video-decode:P-video_decode_argument_type-members:6 --></ins>
 
@@ -1825,31 +1812,31 @@ Specifies indices for arrays of per component histogram information.
 
 #### Constants
 
-##### D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_Y
+##### `D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_Y`
 
 If the format is a YUV format, indicates a histogram for the Y component.
 
-##### D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_U
+##### `D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_U`
 
 If the format is a YUV format, indicates a histogram for the U component.
 
-##### D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_V
+##### `D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_V`
 
 If the format is a YUV format, indicates a histogram for the V component.
 
-##### D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_R
+##### `D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_R`
 
 If the format is an RGB/BGR format, indicates a histogram for the R component.
 
-##### D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_G
+##### `D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_G`
 
 If the format is an RGB/BGR format, indicates a histogram for the G component.
 
-##### D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_B
+##### `D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_B`
 
 If the format is an RGB/BGR format, indicates a histogram for the B component.
 
-##### D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_A
+##### `D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_A`
 
 <ins><!-- d3d12-review-inline:begin:video-decode:P-video_decode_histogram_component-members:14 -->If the format has an alpha channel, indicates a histogram for the A component.<!-- d3d12-review-inline:end:video-decode:P-video_decode_histogram_component-members:14 --></ins>
 
@@ -1884,35 +1871,35 @@ Flags for indicating a subset of components used with video decode histogram. Th
 
 #### Constants
 
-##### D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_FLAG_NONE
+##### `D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_FLAG_NONE`
 
 No associated component.
 
-##### D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_FLAG_Y
+##### `D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_FLAG_Y`
 
 If the format is a YUV format, indicates the Y component.
 
-##### D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_FLAG_U
+##### `D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_FLAG_U`
 
 If the format is a YUV format, indicates the U component.
 
-##### D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_FLAG_V
+##### `D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_FLAG_V`
 
 If the format is a YUV format, indicates the V component.
 
-##### D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_FLAG_R
+##### `D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_FLAG_R`
 
 If the format is an RGB/BGR format, indicates the R component.
 
-##### D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_FLAG_G
+##### `D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_FLAG_G`
 
 If the format is an RGB/BGR format, indicates the G component.
 
-##### D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_FLAG_B
+##### `D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_FLAG_B`
 
 If the format is an RGB/BGR format, indicates the B component.
 
-##### D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_FLAG_A
+##### `D3D12_VIDEO_DECODE_HISTOGRAM_COMPONENT_FLAG_A`
 
 <ins><!-- d3d12-review-inline:begin:video-decode:P-video_decode_histogram_component_flags-members:16 -->If the format is an RGB/BGR format, indicates the A component.<!-- d3d12-review-inline:end:video-decode:P-video_decode_histogram_component_flags-members:16 --></ins>
 
@@ -2020,13 +2007,13 @@ typedef HRESULT (APIENTRY *PFND3D12DDI_VIDEO_GETCAPS)(
 
 #### Parameters
 
-`[in] hDrvDevice`
+`hDrvDevice`
 
-The handle of a device.
+[in] The handle of a device.
 
-`[in, out] pArgs`
+`pArgs`
 
-Pointer to a caller-allocated [**D3D12DDIARG\_VIDEO\_GETCAPS\_0020**](#ddi-capability-payloads) structure used to request a video-specific capability.
+[in, out] Pointer to a caller-allocated [**D3D12DDIARG\_VIDEO\_GETCAPS\_0020**](#ddi-capability-payloads) structure used to request a video-specific capability.
 
 #### Return values
 
@@ -2046,9 +2033,9 @@ typedef SIZE_T ( APIENTRY* PFND3D12DDI_CALCPRIVATEVIDEODECODERSIZE_0072 )( D3D12
 
 The hardware device being processed.
 
-`[in] pArgs`
+`pArgs`
 
-The arguments used to create a video decoder.
+[in] The arguments used to create a video decoder.
 
 #### Return values
 

@@ -1,18 +1,5 @@
 # Synchronization and barriers
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:synchronization:opening:0:authored:opus-chapter-opening -->Barriers order dependent GPU work, make written data visible to later accesses and change texture layouts. D3D12 provides two barrier models. [Enhanced barriers](#enhanced-barriers) control synchronization, access and layout separately. [Legacy resource barriers](#legacy-barriers) transition subresources between resource states. Applications can use both models under the [interoperation rules](#model-interoperation).<!-- d3d12-review-inline:end:synchronization:opening:0:authored:opus-chapter-opening --></ins>
 
 <a id="foundations"></a>
@@ -2201,11 +2188,11 @@ Notifies the driver that it needs to synchronize multiple accesses to resources.
 
 ##### Parameters
 
-<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12GraphicsCommandList-parameters:0 -->**NumBarriers**<!-- d3d12-review-inline:end:synchronization:API-ID3D12GraphicsCommandList-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12GraphicsCommandList-parameters:0 -->`NumBarriers`<!-- d3d12-review-inline:end:synchronization:API-ID3D12GraphicsCommandList-parameters:0 --></ins>
 
 The number of submitted barrier descriptions.
 
-<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12GraphicsCommandList-parameters:2 -->**pBarriers**<!-- d3d12-review-inline:end:synchronization:API-ID3D12GraphicsCommandList-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12GraphicsCommandList-parameters:2 -->`pBarriers`<!-- d3d12-review-inline:end:synchronization:API-ID3D12GraphicsCommandList-parameters:2 --></ins>
 
 Pointer to an array of barrier descriptions.
 
@@ -2231,11 +2218,11 @@ Notifies the driver that it needs to synchronize multiple accesses to resources.
 
 ##### Parameters
 
-<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoDecodeCommandList-parameters:0 -->**NumBarriers**<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoDecodeCommandList-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoDecodeCommandList-parameters:0 -->`NumBarriers`<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoDecodeCommandList-parameters:0 --></ins>
 
 The number of submitted barrier descriptions.
 
-<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoDecodeCommandList-parameters:2 -->**pBarriers**<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoDecodeCommandList-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoDecodeCommandList-parameters:2 -->`pBarriers`<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoDecodeCommandList-parameters:2 --></ins>
 
 Pointer to an array of barrier descriptions.
 
@@ -2261,11 +2248,11 @@ Notifies the driver that it needs to synchronize multiple accesses to resources.
 
 ##### Parameters
 
-<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoProcessCommandList-parameters:0 -->**NumBarriers**<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoProcessCommandList-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoProcessCommandList-parameters:0 -->`NumBarriers`<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoProcessCommandList-parameters:0 --></ins>
 
 The number of submitted barrier descriptions.
 
-<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoProcessCommandList-parameters:2 -->**pBarriers**<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoProcessCommandList-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoProcessCommandList-parameters:2 -->`pBarriers`<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoProcessCommandList-parameters:2 --></ins>
 
 Pointer to an array of barrier descriptions.
 
@@ -2291,11 +2278,11 @@ Notifies the driver that it needs to synchronize multiple accesses to resources.
 
 ##### Parameters
 
-<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoEncodeCommandList-parameters:0 -->**NumBarriers**<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoEncodeCommandList-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoEncodeCommandList-parameters:0 -->`NumBarriers`<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoEncodeCommandList-parameters:0 --></ins>
 
 The number of submitted barrier descriptions.
 
-<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoEncodeCommandList-parameters:2 -->**pBarriers**<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoEncodeCommandList-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:synchronization:API-ID3D12VideoEncodeCommandList-parameters:2 -->`pBarriers`<!-- d3d12-review-inline:end:synchronization:API-ID3D12VideoEncodeCommandList-parameters:2 --></ins>
 
 Pointer to an array of barrier descriptions.
 

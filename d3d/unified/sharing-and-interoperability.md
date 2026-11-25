@@ -1,18 +1,5 @@
 # Sharing and interoperability
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-introduction:0:authored:migration-7d9bf282df9a60d1-0 -->Sharing exposes the same resource or heap backing, fence, or protected resource session to more than one device or process. A shared NT handle identifies the shared kernel object; opening it obtains an interface associated with the opening D3D12 device. It does not transfer the exporting device's COM object or GPU virtual address.<!-- d3d12-review-inline:end:sharing-interop:SH-introduction:0:authored:migration-7d9bf282df9a60d1-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:sharing-interop:SH-introduction:1:authored:migration-cd27ff1dc8bc859d-0 -->Sharing storage does not permit an application to pass one device's resource object or descriptors directly to another device, including an [independent device](devices-and-capabilities.md#independent-devices) that uses the same adapter.<!-- d3d12-review-inline:end:sharing-interop:SH-introduction:1:authored:migration-cd27ff1dc8bc859d-0 --></ins>

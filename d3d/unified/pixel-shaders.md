@@ -2,19 +2,6 @@
 
 # Pixel shaders
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:N-stage:0:authored:migration-36b1964e2a68401b-0 -->A pixel shader consumes rasterizer-produced/interpolated primitive data, computes color/depth/coverage/stencil reference outputs and may access shader resources and UAVs.<!-- d3d12-review-inline:end:pixel-shaders:N-stage:0:authored:migration-36b1964e2a68401b-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:N-stage:1:authored:migration-144213c1dd108e9a-0 -->The stage supports applicable DXBC SM5.0/5.1 and DXIL SM6.x programs.<!-- d3d12-review-inline:end:pixel-shaders:N-stage:1:authored:migration-144213c1dd108e9a-0 --></ins>
@@ -273,7 +260,7 @@ Centroid behaves exactly as follows:
 
 - (2) Else the attribute is evaluated at the first covered sample, in increasing order of sample index, where sample coverage is after ANDing the coverage with the SampleMask Rasterizer State.
 
-- <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-centroid:2:modified:section-20261117-2 -->(3) If no samples are covered, such as on helper pixels executed off the bounds of a primitive to fill out 2x2 pixel stamps, the attribute is evaluated as follows: If the SampleMask Rasterizer state is a subset of the samples in the pixel, then the first sample covered by the SampleMask Rasterizer State is the evaluation point. Otherwise (full SampleMask), the pixel center is the evaluation point.<!-- d3d12-review-inline:end:pixel-shaders:A-centroid:2:modified:section-20261117-2 --></ins>
+- (3) If no samples are covered, such as on helper pixels executed off the bounds of a primitive to fill out 2x2 pixel stamps, the attribute is evaluated as follows: If the SampleMask Rasterizer state is a subset of the samples in the pixel, then the first sample covered by the SampleMask Rasterizer State is the evaluation point. Otherwise (full SampleMask), the pixel center is the evaluation point.
 
 <ins><!-- d3d12-review-inline:begin:pixel-shaders:N-programmed-centroid:0:authored:migration-a761c30b5e7fe4ed-0 -->In fine pixel centroid evaluation, rule (1) also applies when sample positions are programmed. Rule (1) compares the SampleMask-filtered coverage with the entire sample set, not only with the samples that SampleMask enables. For example, four geometrically covered samples with SampleMask `0x5` do not satisfy rule (1). With programmed positions, rule (2) selects the first covered sample in the programmed order, and rule (3) applies when no samples are covered.<!-- d3d12-review-inline:end:pixel-shaders:N-programmed-centroid:0:authored:migration-a761c30b5e7fe4ed-0 --></ins>
 
@@ -606,25 +593,25 @@ registers are not included.
 
 (a) The following uses of sample or derivative instructions are not permitted inside varying flow control (though the HLSL compiler only attempts to warn about it):
 
-- <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-derivative-restrictions:1:modified:section-20261117-1 -->[sample](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE), [sample_b](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE_B), or [sample_c](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE_C), or [lod](../archive/D3D11_3_FunctionalSpec.htm#inst_LOD) when the texture address is<!-- d3d12-review-inline:end:pixel-shaders:A-derivative-restrictions:1:modified:section-20261117-1 --></ins>
+- [sample](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE), [sample_b](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE_B), or [sample_c](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE_C), or [lod](../archive/D3D11_3_FunctionalSpec.htm#inst_LOD) when the texture address is
 a shader-computed temporary.
 
-- <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-derivative-restrictions:1:modified:section-20261117-2 -->[deriv_rtx_coarse](../archive/D3D11_3_FunctionalSpec.htm#inst_DERIV_RTX_COARSE), [deriv_rty_coarse](../archive/D3D11_3_FunctionalSpec.htm#inst_DERIV_RTY_COARSE), [deriv_rtx_fine](../archive/D3D11_3_FunctionalSpec.htm#inst_DERIV_RTX_FINE), [deriv_rty_fine](../archive/D3D11_3_FunctionalSpec.htm#inst_DERIV_RTY_FINE), when the input is<!-- d3d12-review-inline:end:pixel-shaders:A-derivative-restrictions:1:modified:section-20261117-2 --></ins>
+- [deriv_rtx_coarse](../archive/D3D11_3_FunctionalSpec.htm#inst_DERIV_RTX_COARSE), [deriv_rty_coarse](../archive/D3D11_3_FunctionalSpec.htm#inst_DERIV_RTY_COARSE), [deriv_rtx_fine](../archive/D3D11_3_FunctionalSpec.htm#inst_DERIV_RTX_FINE), [deriv_rty_fine](../archive/D3D11_3_FunctionalSpec.htm#inst_DERIV_RTY_FINE), when the input is
 a shader-computed temporary.
 
 (b) Other uses of sample or derivative instructions have no restrictions with flow control. Examples are:
 
-- <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-derivative-restrictions:3:modified:section-20261117-1 -->[sample](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE), [sample_b](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE_B), or [sample_c](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE_C), when the texture address is a shader input (regardless of interpolation mode) or statically indexed constant.<!-- d3d12-review-inline:end:pixel-shaders:A-derivative-restrictions:3:modified:section-20261117-1 --></ins>
+- [sample](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE), [sample_b](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE_B), or [sample_c](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE_C), when the texture address is a shader input (regardless of interpolation mode) or statically indexed constant.
 
-- <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-derivative-restrictions:3:modified:section-20261117-2 -->[deriv_rtx_fine](../archive/D3D11_3_FunctionalSpec.htm#inst_DERIV_RTX_FINE), [deriv_rty_fine](../archive/D3D11_3_FunctionalSpec.htm#inst_DERIV_RTY_FINE), [deriv_rtx_coarse](../archive/D3D11_3_FunctionalSpec.htm#inst_DERIV_RTX_COARSE) and [deriv_rty_coarse](../archive/D3D11_3_FunctionalSpec.htm#inst_DERIV_RTY_COARSE) when the input operand is a shader input (regardless of interpolation mode) or statically indexed constant, though the latter is not useful.<!-- d3d12-review-inline:end:pixel-shaders:A-derivative-restrictions:3:modified:section-20261117-2 --></ins>
+- [deriv_rtx_fine](../archive/D3D11_3_FunctionalSpec.htm#inst_DERIV_RTX_FINE), [deriv_rty_fine](../archive/D3D11_3_FunctionalSpec.htm#inst_DERIV_RTY_FINE), [deriv_rtx_coarse](../archive/D3D11_3_FunctionalSpec.htm#inst_DERIV_RTX_COARSE) and [deriv_rty_coarse](../archive/D3D11_3_FunctionalSpec.htm#inst_DERIV_RTY_COARSE) when the input operand is a shader input (regardless of interpolation mode) or statically indexed constant, though the latter is not useful.
 
-- <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-derivative-restrictions:3:modified:section-20261117-3 -->[sample_l](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE_L): here the application provides LOD as an operand, so no derivative calculation<!-- d3d12-review-inline:end:pixel-shaders:A-derivative-restrictions:3:modified:section-20261117-3 --></ins>
+- [sample_l](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE_L): here the application provides LOD as an operand, so no derivative calculation
 is required, and there is no issue with flow control.
 
-- <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-derivative-restrictions:3:modified:section-20261117-4 -->[sample_d](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE_D): here the application provides derivatives as input operands, so there is no<!-- d3d12-review-inline:end:pixel-shaders:A-derivative-restrictions:3:modified:section-20261117-4 --></ins>
+- [sample_d](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE_D): here the application provides derivatives as input operands, so there is no
 issue with flow control.
 
-- <ins><!-- d3d12-review-inline:begin:pixel-shaders:A-derivative-restrictions:3:modified:section-20261117-5 -->[sample_c_lz](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE_C_LZ), [gather4](../archive/D3D11_3_FunctionalSpec.htm#inst_GATHER4), [gather4_c](../archive/D3D11_3_FunctionalSpec.htm#inst_GATHER4_C), [gather4_po](../archive/D3D11_3_FunctionalSpec.htm#inst_GATHER4_PO), [gather4_po_c](../archive/D3D11_3_FunctionalSpec.htm#inst_GATHER4_PO_C): here the LOD is fixed, so no derivative calculation is required,<!-- d3d12-review-inline:end:pixel-shaders:A-derivative-restrictions:3:modified:section-20261117-5 --></ins>
+- [sample_c_lz](../archive/D3D11_3_FunctionalSpec.htm#inst_SAMPLE_C_LZ), [gather4](../archive/D3D11_3_FunctionalSpec.htm#inst_GATHER4), [gather4_c](../archive/D3D11_3_FunctionalSpec.htm#inst_GATHER4_C), [gather4_po](../archive/D3D11_3_FunctionalSpec.htm#inst_GATHER4_PO), [gather4_po_c](../archive/D3D11_3_FunctionalSpec.htm#inst_GATHER4_PO_C): here the LOD is fixed, so no derivative calculation is required,
 and there is no issue with flow control.
 
 Regardless of the restriction above, shader authors still must ensure that before

@@ -2,19 +2,6 @@
 
 # Geometry shaders and stream output
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <a id="geometry-shader"></a>
 
 ## Geometry shader
@@ -220,7 +207,7 @@ Up to 128 scalar components of data per-vertex can be streamed out across the ou
 
 ### Stream output declaration
 
-<ins><!-- d3d12-review-inline:begin:gs-so:N-so-object:0:authored:migration-fa67d918c917802c-0 -->Stream output is described by the graphics PSO's `D3D12_STREAM_OUTPUT_DESC`. Without a GS, stream 0 carries the last active VS or DS output; HS output is not a direct stream output source. Stream output use requires the root signature's `D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT` permission, as specified by [PSO/root validation](pipeline-state.md#input-layout-constraints).<!-- d3d12-review-inline:end:gs-so:N-so-object:0:authored:migration-fa67d918c917802c-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:gs-so:N-so-object:0:authored:migration-fa67d918c917802c-0 -->Stream output is described by the graphics PSO's `D3D12_STREAM_OUTPUT_DESC`. Without a GS, stream 0 carries the last active VS or DS output; HS output is not a direct stream output source. Stream output use requires the root signature's `D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT` permission, as specified by [PSO/root signature validation](pipeline-state.md#input-layout-constraints).<!-- d3d12-review-inline:end:gs-so:N-so-object:0:authored:migration-fa67d918c917802c-0 --></ins>
 
 <a id="so-declaration-entry"></a>
 
@@ -356,17 +343,17 @@ Sets the stream output buffer views.
 
 #### Parameters
 
-`[in] StartSlot`
+`StartSlot`
 
-Index into the device's zero-based array to begin setting stream output buffers.
+[in] Index into the device's zero-based array to begin setting stream output buffers.
 
-`[in] NumViews`
+`NumViews`
 
-The number of entries in the *pViews* array.
+[in] The number of entries in the *pViews* array.
 
-`[in, optional] pViews`
+`pViews`
 
-Specifies an array of [D3D12_STREAM_OUTPUT_BUFFER_VIEW](#d3d12-stream-output-buffer-view) structures.
+[in, optional] Specifies an array of [D3D12_STREAM_OUTPUT_BUFFER_VIEW](#d3d12-stream-output-buffer-view) structures.
 
 #### Return values
 

@@ -2,19 +2,6 @@
 
 # Indirect execution
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:indirect-execution:N-overview:0:authored:migration-e3975ec366d763f8-0 -->A command signature describes a fixed-format record of arguments and state changes followed by one work command. `ExecuteIndirect` interprets an array of these records on the GPU. Recording the call does not capture the argument buffer or count buffer contents.<!-- d3d12-review-inline:end:indirect-execution:N-overview:0:authored:migration-e3975ec366d763f8-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:indirect-execution:N-overview:1:authored:migration-1a36dd67f592c330-0 -->The command signature selects the record format, not a pipeline, shaders, render targets or descriptor heaps. State not supplied by the signature is inherited from the command list.<!-- d3d12-review-inline:end:indirect-execution:N-overview:1:authored:migration-1a36dd67f592c330-0 --></ins>
@@ -443,15 +430,15 @@ HRESULT CreateCommandSignature(
 
 ### Parameters
 
-`[in] pDesc`
+`pDesc`
 
-Type: **const [D3D12_COMMAND_SIGNATURE_DESC](#command-signature-desc)\***
+[in] Type: **const [D3D12_COMMAND_SIGNATURE_DESC](#command-signature-desc)\***
 
 Describes the command signature to be created with the [D3D12_COMMAND_SIGNATURE_DESC](#command-signature-desc) structure.
 
-`[in, optional] pRootSignature`
+`pRootSignature`
 
-Type: **[ID3D12RootSignature](binding.md#root-signatures)\***
+[in, optional] Type: **[ID3D12RootSignature](binding.md#root-signatures)\***
 
 Specifies the [ID3D12RootSignature](binding.md#root-signatures) that the command signature applies to.
 
@@ -463,9 +450,9 @@ Type: **REFIID**
 
 The globally unique identifier (**GUID**) for the command signature interface ([ID3D12CommandSignature](#command-signatures)). The **REFIID**, or **GUID**, of the interface to the command signature can be obtained by using the \_\_uuidof() macro. For example, \_\_uuidof(**ID3D12CommandSignature**) will get the **GUID** of the interface to a command signature.
 
-`[out, optional] ppvCommandSignature`
+`ppvCommandSignature`
 
-Type: **void\*\***
+[out, optional] Type: **void\*\***
 
 Specifies a pointer, that on successful completion of the method will point to the created command signature ([ID3D12CommandSignature](#command-signatures)).
 

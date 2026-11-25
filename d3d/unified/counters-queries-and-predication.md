@@ -2,19 +2,6 @@
 
 # Counters, queries, and predication
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:queries:N-overview:0:authored:migration-0d3a2220c5cb6256-0 -->Stream output filled sizes and UAV counters use application-allocated buffer storage. Queries measure GPU work and expose typed results through query heaps. Predication uses an application-selected 64-bit buffer value to decide whether eligible GPU operations are skipped.<!-- d3d12-review-inline:end:queries:N-overview:0:authored:migration-0d3a2220c5cb6256-0 --></ins>
 
 <a id="application-counters"></a>
@@ -455,9 +442,9 @@ Creates a query heap. A query heap contains an array of queries.
 
 #### Parameters
 
-`[in] pDesc`
+`pDesc`
 
-Type: **const [D3D12_QUERY_HEAP_DESC](#d3d12_query_heap_desc)\***
+[in] Type: **const [D3D12_QUERY_HEAP_DESC](#d3d12_query_heap_desc)\***
 
 Specifies the query heap in a [D3D12_QUERY_HEAP_DESC](#d3d12_query_heap_desc) structure.
 
@@ -467,9 +454,9 @@ Type: **REFIID**
 
 <ins><!-- d3d12-review-inline:begin:queries:P-ID3D12Device%3A%3ACreateQueryHeap:5:modified:style-o2-query-heap -->Identifies the requested query heap interface, not an individual heap instance.<!-- d3d12-review-inline:end:queries:P-ID3D12Device%3A%3ACreateQueryHeap:5:modified:style-o2-query-heap --></ins>
 
-`[out, optional] ppvHeap`
+`ppvHeap`
 
-Type: **void\*\***
+[out, optional] Type: **void\*\***
 
 Specifies a pointer to the heap, that will be returned on successful completion of the method. *ppvHeap* can be NULL, to enable capability testing. When *ppvHeap* is NULL, no object will be created and S\_FALSE will be returned when *pDesc* is valid.
 
@@ -503,21 +490,21 @@ Starts a query running.
 
 #### Parameters
 
-`[in] pQueryHeap`
+`pQueryHeap`
 
-Type: **[ID3D12QueryHeap](#query-heaps)\***
+[in] Type: **[ID3D12QueryHeap](#query-heaps)\***
 
 Specifies the [ID3D12QueryHeap](#query-heaps) containing the query.
 
-`[in] Type`
+`Type`
 
-Type: **[D3D12_QUERY_TYPE](#d3d12_query_type)**
+[in] Type: **[D3D12_QUERY_TYPE](#d3d12_query_type)**
 
 Specifies one member of [D3D12_QUERY_TYPE](#d3d12_query_type).
 
-`[in] Index`
+`Index`
 
-Type: **UINT**
+[in] Type: **UINT**
 
 Specifies the index of the query within the query heap.
 
@@ -545,21 +532,21 @@ void EndQuery(
 
 #### Parameters
 
-`[in] pQueryHeap`
+`pQueryHeap`
 
-Type: **[ID3D12QueryHeap](#query-heaps)\***
+[in] Type: **[ID3D12QueryHeap](#query-heaps)\***
 
 Specifies the [ID3D12QueryHeap](#query-heaps) containing the query.
 
-`[in] Type`
+`Type`
 
-Type: **[D3D12_QUERY_TYPE](#d3d12_query_type)**
+[in] Type: **[D3D12_QUERY_TYPE](#d3d12_query_type)**
 
 Specifies one member of [D3D12_QUERY_TYPE](#d3d12_query_type).
 
-`[in] Index`
+`Index`
 
-Type: **UINT**
+[in] Type: **UINT**
 
 Specifies the index of the query in the query heap.
 
@@ -590,39 +577,39 @@ Extracts data from a query.
 
 #### Parameters
 
-`[in] pQueryHeap`
+`pQueryHeap`
 
-Type: **[ID3D12QueryHeap](#query-heaps)\***
+[in] Type: **[ID3D12QueryHeap](#query-heaps)\***
 
 Specifies the [ID3D12QueryHeap](#query-heaps) containing the queries to resolve.
 
-`[in] Type`
+`Type`
 
-Type: **[D3D12_QUERY_TYPE](#d3d12_query_type)**
+[in] Type: **[D3D12_QUERY_TYPE](#d3d12_query_type)**
 
 Specifies the type of query, one member of [D3D12_QUERY_TYPE](#d3d12_query_type).
 
-`[in] StartIndex`
+`StartIndex`
 
-Type: **UINT**
+[in] Type: **UINT**
 
 Specifies an index of the first query to resolve.
 
-`[in] NumQueries`
+`NumQueries`
 
-Type: **UINT**
+[in] Type: **UINT**
 
 Specifies the number of queries to resolve.
 
-`[in] pDestinationBuffer`
+`pDestinationBuffer`
 
-Type: **[ID3D12Resource](resources.md#resource-storage)\***
+[in] Type: **[ID3D12Resource](resources.md#resource-storage)\***
 
 Specifies an [ID3D12Resource](resources.md#resource-storage) destination buffer, which must be in the state [D3D12_RESOURCE_STATE_COPY_DEST](synchronization.md#d3d12-resource-states).
 
-`[in] AlignedDestinationBufferOffset`
+`AlignedDestinationBufferOffset`
 
-Type: **UINT64**
+[in] Type: **UINT64**
 
 Specifies an alignment offset into the destination buffer. Must be a multiple of 8 bytes.
 
@@ -1012,13 +999,13 @@ None
 
 ### CPU flag and path selection
 
-**Members:**
+#### Members
 
 - <ins><!-- d3d12-review-inline:begin:queries:CPU-flag-contract:1:occurrence:ffa23448b81c-0 -->**D3D12_QUERY_HEAP_FLAG_NONE** - No special flags. The query heap can only be resolved using the [appropriate command list GPU `ResolveQueryData` method](#gpu-resolve-support).<!-- d3d12-review-inline:end:queries:CPU-flag-contract:1:occurrence:ffa23448b81c-0 --></ins>
 
 - <ins><!-- d3d12-review-inline:begin:queries:CPU-flag-contract:1:occurrence:ffb44d409148-1 -->**D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE** - Enables CPU-based query resolution for this query heap. When this flag is set, applications can use the `ID3D12Device15::ResolveQueryData()` method to resolve query data directly on the CPU timeline after GPU execution completes.<!-- d3d12-review-inline:end:queries:CPU-flag-contract:1:occurrence:ffb44d409148-1 --></ins>
 
-**Remarks:**
+#### Remarks
 
 Query heaps created without the `D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE` flag cannot be used with the <ins><!-- d3d12-review-inline:begin:queries:CPU-flag-contract:3:modified:source-f886e74fc4692b85-0-0 -->`ID3D12Device15::ResolveQueryData()`<!-- d3d12-review-inline:end:queries:CPU-flag-contract:3:modified:source-f886e74fc4692b85-0-0 --></ins> method and will return `E_INVALIDARG` if attempted. Conversely, heaps created with the CPU resolve flag cannot be used with the Command List resolve API.
 
@@ -1091,7 +1078,7 @@ Note that this differs from the GPU-timeline `ID3D12GraphicsCommandList::Resolve
 
 For drivers or hardware that do not support native CPU-based query resolution, the D3D12 runtime provides transparent fallback behavior to ensure the feature works universally across all D3D12-capable hardware.
 
-<ins><!-- d3d12-review-inline:begin:queries:CPU-fallback:1 -->**Fallback mechanism**<!-- d3d12-review-inline:end:queries:CPU-fallback:1 --></ins>
+#### Fallback mechanism
 
 When a query heap is created with the `D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE` flag on hardware or drivers that lack native support:
 
@@ -1113,7 +1100,7 @@ When a query heap is created with the `D3D12_QUERY_HEAP_FLAG_CPU_RESOLVE` flag o
 
 Note that GPU and CPU timestamp counters are not necessarily directly related to the clock speed of these processors, but instead work from timestamp ticks.
 
-<ins><!-- d3d12-review-inline:begin:queries:P-timestamp-calibration:3 -->**Idle clock qualification.**<!-- d3d12-review-inline:end:queries:P-timestamp-calibration:3 --></ins>
+#### <ins><!-- d3d12-review-inline:begin:queries:P-timestamp-calibration:3 -->Idle clock qualification.<!-- d3d12-review-inline:end:queries:P-timestamp-calibration:3 --></ins>
 
 GPU timestamp clocks can stop ticking on some hardware when the GPU is idle, so the correlation can drift. To prevent this, call [**ID3D12Device::SetStablePowerState**](#setstablepowerstate) during development (requires Developer Mode enabled).
 
@@ -1142,9 +1129,9 @@ This method is used to determine the rate at which the GPU timestamp counter inc
 
 #### Parameters
 
-`[out] pFrequency`
+`pFrequency`
 
-Type: **UINT64\***
+[out] Type: **UINT64\***
 
 The GPU timestamp counter frequency (in ticks/second).
 
@@ -1177,15 +1164,15 @@ This method samples the CPU and GPU timestamp counters <ins><!-- d3d12-review-in
 
 #### Parameters
 
-`[out] pGpuTimestamp`
+`pGpuTimestamp`
 
-Type: **UINT64\***
+[out] Type: **UINT64\***
 
 The value of the GPU timestamp counter.
 
-`[out] pCpuTimestamp`
+`pCpuTimestamp`
 
-Type: **UINT64\***
+[out] Type: **UINT64\***
 
 The value of the CPU timestamp counter.
 
@@ -1298,21 +1285,21 @@ Sets a rendering predicate.
 
 #### Parameters
 
-`[in, optional] pBuffer`
+`pBuffer`
 
-Type: **[ID3D12Resource](resources.md#resource-storage)\***
+[in, optional] Type: **[ID3D12Resource](resources.md#resource-storage)\***
 
 <ins><!-- d3d12-review-inline:begin:queries:P-ID3D12GraphicsCommandList%3A%3ASetPredication:2 -->The buffer, as an [ID3D12Resource](resources.md#resource-storage), which must be in the [**D3D12\_RESOURCE\_STATE\_PREDICATION**](synchronization.md#d3d12-resource-states) or [**D3D12\_RESOURCE\_STATE\_INDIRECT\_ARGUMENT**](synchronization.md#d3d12-resource-states) state (both values are identical, and provided as aliases for clarity), or **NULL** to disable predication.<!-- d3d12-review-inline:end:queries:P-ID3D12GraphicsCommandList%3A%3ASetPredication:2 --></ins>
 
-`[in] AlignedBufferOffset`
+`AlignedBufferOffset`
 
-Type: **UINT64**
+[in] Type: **UINT64**
 
 The aligned buffer offset, as a UINT64.
 
-`[in] Operation`
+`Operation`
 
-Type: **[D3D12_PREDICATION_OP](#d3d12-predication-op)**
+[in] Type: **[D3D12_PREDICATION_OP](#d3d12-predication-op)**
 
 Specifies a [D3D12_PREDICATION_OP](#d3d12-predication-op), such as D3D12\_PREDICATION\_OP\_EQUAL\_ZERO or D3D12\_PREDICATION\_OP\_NOT\_EQUAL\_ZERO.
 
@@ -1654,7 +1641,7 @@ typedef VOID ( APIENTRY* PFND3D12DDI_BEGIN_END_QUERY_0003 )( D3D12DDI_HCOMMANDLI
 
 `unnamedParam4`
 
-*<ins><!-- d3d12-review-inline:begin:queries:DDI-ddi-begin-end-query:12:modified:source-60adfd547931ad76-0-0 -->Index<!-- d3d12-review-inline:end:queries:DDI-ddi-begin-end-query:12:modified:source-60adfd547931ad76-0-0 --></ins>*
+<ins><!-- d3d12-review-inline:begin:queries:DDI-ddi-begin-end-query:12:modified:source-60adfd547931ad76-0-0 -->`Index`<!-- d3d12-review-inline:end:queries:DDI-ddi-begin-end-query:12:modified:source-60adfd547931ad76-0-0 --></ins>
 
 The <ins><!-- d3d12-review-inline:begin:queries:DDI-ddi-begin-end-query:13:modified:source-2d3222c9b8327950-0-0 -->zero-based index of the single query<!-- d3d12-review-inline:end:queries:DDI-ddi-begin-end-query:13:modified:source-2d3222c9b8327950-0-0 --></ins> element.
 

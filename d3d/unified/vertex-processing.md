@@ -2,19 +2,6 @@
 
 # Input assembly and vertex processing
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <a id="input-assembly"></a>
 
 ## Input assembly
@@ -183,9 +170,9 @@ Bind information about the primitive type, and data order that describes input d
 
 #### Parameters
 
-`[in] PrimitiveTopology`
+`PrimitiveTopology`
 
-The type of primitive and ordering of the primitive data (see [D3D_PRIMITIVE_TOPOLOGY](#d3d-primitive-topology)).
+[in] The type of primitive and ordering of the primitive data (see [D3D_PRIMITIVE_TOPOLOGY](#d3d-primitive-topology)).
 
 #### Return values
 
@@ -215,17 +202,17 @@ Sets <ins><!-- d3d12-review-inline:begin:geometry:B-IASetVertexBuffers:0:modifie
 
 #### Parameters
 
-`[in] StartSlot`
+`StartSlot`
 
-Index into the device's zero-based array to begin setting vertex buffers.
+[in] Index into the device's zero-based array to begin setting vertex buffers.
 
-`[in] NumViews`
+`NumViews`
 
-The number of views in the *pViews* array.
+[in] The number of views in the *pViews* array.
 
-`[in, optional] pViews`
+`pViews`
 
-Specifies the vertex buffer views in an array of [D3D12_VERTEX_BUFFER_VIEW](#d3d12_vertex_buffer_view) structures.
+[in, optional] Specifies the vertex buffer views in an array of [D3D12_VERTEX_BUFFER_VIEW](#d3d12_vertex_buffer_view) structures.
 
 #### Return values
 
@@ -255,9 +242,9 @@ Only one index buffer can be bound to the graphics pipeline at any one time.
 
 #### Parameters
 
-`[in, optional] pView`
+`pView`
 
-The view specifies the index buffer's address, size, and [DXGI_FORMAT](formats.md#dxgi-format), as a pointer to a [D3D12_INDEX_BUFFER_VIEW](#d3d12_index_buffer_view) structure.
+[in, optional] The view specifies the index buffer's address, size, and [DXGI_FORMAT](formats.md#dxgi-format), as a pointer to a [D3D12_INDEX_BUFFER_VIEW](#d3d12_index_buffer_view) structure.
 
 #### Return values
 
@@ -285,7 +272,7 @@ void IASetIndexBufferStripCutValue(
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:geometry:N-dynamic-cut-parameter:0:authored:migration-1b5b460736261aac-0 -->`IBStripCutValue`<!-- d3d12-review-inline:end:geometry:N-dynamic-cut-parameter:0:authored:migration-1b5b460736261aac-0 --></ins>
+`IBStripCutValue`
 
 <ins><!-- d3d12-review-inline:begin:geometry:N-dynamic-cut-parameter:1:authored:migration-068a1a587895ac6f-0 -->The [strip cut value](#strip-cuts) to set.<!-- d3d12-review-inline:end:geometry:N-dynamic-cut-parameter:1:authored:migration-068a1a587895ac6f-0 --></ins>
 
@@ -327,10 +314,10 @@ Draws non-indexed, instanced primitives.
 >
 > | Parameter | Meaning |
 > | --- | --- |
-> | UINT VertexCountPerInstance | How many vertices to read sequentially from Buffer(s) marked as Vertex Data (same set repeated for each Instance). |
-> | UINT InstanceCount | How many Instances to render. |
-> | UINT StartVertexLocation | Which Vertex to start at in each Buffer marked as Vertex Data (for each Instance). |
-> | UINT StartInstanceLocation | Which Instance to start sequentially fetching from in each Buffer marked as Instance Data. |
+> | `VertexCountPerInstance` | How many vertices to read sequentially from Buffer(s) marked as Vertex Data (same set repeated for each Instance). |
+> | `InstanceCount` | How many Instances to render. |
+> | `StartVertexLocation` | Which Vertex to start at in each Buffer marked as Vertex Data (for each Instance). |
+> | `StartInstanceLocation` | Which Instance to start sequentially fetching from in each Buffer marked as Instance Data. |
 
 <!-- d3d12-review-alert:end:geometry:P-DrawInstanced:0:modified:migration-434a0fc36163cb65-0 -->
 
@@ -371,11 +358,11 @@ Draws indexed, instanced primitives.
 >
 > | Parameter | Meaning |
 > | --- | --- |
-> | UINT IndexCountPerInstance | How many indices to read sequentially from the Index Buffer (same set repeated for each Instance). |
-> | UINT InstanceCount | How many Instances to render. |
-> | UINT StartIndexLocation | Which Index to start at in the Index Buffer (for each Instance). |
-> | INT BaseVertexLocation | Which Vertex in each buffer marked as Vertex Data to consider as Index "0". Note that this value is signed. A negative BaseVertexLocation allows, for example, the first vertex to be referenced by an index value > 0. |
-> | UINT StartInstanceLocation | Which Instance to start sequentially fetching from in each Buffer marked as Instance Data. |
+> | `IndexCountPerInstance` | How many indices to read sequentially from the Index Buffer (same set repeated for each Instance). |
+> | `InstanceCount` | How many Instances to render. |
+> | `StartIndexLocation` | Which Index to start at in the Index Buffer (for each Instance). |
+> | `BaseVertexLocation` | Which Vertex in each buffer marked as Vertex Data to consider as Index "0". Note that this value is signed. A negative BaseVertexLocation allows, for example, the first vertex to be referenced by an index value > 0. |
+> | `StartInstanceLocation` | Which Instance to start sequentially fetching from in each Buffer marked as Instance Data. |
 
 <!-- d3d12-review-alert:end:geometry:P-DrawIndexedInstanced:0:modified:migration-46a0f58d118d6bbc-0 -->
 
@@ -925,7 +912,7 @@ The minimum extent for the bounds is any initial offset applied on the Buffer (s
 
 <ins><!-- d3d12-review-inline:begin:geometry:H-alignment:0 -->For input assembler data, an offset for an Element is required, a stride for a structure (e.g. vertex) is required, or an initial offset for a Buffer is required. All of these types of values have the following alignment restrictions:<!-- d3d12-review-inline:end:geometry:H-alignment:0 --></ins>
 
-- <ins><!-- d3d12-review-inline:begin:geometry:H-alignment:1 -->The alignment of an Element in a structure in memory must be, in bytes, the nearest power of 2 greater or equal to the width of the Element's format, or 4, whichever is less.<!-- d3d12-review-inline:end:geometry:H-alignment:1 --></ins>
+- The alignment of an Element in a structure in memory must be, in bytes, the nearest power of 2 greater or equal to the width of the Element's format, or 4, whichever is less.
 Thus alignment is always at 1 byte, 2 bytes or 4 byte granularity. This alignment is measured from the starting address of the structure. The starting address of the structure must also maintain alignment of all its members.
 
 - The magnitude of any initial offset into a 1D buffer, and/or the structure stride, must result in the Elements in the Buffer remaining

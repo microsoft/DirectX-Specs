@@ -1,18 +1,5 @@
 # Work graph execution
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:work-graphs:N-scope:0:authored:migration-284c87bf676c94bf-0 -->Work graphs are a system for GPU based work creation in D3D12.<!-- d3d12-review-inline:end:work-graphs:N-scope:0:authored:migration-284c87bf676c94bf-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:work-graphs:N-scope:1:authored:migration-e8ff37a81899f4f0-0 -->Work graphs require `D3D12_WORK_GRAPHS_TIER_1_0`. Device support is reported by `WorkGraphsTier` in [`D3D12_FEATURE_DATA_D3D12_OPTIONS21`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options21).<!-- d3d12-review-inline:end:work-graphs:N-scope:1:authored:migration-e8ff37a81899f4f0-0 --></ins>
@@ -2555,7 +2542,7 @@ The order that hardware executes ready work is undefined.  It would seem appeali
 
 As mentioned earlier, if there is no work ready to run (e.g. execution requirements not met, such as no output space), this behaves identically to there being no more tasks queued at all - execution simply stops, as opposed to, say, hanging.
 
-<ins><!-- d3d12-review-inline:begin:work-graphs:W-scheduling-qualification:0:authored:completion-route -->See [No deadlocks / system overload](#no-deadlocks--system-overload) for the completion guarantee for well-behaved graphs and [Discovering backing memory size requirements](state-objects.md#discovering-backing-memory-size-requirements) for the minimum backing memory requirement. The meaning of “execution simply stops” for pending graph work is unresolved. See [ADV-I10](../../spec-maintenance/d3d12/weekend-review-advanced-independent.md#adv-i10--scheduling-completion-ambiguity-remains-genuinely-unresolved).<!-- d3d12-review-inline:end:work-graphs:W-scheduling-qualification:0:authored:completion-route --></ins>
+<ins><!-- d3d12-review-inline:begin:work-graphs:W-scheduling-qualification:0:authored:completion-route -->See [No deadlocks / system overload](#no-deadlocks--system-overload) for the completion guarantee for well-behaved graphs and [Discovering backing memory size requirements](state-objects.md#discovering-backing-memory-size-requirements) for the minimum backing memory requirement. The meaning of “execution simply stops” for pending graph work is unresolved.<!-- d3d12-review-inline:end:work-graphs:W-scheduling-qualification:0:authored:completion-route --></ins>
 
 #### Input memory management
 

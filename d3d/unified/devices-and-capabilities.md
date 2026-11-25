@@ -1,18 +1,5 @@
 # Devices, feature levels and capabilities
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:foundation:0:authored:migration-36d4c47a36dd3eea-0 -->A device represents an adapter and exposes its supported Direct3D 12 functionality. An adapter LUID identifies the adapter rather than a particular device, because [independent devices](#independent-devices) can represent the same adapter. A device can contain several linked physical adapters, called nodes. A node index selects one of these nodes within the device.<!-- d3d12-review-inline:end:devices-capabilities:foundation:0:authored:migration-36d4c47a36dd3eea-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:devices-capabilities:foundation:1:authored:migration-8ff00446cd4a7556-0 -->Device creation selects a minimum feature level. Feature levels group required functionality. Independently queried capabilities describe additional support and tiers.<!-- d3d12-review-inline:end:devices-capabilities:foundation:1:authored:migration-8ff00446cd4a7556-0 --></ins>
@@ -499,11 +486,11 @@ Creates a device that represents the display adapter.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:Parameters-D3D12CreateDevice:1:modified:source-6877ceaa8ecdc281-0-0 -->`pAdapter` (input, optional)<!-- d3d12-review-inline:end:devices-capabilities:Parameters-D3D12CreateDevice:1:modified:source-6877ceaa8ecdc281-0-0 --></ins>
+`pAdapter`
 
 Type: **IUnknown\***
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:Parameters-D3D12CreateDevice:3 -->A pointer to the video adapter to use when creating a device. Pass **NULL** to use the default adapter, which is the first adapter that is enumerated by [IDXGIFactory1::EnumAdapters](https://learn.microsoft.com/en-us/windows/desktop/api/dxgi/nf-dxgi-idxgifactory-enumadapters).<!-- d3d12-review-inline:end:devices-capabilities:Parameters-D3D12CreateDevice:3 --></ins>
+(input, optional) <ins><!-- d3d12-review-inline:begin:devices-capabilities:Parameters-D3D12CreateDevice:3 -->A pointer to the video adapter to use when creating a device. Pass **NULL** to use the default adapter, which is the first adapter that is enumerated by [IDXGIFactory1::EnumAdapters](https://learn.microsoft.com/en-us/windows/desktop/api/dxgi/nf-dxgi-idxgifactory-enumadapters).<!-- d3d12-review-inline:end:devices-capabilities:Parameters-D3D12CreateDevice:3 --></ins>
 
 `MinimumFeatureLevel`
 
@@ -511,17 +498,17 @@ Type: **[D3D_FEATURE_LEVEL](#d3d-feature-level)**
 
 The minimum [D3D_FEATURE_LEVEL](#d3d-feature-level) required for successful device creation.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:Parameters-D3D12CreateDevice:7 -->`riid` (input)<!-- d3d12-review-inline:end:devices-capabilities:Parameters-D3D12CreateDevice:7 --></ins>
+`riid`
 
 Type: **REFIID**
 
-The globally unique identifier (**GUID**) for the device interface. This parameter, and *ppDevice*, can be addressed with the single macro [IID_PPV_ARGS](https://learn.microsoft.com/en-us/windows/desktop/api/combaseapi/nf-combaseapi-iid_ppv_args).
+(input) The globally unique identifier (**GUID**) for the device interface. This parameter, and *ppDevice*, can be addressed with the single macro [IID_PPV_ARGS](https://learn.microsoft.com/en-us/windows/desktop/api/combaseapi/nf-combaseapi-iid_ppv_args).
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:Parameters-D3D12CreateDevice:10:modified:source-6f8ea04e37ed3c62-0-0 -->`ppDevice` (output, optional)<!-- d3d12-review-inline:end:devices-capabilities:Parameters-D3D12CreateDevice:10:modified:source-6f8ea04e37ed3c62-0-0 --></ins>
+`ppDevice`
 
 Type: **void\*\***
 
-A pointer to a memory block that receives a pointer to the device. Pass **NULL** to test if device creation would succeed, but to not actually create the device. If **NULL** is passed and device creation would succeed, **S\_FALSE** is returned.
+(output, optional) A pointer to a memory block that receives a pointer to the device. Pass **NULL** to test if device creation would succeed, but to not actually create the device. If **NULL** is passed and device creation would succeed, **S\_FALSE** is returned.
 
 #### Return values
 
@@ -1147,23 +1134,23 @@ HRESULT SerializeVersionedRootSignature(const D3D12_VERSIONED_ROOT_SIGNATURE_DES
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:1:modified:source-16f4cfb7ad922254-0-0 -->`pDesc` (input)<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:1:modified:source-16f4cfb7ad922254-0-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:1:modified:source-16f4cfb7ad922254-0-0 -->`pDesc`<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:1:modified:source-16f4cfb7ad922254-0-0 --></ins>
 
 Type: **const [D3D12_VERSIONED_ROOT_SIGNATURE_DESC](binding.md#d3d12-versioned-root-signature-desc)\***
 
-Specifies a [D3D12_VERSIONED_ROOT_SIGNATURE_DESC](binding.md#d3d12-versioned-root-signature-desc) that contains a description of any version of a root signature.
+(input) Specifies a [D3D12_VERSIONED_ROOT_SIGNATURE_DESC](binding.md#d3d12-versioned-root-signature-desc) that contains a description of any version of a root signature.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:4:modified:source-3c65e58745bfa22e-0-0 -->`ppResult` (output)<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:4:modified:source-3c65e58745bfa22e-0-0 --></ins>
-
-Type: **ID3DBlob\*\***
-
-A pointer to a memory block that receives a pointer to the [ID3DBlob](#binary-data-blobs) interface that you can use to access the serialized root signature.
-
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:7:modified:source-cf1b87158b09b441-0-0 -->`ppError` (output, optional)<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:7:modified:source-cf1b87158b09b441-0-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:4:modified:source-3c65e58745bfa22e-0-0 -->`ppResult`<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:4:modified:source-3c65e58745bfa22e-0-0 --></ins>
 
 Type: **ID3DBlob\*\***
 
-A pointer to a memory block that receives a pointer to the [ID3DBlob](#binary-data-blobs) interface that you can use to access serializer error messages, or **NULL** if there are no errors.
+(output) A pointer to a memory block that receives a pointer to the [ID3DBlob](#binary-data-blobs) interface that you can use to access the serialized root signature.
+
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:7:modified:source-cf1b87158b09b441-0-0 -->`ppError`<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ASerializeVersionedRootSignature:7:modified:source-cf1b87158b09b441-0-0 --></ins>
+
+Type: **ID3DBlob\*\***
+
+(output, optional) A pointer to a memory block that receives a pointer to the [ID3DBlob](#binary-data-blobs) interface that you can use to access serializer error messages, or **NULL** if there are no errors.
 
 #### Return values
 
@@ -1188,29 +1175,29 @@ HRESULT CreateVersionedRootSignatureDeserializer(const void *pBlob, SIZE_T Size,
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:1:modified:source-11da14ad7f14ec40-0-0 -->`pBlob` (input)<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:1:modified:source-11da14ad7f14ec40-0-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:1:modified:source-11da14ad7f14ec40-0-0 -->`pBlob`<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:1:modified:source-11da14ad7f14ec40-0-0 --></ins>
 
 Type: **LPCVOID**
 
-A pointer to the source data for the serialized root signature.
+(input) A pointer to the source data for the serialized root signature.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:4:modified:source-fdad3526ba034b73-0-0 -->`Size` (input)<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:4:modified:source-fdad3526ba034b73-0-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:4:modified:source-fdad3526ba034b73-0-0 -->`Size`<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:4:modified:source-fdad3526ba034b73-0-0 --></ins>
 
 Type: **SIZE\_T**
 
-The size, in bytes, of the block of memory that *<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:6:modified:source-2bbb98b841658a1a-0-0 -->pBlob<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:6:modified:source-2bbb98b841658a1a-0-0 --></ins>* points to.
+(input) The size, in bytes, of the block of memory that *<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:6:modified:source-2bbb98b841658a1a-0-0 -->pBlob<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:6:modified:source-2bbb98b841658a1a-0-0 --></ins>* points to.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:7 -->`riid` (input)<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:7 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:7 -->`riid`<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:7 --></ins>
 
 Type: **REFIID**
 
-The globally unique identifier (**GUID**) for the root signature deserializer interface.
+(input) The globally unique identifier (**GUID**) for the root signature deserializer interface.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:10:modified:source-91fa6a3edfdccaa5-0-0 -->`ppvDeserializer` (output)<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:10:modified:source-91fa6a3edfdccaa5-0-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:10:modified:source-91fa6a3edfdccaa5-0-0 -->`ppvDeserializer`<!-- d3d12-review-inline:end:devices-capabilities:parameters-ID3D12DeviceConfiguration%3A%3ACreateVersionedRootSignatureDeserializer:10:modified:source-91fa6a3edfdccaa5-0-0 --></ins>
 
 Type: **void\*\***
 
-A pointer to a memory block that receives a pointer to the root signature deserializer.
+(output) A pointer to a memory block that receives a pointer to the root signature deserializer.
 
 #### Return values
 
@@ -1246,23 +1233,23 @@ Type: **UINT**
 
 The number of experimental features to enable.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:Parameters-D3D12EnableExperimentalFeatures:4:modified:source-d4de144566ca686b-0-0 -->`pIIDs` (input)<!-- d3d12-review-inline:end:devices-capabilities:Parameters-D3D12EnableExperimentalFeatures:4:modified:source-d4de144566ca686b-0-0 --></ins>
+`pIIDs`
 
 Type: **const IID\***
 
-A pointer to an array of IDs that specify which of the available experimental features to enable.
+(input) A pointer to an array of IDs that specify which of the available experimental features to enable.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:Parameters-D3D12EnableExperimentalFeatures:7:modified:source-37ad22170b408419-0-0 -->`pConfigurationStructs` (input)<!-- d3d12-review-inline:end:devices-capabilities:Parameters-D3D12EnableExperimentalFeatures:7:modified:source-37ad22170b408419-0-0 --></ins>
+`pConfigurationStructs`
 
 Type: **void\***
 
-Structures that contain additional configuration details that some experimental features might need to be enabled.
+(input) Structures that contain additional configuration details that some experimental features might need to be enabled.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:Parameters-D3D12EnableExperimentalFeatures:10:modified:source-71605c96e3e6472d-0-0 -->`pConfigurationStructSizes` (input)<!-- d3d12-review-inline:end:devices-capabilities:Parameters-D3D12EnableExperimentalFeatures:10:modified:source-71605c96e3e6472d-0-0 --></ins>
+`pConfigurationStructSizes`
 
 Type: **UINT\***
 
-The sizes of any configuration structs passed in pConfigurationStructs parameter.
+(input) The sizes of any configuration structs passed in pConfigurationStructs parameter.
 
 #### Return values
 
@@ -1307,11 +1294,11 @@ Type: **[D3D12_FEATURE](https://learn.microsoft.com/en-us/windows/desktop/api/d3
 
 A constant from the [D3D12_FEATURE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_feature) enumeration describing the feature(s) that you want to query for support.
 
-<ins><!-- d3d12-review-inline:begin:devices-capabilities:Parameters-ID3D12Device%3A%3ACheckFeatureSupport:4:modified:source-17b97c879974f6b8-0-0 -->`pFeatureSupportData` (input, output)<!-- d3d12-review-inline:end:devices-capabilities:Parameters-ID3D12Device%3A%3ACheckFeatureSupport:4:modified:source-17b97c879974f6b8-0-0 --></ins>
+`pFeatureSupportData`
 
 Type: **void\***
 
-A pointer to a data structure that corresponds to the value of the *Feature* parameter. To determine the corresponding data structure for each constant, see [D3D12_FEATURE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_feature).
+(input, output) A pointer to a data structure that corresponds to the value of the *Feature* parameter. To determine the corresponding data structure for each constant, see [D3D12_FEATURE](https://learn.microsoft.com/en-us/windows/desktop/api/d3d12/ne-d3d12-d3d12_feature).
 
 `FeatureSupportDataSize`
 
@@ -1683,57 +1670,57 @@ Additionally, it has the following flags set
 >
 > | Selector | Value | Input / output convention | Payload / capability owner |
 > | --- | --- | --- | --- |
-> | `D3D12_OPTIONS` | 0 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS](#d3d12_feature_data_d3d12_options) |
-> | `ARCHITECTURE` | 1 | `NodeIndex` input. Other fields output | [D3D12_FEATURE_DATA_ARCHITECTURE](#d3d12_feature_data_architecture) |
-> | `FEATURE_LEVELS` | 2 | `NumFeatureLevels`, `pFeatureLevelsRequested` input; array read; `MaxSupportedFeatureLevel` output | [D3D12_FEATURE_DATA_FEATURE_LEVELS](#feature-level-requests) |
-> | `FORMAT_SUPPORT` | 3 | `Format` input; `Support1`, `Support2` output | [D3D12_FEATURE_DATA_FORMAT_SUPPORT](formats.md#format-query-cases) |
-> | `MULTISAMPLE_QUALITY_LEVELS` | 4 | `Format`, `SampleCount`, `Flags` input; `NumQualityLevels` output | [D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS](formats.md#format-query-cases) |
-> | `FORMAT_INFO` | 5 | `Format` input; `PlaneCount` output | [D3D12_FEATURE_DATA_FORMAT_INFO](formats.md#format-query-cases) |
-> | `GPU_VIRTUAL_ADDRESS_SUPPORT` | 6 | No inputs; payload fields output | [D3D12_FEATURE_DATA_GPU_VIRTUAL_ADDRESS_SUPPORT](resources.md#tiled-virtual-address) |
-> | `SHADER_MODEL` | 7 | `HighestShaderModel` in/out request ceiling/result | [D3D12_FEATURE_DATA_SHADER_MODEL](#shader-model-negotiation) |
-> | `D3D12_OPTIONS1` | 8 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS1](#d3d12_feature_data_d3d12_options1) |
-> | `PROTECTED_RESOURCE_SESSION_SUPPORT` | 10 | `NodeIndex` input; `Support` output | [D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_SUPPORT](#d3d12_feature_data_protected_resource_session_support) |
-> | `ROOT_SIGNATURE` | 12 | `HighestVersion` in/out request ceiling/result | [D3D12_FEATURE_DATA_ROOT_SIGNATURE](binding.md#d3d-root-signature-version) |
-> | `ARCHITECTURE1` | 16 | `NodeIndex` input. Other fields output | [D3D12_FEATURE_DATA_ARCHITECTURE1](#d3d12_feature_data_architecture1) |
-> | `D3D12_OPTIONS2` | 18 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS2](#d3d12_feature_data_d3d12_options2) |
-> | `SHADER_CACHE` | 19 | No inputs; payload fields output | [D3D12_FEATURE_DATA_SHADER_CACHE](#d3d12_feature_data_shader_cache) |
-> | `COMMAND_QUEUE_PRIORITY` | 20 | `CommandListType`, `Priority` input; `PriorityForTypeIsSupported` output | [D3D12_FEATURE_DATA_COMMAND_QUEUE_PRIORITY](#d3d12_feature_data_command_queue_priority) |
-> | `D3D12_OPTIONS3` | 21 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS3](#d3d12_feature_data_d3d12_options3) |
-> | `EXISTING_HEAPS` | 22 | No inputs; payload fields output | [D3D12_FEATURE_DATA_EXISTING_HEAPS](#d3d12_feature_data_existing_heaps) |
-> | `D3D12_OPTIONS4` | 23 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS4](#d3d12_feature_data_d3d12_options4) |
-> | `SERIALIZATION` | 24 | `NodeIndex` input; `HeapSerializationTier` output | [D3D12_FEATURE_DATA_SERIALIZATION](#d3d12_feature_data_serialization) |
-> | `CROSS_NODE` | 25 | No inputs; payload fields output | [D3D12_FEATURE_DATA_CROSS_NODE](#d3d12_feature_data_cross_node) |
-> | `D3D12_OPTIONS5` | 27 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS5](devices-and-capabilities.md#d3d12_feature_data_d3d12_options5) |
-> | `DISPLAYABLE` | 28 | No inputs; payload fields output | [D3D12_FEATURE_DATA_DISPLAYABLE](#d3d12_feature_data_displayable) |
-> | `D3D12_OPTIONS6` | 30 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS6](devices-and-capabilities.md#d3d12_feature_data_d3d12_options6) |
-> | `QUERY_META_COMMAND` | 31 | `CommandId`, `NodeMask`, query input pointer/size and output pointer/size input; pointed-to output buffer written | [D3D12_FEATURE_DATA_QUERY_META_COMMAND](#d3d12_feature_data_query_meta_command) |
-> | `D3D12_OPTIONS7` | 32 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS7](devices-and-capabilities.md#d3d12_feature_data_d3d12_options7) |
-> | `PROTECTED_RESOURCE_SESSION_TYPE_COUNT` | 33 | `NodeIndex` input; `Count` output | [D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPE_COUNT](#d3d12_feature_data_protected_resource_session_type_count) |
-> | `PROTECTED_RESOURCE_SESSION_TYPES` | 34 | `NodeIndex`, `Count`, `pTypes` input; pointed-to GUID array output; count matches TYPE_COUNT result | [D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPES](#d3d12_feature_data_protected_resource_session_types) |
-> | `D3D12_OPTIONS8` | 36 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS8](formats.md#bc-dimensions) |
-> | `D3D12_OPTIONS9` | 37 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS9](devices-and-capabilities.md#d3d12_feature_data_d3d12_options9) |
-> | `D3D12_OPTIONS10` | 39 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS10](pixel-shaders.md#d3d12_feature_data_d3d12_options10) |
-> | `D3D12_OPTIONS11` | 40 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS11](#d3d12_feature_data_d3d12_options11) |
-> | `D3D12_OPTIONS12` | 41 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS12](devices-and-capabilities.md#d3d12_feature_data_d3d12_options12) |
-> | `D3D12_OPTIONS13` | 42 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS13](#d3d12_feature_data_d3d12_options13) |
-> | `D3D12_OPTIONS14` | 43 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS14](#d3d12_feature_data_d3d12_options14) |
-> | `D3D12_OPTIONS15` | 44 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS15](#d3d12_feature_data_d3d12_options15) |
-> | `D3D12_OPTIONS16` | 45 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS16](#d3d12_feature_data_d3d12_options16) |
-> | `D3D12_OPTIONS17` | 46 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS17](#d3d12_feature_data_d3d12_options17) |
-> | `D3D12_OPTIONS18` | 47 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS18](devices-and-capabilities.md#d3d12_feature_data_d3d12_options18) |
-> | `D3D12_OPTIONS19` | 48 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS19](#d3d12_feature_data_d3d12_options19) |
-> | `D3D12_OPTIONS20` | 49 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS20](#d3d12_feature_data_d3d12_options20) |
-> | `PREDICATION` | 50 | No inputs; payload fields output | [D3D12_FEATURE_DATA_PREDICATION](#d3d12_feature_data_predication) |
-> | `PLACED_RESOURCE_SUPPORT_INFO` | 51 | `Format`, `Dimension`, `DestHeapProperties` input; `Supported` output | [D3D12_FEATURE_DATA_PLACED_RESOURCE_SUPPORT_INFO](#d3d12_feature_data_placed_resource_support_info) |
-> | `HARDWARE_COPY` | 52 | No inputs; payload fields output | [D3D12_FEATURE_DATA_HARDWARE_COPY](#d3d12_feature_data_hardware_copy) |
-> | `D3D12_OPTIONS21` | 53 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS21](devices-and-capabilities.md#d3d12_feature_data_d3d12_options21) |
-> | `D3D12_TIGHT_ALIGNMENT` | 54 | No inputs; payload fields output | [D3D12_FEATURE_DATA_TIGHT_ALIGNMENT](resources.md#tight-alignment) |
-> | `APPLICATION_SPECIFIC_DRIVER_STATE` | 56 | No inputs; `Supported` output | [D3D12_FEATURE_DATA_APPLICATION_SPECIFIC_DRIVER_STATE](#d3d12_feature_data_application_specific_driver_state) |
-> | `BYTECODE_BYPASS_HASH_SUPPORTED` | 57 | No inputs; `Supported` output | [D3D12_FEATURE_DATA_BYTECODE_BYPASS_HASH_SUPPORTED](#d3d12_feature_data_bytecode_bypass_hash_supported) |
-> | `HARDWARE_SCHEDULING_QUEUE_GROUPINGS` | 60 | No inputs; `ComputeQueuesPer3DQueue` output | [D3D12_FEATURE_DATA_HARDWARE_SCHEDULING_QUEUE_GROUPINGS](execution.md#hardware-scheduling-queue-groupings) |
-> | `SHADER_CACHE_ABI_SUPPORT` | 61 | No inputs; adapter family array, ABI range and compiler/profile versions output | [D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT](#d3d12_feature_data_shadercache_abi_support) |
-> | `BARRIER_LAYOUT` | 64 | `CommandListType`, `Layout` input; `Supported` output | [D3D12_FEATURE_DATA_BARRIER_LAYOUT](#d3d12_feature_data_barrier_layout) |
-> | `D3D12_OPTIONS22` | 65 | No inputs; payload fields output | [D3D12_FEATURE_DATA_D3D12_OPTIONS22](devices-and-capabilities.md#d3d12_feature_data_d3d12_options22) |
+> | `D3D12_OPTIONS` | 0 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS`](#d3d12_feature_data_d3d12_options) |
+> | `ARCHITECTURE` | 1 | `NodeIndex` input. Other fields output | [`D3D12_FEATURE_DATA_ARCHITECTURE`](#d3d12_feature_data_architecture) |
+> | `FEATURE_LEVELS` | 2 | `NumFeatureLevels`, `pFeatureLevelsRequested` input; array read; `MaxSupportedFeatureLevel` output | [`D3D12_FEATURE_DATA_FEATURE_LEVELS`](#feature-level-requests) |
+> | `FORMAT_SUPPORT` | 3 | `Format` input; `Support1`, `Support2` output | [`D3D12_FEATURE_DATA_FORMAT_SUPPORT`](formats.md#format-query-cases) |
+> | `MULTISAMPLE_QUALITY_LEVELS` | 4 | `Format`, `SampleCount`, `Flags` input; `NumQualityLevels` output | [`D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS`](formats.md#format-query-cases) |
+> | `FORMAT_INFO` | 5 | `Format` input; `PlaneCount` output | [`D3D12_FEATURE_DATA_FORMAT_INFO`](formats.md#format-query-cases) |
+> | `GPU_VIRTUAL_ADDRESS_SUPPORT` | 6 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_GPU_VIRTUAL_ADDRESS_SUPPORT`](resources.md#tiled-virtual-address) |
+> | `SHADER_MODEL` | 7 | `HighestShaderModel` in/out request ceiling/result | [`D3D12_FEATURE_DATA_SHADER_MODEL`](#shader-model-negotiation) |
+> | `D3D12_OPTIONS1` | 8 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS1`](#d3d12_feature_data_d3d12_options1) |
+> | `PROTECTED_RESOURCE_SESSION_SUPPORT` | 10 | `NodeIndex` input; `Support` output | [`D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_SUPPORT`](#d3d12_feature_data_protected_resource_session_support) |
+> | `ROOT_SIGNATURE` | 12 | `HighestVersion` in/out request ceiling/result | [`D3D12_FEATURE_DATA_ROOT_SIGNATURE`](binding.md#d3d-root-signature-version) |
+> | `ARCHITECTURE1` | 16 | `NodeIndex` input. Other fields output | [`D3D12_FEATURE_DATA_ARCHITECTURE1`](#d3d12_feature_data_architecture1) |
+> | `D3D12_OPTIONS2` | 18 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS2`](#d3d12_feature_data_d3d12_options2) |
+> | `SHADER_CACHE` | 19 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_SHADER_CACHE`](#d3d12_feature_data_shader_cache) |
+> | `COMMAND_QUEUE_PRIORITY` | 20 | `CommandListType`, `Priority` input; `PriorityForTypeIsSupported` output | [`D3D12_FEATURE_DATA_COMMAND_QUEUE_PRIORITY`](#d3d12_feature_data_command_queue_priority) |
+> | `D3D12_OPTIONS3` | 21 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS3`](#d3d12_feature_data_d3d12_options3) |
+> | `EXISTING_HEAPS` | 22 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_EXISTING_HEAPS`](#d3d12_feature_data_existing_heaps) |
+> | `D3D12_OPTIONS4` | 23 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS4`](#d3d12_feature_data_d3d12_options4) |
+> | `SERIALIZATION` | 24 | `NodeIndex` input; `HeapSerializationTier` output | [`D3D12_FEATURE_DATA_SERIALIZATION`](#d3d12_feature_data_serialization) |
+> | `CROSS_NODE` | 25 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_CROSS_NODE`](#d3d12_feature_data_cross_node) |
+> | `D3D12_OPTIONS5` | 27 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS5`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options5) |
+> | `DISPLAYABLE` | 28 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_DISPLAYABLE`](#d3d12_feature_data_displayable) |
+> | `D3D12_OPTIONS6` | 30 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS6`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options6) |
+> | `QUERY_META_COMMAND` | 31 | `CommandId`, `NodeMask`, query input pointer/size and output pointer/size input; pointed-to output buffer written | [`D3D12_FEATURE_DATA_QUERY_META_COMMAND`](#d3d12_feature_data_query_meta_command) |
+> | `D3D12_OPTIONS7` | 32 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS7`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options7) |
+> | `PROTECTED_RESOURCE_SESSION_TYPE_COUNT` | 33 | `NodeIndex` input; `Count` output | [`D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPE_COUNT`](#d3d12_feature_data_protected_resource_session_type_count) |
+> | `PROTECTED_RESOURCE_SESSION_TYPES` | 34 | `NodeIndex`, `Count`, `pTypes` input; pointed-to GUID array output; count matches TYPE_COUNT result | [`D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPES`](#d3d12_feature_data_protected_resource_session_types) |
+> | `D3D12_OPTIONS8` | 36 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS8`](formats.md#bc-dimensions) |
+> | `D3D12_OPTIONS9` | 37 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS9`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options9) |
+> | `D3D12_OPTIONS10` | 39 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS10`](pixel-shaders.md#d3d12_feature_data_d3d12_options10) |
+> | `D3D12_OPTIONS11` | 40 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS11`](#d3d12_feature_data_d3d12_options11) |
+> | `D3D12_OPTIONS12` | 41 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS12`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options12) |
+> | `D3D12_OPTIONS13` | 42 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS13`](#d3d12_feature_data_d3d12_options13) |
+> | `D3D12_OPTIONS14` | 43 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS14`](#d3d12_feature_data_d3d12_options14) |
+> | `D3D12_OPTIONS15` | 44 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS15`](#d3d12_feature_data_d3d12_options15) |
+> | `D3D12_OPTIONS16` | 45 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS16`](#d3d12_feature_data_d3d12_options16) |
+> | `D3D12_OPTIONS17` | 46 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS17`](#d3d12_feature_data_d3d12_options17) |
+> | `D3D12_OPTIONS18` | 47 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS18`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options18) |
+> | `D3D12_OPTIONS19` | 48 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS19`](#d3d12_feature_data_d3d12_options19) |
+> | `D3D12_OPTIONS20` | 49 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS20`](#d3d12_feature_data_d3d12_options20) |
+> | `PREDICATION` | 50 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_PREDICATION`](#d3d12_feature_data_predication) |
+> | `PLACED_RESOURCE_SUPPORT_INFO` | 51 | `Format`, `Dimension`, `DestHeapProperties` input; `Supported` output | [`D3D12_FEATURE_DATA_PLACED_RESOURCE_SUPPORT_INFO`](#d3d12_feature_data_placed_resource_support_info) |
+> | `HARDWARE_COPY` | 52 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_HARDWARE_COPY`](#d3d12_feature_data_hardware_copy) |
+> | `D3D12_OPTIONS21` | 53 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS21`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options21) |
+> | `D3D12_TIGHT_ALIGNMENT` | 54 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_TIGHT_ALIGNMENT`](resources.md#tight-alignment) |
+> | `APPLICATION_SPECIFIC_DRIVER_STATE` | 56 | No inputs; `Supported` output | [`D3D12_FEATURE_DATA_APPLICATION_SPECIFIC_DRIVER_STATE`](#d3d12_feature_data_application_specific_driver_state) |
+> | `BYTECODE_BYPASS_HASH_SUPPORTED` | 57 | No inputs; `Supported` output | [`D3D12_FEATURE_DATA_BYTECODE_BYPASS_HASH_SUPPORTED`](#d3d12_feature_data_bytecode_bypass_hash_supported) |
+> | `HARDWARE_SCHEDULING_QUEUE_GROUPINGS` | 60 | No inputs; `ComputeQueuesPer3DQueue` output | [`D3D12_FEATURE_DATA_HARDWARE_SCHEDULING_QUEUE_GROUPINGS`](execution.md#hardware-scheduling-queue-groupings) |
+> | `SHADER_CACHE_ABI_SUPPORT` | 61 | No inputs; adapter family array, ABI range and compiler/profile versions output | [`D3D12_FEATURE_DATA_SHADERCACHE_ABI_SUPPORT`](#d3d12_feature_data_shadercache_abi_support) |
+> | `BARRIER_LAYOUT` | 64 | `CommandListType`, `Layout` input; `Supported` output | [`D3D12_FEATURE_DATA_BARRIER_LAYOUT`](#d3d12_feature_data_barrier_layout) |
+> | `D3D12_OPTIONS22` | 65 | No inputs; payload fields output | [`D3D12_FEATURE_DATA_D3D12_OPTIONS22`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options22) |
 
 <!-- d3d12-review-alert:end:devices-capabilities:catalog-table:0:authored:migration-1c3c908fa88edf99-0 -->
 

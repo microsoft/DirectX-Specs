@@ -2,19 +2,6 @@
 
 # Raytracing shader pipelines, shader tables and execution reordering
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:raytracing-pipelines:N-scope:0:authored:migration-f70fa66338edf5d5-0 -->Raytracing pipelines execute shaders selected through application-populated shader tables. The driver manages their scheduling and stack storage. Shader execution reordering lets the application control coherence and separate traversal from final shading.<!-- d3d12-review-inline:end:raytracing-pipelines:N-scope:0:authored:migration-f70fa66338edf5d5-0 --></ins>
 
 <a id="initiating-raytracing"></a>

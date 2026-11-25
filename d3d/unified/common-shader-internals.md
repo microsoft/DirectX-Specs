@@ -301,7 +301,7 @@ In the baseline scalarized representation, i8 is supported only in a few intrins
 
 HLSL min12int, min16int and min16uint data types are mapped to i16.
 
-<ins><!-- d3d12-review-inline:begin:common-shader-internals:minimum-precision:0:authored:primitive-types -->The precision semantics of `half` and `i16` depend on the [DXIL minimum-precision mode](#dxil-minimum-precision).<!-- d3d12-review-inline:end:common-shader-internals:minimum-precision:0:authored:primitive-types --></ins>
+The precision semantics of `half` and `i16` depend on the [DXIL minimum-precision mode](#dxil-minimum-precision).
 
 Native 16-bit operations have [shader model, compiler mode and device support requirements](numeric-and-data-rules.md#native16). Double-precision operations require [double support](numeric-and-data-rules.md#numeric-3-1-4). Integer 64-bit operations require [`Int64ShaderOps`](devices-and-capabilities.md#d3d12_feature_data_d3d12_options1). Shader Model 6.9 requires 64-bit integer shader operations.
 

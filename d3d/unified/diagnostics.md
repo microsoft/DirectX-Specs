@@ -1,18 +1,5 @@
 # Diagnostics
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <a id="device-removal"></a>
 
 ## Device removal status
@@ -97,17 +84,17 @@ Gets a debug interface.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D3D12GetDebugInterface-Parameters:1:modified:source-c26c186c05607d46-0-0 -->`riid` (input)<!-- d3d12-review-inline:end:diagnostics:D3D12GetDebugInterface-Parameters:1:modified:source-c26c186c05607d46-0-0 --></ins>
+`riid`
 
 Type: **REFIID**
 
-The globally unique identifier (**GUID**) for the debug interface. The **REFIID**, or **GUID**, of the debug interface can be obtained by using the \_\_uuidof() macro. For example, \_\_uuidof([ID3D12Debug](#debug-configuration)) will get the **GUID** of the debug interface.
+(input) The globally unique identifier (**GUID**) for the debug interface. The **REFIID**, or **GUID**, of the debug interface can be obtained by using the \_\_uuidof() macro. For example, \_\_uuidof([ID3D12Debug](#debug-configuration)) will get the **GUID** of the debug interface.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D3D12GetDebugInterface-Parameters:4:modified:source-89a317a849aa9943-0-0 -->`ppvDebug` (optional output)<!-- d3d12-review-inline:end:diagnostics:D3D12GetDebugInterface-Parameters:4:modified:source-89a317a849aa9943-0-0 --></ins>
+`ppvDebug`
 
 Type: **void\*\***
 
-The debug interface, as a pointer to pointer to void. See [ID3D12Debug](#debug-configuration) and [ID3D12DebugDevice](#object-scoped-validation).
+(optional output) The debug interface, as a pointer to pointer to void. See [ID3D12Debug](#debug-configuration) and [ID3D12DebugDevice](#object-scoped-validation).
 
 #### Return values
 
@@ -431,7 +418,7 @@ void SetEnableAutoName(BOOL Enable);
 
 | Parameter   | Description                                         |
 |-------------|-----------------------------------------------------|
-| BOOL Enable | Set to TRUE to enable auto-naming, FALSE to disable |
+| `Enable` | Set to TRUE to enable auto-naming, FALSE to disable |
 
 #### Return values
 
@@ -547,11 +534,11 @@ Associates a name with the device object. This name is for use in debug diagnost
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12Object-SetName-Parameters:1:modified:source-fb7229c887354760-0-0 -->`Name` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12Object-SetName-Parameters:1:modified:source-fb7229c887354760-0-0 --></ins>
+`Name`
 
 Type: **LPCWSTR**
 
-A **NULL**-terminated **UNICODE** string that contains the name to associate with the device object.
+(input) A **NULL**-terminated **UNICODE** string that contains the name to associate with the device object.
 
 #### Return values
 
@@ -946,7 +933,7 @@ DRED extends the debugging toolset by <ins><!-- d3d12-review-inline:begin:diagno
 
 <!-- d3d12-review-context:end:diagnostics:dred-auto-breadcrumbs:6 -->
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:dred-auto-breadcrumbs:7 -->**Performance**
+#### <ins><!-- d3d12-review-inline:begin:diagnostics:dred-auto-breadcrumbs:7 -->Performance
 Although Auto-Breadcrumbs are designed to be low-overhead, they are far from free.<!-- d3d12-review-inline:end:diagnostics:dred-auto-breadcrumbs:7 --></ins>
 
 <!-- d3d12-review-context:begin:diagnostics:dred-auto-breadcrumbs:8:modified:migration-5cb599c2e0016e9c-0 -->
@@ -958,7 +945,7 @@ Although Auto-Breadcrumbs are designed to be low-overhead, they are far from fre
 
 <!-- d3d12-review-context:end:diagnostics:dred-auto-breadcrumbs:8:modified:migration-5cb599c2e0016e9c-0 -->
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:dred-auto-breadcrumbs:9 -->**Hardware Requirements**
+#### <ins><!-- d3d12-review-inline:begin:diagnostics:dred-auto-breadcrumbs:9 -->Hardware Requirements
 Because the breadcrumb counter values must be preserved after device removal, the resource containing breadcrumbs must exist in system memory and must persist in the event of device removal.  This means the driver must support D3D12_FEATURE_EXISTING_HEAPS.<!-- d3d12-review-inline:end:diagnostics:dred-auto-breadcrumbs:9 --></ins>
 
 <!-- d3d12-review-context:begin:diagnostics:dred-auto-breadcrumbs:10:modified:migration-47d4018105f27067-0 -->
@@ -975,7 +962,7 @@ Because the breadcrumb counter values must be preserved after device removal, th
 > [!WARNING]
 > **Mixed source and authored adaptation - human review pending.**
 >
-> **Caveats**
+> #### Caveats
 > * Because GPUs are heavily pipelined, there is no guarantee that the breadcrumb counter will indicate the exact operation that failed.  In fact on some tile-based deferred render devices, it is possible for the breadcrumb counter to be a full resource or uav barrier behind the actual GPU progress.
 > * Drivers can reorder commands, pre-fetch from resource memory well before executing a command, or flush cached memory well-after completion of a command.  Any of these can produce GPU errors.  In such cases the autobreadcrumb counters may be less helpful or misleading.
 
@@ -992,13 +979,13 @@ DRED attempts to address some of these scenarios by reporting the names and type
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:dred-pagefault:3 -->Premature release of objects in-flight is one of the top causes for unexpected device removals.  DRED retains a bounded history of recently freed objects. The historical source's 65,000-object figure is not established as a universal retention limit.  DRED reports when any of these objects correlate to the faulting VA.<!-- d3d12-review-inline:end:diagnostics:dred-pagefault:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:dred-pagefault:4 -->**Performance**
+#### <ins><!-- d3d12-review-inline:begin:diagnostics:dred-pagefault:4 -->Performance
 The D3D12 runtime must actively curate a collection of existing and recently-deleted API objects indexable by VA.  This increases the system memory overhead and introduces a small performance hit to object creation and destruction.<!-- d3d12-review-inline:end:diagnostics:dred-pagefault:4 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:dred-pagefault:5 -->**Hardware Requirements**
+#### <ins><!-- d3d12-review-inline:begin:diagnostics:dred-pagefault:5 -->Hardware Requirements
 Many, but not all, GPUs currently support GPU page faults.  Hardware that doesn't support page faulting can still benefit from Auto-Breadcrumbs.<!-- d3d12-review-inline:end:diagnostics:dred-pagefault:5 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:dred-pagefault:6 -->**Caveat**
+#### <ins><!-- d3d12-review-inline:begin:diagnostics:dred-pagefault:6 -->Caveat
 Not all GPUs support page faults.  Some GPUs respond to memory faults by bit-bucket writes, reading simulated data (e.g. zeros), or simply hanging. Unfortunately, in cases where the GPU doesn't immediately hang, TDRs can happen later in the pipe, making it even harder to locate the root cause.<!-- d3d12-review-inline:end:diagnostics:dred-pagefault:6 --></ins>
 
 ### Breadcrumb context strings
@@ -1006,23 +993,23 @@ During command list recording, operations that support breadcrumb context data a
 
 The following is an example of DRED auto-breadcrumb data with context strings:
 
-**Breadcrumbs**
+#### Breadcrumbs
 | Index | Op                                          |
 |-------|---------------------------------------------|
-| 00    | D3D12_AUTO_BREADCRUMB_OP_SETMARKER          |
-| 01    | D3D12_AUTO_BREADCRUMB_OP_COPYRESOURCE       |
-| 02    | D3D12_AUTO_BREADCRUMB_OP_COPYRESOURCE       |
-| 03    | D3D12_AUTO_BREADCRUMB_OP_RESOURCEBARRIER    |
-| 04    | D3D12_AUTO_BREADCRUMB_OP_SETMARKER          |
-| 05    | D3D12_AUTO_BREADCRUMB_OP_DRAWINSTANCED      |
-| 06    | D3D12_AUTO_BREADCRUMB_OP_RESOURCEBARRIER    |
-| 07    | D3D12_AUTO_BREADCRUMB_OP_SETMARKER          |
-| 08    | D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCE |
-| 09    | D3D12_AUTO_BREADCRUMB_OP_RESOURCEBARRIER    |
-| 10    | D3D12_AUTO_BREADCRUMB_OP_SETMARKER          |
-| 11    | D3D12_AUTO_BREADCRUMB_OP_COPYRESOURCE       |
+| 00    | `D3D12_AUTO_BREADCRUMB_OP_SETMARKER`          |
+| 01    | `D3D12_AUTO_BREADCRUMB_OP_COPYRESOURCE`       |
+| 02    | `D3D12_AUTO_BREADCRUMB_OP_COPYRESOURCE`       |
+| 03    | `D3D12_AUTO_BREADCRUMB_OP_RESOURCEBARRIER`    |
+| 04    | `D3D12_AUTO_BREADCRUMB_OP_SETMARKER`          |
+| 05    | `D3D12_AUTO_BREADCRUMB_OP_DRAWINSTANCED`      |
+| 06    | `D3D12_AUTO_BREADCRUMB_OP_RESOURCEBARRIER`    |
+| 07    | `D3D12_AUTO_BREADCRUMB_OP_SETMARKER`          |
+| 08    | `D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCE` |
+| 09    | `D3D12_AUTO_BREADCRUMB_OP_RESOURCEBARRIER`    |
+| 10    | `D3D12_AUTO_BREADCRUMB_OP_SETMARKER`          |
+| 11    | `D3D12_AUTO_BREADCRUMB_OP_COPYRESOURCE`       |
 
-**Breadcrumb Contexts**
+#### Breadcrumb Contexts
 | Op Index | Context String                           |
 |----------|------------------------------------------|
 | 00       | "Copying TexA and TexB to TexC and TexD" |
@@ -1365,10 +1352,10 @@ enum D3D12_DRED_VERSION
 >
 > | Constants              | Meaning          |
 > |------------------------|:-----------------|
-> | D3D12_DRED_VERSION_1_0 | Dred version 1.0 |
-> | D3D12_DRED_VERSION_1_1 | Dred version 1.1 |
-> | D3D12_DRED_VERSION_1_2 | Dred version 1.2 |
-> | D3D12_DRED_VERSION_1_3 | Dred version 1.3 |
+> | `D3D12_DRED_VERSION_1_0` | Dred version 1.0 |
+> | `D3D12_DRED_VERSION_1_1` | Dred version 1.1 |
+> | `D3D12_DRED_VERSION_1_2` | Dred version 1.2 |
+> | `D3D12_DRED_VERSION_1_3` | Dred version 1.3 |
 
 <!-- d3d12-review-alert:end:diagnostics:dred-primary-types:3:modified:migration-3d57626eccf2dd4e-0 -->
 
@@ -1489,9 +1476,9 @@ typedef enum D3D12_DRED_ENABLEMENT
 >
 > | Constants                               | Description                                                                                                                                     |
 > |-----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-> | D3D12_DRED_ENABLEMENT_SYSTEM_CONTROLLED | The DRED feature is enabled only when DRED is turned on by the system automatically (e.g. when a user is reproducing a problem via FeedbackHub) |
-> | D3D12_DRED_ENABLEMENT_FORCED_ON                | Forces a DRED feature on, regardless of system state.                                                                                           |
-> | D3D12_DRED_ENABLEMENT_FORCED_OFF | Disables a DRED feature, regardless of system state.                                                                                            |
+> | `D3D12_DRED_ENABLEMENT_SYSTEM_CONTROLLED` | The DRED feature is enabled only when DRED is turned on by the system automatically (e.g. when a user is reproducing a problem via FeedbackHub) |
+> | `D3D12_DRED_ENABLEMENT_FORCED_ON`                | Forces a DRED feature on, regardless of system state.                                                                                           |
+> | `D3D12_DRED_ENABLEMENT_FORCED_OFF` | Disables a DRED feature, regardless of system state.                                                                                            |
 
 <!-- d3d12-review-alert:end:diagnostics:dred-primary-types:13:modified:migration-cbb866c9a78b82f8-0 -->
 
@@ -1521,16 +1508,16 @@ typedef struct D3D12_AUTO_BREADCRUMB_NODE
 >
 > | Members                 | Description                                                              |
 > |-------------------------|--------------------------------------------------------------------------|
-> | pCommandListDebugNameA  | Pointer to the ANSI debug name of the command list (if any)              |
-> | pCommandListDebugNameW  | Pointer to the wide debug name of the command list (if any)              |
-> | pCommandQueueDebugNameA | Pointer to the ANSI debug name of the command queue (if any)             |
-> | pCommandQueueDebugNameW | Pointer to the wide debug name of the command queue (if any)             |
-> | pCommandList            | Address of the command list at the time of execution                     |
-> | pCommandQueue           | Address of the command queue                                             |
-> | BreadcrumbCount         | Number of retained operation entries in pCommandHistory, in chronological order           |
-> | pLastBreadcrumbValue    | Pointer to the completed-operation count rebased to the retained window; zero means none represented in that window                 |
-> | pCommandHistory         | Pointer to BreadcrumbCount retained operations, ordered oldest to newest             |
-> | pNext                   | Pointer to the next node in the list or nullptr if this is the last node |
+> | `pCommandListDebugNameA`  | Pointer to the ANSI debug name of the command list (if any)              |
+> | `pCommandListDebugNameW`  | Pointer to the wide debug name of the command list (if any)              |
+> | `pCommandQueueDebugNameA` | Pointer to the ANSI debug name of the command queue (if any)             |
+> | `pCommandQueueDebugNameW` | Pointer to the wide debug name of the command queue (if any)             |
+> | `pCommandList`            | Address of the command list at the time of execution                     |
+> | `pCommandQueue`           | Address of the command queue                                             |
+> | `BreadcrumbCount`         | Number of retained operation entries in pCommandHistory, in chronological order           |
+> | `pLastBreadcrumbValue`    | Pointer to the completed-operation count rebased to the retained window; zero means none represented in that window                 |
+> | `pCommandHistory`         | Pointer to BreadcrumbCount retained operations, ordered oldest to newest             |
+> | `pNext`                   | Pointer to the next node in the list or nullptr if this is the last node |
 
 <!-- d3d12-review-alert:end:diagnostics:dred-primary-types:17:modified:migration-632a7774488554e7-0 -->
 
@@ -1552,8 +1539,8 @@ typedef struct D3D12_DRED_BREADCRUMB_CONTEXT
 >
 > | Members         | Description                                                           |
 > |-----------------|-----------------------------------------------------------------------|
-> | BreadcrumbIndex | Zero-based index of the associated operation in retained pCommandHistory |
-> | pContextString  | Points to the breadcrumb context string                               |
+> | `BreadcrumbIndex` | Zero-based index of the associated operation in retained pCommandHistory |
+> | `pContextString`  | Points to the breadcrumb context string                               |
 
 <!-- d3d12-review-alert:end:diagnostics:dred-primary-types:21:modified:migration-0cc84f28829ddf32-0 -->
 
@@ -1585,18 +1572,18 @@ typedef struct D3D12_AUTO_BREADCRUMB_NODE1
 >
 > | Members                 | Description                                                                 |
 > |-------------------------|-----------------------------------------------------------------------------|
-> | pCommandListDebugNameA  | Pointer to the ANSI debug name of the command list (if any)                 |
-> | pCommandListDebugNameW  | Pointer to the wide debug name of the command list (if any)                 |
-> | pCommandQueueDebugNameA | Pointer to the ANSI debug name of the command queue (if any)                |
-> | pCommandQueueDebugNameW | Pointer to the wide debug name of the command queue (if any)                |
-> | pCommandList            | Address of the command list at the time of execution                        |
-> | pCommandQueue           | Address of the command queue                                                |
-> | BreadcrumbCount         | Number of retained operation entries in pCommandHistory, in chronological order              |
-> | pLastBreadcrumbValue    | Pointer to the completed-operation count rebased to the retained window; zero means none represented in that window                    |
-> | pCommandHistory         | Pointer to BreadcrumbCount retained operations, ordered oldest to newest                |
-> | pNext                   | Pointer to the next node in the list or nullptr if this is the last node    |
-> | BreadcrumbContextsCount | Number of surviving context elements after dropped-operation contexts are removed |
-> | pBreadcrumbContexts     | Pointer to BreadcrumbContextsCount surviving contexts with retained-window indices                         |
+> | `pCommandListDebugNameA`  | Pointer to the ANSI debug name of the command list (if any)                 |
+> | `pCommandListDebugNameW`  | Pointer to the wide debug name of the command list (if any)                 |
+> | `pCommandQueueDebugNameA` | Pointer to the ANSI debug name of the command queue (if any)                |
+> | `pCommandQueueDebugNameW` | Pointer to the wide debug name of the command queue (if any)                |
+> | `pCommandList`            | Address of the command list at the time of execution                        |
+> | `pCommandQueue`           | Address of the command queue                                                |
+> | `BreadcrumbCount`         | Number of retained operation entries in pCommandHistory, in chronological order              |
+> | `pLastBreadcrumbValue`    | Pointer to the completed-operation count rebased to the retained window; zero means none represented in that window                    |
+> | `pCommandHistory`         | Pointer to BreadcrumbCount retained operations, ordered oldest to newest                |
+> | `pNext`                   | Pointer to the next node in the list or nullptr if this is the last node    |
+> | `BreadcrumbContextsCount` | Number of surviving context elements after dropped-operation contexts are removed |
+> | `pBreadcrumbContexts`     | Pointer to BreadcrumbContextsCount surviving contexts with retained-window indices                         |
 
 <!-- d3d12-review-alert:end:diagnostics:dred-primary-types:25:modified:migration-65a35502e68ff61e-0 -->
 
@@ -1622,10 +1609,10 @@ struct D3D12_DRED_ALLOCATION_NODE
 >
 > | Members        | Description                                                                          |
 > |----------------|--------------------------------------------------------------------------------------|
-> | ObjectNameA    | ANSI name of the API object or nullptr if no ANSI name exists.                       |
-> | ObjectNameW    | UTF-16 name of the API object or nullptr if no UTF-16 name exists.                   |
-> | AllocationType | Type of allocation                                                                   |
-> | pNext          | Pointer to next allocation node in linked list, or nullptr if this is the last node. |
+> | `ObjectNameA`    | ANSI name of the API object or nullptr if no ANSI name exists.                       |
+> | `ObjectNameW`    | UTF-16 name of the API object or nullptr if no UTF-16 name exists.                   |
+> | `AllocationType` | Type of allocation                                                                   |
+> | `pNext`          | Pointer to next allocation node in linked list, or nullptr if this is the last node. |
 
 <!-- d3d12-review-alert:end:diagnostics:dred-primary-types:30:modified:migration-ab47c0c81e8e2c44-0 -->
 
@@ -1652,11 +1639,11 @@ struct D3D12_DRED_ALLOCATION_NODE1
 >
 > | Members        | Description                                                                          |
 > |----------------|--------------------------------------------------------------------------------------|
-> | ObjectNameA    | ANSI name of the API object or nullptr if no ANSI name exists.                       |
-> | ObjectNameW    | UTF-16 name of the API object or nullptr if no UTF-16 name exists.                   |
-> | AllocationType | Type of allocation                                                                   |
-> | pNext          | Pointer to next allocation node in linked list, or nullptr if this is the last node. |
-> | pObject        | Address of the IUnknown object associated with the allocation.                       |
+> | `ObjectNameA`    | ANSI name of the API object or nullptr if no ANSI name exists.                       |
+> | `ObjectNameW`    | UTF-16 name of the API object or nullptr if no UTF-16 name exists.                   |
+> | `AllocationType` | Type of allocation                                                                   |
+> | `pNext`          | Pointer to next allocation node in linked list, or nullptr if this is the last node. |
+> | `pObject`        | Address of the IUnknown object associated with the allocation.                       |
 
 <!-- d3d12-review-alert:end:diagnostics:dred-primary-types:35:modified:migration-d71e6e29ee8c065e-0 -->
 
@@ -1673,7 +1660,7 @@ struct D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT
 
 | Members                 | Description                                                                |
 |-------------------------|----------------------------------------------------------------------------|
-| pHeadAutoBreadcrumbNode | Pointer to the head of a linked list of D3D12_AUTO_BREADCRUMB_NODE objects |
+| `pHeadAutoBreadcrumbNode` | Pointer to the head of a linked list of D3D12_AUTO_BREADCRUMB_NODE objects |
 
 #### D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 (DRED version 1.2)
 Contains pointer to the head of a linked list of D3D12_AUTO_BREADCRUMB_NODE1 structures.  The last member node in the list has a null pNext member.  The value of pHeadAutoBreadcrumbNode will be null if there are no auto-breadcrumbs.
@@ -1687,7 +1674,7 @@ typedef struct D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1
 
 | Members                 | Description                                                                         |
 |-------------------------|-------------------------------------------------------------------------------------|
-| pHeadAutoBreadcrumbNode | Pointer to the head of a linked list of D3D12_AUTO_BREADCRUMB_NODE1 objects or NULL |
+| `pHeadAutoBreadcrumbNode` | Pointer to the head of a linked list of D3D12_AUTO_BREADCRUMB_NODE1 objects or NULL |
 
 #### D3D12_DRED_PAGE_FAULT_OUTPUT (DRED version 1.1)
 Provides the VA of a GPU page fault and contains a list of matching allocation nodes for active objects and a list of allocation nodes for recently deleted objects.
@@ -1703,9 +1690,9 @@ struct D3D12_DRED_PAGE_FAULT_OUTPUT
 
 | Members                        | Description                                                                                                   |
 |--------------------------------|--------------------------------------------------------------------------------------------------------------|
-| PageFaultVA                    | GPU Virtual Address of GPU page fault                                                                        |
-| pHeadExistingAllocationNode    | Pointer to head allocation node for existing runtime objects with VA ranges that match the faulting VA       |
-| pHeadRecentFreedAllocationNode | Pointer to head allocation node for recently freed runtime objects with VA ranges that match the faulting VA |
+| `PageFaultVA`                    | GPU Virtual Address of GPU page fault                                                                        |
+| `pHeadExistingAllocationNode`    | Pointer to head allocation node for existing runtime objects with VA ranges that match the faulting VA       |
+| `pHeadRecentFreedAllocationNode` | Pointer to head allocation node for recently freed runtime objects with VA ranges that match the faulting VA |
 
 #### D3D12_DRED_PAGE_FAULT_OUTPUT1 (DRED version 1.2)
 Provides the VA of a GPU page fault and contains a list of matching allocation nodes for active objects and a list of allocation nodes for recently deleted objects.
@@ -1721,9 +1708,9 @@ struct D3D12_DRED_PAGE_FAULT_OUTPUT1
 
 | Members                        | Description                                                                                                   |
 |--------------------------------|--------------------------------------------------------------------------------------------------------------|
-| PageFaultVA                    | GPU Virtual Address of GPU page fault                                                                        |
-| pHeadExistingAllocationNode    | Pointer to head allocation node for existing runtime objects with VA ranges that match the faulting VA       |
-| pHeadRecentFreedAllocationNode | Pointer to head allocation node for recently freed runtime objects with VA ranges that match the faulting VA |
+| `PageFaultVA`                    | GPU Virtual Address of GPU page fault                                                                        |
+| `pHeadExistingAllocationNode`    | Pointer to head allocation node for existing runtime objects with VA ranges that match the faulting VA       |
+| `pHeadRecentFreedAllocationNode` | Pointer to head allocation node for recently freed runtime objects with VA ranges that match the faulting VA |
 
 #### D3D12_DEVICE_REMOVED_EXTENDED_DATA1 (DRED version 1.1)
 DRED V1.1 data structure.
@@ -1739,9 +1726,9 @@ struct D3D12_DEVICE_REMOVED_EXTENDED_DATA1
 
 | Members               | Description                                                                   |
 |-----------------------|-------------------------------------------------------------------------------|
-| DeviceRemovedReason   | The device removed reason matching the return value of GetDeviceRemovedReason |
-| AutoBreadcrumbsOutput | Contained D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT member                           |
-| PageFaultOutput       | Contained D3D12_DRED_PAGE_FAULT_OUTPUT member                                 |
+| `DeviceRemovedReason`   | The device removed reason matching the return value of GetDeviceRemovedReason |
+| `AutoBreadcrumbsOutput` | Contained D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT member                           |
+| `PageFaultOutput`       | Contained D3D12_DRED_PAGE_FAULT_OUTPUT member                                 |
 
 #### D3D12_DEVICE_REMOVED_EXTENDED_DATA2 (DRED version 1.2)
 DRED V1.2 data structure.
@@ -1757,9 +1744,9 @@ typedef struct D3D12_DEVICE_REMOVED_EXTENDED_DATA2
 
 | Members               | Description                                                                   |
 |-----------------------|-------------------------------------------------------------------------------|
-| DeviceRemovedReason   | The device removed reason matching the return value of GetDeviceRemovedReason |
-| AutoBreadcrumbsOutput | D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 data                                       |
-| PageFaultOutput       | D3D12_DRED_PAGE_FAULT_OUTPUT1 data                                             |
+| `DeviceRemovedReason`   | The device removed reason matching the return value of GetDeviceRemovedReason |
+| `AutoBreadcrumbsOutput` | D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 data                                       |
+| `PageFaultOutput`       | D3D12_DRED_PAGE_FAULT_OUTPUT1 data                                             |
 
 #### D3D12_DRED_FLAGS
 
@@ -1873,10 +1860,10 @@ struct D3D12_VERSIONED_DEVICE_REMOVED_EXTENDED_DATA
 >
 > | Members  | Description                                                                                |
 > |----------|--------------------------------------------------------------------------------------------|
-> | Dred_1_0 | DRED data as of Windows 10 version 1809.  Valid only if Version is D3D12_DRED_VERSION_1_0. |
-> | Dred_1_1 | DRED data as of Windows 10 19H1.  Valid only if Version is D3D12_DRED_VERSION_1_1.         |
-> | Dred_1_2 | DRED version 1.2. Valid only if Version is D3D12_DRED_VERSION_1_2. |
-> | Dred_1_3 | DRED version 1.3. Valid only if Version is D3D12_DRED_VERSION_1_3. |
+> | `Dred_1_0` | DRED data as of Windows 10 version 1809.  Valid only if Version is D3D12_DRED_VERSION_1_0. |
+> | `Dred_1_1` | DRED data as of Windows 10 19H1.  Valid only if Version is D3D12_DRED_VERSION_1_1.         |
+> | `Dred_1_2` | DRED version 1.2. Valid only if Version is D3D12_DRED_VERSION_1_2. |
+> | `Dred_1_3` | DRED version 1.3. Valid only if Version is D3D12_DRED_VERSION_1_3. |
 
 <!-- d3d12-review-alert:end:diagnostics:dred-versioned-type:3:modified:migration-7b6dc8d9c6c5f063-0 -->
 
@@ -1944,17 +1931,17 @@ Adds a user-defined message to the message queue and sends that message to debug
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-AddApplicationMessage-Parameters:1 -->`Severity` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-AddApplicationMessage-Parameters:1 --></ins>
+`Severity`
 
 Type: **[D3D12_MESSAGE_SEVERITY](#d3d12-message-severity)**
 
-Severity of a message.
+(input) Severity of a message.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-AddApplicationMessage-Parameters:4 -->`pDescription` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-AddApplicationMessage-Parameters:4 --></ins>
+`pDescription`
 
 Type: **LPCSTR**
 
-Specifies the message string.
+(input) Specifies the message string.
 
 #### Return values
 
@@ -1978,29 +1965,29 @@ Adds a debug message to the message queue and sends that message to debug output
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-AddMessage-Parameters:1 -->`Category` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-AddMessage-Parameters:1 --></ins>
+`Category`
 
 Type: **[D3D12_MESSAGE_CATEGORY](#d3d12-message-category)**
 
-Category of a message.
+(input) Category of a message.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-AddMessage-Parameters:4 -->`Severity` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-AddMessage-Parameters:4 --></ins>
+`Severity`
 
 Type: **[D3D12_MESSAGE_SEVERITY](#d3d12-message-severity)**
 
-Severity of a message.
+(input) Severity of a message.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-AddMessage-Parameters:7 -->`ID` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-AddMessage-Parameters:7 --></ins>
+`ID`
 
 Type: **[D3D12_MESSAGE_ID](#d3d12-message-id)**
 
-Unique identifier of a message.
+(input) Unique identifier of a message.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-AddMessage-Parameters:10 -->`pDescription` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-AddMessage-Parameters:10 --></ins>
+`pDescription`
 
 Type: **LPCSTR**
 
-User-defined message.
+(input) User-defined message.
 
 #### Return values
 
@@ -2028,11 +2015,11 @@ HRESULT AddRetrievalFilterEntries(D3D12_INFO_QUEUE_FILTER* pFilter);
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-AddRetrievalFilterEntries-Parameters:1 -->`pFilter` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-AddRetrievalFilterEntries-Parameters:1 --></ins>
+`pFilter`
 
 Type: **[D3D12_INFO_QUEUE_FILTER](#d3d12-info-queue-filter)\***
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-AddRetrievalFilterEntries-Parameters:3 -->Pointer to one filter descriptor; its counted member arrays specify the entries to add.<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-AddRetrievalFilterEntries-Parameters:3 --></ins>
+(input) <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-AddRetrievalFilterEntries-Parameters:3 -->Pointer to one filter descriptor; its counted member arrays specify the entries to add.<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-AddRetrievalFilterEntries-Parameters:3 --></ins>
 
 #### Return values
 
@@ -2088,11 +2075,11 @@ HRESULT AddStorageFilterEntries(D3D12_INFO_QUEUE_FILTER* pFilter);
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-AddStorageFilterEntries-Parameters:1 -->`pFilter` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-AddStorageFilterEntries-Parameters:1 --></ins>
+`pFilter`
 
 Type: **[D3D12_INFO_QUEUE_FILTER](#d3d12-info-queue-filter)\***
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-AddStorageFilterEntries-Parameters:3 -->Pointer to one filter descriptor; its counted member arrays specify the entries to add.<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-AddStorageFilterEntries-Parameters:3 --></ins>
+(input) <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-AddStorageFilterEntries-Parameters:3 -->Pointer to one filter descriptor; its counted member arrays specify the entries to add.<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-AddStorageFilterEntries-Parameters:3 --></ins>
 
 #### Return values
 
@@ -2170,11 +2157,11 @@ BOOL GetBreakOnCategory(D3D12_MESSAGE_CATEGORY Category);
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetBreakOnCategory-Parameters:1 -->`Category` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetBreakOnCategory-Parameters:1 --></ins>
+`Category`
 
 Type: **[D3D12_MESSAGE_CATEGORY](#d3d12-message-category)**
 
-Message category to break on.
+(input) Message category to break on.
 
 #### Return values
 
@@ -2198,11 +2185,11 @@ BOOL GetBreakOnID(D3D12_MESSAGE_ID ID);
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetBreakOnID-Parameters:1 -->`ID` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetBreakOnID-Parameters:1 --></ins>
+`ID`
 
 Type: **[D3D12_MESSAGE_ID](#d3d12-message-id)**
 
-Message identifier to break on.
+(input) Message identifier to break on.
 
 #### Return values
 
@@ -2226,11 +2213,11 @@ BOOL GetBreakOnSeverity(D3D12_MESSAGE_SEVERITY Severity);
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetBreakOnSeverity-Parameters:1 -->`Severity` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetBreakOnSeverity-Parameters:1 --></ins>
+`Severity`
 
 Type: **[D3D12_MESSAGE_SEVERITY](#d3d12-message-severity)**
 
-Message severity level to break on.
+(input) Message severity level to break on.
 
 #### Return values
 
@@ -2254,23 +2241,23 @@ Get a message from the message queue.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:1:modified:source-49c340c85c75a115-0-0 -->`MessageIndex` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:1:modified:source-49c340c85c75a115-0-0 --></ins>
+`MessageIndex`
 
 Type: **UINT64**
 
-Index into message queue after an optional retrieval filter has been applied. This can be between 0 <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:authored:source-f1aa2780791d1ab3-0-0 -->(inclusive) <!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:authored:source-f1aa2780791d1ab3-0-0 --></ins>and the number of messages in the message queue that pass through the retrieval filter (<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:authored:source-f1aa2780791d1ab3-0-1 -->exclusive) (<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:authored:source-f1aa2780791d1ab3-0-1 --></ins>which can be obtained with <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:modified:source-f1aa2780791d1ab3-0-2 -->[GetNumStoredMessagesAllowedByRetrievalFilter](#id3d12infoqueue-getnumstoredmessagesallowedbyretrievalfilter)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:modified:source-f1aa2780791d1ab3-0-2 --></ins>). 0 is the <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:modified:source-f1aa2780791d1ab3-0-3 -->first message in the retrieval-filtered sequence<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:modified:source-f1aa2780791d1ab3-0-3 --></ins>.
+(input) Index into message queue after an optional retrieval filter has been applied. This can be between 0 <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:authored:source-f1aa2780791d1ab3-0-0 -->(inclusive) <!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:authored:source-f1aa2780791d1ab3-0-0 --></ins>and the number of messages in the message queue that pass through the retrieval filter (<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:authored:source-f1aa2780791d1ab3-0-1 -->exclusive) (<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:authored:source-f1aa2780791d1ab3-0-1 --></ins>which can be obtained with <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:modified:source-f1aa2780791d1ab3-0-2 -->[GetNumStoredMessagesAllowedByRetrievalFilter](#id3d12infoqueue-getnumstoredmessagesallowedbyretrievalfilter)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:modified:source-f1aa2780791d1ab3-0-2 --></ins>). 0 is the <ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:modified:source-f1aa2780791d1ab3-0-3 -->first message in the retrieval-filtered sequence<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:3:modified:source-f1aa2780791d1ab3-0-3 --></ins>.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:4:modified:source-7934d084ccd386d1-0-0 -->`pMessage` (optional output)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:4:modified:source-7934d084ccd386d1-0-0 --></ins>
+`pMessage`
 
 Type: **[D3D12_MESSAGE](#d3d12-message)\***
 
-Returned message.
+(optional output) Returned message.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:7:modified:source-4e2417d753f106de-0-0 -->`pMessageByteLength` (input/output)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetMessage-Parameters:7:modified:source-4e2417d753f106de-0-0 --></ins>
+`pMessageByteLength`
 
 Type: **SIZE\_T\***
 
-Size of *pMessage* in bytes.
+(input/output) Size of *pMessage* in bytes.
 
 #### Return values
 
@@ -2490,17 +2477,17 @@ Get the retrieval filter at the top of the <ins><!-- d3d12-review-inline:begin:d
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetRetrievalFilter-Parameters:1 -->`pFilter` (optional output)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetRetrievalFilter-Parameters:1 --></ins>
+`pFilter`
 
 Type: **[D3D12_INFO_QUEUE_FILTER](#d3d12-info-queue-filter)\***
 
-Retrieval filter at the top of the <ins><!-- d3d12-review-inline:begin:diagnostics:STYLE-GetRetrievalFilter:1:modified:filter-name -->retrieval filter<!-- d3d12-review-inline:end:diagnostics:STYLE-GetRetrievalFilter:1:modified:filter-name --></ins> stack.
+(optional output) Retrieval filter at the top of the <ins><!-- d3d12-review-inline:begin:diagnostics:STYLE-GetRetrievalFilter:1:modified:filter-name -->retrieval filter<!-- d3d12-review-inline:end:diagnostics:STYLE-GetRetrievalFilter:1:modified:filter-name --></ins> stack.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetRetrievalFilter-Parameters:4 -->`pFilterByteLength` (input/output)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetRetrievalFilter-Parameters:4 --></ins>
+`pFilterByteLength`
 
 Type: **SIZE\_T\***
 
-Size of the retrieval filter in bytes. If *pFilter* is NULL, the size of the retrieval filter will be output to this parameter.
+(input/output) Size of the retrieval filter in bytes. If *pFilter* is NULL, the size of the retrieval filter will be output to this parameter.
 
 #### Return values
 
@@ -2559,17 +2546,17 @@ Get the storage filter at the top of the <ins><!-- d3d12-review-inline:begin:dia
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetStorageFilter-Parameters:1 -->`pFilter` (optional output)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetStorageFilter-Parameters:1 --></ins>
+`pFilter`
 
 Type: **[D3D12_INFO_QUEUE_FILTER](#d3d12-info-queue-filter)\***
 
-Storage filter at the top of the <ins><!-- d3d12-review-inline:begin:diagnostics:STYLE-GetStorageFilter:1:modified:filter-name -->storage filter<!-- d3d12-review-inline:end:diagnostics:STYLE-GetStorageFilter:1:modified:filter-name --></ins> stack.
+(optional output) Storage filter at the top of the <ins><!-- d3d12-review-inline:begin:diagnostics:STYLE-GetStorageFilter:1:modified:filter-name -->storage filter<!-- d3d12-review-inline:end:diagnostics:STYLE-GetStorageFilter:1:modified:filter-name --></ins> stack.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-GetStorageFilter-Parameters:4 -->`pFilterByteLength` (input/output)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-GetStorageFilter-Parameters:4 --></ins>
+`pFilterByteLength`
 
 Type: **SIZE\_T\***
 
-Size of the storage filter in bytes. If *pFilter* is NULL, the size of the storage filter will be output to this parameter.
+(input/output) Size of the storage filter in bytes. If *pFilter* is NULL, the size of the storage filter will be output to this parameter.
 
 #### Return values
 
@@ -2752,11 +2739,11 @@ Push a retrieval filter onto the <ins><!-- d3d12-review-inline:begin:diagnostics
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-PushRetrievalFilter-Parameters:1 -->`pFilter` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-PushRetrievalFilter-Parameters:1 --></ins>
+`pFilter`
 
 Type: **[D3D12_INFO_QUEUE_FILTER](#d3d12-info-queue-filter)\***
 
-Pointer to a retrieval filter.
+(input) Pointer to a retrieval filter.
 
 #### Return values
 
@@ -2780,11 +2767,11 @@ Push a storage filter onto the <ins><!-- d3d12-review-inline:begin:diagnostics:S
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-PushStorageFilter-Parameters:1 -->`pFilter` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-PushStorageFilter-Parameters:1 --></ins>
+`pFilter`
 
 Type: **[D3D12_INFO_QUEUE_FILTER](#d3d12-info-queue-filter)\***
 
-Pointer to a storage filter.
+(input) Pointer to a storage filter.
 
 #### Return values
 
@@ -2808,17 +2795,17 @@ Set a message category to break on when a message with that category passes thro
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-SetBreakOnCategory-Parameters:1 -->`Category` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-SetBreakOnCategory-Parameters:1 --></ins>
+`Category`
 
 Type: **[D3D12_MESSAGE_CATEGORY](#d3d12-message-category)**
 
-Message category to break on.
+(input) Message category to break on.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-SetBreakOnCategory-Parameters:4 -->`bEnable` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-SetBreakOnCategory-Parameters:4 --></ins>
+`bEnable`
 
 Type: **BOOL**
 
-Turns this breaking condition on or off (true for on, false for off).
+(input) Turns this breaking condition on or off (true for on, false for off).
 
 #### Return values
 
@@ -2842,17 +2829,17 @@ Set a message identifier to break on when a message with that identifier passes 
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-SetBreakOnID-Parameters:1 -->`ID` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-SetBreakOnID-Parameters:1 --></ins>
+`ID`
 
 Type: **[D3D12_MESSAGE_ID](#d3d12-message-id)**
 
-Message identifier to break on.
+(input) Message identifier to break on.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-SetBreakOnID-Parameters:4 -->`bEnable` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-SetBreakOnID-Parameters:4 --></ins>
+`bEnable`
 
 Type: **BOOL**
 
-Turns this breaking condition on or off (true for on, false for off).
+(input) Turns this breaking condition on or off (true for on, false for off).
 
 #### Return values
 
@@ -2876,17 +2863,17 @@ Set a message severity level to break on when a message with that severity level
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-SetBreakOnSeverity-Parameters:1 -->`Severity` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-SetBreakOnSeverity-Parameters:1 --></ins>
+`Severity`
 
 Type: **[D3D12_MESSAGE_SEVERITY](#d3d12-message-severity)**
 
-A message severity level to break on.
+(input) A message severity level to break on.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-SetBreakOnSeverity-Parameters:4 -->`bEnable` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-SetBreakOnSeverity-Parameters:4 --></ins>
+`bEnable`
 
 Type: **BOOL**
 
-Turns this breaking condition on or off (true for on, false for off).
+(input) Turns this breaking condition on or off (true for on, false for off).
 
 #### Return values
 
@@ -2910,11 +2897,11 @@ Set the maximum number of messages that can be added to the message queue.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-SetMessageCountLimit-Parameters:1:modified:source-7c168b5c3485576a-0-0 -->`MessageCountLimit` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-SetMessageCountLimit-Parameters:1:modified:source-7c168b5c3485576a-0-0 --></ins>
+`MessageCountLimit`
 
 Type: **UINT64**
 
-Maximum number of messages that can be added to the message queue. -1 means no limit.
+(input) Maximum number of messages that can be added to the message queue. -1 means no limit.
 
 When the number of messages in the message queue has reached the maximum limit, new messages coming in will push old messages out.
 
@@ -2940,11 +2927,11 @@ Set a boolean that turns the debug output on or off.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:ID3D12InfoQueue-SetMuteDebugOutput-Parameters:1:modified:source-768e2aa0842dc72d-0-0 -->`bMute` (input)<!-- d3d12-review-inline:end:diagnostics:ID3D12InfoQueue-SetMuteDebugOutput-Parameters:1:modified:source-768e2aa0842dc72d-0-0 --></ins>
+`bMute`
 
 Type: **BOOL**
 
-Disable/Enable the debug output (true to disable or mute the output, false to enable the output).
+(input) Disable/Enable the debug output (true to disable or mute the output, false to enable the output).
 
 #### Return values
 
@@ -3719,11 +3706,11 @@ Type: **[D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type)*
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-GetDebugParameter-Parameters:2 -->Specifies a [D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type) value that indicates which debug parameter data to get.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-GetDebugParameter-Parameters:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-GetDebugParameter-Parameters:3 -->`pData` (output)<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-GetDebugParameter-Parameters:3 --></ins>
+`pData`
 
 Type: **void\***
 
-Points to the memory that will be filled with a copy of the debug parameter data. The interpretation of this data depends on the [D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type) given in the *Type* parameter.
+(output) Points to the memory that will be filled with a copy of the debug parameter data. The interpretation of this data depends on the [D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type) given in the *Type* parameter.
 
 `DataSize`
 
@@ -3791,11 +3778,11 @@ Type: **[D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type)*
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-SetDebugParameter-Parameters:2 -->Specifies a [D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type) value that indicates which debug parameter data to set.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-SetDebugParameter-Parameters:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice1-SetDebugParameter-Parameters:3 -->`pData` (input)<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice1-SetDebugParameter-Parameters:3 --></ins>
+`pData`
 
 Type: **const void\***
 
-Debug parameter data to set.
+(input) Debug parameter data to set.
 
 `DataSize`
 
@@ -3833,11 +3820,11 @@ Type: **[D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type)*
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice2-GetDebugParameter-Parameters:2 -->Specifies a [D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type) value that indicates which debug parameter data to get.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice2-GetDebugParameter-Parameters:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice2-GetDebugParameter-Parameters:3 -->`pData` (output)<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice2-GetDebugParameter-Parameters:3 --></ins>
+`pData`
 
 Type: **void\***
 
-Points to the memory that will be filled with a copy of the debug parameter data. The interpretation of this data depends on the [D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type) given in the *Type* parameter.
+(output) Points to the memory that will be filled with a copy of the debug parameter data. The interpretation of this data depends on the [D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type) given in the *Type* parameter.
 
 `DataSize`
 
@@ -3875,11 +3862,11 @@ Type: **[D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type)*
 
 <ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice2-SetDebugParameter-Parameters:2 -->Specifies a [D3D12_DEBUG_DEVICE_PARAMETER_TYPE](#d3d12-debug-device-parameter-type) value that indicates which debug parameter data to set.<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice2-SetDebugParameter-Parameters:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugDevice2-SetDebugParameter-Parameters:3 -->`pData` (input)<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugDevice2-SetDebugParameter-Parameters:3 --></ins>
+`pData`
 
 Type: **const void\***
 
-Debug parameter data to set.
+(input) Debug parameter data to set.
 
 `DataSize`
 
@@ -3917,11 +3904,11 @@ Type: **[D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-para
 
 Specifies a [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) value that determines which debug parameter data to copy to the memory pointed to by *pData*.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-GetDebugParameter-Parameters:3 -->`pData` (output)<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-GetDebugParameter-Parameters:3 --></ins>
+`pData`
 
 Type: **void\***
 
-Points to the memory that will be filled with a copy of the debug parameter data. The interpretation of this data depends on the [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) given in the *Type* parameter.
+(output) Points to the memory that will be filled with a copy of the debug parameter data. The interpretation of this data depends on the [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) given in the *Type* parameter.
 
 `DataSize`
 
@@ -3959,11 +3946,11 @@ Type: **[D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-para
 
 Specifies a [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) value that indicates which debug parameter data to set.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-SetDebugParameter-Parameters:3 -->`pData` (input)<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-SetDebugParameter-Parameters:3 --></ins>
+`pData`
 
 Type: **const void\***
 
-Pointer to debug parameter data to set. The interpretation of this data depends on the [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) given in the *Type* parameter.
+(input) Pointer to debug parameter data to set. The interpretation of this data depends on the [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) given in the *Type* parameter.
 
 `DataSize`
 
@@ -4009,11 +3996,11 @@ Type: **[D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-para
 
 Specifies a [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) value that determines which debug parameter data to copy to the memory pointed to by *pData*.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList2-GetDebugParameter-Parameters:3 -->`pData` (output)<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList2-GetDebugParameter-Parameters:3 --></ins>
+`pData`
 
 Type: **void\***
 
-Points to the memory that will be filled with a copy of the debug parameter data. The interpretation of this data depends on the [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) given in the *Type* parameter.
+(output) Points to the memory that will be filled with a copy of the debug parameter data. The interpretation of this data depends on the [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) given in the *Type* parameter.
 
 `DataSize`
 
@@ -4051,11 +4038,11 @@ Type: **[D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-para
 
 Specifies a [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) value that indicates which debug parameter data to set.
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList2-SetDebugParameter-Parameters:3 -->`pData` (input)<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList2-SetDebugParameter-Parameters:3 --></ins>
+`pData`
 
 Type: **const void\***
 
-Pointer to debug parameter data to set. The interpretation of this data depends on the [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) given in the *Type* parameter.
+(input) Pointer to debug parameter data to set. The interpretation of this data depends on the [D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE](#d3d12-debug-command-list-parameter-type) given in the *Type* parameter.
 
 `DataSize`
 
@@ -4177,11 +4164,11 @@ Checks whether a resource, or subresource, is in a specified state, or not.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList-AssertResourceState-Parameters:0 -->`pResource` (input)<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList-AssertResourceState-Parameters:0 --></ins>
+`pResource`
 
 Type: **ID3D12Resource\***
 
-Specifies the [ID3D12Resource](resources.md#resource-storage) to check.
+(input) Specifies the [ID3D12Resource](resources.md#resource-storage) to check.
 
 `Subresource`
 
@@ -4221,11 +4208,11 @@ Validates that the given state matches the state of the subresource, assuming th
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandList1-AssertResourceState-Parameters:0 -->`pResource` (input)<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandList1-AssertResourceState-Parameters:0 --></ins>
+`pResource`
 
 Type: **ID3D12Resource\***
 
-Specifies the [ID3D12Resource](resources.md#resource-storage) to check.
+(input) Specifies the [ID3D12Resource](resources.md#resource-storage) to check.
 
 `Subresource`
 
@@ -4317,11 +4304,11 @@ Checks whether a resource, or subresource, is in a specified state, or not.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:diagnostics:D107-ID3D12DebugCommandQueue-AssertResourceState-Parameters:0 -->`pResource` (input)<!-- d3d12-review-inline:end:diagnostics:D107-ID3D12DebugCommandQueue-AssertResourceState-Parameters:0 --></ins>
+`pResource`
 
 Type: **ID3D12Resource\***
 
-Specifies the [ID3D12Resource](resources.md#resource-storage) to check.
+(input) Specifies the [ID3D12Resource](resources.md#resource-storage) to check.
 
 `Subresource`
 

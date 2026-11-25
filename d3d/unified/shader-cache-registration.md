@@ -2,19 +2,6 @@
 
 # Shader cache registration lifecycle and target discovery
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:cache-registration:introduction:0:modified:source-6bfc1760b66f3c5a-0-0 -->The D3D Shader Cache Registration (D3DSCR)<!-- d3d12-review-inline:end:cache-registration:introduction:0:modified:source-6bfc1760b66f3c5a-0-0 --></ins> API is a <ins><!-- d3d12-review-inline:begin:cache-registration:introduction:0:modified:source-6bfc1760b66f3c5a-0-1 -->nano-COM-<!-- d3d12-review-inline:end:cache-registration:introduction:0:modified:source-6bfc1760b66f3c5a-0-1 --></ins>based API for managing the registration of and enumeration of <ins><!-- d3d12-review-inline:begin:cache-registration:introduction:0:modified:source-6bfc1760b66f3c5a-0-2 -->State Object Databases (SODBs) and Pre-Compiled Shader Databases (PSDBs) on the end-user system. This API is intended to be used by game installers such as the Xbox Store, Steam etc. during their game installation and update process<!-- d3d12-review-inline:end:cache-registration:introduction:0:modified:source-6bfc1760b66f3c5a-0-2 --></ins>.
 
 <a id="availability"></a>
@@ -217,17 +204,17 @@ Creates a shader cache installer.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createinstaller-source-parameters:0 -->`[in] pClient`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createinstaller-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createinstaller-source-parameters:0 -->`pClient`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createinstaller-source-parameters:0 --></ins>
 
-A pointer to the client interface.
+[in] A pointer to the client interface.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createinstaller-source-parameters:2 -->`[in] riid`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createinstaller-source-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createinstaller-source-parameters:2 -->`riid`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createinstaller-source-parameters:2 --></ins>
 
-The reference ID of the interface to retrieve.
+[in] The reference ID of the interface to retrieve.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createinstaller-source-parameters:4 -->`[out] ppvInstaller`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createinstaller-source-parameters:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createinstaller-source-parameters:4 -->`ppvInstaller`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createinstaller-source-parameters:4 --></ins>
 
-A pointer to receive the installer interface.
+[out] A pointer to receive the installer interface.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createinstaller-parameter-rules:0:authored:migration-961733fb8d2450ae-0 -->`pClient` and `ppvInstaller` are required. `riid` selects the requested interface, normally `IID_ID3DShaderCacheInstaller`. On success the caller owns the returned interface reference and must release it. The client must remain alive until the installer and any notification teardown have completed. The client has no `AddRef`/`Release` protocol. A caller must not unload a DLL that supplies a still-live client implementation or runtime interface.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createinstaller-parameter-rules:0:authored:migration-961733fb8d2450ae-0 --></ins>
 
@@ -255,17 +242,17 @@ Creates a shader cache explorer.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createexplorer-source-parameters:0 -->`[in, optional] pUnknown`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createexplorer-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createexplorer-source-parameters:0 -->`pUnknown`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createexplorer-source-parameters:0 --></ins>
 
-A pointer to an unknown interface.
+[in, optional] A pointer to an unknown interface.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createexplorer-source-parameters:2 -->`[in] riid`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createexplorer-source-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createexplorer-source-parameters:2 -->`riid`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createexplorer-source-parameters:2 --></ins>
 
-The reference ID of the interface to retrieve.
+[in] The reference ID of the interface to retrieve.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createexplorer-source-parameters:4 -->`[out] ppvExplorer`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createexplorer-source-parameters:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createexplorer-source-parameters:4 -->`ppvExplorer`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createexplorer-source-parameters:4 --></ins>
 
-A pointer to receive the explorer interface.
+[out] A pointer to receive the explorer interface.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerfactory-createexplorer-parameter-rules:0:authored:migration-4f5468ff43454255-0 -->A non-null object must expose one of the supported device/adapter interfaces, including `IDXGIAdapter4` for the DXGI path. `riid` normally requests `IID_ID3DShaderCacheExplorer`. `ppvExplorer` is required and receives a caller-owned reference.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerfactory-createexplorer-parameter-rules:0:authored:migration-4f5468ff43454255-0 --></ins>
 
@@ -299,13 +286,13 @@ Returns the name of the installer application.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-getinstallername-source-parameters:0 -->`[in,out] pNameLength`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-getinstallername-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-getinstallername-source-parameters:0 -->`pNameLength`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-getinstallername-source-parameters:0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-getinstallername-source-parameters:1:modified:migration-72b398ebb22bf97a-0 -->A pointer to a `SIZE_T` variable<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-getinstallername-source-parameters:1:modified:migration-72b398ebb22bf97a-0 --></ins> to contain the length in characters of the name.
+[in,out] <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-getinstallername-source-parameters:1:modified:migration-72b398ebb22bf97a-0 -->A pointer to a `SIZE_T` variable<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-getinstallername-source-parameters:1:modified:migration-72b398ebb22bf97a-0 --></ins> to contain the length in characters of the name.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-getinstallername-source-parameters:2 -->`[out, optional] pName`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-getinstallername-source-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-getinstallername-source-parameters:2 -->`pName`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-getinstallername-source-parameters:2 --></ins>
 
-A pointer to a wide character buffer to receive the name.
+[out, optional] A pointer to a wide character buffer to receive the name.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-getinstallername-parameter-rules:0:authored:migration-c51b4d35e01d89b0-0 -->`pNameLength` is required and is an in/out count of `wchar_t` characters, not bytes. With `pName == nullptr`, return the required character count including the terminating NUL. With a non-null buffer, the input count is its character capacity and must be at least the required count. Write the NUL-terminated name within that capacity. Unlike [`ID3DShaderCacheApplication::GetInstallerName`](#id3dshadercacheapplication-getinstallername), which returns a borrowed pointer, this method fills a buffer supplied by the runtime. The runtime first queries the count, then supplies storage. An implementation must not write beyond an undersized buffer.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-getinstallername-parameter-rules:0:authored:migration-c51b4d35e01d89b0-0 --></ins>
 
@@ -358,9 +345,9 @@ This is a callback function that will be called by the system when a graphics dr
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-source-parameters:0:authored:migration-3ca3c64cb7e9531a-0 -->`[in] pInstaller`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-source-parameters:0:authored:migration-3ca3c64cb7e9531a-0 --></ins>
+`pInstaller`
 
-A pointer to an `ID3DShaderCacheInstaller` object that was listening for the driver update.
+[in] A pointer to an `ID3DShaderCacheInstaller` object that was listening for the driver update.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-parameters:0:authored:migration-22a37b0f4b94a82d-0 -->`pInstaller` identifies the notifying installer. The callback does not transfer an interface reference to the client. The retained client must remain valid during callbacks and teardown. Listener removal and installer destruction wait for notification completion. That waiting does not establish that the client can safely remove the listener or release the installer from within this callback.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstallerclient-handledriverupdate-parameters:0:authored:migration-22a37b0f4b94a82d-0 --></ins>
 
@@ -392,21 +379,21 @@ Registers a shader cache application.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerapplication-source-parameters:0 -->`[in] pExePath`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerapplication-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerapplication-source-parameters:0 -->`pExePath`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerapplication-source-parameters:0 --></ins>
 
-The fully qualified path to the main game executable.  This is used as a key to lookup the application in-process, so consider any hard-links.
+[in] The fully qualified path to the main game executable.  This is used as a key to lookup the application in-process, so consider any hard-links.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerapplication-source-parameters:2 -->`[in] pApplicationDesc`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerapplication-source-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerapplication-source-parameters:2 -->`pApplicationDesc`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerapplication-source-parameters:2 --></ins>
 
-A pointer to a structure containing the application info.
+[in] A pointer to a structure containing the application info.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerapplication-source-parameters:4 -->`[in] riid`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerapplication-source-parameters:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerapplication-source-parameters:4 -->`riid`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerapplication-source-parameters:4 --></ins>
 
-The reference ID of the interface to retrieve.
+[in] The reference ID of the interface to retrieve.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerapplication-source-parameters:6 -->`[out, optional] ppvApp`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerapplication-source-parameters:6 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerapplication-source-parameters:6 -->`ppvApp`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerapplication-source-parameters:6 --></ins>
 
-A pointer to receive the application interface.
+[out, optional] A pointer to receive the application interface.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerapplication-parameter-rules:0:authored:migration-95fbc5cbe58ddf1f-0 -->`pExePath`, `pApplicationDesc`, the description's `pName` and `pExeFilename` are required and the strings must be nonempty and NUL-terminated. `pEngineName` may be null and is represented as an empty engine name on readback. Input strings are copied. The caller need not retain them after the call. `riid` selects the returned application interface. A null `ppvApp` requests registration without returning an object. It is not a no-side-effect validation probe. A non-null output receives a caller-owned reference on success. With a null interface output pointer, `riid` is not negotiated.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerapplication-parameter-rules:0:authored:migration-95fbc5cbe58ddf1f-0 --></ins>
 
@@ -436,9 +423,9 @@ Removes a shader cache application.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-removeapplication-source-parameters:0 -->`[in] pApplication`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-removeapplication-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-removeapplication-source-parameters:0 -->`pApplication`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-removeapplication-source-parameters:0 --></ins>
 
-A pointer to the application to remove.
+[in] A pointer to the application to remove.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-removeapplication-parameter-rules:0:authored:migration-4f47845955be0ee3-0 -->`pApplication` is required and must be a runtime-provided application object identifying a registration belonging to this installer and scope, not a fabricated interface implementation or an unrelated application's object. The call does not consume the caller's COM reference. Holding a read-only application view does not change whether a separately held mutable installer can remove the registration.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-removeapplication-parameter-rules:0:authored:migration-4f47845955be0ee3-0 --></ins>
 
@@ -488,17 +475,17 @@ Retrieves a specific application by index.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getapplication-source-parameters:0 -->`[in] index`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getapplication-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getapplication-source-parameters:0 -->`index`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getapplication-source-parameters:0 --></ins>
 
-The index of the application to retrieve.
+[in] The index of the application to retrieve.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getapplication-source-parameters:2 -->`[in] riid`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getapplication-source-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getapplication-source-parameters:2 -->`riid`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getapplication-source-parameters:2 --></ins>
 
-The reference ID of the interface to retrieve.
+[in] The reference ID of the interface to retrieve.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getapplication-source-parameters:4 -->`[out] ppvApp`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getapplication-source-parameters:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getapplication-source-parameters:4 -->`ppvApp`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getapplication-source-parameters:4 --></ins>
 
-A pointer to receive the application interface.
+[out] A pointer to receive the application interface.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getapplication-parameter-rules:0:authored:migration-c68fad4fb021d29e-0 -->`index` selects an existing entry. `riid` normally requests `IID_ID3DShaderCacheApplication`. The required `ppvApp` receives a caller-owned reference.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getapplication-parameter-rules:0:authored:migration-c68fad4fb021d29e-0 --></ins>
 
@@ -572,21 +559,21 @@ Retrieves the precompile targets.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:0 -->`[in, optional] pApplicationDesc`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:0 -->`pApplicationDesc`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:0 --></ins>
 
-An optional pointer to a structure containing the application info.  <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:1:modified:migration-75f0303e8a3e0cb4-0 -->See [Target discovery](#target-discovery).<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:1:modified:migration-75f0303e8a3e0cb4-0 --></ins>
+[in, optional] An optional pointer to a structure containing the application info.  <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:1:modified:migration-75f0303e8a3e0cb4-0 -->See [Target discovery](#target-discovery).<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:1:modified:migration-75f0303e8a3e0cb4-0 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:2 -->`[in,out] pArraySize`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:2 -->`pArraySize`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:2 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:3 -->The in/out element capacity and available count of the array to receive the targets.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:3 --></ins>
+[in,out] <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:3 -->The in/out element capacity and available count of the array to receive the targets.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:3 --></ins>
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:4 -->`[out, optional] pArray`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:4 -->`pArray`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:4 --></ins>
 
-A pointer to an array to receive the targets.
+[out, optional] A pointer to an array to receive the targets.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:6 -->`[in] flags`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:6 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:6 -->`flags`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-source-parameters:6 --></ins>
 
-Modifiers for target lookup behavior.
+[in] Modifiers for target lookup behavior.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-getprecompiletargets-parameter-rules:0:authored:migration-c5e8cd1a86cb4bf3-0 -->`pApplicationDesc` is optional. When supplied, it must provide valid readable NUL-terminated `pExeFilename` and application-title `pName` strings. `pEngineName` is optional and must be readable and NUL-terminated when non-null. The description and its input strings must remain valid for the call. The method does not retain caller storage. A null descriptor requests profile-independent discovery, rather than supplying fallback values for missing required members of a non-null descriptor. `pArraySize` is required: on input it is the number of array elements available; on successful discovery it receives the available element count, which can exceed input capacity. `pArray` supplies caller-owned `D3D_SHADER_CACHE_COMPILER_PROPERTIES` storage for the input capacity. Returned family strings are inline in those structures and need no separate allocator or release. A zero-capacity query does not write an element. A null array is usable only with zero capacity, not as a positive-capacity probe. Counts are structures, not bytes. The method writes the prefix that fits and zero-initializes excess capacity beyond available records. Use `D3D_SHADER_CACHE_TARGET_FLAG_NONE`. Other flags are invalid.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-getprecompiletargets-parameter-rules:0:authored:migration-c5e8cd1a86cb4bf3-0 --></ins>
 
@@ -672,9 +659,9 @@ This function registers a Windows service trigger that will automatically start 
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerservicedriverupdatetrigger-source-parameters:0 -->`[in] hServiceHandle`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerservicedriverupdatetrigger-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerservicedriverupdatetrigger-source-parameters:0 -->`hServiceHandle`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerservicedriverupdatetrigger-source-parameters:0 --></ins>
 
-The service handle.
+[in] The service handle.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-registerservicedriverupdatetrigger-parameter-rules:0:authored:migration-d3379510b66af6f4-0 -->`hServiceHandle` is a caller-owned, borrowed Windows service handle, not an output handle. It must permit querying and changing service configuration (`SERVICE_QUERY_CONFIG` and `SERVICE_CHANGE_CONFIG`). The caller keeps it valid for this call and closes its own handle using the service API. This method does not transfer ownership or require retaining the handle for the trigger's persistence.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-registerservicedriverupdatetrigger-parameter-rules:0:authored:migration-d3379510b66af6f4-0 --></ins>
 
@@ -700,9 +687,9 @@ Unregisters a service driver update trigger.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-unregisterservicedriverupdatetrigger-source-parameters:0 -->`[in] hServiceHandle`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-unregisterservicedriverupdatetrigger-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-unregisterservicedriverupdatetrigger-source-parameters:0 -->`hServiceHandle`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-unregisterservicedriverupdatetrigger-source-parameters:0 --></ins>
 
-The service handle.
+[in] The service handle.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheinstaller-unregisterservicedriverupdatetrigger-parameter-rules:0:authored:migration-d4174c3dfcb5f703-0 -->`hServiceHandle` is borrowed and requires `SERVICE_QUERY_CONFIG` and `SERVICE_CHANGE_CONFIG`. The caller owns and closes it. No output or service handle ownership transfer occurs.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheinstaller-unregisterservicedriverupdatetrigger-parameter-rules:0:authored:migration-d4174c3dfcb5f703-0 --></ins>
 
@@ -732,9 +719,9 @@ Retrieves the full path to the exe.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getexepath-source-parameters:0 -->`[out] pExePath`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getexepath-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getexepath-source-parameters:0 -->`pExePath`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getexepath-source-parameters:0 --></ins>
 
-An out parameter that receives a pointer to the exe path.  The string's lifetime is controlled by the ID3DShaderCacheApplication and must not be used if the application is released.
+[out] An out parameter that receives a pointer to the exe path.  The string's lifetime is controlled by the ID3DShaderCacheApplication and must not be used if the application is released.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getexepath-parameter-rules:0:authored:migration-74889c20696250f4-0 -->`pExePath` is required. On success it receives a borrowed NUL-terminated wide string pointer owned by the application object.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getexepath-parameter-rules:0:authored:migration-74889c20696250f4-0 --></ins>
 
@@ -760,9 +747,9 @@ Retrieves the application description.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getdesc-source-parameters:0 -->`[out] pApplicationDesc`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getdesc-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getdesc-source-parameters:0 -->`pApplicationDesc`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getdesc-source-parameters:0 --></ins>
 
-A pointer to a structure to receive the application desc.  The desc contains strings whose lifetime is controlled by the ID3DShaderCacheApplication and must not be used if the application is released.
+[out] A pointer to a structure to receive the application desc.  The desc contains strings whose lifetime is controlled by the ID3DShaderCacheApplication and must not be used if the application is released.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getdesc-parameter-rules:0:authored:migration-365bdf0037895e42-0 -->`pApplicationDesc` is required and points to caller-owned structure storage. The returned string pointers are borrowed from the application object and must not be freed or used after it is released. The version values are copied.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getdesc-parameter-rules:0:authored:migration-365bdf0037895e42-0 --></ins>
 
@@ -786,9 +773,9 @@ HRESULT GetInstallerName( const wchar_t** pInstallerName);
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getinstallername-parameters:0:authored:migration-91aa8b2ba5970877-0 -->`[out] pInstallerName`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getinstallername-parameters:0:authored:migration-91aa8b2ba5970877-0 --></ins>
+`pInstallerName`
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getinstallername-parameters:1:authored:migration-cabc7d8bb402fe88-0 -->`pInstallerName` is required. It receives a borrowed NUL-terminated wide string pointer with application object lifetime.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getinstallername-parameters:1:authored:migration-cabc7d8bb402fe88-0 --></ins>
+[out] <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getinstallername-parameters:1:authored:migration-cabc7d8bb402fe88-0 -->`pInstallerName` is required. It receives a borrowed NUL-terminated wide string pointer with application object lifetime.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getinstallername-parameters:1:authored:migration-cabc7d8bb402fe88-0 --></ins>
 
 #### Return values
 
@@ -814,29 +801,29 @@ Registers a component with the application.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:0 -->`[in] pName`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:0 -->`pName`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:0 --></ins>
 
-A pointer to a wide character string containing the name of the component.
+[in] A pointer to a wide character string containing the name of the component.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:2 -->`[in] pStateObjectDBPath`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:2 -->`pStateObjectDBPath`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:2 --></ins>
 
-A pointer to a wide character string containing the path to the state object database.
+[in] A pointer to a wide character string containing the path to the state object database.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:4 -->`[in] NumPSDB`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:4 -->`NumPSDB`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:4 --></ins>
 
-The number of precompiled shader databases.
+[in] The number of precompiled shader databases.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:6 -->`[in, optional] pPSDBs`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:6 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:6 -->`pPSDBs`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:6 --></ins>
 
-A pointer to an array of PSDB properties.
+[in, optional] A pointer to an array of PSDB properties.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:8 -->`[in] riid`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:8 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:8 -->`riid`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:8 --></ins>
 
-The reference ID of the interface to retrieve.
+[in] The reference ID of the interface to retrieve.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:10 -->`[out, optional] ppvComponent`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:10 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:10 -->`ppvComponent`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-registercomponent-source-parameters:10 --></ins>
 
-A pointer to receive the component interface.
+[out, optional] A pointer to receive the component interface.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-registercomponent-parameter-rules:0:authored:migration-56e2b595b549678b-0 -->`pName` is a required nonempty NUL-terminated component name. `pStateObjectDBPath` is a required NUL-terminated SODB path. `NumPSDB` is an element count and `pPSDBs` supplies that many structures with required NUL-terminated family/path strings; zero entries do not dereference the array. Input strings are copied. `riid` normally requests `IID_ID3DShaderCacheComponent`. A null `ppvComponent` requests catalog mutation without returning an object. It is not a no-side-effect probe. A returned interface is caller-owned. With a null interface output pointer, `riid` is not negotiated.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-registercomponent-parameter-rules:0:authored:migration-56e2b595b549678b-0 --></ins>
 
@@ -866,9 +853,9 @@ Removes a component from the application.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-removecomponent-source-parameters:0 -->`[in] pComponent`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-removecomponent-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-removecomponent-source-parameters:0 -->`pComponent`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-removecomponent-source-parameters:0 --></ins>
 
-A pointer to the component to remove.
+[in] A pointer to the component to remove.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-removecomponent-parameter-rules:0:authored:migration-fde0696d21d2e67a-0 -->`pComponent` is required and must identify a component of this application. The call does not consume its COM reference.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-removecomponent-parameter-rules:0:authored:migration-fde0696d21d2e67a-0 --></ins>
 
@@ -918,17 +905,17 @@ Retrieves a specific component by index.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getcomponent-source-parameters:0 -->`[in] index`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getcomponent-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getcomponent-source-parameters:0 -->`index`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getcomponent-source-parameters:0 --></ins>
 
-The index of the component to retrieve.
+[in] The index of the component to retrieve.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getcomponent-source-parameters:2 -->`[in] riid`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getcomponent-source-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getcomponent-source-parameters:2 -->`riid`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getcomponent-source-parameters:2 --></ins>
 
-The reference ID of the interface to retrieve.
+[in] The reference ID of the interface to retrieve.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getcomponent-source-parameters:4 -->`[out] ppvComponent`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getcomponent-source-parameters:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getcomponent-source-parameters:4 -->`ppvComponent`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getcomponent-source-parameters:4 --></ins>
 
-A pointer to receive the component interface.
+[out] A pointer to receive the component interface.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getcomponent-parameter-rules:0:authored:migration-970cdd24562511d1-0 -->`index` identifies an existing component. `riid` normally requests `IID_ID3DShaderCacheComponent`. `ppvComponent` is required and receives a caller-owned interface reference.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getcomponent-parameter-rules:0:authored:migration-970cdd24562511d1-0 --></ins>
 
@@ -954,9 +941,9 @@ Retrieves the number of precompile targets.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getprecompiletargetcount-source-parameters:0 -->`[in] flags`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getprecompiletargetcount-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getprecompiletargetcount-source-parameters:0 -->`flags`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getprecompiletargetcount-source-parameters:0 --></ins>
 
-Modifiers for target lookup behavior.
+[in] Modifiers for target lookup behavior.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getprecompiletargetcount-parameter-rules:0:authored:migration-936c2f47c62b69af-0 -->`flags` must be `D3D_SHADER_CACHE_TARGET_FLAG_NONE`; no other flag value is defined.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getprecompiletargetcount-parameter-rules:0:authored:migration-936c2f47c62b69af-0 --></ins>
 
@@ -982,17 +969,17 @@ Retrieves the precompile targets.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getprecompiletargets-source-parameters:0 -->`[in] ArraySize`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getprecompiletargets-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getprecompiletargets-source-parameters:0 -->`ArraySize`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getprecompiletargets-source-parameters:0 --></ins>
 
-The size of the array to receive the targets.
+[in] The size of the array to receive the targets.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getprecompiletargets-source-parameters:2 -->`[out, optional] pArray`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getprecompiletargets-source-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getprecompiletargets-source-parameters:2 -->`pArray`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getprecompiletargets-source-parameters:2 --></ins>
 
-A pointer to an array to receive the targets.
+[out, optional] A pointer to an array to receive the targets.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getprecompiletargets-source-parameters:4 -->`[in] flags`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getprecompiletargets-source-parameters:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getprecompiletargets-source-parameters:4 -->`flags`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getprecompiletargets-source-parameters:4 --></ins>
 
-Modifiers for target lookup behavior.
+[in] Modifiers for target lookup behavior.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheapplication-getprecompiletargets-parameter-rules:0:authored:migration-3bf1738124029232-0 -->`ArraySize` is the caller array capacity in structures. `pArray` supplies caller-owned writable storage for the copied elements; family strings are inline arrays, not separately allocated borrowed pointers. Zero capacity copies none. Use the application's `GetPrecompileTargetCount` to allocate its complete array. There is no in/out size pointer. `flags` must be `D3D_SHADER_CACHE_TARGET_FLAG_NONE`. A null positive-capacity array is not a legal output probe.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheapplication-getprecompiletargets-parameter-rules:0:authored:migration-3bf1738124029232-0 --></ins>
 
@@ -1020,9 +1007,9 @@ Retrieves the name of the component.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getcomponentname-source-parameters:0 -->`[out] pName`<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getcomponentname-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getcomponentname-source-parameters:0 -->`pName`<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getcomponentname-source-parameters:0 --></ins>
 
-A pointer to receive the component name.
+[out] A pointer to receive the component name.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getcomponentname-parameter-rules:0:authored:migration-30190cc6e924a950-0 -->`pName` is required. On success it receives a borrowed NUL-terminated wide string owned by the component. Keep the component alive. Do not modify or free the string.<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getcomponentname-parameter-rules:0:authored:migration-30190cc6e924a950-0 --></ins>
 
@@ -1048,9 +1035,9 @@ Retrieves the path to the state object database.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getstateobjectdatabasepath-source-parameters:0 -->`[out] pPath`<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getstateobjectdatabasepath-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getstateobjectdatabasepath-source-parameters:0 -->`pPath`<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getstateobjectdatabasepath-source-parameters:0 --></ins>
 
-A pointer to receive the path.
+[out] A pointer to receive the path.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getstateobjectdatabasepath-parameter-rules:0:authored:migration-5ee2347889bc0be9-0 -->`pPath` is required and receives a borrowed NUL-terminated wide string owned by the component.<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getstateobjectdatabasepath-parameter-rules:0:authored:migration-5ee2347889bc0be9-0 --></ins>
 
@@ -1076,13 +1063,13 @@ Retrieves the path to the precompiled cache.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getprecompiledcachepath-source-parameters:0 -->`[in] pAdapterFamily`<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getprecompiledcachepath-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getprecompiledcachepath-source-parameters:0 -->`pAdapterFamily`<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getprecompiledcachepath-source-parameters:0 --></ins>
 
-A pointer to a wide character string containing the adapter family name.
+[in] A pointer to a wide character string containing the adapter family name.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getprecompiledcachepath-source-parameters:2 -->`[out] pPath`<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getprecompiledcachepath-source-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getprecompiledcachepath-source-parameters:2 -->`pPath`<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getprecompiledcachepath-source-parameters:2 --></ins>
 
-A pointer to receive the path.
+[out] A pointer to receive the path.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getprecompiledcachepath-parameter-rules:0:authored:migration-3bfd1e4a41c2e1f2-0 -->`pAdapterFamily` is a required NUL-terminated family identifier. `pPath` is a required pointer output location, not a character buffer. On success it receives a borrowed NUL-terminated string owned by the component.<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getprecompiledcachepath-parameter-rules:0:authored:migration-3bfd1e4a41c2e1f2-0 --></ins>
 
@@ -1134,13 +1121,13 @@ Retrieves the precompiled shader databases.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getprecompiledshaderdatabases-source-parameters:0 -->`[in] ArraySize`<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getprecompiledshaderdatabases-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getprecompiledshaderdatabases-source-parameters:0 -->`ArraySize`<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getprecompiledshaderdatabases-source-parameters:0 --></ins>
 
-The size of the array to receive the databases.
+[in] The size of the array to receive the databases.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getprecompiledshaderdatabases-source-parameters:2 -->`[out] pPSDBs`<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getprecompiledshaderdatabases-source-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getprecompiledshaderdatabases-source-parameters:2 -->`pPSDBs`<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getprecompiledshaderdatabases-source-parameters:2 --></ins>
 
-A pointer to an array to receive the database properties.
+[out] A pointer to an array to receive the database properties.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercachecomponent-getprecompiledshaderdatabases-parameter-rules:0:authored:migration-b0030c90e16e3c69-0 -->`ArraySize` must equal `GetPrecompiledShaderDatabaseCount()` for this component object. `pPSDBs` is required even when that count is zero. It points to caller-owned structure storage. Each returned family/path pointer is borrowed from the component and must not be modified, freed or used after its lifetime.<!-- d3d12-review-inline:end:cache-registration:id3dshadercachecomponent-getprecompiledshaderdatabases-parameter-rules:0:authored:migration-b0030c90e16e3c69-0 --></ins>
 
@@ -1170,17 +1157,17 @@ Retrieves an application based on its executable path.
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-source-parameters:0 -->`[in] pFullExePath`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-source-parameters:0 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-source-parameters:0 -->`pFullExePath`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-source-parameters:0 --></ins>
 
-A pointer to a wide character string containing the full executable path.
+[in] A pointer to a wide character string containing the full executable path.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-source-parameters:2 -->`[in] riid`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-source-parameters:2 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-source-parameters:2 -->`riid`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-source-parameters:2 --></ins>
 
-The reference ID of the interface to retrieve.
+[in] The reference ID of the interface to retrieve.
 
-<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-source-parameters:4 -->`[out] ppvApp`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-source-parameters:4 --></ins>
+<ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-source-parameters:4 -->`ppvApp`<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-source-parameters:4 --></ins>
 
-A pointer to receive the application interface.
+[out] A pointer to receive the application interface.
 
 <ins><!-- d3d12-review-inline:begin:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-parameter-rules:0:authored:migration-cf810c9ee13cba8e-0 -->`pFullExePath` is a required NUL-terminated full executable path, not the application's `pExeFilename` metadata. `riid` normally requests `IID_ID3DShaderCacheApplication`. `ppvApp` is required and receives a caller-owned reference.<!-- d3d12-review-inline:end:cache-registration:id3dshadercacheexplorer-getapplicationfromexepath-parameter-rules:0:authored:migration-cf810c9ee13cba8e-0 --></ins>
 

@@ -2,19 +2,6 @@
 
 # Video
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <a id="video-device-model"></a>
 
 ## Device and capability model
@@ -267,9 +254,9 @@ query writes `SupportFlags`.<!-- d3d12-review-inline:end:video-foundation:AB-pro
 >
 > | API Feature | Value | Payload | Input fields |
 > |---|---|---|---|
-> | D3D12_FEATURE_VIDEO_DECODE_PROTECTED_RESOURCES | 28 | D3D12_FEATURE_DATA_VIDEO_DECODE_PROTECTED_RESOURCES | NodeIndex, Configuration |
-> | D3D12_FEATURE_VIDEO_PROCESS_PROTECTED_RESOURCES | 29 | D3D12_FEATURE_DATA_VIDEO_PROCESS_PROTECTED_RESOURCES | NodeIndex |
-> | D3D12_FEATURE_VIDEO_MOTION_ESTIMATOR_PROTECTED_RESOURCES | 30 | D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_PROTECTED_RESOURCES | NodeIndex |
+> | `D3D12_FEATURE_VIDEO_DECODE_PROTECTED_RESOURCES` | 28 | `D3D12_FEATURE_DATA_VIDEO_DECODE_PROTECTED_RESOURCES` | NodeIndex, Configuration |
+> | `D3D12_FEATURE_VIDEO_PROCESS_PROTECTED_RESOURCES` | 29 | `D3D12_FEATURE_DATA_VIDEO_PROCESS_PROTECTED_RESOURCES` | NodeIndex |
+> | `D3D12_FEATURE_VIDEO_MOTION_ESTIMATOR_PROTECTED_RESOURCES` | 30 | `D3D12_FEATURE_DATA_VIDEO_MOTION_ESTIMATOR_PROTECTED_RESOURCES` | NodeIndex |
 
 <!-- d3d12-review-alert:end:video-foundation:AB-protected-video-discovery:1:authored:migration-cafec5f511c58273-0 -->
 

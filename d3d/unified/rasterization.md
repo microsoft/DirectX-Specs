@@ -2,19 +2,6 @@
 
 # Rasterization
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:rasterization:N-stage:0:authored:migration-ee1d6d28de65a1e1-0 -->Rasterization takes the positions and attributes from the last active vertex processing stage or a mesh shader and determines covered pixels/samples.<!-- d3d12-review-inline:end:rasterization:N-stage:0:authored:migration-ee1d6d28de65a1e1-0 --></ins>
 
 <a id="rasterization-enable"></a>
@@ -25,9 +12,9 @@ Rasterization is disabled when the following are all true:
 
 - <ins><!-- d3d12-review-inline:begin:rasterization:A-disable:1:modified:section-20261117-1 -->[The graphics pipeline has no pixel shader](pixel-shaders.md#output-writes)<!-- d3d12-review-inline:end:rasterization:A-disable:1:modified:section-20261117-1 --></ins>
 
-- <ins><!-- d3d12-review-inline:begin:rasterization:A-disable:1:modified:section-20261117-2 -->`DepthEnable` is set to FALSE<!-- d3d12-review-inline:end:rasterization:A-disable:1:modified:section-20261117-2 --></ins>
+- `DepthEnable` is set to FALSE
 
-- <ins><!-- d3d12-review-inline:begin:rasterization:A-disable:1:modified:section-20261117-3 -->`StencilEnable` is set to FALSE<!-- d3d12-review-inline:end:rasterization:A-disable:1:modified:section-20261117-3 --></ins>
+- `StencilEnable` is set to FALSE
 
 <a id="pixel-coordinates"></a>
 
@@ -616,7 +603,7 @@ beyond simply drawing lines and observing/measuring how they look.<!-- d3d12-rev
 The following is a listing of the "nice" properties that fall out of the above algorithm, which in general will be expected of hardware
 implementations (admittedly many of which are likely difficult to test):
 
-- <ins><!-- d3d12-review-inline:begin:rasterization:A-alpha-lines:4 -->Lines are "smooth", with minimal jagged edges or braiding.<!-- d3d12-review-inline:end:rasterization:A-alpha-lines:4 --></ins>
+- Lines are "smooth", with minimal jagged edges or braiding.
 
 - There is virtually no variation in intensity along a line, including during animation.
 
@@ -1638,15 +1625,15 @@ Bind an array of viewports to the rasterizer stage of the pipeline.
 
 #### Parameters
 
-`[in] NumViewports`
+`NumViewports`
 
-Type: **UINT**
+[in] Type: **UINT**
 
 Number of viewports to bind. The range of valid values is <ins><!-- d3d12-review-inline:begin:rasterization:P-RSSetViewports:2:modified:source-94383bfbd010b195-0-0 -->0 through 16 inclusive<!-- d3d12-review-inline:end:rasterization:P-RSSetViewports:2:modified:source-94383bfbd010b195-0-0 --></ins>.
 
-`[in] pViewports`
+`pViewports`
 
-Type: **const [D3D12_VIEWPORT](#d3d12-viewport)\***
+[in] Type: **const [D3D12_VIEWPORT](#d3d12-viewport)\***
 
 An array of [D3D12_VIEWPORT](#d3d12-viewport) structures to bind to the device.
 
@@ -1677,15 +1664,15 @@ Binds an array of scissor rectangles to the rasterizer stage.
 
 #### Parameters
 
-`[in] NumRects`
+`NumRects`
 
-Type: **UINT**
+[in] Type: **UINT**
 
 The number of scissor rectangles to bind<ins><!-- d3d12-review-inline:begin:rasterization:P-RSSetScissorRects:2:modified:source-8b8bd09b26574adb-0-0 -->, from 0 through 16 inclusive<!-- d3d12-review-inline:end:rasterization:P-RSSetScissorRects:2:modified:source-8b8bd09b26574adb-0-0 --></ins>.
 
-`[in] pRects`
+`pRects`
 
-Type: **const D3D12\_RECT\***
+[in] Type: **const D3D12\_RECT\***
 
 An array of scissor rectangles.
 
@@ -1751,23 +1738,23 @@ This method configures the sample positions used by subsequent draw, copy, resol
 
 #### Parameters
 
-`[in] NumSamplesPerPixel`
+`NumSamplesPerPixel`
 
-Type: **UINT**
+[in] Type: **UINT**
 
 Specifies the number of samples to take, per pixel. This value can be 1, 2, 4, 8, or 16, otherwise the custom-pattern arguments are invalid. The number of samples must match the <ins><!-- d3d12-review-inline:begin:rasterization:P-SetSamplePositions:2:modified:GRI12 -->effective PSO/forced sample count<!-- d3d12-review-inline:end:rasterization:P-SetSamplePositions:2:modified:GRI12 --></ins> at draw time, otherwise the behavior is undefined.
 
-`[in] NumPixels`
+`NumPixels`
 
-Type: **UINT**
+[in] Type: **UINT**
 
 <ins><!-- d3d12-review-inline:begin:rasterization:P-SetSamplePositions:5 -->Specifies the number of pixels that sample patterns are being specified for. This value can be either 1 or 4, otherwise the custom-pattern arguments are invalid. A value of 1 configures a single sample pattern to be used for each pixel; a value of 4 configures separate sample patterns for each pixel in a 2x2 pixel grid which is repeated over the render-target or viewport space, aligned to even coordinates.<!-- d3d12-review-inline:end:rasterization:P-SetSamplePositions:5 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:rasterization:P-SetSamplePositions:6 -->Note that the maximum number of combined samples can't exceed 16, otherwise the custom-pattern arguments are invalid. If NumPixels is set to 4, NumSamplesPerPixel can specify no more than 4 samples.<!-- d3d12-review-inline:end:rasterization:P-SetSamplePositions:6 --></ins>
 
-`[in] pSamplePositions`
+`pSamplePositions`
 
-Type: **[D3D12_SAMPLE_POSITION](#d3d12-sample-position)\***
+[in] Type: **[D3D12_SAMPLE_POSITION](#d3d12-sample-position)\***
 
 Specifies an array of D3D12\_SAMPLE\_POSITION elements. The size of the array is NumPixels \* NumSamplesPerPixel. If NumPixels is set to 4, then the first group of sample positions corresponds to the upper-left pixel in the 2x2 grid of pixels; the next group of sample positions corresponds to the upper-right pixel, the next group to the lower-left pixel, and the final group to the lower-right pixel.
 

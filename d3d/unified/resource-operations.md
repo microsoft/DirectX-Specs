@@ -2,19 +2,6 @@
 
 # Resource operations
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <a id="recording-and-access"></a>
 
 ## Recording, access and availability
@@ -448,7 +435,7 @@ Consider using the [CopyResource](#copyresource) method when copying an entire r
 
 **CopyBufferRegion** may be used to initialize resources which alias the same heap memory. See [CreatePlacedResource](resources.md#create-placed-resource) for more details.
 
-##### Examples
+#### Examples
 
 The [D3D12HelloTriangle](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/working-samples) sample uses **ID3D12GraphicsCommandList::CopyBufferRegion** as follows:
 
@@ -715,7 +702,7 @@ For DXGI\_FORMAT\_R9G9B9E5\_SHAREDEXP the width and height must be equal (1 texe
 >
 > | Bit width | Uncompressed resource | Block-compressed resource | Width / height difference |
 > | --- | --- | --- | --- |
-> | 32 | DXGI\_FORMAT\_R32\_UINT DXGI\_FORMAT\_R32\_SINT | DXGI\_FORMAT\_R9G9B9E5\_SHAREDEXP | 1:1 |
+> | 32 | DXGI\_FORMAT\_R32\_UINT DXGI\_FORMAT\_R32\_SINT | `DXGI_FORMAT_R9G9B9E5_SHAREDEXP` | 1:1 |
 > | 64 | DXGI\_FORMAT\_R16G16B16A16\_UINT DXGI\_FORMAT\_R16G16B16A16\_SINT DXGI\_FORMAT\_R32G32\_UINT DXGI\_FORMAT\_R32G32\_SINT | DXGI\_FORMAT\_BC1\_UNORM[\_SRGB] DXGI\_FORMAT\_BC4\_UNORM DXGI\_FORMAT\_BC4\_SNORM | 1:4 |
 > | 128 | DXGI\_FORMAT\_R32G32B32A32\_UINT DXGI\_FORMAT\_R32G32B32A32\_SINT | DXGI\_FORMAT\_BC2\_UNORM[\_SRGB] DXGI\_FORMAT\_BC3\_UNORM[\_SRGB] DXGI\_FORMAT\_BC5\_UNORM DXGI\_FORMAT\_BC5\_SNORM DXGI\_FORMAT\_BC6H\_UF16 DXGI\_FORMAT\_BC6H\_SF16 DXGI\_FORMAT\_BC7\_UNORM[\_SRGB] | 1:4 |
 
@@ -1515,7 +1502,7 @@ Validation failure will result in the call to [Close](execution.md#close) return
 <ins><!-- d3d12-review-inline:begin:resource-operations:ClearRenderTargetView-remarks:4 --> The debug layer will issue errors if the input colors are denormalized.
 For legacy state validation: The debug layer will issue an error if the subresources referenced by the view are not in the appropriate state. For **ClearRenderTargetView**, the state must be [D3D12_RESOURCE_STATE_RENDER_TARGET](synchronization.md#d3d12-resource-states).<!-- d3d12-review-inline:end:resource-operations:ClearRenderTargetView-remarks:4 --></ins>
 
-##### Examples
+#### Examples
 
 The [D3D12HelloTriangle](https://learn.microsoft.com/en-us/windows/desktop/direct3d12/working-samples) sample uses **ID3D12GraphicsCommandList::ClearRenderTargetView** as follows:
 

@@ -1,18 +1,5 @@
 # Command recording and execution
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <a id="execution-objects"></a>
 
 ## Command lists and queues
@@ -351,7 +338,7 @@ This method works for both command lists and bundles.
 
 #### Parameters
 
-**pAllocator**
+`pAllocator`
 
 A pointer to the [`ID3D12CommandAllocator`](#command-storage) object that the device creates command lists from.
 
@@ -360,7 +347,7 @@ be associated with no more than 1 recording command list at a time. The
 allocator type <ins><!-- d3d12-review-inline:begin:execution:P08-allocator:0:modified:source-70ada0efb8230b25-0-0 -->must match the type of command
 list<!-- d3d12-review-inline:end:execution:P08-allocator:0:modified:source-70ada0efb8230b25-0-0 --></ins> that is being <ins><!-- d3d12-review-inline:begin:execution:P08-allocator:0:modified:source-70ada0efb8230b25-0-1 -->reset<!-- d3d12-review-inline:end:execution:P08-allocator:0:modified:source-70ada0efb8230b25-0-1 --></ins>.
 
-**pInitialState**
+`pInitialState`
 
 <ins><!-- d3d12-review-inline:begin:execution:P35-initial-state:1 -->A pointer to the [`ID3D12PipelineState`](pipeline-state.md#ordinary-pipeline-state) object that contains the initial pipeline state for the command list. This is optional and can be NULL. If NULL, the runtime sets a dummy initial pipeline state so that drivers don't have to deal with undefined state.<!-- d3d12-review-inline:end:execution:P35-initial-state:1 --></ins>
 
@@ -516,7 +503,7 @@ Executes a bundle.
 
 #### Parameters
 
-##### pCommandList
+##### `pCommandList`
 
 <ins><!-- d3d12-review-inline:begin:execution:EF-bundle-parameter:0:modified:migration-0b77ba9dbed3670c-0 -->Specifies the [ID3D12GraphicsCommandList](#executebundle) that determines the bundle to be executed.<!-- d3d12-review-inline:end:execution:EF-bundle-parameter:0:modified:migration-0b77ba9dbed3670c-0 --></ins>
 
@@ -566,11 +553,11 @@ void ExecuteCommandLists(
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:execution:execute-parameters:0:modified:migration-48e143852bdb92f2-0 -->**NumCommandLists**<!-- d3d12-review-inline:end:execution:execute-parameters:0:modified:migration-48e143852bdb92f2-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:execute-parameters:0:modified:migration-48e143852bdb92f2-0 -->`NumCommandLists`<!-- d3d12-review-inline:end:execution:execute-parameters:0:modified:migration-48e143852bdb92f2-0 --></ins>
 
 The number of command lists to be executed.
 
-<ins><!-- d3d12-review-inline:begin:execution:execute-parameters:2:modified:migration-56bf3a84cdd3cf35-0 -->**ppCommandLists**<!-- d3d12-review-inline:end:execution:execute-parameters:2:modified:migration-56bf3a84cdd3cf35-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:execute-parameters:2:modified:migration-56bf3a84cdd3cf35-0 -->`ppCommandLists`<!-- d3d12-review-inline:end:execution:execute-parameters:2:modified:migration-56bf3a84cdd3cf35-0 --></ins>
 
 The array of [ID3D12CommandList](#recording-lifecycle) command lists to be executed.
 
@@ -790,19 +777,19 @@ HRESULT CreateFence(
 
 #### Parameters
 
-**InitialValue**
+`InitialValue`
 
 The initial value for the fence.
 
-**Flags**
+`Flags`
 
 A combination of [D3D12_FENCE_FLAGS](#fence-flags)-typed values that are combined by using a bitwise OR operation. The resulting value specifies options for the fence.
 
-**riid**
+`riid`
 
 The globally unique identifier (**GUID**) for the fence interface ([ID3D12Fence](#completion)). The **REFIID**, or **GUID**, of the interface to the fence can be obtained by using the `__uuidof()` macro. For example, `__uuidof(ID3D12Fence)` will get the **GUID** of the interface to a fence.
 
-<ins><!-- d3d12-review-inline:begin:execution:create-fence-parameters:6:modified:migration-fbaeb5d0dd98af2b-0 -->**ppFence**<!-- d3d12-review-inline:end:execution:create-fence-parameters:6:modified:migration-fbaeb5d0dd98af2b-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:create-fence-parameters:6:modified:migration-fbaeb5d0dd98af2b-0 -->`ppFence`<!-- d3d12-review-inline:end:execution:create-fence-parameters:6:modified:migration-fbaeb5d0dd98af2b-0 --></ins>
 
 A pointer to a memory block that receives a pointer to the [ID3D12Fence](#completion) interface that is used to access the fence.
 
@@ -853,11 +840,11 @@ Use this method to set a fence value <ins><!-- d3d12-review-inline:begin:executi
 
 #### Parameters
 
-**pFence**
+`pFence`
 
 A pointer to the [ID3D12Fence](#completion) object.
 
-**Value**
+`Value`
 
 The value to set the fence to.
 
@@ -890,11 +877,11 @@ If you want to perform a CPU-side wait (where the calling thread blocks until a 
 
 #### Parameters
 
-**pFence**
+`pFence`
 
 A pointer to the [ID3D12Fence](#completion) object.
 
-**Value**
+`Value`
 
 <ins><!-- d3d12-review-inline:begin:execution:queue-wait-parameters:3 -->The value that the command queue is waiting for the fence to reach or exceed.<!-- d3d12-review-inline:end:execution:queue-wait-parameters:3 --></ins>
 
@@ -925,7 +912,7 @@ Use this method to set a fence value from the CPU side. Use [ID3D12CommandQueue:
 
 #### Parameters
 
-**Value**
+`Value`
 
 The value to set the fence to.
 
@@ -974,11 +961,11 @@ This method can be safely called from multiple threads at one time.
 
 #### Parameters
 
-**Value**
+`Value`
 
 The fence value when the event is to be signaled.
 
-**hEvent**
+`hEvent`
 
 A handle to the event object.
 
@@ -1010,23 +997,23 @@ HRESULT SetEventOnMultipleFenceCompletion(
 
 #### Parameters
 
-<ins><!-- d3d12-review-inline:begin:execution:multi-event-parameters:0:modified:migration-27f93ff1238dd96d-0 -->**ppFences**<!-- d3d12-review-inline:end:execution:multi-event-parameters:0:modified:migration-27f93ff1238dd96d-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:multi-event-parameters:0:modified:migration-27f93ff1238dd96d-0 -->`ppFences`<!-- d3d12-review-inline:end:execution:multi-event-parameters:0:modified:migration-27f93ff1238dd96d-0 --></ins>
 
 An array of length `NumFences` that specifies the [ID3D12Fence](#completion) objects.
 
-<ins><!-- d3d12-review-inline:begin:execution:multi-event-parameters:2:modified:migration-4dc98c9ec1764557-0 -->**pFenceValues**<!-- d3d12-review-inline:end:execution:multi-event-parameters:2:modified:migration-4dc98c9ec1764557-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:execution:multi-event-parameters:2:modified:migration-4dc98c9ec1764557-0 -->`pFenceValues`<!-- d3d12-review-inline:end:execution:multi-event-parameters:2:modified:migration-4dc98c9ec1764557-0 --></ins>
 
 <ins><!-- d3d12-review-inline:begin:execution:multi-event-parameters:3 -->An array of length `NumFences` that specifies the fence values required for the event to be signaled.<!-- d3d12-review-inline:end:execution:multi-event-parameters:3 --></ins>
 
-**NumFences**
+`NumFences`
 
 Specifies the number of fences to be included.
 
-**Flags**
+`Flags`
 
 Specifies one of the [D3D12_MULTIPLE_FENCE_WAIT_FLAGS](#multiple-fence-flags) that determines how to proceed.
 
-**hEvent**
+`hEvent`
 
 A handle to the event object.
 

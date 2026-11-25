@@ -2,19 +2,6 @@
 
 # Compute execution
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <a id="stage-model"></a>
 
 ## Stage model
@@ -375,21 +362,21 @@ The invocation process dispatches the specified number of groups in the array. (
 
 ### Parameters
 
-`[in] ThreadGroupCountX`
+`ThreadGroupCountX`
 
-Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types)**
+[in] Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types)**
 
 The number of groups dispatched in the x direction. *ThreadGroupCountX* <ins><!-- d3d12-review-inline:begin:compute:P-Dispatch:2:modified:source-50fec85479d14101-0-0 -->follows the [common grid limits](#shared-grid-limits), including the expanded one-dimensional case<!-- d3d12-review-inline:end:compute:P-Dispatch:2:modified:source-50fec85479d14101-0-0 --></ins>.
 
-`[in] ThreadGroupCountY`
+`ThreadGroupCountY`
 
-Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types)**
+[in] Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types)**
 
 The number of groups dispatched in the y direction. *ThreadGroupCountY* must be less than or equal to <ins><!-- d3d12-review-inline:begin:compute:P-Dispatch:5:modified:source-1be4b280c856422d-0-0 -->D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION<!-- d3d12-review-inline:end:compute:P-Dispatch:5:modified:source-1be4b280c856422d-0-0 --></ins> (65535).
 
-`[in] ThreadGroupCountZ`
+`ThreadGroupCountZ`
 
-Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types)**
+[in] Type: **[UINT](https://learn.microsoft.com/en-us/windows/desktop/WinProg/windows-data-types)**
 
 <ins><!-- d3d12-review-inline:begin:compute:P-Dispatch:8 -->The number of groups dispatched in the z direction. *ThreadGroupCountZ* must be less than or equal to D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION (65535).<!-- d3d12-review-inline:end:compute:P-Dispatch:8 --></ins>
 

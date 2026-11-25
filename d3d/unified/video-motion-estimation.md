@@ -2,19 +2,6 @@
 
 # Video: motion estimation reference
 
-<!-- d3d12-review-legend:begin -->
-
-> [!NOTE]
-> **Draft provenance annotations.**
-> Underlining marks pending replacement wording or authored list items. Warning boxes
-> mark authored, mixed or reopened passages awaiting editorial review.
-> Editorial adoption does not establish factual or hardware verification. Exact approved factual
-> corrections do not trigger a marker. Unmarked text elsewhere, declarations
-> and structural Markdown are not assertions of approval.
-> [Annotation scope and approvals](../../spec-maintenance/d3d12/prose-annotations.md).
-
-<!-- d3d12-review-legend:end -->
-
 <ins><!-- d3d12-review-inline:begin:video-motion:N-entry:0:authored:migration-d72fc34085639e68-0 -->A motion estimator maintains operation
 context. A motion vector heap stores hardware-dependent output. A resolve
 records conversion into an application texture.<!-- d3d12-review-inline:end:video-motion:N-entry:0:authored:migration-d72fc34085639e68-0 --></ins>
@@ -1420,7 +1407,7 @@ typedef struct D3D12DDI_VIDEO_MOTION_ESTIMATOR_OUTPUT_0053
 
 Describes the output of the motion estimation operation.
 
-<ins><!-- d3d12-review-inline:begin:video-motion:R-448:0:modified:migration-6c09983358008361-0 -->*hDrvMotionVectorHeap*<!-- d3d12-review-inline:end:video-motion:R-448:0:modified:migration-6c09983358008361-0 --></ins>
+<ins><!-- d3d12-review-inline:begin:video-motion:R-448:0:modified:migration-6c09983358008361-0 -->`hDrvMotionVectorHeap`<!-- d3d12-review-inline:end:video-motion:R-448:0:modified:migration-6c09983358008361-0 --></ins>
 The <ins><!-- d3d12-review-inline:begin:video-motion:R-448:0:modified:migration-d96dba46ea6ec21e-1 -->motion vector heap<!-- d3d12-review-inline:end:video-motion:R-448:0:modified:migration-d96dba46ea6ec21e-1 --></ins> stores the motion estimator output in hardware dependent layout.
 
 #### D3D12DDI_VIDEO_MOTION_ESTIMATOR_INPUT_0053
