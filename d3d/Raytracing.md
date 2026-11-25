@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.49 10/19/2026
+v1.50 11/24/2026
 
 ---
 
@@ -93,6 +93,7 @@ v1.49 10/19/2026
     - [Bottom-level acceleration structure updates](#bottom-level-acceleration-structure-updates)
     - [Top-level acceleration structure updates](#top-level-acceleration-structure-updates)
   - [Acceleration structure memory restrictions](#acceleration-structure-memory-restrictions)
+    - [Enhanced barrier access restrictions](#enhanced-barrier-access-restrictions)
     - [Synchronizing acceleration structure memory writes/reads](#synchronizing-acceleration-structure-memory-writesreads)
   - [Fixed function ray-triangle intersection specification](#fixed-function-ray-triangle-intersection-specification)
     - [Watertightness](#watertightness)
@@ -2352,6 +2353,43 @@ error. Mapping a tile into or out of an acceleration structure
 invalidates that tile's contents.
 
 > The reason for segregating ASBs from non-ASB memory is to enable tools/PIX to be able to robustly capture applications that use raytracing. The restriction avoids instability/crashing from tools attempting to serialize what they think are opaque acceleration structures that might have been partially overwritten by other data because the app repurposed the memory without tools being able to track it. The key issue here is the opaqueness of acceleration structure data, requiring dedicated APIs for serializing and deserializing their data to be able to preserve application state.
+
+### Enhanced barrier access restrictions
+
+For enhanced barriers, an ASB is a buffer created with
+`D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE` using an
+enhanced-barrier resource-creation API, or a buffer created with a legacy
+resource-creation API in
+`D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE`.
+
+A barrier for an ASB is invalid if its `AccessAfter` value includes any
+non-RTAS write access. These include
+`D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`,
+`D3D12_BARRIER_ACCESS_COPY_DEST`,
+`D3D12_BARRIER_ACCESS_RESOLVE_DEST`,
+`D3D12_BARRIER_ACCESS_STREAM_OUTPUT`,
+`D3D12_BARRIER_ACCESS_RENDER_TARGET`,
+`D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE`, and video-write accesses. Any
+non-RTAS operation that writes to an ASB has undefined behavior. This
+restriction does not prohibit `AccessAfter` values for
+`D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ`,
+`D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE`,
+`D3D12_BARRIER_ACCESS_NO_ACCESS`, or non-RTAS read access, such as
+`D3D12_BARRIER_ACCESS_SHADER_RESOURCE` or
+`D3D12_BARRIER_ACCESS_COPY_SOURCE`; other barrier requirements still apply.
+Non-RTAS reads remain governed by their ordinary access rules; ASB contents
+remain opaque.
+
+The binding methods for `TraceRay` and `RayQuery` are unchanged: an ASB can be
+bound as a root SRV containing its GPU virtual address or through a
+descriptor-heap SRV with dimension
+`D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE`. Creating or binding
+either SRV is not itself an access.
+
+Memory can still be reused through resource aliasing or reserved-resource tile
+remapping, subject to the existing restrictions above. Such reuse ends the
+lifetime of the ASB contents; applications must build a new acceleration
+structure before using the memory as an ASB again.
 
 ---
 
@@ -9753,3 +9791,4 @@ v1.46|8/26/2026|<li>In [Additional SRV type](#additional-srv-type), defined what
 v1.47|8/26/2026|<li>Added a way for shaders compiled before Shader Model 6.9 to opt in to Opacity Micromaps and [clustered geometry](raytracing2.md#clustered-geometry) for [RayQuery](#rayquery), which they otherwise cannot do since the [RAYQUERY_FLAGS](#rayquery-flags) template parameter was added in Shader Model 6.9.  This lets an application reuse one [RayQuery](#rayquery) shader across newer devices where these features may be present and older devices whose drivers were never updated to Shader Model 6.9, without compiling separate variants purely to express the opt-in.  See [RayQuery flags on pre Shader Model 6.9 shaders](#rayquery-flags-on-pre-shader-model-69-shaders), which adds `RAYQUERY_ALLOW_OPACITY_MICROMAPS_ON_PRE_SM69_SHADERS` and `RAYQUERY_ALLOW_CLUSTERED_GEOMETRY_ON_PRE_SM69_SHADERS` values to `D3D12_PIPELINE_STATE_FLAGS` for pipelines created outside a state object, and to [D3D12_STATE_OBJECT_FLAGS](#d3d12_state_object_flags) for state objects, raytracing pipelines included.  The `D3D12_PIPELINE_STATE_FLAGS` values are not permitted in a state object, since the opt-in has to be known when a shader is compiled and that can precede the generic program which would carry them.</li><li>Three normative points in that section beyond the flags themselves.  A driver that supports one of these features but predates the corresponding flag must behave as if pre-6.9 [RayQuery](#rayquery) objects had opted in, which is what makes it safe for applications not to condition the flags on driver version.  The shader model that governs is that of the compilation unit which declared the [RayQuery](#rayquery) object, not that of any other code operating on it.  And the flags need not match across [AddToStateObject()](#addtostateobject) calls: each addition controls its own shaders while existing shaders retain the behavior they were compiled with.</li><li>In [D3D12_RAYTRACING_PIPELINE_FLAGS](#d3d12_raytracing_pipeline_flags), scoped `D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY` to [TraceRay()](#traceray) and pointed at the [RayQuery](#rayquery) equivalent, matching how the neighboring `D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS` row was already worded.  The two rows previously disagreed about whether [RayQuery](#rayquery) was covered.</li>
 v1.48|9/8/2026|<li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode), clarified that tools visualization contains decoded input data but retains external references to built acceleration structures and Opacity Micromap arrays. Distinguished the Cluster BLAS source-liveness requirement from recursively copying referenced CLASes into the visualization result.</li><li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc), clarified that deserialization pointer fixups relocate references to corresponding original objects or copies, not substitute different OMM arrays or acceleration structures. Deserialization is not an OMM linkage update. Referenced objects may still be deserialized in any order.</li>
 v1.49|10/19/2026|<li>Clarified in [Minor intersection shader details](#minor-intersection-shader-details) and [D3D12_RAYTRACING_GEOMETRY_FLAGS](#d3d12_raytracing_geometry_flags) that `D3D12_RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION` prevents implementation-generated redundant intersection-shader invocations for the same ray and procedural primitive instance, without coalescing separate application-authored [ReportHit()](#reporthit) calls. Aligned the [Preservation of triangle set](#preservation-of-triangle-set) duplication exception.</li>
+v1.50|11/24/2026|<li>Clarified enhanced-barrier ASB identity and write restrictions while preserving existing non-RTAS reads and TraceRay/RayQuery bindings. Documented resource aliasing and tile remapping as memory-reuse mechanisms that end the lifetime of ASB contents.</li>

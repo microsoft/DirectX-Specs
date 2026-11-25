@@ -495,6 +495,11 @@ Buffers and Simultaneous-Access Textures (Textures created with the `D3D12_RESOU
 - `D3D12_BARRIER_ACCESS_RESOLVE_SOURCE`
 - `D3D12_BARRIER_ACCESS_PREDICATION`
 
+These barrier-free access allowances do not authorize non-RTAS writes to
+acceleration structure buffers (ASBs), as defined in the
+[Raytracing specification](Raytracing.md#acceleration-structure-memory-restrictions);
+non-RTAS reads remain governed by the rules above.
+
 Subsequent accesses MAY also be made without a barrier with no more than one write access type.  However, with the exception of `D3D12_BARRIER_ACCESS_RENDER_TARGET`, barriers MUST be used to flush sequential writes to the same resource.
 
 ### Self Resource Copy
@@ -708,7 +713,7 @@ Possible but not expected to be common: If aliased memory write flushes were nee
 
 Legacy D3D12 resource creation API's require an initial state.  For texture resources, this initial state implies an initial layout according to the table in [Equivalent `D3D12_BARRIER_LAYOUT` for each `D3D12_RESOURCE_STATES` bit](#equivalent-d3d12_barrier_layout-for-each-d3d12_resource_states-bit).
 
-Despite the fact that legacy resource creation API's have an Initial State, buffers do not have a layout, and thus are treated as though they have an initial state of `D3D12_RESOURCE_STATE_COMMON`.  This includes Upload Heap and Readback Heap buffers, despite being documented as requiring `D3D12_RESOURCE_STATE_GENERIC_READ` and `D3D12_RESOURCE_STATE_COPY_DEST` respectively.  The exception to this is buffers intended to be used as raytracing acceleration structures.  The `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE` state is a hint to the runtime, driver and PIX that the resource may only be used as a raytracing acceleration structure.
+Despite the fact that legacy resource creation API's have an Initial State, buffers do not have a layout, and thus are treated as though they have an initial state of `D3D12_RESOURCE_STATE_COMMON`.  This includes Upload Heap and Readback Heap buffers, despite being documented as requiring `D3D12_RESOURCE_STATE_GENERIC_READ` and `D3D12_RESOURCE_STATE_COPY_DEST` respectively.  The exception to this is buffers intended to be used as raytracing acceleration structures.  Creating such a buffer in `D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE` imposes a requirement that any write to it be performed only by an RTAS operation.  A non-RTAS write has undefined behavior.  This requirement does not restrict read access.
 
 Swap Chain textures are initially created in `D3D12_BARRIER_LAYOUT_COMMON`. This matches the initial state for swap chains documented in https://learn.microsoft.com/en-us/windows/win32/direct3d12/using-resource-barriers-to-synchronize-resource-states-in-direct3d-12#initial-states-for-resources.
 
