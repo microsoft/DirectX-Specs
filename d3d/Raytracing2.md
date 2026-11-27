@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec, Part 2 <!-- omit in toc -->
 
-v0.40 11/23/2026
+v0.41 11/24/2026
 
 ---
 
@@ -1087,9 +1087,11 @@ The exception is acceleration structure objects, whose state is discussed in [re
 
 Various indirect RTAS operations have arguments that are read-write or write-only by the driver on the GPU.  The definitions of those arguments point to this section to clarify the required resource state:
 
-The memory for the read-write or write-only operation must be accessible as a UAV(`D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`, or with legacy resource state `D3D12_RESOURCE_STATE_UNORDERED_ACCESS`).
+The memory for the read-write or write-only operation must be accessible as a UAV (`D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`, or with legacy resource state `D3D12_RESOURCE_STATE_UNORDERED_ACCESS`).
 
 The exception is acceleration structure objects, whose state is discussed in [resource state for acceleration structures](#resource-state-for-acceleration-structures).
+
+Writable UAV arguments covered by this section are auxiliary data, not acceleration structure output, and must reside outside ASBs even when an RTAS operation writes them. This includes scratch data, `BatchScratchData`, `ResultSizeArray`, and `ResultAddressArray` when used as a writable output. See the [ASB write restrictions](Raytracing.md#enhanced-barrier-access-restrictions).
 
 ---
 
@@ -1097,13 +1099,15 @@ The exception is acceleration structure objects, whose state is discussed in [re
 
 Various indirect RTAS operations take arguments that are acceleration structures or memory that will be filled with an acceleration structure.  The definitions of those arguments point to this section to clarify the required resource state:
 
-Resources containing CLAS, Cluster BLAS or PTLAS data are acceleration structure buffers and are subject to the [acceleration structure memory restrictions](raytracing.md#acceleration-structure-memory-restrictions) defined in the original DXR functional specification.
+Resources containing CLAS, Cluster BLAS, Cluster Templates or PTLAS data are acceleration structure buffers and are subject to the [acceleration structure memory restrictions](Raytracing.md#acceleration-structure-memory-restrictions) defined in the original DXR functional specification, including the enhanced-barrier write restrictions. The same restrictions apply to source and destination Cluster Objects used by `D3D12_RTAS_OPERATION_TYPE_MOVE_CLUSTER_OBJECTS`.
 
 For enhanced barriers:
 
-The memory for the acceleration structure data must have access `D3D12_BARRIER_ACCESS_ACCELERATION_STRUCTURE_READ` for a read operation or `D3D12_BARRIER_ACCESS_ACCELERATION_STRUCTURE_WRITE` for a write or read/write.  
+The memory for the acceleration structure data must have access `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ` for a read operation or `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE` for a write or read/write.
 
 The applicable barrier sync is `D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE` for operations that generate an acceleration structure, other than move operations which use `D3D12_BARRIER_SYNC_COPY_RAYTRACING_ACCELERATION_STRUCTURE`.
+
+`D3D12_RTAS_OPERATION_MODE_GET_SIZES` for `MOVE_CLUSTER_OBJECTS` still reads each source Cluster Object with `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ` in the same `D3D12_BARRIER_SYNC_COPY_RAYTRACING_ACCELERATION_STRUCTURE` scope as other move modes. A barrier that orders this read after the writes that produced a source object must use the producer's scope in `SyncBefore` (`D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE` for a build or `D3D12_BARRIER_SYNC_COPY_RAYTRACING_ACCELERATION_STRUCTURE` for a move/copy) and `D3D12_BARRIER_SYNC_COPY_RAYTRACING_ACCELERATION_STRUCTURE` in `SyncAfter`.
 
 Raytracing on an acceleration structure uses `D3D12_BARRIER_SYNC_RAYTRACING`.
 
@@ -2366,3 +2370,4 @@ v0.37|9/2/2026|<li>Defined cluster triangle participation and index-based releva
 v0.38|9/8/2026|<li>In [D3D12_RTAS_TOOLS_VISUALIZATION_BUILD_INPUTS_HEADER](#d3d12_rtas_tools_visualization_build_inputs_header), clarified tools-visualization pointer semantics: decoded input data and address arrays reside in the result buffer, while CLAS-address entries, instance BLAS references, and built Opacity Micromap array references remain external object references. Referenced objects are visualized separately.</li>
 v0.39|11/11/2026|<li>Changed [ResultSizeArray](#d3d12_rtas_batched_operation_data) to use packed `UINT32` entries by default because full-width entries are excessive for common CLAS and Cluster Template workloads. Packed 32-bit output halves this size-array storage and eases reuse of 32-bit buffers and shaders, including NVAPI ports, while [64-bit size output](#d3d12_rtas_batched_operation_data_flags) remains available for extremely large Cluster BLAS, including moves.</li><li>Renamed `D3D12_RTAS_OPERATION_ADDRESS_RESOLUTION_FLAGS` to [D3D12_RTAS_BATCHED_OPERATION_DATA_FLAGS](#d3d12_rtas_batched_operation_data_flags) and `AddressResolutionFlags` to `Flags` because the enum now controls both address indirection and result-size format. The existing indirection values are unchanged and the new width flag uses the next free bit, `0x40`.</li><li>Defined `ResultSizeArray` stride as spacing only: stride 0 packs the selected 4-byte or 8-byte type, and nonzero stride must be a multiple of that selected width, so padded 32-bit layouts remain 32-bit. Without [64-bit size output](#d3d12_rtas_batched_operation_data_flags), the unlikely case of one result exceeding `UINT32_MAX` reports `0xffffffff`. Allocation and prebuild comparisons use the full size, and `ToolsInfo` remains full width. A compatible explicit-destination prebuild query provides a `UINT64` per-result upper bound that can guide the optional width choice without proving the actual size exceeds 32 bits. Also clarified effective argument-count handling and move sizing from source objects or usable size reports because move prebuild returns scratch only.</li>
 v0.40|11/23/2026|<li>Clarified `BatchScratchData` nullability and alignment, including `GET_SIZES` and indirected addresses, and `ResultAddressArray` nullability and alignment for destination modes.</li>
+v0.41|11/24/2026|<li>Added an enhanced-barrier write-restrictions cross-reference for acceleration structure buffers, clarified that Cluster Templates and Cluster Objects moved by `D3D12_RTAS_OPERATION_TYPE_MOVE_CLUSTER_OBJECTS` are covered, and corrected the acceleration-structure barrier access enum names. Clarified that writable auxiliary UAV arguments remain outside ASBs, and that `MOVE_CLUSTER_OBJECTS` in `GET_SIZES` mode reads source objects in the copy sync scope after the scope that produced them.</li>

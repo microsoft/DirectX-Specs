@@ -1,6 +1,6 @@
 # DirectX Raytracing (DXR) Functional Spec <!-- omit in toc -->
 
-v1.49 10/19/2026
+v1.50 11/24/2026
 
 ---
 
@@ -93,6 +93,7 @@ v1.49 10/19/2026
     - [Bottom-level acceleration structure updates](#bottom-level-acceleration-structure-updates)
     - [Top-level acceleration structure updates](#top-level-acceleration-structure-updates)
   - [Acceleration structure memory restrictions](#acceleration-structure-memory-restrictions)
+    - [Enhanced barrier access restrictions](#enhanced-barrier-access-restrictions)
     - [Synchronizing acceleration structure memory writes/reads](#synchronizing-acceleration-structure-memory-writesreads)
   - [Fixed function ray-triangle intersection specification](#fixed-function-ray-triangle-intersection-specification)
     - [Watertightness](#watertightness)
@@ -2325,22 +2326,27 @@ which bottom-level acceleration structure each instance points to.
 
 ## Acceleration structure memory restrictions
 
-Acceleration structures can only be placed in resources that are created
-in the default heap (or custom heap equivalent). Further, resources that
-will contain acceleration structures must be created in the state
-[D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states),
-and must have resource flag `D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS`. The
-`ALLOW_UNORDERED_ACCESS` requirement simply acknowledges both: that the
-system will be doing this type of access in its implementation of
-acceleration structure builds behind the scenes, and from the app point
-of view, synchronization of writes/reads to acceleration structures is
+Acceleration structures can only be placed in resources created in the
+default heap (or custom heap equivalent). Resources that will contain
+acceleration structures must have resource flag
+`D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS`. With legacy
+resource-creation APIs, they must also be created in the
+[D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states)
+state. With enhanced-barrier resource-creation APIs, an ASB is identified
+by `D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE` and may be
+created with initial layout `D3D12_BARRIER_LAYOUT_UNDEFINED`. For the
+following discussion, buffers created with the legacy state or enhanced
+barrier flag are referred to as acceleration structure buffers (ASBs).
+
+The `ALLOW_UNORDERED_ACCESS` requirement acknowledges that the system
+will be doing this type of access in its implementation of acceleration
+structure builds behind the scenes. With legacy resource barriers,
+synchronization of writes/reads to acceleration structures is
 accomplished using UAV barriers (discussed later).
 
-For the following discussion, these resources are referred to as
-acceleration structure buffers (ASBs).
-
-ASBs cannot be transitioned into any other state, or vice versa,
-otherwise the runtime will put the command list into removed state.
+With legacy resource barriers, ASBs cannot be transitioned to or from
+any other state; otherwise the runtime will put the command list into
+removed state.
 
 If a placed buffer is created that is an ASB, but there is an existing
 buffer overlapping the VA range that is not an ASB, or vice versa, this
@@ -2353,21 +2359,75 @@ invalidates that tile's contents.
 
 > The reason for segregating ASBs from non-ASB memory is to enable tools/PIX to be able to robustly capture applications that use raytracing. The restriction avoids instability/crashing from tools attempting to serialize what they think are opaque acceleration structures that might have been partially overwritten by other data because the app repurposed the memory without tools being able to track it. The key issue here is the opaqueness of acceleration structure data, requiring dedicated APIs for serializing and deserializing their data to be able to preserve application state.
 
+### Enhanced barrier access restrictions
+
+For enhanced barriers, the following restrictions apply to ASBs as
+defined above.
+
+A buffer barrier whose `pResource` is an ASB is invalid if its
+`AccessAfter` includes any of these non-RTAS write accesses:
+`D3D12_BARRIER_ACCESS_COPY_DEST`,
+`D3D12_BARRIER_ACCESS_RESOLVE_DEST`,
+`D3D12_BARRIER_ACCESS_STREAM_OUTPUT`,
+`D3D12_BARRIER_ACCESS_RENDER_TARGET`,
+`D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE`,
+`D3D12_BARRIER_ACCESS_VIDEO_DECODE_WRITE`,
+`D3D12_BARRIER_ACCESS_VIDEO_PROCESS_WRITE`, or
+`D3D12_BARRIER_ACCESS_VIDEO_ENCODE_WRITE`.
+`D3D12_BARRIER_ACCESS_UNORDERED_ACCESS` may be included in `AccessAfter`
+to synchronize UAV reads, but this does not permit UAV writes to an ASB.
+The `AccessAfter` restriction applies only to buffer barriers that name
+an ASB; it does not apply to global barriers, which may combine RTAS
+access to ASBs with `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS` access to
+other resources.
+
+Only `D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE` may
+write acceleration-structure data in an ASB. Any other write to ASB
+memory has undefined behavior, regardless of which API operation issues
+it. This includes UAV writes for auxiliary outputs of RTAS operations.
+Buffers for scratch data, postbuild-info output, `BatchScratchData`,
+`ResultSizeArray`, and `ResultAddressArray` when used as a writable
+output must reside outside ASBs.
+
+This restriction does not prohibit `AccessAfter` values for
+`D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ`,
+`D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE`,
+`D3D12_BARRIER_ACCESS_NO_ACCESS`, or non-RTAS read access, such as
+`D3D12_BARRIER_ACCESS_SHADER_RESOURCE` or
+`D3D12_BARRIER_ACCESS_COPY_SOURCE`; `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`
+may also be used to synchronize UAV reads. Other barrier requirements
+still apply. Non-RTAS reads remain governed by their ordinary access
+rules; ASB contents remain opaque.
+
+The binding methods for `TraceRay` and `RayQuery` are unchanged: an ASB can be
+bound as a root SRV containing its GPU virtual address or through a
+descriptor-heap SRV with dimension
+`D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE`. Creating or binding
+either SRV is not itself an access.
+
+Memory can still be reused through resource aliasing or reserved-resource tile
+remapping, subject to the existing restrictions above. Such reuse ends the
+lifetime of the ASB contents. The contents may be re-established by any RTAS
+operation that writes a complete acceleration structure, including a build,
+a `CLONE` or `COMPACT` copy from a valid AS, or a `DESERIALIZE` copy.
+
 ---
 
 ### Synchronizing acceleration structure memory writes/reads
 
-Given that acceleration structures must always be in
+With legacy resource barriers, given that ASBs must always be in
 [D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE](#additional-resource-states)
-as described above, resource state transitions can't be used to
-synchronize between writes and reads (and vice versa) of acceleration
-structure data. Instead, the way to accomplish this is using UAV
+as described above, resource state transitions cannot be used to
+synchronize accesses to acceleration structure data. Instead, use UAV
 barriers on resources holding acceleration structure data between
-operations that write to an acceleration structure (such as
-[BuildRaytracingAccelerationStructure()](#buildraytracingaccelerationstructure) and operations that read from
-them (such as [DispatchRays()](#dispatchrays) (and vice versa).
+write operations (such as
+[BuildRaytracingAccelerationStructure()](#buildraytracingaccelerationstructure))
+and read operations (such as [DispatchRays()](#dispatchrays)), and vice
+versa.
+With enhanced barriers, synchronize using the RTAS access and sync scopes
+defined in the [Enhanced Barriers specification](D3D12EnhancedBarriers.md#d3d12_barrier_access_raytracing_acceleration_structure_read).
 
-> The use of UAV barriers (as opposed to state transitions) for synchronizing acceleration structure accesses comes in handy for scenarios like [compacting](#d3d12_raytracing_acceleration_structure_copy_mode) multiple acceleration structures. Each compaction reads an acceleration structure and then writes the compacted result to another address. An app can perform a string of compactions to tightly pack a collection of acceleration structures that all may be in the same resource. No resource transitions are necessary. Instead all that's needed are a single UAV barrier after one or more original acceleration structure builds are complete before passing them into a sequence of compactions for each acceleration structure. Then another UAV barrier after compactions are done and the acceleration structures are referenced by DispatchRays() for raytracing.
+> With legacy resource barriers, the use of UAV barriers (as opposed to state transitions) for synchronizing acceleration structure accesses comes in handy for scenarios like [compacting](#d3d12_raytracing_acceleration_structure_copy_mode) multiple acceleration structures. Each compaction reads an acceleration structure and then writes the compacted result to another address. An app can perform a string of compactions to tightly pack a collection of acceleration structures that all may be in the same resource. No resource transitions are necessary. Instead all that's needed are a single UAV barrier after one or more original acceleration structure builds are complete before passing them into a sequence of compactions for each acceleration structure. Then another UAV barrier after compactions are done and the acceleration structures are referenced by DispatchRays() for raytracing.
 
 ---
 
@@ -9753,3 +9813,4 @@ v1.46|8/26/2026|<li>In [Additional SRV type](#additional-srv-type), defined what
 v1.47|8/26/2026|<li>Added a way for shaders compiled before Shader Model 6.9 to opt in to Opacity Micromaps and [clustered geometry](raytracing2.md#clustered-geometry) for [RayQuery](#rayquery), which they otherwise cannot do since the [RAYQUERY_FLAGS](#rayquery-flags) template parameter was added in Shader Model 6.9.  This lets an application reuse one [RayQuery](#rayquery) shader across newer devices where these features may be present and older devices whose drivers were never updated to Shader Model 6.9, without compiling separate variants purely to express the opt-in.  See [RayQuery flags on pre Shader Model 6.9 shaders](#rayquery-flags-on-pre-shader-model-69-shaders), which adds `RAYQUERY_ALLOW_OPACITY_MICROMAPS_ON_PRE_SM69_SHADERS` and `RAYQUERY_ALLOW_CLUSTERED_GEOMETRY_ON_PRE_SM69_SHADERS` values to `D3D12_PIPELINE_STATE_FLAGS` for pipelines created outside a state object, and to [D3D12_STATE_OBJECT_FLAGS](#d3d12_state_object_flags) for state objects, raytracing pipelines included.  The `D3D12_PIPELINE_STATE_FLAGS` values are not permitted in a state object, since the opt-in has to be known when a shader is compiled and that can precede the generic program which would carry them.</li><li>Three normative points in that section beyond the flags themselves.  A driver that supports one of these features but predates the corresponding flag must behave as if pre-6.9 [RayQuery](#rayquery) objects had opted in, which is what makes it safe for applications not to condition the flags on driver version.  The shader model that governs is that of the compilation unit which declared the [RayQuery](#rayquery) object, not that of any other code operating on it.  And the flags need not match across [AddToStateObject()](#addtostateobject) calls: each addition controls its own shaders while existing shaders retain the behavior they were compiled with.</li><li>In [D3D12_RAYTRACING_PIPELINE_FLAGS](#d3d12_raytracing_pipeline_flags), scoped `D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY` to [TraceRay()](#traceray) and pointed at the [RayQuery](#rayquery) equivalent, matching how the neighboring `D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS` row was already worded.  The two rows previously disagreed about whether [RayQuery](#rayquery) was covered.</li>
 v1.48|9/8/2026|<li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE](#d3d12_raytracing_acceleration_structure_copy_mode), clarified that tools visualization contains decoded input data but retains external references to built acceleration structures and Opacity Micromap arrays. Distinguished the Cluster BLAS source-liveness requirement from recursively copying referenced CLASes into the visualization result.</li><li>In [D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_SERIALIZATION_DESC](#d3d12_raytracing_acceleration_structure_postbuild_info_serialization_desc), clarified that deserialization pointer fixups relocate references to corresponding original objects or copies, not substitute different OMM arrays or acceleration structures. Deserialization is not an OMM linkage update. Referenced objects may still be deserialized in any order.</li>
 v1.49|10/19/2026|<li>Clarified in [Minor intersection shader details](#minor-intersection-shader-details) and [D3D12_RAYTRACING_GEOMETRY_FLAGS](#d3d12_raytracing_geometry_flags) that `D3D12_RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION` prevents implementation-generated redundant intersection-shader invocations for the same ray and procedural primitive instance, without coalescing separate application-authored [ReportHit()](#reporthit) calls. Aligned the [Preservation of triangle set](#preservation-of-triangle-set) duplication exception.</li>
+v1.50|11/24/2026|<li>Clarified enhanced-barrier ASB identity for legacy and enhanced resource creation, prohibited non-RTAS writes while preserving non-RTAS reads and TraceRay/RayQuery bindings, and documented UAV-read synchronization and auxiliary-output restrictions. Documented that aliasing and tile remapping end the ASB contents' lifetime and that any complete RTAS write can re-establish those contents.</li>
