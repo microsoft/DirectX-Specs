@@ -515,7 +515,9 @@ In addition to render target and depth/stencil resources, there are similar UAV 
 
 Barriers are queued in forward order (API-call order, barrier-group-index, barrier-array-index).  Multiple barriers on the same subresource must function as though the barriers complete in queued order.
 
-Queued Barriers with matching `SyncAfter` scopes that potentially write to the same memory must complete all writes in queued order.  This is necessary to avoid data races on barriers that support resource aliasing.  For example a barrier that 'deactivates' a resource must flush any caches before another barrier that 'activates' a different resource on the same memory, possible clearing metadata.
+Queued barriers with matching `SyncAfter` scopes that potentially write overlapping underlying memory must complete all writes in queued order, including when the barriers are submitted by separate `Barrier` calls.  An earlier barrier must complete cache flushes, layout transitions, and other memory or metadata writes before a later barrier writes overlapping underlying memory.  This includes ordering a barrier that 'deactivates' a resource before a barrier that 'activates' a different resource backed by overlapping memory using `D3D12_TEXTURE_BARRIER_FLAG_DISCARD`.
+
+Non-overlapping barriers with matching `SyncAfter` scopes may execute concurrently.
 
 ### New Resource Creation API's
 
@@ -694,15 +696,11 @@ For each "after resource":
 - If needed: Wait for all "before resource" accesses to complete.
 - If needed: Specify desired layout.
   - Use `LayoutBefore` of `D3D12_BARRIER_LAYOUT_UNDEFINED` to avoid modifying memory as part of the barrier.
-- If needed: Perform a full-subresource discard using `D3D2_TEXTURE_BARRIER_FLAG_DISCARD`.
-  - Must not use this flag if any of the "before resource" barriers transition layout or flush memory writes.
+- If needed: Perform a full-subresource discard using `D3D12_TEXTURE_BARRIER_FLAG_DISCARD`.
+  - If a "before resource" barrier transitions layout or flushes writes to underlying memory that overlaps the "after resource", that barrier and the "after resource" barrier must use matching `SyncAfter` scopes.
 - If needed: Set `AccessBefore` to `D3D12_BARRIER_ACCESS_NO_ACCESS` to 'activate' a subresource previously 'deactivated' in the same `ExecuteCommandLists` scope.
 
 Note that each of these is tagged as 'If needed'.  There are aliasing scenarios where resource aliasing can be accomplished without any barriers at all.  For example: all "before" and "after" resources are buffers (thus no layout), and accesses to all "before" resources occurred in a separate `ExecuteCommandLists` scope than all "after" resources.
-
-Since barriers on different subresources have no guaranteed order, care must be taken to avoid combining barriers that potentially modify the same memory. This includes Layout transitions and barriers using `D3D2_TEXTURE_BARRIER_FLAG_DISCARD`.
-
-Possible but not expected to be common: If aliased memory write flushes were needed on any "before resources", then use a separate Discard/Clear/Copy to initialize "after resource" memory rather than using the `D3D2_TEXTURE_BARRIER_FLAG_DISCARD` flag.
 
 ### Initial Resource State
 
